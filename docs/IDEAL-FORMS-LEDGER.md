@@ -51,8 +51,17 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   no sensor, no gate, no beat rung — so the newest observation is eight days old. Its owner of
   record is `GITVS-UNCAPPED-PR-DEBT-0715`, which the diurnal morning page names as the board's
   critical next action, and which asks for a predicate that already exists.
-- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe now exists and
-  reports distance; the producer that feeds it is still unwired.
+- **Evidence (2026-08-05):** the producer is wired. The reason the series stopped was not neglect —
+  **there was never a recorder.** Every observation in it is a side effect of an unrelated feature
+  PR that happened to regenerate the ledger (#1337, #1503, #1508, #1495, #1541), so it ended when
+  that work did. `pr-debt-trend.py --record` is the writer, running as the `github-pr-debt`
+  heartbeat sensor: a cheap due-check every cadence, a full census only on its own wall-clock
+  interval (`LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS`, 20h — inside the probe's 3-day tolerance with two
+  missed runs of margin), and a `ship-docs.sh` PR **only when `content_sha256` moves**, so a
+  PR-debt recorder cannot add to the debt it measures.
+- **Status:** PARTIAL — merge daemon live (`merge-policy.sh`); the trend probe reports distance and
+  the producer now feeds it on a cadence. The open distance is the *trend itself*: the last measured
+  reading was **+105 over three days**, and the ideal's word is monotonically down.
 - **Owner:** Claude (predicate) + merge daemon.
 
 ### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
@@ -197,6 +206,11 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   arming is the operator's valve.
 - **Status:** PARTIAL (2026-07-14) — registry + sender + sensor + keyed headless path shipped and
   wired; the only open distance is opt-in SAFE-send arming, which is deliberately the operator's valve.
+  *(2026-08-05: check D read this PARTIAL against a green probe and called the prose stale. The prose
+  was right and the row was under-declared — the probe counts DRAFTS at one instant, so it is blind
+  to the DISARMED send valve this status reports, and one green inbox reading cannot prove a claim
+  about every message. The probe is now `instantaneous: true`, which lets distance fire and forbids
+  achievement. The repair was in the contract, not the sentence.)*
 - **Owner:** Claude + mail.
 
 ### IF-CONFIG-OWNERSHIP — every host config path has one declared owner
@@ -587,6 +601,21 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   So the cure was a duty cycle: `lsregister -dump` costs **2.85s** and the WatchPaths agent carries
   `ThrottleInterval 10`, a **≥12.85s exposure window per start** against a three-syscall write —
   #1242 named itself "instant" and could not be.
+- **The window is now ~10s, and the remainder is not the effector's to close.** Re-measured
+  2026-08-05: `lsregister -dump` **2.99s** against `codesign --verify --strict` on one known path at
+  **0.009s** — 332×. The effector now cures `$CLAUDE_SHARE/ClaudeCode.app` *before* paying for
+  enumeration (the vendor's `_jb()` targets exactly that path on every start), so time-to-unregister
+  falls from ~13s to ~10s. What remains is `ThrottleInterval 10` itself, which is **deliberately not
+  lowered**: each firing costs a 2.99s dump, and this host is a 16GB machine with logged jetsam
+  kills. The honest statement is that the window is now dominated by a throttle chosen for host
+  safety, not by the effector being slow.
+  The fast path is an **optimization, never a filter** — the full enumeration still runs and stays
+  authoritative, so a `~/.Trash` reseed or a second store is caught exactly as before. Narrowing the
+  *scan* to the known path would repeat the mistake `condemnable()` already made once here. Its
+  finding test is `lsregister -u`'s exit code (measured: **0** when it actually dropped a
+  registration, **1**/`-10814` when there was none), because `condemnable()` answers *"is this
+  assessable"* and the cured steady state is present-and-unassessable-and-unregistered — keying on
+  it alone would have logged a phantom cure on every beat, forever.
 - **Two shipped organs held contradictory invariants over one file, and nothing adjudicated.**
   `claude-identity-bundle.py` (0g8d) kept the bundle **present**; `heal-claude-lsregister.sh`
   declared the steady state **"ZERO registrations … do NOT restore the stub"** and accepted that
@@ -618,3 +647,39 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   setting, which is a feature trade and therefore the operator's, homed as
   `L-CLAUDE-DEEPLINK-REGISTRATION`.
 - **Owner:** Claude (the enumeration + the effector) · the operator (one vendor setting).
+
+### IF-NOTE-HOMED — a cited note exists; the estate cites nothing into a void
+
+- **Ideal form:** every `[[wikilink]]` in a tracked surface — effector header, sensor registry,
+  lever, ledger, source comment — resolves to a file that exists **and is committed**, so a claim
+  and its refutation are both retrievable by the next session instead of re-derived. What is being
+  held here is not accuracy but **reachability**: a citation that resolves and one that dangles are
+  byte-identical at the call site, so the only thing that can tell them apart is a predicate that
+  asks the filesystem.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** this row is the generalization of [`IF-GATEKEEPER-INERT`](#if-gatekeeper-inert--a-vendor-bundle-is-present-for-exec-absent-from-launchservices)'s
+  root mechanism, not a new idea. That class recurred ~10–15× over six weeks because its root cause
+  was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]` — cited from **five** registry surfaces and
+  written **nowhere**. Every session followed the citation, found nothing, fell back to the
+  effector's header comment, and inherited its false premise. **The false belief propagated because
+  its refutation had no home.**
+  Measured at introduction (2026-08-05, `scripts/check-note-links.py`): **49 of 50** cited note
+  slugs across 3,387 tracked files resolved to nothing. The one that resolved was the note written
+  to close that class. So the six-week loop was not an unlucky one-off — it was the expected
+  outcome of a 98%-dangling citation estate, and nothing anywhere could have reported that, because
+  nothing was measuring it.
+  A citation is deliberately *not* required to be accurate — that is `IF-*`'s own job elsewhere and
+  no text predicate can do it. It is required to be **followable**, which is exactly the property
+  whose absence let five competent cures ship against one false premise.
+- **Scope, stated rather than assumed:** single-token citations (`[[link]]`, `[[redirects]]`, and
+  the `PERSON_1`/`ORG_X` redaction placeholders) are **not** gated — in this estate a note slug is
+  kebab-case with ≥2 segments, and Python's `[[0], [1, 2]]` is live source in `check-danse.py`. They
+  are printed as `unclassified` on every run rather than dropped, because a filter that silently
+  narrows its own scope is precisely the defect `condemnable()` carried for six weeks in the class
+  this row generalizes.
+- **Status:** PARTIAL — the ratchet is shipped, contract-tested (18/18, against a fake repo so they
+  test the gate rather than today's tree), and proven to bite end-to-end; the 49 pre-existing
+  dangling slugs are recorded as a **shrink-only** work-list, not forgiven. A line leaves
+  `note-link-baseline.txt` exactly one way — by writing the note it names — and a stale line fails
+  the gate, so the baseline cannot quietly become permission. `at-ideal` is an empty baseline.
+- **Owner:** Claude (`scripts/check-note-links.py` · `institutio/governance/note-link-baseline.txt`).

@@ -19,6 +19,7 @@ did — the registry's header says "there is no field to lie in," and there was 
 
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import json
 import re
@@ -112,7 +113,18 @@ def test_silence_is_not_improvement(mod, repo, capsys, monkeypatch):
     assert "silence is not improvement" in out
     assert mod.PRODUCER in out, "the failure must name the command that ACTUALLY writes the ledger"
     assert "pr-debt" in mod.PRODUCER, "`reconcile` is a dry effector report; it never writes the ledger"
-    assert "GITVS-UNCAPPED-PR-DEBT-0715" in out, "and the owner of record for its being unwired"
+    # ...and the owner of record for the silence. The INVARIANT here is unchanged — a STALE
+    # failure must name who owns fixing it — but the ANSWER moved. This used to pin the board
+    # task GITVS-UNCAPPED-PR-DEBT-0715, whose whole content was "the producer is wired to
+    # nothing". The producer has since been wired to the github-pr-debt sensor, so pinning that
+    # task id made this test assert that the thing it wanted fixed had STAYED broken: it went
+    # red on the fix rather than on the defect, and took main's suite down with it.
+    #
+    # So pin the owner through the module constant (it moves with the wiring) and pin the
+    # sensor by name (so a producer quietly re-orphaned still fails here, which is the whole
+    # point of the row).
+    assert mod.PRODUCER_OWNER in out, "the failure must name the owner of record for the silence"
+    assert "github-pr-debt" in mod.PRODUCER_OWNER, "the owner is the sensor that records the series"
 
 
 def test_a_single_observation_is_unmeasurable_and_that_is_a_failure(mod, repo, capsys, monkeypatch):
@@ -284,3 +296,126 @@ def test_the_real_ledger_writes_no_distance_by_hand_on_any_probed_row(tmp_path):
             if "DERIVED" not in line:
                 offenders.append(ident)
     assert not offenders, f"hand-written distances survive on probed rows: {sorted(set(offenders))}"
+
+
+# ---------------------------------------------------------------------------
+# The recorder's change basis and its two clocks. Every test below fails against
+# the first cut (#1854). PR #1859 is what the CLOCK half looked like in production:
+# a second census fourteen minutes after #1857, under a twenty-hour interval.
+# It is NOT evidence for the change-basis half — #1858 opened between those two
+# censuses, so the PR set really had moved and 1293 held by coincidence. The
+# change-basis defect is proven instead by advancing only the clock fields of the
+# real ledger, which is what test_only_the_clock_moving_is_not_an_observation does.
+# ---------------------------------------------------------------------------
+
+
+def _census(count: int, stamp: str, *, untyped: int = 0) -> dict:
+    """The shape gitvs.py actually writes — per-PR records carrying their OWN clock fields.
+
+    Those per-PR stamps are the trap. `content_sha256` excludes only the TOP-LEVEL
+    `generated_at` (gitvs.py:827), so every one of them is inside the ledger's own hash.
+    """
+    return {
+        "open_pr_count": count,
+        "classification_untyped_count": untyped,
+        "generated_at": f"{stamp}Z",
+        "content_sha256": f"sha-of-{stamp}",
+        "pull_requests": [
+            {
+                "number": i,
+                "classification": "active_custody",
+                "age_hours": round(100.0 + i + len(stamp), 2),
+                "disposition_observed_at": f"{stamp}Z",
+            }
+            for i in range(count)
+        ],
+    }
+
+
+def test_only_the_clock_moving_is_not_an_observation(mod):
+    """The defect that shipped noise: two censuses of an identical estate must compare EQUAL."""
+    a = json.dumps(_census(3, "2026-08-06T03:17:46"))
+    b = json.dumps(_census(3, "2026-08-06T03:31:47"))
+    assert a != b, "the raw bytes differ on every run — that is why a byte compare was never an option"
+    assert json.loads(a)["content_sha256"] != json.loads(b)["content_sha256"], (
+        "and so does the ledger's own content_sha256, because the per-PR stamps are inside it — "
+        "which is precisely how judging change by that field opened a PR per census"
+    )
+    assert mod._stable_digest(a) == mod._stable_digest(b), "nothing but time passed; nothing ships"
+
+
+def test_the_estate_moving_IS_an_observation(mod):
+    """The guard against 'fixing' the above by making the digest insensitive to everything."""
+    base = json.dumps(_census(3, "2026-08-06T03:17:46"))
+    moved_level = json.dumps(_census(4, "2026-08-06T03:17:46"))
+    moved_shape = json.dumps(_census(3, "2026-08-06T03:17:46", untyped=7))
+    assert mod._stable_digest(base) != mod._stable_digest(moved_level), "the debt level moved"
+    assert mod._stable_digest(base) != mod._stable_digest(moved_shape), (
+        "the count held but composition moved — still an observation worth recording"
+    )
+
+
+def test_a_recent_observation_blocks_a_checkout_that_has_never_swept(mod, repo, capsys):
+    """The other half of the duplicate. The local receipt is gitignored, so a fresh worktree has
+    no clock of its own — and the first cut read ONLY that clock, so it went straight to census."""
+    recent = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S")
+    (repo / LEDGER_REL).write_text(json.dumps(_census(2, recent)), encoding="utf-8")
+    _git(repo, "add", LEDGER_REL)
+    _git(repo, "commit", "-q", "-m", "someone else recorded an hour ago")
+    assert not (repo / "logs").exists(), "this checkout has never run the sweep"
+
+    assert mod.record(dry_run=True) == 0
+    out = capsys.readouterr().out
+    assert "not due" in out, "a fresh checkout must still see the clock every checkout shares"
+    assert "an observation was recorded" in out
+
+
+def test_the_digest_is_stable_on_the_REAL_ledger_not_just_a_fixture(mod):
+    """The synthetic fixture above proves the idea; this proves it against the shipped artifact.
+
+    A hand-built census carries exactly the volatile fields its author already knew about, so it
+    cannot fail the way the real thing does — which is precisely how the original defect survived
+    review. This walks the committed ledger (~1,300 records, every field gitvs actually emits),
+    advances ONLY the clock, and requires the digest to hold.
+    """
+    raw = (ROOT / LEDGER_REL).read_text(encoding="utf-8")
+    data = json.loads(raw)
+    assert len(data["pull_requests"]) > 100, "the real ledger, not a stub"
+
+    def advance_clock(node):
+        if isinstance(node, dict):
+            out = {}
+            for k, v in node.items():
+                if k in ("generated_at", "disposition_observed_at"):
+                    out[k] = "2099-01-01T00:00:00.000000Z"
+                elif k == "age_hours":
+                    out[k] = (v + 999.0) if isinstance(v, (int, float)) else v
+                elif k == "content_sha256":
+                    out[k] = "deadbeef" * 8
+                else:
+                    out[k] = advance_clock(v)
+            return out
+        if isinstance(node, list):
+            return [advance_clock(v) for v in node]
+        return node
+
+    later = json.dumps(advance_clock(data))
+    assert raw != later, "the bytes must differ, or this test proves nothing"
+    assert data["content_sha256"] != json.loads(later)["content_sha256"], (
+        "the ledger's own hash moves on a clock-only change — the defect, pinned against real data"
+    )
+    assert mod._stable_digest(raw) == mod._stable_digest(later), "only time passed; nothing ships"
+
+    moved = json.loads(raw)
+    moved["open_pr_count"] -= 1
+    assert mod._stable_digest(raw) != mod._stable_digest(json.dumps(moved)), "one PR left; that ships"
+
+
+def test_a_stale_shared_clock_does_not_block_a_checkout_that_has_never_swept(mod, repo, capsys):
+    """Negative control: the shared clock gates on AGE, not merely on an observation existing."""
+    (repo / LEDGER_REL).write_text(json.dumps(_census(2, "2020-01-01T00:00:00")), encoding="utf-8")
+    _git(repo, "add", LEDGER_REL)
+    _git(repo, "commit", "-q", "-m", "an ancient observation")
+
+    assert mod.record(dry_run=True) == 0
+    assert "DUE" in capsys.readouterr().out

@@ -277,7 +277,7 @@
     },
     {
       "id": "L-TCC-VERSIONED-CLIENT-LEAK-2-1-222",
-      "label": "Remove the two TCC grants that attached to the rotating versioned client `~/.local/share/claude/versions/2.1.222` on 2026-08-05 (kTCCServiceAppleEvents allowed 16:22Z, kTCCServiceSystemPolicyRemovableVolumes allowed 17:07Z) and re-land them on the fixed Domus Agent Host — the host's own AppleEvents decision is currently DENIED (auth_value 0), which is why the prompt fell through to the versioned binary.",
+      "label": "Remove the EIGHT TCC grants that attached to the rotating versioned client `~/.local/share/claude/versions/2.1.222` on 2026-08-05 (16:22Z-22:59Z) and re-land what is still needed on the fixed Domus Agent Host. Identity un-redacted 2026-08-06 via _identity_id(client, client_type=1) -> sha256:7faf64b4..., confirming the 2.1.222 attribution. The host's own AppleEvents decision is DENIED (auth_value 0), which is why the prompt fell through to the versioned binary.",
       "owner": "yours",
       "cost": "~2 min GUI, durable",
       "unlocks": "beat sensor `tcc-track-c` returns green (active_leaks 0, new_managed 0); osascript/Mail automation and removable-volume access survive the next Claude Code version rotation without a fresh prompt",
@@ -285,11 +285,12 @@
       "gate": "macOS TCC (GUI approval + per-row removal) — never automatable",
       "steps": [
         "Trigger the AppleEvents flow once THROUGH the host (`domus-agent-host run -- osascript ...`) and Allow the prompt so the grant lands on Domus Agent Host, not a versioned path (if no prompt appears, first flip Domus Agent Host back ON under System Settings -> Privacy & Security -> Automation)",
-        "In System Settings -> Privacy & Security -> Automation, remove the row for the versioned claude 2.1.222 client (per-row minus control)",
-        "In System Settings -> Privacy & Security -> Files & Folders (Removable Volumes), remove the same versioned client's row; re-grant through the host on next hosted use if needed",
-        "Verify: `python3 scripts/tcc-identity-audit.py --json --strict` exits 0 with active_leaks 0 and new_managed 0, and the next `python3 scripts/tcc-track-c-closeout.py --beat` receipt is green"
+        "Remove the versioned 2.1.222 client's row in EACH of these panes — this is the correction of 2026-08-06; the lever previously named only the first two, so following it as written removed 2 of 8 and left the sensor red: Automation (kTCCServiceAppleEvents, 16:22:16Z) · Files & Folders > Removable Volumes (17:07:04Z) · Files & Folders > Documents (20:38:23Z) · Files & Folders > Desktop (22:59:03Z) · Files & Folders > Downloads (22:59:05Z) · Media & Apple Music (22:59:06Z) · App Data (22:59:10Z, auth_value 5) · Files & Folders > FileProvider (22:59:11Z)",
+        "Leave the kTCCServiceSystemPolicyAllFiles row alone if present — it is auth_value 0 (DENIED, 20:39:47Z), not a grant, and removing a denial is not the goal",
+        "Re-grant only what is actually needed, through the host, on next hosted use",
+        "Verify: `scripts/tcc-identity-audit --strict` exits 0 with active_leaks 0 and new_managed 0, and the next `python3 scripts/tcc-track-c-closeout.py --beat` receipt is green. Cite the WRAPPER, not `scripts/tcc-identity-audit.py`: it execs the same module and additionally handles the no-python3 and non-Darwin cases the bare module does not, so it is the citation that works when someone actually runs it. cli/tests/test_his_hand_registry.py pins the path both spellings share, so this is a free choice, not a pinned one."
       ],
-      "note": "Root cause of recurrence: any osascript/volume access run from an UNHOSTED claude session re-creates this leak after removal — route those flows through `domus-agent-host run --`. Un-redact any future leak hash with the identity formula in scripts/tcc-identity-audit.py (_identity_id).",
+      "note": "Root cause of recurrence: any osascript/volume access run from an UNHOSTED claude session re-creates this leak after removal — route those flows through `domus-agent-host run --`. SCOPE CORRECTED 2026-08-06: the live audit shows NINE decisions on this identity (eight non-denied, one denial), not two. Five of the eight landed in a 9-second burst at 22:59:03-22:59:11Z. The version path still exists on disk (2.1.221/222/223 all present), so these are live rows, not orphans. Un-redact any future leak hash with _identity_id in scripts/tcc-identity-audit.py. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md for the OPEN QUESTION on whether the pre-#1848 deleting effector was generating these.",
       "issue": 1703
     },
     {

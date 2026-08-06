@@ -48,6 +48,15 @@ ratchets:
 # parity preserved the defect faithfully for months. A note beginning UNJUSTIFIED records a
 # path that cannot defend itself — check J reports those and does not fail on them, the same
 # baseline shape the rest of this estate uses. Two of them are not the same finding as none.
+#
+# `arming` is the OTHER half of the same question. Check J asks whether a path reaches the
+# built artifact; arming asks whether the job can ship that artifact AT ALL. A rail whose
+# every effect-bearing step is conditioned on a secret that does not exist deploys nothing —
+# it runs, prints a skip notice, and goes green. Classification is `path matches AND rail is
+# armed`, because the guardrail's real question was never "does this glob match" but "will
+# merging change what is served". Absent an `arming` block a trigger is ARMED: the default
+# must over-protect. Dormancy is declared here and PROVEN by check-gates K — never inferred
+# at merge time, so the merge decision stays deterministic and offline.
 deploy_triggers:
   dashboard:
     workflow: .github/workflows/deploy.yml
@@ -62,6 +71,24 @@ deploy_triggers:
   api:
     workflow: .github/workflows/deploy-api.yml
     build_source: web/api          # gcloud run deploy --source web/api
+    arming:
+      state: dormant
+      secret: GCP_SA_KEY           # allow-secret: the NAME of the secret, never a value
+      var: GCP_SA_KEY_SET          # job env: ${{ secrets.GCP_SA_KEY != '' }}
+      ungated_steps:
+        - step: actions/checkout@v7
+          note: "checks the repo out onto the runner; nothing leaves the job"
+      note: >-
+        The Cloud Run rail is dormant: GCP_SA_KEY exists nowhere, so EVERY effect-bearing
+        step is skipped and the run reports success having deployed nothing. Observed, not
+        assumed — run 31061094764 printed `GCP_SA_KEY_SET: false` from the runner's own env
+        and took the "Note skipped API deploy" branch; today's other seven main runs are the
+        same. This matches the charter: the live runtime API is the Cloudflare Worker.
+        Check K PROVES the shape offline (every step above is gated on `var`, so no secret
+        ⇒ no effect) and corroborates the STATE from the latest run's step conclusions.
+        Consequence: web/api/** and cli/** stop being website-sensitive, because merging
+        them cannot reach a live surface. Landing GCP_SA_KEY arms the rail — flip `state`
+        to `armed` in the same change, and check K fails the PR if you forget.
     paths:
       - "web/api/**"
       - path: "cli/**"
@@ -521,6 +548,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "DOCS-EXPORTS drift: the cross-repo export program is a shrinking work-list, not a parity claim — every row names a limen doc whose SUBJECT another repo owns, and shipping the move DELETES the row. Without a predicate the two halves drift silently: the file leaves and the row lingers (a phantom work item an agent re-executes), or the row retires and the file stays (a claimed export that never happened). Checks every row's path is still tracked, every target is a real cross-repo destination or DELETE, and every declared patch-consumer is a real path. Scoped to docs/** because deleting a doc that still carries a row is exactly the drift this catches."
+  check-note-links:
+    command: "python3 scripts/check-note-links.py"
+    paths: ["**", "scripts/check-note-links.py", "institutio/governance/note-link-baseline.txt", "cli/tests/test_check_note_links.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "NOTE-LINK drift: a `[[wikilink]]` citation must resolve to a tracked file whose stem is that slug, or be recorded in the shrink-only note-link-baseline.txt. The `**` path implicates the gate on ANY change, the same idiom check-root-manifest uses with `*`: a citation can be introduced in any file, so path-scoping this gate would put the blind spot exactly where the defect lives. It costs ~0.4s, which is what makes always-on affordable — and `scoped: false` would have been WRONG here (that means whole-matrix-only, so a scoped push gate would never run it). Founded on the measured defect behind IF-GATEKEEPER-INERT: the root cause of the six-week `ClaudeCode.app is damaged` loop was homed in `[[macos-tcc-gatekeeper-dialogs-solved]]`, cited from FIVE registry surfaces (dialogs-silenced.sh x2, sensors.yaml, parameters.yaml, his-hand-levers.json x2) and written NOWHERE — so every session followed it, found nothing, and re-derived the root from an effector header carrying a false premise. Five cures shipped against that premise. A citation that resolves and one that dangles are byte-identical at the call site; only the filesystem knows, and nothing was asking it. Measured at introduction: 49 of 50 cited slugs dangled. The baseline can only shrink — a stale line (the note now exists) FAILS, so the ratchet cannot silently accumulate permission."
   check-mail-tiers:
     command: "python3 scripts/check-mail-tiers.py"
     paths: ["institutio/governance/mail-tiers.yaml", "scripts/check-mail-tiers.py"]
@@ -600,13 +633,13 @@ gates:
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
-    paths: ["cli/**"]
+    paths: ["cli/**", "his-hand-levers.json", "cloud-routines.json"]
     tier: heavy
     serialize: true
     timeout_seconds: 1500
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores."
+    note: "Env-scrubbed and no-modal: ambient persona tokens and editor configuration must not leak into test behavior. Serialized machine-wide (2026-07-15 host-thrash: two concurrent lawful verify.py runs each launched this full suite in parallel with the Backblaze crawl — the 1,200-test suite is a host-exhausting gate like the node/web estate; queueing is strictly cheaper than thrashing). -n auto is WITHIN-run xdist fan-out and orthogonal to that cross-run flock: one run at a time, that run uses the cores. THE NON-cli PATHS ARE NOT DECORATION: cli/tests asserts on root registries it does not live beside, so a change to one of them can break this suite while implicating nothing. Measured 2026-08-06 by shipping exactly that — a one-key edit to his-hand-levers.json passed verify-scoped.sh (the diff implicated no gate that runs pytest) and took main red on test_his_hand_registry.py. The full dependency set is `grep -o 'ROOT / \"<file>\"' cli/tests/*.py`: his-hand-levers.json, cloud-routines.json, and tasks.yaml. tasks.yaml is DELIBERATELY excluded — it is the board fast lane (see deploy_triggers) and publishes constantly; its shape is held by tasks-parse + task-board instead, and routing every board publish through a 10-minute suite would trade this defect for a worse one."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]
