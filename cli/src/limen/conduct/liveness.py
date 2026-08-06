@@ -10,6 +10,8 @@ Sibling of scripts/_worktree_liveness.py, which serves repo scripts that run wit
 package installed and needs no self-exclusion (the stream launcher probes before it spawns into
 the worktree). Both fail CLOSED: when the probe itself is unavailable, the answer is "occupied"
 (pid -1), so a broken probe can only refuse succession, never steal a live session's worktree.
+`live_checkout_occupant` below is the one deliberate inversion — it fails OPEN, because its
+consumer does not destroy anything and its failure mode is a sync organ that never converges.
 """
 
 from __future__ import annotations
@@ -43,16 +45,35 @@ def _ancestor_pids() -> set[int]:
     return lineage
 
 
-def _process_cwds() -> dict[Path, int]:
-    """Observable process cwds; an unavailable probe fails closed (pid -1 owns everything)."""
-    observed: dict[Path, int] = {}
+def _process_cwds() -> dict[Path, set[int]]:
+    """Observable process cwds; an unavailable probe fails closed (pid -1 owns everything).
+
+    A directory maps to EVERY pid observed there, never one. Keying a single pid per directory is
+    lossy in exactly the case both consumers below live in: they filter the pid they retrieve, so
+    dropping the one that would have survived the filter does not mis-name the occupant, it
+    ERASES it — the probe answers "free" while a live session holds the tree.
+
+    That is not hypothetical. `sync-release.sh` does `cd "$ROOT"` before it asks, so the probe
+    process sits in the very directory it is asking about; with one slot per cwd the probe's own
+    pid evicted the session's, `live_checkout_occupant` then recognised the survivor as its own
+    lineage, and the guard reported the live checkout free while a session worked in it. Observed
+    end-to-end 2026-08-06 by driving sync-release.sh against a real occupant: it unparked HEAD and
+    pushed. The escape valve was luck — lsof emits in ascending pid order, so the LAST writer wins
+    the slot, and the operator host had only escaped because its pid counter had wrapped and the
+    session's pid outranked every fresh spawn.
+
+    The sibling probes (`scripts/_worktree_liveness.py`, `scripts/reap-clones.py`) key the same
+    way and are deliberately NOT changed: their consumers return whatever pid is at the cwd with
+    no filtering, so a collision there costs a wrong pid in a log line, never a wrong decision.
+    """
+    observed: dict[Path, set[int]] = {}
     proc = Path("/proc")
     if proc.is_dir():
         for entry in proc.iterdir():
             if not entry.name.isdigit():
                 continue
             try:
-                observed[(entry / "cwd").resolve(strict=True)] = int(entry.name)
+                observed.setdefault((entry / "cwd").resolve(strict=True), set()).add(int(entry.name))
             except (OSError, ValueError):
                 continue
         return observed
@@ -71,7 +92,7 @@ def _process_cwds() -> dict[Path, int]:
             cwd="/",
         )
     except (OSError, subprocess.TimeoutExpired):
-        return {Path("/"): -1}
+        return {Path("/"): {-1}}
     pid: int | None = None
     for line in result.stdout.splitlines():
         if line.startswith("p"):
@@ -81,7 +102,7 @@ def _process_cwds() -> dict[Path, int]:
                 pid = None
         elif line.startswith("n/") and pid is not None:
             try:
-                observed[Path(line[1:]).resolve()] = pid
+                observed.setdefault(Path(line[1:]).resolve(), set()).add(pid)
             except OSError:
                 continue
     return observed
@@ -96,13 +117,17 @@ def foreign_worktree_occupant(worktree: Path) -> int | None:
     except OSError:
         return -1
     lineage = _ancestor_pids()
-    for cwd, pid in _process_cwds().items():
-        if pid == -1:
+    for cwd, pids in _process_cwds().items():
+        if -1 in pids:
             return -1
-        if pid in lineage:
+        if cwd != root and root not in cwd.parents:
             continue
-        if cwd == root or root in cwd.parents:
-            return pid
+        # EVERY pid at this cwd is a candidate, not just one: the caller runs inside the worktree
+        # it probes, so it routinely shares the cwd with the occupant it is looking for. `sorted`
+        # only makes the choice among several foreign occupants deterministic.
+        foreign = sorted(pids - lineage)
+        if foreign:
+            return foreign[0]
     return None
 
 
@@ -217,18 +242,21 @@ def live_checkout_occupant(root: Path) -> int | None:
         return None  # fail OPEN — see docstring
     linked = linked_worktree_roots(root)
     lineage = _ancestor_pids()
-    for cwd, pid in _process_cwds().items():
-        if pid == -1:
+    for cwd, pids in _process_cwds().items():
+        if -1 in pids:
             return None  # fail OPEN — the probe was unavailable, so it accuses no one
-        if pid in lineage:
-            continue
         if cwd != root and root not in cwd.parents:
             continue
         if any(cwd == w or w in cwd.parents for w in linked):
             continue  # a session in a nested worktree is isolated BY DESIGN, not contending
         if _is_ignored(root, cwd):
             continue  # untracked ground: a rewrite cannot reach it
-        if not _is_session(pid):
-            continue  # a service or a build is not "an interactive session's cwd"
-        return pid
+        # Every pid here, not just one. The per-cwd exclusions above are properties of the
+        # DIRECTORY and are settled once; lineage and session-ness are properties of the PROCESS,
+        # so they must be asked of each occupant separately. Collapsing the two — testing one
+        # arbitrary pid per directory — is what let the caller's own pid stand in for the session
+        # it was meant to find and report the live checkout free. `sorted` for determinism.
+        for pid in sorted(pids - lineage):
+            if _is_session(pid):
+                return pid
     return None
