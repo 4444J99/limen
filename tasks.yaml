@@ -73680,7 +73680,7 @@ tasks:
   workstream: 'contributions'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'failed_blocked'
   labels:
   - 'simplify'
   - 'generated'
@@ -73689,12 +73689,13 @@ tasks:
   - 'tried:gemini'
   - 'slow'
   - 'tried:jules'
+  - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/mirror-mirror/issues/133'
   context: 'Identify the most complex or most-duplicated module in organvm/mirror-mirror and refactor it for clarity, with tests proving behavior is unchanged. Net lines should not grow without cause. [auto-generated 2026-06-30 to keep the stream endless]'
   depends_on: []
   created: '2026-06-30'
-  updated: '2026-07-26T21:52:28.624Z'
+  updated: '2026-08-06T18:47:17.802Z'
   dispatch_log:
   - timestamp: '2026-06-30T15:49:41.321950Z'
     agent: 'claude'
@@ -73775,6 +73776,20 @@ tasks:
     conduct_run_id: 'run-dec26948aae2bfadac4e09044160a274'
     conduct_lease_id: 'lease-364-dec26948aae2bfad'
     conduct_generation: 364
+  - timestamp: '2026-08-06T18:47:17.802Z'
+    agent: 'codex'
+    session_id: 'heal-dispatch-heal'
+    logical_agent: 'limen'
+    logical_session_id: 'heal'
+    status: 'failed_blocked'
+    output: 'heal-dispatch: chronic (reopened ≥3×, never a PR) → failed_blocked (fleet-debt, off the human surface)'
+    lifecycle_repair: 'fleet-debt-park'
+    fleet_debt_source: 'dispatch-verify'
+    fleet_debt_count: 4
+    conduct_event_id: 'conduct:run-cbe076306d8f6d902f120be9e9f181ba:527:compatibility'
+    conduct_run_id: 'run-cbe076306d8f6d902f120be9e9f181ba'
+    conduct_lease_id: 'lease-527-cbe076306d8f6d90'
+    conduct_generation: 527
   predicate: 'test "$(gh issue view 133 --repo organvm/mirror-mirror --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/mirror-mirror/issues/133'
   origin: 'system_debt'
