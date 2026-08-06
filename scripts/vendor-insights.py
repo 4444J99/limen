@@ -50,6 +50,7 @@ import os
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from typing import NamedTuple
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 HOME = Path(os.environ.get("HOME", str(Path.home())))
@@ -107,12 +108,12 @@ def _ro_connect(db_path: Path) -> sqlite3.Connection:
 # {
 #   "id": str, "started_at": iso, "ended_at": iso | None, "cwd": str | None,
 #   "user_msgs": int, "assistant_msgs": int, "tool_calls": int,
-#   "models": [str], "approx_bytes": int,
+#   "models": [str], "approx_bytes": int, ...adapter extras (step_count, rollout_files, ...)
 # }
 
 
-def _mk(sid, started, ended, cwd, u, a, t, models, size) -> dict:
-    return {
+def _mk(sid, started, ended, cwd, u, a, t, models, size, extra: dict | None = None) -> dict:
+    rec = {
         "id": str(sid),
         "started_at": started,
         "ended_at": ended,
@@ -123,6 +124,38 @@ def _mk(sid, started, ended, cwd, u, a, t, models, size) -> dict:
         "models": sorted({m for m in models if m}),
         "approx_bytes": int(size),
     }
+    if extra:
+        rec.update(extra)
+    return rec
+
+
+class IndexResult(NamedTuple):
+    """What every _index_* adapter returns.
+
+    A sample is not the corpus: `total_in_window` is the TRUE in-window population
+    counted with the same predicate that selected `sessions`, before any cap —
+    the renderer and skill surface it so a capped index can never speak in the
+    corpus's language (the antigravity 40-of-505 incident, 2026-08-06).
+    """
+
+    sessions: list
+    total_in_window: int
+    order_key: str
+    notes: tuple | list = ()
+    sources: dict | None = None
+    extra: dict | None = None
+
+
+def _rank(candidates: list[tuple[float, object]], max_sessions: int) -> tuple[list, int, bool]:
+    """One shared recency contract: sort by key desc, keep the newest N.
+
+    Returns (kept_items, total_in_window, capped). Every adapter caps through
+    here so "most-recent N" has a single definition instead of six copies.
+    """
+    candidates.sort(key=lambda kv: kv[0], reverse=True)
+    total = len(candidates)
+    kept = [item for _, item in candidates[:max_sessions]]
+    return kept, total, total > max_sessions
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +164,7 @@ def _mk(sid, started, ended, cwd, u, a, t, models, size) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _index_claude(mod, window_start: datetime, max_sessions: int) -> list[dict]:
+def _index_claude(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     candidates: list[tuple[float, Path]] = []
     for root in mod.claude_estate_roots():
         for proj_dir in root.iterdir():
@@ -144,9 +177,9 @@ def _index_claude(mod, window_start: datetime, max_sessions: int) -> list[dict]:
                 fmt = _mtime(p)
                 if fmt is not None and fmt >= window_start:
                     candidates.append((fmt.timestamp(), p))
-    candidates.sort(reverse=True)
+    kept, total, _capped = _rank(candidates, max_sessions)
     sessions = []
-    for _, p in candidates[:max_sessions]:
+    for p in kept:
         u = a = t = 0
         first_ts = last_ts = cwd = None
         models: set[str] = set()
@@ -178,7 +211,7 @@ def _index_claude(mod, window_start: datetime, max_sessions: int) -> list[dict]:
             sessions.append(_mk(p.stem, first_ts, last_ts, cwd, u, a, t, models, p.stat().st_size))
         except OSError:
             continue
-    return sessions
+    return IndexResult(sessions, total, "file mtime")
 
 
 def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
@@ -281,61 +314,93 @@ def _codex_started_at(p: Path) -> str | None:
     return f"{m.group(1)}T{m.group(2)}:{m.group(3)}:{m.group(4)}+00:00"
 
 
-def _index_codex(mod, window_start: datetime, max_sessions: int) -> list[dict]:
-    candidates: list[tuple[float, Path]] = []
-    for root in _codex_roots(mod):
-        for p in root.rglob("rollout-*.jsonl"):
-            mt = _mtime(p)
-            if mt is not None and mt >= window_start:
-                candidates.append((mt.timestamp(), p))
-    candidates.sort(reverse=True)
+def _codex_file_sid(p: Path) -> str | None:
+    """The logical session id a rollout file belongs to — session_meta sits in the
+    first lines; resumes/forks carry the PARENT id here while the filename has
+    their own. Reads at most 3 lines (population counting must stay cheap)."""
+    try:
+        with p.open(encoding="utf-8", errors="replace") as fh:
+            for i, line in enumerate(fh):
+                if i > 2:
+                    break
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if rec.get("type") == "session_meta":
+                    pay = rec.get("payload") or {}
+                    return pay.get("session_id") or pay.get("id")
+    except OSError:
+        pass
+    return None
+
+
+def _index_codex(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     # Resumed/forked codex sessions write a NEW rollout file carrying the PARENT
     # session_meta.session_id (observed live 2026-08-06: one logical session across
     # 9 files). A logical session is the session_id GROUP — aggregate, never drop.
-    groups: dict[str, dict] = {}
-    scanned = 0
-    file_budget = max_sessions * 10  # bounded I/O: enough files to fill the cap
-    for mts, p in candidates:
-        if len(groups) >= max_sessions and scanned >= file_budget:
-            break
-        scanned += 1
-        try:
-            scan = _codex_scan_file(p)
-            size = p.stat().st_size
-        except OSError:
-            continue
-        sid = scan["sid"] or p.stem
-        if sid not in groups and len(groups) >= max_sessions:
-            continue  # cap reached — only aggregate files of already-known sessions
-        started = _codex_started_at(p)
-        ended = _iso(datetime.fromtimestamp(mts, tz=timezone.utc))
-        g = groups.setdefault(
-            sid,
-            {
-                "started": started,
-                "ended": ended,
-                "cwd": scan["cwd"],
-                "u": 0,
-                "a": 0,
-                "t": 0,
-                "models": set(),
-                "size": 0,
-            },
+    #
+    # Phase 1 groups EVERY in-window file by session id via a 3-line header read,
+    # so total_in_window and the capsule-churn metric cover the whole window;
+    # phase 2 full-scans only the kept N groups (bounded I/O).
+    file_groups: dict[str, list[tuple[float, Path]]] = {}
+    for root in _codex_roots(mod):
+        for p in root.rglob("rollout-*.jsonl"):
+            mt = _mtime(p)
+            if mt is None or mt < window_start:
+                continue
+            sid = _codex_file_sid(p) or p.stem
+            file_groups.setdefault(sid, []).append((mt.timestamp(), p))
+    churn_counts = [len(files) for files in file_groups.values()]
+    capsule_churn = {
+        "files_total": sum(churn_counts),
+        "logical_sessions": len(churn_counts),
+        "mean_files_per_session": round(sum(churn_counts) / len(churn_counts), 2) if churn_counts else 0.0,
+        "max_files_in_one_session": max(churn_counts, default=0),
+    }
+    candidates: list[tuple[float, str]] = [(max(mts for mts, _ in files), sid) for sid, files in file_groups.items()]
+    kept_sids, total, _capped = _rank(candidates, max_sessions)
+    sessions = []
+    for sid in kept_sids:
+        g = {"started": None, "ended": "", "cwd": None, "u": 0, "a": 0, "t": 0, "models": set(), "size": 0}
+        for mts, p in sorted(file_groups[sid]):
+            try:
+                scan = _codex_scan_file(p)
+                size = p.stat().st_size
+            except OSError:
+                continue
+            started = _codex_started_at(p)
+            ended = _iso(datetime.fromtimestamp(mts, tz=timezone.utc))
+            g["u"] += scan["u"]
+            g["a"] += scan["a"]
+            g["t"] += scan["t"]
+            g["models"] |= scan["models"]
+            g["size"] += size
+            g["cwd"] = g["cwd"] or scan["cwd"]
+            if started and (g["started"] is None or started < g["started"]):
+                g["started"] = started
+            if ended > g["ended"]:
+                g["ended"] = ended
+        sessions.append(
+            _mk(
+                sid,
+                g["started"],
+                g["ended"] or None,
+                g["cwd"],
+                g["u"],
+                g["a"],
+                g["t"],
+                g["models"],
+                g["size"],
+                extra={"rollout_files": len(file_groups[sid])},
+            )
         )
-        g["u"] += scan["u"]
-        g["a"] += scan["a"]
-        g["t"] += scan["t"]
-        g["models"] |= scan["models"]
-        g["size"] += size
-        g["cwd"] = g["cwd"] or scan["cwd"]
-        if started and (g["started"] is None or started < g["started"]):
-            g["started"] = started
-        if ended > g["ended"]:
-            g["ended"] = ended
-    return [
-        _mk(sid, g["started"], g["ended"], g["cwd"], g["u"], g["a"], g["t"], g["models"], g["size"])
-        for sid, g in groups.items()
-    ]
+    return IndexResult(
+        sessions,
+        total,
+        "newest rollout-file mtime per logical session",
+        extra={"capsule_churn": capsule_churn, "population_count_method": "rollout header scan (3 lines/file)"},
+    )
 
 
 def _codex_session_files(mod, sid: str) -> list[Path]:
@@ -437,14 +502,12 @@ def _copilot_root(mod) -> Path | None:
     return root if root.is_dir() else None
 
 
-def _index_copilot(mod, window_start: datetime, max_sessions: int) -> list[dict]:
+def _index_copilot(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     root = _copilot_root(mod)
     if root is None:
-        return []
-    sessions = []
-    for sdir in sorted(root.iterdir(), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True):
-        if len(sessions) >= max_sessions:
-            break
+        return IndexResult([], 0, "absent", notes=["copilot session-state root not found"])
+    candidates: list[tuple[float, tuple[Path, dict]]] = []
+    for sdir in root.iterdir():
         ws = sdir / "workspace.yaml"
         if not sdir.is_dir() or not ws.exists():
             continue
@@ -456,6 +519,10 @@ def _index_copilot(mod, window_start: datetime, max_sessions: int) -> list[dict]
             upd_dt = _mtime(sdir)
         if upd_dt is None or upd_dt < window_start:
             continue
+        candidates.append((upd_dt.timestamp(), (sdir, meta)))
+    kept, total, _capped = _rank(candidates, max_sessions)
+    sessions = []
+    for sdir, meta in kept:
         u = a = t = 0
         models: set[str] = set()
         events = sdir / "events.jsonl"
@@ -496,7 +563,7 @@ def _index_copilot(mod, window_start: datetime, max_sessions: int) -> list[dict]
                 size,
             )
         )
-    return sessions
+    return IndexResult(sessions, total, "workspace.yaml updated_at (dir mtime fallback)")
 
 
 def _cat_copilot(mod, sid: str, max_chars: int) -> str | None:
@@ -545,18 +612,24 @@ def _cat_copilot(mod, sid: str, max_chars: int) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _index_opencode(mod, window_start: datetime, max_sessions: int) -> list[dict]:
+def _index_opencode(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     db = Path(mod.VENDOR_REGISTRY["opencode"]["path"])
     if not db.exists():
-        return []
+        return IndexResult([], 0, "absent", notes=["opencode.db not found"])
     window_ms = int(window_start.timestamp() * 1000)
     sessions = []
+    total = 0
     try:
         con = _ro_connect(db)
         cur = con.cursor()
+        # A session created before the window but still active inside it is in-window:
+        # filter on the LATER of created/updated, order by last activity.
+        where = "MAX(COALESCE(time_created, 0), COALESCE(time_updated, 0)) >= ?"
+        cur.execute(f"SELECT COUNT(*) FROM session WHERE {where}", (window_ms,))
+        total = int(cur.fetchone()[0] or 0)
         cur.execute(
             "SELECT id, directory, title, model, time_created, time_updated FROM session "
-            "WHERE time_created >= ? ORDER BY time_created DESC LIMIT ?",
+            f"WHERE {where} ORDER BY COALESCE(time_updated, time_created) DESC LIMIT ?",
             (window_ms, max_sessions),
         )
         rows = cur.fetchall()
@@ -591,7 +664,7 @@ def _index_opencode(mod, window_start: datetime, max_sessions: int) -> list[dict
         con.close()
     except sqlite3.Error as e:
         print(f"WARN: opencode sqlite error: {type(e).__name__}", file=sys.stderr)
-    return sessions
+    return IndexResult(sessions, total, "time_updated (time_created fallback)")
 
 
 def _cat_opencode(mod, sid: str, max_chars: int) -> str | None:
@@ -664,6 +737,47 @@ def _agy_root(mod) -> Path:
     return Path(mod.VENDOR_REGISTRY["antigravity"]["path"])
 
 
+# Structural columns ONLY — title/preview are conversation CONTENT and never
+# leave the store through this organ (PII firewall, mechanically tested).
+_AGY_SUMMARY_SQL = (
+    "SELECT conversation_id, step_count, last_modified_time, workspace_uris, "
+    "killed, not_fully_idle, parent_conversation_id, nesting_depth, "
+    "last_user_input_time, last_user_input_step_index FROM conversation_summaries"
+)
+
+# The store writes literal year-1 datetimes where it has no value; treating the
+# sentinel as a timestamp would rank real work below everything ever recorded.
+_AGY_ZERO_TIME = "0001-01-01"
+
+
+def _agy_parse_time(val) -> datetime | None:
+    if not isinstance(val, str) or val.startswith(_AGY_ZERO_TIME):
+        return None
+    try:
+        dt = datetime.fromisoformat(val)
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _agy_summaries(mod) -> tuple[dict[str, dict], list[str]]:
+    """conversation_id -> structural summary row (no content columns)."""
+    db = _agy_root(mod) / "conversation_summaries.db"
+    if not db.exists():
+        return {}, ["conversation_summaries.db absent"]
+    rows: dict[str, dict] = {}
+    try:
+        con = _ro_connect(db)
+        cur = con.cursor()
+        cur.execute(_AGY_SUMMARY_SQL)
+        for r in cur.fetchall():
+            rows[r["conversation_id"]] = dict(r)
+        con.close()
+    except sqlite3.Error as e:
+        return {}, [f"conversation_summaries.db unreadable ({type(e).__name__})"]
+    return rows, []
+
+
 def _agy_history(mod) -> dict[str, dict]:
     """conversationId -> {count, first_ts, last_ts, workspace} from history.jsonl."""
     hist: dict[str, dict] = {}
@@ -693,51 +807,115 @@ def _agy_history(mod) -> dict[str, dict]:
     return hist
 
 
-def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> list[dict]:
+def _index_antigravity(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    # Three sources describe this estate, and they are nearly DISJOINT (measured
+    # 2026-08-06: 506 summary rows, 129 conversation DBs, overlap 5 — blobs prune
+    # ~10 days out while summaries persist; history.jsonl remembers longest). The
+    # universe is their UNION keyed by conversation_id; each record carries its
+    # provenance, and only the kept N ever open a blob DB (bounded I/O).
+    summaries, notes = _agy_summaries(mod)
     conv_dir = _agy_root(mod) / "conversations"
-    if not conv_dir.is_dir():
-        return []
+    blobs: dict[str, Path] = {p.stem: p for p in conv_dir.glob("*.db")} if conv_dir.is_dir() else {}
     hist = _agy_history(mod)
-    candidates = []
-    for p in conv_dir.glob("*.db"):
-        mt = _mtime(p)
-        if mt is not None and mt >= window_start:
-            candidates.append((mt.timestamp(), p))
-    candidates.sort(reverse=True)
-    sessions = []
-    for mts, p in candidates[:max_sessions]:
-        sid = p.stem
-        total = t132 = t14 = 0
-        try:
-            con = _ro_connect(p)
-            cur = con.cursor()
-            cur.execute("SELECT COUNT(*) FROM steps")
-            total = int(cur.fetchone()[0] or 0)
-            cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 132")
-            t132 = int(cur.fetchone()[0] or 0)
-            cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 14")
-            t14 = int(cur.fetchone()[0] or 0)
-            con.close()
-        except sqlite3.Error:
+
+    candidates: list[tuple[float, str]] = []
+    order_keys: dict[str, str] = {}
+    for cid in set(summaries) | set(blobs) | set(hist):
+        dt = _agy_parse_time((summaries.get(cid) or {}).get("last_modified_time"))
+        key = "summaries.last_modified_time"
+        if dt is None and cid in blobs:
+            dt = _mtime(blobs[cid])
+            key = "conversation .db mtime"
+        if dt is None:
+            key = "history.jsonl last_ts"
+            last_ts = (hist.get(cid) or {}).get("last_ts")
+            if last_ts:
+                try:
+                    dt = datetime.fromisoformat(last_ts)
+                except ValueError:
+                    dt = None
+        if dt is None or dt < window_start:
             continue
-        h = hist.get(sid, {})
-        ended = _iso(datetime.fromtimestamp(mts, tz=timezone.utc))
+        candidates.append((dt.timestamp(), cid))
+        order_keys[cid] = key
+
+    kept, total, _capped = _rank(candidates, max_sessions)
+    coverage: dict[str, int] = {}
+    for cid in kept:
+        coverage[order_keys[cid]] = coverage.get(order_keys[cid], 0) + 1
+
+    sessions = []
+    for cid in kept:
+        srow = summaries.get(cid)
+        blob = blobs.get(cid)
+        h = hist.get(cid, {})
+        total_steps = t132 = t14 = size = 0
+        if blob is not None:
+            try:
+                size = blob.stat().st_size
+                con = _ro_connect(blob)
+                cur = con.cursor()
+                cur.execute("SELECT COUNT(*) FROM steps")
+                total_steps = int(cur.fetchone()[0] or 0)
+                cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 132")
+                t132 = int(cur.fetchone()[0] or 0)
+                cur.execute("SELECT COUNT(*) FROM steps WHERE step_type = 14")
+                t14 = int(cur.fetchone()[0] or 0)
+                con.close()
+            except sqlite3.Error:
+                blob = None
+        step_count = int((srow or {}).get("step_count") or 0) or total_steps
+        cwd = h.get("workspace")
+        if cwd is None and srow and srow.get("workspace_uris"):
+            try:
+                uris = json.loads(srow["workspace_uris"])
+                if isinstance(uris, list) and uris and isinstance(uris[0], str):
+                    cwd = uris[0].removeprefix("file://")
+            except json.JSONDecodeError:
+                pass
+        ended_dt = _agy_parse_time((srow or {}).get("last_modified_time")) or (_mtime(blob) if blob else None)
+        ended = _iso(ended_dt) if ended_dt else h.get("last_ts")
+        provenance = [
+            s
+            for s, present in (("summaries", srow is not None), ("blob", blob is not None), ("history", cid in hist))
+            if present
+        ]
         # user turns come from history.jsonl (the only clean per-message source);
         # assistant msgs = send_message steps; everything else ≈ tool machinery.
         sessions.append(
             _mk(
-                sid,
+                cid,
                 h.get("first_ts"),
-                h.get("last_ts") or ended,
-                h.get("workspace"),
+                ended,
+                cwd,
                 h.get("count", 0),
                 t132,
-                max(0, total - t132 - t14),
+                max(0, total_steps - t132 - t14),
                 [],
-                p.stat().st_size,
+                size,
+                extra={
+                    "step_count": step_count,
+                    "sources": provenance,
+                    "content_depth": "blob" if blob is not None else "summary_only",
+                },
             )
         )
-    return sessions
+    if summaries:
+        pruned = len(set(summaries) - set(blobs))
+        notes.append(f"{pruned} of {len(summaries)} summarized conversations have no local blob store (pruned)")
+    return IndexResult(
+        sessions,
+        total,
+        "summaries.last_modified_time → blob mtime → history last_ts",
+        notes=notes,
+        sources={
+            "summaries_db": len(summaries),
+            "conversation_dbs": len(blobs),
+            "history_jsonl": len(hist),
+            "union": len(set(summaries) | set(blobs) | set(hist)),
+        },
+        extra={"order_key_coverage": coverage},
+    )
 
 
 def _agy_scrape_blob(blob: bytes, keys: tuple[str, ...]) -> str | None:
@@ -760,7 +938,31 @@ def _agy_scrape_blob(blob: bytes, keys: tuple[str, ...]) -> str | None:
 def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
     db = _agy_root(mod) / "conversations" / f"{sid}.db"
     if not db.exists():
-        return None
+        # The blob store prunes ~10 days out; a summaries row proves the session
+        # existed. Report the structural facts honestly — never invent content,
+        # and never surface the summaries' title/preview (content columns).
+        summaries, _ = _agy_summaries(mod)
+        srow = summaries.get(sid)
+        if srow is None:
+            return None
+        ws = ""
+        try:
+            uris = json.loads(srow.get("workspace_uris") or "[]")
+            if isinstance(uris, list) and uris and isinstance(uris[0], str):
+                ws = uris[0].removeprefix("file://")
+        except json.JSONDecodeError:
+            pass
+        lines = [
+            f"[antigravity conversation {sid}: blob store pruned — content not locally readable]\n",
+            f"[structural facts: step_count={srow.get('step_count')}, "
+            f"last_modified={srow.get('last_modified_time')}, workspace={ws or '?'}]\n",
+            "[Antigravity retains conversation blobs ~10 days; the summaries DB persists structure only.]\n",
+        ]
+        hist = _agy_history(mod)
+        h = hist.get(sid)
+        if h:
+            lines.append(f"[history.jsonl: {h['count']} user prompts, {h.get('first_ts')} → {h.get('last_ts')}]\n")
+        return "".join(lines)
     hist = _agy_history(mod)
     out: list[str] = []
     h = hist.get(sid)
@@ -811,18 +1013,19 @@ def _cat_antigravity(mod, sid: str, max_chars: int) -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def _index_gemini(mod, window_start: datetime, max_sessions: int) -> list[dict]:
+def _index_gemini(mod, window_start: datetime, max_sessions: int) -> IndexResult:
     root = Path(mod.VENDOR_REGISTRY["gemini"]["path"])
     if not root.is_dir():
-        return []
+        return IndexResult([], 0, "absent", notes=["gemini tmp root not found"])
     candidates = []
     for p in root.glob("*/chats/session-*.jsonl"):
         mt = _mtime(p)
         if mt is not None and mt >= window_start:
             candidates.append((mt.timestamp(), p))
-    candidates.sort(reverse=True)
+    kept, total, _capped = _rank(candidates, max_sessions)
     sessions = []
-    for mts, p in candidates[:max_sessions]:
+    for p in kept:
+        mts = (_mtime(p) or _now()).timestamp()
         sid = started = ended = None
         u = g = t = 0
         models: set[str] = set()
@@ -857,7 +1060,15 @@ def _index_gemini(mod, window_start: datetime, max_sessions: int) -> list[dict]:
                 pass
         ended = ended or _iso(datetime.fromtimestamp(mts, tz=timezone.utc))
         sessions.append(_mk(sid or p.stem, started, ended, cwd, u, g, t, models, p.stat().st_size))
-    return sessions
+    return IndexResult(
+        sessions,
+        total,
+        "file mtime",
+        notes=[
+            "gemini's store logs user prompts; assistant replies are frequently not captured — "
+            "treat zero assistant_msgs as a store limitation, not silence"
+        ],
+    )
 
 
 def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:
@@ -987,11 +1198,18 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
     def sec(title: str, body: str) -> str:
         return f"<section><h2>{_esc(title)}</h2>{body}</section>"
 
+    imeta = index.get("meta") or {}
+    if imeta.get("capped"):
+        indexed_phrase = (
+            f"{imeta.get('shown', n_sessions)} of {imeta.get('total_in_window', '?')} in-window sessions indexed"
+        )
+    else:
+        indexed_phrase = f"{n_sessions} sessions indexed"
     parts: list[str] = []
     parts.append(
         f"<header><h1>{_esc(vendor)} · usage insights</h1>"
         f"<p class='meta'>{_esc((window.get('start') or '?')[:10])} → {_esc((window.get('end') or '?')[:10])} · "
-        f"{n_sessions} sessions indexed · {len(facets)} faceted · "
+        f"{indexed_phrase} · {len(facets)} faceted · "
         f"{user_msgs} user messages · {tool_calls} tool calls · models: {_esc(', '.join(models) or '—')}</p></header>"
     )
 
@@ -1063,6 +1281,19 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
     ]
     unfaceted = n_sessions - len(facets)
     notes = list(narrative.get("coverage_notes") or [])
+    if imeta.get("capped"):
+        notes.append(
+            f"Index cap: {imeta.get('shown')} of {imeta.get('total_in_window')} in-window sessions were "
+            f"indexed (--max-sessions); those not shown are the OLDEST by {imeta.get('order_key')}."
+        )
+    for adapter_note in imeta.get("notes") or []:
+        notes.append(f"Store note: {adapter_note}")
+    churn = imeta.get("capsule_churn") or {}
+    if churn.get("mean_files_per_session", 0) > 1.0:
+        notes.append(
+            f"Capsule churn: {churn['logical_sessions']} logical sessions span {churn['files_total']} rollout "
+            f"files (mean {churn['mean_files_per_session']}, max {churn['max_files_in_one_session']} in one)."
+        )
     if unfaceted > 0:
         notes.append(f"{unfaceted} of {n_sessions} indexed sessions were not faceted (sampling cap).")
     if missing:
@@ -1123,18 +1354,32 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
         print(f"ERROR: no indexer for vendor '{vendor}' (have: {', '.join(sorted(INDEXERS))})", file=sys.stderr)
         return 1
     window_start = _now() - timedelta(days=window_days)
-    sessions = INDEXERS[vendor](mod, window_start, max_sessions)
+    result = INDEXERS[vendor](mod, window_start, max_sessions)
+    sessions = result.sessions
     sessions.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+    meta = {
+        "total_in_window": result.total_in_window,
+        "shown": len(sessions),
+        "capped": result.total_in_window > len(sessions),
+        "order_key": result.order_key,
+        "notes": list(result.notes),
+    }
+    if result.sources:
+        meta["population_sources"] = result.sources
+    if result.extra:
+        meta.update(result.extra)
     doc = {
         "vendor": vendor,
         "generated_at": _iso(),
         "window": {"start": _iso(window_start), "end": _iso(), "days": window_days},
         "max_sessions": max_sessions,
+        "meta": meta,
         "sessions": sessions,
     }
     out = OUT_ROOT / vendor / "index.json"
     _atomic_write(out, json.dumps(doc, indent=2))
-    print(f"{out} — {len(sessions)} sessions")
+    capnote = f" (of {result.total_in_window} in-window — CAPPED)" if meta["capped"] else ""
+    print(f"{out} — {len(sessions)} sessions{capnote}")
     return 0
 
 
