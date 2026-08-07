@@ -15,6 +15,7 @@ the gate stays his. The whole point: when he says "open the merge gate," this is
 Derive-don't-pin: ranks come from revenue-ladder.json + value-repos.json at run time, never hardcoded.
 Fail-open: any unreadable input yields an empty section, never a crash; gh unavailable -> empty surface.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,8 +46,7 @@ def _ladder_ranks() -> dict[str, int]:
         data = json.loads((ROOT / "revenue-ladder.json").read_text())
     except (OSError, ValueError):
         return {}
-    return {p["repo"]: p.get("rank", 99)
-            for p in (data.get("products") or []) if isinstance(p, dict) and p.get("repo")}
+    return {p["repo"]: p.get("rank", 99) for p in (data.get("products") or []) if isinstance(p, dict) and p.get("repo")}
 
 
 def _value_repos() -> set[str]:
@@ -84,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     rows = []
     if prs:
         import concurrent.futures as cf
+
         with cf.ThreadPoolExecutor(max_workers=10) as ex:
             rows = list(ex.map(md.assess, prs))
 
@@ -102,8 +103,13 @@ def main(argv: list[str] | None = None) -> int:
         "scanned": len(prs),
         "counts": {k: len(v) for k, v in sorted(buckets.items())},
         "ready": [
-            {"ref": f"{repo}#{num}", "repo": repo, "number": num,
-             "revenue_rank": ranks.get(repo), "value_repo": repo in value}
+            {
+                "ref": f"{repo}#{num}",
+                "repo": repo,
+                "number": num,
+                "revenue_rank": ranks.get(repo),
+                "value_repo": repo in value,
+            }
             for repo, num in ready
         ],
         "blocked": {
@@ -128,9 +134,9 @@ def main(argv: list[str] | None = None) -> int:
         f"Scanned **{surface['scanned']}** open PRs (authored by you, across `organvm` + `4444J99`). "
         f"**{c.get('READY', 0)} are CLEAN** (mergeable + CI-green + non-trivial) and ranked revenue-first below.",
         "",
-        "> This is the **single go/no-go**: say *\"open the merge gate\"* and `merge-drain.py` squash-merges "
-        "exactly this READY set (revenue-first), deletes the branches, and never force-merges. "
-        "Nothing here is merged by generating this list — the gate is yours.",
+        '> This is the **single go/no-go**: say *"open the merge gate"* and `merge-drain.py` squash-merges '
+        "exactly this READY set (revenue-first), preserves the source branches for the receipt-backed reap, "
+        "and never force-merges. Nothing here is merged by generating this list — the gate is yours.",
         "",
         "## ✅ READY — clean, ranked revenue-first",
         "",
@@ -139,15 +145,18 @@ def main(argv: list[str] | None = None) -> int:
         lines += ["| # | PR | revenue rank | value-repo |", "|---|---|---|---|"]
         for i, (repo, num) in enumerate(ready, 1):
             rr = ranks.get(repo)
-            lines.append(f"| {i} | `{repo}#{num}` | {rr if rr is not None else '—'} | "
-                         f"{'✓' if repo in value else ''} |")
+            lines.append(f"| {i} | `{repo}#{num}` | {rr if rr is not None else '—'} | {'✓' if repo in value else ''} |")
     else:
         lines.append("_No clean-ready PRs in this scan._")
 
     lines += ["", "## ⏳ Blocked (not yours to fix — the fleet heals these)", ""]
-    label = {"CONFLICT": "merge conflict (rebase needed)", "CI-RED": "CI failing",
-             "CI-PENDING": "CI still running", "TRIVIAL": "no-op/reformat (value gate refuses)",
-             "ERR": "assessment error"}
+    label = {
+        "CONFLICT": "merge conflict (rebase needed)",
+        "CI-RED": "CI failing",
+        "CI-PENDING": "CI still running",
+        "TRIVIAL": "no-op/reformat (value gate refuses)",
+        "ERR": "assessment error",
+    }
     for k in ("CONFLICT", "CI-RED", "CI-PENDING", "TRIVIAL", "ERR"):
         refs = surface["blocked"].get(k)
         if refs:
@@ -156,8 +165,13 @@ def main(argv: list[str] | None = None) -> int:
             lines.append(f"- **{label[k]}** ({len(refs)}): {shown}{more}")
     if not surface["blocked"]:
         lines.append("_None._")
-    lines += ["", "---", "*Generated read-only by `scripts/merge-ready.py` — reuses `merge-drain.py`'s "
-              "classifier. Re-run any time. Nothing merged without your word.*", ""]
+    lines += [
+        "",
+        "---",
+        "*Generated read-only by `scripts/merge-ready.py` — reuses `merge-drain.py`'s "
+        "classifier. Re-run any time. Nothing merged without your word.*",
+        "",
+    ]
 
     try:
         DOCS.mkdir(parents=True, exist_ok=True)
@@ -165,10 +179,12 @@ def main(argv: list[str] | None = None) -> int:
     except OSError:
         pass
 
-    print(f"merge-ready: scanned {surface['scanned']} -> READY {c.get('READY', 0)} "
-          f"(conflict {c.get('CONFLICT', 0)}, ci-red {c.get('CI-RED', 0)}, "
-          f"ci-pending {c.get('CI-PENDING', 0)}, trivial {c.get('TRIVIAL', 0)}) "
-          f"-> docs/MERGE-READY.md + logs/merge-ready.json")
+    print(
+        f"merge-ready: scanned {surface['scanned']} -> READY {c.get('READY', 0)} "
+        f"(conflict {c.get('CONFLICT', 0)}, ci-red {c.get('CI-RED', 0)}, "
+        f"ci-pending {c.get('CI-PENDING', 0)}, trivial {c.get('TRIVIAL', 0)}) "
+        f"-> docs/MERGE-READY.md + logs/merge-ready.json"
+    )
     return 0
 
 
