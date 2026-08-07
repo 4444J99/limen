@@ -1,0 +1,2030 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-08-07T11:25:58.280254Z",
+    "close_effects": 0,
+    "effect_count": 200,
+    "immutable_archived_item_count": 0,
+    "immutable_archived_repository_count": 0,
+    "immutable_archived_repository_hashes": [],
+    "merge_effects": 0,
+    "repository_count": 94,
+    "verified_count": 200
+  },
+  "cohort": "dependabot",
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "generated_at": "2026-08-07T11:10:02.507031Z",
+  "items": [
+    {
+      "draft": false,
+      "head_oid": "970634429df681311609e8559cea8e530bbf7e17",
+      "number": 17,
+      "pr_key": "38b025c83e4a32d09b0515c091cb532469c6fae96f7a29b216bbaa9234052107",
+      "private": false,
+      "repository": "4444J99/hokage-chess",
+      "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/4444J99/hokage-chess/pull/17"
+    },
+    {
+      "draft": false,
+      "head_oid": "8f3baf6000af40b139e60adee258e7c674cc0b14",
+      "number": 14,
+      "pr_key": "88ca780d9b25c82e2bf29f89e40033062d83696a7cd92a921730af38b2281dab",
+      "private": false,
+      "repository": "4444J99/padavano",
+      "title": "chore(deps): bump postcss from 8.5.15 to 8.5.25",
+      "url": "https://github.com/4444J99/padavano/pull/14"
+    },
+    {
+      "draft": false,
+      "head_oid": "3b3d4955550fc020484eb1c2d9e22e458d147326",
+      "number": 15,
+      "pr_key": "b10b58919fce722474f528b75751aa985fd79fab4b42c908417fbbfae170cfc1",
+      "private": false,
+      "repository": "4444J99/padavano",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/4444J99/padavano/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "35aac8ba5a37b71ce16d215da8790b4f477004ad",
+      "number": 861,
+      "pr_key": "0f9bdeb9e6442869d5b472f78d8dc45ef5c88cb1e6832d9aa3436d73b26de321",
+      "private": false,
+      "repository": "4444J99/peer-audited--behavioral-blockchain",
+      "title": "chore(deps-dev): bump postcss from 8.5.24 to 8.5.25",
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/861"
+    },
+    {
+      "draft": false,
+      "head_oid": "f5ca37da28aefa1ac30a222edfb775292376c226",
+      "number": 864,
+      "pr_key": "3758a797bdf478854ce9acedfcfbb18d76182e63a51253b9ec1466a3b7245d55",
+      "private": false,
+      "repository": "4444J99/peer-audited--behavioral-blockchain",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 11 updates",
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/864"
+    },
+    {
+      "draft": false,
+      "head_oid": "cafd41209c5c62e10a086a658d7718bac8338809",
+      "number": 11,
+      "pr_key": "ac995e89a926f6e11cf7347e821b24419ddcefa2993c2e6163da1a14ce0bd1fe",
+      "private": false,
+      "repository": "4444J99/styx-behavioral-art",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/4444J99/styx-behavioral-art/pull/11"
+    },
+    {
+      "draft": false,
+      "head_oid": "ddce87d06a259c08366ae81dbbb650c7ac13bbf1",
+      "number": 505,
+      "pr_key": "e4b4ac89cf527b3393840294a92c57ef06f41dbf0e5f60ae1f36b140fc07a389",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "chore(deps): bump the all-actions group across 1 directory with 27 updates",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/505"
+    },
+    {
+      "draft": false,
+      "head_oid": "16621b370e58f2792448b5dffc7563eb5b42d224",
+      "number": 11,
+      "pr_key": "d523fe18b2abd83bb51595bd9cfb1986aa4b2b0e54f2f84e0bd9a39902f80ada",
+      "private": false,
+      "repository": "organvm-i-theoria/_agent-ontology",
+      "title": "chore(deps): bump the pip-deps group across 2 directories with 3 updates",
+      "url": "https://github.com/organvm-i-theoria/_agent-ontology/pull/11"
+    },
+    {
+      "draft": false,
+      "head_oid": "1007678ad1626d3bc24a35425d4e6600badc82c6",
+      "number": 10,
+      "pr_key": "1d717aedf88a9517d47d2003a543af79ce09c53f16c990fa238c25749a9a24e9",
+      "private": false,
+      "repository": "organvm-i-theoria/chthon-oneiros",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-i-theoria/chthon-oneiros/pull/10"
+    },
+    {
+      "draft": false,
+      "head_oid": "629e780d995b29289e907585e3e972d9ecc17f27",
+      "number": 130,
+      "pr_key": "e6a9d902f3c11f93de28d52462fea18dd5fd68b485727a67acda6d2128cfe031",
+      "private": false,
+      "repository": "organvm-i-theoria/nexus--babel-alexandria",
+      "title": "chore(deps): bump pypdf from 6.13.3 to 6.14.2",
+      "url": "https://github.com/organvm-i-theoria/nexus--babel-alexandria/pull/130"
+    },
+    {
+      "draft": false,
+      "head_oid": "260ae55543c9264e0626c032f7b376dabaed7554",
+      "number": 12,
+      "pr_key": "d117f232353ddc47efa501741e5c699c22e51936f4aee69ce25ebc08741fa6c1",
+      "private": false,
+      "repository": "organvm-i-theoria/scale-threshold-emergence",
+      "title": "chore(deps): update mcp requirement from >=1.28.1 to >=2.0.0 in /scripts/academic_mcp in the pip-deps group across 1 directory",
+      "url": "https://github.com/organvm-i-theoria/scale-threshold-emergence/pull/12"
+    },
+    {
+      "draft": false,
+      "head_oid": "1593c89fa57e5699782da6e62b9a6c5118ca3151",
+      "number": 17,
+      "pr_key": "d34e0f58bef94ea8294168cb3ead644107d7292ca1f2c7a19ea4866829cdb2c2",
+      "private": false,
+      "repository": "organvm-i-theoria/universal-node-network",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-i-theoria/universal-node-network/pull/17"
+    },
+    {
+      "draft": false,
+      "head_oid": "9ea6bc356863c6b61171d139cb4c6bff6bbd2396",
+      "number": 13,
+      "pr_key": "ed83209983e4ea83910e5c977565da11e0dc39c13560b533d5dbe49f35a3b534",
+      "private": false,
+      "repository": "organvm-ii-poiesis/.github",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the all-actions group",
+      "url": "https://github.com/organvm-ii-poiesis/.github/pull/13"
+    },
+    {
+      "draft": false,
+      "head_oid": "0b228be0f345a2c8c8e09b1cc5053fd2f5dd7e5c",
+      "number": 117,
+      "pr_key": "83f74c4e71e132d30c4b92bdf6da3d3f687e52106ee72a29d20b818ccc44ef6c",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps-dev): bump the npm-deps group across 5 directories with 9 updates",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/117"
+    },
+    {
+      "draft": false,
+      "head_oid": "3735365fcbc4b223154f2a72d9519b7396677265",
+      "number": 119,
+      "pr_key": "e66e28228d6c61bee4418024bd9a5b3c195c7458e40679a973266ad8cdf509d0",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/119"
+    },
+    {
+      "draft": false,
+      "head_oid": "ced0c7e1734633bc07ed097d2cbb06d9e430807f",
+      "number": 120,
+      "pr_key": "1bf1105c5240bbc16caa542e0135aaff81a172dbb4e448bbc596623c8584d5de",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps): bump undici from 7.28.0 to 7.29.0",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/120"
+    },
+    {
+      "draft": false,
+      "head_oid": "e3ccd458294931e6d46d798f69d11ab1994ddc55",
+      "number": 121,
+      "pr_key": "25f370be92c671e71a4b38be6ab7de4dd64506d054f6cbadc5742900ee647818",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/121"
+    },
+    {
+      "draft": false,
+      "head_oid": "28298ac812b4286f15ccb8c06f36ee8fdb5e0099",
+      "number": 122,
+      "pr_key": "c7a4f7897451a5731696bc5bfd1f70bf25865835d092577ce25055358aeaae8a",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps-dev): bump socket.io-parser from 4.2.6 to 4.2.7",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/122"
+    },
+    {
+      "draft": false,
+      "head_oid": "32f2f1fd08eae77fb9d23277c808410c57ac4482",
+      "number": 123,
+      "pr_key": "2331061620b15f7f9bcf96183c1c9295884df0ec9f90949dde571d15bd1272bb",
+      "private": false,
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-ii-poiesis/a-mavs-olevm/pull/123"
+    },
+    {
+      "draft": false,
+      "head_oid": "e865b3877754576f990f7471ad5e2be0f463cb3a",
+      "number": 37,
+      "pr_key": "0271e83cf9920243609b51a3f2478d9b89045c2652bb50e7809c203b54f03514",
+      "private": false,
+      "repository": "organvm-ii-poiesis/ivi374ivi027-05",
+      "title": "chore(deps): bump dompurify from 3.4.11 to 3.4.12",
+      "url": "https://github.com/organvm-ii-poiesis/ivi374ivi027-05/pull/37"
+    },
+    {
+      "draft": false,
+      "head_oid": "e73907f135bb5c54f26021956f847a5a194af2f1",
+      "number": 39,
+      "pr_key": "f33fa95301fed58710bbb8e338d09d03ab6f2ab001b30f309c371a21f424fb14",
+      "private": false,
+      "repository": "organvm-ii-poiesis/ivi374ivi027-05",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-ii-poiesis/ivi374ivi027-05/pull/39"
+    },
+    {
+      "draft": false,
+      "head_oid": "275f83d6fbe04dc4af345eaa3c5582f289f580c8",
+      "number": 41,
+      "pr_key": "24cffade175b6d50385f305bb0468af30828cf9cb307864f0db9be17b1d7843c",
+      "private": false,
+      "repository": "organvm-ii-poiesis/ivi374ivi027-05",
+      "title": "chore(deps): bump postcss, next and @tailwindcss/postcss",
+      "url": "https://github.com/organvm-ii-poiesis/ivi374ivi027-05/pull/41"
+    },
+    {
+      "draft": false,
+      "head_oid": "e0a06db37583fdf5e727c92da31e24b4eb38a369",
+      "number": 42,
+      "pr_key": "93d92251a21b90687c385ba978a6711588fb362679f4ab66658c3913575177a9",
+      "private": false,
+      "repository": "organvm-ii-poiesis/ivi374ivi027-05",
+      "title": "chore(deps-dev): bump undici from 7.28.0 to 7.29.0",
+      "url": "https://github.com/organvm-ii-poiesis/ivi374ivi027-05/pull/42"
+    },
+    {
+      "draft": false,
+      "head_oid": "806aadfaf6c2dafc0469d2a627b34f8acd74c97d",
+      "number": 43,
+      "pr_key": "86d3323f89e1575bd2e4e2d2045bd26754879a975890b4c02c3228a12fd81657",
+      "private": false,
+      "repository": "organvm-ii-poiesis/ivi374ivi027-05",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 23 updates",
+      "url": "https://github.com/organvm-ii-poiesis/ivi374ivi027-05/pull/43"
+    },
+    {
+      "draft": false,
+      "head_oid": "b4e0b8e719c0a8683f34bfef57eb7a840352b9a5",
+      "number": 55,
+      "pr_key": "6c453ca89c2038d7a6e132764d0c905c1aa28c5f2fb139d1d5bfb25b7629c1e8",
+      "private": false,
+      "repository": "organvm-ii-poiesis/narratological-algorithmic-lenses",
+      "title": "chore(deps-dev): bump js-yaml from 4.2.0 to 4.3.0",
+      "url": "https://github.com/organvm-ii-poiesis/narratological-algorithmic-lenses/pull/55"
+    },
+    {
+      "draft": false,
+      "head_oid": "ef15c3f82f1c718ee7740288dd9a4d851d96b02a",
+      "number": 56,
+      "pr_key": "5a402dbd5f5e7568b377c5669a17ec3476946fbb720b9d0b33d3520c19d08912",
+      "private": false,
+      "repository": "organvm-ii-poiesis/narratological-algorithmic-lenses",
+      "title": "chore(deps-dev): bump vite from 8.0.16 to 8.1.0",
+      "url": "https://github.com/organvm-ii-poiesis/narratological-algorithmic-lenses/pull/56"
+    },
+    {
+      "draft": false,
+      "head_oid": "355693268152042d985ad613dfea96585c0dc7f7",
+      "number": 57,
+      "pr_key": "adc559e83ed500aea1f01a30e9255eb4479937e064e6fd3db604d43aaebdf2a9",
+      "private": false,
+      "repository": "organvm-ii-poiesis/narratological-algorithmic-lenses",
+      "title": "chore(deps): bump react-router-dom from 6.30.4 to 7.0.0",
+      "url": "https://github.com/organvm-ii-poiesis/narratological-algorithmic-lenses/pull/57"
+    },
+    {
+      "draft": false,
+      "head_oid": "0539cce2c160bc72b8366f644e3a6a54726fc18e",
+      "number": 60,
+      "pr_key": "5108f83d3776bb1125a67d15ab4697cb1666eca97f3c7cd57dc1fefc30e0146f",
+      "private": false,
+      "repository": "organvm-ii-poiesis/narratological-algorithmic-lenses",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-ii-poiesis/narratological-algorithmic-lenses/pull/60"
+    },
+    {
+      "draft": false,
+      "head_oid": "25be4b5cb3db3788e3218faca4b0c43d22541ae7",
+      "number": 15,
+      "pr_key": "4eb15295ae4c4f271117951621ad81083751669212570a6b478a2d68edc0194c",
+      "private": false,
+      "repository": "organvm-ii-poiesis/vigiles-aeternae--agon-cosmogonicum",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-ii-poiesis/vigiles-aeternae--agon-cosmogonicum/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "bd7f2e52f67f0b9fb4b45fe094b77f3bd17fa95e",
+      "number": 15,
+      "pr_key": "37a6c97c0fc20d7e4cc948cf29f6946c3785a4f9e42667cb15f0c4fb29cd0681",
+      "private": false,
+      "repository": "organvm-ii-poiesis/vigiles-aeternae--corpus-mythicum",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-ii-poiesis/vigiles-aeternae--corpus-mythicum/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "8a4460053cfc87ee17ca3ccb71f1efdf35e3d24e",
+      "number": 11,
+      "pr_key": "8301f5bc2ec9f3d0f750a53a04dbb15543d8da46a32733b5fcc4fc830a2a4abc",
+      "private": false,
+      "repository": "organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-ii-poiesis/vigiles-aeternae--theatrum-mundi/pull/11"
+    },
+    {
+      "draft": false,
+      "head_oid": "7d317189b62c5cca7874cca1463b561a271c494b",
+      "number": 16,
+      "pr_key": "c2364014c3e78e46187f35595412583ce8ec51d326b959463c256fd531927f04",
+      "private": false,
+      "repository": "organvm-iii-ergon/.github",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the all-actions group",
+      "url": "https://github.com/organvm-iii-ergon/.github/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "0b8e70967a6ceee828af6a274c8e5472160a3360",
+      "number": 143,
+      "pr_key": "f4e0e6fe46b937fd67a6924779d5a3f3aa2048d8260c9872ff272e63823eb3d1",
+      "private": false,
+      "repository": "organvm-iii-ergon/a-i-chat--exporter",
+      "title": "build(deps): bump the npm-deps group across 1 directory with 16 updates",
+      "url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/pull/143"
+    },
+    {
+      "draft": false,
+      "head_oid": "e39f12d7c45b3868cde6508bfcf4e4a337ef2d86",
+      "number": 188,
+      "pr_key": "f7f738401839587ff36f50cc5ee287a4bd2220078a82aca92e817d46df392eb0",
+      "private": false,
+      "repository": "organvm-iii-ergon/a-i-council--coliseum",
+      "title": "chore(deps): bump litellm from 1.83.7 to 1.93.0 in /backend",
+      "url": "https://github.com/organvm-iii-ergon/a-i-council--coliseum/pull/188"
+    },
+    {
+      "draft": false,
+      "head_oid": "55a4fa9fb155ea7af502771145cb684567bf393f",
+      "number": 189,
+      "pr_key": "ec4c3f4523ed6d06a427ac68ffd9b0342bcbfdea5bc26391b293a92a445e806c",
+      "private": false,
+      "repository": "organvm-iii-ergon/a-i-council--coliseum",
+      "title": "chore(deps): bump next from 15.5.18 to 15.5.21 in /frontend",
+      "url": "https://github.com/organvm-iii-ergon/a-i-council--coliseum/pull/189"
+    },
+    {
+      "draft": false,
+      "head_oid": "0420a95ce4b30dca3cbddc9bc7dbe621ac847ab6",
+      "number": 190,
+      "pr_key": "f8cffc92e4bfbdf0d89d215a505a2e3d89951413d1607553085e211517ba994f",
+      "private": false,
+      "repository": "organvm-iii-ergon/a-i-council--coliseum",
+      "title": "chore(deps-dev): bump postcss from 8.5.10 to 8.5.18 in /frontend",
+      "url": "https://github.com/organvm-iii-ergon/a-i-council--coliseum/pull/190"
+    },
+    {
+      "draft": false,
+      "head_oid": "c129e39b158b117b181c29cfbdc69f0ee53ea130",
+      "number": 191,
+      "pr_key": "c8cf472011d32059e822e8279eac1dbb2315cf0fb4846416944a7d96a725994c",
+      "private": false,
+      "repository": "organvm-iii-ergon/a-i-council--coliseum",
+      "title": "chore(deps): bump the pip-deps group across 1 directory with 9 updates",
+      "url": "https://github.com/organvm-iii-ergon/a-i-council--coliseum/pull/191"
+    },
+    {
+      "draft": false,
+      "head_oid": "c85c367efa736fe500a0a0eb4bc71c12620d35b0",
+      "number": 40,
+      "pr_key": "4e98fd595afa8fae286b6602fb0b90a821fa2708fb435c60becb2c57d1d74fe2",
+      "private": false,
+      "repository": "organvm-iii-ergon/agent--claude-smith",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iii-ergon/agent--claude-smith/pull/40"
+    },
+    {
+      "draft": false,
+      "head_oid": "5039bbed5607cfac5d12915526d6b32b890c7f60",
+      "number": 41,
+      "pr_key": "be88e8d9f0020f34660dba73ff7ade3dd42a14627424c9778306a93235e30ae9",
+      "private": false,
+      "repository": "organvm-iii-ergon/agent--claude-smith",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/agent--claude-smith/pull/41"
+    },
+    {
+      "draft": false,
+      "head_oid": "9e75d8cceee571e79b9b4ca85473b1c759d24323",
+      "number": 100,
+      "pr_key": "2ca69d022e1421e5561b26f860d9fdbdaa8535db4601dcbdaf4cf378ed6143f4",
+      "private": false,
+      "repository": "organvm-iii-ergon/agentic-titan",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-iii-ergon/agentic-titan/pull/100"
+    },
+    {
+      "draft": false,
+      "head_oid": "d7939710ade59bdc0c485d193edcffb8035d4a77",
+      "number": 8,
+      "pr_key": "09108209587ea08b9ccb3ac8514aacf6580cd20d116ef62a518a27791a5285c6",
+      "private": false,
+      "repository": "organvm-iii-ergon/atomic-substrata",
+      "title": "chore(deps): bump the pip-deps group across 2 directories with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/atomic-substrata/pull/8"
+    },
+    {
+      "draft": false,
+      "head_oid": "71a95b43aae8b6ed17098d314a0c4ae176ec1cd9",
+      "number": 25,
+      "pr_key": "9b4c72de480f540262b9ec35a657f8047f21f9ba941734b4521a0ea3bd4514c3",
+      "private": false,
+      "repository": "organvm-iii-ergon/bountyscope",
+      "title": "chore(deps): bump the npm_and_yarn group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/bountyscope/pull/25"
+    },
+    {
+      "draft": false,
+      "head_oid": "161dba08c6b8fe752b98fa75709a939b712c97c4",
+      "number": 11,
+      "pr_key": "a72966eb8349ab1dd17f615457ba5a341e7abff1fe5bc0ae084e605e2541a8a3",
+      "private": false,
+      "repository": "organvm-iii-ergon/carrier-wave--zeitgeist-thesis",
+      "title": "build(deps): bump js-yaml and markdownlint-cli2",
+      "url": "https://github.com/organvm-iii-ergon/carrier-wave--zeitgeist-thesis/pull/11"
+    },
+    {
+      "draft": false,
+      "head_oid": "350353e05fd2dd51d55673ad8307823e0707d8d4",
+      "number": 159,
+      "pr_key": "3d6e20dd30d3bf23c7dbbdfa2959e5e019dc30e7965237877ae15fd91fb01eea",
+      "private": false,
+      "repository": "organvm-iii-ergon/classroom-rpg-aetheria",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 8 updates",
+      "url": "https://github.com/organvm-iii-ergon/classroom-rpg-aetheria/pull/159"
+    },
+    {
+      "draft": false,
+      "head_oid": "eaa3dff26facf2c03e907fdb66b33f69fea51cc3",
+      "number": 160,
+      "pr_key": "36bdcf48224aee0b7e54165dd5d1d38f64229326e69d79e55bc4cce58716342d",
+      "private": false,
+      "repository": "organvm-iii-ergon/classroom-rpg-aetheria",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 52 updates",
+      "url": "https://github.com/organvm-iii-ergon/classroom-rpg-aetheria/pull/160"
+    },
+    {
+      "draft": false,
+      "head_oid": "f70e99212f9885e3987a1f25aa4b91bf2bc53680",
+      "number": 16,
+      "pr_key": "a5878db7b28d9de63dd27051a1f80362ee19e819707ec7b7221eef411e7c738d",
+      "private": false,
+      "repository": "organvm-iii-ergon/edgarflash",
+      "title": "chore(deps-dev): bump postcss from 8.5.15 to 8.5.25 in the npm_and_yarn group across 1 directory",
+      "url": "https://github.com/organvm-iii-ergon/edgarflash/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "acd52c03a8688b70b8deb1ef972aa82c62655a0c",
+      "number": 233,
+      "pr_key": "ad7f9d680e548d67ebae5a08fca35d2738510d6e03062a1ca09b6687687d4fd6",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump shell-quote from 1.8.4 to 1.10.0 in /ios-app",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/233"
+    },
+    {
+      "draft": false,
+      "head_oid": "8de22a373cf887779181460137889f0402f9c767",
+      "number": 234,
+      "pr_key": "160c94719fe9c3c2c7c4f2f1fd8acc5f7c9f53c08194413385ce4464f6bbbff6",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/234"
+    },
+    {
+      "draft": false,
+      "head_oid": "0c3ed305fbc3e8f005917e059ca946273c8beddf",
+      "number": 236,
+      "pr_key": "02a7c2a082303645c23b6c5da2590532fa35f04ab50656c0850a41b6ec4bc32e",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump brace-expansion from 5.0.6 to 5.0.9 in /ios-app",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/236"
+    },
+    {
+      "draft": false,
+      "head_oid": "b72c32059f10be9ee79f40f3ccc98d683604d598",
+      "number": 237,
+      "pr_key": "305ff77e711232be078110da780671cbe63ae7bc94b46b2bf0f757ff13b44d4e",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump postcss from 8.5.15 to 8.5.25 in /ios-app",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/237"
+    },
+    {
+      "draft": false,
+      "head_oid": "bba46a50e7aee683ac3d7ae13aa41524c7309839",
+      "number": 238,
+      "pr_key": "7a021e5fe63f1acd0b38fe765a5275ffbc8ca0fa0fdf401769978fba9705c305",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump undici from 7.28.0 to 7.29.0",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/238"
+    },
+    {
+      "draft": false,
+      "head_oid": "82a305101879de9026fd5670342a1b843006f58b",
+      "number": 239,
+      "pr_key": "1f3cfb8b4e250b213982bd38d71e1aa8d3b04edaab16f374df1a770a994663db",
+      "private": false,
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 15 updates",
+      "url": "https://github.com/organvm-iii-ergon/fetch-familiar-friends/pull/239"
+    },
+    {
+      "draft": false,
+      "head_oid": "16bb5b4aaf8f28468db1b7041b4626d16a001c5d",
+      "number": 13,
+      "pr_key": "ee06058bbdabdf7b992402cc1d3f36d333151d11d190bfc71b00b41b571c5172",
+      "private": false,
+      "repository": "organvm-iii-ergon/glyph-cascade",
+      "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm-iii-ergon/glyph-cascade/pull/13"
+    },
+    {
+      "draft": false,
+      "head_oid": "dc35185f19ae55cdc32e645b7f73bbd13df53f4d",
+      "number": 45,
+      "pr_key": "2df2c33205f8a527bca5b0b7ebef1a31eafd68976e85fcce8469d28957f0d6e2",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump @auth/core and next-auth",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/45"
+    },
+    {
+      "draft": false,
+      "head_oid": "2e24576dd5b8941d6d5ddcdea5753c980521eae4",
+      "number": 48,
+      "pr_key": "1a87dfb17d272bb04dc20a3738f15a487b7ff638e60d28e8bd301f1ffde0860f",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/48"
+    },
+    {
+      "draft": false,
+      "head_oid": "9e559897349e616ff876f1368daf36f2c970b40c",
+      "number": 49,
+      "pr_key": "53089e815aa7b610169be3a5751363c0afd85d4732bf55d4a306000cefbe9f71",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump brace-expansion",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/49"
+    },
+    {
+      "draft": false,
+      "head_oid": "e2108c313879deae715701754525e923beb02a7f",
+      "number": 50,
+      "pr_key": "d7f376d93599ca0c64b9c870a2d4bb83e8002aec7c73bd3837df9498317f28e2",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump undici from 7.25.0 to 7.29.0",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/50"
+    },
+    {
+      "draft": false,
+      "head_oid": "070f28f71528a5041edb41354ffa122b45697b1a",
+      "number": 51,
+      "pr_key": "fce871f5171f9d8b533ddce9a184fd4a6d36a7828d364b948457321c473a378d",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/51"
+    },
+    {
+      "draft": false,
+      "head_oid": "d92dcb2751286ce4e6457a011a94af953163043e",
+      "number": 52,
+      "pr_key": "86b37397289bb118b3497ab672e152563c41efa2a2f7adba31fa231161dc5c71",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump postcss and next",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/52"
+    },
+    {
+      "draft": false,
+      "head_oid": "91d3a5498fe6fef0f9bf73bb9ecc5d37b4ddd791",
+      "number": 53,
+      "pr_key": "cb74afa718dcda39d11e706a064f01e4fa054c2552e93161e9ca0e6107da08d6",
+      "private": false,
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 31 updates",
+      "url": "https://github.com/organvm-iii-ergon/growth-auditor/pull/53"
+    },
+    {
+      "draft": false,
+      "head_oid": "f8e03f5de92b42a7a38890baeb7d82cbaf9a2db2",
+      "number": 143,
+      "pr_key": "0bbaa4b912d038aeac855119ca6faf426edc681e88273a991baa071ea705d263",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps): Bump next from 16.2.6 to 16.2.11",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/143"
+    },
+    {
+      "draft": false,
+      "head_oid": "48f49c4748997d870220b63ec2b856cdccf54427",
+      "number": 144,
+      "pr_key": "9794b8f6e3989c433710a42912ebdb68844010b865af9391fe1d63e3ec7e16a4",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps): Bump next from 16.2.6 to 16.2.11 in /apps/web",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/144"
+    },
+    {
+      "draft": false,
+      "head_oid": "a2b3b6eaff62812c26e4a10eb1f118312317ee36",
+      "number": 149,
+      "pr_key": "f1a553c94aae65238dd2bc04ab8a4a6dfa778e1469549cb4a1851d391d1c11ba",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps-dev): Bump ws from 8.21.0 to 8.21.2",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/149"
+    },
+    {
+      "draft": false,
+      "head_oid": "794ddddf73faaf0b2c0ee183388431b3382b5caa",
+      "number": 150,
+      "pr_key": "8154047c79bce21d5436102f52bc160ea91a3a418a12ebad89fc62f90feea41d",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps-dev): Bump postcss from 8.5.15 to 8.5.23",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/150"
+    },
+    {
+      "draft": false,
+      "head_oid": "aa77122b21546a97473fb48e34c3947a9b9d6df9",
+      "number": 151,
+      "pr_key": "df6b6a33f471837a95e4a2821be2b790464e5554163feb1f7688ebafe8184076",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps-dev): Bump postcss from 8.5.12 to 8.5.23 in /apps/web",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/151"
+    },
+    {
+      "draft": false,
+      "head_oid": "b6e786295225a2e11ef81e5d25f067ea0cb2207f",
+      "number": 152,
+      "pr_key": "8ea47055adffd41abd7016d623a0af301d4d49da56b686c3242155c2ba51dad8",
+      "private": false,
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "title": "build(deps): Bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-iii-ergon/life-my--midst--in/pull/152"
+    },
+    {
+      "draft": false,
+      "head_oid": "4596dbcd49c3a81957e010ce464ecc6d9a94bb1c",
+      "number": 18,
+      "pr_key": "b2a2c330031135fb40f0c1befab11e27e510dfafb07595b060e8ab3d4220d824",
+      "private": false,
+      "repository": "organvm-iii-ergon/materia-collider",
+      "title": "chore(deps): bump js-yaml from 4.2.0 to 4.3.0 in /bench/organ-reset-2026-03-11/organ-iii/parlor-games--ephemera-engine/artifacts",
+      "url": "https://github.com/organvm-iii-ergon/materia-collider/pull/18"
+    },
+    {
+      "draft": false,
+      "head_oid": "6acaf4e36d8748a205f496db5a3c677526536fe7",
+      "number": 20,
+      "pr_key": "7aee68abe6c6c55d1466db6185c15397ffac468e3ad8d6b4de3dd69389fffb1f",
+      "private": false,
+      "repository": "organvm-iii-ergon/materia-collider",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 6 updates",
+      "url": "https://github.com/organvm-iii-ergon/materia-collider/pull/20"
+    },
+    {
+      "draft": false,
+      "head_oid": "8436f4212be18be5cd3332e8eca321ff317c48e5",
+      "number": 21,
+      "pr_key": "15e2ac96807d2c26ce9151db51153f0557436786a04d4cc683399c48251891de",
+      "private": false,
+      "repository": "organvm-iii-ergon/materia-collider",
+      "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0 in /bench/organ-reset-2026-03-11/organ-iii/parlor-games--ephemera-engine/artifacts",
+      "url": "https://github.com/organvm-iii-ergon/materia-collider/pull/21"
+    },
+    {
+      "draft": false,
+      "head_oid": "f91076b2346a67879adb3eb068351ce6438cf00f",
+      "number": 48,
+      "pr_key": "0658645240e9856684845fa042b0305a0bf0025bbdac9a8b689c46e2f3421214",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps-dev): bump brace-expansion from 5.0.6 to 5.0.9",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/48"
+    },
+    {
+      "draft": false,
+      "head_oid": "4f638c4cb214b4229c129771269c8dd499d73810",
+      "number": 49,
+      "pr_key": "62cef5a3933a426736cf0a0999b9db86f3dcb415411ad5f92b82f0d047061dc5",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/49"
+    },
+    {
+      "draft": false,
+      "head_oid": "3c830acb86a5a28be66664d5c17e67edd4a6d9ad",
+      "number": 50,
+      "pr_key": "dc5d05cb312f8adb23917ed6ebf7e62fd62afb65f03e158dccf9577a856a4ce2",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps): bump find-my-way from 9.6.0 to 9.7.0",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/50"
+    },
+    {
+      "draft": false,
+      "head_oid": "ce2ec36dd410fb993b83444007b66fd5755417ec",
+      "number": 51,
+      "pr_key": "ba52060a104686a1370000d93ab38c7392f3710f87956db854e13a5aad62e3b5",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps): bump the npm_and_yarn group across 1 directory with 6 updates",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/51"
+    },
+    {
+      "draft": false,
+      "head_oid": "d1b951e11e904b6c9784b9ddc4a927c8bac24eab",
+      "number": 52,
+      "pr_key": "aeace8326a2ac1c77bd811b1b34e988c591b843ca930506dc80ff4a0624a9099",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/52"
+    },
+    {
+      "draft": false,
+      "head_oid": "bbaf01dee73e212320578f136a258946ef49dbfa",
+      "number": 53,
+      "pr_key": "1b12820fae5db235535af70b1100562dbbeb602dadb434146618adcc84067108",
+      "private": false,
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 11 updates",
+      "url": "https://github.com/organvm-iii-ergon/my-block-warfare/pull/53"
+    },
+    {
+      "draft": false,
+      "head_oid": "9e533b69c15448ed400fe76491acb17696dd3d31",
+      "number": 32,
+      "pr_key": "6f8b87cdffaf65a442f8e27e5f86e0a0fcc7b172c1de8f76298003d0b5a3d441",
+      "private": false,
+      "repository": "organvm-iii-ergon/object-lessons",
+      "title": "chore(deps-dev): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-iii-ergon/object-lessons/pull/32"
+    },
+    {
+      "draft": false,
+      "head_oid": "e5fe3cd1165243b17e52b509e8de186736606614",
+      "number": 33,
+      "pr_key": "61bf739b0ae0e10706db72665d8c265ea621b3028506ea452801d4fcd3334ff4",
+      "private": false,
+      "repository": "organvm-iii-ergon/object-lessons",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 13 updates",
+      "url": "https://github.com/organvm-iii-ergon/object-lessons/pull/33"
+    },
+    {
+      "draft": false,
+      "head_oid": "65e1747796e059f050205747c8a88e1bf90d68a9",
+      "number": 273,
+      "pr_key": "330af65600900b96a41ac3f77dde51f56999765770dc1ba7b49a910927adf45a",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps): bump shell-quote from 1.8.4 to 1.10.0 in /app",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/273"
+    },
+    {
+      "draft": false,
+      "head_oid": "72ecb30e40ac691d129c6e15d7598d576fe43720",
+      "number": 274,
+      "pr_key": "fae8735424679ee30db529db17a326da3234c15a24908e0b6f4736c39183872c",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps): bump js-yaml from 4.2.0 to 4.3.0 in /artifacts",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/274"
+    },
+    {
+      "draft": false,
+      "head_oid": "25d4bb550d82a647308dba42b2f26c99112e071b",
+      "number": 275,
+      "pr_key": "9c63f787092a462fd6fb33d35cd11427e95628553d02115f5e4fa60cae9990b2",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps): bump brace-expansion from 5.0.6 to 5.0.9 in /app",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/275"
+    },
+    {
+      "draft": false,
+      "head_oid": "abb5e3f4ce0c9bed4fd636027d4e1ef32dba87b1",
+      "number": 276,
+      "pr_key": "69ee9b9fc77f22524295499083a1aeb0819fddcc5dbc66882ab008f6398a286c",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps): bump postcss from 8.5.15 to 8.5.25 in /app",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/276"
+    },
+    {
+      "draft": false,
+      "head_oid": "db5846d7dcec0b496d58ba4d886565a1b2226da9",
+      "number": 277,
+      "pr_key": "f57351692f7e7a5bb3e7441d86b2797cf3bc8aea9a51e5c8de5cc498230ac92e",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0 in /artifacts",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/277"
+    },
+    {
+      "draft": false,
+      "head_oid": "907a2a7d16a373bd5d872f4ed875e888884770e5",
+      "number": 278,
+      "pr_key": "b4abe0f78acfe4b9954e26aadaba997d090b83f0519f246cc3b45c35d65abec3",
+      "private": false,
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "title": "chore(deps-dev): bump undici from 7.27.2 to 7.29.0 in /app",
+      "url": "https://github.com/organvm-iii-ergon/parlor-games--ephemera-engine/pull/278"
+    },
+    {
+      "draft": false,
+      "head_oid": "6c988217f96963c5d3133debfce8528ea45dc1d6",
+      "number": 374,
+      "pr_key": "2eb072fc2d36e53b8ab9b35d98f4915b69ec4aa995de276559a57e0adf2d6cea",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump tar from 7.5.16 to 7.5.22",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/374"
+    },
+    {
+      "draft": false,
+      "head_oid": "c40bd9b711f8085d966c3c32d45f25600b21b044",
+      "number": 375,
+      "pr_key": "e23b2cf17e50a39c9eab464c93adb00ebb38d63d9a58e7f5760a2c931017d85c",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps-dev): bump axios from 1.18.1 to 1.19.0",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/375"
+    },
+    {
+      "draft": false,
+      "head_oid": "c2e8cf3c14157ff694ac6c7e8ce0670ae3c1475f",
+      "number": 376,
+      "pr_key": "a6db76ef1a7c296d23e55d95cf857a4b268032c8194abed1d703580cf531f938",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/376"
+    },
+    {
+      "draft": false,
+      "head_oid": "40ad274b3b054c963f6c00e54afa94c2453bbc3c",
+      "number": 377,
+      "pr_key": "abe54f6b733409635a33cb4671e476ae403beb62dd6902c2c2a65ea2d90c1839",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/377"
+    },
+    {
+      "draft": false,
+      "head_oid": "38519457a04654889b92888dc25e61a0063bd64f",
+      "number": 378,
+      "pr_key": "d8c714e65bf377fba02376ec47b9bc51f78b25a457b6856469ccdd5b00aff8bc",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump brace-expansion",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/378"
+    },
+    {
+      "draft": false,
+      "head_oid": "1c62e41f0477937fda3bb7684ab85aaba1fde571",
+      "number": 379,
+      "pr_key": "1343319d5c64a93a849496c3e0007236e65f06438a3c4e63ba9e8430b3cbca85",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps-dev): bump undici from 6.27.0 to 6.28.0",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/379"
+    },
+    {
+      "draft": false,
+      "head_oid": "c31999372598a2381e664f5e9dc4d4a382c57fc7",
+      "number": 380,
+      "pr_key": "7b86f5d522b23d5fbae8b60bcb477222e1c0ba24b4d9b8c24a0ce3bc9b067b6b",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/380"
+    },
+    {
+      "draft": false,
+      "head_oid": "e79b9ce248c9157ccbb8624b5a2452fd50bfa1c9",
+      "number": 381,
+      "pr_key": "5a1154962d537484f26192484684f5997ab4246032e2cb1bbce9517f7f61e927",
+      "private": false,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "title": "chore(deps): bump dompurify from 3.4.11 to 3.4.13",
+      "url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/pull/381"
+    },
+    {
+      "draft": false,
+      "head_oid": "534b10b58051264bd47bccb982cb4b09d55b04e1",
+      "number": 53,
+      "pr_key": "3bf6271051930775ae16fcc50eafea0146aedeb1353182e26190743a7d74db1d",
+      "private": false,
+      "repository": "organvm-iii-ergon/search-local--happy-hour",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 5 updates",
+      "url": "https://github.com/organvm-iii-ergon/search-local--happy-hour/pull/53"
+    },
+    {
+      "draft": false,
+      "head_oid": "83c798639e0d20133d46fed22d77ba1b9f923248",
+      "number": 55,
+      "pr_key": "b774a134f6f642502fe87a030fbabbfe0bfc2c9c7dfe8579c51e335354ca6f0f",
+      "private": false,
+      "repository": "organvm-iii-ergon/search-local--happy-hour",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 45 updates",
+      "url": "https://github.com/organvm-iii-ergon/search-local--happy-hour/pull/55"
+    },
+    {
+      "draft": false,
+      "head_oid": "822191cc23d963498a792632cb4e2d9fa89d77e2",
+      "number": 56,
+      "pr_key": "9d2bdb7ee713b59e6b5c739f8c26740cd3f54f6a657859c40023e5bfeb47c02c",
+      "private": false,
+      "repository": "organvm-iii-ergon/search-local--happy-hour",
+      "title": "chore(deps-dev): bump brace-expansion from 5.0.6 to 5.0.9",
+      "url": "https://github.com/organvm-iii-ergon/search-local--happy-hour/pull/56"
+    },
+    {
+      "draft": false,
+      "head_oid": "91b291cd437a77ac6f4be157520e6bd357f56884",
+      "number": 36,
+      "pr_key": "ca86b8d87443fe074b09945442a02cf1cda3f950b7e558870986fe18ddd1980e",
+      "private": false,
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "title": "Bump tar from 7.5.16 to 7.5.22",
+      "url": "https://github.com/organvm-iii-ergon/select-or-left-or-right-or/pull/36"
+    },
+    {
+      "draft": false,
+      "head_oid": "9f0593a47000382ec93ed612351f31df05e587c4",
+      "number": 37,
+      "pr_key": "f4c4b3c4d86d33914830ebe1025117740f94645a6de41703b62c5f27e48c87db",
+      "private": false,
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "title": "Bump express-rate-limit from 8.6.0 to 8.6.1 in the npm-deps group across 1 directory",
+      "url": "https://github.com/organvm-iii-ergon/select-or-left-or-right-or/pull/37"
+    },
+    {
+      "draft": false,
+      "head_oid": "b90b527c266892cef39f006e3cab23e51b985653",
+      "number": 38,
+      "pr_key": "fcb177c241f001cadf674fc62b4600375007dcd4d85d1a4ca1e55f41d801c680",
+      "private": false,
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "title": "Bump ip-address from 10.2.0 to 10.4.0",
+      "url": "https://github.com/organvm-iii-ergon/select-or-left-or-right-or/pull/38"
+    },
+    {
+      "draft": false,
+      "head_oid": "b2fd518aadbe3528acc7b16267fa1539d1c5da1c",
+      "number": 39,
+      "pr_key": "1038be5c550bc7f1921b60989bcc91fc7052b0fb724da6dab9366d05cb630a55",
+      "private": false,
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "title": "Bump socket.io-parser from 4.2.6 to 4.2.7",
+      "url": "https://github.com/organvm-iii-ergon/select-or-left-or-right-or/pull/39"
+    },
+    {
+      "draft": false,
+      "head_oid": "13b007dd215b59e21ff98de08ca534c94f4b4715",
+      "number": 40,
+      "pr_key": "a6b3cca76c6e0c81b74940031423bded29e016866544f23954e86948e326f28b",
+      "private": false,
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "title": "Bump undici from 6.27.0 to 6.28.0",
+      "url": "https://github.com/organvm-iii-ergon/select-or-left-or-right-or/pull/40"
+    },
+    {
+      "draft": false,
+      "head_oid": "1ca6b527d2edf78d6437de834c4fc54ae3e495fc",
+      "number": 14,
+      "pr_key": "a5fa713dd7ca78638715bc00c6616330d145f6b96f3b5c75aad0f9ac850621fc",
+      "private": false,
+      "repository": "organvm-iii-ergon/shared-remembrance-gateway",
+      "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/shared-remembrance-gateway/pull/14"
+    },
+    {
+      "draft": false,
+      "head_oid": "411cc1654eb88c2878bf5c9f245f970169df2507",
+      "number": 20,
+      "pr_key": "ab7c573a1abdf1fa24e231ee07a793b1e9f5a55912d613dff0100259cd2d96bb",
+      "private": false,
+      "repository": "organvm-iii-ergon/sign-signal--voice-synth",
+      "title": "chore(deps): bump next from 16.2.10 to 16.2.11 in /apps/web",
+      "url": "https://github.com/organvm-iii-ergon/sign-signal--voice-synth/pull/20"
+    },
+    {
+      "draft": false,
+      "head_oid": "9ecef7397dc55b4def326eefa2534f1fe81d5177",
+      "number": 21,
+      "pr_key": "d3c991fb04bf95d1cb416726154d7a740231c3fe58f8b9c5649db41e9374c7c5",
+      "private": false,
+      "repository": "organvm-iii-ergon/sign-signal--voice-synth",
+      "title": "chore(deps): bump the npm-deps group across 2 directories with 1 update",
+      "url": "https://github.com/organvm-iii-ergon/sign-signal--voice-synth/pull/21"
+    },
+    {
+      "draft": false,
+      "head_oid": "5a557bc823119cde06ecfb9ab7b7002762d89ec5",
+      "number": 58,
+      "pr_key": "f5e1f5d8aa8f317fe43609860eefd77a5011b215c684d1b547c0d465f9947ed3",
+      "private": false,
+      "repository": "organvm-iii-ergon/sovereign-ecosystem--real-estate-luxury",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 46 updates",
+      "url": "https://github.com/organvm-iii-ergon/sovereign-ecosystem--real-estate-luxury/pull/58"
+    },
+    {
+      "draft": false,
+      "head_oid": "5340614dbf7f64fdaa42a68027437cb4124fb81b",
+      "number": 59,
+      "pr_key": "b6ddbd5a51841006d7a8eb927d57f14bc7e550d531357f1383438fb3f70ed41c",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump @auth/core and next-auth",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/59"
+    },
+    {
+      "draft": false,
+      "head_oid": "c61e0aebf0e5da24995337abb37524da092c2f5a",
+      "number": 60,
+      "pr_key": "28f9b8ee3bccc46fd3166d74d713e99706043af9956f88035ced255c52479190",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump js-yaml from 4.2.0 to 4.3.0",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/60"
+    },
+    {
+      "draft": false,
+      "head_oid": "5950dd22b3446309e5091eadb70f4b98459bc3d3",
+      "number": 62,
+      "pr_key": "c9110530a85999d77c6b561d79ffa94b4c9689f64bf456133b02648571d202f9",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump ip-address from 10.2.0 to 10.4.0",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/62"
+    },
+    {
+      "draft": false,
+      "head_oid": "7aa6771eed55a83aa59317d5c062d333cde3aba9",
+      "number": 63,
+      "pr_key": "eb6098dfb12ed8936914350006ac05fdc4c0bac399fa342f1e9f6b7ec6a71e7f",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump brace-expansion",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/63"
+    },
+    {
+      "draft": false,
+      "head_oid": "49fd283973af587ad7d3374c83c556676c569784",
+      "number": 64,
+      "pr_key": "48660b08b0ec82bd73f604eb0e6dbf3f3817dcc4d723a57e9a3a7ca73733178b",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump undici from 7.28.0 to 7.29.0",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/64"
+    },
+    {
+      "draft": false,
+      "head_oid": "96e7b960ba7cffad0060d81509af79f925811593",
+      "number": 65,
+      "pr_key": "ab94a014abc3b40dfb23853330f2c08af11abd31b444a190ced309d0bc759386",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/65"
+    },
+    {
+      "draft": false,
+      "head_oid": "e655d1a5187e177c45dc1b532dad872f1bec4458",
+      "number": 66,
+      "pr_key": "1cddb9e8324c47e918ecb93663d1c6f3e51145b37d8a97680db7aa391e2c04cc",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump postcss and next",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/66"
+    },
+    {
+      "draft": false,
+      "head_oid": "3f803c4210354ca344b2edb205cd1b76ff2f966c",
+      "number": 67,
+      "pr_key": "01b8e7536d39d35076891c587740cb40567fb952ba84844319baf74966f82fb6",
+      "private": false,
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 31 updates",
+      "url": "https://github.com/organvm-iii-ergon/specvla-ergon--avditor-mvndi/pull/67"
+    },
+    {
+      "draft": false,
+      "head_oid": "875ab4dcc3fa09c2a6d4d378380cff9461242f13",
+      "number": 16,
+      "pr_key": "6c5812633ab713369e8ad0872f0fbd3ab233963e7941d4fb4d24bd9c5bd8c1fe",
+      "private": false,
+      "repository": "organvm-iii-ergon/speech-score-engine",
+      "title": "chore(deps): bump next from 15.5.18 to 15.5.21",
+      "url": "https://github.com/organvm-iii-ergon/speech-score-engine/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "f95dd76efc9a16bbec238088782daa9193a49514",
+      "number": 18,
+      "pr_key": "916c96eaa65d22c3c74833533ca3d9707e0ab7848c8c42d1e98d4f898665a2d9",
+      "private": false,
+      "repository": "organvm-iii-ergon/speech-score-engine",
+      "title": "chore(deps): bump the npm-deps group across 10 directories with 17 updates",
+      "url": "https://github.com/organvm-iii-ergon/speech-score-engine/pull/18"
+    },
+    {
+      "draft": false,
+      "head_oid": "6b26e5711683ab608ce69c895c3d6fba81470cfe",
+      "number": 42,
+      "pr_key": "28e4494f0b939ebff84abf9ba624b891821b503d9d6d029038ba179761fbb93a",
+      "private": false,
+      "repository": "organvm-iii-ergon/tab-bookmark-manager",
+      "title": "chore(deps-dev): bump tar from 7.5.16 to 7.5.22 in /backend",
+      "url": "https://github.com/organvm-iii-ergon/tab-bookmark-manager/pull/42"
+    },
+    {
+      "draft": false,
+      "head_oid": "94917c2354c3c25d2b92d0c5af135b302e6e19aa",
+      "number": 45,
+      "pr_key": "c7e7786d79c8ad0ab728f4c8645c752998d9c381f79560bc2b3441740a6b369d",
+      "private": false,
+      "repository": "organvm-iii-ergon/tab-bookmark-manager",
+      "title": "chore(deps-dev): bump undici from 6.27.0 to 6.28.0 in /backend",
+      "url": "https://github.com/organvm-iii-ergon/tab-bookmark-manager/pull/45"
+    },
+    {
+      "draft": false,
+      "head_oid": "365d98939d0da171b42c96dea61411a46af0f410",
+      "number": 46,
+      "pr_key": "7205a6bd5c40c2c939a01dd9b45776156f536d7ca6f0bb11ac300f9c00035bc6",
+      "private": false,
+      "repository": "organvm-iii-ergon/tab-bookmark-manager",
+      "title": "chore(deps): bump the pip-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-iii-ergon/tab-bookmark-manager/pull/46"
+    },
+    {
+      "draft": false,
+      "head_oid": "ad2d650770d6c80ac55233a875eb8e67b4f030a9",
+      "number": 55,
+      "pr_key": "8d5446af9570cbb99120e2f828e8a5de15c6a8cb388cf04fb21cb9c2cd6ee3df",
+      "private": false,
+      "repository": "organvm-iii-ergon/the-actual-news",
+      "title": "build(deps): Bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-iii-ergon/the-actual-news/pull/55"
+    },
+    {
+      "draft": false,
+      "head_oid": "56c32522aeaa72392123ebe1af257a52b7340eb3",
+      "number": 83,
+      "pr_key": "eae95ea403953eb0fc1fb86c50c16e847fe7d2e53b3315cbc4b1608b4458e988",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps): bump js-yaml from 4.2.0 to 4.3.0",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/83"
+    },
+    {
+      "draft": false,
+      "head_oid": "8bbbc42b0bed0f498411bbfb5314344ea43d9ed4",
+      "number": 84,
+      "pr_key": "e0ea038e6ded7723daf36f6b1165a28d69b6592d5c89ac2fc09d833cfc8c0ff8",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/84"
+    },
+    {
+      "draft": false,
+      "head_oid": "75f43d135256aefc653254f23f8ecd0b3ac81b21",
+      "number": 87,
+      "pr_key": "170da6ecb9f2eb5b0a7d7a293dca7e3bfc2b0af4bd63fd60045bc2cc4e6358fc",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/87"
+    },
+    {
+      "draft": false,
+      "head_oid": "4a8d719833fd4c11eab7a1fd46178ae1cd6db608",
+      "number": 88,
+      "pr_key": "ed444a065a4a6e2a4f43c6b5f94aa2a7fc737e361ea755459edd428fc34af1cb",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps-dev): bump undici from 7.28.0 to 7.29.0",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/88"
+    },
+    {
+      "draft": false,
+      "head_oid": "6bd1b53d4cf9d30ebb3f4ea5270cb5717469b0d1",
+      "number": 89,
+      "pr_key": "86540601f4d917358062494dc3465a831d563b8286edca045f246909c8de6001",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps): bump ip-address from 10.1.0 to 10.4.0",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/89"
+    },
+    {
+      "draft": false,
+      "head_oid": "a7b326c4ee87465d35f36a82da48ca3e0cf26ffe",
+      "number": 90,
+      "pr_key": "d39c480c27a8aa331169aa00319f78cef40078f7ea519f87cd1ff8a86192f38b",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps): bump socket.io-parser from 4.2.5 to 4.2.7",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/90"
+    },
+    {
+      "draft": false,
+      "head_oid": "e9aa2190498cd0c8c727eb5baa61c7289099e28a",
+      "number": 91,
+      "pr_key": "81a064683bb7ad6702e2d097cfa2d7e5bf4a642fbb124de1ba4f20c84847a346",
+      "private": false,
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "title": "chore(deps): bump the npm-deps group across 2 directories with 21 updates",
+      "url": "https://github.com/organvm-iii-ergon/trade-perpetual-future/pull/91"
+    },
+    {
+      "draft": false,
+      "head_oid": "2b10bd49343e5ef7659ae07f0614b9fab4205fea",
+      "number": 14,
+      "pr_key": "8d037aeeedc9528a6f978971c07c60838c3dad233eed6a0113dd06e1b044a5ed",
+      "private": false,
+      "repository": "organvm-iii-ergon/vox--publica",
+      "title": "chore(deps): bump the npm-deps group across 1 directory with 5 updates",
+      "url": "https://github.com/organvm-iii-ergon/vox--publica/pull/14"
+    },
+    {
+      "draft": false,
+      "head_oid": "7163ac880ad7f4603081814b92ef3c3d0c1ac060",
+      "number": 15,
+      "pr_key": "e09ade186a3ebf09b27ed7bc6608a52e59dbd3547cc126cc5a549d13afedf24e",
+      "private": false,
+      "repository": "organvm-iii-ergon/vox--publica",
+      "title": "chore(deps): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm-iii-ergon/vox--publica/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "81288e93241caec66f3c4cd3605080a7c39b8867",
+      "number": 16,
+      "pr_key": "6ace6cc313ca4ac01b3c686c25d847b9d4b13384546f9363f1a62c238a9e5f58",
+      "private": false,
+      "repository": "organvm-iii-ergon/vox--publica",
+      "title": "chore(deps): bump hono from 4.12.29 to 4.12.34",
+      "url": "https://github.com/organvm-iii-ergon/vox--publica/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "d0c658b300c3f22864bccc8e0b7a36d40b0e7463",
+      "number": 16,
+      "pr_key": "d1a8f5facfc793c740cefb71932ebfdbd237e5cada2af5dabefc259a90f7d63b",
+      "private": false,
+      "repository": "organvm-iii-ergon/vulnpulse",
+      "title": "build(deps): bump the npm_and_yarn group across 1 directory with 8 updates",
+      "url": "https://github.com/organvm-iii-ergon/vulnpulse/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "f8e4da949d61e7b274c969d0f915e1593d921d47",
+      "number": 39,
+      "pr_key": "9fbd0b8536eb84fca710567694ddd258a4c131a000867dd99c9a87eddd11dfc4",
+      "private": false,
+      "repository": "organvm-iv-taxis/a-i--skills",
+      "title": "chore(deps): bump actions/stale from 10 to 11",
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/39"
+    },
+    {
+      "draft": false,
+      "head_oid": "cb79de6f9dce2006d64d5bd9414116e25b9e6e77",
+      "number": 58,
+      "pr_key": "2bbad4d41acff28064ed2c48e6300af8d0682a4801f482f0a462e961765f66ef",
+      "private": false,
+      "repository": "organvm-iv-taxis/a-recursive-root",
+      "title": "chore(deps): bump the pip-deps group across 2 directories with 12 updates",
+      "url": "https://github.com/organvm-iv-taxis/a-recursive-root/pull/58"
+    },
+    {
+      "draft": false,
+      "head_oid": "e9c386a5e5e9a87cf01800687f6484fa1972d5af",
+      "number": 19,
+      "pr_key": "d9ef6e907caab3acf2d2f06f51dfcaa20fcf7328e3172900b51ad6716bc707cf",
+      "private": false,
+      "repository": "organvm-iv-taxis/call-function--ontological",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm-iv-taxis/call-function--ontological/pull/19"
+    },
+    {
+      "draft": false,
+      "head_oid": "54b775b6fa3d4c59ca1060ded959b80c37159aaa",
+      "number": 8,
+      "pr_key": "506ac879bfed4873f9089aff4e9717df30cc23dc4b98a37d4ab567c8ad3817c8",
+      "private": false,
+      "repository": "organvm-iv-taxis/commerce--meta",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-iv-taxis/commerce--meta/pull/8"
+    },
+    {
+      "draft": false,
+      "head_oid": "f5a644061c29132187a8b78b2b550329e1b00dfc",
+      "number": 10,
+      "pr_key": "7c21f9fcd7ce1dec4738430be20d2db3b2b9110efba2e1a251bd2211ad4a7c94",
+      "private": false,
+      "repository": "organvm-iv-taxis/distribution-strategy",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iv-taxis/distribution-strategy/pull/10"
+    },
+    {
+      "draft": false,
+      "head_oid": "01d1c5c8dbb5f828870bbe41e015a9b43e9976da",
+      "number": 16,
+      "pr_key": "acb45c6995896e121a6e10e8c828cec02ddf686abb63a5fda2247936b64cf255",
+      "private": false,
+      "repository": "organvm-iv-taxis/krypto-velamen",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-iv-taxis/krypto-velamen/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "6431d7ca8b26d99de7562722ee77ea7f3662349f",
+      "number": 42,
+      "pr_key": "c0faf726f9a66e7c7d84f6ddec5e88768e6971de34aa8051f61af6f541e24669",
+      "private": false,
+      "repository": "organvm-iv-taxis/meta-source--ledger-output",
+      "title": "chore(deps): bump the npm-deps group across 5 directories with 13 updates",
+      "url": "https://github.com/organvm-iv-taxis/meta-source--ledger-output/pull/42"
+    },
+    {
+      "draft": false,
+      "head_oid": "df45004929411500321d11272a93eab8f38f9314",
+      "number": 190,
+      "pr_key": "dfa8bcedf207c0a6b15f5a55ad0c0fa3260e6aae78d493e738c12f231b1f1afa",
+      "private": false,
+      "repository": "organvm-iv-taxis/orchestration-start-here",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iv-taxis/orchestration-start-here/pull/190"
+    },
+    {
+      "draft": false,
+      "head_oid": "03334c929df9edd371a27161208c27028053a8e7",
+      "number": 159,
+      "pr_key": "f2716f67e7cea9b5b1d492aeff695e16001718230a375d2a5bf6ed395beb917c",
+      "private": false,
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iv-taxis/petasum-super-petasum/pull/159"
+    },
+    {
+      "draft": false,
+      "head_oid": "c6ab7f9a69fb600d5fb845651712696ba7caa120",
+      "number": 54,
+      "pr_key": "43ea9bd140fada74f08352df3ffea7b73e6411bdf757983d560179f63c74a698",
+      "private": false,
+      "repository": "organvm-iv-taxis/praxis-perpetua",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm-iv-taxis/praxis-perpetua/pull/54"
+    },
+    {
+      "draft": false,
+      "head_oid": "83f7b015bb63243f82b3c0ef4bc238438fd967f4",
+      "number": 15,
+      "pr_key": "f7109411f79e5e28c6cc2b371e96d0b6147fb31e46e3c46354b4e0c0ad525c31",
+      "private": false,
+      "repository": "organvm-iv-taxis/schema-definitions",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-iv-taxis/schema-definitions/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "e50f74ca15499a5c1f57f1aac3ec12eb439db775",
+      "number": 55,
+      "pr_key": "5e81b1aad497b3ff7b7b772d94977393fa44a96a644b0eaf03890ddd3fa9ea27",
+      "private": false,
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 5 updates",
+      "url": "https://github.com/organvm-iv-taxis/system-governance-framework/pull/55"
+    },
+    {
+      "draft": false,
+      "head_oid": "a0ddd39f5e1aa44b0e9fb742bba0ba7087585b17",
+      "number": 24,
+      "pr_key": "b51ccc761012e17553e7b51a49702806b5091a8f65abd1f4fce6b6bca6bbba0c",
+      "private": false,
+      "repository": "organvm-vi-koinonia/.github",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the all-actions group",
+      "url": "https://github.com/organvm-vi-koinonia/.github/pull/24"
+    },
+    {
+      "draft": false,
+      "head_oid": "6728849fda68d8c397898e9f0a36127e3371247a",
+      "number": 18,
+      "pr_key": "55296d39d3eb4914f4c77a43ae5eac30d366ca2181df9e7f3fc7730c845345ec",
+      "private": false,
+      "repository": "organvm-vi-koinonia/community-hub",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 5 updates",
+      "url": "https://github.com/organvm-vi-koinonia/community-hub/pull/18"
+    },
+    {
+      "draft": false,
+      "head_oid": "cf4defb2724f638b452a345abe69703f4dbae54d",
+      "number": 43,
+      "pr_key": "aaf00664f3af501c3a9f90a4b78ecfd99d185282c186e38b314834466947608c",
+      "private": false,
+      "repository": "organvm-vi-koinonia/public-process",
+      "title": "chore(deps): bump json from 2.19.2 to 2.19.9",
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/43"
+    },
+    {
+      "draft": false,
+      "head_oid": "32fc0faedb184b63de3213d27d69715925646e8a",
+      "number": 44,
+      "pr_key": "c0a4fa3ef0a2cda9859dc932ffba49bc20b5e48035490c0042f7e0d8ed22d27d",
+      "private": false,
+      "repository": "organvm-vi-koinonia/public-process",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/44"
+    },
+    {
+      "draft": false,
+      "head_oid": "cc911c6159f89fbab00cb11db7ab4e00b6cb6e9b",
+      "number": 14,
+      "pr_key": "cac044f9762d950d6dfe972b19b453a0be8025137d6f8d3a32f30d39ba1ce0e1",
+      "private": false,
+      "repository": "organvm-vi-koinonia/reading-group-curriculum",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm-vi-koinonia/reading-group-curriculum/pull/14"
+    },
+    {
+      "draft": false,
+      "head_oid": "5708c97b899c958f8c7a4b2fddfb4a28bbc1d325",
+      "number": 12,
+      "pr_key": "23aba339e90b865a52d87ffd74eb0b259120368bd890c1473dc13a6eb12e495a",
+      "private": false,
+      "repository": "organvm-vii-kerygma/.github",
+      "title": "chore(deps): bump the all-actions group with 2 updates",
+      "url": "https://github.com/organvm-vii-kerygma/.github/pull/12"
+    },
+    {
+      "draft": false,
+      "head_oid": "959c9cd1a9f3c5cead4e1a60bead6da37316ea7c",
+      "number": 206,
+      "pr_key": "a7ea40f90f8a911192c208fc2c3a31da90b4ab46be1ddb44e018ca85cae4869e",
+      "private": false,
+      "repository": "organvm-vii-kerygma/portfolio",
+      "title": "chore(deps-dev): bump shell-quote from 1.8.4 to 1.10.0",
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/206"
+    },
+    {
+      "draft": false,
+      "head_oid": "79f8dd23714499f070a4261f3f5996d56a0f59c5",
+      "number": 208,
+      "pr_key": "ae491ee96b70c4154f21480d7182f3eaf3541e84b681737676850b3954a597f2",
+      "private": false,
+      "repository": "organvm-vii-kerygma/portfolio",
+      "title": "chore(deps-dev): bump brace-expansion from 5.0.6 to 5.0.9",
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/208"
+    },
+    {
+      "draft": false,
+      "head_oid": "d5bebb4e18e33da76ceeaf9b9dd6faae68e8e51d",
+      "number": 209,
+      "pr_key": "fc03792bb77c89101da9c3787532944d607bf0feec84b83707a702221628647d",
+      "private": false,
+      "repository": "organvm-vii-kerygma/portfolio",
+      "title": "chore(deps): bump postcss from 8.5.10 to 8.5.25",
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/209"
+    },
+    {
+      "draft": false,
+      "head_oid": "3add3a93a3672c63e9205ce4c8f4c46b26b44201",
+      "number": 210,
+      "pr_key": "eb9d8770b69b0c38ba86971b9f2dc06b3e6d99cc178ebe185395d6f104fb6600",
+      "private": false,
+      "repository": "organvm-vii-kerygma/portfolio",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5",
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/210"
+    },
+    {
+      "draft": false,
+      "head_oid": "17560bf8d56678f172c88d0f9bcc717ebe312a98",
+      "number": 211,
+      "pr_key": "2f2e0d5fc61df4a7c2e7f30f3ab0d5adca8412f55cfbbfed90e540a11e07e360",
+      "private": false,
+      "repository": "organvm-vii-kerygma/portfolio",
+      "title": "chore(deps): bump the minor-and-patch group across 1 directory with 11 updates",
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/211"
+    },
+    {
+      "draft": false,
+      "head_oid": "cca2ceeddb69c061b9716665bc4e28a5105beea6",
+      "number": 21,
+      "pr_key": "c23f9da52e1af073508ea4602c5f59f2907bc325b49ffb882e762b43b09732bb",
+      "private": false,
+      "repository": "organvm-vii-kerygma/showcase-portfolio",
+      "title": "chore(deps): bump sharp from 0.34.5 to 0.35.3 in /docs/source-materials/specs",
+      "url": "https://github.com/organvm-vii-kerygma/showcase-portfolio/pull/21"
+    },
+    {
+      "draft": false,
+      "head_oid": "d8264428b1a15ace43f9f487e50e60ad48882112",
+      "number": 22,
+      "pr_key": "93e02405b4b274f064cb31f88ab587e1cc94d4276b9eb51940fc8179662eb280",
+      "private": false,
+      "repository": "organvm-vii-kerygma/showcase-portfolio",
+      "title": "chore(deps): bump postcss from 8.5.16 to 8.5.25 in /docs/source-materials/specs",
+      "url": "https://github.com/organvm-vii-kerygma/showcase-portfolio/pull/22"
+    },
+    {
+      "draft": false,
+      "head_oid": "42e6108deb061dba7b3d7364eedfac7a132ef7fb",
+      "number": 66,
+      "pr_key": "aba8f1e387badd2f62aa9e248011b68c00f6eebb7a6aac0cf5144f622b9195fb",
+      "private": false,
+      "repository": "organvm-vii-kerygma/stakeholder-portal",
+      "title": "chore(deps): bump next-auth from 5.0.0-beta.31 to 5.0.0-beta.32",
+      "url": "https://github.com/organvm-vii-kerygma/stakeholder-portal/pull/66"
+    },
+    {
+      "draft": false,
+      "head_oid": "e8d5e0ec84493b25f2761e6defbde72de8bfad6a",
+      "number": 67,
+      "pr_key": "4fddbed5b03558df7d697f5661b58aa5a067ad0f3c2ffa0921cf56ff280d0d8c",
+      "private": false,
+      "repository": "organvm-vii-kerygma/stakeholder-portal",
+      "title": "chore(deps): bump next from 16.2.9 to 16.2.12",
+      "url": "https://github.com/organvm-vii-kerygma/stakeholder-portal/pull/67"
+    },
+    {
+      "draft": false,
+      "head_oid": "eff61cfb5c27b0ef76529025fb9ea8fbf4788d66",
+      "number": 69,
+      "pr_key": "53f92ac963f8924e07aa79e7e89b99a36f06723b4d56ae0e854aa0892817ed0f",
+      "private": false,
+      "repository": "organvm-vii-kerygma/stakeholder-portal",
+      "title": "chore(deps): bump the all-dependencies group across 1 directory with 15 updates",
+      "url": "https://github.com/organvm-vii-kerygma/stakeholder-portal/pull/69"
+    },
+    {
+      "draft": false,
+      "head_oid": "d78513b49beef70ff9c52fc1511f5add162a98d6",
+      "number": 70,
+      "pr_key": "62b2e71fdabada6d7259c65c895f28c705f1b626bcfa345ffadf1c40f509cdfc",
+      "private": false,
+      "repository": "organvm-vii-kerygma/stakeholder-portal",
+      "title": "chore(deps): bump the all-actions group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm-vii-kerygma/stakeholder-portal/pull/70"
+    },
+    {
+      "draft": false,
+      "head_oid": "e6ca47116415de8b396f70ed3bf899bc072bd510",
+      "number": 71,
+      "pr_key": "0ac55e1df8372cfa25b44581ec63d3001e8a6dbbd37ada3116133d6fbd4837c0",
+      "private": false,
+      "repository": "organvm-vii-kerygma/stakeholder-portal",
+      "title": "chore(deps-dev): bump postcss from 8.5.15 to 8.5.18",
+      "url": "https://github.com/organvm-vii-kerygma/stakeholder-portal/pull/71"
+    },
+    {
+      "draft": false,
+      "head_oid": "1cb059c43131fe5e83fb8afea524fa2a9f2f5447",
+      "number": 23,
+      "pr_key": "462595281a9cc3bf7aa0708c8851abd647be37433d6edbfe0a82291c8a8e95a7",
+      "private": false,
+      "repository": "organvm/.github",
+      "title": "chore(deps): bump the all-actions group with 2 updates",
+      "url": "https://github.com/organvm/.github/pull/23"
+    },
+    {
+      "draft": false,
+      "head_oid": "f52e35278f0feea9bdb5fc7426dacf929221eda2",
+      "number": 18,
+      "pr_key": "1e9786d1695b30d945e28d3939fbe21e5963861bf54eb570a87a9b51dd935d04",
+      "private": false,
+      "repository": "organvm/adaptive-personal-syllabus",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm/adaptive-personal-syllabus/pull/18"
+    },
+    {
+      "draft": false,
+      "head_oid": "d3afd9dcaf7cc7f3f6e711117698363f4d2ef6ee",
+      "number": 15,
+      "pr_key": "771ea9591c94b32cb1425ece525b88705bba9c978b36dc62937cf7b8bcc0b8aa",
+      "private": false,
+      "repository": "organvm/alchemia-ingestvm",
+      "title": "chore(deps): bump httplib2 from 0.31.2 to 0.32.0",
+      "url": "https://github.com/organvm/alchemia-ingestvm/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "7031bd3af2db8d384d5ff64f4f836af211e349b0",
+      "number": 16,
+      "pr_key": "24dc710cc90747add4e829dad8f3f6de4cfaa739c7f46652d502ff25ab1de874",
+      "private": false,
+      "repository": "organvm/alchemia-ingestvm",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/alchemia-ingestvm/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "785e26697020ab114d71476c8cc791f5f3a770bc",
+      "number": 17,
+      "pr_key": "12e056c74a60327f37fe317a7a83e286772d4ed620a5da2fdca218430fc7a367",
+      "private": false,
+      "repository": "organvm/alchemia-ingestvm",
+      "title": "chore(deps): bump cryptography from 48.0.1 to 50.0.0",
+      "url": "https://github.com/organvm/alchemia-ingestvm/pull/17"
+    },
+    {
+      "draft": false,
+      "head_oid": "58a7a530d42ce7592ca785e209e4d7f338236dff",
+      "number": 41,
+      "pr_key": "b529812966b492e7e12215a76d348ca7d21a3b439e6d0dec2988a0e370774f5e",
+      "private": false,
+      "repository": "organvm/alchemical-synthesizer",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/alchemical-synthesizer/pull/41"
+    },
+    {
+      "draft": false,
+      "head_oid": "2cfbb0e076226191c94bb47aeb07fd5972244443",
+      "number": 13,
+      "pr_key": "7cf82c45c53ff42ad8ed18c5d5bdd9b2db6396dbd5e7ff055518f771e5d0dadf",
+      "private": false,
+      "repository": "organvm/announcement-templates",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm/announcement-templates/pull/13"
+    },
+    {
+      "draft": false,
+      "head_oid": "dbda1bdbce5b7a319e0085639b16dfb10ad97cf1",
+      "number": 24,
+      "pr_key": "bbb5fc154c6b72f94e10dd60eb01b1f4cbc0ca756d11edc7ef4e43a4727cb60c",
+      "private": false,
+      "repository": "organvm/auto-revision-epistemic-engine",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm/auto-revision-epistemic-engine/pull/24"
+    },
+    {
+      "draft": false,
+      "head_oid": "c16fc06df68e5d23405d35615944eefd0680e882",
+      "number": 21,
+      "pr_key": "6518239ae589758272beec7249eb0d43e99448687d57d97f8c5f0725983c9c7c",
+      "private": false,
+      "repository": "organvm/client-sdk",
+      "title": "chore(deps-dev): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm/client-sdk/pull/21"
+    },
+    {
+      "draft": false,
+      "head_oid": "27db4414005650e713a7ad5ce47d6eb7af79e85c",
+      "number": 136,
+      "pr_key": "f5e3b6e247212ef66c723f1bc2e916f3cece87fc61b0bf042242c7fe65e56886",
+      "private": false,
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/136"
+    },
+    {
+      "draft": false,
+      "head_oid": "1f617d6b76ab6793abe0879a64ea3dc07f612d31",
+      "number": 14,
+      "pr_key": "c21d49a3fd1e22381e3d20681d2d04a4f5cd04556d7e30921588acdcb497a4a8",
+      "private": false,
+      "repository": "organvm/collective-persona-operations",
+      "title": "chore(deps): bump github/codeql-action from 4 to 4.37.3",
+      "url": "https://github.com/organvm/collective-persona-operations/pull/14"
+    },
+    {
+      "draft": false,
+      "head_oid": "b207fbe790d571fe15c39445c3432ec69161bdbb",
+      "number": 15,
+      "pr_key": "9f9eb54b6b0418e4b829ee58f875d3222549a4b3f7508111a8130b0b41f3b75d",
+      "private": false,
+      "repository": "organvm/collective-persona-operations",
+      "title": "chore(deps): bump actions/stale from 10 to 11",
+      "url": "https://github.com/organvm/collective-persona-operations/pull/15"
+    },
+    {
+      "draft": false,
+      "head_oid": "ef36a70b7df5aea1c4df437ef463b856907a3f25",
+      "number": 16,
+      "pr_key": "b08565ca47da1dd6beb4a5e67f36dfff94c4ec455a5f656bb06d2f33ddd929a2",
+      "private": false,
+      "repository": "organvm/collective-persona-operations",
+      "title": "chore(deps): bump release-drafter/release-drafter from 7 to 7.6.0",
+      "url": "https://github.com/organvm/collective-persona-operations/pull/16"
+    },
+    {
+      "draft": false,
+      "head_oid": "eb6ad665b83aef3b413f34b50252528a187d15a7",
+      "number": 162,
+      "pr_key": "3582f5cef6af415ae56e82a2eec1f98b219e8dcb92b8c9373e483ad652f9c7d1",
+      "private": false,
+      "repository": "organvm/gamified-coach-interface",
+      "title": "build(deps): bump socket.io-parser from 4.2.6 to 4.2.7 in /backend",
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/162"
+    },
+    {
+      "draft": false,
+      "head_oid": "94c8e4ee3ea6e188e3ccb35f5c2d7f9634ec49c0",
+      "number": 163,
+      "pr_key": "7855de1bc2c4cc3c8aae4554b717669913570203519bdcdfce0a21df2d07df9e",
+      "private": false,
+      "repository": "organvm/gamified-coach-interface",
+      "title": "build(deps-dev): bump vite from 8.1.5 to 8.2.0 in the npm-deps group across 1 directory",
+      "url": "https://github.com/organvm/gamified-coach-interface/pull/163"
+    },
+    {
+      "draft": false,
+      "head_oid": "fe500c24ed65b9039b37404facc674bd5907e3ec",
+      "number": 11,
+      "pr_key": "4cdd41b35b12e3c9c35d324718b9addfe718f25b282e60a3c9ee8535fac5f718",
+      "private": false,
+      "repository": "organvm/koinonia-db",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm/koinonia-db/pull/11"
+    },
+    {
+      "draft": false,
+      "head_oid": "a457e9990bd1ca5be97c027526b11b40e957b815",
+      "number": 1801,
+      "pr_key": "7bc69e04dec31b0b3d522e43ac371b73a6213caeb66f2215302bf8d3e9b60245",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "chore(deps-dev): bump postcss from 8.5.15 to 8.5.25 in /moneta in the npm_and_yarn group across 1 directory",
+      "url": "https://github.com/organvm/limen/pull/1801"
+    },
+    {
+      "draft": false,
+      "head_oid": "189dd435c8b9c20b82d4303576b50023aa4a4e40",
+      "number": 21,
+      "pr_key": "db89939e85f968700ac56ed8ecbcce6032c9e56097ea5f9f79d11b8512c0230b",
+      "private": false,
+      "repository": "organvm/linguistic-atomization-framework",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/linguistic-atomization-framework/pull/21"
+    },
+    {
+      "draft": false,
+      "head_oid": "0f35a7ecc4e0c3f9754a3d49f5732c1d007f85e0",
+      "number": 55,
+      "pr_key": "9125c20d862cf80ad1c1b53c9d09be098e18cfac7df2ecf582005e72a0e92292",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump the pip-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/metasystem-master/pull/55"
+    },
+    {
+      "draft": false,
+      "head_oid": "e7503e58b3f24b7a4dc3cf2619db3fa06cd568b1",
+      "number": 56,
+      "pr_key": "876a542c0f61af418938931573f77495467f1b98925392e1e6ac25be5ea59e71",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump brace-expansion from 1.1.16 to 1.1.18",
+      "url": "https://github.com/organvm/metasystem-master/pull/56"
+    },
+    {
+      "draft": false,
+      "head_oid": "129756e39fe2c2de87721e7f697d9d216fa1d453",
+      "number": 57,
+      "pr_key": "d815c8f77eafb8f5805486781be2fadfb2d913cbd3135fcf58bca73b5f821b67",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump socket.io-parser from 4.2.4 to 4.2.7 in /docs/reference/poc-v0.1.0-parent/poc-v0.1.0/client",
+      "url": "https://github.com/organvm/metasystem-master/pull/57"
+    },
+    {
+      "draft": false,
+      "head_oid": "9563e13efc1ae3f09711eb5c815072335527db4b",
+      "number": 58,
+      "pr_key": "f76971bcf2a4062303cdba307c264fd7be30609af145532cc887eb352676388d",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump ip-address from 10.1.0 to 10.4.0 in /packages/performance-sdk",
+      "url": "https://github.com/organvm/metasystem-master/pull/58"
+    },
+    {
+      "draft": false,
+      "head_oid": "df9b2c739757ce874d20e4625f162a3dc0c151d9",
+      "number": 59,
+      "pr_key": "519142c4f7cf565af8e2ccafcd27e12fb90f2d7bc2e81e8e4b0452f2b5f879f7",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump socket.io-parser from 4.2.5 to 4.2.7 in /packages/performance-sdk",
+      "url": "https://github.com/organvm/metasystem-master/pull/59"
+    },
+    {
+      "draft": false,
+      "head_oid": "48ef13eb3ae82b39b3e641e25a3c85241cff85d0",
+      "number": 60,
+      "pr_key": "3cee00ce7bb4f470763b5dd555a925159d120d66218938a2964f0722af11ff9a",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump fast-uri from 3.1.2 to 3.1.5 in /docs/reference/poc-v0.1.0-parent/poc-v0.1.0/client",
+      "url": "https://github.com/organvm/metasystem-master/pull/60"
+    },
+    {
+      "draft": false,
+      "head_oid": "7a80e50edca3c7d8fb32dacb20c1a51c2d2ade1f",
+      "number": 61,
+      "pr_key": "5718d104b099d21c2b5258471cd866fb16f8e02e60dabae5eeaf4fcafa1c25ef",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/metasystem-master/pull/61"
+    },
+    {
+      "draft": false,
+      "head_oid": "05efeab183e0352cde4c3bc2ba1d50f3d6e69615",
+      "number": 62,
+      "pr_key": "355f958d60663a16628e678040e8d2728d8e3c728cf1e5e756aa4e7e19de0c02",
+      "private": false,
+      "repository": "organvm/metasystem-master",
+      "title": "chore(deps): bump the npm-deps group across 6 directories with 13 updates",
+      "url": "https://github.com/organvm/metasystem-master/pull/62"
+    },
+    {
+      "draft": false,
+      "head_oid": "bd8f71dffaffb60f93c4b5555c7d086ef757c2f4",
+      "number": 170,
+      "pr_key": "bdc63a9eec60b71e58b62caf52214e1392ea457b00fd2de9d92ec63d6c25c38b",
+      "private": false,
+      "repository": "organvm/organvm-engine",
+      "title": "chore(deps): bump the all-actions group with 5 updates",
+      "url": "https://github.com/organvm/organvm-engine/pull/170"
+    },
+    {
+      "draft": false,
+      "head_oid": "d5d6cabfb44505c82ec29a2ce5b8d57ccf3764dc",
+      "number": 13,
+      "pr_key": "56e60b89503f765dae8c603b7c62abc46c8c780495fb6f735a0272056718505c",
+      "private": false,
+      "repository": "organvm/organvm-mcp-server",
+      "title": "chore(deps): bump the all-actions group with 3 updates",
+      "url": "https://github.com/organvm/organvm-mcp-server/pull/13"
+    },
+    {
+      "draft": false,
+      "head_oid": "58e1f0219667cdf45a7fe50a6d0d3eb02989a7e6",
+      "number": 22,
+      "pr_key": "29cf26fce9a49d7518e98dc4e311548d91675b58d1fbf76dd3b8d8a2d661def6",
+      "private": false,
+      "repository": "organvm/organvm-ontologia",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/organvm-ontologia/pull/22"
+    },
+    {
+      "draft": false,
+      "head_oid": "15ded483e381f062fb71d6c2f794b77847cc39dd",
+      "number": 8,
+      "pr_key": "9c74de2a36df4e05b12883c78a37801146f883121d4bb832177225e4b820b0cd",
+      "private": false,
+      "repository": "organvm/organvm-scrutator",
+      "title": "chore(deps): bump actions/setup-python from 6 to 7 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm/organvm-scrutator/pull/8"
+    },
+    {
+      "draft": false,
+      "head_oid": "6ce35dd13c930a47db0e32cafe436851b569e521",
+      "number": 27,
+      "pr_key": "e26be9fd9ce8aab79869341a261b4d06c4f54c7d1ddf7e3a732476459534eb50",
+      "private": false,
+      "repository": "organvm/recursive-engine--generative-entity",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 4 updates",
+      "url": "https://github.com/organvm/recursive-engine--generative-entity/pull/27"
+    },
+    {
+      "draft": false,
+      "head_oid": "47d11b798afb14f0a0f23c3c1eeceac46327727e",
+      "number": 18,
+      "pr_key": "1f3d62c6e4d7af6e1267db6e382ee054c2593c7b8bd73dad240ce844fc63edc4",
+      "private": false,
+      "repository": "organvm/reverse-engine-recursive-run",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/reverse-engine-recursive-run/pull/18"
+    },
+    {
+      "draft": false,
+      "head_oid": "e78fe101f2b35e0880207bcd76202c2676b4a69e",
+      "number": 10,
+      "pr_key": "7c3c6943948149c2d527e6dd880f15f64e9b58c16287841179ab631989d195ce",
+      "private": false,
+      "repository": "organvm/salon-archive",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/salon-archive/pull/10"
+    },
+    {
+      "draft": false,
+      "head_oid": "437f095104eae6313c1664e18a7366b6695ea23a",
+      "number": 30,
+      "pr_key": "301209b567eebfd8b15f6a1a4bdb158f74810ce0142c8b47809fd6b8ca3401a0",
+      "private": false,
+      "repository": "organvm/sema-metra--alchemica-mundi",
+      "title": "chore(deps): bump actions/stale from 10 to 11 in the github-actions-deps group across 1 directory",
+      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/30"
+    },
+    {
+      "draft": false,
+      "head_oid": "261c254e8dc671e991d229557140f3412d156461",
+      "number": 31,
+      "pr_key": "9d7df907c9a076c24909bfa9ef902b53731c84fe967edc50b8863423caea5571",
+      "private": false,
+      "repository": "organvm/sema-metra--alchemica-mundi",
+      "title": "chore(deps-dev): bump the npm-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/31"
+    },
+    {
+      "draft": false,
+      "head_oid": "f811f8fd2fcb79ec631ff331ea633d379ee9eb60",
+      "number": 32,
+      "pr_key": "3659b1b28a77b22d28620f8ccea6ca0370e6e413d174e4d6e79ddefe52bc73b2",
+      "private": false,
+      "repository": "organvm/sema-metra--alchemica-mundi",
+      "title": "chore(deps): bump postcss from 8.5.16 to 8.5.25",
+      "url": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/32"
+    },
+    {
+      "draft": false,
+      "head_oid": "15f49a11bb6d6437f5b91dc77d03fb7ff328a931",
+      "number": 10,
+      "pr_key": "d7fbf473da3151201ec252023d3bdb71b39a55c6f2d255df5e32756a4bc252f3",
+      "private": false,
+      "repository": "organvm/social-automation",
+      "title": "chore(deps): bump the github-actions-deps group across 1 directory with 3 updates",
+      "url": "https://github.com/organvm/social-automation/pull/10"
+    },
+    {
+      "draft": false,
+      "head_oid": "3f58acb6acafc6893cf1118a38200ca3dfb7d644",
+      "number": 10,
+      "pr_key": "1dc6cdf8311f1baf164b63b3fbcc38af4414b6313b005f9d643f38c5ff191d9d",
+      "private": false,
+      "repository": "organvm/system-dashboard",
+      "title": "chore(deps): bump the all-actions group across 1 directory with 5 updates",
+      "url": "https://github.com/organvm/system-dashboard/pull/10"
+    },
+    {
+      "draft": false,
+      "head_oid": "1d5cc5bf61a7fe5ac230b5995333a070fa138896",
+      "number": 42,
+      "pr_key": "cf2905300f1a4a9af0cec83ff67f2696d6c88f2b5223e8e37da5d4480866e0fe",
+      "private": false,
+      "repository": "organvm/tool-interaction-design",
+      "title": "chore(deps): bump github/codeql-action from 3 to 4.37.3",
+      "url": "https://github.com/organvm/tool-interaction-design/pull/42"
+    },
+    {
+      "draft": false,
+      "head_oid": "c61dc29a81fa79b067c17f74ffbeb598779719d7",
+      "number": 43,
+      "pr_key": "d294975eef7a52c62af0838d9b77c7606fa13e8acd5a2044af81b794bad962f5",
+      "private": false,
+      "repository": "organvm/tool-interaction-design",
+      "title": "chore(deps): bump actions/stale from 9 to 11",
+      "url": "https://github.com/organvm/tool-interaction-design/pull/43"
+    },
+    {
+      "draft": false,
+      "head_oid": "0caf0d29312097b5fc5b7bf4a2bd05be50664973",
+      "number": 188,
+      "pr_key": "3d8ecac4e20646e591884b4181d7acd8c8f5669aade177c2fdc0623594a9dcc4",
+      "private": false,
+      "repository": "organvm/universal-mail--automation",
+      "title": "chore(deps): bump the npm_and_yarn group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/universal-mail--automation/pull/188"
+    },
+    {
+      "draft": false,
+      "head_oid": "1fe91c384f9193b67fe3ce27322413c2793e8ee4",
+      "number": 190,
+      "pr_key": "fcb541f1ff00fb2fc3f353ae447e0a25de52c5a84f3e4fbd4750ff050ae95aa9",
+      "private": false,
+      "repository": "organvm/universal-mail--automation",
+      "title": "chore(deps): bump the pip-deps group across 1 directory with 2 updates",
+      "url": "https://github.com/organvm/universal-mail--automation/pull/190"
+    }
+  ],
+  "plan_sha256": "ae6ff627a3c1b8785b35acf003cfd55b8d9f3f512a1d3171dc83c68e2926e95f",
+  "repository_count": 94,
+  "review_basis": "Dependabot version bumps typed fail-closed, NOT lifecycle:delivery: delivery arms merge-drain's autonomous rail for ~200 PRs, which is the mass-merge class that stays in the operator's hand (lever L-DEPENDABOT-DELIVERY-ARM). Blocked types the debt honestly and arms nothing.",
+  "schema": "limen.pr_lifecycle_estate_manifest.v2",
+  "scope": "complete-github-estate",
+  "selected_count": 200,
+  "source_ledger_content_sha256": "cb6dc07aa4689a53d9e4ef34063b942ceaaad44c223a9840f16275d1ecec5c07",
+  "source_lifecycle_untyped_count": 283,
+  "source_open_pr_count": 1300,
+  "status": "applied_verified",
+  "unselected_untyped_count": 42
+}

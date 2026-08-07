@@ -45,16 +45,17 @@ def test_authenticated_primary_entries_use_native_config_shapes():
     assert f"mcp add --transport http --scope user {SERVER_NAME}" in claude.rendered
     assert "Authorization: Bearer test-bearer" in claude.rendered
 
-    for name in ("agy", "copilot"):
-        server = entries[name].payload["mcpServers"][SERVER_NAME]
-        assert server["command"]
-        assert server["args"][-1] == "http://127.0.0.1:7666/mcp"
-        header = server["args"][server["args"].index("Authorization") + 1]
-        assert header == "Bearer test-bearer"
+    agy = entries["agy"].payload["mcpServers"][SERVER_NAME]
+    assert agy["command"]
+    assert agy["args"][-1] == "http://127.0.0.1:7666/mcp"
+    header = agy["args"][agy["args"].index("Authorization") + 1]
+    assert header == "Bearer test-bearer"
 
     copilot = entries["copilot"].payload["mcpServers"][SERVER_NAME]
-    assert copilot["type"] == "local"
+    assert copilot["type"] == "http"
+    assert copilot["url"] == "http://127.0.0.1:7666/mcp"
     assert copilot["tools"] == ["*"]
+    assert copilot["headers"]["Authorization"] == "Bearer test-bearer"
 
 
 def test_opencode_generation_matches_native_remote_contract_without_secret_materialization():
