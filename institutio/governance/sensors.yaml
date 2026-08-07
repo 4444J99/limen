@@ -1711,6 +1711,38 @@ sensors:
         severity: advisory
         escalation: "the live checkout is not origin/main — the fleet is executing stale code and every beat-written artifact it produces is suspect; owner is scripts/sync-release.sh (the beat's unpark rung), never a hand fast-forward of a daemon-contended tree"
 
+  session-opening-floor:
+    section: "0e3"
+    title: "session-opening floors — every interactive lane opens at or below its declared cadence ceiling"
+    gate: LIMEN_SESSION_OPENING_FLOOR
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The operator's own framing: "all providers, not just Claude." Every vendor with an
+    # interactive surface has an opening default pinned in its own file, and until 2026-08-07
+    # nothing in the estate could say what any of them were — the Claude cadence had three
+    # enforcement layers while codex sat at `ultra` effort and gemini declared no model at all,
+    # both facts reachable only by hand.
+    #
+    # Rows derive from census.OPENING_FLOORS and are completeness-checked against census.VENDORS,
+    # so a new lane lands as a RED UNDECLARED row rather than inheriting "no cadence applies".
+    # Dispatch is on OpeningFloor.kind, never on a vendor name.
+    #
+    # Advisory because the remedy is operator-owned config in his home directory (lever
+    # L-LANE-OPENING-FLOOR, issue #2000) — an agent reports these, never writes them, the same
+    # boundary that keeps L-FABLE-GUARD-ARM a human lever. --check treats a cited breach as PARKED
+    # and fails only on an uncited one or an undeclared vendor.
+    cadence:
+      env: LIMEN_SESSION_OPENING_FLOOR_CADENCE
+      default: 12
+    timeout:
+      env: LIMEN_SESSION_OPENING_FLOOR_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/session-opening-floor.py --check"
+        severity: advisory
+        escalation: "a lane opens above its declared cadence ceiling with no lever citing it, or a vendor has no OPENING_FLOORS row — lower the pin, raise the declared ceiling, or file it (his-hand-levers.json L-LANE-OPENING-FLOOR)"
+
   work-loan-backfill:
     section: "0z8"
     title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"

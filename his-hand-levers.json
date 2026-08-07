@@ -541,6 +541,15 @@
       "issue": 827
     },
     {
+      "id": "L-LANE-OPENING-FLOOR",
+      "label": "Lower the operator-owned interactive opening pins on the non-Claude lanes: ~/.codex/config.toml model_reasoning_effort ultra -> high (one rung above its declared ceiling), and declare a flash-class model in ~/.gemini/settings.json (no model key today, so the lane opens on an unreadable CLI default). Raising the declared ceiling in census.OPENING_FLOORS is the equally legitimate other answer if ultra is the deliberate house cadence. Read-side predicate: scripts/session-opening-floor.py --check, which reports an above-ceiling lane cited by this lever as PARKED (exit 0) and fails only on an uncited breach or an undeclared vendor.",
+      "owner": "yours",
+      "cost": "~2 min, two config edits, reversible",
+      "unlocks": "every interactive lane opens at or below a declared cadence ceiling, not just Claude",
+      "source_task": "F6 of the cadence-guard arc (plan docs/plans/2026-08-07-cadence-guard-fail-toward-warning.md, parent issue #1990)",
+      "issue": 2000
+    },
+    {
       "id": "L-STORAGE-DRAIN-PUSHED",
       "label": "Retired: pushed-but-unmerged local checkout reclaim is now a default-on, loss-free lifecycle rule governed by all-local-ref remote proof and the live resource envelope.",
       "owner": "yours",
