@@ -157,6 +157,7 @@ def test_fable_is_reserved_above_opus_and_requires_acceptance(tmp_path, monkeypa
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": []})
+    _write_balance(tmp_path, 10.0)  # a TRUSTED meter is a precondition of Fable since 2026-08-07
     assert _CLAUDE_TIER_ORDER[-1] == "fable"
 
     _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
@@ -244,6 +245,7 @@ def test_retry_bump_on_tried_claude(tmp_path, monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": ["research"]})
+    _write_balance(tmp_path, 10.0)  # a TRUSTED meter is a precondition of the Fable bump
     assert D._claude_model(_task(type_="code", labels=["tried:claude"])) == "sonnet"  # haiku→sonnet
     assert D._claude_model(_task(type_="research", labels=["tried:claude"])) == "opus"  # sonnet→opus
     assert D._claude_model(_task(type_="code", labels=["canon", "tried:claude"])) == "opus"  # caps
@@ -373,19 +375,121 @@ def test_fable_reserve_band_passes_only_reserve_receipt(tmp_path, monkeypatch):
     assert D._claude_tier_for(task) == "opus"
 
 
-def test_fable_cap_fails_open_when_no_balance_or_stale(tmp_path, monkeypatch):
-    """No balance file, or a stale (prior-week) one → the receipt gate alone decides (fail-open)."""
+def test_fable_cap_withholds_the_tier_when_the_meter_is_untrusted(tmp_path, monkeypatch):
+    """THE 2026-08-07 REVERSAL (design decision D4). This gate used to FAIL OPEN: an absent or
+    stale meter returned None and the acceptance receipt alone granted Fable. That is exactly how
+    the incident ran — a meter reporting 0.0% because the deployed writer was blind released both
+    brakes, and ~50% of the weekly allotment burned in two days with no downgrade and no warning.
+
+    An unresolvable meter now costs a TIER (Opus), never the WORK. The declared hatch
+    LIMEN_FABLE_BALANCE_MAX_AGE_S <= 0 restores the old behaviour for a host with no beat.
+    """
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": []})
     _write_tiers(tmp_path, {"fable": ["final-canonical-decision"]})
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))
     task = _task(type_="final-canonical-decision")
-    # No balance file at all → fable (receipt gate only).
-    assert D._claude_tier_for(task) == "fable"
-    # A stale prior-week balance is ignored, even if over cap.
+
+    # No balance file at all → the tier is WITHHELD, not granted.
+    assert D._claude_tier_for(task) == "opus"
+
+    # A stale prior-week balance is still not trusted — and no longer reads as permissive.
     _write_balance(tmp_path, 99.0, week="2020-01-06")
+    assert D._claude_tier_for(task) == "opus"
+
+    # A current, fresh, under-cap meter is the ONLY thing that grants the tier.
+    _write_balance(tmp_path, 10.0)
     assert D._claude_tier_for(task) == "fable"
+
+    # The declared hatch: <= 0 disables the freshness/provenance dimensions entirely.
+    import os as _os
+
+    _os.remove(tmp_path / "logs" / "fable-allotment.json")
+    monkeypatch.setenv("LIMEN_FABLE_BALANCE_MAX_AGE_S", "0")
+    assert D._claude_tier_for(task) == "fable"
+
+
+def test_balance_verdict_names_every_unresolvable_state(tmp_path, monkeypatch):
+    """`dict | None` WAS the bug: it had no room for "unknown", so unknown collapsed into fine.
+    Every failure mode must now be a distinct, named, UNTRUSTED state — never a shared sentinel."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    (tmp_path / "logs").mkdir(parents=True, exist_ok=True)
+    meter = tmp_path / "logs" / "fable-allotment.json"
+
+    seen = {}
+    # absent
+    seen["absent"] = M.balance_verdict()
+    # unreadable
+    meter.write_text("{ not json")
+    seen["unreadable"] = M.balance_verdict()
+    # malformed (parses, wrong shape)
+    meter.write_text("[1, 2, 3]")
+    seen["malformed"] = M.balance_verdict()
+    # stale-week
+    _write_balance(tmp_path, 10.0, week="2020-01-06")
+    seen["stale-week"] = M.balance_verdict()
+    # ok
+    _write_balance(tmp_path, 10.0)
+    seen["ok"] = M.balance_verdict()
+
+    for expected, verdict in seen.items():
+        assert verdict["state"] == expected, f"{expected} misreported as {verdict['state']}"
+        assert verdict["trusted"] is (expected == "ok"), expected
+        # No state is ever None — the caller can always ask WHY.
+        assert verdict["detail"] != "" or expected == "ok"
+    # The states are distinct, not aliases of one sentinel.
+    assert len({v["state"] for v in seen.values()}) == len(seen)
+
+
+def test_balance_verdict_marks_an_undeployed_writer_untrusted(tmp_path, monkeypatch):
+    """The incident's exact shape: a meter that is present, current-week and FRESH, written by a
+    checkout that is behind origin/main. No age bound catches this — provenance does (D0)."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    _write_balance(tmp_path, 10.0)
+    assert M.balance_verdict()["state"] == "ok"  # no receipt → provenance unestablished, not drift
+
+    receipt = tmp_path / "logs" / "live-checkout-currency.json"
+    receipt.write_text(json.dumps({"schema": "limen.live_checkout_currency.v1", "state": "drift", "behind": 36}))
+    verdict = M.balance_verdict()
+    assert verdict["state"] == "undeployed"
+    assert verdict["trusted"] is False
+    assert verdict["provenance"] == "drift"
+    assert "36" in verdict["detail"]
+
+    # A coherent tree restores trust.
+    receipt.write_text(json.dumps({"schema": "limen.live_checkout_currency.v1", "state": "coherent", "behind": 0}))
+    assert M.balance_verdict()["state"] == "ok"
+
+
+def test_balance_verdict_distrusts_a_frozen_writer(tmp_path, monkeypatch):
+    """Freshness by MTIME (D1) — the meter body carries no wall-clock field by design, so the
+    file's own mtime is the writer's heartbeat."""
+    _clear(monkeypatch)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    meter = _write_balance(tmp_path, 10.0)
+    assert M.balance_verdict()["state"] == "ok"
+
+    import os as _os
+
+    old = _os.stat(meter).st_mtime - 60 * 60 * 24 * 3  # three days
+    _os.utime(meter, (old, old))
+    verdict = M.balance_verdict()
+    assert verdict["state"] == "stale-file"
+    assert verdict["trusted"] is False
+    assert verdict["age_s"] > 60 * 60 * 24
+
+
+def test_over_cap_derives_from_the_numbers_not_the_stored_flag(tmp_path):
+    """A False/absent over_cap flag on a body whose spent_pct already exceeds hard_cap must not
+    read as under cap — the `bool(x.get("over_cap"))` read forked across three files."""
+    assert M._balance_over_cap({"spent_pct": 80.0, "hard_cap": 50, "over_cap": False}) is True
+    assert M._balance_over_cap({"spent_pct": 80.0, "hard_cap": 50}) is True
+    assert M._balance_over_cap({"spent_pct": 10.0, "hard_cap": 50, "over_cap": False}) is False
+    assert M._balance_over_cap({"spent_pct": 10.0, "hard_cap": 50, "over_cap": True}) is True
+    assert M._balance_over_cap({}) is False
 
 
 def test_fable_per_task_pin_is_also_capped(tmp_path, monkeypatch):
@@ -488,6 +592,7 @@ def test_plan_only_with_fable_class_needs_acceptance(tmp_path, monkeypatch):
     _clear(monkeypatch)
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     _write_ledger(tmp_path, {"waste_classes": []})
+    _write_balance(tmp_path, 10.0)  # a TRUSTED meter is a precondition of Fable
     plan = _task(type_="code", labels=["mode:plan-only", "long-horizon"])
     assert D._claude_model(plan) == "opus"
     monkeypatch.setenv("LIMEN_FABLE_ACCEPTANCE", str(_write_fable_acceptance(tmp_path)))

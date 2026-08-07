@@ -21,6 +21,7 @@ money" routes to *cap/plan-gate Fable*, and codex = KEEP. Output: portable JSON 
 Exit non-zero if any "cancel a capped pool" recommendation is ever implied (a self-check that the
 predicate never contradicts its own doctrine). READ-ONLY. Never prints a token.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -63,13 +64,22 @@ def _vendor_usage(usage: dict, name: str) -> dict:
     return {}
 
 
-def _fable_over_cap() -> dict | None:
-    path = os.environ.get("LIMEN_FABLE_BALANCE_PATH") or str(ROOT / "logs" / "fable-allotment.json")
+def _load_model_selection():
+    """The SHARED weekly-meter reader, loaded from THIS repo tree by file path — same rule as
+    _load_census above (code by __file__, runtime state by LIMEN_ROOT). Pure-stdlib by contract,
+    so no package __init__ and no PYTHONPATH."""
+    path = Path(__file__).resolve().parents[1] / "cli" / "src" / "limen" / "model_selection.py"
+    modname = "_limen_model_selection_advisor"
     try:
-        data = json.loads(Path(path).read_text())
-    except Exception:
+        spec = importlib.util.spec_from_file_location(modname, path)
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[modname] = mod
+        spec.loader.exec_module(mod)
+        return mod
+    except Exception:  # noqa: BLE001 — an unloadable reader is a finding, not a crash
         return None
-    return data if isinstance(data, dict) else None
 
 
 # Utilization health signals that mean "this pool is being used / hits its caps" → KEEP.
@@ -132,14 +142,16 @@ def advise(usage_path: str | None = None) -> dict:
     usage = _load_usage(usage_path)
     verdicts = [_verdict_for(v, usage) for v in census.VENDORS]
 
-    fable = _fable_over_cap()
-    fable_pct = None
-    fable_over = False
-    if isinstance(fable, dict):
-        fable_pct = fable.get("spent_pct")
-        fable_over = bool(fable.get("over_cap")) or (
-            isinstance(fable_pct, (int, float)) and float(fable_pct) >= float(fable.get("hard_cap", 50) or 50)
-        )
+    # The weekly meter through the ONE shared reader (D2): this file used to carry the third of
+    # three forked copies, each typed `dict | None`. The verdict names WHY the meter is untrusted
+    # instead of silently reporting 0% — which is how the incident's blind meter made "cancel a
+    # vendor" look reasonable while the real overspend was invisible.
+    ms = _load_model_selection()
+    verdict = ms.balance_verdict() if ms is not None else {"state": "reader-unavailable", "balance": None}
+    fable = verdict.get("balance")
+    fable_pct = fable.get("spent_pct") if isinstance(fable, dict) else None
+    fable_over = bool(ms._balance_over_cap(fable)) if (ms is not None and isinstance(fable, dict)) else False
+    fable_meter_state = verdict.get("state")
 
     # Self-check: the predicate must never recommend cancelling a pool that hits its caps.
     contradictions = [
@@ -159,6 +171,13 @@ def advise(usage_path: str | None = None) -> dict:
         if fable_over
         else "No vendor is the overspend by utilization; the binding cost constraint is the Fable "
         "runtime tier (cap it via docs/fable-allotment.md), not vendor count."
+        + (
+            ""
+            if fable_meter_state == "ok"
+            else f"  NOTE: the weekly Fable meter is UNTRUSTED (state={fable_meter_state}) — this "
+            "verdict cannot see the actual Fable spend, so treat the tier as unmeasured rather "
+            "than as under cap."
+        )
     )
 
     cancel = [v["vendor"] for v in verdicts if v["verdict"] == "CANCEL-CANDIDATE"]
@@ -171,6 +190,7 @@ def advise(usage_path: str | None = None) -> dict:
         "real_overspend": real_overspend,
         "fable_over_cap": fable_over,
         "fable_spent_pct": fable_pct,
+        "fable_meter_state": fable_meter_state,
         "keep": keep,
         "cancel_candidates": cancel,
         "verdicts": verdicts,

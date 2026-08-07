@@ -283,6 +283,11 @@ gates:
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
     owner: continuity
     note: "The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch."
+  fable-cadence:
+    command: "bash scripts/verify-fable-gate.sh"
+    paths: ["scripts/fable-session-guard.py", "scripts/fable-allotment.py", "scripts/vendor-cancel-advisor.py", "cli/src/limen/model_selection.py", "scripts/verify-fable-gate.sh", "cli/tests/test_claude_tier.py", "cli/tests/test_fable_allotment.py", "cli/tests/test_fable_session_guard.py", "cli/tests/test_vendor_cancel_advisor.py", "scripts/check-live-checkout.py"]
+    owner: arms-agents
+    note: "The Fable role-separation + runtime cap predicate. It has existed and passed since 2026-07-09 and was registered as a gate NOWHERE — so the whole cadence stack was verifiable on demand and verified by nothing, which is how the 2026-08-07 incident ran to ~50% of a weekly allotment while every shipped check was green. Five blocks: the over-cap downgrade, the session guard's warn/no-op split, the vendor advisor's KEEP/CANCEL verdict, the tier/cap pytest suite, and the balance write's fixed point. check-live-checkout.py is a path because the meter's provenance dimension consumes its receipt — a change to the receipt's shape must re-run the guard that reads it."
   live-checkout-currency-test:
     command: "bash scripts/tests/live-checkout-currency.test.sh"
     paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]

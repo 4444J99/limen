@@ -66,7 +66,12 @@ def _parse_ts(raw: str) -> datetime:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Flag a state file that has stopped refreshing.")
     ap.add_argument("--file", required=True, help="state file, relative to LIMEN_ROOT or absolute")
-    ap.add_argument("--field", default="generated_at", help="timestamp field (dotted path ok)")
+    ap.add_argument(
+        "--field",
+        default="generated_at",
+        help="timestamp field (dotted path ok); the reserved value 'mtime' ages the file by its "
+        "own mtime, for writers that must not carry a wall-clock body field",
+    )
     ap.add_argument("--max-age-seconds", type=float, required=True, help="stale if older than this")
     ap.add_argument("--key", default=None, help="notify dedup key (default: <stem>-stale)")
     ap.add_argument("--label", default=None, help="human label (default: file stem)")
@@ -88,19 +93,32 @@ def main(argv: list[str] | None = None) -> int:
     if not path.exists():
         return stale(f"{path} absent — the writer may have stopped")
 
-    try:
-        raw = _get_field(json.loads(path.read_text()), args.field)
-    except Exception as exc:
-        return stale(f"unreadable ({exc})")
-    if raw is None:
-        return stale(f"no '{args.field}' field in {path.name}")
+    # RESERVED SENTINEL: --field mtime ages the file by its own mtime instead of a body field.
+    # Some state files must NOT carry a wall-clock timestamp — logs/fable-allotment.json derives
+    # every value from data so that two consecutive runs are byte-identical (verify-fable-gate.sh
+    # block 5 asserts exactly that), and logs/live-checkout-currency.json follows the same rule.
+    # Adding `generated_at` to those would redden a green predicate and restamp fixtures across
+    # four test files. They live in gitignored runtime state with exactly ONE writer each, so the
+    # file's own mtime IS that writer's heartbeat — the honest freshness signal, not a workaround.
+    if args.field == "mtime":
+        try:
+            age_s = max(0.0, datetime.now(timezone.utc).timestamp() - path.stat().st_mtime)
+        except OSError as exc:
+            return stale(f"cannot stat {path.name} ({exc})")
+    else:
+        try:
+            raw = _get_field(json.loads(path.read_text()), args.field)
+        except Exception as exc:
+            return stale(f"unreadable ({exc})")
+        if raw is None:
+            return stale(f"no '{args.field}' field in {path.name}")
 
-    try:
-        ts = _parse_ts(raw)
-    except Exception as exc:
-        return stale(f"unparseable '{args.field}'={raw!r} ({exc})")
+        try:
+            ts = _parse_ts(raw)
+        except Exception as exc:
+            return stale(f"unparseable '{args.field}'={raw!r} ({exc})")
 
-    age_s = (datetime.now(timezone.utc) - ts).total_seconds()
+        age_s = (datetime.now(timezone.utc) - ts).total_seconds()
     if age_s > args.max_age_seconds:
         return stale(
             f"{path.name} '{args.field}' is {age_s / 3600:.1f}h old "
