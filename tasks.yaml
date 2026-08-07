@@ -163389,3 +163389,37 @@ tasks:
     conduct_lease_id: 'lease-579-df5ad2f67335ad98'
     conduct_generation: 579
   updated: '2026-08-06T23:15:42.920Z'
+- id: 'GH-organvm-limen-1925'
+  title: 'needs-human (L-CONSTELLATION-OVERLAY-RESTORE): Restore the private constellation overlay from the T7 evacuation arch…'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1925'
+  context: 'GitHub issue organvm/limen#1925. **Owner:** Anthony (human-gated lever `L-CONSTELLATION-OVERLAY-RESTORE`). Surfaced once, never nagged, never auto-pulled. This issue is the lever''s permanent, individually-closeable home in the graph — the registry `his-hand-levers.json` is its source of truth. Restore the private constellation overlay from the T7 evacuation archive — one cp, then the constellation-registry gate goes green on this'
+  predicate: 'test "$(gh issue view 1925 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1925'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1925'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T01:16:32.225Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-09d5e2a1d2ad9cce3e41fa393d5ed598:580:compatibility'
+    conduct_run_id: 'run-09d5e2a1d2ad9cce3e41fa393d5ed598'
+    conduct_lease_id: 'lease-580-09d5e2a1d2ad9cce'
+    conduct_generation: 580
+  updated: '2026-08-07T01:16:32.225Z'
