@@ -78,9 +78,27 @@ PYEOF
 pass "40–50% band + reserve receipt → fable"
 
 echo "── 2. session guard warns on Fable over-cap, no-op on non-Fable ──"
-echo '{"model":"claude-opus-4-8"}' | "${PY[@]}" scripts/fable-session-guard.py >/dev/null 2>&1 \
-  || fail "session guard should exit 0 on a non-Fable model"
-pass "non-Fable model → exit 0 (no-op)"
+echo '{"model":"claude-sonnet-5"}' | "${PY[@]}" scripts/fable-session-guard.py >/dev/null 2>&1 \
+  || fail "session guard should exit 0 at the cadence ceiling (sonnet)"
+pass "model at the cadence ceiling → exit 0 (no-op)"
+
+# The ladder blind spot: `"fable" in model` guarded ONE rung of four, so a saved Opus default
+# opened every session while this guard reported a clean no-op. That case used to pass block 2.
+CEIL="$(echo '{"model":"claude-opus-4-8"}' | "${PY[@]}" scripts/fable-session-guard.py 2>&1 >/dev/null)"; CEIL_RC=$?
+[ "$CEIL_RC" = "4" ] || fail "opus above a sonnet ceiling should exit 4, got $CEIL_RC"
+case "$CEIL" in *"ABOVE THE CADENCE CEILING"*) : ;; *) fail "ceiling breach printed nothing: $CEIL" ;; esac
+pass "model above the cadence ceiling → exit 4 + a named ceiling"
+
+LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER=opus \
+  "${PY[@]}" scripts/fable-session-guard.py --model claude-opus-4-8 >/dev/null 2>&1 \
+  || fail "a registry-raised ceiling should make opus clean"
+pass "the ceiling is registry-tunable (LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER=opus → clean)"
+
+if LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER=fable LIMEN_FABLE_BALANCE_PATH="$TMP/fable-allotment-over.json" \
+    "${PY[@]}" scripts/fable-session-guard.py --model claude-fable-5 >/dev/null 2>&1; then
+  fail "no env value may declare Fable an acceptable OPENING tier"
+fi
+pass "the opening ceiling is hard-capped at opus — Fable stays receipt-gated"
 if echo '{"model":"claude-fable-5"}' | LIMEN_FABLE_BALANCE_PATH="$TMP/fable-allotment-over.json" \
     "${PY[@]}" scripts/fable-session-guard.py >/dev/null 2>&1; then
   fail "session guard should exit non-zero on Fable + over_cap"
