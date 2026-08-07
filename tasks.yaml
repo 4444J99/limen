@@ -165332,3 +165332,36 @@ tasks:
     conduct_lease_id: 'lease-635-5bd9de6df3d4fc84'
     conduct_generation: 635
   updated: '2026-08-07T14:43:07.266Z'
+- id: 'GH-organvm-limen-1981'
+  title: 'PR lifecycle has no ideal form: the vocabulary is declared once and hardcoded four times, the semantics are string literals'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1981'
+  context: 'GitHub issue organvm/limen#1981. Follow-on to #1975 (plan merged as #1976), which diagnosed the PR-estate drain at the leaves. Two things force a v2 plan. **1. A grounding correction.** #1975''s diagnosis read the live checkout, which was 29 commits behind `origin/main`. Main carries estate-manifest **v2** (`cfd01fb8`, #1944), where `--disposition` is a parameter over all five labels and `--cohort` partitions the estate. So the cl'
+  predicate: 'test "$(gh issue view 1981 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1981'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1981'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T15:19:14.977Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-32bfc5ea75c29799fed6e3d21f1732d7:636:compatibility'
+    conduct_run_id: 'run-32bfc5ea75c29799fed6e3d21f1732d7'
+    conduct_lease_id: 'lease-636-32bfc5ea75c29799'
+    conduct_generation: 636
+  updated: '2026-08-07T15:19:14.977Z'
