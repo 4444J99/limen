@@ -1,7 +1,7 @@
 # Session-model cadence — a guard that cannot see must warn, not pass
 
 Issue: #1990
-PR: (pending)
+PR: #2013
 
 ## Context
 
@@ -96,6 +96,13 @@ one."* And the sharpest form: every ideal form in the ledger is measured against
 
 Each step is done when its predicate exits 0. Read each predicate's **own** exit code — never a pipeline's.
 
+**Shipped 2026-08-07** — the header `PR:` names the completing PR; the plan landed across five, one
+concern per branch as sequenced below. F4 #1996 · F5 #1997 · F1 #1998 · F2 #2004 · F3+F6+F7 #2013.
+The last three merged as one PR: they edit the same file in sequence, so three separate PRs bought
+review granularity nobody reads at the price of three serial CI cycles. (#2012 was that PR's first
+head, closed and superseded by #2013 after F2's *squash* merge left `main` holding F2's content with
+no ancestry link to the commit the stacked branch was built on — identical content, real conflict.)
+
 1. **FULL** — record the measured baseline above; no change. Predicate: the table reproduces. *(done, this document)*
 2. **HEAL / F4** — deployment currency becomes a declared sensor with an **offline receipt**, so a guard running out of the deployed tree can cite evidence instead of rendering absence as silence. `check-live-checkout.py` answers only when run, needs a network `git ls-remote`, and leaves no artifact — no point-of-use consumer can afford it inline. Adds the receipt + sensor entry + `scripts/tests/live-checkout-currency.test.sh`. **M**
 3. **HEAL / F1** — the weekly meter becomes falsifiable: one verdict-returning reader (D2/D3), mtime freshness (D1), provenance from F4's receipt (D0), every untrusted state routed to the warning; registers the existing predicate as the `fable-cadence` gate; lands the censor precedent. **M**
@@ -147,8 +154,9 @@ Human-gated atoms are **filed in their registry owner and cited by predicate —
 list.** Registry owner: `his-hand-levers.json`.
 
 - **`L-FABLE-GUARD-ARM` (issue #827)** — the one staged paste. Nothing here adds to its cost, and every fix is correct whether or not it is pulled: the dispatch cap gate, all three beat sensors and both new gates gain their guarantees with no arming at all. Only the interactive warning waits on it. **F5 gives it a read-side predicate for the first time.**
-- **The deployment atoms** — the live checkout reaching `origin/main`, and `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat` (the exact remedy `check-beat-freshness.py` already prints). Until both, nothing merged today is running. These belong to `IF-LIVE-TREE-COHERENCE` and the beat-freshness sensor; F4 makes the first continuously audible rather than fail-open into a log nothing reads.
-- **New atom, filed by F6:** `L-LANE-OPENING-FLOOR` — lowering operator-owned non-Claude pins (`~/.codex/config.toml` `ultra` → `high`; a flash-class `model` in `~/.gemini/settings.json`). Needs a real `issue` int before landing (`no-tasks-on-me.sh` §SS7).
+- **The deployment atoms — CLOSED 2026-08-07, by the fix itself.** Both were premises, not tasks. The heartbeat was already `state = running` (`launchctl print gui/501/com.limen.heartbeat`), so the kickstart remedy addressed a stopped beat that was not stopped. And the live checkout was already `{"state": "coherent", "behind": 0, "drift": 0}` — read from **F4's own offline receipt**, from inside an isolated worktree that is structurally forbidden to inspect the live tree. That is the arc closing its own loop: the fix for *"absence rendered as silence"* is what made the absence answerable, and the answer was that the atom had already cleared. A worktree session that had to `git -C` the live checkout could not have established this at all. Ongoing coherence is not a residual — it is `live-checkout-currency` (registered, `src=metabolize,heartbeat`, cadence 4) plus `sync-release.sh`'s auto-unpark, which is the owner. The receipt goes stale between beats **by design**; staleness is the sensor's input, not a dangling item.
+- **New atom, filed by F6:** `L-LANE-OPENING-FLOOR` (issue **#2000**) — lowering operator-owned non-Claude pins (`~/.codex/config.toml` `ultra` → `high`; a flash-class `model` in `~/.gemini/settings.json`). Filed with a real `issue` int per `no-tasks-on-me.sh` §SS7; the remedies are files in the operator's home directory, which an agent reports and never writes.
+- **Sibling instance found while closing this arc, filed as #2020** — `check-plan-decisions.py` matches only `1.`-numbered decisions, so the 65 written as `- **D0 —` bullets across 10 plans are not parsed at all and the gate prints `OK — every new decision names where it binds`. Unparseable and clean are the same value: `PREC-2026-08-07-guard-degrades-toward-silence` exactly, with the plan's own syntax as the unresolvable input. **This plan is the worst-covered file in that table** (12 of 12 invisible) — the arc's precedent caught the arc's own plan. Not fixed here: widening the detector admits all 65 into a shrink-only baseline in one step, which is a plan, not a closeout tail.
 - **Reporting predicates** (run these; do not re-audit by hand):
   ```
   bash scripts/no-tasks-on-me.sh
