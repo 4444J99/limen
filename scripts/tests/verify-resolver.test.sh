@@ -166,9 +166,15 @@ web-build' spec/contracts/readiness.schema.json
 # paused-beat-test is implicated because its fixtures assert that each paused-branch escape hatch
 # (LIMEN_PAUSED_SENSING, LIMEN_PAUSED_SYNC) is DECLARED in the panel — deleting a declaration there
 # is exactly the drift those checks exist to catch, so a params change must run them.
+#
+# guard-degradation joined 2026-08-07: the guards subject to IF-GUARD-FAIL-TOWARD-WARNING are
+# DECLARED as `guard_state:` blocks on the parameters.yaml row that governs each one, and that
+# population is grow-only — so deleting a declaration here is precisely the drift the gate exists
+# to catch, and a params change must re-run it.
 expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
+guard-degradation
 check-params
 paused-beat-test
 check-note-links' institutio/governance/parameters.yaml

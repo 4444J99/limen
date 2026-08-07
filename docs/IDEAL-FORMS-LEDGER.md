@@ -118,6 +118,38 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Owner:** Claude (the census + the court) · the reap organs for relief · his hand only where
   relief is destructive (the archive-then-delete step, the remote-reap lever).
 
+### IF-GUARD-FAIL-TOWARD-WARNING — a guard that cannot see warns, it does not pass
+- **Ideal form:** no safety guard in the estate degrades toward "everything is fine". Every guard
+  whose verdict gates a capability declares its degenerate inputs, and each is **executed** against
+  them: an input the guard cannot resolve comes back untrusted, never silently permissive.
+  "I could not establish this" and "this is fine" are never the same value.
+- **Distance:** DERIVED — `python3 scripts/check-guard-degradation.py` (`findings=N`, ideal 0).
+- **Evidence (2026-08-07):** the same defect found **four times in one stack** in a single session.
+  Three forked weekly-meter readers typed `dict | None`, where `None` meant both "no meter" and "a
+  meter I decided not to trust" — and all three callers read it as permissive. `_resolve_model`
+  returned `""` for an unresolvable session model, so `_is_fable("")` was False and the guard exited
+  0 printing **zero bytes**, byte-identical to a session confirmed cheap. An undeployed copy of a
+  guard printed superseded advice with no sign it was pre-merge. An unarmed SessionStart hook was
+  indistinguishable from one that ran and found nothing.
+  The incident it produced: the live checkout sat **36 commits behind**, so the deployed
+  `fable-allotment.py` scanned a directory holding 0 transcripts and rewrote the weekly meter to
+  `spent_pct 0.0 / over_cap false` **every beat** while the true figure was **75.47% / over_cap
+  true** — releasing both Fable brakes and burning ~50% of a weekly allotment in two days with no
+  downgrade and no warning.
+  **The load-bearing detail:** the meter file was **fresh and wrong** — rewritten 09:17 that morning
+  and every beat before it — so any age bound on the artifact *passes* on this incident. Freshness
+  of an artifact is not truth of its value when the stale party is the writer's code.
+  **Why the proofs are executed, not inspected:** `verify-fable-gate.sh` was **green throughout**,
+  all five blocks passing, because the question it asked was answered correctly by a meter that was
+  itself lying. Inspection cannot catch a guard whose code looks right and whose input is wrong.
+- **Status:** RATCHET ARMED — 2 guards declared, 8 degenerate cases, all degrading. The honest
+  distance is the guards **not yet declared**, not the ones measured: the population is grow-only
+  (`institutio/governance/guard-state-baseline.txt`), so this number improves by declaring more,
+  never by measuring again. Losing a declaration is a RED, because deleting one is exactly how a
+  class-wide invariant quietly stops covering its subject.
+- **Owner:** Claude (`limen.guard_contract` + `scripts/check-guard-degradation.py`). Precedent:
+  `PREC-2026-08-07-guard-degrades-toward-silence`.
+
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
   fast-forwarded; no ahead/behind divergence, no stranded local commits.

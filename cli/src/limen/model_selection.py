@@ -404,11 +404,105 @@ def _claude_model_uses_large_context(model: str | None) -> bool:
     return bool("1m" in text or "1000000" in text or "1,000,000" in text)
 
 
-def _tier_index(tier: str) -> int:
+def _ladder_index(rung: str, ladder: tuple[str, ...]) -> int:
+    """Ordinal position of ``rung`` in a cheapest-first ladder; 0 (the cheapest) when unknown.
+
+    THE one ordinal primitive (design decision D5). It is generic over the ladder so a per-vendor
+    census can reuse it without a second copy of "which of these is dearer" — the shape that had
+    already forked three times for the weekly meter.
+    """
     try:
-        return _CLAUDE_TIER_ORDER.index(tier)
+        return ladder.index(rung)
     except ValueError:
         return 0
+
+
+def _tier_index(tier: str) -> int:
+    """The Claude binding of :func:`_ladder_index`. Kept as a name so no caller moves."""
+    return _ladder_index(tier, _CLAUDE_TIER_ORDER)
+
+
+def _rung_of(pin: str, ladder: tuple[str, ...] = _CLAUDE_TIER_ORDER) -> str:
+    """Classify a model PIN (``claude-opus-5``, ``sonnet``, ``gpt-5.6-sol``) to its ladder rung.
+
+    DEAREST-FIRST, deliberately: if a pin somehow names two rungs, the expensive reading wins, so
+    an ambiguous string fails toward caution rather than toward silence. Returns ``""`` when the
+    pin matches no rung — an explicit "unclassifiable", never the cheapest rung, because that
+    substitution is precisely the defect this arc exists to close.
+    """
+    text = str(pin or "").lower()
+    for rung in reversed(ladder):
+        if rung in text:
+            return rung
+    return ""
+
+
+def session_open_max_tier() -> str:
+    """The cadence CEILING for an interactive session's OPENING model.
+
+    Registry-declared via ``LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER`` (default ``sonnet``, per
+    CLAUDE.md's Session Phase Entry: open cheap, escalate deliberately) and hard-capped at
+    ``opus`` — no env value can declare Fable an acceptable opening tier, because Fable is
+    reserved behind a written acceptance receipt and an opening default is by definition not one.
+    The cap belongs to the VALUE, so every accessor routes through it (D6).
+    """
+    return _cap_tier(os.environ.get("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "sonnet"), "opus")
+
+
+def _cap_rung(rung: str, cap: str, ladder: tuple[str, ...]) -> str:
+    """Cap ``rung`` to ``cap`` WITHIN THE GIVEN LADDER — the generic form of :func:`_cap_tier`.
+
+    ``_cap_tier`` hardcodes the Claude ladder and its unknown-value fallbacks (haiku / sonnet), so
+    handing it a foreign rung silently collapses to ``haiku``: a codex ``high`` ceiling came back
+    as ``'haiku'`` the first time the per-lane census ran. That is this arc's own defect wearing a
+    different hat — an unclassifiable value resolving to the cheapest rung instead of saying so —
+    which is why the generic path validates against the ladder it was actually handed.
+    """
+    if rung not in ladder:
+        rung = ladder[0]
+    if cap not in ladder:
+        cap = ladder[0]
+    return ladder[min(_ladder_index(rung, ladder), _ladder_index(cap, ladder))]
+
+
+def opening_verdict(
+    pin: str,
+    ceiling: str | None = None,
+    ladder: tuple[str, ...] = _CLAUDE_TIER_ORDER,
+    hard_cap: str | None = None,
+) -> dict:
+    """Is an opening model pin at or below the cadence ceiling?
+
+    Returns ``{state, rung, ceiling, pin}`` with state ∈ ``ok`` | ``above-ceiling`` | ``unresolved``.
+
+    The guard used to ask ``"fable" in model.lower()`` — ONE rung of a four-rung ladder. Every tier
+    between the cadence floor and Fable was unguarded, so the operator's saved Opus default (~15x
+    sonnet) opened every session with the guard reporting a clean no-op. Guarding a literal string
+    guards a value; guarding an ORDINAL guards the policy.
+
+    LADDER-GENERIC (D5), so the per-vendor census reuses it rather than forking: ``ladder`` may be
+    any cheapest-first tuple, and the ceiling is capped within THAT ladder. ``hard_cap`` defaults
+    to ``opus`` on the Claude ladder — no declaration may make Fable an acceptable opening default,
+    since Fable is reserved behind a written acceptance receipt — and to the ladder's top elsewhere,
+    because a foreign ladder has no equivalent reserved rung to protect.
+    """
+    if hard_cap and hard_cap in ladder:
+        top = hard_cap
+    elif "opus" in ladder:
+        top = "opus"
+    else:
+        top = ladder[-1]
+    declared = ceiling or (session_open_max_tier() if ladder == _CLAUDE_TIER_ORDER else ladder[0])
+    cap = _cap_rung(declared, top, ladder)
+    rung = _rung_of(pin, ladder)
+    if not rung:
+        # `trusted` is present and DERIVED on every branch so this reader speaks the same contract
+        # balance_verdict() does — see limen.guard_contract, which owns the shape and the executed
+        # proof. It is not imported here: this module's pure-stdlib contract is what lets the
+        # non-bypassable shim load it by file path, and that chokepoint outranks the convenience.
+        return {"state": "unresolved", "trusted": False, "rung": "", "ceiling": cap, "pin": pin, "detail": ""}
+    state = "ok" if _ladder_index(rung, ladder) <= _ladder_index(cap, ladder) else "above-ceiling"
+    return {"state": state, "trusted": state == "ok", "rung": rung, "ceiling": cap, "pin": pin, "detail": ""}
 
 
 def _cap_tier(tier: str, cap: str) -> str:
