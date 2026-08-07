@@ -1,6 +1,6 @@
 """Symmetric peer-conduct protocol and deterministic coordination kernel."""
 
-from limen.conduct.broker import ConductBroker, ConductConflict, ConductError
+from limen.conduct.broker import ConductBroker, ConductConflict, ConductError, TaskAlreadyHomed
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
@@ -43,6 +43,7 @@ __all__ = [
     "RunReceiptV1",
     "SQLiteStateStore",
     "SpendEnvelopeV1",
+    "TaskAlreadyHomed",
     "WorkLoanV1",
     "WorkPacketV1",
 ]

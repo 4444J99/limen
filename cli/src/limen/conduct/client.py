@@ -10,7 +10,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from limen.conduct.broker import ConductBroker, ConductError
+from limen.conduct.broker import ConductBroker, ConductConflict, ConductError
 from limen.conduct.models import ConductorSessionV1, ExecutorAttemptV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.store import SQLiteStateStore
 
@@ -47,7 +47,12 @@ class HttpConductClient:
                 raw = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")[:1000]
-            raise ConductError(f"conduct broker rejected request ({exc.code}): {detail}") from exc
+            message = f"conduct broker rejected request ({exc.code}): {detail}"
+            # The status code is the stable signal; `detail` is keeper-authored prose that
+            # differs per implementation. Carry the code so callers never parse the text.
+            if exc.code == 409:
+                raise ConductConflict(message, status=exc.code) from exc
+            raise ConductError(message, status=exc.code) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
             raise BrokerUnavailable(f"conduct broker unavailable: {exc}") from exc
         try:

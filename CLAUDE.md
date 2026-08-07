@@ -216,6 +216,7 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
 - **Reconcile divergent branches against authoritative data** — GitHub redirect/PR state via `gh`, or `scripts/verify-dispatch.py` — never against heuristics or guesses.
+- **A/B a change against its own parent commit, never against a branch name.** Once the PR merges, `origin/main` *contains* the change, so `git show origin/main:<file>` silently hands back the fixed file as the "before" — and the A/B compares the fix to itself and passes. The three-dot `git diff origin/main...HEAD` keeps showing a correct diff throughout (it resolves the merge base), so nothing looks wrong. Extract the baseline from `<sha>^` and assert a marker is absent from it before trusting any before/after. (2026-08-07: a post-merge runtime verification's first "pre-fix" extraction was the fixed file.)
 - Report status terse and factual: if tests fail, say so with the output; if a step was skipped, say so; call something done only when the predicate proves it.
 
 ## Data Grounding
