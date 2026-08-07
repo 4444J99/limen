@@ -4411,6 +4411,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Where beat_run appends one `{ts,rung,exit}` record per rung per beat. This is the READER the old idiom lacked: scripts/enactment-audit.py folds the tail of this file into per-rung consecutive-failure streaks, so 'this rung has failed N beats running' becomes a RED rung instead of a silence. Labels are stable per rung (script basename plus a disambiguating flag, e.g. heal-board vs heal-board-canonical) because they are the streak buckets. Append-only and bounded — see LIMEN_BEAT_RUNG_LOG_MAX."
+  LIMEN_RUNG_FAIL_STREAK_RED:
+    default: "3"               # consecutive failing beats before a rung is called INEFFECTIVE
+    env: LIMEN_RUNG_FAIL_STREAK_RED
+    self_update: none
+    owner: enactment
+    note: "How many CONSECUTIVE failing beats make scripts/enactment-audit.py's efficacy rung go RED for a rung. The third audit axis: wiring proves a flag is set, liveness proves the daemon is not older than its wiring, and NEITHER can see a rung that is wired, live, and fails every beat. Measured 2026-08-07: heal-board.py --canonical failed on EVERY beat with 'Exceeded allowed rows written in Durable Objects free tier' while the audit printed '3 rung(s) green/skip' and twelve regressed needs-human atoms stayed regressed — the gap was not a flag missing from a list (that flag was declared AND on), it was a missing axis. 3 filters a single bad beat (a timeout, a transient network fault) as noise while catching anything persistent within ~6 minutes at the 120s floor. Streaks are TRAILING, so a recovered rung is healthy. Exit 75 (EX_TEMPFAIL) is reported but never RED: it means 'blocked on a condition already filed with a human owner', and a permanently-red gate is an ignored gate."
   LIMEN_BEAT_RUNG_LOG_MAX:
     default: "20000"           # trim threshold in records (~5 beats' worth of headroom over KEEP)
     env: LIMEN_BEAT_RUNG_LOG_MAX

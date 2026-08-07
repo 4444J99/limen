@@ -11,7 +11,7 @@ fleet enabled it; and every gate went green on the dark state. The only thing th
 could see the gap was the operator, by hand, repeatedly. This script is that missing
 gate — it makes "enacted" a predicate, not a memory.
 
-Two rungs, each catching one real trap:
+Three rungs, each catching one real trap:
 
   1. WIRING (static, CI-safe, ALWAYS enforced). For every ``parameters.yaml`` flag that
      declares ``fleet_runtime:`` (the value the LIVE FLEET must resolve it to), re-derive
@@ -26,15 +26,26 @@ Two rungs, each catching one real trap:
      a kickstart. Catches "wired but daemon not kickstarted" (sync-release's own log
      says "kickstart to load").
 
+  3. EFFICACY (live-host only; SKIP with no ledger — CI-safe). A rung that is wired AND live
+     can still fail on every single beat, and rungs 1-2 are structurally blind to it. Measured
+     2026-08-07: ``heal-board.py --canonical`` failed on EVERY beat with
+     ``Exceeded allowed rows written in Durable Objects free tier`` while this audit printed
+     "3 rung(s) green/skip" and twelve regressed ``needs-human`` atoms stayed regressed. The
+     gap was not a flag missing from this file — the audit is registry-derived, and that flag
+     WAS declared and WAS on. The gap was a missing axis. Reads the per-rung outcome ledger
+     ``logs/beat-rungs.jsonl`` that ``heartbeat-loop.sh``'s ``beat_run`` writes, and goes RED on
+     a rung failing N consecutive beats. Catches "enacted but ineffective".
+
 Usage:
   scripts/enactment-audit.py            # human report (all rungs, with live context)
-  scripts/enactment-audit.py --check    # gate: exit 1 on any RED rung (SKIP never fails)
+  scripts/enactment-audit.py --check    # gate: exit 1 on any RED rung (SKIP/INFO never fail)
   scripts/enactment-audit.py --heartbeat PATH --params PATH   # override inputs (tests)
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import subprocess
@@ -55,6 +66,9 @@ ROOT_IS_EXPLICIT = bool(os.environ.get("LIMEN_ROOT"))
 HOME = Path(os.path.expanduser("~"))
 
 GREEN, RED, SKIP, INFO = "GREEN", "RED", "SKIP", "INFO"
+# sysexits(3). A rung uses this to say "blocked on a condition already filed with a human owner"
+# rather than "I am broken" — see efficacy_rung() for why that distinction must not be RED.
+EX_TEMPFAIL = 75
 
 
 # --------------------------------------------------------------------------- wiring
@@ -316,13 +330,177 @@ def liveness_rung(params: dict) -> list[dict]:
     ]
 
 
+# --------------------------------------------------------------------------- efficacy
+def _rung_outcomes(ledger: Path) -> list[tuple[str, int]]:
+    """(rung, exit) in beat order. Malformed lines are skipped, never fatal — this is a sensor."""
+    outcomes: list[tuple[str, int]] = []
+    try:
+        text = ledger.read_text()
+    except OSError:
+        return outcomes
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+            outcomes.append((str(row["rung"]), int(row["exit"])))
+        except (ValueError, KeyError, TypeError):
+            continue
+    return outcomes
+
+
+def failing_streaks(outcomes: list[tuple[str, int]]) -> dict[str, tuple[int, int]]:
+    """Per rung, its TRAILING run of consecutive non-zero exits: {rung: (streak, last_exit)}.
+
+    Trailing, not total: a rung that failed twice last week and has succeeded since is healthy, and
+    counting its history would make the rung permanently red and therefore ignored. Only rungs with
+    a live streak appear.
+    """
+    latest: dict[str, list[int]] = {}
+    for rung, code in outcomes:
+        latest.setdefault(rung, []).append(code)
+    streaks: dict[str, tuple[int, int]] = {}
+    for rung, codes in latest.items():
+        streak = 0
+        for code in reversed(codes):
+            if code == 0:
+                break
+            streak += 1
+        if streak:
+            streaks[rung] = (streak, codes[-1])
+    return streaks
+
+
+def efficacy_rung() -> list[dict]:
+    """RED when a beat rung has FAILED on N consecutive beats — the axis the other two cannot see.
+
+    Wiring proves a flag is set. Liveness proves the running daemon is not older than its wiring.
+    Neither can see a rung that is wired, live, and fails on every single beat — and that is not a
+    hypothetical. Measured 2026-08-07: ``heal-board.py --canonical`` (#2014) failed on EVERY beat
+    with ``conduct broker rejected request (500): Exceeded allowed rows written in Durable Objects
+    free tier`` while this audit printed "3 rung(s) green/skip". Twelve regressed ``needs-human``
+    atoms stayed regressed for hours behind a fully-enacted, completely ineffective rung.
+
+    The reason it was invisible was not a missing flag in this file — this audit is registry-derived,
+    so a flag only gets a row by declaring ``fleet_runtime``. It was a missing AXIS. Adding
+    ``LIMEN_BOARD_CANONICAL_HEAL`` to a list would have proven the switch was on, which it was.
+
+    ``heartbeat-loop.sh``'s ``beat_run`` helper now records ``{ts,rung,exit}`` per rung per beat to
+    ``logs/beat-rungs.jsonl``; this rung is that ledger's reader — the effector the old
+    ``2>&1 | tail -1`` idiom denied it by destroying the exit status before anything could record it.
+
+    ``EX_TEMPFAIL`` (75) is reported but NOT red, deliberately. It is the code a rung uses to say
+    "blocked on a condition already filed with a human owner" (``heal-board --canonical`` raises it
+    for the keeper's spent storage plan, citing lever ``L-CLOUDFLARE-DO-QUOTA``). Making a correctly
+    homed, human-gated blocker permanently RED would hold this gate red until the operator acts,
+    which trains everyone to ignore it — the precise failure the loop's own comments warn about, and
+    a violation of the charter's "never re-surface a filed gate". So it is visible and named, but it
+    does not fail the audit; a rung failing for any OTHER reason does.
+
+    SKIP when the ledger is absent (CI, or a daemon that has not yet run a loop carrying beat_run).
+    """
+    ledger = Path(os.environ.get("LIMEN_BEAT_RUNG_LOG", str(LIVE_ROOT / "logs" / "beat-rungs.jsonl")))
+    if not ledger.is_file():
+        return [
+            {
+                "rung": "efficacy",
+                "name": "beat-rungs",
+                "status": SKIP,
+                "detail": f"no rung-outcome ledger at {ledger} — not on a live host running beat_run (rung N/A)",
+            }
+        ]
+    outcomes = _rung_outcomes(ledger)
+    if not outcomes:
+        return [
+            {
+                "rung": "efficacy",
+                "name": "beat-rungs",
+                "status": SKIP,
+                "detail": f"rung-outcome ledger at {ledger} holds no readable records yet (rung N/A)",
+            }
+        ]
+    try:
+        threshold = int(os.environ.get("LIMEN_RUNG_FAIL_STREAK_RED", "3"))
+    except ValueError:
+        threshold = 3
+    threshold = max(1, threshold)
+
+    streaks = failing_streaks(outcomes)
+    rows: list[dict] = []
+    for rung, (streak, last_exit) in sorted(streaks.items(), key=lambda kv: (-kv[1][0], kv[0])):
+        if last_exit == EX_TEMPFAIL:
+            rows.append(
+                {
+                    "rung": "efficacy",
+                    "name": rung,
+                    "status": INFO,
+                    "detail": (
+                        f"failing {streak} beat(s) running with exit {EX_TEMPFAIL} (EX_TEMPFAIL) — a "
+                        f"blocker already filed with a human owner, not a fleet defect. Left non-red "
+                        f"on purpose: a permanently-red gate is an ignored gate."
+                    ),
+                }
+            )
+        elif streak >= threshold:
+            rows.append(
+                {
+                    "rung": "efficacy",
+                    "name": rung,
+                    "status": RED,
+                    "detail": (
+                        f"enacted but INEFFECTIVE — failed {streak} consecutive beats (last exit "
+                        f"{last_exit}). The switch is on and the daemon is current; the rung itself "
+                        f"is not landing. Read its `── RUNG FAIL [{rung}] ──` block in the beat log."
+                    ),
+                }
+            )
+        else:
+            rows.append(
+                {
+                    "rung": "efficacy",
+                    "name": rung,
+                    "status": INFO,
+                    "detail": (
+                        f"failed the last {streak} beat(s) (exit {last_exit}) — under the "
+                        f"{threshold}-beat threshold; a single bad beat is noise, not a defect"
+                    ),
+                }
+            )
+    if not rows:
+        distinct = len({rung for rung, _ in outcomes})
+        rows.append(
+            {
+                "rung": "efficacy",
+                "name": "beat-rungs",
+                "status": GREEN,
+                "detail": (
+                    f"every one of {distinct} rung(s) succeeded on its most recent beat "
+                    f"({len(outcomes)} outcome(s) on record)"
+                ),
+            }
+        )
+    return rows
+
+
 # ------------------------------------------------------------------------------ main
-def run(heartbeat: Path, params_path: Path, *, wiring_only: bool = False) -> list[dict]:
+def run(
+    heartbeat: Path,
+    params_path: Path,
+    *,
+    wiring_only: bool = False,
+    efficacy_only: bool = False,
+) -> list[dict]:
+    if efficacy_only:
+        # One axis at a time, so a test can drive it against a fixture ledger without the
+        # host-dependent liveness rung flapping the result between CI and the live host.
+        return efficacy_rung()
     params = yaml.safe_load(params_path.read_text()) or {}
     live = LIVE_ROOT == SCRIPT_ROOT or (LIVE_ROOT / "scripts" / "heartbeat-loop.sh").exists()
     rows = wiring_rung(params, heartbeat, live=live)
-    if not wiring_only:  # liveness reads live host state; tests pin to the code contract only
+    if not wiring_only:  # liveness + efficacy read live host state; tests pin the code contract only
         rows += liveness_rung(params)
+        rows += efficacy_rung()
     return rows
 
 
@@ -332,13 +510,23 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--wiring-only",
         action="store_true",
-        help="skip the live-host liveness rung (deterministic code-contract check for tests)",
+        help="skip the live-host liveness + efficacy rungs (deterministic code-contract check for tests)",
+    )
+    ap.add_argument(
+        "--efficacy-only",
+        action="store_true",
+        help="run ONLY the rung-outcome efficacy rung (point LIMEN_BEAT_RUNG_LOG at a fixture ledger)",
     )
     ap.add_argument("--heartbeat", default=str(SCRIPT_ROOT / "scripts" / "heartbeat-loop.sh"))
     ap.add_argument("--params", default=str(SCRIPT_ROOT / "institutio" / "governance" / "parameters.yaml"))
     args = ap.parse_args(argv)
 
-    rows = run(Path(args.heartbeat), Path(args.params), wiring_only=args.wiring_only)
+    rows = run(
+        Path(args.heartbeat),
+        Path(args.params),
+        wiring_only=args.wiring_only,
+        efficacy_only=args.efficacy_only,
+    )
     reds = [r for r in rows if r["status"] == RED]
 
     if not args.check:
