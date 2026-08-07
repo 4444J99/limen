@@ -164737,3 +164737,38 @@ tasks:
     conduct_lease_id: 'lease-616-c425af69dc30d4a3'
     conduct_generation: 616
   updated: '2026-08-07T10:37:40.052Z'
+- id: 'ASK-routine-limen-disposition-triage'
+  title: 'Routine ''limen-disposition-triage'' is DOWN — check claude.ai session'
+  repo: 'organvm/limen'
+  type: 'ops'
+  target_agent: 'human'
+  priority: 'high'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'routine-freshness'
+  - 'needs-human'
+  urls: []
+  context: 'Cloud routine ''limen-disposition-triage'' is DOWN: 18 days silent. Rolling issue: https://github.com/4444J99/session-meta/issues/79. Fixing a cloud routine requires opening the operator''s claude.ai session, locating the ''limen-disposition-triage'' scheduled routine, and verifying it is configured and enabled. This organ cannot trigger cloud routines — only the operator''s claude.ai session can do so.'
+  predicate: 'test "$(gh issue list --repo organvm/limen --state closed --search ''ASK-routine-limen-disposition-triage in:title'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:issue:ASK-routine-limen-disposition-triage'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Restore delivery for the declared cloud routine limen-disposition-triage'
+  owner_surface: 'organvm/limen'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  updated: '2026-08-07T11:52:18.519Z'
+  dispatch_log:
+  - timestamp: '2026-08-07T11:52:18.519Z'
+    agent: 'codex'
+    session_id: 'routine-freshness-hang-down'
+    logical_agent: 'routine-freshness'
+    logical_session_id: 'hang-down'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2a1a6709f235f4778d935d3298e58b68:617:compatibility'
+    conduct_run_id: 'run-2a1a6709f235f4778d935d3298e58b68'
+    conduct_lease_id: 'lease-617-2a1a6709f235f477'
+    conduct_generation: 617
