@@ -533,10 +533,10 @@
     },
     {
       "id": "L-FABLE-GUARD-ARM",
-      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"opus\" off Fable + appends the SessionStart fable-session-guard.py hook). Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard.",
+      "label": "Arm the session model cadence: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (pins the session-OPENING model to \"sonnet\" + appends the SessionStart fable-session-guard.py hook). Dispatch-side Fable cap already live on main (#818); this closes the interactive bypass durably and makes sessions open cheap — /model opus (or Fable under an allotment acceptance) becomes a deliberate escalation, per CLAUDE.md Session Phase Entry.",
       "owner": "yours",
       "cost": "~2 min, one paste, reversible",
-      "unlocks": "durable interactive Fable guard (no session silently defaults to Fable)",
+      "unlocks": "sessions open on Sonnet instead of the account default (the 2026-07-09 and 2026-08 Fable burns cannot recur silently); SessionStart guard armed",
       "source_task": "closeout 2026-07-09 (fable runtime cap)",
       "issue": 827
     },
@@ -961,6 +961,35 @@
       "note": "Scale of what the name binds today: ~258 LIMEN_* parameters, com.limen.* LaunchAgents, ~/.limen.env, install.sh, the limen CLI + Homebrew formula, the limen-runtime Worker, limen-dashboard.pages.dev. The alias-layer design in ARC 3 makes any answer safe; the only unsafe move is executing a rename from an external charter without this ruling.",
       "issue": 1934,
       "unlocks": "the entire rename/keep track of the 2026-07-30 PORTVS/ASTRA plan (ARC 3): nomenclator mint, GitHub rename with redirects, CLI compat shim, LIMEN_* alias layer — all parked until this one word; also closes the naming loop the 2026-08-06 external charters kept reopening"
+    },
+    {
+      "id": "L-DEPENDABOT-DELIVERY-ARM",
+      "label": "Arm autonomous merge for ~200 green dependabot version-bump PRs — retype lifecycle:blocked → lifecycle:delivery across 94 public repos. One word ('arm' on issue #1947) turns them over to the beat's merge rung.",
+      "source_task": "GITVS-UNCAPPED-PR-DEBT-0715 estate drain (docs/plans/2026-08-07-pr-debt-estate-drain.md, issue #1950) — dependabot cohort fail-closed as lifecycle:blocked via SHA-pinned manifest ae6ff627a3c1b8785b35acf003cfd55b8d9f3f512a1d3171dc83c68e2926e95f (docs/receipts/pr-lifecycle-dependabot-blocked-manifest-20260807.json)",
+      "owner": "yours",
+      "category": "mass-merge-arm",
+      "cost": "one word ('arm' or 'keep-blocked' on issue #1947); the retype manifest and merge-drain runs that follow are system work, not yours",
+      "status": "open",
+      "added": "2026-08-07",
+      "gate": "lifecycle:delivery ARMS merge-drain's autonomous merge rail (scripts/merge-drain.py), and mass cross-org merges are a standing human-gated lever class (CLAUDE.md → Still human-gated levers) — the system may not upgrade 200 PRs from blocked to machine-mergeable on its own authority",
+      "steps": [
+        "Comment 'arm' on organvm/limen#1947 (or 'keep-blocked' to close this lever as ruled-out).",
+        "On 'arm' the system plans a delivery-retype estate manifest over the same cohort (plan → validate --expected-plan-sha → apply), and merge-drain merges each PR only when its own repo checks are green — a red bump stays blocked."
+      ],
+      "note": "Fail-closed typing is already DONE and reversible — nothing merges while this lever is open. The 200 PRs span 94 public repos; each is a dependabot version bump, individually green-gated at merge time.",
+      "issue": 1947,
+      "unlocks": "autonomous drain of the dependabot two-thirds of the open-PR estate (200 of ~1300 open PRs); the stale-pr-sweep count drops by up to 200 without another human touch"
+    },
+    {
+      "id": "L-FLYWHEEL-VALVE-ARM",
+      "label": "Arm the two reviewed flywheel apply-valves (work-loan backfill supply + owner-route drain landing) — two env lines + one daemon restart. Dispatch itself is ALREADY live (25/day bootstrap); this lever only opens the ramp toward 100/day: backfill mints ~168 loan-ready packets, the drain lands the 308 blocked jules PRs that earn landed/dispatched >= 0.30.",
+      "source_task": "jules-flywheel program (docs/plans/2026-08-06-jules-flywheel.md, issue #1874, PR #1893) — both dry-runs reviewed 2026-08-07: backfill census 168 mintable / 520 honestly refused / 0 failures; drain 375 receipts, 15 distinct PRs, 0 verdict flips (325 draft-skip, 50 route-to-heal). The session's env-file append was classifier-blocked, so the two lines are yours.",
+      "owner": "yours",
+      "category": "valve-arm",
+      "cost": "one paste: printf '\\nexport LIMEN_WORK_LOAN_BACKFILL_APPLY=1\\nexport LIMEN_OWNER_ROUTE_DRAIN_APPLY=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat",
+      "status": "open",
+      "added": "2026-08-07",
+      "gate": "the sensors read the daemon env; ~/.limen.env is sourced at loop start only, hence the kickstart. Verify after the next metabolize pass: logs/work-loan-backfill.jsonl gains applied:true rows and logs/owner-route-drain.jsonl gains outcome!=dry-run rows."
     }
   ]
 }

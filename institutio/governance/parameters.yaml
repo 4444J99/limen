@@ -2719,6 +2719,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Daily Jules task target override. Unset derives from capacity.DEFAULT_DAILY_TASK_TARGETS (vendor quota 100/day; operator mandate is full daily consumption)."
+  LIMEN_JULES_FLYWHEEL:
+    default: "1"
+    env: LIMEN_JULES_FLYWHEEL
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-flywheel sensor: THE acceptance predicate of the jules-flywheel program (issue #1874) — exit 0 ⟺ quota consumed AND landing rate holds AND jules PR debt non-increasing; exit 1 names the failing clause and its owning effector."
+  LIMEN_FLYWHEEL_LAND_FLOOR:
+    default: 0.30
+    env: LIMEN_FLYWHEEL_LAND_FLOOR
+    self_update: none
+    owner: arms-agents
+    note: "Landed/dispatched floor the flywheel's landing clause demands over the throughput window — mirrors LIMEN_THROUGHPUT_FLOOR_RATE, and the clause is skipped below the governor's bootstrap_min so the flywheel never alarms on the ramp the governor deliberately allows."
+  LIMEN_JULES_PR_DEBT_SNAPSHOT:
+    default: ""
+    env: LIMEN_JULES_PR_DEBT_SNAPSHOT
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the flywheel's jules open-PR-count snapshot (default logs/jules-pr-debt-snapshot.json at LIMEN_ROOT) — the non-increasing-debt clause compares against it."
   LIMEN_JULES_ADOPTIONS:
     default: ""
     env: LIMEN_JULES_ADOPTIONS
@@ -2785,6 +2803,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the lane-throughput sensor (sensors.yaml lane-throughput): per-lane throughput-governor gauge; advisory-red on a clamp sustained across 2+ days."
+  LIMEN_BEAT_FRESHNESS:
+    default: "1"
+    env: LIMEN_BEAT_FRESHNESS
+    self_update: none
+    owner: substrate
+    note: "Beat gate for the beat-freshness sensor (sensors.yaml beat-freshness): the resident heartbeat daemon must postdate its own loop body on disk; a stale daemon executes dead code until kickstarted (the 2026-08-06 flywheel keyturn lesson)."
+  LIMEN_BEAT_FRESHNESS_CADENCE:
+    default: 4
+    env: LIMEN_BEAT_FRESHNESS_CADENCE
+    self_update: none
+    owner: substrate
+    note: "Run the beat-freshness check every Nth sensor pass — a staleness alarm needs no per-beat cadence."
+  LIMEN_BEAT_FRESHNESS_TIMEOUT:
+    default: 60
+    env: LIMEN_BEAT_FRESHNESS_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Timeout for one check-beat-freshness run (a pgrep + ps + stat)."
   LIMEN_LANE_THROUGHPUT_HISTORY:
     default: ""
     env: LIMEN_LANE_THROUGHPUT_HISTORY
@@ -2923,6 +2959,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Timeout for one dispatch-health --write run."
+  LIMEN_JULES_FLYWHEEL_TIMEOUT:
+    default: 120
+    env: LIMEN_JULES_FLYWHEEL_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one jules-flywheel predicate run (board load + one gh search + snapshot write)."
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY
@@ -5462,6 +5504,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_ESTATE_CENSUS_RECORD:
+    default: "1"
+    env: LIMEN_ESTATE_CENSUS_RECORD
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the `github-estate-census` recorder sensor declared in sensors.yaml — the issue/branch/check axis of the fleet-debt register, sibling of LIMEN_PR_DEBT_RECORD. 0 disables recording, which leaves docs/github-estate-census.json stale rather than silently current."
+  LIMEN_BEAT_ESTATE_CENSUS:
+    default: 12
+    env: LIMEN_BEAT_ESTATE_CENSUS
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) at which the estate-census recorder's CHEAP due-check runs. Not the census cadence: the expensive per-repo GraphQL sweep is throttled separately by LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS (the github-pr-debt two-clock pattern)."
+  LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS:
+    default: 24
+    env: LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS
+    self_update: none
+    owner: gitvs
+    note: "Minimum wall-clock hours between full estate censuses (issues/branches/checks across every governed repo). Applied to TWO clocks and due only when both are stale: the mtime of the gitignored logs/github-estate-census-facts.json receipt (this checkout swept) AND source_report.generated_at in the committed ledger (anyone recorded — shared by every checkout). Same two-clock rule LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS documents, inherited from the #1859 duplicate-census incident."
+  LIMEN_ESTATE_CENSUS_RECORD_TIMEOUT:
+    default: 1800
+    env: LIMEN_ESTATE_CENSUS_RECORD_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Seconds the estate-census recorder rung may take. Larger than the PR-debt rung's because a due run paginates issues, branches and check rollups per repository across the whole estate (~313 repos) plus a ship-docs PR; advisory, never breaks the fail-open beat."
   LIMEN_SESSION_CONTENTION_GUARD:
     default: "1"
     env: LIMEN_SESSION_CONTENTION_GUARD

@@ -151,7 +151,7 @@ def test_primary_peer_conductors_preserve_native_identity_and_fanout_contract():
         "claude": "ianva-http",
         "opencode": "ianva-http",
         "agy": "ianva-stdio",
-        "copilot": "ianva-stdio",
+        "copilot": "ianva-http",
     }
     assert {name for name, profile in profiles.items() if profile.native_fanout} == {
         "codex",
