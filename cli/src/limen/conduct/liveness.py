@@ -170,8 +170,64 @@ def linked_worktree_roots(root: Path) -> set[Path]:
 SESSION_RUNTIMES = ("claude", "codex", "gemini", "opencode")
 
 
+#: Subcommands that make an agent-runtime process something OTHER than an interactive session.
+#: `bg-spare` is a session process pre-warmed ahead of demand; `bg-pty-host` is its terminal;
+#: `agents` is the FleetView viewer. All three are the same kind of thing as the MCP server and the
+#: static file server SESSION_RUNTIMES' docstring already excludes — they are simply harder to see,
+#: because they are the runtime, byte-identical in argv[0] to a real session.
+NON_INTERACTIVE_SUBCOMMANDS = ("bg-spare", "bg-pty-host", "agents")
+
+
+def _invocation_subcommand(pid: int) -> str:
+    """`pid`'s first argv word after the program, when it is a bare subcommand; `""` otherwise.
+
+    Read from `command=` rather than `comm=` deliberately. `comm` reports the process TITLE, which
+    macOS truncates to 16 characters — enough to see "claude bg-spare" but not "claude bg-pty-host"
+    — and which carries no subcommand at all for a normally-invoked process (the FleetView viewer's
+    comm is just its binary path). `command` is the full argv, where every one of these is legible.
+    """
+    try:
+        out = subprocess.run(
+            ["ps", "-o", "command=", "-p", str(pid)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            cwd="/",
+        ).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""  # unreadable argv accuses no one of being a service — the runtime check stands
+    words = out.split()
+    if len(words) < 2:
+        return ""
+    return "" if words[1].startswith("-") else words[1]
+
+
 def _is_session(pid: int) -> bool:
-    """Whether `pid` is an interactive agent runtime rather than a service or a build."""
+    """Whether `pid` is an interactive agent runtime rather than a service, a viewer, or a build.
+
+    TWO QUESTIONS, NOT ONE, and the second is what this guard was missing. Matching the program
+    alone answers "is this the same executable an interactive session runs?" — and for a Claude host
+    that is true of the pre-warmed spares, their pty hosts, and the FleetView viewer, none of which
+    is the ideal's subject. Measured on the operator host 2026-08-07: nine spares alive at once, and
+    every one of the eight occupancy records in logs/session-contention.jsonl named one of these
+    three shapes, including the parent of the very session that read them. sync-release had declined
+    the fast-forward on eight consecutive beats with no interactive session anywhere in the checkout,
+    which stood 37 commits behind release. "Occupied" had become the modal state — exactly the
+    non-convergence SESSION_RUNTIMES' docstring refuses, arriving through the runtime it was hunting.
+
+    WHY THE CWD CANNOT BE SALVAGED FOR THEM. The tempting repair is to keep counting these processes
+    but ask where their session really works. It does not exist: a runtime process's cwd records the
+    directory the job was LAUNCHED from, and `EnterWorktree` moves the session's shell into an
+    isolated worktree while deliberately leaving the runtime behind — so a background job launched
+    from the live checkout leaves a process sitting in tracked root content for its whole life while
+    working nowhere near it. Walking descendants does not help either: cwd inheritance is transitive,
+    so the subtree inherits the same misleading directory (measured: a `caffeinate -i -t 300` child
+    holding the live checkout). The invocation is the only honest evidence, so it is what is read.
+
+    Nothing here weakens the guard's protective direction. An operator's own `claude` in the live
+    checkout carries no subcommand, keeps its trusted cwd, and still reports the tree occupied.
+    """
     try:
         comm = subprocess.run(
             ["ps", "-o", "comm=", "-p", str(pid)],
@@ -184,7 +240,9 @@ def _is_session(pid: int) -> bool:
     except (OSError, subprocess.TimeoutExpired):
         return False  # fail OPEN, consistent with this consumer's direction
     name = Path(comm.split()[0]).name if comm else ""
-    return any(name == runtime or name.startswith(f"{runtime}-") for runtime in SESSION_RUNTIMES)
+    if not any(name == runtime or name.startswith(f"{runtime}-") for runtime in SESSION_RUNTIMES):
+        return False
+    return _invocation_subcommand(pid) not in NON_INTERACTIVE_SUBCOMMANDS
 
 
 def _is_ignored(root: Path, cwd: Path) -> bool:
@@ -239,6 +297,14 @@ def live_checkout_occupancy(root: Path) -> tuple[int | None, bool]:
     Any one of them holding a live session would report the checkout occupied, which is close to
     the modal state — so the guard would never let the sync organ run again. A true occupant is
     under `root` and under NO linked worktree.
+
+    A RUNTIME PROCESS'S CWD IS NOT ITS WORKSPACE. The containment rule reads a cwd as the tree a
+    process works in, and for a session runtime that is false: the cwd records where the job was
+    LAUNCHED, and `EnterWorktree` moves the session's shell into an isolated worktree while leaving
+    the runtime process behind. So the pre-warmed spares, their pty hosts, and the FleetView viewer
+    sit in tracked root content for their whole lives while working nowhere near it — beside a linked
+    worktree rather than in one, so that exclusion cannot reach them. This is handled where it
+    belongs, in `_is_session`, which see: they are not interactive sessions at all.
 
     IT FAILS OPEN, inverting this module's sibling. `foreign_worktree_occupant` fails closed
     because its consumer *deletes*; a broken probe there can only refuse to destroy. This
