@@ -931,6 +931,13 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
 
     if phase in ("midday", "evening"):
         claims = prev_morning.get("claims") or []
+        # The claims this phase is ABOUT, carried so the receipt below records them in the one shape
+        # every reader already expects. Set here rather than reconstructed at write time: the sidecar
+        # tried to recover them from the scored rows and produced `text` STRINGS, while morning wrote
+        # claim DICTS under the identical key. score_claims() indexes `c["section"]`, so a consumer
+        # that fed a midday receipt back in the way midday itself consumes the morning one would hit
+        # `TypeError: string indices must be integers`. One key, one type, one place that sets it.
+        ctx["claims"] = claims
         probe = render_phase(root, sections, "morning", dict(ctx, claims=claims))
         scored = score_claims(claims, probe)
         ctx["midflight" if phase == "midday" else "scored"] = scored
@@ -996,9 +1003,10 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
         "phase": phase,
         "date": today,
         "generated_at": now.isoformat(timespec="seconds"),
-        # Morning EMITS claims; midday and evening SCORE the morning's. Either way the receipt
-        # should say which claims this phase was about instead of an empty list.
-        "claims": ctx.get("claims") or [s.get("text") for s in (scored_this_phase or []) if isinstance(s, dict)],
+        # Morning EMITS claims; midday and evening SCORE the morning's. Both now set ctx["claims"]
+        # to the same list-of-dicts shape, so this is a plain read — no phase-dependent fallback,
+        # because that fallback is exactly what made one key carry two types.
+        "claims": ctx.get("claims") or [],
         "scored": scored_this_phase or [],
         "sections": [{"key": r.key, "metric": r.metric, "stale": r.stale} for r in rendered],
     }

@@ -65,21 +65,57 @@ def _sidecar(root: Path, phase: str) -> dict:
 # test_diurnal_claims.py's job, and reproducing a real `missed` verdict would mean pinning a live
 # section's metric into this fixture, which couples these cases to whichever sections happen to
 # render a number. Stubbing score_claims isolates the actual defect: emit() persisting the wrong
-# ctx key. The stub returns the exact shape score_claims does (claim fields plus `now`/`verdict`).
+# ctx key.
+#
+# The stub returns the fields these cases READ (`text`/`was`/`now` for the drift line, `verdict` for
+# the split, `section` to look like a claim) plus `acted_when`, which real claims carry. It is
+# deliberately NOT billed as "the exact shape score_claims produces": the real rows are
+# `{**claim, now, verdict}` over whatever build_claims emitted — on the live root that includes `id`
+# and `metric` — so a comment claiming exactness would itself drift the moment build_claims gains a
+# field, which is the same silent-divergence class these cases exist to pin.
 _SCORED = [
-    {"section": "only you", "text": "only you: open_levers falls below 68", "was": 68, "now": 73, "verdict": "missed"},
+    {
+        "section": "only you",
+        "text": "only you: open_levers falls below 68",
+        "was": 68,
+        "now": 73,
+        "verdict": "missed",
+        "acted_when": "metric_decreased",
+    },
     {
         "section": "organ liveness",
         "text": "organ liveness: not_green falls below 3",
         "was": 3,
         "now": 2,
         "verdict": "held",
+        "acted_when": "metric_decreased",
+    },
+]
+
+
+# The claims the stubbed scoring is nominally ABOUT. A bare tmp_path root renders no section with a
+# live metric, so build_claims legitimately emits nothing there — and a morning with no claims makes
+# midday's "which claims was this about?" honestly empty. Stubbing both ends keeps the fixture
+# world coherent: real claims in the morning receipt, a scoring of them at midday.
+_CLAIMS = [
+    {
+        "section": "only you",
+        "text": "only you: open_levers falls below 68",
+        "was": 68,
+        "acted_when": "metric_decreased",
+    },
+    {
+        "section": "organ liveness",
+        "text": "organ liveness: not_green falls below 3",
+        "was": 3,
+        "acted_when": "metric_decreased",
     },
 ]
 
 
 @pytest.fixture()
 def scored(mod, monkeypatch):
+    monkeypatch.setattr(mod, "build_claims", lambda *a, **k: list(_CLAIMS))
     monkeypatch.setattr(mod, "score_claims", lambda claims, rendered: list(_SCORED))
     return _SCORED
 
@@ -121,6 +157,35 @@ def test_the_other_phases_carry_no_drift_key_because_only_midday_derives_one(mod
 
     assert mod.emit(root, "evening", dry_run=False) == 0
     assert "drift" not in _sidecar(root, "evening")
+
+
+def test_claims_is_the_same_TYPE_in_every_phase(mod, root, scored, monkeypatch):
+    """One key, one type. The first fix for the empty-receipt defect introduced this one.
+
+    The sidecar reconstructed midday's claims from the scored rows as `s["text"]` — plain STRINGS —
+    while morning wrote claim DICTS under the identical key (live receipt: `acted_when`, `id`,
+    `metric`, `section`, `text`, `was`). Nothing raised, because a list of strings is a perfectly
+    valid list.
+
+    It is a trap rather than a cosmetic split: `score_claims()` indexes `c["section"]`, and midday
+    consumes the morning receipt through exactly that path. Any consumer that fed a midday receipt
+    back the same way — a backfilled phase, an evening reading a midday prior — gets
+    `TypeError: string indices must be integers`, at a call site whose inputs look fine.
+    """
+    real_claims = [{"section": "s1", "text": "t1", "was": 1, "acted_when": "metric_decreased"}]
+    monkeypatch.setattr(mod, "build_claims", lambda *a, **k: list(real_claims))
+
+    assert mod.emit(root, "morning", dry_run=False) == 0
+    assert mod.emit(root, "midday", dry_run=False) == 0
+    assert mod.emit(root, "evening", dry_run=False) == 0
+
+    types = {}
+    for phase in ("morning", "midday", "evening"):
+        claims = _sidecar(root, phase)["claims"]
+        assert claims, f"{phase} receipt recorded no claims"
+        types[phase] = type(claims[0]).__name__
+
+    assert set(types.values()) == {"dict"}, f"claims type differs by phase: {types}"
 
 
 def test_the_evening_receipt_still_carries_its_own_scoring(mod, root, scored):
