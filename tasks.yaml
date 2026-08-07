@@ -165249,3 +165249,36 @@ tasks:
     conduct_lease_id: 'lease-633-0beb867a37b4362a'
     conduct_generation: 633
   updated: '2026-08-07T14:42:10.684Z'
+- id: 'GH-organvm-limen-1975'
+  title: 'PR estate drain: the merge rung has no reachable gate, and the ledger disagrees with the labels'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1975'
+  context: 'GitHub issue organvm/limen#1975. Live exhaustive measurement (2026-08-07T13:49–14:05Z; 10 owners → 313 repos → 1,298 open PRs, 0 fetch errors) contradicts the standing diagnosis that the estate is starved of lifecycle labels. **Five defects:** 1. **D1 — the sealed 278-item manifest has `pending = 0`.** 249 already labeled (actor `4444J99`, 11:14:48Z today), 18 closed, 11 became `lifecycle:active-human`. Separately, `apply_plan` a'
+  predicate: 'test "$(gh issue view 1975 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1975'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1975'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T14:42:18.236Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-39f3631310da3dece0f2125adf3a244a:634:compatibility'
+    conduct_run_id: 'run-39f3631310da3dece0f2125adf3a244a'
+    conduct_lease_id: 'lease-634-39f3631310da3dec'
+    conduct_generation: 634
+  updated: '2026-08-07T14:42:18.236Z'
