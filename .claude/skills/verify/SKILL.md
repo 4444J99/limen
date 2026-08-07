@@ -86,15 +86,26 @@ option and does not apply to blob shows).
   commit `main` gained as lines you deleted. Both failures print the same thing:
 
   ```bash
-  git diff origin/main -- <files> | grep -E '^-[^-]'  # uncommitted work: catches the clobber
-  git diff origin/main...HEAD    | grep -E '^-[^-]'   # committed work: resolves the merge base
-  git merge-base --is-ancestor origin/main HEAD       # 0 ⟺ up to date or ahead; see below
+  git diff origin/main -- <files> | grep '^-' | grep -v '^--- '  # uncommitted: catches the clobber
+  git diff origin/main...HEAD    | grep '^-' | grep -v '^--- '  # committed: resolves the merge base
+  git merge-base --is-ancestor origin/main HEAD                 # 0 ⟺ up to date or ahead; see below
   ```
 
-  Use `'^-[^-]'` on **both** lines, not the bare `'^-'`. A diff's own `--- a/<file>` header starts
-  with a dash, so `grep '^-'` counts one phantom removal per file touched and can only ever *inflate*
-  the number you are judging — measured on one commit here: 9 lines vs the real 7. It also drops a
-  removed blank line, since that hunk line is a lone `-`. Same pattern, both invocations.
+  **Exclude the header explicitly; do not filter by dash count.** Both obvious one-liners are wrong,
+  in opposite directions, and the tempting one is the dangerous one. Measured on a fixture holding
+  three real removals — an ordinary line, a removed *blank* line, and a removed line that itself
+  begins `--`:
+
+  | pattern | counts | verdict |
+  |---|---|---|
+  | `grep '^-'` | 4 | over by one per file — the `--- a/<file>` header |
+  | `grep -E '^-[^-]'` | **1** | **drops 2 of 3** — the lone `-` and the `--`-prefixed line |
+  | `grep '^-' \| grep -v '^--- '` | 3 | exact |
+
+  Over-counting is merely noisy: you inspect a phantom line and move on. **Under-counting hides the
+  clobber this check exists to find** — which is precisely what `'^-[^-]'` does, because a removed
+  blank line is a lone `-` and a removed `--flag` line renders as `---flag`. A tidier-looking regex
+  bought a silent false negative in a check whose whole job is not to have one.
 
   **`--is-ancestor` nonzero does NOT mean "behind".** It means `origin/main` is not an ancestor of
   `HEAD` — which is **behind OR diverged**, and those want different repairs (fast-forward vs rebase
