@@ -1635,6 +1635,68 @@ def test_stable_agent_host_does_not_nest_or_affect_non_macos(
     )
 
 
+def test_uninherited_lifetime_descriptor_is_absence_not_tampering():
+    """A grandchild keeps the marker env but loses the fd — that must not weld dispatch shut.
+
+    2026-08-07: the beat's dispatch rung fired, stamped, and dispatched nothing for hours.
+    heartbeat-loop.sh holds a live lifetime fd; beat-sensors' Popen closes it; the engine two
+    levels down still read DOMUS_AGENT_HOST_LIFETIME_FD from the inherited environment and
+    raised on the dead descriptor inside the always-working gate's _run_capture — killing EVERY
+    lane at gate 5 before a task was selected.
+    """
+    read_fd, write_fd = os.pipe()
+    os.close(read_fd)
+    os.close(write_fd)  # the descriptor a nested child would NOT have inherited
+    env = {
+        "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+        "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:1:1",
+    }
+
+    assert D._stable_agent_host_lifetime_fds(env) == ()
+
+    with pytest.raises(D.StableAgentHostError, match="lifetime descriptor is invalid"):
+        D._stable_agent_host_lifetime_fds(env, required=True)
+
+
+def test_malformed_lifetime_descriptor_still_raises_unconditionally():
+    env = {
+        "DOMUS_AGENT_HOST_LIFETIME_FD": "not-a-number",
+        "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:1:1",
+    }
+    with pytest.raises(D.StableAgentHostError, match="lifetime descriptor is malformed"):
+        D._stable_agent_host_lifetime_fds(env)
+
+
+def test_live_descriptor_with_drifted_identity_still_raises():
+    """An inherited-but-mismatched identity is real drift — the EBADF relaxation must not cover it."""
+    read_fd, write_fd = os.pipe()
+    try:
+        env = {
+            "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+            "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:999999:999999",
+        }
+        with pytest.raises(D.StableAgentHostError, match="lifetime identity is invalid"):
+            D._stable_agent_host_lifetime_fds(env)
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
+
+
+def test_live_descriptor_with_matching_identity_is_forwarded():
+    read_fd, write_fd = os.pipe()
+    try:
+        lifetime = os.fstat(write_fd)
+        env = {
+            "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+            "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}",
+        }
+        assert D._stable_agent_host_lifetime_fds(env) == (write_fd,)
+        assert D._stable_agent_host_lifetime_fds(env, required=True) == (write_fd,)
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
+
+
 def test_stable_agent_host_rejects_reused_lifetime_descriptor(tmp_path: Path):
     host = tmp_path / "DomusAgentHost"
     _write_valid_stable_agent_host(host)
