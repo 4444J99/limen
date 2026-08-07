@@ -165,6 +165,58 @@ if ! git diff --quiet -- tasks.yaml 2>/dev/null \
   exit 0
 fi
 
+# ── SESSION-CONTENTION guard (IF-SESSION-NON-CONTENTION) ────────────────────────────────────────
+# The ideal: "the fleet never rebases or cleans the tree a live session is working in." This organ
+# is the one remaining path that could — dispatch already preserves-and-retries rather than reusing
+# an existing worktree, and reclaim-worktrees.py is liveness-gated on its delete path. Only the LIVE
+# CHECKOUT was unguarded, and it is the tree a session is most likely to be sitting in by mistake.
+#
+# Probed ONCE, consulted at each destructive site. The probe reports an interactive agent session
+# whose cwd is in TRACKED ground of the live checkout, excluding nested worktrees (isolated by
+# design), gitignored runtime, and this process's own lineage. It FAILS OPEN: an unavailable probe
+# yields an empty OCCUPANT and every valve behaves exactly as before, honouring this script's own
+# capitalised contract ("It FAILS OPEN, always").
+#
+# PRECEDENCE, stated once: a clean FAST-FORWARD is never blocked. IF-LIVE-TREE-COHERENCE wins there,
+# because a silently-never-converging sync is a failure this fleet has already paid for (120 commits
+# behind, six days stale, nothing read the log). Only the DESTRUCTIVE valves — unpark, reset --hard,
+# stash push — defer to a live session, because those are the ones that can take work away.
+OCCUPANT=""
+if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
+  # CAPTURE AND EXTRACT ARE SEPARATE STEPS, and that is not style. `probe` exits 1 when the tree
+  # is OCCUPIED — that is its verdict, not a failure — and this file runs under `set -o pipefail`
+  # (top), which propagates that 1 out of the pipeline. Written as
+  #     OCCUPANT="$(probe | sed ...)" || OCCUPANT=""
+  # the fallback therefore fired on exactly the branch that had found something, blanking the pid
+  # it had just extracted: the trace reads `OCCUPANT=34598` followed immediately by `OCCUPANT=`.
+  # The guard could not arm in either direction — free left it empty, occupied ALSO left it empty
+  # — so it shipped inert and every gate stayed green. A defensive `||` became an eraser.
+  # `|| true` absorbs the intended non-zero; the sed then reads a variable, where no exit status
+  # of the probe's can reach it. The TEXT is the verdict here, never the status.
+  _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
+  OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
+  # A BLIND PROBE MUST NOT BE A QUIET ONE. The capture above swallows the probe's stdout, so on a
+  # host where the probe cannot run — package unimportable, lsof missing — the guard disarms and
+  # this beat says nothing whatsoever about it. Fail-open is correct and unchanged (OCCUPANT stays
+  # empty either way); being unable to tell the two apart in the log is not, and is the same
+  # "silent no" this organ's header exists to prevent. One line, only on the blind path.
+  case "$_probe_out" in
+    *"probe UNAVAILABLE"*)
+      echo "sync-release: session-contention probe UNAVAILABLE — guard DISARMED, proceeding fail-open (IF-SESSION-NON-CONTENTION unverified this beat)"
+      ;;
+  esac
+fi
+
+# Returns 0 (true) when a live session holds the tree, after logging and recording the incident.
+# Recording is best-effort by construction: this runs inside the beat and must never stop it.
+_contended() {
+  [ -n "$OCCUPANT" ] || return 1
+  echo "sync-release: live session (pid $OCCUPANT) occupies $ROOT — declining $1 (IF-SESSION-NON-CONTENTION)"
+  python3 "$ROOT/scripts/session-contention.py" record --root "$ROOT" --pid "$OCCUPANT" --action "$1" \
+    >/dev/null 2>&1 || true
+  return 0
+}
+
 # ── UNPARK valve — the live checkout must REST ON THE RELEASE BRANCH. A session that leaves HEAD
 # parked on a work branch strands the daemon on stale code with no way home (observed
 # 2026-06-29 → 07-04: five days pinned to a jules-capfill branch, 65 behind release, every
@@ -178,6 +230,9 @@ fi
 # away would lose it. Detached HEAD is left alone.
 CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
 if [ -n "$CUR" ] && [ "$CUR" != "$BRANCH" ]; then
+  # Unpark commits the session's dirt, pushes it, and switches HEAD out from under them. Every
+  # step of that is a rewrite of the tree they are working in.
+  _contended "skipped-unpark" && exit 0
   git fetch --quiet origin "$CUR" 2>/dev/null || true
   dirt="$( { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } | grep -vxF 'tasks.yaml' | sort -u)"
   if [ -n "$dirt" ]; then
@@ -264,7 +319,7 @@ EOF
     reconcile_reason="local commit(s) touch ONLY regenerable receipts"
   fi
   CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
-  if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ]; then
+  if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ] && ! _contended "skipped-reset-hard"; then
     # reset --hard leaves UNTRACKED runtime (logs/, usage.json) untouched; the valve above proved no
     # genuine committed work is lost. The clean tasks.yaml cache follows the release projection.
     if git reset --hard "origin/$BRANCH" --quiet 2>/dev/null; then
@@ -283,6 +338,10 @@ CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
 # guard above ensures tasks.yaml is not among them; the released projection wins.
 stashed=0
 if ! git diff --quiet 2>/dev/null; then
+  # A dirty tree under a live session is that session's UNCOMMITTED WORK. Stashing it is exactly
+  # the thing the ideal forbids — and worse than a reset, because the stack is shared across every
+  # worktree on this host, so the session cannot even safely pop it back.
+  _contended "skipped-stash-push" && exit 0
   git stash push --quiet 2>/dev/null && stashed=1 || true
 fi
 

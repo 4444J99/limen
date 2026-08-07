@@ -154,12 +154,28 @@ ideals:
       An interactive session's cwd is an isolated, non-recycled worktree; the fleet never
       rebases or cleans the tree a live session is working in.
     owner: "Claude (worktree allocation / harness convention)"
-    probe: null
-    probe_absent_reason: >
-      Contention is an event, not a state: it is only observable while a session holds a tree
-      the daemon then rewrites. Nothing on disk afterwards distinguishes "was rebased under a
-      live session" from "was rebased." The measurable form is a recorded incident count, which
-      needs the daemon to emit a receipt when it rewrites an occupied worktree.
+    # The vacuum's reason was right — "contention is an event, not a state ... the measurable form
+    # is a recorded incident count, which needs the daemon to emit a receipt when it rewrites an
+    # occupied worktree" — and it named its own closure. session-contention.py is that receipt.
+    #
+    # But building it found the row's STATED distance stale. Of the three paths that can rewrite a
+    # tree, two were already guarded: the dispatch allocator preserves an existing worktree and
+    # retries under a fresh suffix (so the #276 mechanism this row has cited since 2026 can no
+    # longer recur), and reclaim-worktrees.py is liveness-gated on its delete path. Only the LIVE
+    # CHECKOUT was exposed, via sync-release.sh. Nobody re-derived the distance, so the row read
+    # OPEN long after two thirds of it had closed — which is the argument for probes, made against
+    # this ledger by this ledger.
+    #
+    # Distance sums EXPOSURE (paths that could rewrite unguarded — zero means it cannot happen)
+    # and INCIDENTS (contention that did). `host`, not `repo`, because incidents recorded on the
+    # operator host but not yet shipped must count: a probe blind to them would announce the ideal
+    # achieved at exactly the moment it was being violated.
+    probe:
+      command: "python3 scripts/check-session-contention.py"
+      derives: "unguarded tree-rewriting paths plus recorded contention incidents"
+      environment: host
+      extract: "contention distance: ([0-9]+)"
+      ideal_value: 0
 
   IF-SENSOR-REGISTRY:
     ideal: >

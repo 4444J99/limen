@@ -223,6 +223,34 @@ sensors:
         severity: advisory
         escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
 
+  session-contention-ship:
+    section: "heartbeat"
+    title: "promote recorded session-contention incidents into the committed ledger"
+    gate: LIMEN_SESSION_CONTENTION_SHIP
+    default: "1"
+    source: [heartbeat]
+    owner: substrate
+    # The durability half of IF-SESSION-NON-CONTENTION's receipt. sync-release.sh records an
+    # incident LOCALLY the moment it declines to rewrite an occupied tree — that write must be
+    # instant and fail-open, because it happens inside the beat and must never be able to stop it.
+    # Promotion to the committed ledger is a git operation: slow, fallible, and safely retried.
+    # Splitting them is also what keeps the recorder from fighting the daemon for the very tree it
+    # is guarding — sync-release.sh's whole job is to keep the live checkout clean, so it cannot be
+    # the thing that commits into it.
+    #
+    # A no-op when nothing was recorded, which is the expected steady state: the ideal is that this
+    # rung never has anything to ship.
+    cadence:
+      env: LIMEN_BEAT_SESSION_CONTENTION
+      default: 12
+    timeout:
+      env: LIMEN_SESSION_CONTENTION_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/session-contention.py ship"
+        severity: advisory
+        escalation: "a session-contention incident was recorded but could not be promoted to the committed ledger — the fleet rewrote a tree a live session was working in and the evidence is still local-only (logs/session-contention.jsonl); IF-SESSION-NON-CONTENTION counts unshipped incidents, so its probe already reports the distance"
+
   github-publish-sweep:
     section: "heartbeat"
     title: "keep every publish candidate's pre-publication sweep receipt green and fresh"
