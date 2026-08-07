@@ -135054,26 +135054,37 @@ tasks:
   horizon: 'present'
   value_case: 'Restore dispatch continuity for the starved gemini lane'
   owner_surface: 'organvm/limen'
-- id: ASK-lane-starved-opencode
+- id: 'ASK-lane-starved-opencode'
   title: 'Lane ''opencode'' starved: silent >42.4h with open queue + ok budget'
-  type: ops
-  target_agent: agy
-  priority: high
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'needs_human'
   labels:
-  - dispatch-continuity
-  - needs-human
+  - 'dispatch-continuity'
+  - 'needs-human'
   urls: []
-  context: "Lane 'opencode' has been silent for 42.4h while 137 open task(s) await\
-    \ it and its budget is ok. This matches the Jul 3\u20135 starvation signature:\
-    \ daemon alive, queue non-empty, budget available, zero dispatches for an extended\
-    \ period (window: 24h). Likely cause: routing bypass, gate mis-config, or lane\
-    \ not being selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py."
+  context: 'Lane ''opencode'' has been silent for 467.3h while 106 open task(s) await it and its budget is ok. This matches the Jul 3–5 starvation signature: daemon alive, queue non-empty, budget available, zero dispatches for an extended period (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T11:53:57.061166Z'
-  dispatch_log: []
+  updated: '2026-08-07T13:24:54.906Z'
+  dispatch_log:
+  - timestamp: '2026-08-07T13:24:54.906Z'
+    agent: 'codex'
+    session_id: 'dispatch-continuity-starved-opencode'
+    logical_agent: 'dispatch-continuity'
+    logical_session_id: 'starved-opencode'
+    status: 'needs_human'
+    output: 'task.mutate applied through the conduct keeper'
+    conduct_event_id: 'conduct:run-29c2c02c94fd30b21e30e3f41bd210ed:630:compatibility'
+    conduct_run_id: 'run-29c2c02c94fd30b21e30e3f41bd210ed'
+    conduct_lease_id: 'lease-630-29c2c02c94fd30b2'
+    conduct_generation: 630
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Restore dispatch continuity for the starved opencode lane'
+  owner_surface: 'organvm/limen'
 - id: GH-organvm-limen-784
   title: 'reap acceptance: pending queue isn''t durable; gh 800-PR window flickers
     proof-2 coverage'
