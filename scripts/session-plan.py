@@ -39,13 +39,34 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import os
 import re
 import shlex
 import subprocess
 import sys
 from pathlib import Path
 
+# ROOT is bound to __file__, NOT to $LIMEN_ROOT, and that is deliberate: this organ and the
+# `session-phase` gate built on it must judge the tree they were invoked from. A worktree runs
+# verify-scoped with LIMEN_ROOT still exported to the live checkout (scripts/drain.sh:11,
+# scripts/cells.sh:324 both set it), so honouring the variable would gate the WRONG tree —
+# green on the live checkout while the worktree's own plan is malformed.
+#
+# The trap is that ignoring it silently is indistinguishable from agreeing with it. A probe run
+# as `LIMEN_ROOT=/some/copy check-session-phase.py` returned `PASS — 15 plans`, byte-identical to
+# the unmutated run, because the copy was never opened — the estate's own "I found nothing" and
+# "I read nothing" collision. So the override is refused OUT LOUD rather than obeyed or ignored.
 ROOT = Path(__file__).resolve().parent.parent
+
+_env_root = os.environ.get("LIMEN_ROOT")
+if _env_root and Path(_env_root).resolve() != ROOT:
+    print(
+        f"session-plan: NOTE — $LIMEN_ROOT={_env_root} is set but NOT used; this organ and the "
+        f"session-phase gate always judge their own tree ({ROOT}). Run the copy's own checkout of "
+        "this script to inspect a different tree.",
+        file=sys.stderr,
+    )
+
 PLANS = ROOT / "docs" / "plans"
 BASELINE = ROOT / "institutio" / "governance" / "session-plan-baseline.txt"
 
