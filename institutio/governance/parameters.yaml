@@ -4399,6 +4399,30 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Which ref `heal-board.py --canonical` reads the keeper's published board from. Read from the publication ref rather than over HTTP because that ref is the projection contract (the keeper publishes only through it) and a several-MB fetch has no place on a beat rung. An unreadable ref (shallow clone, unfetched remote) makes the rung a no-op rather than a guess; a keeper that has published past this head simply fails the compare-and-swap and the next pass re-derives."
+  LIMEN_RUNG_FAIL_LINES:
+    default: "15"              # how much of a FAILING rung's real output the beat log keeps
+    env: LIMEN_RUNG_FAIL_LINES
+    self_update: none
+    owner: limen-daemon
+    note: "Lines of a failed rung's captured output that heartbeat-loop.sh's beat_run helper prints under its `── RUNG FAIL [label] ──` banner. Replaces the estate's old `2>&1 | tail -1` idiom, which destroyed the exit status (a pipeline reports TAIL's, ~always 0 — so the trailing `|| true` was decorative and nothing could tell a failure from a clean run), destroyed the diagnostic (tail -1 of a Python traceback is the last line of the exception's own repr; for an HTTP error carrying a JSON body that is a bare `}`), and recorded nothing. Measured 2026-08-07: the canonical-heal rung failed on EVERY beat with `conduct broker rejected request (500): Exceeded allowed rows written in Durable Objects free tier`, emitting 61 lines; the beat log received `}` and the string appeared in NO log file estate-wide. 15 is enough to carry a traceback's frames plus the exception body while keeping a noisy organ from flooding the log. The happy path is unchanged at one line. Gate: check-beat-diagnostics."
+  LIMEN_BEAT_RUNG_LOG:
+    default: "$LIMEN_ROOT/logs/beat-rungs.jsonl"   # the per-rung outcome ledger
+    env: LIMEN_BEAT_RUNG_LOG
+    self_update: none
+    owner: limen-daemon
+    note: "Where beat_run appends one `{ts,rung,exit}` record per rung per beat. This is the READER the old idiom lacked: scripts/enactment-audit.py folds the tail of this file into per-rung consecutive-failure streaks, so 'this rung has failed N beats running' becomes a RED rung instead of a silence. Labels are stable per rung (script basename plus a disambiguating flag, e.g. heal-board vs heal-board-canonical) because they are the streak buckets. Append-only and bounded — see LIMEN_BEAT_RUNG_LOG_MAX."
+  LIMEN_BEAT_RUNG_LOG_MAX:
+    default: "20000"           # trim threshold in records (~5 beats' worth of headroom over KEEP)
+    env: LIMEN_BEAT_RUNG_LOG_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Record count above which heartbeat-loop.sh's trim_beat_rung_log() truncates the outcome ledger to LIMEN_BEAT_RUNG_LOG_KEEP. ~65 rungs fire per full beat, so 20000 is a few hundred beats — far more history than the audit's streak window reads, and the trim is one `wc -l` per beat."
+  LIMEN_BEAT_RUNG_LOG_KEEP:
+    default: "4000"            # records retained after a trim
+    env: LIMEN_BEAT_RUNG_LOG_KEEP
+    self_update: none
+    owner: limen-daemon
+    note: "Records kept when the outcome ledger is trimmed. Must stay comfortably above the audit's streak window (a streak is at most a few beats × ~65 rungs), so a trim can never manufacture a fake 'no failures' history by discarding the evidence of an ongoing one."
   LIMEN_TABVLARIVS:
     default: "1"               # ON — the record-keeper drains the ticket inbox onto the board each beat
     env: LIMEN_TABVLARIVS
