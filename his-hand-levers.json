@@ -1051,6 +1051,44 @@
       "note": "No collision with L-DEPENDABOT-DELIVERY-ARM (#1947): this rung applies the same fail-closed lifecycle:blocked the drain used; the delivery upgrade (arming autonomous merges) stays that separate lever. Human-authored arrivals are counted and surfaced by the rung, never auto-typed."
     },
     {
+      "id": "L-MCP-BOOT-HEAL-ARM",
+      "label": "Arm the local-MCP-boot heal effector — one paste sets LIMEN_MCP_BOOT_HEAL=1. The 0b2 beat sensor already reports every configured stdio/http MCP server that fails to boot across all seven agent CLIs; arming lets it CURE the two failure modes it covers (a dropped agent entry, re-landed via `ianva install-configs --apply`, and a corrupt npx cache, cleared and re-probed once) instead of only naming them in the beat log.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "the local-MCP-boot invariant gains its effector — a dropped or cache-crashed server self-heals on the next beat rather than sitting red until someone reads the log. Today the sensor is a signal with no consumer: it reports failures and nothing acts on them.",
+      "source_task": "/verify observation while closing the cadence-guard arc (#1990). Measured 2026-08-07: 4 of 16 configured servers fail to boot (codex/conductor, codex/voice-scorer, claude/conductor, claude/voice-scorer). IMPORTANT and deliberate: arming heals 0 of those 4 — their root cause is an unpinned `mcp` major (2.0.0) that removed Server.list_tools inside the per-capability venvs, which is neither a dropped entry nor an npx cache. That defect is owned separately by issue #2045, which also carries the finding that the sensor's escalation text prescribes a cure not covering its own most common failure. This lever is about the failure modes the effector DOES cover, so the next occurrence of those self-heals.",
+      "gate": "auto-writing agent CLI config files is an authorization, not a default (the parameters registry's own words, mirroring LIMEN_LAUNCHAGENT_HEAL). Persistence-arming — writing LIMEN_*=1 into ~/.limen.env, what the beat actually reads — is classifier-denied to the session, and an agent arming its own config writer is the self-modification boundary. Only you can persist it.",
+      "steps": [
+        "Prereq: read one beat's 0b2 block (scripts/mcp-server-boot.py runs dry every beat and mutates nothing). Rows are boots/reachable, or a failure with its reason. Confirm the failures you see are the kind the heal covers — a server MISSING from a config (dropped entry) or an npx crash — and not the #2045 venv-import class, which arming will not touch.",
+        "Arm: echo 'LIMEN_MCP_BOOT_HEAL=1' >> ~/.limen.env",
+        "Per the arming contract, flip fleet_runtime: \"1\" on LIMEN_MCP_BOOT_HEAL in institutio/governance/parameters.yaml in the same change, so enactment-audit locks it live.",
+        "Done when: a beat shows the 0b2 step re-probing after a heal attempt, and python3 scripts/armed-valve-audit.py reports LIMEN_MCP_BOOT_HEAL as ARMED rather than PARKED."
+      ],
+      "issue": 2045,
+      "status": "open",
+      "added": "2026-08-07",
+      "note": "Scoped strictly to the heal effector. The estate-wide predicate (scripts/verify-mcp-estate.sh) and the ianva UPSTREAMS set are separate concerns — an empty upstream registry is a registry decision, not a probe result, and the effector never guesses it."
+    },
+    {
+      "id": "L-DECORUM-APPLY-ARM",
+      "label": "Arm the DECORVM professionalization effector — one paste sets LIMEN_DECORUM_APPLY=1. The keeper already federates the estate's quality organs into one verdict every cadence and reports any public egg-face; arming lets it file one bounded, idempotent board ticket per finding through the tabularius broker instead of planning them forever in dry-run.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "the estate's public-surface defects become tracked work instead of a line in a log. Unarmed, DECORVM is a beat-wired organ in permanent dry-run — the exact 'the deliverable IS the live effect, and the organ never produces it' shape that armed-valve-audit exists to surface.",
+      "source_task": "/verify observation while closing the cadence-guard arc (#1990). The parameters registry ships this valve DARK with an explicit prerequisite — 'observe the DRY plan in the beat log first' — and that observation is now DONE and recorded in issue #2046. Run 2026-08-07: 3 findings, 2 at/above the 'high' floor, effector would file 3 tickets (0 already on board) against a cap of 8. Both high rows are real live defects: one public page renders body copy and CTAs near-white on near-white while its dynamic content 404s, another ships a ~9.6MB hero PNG with clipped colour bands and CORS/SRI failures on its animation scripts.",
+      "gate": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — and beyond the mechanism, turning on fleet-wide auto-filing is an autonomy decision about whether the estate opens its own work, which is yours by definition. Only you can persist it.",
+      "steps": [
+        "Prereq (already satisfied; re-check if you want a second data point): run python3 scripts/decorum-keeper.py with no flags — it is dry by default and mutates nothing. Confirm the 'effector: DRY-RUN — would file N ticket(s)' line is small, that the ids are the stable DECORUM-<lane>-<surface> form, and that the findings are genuine rather than probe noise.",
+        "Arm: echo 'LIMEN_DECORUM_APPLY=1' >> ~/.limen.env",
+        "Per the arming contract, flip fleet_runtime: \"1\" on LIMEN_DECORUM_APPLY in institutio/governance/parameters.yaml in the same change, so enactment-audit locks it live.",
+        "Done when: the board carries DECORUM-* tickets, a re-run reports them as 'already on board' rather than re-filing (proving the create-only upsert), and python3 scripts/armed-valve-audit.py reports LIMEN_DECORUM_APPLY as ARMED rather than PARKED."
+      ],
+      "issue": 2046,
+      "status": "open",
+      "added": "2026-08-07",
+      "note": "Deliberately scoped to the board-ticket effector only. The sibling valve LIMEN_DECORUM_ISSUES_APPLY mirrors findings to public decorum-labelled GitHub issues and is a strictly larger authorization — opening public issues is not the same step as filing an internal board task — so it stays dark and out of scope here. Filing a ticket is the only mutation either way: the organ never sends and never wipes, and the cap LIMEN_DECORUM_MAX (default 8) bounds board churn while findings drain over successive beats."
+    },
+    {
       "id": "L-CLOUDFLARE-DO-QUOTA",
       "label": "The conduct keeper's storage plan is SPENT — every relay write is refused with `500 {\"detail\": \"Exceeded allowed rows written in Durable Objects free tier.\"}`. This is the live blocker on the requested 100 tasks/day: the keeper is the only sanctioned board writer, so while its writes are refused the board cannot advance at all. Raise the plan (Cloudflare Workers Paid, $5/mo, lifts the SQLite-backed Durable Object rows-written ceiling) or accept a board that resumes only at each daily quota reset.",
       "owner": "yours",
