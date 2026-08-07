@@ -3,6 +3,13 @@
 Issue: #1975
 PR: (pending)
 
+> **Framing superseded by `2026-08-07-pr-estate-drain-full-fix-v2.md` (#1981).** Findings D1, D3,
+> D4 and every measurement below stand. **D2 is corrected there** — its code facts were read from a
+> checkout 29 commits behind `origin/main`, which carries estate-manifest v2 (#1944): a
+> `lifecycle:delivery` writer *does* exist, enacted by nothing. D5 stands for draining, is
+> superseded for typing. This document is left exactly as shipped; the correction is not an
+> overwrite.
+
 ## Context
 
 A 2026-08-07 session concluded that the estate's 1,293 open PRs were not draining because the
