@@ -24,6 +24,13 @@ SCRIPT = ROOT / "scripts" / "check-board-partition.py"
 BASELINE = ROOT / "institutio" / "governance" / "board-partition-baseline.txt"
 
 
+# A verification unit with no deadline is not a verification unit. Without `timeout=` a wedged CLI
+# hangs the whole suite instead of failing one test, and a hang reports as "still running", never as
+# red — the same shape as a check that cannot fail. 60s is far above the real runtime (these parse a
+# tmp_path board of a few rows) and far below any CI patience.
+_RUN_TIMEOUT_SECONDS = 60
+
+
 def _run(board: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
@@ -31,6 +38,7 @@ def _run(board: Path, *args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         env={"PATH": "/usr/bin:/bin", "LIMEN_TASKS": str(board), "HOME": str(Path.home())},
         cwd=str(ROOT),
+        timeout=_RUN_TIMEOUT_SECONDS,
     )
 
 
@@ -163,9 +171,11 @@ def test_the_shipped_baseline_is_parseable_and_carries_no_titles() -> None:
 # That un-redirectable write target is why the invariant went untested in the first place.
 
 
-def _run_update(board: Path, baseline: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def _run_with_baseline(board: Path, baseline: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    """Deliberately NOT named `_run`: that name is taken above and Python resolves it at call time,
+    so a second `_run` here would silently hijack all nine of the earlier call sites."""
     return subprocess.run(
-        [sys.executable, str(SCRIPT), "--update", *args],
+        [sys.executable, str(SCRIPT), *args],
         capture_output=True,
         text=True,
         env={
@@ -175,7 +185,12 @@ def _run_update(board: Path, baseline: Path, *args: str) -> subprocess.Completed
             "HOME": str(Path.home()),
         },
         cwd=str(ROOT),
+        timeout=_RUN_TIMEOUT_SECONDS,
     )
+
+
+def _run_update(board: Path, baseline: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return _run_with_baseline(board, baseline, "--update", *args)
 
 
 def _client_row(task_id: str) -> dict[str, object]:
@@ -239,6 +254,63 @@ def test_a_refused_growth_does_not_quietly_bank_the_shrink(tmp_path: Path) -> No
     assert result.returncode == 1
     assert "would have been dropped" in result.stdout
     assert baseline.read_text() == original
+
+
+def test_accepting_disclosures_without_update_is_refused_not_ignored(tmp_path: Path) -> None:
+    """The false green. Parsed alone the flag accepted nothing and could still exit 0.
+
+    That is the worst possible pairing: the riskiest flag in this script returning SUCCESS for a
+    decision it never recorded. A caller re-pinning a scrub would read the zero and believe the
+    disclosure was banked. argparse's own error path exits 2 and writes to stderr.
+    """
+    baseline = tmp_path / "baseline.txt"
+    baseline.write_text("# empty\n")
+    board = _board(tmp_path, [{"id": "MINE-3", "title": "t", "repo": "organvm/limen"}])
+
+    result = _run_with_baseline(board, baseline, "--accept-new-disclosures")
+
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert "only means anything with --update" in result.stderr
+    assert baseline.read_text() == "# empty\n"
+
+
+def test_a_failed_baseline_write_leaves_the_previous_baseline_intact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Atomicity, proven where it matters: the ratchet FLOOR must never be readable half-written.
+
+    `Path.write_text` truncated the target before writing, so an interrupted re-pin could leave an
+    empty or partial floor — which either reddens every published row as "new" (a gate nobody can
+    clear) or silently accepts whatever the truncation dropped. The write now lands via a temp file
+    plus `os.replace`; this simulates the crash at the rename and asserts the old bytes survive.
+
+    This one test imports the module rather than driving the CLI — the exception has to be injected
+    mid-write, which no subprocess can do. `monkeypatch` is not optional here: `module.os` IS the
+    stdlib `os`, so a bare assignment would break `os.replace` for every later test in the session.
+    """
+    import importlib.util
+
+    baseline = tmp_path / "baseline.txt"
+    original = "row board-partition: KEEP-1 is attributed to partner lane 4444J99/victoroff-os\n"
+    baseline.write_text(original)
+
+    monkeypatch.setenv("LIMEN_BOARD_PARTITION_BASELINE", str(baseline))
+    spec = importlib.util.spec_from_file_location("_bp_atomic", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module.BASELINE == baseline
+
+    def _boom(src: object, dst: object) -> None:
+        raise OSError("simulated crash between write and rename")
+
+    monkeypatch.setattr(module.os, "replace", _boom)
+    with pytest.raises(OSError):
+        module._write_baseline(["row board-partition: NEW-1 is attributed to partner lane x/y"])
+
+    # The floor is exactly what it was, and no temp file is left lying beside it.
+    assert baseline.read_text() == original
+    assert not list(tmp_path.glob(".*.tmp"))
 
 
 def test_the_shipped_baseline_path_is_still_the_default(tmp_path: Path) -> None:
