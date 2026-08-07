@@ -21,7 +21,14 @@
 # passing after the real line regressed, which is the whole failure mode being guarded here.
 #
 # HERMETIC: a fake `launchctl` on PATH. No launchd, no real jobs, nothing kickstarted.
-set -u
+#
+# `set -uo pipefail`, NOT `set -euo pipefail`. Two reasons, and the second is specific to this file:
+# it accumulates failures and reports every probe, so `-e` would abort at the first one and hide the
+# rest; and the CONDITION extraction below is a `grep | head | cut | sed` pipeline whose `head` can
+# SIGPIPE the `grep`, which under `-e` would kill the script before a single probe ran. Without `-e`
+# the assignment completes regardless, so `pipefail` costs nothing and still catches a genuinely
+# broken stage.
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 LOOP="$ROOT/scripts/heartbeat-loop.sh"
@@ -49,7 +56,7 @@ chmod +x "$TMP/launchctl"
 export PATH="$TMP:$PATH"
 
 # Pull the real condition out of the shipped script. One line, matched by its distinctive head.
-CONDITION="$(grep -n 'if launchctl list' "$LOOP" | head -1 | cut -d: -f2- | sed 's/^ *//; s/^if //; s/; then$//')"
+CONDITION="$(grep -n 'if launchctl list' "$LOOP" | head -n 1 | cut -d: -f2- | sed 's/^[[:space:]]*//; s/^if //; s/; then$//')"
 if [ -z "$CONDITION" ]; then
   fail "could not extract the guard condition from heartbeat-loop.sh (did the line change shape?)"
   printf '\nheartbeat-kickstart-guard: %d failure(s)\n' "$fails"
