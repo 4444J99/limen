@@ -44,8 +44,14 @@ from pathlib import Path
 
 import yaml
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import _root  # noqa: E402  — sibling helper, importable only after the sys.path insert above
+
 SCRIPT_ROOT = Path(__file__).resolve().parent.parent  # the checkout THIS script lives in
 LIVE_ROOT = Path(os.environ.get("LIMEN_ROOT", str(SCRIPT_ROOT)))
+LIMEN_ROOT_EXPLICIT = bool(os.environ.get("LIMEN_ROOT"))
 HOME = Path(os.path.expanduser("~"))
 
 GREEN, RED, SKIP, INFO = "GREEN", "RED", "SKIP", "INFO"
@@ -150,6 +156,54 @@ def parse_etime(etime: str) -> int | None:
     return days * 86400 + h * 3600 + m * 60 + s
 
 
+def live_checkout() -> Path | None:
+    """The checkout the RUNNING daemon was launched from, or None if it cannot be resolved.
+
+    THE DEFECT THIS EXISTS FOR. `heartbeat_pid()` is `pgrep -f heartbeat-loop.sh` — host-GLOBAL, so
+    it finds the one real daemon no matter which checkout the audit runs from. The wiring mtime was
+    read from `LIVE_ROOT`, which defaults to the checkout this script lives in — per-WORKTREE. Git
+    stamps a linked worktree's files at checkout time, which is essentially always AFTER the daemon
+    started, so comparing the two fabricated a RED every single time this ran from a worktree.
+
+    Measured 2026-08-07 from a session worktree: `daemon pid 59319 started 11973s ago but its wiring
+    changed 984s more recently — running stale env`. The live checkout's copy was stamped 14:42:29,
+    the daemon started at 15:20:25, and the two files were byte-identical — the daemon was carrying
+    its wiring correctly. 984s is exactly the worktree's checkout time minus the daemon's start.
+
+    A false RED is not the harmless direction of this error. This organ is what `.claude/skills/
+    verify` tells a session to run to decide whether a merged loop-body edit is live, and sessions
+    work in worktrees by charter — so the reading was wrong precisely in the place it is most used,
+    and it says "kickstart the daemon" while handing over no way to tell a real stale daemon from
+    the artifact of asking from the wrong tree.
+
+    Explicit `LIMEN_ROOT` is returned untouched: `_root.resolve()` states the rule this follows —
+    explicit configuration is never silently overridden. Only the DEFAULTED root gets corrected.
+    """
+    if LIMEN_ROOT_EXPLICIT:
+        return LIVE_ROOT
+    if not _root.is_worktree(SCRIPT_ROOT):
+        return SCRIPT_ROOT
+    # A linked worktree's `.git` file points at `<primary>/.git/worktrees/<name>`; `--git-common-dir`
+    # resolves that to `<primary>/.git`, whose parent is the checkout the daemon actually runs from.
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(SCRIPT_ROOT), "rev-parse", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        ).stdout.strip()
+    except Exception:
+        return None
+    if not out:
+        return None
+    common = Path(out)
+    if not common.is_absolute():
+        common = SCRIPT_ROOT / common
+    primary = common.resolve().parent
+    # Never trust the derivation blindly — a bare/relocated git dir has no checkout beside it.
+    return primary if (primary / "scripts" / "heartbeat-loop.sh").is_file() else None
+
+
 def heartbeat_pid() -> int | None:
     try:
         out = subprocess.run(["pgrep", "-f", "heartbeat-loop.sh"], capture_output=True, text=True, timeout=5).stdout
@@ -211,9 +265,27 @@ def liveness_rung(params: dict) -> list[dict]:
                 "detail": f"heartbeat pid {pid} found but start time unreadable (rung N/A)",
             }
         ]
+    # The daemon is host-global (pgrep); its wiring must be read from the checkout it was launched
+    # from, never from whichever worktree happens to be asking. See live_checkout() for the false
+    # RED this prevents. Unresolvable → SKIP, never RED: a fabricated RED is the defect being
+    # removed here, so no path added by this fix may be able to produce one.
+    root = live_checkout()
+    if root is None:
+        return [
+            {
+                "rung": "liveness",
+                "name": "heartbeat-daemon",
+                "status": SKIP,
+                "detail": (
+                    f"heartbeat pid {pid} is running but its checkout could not be resolved from "
+                    f"this worktree ({SCRIPT_ROOT}) — set LIMEN_ROOT to the live checkout to audit "
+                    f"staleness from here (rung N/A)"
+                ),
+            }
+        ]
     # Only files that ACTUALLY assign a fleet flag are its wiring — a file the beat churns
     # (~/.limen.env, re-hydrated every beat) without setting the flag is not a wiring change.
-    wiring_files = [LIVE_ROOT / "scripts" / "heartbeat-loop.sh", HOME / ".limen.env"]
+    wiring_files = [root / "scripts" / "heartbeat-loop.sh", HOME / ".limen.env"]
     newest = 0.0
     newest_src = None
     for f in wiring_files:

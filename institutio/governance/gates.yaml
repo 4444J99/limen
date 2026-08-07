@@ -334,10 +334,10 @@ gates:
     owner: verify
     note: "CI fail-closed contract (issue #1048): --require-base hard-fails an unresolvable merge-base or empty diff, PR deploy-trigger diffs escalate to the whole matrix, merge-group integration runs scoped current-base seams, and ci_job-covered gates defer only on the PR path."
   enactment-test:
-    command: "bash scripts/tests/enactment-audit.test.sh"
-    paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
+    command: "bash scripts/tests/enactment-audit.test.sh && bash scripts/run-pytest-hermetic.sh cli/tests/test_enactment_audit_root.py -q"
+    paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh", "cli/tests/test_enactment_audit_root.py", "scripts/run-pytest-hermetic.sh"]
     owner: enactment
-    note: "Declared-ON fleet flags are actually wired live, not just merged."
+    note: "Declared-ON fleet flags are actually wired live, not just merged. Two suites, one gate, because they cover one script from opposite sides: the shell fixture runs --wiring-only ON PURPOSE (the liveness rung reads host state and would flap between CI and the live host), which structurally left the liveness rung untested — and that is exactly where the 2026-08-07 defect lived. heartbeat_pid() is host-global pgrep while the wiring mtime came from the per-worktree LIVE_ROOT, so a linked worktree's checkout-time stamp — always later than the daemon's start — fabricated `running stale env` on a daemon that was current. The Python suite drives liveness_rung directly with the host probes stubbed, so it is deterministic with no daemon, and it carries the negative control: removing a false RED must not cost the true one, since a false GREEN in a staleness auditor is strictly worse than the false RED it replaced."
   enactment-wiring:
     command: "python3 scripts/enactment-audit.py --check --wiring-only"
     paths: ["scripts/enactment-audit.py"]
