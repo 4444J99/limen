@@ -164976,3 +164976,37 @@ tasks:
     conduct_lease_id: 'lease-623-c413c4f20ea2074f'
     conduct_generation: 623
   updated: '2026-08-07T12:33:56.741Z'
+- id: 'GH-organvm-limen-1965'
+  title: 'censor: [cross-vendor-health] vendor_health: 11'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'censor'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1965'
+  context: 'GitHub issue organvm/limen#1965. **Owner:** the censor (limen''s insights→actions institution). This issue is the public, individually-closeable home of a live censor residual — auto-opened by `scripts/sync-censor-issues.py`, auto-closed the moment the residual clears from `logs/censor-residual.json` (insight-route.py appends warnings there from the insights lineage and removes them when the lineage marks the friction resolved). C'
+  predicate: 'test "$(gh issue view 1965 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1965'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1965'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T13:14:24.051Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-6a9337780a31ae5b2afabab4fec9535e:624:compatibility'
+    conduct_run_id: 'run-6a9337780a31ae5b2afabab4fec9535e'
+    conduct_lease_id: 'lease-624-6a9337780a31ae5b'
+    conduct_generation: 624
+  updated: '2026-08-07T13:14:24.051Z'
