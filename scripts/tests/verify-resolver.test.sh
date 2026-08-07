@@ -78,6 +78,7 @@ pytest-api' web/api/main.py
 expect mcp-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
+agent-docs
 check-note-links
 check-effectors
 ruff-lint

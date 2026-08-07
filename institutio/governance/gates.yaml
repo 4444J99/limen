@@ -424,9 +424,9 @@ gates:
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py", "institutio/governance/gates.yaml"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
-    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
