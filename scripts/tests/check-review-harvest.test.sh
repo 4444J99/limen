@@ -39,9 +39,15 @@ for a in "$@"; do
   case "$a" in
     *totalCount*) printf '{"data":{"repository":{"pullRequests":{"totalCount":%s}}}}\n' "${GH_TOTAL:-1}"; exit 0 ;;
     *reviewThreads*) cat "$GH_THREADS"; exit 0 ;;
-    # The resolve mutation the predicate PRINTS, executed back against this stub. Echoing the query
-    # verbatim lets the caller assert the thread id survived the round trip intact.
-    *resolveReviewThread*) printf '{"data":{"resolveReviewThread":{"thread":{"isResolved":true}}},"sent":"%s"}\n' "$a"; exit 0 ;;
+    # The resolve mutation the predicate PRINTS, executed back against this stub. The echoed query
+    # goes out as a PLAIN TEXT line, not a JSON field: the query itself contains double quotes
+    # (threadId:"…"), so interpolating it into `{"sent":"%s"}` emitted invalid JSON. Nothing parses
+    # it today — the caller greps it — but a stub that emits malformed JSON is a trap primed for the
+    # first assertion that does parse it.
+    *resolveReviewThread*)
+      printf '{"data":{"resolveReviewThread":{"thread":{"isResolved":true}}}}\n'
+      printf 'sent: %s\n' "$a"
+      exit 0 ;;
   esac
 done
 # `gh pr list ... --json number`
@@ -83,7 +89,10 @@ out="$(run)"; rc=$?
 # the trailing `}}}` as an unbalanced brace and filed the command as malformed. It is balanced (and
 # five real threads were closed with it), but nothing MECHANICAL could settle that. So extract the
 # line the predicate emits, strip the `resolve: ` label, and eval it against the stub.
-resolve_cmd="$(printf '%s' "$out" | sed -n 's/^ *resolve: //p' | head -1)"
+# `[[:space:]]*` rather than literal spaces, and POSIX `head -n 1` rather than the obsolescent
+# `head -1`: the extraction should not be the thing that breaks when the predicate reflows its
+# indentation or this runs on a stricter head(1).
+resolve_cmd="$(printf '%s' "$out" | sed -n 's/^[[:space:]]*resolve:[[:space:]]*//p' | head -n 1)"
 [ -n "$resolve_cmd" ] \
   && pass "the finding carries a resolve command" \
   || fail "no resolve command in output"
