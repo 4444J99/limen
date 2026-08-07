@@ -1,10 +1,7 @@
 # The Salve: reopen the valve, feed the lane, land the value — jules to 100/day
 
 Issue: #1874
-PR: (pending)
-
-Issue: (to be opened via `scripts/session-plan.py open jules-flywheel --title "..."` at BUILD entry)
-PR: (pending)
+PR: #1893
 
 ## Context
 
