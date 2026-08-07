@@ -140,6 +140,38 @@ def merged_prs(repo: str, sample: int) -> list[int] | None:
         return None
 
 
+_MERGED_TOTAL_QUERY = """
+query($owner:String!, $name:String!) {
+  repository(owner:$owner, name:$name) { pullRequests(states:MERGED) { totalCount } }
+}
+"""
+
+
+def merged_total(repo: str) -> int | None:
+    """Exact count of merged PRs on the repo. None ⟺ unreadable.
+
+    THE WINDOW SLIDES, AND THAT IS A TRUNCATION. `--sample N` takes the newest N merged PRs, so
+    every merge pushes the oldest one out of scope — findings included. Caught by running this
+    predicate on its own estate: the count fell 17 -> 11 while only 5 threads had been resolved,
+    because three PRs carrying seven unresolved findings aged out underneath it as this session's
+    own work merged. A number that shrinks because you looked at LESS reads exactly like progress,
+    which is the silent-cap failure this predicate exists to catch one domain over.
+
+    `totalCount` and not a list walk, for the reason the first version of this function got wrong:
+    it counted `pr list --limit 1000` and reported "990 older" on a repo with 1394 merged PRs — the
+    truncation reporter was itself truncated by its own cap, and the understated figure looked
+    entirely plausible. One aggregate query is exact, cheaper, and has no ceiling to forget.
+    """
+    owner, _, name = repo.partition("/")
+    r = _gh(["api", "graphql", "-f", f"query={_MERGED_TOTAL_QUERY}", "-F", f"owner={owner}", "-F", f"name={name}"])
+    if r.returncode != 0:
+        return None
+    try:
+        return int(json.loads(r.stdout)["data"]["repository"]["pullRequests"]["totalCount"])
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
 def unresolved_agent_threads(repo: str, number: int, agents: frozenset[str]) -> list[dict] | None:
     """Unresolved, non-outdated threads opened by a known agent. None ⟺ unreadable."""
     owner, _, name = repo.partition("/")
@@ -210,11 +242,25 @@ def main(argv: list[str] | None = None) -> int:
     checked = 0
     skipped: list[str] = []
 
+    bounds: list[dict] = []
+
     for repo in repos:
         numbers = merged_prs(repo, args.sample)
         if numbers is None:
             skipped.append(f"{repo}: PR list unreadable")
             continue
+        if numbers:
+            total = merged_total(repo)
+            older = None if total is None else max(0, total - len(numbers))
+            bounds.append(
+                {
+                    "repo": repo,
+                    "oldest_sampled": min(numbers),
+                    "sampled": len(numbers),
+                    "merged_total": total,
+                    "older_unsampled": older,
+                }
+            )
         for number in numbers:
             threads = unresolved_agent_threads(repo, number, agents)
             if threads is None:
@@ -225,7 +271,24 @@ def main(argv: list[str] | None = None) -> int:
                 findings.append({**thread, "repo": repo})
 
     if args.json:
-        print(json.dumps({"checked": checked, "skipped": skipped, "findings": findings}, indent=2))
+        print(json.dumps({"checked": checked, "skipped": skipped, "bounds": bounds, "findings": findings}, indent=2))
+
+    def _print_bounds() -> None:
+        """Say what was NOT looked at, on every run — green or red.
+
+        Without this the count is not comparable to itself across runs: merges slide the window, so
+        the number can FALL because findings aged out rather than because anything was fixed. That
+        reads as progress and is the opposite.
+        """
+        for b in bounds:
+            older, total = b["older_unsampled"], b["merged_total"]
+            head = f"  window: {b['sampled']} newest merged on {b['repo']}, down to #{b['oldest_sampled']}"
+            if older is None:
+                print(f"{head} — total merged UNREADABLE, so coverage is unknown, not total")
+            elif older:
+                print(f"{head} — {b['sampled']}/{total} merged PRs; {older} older NOT sampled (widen with --sample)")
+            else:
+                print(f"{head} — all {total} merged PRs sampled, coverage is total")
 
     # SKIP: nothing was readable at all. Report it as a skip, never as green-because-empty — the
     # two are indistinguishable in a count, and that is exactly the failure this estate has hit
@@ -252,11 +315,13 @@ def main(argv: list[str] | None = None) -> int:
             )
             if skipped:
                 print(f"  ({len(skipped)} unreadable, not counted: {'; '.join(skipped[:3])})")
+            _print_bounds()
         return 1
 
     if not args.json:
         note = f" ({len(skipped)} unreadable)" if skipped else ""
         print(f"✓ review-harvest: {checked} merged PR(s), no unresolved agent findings{note}")
+        _print_bounds()
     return 0
 
 

@@ -34,8 +34,12 @@ cat > "$TMP/gh" <<'STUB'
 case "${GH_MODE:-broken}" in
   broken) exit 1 ;;
 esac
+# Two distinct GraphQL calls share the `graphql` verb, so dispatch on the query body, not the verb.
 for a in "$@"; do
-  if [ "$a" = "graphql" ]; then cat "$GH_THREADS"; exit 0; fi
+  case "$a" in
+    *totalCount*) printf '{"data":{"repository":{"pullRequests":{"totalCount":%s}}}}\n' "${GH_TOTAL:-1}"; exit 0 ;;
+    *reviewThreads*) cat "$GH_THREADS"; exit 0 ;;
+  esac
 done
 # `gh pr list ... --json number`
 printf '[{"number":1}]\n'
@@ -91,6 +95,41 @@ run >/dev/null 2>&1 && pass "a human's thread is out of scope for this predicate
 thread false false "copilot-pull-request-reviewer" "regex label match"
 run >/dev/null 2>&1 && fail "GraphQL bare login not matched against REST [bot] spelling — predicate would go silently green" \
   || pass "bare GraphQL login matches the REST [bot] spelling in AGENT_LOGINS"
+
+# --- the sliding window must never truncate silently -----------------------------------------------
+# `--sample N` takes the NEWEST N merged PRs, so every merge pushes the oldest out of scope. Observed
+# on the live estate: the finding count fell 17 -> 11 while only 5 threads had been resolved, because
+# three PRs carrying seven findings aged out underneath it. A number that shrinks because you looked
+# at LESS reads exactly like progress. The bound must therefore print on BOTH verdicts, never only
+# the red one — a green that does not say what it skipped is the more dangerous of the two.
+thread false false "coderabbitai" "still open"
+GH_TOTAL=1394 run | grep -q "1393 older NOT sampled" \
+  && pass "a red run reports how many merged PRs were NOT sampled" \
+  || fail "red run does not report the unsampled remainder"
+
+thread true false "coderabbitai" "resolved"
+GH_TOTAL=1394 run | grep -q "1393 older NOT sampled" \
+  && pass "a GREEN run reports the unsampled remainder too" \
+  || fail "green run hides the window — 'no findings' would read as 'nothing owed anywhere'"
+
+thread true false "coderabbitai" "resolved"
+GH_TOTAL=1 run | grep -q "coverage is total" \
+  && pass "when the window covers every merged PR it says so, rather than naming a remainder of 0" \
+  || fail "full coverage is not distinguished from a truncated sweep"
+
+# The remainder must come from an exact aggregate, not a capped list walk. The first version counted
+# `pr list --limit 1000` and reported "990 older" on a repo with 1394 merged PRs — a truncation
+# reporter truncated by its own cap, and the understated figure looked entirely plausible.
+# Matched on the argv token as Python spells it, not on prose: the docstring above deliberately
+# NAMES the old `pr list --limit 1000` so the trap is recorded, and a looser pattern would flag that
+# explanation as the defect it warns about.
+grep -q '"--limit", "1000"' "$PREDICATE" \
+  && fail "the unsampled remainder is derived from a capped list walk — it will understate on a large repo" \
+  || pass "the remainder comes from an exact totalCount, not a capped list"
+
+grep -q "totalCount" "$PREDICATE" \
+  && pass "the exact merged total is queried as an aggregate" \
+  || fail "no totalCount query — the remainder cannot be exact"
 
 # --- reuse, not a copy ---------------------------------------------------------------------------
 grep -q "check-review-engine.py" "$PREDICATE" \
