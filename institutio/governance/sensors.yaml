@@ -1607,6 +1607,35 @@ sensors:
         severity: advisory
         escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
 
+  beat-freshness:
+    section: "0z4a"
+    title: "beat freshness — the resident daemon must be newer than the loop body it runs"
+    gate: LIMEN_BEAT_FRESHNESS
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: substrate
+    # The 2026-08-06 -> 08-07 lesson, codified: heartbeat-loop.sh is a resident `while true`
+    # under KeepAlive that never re-execs, so a merged loop-body edit is dead code until
+    # `launchctl kickstart`. Seven flywheel PRs sat inert for 18h behind exactly this (and the
+    # 15-day starvation ended on the same unrun restart atom). This predicate compares the
+    # running process's start time against the loop file's mtime on disk and alarms with the
+    # one-command remedy. It runs as a re-exec'd CHILD each pass, so it reads current code even
+    # when its parent daemon is the stale party — the failure it detects cannot silence it,
+    # provided the stale body already carries a sensor pass (both sources declared for reach).
+    # Deliberately no auto-kickstart: the sensor may sit in the process tree it would kill,
+    # and a mid-beat self-restart could interrupt a merge rung. Dead daemon = liveness's
+    # verdict (LAUNCH_AGENT_LIVENESS), not this one's.
+    cadence:
+      env: LIMEN_BEAT_FRESHNESS_CADENCE
+      default: 4
+    timeout:
+      env: LIMEN_BEAT_FRESHNESS_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/check-beat-freshness.py"
+        severity: advisory
+        escalation: "the resident heartbeat daemon predates its own loop body — every loop-body merge since is dead code; run `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat` (the output names the exact timestamps)"
+
   work-loan-backfill:
     section: "0z8"
     title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"

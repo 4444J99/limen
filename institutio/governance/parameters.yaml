@@ -2785,6 +2785,24 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the lane-throughput sensor (sensors.yaml lane-throughput): per-lane throughput-governor gauge; advisory-red on a clamp sustained across 2+ days."
+  LIMEN_BEAT_FRESHNESS:
+    default: "1"
+    env: LIMEN_BEAT_FRESHNESS
+    self_update: none
+    owner: substrate
+    note: "Beat gate for the beat-freshness sensor (sensors.yaml beat-freshness): the resident heartbeat daemon must postdate its own loop body on disk; a stale daemon executes dead code until kickstarted (the 2026-08-06 flywheel keyturn lesson)."
+  LIMEN_BEAT_FRESHNESS_CADENCE:
+    default: 4
+    env: LIMEN_BEAT_FRESHNESS_CADENCE
+    self_update: none
+    owner: substrate
+    note: "Run the beat-freshness check every Nth sensor pass — a staleness alarm needs no per-beat cadence."
+  LIMEN_BEAT_FRESHNESS_TIMEOUT:
+    default: 60
+    env: LIMEN_BEAT_FRESHNESS_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Timeout for one check-beat-freshness run (a pgrep + ps + stat)."
   LIMEN_LANE_THROUGHPUT_HISTORY:
     default: ""
     env: LIMEN_LANE_THROUGHPUT_HISTORY
