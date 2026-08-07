@@ -134992,26 +134992,37 @@ tasks:
       integrity ok; SHA-256 05eb1e65a678a5219bce25733826a02a9c84fead31e14b6930fd990e254f542c;
       indexed 1627 sessions in private corpus; tracked receipt docs/opencode-db-corpus-intake.md;
       local DB retained for retention decision.
-- id: ASK-lane-starved-agy
+- id: 'ASK-lane-starved-agy'
   title: 'Lane ''agy'' starved: silent >42.5h with open queue + ok budget'
-  type: ops
-  target_agent: agy
-  priority: high
+  type: 'ops'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: needs_human
+  status: 'needs_human'
   labels:
-  - dispatch-continuity
-  - needs-human
+  - 'dispatch-continuity'
+  - 'needs-human'
   urls: []
-  context: "Lane 'agy' has been silent for 42.5h while 79 open task(s) await it and\
-    \ its budget is ok. This matches the Jul 3\u20135 starvation signature: daemon\
-    \ alive, queue non-empty, budget available, zero dispatches for an extended period\
-    \ (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being\
-    \ selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py."
+  context: 'Lane ''agy'' has been silent for 467.3h while 209 open task(s) await it and its budget is ok. This matches the Jul 3–5 starvation signature: daemon alive, queue non-empty, budget available, zero dispatches for an extended period (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-07-09T11:53:48.574540Z'
-  dispatch_log: []
+  updated: '2026-08-07T13:20:50.646Z'
+  dispatch_log:
+  - timestamp: '2026-08-07T13:20:50.646Z'
+    agent: 'codex'
+    session_id: 'dispatch-continuity-starved-agy'
+    logical_agent: 'dispatch-continuity'
+    logical_session_id: 'starved-agy'
+    status: 'needs_human'
+    output: 'task.mutate applied through the conduct keeper'
+    conduct_event_id: 'conduct:run-6a6ccf84e1102a9c00a1e3fc06dbba55:625:compatibility'
+    conduct_run_id: 'run-6a6ccf84e1102a9c00a1e3fc06dbba55'
+    conduct_lease_id: 'lease-625-6a6ccf84e1102a9c'
+    conduct_generation: 625
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Restore dispatch continuity for the starved agy lane'
+  owner_surface: 'organvm/limen'
 - id: ASK-lane-starved-gemini
   title: 'Lane ''gemini'' starved: silent >47.8h with open queue + ok budget'
   type: ops
