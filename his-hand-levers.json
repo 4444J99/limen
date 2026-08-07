@@ -979,6 +979,17 @@
       "note": "Fail-closed typing is already DONE and reversible — nothing merges while this lever is open. The 200 PRs span 94 public repos; each is a dependabot version bump, individually green-gated at merge time.",
       "issue": 1947,
       "unlocks": "autonomous drain of the dependabot two-thirds of the open-PR estate (200 of ~1300 open PRs); the stale-pr-sweep count drops by up to 200 without another human touch"
+    },
+    {
+      "id": "L-FLYWHEEL-VALVE-ARM",
+      "label": "Arm the two reviewed flywheel apply-valves (work-loan backfill supply + owner-route drain landing) — two env lines + one daemon restart. Dispatch itself is ALREADY live (25/day bootstrap); this lever only opens the ramp toward 100/day: backfill mints ~168 loan-ready packets, the drain lands the 308 blocked jules PRs that earn landed/dispatched >= 0.30.",
+      "source_task": "jules-flywheel program (docs/plans/2026-08-06-jules-flywheel.md, issue #1874, PR #1893) — both dry-runs reviewed 2026-08-07: backfill census 168 mintable / 520 honestly refused / 0 failures; drain 375 receipts, 15 distinct PRs, 0 verdict flips (325 draft-skip, 50 route-to-heal). The session's env-file append was classifier-blocked, so the two lines are yours.",
+      "owner": "yours",
+      "category": "valve-arm",
+      "cost": "one paste: printf '\\nexport LIMEN_WORK_LOAN_BACKFILL_APPLY=1\\nexport LIMEN_OWNER_ROUTE_DRAIN_APPLY=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat",
+      "status": "open",
+      "added": "2026-08-07",
+      "gate": "the sensors read the daemon env; ~/.limen.env is sourced at loop start only, hence the kickstart. Verify after the next metabolize pass: logs/work-loan-backfill.jsonl gains applied:true rows and logs/owner-route-drain.jsonl gains outcome!=dry-run rows."
     }
   ]
 }
