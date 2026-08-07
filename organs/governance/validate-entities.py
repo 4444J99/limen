@@ -59,6 +59,7 @@ DATE_PATTERN: str = r"^\d{4}-\d{2}-\d{2}"
 # Rule predicates                                                              #
 # --------------------------------------------------------------------------- #
 
+
 def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
     """Return a list of violation strings for one entities.yaml (empty = pass)."""
     try:
@@ -84,9 +85,7 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
     if not isinstance(sv, str):
         violations.append("missing or non-string 'schema_version'")
     elif not re.match(SCHEMA_VERSION_PATTERN, sv):
-        violations.append(
-            f"'schema_version' {sv!r} does not match expected pattern (e.g. '1.0', '1.0.0')"
-        )
+        violations.append(f"'schema_version' {sv!r} does not match expected pattern (e.g. '1.0', '1.0.0')")
 
     updated = doc.get("updated")
     if updated is not None and (not isinstance(updated, str) or not re.match(DATE_PATTERN, str(updated))):
@@ -148,13 +147,9 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
             for field in type_req:
                 val = entity.get(field)
                 if val is None:
-                    violations.append(
-                        f"entities[{idx}] ({eid}) of type {etype!r} missing required field: {field!r}"
-                    )
+                    violations.append(f"entities[{idx}] ({eid}) of type {etype!r} missing required field: {field!r}")
                 elif isinstance(val, str) and not val.strip():
-                    violations.append(
-                        f"entities[{idx}] ({eid}) required field {field!r} is empty"
-                    )
+                    violations.append(f"entities[{idx}] ({eid}) required field {field!r} is empty")
 
         # Rule 3b — mandates are allowed for this type
         mandates = entity.get("mandates")
@@ -172,9 +167,7 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
         if isinstance(forbidden, list) and isinstance(mandates, list):
             overlap = set(forbidden) & set(mandates)
             if overlap:
-                violations.append(
-                    f"entities[{idx}] ({eid}) forbidden_acts overlap with mandates: {sorted(overlap)}"
-                )
+                violations.append(f"entities[{idx}] ({eid}) forbidden_acts overlap with mandates: {sorted(overlap)}")
             if etype in forbidden_by_type:
                 for fa in forbidden:
                     if fa not in forbidden_by_type[etype]:
@@ -189,8 +182,7 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
             c_upper = cursus.upper()
             if c_upper not in CURSUS_SET:
                 violations.append(
-                    f"entities[{idx}] ({eid}) cursus {cursus!r} is not a recognized office "
-                    f"({' → '.join(CURSUS)})"
+                    f"entities[{idx}] ({eid}) cursus {cursus!r} is not a recognized office ({' → '.join(CURSUS)})"
                 )
 
     # -- Repo registration checks (Rule #4) --------------------------------- #
@@ -212,8 +204,7 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
             c_upper = cursus.upper()
             if c_upper not in CURSUS_SET:
                 violations.append(
-                    f"repos[{ridx}] ({rname}) cursus {cursus!r} is not a recognized office "
-                    f"({' → '.join(CURSUS)})"
+                    f"repos[{ridx}] ({rname}) cursus {cursus!r} is not a recognized office ({' → '.join(CURSUS)})"
                 )
 
         # Rule 4b — implementation_status matches promotion_status
@@ -229,19 +220,14 @@ def _validate_one(path: Path, *, strict_graph: bool = False) -> list[str]:
         # Rule 4c — entity reference must exist
         eref = repo.get("entity")
         if isinstance(eref, str) and eref not in seen_ids:
-            violations.append(
-                f"repos[{ridx}] ({rname}) references unknown entity {eref!r}"
-            )
+            violations.append(f"repos[{ridx}] ({rname}) references unknown entity {eref!r}")
 
     # -- Cursus office sequence integrity ----------------------------------- #
     offices = doc.get("cursus_offices")
     if not isinstance(offices, list):
         violations.append("missing or non-list 'cursus_offices'")
     elif offices != CURSUS:
-        violations.append(
-            f"cursus_offices {offices} does not match canonical sequence "
-            f"({' → '.join(CURSUS)})"
-        )
+        violations.append(f"cursus_offices {offices} does not match canonical sequence ({' → '.join(CURSUS)})")
 
     # -- Rule 4d (strict-graph): promotion_rules structure ------------------ #
     if strict_graph:
@@ -260,7 +246,7 @@ def _validate_strict_graph(doc: dict[str, Any]) -> list[str]:
 
     valid_pair: set[str] = set()
     for i in range(len(CURSUS) - 1):
-        valid_pair.add(f"{CURSUS[i]}_to_{CURSUS[i+1]}")
+        valid_pair.add(f"{CURSUS[i]}_to_{CURSUS[i + 1]}")
 
     seen_rules: set[str] = set()
     for key, rule in promo.items():
@@ -274,8 +260,7 @@ def _validate_strict_graph(doc: dict[str, Any]) -> list[str]:
         # Check key format: FROM_to_TO
         if key not in valid_pair and key.upper() not in valid_pair:
             violations.append(
-                f"promotion_rules.{key!r} does not match any valid cursus transition "
-                f"({' → '.join(CURSUS)})"
+                f"promotion_rules.{key!r} does not match any valid cursus transition ({' → '.join(CURSUS)})"
             )
 
         if not isinstance(rule, dict):
@@ -290,9 +275,7 @@ def _validate_strict_graph(doc: dict[str, Any]) -> list[str]:
 
         validated_by = rule.get("validated_by")
         if validated_by is not None and not isinstance(validated_by, str):
-            violations.append(
-                f"promotion_rules.{key!r} 'validated_by' must be a string"
-            )
+            violations.append(f"promotion_rules.{key!r} 'validated_by' must be a string")
 
     return violations
 
@@ -300,6 +283,7 @@ def _validate_strict_graph(doc: dict[str, Any]) -> list[str]:
 # --------------------------------------------------------------------------- #
 # CLI                                                                          #
 # --------------------------------------------------------------------------- #
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(

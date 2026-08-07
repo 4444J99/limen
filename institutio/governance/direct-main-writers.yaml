@@ -3,7 +3,7 @@ protected_repository: organvm/limen
 protected_branch: main
 remote_enforcement:
   ruleset: limen-default-merge-queue
-  required_rules: [pull_request, merge_queue]
+  required_rules: [pull_request]   # merge_queue rule removed 2026-08-06 — queue-free proven-at-submission rail
   bypass_actors: []
 
 # Every production source containing a git-push, GitHub Contents PUT, or literal

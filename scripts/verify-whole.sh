@@ -139,6 +139,9 @@ bash scripts/tests/worktree-commit-guard.test.sh
 step "Verify the pytest-scope-guard hook (full-suite pytest deny matrix, hermetic fixture)"
 bash scripts/tests/pytest-scope-guard.test.sh
 
+step "Verify the no-hand-poll-guard hook (PR poll-loop deny matrix, hermetic fixture)"
+bash scripts/tests/no-hand-poll-guard.test.sh
+
 # The outbound estate. These two rungs shipped registered to gates.yaml as `scoped: false` with no
 # ci_job and were named HERE by nothing, so neither ran anywhere — the deny matrix proving the
 # outbound gate denies had never once executed. check-runner-coverage.py class F is the predicate

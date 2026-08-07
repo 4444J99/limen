@@ -1,7 +1,7 @@
 # Universal insights → universal governance: implement all /insights suggestions across every actor
 
 Issue: #1876
-PR: (pending)
+PR: #1910
 
 ## Context
 

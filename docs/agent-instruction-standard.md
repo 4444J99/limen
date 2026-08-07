@@ -23,6 +23,8 @@ layers. The job is to **converge on them, not rebuild** them.
 | `.agents/skills/agy_conductor/SKILL.md` | Agy's thin adapter to the shared conduct CLI/MCP protocol | Self-claim, board writes, or a privileged conductor role |
 | `integrations/copilot/limen-conductor.agent.md` | Canonical source for the organization-level Copilot cloud adapter to authenticated remote ianva | Repository placement that overrides the organization profile, provider/model pinning, or direct lifecycle rules |
 | `CONTRIBUTING.md` | Human setup, style, gates, branch/PR requirements | Agent dispatch protocol |
+| `.github/copilot-instructions.md` | Pointer file only — routes Copilot (which reads this path natively) to `AGENTS.md`, the closest directory-scoped `AGENTS.md`, and `CONTRIBUTING.md` | Any rule of its own beyond the pointer; it self-declares stale wherever it disagrees with its targets |
+| Directory-scoped `AGENTS.md` (today: `apps/danse/AGENTS.md`) | Component-local knowledge for its subtree — closest wins, more specific never higher-ranked | Cross-agent protocol, task states, or anything the root contract owns |
 | `docs/deployment.md` | Production deployment variables, commands, and safety checks | Agent task claiming or lifecycle state |
 | Generated templates | Starter guidance for other tools/editors | Repo-specific truth copied out of date |
 
@@ -58,10 +60,13 @@ back to `AGENTS.md` instead.
     environment probes derive the lane and ending. The closeout must print one launch command and
     make the capsule remotely durable. Carry one validated finite configurable runway that successor
     sessions inherit; never hard-code a future model, provider table, task count, or desired terminal
-    verdict into the capsule.
+    verdict into the capsule. Full doctrine (Tier-1 home since the 2026-08-06 stratification):
+    `docs/architecture/continuation-capsules.md` — `AGENTS.md` keeps the binding stub.
 11. Apply `AGENTS.md` → Bounded Composition to campaigns, CI, generated artifacts, and handoffs.
     Aggregate entrypoints are thin fan-in layers over independently runnable modules with finite
     retries, bounded output, and durable receipts; they never duplicate successful children.
+    Full doctrine: `docs/architecture/bounded-composition.md` (Tier-1 home; `AGENTS.md` keeps the
+    binding stub).
 12. Apply `AGENTS.md` → Peer Conductor Contract to every agent surface. Conductor is a temporary
     capability, never a rank; all child work is broker-reserved, authority attenuates, native
     identity survives, protected human sessions are untouchable, hidden fanout is rejected, and
@@ -71,6 +76,14 @@ back to `AGENTS.md` instead.
     queue and its synthetic `merge_group`, not by repeatedly rewriting every branch and rerunning
     successful head CI. Direct `main` writers yield to active integration. The executable contract
     is `AGENTS.md` → Session Discipline rule 5 plus `docs/architecture/concurrent-integration.md`.
+14. Instruction surfaces are byte-budgeted. The weakest consumer's default cap is the budget
+    (codex truncates project docs at 32,768 bytes SILENTLY — the 2026-08-06 incident dropped
+    every AGENTS.md section past ~line 499, including codex's own Agent-Specific Note); the
+    declared registry is `institutio/governance/gates.yaml` → `instruction_surfaces`, and
+    `scripts/check-agent-docs.py` check S enforces it as a shrink-only ratchet with a named
+    debt line while any surface exceeds the budget. Doctrine that outgrows the budget relocates
+    to a Tier-1 home (`docs/architecture/`) behind a pointer stub — the budget law lives HERE,
+    in the uncapped standard, never inside the capped file it governs.
 
 ## Home-scope generated surfaces
 
@@ -199,6 +212,21 @@ the home-scope Layer-1 `AGENTS.md.tmpl` must carry a matching summary that defer
 rather than diverging. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend or cite these rules;
 they must not define divergent versions. Phrase assertions: `scripts/verify-scoped.sh`,
 `scripts/await-pr.sh`, `BLOCKED: <atom>`, `his-hand-levers.json`, `registry already owns the answer`.
+
+**Checks N–S (accumulated since):** the predicate has kept growing past M; the script is the
+authority for the exact assertions, but by intent: **N** — the six Standing-Corrections phrases in
+`## Session Discipline`; **O** — Peer Conductor symmetry (required contract phrases, forbidden
+rank wording, a line-level ban on un-negated "edit `tasks.yaml`" guidance in any surface, all four
+adapters carry the contract string, the org-level Copilot profile stays out of `.github/agents/`);
+**P** — merge-queue semantics phrases in `AGENTS.md`, `CLAUDE.md`, and this standard; **Q** — the
+Full Lifecycle Closure covenant phrases; **R** — exit-code discipline phrases
+(`PIPESTATUS`, one-command-per-judged-invocation); **S** — the instruction-surface byte budget
+from `institutio/governance/gates.yaml → instruction_surfaces` (budget/ceiling/slack, and a
+`debt:` line required iff a surface exceeds budget); **T** — the pointer file
+(`.github/copilot-instructions.md`) and directory-scoped surfaces (`apps/danse/AGENTS.md`) stay
+in the estate: the pointer keeps its self-subordination clause and points at `AGENTS.md`, scoped
+files keep "root wins" deference, and neither presents non-canonical status values. A new check
+letters itself here when added.
 
 ---
 
