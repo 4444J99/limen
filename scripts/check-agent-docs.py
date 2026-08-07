@@ -105,7 +105,15 @@ STANDARD = ROOT / "docs" / "agent-instruction-standard.md"
 AGY_SKILL = ROOT / ".agents" / "skills" / "agy_conductor" / "SKILL.md"
 COPILOT_PROFILE = ROOT / "integrations" / "copilot" / "limen-conductor.agent.md"
 COPILOT_REPO_OVERRIDE = ROOT / ".github" / "agents" / "limen-conductor.agent.md"
-REFERENCE_DOCS = DOCS + [ROOT / "CONTRIBUTING.md", STANDARD, ROOT / "docs" / "deployment.md"]
+COPILOT_POINTER = ROOT / ".github" / "copilot-instructions.md"
+SCOPED_AGENTS = [ROOT / "apps" / "danse" / "AGENTS.md"]
+REFERENCE_DOCS = DOCS + [
+    ROOT / "CONTRIBUTING.md",
+    STANDARD,
+    ROOT / "docs" / "deployment.md",
+    COPILOT_POINTER,
+    *SCOPED_AGENTS,
+]
 TEMPLATE_DOCS = [
     ROOT / "domus-genoma" / "dot_config" / "ai-context" / "AGENTS.md.tmpl",
     ROOT / "domus-genoma" / "dot_local" / "share" / "codex" / "AGENTS.md.tmpl",
@@ -223,7 +231,11 @@ def documented_agent_notes(agents_md: str) -> set[str]:
 def referenced_paths(text: str) -> set[str]:
     """Find concrete repo-relative paths mentioned in code spans or markdown links."""
     paths: set[str] = set()
-    for match in re.finditer(r"(?:`|\()((?:docs|scripts|mcp|web|cli|spec)/[A-Za-z0-9_.\-/]+)(?:`|\))", text):
+    for match in re.finditer(
+        r"(?:`|\()((?:docs|scripts|mcp|web|cli|spec|institutio|integrations|apps|organs|censor|moneta|ianva)"
+        r"/[A-Za-z0-9_.\-/]+)(?:`|\))",
+        text,
+    ):
         path = match.group(1).rstrip(".,)")
         if "*" in path or "<" in path:
             continue
@@ -714,6 +726,42 @@ def main() -> int:
                     f"{name} fits the {budget} B budget but the debt line is still present — "
                     f"the debt is paid; remove the line (S4)"
                 )
+
+    # T — the pointer file and directory-scoped surfaces are part of the estate
+    # (2026-08-06 audit: both were checked by NOTHING, so the pointer could silently
+    # grow into the competing rulebook AGENTS.md forbids, and a scoped AGENTS.md could
+    # invert precedence or invent states with no predicate objecting).
+    if not COPILOT_POINTER.exists():
+        errors.append(".github/copilot-instructions.md is missing — Copilot reads this path natively (T)")
+    else:
+        pointer_text = COPILOT_POINTER.read_text(encoding="utf-8")
+        if "AGENTS.md" not in pointer_text:
+            errors.append(".github/copilot-instructions.md does not point at AGENTS.md (T)")
+        if "this file is stale" not in pointer_text:
+            errors.append(
+                ".github/copilot-instructions.md lost its self-subordination clause "
+                "('they win and this file is stale') — it is a pointer, never a second rulebook (T)"
+            )
+        invalid_presented = presented_status_tokens(pointer_text) - valid
+        if invalid_presented:
+            errors.append(
+                f".github/copilot-instructions.md presents non-canonical status values: {sorted(invalid_presented)} (T)"
+            )
+    for scoped in SCOPED_AGENTS:
+        if not scoped.exists():
+            errors.append(f"{scoped.relative_to(ROOT)} is a declared scoped surface but is missing (T)")
+            continue
+        scoped_text = scoped.read_text(encoding="utf-8")
+        if "AGENTS.md" not in scoped_text or "root wins" not in scoped_text:
+            errors.append(
+                f"{scoped.relative_to(ROOT)} must defer to the root contract "
+                f"(a root AGENTS.md reference plus 'root wins') — closest wins, never higher-ranked (T)"
+            )
+        invalid_presented = presented_status_tokens(scoped_text) - valid
+        if invalid_presented:
+            errors.append(
+                f"{scoped.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)} (T)"
+            )
 
     if errors:
         print("Agent-instruction doc drift detected:")
