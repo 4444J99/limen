@@ -165282,3 +165282,53 @@ tasks:
     conduct_lease_id: 'lease-634-39f3631310da3dec'
     conduct_generation: 634
   updated: '2026-08-07T14:42:18.236Z'
+- id: 'AW-PROMPT-PACKETS'
+  title: 'Reconcile prompt packet receipts before counting prompt progress'
+  description: 'packet ledger clear from receipts'
+  repo: 'organvm/limen'
+  type: 'coordination'
+  target_agent: 'codex'
+  workstream: 'prompt-packets'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'always-working'
+  - 'receipt-first'
+  - 'prompt-packets'
+  urls:
+  - '~/Workspace/limen/docs/prompt-packet-ledger.md'
+  - '~/Workspace/limen/docs/prompt-packet-resolution-receipts.json'
+  - '~/Workspace/limen/docs/current-session-fanout.md'
+  context: 'Receipt-first verdict: packet ledger clear from receipts
+
+    Task: Map each open prompt packet to merged PR, open PR, owner task, supersession, or precise blocker.
+
+    Predicate: python3 scripts/prompt-packet-ledger.py --write
+
+    Receipt target: git:organvm/limen:docs/prompt-packet-ledger.md
+
+    Stop condition: open prompt packet count is zero or every packet has an owner receipt
+
+    Do not start a first run until existing receipts/PRs/tasks for this packet have been harvested.'
+  predicate: 'python3 scripts/prompt-packet-ledger.py --write'
+  receipt_target: 'git:organvm/limen:docs/prompt-packet-ledger.md'
+  origin: 'human_prompt'
+  horizon: 'present'
+  value_case: 'Close the explicit always-working promise PROMPT-PACKETS'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T14:43:07.266Z'
+    agent: 'codex'
+    session_id: 'codex-always-working'
+    logical_agent: 'codex'
+    logical_session_id: 'always-working'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-5bd9de6df3d4fc847105194565589f96:635:compatibility'
+    conduct_run_id: 'run-5bd9de6df3d4fc847105194565589f96'
+    conduct_lease_id: 'lease-635-5bd9de6df3d4fc84'
+    conduct_generation: 635
+  updated: '2026-08-07T14:43:07.266Z'
