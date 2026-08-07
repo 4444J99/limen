@@ -437,6 +437,44 @@ def _rung_of(pin: str, ladder: tuple[str, ...] = _CLAUDE_TIER_ORDER) -> str:
     return ""
 
 
+def _norm_rung(value: str, ladder: tuple[str, ...] = _CLAUDE_TIER_ORDER) -> str:
+    """Normalize a DECLARED rung name (a ceiling, a floor, a cap) to its ladder member, or ``""``.
+
+    EXACT membership after case/whitespace normalization — deliberately NOT :func:`_rung_of`'s
+    substring scan, which classifies model PINS. A declaration names a rung outright, so ``"opus"``
+    must match and ``"claude-opus-5"`` must not: a ceiling is not a model.
+
+    Returns ``""`` rather than a rung when the value names none, so a caller WITH a verdict channel
+    can say "this could not be resolved" instead of substituting a value nobody declared (D3). The
+    string-returning accessors keep their own fallbacks — this primitive only stops the two ways a
+    real declaration was being thrown away: surrounding whitespace, and capitalisation.
+    """
+    text = str(value or "").strip().lower()
+    return text if text in ladder else ""
+
+
+def _declared_ceiling(ceiling: str | None, ladder: tuple[str, ...] = _CLAUDE_TIER_ORDER) -> tuple[str, str]:
+    """THE one reader of the declared opening ceiling: ``(raw, resolved)``.
+
+    ``resolved`` is ``""`` when ``raw`` names no rung of ``ladder``. Both the ``--ceiling`` flag and
+    ``LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER`` land here — D6's "the cap belongs to the VALUE, not one
+    accessor", now true of the unknown-value case too and not only of the opus hard cap. Kept as ONE
+    reader because two readers of one env var is precisely the fork D2 deleted for the weekly meter.
+
+    An EMPTY declaration is absent, not garbage: it falls through to the default exactly as the
+    previous ``or``-chain did. Only a value that genuinely NAMES something the ladder does not
+    contain is unresolvable — the distinction matters because ``os.environ.get(k, default)`` hands
+    back ``""`` for a set-but-empty var, and turning that into a warning would fire on ``export VAR=``.
+    """
+    if ceiling is not None and str(ceiling).strip():
+        raw = str(ceiling)
+    elif ladder == _CLAUDE_TIER_ORDER:
+        raw = os.environ.get("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "").strip() or "sonnet"
+    else:
+        raw = ladder[0]
+    return raw, _norm_rung(raw, ladder)
+
+
 def session_open_max_tier() -> str:
     """The cadence CEILING for an interactive session's OPENING model.
 
@@ -445,8 +483,13 @@ def session_open_max_tier() -> str:
     ``opus`` — no env value can declare Fable an acceptable opening tier, because Fable is
     reserved behind a written acceptance receipt and an opening default is by definition not one.
     The cap belongs to the VALUE, so every accessor routes through it (D6).
+
+    A plain ``str`` for callers that need one. An unresolvable declaration still degrades to the
+    cheapest rung HERE, because this signature has no room to say anything else — that is a declared,
+    accepted degradation, not a silent one. Callers that can carry a verdict use
+    :func:`opening_verdict`, which reports the unresolvable declaration instead of substituting for it.
     """
-    return _cap_tier(os.environ.get("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "sonnet"), "opus")
+    return _cap_tier(_declared_ceiling(None)[1] or "haiku", "opus")
 
 
 def _cap_rung(rung: str, cap: str, ladder: tuple[str, ...]) -> str:
@@ -457,11 +500,13 @@ def _cap_rung(rung: str, cap: str, ladder: tuple[str, ...]) -> str:
     as ``'haiku'`` the first time the per-lane census ran. That is this arc's own defect wearing a
     different hat — an unclassifiable value resolving to the cheapest rung instead of saying so —
     which is why the generic path validates against the ladder it was actually handed.
+
+    It still resolves a genuinely unclassifiable rung to ``ladder[0]``: a ``-> str`` signature has no
+    verdict channel. :func:`opening_verdict` therefore resolves the ceiling BEFORE calling this, so
+    the unresolvable case never reaches here disguised as a value.
     """
-    if rung not in ladder:
-        rung = ladder[0]
-    if cap not in ladder:
-        cap = ladder[0]
+    rung = _norm_rung(rung, ladder) or ladder[0]
+    cap = _norm_rung(cap, ladder) or ladder[0]
     return ladder[min(_ladder_index(rung, ladder), _ladder_index(cap, ladder))]
 
 
@@ -474,6 +519,12 @@ def opening_verdict(
     """Is an opening model pin at or below the cadence ceiling?
 
     Returns ``{state, rung, ceiling, pin}`` with state ∈ ``ok`` | ``above-ceiling`` | ``unresolved``.
+
+    ``unresolved`` covers BOTH inputs — an unclassifiable pin and an unclassifiable ceiling — because
+    either one makes the comparison unanswerable. ``detail`` says which, so a consumer prints the real
+    reason instead of re-deriving a pin-shaped one. There is no fourth state on purpose: the third
+    already means "I could not answer this", and splitting it would make every consumer learn a state
+    to reach the same conclusion.
 
     The guard used to ask ``"fable" in model.lower()`` — ONE rung of a four-rung ladder. Every tier
     between the cadence floor and Fable was unguarded, so the operator's saved Opus default (~15x
@@ -492,7 +543,25 @@ def opening_verdict(
         top = "opus"
     else:
         top = ladder[-1]
-    declared = ceiling or (session_open_max_tier() if ladder == _CLAUDE_TIER_ORDER else ladder[0])
+    raw, declared = _declared_ceiling(ceiling, ladder)
+    if not declared:
+        # THE CEILING IS THE OTHER INPUT. `_cap_rung` would answer this with `ladder[0]` and the
+        # verdict would render it as the declared ceiling — so a haiku pin measured against a ceiling
+        # nobody declared came back state='ok', trusted=True: a degenerate input returning TRUSTED,
+        # which guard_contract names as the one thing a guard must never do. Same defect as the pin
+        # side (D3), one argument over, and invisible because it fails toward caution for every pin
+        # ABOVE the cheapest rung — no incident, so nothing forced it up.
+        return {
+            "state": "unresolved",
+            "trusted": False,
+            "rung": _rung_of(pin, ladder),
+            "ceiling": "",  # never render a value nobody declared as the authoritative one
+            "pin": pin,
+            "detail": (
+                f"the declared opening ceiling {raw!r} names no rung of {ladder} — the session's tier "
+                f"cannot be placed against a ceiling that could not be resolved"
+            ),
+        }
     cap = _cap_rung(declared, top, ladder)
     rung = _rung_of(pin, ladder)
     if not rung:
@@ -506,11 +575,16 @@ def opening_verdict(
 
 
 def _cap_tier(tier: str, cap: str) -> str:
-    """Return ``tier`` capped to ``cap`` in the shared cheap→expensive ladder."""
-    if tier not in _CLAUDE_TIER_ORDER:
-        tier = "haiku"
-    if cap not in _CLAUDE_TIER_ORDER:
-        cap = "sonnet"
+    """Return ``tier`` capped to ``cap`` in the shared cheap→expensive ladder.
+
+    Both arguments are DECLARATIONS (env values, mostly), so both are normalized: ``"Opus"`` and
+    ``" opus "`` are the operator writing ``opus``, and throwing that away was silently handing five
+    registry-declared env vars the cheapest rung instead of the tier they asked for. A value that
+    names no rung even after normalization still degrades to the cheapest — this signature cannot
+    say "unresolvable", which is why the ceiling resolves through :func:`opening_verdict` instead.
+    """
+    tier = _norm_rung(tier) or "haiku"
+    cap = _norm_rung(cap) or "sonnet"
     return _CLAUDE_TIER_ORDER[min(_tier_index(tier), _tier_index(cap))]
 
 
@@ -588,6 +662,13 @@ def _guard_fable_model_pin(model: str | None) -> str | None:
 #                                 SAME tier dispatch's ladder assigns to unclassed work, so this is
 #                                 the ladder's own default, NOT a blanket downgrade).
 #
+# SO THE SHIM IS A FLOOR, NOT A CAP — and in particular it is NOT a second Fable cap. An explicit
+# `--model claude-fable-5` rides straight through untouched, by the first rule above; that is the
+# documented contract, not an oversight. Fable enforcement lives in exactly two places, and neither
+# is here: dispatch's ladder (`_claude_tier_for` → `_earned_fable_tier`, receipt AND live weekly cap)
+# and the SessionStart guard. Do not "harden" the shim into a third — it is on the fail-open hot path
+# of every fleet spawn, and a cap that must never block a spawn is not a cap.
+#
 # Subagents default to `inherit`, so this one top-level injection governs the ENTIRE fan-out tree.
 # CAVEAT: `claude --resume` ignores --model (a resumed session keeps its BIRTH model), so a resume
 # is governed by the tier it was born at — which this shim sets for every NEW session. Fail-open to
@@ -601,8 +682,8 @@ def _shim_floor_tier() -> str:
     ``LIMEN_CLAUDE_MAX_INHERITED_TIER`` (default Sonnet) so a shell export cannot make trivial
     workers inherit Opus/Fable or 1M context by default.
     """
-    tier = os.environ.get("LIMEN_CLAUDE_SHIM_FLOOR", "haiku")
-    if tier not in _CLAUDE_TIER_ORDER:
+    tier = _norm_rung(os.environ.get("LIMEN_CLAUDE_SHIM_FLOOR", "haiku"))
+    if not tier:
         return "haiku"
     return _cap_tier(tier, _max_inherited_tier())
 

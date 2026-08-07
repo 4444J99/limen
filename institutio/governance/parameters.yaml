@@ -3227,6 +3227,18 @@ parameters:
           args: ["claude-opus-5"]
         - name: "empty pin"
           args: [""]
+        # THE OTHER INPUT. opening_verdict(pin, ceiling) takes two declarations and the three cases
+        # above all pass only args[0] — so the ratchet proved everything it was told about while the
+        # ceiling axis stayed invisible through the whole 2026-08-07 arc. The pin is deliberately the
+        # CHEAPEST rung: an unresolvable ceiling collapsed to `haiku`, and a haiku pin measured
+        # against it came back state='ok', trusted=True. Every dearer pin returned above-ceiling, so
+        # this returned TRUSTED for exactly one pin and produced no incident to force it up.
+        - name: "ceiling flag names no rung"
+          args: ["claude-haiku-4-5", "banana"]
+        - name: "ceiling env names no rung"
+          args: ["claude-haiku-4-5"]
+          env:
+            LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER: "banana"
     note: "The cadence CEILING for an interactive session's OPENING model (CLAUDE.md Session Phase Entry: open cheap on sonnet, escalate deliberately). Read by model_selection.session_open_max_tier() and enforced by fable-session-guard.py's exit 4. Hard-capped at opus by the same accessor the --ceiling flag uses — the cap belongs to the VALUE, not to one entry point, so nothing can declare Fable an acceptable opening default. Before 2026-08-07 the guard asked `\"fable\" in model`, one rung of a four-rung ladder: every tier between the floor and Fable was unguarded, so a saved Opus default (~15x sonnet) opened every session while the guard reported a clean no-op. Raise this to `opus` if opening on Opus is the deliberate house cadence — that is the tuning knob, and it is a one-token registry change. Do NOT answer warning-fatigue with a quiet switch instead; that re-creates the defect as a supported feature."
   LIMEN_CLAUDE_FABLE_CAP_TIER:
     default: "opus"
