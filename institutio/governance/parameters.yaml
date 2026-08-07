@@ -5504,6 +5504,42 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_PR_AUTOTYPE:
+    default: "1"
+    env: LIMEN_PR_AUTOTYPE
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the `github-pr-autotype` sensor declared in sensors.yaml — the continuous typing rung that keeps newly-arrived mechanical PRs from re-reddening gitvs.py pr-debt --check at arrival rate. On means the DRY-RUN scan runs and receipts accrue (observable before autonomous); the mutation itself is the separate LIMEN_PR_AUTOTYPE_APPLY valve."
+  LIMEN_BEAT_PR_AUTOTYPE:
+    default: 4
+    env: LIMEN_BEAT_PR_AUTOTYPE
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) for the auto-typing rung. Cheap by construction — the negated-label search returns only the untyped mechanical residual (normally empty) — so unlike LIMEN_BEAT_PR_DEBT no script-owned wall-clock throttle backs it; the cadence IS the throttle."
+  LIMEN_PR_AUTOTYPE_TIMEOUT:
+    default: 300
+    env: LIMEN_PR_AUTOTYPE_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Seconds the auto-typing rung may take (2 gh searches across the estate-derived owner set, plus per-candidate pr view / repo view / edit calls bounded by LIMEN_PR_AUTOTYPE_LIMIT). Advisory; never breaks the fail-open beat. A timeout is NOT silent: gh transport errors are converted to named per-item skips, and a failed arrival search exits non-zero so the sensor's escalation line fires."
+  LIMEN_PR_AUTOTYPE_APPLY:
+    default: "0"
+    env: LIMEN_PR_AUTOTYPE_APPLY
+    self_update: none
+    owner: gitvs
+    note: "SAFE CODE DEFAULT — dry-run; the armed deliverable valve on the auto-typing rung (adds --apply). Arm via lever L-PR-AUTOTYPE-ARM after reviewing dry-run receipts in logs/pr-lifecycle-autotype.jsonl; logs/AUTONOMY_PAUSED forces observation-only even when armed. WHEN ARMING: set 1 in the daemon env AND add fleet_runtime: \"1\" here in the same change, so enactment-audit.py locks it live (the #576 dark-switch lesson)."
+  LIMEN_PR_AUTOTYPE_LIMIT:
+    default: 20
+    env: LIMEN_PR_AUTOTYPE_LIMIT
+    self_update: none
+    owner: gitvs
+    note: "Effects-per-run cap for the auto-typing rung — EFFECTS, not candidates examined: a candidate that can never be typed (archived, closed, human) must not consume the budget a real arrival needs, and because the cohort is sorted it would consume the same leading slot every visit. Arrival rate is a few PRs an hour at worst, so 20 per visit drains any burst within one cadence without a mass-mutation blast radius. Truncation is announced (residual=N), never silent."
+  LIMEN_PR_AUTOTYPE_AUTHORS:
+    default: "app/dependabot"
+    env: LIMEN_PR_AUTOTYPE_AUTHORS
+    self_update: none
+    owner: gitvs
+    note: "Comma-separated bot authors whose untyped arrivals the rung may auto-type (search form app/<name>; the effect-time rail also accepts the bare login gh pr view reports). Humans are never in this list — human-authored untyped arrivals are counted and surfaced, never typed."
   LIMEN_ESTATE_CENSUS_RECORD:
     default: "1"
     env: LIMEN_ESTATE_CENSUS_RECORD
@@ -5533,7 +5569,7 @@ parameters:
     env: LIMEN_SESSION_CONTENTION_GUARD
     self_update: none
     owner: substrate
-    note: "Master on/off for the occupancy guard in sync-release.sh (IF-SESSION-NON-CONTENTION). 1 means the organ probes for a live interactive session in the live checkout and declines its DESTRUCTIVE valves — unpark, reset --hard, stash push — when one is present, recording an incident. A clean fast-forward is never blocked either way: IF-LIVE-TREE-COHERENCE wins there, because a silently-never-converging sync is a failure this fleet has already paid for. 0 restores the pre-guard behaviour exactly, and is the escape hatch if the probe itself ever misbehaves — the guard is fail-open by construction, so this should never be needed."
+    note: "Master on/off for the occupancy guard in sync-release.sh (IF-SESSION-NON-CONTENTION). 1 means the organ probes for a live interactive session in the live checkout and declines its DESTRUCTIVE valves — unpark, reset --hard, stash push — when one is present, recording an incident. THE FAST-FORWARD IS NOT EXEMPT IN PRACTICE, and this note used to claim it was (\"a clean fast-forward is never blocked either way\"): that holds only for a CLEAN tree, and capture.sh guarantees the live checkout is never clean — it snapshots default-branch dirt to a stable custody side ref and deliberately never commits the working tree. So every ff routes through the stash-push valve, consults the guard, and is declined whenever the probe names anyone. Measured 2026-08-07: 8 consecutive declines, all of them false positives (the probe counted pre-warmed `claude bg-spare` processes and the FleetView viewer as interactive sessions), live checkout 37 commits behind release, the sync organ silently never converging — the exact failure IF-LIVE-TREE-COHERENCE exists to prevent, reached through the guard that was supposed to be exempt from it. 0 restores the pre-guard behaviour exactly, and is the escape hatch when the probe itself misbehaves; it was needed twice that day to break the deadlock, because a checkout cannot apply the fix to a probe that is blocking its own fast-forward."
   LIMEN_SESSION_CONTENTION_SHIP:
     default: "1"
     env: LIMEN_SESSION_CONTENTION_SHIP
