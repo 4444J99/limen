@@ -5462,6 +5462,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_SESSION_CONTENTION_GUARD:
+    default: "1"
+    env: LIMEN_SESSION_CONTENTION_GUARD
+    self_update: none
+    owner: substrate
+    note: "Master on/off for the occupancy guard in sync-release.sh (IF-SESSION-NON-CONTENTION). 1 means the organ probes for a live interactive session in the live checkout and declines its DESTRUCTIVE valves — unpark, reset --hard, stash push — when one is present, recording an incident. A clean fast-forward is never blocked either way: IF-LIVE-TREE-COHERENCE wins there, because a silently-never-converging sync is a failure this fleet has already paid for. 0 restores the pre-guard behaviour exactly, and is the escape hatch if the probe itself ever misbehaves — the guard is fail-open by construction, so this should never be needed."
+  LIMEN_SESSION_CONTENTION_SHIP:
+    default: "1"
+    env: LIMEN_SESSION_CONTENTION_SHIP
+    self_update: none
+    owner: substrate
+    note: "Master on/off for the `session-contention-ship` rung that promotes locally-recorded contention incidents into the committed ledger. 0 leaves incidents in logs/session-contention.jsonl, which IF-SESSION-NON-CONTENTION's probe still counts as distance — so disabling this hides the evidence from git, never from the predicate."
+  LIMEN_BEAT_SESSION_CONTENTION:
+    default: 12
+    env: LIMEN_BEAT_SESSION_CONTENTION
+    self_update: none
+    owner: substrate
+    note: "Cadence (every N beats) at which unshipped contention incidents are promoted. A no-op when nothing was recorded, which is the expected steady state — the ideal is that this rung never has anything to ship."
+  LIMEN_SESSION_CONTENTION_TIMEOUT:
+    default: 300
+    env: LIMEN_SESSION_CONTENTION_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Seconds the contention-ship rung may take. Sized for a ship-docs.sh PR (fresh worktree, branch, push, self-merge), not for the local append, which is instant and fail-open by design."
   LIMEN_DIURNAL:
     default: "1"
     env: LIMEN_DIURNAL

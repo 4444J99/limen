@@ -566,6 +566,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: vitals
     note: "IF-HOST-PRESSURE, executably: every declared pressure axis keeps a gauge whose named symbol still exists in its source, and a valve that is ARMED-BY-DEFAULT. Deliberately NOT a pressure reading — the row sat probe:null on the correct objection that a one-shot probe would report the weather of whatever machine ran pr-gate; the ideal's own sentence is about the ESTATE ('has an executable gauge and a mechanical valve … and the gauges are watched'), which is a repo fact. So this is a ratchet: it cannot go red because the host is busy, only because a gauge was refactored away or a safety valve quietly defaulted to '0' — the SILENT-OFF class armed-valve-audit.py names, applied to the axes that actually thrash this 16 GB host. Check D asserts the watcher exists, because the 2026-07-15 stack was three individually-legitimate loads while nothing watched the watcher."
+  session-contention:
+    command: "python3 scripts/check-session-contention.py"
+    paths: ["scripts/check-session-contention.py", "scripts/session-contention.py", "scripts/sync-release.sh", "scripts/reclaim-worktrees.py", "cli/src/limen/dispatch.py", "cli/src/limen/conduct/liveness.py", "docs/receipts/session-contention-ledger.json"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: substrate
+    note: "IF-SESSION-NON-CONTENTION, executably: every path that can rewrite or remove a tree consults occupancy first, and no contention incident has been recorded. Distance sums EXPOSURE (an unguarded path means it CAN happen) and INCIDENTS (it DID) — 'never' is a claim about both. Enumerated call sites, not a grep: a free-text sweep for reset --hard|switch|stash push|rebase returns ten files of which eight are prose (task descriptions self-heal.py writes for a human, a hook-policy string list), so a baseline cancelling those out would be a rubber stamp. Found by building it: the row's stated distance was stale — dispatch already preserves-and-retries and reclaim is liveness-gated, leaving only the live checkout under sync-release.sh."
   check-decorum:
     command: "python3 scripts/check-decorum.py"
     paths: ["institutio/governance/decorum-surfaces.yaml", "scripts/check-decorum.py", "scripts/decorum-keeper.py", "institutio/observatory/decorum-judgments.yaml"]

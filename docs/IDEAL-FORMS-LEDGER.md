@@ -141,10 +141,32 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 ### IF-SESSION-NON-CONTENTION — sessions don't sit in contended worktrees
 - **Ideal form:** an interactive session's cwd is an isolated, non-recycled worktree; the fleet
   never rebases or `clean`s the tree a live session is working in.
-- **Distance:** this session's cwd (`.claude/worktrees/stateful-dazzling-rainbow`) was checked
-  out to a fleet PR branch (`fix/creds-hydrate-noninteractive-guard`, #276), rebased, and amended
-  **by the daemon mid-session.**
-- **Status:** OPEN.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the founding incident — this ledger's original entry — was a session whose cwd
+  (`.claude/worktrees/stateful-dazzling-rainbow`) was checked out to a fleet PR branch
+  (`fix/creds-hydrate-noninteractive-guard`, #276), rebased, and amended **by the daemon
+  mid-session.**
+- **Evidence (2026-08-06):** the row's stated distance was **stale, and the probe is what found
+  it.** Enumerating every path that can rewrite or remove a tree turns up three, and two were
+  already guarded: the dispatch allocator *preserves* an existing worktree directory and retries
+  under a fresh `secrets.token_hex` suffix rather than reusing it — so the #276 mechanism above can
+  no longer recur — and `reclaim-worktrees.py` is liveness-gated on its delete path. Only the
+  **live checkout** was exposed, through `sync-release.sh`, which every beat runs `git switch`,
+  `git reset --hard` and `git stash push` against `$LIMEN_ROOT` while consulting nothing but git
+  state. That guard now exists (`live_checkout_occupant`, consulted at each destructive site), and
+  the distance is `exposure + incidents`, measured by `scripts/check-session-contention.py`.
+  Three exclusions in the probe are load-bearing, and each was found by *running* it on the
+  operator host rather than by reading code: **nested worktrees** (16 of this host's 31 linked
+  worktrees sit under `$LIMEN_ROOT`, so the naive containment rule reports it occupied in close to
+  the modal state), **gitignored ground** (`reset --hard` only rewrites tracked content, so two
+  codex plugin-cache processes were not occupants), and **non-session processes** (an MCP server
+  and a static file server sat in tracked directories; the ideal's subject is *"an interactive
+  session's cwd"*). Without all three the guard would fire constantly and the sync organ would
+  never converge — recreating the failure `IF-LIVE-TREE-COHERENCE` already records. It fails
+  **open**, inverting its sibling probe, for the same reason. A clean fast-forward is never
+  blocked; only the destructive valves defer.
+- **Status:** SHIPPED — every tree-rewriting path is occupancy-guarded and contention is now a
+  recorded, counted event rather than an unobservable one.
 - **Owner:** Claude (worktree allocation / harness convention).
 
 ### IF-HARNESS-SENSED — the Claude harness root is declared, resolved once, and sensed

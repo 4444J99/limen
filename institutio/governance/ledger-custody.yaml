@@ -52,3 +52,29 @@ ledgers:
     # 1059. The reader is fixed; this holds the *written* series to the same rule.
     series_key: generated_at
     count_key: open_pr_count
+
+  session-contention:
+    path: docs/receipts/session-contention-ledger.json
+    owner: substrate
+    note: >-
+      The contention-incident series behind IF-SESSION-NON-CONTENTION. A document recording that
+      the fleet rewrote a live session's tree is exactly the kind an unrelated PR must never
+      regenerate as a passenger: an incident that arrives by accident is indistinguishable from
+      one that was fabricated, and an incident that leaves the same way is a violation erased.
+      Registered here on the day it was created rather than after its first dilution — the debt
+      ledger got custody only after five passenger commits had already happened.
+
+    # `session-contention.py` is both: it observes the incident (producer) and decides when the
+    # local record is promoted into the committed series (keeper). Unlike the debt ledger those
+    # are not separable here, because the observation is an event with no independent census to
+    # regenerate — nothing else can produce the bytes after the moment has passed.
+    keeper: scripts/session-contention.py
+    producer: scripts/session-contention.py
+    readers:
+      - scripts/check-session-contention.py
+
+    commit_subject: '^docs\(contention\): record session-contention incident \(\d+ total\)'
+    baseline: institutio/governance/ledger-custody-baseline.txt
+
+    series_key: generated_at
+    count_key: incident_count

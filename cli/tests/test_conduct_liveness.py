@@ -10,20 +10,32 @@ def test_own_lineage_is_not_a_foreign_occupant(monkeypatch, tmp_path) -> None:
     # The claimant registers from INSIDE the worktree it claims: its own boot chain must not
     # read as an occupant, or succession would always be refused.
     monkeypatch.setattr(liveness, "_ancestor_pids", lambda: {100, 200})
-    monkeypatch.setattr(liveness, "_process_cwds", lambda: {tmp_path: 100, tmp_path / "sub": 200})
+    monkeypatch.setattr(liveness, "_process_cwds", lambda: {tmp_path: {100}, tmp_path / "sub": {200}})
     assert foreign_worktree_occupant(tmp_path) is None
 
 
 def test_foreign_process_in_worktree_blocks_succession(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(liveness, "_ancestor_pids", lambda: {100})
-    monkeypatch.setattr(liveness, "_process_cwds", lambda: {tmp_path / "deep": 999})
+    monkeypatch.setattr(liveness, "_process_cwds", lambda: {tmp_path / "deep": {999}})
+    assert foreign_worktree_occupant(tmp_path) == 999
+
+
+def test_the_caller_sharing_a_cwd_does_not_mask_the_occupant(monkeypatch, tmp_path) -> None:
+    # A DIRECTORY HOLDS EVERY PID, NOT ONE. The two preceding cases put the caller and the
+    # occupant in separate directories, which is the arrangement that cannot fail: the whole
+    # difficulty is that this probe's caller runs inside the worktree it is asking about, so it
+    # routinely shares a cwd with what it is looking for. While _process_cwds kept one pid per
+    # directory the caller's own pid evicted the occupant's, the lineage filter then discarded
+    # the survivor, and the probe answered "unoccupied" — succession granted over a live session.
+    monkeypatch.setattr(liveness, "_ancestor_pids", lambda: {100})
+    monkeypatch.setattr(liveness, "_process_cwds", lambda: {tmp_path: {100, 999}})
     assert foreign_worktree_occupant(tmp_path) == 999
 
 
 def test_process_outside_worktree_is_ignored(monkeypatch, tmp_path) -> None:
     elsewhere = tmp_path.parent
     monkeypatch.setattr(liveness, "_ancestor_pids", lambda: {100})
-    monkeypatch.setattr(liveness, "_process_cwds", lambda: {elsewhere: 999})
+    monkeypatch.setattr(liveness, "_process_cwds", lambda: {elsewhere: {999}})
     assert foreign_worktree_occupant(tmp_path) is None
 
 
@@ -31,7 +43,7 @@ def test_unavailable_probe_fails_closed(monkeypatch, tmp_path) -> None:
     # pid -1 is the probe's own unavailability sentinel: it must surface as "occupied" so a
     # broken probe can only refuse succession, never steal a live session's worktree.
     monkeypatch.setattr(liveness, "_ancestor_pids", lambda: {100})
-    monkeypatch.setattr(liveness, "_process_cwds", lambda: {Path("/"): -1})
+    monkeypatch.setattr(liveness, "_process_cwds", lambda: {Path("/"): {-1}})
     assert foreign_worktree_occupant(tmp_path) == -1
 
 
