@@ -3170,6 +3170,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Freshness budget (seconds, default 6h) for the weekly Fable meter, measured from the file's MTIME — the body carries no wall-clock field by design, because compute_balance() derives every value from data so two consecutive runs are byte-identical (verify-fable-gate.sh block 5 asserts exactly that). logs/ is gitignored runtime state with one writer, so the mtime IS the writer's heartbeat. THE DECLARED HATCH: a value <= 0 disables both the freshness and the deployment-provenance dimensions, restoring the pre-2026-08-07 fail-open behaviour for a host that genuinely runs no beat. The hatch is POLICY, not truth: balance_verdict() still reports the real state (an absent meter still reads `absent`), and only the consumer's decision to withhold a tier is switched off. Do not add a second, broader quiet switch — that re-creates the defect as a supported feature."
+  LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER:
+    default: "sonnet"
+    env: LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER
+    self_update: none
+    owner: arms-agents
+    note: "The cadence CEILING for an interactive session's OPENING model (CLAUDE.md Session Phase Entry: open cheap on sonnet, escalate deliberately). Read by model_selection.session_open_max_tier() and enforced by fable-session-guard.py's exit 4. Hard-capped at opus by the same accessor the --ceiling flag uses — the cap belongs to the VALUE, not to one entry point, so nothing can declare Fable an acceptable opening default. Before 2026-08-07 the guard asked `\"fable\" in model`, one rung of a four-rung ladder: every tier between the floor and Fable was unguarded, so a saved Opus default (~15x sonnet) opened every session while the guard reported a clean no-op. Raise this to `opus` if opening on Opus is the deliberate house cadence — that is the tuning knob, and it is a one-token registry change. Do NOT answer warning-fatigue with a quiet switch instead; that re-creates the defect as a supported feature."
   LIMEN_CLAUDE_FABLE_CAP_TIER:
     default: "opus"
     env: LIMEN_CLAUDE_FABLE_CAP_TIER
