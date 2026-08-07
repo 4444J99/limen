@@ -31,9 +31,18 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
+from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
 from limen.work_loan import task_work_loan_readiness  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
+
+# One reason code per canonical hold label; a label added to HOLD_LABELS without a
+# name here still gates admission (generic "hold_label") instead of silently passing.
+_HOLD_LABEL_REASONS = {
+    "needs-human": "human_gate",
+    "operator-paused": "operator_paused",
+    WORKSTREAM_SUCCESSOR_REQUIRED_LABEL: "successor_required",
+}
 
 HANDOFF = ROOT / "logs" / "handoff.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS") or ROOT / "tasks.yaml")
@@ -321,10 +330,9 @@ def _dispatch_admission(
         if _has_terminal_transition(task):
             reason = "terminal_history"
         labels = {str(label) for label in task.get("labels") or []}
-        if reason is None and "needs-human" in labels:
-            reason = "human_gate"
-        if reason is None and WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in labels:
-            reason = "successor_required"
+        held = labels & HOLD_LABELS
+        if reason is None and held:
+            reason = _HOLD_LABEL_REASONS.get(min(held), "hold_label")
         deps = [str(value) for value in task.get("depends_on") or []]
         if reason is None and any(not _dependency_merged(by_id.get(dep)) for dep in deps):
             reason = "dependencies"
