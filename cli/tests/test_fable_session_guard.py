@@ -34,10 +34,49 @@ def _run(payload: dict, env_extra: dict | None = None):
     )
 
 
-def test_non_fable_model_is_noop(tmp_path):
-    proc = _run({"model": "claude-opus-4-8"})
-    assert proc.returncode == 0
+def test_model_at_the_cadence_ceiling_is_noop(tmp_path):
+    """Sonnet is the declared opening tier, so it is the clean case."""
+    proc = _run({"model": "claude-sonnet-5"})
+    assert proc.returncode == 0, proc.stderr
     assert proc.stderr.strip() == ""
+
+
+def test_model_above_the_cadence_ceiling_warns(tmp_path):
+    """THE BLIND SPOT, pinned. The guard asked `"fable" in model` — ONE rung of a four-rung
+    ladder — so every tier between the cadence floor and Fable was unguarded and a saved Opus
+    default (~15x sonnet) opened every session with the guard reporting a clean no-op. This case
+    used to be `returncode == 0` with an empty stderr; asserting that WAS asserting the defect.
+    """
+    proc = _run({"model": "claude-opus-4-8"})
+    assert proc.returncode == 4, proc.stderr
+    assert "ABOVE THE CADENCE CEILING" in proc.stderr
+    assert "opus" in proc.stderr and "sonnet" in proc.stderr
+
+
+def test_cadence_ceiling_is_registry_tunable(tmp_path):
+    """The tuning knob is the declared ceiling, never a narrowing of the code."""
+    proc = _run({"model": "claude-opus-4-8"}, {"LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER": "opus"})
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr.strip() == ""
+
+
+def test_cadence_ceiling_cannot_be_raised_to_fable(tmp_path):
+    """The cap belongs to the VALUE: no env setting can declare Fable an acceptable OPENING tier,
+    because Fable is reserved behind a written acceptance receipt and a default is not one."""
+    proc = _run({"model": "claude-opus-4-8"}, {"LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER": "fable"})
+    assert proc.returncode == 0, proc.stderr  # capped to opus → opus is at the ceiling
+    # …and the cap does not thereby bless Fable itself.
+    fable = _run({"model": "claude-fable-5"}, {"LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER": "fable"})
+    assert fable.returncode == 2, fable.stderr
+    assert "HARD WARNING" in fable.stderr
+
+
+def test_unclassifiable_model_is_unverified_not_cheap(tmp_path):
+    """A pin matching no rung cannot be placed against the ceiling — that is 'I could not
+    establish this', which must never resolve to the cheapest rung."""
+    proc = _run({"model": "some-other-vendor-model-9"})
+    assert proc.returncode == 3, proc.stderr
+    assert "UNVERIFIED" in proc.stderr
 
 
 def test_unresolved_model_is_a_third_state_that_speaks(tmp_path):

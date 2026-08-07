@@ -110,6 +110,45 @@ class ExecutionProfile:
 
 
 @dataclass(frozen=True)
+class OpeningFloor:
+    """Where one lane's INTERACTIVE opening model/effort is pinned, and how to read it.
+
+    The cadence question generalized past Claude (F6 of the 2026-08-07 cadence-guard arc). The
+    operator's own framing was "all providers, not just Claude": every vendor with an interactive
+    surface has some opening default, each in its own file, and nothing in the estate could say
+    what any of them were. Measured that day: ``~/.codex/config.toml`` carried ``gpt-5.6-sol`` at
+    ``ultra`` effort, and ``~/.gemini/settings.json`` carried no ``model`` key at all — neither
+    fact was reachable by any predicate.
+
+    ``kind`` is the reason a lane has (or lacks) a readable floor, so no row is ever a bare N/A:
+
+      config-file      a readable config file declares it — probe ``config_path`` at ``pointer``
+      hook-armed       the pin lives in a harness-internal store no predicate can read; the only
+                       observable is whether the DECLARED pin is armed, so the row delegates to
+                       ``arming_valve`` in spec/armed-valves.json (design decision D8: exactly one
+                       reader of settings.json arming state, and this is not a second one)
+      unresolved       the lane has an interactive surface but its config was NOT LOCATED — the
+                       honest starting state, which clears when someone finds the file
+      not-interactive  no interactive session surface exists (issue-dispatch / CI lanes), so there
+                       is no opening default to pin. A reason, not a vacuum.
+      not-metered      interactive but no per-token spend (local weights), so cadence does not apply
+
+    ``ladder_ref`` follows the same convention as ExecutionProfile's ``*_ref`` fields: a REFERENCE
+    to live code rather than a copied snapshot, so the Claude ladder is never re-typed here and
+    cannot drift from the one in model_selection.
+    """
+
+    kind: str
+    config_path: str = ""
+    pointer: str = ""
+    ladder: tuple[str, ...] = ()
+    ladder_ref: str = ""
+    ceiling: str = ""
+    arming_valve: str = ""
+    note: str = ""
+
+
+@dataclass(frozen=True)
 class Vendor:
     """One provider of dispatchable work-capacity, with every scattered fact homed here."""
 
@@ -462,6 +501,88 @@ VENDORS: tuple[Vendor, ...] = (
 # The subset + order that `dispatch._LANE_CASCADE` walks (the earned local rotation). Homed here so
 # the two can never silently diverge; test_census asserts equality against dispatch.
 _LANE_CASCADE_ORDER: tuple[str, ...] = ("codex", "opencode", "agy", "claude", "gemini", "jules", "ollama")
+
+
+# ── SESSION-OPENING FLOORS ───────────────────────────────────────────────────────────────────
+# One row per lane, keyed by canonical vendor name. Declared as a block beside VENDORS rather than
+# as a field inside each record because it is a HOST-configuration fact about the interactive
+# surface, not a dispatch fact — but it is completeness-checked against VENDORS below, so a new
+# vendor cannot land without one and the registry can never silently lag the register.
+#
+# Every row carries a REASON (see OpeningFloor.kind). Rule #1: an N/A is a vacuum, never a resting
+# state — "not-interactive" and "unresolved" are different findings and are recorded as such.
+OPENING_FLOORS: dict[str, OpeningFloor] = {
+    "claude": OpeningFloor(
+        kind="hook-armed",
+        config_path="~/.claude/settings.json",
+        pointer="model",
+        ladder_ref="limen.model_selection:_CLAUDE_TIER_ORDER",
+        ceiling="sonnet",
+        arming_valve="SESSION_MODEL_OPENING_PIN",
+        note=(
+            "`/model` persists its choice to a harness-internal store that is absent from "
+            "settings.json, settings.local.json and every plain key of ~/.claude.json — searched "
+            "2026-08-07, only per-project lastModelUsage exists. So the LIVE opening tier is "
+            "unreadable by construction and only the DECLARED pin can be probed. This row is "
+            "therefore about arming, and delegates; the live tier is caught at SessionStart by "
+            "fable-session-guard.py's ceiling arm instead."
+        ),
+    ),
+    "codex": OpeningFloor(
+        kind="config-file",
+        config_path="~/.codex/config.toml",
+        pointer="model_reasoning_effort",
+        ladder=("minimal", "low", "medium", "high", "ultra"),
+        ceiling="high",
+        note=(
+            "Measured 2026-08-07: model gpt-5.6-sol at `ultra` effort — one rung above the "
+            "declared ceiling. Codex's cost axis is reasoning EFFORT rather than a model tier, "
+            "which is why this row points at model_reasoning_effort and not at `model`; the "
+            "cadence question ('does this lane open dearer than it needs to?') is the same one."
+        ),
+    ),
+    "gemini": OpeningFloor(
+        kind="config-file",
+        config_path="~/.gemini/settings.json",
+        pointer="model",
+        ladder=("flash", "pro"),
+        ceiling="flash",
+        note=(
+            "Measured 2026-08-07: no `model` key at all, so the lane opens on whatever the CLI's "
+            "own default is — unreadable from here and therefore UNSET rather than known-cheap. "
+            "An absent pin is reported as unset, never assumed to be the cheap rung."
+        ),
+    ),
+    "agy": OpeningFloor(kind="unresolved", note="interactive surface; opening-pin config not located"),
+    "copilot": OpeningFloor(kind="unresolved", note="interactive surface; opening-pin config not located"),
+    "warp": OpeningFloor(kind="unresolved", note="interactive surface; opening-pin config not located"),
+    "oz": OpeningFloor(kind="unresolved", note="interactive surface; opening-pin config not located"),
+    "opencode": OpeningFloor(kind="unresolved", note="interactive surface; opening-pin config not located"),
+    "ollama": OpeningFloor(
+        kind="not-metered",
+        note="local weights, no per-token spend — a cadence ceiling has nothing to protect here",
+    ),
+    "jules": OpeningFloor(
+        kind="not-interactive",
+        note="dispatched by assigning a GitHub issue; there is no interactive session to open",
+    ),
+    "github_actions": OpeningFloor(
+        kind="not-interactive",
+        note="CI runner lane; no interactive session surface exists",
+    ),
+}
+
+
+def opening_floor(name: str) -> OpeningFloor | None:
+    """The declared session-opening floor for a canonical vendor name (or None)."""
+    return OPENING_FLOORS.get(canonical(name))
+
+
+def undeclared_opening_floors() -> tuple[str, ...]:
+    """Vendors in VENDORS with no OPENING_FLOORS row — a self-surfacing vacuum, the same shape
+    armed-valve-audit's UNCLASSIFIED uses. A new vendor lands red here rather than silently
+    inheriting "no cadence applies"."""
+    return tuple(v.name for v in VENDORS if v.name not in OPENING_FLOORS)
 
 
 # ── DERIVED VIEWS ────────────────────────────────────────────────────────────────────────────

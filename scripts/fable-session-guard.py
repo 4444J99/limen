@@ -26,7 +26,14 @@ harness provides it, else from ANTHROPIC_MODEL / an explicit --model, so the gua
 Exit codes (for the verify harness, NOT to block a live session):
   0 — non-Fable model, or Fable under cap with a live receipt (clean).
   2 — Fable model AND (over_cap OR no live acceptance receipt OR an untrusted meter) — hard warn.
-  3 — the session model could not be resolved at all — reported, never mistaken for cheap.
+  3 — the session tier could not be ESTABLISHED (no model resolved, or a model matching no rung).
+  4 — the session opens ABOVE the declared cadence ceiling (LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER).
+
+Exit 4 exists because `"fable" in model` guarded ONE rung of a four-rung ladder: every tier
+between the cadence floor and Fable was unguarded, so a saved Opus default (~15x sonnet) opened
+every session while this guard reported a clean no-op. Guarding a literal string guards a value;
+guarding an ORDINAL guards the policy. The Fable arm still evaluates first and unconditionally —
+defence in depth, not a replacement.
 
 Exit 3 is the SECOND instance of this file's own defect class, closed on the same day as the
 first: `_resolve_model` used to return "" for an unresolvable model, `_is_fable("")` is False, and
@@ -161,6 +168,14 @@ def _live_acceptance_present() -> bool:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--model", help="override the resolved session model (test/inspection)")
+    ap.add_argument(
+        "--ceiling",
+        default=None,
+        help="override the cadence opening ceiling (default LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER, "
+        "itself defaulting to sonnet). Hard-capped at opus by the SAME accessor the env var uses — "
+        "the cap belongs to the value, not to one entry point, so no flag can declare Fable an "
+        "acceptable opening default.",
+    )
     args = ap.parse_args(argv)
 
     payload = _read_stdin_payload()
@@ -182,8 +197,42 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 3
 
+    # THE CADENCE CEILING (F3). The Fable arm below evaluates first and unconditionally — defence
+    # in depth — but `"fable" in model` guards ONE rung of a four-rung ladder. Every tier between
+    # the cadence floor and Fable was unguarded, so a saved Opus default (~15x sonnet) opened
+    # every session while this guard reported a clean no-op. Guarding a literal string guards a
+    # value; guarding an ORDINAL guards the policy.
     if not _is_fable(model):
-        return 0  # clean no-op on any non-Fable model
+        mod = _model_selection()
+        if mod is None:
+            print(
+                "[fable-session-guard] Cannot classify the session model — the shared tier ladder "
+                "(cli/src/limen/model_selection.py) could not be loaded beside this script. Session "
+                "tier UNVERIFIED.",
+                file=sys.stderr,
+            )
+            return 3
+        opening = mod.opening_verdict(model, args.ceiling)
+        if opening["state"] == "unresolved":
+            print(
+                f"[fable-session-guard] Session model {model!r} (via {source}) matches no rung of the "
+                f"tier ladder, so its cost cannot be placed against the cadence ceiling "
+                f"({opening['ceiling']}). Session tier UNVERIFIED — treat as UNKNOWN, not cheap.",
+                file=sys.stderr,
+            )
+            return 3
+        if opening["state"] == "above-ceiling":
+            print(
+                f"[fable-session-guard] Session OPENS ABOVE THE CADENCE CEILING: {model!r} is the "
+                f"{opening['rung']!r} rung (via {source}); the declared opening ceiling is "
+                f"{opening['ceiling']!r}. CLAUDE.md's Session Phase Entry opens cheap and escalates "
+                f"deliberately — if this escalation is deliberate, nothing is wrong; if it is a saved "
+                f"default from an earlier session, {FABLE_SWITCH} restores the cadence. "
+                "(Ceiling: LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER.)",
+                file=sys.stderr,
+            )
+            return 4
+        return 0  # at or below the cadence ceiling — clean
 
     verdict = _balance_verdict()
     accept = _live_acceptance_present()

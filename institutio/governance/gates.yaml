@@ -283,6 +283,16 @@ gates:
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
     owner: continuity
     note: "The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch."
+  guard-degradation:
+    command: "python3 scripts/check-guard-degradation.py && bash scripts/run-pytest-hermetic.sh cli/tests/test_guard_contract.py -q"
+    paths: ["cli/src/limen/guard_contract.py", "cli/src/limen/model_selection.py", "scripts/check-guard-degradation.py", "cli/tests/test_guard_contract.py", "institutio/governance/parameters.yaml", "institutio/governance/guard-state-baseline.txt"]
+    owner: arms-agents
+    note: "IF-GUARD-FAIL-TOWARD-WARNING's predicate: every guard declared by a `guard_state:` block in parameters.yaml is EXECUTED against its degenerate inputs, and one that returns TRUSTED on an input it cannot resolve is a finding. Executed, never inspected — verify-fable-gate.sh was green through the entire 2026-08-07 incident, all five blocks passing, because the question it asked was answered correctly by a meter that was itself lying; inspection cannot catch a guard whose code looks right and whose input is wrong. The declared population is grow-only (guard-state-baseline.txt): deleting a declaration is exactly how a class-wide invariant quietly stops covering its subject, so a shrink is RED rather than a cleanup."
+  session-opening-floor:
+    command: "python3 scripts/session-opening-floor.py --check && bash scripts/run-pytest-hermetic.sh cli/tests/test_session_opening_floor.py -q"
+    paths: ["cli/src/limen/census.py", "scripts/session-opening-floor.py", "cli/tests/test_session_opening_floor.py", "institutio/governance/sensors.yaml"]
+    owner: arms-agents
+    note: "Every lane in census.VENDORS must declare an OPENING_FLOORS row, and no lane may open above its declared cadence ceiling without a lever citing it. On a CI runner the operator's home configs are absent, so every config-file row reports `unset` and the ONLY failure mode left is UNDECLARED — which is precisely the repo-deterministic half of the contract: adding a vendor without declaring where its interactive session opens lands red. The host-dependent half is the beat's job (sensors.yaml session-opening-floor), because the remedies are operator-owned files an agent reports and never writes."
   fable-cadence:
     command: "bash scripts/verify-fable-gate.sh"
     paths: ["scripts/fable-session-guard.py", "scripts/fable-allotment.py", "scripts/vendor-cancel-advisor.py", "cli/src/limen/model_selection.py", "scripts/verify-fable-gate.sh", "cli/tests/test_claude_tier.py", "cli/tests/test_fable_allotment.py", "cli/tests/test_fable_session_guard.py", "cli/tests/test_vendor_cancel_advisor.py", "scripts/check-live-checkout.py"]

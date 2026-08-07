@@ -1,0 +1,4 @@
+# Declared population for check-guard-degradation.py — GROW-ONLY.
+# Each line is a parameters.yaml row carrying a `guard_state:` block.
+LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER
+LIMEN_FABLE_BALANCE_MAX_AGE_S
