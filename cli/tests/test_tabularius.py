@@ -15,8 +15,10 @@ from typing import Any
 
 import limen.tabularius as tabularius
 import pytest
-from limen.conduct.broker import ConductConflict, TaskAlreadyHomed
+from limen.conduct.broker import ConductBroker, ConductConflict, TaskAlreadyHomed
 from limen.conduct.client import BrokerUnavailable
+from limen.conduct.models import AgentIdentityV1, ConductorSessionV1
+from limen.conduct.store import SQLiteStateStore
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile
 from limen.tabularius import (
@@ -446,6 +448,141 @@ def test_remote_registration_identity_is_bound_into_compatibility_packet():
     assert fake.packets[0].conductor.agent == "codex"
     assert fake.packets[0].conductor.surface == "credential-principal"
     assert fake.packets[0].initiator == fake.packets[0].conductor
+
+
+def test_the_healthy_path_keeps_the_stable_relay_literal():
+    """The recorded ``session_id`` is an observable identifier — the keeper stamps it into every
+    projection event, and harvest reads it. It must NOT change when nothing is wrong."""
+    fake = FakeConductClient([])
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-STABLE",
+        patch=_task("T-STABLE", status="open"),
+        ticket_id="stable-relay",
+    )
+
+    tabularius._relay_ticket(ticket, None, client=fake)
+
+    assert fake.registered[0].session_id == f"{ticket.agent}-{ticket.session_id}"
+    assert len(fake.registered) == 1
+
+
+def test_a_frozen_relay_literal_falls_back_to_a_keyed_id_and_still_relays():
+    """A FIXED relay session id is claimable exactly once, and the loser is refused forever.
+
+    ``register()`` binds agent/surface/session_id from the principal and then rejects any
+    re-registration whose whole identity object differs — so post-binding the only fields that can
+    still differ are client-declared, and a drift in them is a permanent 409. That froze
+    ``dispatch-serial-results`` from 2026-07-19: jules sessions launched, receipts were never
+    recorded, and the throughput governor read 0 dispatches (#1995). A refused literal must fall
+    back to an id this client can own, rather than killing the relay.
+    """
+    refused: list[str] = []
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-FROZEN",
+        patch=_task("T-FROZEN", status="open"),
+        ticket_id="frozen-relay",
+    )
+    frozen_literal = f"{ticket.agent}-{ticket.session_id}"
+
+    class FrozenLiteralClient(FakeConductClient):
+        def register(self, session):
+            if session.session_id == frozen_literal:
+                refused.append(session.session_id)
+                raise ConductConflict(
+                    'conduct broker rejected request (409): {"detail": '
+                    '"session_id is already registered to another identity"}',
+                    status=409,
+                )
+            return super().register(session)
+
+    fake = FrozenLiteralClient([])
+
+    tabularius._relay_ticket(ticket, None, client=fake)
+
+    literal = f"{ticket.agent}-{ticket.session_id}"
+    assert refused == [literal]  # the literal was tried first, and only once
+    assert fake.registered[0].session_id.startswith(f"{literal}-")
+    assert fake.registered[0].identity.session_id == fake.registered[0].session_id
+    assert fake.packets, "the ticket must still relay after the fallback"
+
+
+def test_a_non_conflict_registration_failure_is_never_retried():
+    """Only a conflict means "that literal is not mine". Anything else must surface unchanged."""
+
+    class BrokenClient(FakeConductClient):
+        def register(self, session):
+            raise BrokerUnavailable("keeper down")
+
+    fake = BrokenClient([])
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-DOWN",
+        patch=_task("T-DOWN", status="open"),
+        ticket_id="down-relay",
+    )
+
+    with pytest.raises(BrokerUnavailable):
+        tabularius._relay_ticket(ticket, None, client=fake)
+
+
+def test_relay_identity_key_tracks_only_the_fields_register_leaves_unbound():
+    """The key must cover exactly what the keeper compares verbatim — no more, no less.
+
+    Principal-bound fields are normalized on both sides, so keying them would split one relay
+    session into many for no reason; client-declared fields are compared as sent, so NOT keying
+    them re-opens the freeze.
+    """
+    base = AgentIdentityV1(
+        agent="dispatch",
+        surface="tabularius-relay",
+        session_id="dispatch-serial-results",
+        provider_identity="limen-cli",
+    )
+    key = tabularius._relay_identity_key(base)
+
+    assert tabularius._relay_identity_key(base.model_copy(update={"agent": "codex"})) == key
+    assert tabularius._relay_identity_key(base.model_copy(update={"surface": "other-surface"})) == key
+    assert tabularius._relay_identity_key(base.model_copy(update={"session_id": "other-session"})) == key
+
+    assert tabularius._relay_identity_key(base.model_copy(update={"provider_identity": "limen-cli-2"})) != key
+    assert tabularius._relay_identity_key(base.model_copy(update={"native_run_id": "run-7"})) != key
+
+
+def test_fixed_relay_session_id_freezes_on_provider_drift_but_a_keyed_one_does_not(tmp_path):
+    """The regression, against the real broker: same principal, drifted provider identity."""
+    broker = ConductBroker(store=SQLiteStateStore(tmp_path / "conduct.db"))
+    now = datetime.now(timezone.utc)
+
+    def session(session_id: str, provider: str) -> ConductorSessionV1:
+        return ConductorSessionV1(
+            session_id=session_id,
+            identity=AgentIdentityV1(
+                agent="dispatch",
+                surface="tabularius-relay",
+                session_id=session_id,
+                provider_identity=provider,
+            ),
+            origin="relay",
+            capabilities=frozenset({"task-submit"}),
+            transport="ianva",
+            harvest_method="receipt",
+            registered_at=now,
+            heartbeat_at=now,
+        )
+
+    broker.register(session("dispatch-serial-results", "limen-cli"))
+    with pytest.raises(ConductConflict):
+        broker.register(session("dispatch-serial-results", "limen-cli-2"))
+
+    def keyed(provider: str) -> ConductorSessionV1:
+        identity = session("dispatch-serial-results", provider).identity
+        return session(f"dispatch-serial-results-{tabularius._relay_identity_key(identity)}", provider)
+
+    broker.register(keyed("limen-cli"))
+    broker.register(keyed("limen-cli-2"))
+    broker.register(keyed("limen-cli"))
 
 
 def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeypatch):
