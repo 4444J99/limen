@@ -15,6 +15,7 @@ from typing import Any
 
 import limen.tabularius as tabularius
 import pytest
+from limen.conduct.broker import ConductConflict, TaskAlreadyHomed
 from limen.conduct.client import BrokerUnavailable
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile
@@ -97,9 +98,11 @@ class FakeConductClient:
         unavailable_on_register: bool = False,
         bound_agent: str | None = None,
         bound_surface: str | None = None,
+        conflict_on: set[str] | None = None,
     ):
         self.tasks = {str(task["id"]): dict(task) for task in tasks}
         self.fail_after = fail_after
+        self.conflict_on = set(conflict_on or ())
         self.unavailable_on_register = unavailable_on_register
         self.bound_agent = bound_agent
         self.bound_surface = bound_surface
@@ -120,9 +123,16 @@ class FakeConductClient:
     def submit(self, packet):
         if self.fail_after is not None and len(self.packets) >= self.fail_after:
             raise BrokerUnavailable("test broker interrupted")
-        self.packets.append(packet)
         intent = dict(packet.intent)
         task_id = str(intent["task_id"])
+        if task_id in self.conflict_on:
+            # The deployed Worker's answer, verbatim: HTTP 409 whose detail is keeper prose.
+            # Callers must classify on the status, never on the sentence.
+            raise ConductConflict(
+                f'conduct broker rejected request (409): {{"detail": "task {task_id} already exists"}}',
+                status=409,
+            )
+        self.packets.append(packet)
         if intent["kind"] == "task.upsert":
             projected = dict(intent["task"])
         else:
@@ -700,3 +710,145 @@ def test_canonical_revision_matches_worker_millisecond_canon() -> None:
     # Non-datetime revisions pass through untouched, exactly like the worker.
     assert canon({"created": "2026-07-23"}) == "2026-07-23"
     assert canon({"status": "open"}) == "open"
+
+
+# ── already-homed tolerance (the local projection LAGS the keeper) ────────────
+#
+# A caller derives "this task is absent" from tasks.yaml, which republishes on its own
+# cadence. When the keeper already holds the task, the create is refused — benignly. Three
+# keepers word that refusal three ways (the Worker's 409 "already exists", the in-process
+# compat path's "already exists", the ticket path's "is no longer absent"), so tolerance is
+# keyed on the STATUS/marker and attributed to the in-flight ticket, never parsed out of
+# the sentence.
+
+
+def test_sync_tolerates_an_opted_in_already_homed_create_and_keeps_relaying(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    desired.tasks.append(_board([_task("T-fresh", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        desired,
+        agent="legacy-adapter",
+        session_id="sync-relay",
+        tolerate_already_homed={"T-homed", "T-fresh"},
+    )
+
+    assert result.already_homed == ["T-homed"]
+    # The conflict did not hold the genuinely-new task hostage.
+    assert "T-fresh" in fake.tasks
+    assert result.applied == 1
+
+
+def test_sync_refuses_a_conflict_for_a_task_the_caller_did_not_opt_in(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    with pytest.raises(ConductConflict):
+        apply_limen_file_sync(
+            board,
+            desired,
+            agent="legacy-adapter",
+            session_id="sync-relay",
+            tolerate_already_homed={"T-something-else"},
+        )
+
+
+def test_sync_without_the_opt_in_still_fails_closed_on_a_conflict(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    with pytest.raises(ConductConflict):
+        apply_limen_file_sync(board, desired, agent="legacy-adapter", session_id="sync-relay")
+
+
+def test_already_homed_tolerance_is_keyed_on_status_not_on_keeper_prose(tmp_path, monkeypatch):
+    """Reword every keeper's detail text: tolerance must survive, because it reads the code."""
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board)
+    reworded = []
+
+    def submit(packet):
+        task_id = str(dict(packet.intent)["task_id"])
+        if task_id == "T-homed":
+            reworded.append(task_id)
+            raise ConductConflict("HTTP 409 Conflict", status=409)
+        return FakeConductClient.submit(fake, packet)
+
+    fake.submit = submit
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        desired,
+        agent="legacy-adapter",
+        session_id="sync-relay",
+        tolerate_already_homed={"T-homed"},
+    )
+
+    assert reworded == ["T-homed"]
+    assert result.already_homed == ["T-homed"]
+
+
+def test_local_keepers_own_wording_is_tolerated_too(tmp_path):
+    """The in-tree LocalConductClient says 'is no longer absent', not 'already exists'.
+
+    Regression: keying on the remote keeper's sentence made this path fatal, and the
+    genuinely-new atom in the same batch was lost with it.
+    """
+    board = _seed_board(tmp_path, n=1)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    # First pass homes T-homed on the real local keeper.
+    apply_limen_file_sync(board, desired, agent="legacy-adapter", session_id="first")
+
+    # Now rewind the local projection so it LAGS the keeper — exactly what the beat sees.
+    save_limen_file(board, _board([_task("T-0", status="open")]))
+    lagging = load_limen_file(board)
+    lagging.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    lagging.tasks.append(_board([_task("T-fresh", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        lagging,
+        agent="legacy-adapter",
+        session_id="second",
+        tolerate_already_homed={"T-homed", "T-fresh"},
+    )
+
+    assert result.already_homed == ["T-homed"]
+    assert "T-fresh" in result.projected_tasks
+
+
+def test_already_homed_marker_carries_its_task_identity():
+    """The signal a caller needs is structural: which task, and 'this is the benign one'."""
+    exc = TaskAlreadyHomed("task T-1 already exists", task_id="T-1")
+    assert exc.task_id == "T-1"
+    assert exc.already_homed is True
+    assert exc.status == 409
+    # Still a ValueError: every raise site it replaced was one, and callers catch that type.
+    assert isinstance(exc, ValueError)
+
+
+def test_a_non_absent_precondition_failure_is_never_tolerated():
+    """Tolerance covers creates only. A failed update precondition means state moved."""
+    ticket = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"task_sha256": "deadbeef"})
+    exc = TaskAlreadyHomed("task precondition failed: T-1 is no longer absent", task_id="T-1")
+    assert tabularius._is_tolerated_already_homed(exc, ticket, {"T-1"}) is False
+
+    create = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"absent": True})
+    assert tabularius._is_tolerated_already_homed(exc, create, {"T-1"}) is True
+    assert tabularius._is_tolerated_already_homed(exc, create, set()) is False
+    assert tabularius._is_tolerated_already_homed(RuntimeError("boom"), create, {"T-1"}) is False
