@@ -49,8 +49,21 @@ def _rung_source() -> str:
     raise AssertionError("rung's closing `fi` not found at loop-body indent")
 
 
-def _run(tmp_path: Path, *, marker: bool, label: str, managed: bool, enabled: str = "1") -> tuple[str, list[str]]:
-    """Execute the real rung with a stub launchctl; return (stdout, argv-lines the stub recorded)."""
+def _run(
+    tmp_path: Path,
+    *,
+    marker: bool,
+    label: str,
+    managed: bool,
+    enabled: str = "1",
+    listing: str | None = None,
+) -> tuple[str, list[str]]:
+    """Execute the real rung with a stub launchctl; return (stdout, argv-lines the stub recorded).
+
+    ``listing`` overrides which label launchd is pretending to hold, independently of ``label``.
+    ``managed`` is the common case (holds the same label, or an unrelated one); ``listing`` exists
+    for the near-miss cases where the held label is deliberately CLOSE to the one being looked up.
+    """
     root = tmp_path / "root"
     (root / "logs").mkdir(parents=True)
     if marker:
@@ -58,14 +71,29 @@ def _run(tmp_path: Path, *, marker: bool, label: str, managed: bool, enabled: st
 
     bindir = tmp_path / "bin"
     bindir.mkdir()
-    listing = label if managed else "com.something.else"
+    held = listing if listing is not None else (label if managed else "com.something.else")
     stub = bindir / "launchctl"
     # `list` answers the managed-or-not question; every other subcommand (i.e. kickstart) is recorded
     # instead of performed. Recording argv is the point: a wrong domain or a missing -k would restart
     # nothing, or the wrong thing, and still look green.
+    #
+    # `list` MODELS BOTH REAL FORMS, and the distinction is the whole point of this stub:
+    #   launchctl list           -> prints the PID/Status/Label table, always exit 0
+    #   launchctl list <label>   -> EXACT lookup: exit 0 if that job exists, 113 if it does not
+    # The stub used to answer any `list` with exit 0 and a printed label, which models only the first
+    # form. That made it blind to the difference between grepping the table and asking launchd — so
+    # when the rung moved to the exact lookup, an unmanaged label still read as managed here. A stub
+    # that models one of two real behaviours will certify code written against the other.
     stub.write_text(
         "#!/bin/sh\n"
-        'if [ "$1" = "list" ]; then printf "%s\\n" ' + f'"{listing}"' + "; exit 0; fi\n"
+        'if [ "$1" = "list" ]; then\n'
+        '  if [ "$#" -ge 2 ]; then\n'
+        f'    [ "$2" = "{held}" ] && exit 0\n'
+        "    exit 113\n"
+        "  fi\n"
+        f'  printf "%s\\n" "{held}"\n'
+        "  exit 0\n"
+        "fi\n"
         f'printf "%s\\n" "$*" >> "{tmp_path}/argv.log"\n'
         "exit 0\n"
     )
@@ -137,6 +165,33 @@ def test_the_label_is_not_hardcoded_past_the_env(tmp_path: Path) -> None:
     assert "com.limen.heartbeat" not in out
 
 
+@pytest.mark.parametrize(
+    ("held", "why"),
+    [
+        ("comXlimenXheartbeat", "the label is a REGEX under grep and the default is mostly dots"),
+        ("com.limen.heartbeat-loop", "a SUBSTRING match says yes to a longer, different job"),
+    ],
+)
+def test_a_near_miss_label_is_not_this_job(tmp_path: Path, held: str, why: str) -> None:
+    """launchd holding a label CLOSE to ours must read as unmanaged. Two ways that used to fail.
+
+    The rung asked `launchctl list | grep -q "$_kick_label"`, which is wrong twice over: grep reads
+    the label as a pattern, so `com.limen.heartbeat` matches the literal `comXlimenXheartbeat`; and
+    even the obvious `grep -F` repair still substring-matches `com.limen.heartbeat-loop`. The tidy
+    fixed-string patch looks correct and is not, which is why both live here rather than in a
+    comment.
+
+    The damage is not a stray kickstart — `-k` names $_kick_label, so it targets the right label and
+    simply fails when unmanaged. It is that the guard takes the TRUE branch, so the else-branch never
+    clears the marker, and the rung this suite's own header calls self-limiting retries every beat
+    forever instead of firing once.
+    """
+    out, recorded = _run(tmp_path, marker=True, label="com.limen.heartbeat", managed=False, listing=held)
+    assert recorded == [], f"kickstarted on a near-miss label — {why}"
+    assert "not launchd-managed" in out
+    assert "[marker_left=False]" in out, "the marker must be cleared or this logs every beat forever"
+
+
 def test_the_startup_clear_still_exists_because_it_is_what_bounds_the_rung(tmp_path: Path) -> None:
     """The rung has no counter; the startup clear is its ONLY bound.
 
@@ -158,10 +213,19 @@ def test_the_rung_only_ever_asks_launchctl_to_kickstart(tmp_path: Path, subcomma
 
 
 def test_the_extractor_fails_loudly_if_the_rung_moves() -> None:
-    """Guards the test itself: a silently-empty extraction would make every case above vacuous."""
+    """Guards the test itself: a silently-empty extraction would make every case above vacuous.
+
+    Counted over CODE lines only. The rung carries a comment explaining why it asks launchd for the
+    label instead of grepping the table, and that explanation necessarily quotes `launchctl` — a
+    whole-text count read those mentions as extra call sites and failed on a rung that had gained
+    documentation, not authority. The invariant being protected is "one probe, one effector, no
+    bootout/unload/stop", which is a property of the code.
+    """
     source = _rung_source()
     assert "launchctl kickstart -k" in source
-    assert source.count("launchctl") == 2, "expect exactly the `list` probe and the `kickstart` effector"
+    code = [ln for ln in source.splitlines() if not ln.lstrip().startswith("#")]
+    calls = sum(ln.count("launchctl") for ln in code)
+    assert calls == 2, f"expect exactly the `list` probe and the `kickstart` effector, got {calls}"
 
 
 if __name__ == "__main__":  # pragma: no cover
