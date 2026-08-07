@@ -437,7 +437,14 @@ def save_local_conduct_projection(
         or not target.is_relative_to(temporary_root)
         or not under_fixed_temporary_root
     ):
-        raise ValueError("local conduct projection is restricted to the operating-system temporary root")
+        raise ValueError(
+            "local conduct projection is restricted to the operating-system temporary root: "
+            f"both LIMEN_CONDUCT_STATE ({state}) and the board ({target}) must live under "
+            f"{temporary_root}, and the board must sit beside the state file in {state.parent}"
+        )
     if not target.is_relative_to(state.parent):
-        raise ValueError("local conduct projection must stay inside its isolated keeper directory")
+        raise ValueError(
+            f"local conduct projection must stay inside its isolated keeper directory: "
+            f"the board ({target}) must sit beside LIMEN_CONDUCT_STATE in {state.parent}"
+        )
     save_limen_file(target, limen, allow_shrink=True)

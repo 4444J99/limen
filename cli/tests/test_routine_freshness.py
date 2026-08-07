@@ -389,53 +389,75 @@ class _FakeFile:
         self.tasks = [_FakeTask(i) for i in ids]
 
 
-_C409 = "conduct broker rejected request (409): task {} already exists"
+class _FakeDrain:
+    def __init__(self, already_homed=()):
+        self.already_homed = list(already_homed)
 
 
-def test_relay_ledger_409_is_homed_not_fatal():
-    """A keeper 409 for a just-created atom is benign: recorded as homed, never raised."""
+def test_relay_ledger_already_homed_is_recorded_not_fatal():
+    """A keeper's already-homed answer for a just-created atom is benign, never raised."""
     mod = _load()
     lf = _FakeFile(["ASK-routine-a"])
     res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
-    calls = []
 
     def sync(_ledger, _lf, **_kw):
-        calls.append(1)
-        if len(calls) == 1:
-            raise RuntimeError(_C409.format("ASK-routine-a"))
+        return _FakeDrain(["ASK-routine-a"])
 
     mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
 
     assert "error" not in res
     assert res["created"] == []
     assert any("ASK-routine-a" in h for h in res["homed"])
-    assert [t.id for t in lf.tasks] == []
-    assert len(calls) == 2  # retried after dropping the already-homed atom
 
 
-def test_relay_ledger_409_does_not_block_a_genuinely_new_atom():
-    """One already-homed atom must not hold a genuinely new one hostage in the same batch."""
+def test_relay_ledger_reads_the_keepers_verdict_never_the_rejection_prose():
+    """The organ must not classify on error text. Three keepers word this condition three ways;
+    matching one of them silently reverts this severity:silent sensor to fatal on a reword."""
+    relay = SCRIPT.read_text().split("def _relay_ledger", 1)[1].split("\ndef ", 1)[0]
+    code = relay.split('"""', 2)[2]  # skip the docstring's own explanatory prose
+    for prose in ("already exists", "no longer absent", "409"):
+        assert prose not in code, f"_relay_ledger matches keeper prose: {prose!r}"
+
+
+def test_relay_ledger_opts_in_only_the_atoms_this_run_appended():
+    """Tolerating a task this run did NOT append would let it be dropped, and a dropped task
+    diffs as EV_TASK_REMOVE — which the keeper refuses outright."""
     mod = _load()
-    lf = _FakeFile(["ASK-routine-old", "ASK-routine-new"])
-    res = {"created": ["ASK-routine-old", "ASK-routine-new"], "refreshed": [], "homed": []}
-    relayed = []
+    lf = _FakeFile(["ASK-routine-preexisting", "ASK-routine-new"])
+    res = {"created": ["ASK-routine-new"], "refreshed": ["ASK-routine-preexisting"], "homed": []}
+    seen = {}
 
-    def sync(_ledger, lf_arg, **_kw):
-        ids = [t.id for t in lf_arg.tasks]
-        if "ASK-routine-old" in ids:
-            raise RuntimeError(_C409.format("ASK-routine-old"))
-        relayed.append(list(ids))
+    def sync(_ledger, _lf, **kw):
+        seen.update(kw)
+        return _FakeDrain()
 
-    new_ids = {"ASK-routine-old", "ASK-routine-new"}
-    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=new_ids, res=res)
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-new"}, res=res)
 
-    assert "error" not in res
-    assert relayed == [["ASK-routine-new"]]
-    assert res["created"] == ["ASK-routine-new"]
+    assert seen["tolerate_already_homed"] == {"ASK-routine-new"}
+    assert "ASK-routine-preexisting" not in seen["tolerate_already_homed"]
 
 
-def test_relay_ledger_non_409_error_is_recorded_not_raised():
-    """Any other keeper failure is fail-open: recorded on the result, never crashes the beat."""
+def test_relay_ledger_relays_the_whole_batch_in_one_pass():
+    """N already-homed atoms cost one round trip, not N: the keeper reports them together."""
+    mod = _load()
+    ids = [f"ASK-routine-{n}" for n in range(5)]
+    lf = _FakeFile(ids)
+    res = {"created": list(ids), "refreshed": [], "homed": []}
+    calls = []
+
+    def sync(_ledger, _lf, **_kw):
+        calls.append(1)
+        return _FakeDrain(ids)
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=set(ids), res=res)
+
+    assert len(calls) == 1
+    assert res["created"] == []
+    assert len(res["homed"]) == 5
+
+
+def test_relay_ledger_error_is_recorded_not_raised():
+    """Any keeper failure is fail-open: recorded on the result, never crashes the beat."""
     mod = _load()
     lf = _FakeFile(["ASK-routine-a"])
     res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
@@ -446,19 +468,4 @@ def test_relay_ledger_non_409_error_is_recorded_not_raised():
     mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
 
     assert "keeper sync failed" in res["error"]
-
-
-def test_relay_ledger_never_drops_a_preexisting_task():
-    """A 409 naming a task this run did NOT append must not be dropped: that diffs as a removal,
-    which the keeper refuses outright."""
-    mod = _load()
-    lf = _FakeFile(["ASK-routine-preexisting"])
-    res = {"created": [], "refreshed": ["ASK-routine-preexisting"], "homed": []}
-
-    def sync(_ledger, _lf, **_kw):
-        raise RuntimeError(_C409.format("ASK-routine-preexisting"))
-
-    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=set(), res=res)
-
-    assert "error" in res
-    assert [t.id for t in lf.tasks] == ["ASK-routine-preexisting"]
+    assert [t.id for t in lf.tasks] == ["ASK-routine-a"]
