@@ -5486,6 +5486,30 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_ESTATE_CENSUS_RECORD:
+    default: "1"
+    env: LIMEN_ESTATE_CENSUS_RECORD
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the `github-estate-census` recorder sensor declared in sensors.yaml — the issue/branch/check axis of the fleet-debt register, sibling of LIMEN_PR_DEBT_RECORD. 0 disables recording, which leaves docs/github-estate-census.json stale rather than silently current."
+  LIMEN_BEAT_ESTATE_CENSUS:
+    default: 12
+    env: LIMEN_BEAT_ESTATE_CENSUS
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) at which the estate-census recorder's CHEAP due-check runs. Not the census cadence: the expensive per-repo GraphQL sweep is throttled separately by LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS (the github-pr-debt two-clock pattern)."
+  LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS:
+    default: 24
+    env: LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS
+    self_update: none
+    owner: gitvs
+    note: "Minimum wall-clock hours between full estate censuses (issues/branches/checks across every governed repo). Applied to TWO clocks and due only when both are stale: the mtime of the gitignored logs/github-estate-census-facts.json receipt (this checkout swept) AND source_report.generated_at in the committed ledger (anyone recorded — shared by every checkout). Same two-clock rule LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS documents, inherited from the #1859 duplicate-census incident."
+  LIMEN_ESTATE_CENSUS_RECORD_TIMEOUT:
+    default: 1800
+    env: LIMEN_ESTATE_CENSUS_RECORD_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Seconds the estate-census recorder rung may take. Larger than the PR-debt rung's because a due run paginates issues, branches and check rollups per repository across the whole estate (~313 repos) plus a ship-docs PR; advisory, never breaks the fail-open beat."
   LIMEN_SESSION_CONTENTION_GUARD:
     default: "1"
     env: LIMEN_SESSION_CONTENTION_GUARD
