@@ -10,7 +10,7 @@
 #   R1 spine     — chezmoi source is the real cartridge clone (scripts/cartridge-connected.py)
 #   R2 capture   — deployed config carries no un-captured local state (scripts/chezmoi-drift.py)
 #   R3 creds     — every materialized credential still authenticates (creds-hydrate --verify)
-#   R4 toolchain — the declared toolchain is summonable (mise.toml resolves via `mise current`)
+#   R4 toolchain — every tool mise.toml declares is INSTALLED (`mise ls --missing` is empty)
 #   R5 repos     — every clone under $LIMEN_WORKDIR is clean, pushed, and stash-free
 #   R6 residue   — the residue R5 steps over is within its declared caps (scripts/residue-census.py)
 #
@@ -56,13 +56,30 @@ else
   fail "R3 creds — dead credential(s) (scripts/creds-hydrate.py --verify)"
 fi
 
-# R4 — the declared toolchain (mise.toml ranges) resolves. Organ-absent = advisory skip: the
-# jack-in installs mise; its absence on a working floor is a gap, not un-summonable state.
+# R4 — the declared toolchain (mise.toml ranges) is INSTALLED, not merely resolvable.
+#
+# This rung shipped asking `mise current`, which answers a question that has an answer whether or
+# not the tool exists: it resolves each range to a version STRING from config, prints a WARN per
+# missing tool, and exits 0 regardless. So the rung could not fail. On 2026-08-07 it reported
+# "✓ declared toolchain resolves" while python@3.12.13, node@22.23.2 AND uv@0.12.2 were all absent
+# from disk — the entire declaration un-summoned — and the repo silently ran Homebrew's node 26
+# against a CI that runs node 22, which is the exact parity mise.toml's header demands.
+#
+# `mise ls --missing` is the installation truth. Its OWN exit code is 0 either way (it is a report,
+# not a gate), so the OUTPUT is the answer: empty ⟺ every declared tool is on disk. Failure to
+# enumerate at all is red, not green — a broken mise must not read as a summoned toolchain.
+# Organ-absent = advisory skip: the jack-in installs mise; its absence on a working floor is a gap,
+# not un-summonable state.
 if command -v mise >/dev/null 2>&1; then
-  if mise current >/dev/null 2>&1; then
-    ok "R4 toolchain — declared toolchain resolves (mise current)"
+  if r4_raw="$(mise ls --missing 2>/dev/null)"; then
+    r4_missing="$(printf '%s\n' "$r4_raw" | awk 'NF {printf "%s@%s ", $1, $2}')"
+    if [ -z "$r4_missing" ]; then
+      ok "R4 toolchain — every declared tool installed (mise ls --missing empty)"
+    else
+      fail "R4 toolchain — declared but NOT installed: ${r4_missing% } (run: mise install)"
+    fi
   else
-    fail "R4 toolchain — declared toolchain unresolved (run: mise install)"
+    fail "R4 toolchain — mise could not enumerate the declaration (mise ls --missing failed)"
   fi
 else
   skip "R4 toolchain — mise not installed (advisory; the jack-in installs it)"
