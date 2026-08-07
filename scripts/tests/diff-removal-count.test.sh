@@ -49,22 +49,44 @@ documented=$(grep '^-' "$TMP/fixture.diff" | grep -vcE "$HEADER_RE")
   && pass "the documented pattern counts exactly the $TRUE_REMOVALS real removals" \
   || fail "documented pattern counted $documented, expected $TRUE_REMOVALS"
 
-naive=$(grep -c '^-' "$TMP/fixture.diff")
-[ "$naive" -gt "$TRUE_REMOVALS" ] \
-  && pass "the bare '^-' over-counts, as documented (got $naive) — noisy, not dangerous" \
+# EXACT counts, not relations. The comparison table in SKILL.md quotes all four of these numbers, and
+# its first draft carried 2 and 4 where the fixture produces 1 and 3 — wrong numbers in a table whose
+# whole subject is counting precisely. The earlier version of this gate asserted only "over-counts" /
+# "under-counts", which is directionally true of both the right answer and the wrong ones, so it
+# certified the table without ever reading it. Each row now has a value, and the row is checked.
+expect() { # expect <label> <got> <want>
+  [ "$2" = "$3" ] && pass "$1 = $3, as the SKILL.md table states" \
+    || fail "$1 = $2 but the SKILL.md table says $3 — table and fixture have drifted"
+}
+
+expect "bare '^-'" "$(grep -c '^-' "$TMP/fixture.diff")" 5
+expect "'^-[^-]'" "$(grep -cE '^-[^-]' "$TMP/fixture.diff")" 1
+expect "loose '^--- ' exclusion" "$(grep '^-' "$TMP/fixture.diff" | grep -vc '^--- ')" 3
+expect "full-shape exclusion" "$(grep '^-' "$TMP/fixture.diff" | grep -vcE "$HEADER_RE")" 4
+
+# Direction still asserted, because an exact number that happens to equal TRUE_REMOVALS by accident
+# would otherwise read as correct. Both wrong patterns must remain wrong in the direction claimed.
+[ "$(grep -c '^-' "$TMP/fixture.diff")" -gt "$TRUE_REMOVALS" ] \
+  && pass "the bare '^-' over-counts — noisy, not dangerous" \
   || fail "'^-' no longer over-counts; the fixture stopped exercising the header case"
 
-deflating=$(grep -cE '^-[^-]' "$TMP/fixture.diff")
-[ "$deflating" -lt "$TRUE_REMOVALS" ] \
-  && pass "'^-[^-]' UNDER-counts (got $deflating) — the false negative this recipe must not ship" \
+[ "$(grep -cE '^-[^-]' "$TMP/fixture.diff")" -lt "$TRUE_REMOVALS" ] \
+  && pass "'^-[^-]' UNDER-counts — the false negative this recipe must not ship" \
   || fail "'^-[^-]' no longer under-counts; the fixture stopped exercising blank/dash removals"
 
-# The previous fix, which read as exact and was not. Kept as a case so the third iteration cannot be
-# quietly reverted to the second.
-loose=$(grep '^-' "$TMP/fixture.diff" | grep -vc '^--- ')
-[ "$loose" -lt "$TRUE_REMOVALS" ] \
-  && pass "the loose '^--- ' exclusion still UNDER-counts (got $loose) — it eats the '-- ' removal" \
+# The previous fix, which read as exact and was not. Kept so the third iteration cannot be quietly
+# reverted to the second.
+[ "$(grep '^-' "$TMP/fixture.diff" | grep -vc '^--- ')" -lt "$TRUE_REMOVALS" ] \
+  && pass "the loose '^--- ' exclusion still UNDER-counts — it eats the '-- ' removal" \
   || fail "the loose exclusion no longer under-counts; the fixture stopped exercising the '-- ' case"
+
+# Every number above is quoted in SKILL.md's table. If a row is edited to a different value the
+# fixture disagrees with, the assertions above fire — but only if the row is actually THERE.
+for want in "| \`grep '^-'\` | 5 |" "| **1** |" "| **3** |" "| **4** |"; do
+  grep -Fq "$want" "$SKILL" \
+    && pass "SKILL.md's table carries the row ${want}" \
+    || fail "SKILL.md's table is missing or has changed the row ${want}"
+done
 
 # The recipe in the skill file must BE the documented form, not merely mention it. A doc that
 # explains the right pattern while its copy-paste block shows the wrong one is worse than silence:
