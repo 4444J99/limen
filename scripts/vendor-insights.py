@@ -1124,6 +1124,382 @@ def _cat_gemini(mod, sid: str, max_chars: int) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Adapter: claude-desktop — plan-usage-history.json spine + session-dir counts.
+# Conversation content is a server-side mirror (Local Storage LevelDB /
+# IndexedDB) that this organ NEVER parses — enforced by sentinel test.
+# ---------------------------------------------------------------------------
+
+
+def _index_claude_desktop(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    meta = mod.VENDOR_REGISTRY["claude-desktop"]
+    root = Path(meta["path"])
+    if not root.is_dir():
+        return IndexResult([], 0, "absent", notes=["Claude Desktop estate not found"])
+
+    candidates: list[tuple[float, tuple[str, Path]]] = []
+    for store in meta.get("session_dirs", []):
+        d = root / store
+        if not d.is_dir():
+            continue
+        for child in d.iterdir():
+            if not child.is_dir():
+                continue
+            mt = _mtime(child)
+            if mt is not None and mt >= window_start:
+                candidates.append((mt.timestamp(), (store, child)))
+    kept, total, _capped = _rank(candidates, max_sessions)
+
+    sessions = []
+    for store, child in kept:
+        mt = _mtime(child)
+        size = 0
+        try:
+            size = sum(f.stat().st_size for f in child.rglob("*") if f.is_file())
+        except OSError:
+            pass
+        sessions.append(
+            _mk(child.name, None, _iso(mt) if mt else None, None, 0, 0, 0, [], size, extra={"store": store})
+        )
+
+    plan_usage: dict = {
+        "samples_in_window": 0,
+        "peak_five_hour_pct": 0,
+        "peak_seven_day_pct": 0,
+        "saturated_samples": 0,
+    }
+    usage_path = root / "plan-usage-history.json"
+    if usage_path.is_file():
+        try:
+            doc = json.loads(usage_path.read_text(encoding="utf-8"))
+            cutoff_ms = window_start.timestamp() * 1000
+            for sample in doc.get("samples") or []:
+                if not isinstance(sample, dict) or sample.get("t", 0) < cutoff_ms:
+                    continue
+                plan_usage["samples_in_window"] += 1
+                u = sample.get("u") or {}
+                fh = int(u.get("fh") or 0)
+                sd = int(u.get("sd") or 0)
+                plan_usage["peak_five_hour_pct"] = max(plan_usage["peak_five_hour_pct"], fh)
+                plan_usage["peak_seven_day_pct"] = max(plan_usage["peak_seven_day_pct"], sd)
+                if fh >= 90 or sd >= 90:
+                    plan_usage["saturated_samples"] += 1
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            pass
+
+    return IndexResult(
+        sessions,
+        total,
+        "session-dir mtime",
+        notes=[
+            "Conversation content is a server-side mirror (LevelDB) this organ never parses — "
+            "zero message counts are the store contract, not silence",
+            "plan-usage spine summarized in meta.plan_usage (five-hour/seven-day utilization %)",
+        ],
+        extra={"plan_usage": plan_usage},
+    )
+
+
+def _cat_claude_desktop(mod, sid: str, max_chars: int) -> str | None:
+    meta = mod.VENDOR_REGISTRY["claude-desktop"]
+    root = Path(meta["path"])
+    for store in meta.get("session_dirs", []):
+        child = root / store / sid
+        if child.is_dir():
+            lines = [f"[claude-desktop session dir: {store}/{sid}]"]
+            for f in sorted(child.rglob("*")):
+                if f.is_file():
+                    try:
+                        st = f.stat()
+                    except OSError:
+                        continue
+                    rel = f.relative_to(child)
+                    lines.append(f"  {rel}  {st.st_size}B  mtime {_iso(_mtime(f))}")
+            lines.append(
+                "[conversation content lives in a server-side mirror (Local Storage LevelDB) "
+                "that this organ never parses — structural listing only]"
+            )
+            return "\n".join(lines)[:max_chars] + "\n"
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Adapter: chatgpt-desktop — opaque .data payloads; counts/sizes/mtimes ONLY.
+# The payload bytes are never read — enforced by sentinel test.
+# ---------------------------------------------------------------------------
+
+
+def _index_chatgpt_desktop(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    root = Path(mod.VENDOR_REGISTRY["chatgpt-desktop"]["path"])
+    if not root.is_dir():
+        return IndexResult([], 0, "absent", notes=["ChatGPT.app estate not found"])
+
+    candidates: list[tuple[float, Path]] = []
+    for conv_dir in root.glob("conversations-v3-*"):
+        if not conv_dir.is_dir():
+            continue
+        for p in conv_dir.glob("*.data"):
+            mt = _mtime(p)
+            if mt is not None and mt >= window_start:
+                candidates.append((mt.timestamp(), p))
+    kept, total, _capped = _rank(candidates, max_sessions)
+
+    sessions = []
+    for p in kept:
+        mt = _mtime(p)
+        try:
+            size = p.stat().st_size
+        except OSError:
+            size = 0
+        sessions.append(_mk(p.stem, None, _iso(mt) if mt else None, None, 0, 0, 0, [], size))
+    return IndexResult(
+        sessions,
+        total,
+        "payload-file mtime",
+        notes=[
+            "Payloads are opaque .data blobs this organ never reads — "
+            "zero message counts are the store contract, not silence"
+        ],
+    )
+
+
+def _cat_chatgpt_desktop(mod, sid: str, max_chars: int) -> str | None:
+    root = Path(mod.VENDOR_REGISTRY["chatgpt-desktop"]["path"])
+    if not root.is_dir():
+        return None
+    for conv_dir in root.glob("conversations-v3-*"):
+        p = conv_dir / f"{sid}.data"
+        if p.is_file():
+            try:
+                st = p.stat()
+            except OSError:
+                return None
+            return (
+                f"[chatgpt-desktop conversation {sid}]\n"
+                f"  payload: {st.st_size}B, mtime {_iso(_mtime(p))}\n"
+                "[payload is an opaque .data blob this organ never reads — structural facts only]\n"
+            )
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Adapter: vscode-copilot-chat (×2 variants) — chatSessions/<sid>.jsonl v3
+# delta logs: line 0 is {"kind": 0, "v": {version: 3, sessionId, creationDate,
+# requests, ...}}; later lines are patches, counted but never replayed.
+# version != 3 degrades to counts-only.
+# ---------------------------------------------------------------------------
+
+
+def _vscode_snapshot(p: Path) -> tuple[dict | None, int]:
+    """(v3 snapshot dict or None, patch-line count) for one delta-log file."""
+    try:
+        with p.open(encoding="utf-8", errors="replace") as fh:
+            first = fh.readline()
+            patches = sum(1 for _ in fh)
+        head = json.loads(first)
+    except (OSError, json.JSONDecodeError):
+        return None, 0
+    snapshot = head.get("v") if isinstance(head, dict) else None
+    if isinstance(snapshot, dict) and snapshot.get("version") == 3:
+        return snapshot, patches
+    return None, patches
+
+
+def _index_vscode_chat(mod, window_start: datetime, max_sessions: int, vendor_key: str) -> IndexResult:
+    meta = mod.VENDOR_REGISTRY[vendor_key]
+    root = Path(meta["path"])
+    if not root.is_dir():
+        return IndexResult([], 0, "absent", notes=[f"workspaceStorage not found ({meta.get('variant')})"])
+
+    candidates: list[tuple[float, Path]] = []
+    for p in root.glob("*/chatSessions/*.jsonl"):
+        mt = _mtime(p)
+        if mt is not None and mt >= window_start:
+            candidates.append((mt.timestamp(), p))
+    kept, total, _capped = _rank(candidates, max_sessions)
+
+    sessions = []
+    unreadable = 0
+    for p in kept:
+        mt = _mtime(p)
+        try:
+            size = p.stat().st_size
+        except OSError:
+            size = 0
+        snapshot, patches = _vscode_snapshot(p)
+        if snapshot is None:
+            unreadable += 1
+            sessions.append(
+                _mk(p.stem, None, _iso(mt) if mt else None, None, 0, 0, 0, [], size, extra={"snapshot": "unreadable"})
+            )
+            continue
+        created = snapshot.get("creationDate")
+        if isinstance(created, (int, float)):
+            started = _iso(datetime.fromtimestamp(created / 1000, tz=timezone.utc))
+        else:
+            started = created if isinstance(created, str) else None
+        requests = snapshot.get("requests") if isinstance(snapshot.get("requests"), list) else []
+        answered = sum(1 for r in requests if isinstance(r, dict) and r.get("response"))
+        sessions.append(
+            _mk(
+                snapshot.get("sessionId") or p.stem,
+                started,
+                _iso(mt) if mt else None,
+                None,
+                len(requests),
+                answered,
+                0,
+                [],
+                size,
+                extra={"patch_lines": patches, "workspace_hash": p.parent.parent.name},
+            )
+        )
+    notes = [
+        "v3 delta log: message counts come from the line-0 snapshot only; "
+        "patch lines are counted (extra.patch_lines) but never replayed"
+    ]
+    if unreadable:
+        notes.append(f"{unreadable} of {len(kept)} kept sessions not v3-snapshot-readable — counts-only records")
+    return IndexResult(sessions, total, "delta-log file mtime", notes=notes)
+
+
+def _collect_text(node, out: list[str]) -> None:
+    """Best-effort text harvest from an undocumented snapshot subtree: every
+    string under a key named 'text' — nothing else is assumed about the shape."""
+    if isinstance(node, dict):
+        for k, val in node.items():
+            if k == "text" and isinstance(val, str) and val.strip():
+                out.append(val)
+            else:
+                _collect_text(val, out)
+    elif isinstance(node, list):
+        for item in node:
+            _collect_text(item, out)
+
+
+def _cat_vscode_chat(mod, sid: str, max_chars: int, vendor_key: str) -> str | None:
+    root = Path(mod.VENDOR_REGISTRY[vendor_key]["path"])
+    if not root.is_dir():
+        return None
+    match = None
+    for p in root.glob("*/chatSessions/*.jsonl"):
+        if sid in p.name:
+            match = p
+            break
+        snapshot, _ = _vscode_snapshot(p)
+        if snapshot and snapshot.get("sessionId") == sid:
+            match = p
+            break
+    if match is None:
+        return None
+    snapshot, patches = _vscode_snapshot(match)
+    if snapshot is None:
+        try:
+            size = match.stat().st_size
+        except OSError:
+            size = 0
+        return (
+            f"[vscode-copilot-chat session {sid}: snapshot not v3-readable — "
+            f"{size}B, {patches} patch lines, content not extracted]\n"
+        )
+    out: list[str] = []
+    total = 0
+    for i, req in enumerate(snapshot.get("requests") or []):
+        if not isinstance(req, dict):
+            continue
+        texts: list[str] = []
+        _collect_text(req.get("message"), texts)
+        if texts:
+            chunk = f"--- user (request {i}) ---\n" + "\n".join(texts) + "\n"
+            out.append(chunk)
+            total += len(chunk)
+        texts = []
+        _collect_text(req.get("response"), texts)
+        if texts:
+            chunk = f"--- assistant (request {i}) ---\n" + "\n".join(texts) + "\n"
+            out.append(chunk)
+            total += len(chunk)
+        if total >= max_chars:
+            out.append("[... truncated at max-chars ...]\n")
+            break
+    out.append(f"[{patches} patch lines not replayed — snapshot content only]\n")
+    return "".join(out)
+
+
+def _index_vscode_chat_stable(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    return _index_vscode_chat(mod, window_start, max_sessions, "vscode-copilot-chat")
+
+
+def _index_vscode_chat_insiders(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    return _index_vscode_chat(mod, window_start, max_sessions, "vscode-copilot-chat-insiders")
+
+
+def _cat_vscode_chat_stable(mod, sid: str, max_chars: int) -> str | None:
+    return _cat_vscode_chat(mod, sid, max_chars, "vscode-copilot-chat")
+
+
+def _cat_vscode_chat_insiders(mod, sid: str, max_chars: int) -> str | None:
+    return _cat_vscode_chat(mod, sid, max_chars, "vscode-copilot-chat-insiders")
+
+
+# ---------------------------------------------------------------------------
+# Adapter: cline — state-only store, no transcripts exist. The zero message
+# counts ARE the finding; cat lists state file names/sizes, never values.
+# ---------------------------------------------------------------------------
+
+
+def _index_cline(mod, window_start: datetime, max_sessions: int) -> IndexResult:
+    root = Path(mod.VENDOR_REGISTRY["cline"]["path"])
+    workspaces = root / "workspaces"
+    if not workspaces.is_dir():
+        return IndexResult([], 0, "absent", notes=["cline workspaces directory not found"])
+
+    candidates: list[tuple[float, Path]] = []
+    for child in workspaces.iterdir():
+        if not child.is_dir():
+            continue
+        mt = _mtime(child)
+        if mt is not None and mt >= window_start:
+            candidates.append((mt.timestamp(), child))
+    kept, total, _capped = _rank(candidates, max_sessions)
+
+    sessions = []
+    for child in kept:
+        mt = _mtime(child)
+        size = 0
+        try:
+            size = sum(f.stat().st_size for f in child.rglob("*") if f.is_file())
+        except OSError:
+            pass
+        sessions.append(_mk(child.name, None, _iso(mt) if mt else None, None, 0, 0, 0, [], size))
+    return IndexResult(
+        sessions,
+        total,
+        "workspace-dir mtime",
+        notes=[
+            "state-only store: cline keeps workspace state, no transcripts — "
+            "the zero message counts are the finding, not a coverage gap"
+        ],
+    )
+
+
+def _cat_cline(mod, sid: str, max_chars: int) -> str | None:
+    root = Path(mod.VENDOR_REGISTRY["cline"]["path"])
+    child = root / "workspaces" / sid
+    if not child.is_dir():
+        return None
+    lines = [f"[cline workspace state: {sid}]"]
+    for f in sorted(child.rglob("*")):
+        if f.is_file():
+            try:
+                st = f.stat()
+            except OSError:
+                continue
+            lines.append(f"  {f.relative_to(child)}  {st.st_size}B  mtime {_iso(_mtime(f))}")
+    lines.append("[state file VALUES are never echoed — names/sizes/mtimes only; no transcript exists]")
+    return "\n".join(lines)[:max_chars] + "\n"
+
+
+# ---------------------------------------------------------------------------
 # Dispatch tables
 # ---------------------------------------------------------------------------
 
@@ -1134,6 +1510,11 @@ INDEXERS = {
     "opencode": _index_opencode,
     "antigravity": _index_antigravity,
     "gemini": _index_gemini,
+    "claude-desktop": _index_claude_desktop,
+    "chatgpt-desktop": _index_chatgpt_desktop,
+    "vscode-copilot-chat": _index_vscode_chat_stable,
+    "vscode-copilot-chat-insiders": _index_vscode_chat_insiders,
+    "cline": _index_cline,
 }
 
 CATTERS = {
@@ -1143,6 +1524,11 @@ CATTERS = {
     "opencode": _cat_opencode,
     "antigravity": _cat_antigravity,
     "gemini": _cat_gemini,
+    "claude-desktop": _cat_claude_desktop,
+    "chatgpt-desktop": _cat_chatgpt_desktop,
+    "vscode-copilot-chat": _cat_vscode_chat_stable,
+    "vscode-copilot-chat-insiders": _cat_vscode_chat_insiders,
+    "cline": _cat_cline,
 }
 
 VENDOR_ALIASES = {"agy": "antigravity"}
@@ -1151,6 +1537,23 @@ VENDOR_ALIASES = {"agy": "antigravity"}
 # ---------------------------------------------------------------------------
 # Facet aggregation + HTML renderer
 # ---------------------------------------------------------------------------
+
+
+def _as_count(v) -> int:
+    """Tolerant facet-count coercion: a model-written facet must never crash the
+    render (a goal_categories value arrived as descriptive prose, 2026-08-06).
+    bools/ints/numeric strings count as themselves; other truthy values mean
+    'present' (1); falsy/absent means 0."""
+    if isinstance(v, bool):
+        return int(v)
+    if isinstance(v, (int, float)):
+        return int(v)
+    if isinstance(v, str):
+        try:
+            return int(v)
+        except ValueError:
+            return 1 if v.strip() else 0
+    return 1 if v else 0
 
 
 def _aggregate_facets(facets: list[dict]) -> dict:
@@ -1168,11 +1571,11 @@ def _aggregate_facets(facets: list[dict]) -> dict:
         st = f.get("session_type") or "unknown"
         agg["session_types"][st] = agg["session_types"].get(st, 0) + 1
         for k, v in (f.get("friction_counts") or {}).items():
-            agg["friction_counts"][k] = agg["friction_counts"].get(k, 0) + int(v)
+            agg["friction_counts"][k] = agg["friction_counts"].get(k, 0) + _as_count(v)
         for k, v in (f.get("user_satisfaction_counts") or {}).items():
-            agg["satisfaction_counts"][k] = agg["satisfaction_counts"].get(k, 0) + int(v)
+            agg["satisfaction_counts"][k] = agg["satisfaction_counts"].get(k, 0) + _as_count(v)
         for k, v in (f.get("goal_categories") or {}).items():
-            agg["goal_categories"][k] = agg["goal_categories"].get(k, 0) + int(v)
+            agg["goal_categories"][k] = agg["goal_categories"].get(k, 0) + _as_count(v)
     return agg
 
 
@@ -1348,6 +1751,23 @@ def cmd_list(mod) -> int:
     return 0
 
 
+def cmd_index_all(mod, window_days: int, max_sessions: int) -> int:
+    """Refresh every lane's index, continuing past a failing lane (the beat's rung:
+    one broken vendor store must not starve the other ten of fresh indexes)."""
+    failures = []
+    for vendor in sorted(INDEXERS):
+        try:
+            rc = cmd_index(mod, vendor, window_days, max_sessions)
+        except Exception as exc:  # noqa: BLE001 — a lane failure is data, not a crash
+            print(f"ERROR: index --all: '{vendor}' raised {type(exc).__name__}: {exc}", file=sys.stderr)
+            rc = 1
+        if rc != 0:
+            failures.append(vendor)
+    if failures:
+        print(f"index --all: {len(failures)} lane(s) failed: {', '.join(failures)}", file=sys.stderr)
+    return 1 if len(failures) == len(INDEXERS) else 0
+
+
 def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
     vendor = _resolve_vendor(vendor)
     if vendor not in INDEXERS:
@@ -1436,7 +1856,9 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list")
     p_idx = sub.add_parser("index")
-    p_idx.add_argument("--vendor", required=True)
+    group = p_idx.add_mutually_exclusive_group(required=True)
+    group.add_argument("--vendor")
+    group.add_argument("--all", action="store_true", help="index every lane, continuing past a failing one")
     p_idx.add_argument("--window-days", type=int, default=DEFAULT_WINDOW_DAYS)
     p_idx.add_argument("--max-sessions", type=int, default=DEFAULT_MAX_SESSIONS)
     p_cat = sub.add_parser("cat-session")
@@ -1451,6 +1873,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "list":
         return cmd_list(mod)
     if args.cmd == "index":
+        if args.all:
+            return cmd_index_all(mod, args.window_days, args.max_sessions)
         return cmd_index(mod, args.vendor, args.window_days, args.max_sessions)
     if args.cmd == "cat-session":
         return cmd_cat(mod, args.vendor, args.session, args.max_chars)

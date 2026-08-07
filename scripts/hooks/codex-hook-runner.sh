@@ -43,6 +43,9 @@ case "$hook_name" in
   lint-edited-file)
     target="$root/scripts/hooks/lint-edited-file.sh"
     ;;
+  no-hand-poll)
+    target="$root/scripts/hooks/no-hand-poll-guard.sh"
+    ;;
   host-admission)
     target="$root/scripts/hooks/codex-host-admission.py"
     immutable_target="${LIMEN_IMMUTABLE_ADMISSION_ENTRYPOINT:-$HOME/.local/share/limen/current/source/scripts/hooks/codex-host-admission.py}"
