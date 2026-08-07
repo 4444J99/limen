@@ -101,9 +101,16 @@ option and does not apply to blob shows).
   | pattern | counts | verdict |
   |---|---|---|
   | `grep '^-'` | 5 | over by one per file — counts the header |
-  | `grep -E '^-[^-]'` | **2** | **drops the blank, the `--flag`, and the `-- ` line** |
-  | `grep -v '^--- '` | **4** | still **drops the `-- ` comment** — it looks exactly like a header |
-  | `grep -vE '^--- (a/\|/dev/null)'` | 5 → **4 real** | exact: only the real header forms excluded |
+  | `grep -E '^-[^-]'` | **1** | **drops the blank, the `--flag`, and the `-- ` line** |
+  | `grep -v '^--- '` | **3** | still **drops the `-- ` comment** — it looks exactly like a header |
+  | `grep -vE '^--- (a/\|/dev/null)'` | **4** | exact: only the real header forms excluded |
+
+  Those four numbers are asserted against the fixture by `scripts/tests/diff-removal-count.test.sh`,
+  not copied from a run. The first draft of this table carried 2 and 4 where the fixture produces 1
+  and 3 — wrong numbers in a table whose entire subject is counting precisely, and the gate did not
+  notice because it asserted only the *relations* (this one over-counts, that one under-counts).
+  A comparison that is merely directionally right is how the previous two versions of this recipe
+  survived, so the counts are now checked exactly.
 
   Over-counting is merely noisy: you inspect a phantom line and move on. **Under-counting hides the
   clobber this check exists to find.** Two successive "fixes" here each traded one direction of error
