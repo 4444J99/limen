@@ -164909,3 +164909,37 @@ tasks:
     conduct_lease_id: 'lease-621-3a0ae78c7f1b5663'
     conduct_generation: 621
   updated: '2026-08-07T12:33:46.667Z'
+- id: 'GH-organvm-limen-1947'
+  title: 'L-DEPENDABOT-DELIVERY-ARM — retype ~200 dependabot PRs lifecycle:blocked → lifecycle:delivery (arms merge-drain)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1947'
+  context: 'GitHub issue organvm/limen#1947. ## The lever The 2026-08-07 lifecycle drain typed every dependabot PR in the estate `lifecycle:blocked` (fail-closed; arms nothing). Retyping them `lifecycle:delivery` is the one-word decision that ARMS `scripts/merge-drain.py`''s autonomous merge rail for them — each still individually gated by CI-green, `merge-policy.sh`, the trivial-diff value gate, the stale-base guard, and the 10-per-beat boun'
+  predicate: 'test "$(gh issue view 1947 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1947'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1947'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T12:33:51.517Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-76eb128dac2d679a76a8874d8a8c0424:622:compatibility'
+    conduct_run_id: 'run-76eb128dac2d679a76a8874d8a8c0424'
+    conduct_lease_id: 'lease-622-76eb128dac2d679a'
+    conduct_generation: 622
+  updated: '2026-08-07T12:33:51.517Z'
