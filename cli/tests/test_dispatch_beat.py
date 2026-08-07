@@ -101,6 +101,54 @@ def test_stale_stamp_is_not_a_throttle(monkeypatch, tmp_path):
     assert launched
 
 
+def test_a_stale_host_marker_is_dropped_rather_than_forwarded(monkeypatch, tmp_path, capsys):
+    """The beat reaches dispatch as a GRANDCHILD of DomusAgentHost: heartbeat-loop.sh holds the
+    lifetime pipe, beat-sensors' Popen closes it, and only the env survives. The engine then
+    inherited `ACTIVE=1` with a dead (or already reused) descriptor and refused every launch —
+    "refusing an unstable TCC principal" on every jules task, silent behind this script's exit 0,
+    for 19 days. A claim that cannot be backed must be dropped so the engine takes its first-launch
+    path and wraps the agent CLI in a fresh host holding a real pipe."""
+    mod = _load(monkeypatch, tmp_path)
+    read_fd, write_fd = os.pipe()
+    os.close(read_fd)
+    os.close(write_fd)  # the descriptor a nested child would NOT have inherited
+    env = {
+        "DOMUS_AGENT_HOST_ACTIVE": "1",
+        "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+        "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:1:1",
+    }
+
+    assert mod._forwardable_lifetime_fds(env) == ()
+    assert env == {}, "a claim that cannot be backed must not reach the engine"
+    assert "stale" in capsys.readouterr().out
+
+
+def test_a_live_host_marker_is_forwarded_and_kept(monkeypatch, tmp_path):
+    """The other half: a descriptor that still verifies is handed down via pass_fds with its
+    markers intact, so the engine correctly declines to nest a second host."""
+    mod = _load(monkeypatch, tmp_path)
+    read_fd, write_fd = os.pipe()
+    try:
+        lifetime = os.fstat(write_fd)
+        env = {
+            "DOMUS_AGENT_HOST_ACTIVE": "1",
+            "DOMUS_AGENT_HOST_LIFETIME_FD": str(write_fd),
+            "DOMUS_AGENT_HOST_LIFETIME_ID": f"{'0' * 16}:{lifetime.st_dev}:{lifetime.st_ino}",
+        }
+        assert mod._forwardable_lifetime_fds(env) == (write_fd,)
+        assert env["DOMUS_AGENT_HOST_ACTIVE"] == "1", "a verified identity must be preserved"
+    finally:
+        os.close(read_fd)
+        os.close(write_fd)
+
+
+def test_no_host_marker_is_left_alone(monkeypatch, tmp_path):
+    mod = _load(monkeypatch, tmp_path)
+    env = {"PATH": "/usr/bin"}
+    assert mod._forwardable_lifetime_fds(env) == ()
+    assert env == {"PATH": "/usr/bin"}
+
+
 def test_heartbeat_loop_runs_metabolize_pass_above_observe_short_circuit():
     """The metabolize sensor pass (starvation alarm, quota/supply gauges) must fire in
     observe mode — the 15-day outage was an observe-mode outage — while dispatch stays
