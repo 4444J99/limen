@@ -21,6 +21,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -102,6 +103,87 @@ def test_an_unavailable_probe_fails_OPEN(occupancy):
     """Inverts the sibling probe deliberately: failing closed here means never syncing again."""
     occupancy({Path("/"): -1})
     assert liveness.live_checkout_occupant(ROOT) is None
+
+
+# ── what the runtime was INVOKED as, read off real `ps` lines from the operator host ───────
+
+
+def _fake_ps(monkeypatch, comm, command):
+    """`_is_session` asks two questions with two `ps` calls; answer them by which field was asked."""
+
+    def run(cmd, *a, **k):
+        return SimpleNamespace(stdout=(comm if "comm=" in cmd else command))
+
+    monkeypatch.setattr(liveness.subprocess, "run", run)
+
+
+def test_a_pre_warmed_spare_is_not_an_interactive_session(monkeypatch):
+    """The fourth load-bearing exclusion, found the same way as the other three — by running the
+    probe on the operator host (2026-08-07). A `claude bg-spare` is a session process pre-warmed
+    ahead of demand: argv[0] identical to a real session, sitting in tracked root content, outside
+    every linked worktree, and doing nothing at all. Nine were alive at once and every one of the
+    eight records in logs/session-contention.jsonl named one of these shapes, so sync-release
+    declined the fast-forward for eight straight beats while the checkout fell 37 commits behind
+    release with no interactive session anywhere in it.
+    """
+    _fake_ps(monkeypatch, "claude bg-spare\n", "claude bg-spare --bg-spare /tmp/x.claim.sock\n")
+    assert liveness._is_session(1) is False
+
+
+def test_a_spares_pty_host_is_not_an_interactive_session(monkeypatch):
+    _fake_ps(
+        monkeypatch,
+        "claude bg-pty-host\n",
+        "claude bg-pty-host --bg-pty-host /tmp/x.pty.sock 200 50 -- /v/2.1.224 --bg-spare /tmp/x.sock\n",
+    )
+    assert liveness._is_session(1) is False
+
+
+def test_the_fleetview_viewer_is_not_an_interactive_session(monkeypatch):
+    """Why `command=` and not `comm=`: this process's comm is a bare binary path with no subcommand
+    in it at all, so the title cannot tell it from an operator's own session. Its argv can. It is a
+    viewer — the same kind of thing as the MCP server this module already excluded, and it was the
+    live occupant of the checkout while this was being written.
+    """
+    _fake_ps(monkeypatch, "/Users/4jp/.local/bin/claude\n", "/Users/4jp/.local/bin/claude agents\n")
+    assert liveness._is_session(1) is False
+
+
+def test_an_operators_own_session_in_the_live_checkout_still_counts(monkeypatch):
+    """The protective direction, which narrowing this guard must not weaken: a real session carries
+    no subcommand, keeps its trusted cwd, and goes on blocking the sync organ.
+    """
+    _fake_ps(monkeypatch, "/Users/4jp/.local/bin/claude\n", "/Users/4jp/.local/bin/claude\n")
+    assert liveness._is_session(1) is True
+
+
+def test_a_leading_flag_is_not_mistaken_for_a_subcommand(monkeypatch):
+    """`claude --permission-mode plan` is a session, and argv[1] is a flag rather than a verb — so
+    the parse must reject flags outright instead of testing the next bare word it can find, which
+    would read "plan" (or a prompt's first word) as a subcommand.
+    """
+    _fake_ps(monkeypatch, "claude\n", "claude --permission-mode plan\n")
+    assert liveness._is_session(1) is True
+
+
+def test_a_non_runtime_is_still_rejected_without_consulting_argv(monkeypatch):
+    """Order matters: the program check comes first, so a service never reaches the argv read."""
+    _fake_ps(monkeypatch, "node\n", "node /srv/http-server .\n")
+    assert liveness._is_session(1) is False
+
+
+def test_an_unreadable_argv_leaves_the_runtime_verdict_standing(monkeypatch):
+    """Opposite fail-direction from the program check, deliberately: being unable to read argv is no
+    evidence that a runtime is a service, so a matched runtime stays an occupant.
+    """
+
+    def run(cmd, *a, **k):
+        if "comm=" in cmd:
+            return SimpleNamespace(stdout="claude\n")
+        raise OSError("no ps")
+
+    monkeypatch.setattr(liveness.subprocess, "run", run)
+    assert liveness._is_session(1) is True
 
 
 def test_an_unavailable_probe_is_distinguishable_from_a_free_tree(occupancy):
