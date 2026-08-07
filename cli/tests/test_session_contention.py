@@ -320,13 +320,90 @@ def test_probe_counts_unshipped_local_incidents(probe, tmp_path):
 
 
 def test_probe_counts_committed_incidents(probe, tmp_path):
+    """A scalar claim above the recorded array is unreconcilable — and must not discount to zero.
+
+    Classifying holds from breaches means reading `incidents`, so the scalar `incident_count` is no
+    longer the source of truth. It is still ASSERTED against: `ship` keeps the two equal, so a
+    ledger claiming more than it records is unauditable, and an unauditable record counts as
+    distance for the same reason an unparseable one does.
+    """
     ledger = tmp_path / "docs/receipts/session-contention-ledger.json"
     ledger.parent.mkdir(parents=True, exist_ok=True)
     ledger.write_text(json.dumps({"incident_count": 3, "incidents": []}), encoding="utf-8")
 
     findings, incidents = probe.check_incidents()
     assert incidents == 3
-    assert "3 committed" in findings[0]
+    assert "unreconcilable" in findings[0]
+
+
+def test_a_declined_action_is_a_guard_hold_not_a_breach(probe, tmp_path, capsys):
+    """The inversion this gate shipped with: `sync-release.sh`'s `_contended()` records what it
+    DECLINED to do, so every `skipped-*` entry is the guard holding — nothing touched the occupied
+    tree, which is the ideal being met. Counting those as "it DID happen" made the gate permanently
+    red on a 100%-success record (2026-08-07: all 7 records were `skipped-stash-push`) and blocked
+    every PR touching cli/src/limen/dispatch.py, one of this gate's own declared paths."""
+    ledger = tmp_path / "docs/receipts/session-contention-ledger.json"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text(
+        json.dumps(
+            {
+                "incident_count": 2,
+                "incidents": [
+                    {"action": "skipped-stash-push", "observed_at": "2026-08-07T01:49:15Z"},
+                    {"action": "skipped-reset", "observed_at": "2026-08-07T02:00:00Z"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings, incidents = probe.check_incidents()
+    assert findings == []
+    assert incidents == 0
+    # Held, not hidden: a session parked on the live checkout still gets said out loud.
+    assert "2 guard hold(s)" in capsys.readouterr().out
+
+
+def test_an_actual_breach_still_counts_and_reds_the_gate(probe, tmp_path):
+    """The other half. Relaxing declines must not relax a path that really did rewrite the tree."""
+    ledger = tmp_path / "docs/receipts/session-contention-ledger.json"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text(
+        json.dumps(
+            {
+                "incident_count": 2,
+                "incidents": [
+                    {"action": "skipped-stash-push", "observed_at": "2026-08-07T01:49:15Z"},
+                    {"action": "rebased-live-session", "observed_at": "2026-08-07T02:00:00Z"},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings, incidents = probe.check_incidents()
+    assert incidents == 1
+    assert "1 committed contention breach(es)" in findings[0]
+    assert "rebased-live-session" in findings[0]
+
+
+def test_unshipped_holds_do_not_red_the_gate_but_unshipped_breaches_do(probe, tmp_path):
+    log = tmp_path / "logs/session-contention.jsonl"
+    log.parent.mkdir(parents=True, exist_ok=True)
+    log.write_text(
+        json.dumps({"pid": 1, "action": "skipped-stash-push", "shipped": False}) + "\n",
+        encoding="utf-8",
+    )
+    findings, incidents = probe.check_incidents()
+    assert (findings, incidents) == ([], 0)
+
+    log.write_text(
+        json.dumps({"pid": 2, "action": "switched-live-session", "shipped": False}) + "\n",
+        encoding="utf-8",
+    )
+    findings, incidents = probe.check_incidents()
+    assert incidents == 1
+    assert "not yet shipped" in findings[0]
 
 
 def test_probe_treats_an_unreadable_ledger_as_distance(probe, tmp_path):
