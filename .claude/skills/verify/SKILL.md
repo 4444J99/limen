@@ -81,6 +81,25 @@ option and does not apply to blob shows).
   If your tree is N commits behind, the modified files are carried over the newer base whole. Always
   finish with `git diff origin/main -- <files> | grep '^-'` and confirm the only removed lines are
   ones you meant to replace. (This happened, and reverted another lane's feature.)
+- **…but read that check with THREE dots once you have committed, or it lies the other way.**
+  Two-dot `git diff origin/main` compares *trees*, so a branch that is merely **behind** renders every
+  commit `main` gained as lines you deleted. Both failures print the same thing:
+
+  ```bash
+  git diff origin/main -- <files> | grep '^-'   # uncommitted work: correct, catches the clobber
+  git diff origin/main...HEAD | grep -E '^-[^-]' # committed work: resolves the merge base
+  git merge-base --is-ancestor origin/main HEAD  # nonzero ⟺ behind, so rebase before judging
+  ```
+
+  A long-running background `await-pr.sh` fetches, so `origin/main` advances *under you* mid-session
+  and a branch that was current when you cut it is behind by the time you diff it. Observed: a clean
+  branch appeared to delete an entire merged feature (`repair_canonical`, its params, its tests, its
+  rung). Check `--is-ancestor` first; if behind, rebase and re-diff rather than interpreting.
+- **Two rungs appended to the same region of `heartbeat-loop.sh` WILL conflict on rebase.** "Both
+  additions are wanted" is semantics; git only sees two edits at one line. Resolve by keeping both and
+  think about **order** — a repair rung belongs before the rung whose gate it unblocks, or the pair
+  converges a beat later than it needs to. Chunking one concern per branch is still right; the
+  mechanical conflict is its price.
 - **The live checkout is permanently dirty by design** (`capture.sh` snapshots it to a side ref), so
   `git status` there is never clean and is not a signal.
 - **Dry-run scripts can still write.** `scripts/reclassify-needs-human.py` with no flags writes
@@ -115,3 +134,34 @@ git show origin/tabularius/board-projection:tasks.yaml | md5 # what the KEEPER s
 A conclusion about board state drawn from the local file is a conclusion about `main`, not about the
 keeper. Every self-heal organ (`heal-board.py`, `reclassify-needs-human.py`, …) reads the local
 file, so canonical-side drift is invisible to all of them.
+
+**This is a class, not two bugs — confirmed in two unrelated gates.** Anything reading `LIMEN_TASKS`
+protects the mirror, not the artifact that publishes, so it goes green while the canonical board is
+red. `heal-board` reported a healthy board while the keeper carried 12 regressed `needs-human` atoms
+(fixed: `--canonical`, #2014). `check-board-partition` reports
+`411 findings — {row: 200, content: 16, slug: 195}` **green** locally while CI on the publication PR
+reports `404 — {row: 207, content: 17, slug: 180}` **red with 8 new** (#1780). Before believing any
+board-derived verdict, run it against the extracted keeper board:
+
+```bash
+git show origin/tabularius/board-projection:tasks.yaml > /tmp/canonical.yaml   # NOT --output=, it writes nothing
+LIMEN_TASKS=/tmp/canonical.yaml python3 scripts/<predicate>.py --check
+```
+
+## Look for signals with no effector
+
+The most durable defects in this estate are not missing checks — they are checks whose finding
+nothing consumes. Every observable looks healthy: a marker gets written, an auditor reports RED, a
+receipt records the state. Nothing acts. Grep the full touchpoint set before assuming a signal is
+handled:
+
+```bash
+grep -rn '<marker-or-flag>' scripts/ organs/ institutio/    # who SETS, who READS, who ACTS?
+```
+
+`logs/.loop-update-pending` had exactly three: `sync-release.sh` set it, `sync-release.sh` reported
+it, `heartbeat-loop.sh` cleared it at startup. **Zero acted** — so the flag was cleared by the very
+restart it was meant to cause, and merged rungs stayed dark behind a daemon older than its own script
+(fixed: #2023). Corollary specific to this repo: **a loop-body edit to `heartbeat-loop.sh` does not
+take effect on merge.** `KeepAlive` restarts on EXIT and a `while true` loop never exits. Confirm with
+`python3 scripts/enactment-audit.py --check`, which prints the daemon's age against its wiring's mtime.
