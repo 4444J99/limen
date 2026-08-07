@@ -39,7 +39,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel
 
-from limen.conduct.broker import ConductError, TaskAlreadyHomed
+from limen.conduct.broker import ConductConflict, ConductError, TaskAlreadyHomed
 from limen.conduct.client import BrokerUnavailable, LocalConductClient, client_from_env
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -1137,6 +1137,81 @@ def _materialize_local_result(
     return canonical
 
 
+# register() binds these three identity fields from the authenticated principal; every OTHER
+# identity field is client-declared and is compared verbatim against the stored session.
+_RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS = ("agent", "surface", "session_id")
+
+
+def _relay_identity_key(identity: AgentIdentityV1) -> str:
+    """A short digest of the identity fields `register()` compares but does NOT normalize.
+
+    The keeper binds agent/surface/session_id from the principal and then rejects a
+    re-registration whose whole identity object differs. Post-binding those three are forced
+    equal, so that check can only ever fire on the remaining client-declared fields
+    (`provider_identity`, `native_run_id`) — never on an authority mismatch, which
+    ``session_principals`` guards two lines later. With a FIXED relay session id the first
+    client to register owns the literal forever and every later build takes a permanent 409:
+    the #1408 relay freeze, recurring on the fields the #1408 fix did not normalize.
+
+    The digest covers whatever the binding leaves unbound, so adding an identity field keys it
+    automatically instead of re-opening the freeze, and it derives from stable per-build values
+    (never per-process) so the recovery below cannot grow the keeper's session table without bound.
+    """
+    unbound = {
+        name: value
+        for name, value in identity.model_dump(mode="json").items()
+        if name not in _RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS
+    }
+    return canonical_hash(unbound)[:12]
+
+
+def _register_relay_session(remote: Any, session: ConductorSessionV1) -> tuple[Any, ConductorSessionV1]:
+    """Register the relay session, recovering the one way a fixed session id becomes unusable.
+
+    THE FREEZE. Every relay call site passes a fixed ``session_id`` literal
+    (``dispatch-serial-results``, ``harvest``, ``dispatch-async/reserve``, …), and a literal is
+    claimable exactly once: whichever identity registers it first owns it, and a later client whose
+    client-declared identity metadata differs by a single field is refused forever. Reproduced
+    against the real broker with ONE principal throughout — ``limen-cli`` OK, ``limen-cli`` OK
+    (idempotent), ``limen-cli-2`` CONFLICT, and CONFLICT on every retry after.
+
+    It froze ``dispatch-serial-results`` on 2026-07-19 (#1995): jules sessions kept launching while
+    no receipt was ever recorded, so ``lane_throughput_window`` counted 0 dispatches and the
+    governor pinned the lane in bootstrap at 25/day for 19 days. Every other literal kept working,
+    which is why the board went on moving and only the dispatch receipt vanished.
+
+    WHY A FALLBACK RATHER THAN ALWAYS KEYING THE ID. The relay session id is not internal plumbing —
+    the keeper stamps it into ``session_id`` on every projection event, so it is part of the recorded
+    receipt that harvest and 14 tests read. Keying it unconditionally renames an observable
+    identifier estate-wide to fix a condition that only arises once a literal is already poisoned.
+    So the healthy path keeps the stable literal and only a REFUSED one falls back, which also makes
+    the fallback legible: a keyed ``session_id`` in a dispatch_log entry *is* the signal that its
+    literal is frozen.
+
+    CLASSIFIED ON THE STATUS, NEVER THE PROSE — ``ConductError``'s own documented contract, because
+    three keepers word this refusal three ways. Both 409 shapes, frozen identity and bound principal,
+    mean one thing to this caller: that literal is not mine to use. Both are answered the same safe
+    way, since registering a DIFFERENT id cannot touch the session the keeper is protecting, and
+    every authority check still applies to whatever this client does register.
+    """
+    try:
+        return remote.register(session), session
+    except ConductConflict:
+        keyed = _safe_identifier(
+            f"{session.session_id}-{_relay_identity_key(session.identity)}",
+            "tabularius-relay-session",
+        )
+        if keyed == session.session_id:
+            raise
+        fallback = session.model_copy(
+            update={
+                "session_id": keyed,
+                "identity": session.identity.model_copy(update={"session_id": keyed}),
+            }
+        )
+        return remote.register(fallback), fallback
+
+
 def _submit_compatibility_ticket(
     ticket: Ticket,
     intent: dict[str, Any],
@@ -1166,7 +1241,7 @@ def _submit_compatibility_ticket(
         registered_at=registration_now,
         heartbeat_at=registration_now,
     )
-    registration = remote.register(session)
+    registration, session = _register_relay_session(remote, session)
     registered_payload = registration.get("session", registration) if isinstance(registration, dict) else registration
     try:
         registered_session = ConductorSessionV1.model_validate(registered_payload)
