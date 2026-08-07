@@ -165499,3 +165499,36 @@ tasks:
     conduct_lease_id: 'lease-640-d44f8dbe3cc7322f'
     conduct_generation: 640
   updated: '2026-08-07T16:55:35.023Z'
+- id: 'GH-organvm-limen-2000'
+  title: 'Lane opening floors: lower the non-Claude interactive pins to their declared cadence ceilings'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2000'
+  context: 'GitHub issue organvm/limen#2000. Lower the operator-owned interactive opening pins on the non-Claude lanes so every lane opens at or below its declared cadence ceiling. ## Why this is a human lever These are files in the operator''s home directory that govern *his* interactive sessions. An agent does not write them — the same boundary that keeps `L-FABLE-GUARD-ARM` a human lever. The estate''s job is to make the state **readable an'
+  predicate: 'test "$(gh issue view 2000 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2000'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2000'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T16:55:41.741Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-b92181f8c1923d2962ad44aa953e244a:641:compatibility'
+    conduct_run_id: 'run-b92181f8c1923d2962ad44aa953e244a'
+    conduct_lease_id: 'lease-641-b92181f8c1923d29'
+    conduct_generation: 641
+  updated: '2026-08-07T16:55:41.741Z'
