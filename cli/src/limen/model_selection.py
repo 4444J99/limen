@@ -101,30 +101,170 @@ def _claude_fable_acceptance_present() -> bool:
         return False
 
 
-def _fable_balance() -> dict | None:
-    """Read the live weekly Fable balance written by ``scripts/fable-allotment.py balance``
-    (``$LIMEN_ROOT/logs/fable-allotment.json``). Returns the parsed dict for the CURRENT ISO-week,
-    or None when absent / stale / unreadable (fail-open → the acceptance receipt remains the only
-    gate). Env override ``LIMEN_FABLE_BALANCE_PATH`` points at an alternate file (tests)."""
+# ── The weekly Fable meter: ONE reader, returning a VERDICT ─────────────────────────────────
+#
+# Until 2026-08-07 THREE copies of this read existed — model_selection._fable_balance,
+# fable-session-guard._load_balance, vendor-cancel-advisor._fable_over_cap — each typed
+# ``dict | None``, and each caller read None as permissive. That type WAS the bug: it had no room
+# for "unknown", so unknown collapsed into fine. `parameters.yaml` had named all three as a
+# declared fork since before the incident; the fork was declared and never closed.
+#
+# The replacement returns a VERDICT with an explicit state, so "I could not establish this" and
+# "this is fine" can never again be the same value (design decisions D2/D3).
+
+_FABLE_BALANCE_MAX_AGE_S_DEFAULT = 21600.0  # 6h — several beats' slack, still catches a dead writer
+
+
+def _fable_balance_path() -> tuple[str, bool]:
+    """(path, is_beat_written). ``LIMEN_FABLE_BALANCE_PATH`` names a caller-supplied file — a test
+    fixture or a deliberate pin — which is NOT the beat's artifact, so the deployment-provenance
+    dimension below does not apply to it."""
     raw = os.environ.get("LIMEN_FABLE_BALANCE_PATH")
     if raw:
-        path = raw
+        return raw, False
+    root = os.environ.get("LIMEN_ROOT")
+    base = root if root else os.path.join(os.path.expanduser("~"), "Workspace", "limen")
+    return os.path.join(base, "logs", "fable-allotment.json"), True
+
+
+def _fable_balance_max_age_s() -> float:
+    """Freshness budget for the meter file, in seconds. THE DECLARED HATCH (D4): a value <= 0
+    disables both the freshness and the provenance dimensions, restoring the pre-2026-08-07
+    fail-open behaviour for a host that genuinely runs no beat."""
+    try:
+        return float(os.environ.get("LIMEN_FABLE_BALANCE_MAX_AGE_S", _FABLE_BALANCE_MAX_AGE_S_DEFAULT))
+    except (TypeError, ValueError):
+        return _FABLE_BALANCE_MAX_AGE_S_DEFAULT
+
+
+def deployment_currency() -> tuple[str, str]:
+    """(state, detail) for the tree the beat executes — read from the OFFLINE receipt written by
+    ``scripts/check-live-checkout.py`` (no network, no git). States: ``coherent`` / ``drift`` /
+    ``unverifiable-here`` / ``absent`` / ``unreadable``.
+
+    This is the provenance dimension the 2026-08-07 incident demanded (D0). The meter file there
+    was FRESH and WRONG: rewritten every beat by a copy of fable-allotment.py that predated the
+    heal giving it sight, so it reported 0.0% while the true figure was 75.47%. No age bound
+    catches that, because the stale party was the writer's code, not the artifact.
+    """
+    raw = os.environ.get("LIMEN_LIVE_CHECKOUT_RECEIPT")
+    if raw:
+        path = os.path.expanduser(raw)
     else:
         root = os.environ.get("LIMEN_ROOT")
         base = root if root else os.path.join(os.path.expanduser("~"), "Workspace", "limen")
-        path = os.path.join(base, "logs", "fable-allotment.json")
+        path = os.path.join(base, "logs", "live-checkout-currency.json")
     try:
         with open(path) as fh:
             data = json.load(fh)
-    except Exception:
-        return None
+    except FileNotFoundError:
+        return "absent", "no live-checkout receipt — deployment currency unestablished"
+    except Exception as exc:  # noqa: BLE001 — an unreadable receipt is itself the finding
+        return "unreadable", f"live-checkout receipt unreadable ({type(exc).__name__})"
     if not isinstance(data, dict):
-        return None
+        return "unreadable", "live-checkout receipt is not an object"
+    state = str(data.get("state") or "unreadable")
+    if state == "drift":
+        return state, (
+            f"the tree the beat executes is {data.get('behind', '?')} commit(s) behind origin/main "
+            "— every artifact it wrote is suspect regardless of how recently it was written"
+        )
+    return state, str(data.get("detail") or "")
+
+
+def balance_verdict() -> dict:
+    """THE reader of the weekly Fable meter. Never returns None; always returns a verdict:
+
+        {state, trusted, balance, age_s, provenance, detail}
+
+    ``state``       ok | absent | unreadable | malformed | stale-week | stale-file | undeployed
+    ``trusted``     False for every state except ``ok`` — the caller must degrade, not proceed
+    ``balance``     the parsed dict when readable, else None (never the trust signal)
+    ``provenance``  deployment_currency() state, always reported even when it costs nothing
+
+    Freshness is measured from the file's MTIME, not a body field (D1): ``compute_balance()``
+    declares that timestamps derive from data and never from wall-clock, and
+    ``verify-fable-gate.sh`` block 5 asserts two consecutive runs are byte-identical — adding a
+    ``generated_at`` would redden a green predicate and restamp fixtures across four test files.
+    ``logs/`` is gitignored runtime state with exactly one writer, so the file's mtime IS the
+    writer's heartbeat.
+
+    PROVENANCE COSTS TRUST ONLY ON ``drift``. An ``absent`` receipt means deployment currency is
+    unestablished, which is REPORTED in ``detail`` and carried in ``provenance`` for callers that
+    should speak about it — but it does not by itself withhold a tier, because a receipt that has
+    simply never been written yet (a fresh host, a CI runner) is not evidence of a stale tree. The
+    distinction the defect class forbids collapsing is preserved: every state is named and
+    reachable by the caller. What varies is only which of them costs a TIER.
+    """
+    path, beat_written = _fable_balance_path()
+    max_age = _fable_balance_max_age_s()
+    checks_disabled = max_age <= 0
+    prov_state, prov_detail = ("skipped", "") if checks_disabled else deployment_currency()
+
+    def verdict(state, trusted, balance=None, age_s=None, detail=""):
+        return {
+            "state": state,
+            "trusted": trusted,
+            "balance": balance,
+            "age_s": age_s,
+            "provenance": prov_state,
+            # ``enforced`` is POLICY, kept separate from the verdict's truth: with the declared
+            # hatch armed the state is still reported honestly (``absent`` stays ``absent``), and
+            # only the consumer's decision to withhold a tier is switched off. A hatch must never
+            # be implemented by making the reader lie about what it saw.
+            "enforced": not checks_disabled,
+            "detail": detail or prov_detail,
+        }
+
+    try:
+        with open(path) as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        return verdict("absent", False, detail=f"no weekly Fable meter at {path}")
+    except Exception as exc:  # noqa: BLE001 — an unreadable meter is the finding
+        return verdict("unreadable", False, detail=f"meter unreadable ({type(exc).__name__})")
+    if not isinstance(data, dict):
+        return verdict("malformed", False, detail="meter is not an object")
+
     now = dt.datetime.now(dt.timezone.utc)
     monday = (now - dt.timedelta(days=now.weekday())).date().isoformat()
     if str(data.get("week")) != monday:
-        return None  # stale week — do not trust a prior week's balance
-    return data
+        return verdict(
+            "stale-week", False, balance=data, detail=f"meter is for week {data.get('week')!r}, not {monday}"
+        )
+
+    age_s = None
+    if not checks_disabled:
+        try:
+            age_s = max(0.0, dt.datetime.now().timestamp() - os.stat(path).st_mtime)
+        except OSError:
+            age_s = None
+        if age_s is not None and age_s > max_age:
+            return verdict(
+                "stale-file",
+                False,
+                balance=data,
+                age_s=age_s,
+                detail=f"meter last written {age_s / 3600:.1f}h ago (budget {max_age / 3600:.1f}h) — the writer stopped",
+            )
+        if beat_written and prov_state == "drift":
+            return verdict("undeployed", False, balance=data, age_s=age_s, detail=prov_detail)
+
+    return verdict("ok", True, balance=data, age_s=age_s)
+
+
+def _balance_over_cap(balance: dict) -> bool:
+    """Derive over-cap from the numbers, never from the stored boolean alone. One home for the
+    ``bool(x.get("over_cap"))`` read that was forked across three files — a False/absent flag on a
+    body whose spent_pct already exceeds hard_cap must not read as under cap."""
+    if not isinstance(balance, dict):
+        return False
+    try:
+        spent = float(balance.get("spent_pct"))  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return bool(balance.get("over_cap"))
+    hard_cap = float(balance.get("hard_cap", 50) or 50)
+    return bool(balance.get("over_cap")) or spent >= hard_cap
 
 
 def _fable_capped_tier(reserve_ok: bool) -> str | None:
@@ -137,18 +277,29 @@ def _fable_capped_tier(reserve_ok: bool) -> str | None:
       * spent_pct ≥ hard_cap (50)               → hard downgrade to Opus, NO exception.
 
     ``reserve_ok`` marks that the caller's authorization is a fresh ``reserve``-category receipt.
-    Fail-open (no balance file / malformed) → None so the meter can never block on a hiccup; the
-    acceptance receipt organ stays the authorization of record. HARD_CAP is a hard cap. The cap
-    downgrade lands on Opus (an over-cap Fable job was legitimately high-value; Opus is the nearest
-    tier down), distinct from the acceptance-ABSENT fallback which stays at ``_fable_fallback_tier``.
+    HARD_CAP is a hard cap. The cap downgrade lands on Opus (an over-cap Fable job was legitimately
+    high-value; Opus is the nearest tier down), distinct from the acceptance-ABSENT fallback which
+    stays at ``_fable_fallback_tier``.
+
+    BEHAVIOUR REVERSAL, 2026-08-07 (design decision D4). This used to FAIL OPEN: an absent,
+    unreadable, or stale meter returned None, so the acceptance receipt alone decided and Fable was
+    granted. That is exactly how the incident ran — a meter reporting 0.0% because the deployed
+    writer was blind released both brakes, and ~50% of the weekly allotment burned in two days with
+    no downgrade and no warning. An unresolvable meter now costs a TIER: the selection lands on
+    Opus. It never costs the WORK — no job is blocked, only the reserved tier withheld — and the
+    declared hatch (``LIMEN_FABLE_BALANCE_MAX_AGE_S <= 0``) restores the old behaviour for a host
+    that genuinely runs no beat.
     """
-    bal = _fable_balance()
-    if bal is None:
-        return None
+    verdict = balance_verdict()
+    if not verdict["trusted"]:
+        if not verdict["enforced"]:
+            return None  # declared hatch armed — the operator has switched this dimension off
+        return _fable_cap_downgrade_tier()
+    bal = verdict["balance"]
     try:
-        spent = float(bal.get("spent_pct"))  # type: ignore[arg-type]
+        spent = float(bal.get("spent_pct"))
     except (TypeError, ValueError):
-        return None
+        return _fable_cap_downgrade_tier()
     deliberate_cap = float(bal.get("deliberate_cap", 40) or 40)
     hard_cap = float(bal.get("hard_cap", 50) or 50)
     if spent >= hard_cap:
