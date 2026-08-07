@@ -989,7 +989,9 @@
       "cost": "one paste: printf '\\nexport LIMEN_WORK_LOAN_BACKFILL_APPLY=1\\nexport LIMEN_OWNER_ROUTE_DRAIN_APPLY=1\\n' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat",
       "status": "open",
       "added": "2026-08-07",
-      "gate": "the sensors read the daemon env; ~/.limen.env is sourced at loop start only, hence the kickstart. Verify after the next metabolize pass: logs/work-loan-backfill.jsonl gains applied:true rows and logs/owner-route-drain.jsonl gains outcome!=dry-run rows."
+      "gate": "the sensors read the daemon env; ~/.limen.env is sourced at loop start only, hence the kickstart. Verify after the next metabolize pass: logs/work-loan-backfill.jsonl gains applied:true rows and logs/owner-route-drain.jsonl gains outcome!=dry-run rows.",
+      "unlocks": "the ramp from the 25/day dispatch bootstrap toward 100/day: the backfill valve mints ~168 loan-ready packets (supply) and the drain valve lands the 308 blocked jules PRs earning landed/dispatched >= 0.30 (landing) — both reviewed dry-run-clean 2026-08-07, armed by two env lines",
+      "issue": 1970
     },
     {
       "id": "L-CONDUCT-REGISTRY-DEPLOY",
