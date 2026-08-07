@@ -165182,3 +165182,37 @@ tasks:
     conduct_lease_id: 'lease-631-eeb513d14a81d712'
     conduct_generation: 631
   updated: '2026-08-07T14:01:23.871Z'
+- id: 'GH-organvm-limen-1968'
+  title: 'L-CONDUCT-REGISTRY-DEPLOY — deploy per-agent conduct bearers to the live Worker (registry drift blocks broker discharge)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'credential'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1968'
+  context: 'GitHub issue organvm/limen#1968. The live limen-runtime Worker authenticates only the legacy default conduct bearer (agent codex). Every per-agent bearer in ~/.limen.env''s LIMEN_CONDUCT_PRINCIPAL_REGISTRY — including claude-direct — returns 401: the rotated registry was never deployed as the Worker secret. Measured 2026-08-07 while discharging GITVS-UNCAPPED-PR-DEBT-0715: the task targets agy, so the discharge chain (open reroute'
+  predicate: 'test "$(gh issue view 1968 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1968'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1968'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T14:01:29.416Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-f229ffb083652d983fe63f5e36f7e0ea:632:compatibility'
+    conduct_run_id: 'run-f229ffb083652d983fe63f5e36f7e0ea'
+    conduct_lease_id: 'lease-632-f229ffb083652d98'
+    conduct_generation: 632
+  updated: '2026-08-07T14:01:29.416Z'
