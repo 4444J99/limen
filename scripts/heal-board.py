@@ -47,6 +47,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import load_limen_file, queue_lock  # noqa: E402
 from limen.models import VALID_STATUSES, DispatchLogEntry, LimenFile, Task  # noqa: E402
@@ -56,6 +57,10 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 HEAL_ON = os.environ.get("LIMEN_BOARD_HEAL", "1") != "0"
 ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
+# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable home
+# instead of reciting the atom at the operator (CLAUDE.md → Closeout Definition).
+QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 NEEDS_HUMAN_LABEL = "needs-human"
 DISPATCHABLE = {"open", "dispatched", "in_progress"}
 
@@ -283,13 +288,23 @@ def repair_canonical(*, check: bool, dry_run: bool) -> int:
         print(f"heal-board: WOULD reconcile {summary}")
         return 0
 
-    apply_limen_file_sync(
-        BOARD,
-        repaired,
-        agent="heal-board",
-        session_id="canonical-reconcile",
-        before=canonical,
-    )
+    try:
+        apply_limen_file_sync(
+            BOARD,
+            repaired,
+            agent="heal-board",
+            session_id="canonical-reconcile",
+            before=canonical,
+        )
+    except BrokerQuotaExhausted as exc:
+        # A spent storage plan is not a heal failure and not a bug — it is an owner decision the
+        # rung cannot make. Report it as one legible line naming its registry owner, and exit
+        # EX_TEMPFAIL so the beat's rung ledger still records a NON-ZERO outcome: a tidy exit 0
+        # here would restore exactly the "everything looks healthy" blindness that let this sit.
+        print(f"heal-board: BLOCKED — keeper storage quota exhausted, canonical reconcile deferred ({summary})")
+        print(f"heal-board: the write path is spent, not broken — owner: lever {QUOTA_LEVER} in his-hand-levers.json")
+        print(f"heal-board: keeper said: {exc}"[:400])
+        return EX_TEMPFAIL
     print(f"heal-board: reconciled {summary}")
     return 0
 
