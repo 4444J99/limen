@@ -2821,6 +2821,30 @@ parameters:
     self_update: none
     owner: substrate
     note: "Timeout for one check-beat-freshness run (a pgrep + ps + stat)."
+  LIMEN_LIVE_CHECKOUT_CURRENCY:
+    default: "1"
+    env: LIMEN_LIVE_CHECKOUT_CURRENCY
+    self_update: none
+    owner: substrate
+    note: "Beat gate for the live-checkout-currency sensor (sensors.yaml live-checkout-currency): the tree the beat EXECUTES must be origin/main, and — new on 2026-08-07 — the answer must persist as an offline receipt. beat-freshness's sibling one layer out (daemon vs its loop body; this one, code on disk vs the remote). Set 0 only on a host with no live checkout, where the probe already self-reports unverifiable-here."
+  LIMEN_LIVE_CHECKOUT_CADENCE:
+    default: 4
+    env: LIMEN_LIVE_CHECKOUT_CADENCE
+    self_update: none
+    owner: substrate
+    note: "Run the live-checkout currency probe every Nth sensor pass. It costs one network `git ls-remote`, so it is not a per-beat rung; the receipt it writes is what point-of-use consumers read, and they read it every time."
+  LIMEN_LIVE_CHECKOUT_TIMEOUT:
+    default: 90
+    env: LIMEN_LIVE_CHECKOUT_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Timeout for one check-live-checkout run. Larger than beat-freshness's because this one talks to origin; on timeout the probe simply does not refresh its receipt, which ages out and degrades consumers toward the warning — the correct direction."
+  LIMEN_LIVE_CHECKOUT_RECEIPT:
+    default: ""
+    env: LIMEN_LIVE_CHECKOUT_RECEIPT
+    self_update: none
+    owner: substrate
+    note: "Override path for the offline live-checkout currency receipt (default logs/live-checkout-currency.json at LIMEN_ROOT). Consumed by the Fable meter's provenance dimension (model_selection.balance_verdict) to answer 'was the deployed tree current when this beat-written artifact was produced?' without a network call. Tests point it at a fixture; production never sets it."
   LIMEN_LANE_THROUGHPUT_HISTORY:
     default: ""
     env: LIMEN_LANE_THROUGHPUT_HISTORY

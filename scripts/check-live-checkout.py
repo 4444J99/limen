@@ -33,8 +33,26 @@ Machine line (parsed by scripts/check-ideal-forms.py via the ideal-forms registr
     live-checkout: state=<state> branch=<b> drift=<n> ahead=<n> behind=<n> dirty=<n>
 
 `drift` is the single measurement: 0 iff the fleet is running exactly what origin/main holds.
+
+THE RECEIPT (2026-08-07, the cadence-guard arc). This probe answers only when RUN, needs a
+network `git ls-remote`, and left no artifact — so no point-of-use consumer could afford to ask
+it inline, and the answer existed nowhere between runs. That is how a guard came to read a
+*fresh* meter file written by *stale code* and call it fine: freshness of an artifact is not
+truth of its value when the writer is the stale party. Every run now also writes an OFFLINE
+receipt (``logs/live-checkout-currency.json``, ``--receipt`` to override) so a guard deciding
+whether to trust any beat-written artifact can read one local file with no network and no git.
+
+The receipt carries NO wall-clock field, on purpose and for the same reason the Fable meter
+does not: ``logs/`` is gitignored runtime state with exactly one writer, so the file's own mtime
+IS the writer's heartbeat, and a body without a timestamp stays byte-identical across runs when
+nothing changed — an idempotent artifact whose every diff is a real change. Consumers age it
+with ``os.stat().st_mtime``.
+
+Receipt absence is NOT "fine": a consumer that cannot find this file has learned that deployment
+currency is unestablished, which is exactly the state that must degrade toward the warning.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -44,6 +62,28 @@ DEFAULT_ROOT = Path.home() / "Workspace" / "limen"
 DEFAULT_BRANCH = "main"
 UNVERIFIABLE = "live-checkout: state=unverifiable-here branch={b} drift=0 ahead=0 behind=0 dirty=0  ({why})"
 
+RECEIPT_SCHEMA = "limen.live_checkout_currency.v1"
+RECEIPT_REL = os.path.join("logs", "live-checkout-currency.json")
+
+
+def receipt_path(root: Path) -> Path:
+    """Where the offline currency receipt lives. ``--receipt``/``LIMEN_LIVE_CHECKOUT_RECEIPT``
+    override it (tests, alternate hosts)."""
+    raw = os.environ.get("LIMEN_LIVE_CHECKOUT_RECEIPT")
+    return Path(raw).expanduser() if raw else root / RECEIPT_REL
+
+
+def write_receipt(path: Path, **fields) -> None:
+    """Write the offline receipt. NEVER raises: a probe that cannot record its own answer must
+    still report it on stdout, and an unwritable receipt reads downstream as absent — which
+    already degrades toward the warning, the correct direction."""
+    body = {"schema": RECEIPT_SCHEMA, **fields}
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    except Exception:
+        pass
+
 
 def git(root: Path, *args: str) -> tuple[int, str]:
     proc = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=False)
@@ -51,24 +91,48 @@ def git(root: Path, *args: str) -> tuple[int, str]:
 
 
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Is the tree the beat executes identical to origin/main?")
+    ap.add_argument("--receipt", default=None, help="offline receipt path (default logs/live-checkout-currency.json)")
+    ap.add_argument("--no-receipt", action="store_true", help="report only; write no receipt")
+    args = ap.parse_args()
+
     root = Path(os.environ.get("LIMEN_ROOT", DEFAULT_ROOT)).expanduser()
+    rpath = Path(args.receipt).expanduser() if args.receipt else receipt_path(root)
+
+    def unverifiable(branch: str, why: str) -> int:
+        # "I could not establish this" is its OWN state, never folded into `coherent`. A consumer
+        # reading state != "coherent" degrades toward the warning; that is the whole contract.
+        if not args.no_receipt:
+            write_receipt(
+                rpath,
+                state="unverifiable-here",
+                branch=branch,
+                drift=0,
+                ahead=0,
+                behind=0,
+                dirty=0,
+                unfetched=False,
+                root=str(root),
+                detail=why,
+            )
+        print(UNVERIFIABLE.format(b=branch, why=why))
+        return 0
 
     # Host-aware: no live checkout here at all (the CI case) is not drift.
     if not (root / ".git").exists():
-        print(UNVERIFIABLE.format(b="-", why=f"{root} is not a checkout"))
-        return 0
+        return unverifiable("-", f"{root} is not a checkout")
 
     rc, branch = git(root, "rev-parse", "--abbrev-ref", "HEAD")
     if rc != 0:
-        print(UNVERIFIABLE.format(b="-", why=f"git failed in {root}"))
-        return 0
+        return unverifiable("-", f"git failed in {root}")
     _, head = git(root, "rev-parse", "HEAD")
 
     # Ground truth: what origin/main IS right now, not what this checkout last heard.
     rc, ls = git(root, "ls-remote", "origin", f"refs/heads/{DEFAULT_BRANCH}")
     if rc != 0 or not ls:
-        print(UNVERIFIABLE.format(b=branch, why="origin unreachable — cannot establish the true head"))
-        return 0
+        return unverifiable(branch, "origin unreachable — cannot establish the true head")
     remote_head = ls.split()[0]
 
     # Exact counts need the remote objects locally. Their absence IS drift (this checkout has
@@ -104,6 +168,19 @@ def main() -> int:
 
     drift = behind + ahead + (1 if unfetched else 0) + (0 if branch == DEFAULT_BRANCH else 1)
     state = "drift" if problems else "coherent"
+    if not args.no_receipt:
+        write_receipt(
+            rpath,
+            state=state,
+            branch=branch,
+            drift=drift,
+            ahead=ahead,
+            behind=behind,
+            dirty=dirty,
+            unfetched=unfetched,
+            root=str(root),
+            detail="; ".join(problems),
+        )
     print(f"live-checkout: state={state} branch={branch} drift={drift} ahead={ahead} behind={behind} dirty={dirty}")
     print(f"  root: {root}")
     if dirty:
