@@ -943,6 +943,23 @@
       "unlocks": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
       "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time.",
       "issue": 1925
+    },
+    {
+      "id": "L-NAME-RULING-LIMEN-ASTRA-STRATVM",
+      "label": "Rule on the system's name — keep LIMEN, rename to ASTRA (2026-07-30 plan decision, never enrolled), or rename to STRATVM (2026-08-06 transcript signal). One word settles it.",
+      "source_task": "prima-materia reconciliation 2026-08-06 (docs/plans/2026-08-06-prima-materia-reconciliation.md, issue #1934) — two conflicting operator signals found: docs/plans/2026-07-30-portvs-astra-consolidation.md decision 1 (limen->astra, stratvm fallback; per PREC-2026-07-30-plan-decisions-dont-bind it binds nothing, ASTRA never enrolled in roll.yaml) vs the 2026-08-06 brainstorm transcript naming stratvm outright",
+      "owner": "yours",
+      "category": "identity-ruling",
+      "cost": "one word (limen | astra | stratvm | later); the migration that follows is system work, not yours",
+      "status": "open",
+      "added": "2026-08-06",
+      "gate": "identity ruling with two conflicting operator signals — only the operator can settle which name the system carries; no rename executes until this discharges",
+      "steps": [
+        "Say the word: 'limen' (keep; roll.yaml note already reads 'already prima materia — nothing to strip'), 'astra', 'stratvm', or 'later' (explicitly parks it and the lever closes as deferred-by-ruling).",
+        "If a rename is chosen the system runs the nomenclator mint (scripts/nomenclator.py --check <name> -> roll.yaml row), then ARC 3 of the 2026-07-30 plan: GitHub rename with redirects, CLI compat shim, LIMEN_*/new-prefix alias layer accepted forever, internals migrating opportunistically — no big-bang cutover, nothing breaks on day 0."
+      ],
+      "note": "Scale of what the name binds today: ~258 LIMEN_* parameters, com.limen.* LaunchAgents, ~/.limen.env, install.sh, the limen CLI + Homebrew formula, the limen-runtime Worker, limen-dashboard.pages.dev. The alias-layer design in ARC 3 makes any answer safe; the only unsafe move is executing a rename from an external charter without this ruling.",
+      "issue": 1934
     }
   ]
 }
