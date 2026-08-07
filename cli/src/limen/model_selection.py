@@ -297,7 +297,7 @@ def _fable_capped_tier(reserve_ok: bool) -> str | None:
         return _fable_cap_downgrade_tier()
     bal = verdict["balance"]
     try:
-        spent = float(bal.get("spent_pct"))  # type: ignore[arg-type,union-attr]
+        spent = float(bal.get("spent_pct"))
     except (TypeError, ValueError):
         return _fable_cap_downgrade_tier()
     deliberate_cap = float(bal.get("deliberate_cap", 40) or 40)
