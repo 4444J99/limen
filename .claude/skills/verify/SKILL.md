@@ -86,15 +86,31 @@ option and does not apply to blob shows).
   commit `main` gained as lines you deleted. Both failures print the same thing:
 
   ```bash
-  git diff origin/main -- <files> | grep '^-'   # uncommitted work: correct, catches the clobber
-  git diff origin/main...HEAD | grep -E '^-[^-]' # committed work: resolves the merge base
-  git merge-base --is-ancestor origin/main HEAD  # nonzero ⟺ behind, so rebase before judging
+  git diff origin/main -- <files> | grep -E '^-[^-]'  # uncommitted work: catches the clobber
+  git diff origin/main...HEAD    | grep -E '^-[^-]'   # committed work: resolves the merge base
+  git merge-base --is-ancestor origin/main HEAD       # 0 ⟺ up to date or ahead; see below
+  ```
+
+  Use `'^-[^-]'` on **both** lines, not the bare `'^-'`. A diff's own `--- a/<file>` header starts
+  with a dash, so `grep '^-'` counts one phantom removal per file touched and can only ever *inflate*
+  the number you are judging — measured on one commit here: 9 lines vs the real 7. It also drops a
+  removed blank line, since that hunk line is a lone `-`. Same pattern, both invocations.
+
+  **`--is-ancestor` nonzero does NOT mean "behind".** It means `origin/main` is not an ancestor of
+  `HEAD` — which is **behind OR diverged**, and those want different repairs (fast-forward vs rebase
+  or merge). Verified while writing this: a branch cut from `origin/main` an hour earlier, one commit
+  ahead with one commit landed underneath it, reads `1` — it is diverged, not behind. Get the actual
+  shape before choosing:
+
+  ```bash
+  git rev-list --left-right --count origin/main...HEAD   # -> "<behind-by>  <ahead-by>"
   ```
 
   A long-running background `await-pr.sh` fetches, so `origin/main` advances *under you* mid-session
   and a branch that was current when you cut it is behind by the time you diff it. Observed: a clean
   branch appeared to delete an entire merged feature (`repair_canonical`, its params, its tests, its
-  rung). Check `--is-ancestor` first; if behind, rebase and re-diff rather than interpreting.
+  rung). Check ancestry first; if it is not an ancestor, get the counts, rebase, and re-diff rather
+  than interpreting.
 - **Two rungs appended to the same region of `heartbeat-loop.sh` WILL conflict on rebase.** "Both
   additions are wanted" is semantics; git only sees two edits at one line. Resolve by keeping both and
   think about **order** — a repair rung belongs before the rung whose gate it unblocks, or the pair
@@ -107,9 +123,18 @@ option and does not apply to blob shows).
 - **Worktree-isolation guard rejects compound commands.** No `cmd && cmd`, no `>` redirect combined
   with `cd`, no heredoc-into-`cat` chains. Issue plain single commands with absolute paths, or use
   the Write tool for scratch files (inside the worktree).
-- **A fresh worktree has no `web/worker/node_modules`,** and `npm run check` then reports 4 of 5 test
-  *files* failing with no useful summary — it looks like your change broke the Worker. Run one file
-  directly to see the real cause (`ERR_MODULE_NOT_FOUND: ajv`). Fix: `npm --prefix web/worker ci`.
+- **A fresh worktree has no `web/worker/node_modules`,** and `npm --prefix web/worker run check` then
+  reports 4 of 5 test *files* failing with no useful summary — it looks like your change broke the
+  Worker. Run one file directly to see the real cause:
+
+  ```bash
+  node --test web/worker/test/conduct-keeper.test.js   # from the repo root
+  ```
+
+  That prints `ERR_MODULE_NOT_FOUND: ajv`, which the aggregate run swallows. Fix:
+  `npm --prefix web/worker ci`. Keep the `--prefix` form everywhere — a bare `npm run check` only
+  works from inside `web/worker/`, and "which directory was I in?" is the ambiguity that makes this
+  symptom look like a code failure twice over.
 - **`test_campaign_relay_effector::test_full_relay_exec_proof_closes_while_keepalive_remains_live`
   is load-sensitive, not randomly flaky.** It asserts a spawned provider wrote its pidfile; under
   host contention the parent races ahead. The tell is duration — passing runs take ~16s, failing
