@@ -1132,6 +1132,38 @@ def _materialize_local_result(
     return canonical
 
 
+# register() binds these three identity fields from the authenticated principal; every OTHER
+# identity field is client-declared and is compared verbatim against the stored session.
+_RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS = ("agent", "surface", "session_id")
+
+
+def _relay_identity_key(identity: AgentIdentityV1) -> str:
+    """A short digest of the identity fields `register()` compares but does NOT normalize.
+
+    The keeper binds agent/surface/session_id from the principal and then rejects a
+    re-registration whose whole identity object differs. Post-binding those three are forced
+    equal, so that check can only ever fire on the remaining client-declared fields
+    (`provider_identity`, `native_run_id`) — never on an authority mismatch, which
+    ``session_principals`` guards two lines later. With a FIXED relay session id the first
+    client to register owns the literal forever and every later build takes a permanent 409:
+    the #1408 relay freeze, recurring on the fields the #1408 fix did not normalize. It froze
+    the serial dispatch commit on 2026-07-19 (#1995) — jules sessions kept launching while no
+    receipt was ever recorded, so the throughput governor read 0 dispatches and pinned the
+    lane in bootstrap at 25/day for 19 days.
+
+    Keying the session id on that metadata turns a drift into a NEW session instead of a
+    conflict. The digest covers whatever is left unbound, so adding an identity field keys it
+    automatically rather than re-opening the freeze. It is derived from stable per-build
+    values, never per-process, so the keeper's session table does not grow without bound.
+    """
+    unbound = {
+        name: value
+        for name, value in identity.model_dump(mode="json").items()
+        if name not in _RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS
+    }
+    return canonical_hash(unbound)[:12]
+
+
 def _submit_compatibility_ticket(
     ticket: Ticket,
     intent: dict[str, Any],
@@ -1141,7 +1173,7 @@ def _submit_compatibility_ticket(
     board_path: Path | None = None,
     local_board: LimenFile | None = None,
 ) -> dict[str, Any]:
-    requested_identity = AgentIdentityV1(
+    unkeyed_identity = AgentIdentityV1(
         agent=_safe_identifier(ticket.agent, "tabularius-relay"),
         surface="tabularius-relay",
         session_id=_safe_identifier(
@@ -1149,6 +1181,14 @@ def _submit_compatibility_ticket(
             "tabularius-relay-session",
         ),
         provider_identity="limen-cli",
+    )
+    requested_identity = unkeyed_identity.model_copy(
+        update={
+            "session_id": _safe_identifier(
+                f"{unkeyed_identity.session_id}-{_relay_identity_key(unkeyed_identity)}",
+                "tabularius-relay-session",
+            )
+        }
     )
     registration_now = datetime.now(timezone.utc)
     session = ConductorSessionV1(
