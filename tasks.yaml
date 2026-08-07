@@ -163525,3 +163525,37 @@ tasks:
     conduct_lease_id: 'lease-583-7361a8093a1dc1a7'
     conduct_generation: 583
   updated: '2026-08-07T01:50:19.180Z'
+- id: 'GH-organvm-limen-1933'
+  title: 'handoff-relay --check: FAIL ''provider headroom timestamp missing or unparseable'' blocks all dispatch admission'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1933'
+  context: 'GitHub issue organvm/limen#1933. Pre-existing, surfaced during runtime verification of #1930. `limen dispatch --agent claude` is admission-blocked estate-wide: `handoff-relay --check` fails with ''provider headroom timestamp missing or unparseable'', and the printed remediation (`python3 scripts/handoff-relay.py` refresh, which succeeds and writes handoff.json with open=829) does not clear it — the headroom timestamp is produced el'
+  predicate: 'test "$(gh issue view 1933 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1933'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1933'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T02:31:55.925Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-1fd2421120fa786d996f541d9e684ff2:584:compatibility'
+    conduct_run_id: 'run-1fd2421120fa786d996f541d9e684ff2'
+    conduct_lease_id: 'lease-584-1fd2421120fa786d'
+    conduct_generation: 584
+  updated: '2026-08-07T02:31:55.925Z'
