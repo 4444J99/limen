@@ -85,8 +85,9 @@ AGENTS: list[AgentTarget] = [
         key="copilot",
         label="GitHub Copilot CLI",
         path=HOME / ".copilot" / "mcp-config.json",
-        fmt="json_stdio_mcpservers",
-        note="Standard mcpServers JSON; HTTP support unconfirmed → stdio via mcp-proxy.",
+        fmt="json_mcpservers",
+        note='Standard mcpServers JSON; {type:"http", url} confirmed on v1.0.78 (the stdio '
+        "mcp-proxy shim it replaced broke on an mcp SDK import drift).",
     ),
     AgentTarget(
         key="cline",
