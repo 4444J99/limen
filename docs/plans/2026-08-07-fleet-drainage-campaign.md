@@ -1,7 +1,7 @@
 # Fleet drainage campaign: arm the existing drain organs, wire the fleet debt registers, harvest the corpus
 
 Issue: #1952
-PR: (pending)
+PR: #1956
 
 ## Context
 
