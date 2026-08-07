@@ -85,6 +85,66 @@ def test_opening_verdict_hard_caps_fable_only_on_the_claude_ladder():
     assert M.opening_verdict("ultra", "ultra", codex)["ceiling"] == "ultra"
 
 
+def test_an_unresolvable_ceiling_is_a_VERDICT_not_the_cheapest_rung(monkeypatch):
+    """THE OTHER INPUT. `opening_verdict(pin, ceiling)` takes two declarations; the arc gave the PIN
+    a third state (F2/D3) and left the CEILING resolving to `ladder[0]` and rendering it as though
+    someone had declared it. The load-bearing case is the CHEAPEST pin: against a collapsed 'haiku'
+    ceiling a haiku pin measured `state='ok', trusted=True` — a degenerate input returning TRUSTED,
+    the one thing guard_contract says a guard must never do. Every dearer pin returned
+    above-ceiling, so it failed toward caution for all but one pin and never produced an incident."""
+    monkeypatch.delenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", raising=False)
+    v = M.opening_verdict("claude-haiku-4-5", "banana")
+    assert v["state"] == "unresolved", v
+    assert v["trusted"] is False, v
+    # Never render a value nobody declared as the authoritative ceiling.
+    assert v["ceiling"] == "", v
+    assert "banana" in v["detail"], v
+    # The pin itself was perfectly classifiable — the CEILING is what could not be resolved, and the
+    # detail must say so or the consumer prints the wrong side.
+    assert v["rung"] == "haiku", v
+    assert "ceiling" in v["detail"], v
+
+    # Same defect through the env var, which is the way an operator actually hits it.
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "banana")
+    assert M.opening_verdict("claude-haiku-4-5")["trusted"] is False
+
+
+def test_a_ceiling_declaration_survives_case_and_whitespace(monkeypatch):
+    """`Opus` is the operator writing `opus`, not an unclassifiable value. It used to collapse to
+    'haiku' — so a typo'd env var silently imposed a STRICTER ceiling than the one declared, with no
+    line saying so. Normalization is the fix; the unresolvable case above is the verdict."""
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "Opus")
+    assert M.session_open_max_tier() == "opus"
+    v = M.opening_verdict("claude-sonnet-5")
+    assert v["state"] == "ok" and v["ceiling"] == "opus", v
+
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "  SONNET  ")
+    assert M.session_open_max_tier() == "sonnet"
+
+    # Normalization must not open the hard cap: no declaration makes Fable an opening default.
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "FABLE")
+    assert M.session_open_max_tier() == "opus"
+    assert M.opening_verdict("claude-fable-5")["ceiling"] == "opus"
+
+    # The flag takes the same path as the env var — D6's "the cap belongs to the VALUE", now true of
+    # the unknown-value case too and not only of the opus hard cap.
+    monkeypatch.delenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", raising=False)
+    assert M.opening_verdict("claude-sonnet-5", "OPUS")["ceiling"] == "opus"
+
+
+def test_norm_rung_matches_declarations_not_model_pins():
+    """A ceiling names a rung outright, so this is exact membership — deliberately NOT `_rung_of`'s
+    substring scan. `claude-opus-5` is a PIN; accepting it as a ceiling declaration would let a
+    model string be read as a policy."""
+    assert M._norm_rung("opus") == "opus"
+    assert M._norm_rung(" Opus ") == "opus"
+    assert M._norm_rung("claude-opus-5") == ""
+    assert M._norm_rung("") == ""
+    codex = ("minimal", "low", "medium", "high", "ultra")
+    assert M._norm_rung("HIGH", codex) == "high"
+    assert M._norm_rung("opus", codex) == ""
+
+
 def test_rung_of_is_dearest_first_and_says_when_it_cannot_classify():
     assert M._rung_of("claude-opus-5") == "opus"
     assert M._rung_of("claude-3-5-haiku-20241022") == "haiku"

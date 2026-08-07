@@ -157,6 +157,34 @@ list.** Registry owner: `his-hand-levers.json`.
 - **The deployment atoms — CLOSED 2026-08-07, by the fix itself.** Both were premises, not tasks. The heartbeat was already `state = running` (`launchctl print gui/501/com.limen.heartbeat`), so the kickstart remedy addressed a stopped beat that was not stopped. And the live checkout was already `{"state": "coherent", "behind": 0, "drift": 0}` — read from **F4's own offline receipt**, from inside an isolated worktree that is structurally forbidden to inspect the live tree. That is the arc closing its own loop: the fix for *"absence rendered as silence"* is what made the absence answerable, and the answer was that the atom had already cleared. A worktree session that had to `git -C` the live checkout could not have established this at all. Ongoing coherence is not a residual — it is `live-checkout-currency` (registered, `src=metabolize,heartbeat`, cadence 4) plus `sync-release.sh`'s auto-unpark, which is the owner. The receipt goes stale between beats **by design**; staleness is the sensor's input, not a dangling item.
 - **New atom, filed by F6:** `L-LANE-OPENING-FLOOR` (issue **#2000**) — lowering operator-owned non-Claude pins (`~/.codex/config.toml` `ultra` → `high`; a flash-class `model` in `~/.gemini/settings.json`). Filed with a real `issue` int per `no-tasks-on-me.sh` §SS7; the remedies are files in the operator's home directory, which an agent reports and never writes.
 - **Sibling instance found while closing this arc, filed as #2020** — `check-plan-decisions.py` matches only `1.`-numbered decisions, so the 65 written as `- **D0 —` bullets across 10 plans are not parsed at all and the gate prints `OK — every new decision names where it binds`. Unparseable and clean are the same value: `PREC-2026-08-07-guard-degrades-toward-silence` exactly, with the plan's own syntax as the unresolvable input. **This plan is the worst-covered file in that table** (12 of 12 invisible) — the arc's precedent caught the arc's own plan. Not fixed here: widening the detector admits all 65 into a shrink-only baseline in one step, which is a plan, not a closeout tail.
+- **Second sibling, found by review of this arc and CLOSED by the follow-up — the ratchet's declared
+  population covered only ONE of its reader's two inputs.** `opening_verdict(pin, ceiling)` takes two
+  declarations; all three degenerate cases D6 declared pass only `args[0]`. So F7's proof-by-execution
+  did exactly what it was told and the **ceiling axis was never enrolled**. Measured on this arc's own
+  shipped tree: `opening_verdict("claude-haiku-4-5", "banana")` → `{"state":"ok","trusted":true,
+  "ceiling":"haiku"}` — a degenerate input returning TRUSTED, which `guard_contract` names as the one
+  thing a guard must never do, while `check-guard-degradation.py` exited 0. It survived seven fixes
+  because it inverts by pin: every rung **above** the cheapest returned `above-ceiling`, so it failed
+  toward caution for all but one pin and produced no incident to force it up. `LIMEN_..._MAX_TIER=Opus`
+  hit the same collapse through case alone. Closed by `_norm_rung` + `_declared_ceiling` (D3 applied to
+  the ceiling, `detail` carrying the reason) and by declaring the two ceiling cases — pre-fix 2 findings,
+  post-fix 0, same cases. **D6's own words were the tell:** *"the cap belongs to the VALUE, not one
+  accessor"* was honoured for the opus hard cap and violated for the unknown-value fallback, in the same
+  sentence. `_cap_rung` is likewise **not** the fix its docstring implies: it generalized the *ladder*,
+  never the unclassifiable value, and still returns `ladder[0]`.
+- **NOT closed — the channel-less siblings.** `_cap_tier` and `_cap_rung` return `str`, so they have
+  nowhere to say "unresolvable" and still resolve a genuinely unclassifiable value to the cheapest rung:
+  `LIMEN_CLAUDE_BUILD_MAX_TIER`, `LIMEN_CLAUDE_FABLE_CAP_TIER`, `LIMEN_CLAUDE_MAX_INHERITED_TIER`,
+  `LIMEN_CLAUDE_FABLE_FALLBACK_TIER`, `LIMEN_CLAUDE_SHIM_FLOOR`. Normalization now recovers the common
+  case (wrong case, stray whitespace) for all five; the unclassifiable case remains a **declared,
+  accepted** degradation, documented at each site rather than left implicit. Giving them verdicts means
+  giving them callers that can carry one — a plan, not a closeout tail.
+- **Verified, not a residual — D4's dispatch downgrade.** A review flagged it as unexercised because
+  `limen dispatch` is admission-blocked upstream and reaching the Fable path would mean writing a spend
+  authorization to satisfy a probe. Declining that was right, and the claim was never unproven:
+  `cli/tests/test_claude_tier.py::test_fable_cap_withholds_the_tier_when_the_meter_is_untrusted` covers
+  all four arms (absent meter → opus, stale → opus, fresh under-cap → fable, declared hatch → fable).
+  The predicate is the evidence; a runtime probe was never the only road to it.
 - **Reporting predicates** (run these; do not re-audit by hand):
   ```
   bash scripts/no-tasks-on-me.sh

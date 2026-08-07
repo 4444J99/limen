@@ -214,10 +214,15 @@ def main(argv: list[str] | None = None) -> int:
             return 3
         opening = mod.opening_verdict(model, args.ceiling)
         if opening["state"] == "unresolved":
+            # The reader says WHICH input it could not resolve; print that rather than re-deriving a
+            # pin-shaped reason, which would name the wrong side whenever the CEILING is the bad one.
+            why = opening.get("detail") or (
+                f"Session model {model!r} (via {source}) matches no rung of the tier ladder, so its "
+                f"cost cannot be placed against the cadence ceiling ({opening['ceiling']})"
+            )
             print(
-                f"[fable-session-guard] Session model {model!r} (via {source}) matches no rung of the "
-                f"tier ladder, so its cost cannot be placed against the cadence ceiling "
-                f"({opening['ceiling']}). Session tier UNVERIFIED — treat as UNKNOWN, not cheap.",
+                f"[fable-session-guard] {why}. Session tier UNVERIFIED — treat as UNKNOWN, not cheap. "
+                "(Ceiling: --ceiling, else LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER.)",
                 file=sys.stderr,
             )
             return 3

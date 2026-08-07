@@ -105,3 +105,23 @@ def test_opening_verdict_degrades_on_every_degenerate_pin():
     for pin in ("", "some-other-vendor-model-9", "claude-fable-5"):
         assert M.opening_verdict(pin)["trusted"] is False, pin
     assert M.opening_verdict("claude-sonnet-5")["trusted"] is True
+
+
+def test_opening_verdict_degrades_on_a_degenerate_CEILING_too(monkeypatch):
+    """The invariant belongs to the READER, not to one of its arguments. `opening_verdict` takes two
+    declarations and the declared degenerate population covered only the pin — so the ratchet proved
+    everything it was told about while the ceiling axis stayed invisible. The cheapest pin is the
+    one that mattered: it was the only one that came back TRUSTED against a ceiling nobody declared."""
+    monkeypatch.delenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", raising=False)
+    for ceiling in ("banana", "claude-opus-5", "gpt-5.6"):
+        assert M.opening_verdict("claude-haiku-4-5", ceiling)["trusted"] is False, ceiling
+
+    # An EMPTY declaration is absent, not garbage — it falls through to the default, as before.
+    assert M.opening_verdict("claude-haiku-4-5", "")["trusted"] is True
+
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "banana")
+    assert M.opening_verdict("claude-haiku-4-5")["trusted"] is False
+
+    # A ceiling that IS declared (any case) still resolves — the fix is a verdict, not a refusal.
+    monkeypatch.setenv("LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER", "Opus")
+    assert M.opening_verdict("claude-haiku-4-5")["trusted"] is True
