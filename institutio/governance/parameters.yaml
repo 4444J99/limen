@@ -4321,6 +4321,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether save_limen_file refuses a catastrophic board shrink (a clobber). The board only ever grows/holds steady — all callers load→mutate→save — so a collapse toward zero is always a bug. Set 0 to disable; pass allow_shrink=True in code for an intentional bulk archive. See io.py BoardCollapseError."
+  LIMEN_BOARD_PARTITION_BASELINE:
+    default: "institutio/governance/board-partition-baseline.txt"   # the tracked, shrink-only pinned leak
+    env: LIMEN_BOARD_PARTITION_BASELINE
+    self_update: none
+    owner: tabularius
+    note: "Where scripts/check-board-partition.py reads and re-pins its baseline. Redirectable INDEPENDENTLY of LIMEN_ROOT, which is the point rather than a convenience: --update is that predicate's only write, and overriding LIMEN_ROOT to redirect it also relocates the partner-lane registries, so findings() raises PartitionRegistryError before any baseline logic runs. The one surface that could violate the shrink-only ratchet was therefore the one surface no test could reach — and the ratchet went unenforced through three separate written statements of it (module docstring, baseline header, and a test named test_the_baseline_only_shrinks that actually exercises --check, where nothing is written). Set only by that suite; a production run must leave it unset so the tracked file is the target."
   LIMEN_BOARD_SHRINK_FLOOR:
     default: 5                 # never guard tiny boards (tests, fresh bootstrap); only substantial queues
     env: LIMEN_BOARD_SHRINK_FLOOR

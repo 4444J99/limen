@@ -34,7 +34,12 @@ baseline may only shrink. The existing rows are homed on the broker scrub, not o
   python3 scripts/check-board-partition.py            # report
   python3 scripts/check-board-partition.py --check    # exit 1 on a finding outside the baseline
   python3 scripts/check-board-partition.py --json     # machine-readable, for a doctor rung
-  python3 scripts/check-board-partition.py --update   # re-pin after a real broker scrub
+  python3 scripts/check-board-partition.py --update   # re-pin after a real broker scrub (SHRINK-ONLY)
+
+``--update`` is shrink-only and refuses to add: growing this baseline accepts a new disclosure on a
+public head, which is a human decision and needs an explicit ``--accept-new-disclosures`` to say so.
+The refusal exists because ``--check``'s own "run --update to drop it" hint would otherwise launder
+new findings into the baseline as a routine re-pin — see ``_update``.
 """
 
 from __future__ import annotations
@@ -60,7 +65,19 @@ from limen.partition_lanes import (  # noqa: E402
 )
 
 BOARD = Path(os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
-BASELINE = ROOT / "institutio" / "governance" / "board-partition-baseline.txt"
+# Redirectable INDEPENDENTLY of ROOT, and that is the point rather than a convenience. `--update` is
+# this predicate's only write, so its target was the only thing a test had to redirect to exercise the
+# shrink-only ratchet — and it could not: overriding LIMEN_ROOT relocates the partner-lane registries
+# too, which makes `findings()` raise PartitionRegistryError before any baseline logic runs. So the one
+# surface that could violate the invariant was also the one surface no test could reach, and the
+# invariant went unenforced through three separate written statements of it. An untestable write is how
+# a stated rule survives with no code behind it.
+BASELINE = Path(
+    os.environ.get(
+        "LIMEN_BOARD_PARTITION_BASELINE",
+        str(ROOT / "institutio" / "governance" / "board-partition-baseline.txt"),
+    )
+)
 
 # Fields scanned for a partner name. Deliberately NOT the whole row: a `urls` entry pointing at a
 # partner repo is a reference, not a disclosure, and flagging it would bury the real findings.
@@ -156,6 +173,18 @@ def _baseline() -> set[str]:
     }
 
 
+def _baseline_label() -> str:
+    """Repo-relative when the baseline is the shipped one, absolute when it has been redirected.
+
+    Not cosmetic: the redirect exists so a test can exercise the only write this predicate makes, and a
+    run that re-pinned somewhere other than the tracked file should say so in the line a human reads.
+    """
+    try:
+        return str(BASELINE.relative_to(ROOT))
+    except ValueError:
+        return str(BASELINE)
+
+
 def _write_baseline(current: list[str]) -> None:
     header = (
         "# board-partition-baseline — client/partner work already published on the PUBLIC board\n"
@@ -172,15 +201,78 @@ def _write_baseline(current: list[str]) -> None:
         "# writer and agent sessions never push tasks.yaml. Their owner is the broker scrub.\n"
         "# After a real scrub lands, re-pin with:\n"
         "#   python3 scripts/check-board-partition.py --update\n"
+        "#\n"
+        "# That re-pin is SHRINK-ONLY and refuses to add. Growing this list accepts a new disclosure\n"
+        "# on a public head, so it takes an explicit --accept-new-disclosures; a bare --update can\n"
+        "# only drop cleared entries. Do not hand-append rows here to clear a red gate.\n"
     )
     BASELINE.write_text(header + "\n".join(current) + ("\n" if current else ""))
+
+
+def _update(current: list[str], *, accept_new: bool) -> int:
+    """Re-pin the baseline, SHRINK-ONLY — the invariant this file states three times and never enforced.
+
+    The docstring, the baseline header, and a test title all say the list may only shrink. The code
+    said otherwise: ``--update`` called ``_write_baseline(current)``, which re-pins to whatever is on
+    the board right now, additions included. So the one surface that can actually violate the ratchet
+    was the one surface with no guard on it, and ``test_the_baseline_only_shrinks`` tests ``--check``
+    (where a cleared finding is reported stale rather than failing) — the invariant was verified
+    exactly where it could not be broken.
+
+    That gap is not theoretical, it is a loaded trap sitting in this gate's own output. When a finding
+    clears, ``--check`` prints ``note baseline entry no longer reproduces (run --update to drop it)``.
+    Measured 2026-08-07 on PR #2001 (the board publication backlog): 15 entries had cleared and were
+    advertising exactly that instruction, while 8 NEW partner-lane findings were failing in the same
+    run. Following the gate's own advice to clear the noise would have silently accepted all 8 —
+    new disclosures on a PUBLIC head, landed by an agent trying to tidy up, with the diff reading as
+    a routine re-pin.
+
+    So growth is refused by default and named line by line. It stays *possible* (a genuinely accepted
+    disclosure, or a newly onboarded partner lane whose rows are already public) but only behind an
+    explicit ``--accept-new-disclosures``, because that is a disclosure decision and it should have to
+    be spelled out in the command someone ran. Shrinking needs no flag: dropping a cleared finding
+    tightens the gate, which is the direction the ratchet is supposed to turn.
+    """
+    baseline = _baseline()
+    added = [line for line in current if line not in baseline]
+    dropped = sorted(baseline - set(current))
+
+    if added and not accept_new:
+        print(f"FAIL board-partition: --update would GROW the baseline by {len(added)} finding(s).")
+        for line in added:
+            print(f"  would-add {line}")
+        print(
+            "The baseline may only SHRINK. Growing it accepts a NEW disclosure on a public head — a "
+            "human decision, not a re-pin. These rows' owner is the broker scrub, not this predicate "
+            "(TABVLARIVS is the board's only logical writer). If the disclosure is genuinely accepted, "
+            "say so explicitly: --update --accept-new-disclosures."
+        )
+        if dropped:
+            print(
+                f"note {len(dropped)} cleared entry(ies) would have been dropped by this re-pin; "
+                "the refusal keeps them pinned. Shrink alone is available once the new findings are gone."
+            )
+        return 1
+
+    _write_baseline(current)
+    verb = "re-pinned" if not added else f"re-pinned with {len(added)} ACCEPTED new disclosure(s)"
+    print(
+        f"board-partition: baseline {verb} — {len(current)} finding(s), {len(dropped)} dropped -> {_baseline_label()}"
+    )
+    return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--check", action="store_true", help="exit 1 on a finding outside the baseline")
     parser.add_argument("--json", action="store_true", help="machine-readable report")
-    parser.add_argument("--update", action="store_true", help="re-pin the baseline to current findings")
+    parser.add_argument("--update", action="store_true", help="re-pin the baseline to current findings (shrink-only)")
+    parser.add_argument(
+        "--accept-new-disclosures",
+        action="store_true",
+        help="with --update: also ADD new findings. Accepting a new disclosure on a public head is a "
+        "human decision, never a re-pin — see the growth refusal for why this needs saying out loud.",
+    )
     args = parser.parse_args()
 
     try:
@@ -191,9 +283,7 @@ def main() -> int:
         return 1
 
     if args.update:
-        _write_baseline(current)
-        print(f"board-partition: baseline re-pinned with {len(current)} finding(s) -> {BASELINE.relative_to(ROOT)}")
-        return 0
+        return _update(current, accept_new=args.accept_new_disclosures)
 
     baseline = _baseline()
     new = [line for line in current if line not in baseline]
