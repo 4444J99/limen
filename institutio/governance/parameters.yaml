@@ -4825,6 +4825,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the trunk-green sensor (scripts/check-main-green.py) run each beat by metabolize.sh section 0g3. Closes the 2026-07-10 gap where main's REQUIRED pr-gate silently went red (non-hermetic tests) and no sensor detected it. pr-gate runs on pull_request only; ci.yml runs the same suite on push:[main], so the latest completed CI run on main is the trunk-health proxy. On RED the sensor exits non-zero so the beat surfaces it. Throttled gh (LIMEN_MAIN_GREEN_THROTTLE) + fail-open offline. Set 0 to silence."
 
+  LIMEN_REVIEW_HARVEST:
+    default: "1"               # ON — surface merged-past agent review findings in the beat log (§0g3a), never in chat
+    env: LIMEN_REVIEW_HARVEST
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the review-harvest sensor (scripts/check-review-harvest.py) run each beat by metabolize.sh section 0g3a. Closes the gap between two organs that both look at review traffic and neither asks this: check-review-engine.py counts distinct reviewer LOGINS and never reads what they said, and preflight-thread-state.py gates an outbound COMMENT rather than a merge. Measured 2026-08-07: 17 unresolved agent findings across 10 merged PRs, every one of which check-review-engine called green. Resolution state is read from GitHub's own reviewThreads (isResolved/isOutdated) — no local ledger, so a human clears a finding from the UI and it stays cleared; outdated threads decay on their own. ADVISORY and strictly downstream of the merge: merge-policy.sh counts only REQUIRED checks on purpose (2026-07-24 insights lineage) and bot reviews are slower than the merge, so this never votes on one. Offline/unreadable is a SKIP at exit 0 that SAYS skip — 'I read nothing' must never print as 'I found nothing'. Set 0 to silence."
+
   LIMEN_MAIN_GREEN_APPLY:
     default: "0"               # OFF (DARK) — detection-only until armed; then auto-emits one heal task
     env: LIMEN_MAIN_GREEN_APPLY
