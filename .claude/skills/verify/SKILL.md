@@ -53,6 +53,34 @@ PYTHONPATH=<worktree>/cli/src ~/Applications/DomusAgentHost.app/Contents/MacOS/D
 | `status.py` | `limen status \| head -6` |
 | the Cloudflare Worker (`web/worker/`) | `npm --prefix web/worker ci` **once per worktree**, then `npm --prefix web/worker run check` (`node --check` + `node --test`) |
 | the durable board | `git show origin/tabularius/board-projection:tasks.yaml` — the keeper's published projection, which is **not** `main`'s copy |
+| a beat sensor (`sensors.yaml`) | `beat-sensors.py --run --source <src> --dry-run` proves it is in the execution set; its OUTPUT lands in `logs/metabolize-sensors.log` — see below, because being in the matrix is not being read |
+
+### A sensor in the matrix is not a sensor anyone reads
+
+`--list` and `--dry-run` answer "is it wired". Neither answers "does its finding reach a reader",
+and for an advisory sensor whose entire product is a printed finding, only the second matters.
+
+```bash
+python3 scripts/beat-sensors.py --run --source metabolize --dry-run   # in the execution set?
+tail -40 logs/metabolize-sensors.log                                  # what the last pass SAID
+stat -f '%Sm' logs/.voice/metabolize_pass                             # when that pass ran
+```
+
+Two traps, both measured 2026-08-07 while verifying a sensor shipped hours earlier:
+
+- **The pass used to be piped through `tail -5`.** 57 sensors, well over a hundred lines, five kept.
+  The `review-harvest` sensor ran, reported unresolved findings, and no log recorded a word of it —
+  the organ built to prove a finding gets *consumed* had its own finding thrown away by its runner
+  (fixed: `logs/metabolize-sensors.log`, #2048). If a sensor's output is missing, check what the
+  rung does with the runner's stdout before concluding the sensor did not run.
+- **A voice stamp is not evidence of content.** `logs/.voice/<id>` records that a sensor VISITED,
+  never what it said, and `_stamp()` only fires for sensors declaring a `cadence` — so a
+  cadence-less sensor legitimately has no stamp, and a stamped one may still have been discarded.
+  Absence of a stamp proves nothing in either direction.
+
+`source: [metabolize]` sensors do **not** run every heartbeat tick. `metabolize.sh` has no scheduler;
+the daemon runs them from one wall-clock-throttled rung (`metabolize_pass_due`, hourly by
+`LIMEN_METABOLIZE_SENSORS_SECS`). A sensor absent from the beat log for ten minutes is normal.
 
 ## Comparing shipped vs pre-fix code (the A/B that proves a fix)
 
