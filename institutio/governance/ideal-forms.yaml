@@ -154,12 +154,28 @@ ideals:
       An interactive session's cwd is an isolated, non-recycled worktree; the fleet never
       rebases or cleans the tree a live session is working in.
     owner: "Claude (worktree allocation / harness convention)"
-    probe: null
-    probe_absent_reason: >
-      Contention is an event, not a state: it is only observable while a session holds a tree
-      the daemon then rewrites. Nothing on disk afterwards distinguishes "was rebased under a
-      live session" from "was rebased." The measurable form is a recorded incident count, which
-      needs the daemon to emit a receipt when it rewrites an occupied worktree.
+    # The vacuum's reason was right — "contention is an event, not a state ... the measurable form
+    # is a recorded incident count, which needs the daemon to emit a receipt when it rewrites an
+    # occupied worktree" — and it named its own closure. session-contention.py is that receipt.
+    #
+    # But building it found the row's STATED distance stale. Of the three paths that can rewrite a
+    # tree, two were already guarded: the dispatch allocator preserves an existing worktree and
+    # retries under a fresh suffix (so the #276 mechanism this row has cited since 2026 can no
+    # longer recur), and reclaim-worktrees.py is liveness-gated on its delete path. Only the LIVE
+    # CHECKOUT was exposed, via sync-release.sh. Nobody re-derived the distance, so the row read
+    # OPEN long after two thirds of it had closed — which is the argument for probes, made against
+    # this ledger by this ledger.
+    #
+    # Distance sums EXPOSURE (paths that could rewrite unguarded — zero means it cannot happen)
+    # and INCIDENTS (contention that did). `host`, not `repo`, because incidents recorded on the
+    # operator host but not yet shipped must count: a probe blind to them would announce the ideal
+    # achieved at exactly the moment it was being violated.
+    probe:
+      command: "python3 scripts/check-session-contention.py"
+      derives: "unguarded tree-rewriting paths plus recorded contention incidents"
+      environment: host
+      extract: "contention distance: ([0-9]+)"
+      ideal_value: 0
 
   IF-SENSOR-REGISTRY:
     ideal: >
@@ -231,12 +247,20 @@ ideals:
       executable gauge and a mechanical valve; no stack of individually-legitimate loads can
       thrash the host, because each is gated where it starts and the gauges are watched.
     owner: "Claude (all four forms)"
-    probe: null
-    probe_absent_reason: >
-      Host pressure is a live condition, not a repo fact, and it is already measured
-      continuously by the VITALS axes declared in sensors.yaml — the beat IS its measurement
-      surface. A one-shot repo probe would report the pressure of whatever machine happened to
-      run pr-gate, which is not the ideal's subject.
+    probe:
+      command: "python3 scripts/check-host-pressure-estate.py"
+      derives: "declared pressure axes missing a gauge or an armed-by-default valve"
+      environment: repo
+      extract: "unguarded axes: ([0-9]+)"
+      ideal_value: 0
+      # The vacuum this replaced was right about live pressure and wrong about the ideal. Its
+      # reason — "a one-shot repo probe would report the pressure of whatever machine happened
+      # to run pr-gate" — correctly rejects measuring the WEATHER. But the ideal's own sentence
+      # is "every axis HAS an executable gauge and a mechanical valve ... and the gauges are
+      # watched", which is estate completeness: a repo fact, and stable. So this probe is a
+      # RATCHET, not a thermometer, and needs no `instantaneous:` — it is not a snapshot of a
+      # condition, it is a structural claim that holds until someone deletes a gauge or
+      # disarms a valve. Which is precisely the 2026-07-15 failure it exists to prevent.
 
   IF-LEDGER-OF-IDEALS:
     ideal: >

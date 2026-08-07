@@ -141,10 +141,32 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 ### IF-SESSION-NON-CONTENTION — sessions don't sit in contended worktrees
 - **Ideal form:** an interactive session's cwd is an isolated, non-recycled worktree; the fleet
   never rebases or `clean`s the tree a live session is working in.
-- **Distance:** this session's cwd (`.claude/worktrees/stateful-dazzling-rainbow`) was checked
-  out to a fleet PR branch (`fix/creds-hydrate-noninteractive-guard`, #276), rebased, and amended
-  **by the daemon mid-session.**
-- **Status:** OPEN.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** the founding incident — this ledger's original entry — was a session whose cwd
+  (`.claude/worktrees/stateful-dazzling-rainbow`) was checked out to a fleet PR branch
+  (`fix/creds-hydrate-noninteractive-guard`, #276), rebased, and amended **by the daemon
+  mid-session.**
+- **Evidence (2026-08-06):** the row's stated distance was **stale, and the probe is what found
+  it.** Enumerating every path that can rewrite or remove a tree turns up three, and two were
+  already guarded: the dispatch allocator *preserves* an existing worktree directory and retries
+  under a fresh `secrets.token_hex` suffix rather than reusing it — so the #276 mechanism above can
+  no longer recur — and `reclaim-worktrees.py` is liveness-gated on its delete path. Only the
+  **live checkout** was exposed, through `sync-release.sh`, which every beat runs `git switch`,
+  `git reset --hard` and `git stash push` against `$LIMEN_ROOT` while consulting nothing but git
+  state. That guard now exists (`live_checkout_occupant`, consulted at each destructive site), and
+  the distance is `exposure + incidents`, measured by `scripts/check-session-contention.py`.
+  Three exclusions in the probe are load-bearing, and each was found by *running* it on the
+  operator host rather than by reading code: **nested worktrees** (16 of this host's 31 linked
+  worktrees sit under `$LIMEN_ROOT`, so the naive containment rule reports it occupied in close to
+  the modal state), **gitignored ground** (`reset --hard` only rewrites tracked content, so two
+  codex plugin-cache processes were not occupants), and **non-session processes** (an MCP server
+  and a static file server sat in tracked directories; the ideal's subject is *"an interactive
+  session's cwd"*). Without all three the guard would fire constantly and the sync organ would
+  never converge — recreating the failure `IF-LIVE-TREE-COHERENCE` already records. It fails
+  **open**, inverting its sibling probe, for the same reason. A clean fast-forward is never
+  blocked; only the destructive valves defer.
+- **Status:** SHIPPED — every tree-rewriting path is occupancy-guarded and contention is now a
+  recorded, counted event rather than an unobservable one.
 - **Owner:** Claude (worktree allocation / harness convention).
 
 ### IF-HARNESS-SENSED — the Claude harness root is declared, resolved once, and sensed
@@ -304,7 +326,8 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Ideal form:** every host-pressure axis — memory, CPU load, the backup crawler, test fan-out —
   has an executable gauge and a mechanical valve; no stack of individually-legitimate loads can
   thrash the host because each is gated where it starts, and the gauges themselves are watched.
-- **Distance:** incident 2026-07-15 (16 GB host: swap 6.4/7.2 GiB, load 5.7, 24 min after reboot)
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence:** incident 2026-07-15 (16 GB host: swap 6.4/7.2 GiB, load 5.7, 24 min after reboot)
   had three stacked loads, all invisible to the armed VITALS memory gate: (a) Backblaze
   `bztransmit` re-crawling ~748 worktree roots / 61 GiB of regenerable state at 95 % CPU,
   (b) one session running FULL `pytest tests/` twice concurrently — the scoped-verification law
@@ -323,6 +346,22 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `sudo kill` one-liner), onset-deduped macOS notifications (`scripts/_notify.py`, also
   wired into `host-pressure-stale`), and RSS/wall-clock self-bounds in `overnight-watch.py`
   (issue #1148: one tick wedged 51 min at 3.1 GiB).
+- **Evidence (2026-08-06):** this row sat `probe: null` for a reason that was right about live
+  pressure and wrong about the ideal — *"a one-shot repo probe would report the pressure of
+  whatever machine happened to run pr-gate."* True, and a good reason not to measure the
+  **weather**. But the ideal's own sentence is *"every axis **has** an executable gauge and a
+  mechanical valve … and the gauges are watched"* — estate completeness, which is a repo fact.
+  The vacuum was a noun error, not a missing capability. `institutio/governance/host-pressure-axes.yaml`
+  now declares the estate (6 axes + the watcher, read **by capability**, never by sensor id) and
+  `scripts/check-host-pressure-estate.py` derives the distance: every axis must keep a gauge whose
+  named symbol still exists in its source, and a valve that is **armed-by-default** (`default: "1"`
+  on an `args_when` entry carrying `armed_valve_type`). It is a ratchet, not a thermometer — it
+  cannot go red because the operator compiled something, only because a gauge was refactored away
+  or a safety valve was quietly disarmed. That second case is the SILENT-OFF class
+  `armed-valve-audit.py` names, applied to the specific axes that thrash this host. The registry
+  declares six axes where the prose enumerates four: swap is a distinct assessor in `vitals.py`
+  with its own severity, and disk has a full gauge+valve pair — declaring fewer axes than the
+  estate defends would make the ratchet weaker than the system.
 - **Status:** SHIPPED — all four forms mechanical; the operator is no longer the sensor of
   last resort. The only human residue is the pre-formed root-kill one-liner, pushed by
   notification when it exists.

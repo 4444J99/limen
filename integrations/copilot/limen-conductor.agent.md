@@ -32,3 +32,7 @@ the child request.
 Honor all resource claims and recheck the leased remote PR/branch head before push. Protected human
 sessions are observable only; never adopt, cancel, signal, retune, stash, reset, or reap them.
 Copilot may review or repair an exact leased head, but it never independently merges or closes a PR.
+
+End every claimed packet at the closure covenant's fixed point (`AGENTS.md` → **Full Lifecycle
+Closure**): durable receipts filed with owners — an option menu, a caveat tail, or work parked only
+in the transcript is not a closure form.

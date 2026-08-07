@@ -47,6 +47,27 @@ def test_stale_capped_lane_is_cleared_and_reset_is_reported(monkeypatch):
     assert D._remaining_budget(lf, "jules", 600) == 100
 
 
+def test_reset_persists_even_when_admission_blocks(tmp_path, monkeypatch):
+    """The 11-day 8/600 corpse: the cadence reset used to sit BELOW the admission return, so a
+    blocked estate could neither spend nor reset. The reset is bookkeeping — it must persist
+    before admission gets a say."""
+    now = datetime.now(timezone.utc)
+    stale = (now - timedelta(days=4)).isoformat()
+    lf = _lf(caps={"jules": 100}, spent={"jules": 100}, resets={"jules": stale})
+
+    commits: list[tuple] = []
+    monkeypatch.setattr(D, "_commit_dispatch_results", lambda *a, **k: commits.append(a))
+    monkeypatch.setattr(
+        D, "dispatch_admission_check", lambda *a, **k: {"allow": False, "reason": "test block", "exit_code": 20}
+    )
+    monkeypatch.setattr(D, "print_dispatch_admission_block", lambda *a, **k: None)
+
+    D.dispatch_tasks(lf, tmp_path / "tasks.yaml", agent="jules", dry_run=False)
+
+    assert len(commits) == 1  # the reset was persisted before the admission return
+    assert lf.portal.budget.track.per_agent["jules"] == 0
+
+
 def test_fresh_counter_within_window_is_untouched_and_not_reported():
     now = datetime(2026, 7, 3, 12, 0, tzinfo=timezone.utc)
     fresh = (now - timedelta(minutes=5)).isoformat()  # << every window

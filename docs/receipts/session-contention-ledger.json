@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-08-07T03:18:59Z",
+  "incident_count": 1,
+  "incidents": [
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-07T01:49:15Z",
+      "pid": 67028,
+      "root": "/Users/4jp/Workspace/limen"
+    }
+  ],
+  "schema": "limen.session_contention_ledger.v1"
+}

@@ -18,6 +18,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+
+from limen import harness_paths
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 DEFAULT_RECEIPTS = ROOT / "logs" / "fable-acceptance"
@@ -216,7 +219,11 @@ def cmd_validate(args: argparse.Namespace) -> int:
 # that is the truest source. Fail-open: a dark meter writes over_cap=false (never blocks a run on
 # a measurement hiccup; the acceptance receipt organ remains the authorization).
 
-_FABLE_WEEKLY_BUDGET_TOKENS_DEFAULT = 1_000_000_000  # ≈ the observed weekly Fable allotment ceiling
+# Calibrated 2026-08-06: 33.9M billable (7-day transcript sum, all accrued Aug 5-6) ↔ 53% on
+# Anthropic's own weekly Fable meter → ceiling ≈ 64M billable. The prior 1B default under-read
+# the meter ~16x, so a live scan still reported deep under-cap at true 53%. The ratelimit-header
+# source, when captured, remains the truest reading and bypasses this divisor entirely.
+_FABLE_WEEKLY_BUDGET_TOKENS_DEFAULT = 64_000_000
 _WEEKLY_WIN_S = 7 * 86400
 
 
@@ -230,7 +237,9 @@ def _finite_int(value: object, default: int) -> int:
 
 def _transcripts_dir() -> Path:
     raw = os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR")
-    return Path(raw) if raw else (Path.home() / ".claude" / "projects")
+    if raw:
+        return Path(raw)
+    return harness_paths.harness_dir("projects", repo_root=ROOT)
 
 
 def _iso_ts(value: str) -> float | None:

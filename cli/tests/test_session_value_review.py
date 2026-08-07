@@ -583,3 +583,82 @@ def test_gate_does_not_stop_on_a_missing_private_index(tmp_path: Path):
 
     assert gate["action"] != "stop_missing_inputs"
     assert "batch_review_index" not in gate["reason"]
+
+
+def _idle_snapshot() -> dict:
+    return {
+        "window": {"hours": 1.5},
+        "inputs": {
+            "batch_resolution_receipts": {"present": True},
+            "batch_review_index": {"present": True},
+        },
+        "metrics": {
+            "commits": 0,
+            "batch_receipts": 0,
+            "prompt_events_recorded": 0,
+            "followup_roots": 0,
+            "merged_roots": 0,
+            "owner_absent_roots": 0,
+        },
+        "current_queue": {
+            "coverage": {"open_review_batches": 3},
+            "next": [],
+        },
+    }
+
+
+def test_zero_dispatches_in_window_bootstraps_instead_of_self_sealing():
+    """The 07-19 -> 08-06 deadlock: dispatch refused because nothing landed, nothing landing
+    because dispatch refused. An idle window is starvation evidence, not runaway evidence."""
+    review = _load()
+    gate = review.decide_gate(_idle_snapshot(), history=[], dispatch_count=0)
+    assert gate["action"] == "bootstrap_idle_dispatch"
+    assert gate["exit_code"] == 0
+    assert gate["pressures"]["window_dispatches"] == 0
+
+
+def test_dispatches_without_landings_still_stop():
+    """The runaway brake is intact: >=1 dispatch with zero durable progress blocks exactly
+    as before — only the cold start changed."""
+    review = _load()
+    gate = review.decide_gate(_idle_snapshot(), history=[], dispatch_count=3)
+    assert gate["action"] == "stop_no_durable_progress"
+    assert gate["exit_code"] == 20
+
+
+def test_unreadable_dispatch_meter_keeps_blocking():
+    review = _load()
+    gate = review.decide_gate(_idle_snapshot(), history=[], dispatch_count=None)
+    assert gate["action"] == "stop_no_durable_progress"
+    assert gate["exit_code"] == 20
+
+
+def test_dispatches_in_window_counts_only_windowed_dispatch_receipts(tmp_path: Path):
+    import datetime as dt
+
+    review = _load()
+    board = tmp_path / "tasks.yaml"
+    board.write_text(
+        "tasks:\n"
+        "  - id: T1\n"
+        "    status: open\n"
+        "    dispatch_log:\n"
+        "      - timestamp: '2026-08-06T10:00:00+00:00'\n"
+        "        agent: jules\n"
+        "        session_id: s-1\n"
+        "        status: dispatched\n"
+        "      - timestamp: '2026-08-06T10:05:00+00:00'\n"
+        "        agent: jules\n"
+        "        session_id: s-2\n"
+        "        status: done\n"
+        "      - timestamp: '2026-08-01T10:00:00+00:00'\n"
+        "        agent: jules\n"
+        "        session_id: s-3\n"
+        "        status: dispatched\n"
+    )
+    review.TASKS_PATH = board
+    since = dt.datetime(2026, 8, 6, 9, 0, tzinfo=dt.timezone.utc)
+    until = dt.datetime(2026, 8, 6, 12, 0, tzinfo=dt.timezone.utc)
+    assert review.dispatches_in_window(since, until) == 1
+    review.TASKS_PATH = tmp_path / "missing.yaml"
+    assert review.dispatches_in_window(since, until) is None
