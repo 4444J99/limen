@@ -384,7 +384,7 @@ VENDORS: tuple[Vendor, ...] = (
         execution=_execution(
             "copilot",
             capabilities=("conduct", "execute", "code", "review", "inspect", "github-remote"),
-            transport="ianva-stdio",
+            transport="ianva-http",
             native_fanout=True,
             harvest_method="github-receipt",
             concurrency_scope="provider-headroom",
