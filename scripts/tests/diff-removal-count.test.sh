@@ -30,15 +30,21 @@ fail() { printf '  FAIL %s\n' "$1"; fails=$((fails + 1)); }
 cat > "$TMP/fixture.diff" <<'DIFF'
 --- a/foo.py
 +++ b/foo.py
-@@ -1,4 +1,3 @@
+@@ -1,5 +1,3 @@
 -real_removal = 1
 -
 ---dash-prefixed-removal
+--- sql style comment
 +added
 DIFF
-TRUE_REMOVALS=3
+TRUE_REMOVALS=4
+HEADER_RE="^--- (a/|/dev/null)"
 
-documented=$(grep '^-' "$TMP/fixture.diff" | grep -vc '^--- ')
+# The `-- ` case is the one two successive fixes missed. A source line `-- sql style comment` gains
+# the diff's own `-` prefix and renders as `--- sql style comment`, which is byte-indistinguishable
+# from a `--- a/<file>` header by prefix alone. Excluding by full header SHAPE is the only filter
+# that keeps it.
+documented=$(grep '^-' "$TMP/fixture.diff" | grep -vcE "$HEADER_RE")
 [ "$documented" = "$TRUE_REMOVALS" ] \
   && pass "the documented pattern counts exactly the $TRUE_REMOVALS real removals" \
   || fail "documented pattern counted $documented, expected $TRUE_REMOVALS"
@@ -53,12 +59,30 @@ deflating=$(grep -cE '^-[^-]' "$TMP/fixture.diff")
   && pass "'^-[^-]' UNDER-counts (got $deflating) — the false negative this recipe must not ship" \
   || fail "'^-[^-]' no longer under-counts; the fixture stopped exercising blank/dash removals"
 
+# The previous fix, which read as exact and was not. Kept as a case so the third iteration cannot be
+# quietly reverted to the second.
+loose=$(grep '^-' "$TMP/fixture.diff" | grep -vc '^--- ')
+[ "$loose" -lt "$TRUE_REMOVALS" ] \
+  && pass "the loose '^--- ' exclusion still UNDER-counts (got $loose) — it eats the '-- ' removal" \
+  || fail "the loose exclusion no longer under-counts; the fixture stopped exercising the '-- ' case"
+
 # The recipe in the skill file must BE the documented form, not merely mention it. A doc that
 # explains the right pattern while its copy-paste block shows the wrong one is worse than silence:
 # the block is what gets used.
-grep -q "grep '\^-' | grep -v '\^--- '" "$SKILL" \
-  && pass "SKILL.md's copy-paste block carries the header-excluding form" \
+# `grep -F` on the literal: the pattern being searched for is itself full of regex metacharacters,
+# and escaping it twice over is how this assertion would come to test something other than it reads.
+grep -Fq 'R="^--- (a/|/dev/null)"' "$SKILL" \
+  && pass "SKILL.md's copy-paste block carries the full-shape header exclusion" \
   || fail "SKILL.md's block does not carry the documented pattern"
+
+# Scoped to a RUNNABLE recipe line (one carrying `git diff`), never to any mention. The comparison
+# table above deliberately records the loose form as a wrong answer, and a file-wide grep reads that
+# record as the defect it warns about. This is the THIRD assertion in this session to need scoping
+# for the same reason — "the file must not contain X" is almost never what is meant when the file's
+# job is to explain why X is wrong.
+grep -qE "git diff.*grep -v '\^--- '" "$SKILL" \
+  && fail "SKILL.md still hands out the loose '^--- ' exclusion in a runnable recipe" \
+  || pass "no recipe line hands out the loose header exclusion"
 
 # Scoped to a RECIPE line — `git diff … | grep -E '^-[^-]'` — not to any mention of the pattern.
 # The prose deliberately names the under-counting form in a comparison table so the trap stays
