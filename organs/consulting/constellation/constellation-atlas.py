@@ -161,9 +161,7 @@ def _stage_var(stage: str) -> str:
 def _ladder(stage: str) -> str:
     """Six ticks lit up to the lane's rung — state as form, not just a word."""
     idx = STAGES.index(stage) if stage in STAGES else 0
-    ticks = "".join(
-        f'<span class="tick{" lit" if i <= idx else ""}"></span>' for i in range(len(STAGES))
-    )
+    ticks = "".join(f'<span class="tick{" lit" if i <= idx else ""}"></span>' for i in range(len(STAGES)))
     return ticks
 
 
@@ -260,8 +258,7 @@ def render(people: list[dict[str, Any]], *, private: bool, version: str) -> str:
         (faceless, "no public face"),
     ]
     figures_html = "".join(
-        f'<div class="figure"><span class="n">{n}</span><span class="k">{E(k)}</span></div>'
-        for n, k in figures
+        f'<div class="figure"><span class="n">{n}</span><span class="k">{E(k)}</span></div>' for n, k in figures
     )
 
     strata = ""
@@ -275,28 +272,21 @@ def render(people: list[dict[str, Any]], *, private: bool, version: str) -> str:
         strata += (
             '<section class="stratum">'
             f'<div class="stratum-head"><span class="tier-mark">{E(tier)}</span>'
-            f"<h2>{E(heading)}</h2><span class=\"gloss\">{E(gloss)}</span>"
+            f'<h2>{E(heading)}</h2><span class="gloss">{E(gloss)}</span>'
             f'<span class="count">{len(cohort)} people / {lanes_in_tier} lanes</span></div>'
             f"{rows}</section>"
         )
 
-    ladder_legend = "".join(
-        f'<li><span class="i">{i + 1}</span> {E(s)}</li>' for i, s in enumerate(STAGES)
-    )
+    ladder_legend = "".join(f'<li><span class="i">{i + 1}</span> {E(s)}</li>' for i, s in enumerate(STAGES))
 
     stamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     mode_label = "full register — private overlay merged" if private else "public-safe half"
-    seal = (
-        '<div class="seal">Private overlay merged — local only, never publish</div>'
-        if private
-        else ""
-    )
+    seal = '<div class="seal">Private overlay merged — local only, never publish</div>' if private else ""
     scope_note = (
         "Channel state, interface budgets, and standing boundaries come from the "
         "ARCA-sealed overlay and appear beside each person."
         if private
-        else "Channel state and standing boundaries live in the private overlay and are "
-        "deliberately absent here."
+        else "Channel state and standing boundaries live in the private overlay and are deliberately absent here."
     )
 
     return f"""<title>The Collaborator Constellation</title>

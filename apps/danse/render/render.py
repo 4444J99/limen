@@ -254,11 +254,20 @@ def concat(stem: Path, codec: str) -> Path:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--window", "--capture", dest="window", default="passage",
-                    help="a named capture preset from render/program.json")
-    ap.add_argument("--start", type=float, default=0.0,
-                    help="where in the river to begin recording, in seconds. A `passages` capture snaps "
-                         "forward to the next passage boundary; a `seconds` capture starts exactly here.")
+    ap.add_argument(
+        "--window",
+        "--capture",
+        dest="window",
+        default="passage",
+        help="a named capture preset from render/program.json",
+    )
+    ap.add_argument(
+        "--start",
+        type=float,
+        default=0.0,
+        help="where in the river to begin recording, in seconds. A `passages` capture snaps "
+        "forward to the next passage boundary; a `seconds` capture starts exactly here.",
+    )
     ap.add_argument("--tier", default="screen", help="corpus tier (`film` for the 4K master)")
     ap.add_argument("--seed", type=int, help="override the program's seed")
     ap.add_argument("--codec", default="prores", choices=sorted(CODECS))

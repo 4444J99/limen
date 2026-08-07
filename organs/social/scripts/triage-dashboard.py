@@ -95,23 +95,25 @@ def generate_dashboard(base: Path) -> str:
         standing_raw = standing.get("current", "") if isinstance(standing, dict) else ""
         standing_val = str(standing_raw).upper()
 
-        engagements.append({
-            "identifier": identifier,
-            "name": member.get("name", identifier) if isinstance(member, dict) else identifier,
-            "relationship": mandate.get("relationship", "") if isinstance(mandate, dict) else "",
-            "standing": standing_val,
-            "standing_label": _standing_priority_label(standing_val),
-            "standing_rank": _standing_rank(standing_val),
-            "warmth": standing.get("warmth", "") if isinstance(standing, dict) else "",
-            "owed_replies": (standard.get("owed_replies", []) if isinstance(standard, dict) else []),
-            "care_pattern": standard.get("care_pattern", "") if isinstance(standard, dict) else "",
-            "next_output": artifacts.get("next_reviewable_output", "") if isinstance(artifacts, dict) else "",
-            "manual_mode": (governance.get("manual_mode") is True if isinstance(governance, dict) else False),
-            "human_gates": (governance.get("human_gates", []) if isinstance(governance, dict) else []),
-            "never_autonomous": (governance.get("never_autonomous", []) if isinstance(governance, dict) else []),
-            "violations": violations,
-            "doc": doc,
-        })
+        engagements.append(
+            {
+                "identifier": identifier,
+                "name": member.get("name", identifier) if isinstance(member, dict) else identifier,
+                "relationship": mandate.get("relationship", "") if isinstance(mandate, dict) else "",
+                "standing": standing_val,
+                "standing_label": _standing_priority_label(standing_val),
+                "standing_rank": _standing_rank(standing_val),
+                "warmth": standing.get("warmth", "") if isinstance(standing, dict) else "",
+                "owed_replies": (standard.get("owed_replies", []) if isinstance(standard, dict) else []),
+                "care_pattern": standard.get("care_pattern", "") if isinstance(standard, dict) else "",
+                "next_output": artifacts.get("next_reviewable_output", "") if isinstance(artifacts, dict) else "",
+                "manual_mode": (governance.get("manual_mode") is True if isinstance(governance, dict) else False),
+                "human_gates": (governance.get("human_gates", []) if isinstance(governance, dict) else []),
+                "never_autonomous": (governance.get("never_autonomous", []) if isinstance(governance, dict) else []),
+                "violations": violations,
+                "doc": doc,
+            }
+        )
 
     engagements.sort(key=lambda e: (e["standing_rank"], e["name"]))
 

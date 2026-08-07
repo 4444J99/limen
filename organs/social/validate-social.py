@@ -69,18 +69,14 @@ def _validate_one(path: Path) -> list[str]:
 
     standing = _standing(doc)
     if standing not in POSTURE_SET:
-        violations.append(
-            f"Rule #1 violation: standing {standing!r} is not in {' -> '.join(POSTURES)}"
-        )
+        violations.append(f"Rule #1 violation: standing {standing!r} is not in {' -> '.join(POSTURES)}")
 
     next_standing = str(doc.get("next_standing") or "").upper()
     if standing in POSTURE_SET and next_standing in POSTURE_SET:
         idx = POSTURES.index(standing)
         nidx = POSTURES.index(next_standing)
         if next_standing != "PROTECTED" and nidx <= idx:
-            violations.append(
-                f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}"
-            )
+            violations.append(f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}")
 
     governance = doc.get("governance")
     if not isinstance(governance, dict) or governance.get("manual_mode") is not True:
@@ -92,11 +88,8 @@ def _validate_one(path: Path) -> list[str]:
 
     never_auto = governance.get("never_autonomous") if isinstance(governance, dict) else None
     if not isinstance(never_auto, list) or not never_auto:
-        violations.append(
-            "Rule #2 violation: governance.never_autonomous must list forbidden autonomous acts"
-        )
+        violations.append("Rule #2 violation: governance.never_autonomous must list forbidden autonomous acts")
 
-    standard = doc.get("standard")
     evidence = doc.get("artifacts", {}).get("evidence") if isinstance(doc.get("artifacts"), dict) else None
     if not isinstance(evidence, list) or not evidence:
         violations.append("Rule #4 violation: artifacts.evidence must list at least one evidence item")
@@ -105,15 +98,11 @@ def _validate_one(path: Path) -> list[str]:
             lowered = str(item).lower()
             for pattern in PLACEHOLDER_PATTERNS:
                 if pattern in lowered:
-                    violations.append(
-                        f"Rule #4 violation: evidence item {item!r} contains placeholder {pattern!r}"
-                    )
+                    violations.append(f"Rule #4 violation: evidence item {item!r} contains placeholder {pattern!r}")
 
     claim_doc = {k: v for k, v in doc.items() if k != "governance"}
     if isinstance(governance, dict):
-        claim_doc["governance"] = {
-            k: v for k, v in governance.items() if k != "forbidden_acts"
-        }
+        claim_doc["governance"] = {k: v for k, v in governance.items() if k != "forbidden_acts"}
     blob = _text(claim_doc).lower()
     for pattern in OVERREACH_PATTERNS:
         if pattern in blob:

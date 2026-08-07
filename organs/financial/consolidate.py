@@ -25,7 +25,6 @@ import json
 import os
 import re
 import sys
-from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -113,11 +112,13 @@ def append_balance_journal(snapshots: list, entities: dict) -> list:
             }
     if snapshots and snapshots[-1].get("balances") == balances:
         return snapshots
-    snapshots.append({
-        "date": now,
-        "generated_at": now_iso(),
-        "balances": balances,
-    })
+    snapshots.append(
+        {
+            "date": now,
+            "generated_at": now_iso(),
+            "balances": balances,
+        }
+    )
     return snapshots
 
 
@@ -210,9 +211,7 @@ def classify_balances(snapshots: list, classification: dict) -> dict:
     }
 
 
-def build_balance_sheet(
-    entities: dict, revenue: dict, obligations: dict, classified: dict
-) -> str:
+def build_balance_sheet(entities: dict, revenue: dict, obligations: dict, classified: dict) -> str:
     lines = []
     lines.append("# Financial Office — Consolidated Balance Sheet")
     lines.append("")
@@ -284,7 +283,7 @@ def build_balance_sheet(
     if nw is not None:
         lines.append("### Net Worth Summary")
         lines.append("")
-        lines.append(f"| | Amount |")
+        lines.append("| | Amount |")
         lines.append("|---|---|")
         lines.append(f"| Total Assets | ${total_a:,.2f} |")
         lines.append(f"| Total Liabilities | ${total_l:,.2f} |")
@@ -296,13 +295,9 @@ def build_balance_sheet(
     lines.append(f"- **Snapshots recorded:** {sc}")
     lines.append(f"- **Latest:** {classified.get('latest_date', '-')}")
     if sc >= 2:
-        lines.append(
-            "- **Trend tracking active** — run consolidate.py each beat to record changes"
-        )
+        lines.append("- **Trend tracking active** — run consolidate.py each beat to record changes")
     else:
-        lines.append(
-            "- **First snapshot recorded** — trend data will appear after the next beat"
-        )
+        lines.append("- **First snapshot recorded** — trend data will appear after the next beat")
     lines.append("")
 
     return "\n".join(lines)
@@ -318,19 +313,13 @@ def _net_worth_trend(classified: dict) -> str | None:
     return None
 
 
-def build_cashflow(
-    entities: dict, revenue: dict, obligations: dict, classified: dict
-) -> str:
+def build_cashflow(entities: dict, revenue: dict, obligations: dict, classified: dict) -> str:
     lines = []
     lines.append("# Financial Office — Rolling Cash-Flow Projection")
     lines.append("")
     lines.append(f"> Generated: {now_iso()}")
-    lines.append(
-        "> *Forward-looking estimate based on known revenue stages and obligations."
-    )
-    lines.append(
-        "> Confidence increases as more balances and obligation amounts are confirmed.*"
-    )
+    lines.append("> *Forward-looking estimate based on known revenue stages and obligations.")
+    lines.append("> Confidence increases as more balances and obligation amounts are confirmed.*")
     lines.append("")
 
     products = revenue.get("products", [])
@@ -349,9 +338,7 @@ def build_cashflow(
     start = datetime.now(timezone.utc)
     lines.append("## 12-Week Rolling Projection")
     lines.append("")
-    lines.append(
-        "| Week | Starting | Known Inflows | Known Outflows | Net | Cumulative | Note |"
-    )
+    lines.append("| Week | Starting | Known Inflows | Known Outflows | Net | Cumulative | Note |")
     lines.append("|---|---|---|---|---|---|---|")
 
     financial_obs = financial_obligations(entities, obligations)
@@ -365,9 +352,7 @@ def build_cashflow(
         notes = []
 
         deploy_week = 2
-        if w >= deploy_week and any(
-            p.get("stage") in ("deploy-ready", "live") for p in products
-        ):
+        if w >= deploy_week and any(p.get("stage") in ("deploy-ready", "live") for p in products):
             notes.append("post-deploy")
 
         cumulative += inflows - outflows
@@ -398,20 +383,12 @@ def build_cashflow(
 
     lines.append("## Obligations (financial-material)")
     lines.append("")
-    source_label = (
-        "obligations-ledger.json"
-        if obligations.get("obligations")
-        else "entities.yaml registry fallback"
-    )
-    lines.append(
-        f"Sourced from `{source_label}` — {len(financial_obs)} protocol-class obligations:"
-    )
+    source_label = "obligations-ledger.json" if obligations.get("obligations") else "entities.yaml registry fallback"
+    lines.append(f"Sourced from `{source_label}` — {len(financial_obs)} protocol-class obligations:")
     lines.append("")
     lines.append("| Priority | Title | Owner | Next Step |")
     lines.append("|---|---|---|---|")
-    for ob in sorted(
-        financial_obs, key=lambda o: o.get("priority", 50), reverse=True
-    ):
+    for ob in sorted(financial_obs, key=lambda o: o.get("priority", 50), reverse=True):
         title = ob.get("title", "?")
         priority = ob.get("priority", "?")
         owner = ob.get("owner", "?")
@@ -445,9 +422,7 @@ def financial_obligations(entities: dict, obligations: dict) -> list[dict]:
     entities.yaml embeds the financial-material obligations so the face remains
     truthful without reading the live root.
     """
-    root_obligations = [
-        o for o in obligations.get("obligations", []) if o.get("rung") == "protocol"
-    ]
+    root_obligations = [o for o in obligations.get("obligations", []) if o.get("rung") == "protocol"]
     if root_obligations:
         return root_obligations
 
@@ -466,9 +441,7 @@ def financial_obligations(entities: dict, obligations: dict) -> list[dict]:
     return embedded
 
 
-def build_dashboard(
-    entities: dict, revenue: dict, obligations: dict, classified: dict
-) -> str:
+def build_dashboard(entities: dict, revenue: dict, obligations: dict, classified: dict) -> str:
     entity_list = entities.get("entities", [])
     products = revenue.get("products", [])
     oblist = obligations.get("obligations", [])
@@ -483,11 +456,7 @@ def build_dashboard(
     lines.append("")
     lines.append("## At a glance")
     lines.append("")
-    deployed_revenue = [
-        p
-        for p in products
-        if p.get("stage") in ("deploy-ready", "live", "monetized")
-    ]
+    deployed_revenue = [p for p in products if p.get("stage") in ("deploy-ready", "live", "monetized")]
 
     nw = classified.get("net_worth")
     nw_str = f"${nw:,.2f}" if nw is not None else "unknown"
@@ -499,21 +468,13 @@ def build_dashboard(
     sc = classified.get("snapshot_count", 0)
 
     lines.append(f"- **Entities tracked:** {len(entity_list)}")
-    lines.append(
-        f"- **Revenue products:** {len(products)} ({len(deployed_revenue)} deploy-ready or live)"
-    )
+    lines.append(f"- **Revenue products:** {len(products)} ({len(deployed_revenue)} deploy-ready or live)")
     obligation_count = len(oblist) if oblist else len(financial_obs)
-    obligation_label = (
-        str(obligation_count)
-        if oblist
-        else f"{obligation_count} financial-material (registry fallback)"
-    )
+    obligation_label = str(obligation_count) if oblist else f"{obligation_count} financial-material (registry fallback)"
     lines.append(f"- **Open obligations:** {obligation_label}")
     lines.append(f"- **Net worth:** {nw_str}{trend}")
     lines.append(f"- **Balance snapshots:** {sc}")
-    lines.append(
-        f"- **First dollar path:** ChatGPT Exporter → MONETA/Ko-fi (deploy-ready, principal-gated)"
-    )
+    lines.append("- **First dollar path:** ChatGPT Exporter → MONETA/Ko-fi (deploy-ready, principal-gated)")
     lines.append("")
     lines.append("## Artifacts")
     lines.append("")
@@ -526,26 +487,20 @@ def build_dashboard(
     )
     lines.append(
         "| Micro Instance Face | `MICRO.md` | {} |".format(
-            "Deepened — wealth/portfolio/tax-automation workflow, MONETA interaction, priority gates" if MICRO_FACE.exists() else "Missing"
+            "Deepened — wealth/portfolio/tax-automation workflow, MONETA interaction, priority gates"
+            if MICRO_FACE.exists()
+            else "Missing"
         )
     )
-    lines.append(
-        "| Entity Registry | `entities.yaml` | Live — {} entities registered |".format(
-            len(entity_list)
-        )
-    )
-    has_balances = classified.get("known_assets", 0) + classified.get(
-        "known_liabilities", 0
-    )
+    lines.append("| Entity Registry | `entities.yaml` | Live — {} entities registered |".format(len(entity_list)))
+    has_balances = classified.get("known_assets", 0) + classified.get("known_liabilities", 0)
     bs_status = (
         "Live — {} known balances".format(has_balances) if has_balances else "Generated — needs principal balance entry"
     )
     lines.append(f"| Balance Sheet | `balance-sheet.md` | {bs_status} |")
     lines.append("| Cash-Flow Projection | `cashflow.md` | Generated — pre-revenue baseline |")
     lines.append("| Payrail Disbursement Map | `payrail.md` | Authored — all 4 hops mapped |")
-    lines.append(
-        "| Balance History | `balances-history.json` | {} snapshot(s) recorded |".format(sc)
-    )
+    lines.append("| Balance History | `balances-history.json` | {} snapshot(s) recorded |".format(sc))
     lines.append(
         "| Financial Dashboard (JSON) | `web/app/public/financial-standing.json` | Live — generated by this consolidator |"
     )
@@ -556,42 +511,26 @@ def build_dashboard(
             else "Absent in this worktree — using `entities.yaml` fallback"
         )
     )
-    lines.append(
-        "| Revenue Ladder | `../../revenue-ladder.json` | Live — conductor beat |"
-    )
+    lines.append("| Revenue Ladder | `../../revenue-ladder.json` | Live — conductor beat |")
     lines.append("")
     lines.append("## Next deepen steps")
     lines.append("")
-    lines.append(
-        "1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)"
-    )
+    lines.append("1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)")
     lines.append(
         "2. **P0: Clear card-0186 fraud hold** — one call to Santander; keystone for 3+ cascaded billing failures"
     )
     lines.append(
         "3. **P1: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
     )
-    lines.append(
-        "4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`"
-    )
-    lines.append(
-        "5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi"
-    )
+    lines.append("4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`")
+    lines.append("5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi")
     lines.append(
         "6. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land"
     )
-    lines.append(
-        "7. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat"
-    )
-    lines.append(
-        "8. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots"
-    )
-    lines.append(
-        "9. **P4: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure"
-    )
-    lines.append(
-        "10. **P5: Register investment accounts** — brokerage, retirement, crypto, credit accounts"
-    )
+    lines.append("7. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat")
+    lines.append("8. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots")
+    lines.append("9. **P4: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure")
+    lines.append("10. **P5: Register investment accounts** — brokerage, retirement, crypto, credit accounts")
     lines.append("")
 
     return "\n".join(lines)
@@ -671,9 +610,10 @@ def main() -> int:
     revenue = load_json(ROOT / "revenue-ladder.json")
     obligations = load_json(ROOT / "obligations-ledger.json")
 
-    classification = load_yaml(HERE / "entities.yaml").get(
-        "account_classification", ACCOUNT_CLASSIFICATION
-    ) or ACCOUNT_CLASSIFICATION
+    classification = (
+        load_yaml(HERE / "entities.yaml").get("account_classification", ACCOUNT_CLASSIFICATION)
+        or ACCOUNT_CLASSIFICATION
+    )
 
     snapshots = load_balance_journal()
     snapshots = append_balance_journal(snapshots, entities)
@@ -683,15 +623,9 @@ def main() -> int:
     classified = classify_balances(snapshots, classification)
 
     artifacts = {
-        "balance-sheet.md": build_balance_sheet(
-            entities, revenue, obligations, classified
-        ),
-        "cashflow.md": build_cashflow(
-            entities, revenue, obligations, classified
-        ),
-        "STATUS.md": build_dashboard(
-            entities, revenue, obligations, classified
-        ),
+        "balance-sheet.md": build_balance_sheet(entities, revenue, obligations, classified),
+        "cashflow.md": build_cashflow(entities, revenue, obligations, classified),
+        "STATUS.md": build_dashboard(entities, revenue, obligations, classified),
     }
 
     for filename, content in artifacts.items():

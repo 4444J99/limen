@@ -109,17 +109,11 @@ def _validate_one(path: Path) -> list[str]:
     next_standing = str(doc.get("next_standing") or "").upper()
     if standing in ADVANCING[:-1]:
         if not next_standing:
-            violations.append(
-                "Rule #1 violation: next_standing is required until the chamber reaches EXHIBITED"
-            )
+            violations.append("Rule #1 violation: next_standing is required until the chamber reaches EXHIBITED")
         elif next_standing not in ADVANCING:
-            violations.append(
-                f"Rule #1 violation: next_standing {next_standing!r} is not in {' -> '.join(ADVANCING)}"
-            )
+            violations.append(f"Rule #1 violation: next_standing {next_standing!r} is not in {' -> '.join(ADVANCING)}")
         elif ADVANCING.index(next_standing) <= ADVANCING.index(standing):
-            violations.append(
-                f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}"
-            )
+            violations.append(f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}")
     elif standing == "EXHIBITED" and next_standing and next_standing != "EXHIBITED":
         violations.append(
             f"Rule #1 violation: EXHIBITED is terminal unless reopened by a new chamber; got {next_standing!r}"
@@ -142,9 +136,7 @@ def _validate_one(path: Path) -> list[str]:
             lowered = str(item).lower()
             for placeholder in PLACEHOLDERS:
                 if placeholder in lowered:
-                    violations.append(
-                        f"Rule #4 violation: evidence item {item!r} contains placeholder {placeholder!r}"
-                    )
+                    violations.append(f"Rule #4 violation: evidence item {item!r} contains placeholder {placeholder!r}")
 
     claims = _text(_claim_doc(doc)).lower()
     for phrase in OVERREACH:

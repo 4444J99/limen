@@ -304,16 +304,26 @@ class Moments:
             pos = np.arange(x0 + 1, x1)
             if pos.size == 0:
                 return pos, None, None
-            prefix = [t[..., y1, x0 + 1 : x1, :] - t[..., y0, x0 + 1 : x1, :]
-                      - t[..., y1, x0 : x0 + 1, :] + t[..., y0, x0 : x0 + 1, :] for t in tables]
+            prefix = [
+                t[..., y1, x0 + 1 : x1, :]
+                - t[..., y0, x0 + 1 : x1, :]
+                - t[..., y1, x0 : x0 + 1, :]
+                + t[..., y0, x0 : x0 + 1, :]
+                for t in tables
+            ]
             span = (y1 - y0) * self.npx
             n_lo, n_hi = (pos - x0) * span, (x1 - pos) * span
         else:  # horizontal cut, sweeping y
             pos = np.arange(y0 + 1, y1)
             if pos.size == 0:
                 return pos, None, None
-            prefix = [t[..., y0 + 1 : y1, x1, :] - t[..., y0 + 1 : y1, x0, :]
-                      - t[..., y0 : y0 + 1, x1, :] + t[..., y0 : y0 + 1, x0, :] for t in tables]
+            prefix = [
+                t[..., y0 + 1 : y1, x1, :]
+                - t[..., y0 + 1 : y1, x0, :]
+                - t[..., y0 : y0 + 1, x1, :]
+                + t[..., y0 : y0 + 1, x0, :]
+                for t in tables
+            ]
             span = (x1 - x0) * self.npx
             n_lo, n_hi = (pos - y0) * span, (y1 - pos) * span
 
@@ -464,8 +474,9 @@ def refine(node: Node, C, stack, block: int, span: int, px=None):
 # ---------------------------------------------------------------- solve
 
 
-def solve(target: Path, C, stack, names, leaves: int, block: int,
-          depth: int = 1, topk: int = 12, pair_margin: float = 0.15) -> dict:
+def solve(
+    target: Path, C, stack, names, leaves: int, block: int, depth: int = 1, topk: int = 12, pair_margin: float = 0.15
+) -> dict:
     h, w, _ = C.shape
     mom = Moments(C, stack, block)
     root = partition(mom, leaves)
