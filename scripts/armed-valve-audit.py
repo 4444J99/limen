@@ -17,7 +17,8 @@ Three-source model (liquid, never a hand-maintained sensor list):
   • SENSOR CAPABILITIES — sensors.yaml classifies conditional behavior gates next
     to the command they control via ``armed_valve_type``.
   • EXTERNAL REGISTRY — spec/armed-valves.json holds non-sensor classifications
-    and probes (a URL that must serve, an artifact that must carry the rail).
+    and probes (a URL that must serve, an artifact that must carry the rail, a
+    local settings file that must carry the arm — ``kind: file_json``).
 
 Verdicts per valve:
   ARMED        armed (env arm active, or probe green)
@@ -141,6 +142,77 @@ def lever_citations(levers_path):
     return p.read_text(errors="replace") if p.exists() else ""
 
 
+def _dotted(obj, path):
+    """Read a dotted path out of a parsed JSON document; None if any segment is missing."""
+    cur = obj
+    for seg in str(path).split("."):
+        if isinstance(cur, list):
+            try:
+                cur = cur[int(seg)]
+                continue
+            except (ValueError, IndexError):
+                return None
+        if not isinstance(cur, dict) or seg not in cur:
+            return None
+        cur = cur[seg]
+    return cur
+
+
+def probe_file_json(entry):
+    """(ok, note) for a ``file_json`` probe — is an arming state present in a LOCAL json file?
+
+    The one reader of ``~/.claude/settings.json`` arming state (design decision D8 of the
+    2026-08-07 cadence-guard arc). Until this existed, an unarmed SessionStart guard was
+    indistinguishable from a guard that ran and found nothing — the same silence the guard itself
+    was built to break, one layer up. This probe makes the arm a REPORTED verdict every beat.
+
+    READ-ONLY, and deliberately so: agents never write settings.json (that boundary is the whole
+    reason ``L-FABLE-GUARD-ARM`` is a human lever). Probing an arm is not arming it. An absent or
+    unparseable file is NOT armed — which, with the lever cited, reports PARKED rather than
+    SILENT-OFF, i.e. owned-and-waiting rather than dropped.
+
+    Local and deterministic, so unlike the url probes it is never skipped by ``--offline``: a CI
+    runner simply has no such file and reports PARKED, the same answer it would give on a laptop
+    that has not pulled the lever.
+
+    Two shapes, checked in order:
+      ``needle``       — substring present anywhere in the re-serialized document (proves the
+                         file PARSES as well as carries the value; a corrupt settings.json is a
+                         finding, not a pass).
+      ``pointer``      — dotted path, compared against ``expected`` or membership in
+                         ``expected_any``; bare pointer means "any non-empty value".
+    """
+    raw = os.path.expandvars(str(entry.get("path", "")))
+    path = Path(raw).expanduser()
+    if not path.exists():
+        return False, f"{path} absent"
+    try:
+        doc = json.loads(path.read_text(errors="replace"))
+    except (OSError, ValueError) as exc:
+        return False, f"unparseable ({type(exc).__name__})"
+
+    needle = entry.get("needle")
+    if needle:
+        ok = needle in json.dumps(doc)
+        return ok, f"needle {'present' if ok else 'ABSENT'}"
+
+    pointer = entry.get("pointer")
+    if pointer:
+        value = _dotted(doc, pointer)
+        if value is None:
+            return False, f"{pointer} unset"
+        allowed = entry.get("expected_any")
+        if allowed:
+            ok = str(value) in [str(a) for a in allowed]
+            return ok, f"{pointer}={value}" + ("" if ok else f" (want one of {allowed})")
+        if "expected" in entry:
+            ok = str(value) == str(entry["expected"])
+            return ok, f"{pointer}={value}" + ("" if ok else f" (want {entry['expected']})")
+        return True, f"{pointer}={value}"
+
+    return False, "malformed file_json entry (needs `needle` or `pointer`)"
+
+
 def probe_url(entry, timeout=10):
     """(ok, note) for url / url_contains probes. Never raises."""
     url = entry["url"]
@@ -184,6 +256,10 @@ def audit(registry, gates, env, levers_text, offline=False, sensor_valves=None):
         if entry["kind"] == "env":
             armed = env.get(vid, gates.get(vid, "0")) == entry.get("expected", "1")
             note = f"env={env.get(vid, '<unset>')}"
+        elif entry["kind"] == "file_json":
+            # Local + deterministic — deliberately NOT skipped by --offline. A CI runner with no
+            # such file reports the same "not armed" a laptop that never pulled the lever does.
+            armed, note = probe_file_json(entry)
         elif offline:
             rows.append(dict(id=vid, verdict="SKIP", note="offline", what=entry.get("what", "")))
             continue
