@@ -27,6 +27,23 @@
       "url": "https://chatgpt-exporter-e08.pages.dev/chatgpt.user.js",
       "needle": "mint.4444j99.dev",
       "what": "the public exporter install artifact carries the mint checkout — the user-reachable half of the rail (EXCAV-0708-EXPORTER-ARM ship-gate)"
+    },
+    {
+      "id": "FABLE_GUARD_SESSIONSTART_WIRED",
+      "kind": "file_json",
+      "path": "~/.claude/settings.json",
+      "needle": "fable-session-guard.py",
+      "lever": "L-FABLE-GUARD-ARM",
+      "what": "the interactive Fable guard is actually INSTALLED as a SessionStart hook. Shipped 2026-07-09 and staged for a human paste ever since; measured 2026-08-07 the file held 8 SessionStart entries and none was the guard. An unarmed guard is byte-identical to a guard that ran and found nothing — the same silence it exists to break, one layer up. Read-only probe: agents never write settings.json (that boundary is why L-FABLE-GUARD-ARM is a human lever), and probing an arm is not arming it."
+    },
+    {
+      "id": "SESSION_MODEL_OPENING_PIN",
+      "kind": "file_json",
+      "path": "~/.claude/settings.json",
+      "pointer": "model",
+      "expected_any": ["sonnet", "haiku"],
+      "lever": "L-FABLE-GUARD-ARM",
+      "what": "interactive sessions OPEN at or below the cadence floor (CLAUDE.md Session Phase Entry: open cheap on sonnet, escalate deliberately). The weakest of the three cadence layers by construction — `/model` persists its own default to a harness-internal store no predicate can read, so one `/model opus` months ago silently re-arms an expensive default for every future session and leaves no artifact. This row therefore measures only the DECLARED pin; detection (the SessionStart guard) and the beat audit are what hold the line. Absent pin + cited lever = PARKED, not SILENT-OFF."
     }
   ],
   "safety": [

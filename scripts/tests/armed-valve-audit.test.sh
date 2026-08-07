@@ -107,3 +107,62 @@ grep -q "SAFE-OFF.*VALVEFIX_TEST_NEWGATE" <<<"$out" \
   || { echo "FAIL: sensor capability did not classify renamed valve: $out" >&2; exit 1; }
 
 echo "armed-valve-audit.test: sensor capability cases pass"
+
+# ── file_json probes: is a LOCAL arming state present? (F5 of the cadence-guard arc) ───────────
+# The gap: an unarmed SessionStart guard is byte-identical to a guard that ran and found nothing.
+# These cases pin that an absent/unparseable/unset arm is NOT armed, that a cited lever makes it
+# PARKED rather than SILENT-OFF, and — load-bearing — that --offline never skips a local probe
+# (skipping would restore the very silence the row exists to break).
+echo 'export VALVEFIX_TEST_VALVE=1' > "$work/env-armed"
+echo '{"levers": [{"id": "L-ARM-TEST", "label": "paste the snippet"}]}' > "$work/levers-arm.json"
+
+cat > "$work/reg-file.json" <<JSON
+{"deliverable": [
+  {"id": "ARM_NEEDLE", "kind": "file_json", "path": "$work/settings.json",
+   "needle": "guard.py", "lever": "L-ARM-TEST", "what": "hook wired"},
+  {"id": "ARM_POINTER", "kind": "file_json", "path": "$work/settings.json",
+   "pointer": "model", "expected_any": ["sonnet", "haiku"], "lever": "L-ARM-TEST", "what": "opening pin"}
+], "safety": ["VALVEFIX_TEST_NEWGATE"]}
+JSON
+
+runfile() { # $1 = extra args
+  env -u VALVEFIX_TEST_VALVE python3 "$audit" --check --offline --gate-prefix VALVEFIX_ \
+    --registry "$work/reg-file.json" --sources "$work/beat.sh" \
+    --env-file "$work/env-armed" --levers "$work/levers-arm.json" --stamp "$work/stamp.json" ${1:-}
+}
+
+echo "case 8: absent settings file → not armed, cited lever → PARKED (owned, not dropped)"
+rm -f "$work/settings.json"
+out="$(runfile)" || { echo "FAIL: absent file should be PARKED (exit 0), not SILENT-OFF" >&2; exit 1; }
+grep -q "PARKED *ARM_NEEDLE" <<<"$out" || { echo "FAIL: expected PARKED ARM_NEEDLE, got: $out" >&2; exit 1; }
+grep -q "absent" <<<"$out" || { echo "FAIL: note should name the absent file: $out" >&2; exit 1; }
+
+echo "case 9: armed settings file → ARMED on both needle and pointer"
+echo '{"model": "sonnet", "hooks": {"SessionStart": [{"hooks": [{"command": "python3 guard.py"}]}]}}' > "$work/settings.json"
+out="$(runfile)" || { echo "FAIL: armed file tripped the gate: $out" >&2; exit 1; }
+grep -q "ARM_NEEDLE" <<<"$out" && { echo "FAIL: ARMED rows must stay silent, saw ARM_NEEDLE: $out" >&2; exit 1; }
+grep -q "ARM_POINTER" <<<"$out" && { echo "FAIL: ARMED rows must stay silent, saw ARM_POINTER: $out" >&2; exit 1; }
+
+echo "case 10: pointer present but ABOVE the ceiling → not armed (expected_any is a whitelist)"
+echo '{"model": "opus", "hooks": {"SessionStart": [{"hooks": [{"command": "python3 guard.py"}]}]}}' > "$work/settings.json"
+out="$(runfile)" || { echo "FAIL: off-ceiling pin should be PARKED, not SILENT-OFF" >&2; exit 1; }
+grep -q "PARKED *ARM_POINTER" <<<"$out" || { echo "FAIL: expected PARKED ARM_POINTER, got: $out" >&2; exit 1; }
+grep -q "model=opus" <<<"$out" || { echo "FAIL: note should report the offending value: $out" >&2; exit 1; }
+
+echo "case 11: unparseable settings file → NOT armed (a corrupt file is a finding, never a pass)"
+echo '{ this is not json' > "$work/settings.json"
+out="$(runfile)" || { echo "FAIL: unparseable file should be PARKED, not SILENT-OFF" >&2; exit 1; }
+grep -q "unparseable" <<<"$out" || { echo "FAIL: expected an unparseable note, got: $out" >&2; exit 1; }
+
+echo "case 12: --offline must NOT skip a local file probe (skipping restores the silence)"
+grep -q "SKIP *ARM_NEEDLE" <<<"$out" && { echo "FAIL: --offline skipped a local file_json probe: $out" >&2; exit 1; }
+
+echo "case 13: no lever citation → a disarmed file probe is SILENT-OFF, exit 1"
+if out="$(env -u VALVEFIX_TEST_VALVE python3 "$audit" --check --offline --gate-prefix VALVEFIX_ \
+    --registry "$work/reg-file.json" --sources "$work/beat.sh" \
+    --env-file "$work/env-armed" --levers "$work/levers-empty.json" --stamp "$work/stamp.json" 2>&1)"; then
+  echo "FAIL: uncited disarmed file probe did NOT trip the gate: $out" >&2; exit 1
+fi
+grep -q "SILENT-OFF" <<<"$out" || { echo "FAIL: expected SILENT-OFF, got: $out" >&2; exit 1; }
+
+echo "armed-valve-audit.test: file_json cases pass"
