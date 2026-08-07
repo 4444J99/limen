@@ -51,7 +51,7 @@ import _root  # noqa: E402  — sibling helper, importable only after the sys.pa
 
 SCRIPT_ROOT = Path(__file__).resolve().parent.parent  # the checkout THIS script lives in
 LIVE_ROOT = Path(os.environ.get("LIMEN_ROOT", str(SCRIPT_ROOT)))
-LIMEN_ROOT_EXPLICIT = bool(os.environ.get("LIMEN_ROOT"))
+ROOT_IS_EXPLICIT = bool(os.environ.get("LIMEN_ROOT"))
 HOME = Path(os.path.expanduser("~"))
 
 GREEN, RED, SKIP, INFO = "GREEN", "RED", "SKIP", "INFO"
@@ -179,7 +179,7 @@ def live_checkout() -> Path | None:
     Explicit `LIMEN_ROOT` is returned untouched: `_root.resolve()` states the rule this follows —
     explicit configuration is never silently overridden. Only the DEFAULTED root gets corrected.
     """
-    if LIMEN_ROOT_EXPLICIT:
+    if ROOT_IS_EXPLICIT:
         return LIVE_ROOT
     if not _root.is_worktree(SCRIPT_ROOT):
         return SCRIPT_ROOT

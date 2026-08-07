@@ -162,7 +162,7 @@ def test_live_checkout_resolves_a_real_linked_worktree_to_its_primary(
 
     m = _load()
     monkeypatch.setattr(m, "SCRIPT_ROOT", worktree)
-    monkeypatch.setattr(m, "LIMEN_ROOT_EXPLICIT", False)
+    monkeypatch.setattr(m, "ROOT_IS_EXPLICIT", False)
 
     assert m.live_checkout() == primary.resolve()
 
@@ -170,7 +170,7 @@ def test_live_checkout_resolves_a_real_linked_worktree_to_its_primary(
 def test_an_explicit_limen_root_is_never_silently_overridden(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """_root.resolve() states the rule: explicit configuration wins, even from a worktree."""
     m = _load()
-    monkeypatch.setattr(m, "LIMEN_ROOT_EXPLICIT", True)
+    monkeypatch.setattr(m, "ROOT_IS_EXPLICIT", True)
     monkeypatch.setattr(m, "LIVE_ROOT", tmp_path / "explicitly-chosen")
     assert m.live_checkout() == tmp_path / "explicitly-chosen"
 
@@ -189,7 +189,7 @@ def test_a_primary_without_the_loop_script_resolves_to_none(tmp_path: Path, monk
 
     m = _load()
     monkeypatch.setattr(m, "SCRIPT_ROOT", worktree)
-    monkeypatch.setattr(m, "LIMEN_ROOT_EXPLICIT", False)
+    monkeypatch.setattr(m, "ROOT_IS_EXPLICIT", False)
 
     assert m.live_checkout() is None
 
