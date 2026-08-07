@@ -164807,3 +164807,37 @@ tasks:
     conduct_run_id: 'run-2d38f2f8a99d96c0d40c78980cfb8589'
     conduct_lease_id: 'lease-618-2d38f2f8a99d96c0'
     conduct_generation: 618
+- id: 'GH-organvm-limen-1957'
+  title: 'Corpus drain pilot: point the atomizer at the real stores, refresh the cursor, run one bounded disposition batch'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1957'
+  context: 'GitHub issue organvm/limen#1957. The reconciliation plan (issue #1934) promised this as successor objective 3: the prompt-atom ledger holds 741,827 atoms with 0 assessed and Validation: FAIL, its newest source event is 2026-07-08, and its LOCAL_SOURCES read an emptied $HOME (~/.claude/projects holds 0 jsonl while .agent-runtime/claude/projects holds 520 files / 529M; gemini has ~570MB on disk against a declared unpopulated vacuum'
+  predicate: 'test "$(gh issue view 1957 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1957'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1957'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T12:33:34.993Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ce29fe73fa7c83e5bb3a5c4330172a3e:619:compatibility'
+    conduct_run_id: 'run-ce29fe73fa7c83e5bb3a5c4330172a3e'
+    conduct_lease_id: 'lease-619-ce29fe73fa7c83e5'
+    conduct_generation: 619
+  updated: '2026-08-07T12:33:34.993Z'
