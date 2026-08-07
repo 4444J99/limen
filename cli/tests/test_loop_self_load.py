@@ -49,6 +49,26 @@ def _rung_source() -> str:
     raise AssertionError("rung's closing `fi` not found at loop-body indent")
 
 
+HELPER_START = 'BEAT_RUNG_LOG="${LIMEN_BEAT_RUNG_LOG:-'
+HELPER_END = "# BOUNDED WAKE"
+
+
+def _helper_source() -> str:
+    """The loop's rung runner, lifted verbatim — the rung calls it, so the rung cannot run without it.
+
+    Raises rather than returning an empty string if the anchors move; a silently-empty prelude would
+    turn every assertion below into a test of `beat_run: command not found`.
+    """
+    text = LOOP.read_text()
+    start = text.find(HELPER_START)
+    assert start != -1, f"{HELPER_START!r} not found in {LOOP} — did the rung runner move?"
+    end = text.find(HELPER_END, start)
+    assert end != -1, f"{HELPER_END!r} not found after the rung runner in {LOOP}"
+    body = text[start:end]
+    assert "beat_run() {" in body, "extraction missed beat_run"
+    return body
+
+
 def _run(
     tmp_path: Path,
     *,
@@ -100,7 +120,11 @@ def _run(
     stub.chmod(0o755)
 
     script = tmp_path / "rung.sh"
-    script.write_text("set -u\n" + _rung_source() + "\n")
+    # The rung invokes the loop's own beat_run helper (so a failing kickstart prints a real
+    # diagnostic instead of a swallowed one), so the extraction must carry the helper too. Lifting
+    # the shipped bytes of BOTH keeps this a test of the real composition rather than of the rung in
+    # a world where its runner does not exist.
+    script.write_text("set -u\n" + _helper_source() + "\n" + _rung_source() + "\n")
 
     proc = subprocess.run(
         ["bash", str(script)],
