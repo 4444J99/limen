@@ -32,10 +32,10 @@ every morning.
 
 | Cohort | Items | Disposition | Manifest (SHA-pinned) | Status |
 |---|---|---|---|---|
-| operator-stale | 25 | `lifecycle:active-human` | `docs/receipts/pr-lifecycle-operator-stale-manifest-20260807.json` (b18cde39…864b) | applied_verified |
+| operator-stale | 25 | `lifecycle:blocked` (fail-closed) | `docs/receipts/pr-lifecycle-operator-stale-manifest-20260807.json` (b18cde39…864b) | applied_verified |
 | private | 41 | per-facts | `logs/` (private) + public receipt `docs/receipts/pr-lifecycle-private-receipt-20260807.json` (218f7e50…5816) | applied_verified |
 | dependabot | 200 / 94 repos | `lifecycle:blocked` (fail-closed) | `docs/receipts/pr-lifecycle-dependabot-blocked-manifest-20260807.json` (ae6ff627…e95f) | applied_verified |
-| operator-active | 17 | `lifecycle:active-human` | re-planned after PRs #1941/#1944 merge (they are in the cohort) | pending |
+| operator-active | 15 (17 planned; 2 merged first) | `lifecycle:active-human` | `docs/receipts/pr-lifecycle-operator-active-manifest-20260807-final.json` (dfc72d9f…f09e) | applied_verified |
 
 The dependabot delivery upgrade — retyping 200 PRs to `lifecycle:delivery`, which arms
 merge-drain's autonomous merge rail — is a **mass-merge human gate**, filed as lever

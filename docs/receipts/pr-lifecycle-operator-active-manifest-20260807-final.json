@@ -1,0 +1,180 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-08-07T12:46:55.493569Z",
+    "close_effects": 0,
+    "effect_count": 15,
+    "immutable_archived_item_count": 0,
+    "immutable_archived_repository_count": 0,
+    "immutable_archived_repository_hashes": [],
+    "merge_effects": 0,
+    "repository_count": 1,
+    "verified_count": 15
+  },
+  "cohort": "operator-active",
+  "disposition": "lifecycle:active-human",
+  "effect": "add-label:lifecycle:active-human",
+  "generated_at": "2026-08-07T12:46:06.298821Z",
+  "items": [
+    {
+      "draft": false,
+      "head_oid": "0b4e24c63c600ba1c78f3eec34200fe5c745b58a",
+      "number": 1787,
+      "pr_key": "f6d63934e565194ffc000348ca01d111d75b130f5bd61a3ce56955476bf1261b",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(charles): complete summer fabric trilogy",
+      "url": "https://github.com/organvm/limen/pull/1787"
+    },
+    {
+      "draft": false,
+      "head_oid": "738e46848b86167bb79d8f9898d173c381afeb57",
+      "number": 1788,
+      "pr_key": "e82a74ed17c338f8861fc934e0c73618813c39ad537278ef00c363d9b4e5feaa",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Assemble the Downs Style archive and Charles voice system",
+      "url": "https://github.com/organvm/limen/pull/1788"
+    },
+    {
+      "draft": true,
+      "head_oid": "a989cdc2dba839b43391c2f40a2eaac011a69d59",
+      "number": 1789,
+      "pr_key": "27adce19a1785be598564c6bd35eee71a9b571c098fdf1c2b5f489653683380d",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Register the complete Charles universe",
+      "url": "https://github.com/organvm/limen/pull/1789"
+    },
+    {
+      "draft": false,
+      "head_oid": "b19f02f8f28f417f5dc518fc22366f7150622f3c",
+      "number": 1791,
+      "pr_key": "a34c55d996fb3d003bfed8c549d09f1c232c1e3a38208fa5762b7d3cc752d31d",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "feat: deliver Charles cotton editorial preview",
+      "url": "https://github.com/organvm/limen/pull/1791"
+    },
+    {
+      "draft": false,
+      "head_oid": "8c11047e8dca28438ad5a7062f095685ef2a4294",
+      "number": 1793,
+      "pr_key": "95247243721ffaa9304f6124bc340ee5d111dfb6b0476873cfb0f2748f24bce8",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "chore: home Danse artistic approval in the human-gate registry",
+      "url": "https://github.com/organvm/limen/pull/1793"
+    },
+    {
+      "draft": false,
+      "head_oid": "0f34299d146b5111527162e9395995ecf1a18a32",
+      "number": 1795,
+      "pr_key": "ae7bd6c13d1140252aa1f439f7ef87a9d77a73cb0755c69ae63c08aa45cf4b6e",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Tighten types in organvm/limen (Fixes #1565)",
+      "url": "https://github.com/organvm/limen/pull/1795"
+    },
+    {
+      "draft": false,
+      "head_oid": "62cb5d01aebb827c166a64e85b66ff1aa8381d60",
+      "number": 1796,
+      "pr_key": "865ec6ea43ca6e515291e311b885dc538f872aca0a53789a5875bb1577aaae4b",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Tighten types in organvm/limen (Fixes #1565)",
+      "url": "https://github.com/organvm/limen/pull/1796"
+    },
+    {
+      "draft": false,
+      "head_oid": "2ab04fb8224103dbe08c12a5a84f320bd0c539ac",
+      "number": 1845,
+      "pr_key": "cdec969b630b4c5b17dabf4abecfe83a43af59c6bdef51d84a5eb8fe79730b7c",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(diurnal): 2026-08-05 INDEX",
+      "url": "https://github.com/organvm/limen/pull/1845"
+    },
+    {
+      "draft": false,
+      "head_oid": "b3058508fe777d3a1447958a8201a2aa4c377ece",
+      "number": 1896,
+      "pr_key": "70dccf38572e9b661a26ec02d517ec18499d88e2a57169a8d29dee7e835c735a",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "chore(claude): settings-estate repair \u2014 plansDirectory alignment + install lever",
+      "url": "https://github.com/organvm/limen/pull/1896"
+    },
+    {
+      "draft": false,
+      "head_oid": "1bc09bddca40c029aceb16c33252f94210701ca7",
+      "number": 1899,
+      "pr_key": "8e72b71f4c32a012725886c2acc01b2351bd3dd5172cc0d112a16255daafbf7a",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(plan): Settings-estate leftovers: heal the keystone PR, expand the predicates, evolve the sensors",
+      "url": "https://github.com/organvm/limen/pull/1899"
+    },
+    {
+      "draft": false,
+      "head_oid": "5264ee6fb950457c4356cf11b1ea8fa1b51a058c",
+      "number": 1900,
+      "pr_key": "b5c3af9a3119f7b7cc32f91222ea5e335f76efbde1d1d8feca419e135f885f09",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(charter): /doctor trim \u2014 relocate Data-Grounding case histories, cut derivable blocks",
+      "url": "https://github.com/organvm/limen/pull/1900"
+    },
+    {
+      "draft": false,
+      "head_oid": "f62f053bdb291a56f076a3dba556b1a7d85d416c",
+      "number": 1927,
+      "pr_key": "a26b4efe962bb942548c6021cd43c590af388019bbd2186fbcec865c14d95d3a",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(gitvs): record open-PR debt observation (1297 open)",
+      "url": "https://github.com/organvm/limen/pull/1927"
+    },
+    {
+      "draft": false,
+      "head_oid": "13797b2350ee56b45a28fc5b615008920f7978d3",
+      "number": 1928,
+      "pr_key": "1709b1487e8edb2d6fd10345793e5c6c8980253a4681bea86a9c64d9f75a9927",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "docs(diurnal): 2026-08-06 INDEX",
+      "url": "https://github.com/organvm/limen/pull/1928"
+    },
+    {
+      "draft": true,
+      "head_oid": "ef190765c5acb3a961c724b2bedfbd8b3392fe35",
+      "number": 1939,
+      "pr_key": "5e15b3fdcd3a94760b25202e5b61ad2a665dcb9c79506874af0c696c5e00bd5c",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "limen: refresh autonomous PR receipts",
+      "url": "https://github.com/organvm/limen/pull/1939"
+    },
+    {
+      "draft": false,
+      "head_oid": "c7bea5585987babab07b9b8ab7b35c3dd98387e1",
+      "number": 1949,
+      "pr_key": "4c9addf7f218c5f572bc9e1601e75e58a9c21493515cbb4e4de062fa985efb1a",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "feat(cadence): sessions open on Sonnet \u2014 Fable/Opus become deliberate plan-ratification escalations",
+      "url": "https://github.com/organvm/limen/pull/1949"
+    }
+  ],
+  "plan_sha256": "dfc72d9f3dcf920b7eae3074c57f72ea1856ffa123413e2548da3eeb463df09e",
+  "repository_count": 1,
+  "review_basis": "Operator's own fresh-custody PRs: a human is actively driving; keeps merge-drain hands-off (skips non-delivery). Re-planned post-merge of #1941/#1944 from the 2026-08-07 final census.",
+  "schema": "limen.pr_lifecycle_estate_manifest.v2",
+  "scope": "complete-github-estate",
+  "selected_count": 15,
+  "source_ledger_content_sha256": "1514e436204cdd61146244eec3d5c52c6b73e055e9a17aa9ba46466c492c39ac",
+  "source_lifecycle_untyped_count": 15,
+  "source_open_pr_count": 1298,
+  "status": "applied_verified",
+  "unselected_untyped_count": 0
+}
