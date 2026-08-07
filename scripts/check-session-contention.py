@@ -162,7 +162,24 @@ def _arming_findings(name: str, spec: dict) -> list[str]:
     return []
 
 
-def _unshipped_local() -> int:
+#: A recorded action names what a tree-rewriting path DECLINED to do when it found the tree
+#: occupied — `sync-release.sh`'s `_contended()` prints "declining <action>" and records that same
+#: string. A decline is the guard HOLDING: nothing touched the occupied tree, which is exactly what
+#: IF-SESSION-NON-CONTENTION asks for. Counting those as "it DID happen" inverted the ideal's own
+#: sign and made this gate permanently red on a 100%-success record (measured 2026-08-07: all 7
+#: records, 1 committed and 6 local, were `skipped-stash-push`), which in turn blocked every PR
+#: touching cli/src/limen/dispatch.py — one of this gate's own declared paths. The gate's header
+#: argues for an ACCURATE distance, not a maximal one; this is that argument applied to the
+#: incident term. A hold is still reported, because a session parked on the live checkout is worth
+#: seeing — it just is not a breach of "no path rewrites an occupied tree".
+HOLD_ACTION_PREFIX = "skipped-"
+
+
+def _is_hold(action: object) -> bool:
+    return isinstance(action, str) and action.startswith(HOLD_ACTION_PREFIX)
+
+
+def _unshipped_local() -> tuple[int, int]:
     """Incidents recorded on this host but not yet promoted into the committed ledger.
 
     Counted deliberately, and it is why this probe is `environment: host`. Reading only the
@@ -170,21 +187,29 @@ def _unshipped_local() -> int:
     would announce the ideal achieved at exactly the moment it was being violated. That is the
     same shape as the defect check-live-checkout.py records in its own header, where comparing a
     stale local ref instead of asking the remote reported `behind=0` on an unfetched checkout.
+
+    Returned split as (breaches, holds): only a breach moves the distance, but an unshipped hold
+    is still surfaced so a burst between ship windows stays visible rather than silently zero.
     """
     path = ROOT / LOG_REL
     if not path.is_file():
-        return 0
-    count = 0
+        return (0, 0)
+    breaches = holds = 0
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line:
             continue
         try:
-            if not json.loads(line).get("shipped"):
-                count += 1
+            row = json.loads(line)
         except ValueError:
             continue
-    return count
+        if row.get("shipped"):
+            continue
+        if _is_hold(row.get("action")):
+            holds += 1
+        else:
+            breaches += 1
+    return (breaches, holds)
 
 
 def check_incidents() -> tuple[list[str], int]:
@@ -193,21 +218,48 @@ def check_incidents() -> tuple[list[str], int]:
     if ledger.get("_unreadable"):
         return [f"[INCIDENT] {LEDGER_REL} is not valid JSON — a record nobody can read is not a record"], 1
 
-    committed = ledger.get("incident_count")
-    committed = committed if isinstance(committed, int) else 0
-    unshipped = _unshipped_local()
-    total = committed + unshipped
+    recorded = [i for i in (ledger.get("incidents") or []) if isinstance(i, dict)]
+    committed_breaches = [i for i in recorded if not _is_hold(i.get("action"))]
+    committed_holds = [i for i in recorded if _is_hold(i.get("action"))]
+    unshipped_breaches, unshipped_holds = _unshipped_local()
+
+    # Classifying by action means reading the `incidents` array rather than trusting the scalar
+    # `incident_count`. `ship` keeps them equal, so a claim ABOVE the array is a record that cannot
+    # be reconciled — and it must not become a silent discount. Same stance as the unreadable
+    # ledger above: an unauditable record counts as distance, never as zero.
+    claimed = ledger.get("incident_count")
+    claimed = claimed if isinstance(claimed, int) else 0
+    unreconciled = max(0, claimed - len(recorded))
+    total = len(committed_breaches) + unshipped_breaches + unreconciled
+
+    # Holds are telemetry, printed whether or not anything failed: a session parked on the live
+    # checkout is worth seeing (CLAUDE.md says do session work in a worktree), and silence here
+    # would hide the very records this gate reads.
+    holds = len(committed_holds) + unshipped_holds
+    if holds:
+        recent = (committed_holds or [{}])[-1:]
+        where = f", most recent {recent[0].get('action')} at {recent[0].get('observed_at')}" if recent[0] else ""
+        print(
+            f"  · {holds} guard hold(s) recorded — a tree-rewriting path found the tree occupied "
+            f"and declined{where}. The ideal HELD; these do not move the distance."
+        )
+
     if not total:
         return [], 0
 
     findings = []
-    if committed:
-        recent = (ledger.get("incidents") or [])[-1:]
-        where = f" (most recent: {recent[0].get('action')} at {recent[0].get('observed_at')})" if recent else ""
-        findings.append(f"[INCIDENT] {committed} committed contention incident(s){where}")
-    if unshipped:
+    if unreconciled:
         findings.append(
-            f"[INCIDENT] {unshipped} incident(s) recorded on this host and not yet shipped — "
+            f"[INCIDENT] {LEDGER_REL} claims incident_count {claimed} but records {len(recorded)} "
+            f"incident(s) — {unreconciled} unreconcilable, and an unauditable record is not zero"
+        )
+    if committed_breaches:
+        recent = committed_breaches[-1:]
+        where = f" (most recent: {recent[0].get('action')} at {recent[0].get('observed_at')})" if recent else ""
+        findings.append(f"[INCIDENT] {len(committed_breaches)} committed contention breach(es){where}")
+    if unshipped_breaches:
+        findings.append(
+            f"[INCIDENT] {unshipped_breaches} breach(es) recorded on this host and not yet shipped — "
             f"run `python3 scripts/session-contention.py ship`"
         )
     return findings, total
@@ -245,7 +297,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"contention distance: {distance}")
         print(
             "the ideal is 'never', so exposure and history both count: an unguarded path means it "
-            "CAN happen, a recorded incident means it DID"
+            "CAN happen, a recorded breach means it DID (a declined action is the guard holding, "
+            "not a breach)"
         )
         return 1
 
@@ -256,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"OK: check-session-contention — {len(GUARDED_PATHS)} tree-rewriting paths, each with its "
         f"occupancy guard wired in; {witnessed}/{len(GUARDED_PATHS)} also have a runtime arming "
-        "witness; no contention incident ever recorded"
+        "witness; no contention breach ever recorded"
     )
     print("contention distance: 0")
     return 0
