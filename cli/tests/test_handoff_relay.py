@@ -284,6 +284,57 @@ def test_check_rejects_missing_or_stale_provider_truth(monkeypatch, tmp_path, ca
     assert "provider headroom stale" in capsys.readouterr().out
 
 
+def test_print_missing_file_is_loud_and_nonzero(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    assert mod.print_handoff() == 1
+    assert "NO HANDOFF RECORDED" in capsys.readouterr().out
+
+
+def test_print_corrupt_json_is_loud_and_nonzero(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    mod.HANDOFF.write_text("{not json", encoding="utf-8")
+    assert mod.print_handoff() == 1
+    assert "NO HANDOFF RECORDED" in capsys.readouterr().out
+
+
+def test_print_empty_dict_is_loud_and_nonzero(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    mod.HANDOFF.write_text("{}", encoding="utf-8")
+    assert mod.print_handoff() == 1
+    out = capsys.readouterr().out
+    assert "NO HANDOFF RECORDED" in out
+    assert "0 open across 0 lanes" not in out
+
+
+def test_print_fresh_handoff_renders_zero_exit(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([_task("READY")]))
+    assert mod.write() == 0
+    capsys.readouterr()
+    assert mod.print_handoff() == 0
+    out = capsys.readouterr().out
+    assert "Resume from (handoff)" in out
+    assert "NO HANDOFF RECORDED" not in out
+    assert "seam may be cold" not in out
+
+
+def test_print_stale_handoff_carries_staleness_note(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([_task("READY")]))
+    assert mod.write() == 0
+    payload = json.loads(mod.HANDOFF.read_text(encoding="utf-8"))
+    payload["generated"] = "2026-07-12T09:05:00+00:00"
+    mod.HANDOFF.write_text(json.dumps(payload), encoding="utf-8")
+    capsys.readouterr()
+    assert mod.print_handoff() == 0
+    out = capsys.readouterr().out
+    assert "seam may be cold" in out
+    assert "Resume from (handoff)" in out
+
+
 def test_handoff_refresh_is_wired_across_heartbeat_metabolize_and_breadcrumb_consumer():
     heartbeat = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
     metabolize = (ROOT / "scripts" / "metabolize.sh").read_text(encoding="utf-8")
