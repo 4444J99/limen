@@ -531,9 +531,26 @@ while true; do
     # Wall-clock throttled (hourly), per-sensor timeout-bounded by the registry, `|| true`
     # guarded: a failing sensor never fails the beat. Loop-body edit — effective only after
     # `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
+    #
+    # THE PASS'S OUTPUT IS THE PRODUCT — it must not be piped away. 57 sensors emit well over a
+    # hundred lines here and `| tail -5` kept five, so every finding from every sensor but the last
+    # was produced and then discarded. Measured 2026-08-07: the review-harvest sensor (§0g3a, line
+    # 32 of the pass) ran in the 17:49 pass carrying unresolved agent findings, and no log anywhere
+    # in the estate recorded a word of it — the organ built to prove a finding gets CONSUMED had its
+    # own finding thrown away by its runner. beat-sensors.py persists nothing itself: a voice stamp
+    # records that a sensor VISITED, never what it said, which is the same liveness-for-consumption
+    # substitution one layer down. This redirect is the only durable home.
+    #
+    # Truncating (`>`) rather than appending keeps it bounded with no rotation organ to maintain:
+    # the pass re-runs hourly and reports CURRENT state, so the latest pass is the whole answer.
+    # The beat log stays exactly as terse as before — the same five lines, now read back from the
+    # file rather than being all that survived. `|| true` still guards the python, not a pipeline,
+    # so the rung's own exit code is the sensor runner's and never `tail`'s.
     if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ] && metabolize_pass_due; then
       python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source metabolize \
-        --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" 2>&1 | tail -5 || true
+        --beat "$c" --loop-max "$MAX" --voice-dir "$VOICED" \
+        >"$LIMEN_ROOT/logs/metabolize-sensors.log" 2>&1 || true
+      tail -5 "$LIMEN_ROOT/logs/metabolize-sensors.log" 2>/dev/null || true
       stamp metabolize_pass
     fi
 
