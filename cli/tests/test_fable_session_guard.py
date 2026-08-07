@@ -40,6 +40,38 @@ def test_non_fable_model_is_noop(tmp_path):
     assert proc.stderr.strip() == ""
 
 
+def test_unresolved_model_is_a_third_state_that_speaks(tmp_path):
+    """THE DEFECT, pinned. `_resolve_model` used to return "" for an unresolvable session model;
+    `_is_fable("")` is False, so the guard took the clean-no-op branch and exited 0 with ZERO
+    bytes on stderr — byte-identical to a session confirmed to be running on a cheap tier. The
+    guard's most consequential input had a failure mode that looked exactly like success.
+    """
+    proc = _run({})  # no --model, no payload model, and _run() passes only PATH in the env
+    assert proc.returncode == 3, proc.stderr
+    assert "UNRESOLVED" in proc.stderr
+    # It must not be byte-identical to the confirmed-cheap case — that equality WAS the bug.
+    cheap = _run({"model": "claude-opus-4-8"})
+    assert (proc.returncode, proc.stderr) != (cheap.returncode, cheap.stderr)
+    # And it must not be the HARD WARNING either: "I could not see" is a different finding from
+    # "I saw something bad", and printing them the same way drains the loud case of signal.
+    assert "HARD WARNING" not in proc.stderr
+
+
+def test_unresolved_model_resolves_from_env(tmp_path):
+    """The notice names LIMEN_SESSION_MODEL as the remedy; that remedy must actually work."""
+    proc = _run({}, {"LIMEN_SESSION_MODEL": "claude-sonnet-5"})
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr.strip() == ""
+
+
+def test_unresolved_takes_precedence_over_a_missing_meter(tmp_path):
+    """An unresolvable model is answered BEFORE any meter question — the guard cannot report on a
+    Fable cap for a session whose tier it never established."""
+    proc = _run({}, {"LIMEN_FABLE_BALANCE_PATH": str(tmp_path / "nope.json")})
+    assert proc.returncode == 3, proc.stderr
+    assert "UNRESOLVED" in proc.stderr
+
+
 def test_fable_over_cap_hard_warns(tmp_path):
     bal = tmp_path / "fable-allotment.json"
     bal.write_text(

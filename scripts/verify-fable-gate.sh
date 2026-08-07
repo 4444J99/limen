@@ -87,6 +87,15 @@ if echo '{"model":"claude-fable-5"}' | LIMEN_FABLE_BALANCE_PATH="$TMP/fable-allo
 fi
 pass "Fable + over_cap → exit 2 (hard warn)"
 
+# The unresolvable-model third state. Before 2026-08-07 this exited 0 with zero bytes on stderr —
+# byte-identical to the confirmed-cheap case above, which is what made the failure invisible.
+UNRES="$(printf '{}' | env -u ANTHROPIC_MODEL -u CLAUDE_MODEL -u LIMEN_SESSION_MODEL \
+  "${PY[@]}" scripts/fable-session-guard.py 2>&1 >/dev/null)"; UNRES_RC=$?
+[ "$UNRES_RC" = "3" ] || fail "unresolvable session model should exit 3, got $UNRES_RC"
+case "$UNRES" in *UNRESOLVED*) : ;; *) fail "unresolvable model printed nothing about it: $UNRES" ;; esac
+case "$UNRES" in *"HARD WARNING"*) fail "unresolved must not print the HARD WARNING (different finding)" ;; esac
+pass "unresolvable session model → exit 3 + a spoken notice, never a silent 0"
+
 echo "── 3. vendor-cancel-advisor: codex=KEEP, idle mock=CANCEL-CANDIDATE, Fable named ──"
 cat > "$TMP/usage.json" <<'JSON'
 {"vendors":{"codex":{"health":"rate-limited","recent_rate_limit":true,"headroom_pct":5},
