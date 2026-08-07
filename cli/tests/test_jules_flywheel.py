@@ -5,7 +5,6 @@ from __future__ import annotations
 import datetime as dt
 import importlib.util
 import json
-import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -54,11 +53,11 @@ def _board(entries: list[DispatchLogEntry]) -> LimenFile:
     )
 
 
-def _load(tmp_path: Path, board: LimenFile):
+def _load(monkeypatch, tmp_path: Path, board: LimenFile):
     tasks_path = tmp_path / "tasks.yaml"
     save_limen_file(tasks_path, board)
-    os.environ["LIMEN_ROOT"] = str(tmp_path)
-    os.environ["LIMEN_TASKS"] = str(tasks_path)
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
     spec = importlib.util.spec_from_file_location("jules_flywheel_uut", SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -79,7 +78,7 @@ def _gh_count(monkeypatch, mod, count):
 def test_healthy_flywheel_exits_zero(monkeypatch, tmp_path, capsys):
     entries = [_entry("dispatched", hours_ago=float(i % 20) + 1, session_id=f"s{i}") for i in range(80)]
     entries += [_entry("done", hours_ago=2.0, session_id=f"d{i}") for i in range(30)]
-    mod = _load(tmp_path, _board(entries))
+    mod = _load(monkeypatch, tmp_path, _board(entries))
     _freeze_now(monkeypatch, mod)
     _gh_count(monkeypatch, mod, 100)
     assert mod.main() == 0
@@ -87,7 +86,7 @@ def test_healthy_flywheel_exits_zero(monkeypatch, tmp_path, capsys):
 
 
 def test_quota_clause_fails_after_alarm_hour_and_names_owners(monkeypatch, tmp_path, capsys):
-    mod = _load(tmp_path, _board([]))
+    mod = _load(monkeypatch, tmp_path, _board([]))
     _freeze_now(monkeypatch, mod)
     _gh_count(monkeypatch, mod, 100)
     assert mod.main() == 1
@@ -101,7 +100,7 @@ def test_landing_clause_skipped_below_bootstrap_min(monkeypatch, tmp_path, capsy
     # use a low-rate board UNDER bootstrap_min by pinning bootstrap_min high via env.
     monkeypatch.setenv("LIMEN_THROUGHPUT_BOOTSTRAP_MIN", "500")
     entries = [_entry("dispatched", hours_ago=1.0, session_id=f"s{i}") for i in range(85)]
-    mod = _load(tmp_path, _board(entries))
+    mod = _load(monkeypatch, tmp_path, _board(entries))
     _freeze_now(monkeypatch, mod)
     _gh_count(monkeypatch, mod, 100)
     assert mod.main() == 0
@@ -111,7 +110,7 @@ def test_landing_clause_skipped_below_bootstrap_min(monkeypatch, tmp_path, capsy
 def test_landing_clause_fails_and_names_landing_organs(monkeypatch, tmp_path, capsys):
     entries = [_entry("dispatched", hours_ago=1.0, session_id=f"s{i}") for i in range(85)]
     entries += [_entry("done", hours_ago=2.0, session_id="d0")]  # 1/85 ≈ 1%
-    mod = _load(tmp_path, _board(entries))
+    mod = _load(monkeypatch, tmp_path, _board(entries))
     _freeze_now(monkeypatch, mod)
     _gh_count(monkeypatch, mod, 100)
     assert mod.main() == 1
@@ -122,7 +121,7 @@ def test_landing_clause_fails_and_names_landing_organs(monkeypatch, tmp_path, ca
 def test_debt_rise_fails_and_snapshot_updates(monkeypatch, tmp_path, capsys):
     entries = [_entry("dispatched", hours_ago=float(i % 20) + 1, session_id=f"s{i}") for i in range(80)]
     entries += [_entry("done", hours_ago=2.0, session_id=f"d{i}") for i in range(30)]
-    mod = _load(tmp_path, _board(entries))
+    mod = _load(monkeypatch, tmp_path, _board(entries))
     _freeze_now(monkeypatch, mod)
     mod.SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
     mod.SNAPSHOT.write_text(json.dumps({"open_jules_prs": 300}))
@@ -136,7 +135,7 @@ def test_debt_rise_fails_and_snapshot_updates(monkeypatch, tmp_path, capsys):
 def test_gh_unavailable_fails_open_on_debt(monkeypatch, tmp_path, capsys):
     entries = [_entry("dispatched", hours_ago=float(i % 20) + 1, session_id=f"s{i}") for i in range(80)]
     entries += [_entry("done", hours_ago=2.0, session_id=f"d{i}") for i in range(30)]
-    mod = _load(tmp_path, _board(entries))
+    mod = _load(monkeypatch, tmp_path, _board(entries))
     _freeze_now(monkeypatch, mod)
     monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: SimpleNamespace(returncode=1, stdout="", stderr="no gh"))
     assert mod.main() == 0
