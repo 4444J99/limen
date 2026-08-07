@@ -723,6 +723,36 @@ sensors:
         severity: advisory
         escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
 
+  review-harvest:
+    section: "0g3a"
+    title: "review-harvest — an agent review finding must be CONSUMED, not merged past"
+    gate: LIMEN_REVIEW_HARVEST
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # SIBLING OF trunk-green (§0g3), ONE JOINT LATER. trunk-green asks whether main can merge;
+    # this asks what survived the merge. The gap it fills is real and was measured: scripts/
+    # check-review-engine.py counts distinct reviewer LOGINS and never reads what they said, so
+    # it called all six of 2026-08-07's PRs green while 17 findings sat unresolved across ten
+    # merged PRs. preflight-thread-state.py reads threads but gates an outbound COMMENT, not a
+    # merge. Feedback provably ARRIVED; nothing proved it was spent.
+    #
+    # ADVISORY, AND DOWNSTREAM OF THE MERGE ON PURPOSE. merge-policy.sh deliberately counts only
+    # REQUIRED checks so an advisory check cannot hold a deliverable hostage (the 2026-07-24
+    # insights lineage). Bot reviews are advisory AND slower than the merge — three of the six
+    # landed 2-3 minutes AFTER their PR was in. A gate that waited for them would stall a cadence
+    # that merged sixteen PRs in under an hour to catch findings that are mostly not there yet.
+    # So this never votes on a merge; it harvests after one.
+    #
+    # NO CADENCE, deliberately: a [metabolize]-source sensor WITH a cadence fires in neither beat
+    # path (the launch-agent-liveness incident — see npm-audit-autofix below). --sample 5 keeps the
+    # per-beat cost at ~6 gh calls, well inside the estate's 15% rate-limit headroom floor, while
+    # the CLI default stays 10 for a manual sweep.
+    steps:
+      - command: "python3 scripts/check-review-harvest.py --sample 5"
+        severity: advisory
+        escalation: "a merged PR carries an UNRESOLVED agent review finding (above) — fix it and resolve the thread, or resolve it with a reason; each line prints the exact resolveReviewThread command. Offline/unreadable is a SKIP, never a green. See scripts/check-review-harvest.py"
+
   npm-audit-autofix:
     section: "0g3b"
     title: "npm-audit autofix — a new high/critical transitive advisory auto-produces an overrides fix PR, never a queue jam"
