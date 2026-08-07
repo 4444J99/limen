@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -41,7 +41,11 @@ def _fresh_logs(mod, tmp_path: Path, *, escalation: dict[str, Any] | None, artif
     logs = tmp_path / "logs"
     voice = logs / ".voice"
     voice.mkdir(parents=True)
-    now = datetime.now().replace(microsecond=0)
+    # UTC, matching the producer: routine-freshness-audit writes `generated` from
+    # datetime.now(timezone.utc) with a trailing Z. This built it from a LOCAL clock and appended
+    # Z anyway — the same skew the reader carried, so the two errors cancelled and the suffix
+    # assertions below passed on a number that was wrong by one UTC offset in production.
+    now = datetime.now(timezone.utc).replace(microsecond=0)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     art_stamp = (now - timedelta(hours=artifact_age_h)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -202,3 +206,53 @@ def test_the_age_suffix_is_opt_in_and_absent_without_a_stamp_field(tmp_path: Pat
 
     path.write_text(json.dumps({"generated": "not a timestamp", "escalation": {"error": "boom"}}))
     assert mod._json_nested_error(path, ("escalation", "error"), stamp="generated") == "escalation.error: boom"
+
+
+def test_a_utc_artifact_stamp_is_not_read_as_local_time(tmp_path: Path) -> None:
+    """The reader must not be the thing that manufactures freshness.
+
+    Producers write UTC — routine-freshness-audit stamps `generated` from
+    `datetime.now(timezone.utc)`, trailing `Z`. Parsing that naive means LOCAL, which lands one
+    UTC-offset in the past; every consumer subtracts from `time.time()`, so the organ reports
+    itself one offset YOUNGER than it is (4h in EDT).
+
+    Two things rode on it. Freshness probes that fall back to an artifact published a
+    manufactured youth. And the `(recorded Xh ago)` suffix is computed from this helper, so a
+    defect recorded 6.1h ago was published as "recorded 2.1h ago" — measured live, against the
+    same run whose voice stamp read 6.1h.
+
+    Naive strings stay local: some artifacts write local time, and assuming UTC for them would
+    invent the same error mirrored.
+    """
+    mod = _load()
+    path = tmp_path / "a.json"
+    utc = datetime.now(timezone.utc).replace(microsecond=0)
+
+    path.write_text(json.dumps({"generated": utc.strftime("%Y-%m-%dT%H:%M:%SZ")}))
+    assert abs(mod._json_field_ts(path, "generated") - utc.timestamp()) < 2
+
+    local = datetime.now().replace(microsecond=0)
+    path.write_text(json.dumps({"generated": local.strftime("%Y-%m-%dT%H:%M:%S")}))
+    assert abs(mod._json_field_ts(path, "generated") - local.timestamp()) < 2
+
+
+def test_the_freshness_budget_is_the_organs_own_cadence_not_one_beat(tmp_path: Path) -> None:
+    """The live regression: a healthy organ reporting `down` most of the time.
+
+    routine-freshness-audit is invoked at `--throttle 21600`, so it rewrites its artifact at most
+    every 6h by design. The rung declared no interval, and the fallback derives
+    beats(1) x loop_max(1800s) = 30min — measured live as `age_h 5.7 / expected_h 0.5 /
+    status down` against an artifact whose escalation and retire were both clean.
+
+    Two things rode on that number, which is why it is asserted rather than left to the eye:
+    avtopoiesis maps down -> 0.0, so a healthy organ contributed a floor score as its STEADY
+    state; and the defect channel became near-unobservable, able only to add `down` to a row
+    that was already down.
+    """
+    mod = _load()
+    _fresh_logs(mod, tmp_path, escalation={"created": []}, artifact_age_h=5.7)
+    (mod.VOICED / "routines").unlink()  # no stamp -> the artifact probe is the signal, as after a restart
+
+    row = _routines_row(mod)
+    assert row["expected_h"] == 6.0, "the budget must track the sensor's --throttle, not one beat"
+    assert row["status"] == "green", "a healthy organ inside its own cadence is not down"
