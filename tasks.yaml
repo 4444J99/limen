@@ -165102,3 +165102,38 @@ tasks:
     conduct_run_id: 'run-4f9f866f7fe86aa2660016f92dee88ed'
     conduct_lease_id: 'lease-627-4f9f866f7fe86aa2'
     conduct_generation: 627
+- id: 'ASK-lane-starved-jules'
+  title: 'Lane ''jules'' starved: silent >467.3h with open queue + ok budget'
+  repo: 'organvm/limen'
+  type: 'ops'
+  target_agent: 'human'
+  priority: 'high'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'dispatch-continuity'
+  - 'needs-human'
+  urls: []
+  context: 'Lane ''jules'' has been silent for 467.3h while 162 open task(s) await it and its budget is ok. This matches the Jul 3–5 starvation signature: daemon alive, queue non-empty, budget available, zero dispatches for an extended period (window: 24h). Likely cause: routing bypass, gate mis-config, or lane not being selected. See scripts/route.py for routing logic. Auto-hung by dispatch-continuity-check.py.'
+  predicate: 'test "$(gh issue list --repo organvm/limen --state closed --search ''ASK-lane-starved-jules in:title'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:issue:ASK-lane-starved-jules'
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Restore dispatch continuity for the starved jules lane'
+  owner_surface: 'organvm/limen'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  updated: '2026-08-07T13:24:04.919Z'
+  dispatch_log:
+  - timestamp: '2026-08-07T13:24:04.919Z'
+    agent: 'codex'
+    session_id: 'dispatch-continuity-starved-jules'
+    logical_agent: 'dispatch-continuity'
+    logical_session_id: 'starved-jules'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-d92fa00370f9684161c0bb06909dfb3c:629:compatibility'
+    conduct_run_id: 'run-d92fa00370f9684161c0bb06909dfb3c'
+    conduct_lease_id: 'lease-629-d92fa00370f96841'
+    conduct_generation: 629
