@@ -370,6 +370,11 @@ print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
 PY
 }
 cleanup() {
+  # beat_run's capture buffer. Named by pid, reused for every rung, and removed after each — so it
+  # only survives if the daemon dies mid-rung. launchd's SIGTERM (which the self-load rung relies on
+  # to restart the loop) runs this trap, so the ordinary case is covered here; a SIGKILL is what the
+  # startup sweep below exists for.
+  rm -f "$LIMEN_ROOT/logs/.beat-rung.$$.out" 2>/dev/null || true
   rmdir "$LOCKD" 2>/dev/null || true
   if [ "$(cat "$DAEMON_LOCK" 2>/dev/null)" = "$$" ]; then
     rm -f "$DAEMON_LOCK" "$LIMEN_ROOT/logs/heartbeat-loop.pid" 2>/dev/null
@@ -384,6 +389,13 @@ echo "═══ heartbeat-loop start $(date '+%F %T') tempo=${MIN}-${MAX}s plann
 # loop-body ff) and nothing else clears it, so without this it stays set forever and the
 # "kickstart needed" signal goes permanently stale. Clearing it on startup keeps the signal true.
 rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
+# Sweep beat_run capture buffers left by a generation that was SIGKILLed mid-rung (jetsam on a
+# 16GB host does exactly this). The EXIT trap covers every graceful death including launchd's
+# SIGTERM; only a hard kill leaks, and only one file per generation — but logs/ is a watched
+# directory and slow litter there is still litter. Safe as a broad glob because the atomic
+# singleton guard has already been WON by this point (this process wrote its own pid well above),
+# so there is no concurrent loop whose live buffer could be swept out from under it.
+rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
 while true; do
