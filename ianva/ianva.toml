@@ -19,8 +19,10 @@ backend_cmd = "npx -y @samanhappy/mcphub@1.0.18"
 
 [bridge]
 # sparfenyuk/mcp-proxy (PyPI: mcp-proxy) as the stdio<->HTTP shim for agents without first-class HTTP MCP.
+# mcp<1.17 pin: mcp-proxy (through 0.x) imports request_ctx, removed from the mcp SDK after
+# 1.16 — unpinned, uvx resolves an incompatible pair and the shim dies at import time.
 proxy_bin = "uvx"
-proxy_args = ["mcp-proxy", "--transport", "streamablehttp"]
+proxy_args = ["--with", "mcp<1.17", "mcp-proxy", "--transport", "streamablehttp"]
 
 [upstreams]
 # build-mcp-registry.py's inventory (its first real consumer). Empty = ~/.agents/mcp/servers.json.

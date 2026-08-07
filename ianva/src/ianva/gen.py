@@ -10,7 +10,8 @@ Per-agent quirks confirmed by adversarial verification against each agent's real
   * Gemini: streamable-HTTP key is `httpUrl` (the CLI's own `mcp add` writes the wrong key).
   * opencode: `{type:"remote", url, headers}` under top-level "mcp"; its native
     `{env:NAME}` expansion keeps the bearer out of generated config.
-  * Copilot CLI: the installed binary REQUIRES a per-server `tools` field, else "Invalid input".
+  * Copilot CLI: direct http via {type:"http", url} (confirmed v1.0.78); its validator
+    REQUIRES a per-server `tools` field, else "Invalid input".
   * agy/Cline: stdio `{command,args}` validates.
 When a bearer is set (cloud face), the matching Authorization header / token-env is injected.
 """
@@ -35,7 +36,11 @@ class Endpoint:
     public_url: str = ""  # set once tunneled (cloud face); preferred for remote agents
     bearer: str = ""  # when set, the gateway enforces it and entries carry the header
     proxy_bin: str = "uvx"
-    proxy_args: list[str] = field(default_factory=lambda: ["mcp-proxy", "--transport", "streamablehttp"])
+    # mcp-proxy (through 0.x) imports request_ctx, removed from the mcp SDK after 1.16 —
+    # unpinned, uvx resolves an incompatible pair and the shim dies at import time.
+    proxy_args: list[str] = field(
+        default_factory=lambda: ["--with", "mcp<1.17", "mcp-proxy", "--transport", "streamablehttp"]
+    )
 
     def url(self) -> str:
         if self.public_url:
@@ -94,11 +99,14 @@ def _render_codex(ep: Endpoint) -> Entry:
 
 
 def _render_json_mcpservers(a: AgentTarget, ep: Endpoint) -> Entry:
-    payload = _http_payload_mcpservers(ep) if a.transport == "http" else _stdio_payload(ep)
     if a.key == "copilot":
-        # Copilot CLI v0.0.361's validator requires `tools`; `type:"local"` is the accepted
-        # local-process type ("stdio" is rejected). Verified empirically.
-        payload = {**payload, "type": "local", "tools": ["*"]}
+        # Copilot CLI speaks streamable HTTP directly with {type:"http", url} — the shape its
+        # own working http entries use. Its validator requires `tools` on every server.
+        payload: dict = {"type": "http", "url": ep.url(), "tools": ["*"]}
+        if ep.bearer:
+            payload["headers"] = ep.headers()
+    else:
+        payload = _http_payload_mcpservers(ep) if a.transport == "http" else _stdio_payload(ep)
     blob = {"mcpServers": {SERVER_NAME: payload}}
     return Entry(
         key=a.key,
