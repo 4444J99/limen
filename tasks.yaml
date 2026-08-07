@@ -165216,3 +165216,36 @@ tasks:
     conduct_lease_id: 'lease-632-f229ffb083652d98'
     conduct_generation: 632
   updated: '2026-08-07T14:01:29.416Z'
+- id: 'GH-organvm-limen-1978'
+  title: 'Continuous PR lifecycle auto-typing rung — pr-debt --check rebounds red at arrival rate'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1978'
+  context: 'GitHub issue organvm/limen#1978. The GITVS-UNCAPPED-PR-DEBT-0715 drain typed 283 lifecycle-untyped PRs to zero across 313 repos, and the predicate (`scripts/gitvs.py pr-debt --check`) rebounded 0→2 untyped within the hour — both mechanical dependabot-class arrivals. The drain was a one-shot organ; nothing in the beat types new arrivals, so "done" un-does itself at arrival rate. Salve (per IF-SENSOR-REGISTRY): a continuous rung —'
+  predicate: 'test "$(gh issue view 1978 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1978'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1978'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T14:42:10.684Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0beb867a37b4362a5a4c319052916c9b:633:compatibility'
+    conduct_run_id: 'run-0beb867a37b4362a5a4c319052916c9b'
+    conduct_lease_id: 'lease-633-0beb867a37b4362a'
+    conduct_generation: 633
+  updated: '2026-08-07T14:42:10.684Z'
