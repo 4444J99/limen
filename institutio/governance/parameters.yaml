@@ -3163,7 +3163,13 @@ parameters:
     env: LIMEN_FABLE_BALANCE_PATH
     self_update: none
     owner: arms-agents
-    note: "Override path to the live weekly Fable balance file (default $LIMEN_ROOT/logs/fable-allotment.json). Read by the model_selection cap gate, the session guard, and the vendor advisor; used by tests to seed a mock balance. Empty means the default location."
+    note: "Override path to the live weekly Fable balance file (default $LIMEN_ROOT/logs/fable-allotment.json). ONE reader since 2026-08-07 — model_selection.balance_verdict(); the session guard and the vendor advisor importlib-load it by file path instead of carrying the forked copies this note used to describe. Setting it names a CALLER-SUPPLIED file (a test fixture or a deliberate pin), which is not the beat's artifact, so the deployment-provenance dimension does not apply to it. Empty means the default location."
+  LIMEN_FABLE_BALANCE_MAX_AGE_S:
+    default: 21600
+    env: LIMEN_FABLE_BALANCE_MAX_AGE_S
+    self_update: none
+    owner: arms-agents
+    note: "Freshness budget (seconds, default 6h) for the weekly Fable meter, measured from the file's MTIME — the body carries no wall-clock field by design, because compute_balance() derives every value from data so two consecutive runs are byte-identical (verify-fable-gate.sh block 5 asserts exactly that). logs/ is gitignored runtime state with one writer, so the mtime IS the writer's heartbeat. THE DECLARED HATCH: a value <= 0 disables both the freshness and the deployment-provenance dimensions, restoring the pre-2026-08-07 fail-open behaviour for a host that genuinely runs no beat. The hatch is POLICY, not truth: balance_verdict() still reports the real state (an absent meter still reads `absent`), and only the consumer's decision to withhold a tier is switched off. Do not add a second, broader quiet switch — that re-creates the defect as a supported feature."
   LIMEN_CLAUDE_FABLE_CAP_TIER:
     default: "opus"
     env: LIMEN_CLAUDE_FABLE_CAP_TIER
