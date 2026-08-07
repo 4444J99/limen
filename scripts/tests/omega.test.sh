@@ -35,7 +35,7 @@ export PYTHONPATH="$here/../../cli/src${PYTHONPATH:+:$PYTHONPATH}"
 # through a generic stub whose sensor id is intentionally unrelated to its command/label.)
 write_stubs() {
   local ask_rc="$1"
-  for py in enactment-audit armed-valve-audit handoff-relay; do
+  for py in enactment-audit armed-valve-audit handoff-relay autonomy-governor; do
     printf '#!/usr/bin/env python3\nimport sys; sys.exit(0)\n' > "$work/scripts/$py.py"
     chmod +x "$work/scripts/$py.py"
   done

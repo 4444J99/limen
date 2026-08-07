@@ -267,19 +267,23 @@ owner_rung core.overnight-trial "overnight-trial (last run passed)"
 # 9. handoff-relay — a fresh, complete seam-survival packet exists (a warm resume IS possible).
 rung core.handoff "handoff (warm resume ready)" det python3 "$ROOT/scripts/handoff-relay.py" --check
 
-# 10. no-tasks-on-me — nothing hangs on the ephemeral session; every owed item is homed in a
+# 10. autonomy-acting — the maintenance rail is ACTING: no resume predicate sits stuck
+#     unrunnable or red past its window (the distinct state PR #1827 surfaced).
+rung core.autonomy-acting "autonomy-acting (no stuck maintenance blocker)" det python3 "$ROOT/scripts/autonomy-governor.py" acting
+
+# 11. no-tasks-on-me — nothing hangs on the ephemeral session; every owed item is homed in a
 #     git-tracked owner (lever / credential organ / registry), no stranded staged refs.
 owner_rung core.no-tasks-on-me "no-tasks-on-me (owed work homed)"
 
-# 11. credential-wall — every secret in use is homed in its organ (validity, not just presence).
+# 12. credential-wall — every secret in use is homed in its organ (validity, not just presence).
 owner_rung core.credential-wall "credential-wall (secrets homed)"
 
-# 12. lifecycle closure — preserved worktree debt is a diagnostic during ordinary dispatch, but
+# 13. lifecycle closure — preserved worktree debt is a diagnostic during ordinary dispatch, but
 #     Omega is the exact-zero fixed point: no debt roots and no accepted-reaper residue. The scan is
 #     intentionally live/explicit (not a dispatch hot-path check), so offline CI reports SKIP.
 owner_rung core.worktree-lifecycle "worktree lifecycle (exact zero)"
 
-# 13+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
+# 14+. Registry-declared fixed-point checks. Sensor ids and commands remain inside sensors.yaml;
 #      omega consumes only generic {id,index,tier,label} metadata and therefore needs no edit when a
 #      sensor is added or renamed. ``rung`` owns offline handling, so every live check remains an
 #      explicit SKIP rather than a fake pass.
