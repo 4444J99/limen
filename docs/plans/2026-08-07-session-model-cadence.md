@@ -1,7 +1,7 @@
 # Session Model Cadence — open cheap, escalate deliberately
 
 Issue: #1948
-PR: (pending)
+PR: #1949
 
 ## Context
 
