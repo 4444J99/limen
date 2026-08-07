@@ -86,26 +86,29 @@ option and does not apply to blob shows).
   commit `main` gained as lines you deleted. Both failures print the same thing:
 
   ```bash
-  git diff origin/main -- <files> | grep '^-' | grep -v '^--- '  # uncommitted: catches the clobber
-  git diff origin/main...HEAD    | grep '^-' | grep -v '^--- '  # committed: resolves the merge base
-  git merge-base --is-ancestor origin/main HEAD                 # 0 ⟺ up to date or ahead; see below
+  R="^--- (a/|/dev/null)"                                  # the header, and ONLY the header
+  git diff origin/main -- <files> | grep '^-' | grep -vE "$R"  # uncommitted: catches the clobber
+  git diff origin/main...HEAD    | grep '^-' | grep -vE "$R"  # committed: resolves the merge base
+  git merge-base --is-ancestor origin/main HEAD               # 0 ⟺ up to date or ahead; see below
   ```
 
-  **Exclude the header explicitly; do not filter by dash count.** Both obvious one-liners are wrong,
-  in opposite directions, and the tempting one is the dangerous one. Measured on a fixture holding
-  three real removals — an ordinary line, a removed *blank* line, and a removed line that itself
-  begins `--`:
+  **Match the header's full shape; every shortcut here under-counts.** A diff prefixes each removed
+  line with `-`, so a source line already starting with a dash gains one: `--flag` renders `---flag`,
+  and `-- sql comment` renders `--- sql comment` — indistinguishable from the header by prefix alone.
+  Measured on a fixture with **four** real removals (an ordinary line, a blank line, a `--flag` line,
+  and a `-- ` comment line):
 
   | pattern | counts | verdict |
   |---|---|---|
-  | `grep '^-'` | 4 | over by one per file — the `--- a/<file>` header |
-  | `grep -E '^-[^-]'` | **1** | **drops 2 of 3** — the lone `-` and the `--`-prefixed line |
-  | `grep '^-' \| grep -v '^--- '` | 3 | exact |
+  | `grep '^-'` | 5 | over by one per file — counts the header |
+  | `grep -E '^-[^-]'` | **2** | **drops the blank, the `--flag`, and the `-- ` line** |
+  | `grep -v '^--- '` | **4** | still **drops the `-- ` comment** — it looks exactly like a header |
+  | `grep -vE '^--- (a/\|/dev/null)'` | 5 → **4 real** | exact: only the real header forms excluded |
 
   Over-counting is merely noisy: you inspect a phantom line and move on. **Under-counting hides the
-  clobber this check exists to find** — which is precisely what `'^-[^-]'` does, because a removed
-  blank line is a lone `-` and a removed `--flag` line renders as `---flag`. A tidier-looking regex
-  bought a silent false negative in a check whose whole job is not to have one.
+  clobber this check exists to find.** Two successive "fixes" here each traded one direction of error
+  for the other before landing on excluding the header by its actual shape — `--- a/…` for a tracked
+  file, `--- /dev/null` for a new one — rather than by counting dashes or matching `--- ` loosely.
 
   **`--is-ancestor` nonzero does NOT mean "behind".** It means `origin/main` is not an ancestor of
   `HEAD` — which is **behind OR diverged**, and those want different repairs (fast-forward vs rebase
