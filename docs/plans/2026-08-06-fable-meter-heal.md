@@ -1,7 +1,7 @@
 # Heal the blind Fable weekly meter: transcripts relocation + 16x budget miscalibration
 
 Issue: #1929
-PR: (pending)
+PR: #1930
 
 ## Problem
 
