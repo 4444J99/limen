@@ -1,0 +1,79 @@
+{
+  "findings": {
+    "D1_manifest_already_applied": {
+      "already_labeled": 249,
+      "closed_since_snapshot": 18,
+      "head_drift": 0,
+      "label_drift_to_active_human": 11,
+      "pending_effects": 0
+    },
+    "D2_lifecycle_delivery_has_no_writer": {
+      "grep_scope": "scripts/ institutio/ docs/*.md",
+      "live_delivery_labeled_prs": 0,
+      "merge_drain_gate": "scripts/merge-drain.py:134 merges only disposition == lifecycle:delivery",
+      "writers_found": 0
+    },
+    "D3_ledger_label_divergence": {
+      "divergent_prs": 124,
+      "live_unlabeled_that_are_ledger_preservation_rows": 130,
+      "mechanism": "gitvs._pr_lifecycle returns lifecycle:preservation from a PR-BODY marker with lifecycle_complete=true and no label; every effector reads labels only",
+      "secondary": "build_plan filters on ledger lifecycle_disposition, so these rows are excluded from every estate manifest by construction"
+    },
+    "D4_draft_cohort": {
+      "drafts": 530,
+      "pct_of_estate": 40.8,
+      "handling": "owner_route_drain.classify returns SKIP(draft); merge-policy holds drafts; no organ marks a PR ready"
+    },
+    "D5_armed_drain_capacity": {
+      "actionable": 57,
+      "archived": 1,
+      "drafts": 250,
+      "estate_total": 1298,
+      "jules_in_scope": 308,
+      "pct_of_estate": 4.4,
+      "scope": "LIMEN_OWNERS=organvm,4444J99 x jules authorship"
+    }
+  },
+  "ledger_snapshot": {
+    "disposition_source_counts": {
+      "label": 889,
+      "legacy-preservation-marker": 124,
+      "missing-label": 278,
+      "repository-archived-immutable": 6
+    },
+    "generated_at": "2026-08-07T00:49:00.823347Z",
+    "lifecycle_untyped_count": 278,
+    "open_pr_count": 1297,
+    "path": "logs/gitvs-pr-debt-facts.json",
+    "refresh_throttle_hours": 20
+  },
+  "live": {
+    "archived_repo_prs": 20,
+    "author_counts": {
+      "4444J99": 627,
+      "app/dependabot": 361,
+      "app/google-labs-jules": 308,
+      "other": 2
+    },
+    "drafts": 530,
+    "label_counts": {
+      "lifecycle:active-human": 14,
+      "lifecycle:blocked": 1146,
+      "lifecycle:delivery": 0,
+      "lifecycle:preservation": 6,
+      "unlabeled": 132
+    },
+    "open_prs": 1298
+  },
+  "measured_at": "2026-08-07T14:05:00Z",
+  "method": "gh repo list over the 10 canonical owners -> 313 repositories (72 archived) -> gh pr list --state open --limit 1000 per repo at 8-way concurrency; 0 fetch errors, so exhaustive rather than sampled; wall clock 18s",
+  "schema": "limen.pr_estate_drain_diagnosis.v1",
+  "sealed_manifest_replay": {
+    "abort_reason": "apply_plan raises on the first of three fatal drift classes across all 278 items in 110 repos; 4444J99/sovereign-systems--elevate-align#277 sorts first, so no effect was written",
+    "items": 278,
+    "labels_applied_by": "actor 4444J99 at 2026-08-07T11:14:48Z (issue-timeline evidence, sibling job, fresher 249-item plan)",
+    "pending_effects": 0,
+    "plan_sha256": "6c9c7197f5ea7aae617da8013a41fcad74ac0ee183fff60367e9696a72e3a17f",
+    "repositories": 110
+  }
+}
