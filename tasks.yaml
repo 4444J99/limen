@@ -164841,3 +164841,37 @@ tasks:
     conduct_lease_id: 'lease-619-ce29fe73fa7c83e5'
     conduct_generation: 619
   updated: '2026-08-07T12:33:34.993Z'
+- id: 'GH-organvm-limen-1950'
+  title: 'GITVS-UNCAPPED-PR-DEBT-0715 — lifecycle-type the full PR estate and discharge the task'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'censor'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1950'
+  context: 'GitHub issue organvm/limen#1950. Tracking issue for docs/plans/2026-08-07-pr-debt-estate-drain.md. The uncapped exact owner-route predicate shipped earlier; what kept `gitvs.py pr-debt --check` red was 283 lifecycle-untyped open PRs across 313 repos. This drain types every one through SHA-pinned reviewed estate manifests (operator-stale 25, private 41, dependabot 200 as fail-closed lifecycle:blocked — delivery upgrade is lever #1'
+  predicate: 'test "$(gh issue view 1950 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1950'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1950'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T12:33:40.963Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-fc384f0096a461382cf316337b1f2232:620:compatibility'
+    conduct_run_id: 'run-fc384f0096a461382cf316337b1f2232'
+    conduct_lease_id: 'lease-620-fc384f0096a46138'
+    conduct_generation: 620
+  updated: '2026-08-07T12:33:40.963Z'
