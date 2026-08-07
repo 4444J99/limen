@@ -164943,3 +164943,36 @@ tasks:
     conduct_lease_id: 'lease-622-76eb128dac2d679a'
     conduct_generation: 622
   updated: '2026-08-07T12:33:51.517Z'
+- id: 'GH-organvm-limen-1945'
+  title: 'Gemini in-repo sessions lose the ianva doorway: project mcpServers replaces the global map'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1945'
+  context: 'GitHub issue organvm/limen#1945. Observed while verifying #1943 (Gemini CLI v0.52.0): with the project `.gemini/settings.json` active, `gemini mcp list` in this repo shows **only** `limen` (direct stdio). The global `~/.gemini/settings.json` entry `ianva` (httpUrl `http://127.0.0.1:7666/mcp`) never appears, even though the gateway is alive (`com.ianva.gateway` launchd job, port answers). `GEMINI.md` says Gemini reaches the authen'
+  predicate: 'test "$(gh issue view 1945 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1945'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1945'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T12:33:56.741Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c413c4f20ea2074fca863056079f838a:623:compatibility'
+    conduct_run_id: 'run-c413c4f20ea2074fca863056079f838a'
+    conduct_lease_id: 'lease-623-c413c4f20ea2074f'
+    conduct_generation: 623
+  updated: '2026-08-07T12:33:56.741Z'
