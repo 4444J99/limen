@@ -533,7 +533,7 @@
     },
     {
       "id": "L-FABLE-GUARD-ARM",
-      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"sonnet\" — the session-OPENING tier, not opus — + appends the SessionStart fable-session-guard.py hook). Only the hook half needs this file: typing `/model sonnet` once sets the same opening tier with no paste at all. Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard. Read-side predicate since 2026-08-07: `armed-valve-audit.py --check` reports FABLE_GUARD_SESSIONSTART_WIRED and SESSION_MODEL_OPENING_PIN as PARKED every beat until pulled.",
+      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"opus\" off Fable + appends the SessionStart fable-session-guard.py hook). Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard.",
       "owner": "yours",
       "cost": "~2 min, one paste, reversible",
       "unlocks": "durable interactive Fable guard (no session silently defaults to Fable)",
@@ -636,7 +636,8 @@
       "gate": "this widens what the fleet may DELETE without a per-branch human key — an authority boundary, not a mechanism, so the organ files it rather than taking it",
       "unlocks": "80 of the 562 local branches become reapable on the beat's reap rung; local_branches residue (562 vs the LIMEN_RESIDUE_LOCAL_BRANCHES=40 cap) gets its first mechanism that can actually reduce it, rather than a cap measuring a quantity nothing is empowered to lower",
       "source_task": "asked 2026-08-07 (\"why do we need 469 live work branches?\") → measured: of 457 ledger entries, 230 never pushed, 87 closed-unmerged, 49 open-PR, 11 merged-but-missed, 80 genuinely unfulfilled · limen PR feat/branch-reap-decided-proof",
-      "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete — no proof can make an unpushed commit loss-free."
+      "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete — no proof can make an unpushed commit loss-free.",
+      "issue": 2010
     },
     {
       "id": "L-DAILY-ENGINE-PHONE-LEAVES",
