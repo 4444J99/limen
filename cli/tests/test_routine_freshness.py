@@ -368,3 +368,97 @@ def test_omega_scorecard_is_may_be_silent_and_flag_is_opt_in():
     assert 0 < len(flagged) < len(delta_gated), (
         "may_be_silent must be a deliberate per-routine opt-in, not applied to every delta-gated row"
     )
+
+
+# ── _relay_ledger tests (a keeper 409 must never kill the beat) ───────────────
+#
+# Regression: the local tasks.yaml projection LAGS the conduct keeper. An atom already homed on
+# the keeper but absent from that projection sent hang_down_atoms down the create branch, and the
+# keeper answered 409 "already exists". That ConductError was uncaught and killed the whole audit
+# before it wrote its artifact or retired recovered atoms — invisibly, since the beat runs this
+# sensor at severity:silent.
+
+
+class _FakeTask:
+    def __init__(self, tid):
+        self.id = tid
+
+
+class _FakeFile:
+    def __init__(self, ids):
+        self.tasks = [_FakeTask(i) for i in ids]
+
+
+_C409 = "conduct broker rejected request (409): task {} already exists"
+
+
+def test_relay_ledger_409_is_homed_not_fatal():
+    """A keeper 409 for a just-created atom is benign: recorded as homed, never raised."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-a"])
+    res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
+    calls = []
+
+    def sync(_ledger, _lf, **_kw):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError(_C409.format("ASK-routine-a"))
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
+
+    assert "error" not in res
+    assert res["created"] == []
+    assert any("ASK-routine-a" in h for h in res["homed"])
+    assert [t.id for t in lf.tasks] == []
+    assert len(calls) == 2  # retried after dropping the already-homed atom
+
+
+def test_relay_ledger_409_does_not_block_a_genuinely_new_atom():
+    """One already-homed atom must not hold a genuinely new one hostage in the same batch."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-old", "ASK-routine-new"])
+    res = {"created": ["ASK-routine-old", "ASK-routine-new"], "refreshed": [], "homed": []}
+    relayed = []
+
+    def sync(_ledger, lf_arg, **_kw):
+        ids = [t.id for t in lf_arg.tasks]
+        if "ASK-routine-old" in ids:
+            raise RuntimeError(_C409.format("ASK-routine-old"))
+        relayed.append(list(ids))
+
+    new_ids = {"ASK-routine-old", "ASK-routine-new"}
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=new_ids, res=res)
+
+    assert "error" not in res
+    assert relayed == [["ASK-routine-new"]]
+    assert res["created"] == ["ASK-routine-new"]
+
+
+def test_relay_ledger_non_409_error_is_recorded_not_raised():
+    """Any other keeper failure is fail-open: recorded on the result, never crashes the beat."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-a"])
+    res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
+
+    def sync(_ledger, _lf, **_kw):
+        raise RuntimeError("conduct broker is not configured")
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
+
+    assert "keeper sync failed" in res["error"]
+
+
+def test_relay_ledger_never_drops_a_preexisting_task():
+    """A 409 naming a task this run did NOT append must not be dropped: that diffs as a removal,
+    which the keeper refuses outright."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-preexisting"])
+    res = {"created": [], "refreshed": ["ASK-routine-preexisting"], "homed": []}
+
+    def sync(_ledger, _lf, **_kw):
+        raise RuntimeError(_C409.format("ASK-routine-preexisting"))
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=set(), res=res)
+
+    assert "error" in res
+    assert [t.id for t in lf.tasks] == ["ASK-routine-preexisting"]
