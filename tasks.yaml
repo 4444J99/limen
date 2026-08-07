@@ -163423,3 +163423,37 @@ tasks:
     conduct_lease_id: 'lease-580-09d5e2a1d2ad9cce'
     conduct_generation: 580
   updated: '2026-08-07T01:16:32.225Z'
+- id: 'GH-organvm-limen-1922'
+  title: 'FULL → HEAL → EXPAND → EVOLVE — estate plan'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1922'
+  context: 'GitHub issue organvm/limen#1922. Tonight''s notification storm root-caused to one mypy error on main; the arc it exposed is the real problem: omega off its fixed point (stale stamp masking the true fail set), worktree debt, a 7/8-landed jules flywheel, and two genuinely unbuilt recurrence guards (a cross-source notification-storm sensor; a review-comment drain organ). Plan artifact: `docs/plans/2026-08-06-full-heal-expand-evolve.m'
+  predicate: 'test "$(gh issue view 1922 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1922'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1922'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T01:16:37.884Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0cb19ca62fb51b46c72051e44810eea3:581:compatibility'
+    conduct_run_id: 'run-0cb19ca62fb51b46c72051e44810eea3'
+    conduct_lease_id: 'lease-581-0cb19ca62fb51b46'
+    conduct_generation: 581
+  updated: '2026-08-07T01:16:37.884Z'
