@@ -283,6 +283,11 @@ gates:
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
     owner: continuity
     note: "The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch."
+  live-checkout-currency-test:
+    command: "bash scripts/tests/live-checkout-currency.test.sh"
+    paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]
+    owner: substrate
+    note: "The deployment-currency probe must persist its answer: coherent/drift/unverifiable-here are three RECORDED states, never two plus a silence. `unverifiable-here` is the load-bearing case — a consumer that cannot establish currency must be able to tell that apart from established-fine, which is the 2026-08-07 defect class in one assertion. The receipt body carries no wall-clock, so consecutive runs are byte-identical and every diff is a real change."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]

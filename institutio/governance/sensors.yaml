@@ -1674,6 +1674,43 @@ sensors:
         severity: advisory
         escalation: "the resident heartbeat daemon predates its own loop body — every loop-body merge since is dead code; run `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat` (the output names the exact timestamps)"
 
+  live-checkout-currency:
+    section: "0z4b"
+    title: "live-checkout currency — the tree the beat executes must be origin/main, and the answer must persist"
+    gate: LIMEN_LIVE_CHECKOUT_CURRENCY
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: substrate
+    # beat-freshness's sibling one layer out: that one asks "is the running DAEMON newer than its
+    # loop body", this one asks "is the CODE ON DISK what origin/main holds". Both are staleness;
+    # only together do they mean the fleet runs what was merged.
+    #
+    # check-live-checkout.py existed since 2026-07-29 and was reachable ONLY from the ideal-forms
+    # probe — answering when run, needing a network ls-remote, leaving no artifact. So between runs
+    # the answer existed nowhere, and no point-of-use consumer could afford to ask. That gap is the
+    # 2026-08-07 incident in one line: the live checkout sat 36 commits behind, its copy of
+    # fable-allotment.py predated the heal that gave the weekly Fable meter sight, and it therefore
+    # rewrote logs/fable-allotment.json to `spent_pct 0.0 / over_cap false` EVERY BEAT while the
+    # true figure was 75.47% / over_cap true. Both Fable brakes released; ~50% of the weekly
+    # allotment burned in two days with no downgrade and no warning.
+    #
+    # The load-bearing correction: the meter file was FRESH and WRONG. Any age bound on it passes
+    # on this incident, because the stale party was the writer's code, not the artifact. So the
+    # cure is not another freshness alarm — it is that the run now writes an OFFLINE receipt
+    # (logs/live-checkout-currency.json) which guards read with no network and no git, so
+    # "was the deployed tree current when this artifact was written?" becomes answerable at the
+    # point of use. Advisory by severity, load-bearing by consumption.
+    cadence:
+      env: LIMEN_LIVE_CHECKOUT_CADENCE
+      default: 4
+    timeout:
+      env: LIMEN_LIVE_CHECKOUT_TIMEOUT
+      default: 90
+    steps:
+      - command: "python3 scripts/check-live-checkout.py"
+        severity: advisory
+        escalation: "the live checkout is not origin/main — the fleet is executing stale code and every beat-written artifact it produces is suspect; owner is scripts/sync-release.sh (the beat's unpark rung), never a hand fast-forward of a daemon-contended tree"
+
   work-loan-backfill:
     section: "0z8"
     title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"
