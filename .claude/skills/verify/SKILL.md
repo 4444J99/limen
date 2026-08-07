@@ -51,6 +51,7 @@ PYTHONPATH=<worktree>/cli/src ~/Applications/DomusAgentHost.app/Contents/MacOS/D
 | the conduct relay (`tabularius.py`) | any live `--live` dispatch — the receipt commit runs `apply_limen_file_sync` at the end |
 | `conduct/liveness.py` occupancy | `python3 scripts/session-contention.py probe --root <root>` — exit 0 `free` / exit 1 `OCCUPIED by pid N` / exit 0 `probe UNAVAILABLE` |
 | `status.py` | `limen status \| head -6` |
+| the Cloudflare Worker (`web/worker/`) | `npm --prefix web/worker ci` **once per worktree**, then `npm --prefix web/worker run check` (`node --check` + `node --test`) |
 | the durable board | `git show origin/tabularius/board-projection:tasks.yaml` — the keeper's published projection, which is **not** `main`'s copy |
 
 ## Comparing shipped vs pre-fix code (the A/B that proves a fix)
@@ -87,6 +88,18 @@ option and does not apply to blob shows).
 - **Worktree-isolation guard rejects compound commands.** No `cmd && cmd`, no `>` redirect combined
   with `cd`, no heredoc-into-`cat` chains. Issue plain single commands with absolute paths, or use
   the Write tool for scratch files (inside the worktree).
+- **A fresh worktree has no `web/worker/node_modules`,** and `npm run check` then reports 4 of 5 test
+  *files* failing with no useful summary — it looks like your change broke the Worker. Run one file
+  directly to see the real cause (`ERR_MODULE_NOT_FOUND: ajv`). Fix: `npm --prefix web/worker ci`.
+- **`test_campaign_relay_effector::test_full_relay_exec_proof_closes_while_keepalive_remains_live`
+  is load-sensitive, not randomly flaky.** It asserts a spawned provider wrote its pidfile; under
+  host contention the parent races ahead. The tell is duration — passing runs take ~16s, failing
+  runs ~4s, and every failure lands while something heavy is running. Observed failing 4× then
+  passing 3× on the *same commit*. Do not conclude "pre-existing on main" from an isolation
+  argument: re-run it on a quiet host before believing either verdict.
+- **`git checkout -- <file>` reverts the WHOLE file, including uncommitted work you meant to keep.**
+  Commit before mutating an implementation to prove a test can fail, or you will revert the fix
+  along with the mutation.
 
 ## Local vs canonical state — do not confuse them
 
