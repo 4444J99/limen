@@ -25,7 +25,14 @@ harness provides it, else from ANTHROPIC_MODEL / an explicit --model, so the gua
 
 Exit codes (for the verify harness, NOT to block a live session):
   0 — non-Fable model, or Fable under cap with a live receipt (clean).
-  2 — Fable model AND (over_cap OR no live acceptance receipt) — the hard-warn case.
+  2 — Fable model AND (over_cap OR no live acceptance receipt OR an untrusted meter) — hard warn.
+  3 — the session model could not be resolved at all — reported, never mistaken for cheap.
+
+Exit 3 is the SECOND instance of this file's own defect class, closed on the same day as the
+first: `_resolve_model` used to return "" for an unresolvable model, `_is_fable("")` is False, and
+the guard took the clean-no-op branch — exit 0 with zero bytes on stderr, byte-identical to a
+session confirmed to be running on a cheap tier. The guard's most consequential input had a
+failure mode indistinguishable from success.
 """
 
 from __future__ import annotations
@@ -58,25 +65,35 @@ def _read_stdin_payload() -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def _resolve_model(payload: dict, explicit: str | None) -> str:
+def _resolve_model(payload: dict, explicit: str | None) -> tuple[str, str]:
+    """(model, source) — and an EMPTY model is a third state, not a cheap one.
+
+    This used to return a bare ``str`` and fall through to ``""``. ``_is_fable("")`` is False, so
+    an unresolvable session model took the "clean no-op" branch: exit 0, zero bytes on stderr —
+    byte-identical, to every observer, to a session confirmed to be running on a cheap tier. The
+    guard's single most consequential input had a failure mode that looked exactly like success.
+
+    Returning the SOURCE alongside the value is what makes the difference observable: the caller
+    can say which rung answered, or that none did.
+    """
     if explicit:
-        return explicit
+        return explicit, "--model"
     # SessionStart payloads may carry the model under a few shapes; be permissive.
     for key in ("model", "model_id"):
         v = payload.get(key)
         if isinstance(v, str) and v:
-            return v
+            return v, f"payload.{key}"
     m = payload.get("model")
     if isinstance(m, dict):
         for key in ("id", "name"):
             v = m.get(key)
             if isinstance(v, str) and v:
-                return v
+                return v, f"payload.model.{key}"
     for env_key in ("ANTHROPIC_MODEL", "CLAUDE_MODEL", "LIMEN_SESSION_MODEL"):
         v = os.environ.get(env_key)
         if v:
-            return v
-    return ""
+            return v, f"env:{env_key}"
+    return "", ""
 
 
 def _is_fable(model: str) -> bool:
@@ -147,7 +164,23 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     payload = _read_stdin_payload()
-    model = _resolve_model(payload, args.model)
+    model, source = _resolve_model(payload, args.model)
+
+    if not model:
+        # THE THIRD STATE. Not "fine" and not a hard warning — an honest "I could not establish
+        # this", which is information the previous silence destroyed. Deliberately a one-line
+        # NOTICE rather than the HARD WARNING: "I could not see" and "I saw something bad" are
+        # different findings and must not print the same way, or the loud case stops carrying
+        # signal. Proportionate, but never silent.
+        print(
+            "[fable-session-guard] Session model UNRESOLVED — no --model, no model field in the "
+            "SessionStart payload, and none of ANTHROPIC_MODEL / CLAUDE_MODEL / LIMEN_SESSION_MODEL "
+            "is set. This guard cannot confirm the session tier, so treat it as UNKNOWN rather than "
+            "cheap. (The harness's SessionStart model field is documented as not guaranteed present; "
+            "export LIMEN_SESSION_MODEL to make it resolvable.)",
+            file=sys.stderr,
+        )
+        return 3
 
     if not _is_fable(model):
         return 0  # clean no-op on any non-Fable model
