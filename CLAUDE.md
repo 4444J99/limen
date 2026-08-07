@@ -104,6 +104,23 @@ ExitPlanMode). Enumerating exempt session shapes would be hand-maintained prose 
 transcript records every `permissionMode` transition instead, and `scripts/harness-root-probe.py`
 already reads that field. The default binds, the exit is cheap, and the exit is observable.
 
+**Session model cadence — open cheap, escalate deliberately.** Interactive sessions OPEN on
+Sonnet (the `"model": "sonnet"` pin staged in `docs/keys/fable-guard-settings-snippet.json`,
+human-armed via lever `L-FABLE-GUARD-ARM` — an agent never arms settings). The first message —
+usually a chaotic brainstorm — is structured into the plan chain *in plan mode on Sonnet*;
+`/model opus` is the deliberate escalation for ratifying a genuinely hard plan, and Fable is
+never a session default — only an explicit `/model` escalation under a live
+`docs/fable-allotment.md` acceptance receipt. After plan approval, drop back (`/model sonnet`)
+and execute through the tiered fleet (`.claude/agents/` pins + the `model_selection.py` ladder —
+do not restate it here). The harness routes models per *session*, never per message (verified
+2026-08-07: hooks cannot switch models; `/model` is manual and session-only), so enforcement is
+the three real layers: the opening pin (prevention), `scripts/fable-session-guard.py` at
+SessionStart (loud warning on Fable over-cap/unaccepted), and the
+`claude-workflow-guard.py audit-transcript` beat audit (unaccepted Fable burn is a violation).
+Do not replace plan-mode entry with an auto-mode entry plus a hand-built plan-first hook: plan
+mode already *is* that enforcement, and the cost objection dissolves once the opening model is
+cheap.
+
 **A plan carries an issue and a PR — via one command.** The `plan` phase's product is not a file,
 it is a *chain*: plan artifact → labelled GitHub issue → implementing PR. Open it with
 

@@ -2,18 +2,26 @@
   "_README": [
     "STAGED settings.json snippet for the Fable runtime cap (do NOT let an agent arm settings.json).",
     "Apply BOTH pieces below into $HOME/.claude/settings.json (or the project .claude/settings.json)",
-    "by hand. This closes the interactive Fable bypass: it pins the default model off Fable (Opus) and",
-    "arms the SessionStart guard that loudly warns when an interactive session is on Fable over-cap.",
+    "by hand. This closes the interactive Fable bypass: it pins the session-OPENING model to Sonnet",
+    "and arms the SessionStart guard that loudly warns when an interactive session is on Fable over-cap.",
     "",
-    "1) Set the top-level default model off Fable:",
-    "     \"model\": \"opus\"",
+    "Sonnet (not Opus) is the opening pin per the session model cadence (CLAUDE.md, Session Phase",
+    "Entry): sessions open in plan mode on Sonnet to structure the first brainstorm message into a",
+    "plan; /model opus is the deliberate escalation for ratifying a genuinely hard plan (Fable only",
+    "under a docs/fable-allotment.md acceptance receipt); execution drops back to /model sonnet and",
+    "fans out to the tiered fleet. The harness has no per-message model routing (verified 2026-08-07:",
+    "hooks cannot switch models; /model is manual, session-only), so the opening pin + this guard +",
+    "the SessionEnd workflow-guard audit are the three enforceable layers.",
+    "",
+    "1) Set the top-level default model to the opening tier:",
+    "     \"model\": \"sonnet\"",
     "",
     "2) ADD the guard command to the EXISTING SessionStart hook array (append, do not replace the",
     "   session-orient entry already there). The command below is the exact validated block.",
     "",
     "After pasting, verify with: scripts/verify-fable-gate.sh"
   ],
-  "model": "opus",
+  "model": "sonnet",
   "hooks": {
     "SessionStart": [
       {

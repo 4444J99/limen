@@ -20,6 +20,7 @@ Exit codes (for the verify harness, NOT to block a live session):
   0 — non-Fable model, or Fable under cap with a live receipt (clean).
   2 — Fable model AND (over_cap OR no live acceptance receipt) — the hard-warn case.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
-FABLE_SWITCH = "/model opus"  # the exact in-session switch off Fable
+FABLE_SWITCH = "/model sonnet"  # the exact in-session switch off Fable (sonnet = the session-opening tier)
 
 
 def _read_stdin_payload() -> dict:
