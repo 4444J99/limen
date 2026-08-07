@@ -400,7 +400,18 @@ def efficacy_rung() -> list[dict]:
 
     SKIP when the ledger is absent (CI, or a daemon that has not yet run a loop carrying beat_run).
     """
-    ledger = Path(os.environ.get("LIMEN_BEAT_RUNG_LOG", str(LIVE_ROOT / "logs" / "beat-rungs.jsonl")))
+    # Resolve the ledger against the checkout the DAEMON runs from, not the one this script lives
+    # in. #2053 fixed exactly this asymmetry for the liveness rung — a host-global daemon compared
+    # against a per-worktree path — and the efficacy rung would reintroduce it verbatim: run from a
+    # session worktree, LIVE_ROOT is that worktree, its logs/ has no ledger, and the rung SKIPs while
+    # the real one sits in the live checkout. A silent SKIP where the evidence exists is the same
+    # "I found nothing" / "I read nothing" confusion this whole lineage is about.
+    override = os.environ.get("LIMEN_BEAT_RUNG_LOG")
+    if override:
+        ledger = Path(override)
+    else:
+        root = live_checkout() or LIVE_ROOT
+        ledger = root / "logs" / "beat-rungs.jsonl"
     if not ledger.is_file():
         return [
             {
