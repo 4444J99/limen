@@ -1,7 +1,7 @@
 # Reconcile the external prima-materia/consolidation charters into settled estate law
 
 Issue: #1934
-PR: (pending)
+PR: #1935
 
 ## Context
 
