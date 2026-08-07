@@ -157,6 +157,68 @@ def test_balance_writes_current_week_report(tmp_path):
     assert written == out
 
 
+def _write_fable_transcript(projects_dir: Path, tokens: tuple[int, int, int] = (100, 200, 300)):
+    """One relocated-layout transcript holding a fresh Fable usage record."""
+    session_dir = projects_dir / "proj"
+    session_dir.mkdir(parents=True)
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "message": {
+            "model": "claude-fable-5",
+            "usage": {
+                "input_tokens": tokens[0],
+                "output_tokens": tokens[1],
+                "cache_creation_input_tokens": tokens[2],
+            },
+        },
+    }
+    (session_dir / "s.jsonl").write_text(json.dumps(record) + "\n")
+
+
+def test_balance_reads_relocated_agent_runtime_tree(tmp_path):
+    """With no transcripts env, balance resolves via harness_paths and finds the repo-local
+    .agent-runtime tree — the relocation that blinded the meter for five weeks."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    _write_fable_transcript(root / ".agent-runtime" / "claude" / "projects")
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "balance"],
+        capture_output=True,
+        text=True,
+        env={
+            "LIMEN_ROOT": str(root),
+            "PATH": __import__("os").environ.get("PATH", ""),
+        },
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    assert out["week"] == _this_monday()
+    assert out["spent_tokens"] == 600
+    assert out["source"] == "transcript-token-sum"
+
+
+def test_transcripts_env_override_wins_over_relocated(tmp_path):
+    """An explicit LIMEN_CLAUDE_TRANSCRIPTS_DIR pin outranks the harness_paths resolution."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    _write_fable_transcript(root / ".agent-runtime" / "claude" / "projects")
+    empty = tmp_path / "pinned-empty"
+    empty.mkdir()
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "balance"],
+        capture_output=True,
+        text=True,
+        env={
+            "LIMEN_ROOT": str(root),
+            "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(empty),
+            "PATH": __import__("os").environ.get("PATH", ""),
+        },
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    assert out["spent_tokens"] == 0
+
+
 def test_balance_is_idempotent(tmp_path):
     """Re-running balance on the same inputs produces an identical file (fixed point)."""
     root = tmp_path / "root"

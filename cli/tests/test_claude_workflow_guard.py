@@ -490,3 +490,41 @@ def test_audit_transcript_full_pytest_escape_hatch(tmp_path):
     report = json.loads(proc.stdout)
     assert report["fullSuitePytestCalls"] == 1  # still counted — only the violation is waived
     assert proc.returncode == 0
+
+
+def test_find_session_jsonl_resolves_relocated_root(tmp_path):
+    """A bare session id resolves through harness_paths to the repo-local .agent-runtime tree;
+    an explicit LIMEN_CLAUDE_TRANSCRIPTS_DIR pin still outranks it (empty string = unset)."""
+    root = tmp_path / "root"
+    session_dir = root / ".agent-runtime" / "claude" / "projects" / "proj"
+    session_dir.mkdir(parents=True)
+    sid = "sess-relocated-123"
+    (session_dir / f"{sid}.jsonl").write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {
+                    "model": "claude-sonnet-4-6",
+                    "content": [{"type": "text", "text": "done"}],
+                    "usage": {"input_tokens": 10, "output_tokens": 20},
+                },
+            }
+        )
+        + "\n"
+    )
+    proc = run_guard(
+        "audit-transcript",
+        sid,
+        env={"LIMEN_ROOT": str(root), "LIMEN_CLAUDE_TRANSCRIPTS_DIR": ""},
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout)["ok"] is True
+
+    pinned_empty = tmp_path / "pinned-empty"
+    pinned_empty.mkdir()
+    proc = run_guard(
+        "audit-transcript",
+        sid,
+        env={"LIMEN_ROOT": str(root), "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(pinned_empty)},
+    )
+    assert proc.returncode != 0

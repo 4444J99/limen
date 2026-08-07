@@ -1825,11 +1825,11 @@ parameters:
     owner: continuity
     note: "Freshness ceiling in seconds for a claude-usage avenue reading. An avenue older than this is visibly SKIPPED (the anti-forgettable-hole guard) rather than silently trusted."
   LIMEN_CLAUDE_TRANSCRIPTS_DIR:
-    default: "~/.claude/projects"
+    default: ""
     env: LIMEN_CLAUDE_TRANSCRIPTS_DIR
     self_update: none
     owner: continuity
-    note: "Root of the Claude Code session transcripts the on-disk (calibrated) claude-usage avenue scans for per-window token cost. Overridable for testing/portability; never hardcode the home path."
+    note: "Explicit pin for the Claude Code session-transcripts root (tests and verify-fable-gate.sh set it). Empty = resolve via limen.harness_paths: LIMEN_CLAUDE_HARNESS_ROOT env, then <repo>/.agent-runtime/claude/projects, then the worktree shared checkout, then ~/.claude/projects — liveness-probed, so an empty legacy shell never wins over a populated relocated tree. Consumers: fable-allotment.py balance, claude-workflow-guard.py session lookups, claude-usage.py ondisk avenue."
   LIMEN_OVERNIGHT_WATCH_STATE:
     default: "$LIMEN_ROOT/logs/overnight-watch-state.json"
     env: LIMEN_OVERNIGHT_WATCH_STATE
@@ -3081,11 +3081,11 @@ parameters:
     owner: arms-agents
     note: "Emergency override for claude-workflow-guard's written-acceptance check when transcript evidence is incomplete. Default 0 blocks Fable runs that lack a visible acceptance command or receipt reference."
   LIMEN_FABLE_WEEKLY_TOKENS:
-    default: "1000000000"
+    default: "64000000"
     env: LIMEN_FABLE_WEEKLY_TOKENS
     self_update: none
     owner: arms-agents
-    note: "Weekly Fable token budget the balance meter (scripts/fable-allotment.py balance) divides actual weekly Fable tokens by when Anthropic's weekly ratelimit-header percent is not captured. Default ~1B ≈ the observed weekly allotment ceiling; used only for the transcript-token-sum fallback source."
+    note: "Weekly Fable BILLABLE-token budget (input+output+cache-creation; cache reads excluded) the balance meter (scripts/fable-allotment.py balance) divides the 7-day transcript sum by when Anthropic's weekly ratelimit-header percent is not captured. Calibrated 2026-08-06 against the live meter: 33.9M billable ↔ 53% weekly → ~64M ceiling. The prior 1B default under-read ~16x. Used only for the transcript-token-sum fallback source; re-calibrate if plan tier changes."
   LIMEN_FABLE_BALANCE:
     default: "1"
     env: LIMEN_FABLE_BALANCE
