@@ -164875,3 +164875,37 @@ tasks:
     conduct_lease_id: 'lease-620-fc384f0096a46138'
     conduct_generation: 620
   updated: '2026-08-07T12:33:40.963Z'
+- id: 'GH-organvm-limen-1948'
+  title: 'Session model cadence: open on Sonnet, escalate deliberately (Fable/Opus = plan ratification only)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'enhancement'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1948'
+  context: 'GitHub issue organvm/limen#1948. Fable''s weekly allotment burned ~50% in two days because interactive sessions open on the account default model and ride it for every turn — routine execution included. Decided cadence (harness-verified 2026-08-07: no per-message model routing exists; hooks cannot switch models; /model is manual + session-only): - Sessions OPEN on Sonnet — `"model": "sonnet"` pin in the staged snippet `docs/keys/f'
+  predicate: 'test "$(gh issue view 1948 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1948'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1948'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T12:33:46.667Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3a0ae78c7f1b5663decac88e89acc821:621:compatibility'
+    conduct_run_id: 'run-3a0ae78c7f1b5663decac88e89acc821'
+    conduct_lease_id: 'lease-621-3a0ae78c7f1b5663'
+    conduct_generation: 621
+  updated: '2026-08-07T12:33:46.667Z'
