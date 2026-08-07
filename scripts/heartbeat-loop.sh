@@ -357,7 +357,19 @@ while true; do
   # cheaper than aborting a beat mid-flight, which is what a post-sync placement would do.
   if [ "${LIMEN_LOOP_SELF_KICKSTART:-1}" = "1" ] && [ -f "$LIMEN_ROOT/logs/.loop-update-pending" ]; then
     _kick_label="${LIMEN_HEARTBEAT_LABEL:-com.limen.heartbeat}"
-    if launchctl list 2>/dev/null | grep -q "$_kick_label"; then
+    # ASK LAUNCHD FOR THE LABEL, do not grep its table. `launchctl list | grep -q "$_kick_label"`
+    # was wrong twice over, and both were verified against the live table rather than reasoned about:
+    #   1. the label is a REGEX there, and the default is full of dots — pattern `com.limen.heartbeat`
+    #      matches the string `comXlimenXheartbeat`;
+    #   2. `grep -F` fixes only the first: as a substring it still matches a DIFFERENT job, e.g.
+    #      `com.limen.heartbeat-loop`, so the obvious fixed-string patch is not enough either.
+    # The damage is not a stray kickstart — `-k` names $_kick_label, so it targets the right label
+    # and simply fails when that label is unmanaged. It is that the guard takes the TRUE branch, so
+    # the else-branch below never clears logs/.loop-update-pending. The marker survives, and the rung
+    # that this file's own header calls "SELF-LIMITING FOR FREE — the restart destroys its own
+    # trigger" retries every single beat forever instead of firing at most once.
+    # `launchctl list <label>` is an exact lookup: 0 when that job exists, non-zero (113) otherwise.
+    if launchctl list "$_kick_label" >/dev/null 2>&1; then
       echo "── loop-body self-load: wiring changed under a running loop — kickstart $_kick_label ──"
       launchctl kickstart -k "gui/$(id -u)/$_kick_label" 2>&1 | tail -1 || true
       # launchd's SIGTERM lands here; `trap cleanup EXIT` releases the lock so the replacement starts
