@@ -77,18 +77,20 @@ def test_check_degrades_is_silent_when_the_invariant_holds():
     assert G.check_degrades(honest, [{"name": "absent input"}]) == []
 
 
-def test_env_overrides_are_restored_exactly(tmp_path):
-    """A leaked degenerate env would make the NEXT case's result meaningless."""
-    os.environ["GUARD_CONTRACT_TEST_PRESENT"] = "original"
-    os.environ.pop("GUARD_CONTRACT_TEST_ABSENT", None)
-    try:
-        with G._env({"GUARD_CONTRACT_TEST_PRESENT": "changed", "GUARD_CONTRACT_TEST_ABSENT": "added"}):
-            assert os.environ["GUARD_CONTRACT_TEST_PRESENT"] == "changed"
-            assert os.environ["GUARD_CONTRACT_TEST_ABSENT"] == "added"
-        assert os.environ["GUARD_CONTRACT_TEST_PRESENT"] == "original"
-        assert "GUARD_CONTRACT_TEST_ABSENT" not in os.environ
-    finally:
-        os.environ.pop("GUARD_CONTRACT_TEST_PRESENT", None)
+def test_env_overrides_are_restored_exactly(monkeypatch):
+    """A leaked degenerate env would make the NEXT case's result meaningless.
+
+    The fixture is set through monkeypatch (per check-test-hygiene) so this test cannot leak even if
+    it fails mid-body; the direct os.environ mutation under test happens inside ``_env`` itself.
+    """
+    monkeypatch.setenv("GUARD_CONTRACT_TEST_PRESENT", "original")
+    monkeypatch.delenv("GUARD_CONTRACT_TEST_ABSENT", raising=False)
+
+    with G._env({"GUARD_CONTRACT_TEST_PRESENT": "changed", "GUARD_CONTRACT_TEST_ABSENT": "added"}):
+        assert os.environ["GUARD_CONTRACT_TEST_PRESENT"] == "changed"
+        assert os.environ["GUARD_CONTRACT_TEST_ABSENT"] == "added"
+    assert os.environ["GUARD_CONTRACT_TEST_PRESENT"] == "original"
+    assert "GUARD_CONTRACT_TEST_ABSENT" not in os.environ
 
 
 def test_the_real_readers_speak_the_contract():
