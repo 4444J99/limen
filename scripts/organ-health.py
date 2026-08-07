@@ -270,7 +270,7 @@ def _json_field_ts(path, *fields):
     return None
 
 
-def _json_nested_error(path, *trails):
+def _json_nested_error(path, *trails, stamp=None):
     """First recorded failure inside an organ's OWN artifact, or None.
 
     Freshness answers "did it run"; it cannot answer "did it work". Every signal this file
@@ -287,6 +287,15 @@ def _json_nested_error(path, *trails):
     every artifact format change would manufacture a false operator atom.
 
     Each trail is a key path into the artifact, e.g. ("escalation", "error").
+
+    `stamp` names the artifact's OWN timestamp field, and the reason it exists is that the row's
+    `age_h` measures a DIFFERENT clock. The voice stamp is written unconditionally after a
+    sensor's steps (beat-sensors.py `_stamp`, regardless of exit code) while an audit may be
+    throttled and skip without rewriting its artifact — routine-freshness runs at
+    `--throttle 21600`, so up to 6h can pass with a fresh voice over an untouched artifact. The
+    recorded failure is then real but stale, and shown beside `0.0h ago` it reads as happening
+    right now. Naming the artifact's own age keeps the verdict (last known state of the effector
+    half IS failed) while ending the false immediacy.
     """
     try:
         obj = json.loads(Path(path).read_text())
@@ -300,7 +309,11 @@ def _json_nested_error(path, *trails):
                 break
             node = node.get(key)
         if isinstance(node, str) and node.strip():
-            return f"{'.'.join(trail)}: {node.strip()}"
+            msg = f"{'.'.join(trail)}: {node.strip()}"
+            recorded = _json_field_ts(path, stamp) if stamp else None
+            if recorded is not None:
+                msg = f"{msg} (recorded {round((time.time() - recorded) / 3600, 1)}h ago)"
+            return msg
     return None
 
 
@@ -534,7 +547,12 @@ def _registry():
             # This organ's whole point is hanging an operator atom when a routine goes down.
             # If that half fails, a fresh timestamp is a lie — so read the failure it records.
             defect=lambda: _json_nested_error(
-                LOGS / "routine-freshness.json", ("escalation", "error"), ("retire", "error")
+                LOGS / "routine-freshness.json",
+                ("escalation", "error"),
+                ("retire", "error"),
+                # The audit is throttled at 21600s and skips WITHOUT rewriting this artifact, while
+                # the voice stamps every beat — so the row's age_h can read 0.0 over a 6h-old error.
+                stamp="generated",
             ),
         ),
         # no cadence_key: session-walk-census runs inside metabolize.sh step 0j; green when its

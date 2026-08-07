@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -30,16 +30,23 @@ def _load():
     return mod
 
 
-def _fresh_logs(mod, tmp_path: Path, *, escalation: dict[str, Any] | None) -> None:
-    """A logs dir where routine-freshness looks maximally healthy on every age-based signal."""
+def _fresh_logs(mod, tmp_path: Path, *, escalation: dict[str, Any] | None, artifact_age_h: float = 0.0) -> None:
+    """A logs dir where routine-freshness looks maximally healthy on every age-based signal.
+
+    `artifact_age_h` backdates the ARTIFACT only, leaving the voice stamp current. That is not a
+    contrived shape: the voice stamps every beat regardless of exit code while the audit is
+    throttled at 21600s and skips without rewriting, so the two clocks routinely disagree by
+    hours in production.
+    """
     logs = tmp_path / "logs"
     voice = logs / ".voice"
     voice.mkdir(parents=True)
     now = datetime.now().replace(microsecond=0)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    art_stamp = (now - timedelta(hours=artifact_age_h)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     artifact: dict[str, Any] = {
-        "generated": stamp,
+        "generated": art_stamp,
         "routines": [{"name": "atom-backlog-triage", "verdict": "down", "days_silent": 31.0}],
         "summary": {"green": 12, "down": 1},
         "retire": {"retired": []},
@@ -147,3 +154,51 @@ def test_the_first_recorded_failure_wins_in_trail_order(tmp_path: Path) -> None:
     path.write_text(json.dumps({"escalation": {"error": "first"}, "retire": {"error": "second"}}))
     assert mod._json_nested_error(path, ("escalation", "error"), ("retire", "error")) == "escalation.error: first"
     assert mod._json_nested_error(path, ("retire", "error"), ("escalation", "error")) == "retire.error: second"
+
+
+def test_a_stale_artifact_under_a_fresh_voice_names_its_own_age(tmp_path: Path) -> None:
+    """The row's `age_h` measures the VOICE. The defect came from the artifact. They diverge.
+
+    beat-sensors stamps the voice unconditionally after a sensor's steps, while the audit runs at
+    `--throttle 21600` and skips without rewriting — so a real, long-since-repaired failure can sit
+    beside `0.0h ago` and read as happening right now. The verdict stays `down` (last known state
+    of the effector half IS failed); only the false immediacy goes away.
+    """
+    mod = _load()
+    _fresh_logs(
+        mod,
+        tmp_path,
+        escalation={"created": [], "error": "keeper sync failed; long since repaired"},
+        artifact_age_h=5.0,
+    )
+
+    row = _routines_row(mod)
+    assert row["status"] == "down"
+    # The voice is still current — that is the whole trap, and it must stay true.
+    assert row["age_h"] is not None and row["age_h"] < 1
+    assert "recorded 5.0h ago" in row["note"], row["note"]
+
+
+def test_a_freshly_recorded_failure_is_not_labelled_stale(tmp_path: Path) -> None:
+    """The control for the age suffix: it reports a real measurement, not a constant."""
+    mod = _load()
+    _fresh_logs(mod, tmp_path, escalation={"created": [], "error": "keeper sync failed just now"})
+
+    row = _routines_row(mod)
+    assert row["status"] == "down"
+    assert "recorded 0.0h ago" in row["note"], row["note"]
+
+
+def test_the_age_suffix_is_opt_in_and_absent_without_a_stamp_field(tmp_path: Path) -> None:
+    """A caller that names no stamp field gets the bare message — and an artifact with no usable
+    timestamp is not an error, so the reader stays fail-open on shape."""
+    mod = _load()
+    path = tmp_path / "a.json"
+    path.write_text(json.dumps({"generated": "2026-08-07T10:00:00Z", "escalation": {"error": "boom"}}))
+    assert mod._json_nested_error(path, ("escalation", "error")) == "escalation.error: boom"
+
+    path.write_text(json.dumps({"escalation": {"error": "boom"}}))
+    assert mod._json_nested_error(path, ("escalation", "error"), stamp="generated") == "escalation.error: boom"
+
+    path.write_text(json.dumps({"generated": "not a timestamp", "escalation": {"error": "boom"}}))
+    assert mod._json_nested_error(path, ("escalation", "error"), stamp="generated") == "escalation.error: boom"
