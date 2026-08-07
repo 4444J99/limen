@@ -336,6 +336,42 @@ while true; do
   worked=0
   VITALS_PRESSURE=0
   echo "──── beat $c $(date '+%F %T') ────"
+  # LOOP-BODY SELF-LOAD — a `while true` daemon never re-reads its own script, so a merged rung sits
+  # on disk INERT until something restarts the process. Three touchpoints existed for that fact and
+  # not one of them acted: sync-release.sh SETS logs/.loop-update-pending on a loop-body ff,
+  # enactment-audit.py reports it RED with the exact kickstart command, and this script clears it at
+  # startup (see the rm above the loop). So the flag was cleared by the very restart it was meant to
+  # cause, nothing caused that restart, and every loop-body edit silently waited on a human noticing
+  # a log line. A signal with no effector: every observable looks healthy while nothing happens.
+  #
+  # launchd does not cover this. KeepAlive restarts on EXIT and this loop never exits, so the process
+  # can outlive its own script indefinitely. Measured 2026-08-07: the board-publication rung (#2016)
+  # merged, fast-forwarded onto disk, and stayed dark behind a daemon 5h15m older than its own wiring
+  # — while that rung was the fix for a 12-day board freeze that had put the 100/day jules target out
+  # of reach (#1995). The repair shipped and did not run.
+  #
+  # SELF-LIMITING FOR FREE: the replacement process clears the marker at startup, so this can fire at
+  # most once per loop-body change — the restart destroys its own trigger. No debounce, no counter, no
+  # restart loop. Placed at the TOP of the beat deliberately: the previous beat finished cleanly and
+  # this one has done nothing yet, so nothing is cut in half. Waiting one tempo interval is far
+  # cheaper than aborting a beat mid-flight, which is what a post-sync placement would do.
+  if [ "${LIMEN_LOOP_SELF_KICKSTART:-1}" = "1" ] && [ -f "$LIMEN_ROOT/logs/.loop-update-pending" ]; then
+    _kick_label="${LIMEN_HEARTBEAT_LABEL:-com.limen.heartbeat}"
+    if launchctl list 2>/dev/null | grep -q "$_kick_label"; then
+      echo "── loop-body self-load: wiring changed under a running loop — kickstart $_kick_label ──"
+      launchctl kickstart -k "gui/$(id -u)/$_kick_label" 2>&1 | tail -1 || true
+      # launchd's SIGTERM lands here; `trap cleanup EXIT` releases the lock so the replacement starts
+      # clean. If the kill somehow does not arrive we simply run this beat and retry on the next.
+      # Settle window is a parameter so the rung's own test suite can run it at 0 instead of paying
+      # five real seconds per case — a test that is slow for no reason gets skipped, then rots.
+      sleep "${LIMEN_LOOP_KICKSTART_SETTLE:-5}"
+    else
+      # A hand-run loop (tests, a foreground debug session) has no label to kickstart. Clear the
+      # marker so this does not log the same impossible instruction every beat forever.
+      echo "── loop-body self-load: marker set but $_kick_label is not launchd-managed — restart by hand ──"
+      rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
+    fi
+  fi
   # Drain local SessionEnd work while this process owns the singleton, even when
   # autonomy is paused or the network is offline. The consumer remains bounded
   # and fail-open so lifecycle work cannot wedge the daemon.
