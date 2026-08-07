@@ -496,9 +496,13 @@ def opening_verdict(
     cap = _cap_rung(declared, top, ladder)
     rung = _rung_of(pin, ladder)
     if not rung:
-        return {"state": "unresolved", "rung": "", "ceiling": cap, "pin": pin}
+        # `trusted` is present and DERIVED on every branch so this reader speaks the same contract
+        # balance_verdict() does — see limen.guard_contract, which owns the shape and the executed
+        # proof. It is not imported here: this module's pure-stdlib contract is what lets the
+        # non-bypassable shim load it by file path, and that chokepoint outranks the convenience.
+        return {"state": "unresolved", "trusted": False, "rung": "", "ceiling": cap, "pin": pin, "detail": ""}
     state = "ok" if _ladder_index(rung, ladder) <= _ladder_index(cap, ladder) else "above-ceiling"
-    return {"state": state, "rung": rung, "ceiling": cap, "pin": pin}
+    return {"state": state, "trusted": state == "ok", "rung": rung, "ceiling": cap, "pin": pin, "detail": ""}
 
 
 def _cap_tier(tier: str, cap: str) -> str:
