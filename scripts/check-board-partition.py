@@ -206,7 +206,23 @@ def _write_baseline(current: list[str]) -> None:
         "# on a public head, so it takes an explicit --accept-new-disclosures; a bare --update can\n"
         "# only drop cleared entries. Do not hand-append rows here to clear a red gate.\n"
     )
-    BASELINE.write_text(header + "\n".join(current) + ("\n" if current else ""))
+    # ATOMIC, because a partial baseline is worse than no baseline. `Path.write_text` truncates the
+    # target before it writes a byte, so a crash mid-write leaves the tracked file empty or half a
+    # list — and this gate reads that file as the RATCHET FLOOR. An empty floor makes every published
+    # row read as a NEW finding (a red gate nobody can clear); a truncated one silently accepts every
+    # entry the truncation dropped. The temp file is created in BASELINE.parent so `os.replace` is a
+    # same-filesystem rename, which POSIX guarantees is atomic — a reader sees the old file or the new
+    # one, never a torn one.
+    tmp = BASELINE.parent / f".{BASELINE.name}.tmp"
+    try:
+        with tmp.open("w", encoding="utf-8") as fh:
+            fh.write(header + "\n".join(current) + ("\n" if current else ""))
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, BASELINE)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def _update(current: list[str], *, accept_new: bool) -> int:
@@ -274,6 +290,15 @@ def main() -> int:
         "human decision, never a re-pin — see the growth refusal for why this needs saying out loud.",
     )
     args = parser.parse_args()
+
+    # A flag that says "I accept these disclosures" and then accepts nothing is the false-green shape
+    # this whole predicate exists to prevent. Parsed alone, --accept-new-disclosures used to fall
+    # through to the read-only report path and exit 0 on a clean board — so a caller who typed the
+    # riskiest flag in this script got a SUCCESS back for a decision that was never recorded. The
+    # asymmetry is what makes it dangerous: the flag reads as "more permissive", so nobody re-checks
+    # a zero exit. Refuse the combination outright rather than ignoring it silently.
+    if args.accept_new_disclosures and not args.update:
+        parser.error("--accept-new-disclosures only means anything with --update; it accepts nothing on its own")
 
     try:
         current = findings()
