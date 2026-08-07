@@ -3464,6 +3464,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Extra branch names (space-separated) reap-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
+  LIMEN_BRANCH_REAP_PR_LIMIT:
+    default: 3000
+    env: LIMEN_BRANCH_REAP_PR_LIMIT
+    self_update: none
+    owner: limen-daemon
+    note: "How many RECENT PRs reap-branches.py reads for proofs 2 (merged) and 3 (closed-unmerged). `gh pr list` returns the N most recent, so a limit below the repo's PR count silently blinds every proof for older heads — and an unseen PR is indistinguishable from no PR, i.e. it reads as live-work. Measured 2026-08-07 at the former hard-coded 800 against organvm/limen's 1724 PRs: of 241 local branches that HAD a PR, 132 were invisible (64 CLOSED, 50 OPEN, 18 MERGED) — the 50 OPEN being the sharp edge, since those heads were not protected as in-flight at all. Hitting this ceiling WARNs rather than truncating silently."
   LIMEN_REMOTE_REAP_APPLY:
     default: 0
     env: LIMEN_REMOTE_REAP_APPLY

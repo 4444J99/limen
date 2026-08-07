@@ -629,6 +629,16 @@
       "issue": 1053
     },
     {
+      "id": "L-BRANCH-REAP-DECIDED-GRANT",
+      "label": "Decide whether the DECIDED class joins the local reaper's standing grant. scripts/reap-branches.py now carries a third reap proof (2026-08-07): a CLOSED-unmerged PR whose headRefOid IS the local tip — a rejection a human already recorded, with the exact commit preserved by GitHub at refs/pull/N/head forever (`git fetch origin pull/N/head` recovers it, ls-remote-verified). It classifies 80 local branches as `decided-pr-closed`. They are NOT reaped today: the class is deliberately absent from STANDING_GRANT_REASONS in that script, so --apply keeps every one with `missing-branch-reap-acceptance`. Making the class machine-provable was the organ's job; widening autonomous deletion authority over it is not. Two ways to grant: add `decided-pr-closed` to STANDING_GRANT_REASONS (covers the class, like the two landed classes), or write per-branch events into docs/branch-reap-acceptance.jsonl (covers only what you list). Declining is a real answer — the class stays visible in docs/branch-hygiene.md under its own heading either way, and the closeout gate does NOT go red on it by construction.",
+      "owner": "yours",
+      "cost": "~2 min once, reversible (one set-literal edit, or N ledger lines); every deletion stays git-branch -D, i.e. reflog-recoverable ~90d",
+      "gate": "this widens what the fleet may DELETE without a per-branch human key — an authority boundary, not a mechanism, so the organ files it rather than taking it",
+      "unlocks": "80 of the 562 local branches become reapable on the beat's reap rung; local_branches residue (562 vs the LIMEN_RESIDUE_LOCAL_BRANCHES=40 cap) gets its first mechanism that can actually reduce it, rather than a cap measuring a quantity nothing is empowered to lower",
+      "source_task": "asked 2026-08-07 (\"why do we need 469 live work branches?\") → measured: of 457 ledger entries, 230 never pushed, 87 closed-unmerged, 49 open-PR, 11 merged-but-missed, 80 genuinely unfulfilled · limen PR feat/branch-reap-decided-proof",
+      "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete — no proof can make an unpushed commit loss-free."
+    },
+    {
       "id": "L-DAILY-ENGINE-PHONE-LEAVES",
       "label": "Install the two daily-engine phone entry points (one sit-down, same device): (1) Files app → iCloud Drive → DailyEngine → tap 'Snap the Plate.shortcut' → Add Shortcut, then put it on the Home Screen / Action Button — one tap photographs the plate and the local watcher assesses + logs the meal ($0, photos never leave the Mac). (2) Shortcuts → Automation → Time of Day (~9:30 PM, Run Immediately) → Find Health Samples (Steps, Today) → Calculate Statistics (Sum) → Save File → iCloud Drive/DailyEngine/steps (Ask Where to Save: Off, Overwrite: On) — the beat ingests the drop; no URL, no LAN IP to rot. Full recipes: engine README §One-time iOS Shortcuts.",
       "owner": "yours",

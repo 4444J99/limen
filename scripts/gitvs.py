@@ -277,10 +277,14 @@ def _local_branch_reasons() -> dict[str, int]:
         dref = rb.default_ref()
         dname = rb.default_name(dref)
         checked = rb.checked_out_branches()
-        merged, open_, _ = rb.gh_head_states()
+        # Unpack ALL of it: the closed-head map carries reap-branches' proof 3 (the DECIDED class),
+        # and dropping it here would silently re-file every closed-PR branch as `livework` in this
+        # histogram. The except-clause below returns {} on any error, so a stale arity would degrade
+        # this lens to empty rather than fail — keep the call in exact lockstep with the module.
+        merged, open_, closed, _online = rb.gh_head_states()
         hist: dict[str, int] = {}
         for b in rb.local_branches():
-            v = rb.classify(rb.gather_facts(b, dref, checked, merged, open_, dname))
+            v = rb.classify(rb.gather_facts(b, dref, checked, merged, open_, dname, closed))
             hist[v.reason] = hist.get(v.reason, 0) + 1
         return hist
     except Exception:
