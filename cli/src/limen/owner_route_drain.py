@@ -60,11 +60,8 @@ def task_family(title: str, head_ref: str) -> str | None:
 
 def _ci_signal(status_check_rollup: object) -> str:
     """'red' | 'pending' | 'green' — green only when every check concluded clean."""
-    states = [
-        str(check.get("conclusion") or check.get("state") or "")
-        for check in (status_check_rollup or [])
-        if isinstance(check, dict)
-    ]
+    rollup = status_check_rollup if isinstance(status_check_rollup, list) else []
+    states = [str(check.get("conclusion") or check.get("state") or "") for check in rollup if isinstance(check, dict)]
     if any(state in _RED_STATES for state in states):
         return "red"
     if any(state in _PENDING_STATES for state in states):
