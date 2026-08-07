@@ -165432,3 +165432,36 @@ tasks:
     conduct_lease_id: 'lease-638-70b22af99d61b6b6'
     conduct_generation: 638
   updated: '2026-08-07T16:03:16.486Z'
+- id: 'GH-organvm-limen-1989'
+  title: 'The dispatch rung''s outcome is unobservable in the beat log — the silence that hid 19 days of zero dispatch'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1989'
+  context: 'GitHub issue organvm/limen#1989. ## What is invisible `scripts/dispatch-beat.py` captures the engine''s stdout/stderr into its own buffer and prints only the last 6 lines — and the sensor runner swallows a rung''s stdout when it exits 0, which `dispatch-beat` always does by design (a governor hold or a failed launch must never redden the beat). Net effect, measured 2026-08-07 on a 15 MB `logs/heartbeat.out.log` that was current to'
+  predicate: 'test "$(gh issue view 1989 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1989'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1989'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T16:03:22.237Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-029e32a0f4819897090ebf77e0f18743:639:compatibility'
+    conduct_run_id: 'run-029e32a0f4819897090ebf77e0f18743'
+    conduct_lease_id: 'lease-639-029e32a0f4819897'
+    conduct_generation: 639
+  updated: '2026-08-07T16:03:22.237Z'
