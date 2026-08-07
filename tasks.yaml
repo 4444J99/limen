@@ -165365,3 +165365,36 @@ tasks:
     conduct_lease_id: 'lease-636-32bfc5ea75c29799'
     conduct_generation: 636
   updated: '2026-08-07T15:19:14.977Z'
+- id: 'GH-organvm-limen-1995'
+  title: 'Dispatch creates real jules work but records no receipt — the lane is pinned at 25/day and the daily cap does not bind'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/1995'
+  context: 'GitHub issue organvm/limen#1995. ## The observation 2026-08-07, after #1973 / #1984 / #1987 restored dispatch: **14 live jules sessions on `organvm/limen`**, created today, several already In Progress. The board recorded **none** of them. | surface | what it says | |---|---| | `jules remote list --session` | 14 live sessions on `organvm/limen`, created today | | live projection `tasks.yaml` | `budget.track.date: ''2026-07-26''`, `s'
+  predicate: 'test "$(gh issue view 1995 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1995'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1995'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T16:03:10.856Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-fe8c8feb7628d08c006584ea1889c9b4:637:compatibility'
+    conduct_run_id: 'run-fe8c8feb7628d08c006584ea1889c9b4'
+    conduct_lease_id: 'lease-637-fe8c8feb7628d08c'
+    conduct_generation: 637
+  updated: '2026-08-07T16:03:10.856Z'
