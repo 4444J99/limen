@@ -959,7 +959,8 @@
         "If a rename is chosen the system runs the nomenclator mint (scripts/nomenclator.py --check <name> -> roll.yaml row), then ARC 3 of the 2026-07-30 plan: GitHub rename with redirects, CLI compat shim, LIMEN_*/new-prefix alias layer accepted forever, internals migrating opportunistically — no big-bang cutover, nothing breaks on day 0."
       ],
       "note": "Scale of what the name binds today: ~258 LIMEN_* parameters, com.limen.* LaunchAgents, ~/.limen.env, install.sh, the limen CLI + Homebrew formula, the limen-runtime Worker, limen-dashboard.pages.dev. The alias-layer design in ARC 3 makes any answer safe; the only unsafe move is executing a rename from an external charter without this ruling.",
-      "issue": 1934
+      "issue": 1934,
+      "unlocks": "the entire rename/keep track of the 2026-07-30 PORTVS/ASTRA plan (ARC 3): nomenclator mint, GitHub rename with redirects, CLI compat shim, LIMEN_* alias layer — all parked until this one word; also closes the naming loop the 2026-08-06 external charters kept reopening"
     }
   ]
 }
