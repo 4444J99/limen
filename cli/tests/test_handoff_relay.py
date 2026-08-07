@@ -172,6 +172,20 @@ def test_dispatchable_next_skips_successor_required_open_row():
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
+def test_dispatchable_next_skips_operator_paused_open_row():
+    mod = _load()
+    tasks = [
+        _task("PAUSED", priority="critical", labels=["operator-paused"]),
+        _task("READY", priority="medium"),
+    ]
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+    assert admission["dispatchable_next"]["id"] == "READY"
+    assert admission["reason_counts"]["operator_paused"] == 1
+
+
 def test_dispatchable_next_reports_stable_work_loan_denial() -> None:
     mod = _load()
     legacy = _task("LEGACY", priority="critical")
