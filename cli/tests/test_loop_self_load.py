@@ -252,5 +252,35 @@ def test_the_extractor_fails_loudly_if_the_rung_moves() -> None:
     assert calls == 2, f"expect exactly the `list` probe and the `kickstart` effector, got {calls}"
 
 
+def test_the_rung_runs_above_the_autonomy_governor() -> None:
+    """A paused beat must still be able to reload its own body — and that must be a DECIDED order.
+
+    Observed 2026-08-07: five sandbox drives of the real loop printed the self-load line before
+    "autonomy paused by governor", so the rung already acted during a pause — but nothing declared
+    that, and no test held it, so a future reorder could silently invert it either way.
+
+    The order is deliberate. A pause governs OUTWARD action (dispatching, spending, sending, writing
+    to the keeper); loading the code this process is already meant to be running is none of those,
+    which is the same reasoning the SessionEnd drain states for itself one line below. And gating
+    self-load on the governor would produce the worst available case: a pause is exactly when a fix
+    is most likely to be merged and least likely to be noticed as dark, so the daemon would drift
+    arbitrarily far from its own script and then resume, on release, still running the stale body.
+
+    Reversing it is defensible; doing so SILENTLY is not. This test is what makes it an argument.
+    """
+    lines = LOOP.read_text().splitlines()
+    rung = next(i for i, line in enumerate(lines) if line.strip() == GUARD_OPEN)
+    governor = next(
+        (i for i, line in enumerate(lines) if "autonomy-governor.py" in line and "MODE=" in line),
+        None,
+    )
+    assert governor is not None, "the governor mode check moved — re-anchor this test rather than deleting it"
+    assert rung < governor, (
+        "the self-load rung is now BELOW the autonomy governor check, so a paused daemon can no "
+        "longer reload its own body. If that reversal is intended, say why in the rung's comment "
+        "and update this test; do not let it happen as a side effect of moving code."
+    )
+
+
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(pytest.main([__file__, "-q"]))
