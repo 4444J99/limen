@@ -165148,3 +165148,37 @@ tasks:
     conduct_run_id: 'run-d92fa00370f9684161c0bb06909dfb3c'
     conduct_lease_id: 'lease-629-d92fa00370f96841'
     conduct_generation: 629
+- id: 'GH-organvm-limen-1970'
+  title: 'L-FLYWHEEL-VALVE-ARM — arm the two reviewed flywheel apply-valves (backfill supply + owner-route drain landing)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1970'
+  context: 'GitHub issue organvm/limen#1970. Lever L-FLYWHEEL-VALVE-ARM in his-hand-levers.json (added 2026-08-07 by the flywheel session; issue pointer minted during closeout parity heal). One paste: printf ''\nexport LIMEN_WORK_LOAN_BACKFILL_APPLY=1\nexport LIMEN_OWNER_ROUTE_DRAIN_APPLY=1\n'' >> ~/.limen.env && launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat Dispatch is already live (25/day bootstrap); this only opens the ramp toward'
+  predicate: 'test "$(gh issue view 1970 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1970'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1970'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-07T14:01:23.871Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-eeb513d14a81d712f86ab3db424e3a34:631:compatibility'
+    conduct_run_id: 'run-eeb513d14a81d712f86ab3db424e3a34'
+    conduct_lease_id: 'lease-631-eeb513d14a81d712'
+    conduct_generation: 631
+  updated: '2026-08-07T14:01:23.871Z'
