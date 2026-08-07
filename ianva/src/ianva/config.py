@@ -36,7 +36,11 @@ class GatewayConfig:
 
     proxy_bin: str = "uvx"
     # mcp-proxy client mode: --transport streamablehttp connects to ianva's streamable-HTTP endpoint.
-    proxy_args: list[str] = field(default_factory=lambda: ["mcp-proxy", "--transport", "streamablehttp"])
+    # mcp<1.17 pin: mcp-proxy (through 0.x) imports request_ctx, removed from the mcp SDK after
+    # 1.16 — unpinned, uvx resolves an incompatible pair and the shim dies at import time.
+    proxy_args: list[str] = field(
+        default_factory=lambda: ["--with", "mcp<1.17", "mcp-proxy", "--transport", "streamablehttp"]
+    )
 
     registry: str = ""  # defaults to paths.DEFAULT_REGISTRY when empty
     extra: str = ""  # defaults to paths.UPSTREAMS_JSON when empty
