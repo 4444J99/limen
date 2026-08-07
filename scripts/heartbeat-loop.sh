@@ -416,6 +416,22 @@ while true; do
     # unacknowledged suffix pending. The local tasks.yaml is read-only cache evidence, never a
     # lifecycle writer. Idempotent: an empty inbox is an instant no-op.
     [ "${LIMEN_TABVLARIVS:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/tabularius-organ.py" 2>&1 | tail -1 || true
+    # CANONICAL BOARD RECONCILE — the BOARD-INTEGRITY preflight above reads tasks.yaml, which
+    # mirrors the keeper only after a board-publication PR merges to main. When that merge stalls,
+    # canonical drift lands somewhere NO self-heal rung can see, and each one reports a healthy
+    # board while looking at a stale copy of it. Measured 2026-08-07: twelve needs-human-labelled
+    # ASK-quicken-* tasks (login/credential/delete/send) sat at `open` on the keeper's published
+    # projection while main had them correctly at needs_human — so heal-board found nothing wrong
+    # while the canonical board was the one offering human-gated levers to the fleet, AND that same
+    # drift held main red on validate-task-board.py (needs-human-in-open), blocking the very
+    # publication merge that would have refreshed the mirror. A closed loop where the drift
+    # protects itself from the repair; this line is what opens it. Submits through the authenticated
+    # relay with the published board as the explicit compare-and-swap base, never writes locally,
+    # and no-ops when the publication ref is unreadable. Fail-open like its siblings.
+    # ORDER: this runs BEFORE the publication rung below, because the drift it repairs is exactly
+    # what holds validate-task-board red on the publication PR. Heal-then-publish converges in one
+    # beat; publish-then-heal opens a red PR and waits for the next one.
+    [ "${LIMEN_BOARD_CANONICAL_HEAL:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/heal-board.py" --canonical 2>&1 | tail -1 || true
     # BOARD PUBLICATION — open the PR that carries the keeper's published projection into main. The
     # PR-opening half of preserve_board_projection was retired with the local publication writer and
     # never replaced (BOARD_PUBLICATION_TITLE has been a dead constant since), so the keeper kept

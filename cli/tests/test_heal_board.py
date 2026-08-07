@@ -30,6 +30,93 @@ def run_heal_board(tmp_path: Path, *args: str) -> subprocess.CompletedProcess[st
     )
 
 
+def _board_yaml(status: str) -> str:
+    return yaml.safe_dump(
+        {
+            "version": "1.0",
+            "tasks": [
+                {
+                    "id": "ASK-human-gated",
+                    "title": "a human-gated ask",
+                    "target_agent": "codex",
+                    "status": status,
+                    "created": "2026-06-30",
+                    "labels": ["needs-human"],
+                }
+            ],
+        },
+        sort_keys=False,
+    )
+
+
+def _git(cwd: Path, *args: str) -> None:
+    subprocess.run(
+        ["git", *args],
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "GIT_AUTHOR_NAME": "t",
+            "GIT_AUTHOR_EMAIL": "t@t",
+            "GIT_COMMITTER_NAME": "t",
+            "GIT_COMMITTER_EMAIL": "t@t",
+        },
+    )
+
+
+def test_canonical_reconcile_skips_when_the_publication_ref_is_unreadable(tmp_path: Path) -> None:
+    # Fail OPEN: a shallow clone or unfetched remote must not fail the beat, and must not guess.
+    (tmp_path / "tasks.yaml").write_text(_board_yaml("needs_human"))
+    result = run_heal_board(tmp_path, "--canonical", "--dry-run")
+    assert result.returncode == 0
+    assert "canonical reconcile skipped" in result.stdout
+
+
+def test_canonical_reconcile_sees_drift_the_local_board_cannot(tmp_path: Path) -> None:
+    """The structural point: every other repair reads the local mirror, so canonical drift is
+    invisible to all of them. Here the local board is HEALTHY (`needs_human`) while the keeper's
+    published projection has the same task regressed to a dispatchable `open` — the 2026-08-07
+    ASK-quicken-* shape. The default pass must report healthy; --canonical must report the drift.
+    """
+    _git(tmp_path, "init", "-q", "-b", "main")
+    (tmp_path / "tasks.yaml").write_text(_board_yaml("open"))
+    _git(tmp_path, "add", "tasks.yaml")
+    _git(tmp_path, "commit", "-qm", "canonical: task regressed to open")
+    _git(tmp_path, "branch", "published")
+
+    # the local mirror is correct; only the published ref carries the regression
+    (tmp_path / "tasks.yaml").write_text(_board_yaml("needs_human"))
+
+    env_ref = {"LIMEN_BOARD_CANONICAL_REF": "published"}
+
+    local = run_heal_board(tmp_path, "--check")
+    assert local.returncode == 0, local.stdout
+    assert "healthy" in local.stdout
+
+    canonical = subprocess.run(
+        [sys.executable, str(SCRIPT), "--canonical", "--check"],
+        text=True,
+        capture_output=True,
+        check=False,
+        env={
+            **os.environ,
+            "LIMEN_ROOT": str(tmp_path),
+            "LIMEN_TASKS": str(tmp_path / "tasks.yaml"),
+            "LIMEN_BOARD_SHRINK_FLOOR": "0",
+            "PYTHONPATH": str(CLI_SRC),
+            **env_ref,
+        },
+    )
+    assert canonical.returncode == 1, canonical.stdout
+    assert "1 needs-human" in canonical.stdout
+    assert "ASK-human-gated" in canonical.stdout
+
+    # and it never writes the local projection — the keeper stays the only board writer
+    assert yaml.safe_load((tmp_path / "tasks.yaml").read_text())["tasks"][0]["status"] == "needs_human"
+
+
 def test_heal_board_repairs_reopened_done_task(tmp_path: Path) -> None:
     tasks = tmp_path / "tasks.yaml"
     tasks.write_text(

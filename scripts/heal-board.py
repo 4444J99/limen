@@ -44,10 +44,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import load_limen_file, queue_lock  # noqa: E402
-from limen.models import VALID_STATUSES, DispatchLogEntry, Task  # noqa: E402
+from limen.models import VALID_STATUSES, DispatchLogEntry, LimenFile, Task  # noqa: E402
 from limen.tabularius import apply_limen_file_sync, restore_limen_projection_text  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -204,6 +206,94 @@ def _apply_lifecycle_repairs(tasks: list[Task], now: datetime) -> tuple[list[str
     return reopened, reconciled, mismatched
 
 
+CANONICAL_REF = os.environ.get("LIMEN_BOARD_CANONICAL_REF", "origin/tabularius/board-projection")
+
+
+def _canonical_board() -> LimenFile | None:
+    """The keeper's PUBLISHED projection, read offline from its publication ref.
+
+    EVERY repair in this organ reads ``BOARD`` — the local projection — which mirrors the keeper
+    only after a board-publication PR merges to ``main``. When that merge stalls, canonical state
+    drifts somewhere no self-heal rung can see, and each one reports a healthy board while looking
+    at a stale copy of it.
+
+    Measured 2026-08-07: twelve ``needs-human``-labelled ``ASK-quicken-*`` tasks (login, credential,
+    d2l, delete, send, and seven escalations) sat at ``open`` on the keeper's published projection
+    while ``main`` had them correctly at ``needs_human``. So the needs-human reconcile below — which
+    exists precisely to stop the fleet re-picking a human-gated lever — read the local board, found
+    nothing wrong, and did nothing, while the canonical board was the one offering delete/send atoms
+    to agents. It also held ``main`` red on ``validate-task-board.py``
+    (``needs-human-in-open``), which is what blocked the publication merge that would have refreshed
+    the local projection: a closed loop where the drift protects itself from the repair.
+
+    Read from the publication ref rather than over HTTP because that ref *is* the projection
+    contract (the keeper publishes only through it) and a several-MB fetch has no place on a beat
+    rung. If the ref is absent — a shallow clone, an unfetched remote — this returns ``None`` and the
+    caller skips rather than guessing; and if the keeper has published past this head, the
+    compare-and-swap precondition simply fails and the next pass re-derives.
+    """
+    try:
+        raw = subprocess.run(
+            ["git", "-C", str(ROOT), "show", f"{CANONICAL_REF}:tasks.yaml"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if raw.returncode != 0 or not raw.stdout.strip():
+        return None
+    try:
+        return LimenFile.model_validate(yaml.safe_load(raw.stdout))
+    except Exception:
+        return None
+
+
+def repair_canonical(*, check: bool, dry_run: bool) -> int:
+    """Run the same lifecycle repairs against the keeper's published projection.
+
+    Submitted through the authenticated relay with the published board as the explicit ``before``,
+    so every ticket's compare-and-swap precondition is computed from canonical state instead of the
+    local mirror. Nothing is written locally: the keeper remains the only board writer.
+    """
+    canonical = _canonical_board()
+    if canonical is None:
+        print(f"heal-board: canonical reconcile skipped; {CANONICAL_REF}:tasks.yaml unreadable")
+        return 0
+
+    now = datetime.now(timezone.utc)
+    repaired = canonical.model_copy(deep=True)
+    reopened, reconciled, mismatched = _apply_lifecycle_repairs(repaired.tasks, now)
+
+    if not reopened and not reconciled and not mismatched:
+        print(f"heal-board: OK — canonical projection healthy at {CANONICAL_REF} (total={len(canonical.tasks)})")
+        return 0
+
+    summary = (
+        f"canonical drift at {CANONICAL_REF}: "
+        f"{len(reopened)} reopened-done, {len(reconciled)} needs-human, {len(mismatched)} log-mismatch"
+    )
+    if reconciled:
+        summary += " — needs-human: " + ", ".join(reconciled[:12])
+    if check:
+        print(f"heal-board: {summary}")
+        return 1
+    if dry_run:
+        print(f"heal-board: WOULD reconcile {summary}")
+        return 0
+
+    apply_limen_file_sync(
+        BOARD,
+        repaired,
+        agent="heal-board",
+        session_id="canonical-reconcile",
+        before=canonical,
+    )
+    print(f"heal-board: reconciled {summary}")
+    return 0
+
+
 def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
     """Run the healthy-board lifecycle repairs (reopened-done + needs-human reconcile).
 
@@ -282,7 +372,19 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="auto-restore a collapsed/unloadable tasks.yaml")
     ap.add_argument("--check", action="store_true", help="report only; exit 1 if collapsed, no writes")
     ap.add_argument("--dry-run", action="store_true", help="report what would be restored; no writes")
+    ap.add_argument(
+        "--canonical",
+        action="store_true",
+        help=(
+            "run the lifecycle repairs against the KEEPER's published projection instead of the "
+            "local mirror (the drift no other self-heal rung can see); submits through the relay, "
+            "never writes locally"
+        ),
+    )
     args = ap.parse_args(argv)
+
+    if args.canonical:
+        return repair_canonical(check=args.check, dry_run=args.dry_run)
 
     loadable, total, active = board_health(BOARD)
     collapsed = (not loadable) or (total <= FLOOR)

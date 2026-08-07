@@ -4311,6 +4311,18 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Base branch scripts/publish-board-pr.sh targets. Per ci.yml's board fast lane a board-projection PR implicates no code, so the matrix runs post-merge for check-main-green's exact-head evidence rather than on the PR's critical path."
+  LIMEN_BOARD_CANONICAL_HEAL:
+    default: "1"               # ON — reconcile the KEEPER's published projection, not just the local mirror
+    env: LIMEN_BOARD_CANONICAL_HEAL
+    self_update: none
+    owner: limen-daemon
+    note: "Whether the beat runs `scripts/heal-board.py --canonical`, applying the same lifecycle repairs to the keeper's PUBLISHED projection instead of the local mirror. Every other self-heal rung reads tasks.yaml, which mirrors the keeper only after a board-publication PR merges to main — so when that merge stalls, canonical drift lands where no rung can see it and each reports a healthy board while looking at a stale copy. Measured 2026-08-07: twelve needs-human-labelled ASK-quicken-* tasks (login/credential/delete/send) sat at `open` on the keeper while main had them at needs_human, so heal-board found nothing wrong while the canonical board offered human-gated levers to the fleet — and that same drift held main red on validate-task-board.py (needs-human-in-open), blocking the very publication merge that would have refreshed the mirror. Submits through the authenticated relay with the published board as the explicit compare-and-swap base; never writes locally. Set 0 to disable."
+  LIMEN_BOARD_CANONICAL_REF:
+    default: "origin/tabularius/board-projection"   # the keeper's publication ref IS the projection contract
+    env: LIMEN_BOARD_CANONICAL_REF
+    self_update: none
+    owner: tabularius
+    note: "Which ref `heal-board.py --canonical` reads the keeper's published board from. Read from the publication ref rather than over HTTP because that ref is the projection contract (the keeper publishes only through it) and a several-MB fetch has no place on a beat rung. An unreadable ref (shallow clone, unfetched remote) makes the rung a no-op rather than a guess; a keeper that has published past this head simply fails the compare-and-swap and the next pass re-derives."
   LIMEN_TABVLARIVS:
     default: "1"               # ON — the record-keeper drains the ticket inbox onto the board each beat
     env: LIMEN_TABVLARIVS
