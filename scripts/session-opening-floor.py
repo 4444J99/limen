@@ -188,7 +188,11 @@ def rows(levers_text: str = "", registry_path: Path | None = None) -> list[dict]
             row["detail"] = f"pin={value!r} at rung {verdict['rung']!r} <= ceiling {verdict['ceiling']!r}"
         elif verdict["state"] == "unresolved":
             row["verdict"] = "unresolved"
-            row["detail"] = f"pin={value!r} matches no rung of {ladder} — cannot be placed"
+            # The reader names which input failed — the pin or this lane's DECLARED ceiling. Prefer
+            # it: a lane whose census row declares a ceiling outside its own ladder is a real defect
+            # (a codex `high` read as `haiku` is how this class was found), and the pin-shaped
+            # fallback text would blame the wrong side.
+            row["detail"] = verdict.get("detail") or f"pin={value!r} matches no rung of {ladder} — cannot be placed"
         else:
             cited = bool(levers_text) and ("L-LANE-OPENING-FLOOR" in levers_text or vendor.name in levers_text)
             row["verdict"] = "above-ceiling" if cited else "ABOVE-CEILING"
