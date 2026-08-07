@@ -346,23 +346,55 @@ def audit_workflow(
     }
 
 
+def _harness_paths() -> Any:
+    """Load ``limen.harness_paths`` BY FILE PATH — same self-contained importlib load as
+    :func:`_model_selection`, same rationale. Fail-open to None so the guard still runs
+    standalone; callers then fall back to the legacy ``~/.claude/projects`` root."""
+    try:
+        import importlib.util
+
+        root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
+        path = root / "cli" / "src" / "limen" / "harness_paths.py"
+        if not path.exists():
+            path = Path(__file__).resolve().parents[1] / "cli" / "src" / "limen" / "harness_paths.py"
+        spec = importlib.util.spec_from_file_location("_limen_harness_paths_guard", path)
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    except Exception:
+        return None
+
+
+def _session_roots() -> list[Path]:
+    raw = os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR")
+    if raw:
+        return [Path(raw)]
+    hp = _harness_paths()
+    if hp is None:
+        return [Path.home() / ".claude" / "projects"]
+    repo_root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
+    return [root / "projects" for root in hp.harness_roots(repo_root=repo_root)]
+
+
 def _find_session_dir(session: str) -> Path:
-    root = Path.home() / ".claude" / "projects"
-    matches = list(root.glob(f"*/{session}"))
-    if not matches:
-        raise FileNotFoundError(f"no Claude session directory found for {session}")
-    return matches[0]
+    for root in _session_roots():
+        matches = list(root.glob(f"*/{session}"))
+        if matches:
+            return matches[0]
+    raise FileNotFoundError(f"no Claude session directory found for {session}")
 
 
 def _find_session_jsonl(session_or_path: str) -> Path:
     p = Path(session_or_path).expanduser()
     if p.exists():
         return p
-    root = Path.home() / ".claude" / "projects"
-    matches = list(root.glob(f"*/{session_or_path}.jsonl"))
-    if not matches:
-        raise FileNotFoundError(f"no Claude transcript found for {session_or_path}")
-    return matches[0]
+    for root in _session_roots():
+        matches = list(root.glob(f"*/{session_or_path}.jsonl"))
+        if matches:
+            return matches[0]
+    raise FileNotFoundError(f"no Claude transcript found for {session_or_path}")
 
 
 def _iter_jsonl(path: Path):
