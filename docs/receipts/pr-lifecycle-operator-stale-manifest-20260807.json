@@ -1,0 +1,280 @@
+{
+  "apply_receipt": {
+    "applied_at": "2026-08-07T11:14:14.110385Z",
+    "close_effects": 0,
+    "effect_count": 25,
+    "immutable_archived_item_count": 0,
+    "immutable_archived_repository_count": 0,
+    "immutable_archived_repository_hashes": [],
+    "merge_effects": 0,
+    "repository_count": 3,
+    "verified_count": 25
+  },
+  "cohort": "operator-stale",
+  "disposition": "lifecycle:blocked",
+  "effect": "add-label:lifecycle:blocked",
+  "generated_at": "2026-08-07T11:09:53.468013Z",
+  "items": [
+    {
+      "draft": false,
+      "head_oid": "f6cabbf748eee51819ff6500af105d1a6e5cdb2a",
+      "number": 457,
+      "pr_key": "92ca75c907bc4896d1ed767dd8326f00aeed6b83c7c157bcc39f833574f881a4",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen GH-organvm-i-theoria-github-451] \ud83d\udea8 Security Alert: Potential Secrets Detected in Code",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/457"
+    },
+    {
+      "draft": false,
+      "head_oid": "af9232b68d53e7599d23a9d9226c561b310b0cb4",
+      "number": 458,
+      "pr_key": "d4fbc76f7f0ee1e05f71da1d5cd2d898d479b9bb4139899c349eb27987b0bf87",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen CIFIX-organvm-i-theoria--github] Fix pre-existing CI breakage (tsc/test-matrix errors) blocking all open PRs in organvm-i-theoria/.github",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/458"
+    },
+    {
+      "draft": false,
+      "head_oid": "730ee64f6729cb72c2a1c99f981a8846e505d243",
+      "number": 459,
+      "pr_key": "888603a18659988ec663b744044f060abbf5909c42c00056be780972916e87e1",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen CIFIX-organvm-i-theoria--github] Fix pre-existing CI breakage (tsc/test-matrix errors) blocking all open PRs in organvm-i-theoria/.github",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/459"
+    },
+    {
+      "draft": false,
+      "head_oid": "75124083409387595a94de91f748c8966a10be63",
+      "number": 460,
+      "pr_key": "6568d3e0e08c5412737c34705403cbb191622241b649f8a1fc2fead857b2311c",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen CIFIX-organvm-i-theoria-.github] CIFIX organvm-i-theoria/.github: Validate Version Control Standards, Check/Validate",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/460"
+    },
+    {
+      "draft": false,
+      "head_oid": "a1398615a984709073ed6a79fb532ff279590815",
+      "number": 461,
+      "pr_key": "f63f6c1360f0e8a4822b8563af16858c273a2f37c27cc5584e62ccdb0da22167",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "docs(limen): resolve organvm-i-theoria/.github#455",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/461"
+    },
+    {
+      "draft": false,
+      "head_oid": "8c708f734e692ee913ba65e3237c2316fd710682",
+      "number": 462,
+      "pr_key": "f8161cba11a042e58a97119ae20c54e9e50d63032c31c5d0fec798e4a3376369",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen RESOLVE-organvm-i-theoria-.github-457] resolve .github#457 (BLOCKED)",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/462"
+    },
+    {
+      "draft": false,
+      "head_oid": "ba28927b59e0c4b54358187941b77b48240a50c1",
+      "number": 463,
+      "pr_key": "4901d0aa6b9c2468be0d79d0ed201208d466e6a26d8b46c80ed68c8eda026246",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen RESOLVE-organvm-i-theoria-.github-458] resolve .github#458 (BLOCKED)",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/463"
+    },
+    {
+      "draft": false,
+      "head_oid": "d84cef8e82968e97a252adf09463b3027e351d3f",
+      "number": 465,
+      "pr_key": "da5fe2f1d1e6b26d8a1d2c790b55194e2d07fe0982b8eeef38122aec813c4cb0",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen RESOLVE-organvm-i-theoria-.github-460] resolve .github#460 (BLOCKED)",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/465"
+    },
+    {
+      "draft": false,
+      "head_oid": "ca6cc1c98b13f51f68a4395fd948070bacdd6378",
+      "number": 468,
+      "pr_key": "5fd7e6f90e482ad878cb4988062ccc98d6354f7d8c48259ac1341ddfbf03a5d2",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen RESOLVE-organvm-i-theoria-.github-459] resolve .github#459 (BLOCKED)",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/468"
+    },
+    {
+      "draft": false,
+      "head_oid": "742f32fa10f360e6b15106165e147b932517815a",
+      "number": 470,
+      "pr_key": "71b2c66ba2084033bda3de447de832fe3b29c6763f884344654a43b0548645b0",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen RESOLVE-organvm-i-theoria-.github-453] resolve .github#453 (BLOCKED)",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/470"
+    },
+    {
+      "draft": false,
+      "head_oid": "e79d62087c422f03a5a45091a6aed1b154d38d8b",
+      "number": 471,
+      "pr_key": "ec0ac365446c9d7e68e65ccc0d98049a077f22c8b9534ed2efaf61418d91cc20",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "fix: resolve security alert potential secrets detected",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/471"
+    },
+    {
+      "draft": false,
+      "head_oid": "0c21ca5b824dc139b2ed35fb3dbb3755516ef99a",
+      "number": 472,
+      "pr_key": "6cd52850559db3e353e94219e705f8e876f78de695d0d8fe1367211355fa9689",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen GEN-organvm-i-theoria-.github-ci-green-0620] Make organvm-i-theoria/.github CI green",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/472"
+    },
+    {
+      "draft": false,
+      "head_oid": "29b3b61a59f95e350cad93e9fff28c4797c2d941",
+      "number": 473,
+      "pr_key": "4d4c9d2435c3eb2dfaa9d86ab37c85b0d3313a79b0e37b5061c42acb9317e189",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen GEN-organvm-dot-github--theoria-test-coverage-0620] Raise test coverage in organvm/dot-github--theoria",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/473"
+    },
+    {
+      "draft": false,
+      "head_oid": "4033b9633c2f8feec971413e06f6890feaac1197",
+      "number": 476,
+      "pr_key": "26d0388e7dff859684e62dcc6b68611f28ac9058a66409fcee58909190a72f63",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "DISCOVERY: rank organvm/dot-github--theoria \u2014 AI capability registry",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/476"
+    },
+    {
+      "draft": false,
+      "head_oid": "8c97cc4a77f5a6a35b053bb91ed31864c2c5e876",
+      "number": 477,
+      "pr_key": "44318e5735118d678bd18d7dbd0d4bea1b4975466f1694b7f81c7d604868bb8c",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "chore: [limen jules GH-organvm-dot-github-theoria-474] \ud83d\udcc5 Staggered Walkthrough Schedule - Week of 2026-06-2",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/477"
+    },
+    {
+      "draft": false,
+      "head_oid": "f1ebf2388b24d41e66904b167b68184f0a9a27b7",
+      "number": 478,
+      "pr_key": "13d14cff54debd13e386aca70d998dfe9bac46b1bc45aeaa9d85ceaa6f119291",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen jules GH-organvm-dot-github-theoria-474] \ud83d\udcc5 Staggered Walkthrough Schedule - Week of 2026-06-2",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/478"
+    },
+    {
+      "draft": false,
+      "head_oid": "6157bf6c88baaf05145c15ad210982f959192306",
+      "number": 479,
+      "pr_key": "bdab86692688301cbe1dd41535246b1131882c284447573b503027ea337e3b4f",
+      "private": false,
+      "repository": "organvm-i-theoria/.github",
+      "title": "[limen jules GH-organvm-dot-github-theoria-474] \ud83d\udcc5 Staggered Walkthrough Schedule - Week of 2026-06-2",
+      "url": "https://github.com/organvm-i-theoria/.github/pull/479"
+    },
+    {
+      "draft": true,
+      "head_oid": "669b74e90c1864bcfb337a9d1cef42d5353132e6",
+      "number": 1554,
+      "pr_key": "99e4e24990d4de45458f1ba8afa99361fee0a41ec9695bbfb7ba0325407c1956",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Preserve canonical MCP lock drift",
+      "url": "https://github.com/organvm/limen/pull/1554"
+    },
+    {
+      "draft": false,
+      "head_oid": "4c0b782ebfa618d307e99ce96322b61429fb8952",
+      "number": 1605,
+      "pr_key": "289ff271c9378bcb25eb82a0524571172c63f34b90e7c125d28f8be28f0d6c4a",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "feat(representation): compose the career/network portal",
+      "url": "https://github.com/organvm/limen/pull/1605"
+    },
+    {
+      "draft": false,
+      "head_oid": "f002f973d7f2d46cb218fe49edebfa43d43cc523",
+      "number": 1606,
+      "pr_key": "7884c11890585657514d125e3db34f1bfb1d71e4cafa94613980f5205385f1c9",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Enforce Prima Materia alpha-to-omega custody",
+      "url": "https://github.com/organvm/limen/pull/1606"
+    },
+    {
+      "draft": false,
+      "head_oid": "f832176fc4eee7ebb1183284f049157dde2e860d",
+      "number": 1679,
+      "pr_key": "86d30c0ebd5f0c335d3dd2168d19849f0c253699523e6c6b91e9615b05154a5c",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "feat(conduct): add authenticated full-mesh canary",
+      "url": "https://github.com/organvm/limen/pull/1679"
+    },
+    {
+      "draft": false,
+      "head_oid": "120f4816e4e22cc5d7af990b0f1443bc2aaba17e",
+      "number": 1691,
+      "pr_key": "e4bb02e6f41c769173bdbdc2105ad484c058092ff50f368df895e2def72f108f",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Guard campaign relay providers with native admission",
+      "url": "https://github.com/organvm/limen/pull/1691"
+    },
+    {
+      "draft": false,
+      "head_oid": "bba9c6a53fd7b4303dda8bbc3d985c32acabd518",
+      "number": 1693,
+      "pr_key": "5a5f1f611b4cde0b460917361ac29c7be901465e6d8b0b16e520db36ff4748dc",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "fix(conduct): close relay lifecycle cleanup gaps",
+      "url": "https://github.com/organvm/limen/pull/1693"
+    },
+    {
+      "draft": false,
+      "head_oid": "03c0046624eb72b173e27736cd1b242bffec2c9f",
+      "number": 1705,
+      "pr_key": "1e55b5badf7a353a581b0366bbb3cddba7b2b006b938bf8b72d2fe0dbdce22e1",
+      "private": false,
+      "repository": "organvm/limen",
+      "title": "Enforce literal substrate convergence",
+      "url": "https://github.com/organvm/limen/pull/1705"
+    },
+    {
+      "draft": false,
+      "head_oid": "1bb241a108cbf0054f1daf7537feaa02393356b8",
+      "number": 6,
+      "pr_key": "f531bcc2c43be339a478dbded832494cead8f08bcbfd41c1cd6435fc917f3066",
+      "private": false,
+      "repository": "organvm/portvs",
+      "title": "Declare the literal Workspace substrate",
+      "url": "https://github.com/organvm/portvs/pull/6"
+    }
+  ],
+  "plan_sha256": "b18cde39ac29da37f655f77e432c36005e408db1fe9cdd3ec83fea63b169864b",
+  "repository_count": 3,
+  "review_basis": "Operator-owned stale owner_route PRs: fail-closed pending explicit lifecycle review (jules precedent); arms nothing.",
+  "schema": "limen.pr_lifecycle_estate_manifest.v2",
+  "scope": "complete-github-estate",
+  "selected_count": 25,
+  "source_ledger_content_sha256": "cb6dc07aa4689a53d9e4ef34063b942ceaaad44c223a9840f16275d1ecec5c07",
+  "source_lifecycle_untyped_count": 283,
+  "source_open_pr_count": 1300,
+  "status": "applied_verified",
+  "unselected_untyped_count": 217
+}
