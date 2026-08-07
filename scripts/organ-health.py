@@ -270,6 +270,40 @@ def _json_field_ts(path, *fields):
     return None
 
 
+def _json_nested_error(path, *trails):
+    """First recorded failure inside an organ's OWN artifact, or None.
+
+    Freshness answers "did it run"; it cannot answer "did it work". Every signal this file
+    reads — the voice stamp and the artifact's `generated` field — is written at the END of a
+    run that completed, including a run whose effector half failed and swallowed the error to
+    stay fail-open. Such an organ is fresh, green, and not delivering.
+
+    That is not hypothetical: routine-freshness ran for 50 consecutive days at severity:silent
+    while a keeper 409 killed its atom-hanging half on every pass (fixed in #1999). The repair
+    made the failure non-fatal and RECORDED it in the artifact — which moved the defect from
+    "crashes silently" to "records silently", because nothing read the record. This reads it.
+
+    Fail-open in the reader too: an unreadable or oddly-shaped artifact is NOT a defect, or
+    every artifact format change would manufacture a false operator atom.
+
+    Each trail is a key path into the artifact, e.g. ("escalation", "error").
+    """
+    try:
+        obj = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+    for trail in trails:
+        node = obj
+        for key in trail:
+            if not isinstance(node, dict):
+                node = None
+                break
+            node = node.get(key)
+        if isinstance(node, str) and node.strip():
+            return f"{'.'.join(trail)}: {node.strip()}"
+    return None
+
+
 # ── the enrichment table ──────────────────────────────────────────────────────────────────────
 # NOT the door-list (that is DISCOVERED from the heartbeat — see _doors). This only ENRICHES a
 # discovered beat with the signal specifics the loop can't express: which VOICE stamps it, which
@@ -497,6 +531,11 @@ def _registry():
             gate_default="1",
             what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
             probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated"),
+            # This organ's whole point is hanging an operator atom when a routine goes down.
+            # If that half fails, a fresh timestamp is a lie — so read the failure it records.
+            defect=lambda: _json_nested_error(
+                LOGS / "routine-freshness.json", ("escalation", "error"), ("retire", "error")
+            ),
         ),
         # no cadence_key: session-walk-census runs inside metabolize.sh step 0j; green when its
         # per-beat census stamp is fresh.
@@ -643,6 +682,17 @@ def build():
             kind = "intended HOLD" if hold_vs_residual else "residual (capability)"
             bits = [kind] + ([f"lever {bound_lever}"] if bound_lever else []) + ([note] if note else [])
             note = " · ".join(bits)
+
+        # A recorded self-reported failure outranks freshness. Deliberately AFTER the gate branch
+        # and skipped when gated: an organ held off on purpose is not defective, and a stale
+        # artifact from before the hold must not resurrect as a "down". Reuses the existing "down"
+        # vocabulary rather than adding a status the dot/label maps and every downstream reader
+        # would have to learn.
+        defect_probe = o.get("defect")
+        defect = defect_probe() if (defect_probe and not gated) else None
+        if defect:
+            status = "down"
+            note = " · ".join([b for b in (f"self-reported defect — {defect}", note) if b])
 
         organs.append(
             {
