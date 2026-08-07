@@ -303,6 +303,11 @@ gates:
     paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]
     owner: substrate
     note: "The deployment-currency probe must persist its answer: coherent/drift/unverifiable-here are three RECORDED states, never two plus a silence. `unverifiable-here` is the load-bearing case — a consumer that cannot establish currency must be able to tell that apart from established-fine, which is the 2026-08-07 defect class in one assertion. The receipt body carries no wall-clock, so consecutive runs are byte-identical and every diff is a real change."
+  heartbeat-kickstart-guard-test:
+    command: "bash scripts/tests/heartbeat-kickstart-guard.test.sh"
+    paths: ["scripts/heartbeat-loop.sh", "scripts/tests/heartbeat-kickstart-guard.test.sh"]
+    owner: limen-daemon
+    note: "The loop-body self-load guard must ask launchd for its label, never grep the job table. `launchctl list | grep -q \"$label\"` was wrong twice: the default label is mostly dots and grep read it as a REGEX (matching `comXlimenXheartbeat`), and even `grep -F` still substring-matches a DIFFERENT job (`com.limen.heartbeat-loop`). A false positive takes the kickstart branch, so the else-branch never clears logs/.loop-update-pending and the rung its own header calls SELF-LIMITING retries every beat forever. The test extracts the shipped condition from heartbeat-loop.sh rather than re-typing it, so a regression cannot pass by being copied."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
