@@ -163559,3 +163559,37 @@ tasks:
     conduct_lease_id: 'lease-584-1fd2421120fa786d'
     conduct_generation: 584
   updated: '2026-08-07T02:31:55.925Z'
+- id: 'GH-organvm-limen-1932'
+  title: 'fable-allotment: env-pinned balance run clobbers canonical logs/fable-allotment.json'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1932'
+  context: 'GitHub issue organvm/limen#1932. Surfaced during runtime verification of #1930. A `balance` run with `LIMEN_CLAUDE_TRANSCRIPTS_DIR` pinned (including to a nonexistent path, which reads gracefully as zero spend) still writes the shared `logs/fable-allotment.json` — overwriting the live over-cap reading with `over_cap: false` until the next beat restamps. A typo''d pin thus silently re-creates the exact blindness class #1930 healed,'
+  predicate: 'test "$(gh issue view 1932 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1932'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1932'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T02:32:01.203Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-308bd53d4eb0ff0bf516d7176594c95a:585:compatibility'
+    conduct_run_id: 'run-308bd53d4eb0ff0bf516d7176594c95a'
+    conduct_lease_id: 'lease-585-308bd53d4eb0ff0b'
+    conduct_generation: 585
+  updated: '2026-08-07T02:32:01.203Z'
