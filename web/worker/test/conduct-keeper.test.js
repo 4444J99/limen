@@ -2940,3 +2940,57 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   const graph = await graphResponse.json();
   assert.equal(graph.nodes[0].lease_id, reserved.lease.lease_id);
 });
+
+// The already-homed answer is a STATUS CODE, and this keeper is the one that has to say it.
+//
+// A create carrying `expected_absent` against a board that already holds the task is refused
+// with 409. Callers — notably `_is_tolerated_already_homed` in cli/src/limen/tabularius.py —
+// classify that refusal on the code, because three keepers (this Worker, the FastAPI adapter,
+// the in-process broker) word the same condition three different ways. Reword the message here
+// and nothing breaks; change the 409 and the routine-freshness organ silently goes fatal again.
+//
+// So this asserts `.status`, never the text. `cli/tests/test_tabularius.py` holds the Python
+// side to the same number and reads this file to prove the two agree.
+test("an expected_absent create against an existing task is refused with 409, not a message", () => {
+  const board = {
+    tasks: [{
+      id: "TASK-HOMED",
+      title: "Already homed on the keeper",
+      repo: "organvm/limen",
+      status: "open",
+      budget_cost: 1,
+      created: "2026-07-18",
+      dispatch_log: [],
+    }],
+  };
+  const before = structuredClone(board);
+  const event = {
+    schema_version: "limen.task_packet_projection_event.v1",
+    event_id: "conduct:already-homed:1:compatibility",
+    timestamp: NOW.toISOString(),
+    task_id: "TASK-HOMED",
+    run_id: "run-already-homed",
+    lease_id: "lease-already-homed",
+    generation: 1,
+    agent: "tabularius",
+    session_id: "tabularius-session",
+    intent: {
+      kind: "task.upsert",
+      task_id: "TASK-HOMED",
+      expected_absent: true,
+      task: { id: "TASK-HOMED", title: "Already homed on the keeper" },
+    },
+  };
+
+  let raised;
+  try {
+    applyTaskPacketProjectionEvent(board, event);
+  } catch (err) {
+    raised = err;
+  }
+  assert.ok(raised, "an expected_absent create over an existing task must be refused");
+  assert.equal(raised.status, 409, "the already-homed refusal must carry HTTP 409");
+  // The refusal is a read-only verdict: the board must be untouched, or a "benign" 409 would
+  // still have mutated production state before the caller got to tolerate it.
+  assert.deepEqual(board, before);
+});
