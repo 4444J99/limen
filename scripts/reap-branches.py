@@ -9,19 +9,29 @@ gets hand-waved as "housekeeping" each session. That per-session judgment IS the
 this organ is the macro fix that ends it (memory: build-the-repeatable-process-not-the-one-off).
 
 Like its siblings it is an ALLOWLIST, not a denylist: it deletes a branch ONLY when it can
-positively prove the branch's work is already LANDED on the default branch (loss-free), by ONE of
-exactly two strong signals:
+positively prove the WORK SURVIVES THE DELETION, by ONE of exactly three strong signals. Two prove
+the work LANDED on the default branch; the third proves it was DECIDED AGAINST and preserved:
 
   1. TIP is an ancestor of origin/main            — a real merge / fast-forward (no commit is
      off-trunk; self-protecting — a post-merge commit would break ancestry), OR
   2. its PR is MERGED (per `gh`) AND the branch tip is NOT newer than the PR's mergedAt — the
      SQUASH-MERGE signal topology cannot see, with a belt against the "force-push new commits onto
-     an already-merged branch" loss path (an advanced tip → KEPT as unpushed work, never deleted).
+     an already-merged branch" loss path (an advanced tip → KEPT as unpushed work, never deleted), OR
+  3. its PR is CLOSED-UNMERGED (per `gh`) AND the local tip is EXACTLY that PR's headRefOid — the
+     DECIDED class. A human closed that PR: the rejection is already recorded, and GitHub preserves
+     the exact commit at `refs/pull/N/head` forever, so `git fetch origin pull/N/head` recovers it.
+     Same belt, by SHA rather than by clock: a tip that differs from the PR head carries commits
+     that exist nowhere else → KEPT as `pr-closed-but-advanced` (measured 2026-08-07: 14 of 94, so
+     the belt is load-bearing, not theoretical). Proof 3 is strictly tighter than proof 2 — an exact
+     object identity where proof 2 compares timestamps.
 
-Deleting a landed branch is loss-free (its diff is on main; the pre-squash commits stay in the
-reflog ~90d, so a mistaken delete is even recoverable). As of 2026-07-06, `--apply` still requires
-a matching human acceptance/redaction/archive event in `docs/branch-reap-acceptance.jsonl` before
-`git branch -D` runs.
+Deleting a landed branch is loss-free (its diff is on main); deleting a decided branch is loss-free
+(the exact commit is on GitHub's pull ref). In both cases the local commits also stay in the reflog
+~90d, so a mistaken delete is even recoverable. As of 2026-07-06, `--apply` still requires a matching
+human acceptance/redaction/archive event in `docs/branch-reap-acceptance.jsonl` before
+`git branch -D` runs — and the DECIDED class is deliberately NOT in STANDING_GRANT_REASONS: proof 3
+makes the class machine-provable and visible, but widening standing deletion authority over it is an
+operator decision, not this organ's to take.
 
 Deliberately NOT reap proofs (each would violate a hard-won rule):
   • patch-equivalence (`git cherry` all '-') — low-value here and easy to fool; dropped for a
@@ -29,9 +39,11 @@ Deliberately NOT reap proofs (each would violate a hard-won rule):
   • empty diff vs main — an empty/identical branch with no PR is a PLACEHOLDER, i.e. an unfulfilled
     intention (memory: empty-branch-is-a-todo); reaping it would delete intent. Kept as live-work.
 
-Everything not provably landed FAILS SAFE to KEEP:
+Everything without a surviving-work proof FAILS SAFE to KEEP:
   • an OPEN PR                          → IN-FLIGHT (kept silently),
-  • merged-PR but tip advanced past it  → LIVE-WORK (unpushed post-merge commits — surfaced), and
+  • merged-PR but tip advanced past it  → LIVE-WORK (unpushed post-merge commits — surfaced),
+  • closed-PR but tip differs from its  → LIVE-WORK (commits that exist nowhere else — surfaced),
+    headRefOid
   • real work not on main, no PR        → LIVE-WORK: an unfulfilled intention. NEVER deleted — it is
     surfaced to a git-tracked ledger (docs/branch-hygiene.md) so it "finds its location" instead of
     hanging invisibly on a machine.
@@ -43,8 +55,12 @@ squash-merged branches are conservatively KEPT until an online beat — never wr
 Dry-run by default; --apply deletes (git branch -D — safe: proven landed, reflog-recoverable).
 Use repeatable --branch NAME arguments for an exact allowlist; a missing name fails closed without
 touching any branch. With no --branch arguments the existing whole-local-ref policy is unchanged.
---check exits 1 iff any provably-landed branch still LINGERS — spent for longer than the digestion
-grace window (the fixed-point predicate wired into scripts/no-tasks-on-me.sh). A branch whose PR
+--check exits 1 iff any provably-LANDED branch still LINGERS — spent for longer than the digestion
+grace window (the fixed-point predicate wired into scripts/no-tasks-on-me.sh). It keys on
+Verdict.landed, exactly as that field's contract always claimed; before proof 3 it keyed on
+`action == "reap"` instead, which was equivalent only because every reap class was landed. The
+DECIDED class is reapable but NOT landed, so it does not redden the closeout gate: a red nobody is
+authorized to clear is how a gate trains its reader to stop looking (2026-08-07). A branch whose PR
 merged seconds ago is mid-beat housekeeping, not hanging debt; without the grace, a continuously
 merging fleet makes the closeout gate unsatisfiable at every instant. Bounded (--max), fails OPEN
 per-branch, self-throttles to once per LIMEN_BRANCH_REAP_EVERY_MIN minutes, logs
@@ -54,6 +70,8 @@ Env: LIMEN_ROOT, LIMEN_BRANCH_REAP_REPO_ROOT (optional target repository; receip
      under LIMEN_ROOT), LIMEN_BRANCH_REAP_MAX (100), LIMEN_BRANCH_REAP_EVERY_MIN (30),
      LIMEN_BRANCH_REAP_GRACE_MIN (60; --check only: a landed branch younger than this many minutes
      is digesting, not lingering — --apply eligibility is unaffected),
+     LIMEN_BRANCH_REAP_PR_LIMIT (3000; how many recent PRs to read for proofs 2/3 — hitting the
+     ceiling WARNs, because an unseen PR is indistinguishable from no PR),
      LIMEN_BRANCH_REAP_PROTECT (extra protected branch names, space-separated), LIMEN_OFFLINE.
 """
 
@@ -271,14 +289,26 @@ def _merged_at_epoch(iso: str | None) -> float | None:
         return None
 
 
-def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], bool]:
-    """(merged heads, open head→exact SHA, online).
+def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str, set[str]], bool]:
+    """(merged heads, open head→exact SHA, closed-unmerged head→{exact SHAs}, online).
 
     Branch names are reusable. An open PR protects a local ref only when that ref still points at
     the PR's exact remote head; a stale same-name ancestor must remain reapable.
+
+    The closed map is a SET of head SHAs per name for the same reason, read the other way: proof 3
+    needs "some closed PR preserves THIS exact commit at its pull ref", so a name that was reused
+    across several closed PRs must match on the SHA, never on the name. Collapsing it to one SHA
+    (last-wins, as merged/open do) would let an unrelated PR's identity vouch for this branch.
     """
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
-        return {}, {}, False
+        return {}, {}, {}, False
+    # `gh pr list` returns the N MOST RECENT PRs, so a limit below the repo's PR count silently
+    # blinds every proof for older heads — and silence here looks exactly like "no PR exists",
+    # i.e. livework. Measured on organvm/limen 2026-08-07 at the former hard-coded 800: of 241
+    # local branches that HAD a PR, 132 were invisible (64 CLOSED, 50 OPEN, 18 MERGED). The 50
+    # OPEN ones are the sharp edge — those heads were not being protected as in-flight at all.
+    # Raised, made tunable, and made LOUD on truncation (charter: no silent caps).
+    pr_limit = _int_env("LIMEN_BRANCH_REAP_PR_LIMIT", 3000, minimum=1)
     try:
         res = subprocess.run(
             [
@@ -290,7 +320,7 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], bool]:
                 "--json",
                 "headRefName,headRefOid,state,mergedAt",
                 "--limit",
-                "800",
+                str(pr_limit),
             ],
             cwd=str(LIMEN_ROOT),
             capture_output=True,
@@ -299,21 +329,38 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], bool]:
             env=_GIT_ENV,
         )
         if res.returncode != 0 or not res.stdout.strip():
-            return {}, {}, False
+            return {}, {}, {}, False
         prs = json.loads(res.stdout)
     except Exception:
-        return {}, {}, False
+        return {}, {}, {}, False
+    if len(prs) >= pr_limit:
+        # Hit the ceiling → older PRs were almost certainly dropped. This is NOT uniformly fail-safe,
+        # which is why it warns instead of passing quietly: a dropped MERGED or CLOSED PR only costs
+        # a proof (→ the branch is KEPT as livework), but a dropped OPEN PR removes the in-flight
+        # PROTECTION, leaving that head reapable if any other proof happens to hold. Truncation can
+        # therefore make the reaper both blinder AND bolder — never let it happen silently.
+        print(
+            f"[reap-branches] WARN — gh returned {len(prs)} PRs at the --limit ceiling ({pr_limit}); "
+            "older PRs are out of view, so some heads may be misreported as live-work AND some open "
+            "PRs may have lost their in-flight protection. Raise LIMEN_BRANCH_REAP_PR_LIMIT."
+        )
     merged: dict[str, float | None] = {}
     open_: dict[str, str] = {}
+    closed: dict[str, set[str]] = {}
     for p in prs:
         head = p.get("headRefName")
         if not head:
             continue
-        if p.get("state") == "MERGED":
+        state = p.get("state")
+        if state == "MERGED":
             merged[head] = _merged_at_epoch(p.get("mergedAt"))
-        elif p.get("state") == "OPEN":
+        elif state == "OPEN":
             open_[head] = str(p.get("headRefOid") or "")
-    return merged, open_, True
+        elif state == "CLOSED":
+            oid = str(p.get("headRefOid") or "")
+            if oid:  # an empty OID would match an unreadable local tip — never record it
+                closed.setdefault(head, set()).add(oid)
+    return merged, open_, closed, True
 
 
 @dataclass(frozen=True)
@@ -324,6 +371,10 @@ class Facts:
     pr_open: bool  # an OPEN PR exists for this head
     checked_out: bool  # checked out in some worktree
     protected: bool  # trunk / configured-protected
+    # Defaulted so older callers/tests constructing Facts positionally keep working; False is the
+    # conservative value, so an un-updated caller can only KEEP a branch, never reap one.
+    pr_closed_safe: bool = False  # proof 3: CLOSED-unmerged PR whose headRefOid IS the local tip
+    pr_closed_raw: bool = False  # a CLOSED-unmerged PR exists for this head (advance-report case)
 
 
 @dataclass(frozen=True)
@@ -334,24 +385,33 @@ class Verdict:
 
 
 def classify(f: Facts) -> Verdict:
-    """PURE predicate (the unit under test). Protective checks first; a landed proof last.
+    """PURE predicate (the unit under test). Protective checks first; a surviving-work proof last.
 
-    landed=True means "provably landed and reapable" — ONLY this drives --apply and --check. A
-    branch that is landed but checked-out/protected/in-flight is NOT reapable now, so landed=False
-    for it (it is legitimately in use; the fixed-point predicate must not fail on it)."""
+    action="reap" means "the work provably survives deletion" and drives --apply.
+    landed=True means "provably landed ON THE DEFAULT BRANCH and reapable now" and drives --check.
+    They are NOT the same set: the DECIDED class (proof 3) is reapable but not landed, because its
+    work never reached main — it was rejected, and preserved on GitHub's pull ref instead. A branch
+    that is landed but checked-out/protected/in-flight is NOT reapable now, so landed=False for it
+    (it is legitimately in use; the fixed-point predicate must not fail on it)."""
     if f.protected:
         return Verdict("keep", "protected", False)
     if f.checked_out:
         return Verdict("keep", "checked-out", False)  # in active use — reaped once its worktree frees
     if f.pr_open:
         return Verdict("keep", "inflight", False)  # a live PR — never yank it
-    # Two loss-free landed proofs. Order only sets the reported reason.
+    # Two loss-free LANDED proofs. Order only sets the reported reason.
     if f.is_ancestor:
         return Verdict("reap", "landed-ancestor", True)
     if f.pr_merged_safe:
         return Verdict("reap", "landed-pr-merged", True)  # the squash-merge case topology misses
     if f.pr_merged_raw:
         return Verdict("keep", "pr-merged-but-advanced", False)  # unpushed post-merge commits → surface
+    # The DECIDED proof, strictly after every landed proof and every merged-PR report: a merged PR
+    # must never be re-labelled as a rejection just because a same-named closed PR also exists.
+    if f.pr_closed_safe:
+        return Verdict("reap", "decided-pr-closed", False)  # rejected by a human; preserved at refs/pull/N/head
+    if f.pr_closed_raw:
+        return Verdict("keep", "pr-closed-but-advanced", False)  # commits that exist nowhere else → surface
     return Verdict("keep", "livework", False)  # unfulfilled intention — surfaced, never deleted
 
 
@@ -362,6 +422,7 @@ def gather_facts(
     merged: dict[str, float | None],
     open_: dict[str, str] | set[str],
     dname: str,
+    closed: dict[str, set[str]] | None = None,
 ) -> Facts:
     """Compute the branch's Facts via git + the precomputed gh maps. Every git/parse failure → the
     conservative value (which makes the branch HARDER to reap, never easier)."""
@@ -387,6 +448,10 @@ def gather_facts(
         # Reap only if we can prove the tip is NOT newer than the merge. Unknown merge time or tip
         # time → fail safe (treat as advanced → keep). A clean merge has tip_ct <= mergedAt.
         pr_merged_safe = bool(merged_at is not None and tip_ct is not None and tip_ct <= merged_at + ADVANCED_BUFFER_S)
+    # Proof 3. Unreadable tip → tip_oid == "" → no match, so a git failure KEEPS the branch.
+    closed_oids = (closed or {}).get(branch, set())
+    pr_closed_raw = bool(closed_oids)
+    pr_closed_safe = bool(tip_oid and tip_oid in closed_oids)
     return Facts(
         is_ancestor=is_ancestor,
         pr_merged_safe=pr_merged_safe,
@@ -394,6 +459,8 @@ def gather_facts(
         pr_open=pr_open,
         checked_out=branch in checked_out,
         protected=(branch == dname or branch in BASE_PROTECT or branch in EXTRA_PROTECT),
+        pr_closed_safe=pr_closed_safe,
+        pr_closed_raw=pr_closed_raw,
     )
 
 
@@ -427,10 +494,18 @@ def _branch_tip_desc(branch: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else "(unreadable)"
 
 
-def write_ledger(livework: list[str], advanced: list[str], inflight_n: int) -> None:
+def write_ledger(
+    livework: list[str],
+    advanced: list[str],
+    inflight_n: int,
+    closed_advanced: list[str] | None = None,
+    decided: list[str] | None = None,
+) -> None:
     """Regenerate the durable, git-tracked home for KEPT-BUT-UNDECIDED branches. Deterministic
     (sorted, stable per-branch descriptors, no volatile clock) so re-runs produce no diff unless a
     branch actually changed — an idempotent fixed point, not churn."""
+    closed_advanced = closed_advanced or []
+    decided = decided or []
     lines = [
         "# Branch hygiene — the unfinished-intention ledger",
         "",
@@ -438,12 +513,35 @@ def write_ledger(livework: list[str], advanced: list[str], inflight_n: int) -> N
         "> re-run `python3 scripts/reap-branches.py --apply` to regenerate.",
         "",
         "Spent branches (work landed on `main`) are receipt-gated reap candidates. The branches below",
-        "carry real work **not** on `main` — closed-unmerged, never-pushed, or advanced past a merge.",
-        "They are *unfulfilled intentions* (memory: empty-branch-is-a-todo), so they are **kept, never",
-        "auto-deleted** — this is their git-tracked location instead of hanging invisibly.",
+        "carry real work **not** on `main` and **not** preserved on a GitHub pull ref — never-pushed, or",
+        "advanced past the merge/close its PR recorded. They are *unfulfilled intentions* (memory:",
+        "empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is their git-tracked",
+        "location instead of hanging invisibly.",
         "Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.",
         "",
     ]
+    if decided:
+        lines.append(f"## Decided — closed PR, work preserved ({len(decided)}) — reapable, awaiting acceptance")
+        lines.append("")
+        lines.append("A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so")
+        lines.append("GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`")
+        lines.append("recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:")
+        lines.append("the intention was already decided against. They are reap candidates gated on")
+        lines.append("`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.")
+        lines.append("")
+        for b in sorted(decided):
+            lines.append(f"- `{b}` — {_branch_tip_desc(b)}")
+        lines.append("")
+    if closed_advanced:
+        lines.append(f"## Closed-but-advanced ({len(closed_advanced)}) — has commits the closed PR never saw")
+        lines.append("")
+        lines.append("These heads had a CLOSED-unmerged PR but the local tip DIFFERS from that PR's head, so")
+        lines.append("the extra commits exist **nowhere but this machine**. Never auto-deleted.")
+        lines.append("Push them as a fresh PR, or delete by hand if the extra commits are throwaway.")
+        lines.append("")
+        for b in sorted(closed_advanced):
+            lines.append(f"- `{b}` — {_branch_tip_desc(b)}")
+        lines.append("")
     if advanced:
         lines.append(f"## Merged-but-advanced ({len(advanced)}) — has commits ADDED after the PR merged")
         lines.append("")
@@ -489,7 +587,7 @@ def main() -> int:
     dref = default_ref()
     dname = default_name(dref)
     checked = checked_out_branches()
-    merged, open_, online = gh_head_states()
+    merged, open_, closed, online = gh_head_states()
     branches, missing_targets = exact_branch_allowlist(local_branches(), args.branch)
     if missing_targets:
         print(
@@ -504,21 +602,30 @@ def main() -> int:
             return 0
 
     reap: list[tuple[str, str]] = []
+    landed_reap: list[tuple[str, str]] = []  # the --check subset: reapable AND landed on the default ref
     inflight: list[str] = []
     livework: list[str] = []
     advanced: list[str] = []
+    closed_advanced: list[str] = []
+    decided: list[str] = []
     kept_reasons: dict[str, int] = {}
     for b in branches:
-        f = gather_facts(b, dref, checked, merged, open_, dname)
+        f = gather_facts(b, dref, checked, merged, open_, dname, closed)
         v = classify(f)
         if v.action == "reap":
             reap.append((b, v.reason))
+            if v.landed:
+                landed_reap.append((b, v.reason))
+            else:
+                decided.append(b)
         else:
             kept_reasons[v.reason] = kept_reasons.get(v.reason, 0) + 1
             if v.reason == "inflight":
                 inflight.append(b)
             elif v.reason == "pr-merged-but-advanced":
                 advanced.append(b)
+            elif v.reason == "pr-closed-but-advanced":
+                closed_advanced.append(b)
             elif v.reason == "livework":
                 livework.append(b)
 
@@ -529,8 +636,12 @@ def main() -> int:
     # eligibility is deliberately NOT graced: an accepted young branch reaps immediately.
     if args.check:
         grace_s = _float_env("LIMEN_BRANCH_REAP_GRACE_MIN", 60.0, minimum=0.0) * 60.0
-        lingering = _lingering(reap, merged, time.time(), grace_s)
-        young = len(reap) - len(lingering)
+        # landed_reap, NOT reap: the DECIDED class is reapable but never landed, so it is reported
+        # (below) rather than asserted to zero. Gating the closeout on it would make the gate red
+        # until an operator widens deletion authority — an unclearable red, which is how a gate
+        # stops being read at all.
+        lingering = _lingering(landed_reap, merged, time.time(), grace_s)
+        young = len(landed_reap) - len(lingering)
         young_note = f" ({young} younger than the grace window — digesting, not lingering)" if young else ""
         if lingering:
             # The advice must derive from ledger state, not a static worst case: a branch whose
@@ -563,20 +674,27 @@ def main() -> int:
             if len(lingering) > 20:
                 print(f"  … and {len(lingering) - 20} more (see scripts/reap-branches.py dry-run)")
             return 1
-        note = "" if online else " (offline — gh proof-2 skipped; ancestor-only)"
+        note = "" if online else " (offline — gh proof-2/3 skipped; ancestor-only)"
+        decided_note = (
+            f" {len(decided)} decided (closed-PR, preserved at refs/pull/N/head) awaiting acceptance."
+            if decided
+            else ""
+        )
         print(
             f"[reap-branches] ok — no provably-landed branch lingers{young_note}{note}. "
-            f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, {len(livework)} live-work kept."
+            f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, "
+            f"{len(closed_advanced)} closed-advanced, {len(livework)} live-work kept.{decided_note}"
         )
         return 0
 
     # ── dry-run / --apply ────────────────────────────────────────────────────────────────────────
     mode = "APPLY" if args.apply else "dry-run"
-    online_note = "online" if online else "offline(gh proof-2 skipped)"
+    online_note = "online" if online else "offline(gh proof-2/3 skipped)"
     print(
         f"[reap-branches] {mode}; default={dref}; {online_note}; "
-        f"{len(reap)} reapable, {len(inflight)} in-flight, {len(advanced)} merged-advanced, "
-        f"{len(livework)} live-work."
+        f"{len(reap)} reapable ({len(landed_reap)} landed, {len(decided)} decided), "
+        f"{len(inflight)} in-flight, {len(advanced)} merged-advanced, "
+        f"{len(closed_advanced)} closed-advanced, {len(livework)} live-work."
     )
 
     done = 0
@@ -616,6 +734,8 @@ def main() -> int:
                             "reaped": reaped_names,
                             "inflight": sorted(inflight),
                             "advanced": sorted(advanced),
+                            "closed_advanced": sorted(closed_advanced),
+                            "decided": sorted(decided),
                             "livework": sorted(livework),
                             "kept_reasons": kept_reasons,
                         }
@@ -634,12 +754,14 @@ def main() -> int:
                             "reaped_this_run": reaped_names,
                             "inflight": sorted(inflight),
                             "advanced": sorted(advanced),
+                            "closed_advanced": sorted(closed_advanced),
+                            "decided": sorted(decided),
                             "livework": sorted(livework),
                         },
                         indent=2,
                     )
                 )
-                write_ledger(livework, advanced, len(inflight))
+                write_ledger(livework, advanced, len(inflight), closed_advanced, decided)
         except Exception as e:  # observability must never break the beat
             print(f"[reap-branches] note: stamp/ledger write skipped ({str(e)[:80]})")
 
