@@ -17,7 +17,15 @@
 # HERMETIC: a fake `gh` on PATH serving fixtures. No network, no auth, no real PR. The stub answers
 # both surfaces the predicate uses — `gh pr list --json number` and `gh api graphql` — so the whole
 # path is exercised, not mocked out at the top.
-set -u
+#
+# `set -uo pipefail`, NOT `set -euo pipefail`. This file accumulates failures and reports every
+# probe, so `-e` would abort at the first one and hide the rest — the same reason its siblings
+# preflight-thread-state.test.sh and outbound-preflight-guard.test.sh omit it. `pipefail` needed one
+# real change to be safe: the window assertions used to pipe `run` straight into grep, and this
+# predicate exits 1 whenever findings exist, so the pipeline reported failure for a run that behaved
+# exactly as intended. Output is captured first now — exit status and printed text are different
+# questions and a pipeline was answering both at once.
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 PREDICATE="$ROOT/scripts/check-review-harvest.py"
@@ -134,18 +142,25 @@ run >/dev/null 2>&1 && fail "GraphQL bare login not matched against REST [bot] s
 # three PRs carrying seven findings aged out underneath it. A number that shrinks because you looked
 # at LESS reads exactly like progress. The bound must therefore print on BOTH verdicts, never only
 # the red one — a green that does not say what it skipped is the more dangerous of the two.
+# Output is CAPTURED, then matched — never `run | grep`. Piping conflates two different questions:
+# this predicate exits 1 whenever findings exist, which is the expected state for half these cases,
+# so under `pipefail` the pipeline reports failure for a run that behaved perfectly. Separating them
+# is what lets this file carry `pipefail` at all (see the header).
 thread false false "coderabbitai" "still open"
-GH_TOTAL=1394 run | grep -q "1393 older NOT sampled" \
+out="$(GH_TOTAL=1394 run)"
+printf '%s' "$out" | grep -q "1393 older NOT sampled" \
   && pass "a red run reports how many merged PRs were NOT sampled" \
   || fail "red run does not report the unsampled remainder"
 
 thread true false "coderabbitai" "resolved"
-GH_TOTAL=1394 run | grep -q "1393 older NOT sampled" \
+out="$(GH_TOTAL=1394 run)"
+printf '%s' "$out" | grep -q "1393 older NOT sampled" \
   && pass "a GREEN run reports the unsampled remainder too" \
   || fail "green run hides the window — 'no findings' would read as 'nothing owed anywhere'"
 
 thread true false "coderabbitai" "resolved"
-GH_TOTAL=1 run | grep -q "coverage is total" \
+out="$(GH_TOTAL=1 run)"
+printf '%s' "$out" | grep -q "coverage is total" \
   && pass "when the window covers every merged PR it says so, rather than naming a remainder of 0" \
   || fail "full coverage is not distinguished from a truncated sweep"
 
