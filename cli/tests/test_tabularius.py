@@ -43,6 +43,7 @@ from limen.tabularius import (
 )
 
 _NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _task(tid: str, **over: Any) -> dict[str, Any]:
@@ -852,3 +853,76 @@ def test_a_non_absent_precondition_failure_is_never_tolerated():
     assert tabularius._is_tolerated_already_homed(exc, create, {"T-1"}) is True
     assert tabularius._is_tolerated_already_homed(exc, create, set()) is False
     assert tabularius._is_tolerated_already_homed(RuntimeError("boom"), create, {"T-1"}) is False
+
+
+def test_every_local_refusal_of_a_settled_create_reaches_the_classifier():
+    """Completeness, not behaviour: are there only three sites, and do all three answer alike?
+
+    The earlier tests prove the sites we know about behave. This one exists because the bug
+    being guarded was a site nobody had enumerated — the local adapter's own wording, which
+    the previous prose regex did not match, so a genuinely-new atom was dropped on the floor.
+
+    Each of the three in-process paths is DRIVEN here (not asserted about), and the exception
+    it actually raises is fed to the real classifier. A fourth path added later that refuses a
+    settled create with a bare ``ValueError`` fails this test, because the classifier will
+    reject it — which is the whole point.
+    """
+    create = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"absent": True})
+    settled = _task("T-1", status="open")
+    raised: list[Exception] = []
+
+    # Site 1 — the compatibility intent builder, before anything crosses the wire.
+    with pytest.raises(TaskAlreadyHomed) as one:
+        tabularius._compatibility_intent(create, settled)
+    raised.append(one.value)
+
+    # Site 2 — the local projection of a keeper task event, over a board that already holds it.
+    event = {
+        "task_id": "T-1",
+        "intent": {"kind": "task.upsert", "task_id": "T-1", "expected_absent": True, "task": settled},
+        "event_id": "conduct:already-homed:local:1",
+    }
+    with pytest.raises(TaskAlreadyHomed) as two:
+        tabularius._project_local_task_event(_board([settled]), event)
+    raised.append(two.value)
+
+    # Site 3 — the ticket applier over an in-memory board that already holds the task.
+    tasks: OrderedDict[str, dict[str, Any]] = OrderedDict({"T-1": dict(settled)})
+    with pytest.raises(TaskAlreadyHomed) as three:
+        _apply(create, tasks, {})
+    raised.append(three.value)
+
+    assert len(raised) == 3
+    for exc in raised:
+        assert exc.task_id == "T-1"
+        assert exc.status == 409
+        assert tabularius._is_tolerated_already_homed(exc, create, {"T-1"}) is True
+
+    # Three sites, three different sentences — which is exactly why nobody reads the sentence.
+    assert len({str(exc) for exc in raised}) > 1
+
+
+def test_the_worker_and_the_python_keepers_agree_on_the_already_homed_status():
+    """Cross-language parity: one condition, three keepers, one number.
+
+    The whole tolerance path rests on 409 being what a keeper answers when a create loses to
+    an already-homed task — and the production keeper is JavaScript, so no Python test touches
+    it. This reads the Worker's own source and holds it to the number Python declares.
+
+    It deliberately asserts on the STATUS ARGUMENT, not on the message: the two implementations
+    are free to word the refusal differently (they do), and must not be free to number it
+    differently.
+    """
+    projection = ROOT / "web" / "worker" / "src" / "conduct" / "projection.js"
+    source = projection.read_text()
+    absent_branch = source.split("if (intent.expected_absent && existing)", 1)
+    assert len(absent_branch) == 2, (
+        f"{projection} no longer refuses an expected_absent create over an existing task; "
+        "the Python already-homed tolerance has nothing to key on"
+    )
+    # End at the call's own `);` — a `}` boundary would land inside the `${taskId}` literal.
+    throw = absent_branch[1].split(");", 1)[0]
+    assert f", {TaskAlreadyHomed.status}" in throw, (
+        f"the Worker's already-homed refusal must carry {TaskAlreadyHomed.status}, "
+        f"matching TaskAlreadyHomed.status; found: {throw.strip()}"
+    )

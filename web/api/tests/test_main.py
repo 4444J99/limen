@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import io
 import json
 import stat
 import sys
@@ -1712,3 +1713,51 @@ def test_task_update_rejects_oversized_label_and_url_lists(client: TestClient, t
         "urls": ["https://github.com/4444J99/limen/issues/1" for _ in range(21)],
     }
     assert client.patch("/api/tasks/LIMEN-SEC-004", json=too_many_urls).status_code == 422
+
+
+@pytest.mark.parametrize(
+    ("upstream", "expected"),
+    [
+        (409, 409),  # the already-homed refusal — the one callers classify on
+        (422, 422),  # any other 4xx keeps its own code
+        (503, 502),  # 5xx becomes a bad-gateway; the adapter does not impersonate the keeper
+    ],
+)
+def test_a_4xx_from_the_conduct_keeper_reaches_the_caller_with_its_own_code(
+    upstream: int,
+    expected: int,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """This adapter is a relay, and the already-homed contract depends on it relaying faithfully.
+
+    ``_is_tolerated_already_homed`` in cli/src/limen/tabularius.py treats a 409 on a create as
+    "the keeper already holds it". Between that caller and the Worker sits this adapter. If it
+    ever collapsed 4xx into a generic 502, a genuine already-homed answer would arrive as an
+    opaque failure and the routine-freshness organ would go fatal again — the exact regression
+    the status-based tolerance was built to end.
+
+    So the passthrough is asserted, not assumed. 409 is the case that matters; the other two
+    rows pin the surrounding behaviour so a future "simplify the error handling" cannot quietly
+    flatten it.
+    """
+    import urllib.error
+
+    monkeypatch.setenv("LIMEN_CONDUCT_URL", "https://keeper.example/api")
+    monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "token")
+
+    def refuse(*_args, **_kwargs):
+        raise urllib.error.HTTPError(
+            url="https://keeper.example/api/conduct/runs",
+            code=upstream,
+            msg="rejected",
+            hdrs=None,
+            # Keeper-authored prose, deliberately not the Worker's wording: the caller must
+            # never need this text, only the code.
+            fp=io.BytesIO(b"ASK-routine-x is no longer absent"),
+        )
+
+    monkeypatch.setattr(main.urllib.request, "urlopen", refuse)
+
+    with pytest.raises(main.HTTPException) as excinfo:
+        main.conduct_request("POST", "/conduct/runs", {"any": "payload"})
+    assert excinfo.value.status_code == expected
