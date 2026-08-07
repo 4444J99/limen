@@ -39,6 +39,9 @@ for a in "$@"; do
   case "$a" in
     *totalCount*) printf '{"data":{"repository":{"pullRequests":{"totalCount":%s}}}}\n' "${GH_TOTAL:-1}"; exit 0 ;;
     *reviewThreads*) cat "$GH_THREADS"; exit 0 ;;
+    # The resolve mutation the predicate PRINTS, executed back against this stub. Echoing the query
+    # verbatim lets the caller assert the thread id survived the round trip intact.
+    *resolveReviewThread*) printf '{"data":{"resolveReviewThread":{"thread":{"isResolved":true}}},"sent":"%s"}\n' "$a"; exit 0 ;;
   esac
 done
 # `gh pr list ... --json number`
@@ -74,9 +77,29 @@ thread false false "coderabbitai" "Make accepted baseline writes atomic."
 out="$(run)"; rc=$?
 [ "$rc" = "1" ] && pass "an unresolved agent thread on a merged PR exits 1" \
   || fail "unresolved agent thread must exit 1 (got $rc)"
-printf '%s' "$out" | grep -q "resolveReviewThread" \
-  && pass "the finding carries the exact command that closes it" \
+# THE PRINTED COMMAND IS RUN, not pattern-matched. The gate note and the module docstring both
+# promise "the exact command that closes it", and a substring grep for `resolveReviewThread` cannot
+# tell a working mutation from a mangled one — which is not hypothetical: a reviewer on #2033 read
+# the trailing `}}}` as an unbalanced brace and filed the command as malformed. It is balanced (and
+# five real threads were closed with it), but nothing MECHANICAL could settle that. So extract the
+# line the predicate emits, strip the `resolve: ` label, and eval it against the stub.
+resolve_cmd="$(printf '%s' "$out" | sed -n 's/^ *resolve: //p' | head -1)"
+[ -n "$resolve_cmd" ] \
+  && pass "the finding carries a resolve command" \
   || fail "no resolve command in output"
+
+if [ -n "$resolve_cmd" ]; then
+  # GH_MODE is set per-invocation by run(); the stub defaults to `broken`, so the eval must arm it
+  # explicitly or this measures the offline path instead of the mutation.
+  sent="$(GH_MODE=ok eval "$resolve_cmd" 2>&1)"; rc=$?
+  [ "$rc" = "0" ] \
+    && pass "the printed command EXECUTES — it is a runnable mutation, not just a matching string" \
+    || fail "the printed resolve command failed to execute: $sent"
+
+  printf '%s' "$sent" | grep -q "PRRT_fixture" \
+    && pass "the thread id survives into the executed mutation intact" \
+    || fail "the executed mutation lost or mangled the thread id: $sent"
+fi
 
 # --- what must NOT be a finding ------------------------------------------------------------------
 thread true false "coderabbitai" "already dealt with"
