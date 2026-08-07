@@ -703,6 +703,21 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: censor
     note: "The /vendor-insights engine's adapter tests plus the cross-vendor health-sensor tests, which NOTHING scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/vendor-insights.py implicated no test at all — the same declared-but-unwired class check-runner-coverage exists to catch. insight-cadence.py is a path because test_health_packet_is_consumed_by_insight_cadence binds its packet loop to the health packet's declared owner/severity. Cheap tier: two files, hermetic, no xdist."
+  hot-cache-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_verify_hot_cache.py cli/tests/test_check_foreign_litter.py cli/tests/test_residue_census.py -q"
+    paths:
+      [
+        "scripts/verify-hot-cache.sh",
+        "scripts/residue-census.py",
+        "scripts/check-foreign-litter.py",
+        "cli/tests/test_verify_hot_cache.py",
+        "cli/tests/test_check_foreign_litter.py",
+        "cli/tests/test_residue_census.py",
+        "mise.toml",
+      ]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: continuity
+    note: "The disposability predicate, the census it consults, and the litter sensor — none of which anything scoped ran before this row existed: pytest-cli's paths are cli/** plus root registries, so editing scripts/verify-hot-cache.sh implicated no test at all, the same declared-but-unwired class check-runner-coverage exists to catch. These tests drive the SHIPPED script (bash scripts/verify-hot-cache.sh under a tmp LIMEN_ROOT and a narrowed PATH), never an extracted copy of a rung, because the defects they pin are rungs that reported GREEN: R6 derived its verdict from parsed BREACH lines, so a census that died any other way named nothing and PASSED; R5 printed '0 clone(s) clean, pushed, stash-free' for a walk that never happened; and a failed `cd $ROOT` still reached DISPOSABLE. An extracted-copy test is what let the previous 'bidirectional proof' pass against a file it had already diverged from. mise.toml is a path because R4 asserts every tool THIS repo declares is in force — a mise query answers for the config merged from the CWD upward, so a declaration change must re-run the rung that reads it. Cheap tier: three files, hermetic, no xdist."
   pytest-api:
     command: "bash scripts/run-pytest-hermetic.sh web/api/tests -q"
     paths: ["web/api/**", "cli/**"]

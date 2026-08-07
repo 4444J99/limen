@@ -10,7 +10,7 @@
 #   R1 spine     — chezmoi source is the real cartridge clone (scripts/cartridge-connected.py)
 #   R2 capture   — deployed config carries no un-captured local state (scripts/chezmoi-drift.py)
 #   R3 creds     — every materialized credential still authenticates (creds-hydrate --verify)
-#   R4 toolchain — every tool mise.toml declares is INSTALLED (`mise ls --missing` is empty)
+#   R4 toolchain — every tool THIS repo's mise.toml declares is INSTALLED and in force
 #   R5 repos     — every clone under $LIMEN_WORKDIR is clean, pushed, and stash-free
 #   R6 residue   — the residue R5 steps over is within its declared caps (scripts/residue-census.py)
 #
@@ -25,7 +25,15 @@
 set -uo pipefail
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 WS="${LIMEN_WORKDIR:-$HOME/Workspace}"
-cd "$ROOT"
+# A failed cd is not survivable here: every rung below resolves against the CWD (R4 asks mise, R5/R6
+# shell relative children), so continuing from the caller's directory would answer for the wrong tree
+# and still print greens. Fail loudly instead — this is the R4/R5/R6 silent-wrong-answer class at the
+# root. `fail()` is not defined until below, so this reports itself.
+cd "$ROOT" || {
+  echo "  ✗ R0 root — LIMEN_ROOT unreachable: $ROOT"
+  echo "HOT-CACHE: NOT DISPOSABLE — the predicate could not reach the tree it judges"
+  exit 1
+}
 
 red=0
 fail() { echo "  ✗ $*"; red=1; }
@@ -73,10 +81,45 @@ fi
 if command -v mise >/dev/null 2>&1; then
   if r4_raw="$(mise ls --missing 2>/dev/null)"; then
     r4_missing="$(printf '%s\n' "$r4_raw" | awk 'NF {printf "%s@%s ", $1, $2}')"
-    if [ -z "$r4_missing" ]; then
-      ok "R4 toolchain — every declared tool installed (mise ls --missing empty)"
-    else
+    if [ -n "$r4_missing" ]; then
       fail "R4 toolchain — declared but NOT installed: ${r4_missing% } (run: mise install)"
+    else
+      # Every mise query resolves against the CWD, so it answers for the config MERGED from this
+      # repo's mise.toml upward through every ancestor. An empty `--missing` therefore proves only
+      # "nothing the merged config asks for is absent" — it cannot distinguish that from
+      # "$ROOT/mise.toml contributed nothing and an ancestor's toolchain is what resolved". Benign
+      # while line 28 cds to $ROOT, and silent on the day it is not. So assert that each tool THIS
+      # repo declares is present in what mise actually resolved.
+      #
+      # Name-presence, deliberately not range comparison: mise.toml declares RANGES on purpose
+      # (Rule #12 — pins rot, live-verify), mise already owns the range→version fact, and re-solving
+      # it here would be a second, permanently drifting opinion. Extra tools an ancestor contributes
+      # are not a red — they are not this repo's declaration to hold.
+      r4_declared="$(awk '
+        /^[[:space:]]*\[/ { intools = ($0 ~ /^[[:space:]]*\[tools\]/); next }
+        !intools { next }
+        { line = $0; sub(/#.*/, "", line)
+          if (line !~ /=/) next
+          key = line; sub(/=.*/, "", key); gsub(/[ \t"]/, "", key)
+          if (key != "") print key }
+      ' "$ROOT/mise.toml" 2>/dev/null)"
+      if [ -z "$r4_declared" ]; then
+        fail "R4 toolchain — $ROOT/mise.toml declares no [tools] (the jack-in summons the whole floor from it)"
+      elif ! r4_cur="$(mise current 2>/dev/null)"; then
+        fail "R4 toolchain — mise could not report the resolved toolchain (mise current failed)"
+      else
+        r4_absent=""
+        while IFS= read -r r4_tool; do
+          [ -n "$r4_tool" ] || continue
+          printf '%s\n' "$r4_cur" | awk -v t="$r4_tool" '$1 == t { hit = 1 } END { exit !hit }' ||
+            r4_absent="${r4_absent:+$r4_absent }$r4_tool"
+        done <<<"$r4_declared"
+        if [ -n "$r4_absent" ]; then
+          fail "R4 toolchain — declared by $ROOT/mise.toml but absent from the resolved toolchain: $r4_absent (an ancestor mise.toml is what resolved; run: mise install)"
+        else
+          ok "R4 toolchain — every tool mise.toml declares is installed and in force ($(printf '%s' "$r4_declared" | tr '\n' ' '))"
+        fi
+      fi
     fi
   else
     fail "R4 toolchain — mise could not enumerate the declaration (mise ls --missing failed)"
@@ -105,23 +148,48 @@ while IFS= read -r gitdir; do
   fi
 done < <(find "$WS" -maxdepth 3 -name .git \( -type d -o -type f \) 2>/dev/null | grep -Ev "$R5_EXCLUDE" | sort)
 if [ "$r5_bad" -eq 0 ]; then
-  ok "R5 repos — $r5_seen clone(s) clean, pushed, stash-free (worktree/quarantine roots excluded by marker)"
+  if [ "$r5_seen" -eq 0 ]; then
+    # An empty walk is not a clean floor — R6's defect in R5's clothes. `find`'s stderr is swallowed
+    # and its status never read (it feeds a process substitution, so pipefail cannot reach it), and
+    # `grep -Ev` exits 1 when it filters everything out. So a wrong or unreadable $LIMEN_WORKDIR
+    # printed "✓ 0 clone(s) clean, pushed, stash-free" — a verification claim for an enumeration that
+    # never happened. Advisory, not red: a genuinely empty floor is a gap, not un-summonable state.
+    skip "R5 repos — enumerated 0 clones under $WS (advisory: an empty walk is not a clean floor — LIMEN_WORKDIR wrong or unreadable?)"
+  else
+    ok "R5 repos — $r5_seen clone(s) clean, pushed, stash-free (worktree/quarantine roots excluded by marker)"
+  fi
 fi
 
 # R6 — the residue R5 deliberately steps over. R5 excludes worktrees and quarantines because they
 # have their OWN reap organs; that exclusion is correct and stays. What was missing is anyone
 # asking whether those organs KEEP UP. The census counts each residue class against its declared
-# cap and names the organ or lever that relieves it — read-only, deletes nothing. Absent or
-# unrunnable => advisory skip: a missing census is a gap in the court, not un-summonable state.
+# cap and names the organ or lever that relieves it — read-only, deletes nothing. Absent =>
+# advisory skip: a missing census is a gap in the court, not un-summonable state.
+#
+# UNRUNNABLE is not absent. This rung shipped deriving its VERDICT from parsing: a non-zero census
+# entered a loop that called `fail` once per line containing BREACH, so a census that died any OTHER
+# way — a traceback, an import error, a timeout kill, an argparse change — matched zero lines, called
+# `fail` zero times, and the rung PASSED. An unrunnable census read as a clean one, in the predicate
+# whose whole job is to be un-foolable. The EXIT CODE is the verdict; the BREACH lines are only the
+# detail. A non-zero child therefore always leaves at least one red.
 if [ -x "$ROOT/scripts/residue-census.py" ] || [ -f "$ROOT/scripts/residue-census.py" ]; then
   if r6_out="$(python3 "$ROOT/scripts/residue-census.py" --check 2>&1)"; then
     ok "R6 residue — every declared cap holds (nothing sprawling)"
   else
+    r6_rc=$?
+    r6_named=0
     while IFS= read -r line; do
       case "$line" in
-        *BREACH*) fail "R6 residue —${line#*BREACH}" ;;
+        *BREACH*)
+          fail "R6 residue —${line#*BREACH}"
+          r6_named=$((r6_named + 1))
+          ;;
       esac
     done <<<"$r6_out"
+    if [ "$r6_named" -eq 0 ]; then
+      r6_why="$(printf '%s' "$r6_out" | tr '\n' ' ' | cut -c1-200)"
+      fail "R6 residue — census UNRUNNABLE (residue-census.py --check exited $r6_rc naming no BREACH): ${r6_why:-<no output>}"
+    fi
   fi
 else
   skip "R6 residue — scripts/residue-census.py absent (advisory)"
