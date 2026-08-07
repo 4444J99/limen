@@ -163457,3 +163457,37 @@ tasks:
     conduct_lease_id: 'lease-581-0cb19ca62fb51b46'
     conduct_generation: 581
   updated: '2026-08-07T01:16:37.884Z'
+- id: 'GH-organvm-limen-1931'
+  title: 'Flaky: test_single_rail_output_is_rejected_at_limit_plus_one (stderr param) — kill-race yields termination-failed under xdist load'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1931'
+  context: 'GitHub issue organvm/limen#1931. Observed 2026-08-06 during the scoped gate run for PR #1930 (a diff that does not touch estate_audit_paired_custody): under `run-pytest-hermetic.sh cli/tests -q -n auto` (gw7), the stderr-limit parametrization asserted `single-rail-check-termination-failed` where `single-rail-check-stderr-limit` was expected — the child exceeded the output limit but its termination did not complete cleanly under l'
+  predicate: 'test "$(gh issue view 1931 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1931'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1931'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T01:50:14.208Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-4909344ffe8b8daad3c1279b6937c770:582:compatibility'
+    conduct_run_id: 'run-4909344ffe8b8daad3c1279b6937c770'
+    conduct_lease_id: 'lease-582-4909344ffe8b8daa'
+    conduct_generation: 582
+  updated: '2026-08-07T01:50:14.208Z'
