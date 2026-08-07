@@ -1,0 +1,25 @@
+# BEAT DIAGNOSTICS baseline — per-file ceiling for `2>&1 | tail -1` rungs.
+#
+# The idiom destroys the exit status (a pipeline reports TAIL's status, ~always 0), the
+# diagnostic (tail -1 of a traceback is the last line of the exception's repr — a bare `}`
+# for a JSON error body), and the record (nothing is written down, so a rung can fail every
+# beat forever with every observable green). scripts/check-beat-diagnostics.py is the gate.
+#
+# SHRINK-ONLY. `--update` refuses to grow any count; a ceiling moves UP only by editing this
+# file by hand, which is a reviewable diff rather than a flag someone reached for.
+#
+# heartbeat-loop.sh is at 0 — all 65 of its rungs go through the loop's own beat_run helper,
+# which keeps the happy path to one line, prints a real tail on failure, and records the
+# outcome to logs/beat-rungs.jsonl for the enactment audit's efficacy rung.
+#
+# The siblings are held at their current counts rather than rewritten in the same change:
+# beat_run is deliberately INLINE in heartbeat-loop.sh so the daemon takes on no new file
+# dependency (a missing sourced helper would kill the beat outright), and giving the sibling
+# scripts a shared helper is its own concern. This ceiling is what keeps that a declared
+# position instead of a leak — each of these 8 goes to 0 as its script is converted.
+scripts/heartbeat-loop.sh 0
+scripts/heartbeat.sh 4
+scripts/mail-beat.sh 2
+scripts/publish-board-pr.sh 1
+scripts/saturate.sh 0
+scripts/deploy-corpus-organs.sh 1
