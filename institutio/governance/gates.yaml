@@ -313,6 +313,11 @@ gates:
     paths: ["scripts/check-review-harvest.py", "scripts/tests/check-review-harvest.test.sh", "scripts/check-review-engine.py"]
     owner: verify
     note: "The harvest predicate's exit codes ARE its contract — it runs as an advisory sensor, so on a green beat only the code is consumed. Hardest case first: offline/unreadable must print SKIP at exit 0 and must NOT print the green line, because 'I read nothing' and 'I found nothing' are the same count (Data Grounding). Also pins the seam that would fail silent-green: AGENT_LOGINS is written in REST spelling (`coderabbitai[bot]`) while GraphQL returns the bare login. check-review-engine.py is in paths because AGENT_LOGINS is imported from it — a change there changes what this predicate can see."
+  diff-removal-count-test:
+    command: "bash scripts/tests/diff-removal-count.test.sh"
+    paths: [".claude/skills/verify/SKILL.md", "scripts/tests/diff-removal-count.test.sh"]
+    owner: verify
+    note: "The clobber check in the verify skill must count removals correctly, because sessions copy that line verbatim to answer 'did my branch delete someone else's work?'. Both obvious one-liners are wrong in opposite directions: `grep '^-'` over-counts by the `--- a/<file>` header (noisy), and the tidier `grep -E '^-[^-]'` UNDER-counts — a removed BLANK line is a lone `-` and a removed `--flag` line renders `---flag`, so on a 3-removal fixture it reports 1. Under-counting hides the clobber the check exists to find, and that pattern shipped for one merge. The assertion is scoped to a runnable `git diff … | grep` recipe line, not any mention: the prose names the bad pattern on purpose so the trap stays recorded."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
