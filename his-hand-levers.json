@@ -1010,6 +1010,25 @@
       "note": "Everything else about the task is DONE and durable: estate census exhaustive (313 repos / 1297 open PRs), lifecycle_untyped_count=0, the task's own pinned-owners predicate exits 0, green ledger keeper-shipped (PR #1966), receipts and plan merged (PRs #1951/#1967). Only the board-status flip awaits this bearer deploy.",
       "issue": 1968,
       "unlocks": "the broker discharge of the one operator-paused task on the board (making 'nothing is paused' literally true), plus every future per-agent authenticated conduct submission (claude/agy/gemini/opencode direct principals)"
+    },
+    {
+      "id": "L-PR-AUTOTYPE-ARM",
+      "label": "Arm the continuous PR auto-typing rung to APPLY — one paste sets LIMEN_PR_AUTOTYPE_APPLY=1. It ships LIVE in dry-run (receipts accrue every cadence to logs/pr-lifecycle-autotype.jsonl); arming makes the beat actually add lifecycle:blocked to newly-arrived mechanical (dependabot) PRs, so gitvs.py pr-debt --check stops rebounding red at arrival rate.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "the estate drain's zero-untyped state becomes self-maintaining — the one-shot drain (283 PRs typed 2026-08-07) gains its continuous loop-closer, and the morning stale-pr-sweep stops re-reporting a small nonzero untyped count every arrival",
+      "source_task": "GITVS-UNCAPPED-PR-DEBT-0715 /verify finding (issue #1978, docs/plans/2026-08-07-pr-autotype-rung.md): predicate went 0→2 untyped within the hour of discharge because arrivals had no typing organ; sensor github-pr-autotype + scripts/pr-lifecycle-autotype.py are that organ, dry-run until this lever",
+      "gate": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — only you can persist it",
+      "steps": [
+        "Prereq: the rung PR is merged; review a day of dry-run receipts: tail logs/pr-lifecycle-autotype.jsonl. Every row is one of: verdict=type/outcome=dry-run (the intended shape — a would-be lifecycle:blocked on a dependabot PR); verdict=skip with reason closed-since-search or labeled-since-search or repo-archived-immutable (benign drift the per-item gate caught); verdict=skip/reason=not-mechanical (the human-safety rail working); verdict=skip/reason=gh-view-failed or verdict=read-failed (gh could not be READ — never evidence the estate is clean)",
+        "ARM WHEN, checkably: at least one verdict=type row, ZERO read-failed rows, and ZERO not-mechanical rows. An EMPTY ledger is not a pass — it means the rung never ran or never read, and arming on it would be arming on evidence that was never collected",
+        "Arm APPLY: echo 'LIMEN_PR_AUTOTYPE_APPLY=1' >> ~/.limen.env — and per the arming contract flip fleet_runtime: \"1\" on LIMEN_PR_AUTOTYPE_APPLY in institutio/governance/parameters.yaml in the same change (enactment-audit locks it live)",
+        "Done when: receipts show \"applied\": true rows with outcome typed, and python3 scripts/beat-sensors.py --list | grep github-pr-autotype shows the sensor scheduled"
+      ],
+      "issue": 1978,
+      "status": "open",
+      "added": "2026-08-07",
+      "note": "No collision with L-DEPENDABOT-DELIVERY-ARM (#1947): this rung applies the same fail-closed lifecycle:blocked the drain used; the delivery upgrade (arming autonomous merges) stays that separate lever. Human-authored arrivals are counted and surfaced by the rung, never auto-typed."
     }
   ]
 }

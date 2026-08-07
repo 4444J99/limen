@@ -223,6 +223,44 @@ sensors:
         severity: advisory
         escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
 
+  github-pr-autotype:
+    section: "heartbeat"
+    title: "auto-type newly-arrived mechanical PRs lifecycle:blocked (fail-closed) so the estate predicate cannot rebound at arrival rate"
+    gate: LIMEN_PR_AUTOTYPE
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # THE LOOP-CLOSER FOR THE ONE-SHOT DRAIN. The estate drain typed 283 PRs to zero and
+    # gitvs.py pr-debt --check rebounded 0→2 within the hour, because arrivals (dependabot)
+    # had no continuous typing rung. SCOPE IS THE PREDICATE'S SCOPE: the rung derives its
+    # owner set from the same estate authority gitvs.py uses (10 governed owners), never the
+    # two-owner literal the sibling drains carry — 61% of the open dependabot stream lives in
+    # the shelf orgs, so a narrower scope would deliver a fraction of the contract while
+    # printing a confident cohort=0. CHEAP by construction — the negated-label search returns
+    # only the untyped mechanical residual (normally empty) plus per-item pr views, so the
+    # cadence IS the throttle and no script-owned wall-clock interval is needed (contrast
+    # github-pr-debt's 20h guard on the fully paginated census). Dry-run until the deliverable
+    # valve is armed (lever L-PR-AUTOTYPE-ARM); receipts either way to
+    # logs/pr-lifecycle-autotype.jsonl. Human-authored arrivals are counted, never typed.
+    # No collision with L-DEPENDABOT-DELIVERY-ARM (#1947): blocked is the same fail-closed
+    # default the drain applied; the delivery upgrade stays that separate human lever.
+    cadence:
+      env: LIMEN_BEAT_PR_AUTOTYPE
+      default: 4
+    timeout:
+      env: LIMEN_PR_AUTOTYPE_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/pr-lifecycle-autotype.py"
+        args_when:
+          - env: LIMEN_PR_AUTOTYPE_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "the arrival auto-typing rung did not run — newly-arrived mechanical PRs accumulate untyped and gitvs.py pr-debt --check rebounds red at arrival rate"
+
   github-estate-census:
     section: "heartbeat"
     title: "record the estate-wide issue/branch/check census (the fleet-debt register's second axis)"
