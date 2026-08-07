@@ -498,6 +498,35 @@ def render(data: dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def print_handoff() -> int:
+    """Render the stored handoff — loudly distinguishing absence from a real empty board.
+
+    A missing/corrupt/unstamped handoff.json used to collapse to {} and render as a
+    healthy-looking "0 open across 0 lanes"; absence must never look like health.
+    """
+    data = _load_json(HANDOFF, None)
+    if not isinstance(data, dict) or not data.get("generated"):
+        print(
+            "**Resume from (handoff)** — NO HANDOFF RECORDED "
+            "(logs/handoff.json missing, corrupt, or unstamped) — "
+            "run `python3 scripts/handoff-relay.py` to scan"
+        )
+        return 1
+    try:
+        age_min = (_now() - dt.datetime.fromisoformat(str(data["generated"]))).total_seconds() / 60
+    except Exception:
+        print(
+            "**Resume from (handoff)** — NO HANDOFF RECORDED "
+            "(logs/handoff.json missing, corrupt, or unstamped) — "
+            "run `python3 scripts/handoff-relay.py` to scan"
+        )
+        return 1
+    if age_min > FRESH_MAX_MINUTES:
+        print(f"⚠ handoff is {age_min:.0f}m old (> {FRESH_MAX_MINUTES}m) — seam may be cold")
+    print(render(data))
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="seam-survival handoff relay")
     ap.add_argument("--check", action="store_true", help="predicate: fresh+complete handoff exists")
@@ -506,8 +535,7 @@ def main() -> int:
     if args.check:
         return check()
     if args.do_print:
-        print(render(_load_json(HANDOFF, {})))
-        return 0
+        return print_handoff()
     return write()
 
 
