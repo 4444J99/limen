@@ -416,6 +416,17 @@ while true; do
     # unacknowledged suffix pending. The local tasks.yaml is read-only cache evidence, never a
     # lifecycle writer. Idempotent: an empty inbox is an instant no-op.
     [ "${LIMEN_TABVLARIVS:-1}" = "1" ] && python3 "$LIMEN_ROOT/scripts/tabularius-organ.py" 2>&1 | tail -1 || true
+    # BOARD PUBLICATION — open the PR that carries the keeper's published projection into main. The
+    # PR-opening half of preserve_board_projection was retired with the local publication writer and
+    # never replaced (BOARD_PUBLICATION_TITLE has been a dead constant since), so the keeper kept
+    # publishing to tabularius/board-projection and nothing carried it to main. Last publication
+    # merged 2026-07-26 (#1569) — exactly the track.date the board was then frozen at for 12 days,
+    # while the local tasks.yaml was byte-identical to origin/main (current checkout, dead rung). The
+    # frozen copy is what dispatch SELECTS from, what every receipt's compare-and-swap precondition
+    # is computed from, and what lane_throughput_window counts 0 dispatches in — pinning jules in
+    # bootstrap at 25/day and putting 100/day out of reach (#1995). Opens or reports only; never
+    # merges, never pushes. Idempotent and fail-open.
+    [ "${LIMEN_BOARD_PUBLISH_PR:-1}" = "1" ] && bash "$LIMEN_ROOT/scripts/publish-board-pr.sh" 2>&1 | tail -1 || true
     # ENACTMENT — surface any declared-ON fleet flag that is dark/stale in THIS running beat (memory:
     # enacted-not-declared). THE LIVE-LOOP HOME: metabolize.sh has the same advisory but the daemon
     # never runs metabolize (only saturate.sh does — route.py:208), so this line is what makes the

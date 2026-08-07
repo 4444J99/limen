@@ -4293,6 +4293,24 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether scripts/heal-board.py (heartbeat preflight) auto-restores the live board from `git show HEAD:tasks.yaml` when it is unloadable or collapsed (≤ LIMEN_BOARD_SHRINK_FLOOR tasks). Idempotent: a healthy board is a no-op. The recovery net behind the save-time guard. Set 0 to disable."
+  LIMEN_BOARD_PUBLISH_PR:
+    default: "1"               # ON — keep a publication PR open whenever the keeper is ahead of main
+    env: LIMEN_BOARD_PUBLISH_PR
+    self_update: none
+    owner: tabularius
+    note: "Whether the beat runs scripts/publish-board-pr.sh, which opens the PR that carries the keeper's published projection into main. The PR-opening half of preserve_board_projection was retired along with the local publication writer and never replaced — BOARD_PUBLICATION_TITLE has been a dead constant since — so the keeper published to tabularius/board-projection and nothing carried it to main. Last publication merged 2026-07-26 (#1569), exactly the track.date the board sat frozen at for 12 days while the local tasks.yaml was byte-identical to origin/main (a current checkout with a dead rung, not a sync failure). The frozen copy is what dispatch SELECTS from, what every receipt's compare-and-swap precondition is computed from, and what lane_throughput_window counts 0 dispatches in — pinning the jules lane in bootstrap at 25/day and putting the requested 100/day out of reach (#1995). Opens or reports only: never merges, never pushes; merge-policy.sh decides and the beat's merge rung owns it. Idempotent — an already-open PR and a projection with no tasks.yaml change are both no-ops. Set 0 to disable."
+  LIMEN_BOARD_PUBLICATION_BRANCH:
+    default: "tabularius/board-projection"   # the keeper's only sanctioned publication ref
+    env: LIMEN_BOARD_PUBLICATION_BRANCH
+    self_update: none
+    owner: tabularius
+    note: "Head branch scripts/publish-board-pr.sh opens its PR from. Mirrors BOARD_PUBLICATION_BRANCH in cli/src/limen/tabularius.py; the keeper publishes only through this ref, and its exact head enters the normal merge queue."
+  LIMEN_BOARD_PUBLICATION_BASE:
+    default: "main"            # trunk and live deploy source; the board fast lane targets it
+    env: LIMEN_BOARD_PUBLICATION_BASE
+    self_update: none
+    owner: tabularius
+    note: "Base branch scripts/publish-board-pr.sh targets. Per ci.yml's board fast lane a board-projection PR implicates no code, so the matrix runs post-merge for check-main-green's exact-head evidence rather than on the PR's critical path."
   LIMEN_TABVLARIVS:
     default: "1"               # ON — the record-keeper drains the ticket inbox onto the board each beat
     env: LIMEN_TABVLARIVS
