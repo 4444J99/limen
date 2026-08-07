@@ -223,6 +223,32 @@ sensors:
         severity: advisory
         escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
 
+  github-estate-census:
+    section: "heartbeat"
+    title: "record the estate-wide issue/branch/check census (the fleet-debt register's second axis)"
+    gate: LIMEN_ESTATE_CENSUS_RECORD
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # THE OTHER HALF OF THE FLEET-DEBT REGISTER. github-pr-debt records the open-PR series;
+    # this rung records the open-issue / branch / check census the same script family produces —
+    # docs/github-estate-census.json had exactly one observation (2026-07-22) because, like the
+    # PR ledger before its recorder, it was attached to no sensor and refreshed only as a side
+    # effect of feature work. Same shape as github-pr-debt: the cadence is a CHEAP due-check,
+    # --record owns its own wall-clock interval (LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS,
+    # default 24h), ships through ship-docs only when the stable digest moves, and restores the
+    # tracked ledger otherwise so the live checkout never carries a clock-only dirty file.
+    cadence:
+      env: LIMEN_BEAT_ESTATE_CENSUS
+      default: 12
+    timeout:
+      env: LIMEN_ESTATE_CENSUS_RECORD_TIMEOUT
+      default: 1800
+    steps:
+      - command: "python3 scripts/github-estate-census.py --record"
+        severity: advisory
+        escalation: "the estate census observation was not recorded — docs/github-estate-census.json goes stale and the fleet-debt register loses its issue/branch axis (run python3 scripts/github-estate-census.py --record)"
+
   session-contention-ship:
     section: "heartbeat"
     title: "promote recorded session-contention incidents into the committed ledger"

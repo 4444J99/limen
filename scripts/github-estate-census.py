@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
 import shutil
+import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -30,6 +32,168 @@ from limen.github_estate_census import (  # noqa: E402
 SOURCE_REPORT = ROOT / "logs" / "progress-sources" / "github-estate.json"
 PRIVATE_FACTS = ROOT / "logs" / "github-estate-census-facts.json"
 TRACKED_LEDGER = ROOT / "docs" / "github-estate-census.json"
+SHIP = "scripts/ship-docs.sh"
+
+# Every key whose value moves with the wall clock rather than with the estate, stripped at any
+# depth before hashing. The pr-debt-trend.py lesson applies verbatim: the ledger's own
+# `content_sha256` is computed over clock-driven fields, so it moves on every run and cannot
+# answer "did anything but the clock move?".
+VOLATILE_KEYS = frozenset({"generated_at", "content_sha256"})
+
+
+def _int(name: str, default: int) -> int:
+    try:
+        return int(os.environ.get(name, "") or default)
+    except ValueError:
+        return default
+
+
+def _git(*args: str, timeout: int = 60) -> tuple[int, str]:
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=timeout, check=False
+        )
+    except (OSError, subprocess.SubprocessError):
+        return 1, ""
+    return proc.returncode, proc.stdout
+
+
+def _strip_volatile(node: object) -> object:
+    if isinstance(node, dict):
+        return {k: _strip_volatile(v) for k, v in node.items() if k not in VOLATILE_KEYS}
+    if isinstance(node, list):
+        return [_strip_volatile(v) for v in node]
+    return node
+
+
+def _stable_digest(blob: str) -> str | None:
+    """Identity of an observation: the whole ledger minus every clock-driven field."""
+    try:
+        data = json.loads(blob)
+    except ValueError:
+        return None
+    canonical = json.dumps(_strip_volatile(data), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _last_census_utc() -> datetime | None:
+    """When THIS CHECKOUT last ran the census, from the gitignored receipt's mtime. None ⇒ never."""
+    if not PRIVATE_FACTS.is_file():
+        return None
+    try:
+        return datetime.fromtimestamp(PRIVATE_FACTS.stat().st_mtime, tz=UTC)
+    except OSError:
+        return None
+
+
+def _last_recorded_utc() -> datetime | None:
+    """When an observation was last RECORDED, read from the committed ledger. None ⇒ unknown.
+
+    The shared half of the clock (the pr-debt-trend two-clock rule): read from git rather than
+    the working tree so every checkout — beat, worktree, session — answers "has anyone recorded
+    recently?" identically.
+    """
+    rel = str(TRACKED_LEDGER.relative_to(ROOT))
+    for ref in ("origin/main", "main", "HEAD"):
+        rc, blob = _git("show", f"{ref}:{rel}")
+        if rc != 0 or not blob.strip():
+            continue
+        try:
+            stamp = (json.loads(blob).get("source_report") or {}).get("generated_at")
+        except ValueError:
+            continue
+        if not isinstance(stamp, str) or not stamp:
+            continue
+        try:
+            return datetime.fromisoformat(stamp.replace("Z", "+00:00")).astimezone(UTC)
+        except ValueError:
+            continue
+    return None
+
+
+def _due_reason(now: datetime, interval: int) -> str | None:
+    """None ⇒ due. A string ⇒ why not. Due requires BOTH clocks stale (pr-debt #1859 lesson)."""
+    for label, last in (
+        ("this checkout swept", _last_census_utc()),
+        ("an observation was recorded", _last_recorded_utc()),
+    ):
+        if last is None:
+            continue
+        age_h = (now - last).total_seconds() / 3600.0
+        if age_h < interval:
+            return f"not due — {label} {age_h:.1f}h ago (interval {interval}h)"
+    return None
+
+
+def record(*, workers: int, dry_run: bool) -> int:
+    """Run the census when due; ship the tracked ledger only if the estate actually moved."""
+    interval = _int("LIMEN_ESTATE_CENSUS_RECORD_INTERVAL_HOURS", 24)
+    now = datetime.now(UTC)
+    blocked = _due_reason(now, interval)
+    if blocked is not None:
+        print(f"estate-census-record: {blocked}")
+        return 0
+
+    rel = str(TRACKED_LEDGER.relative_to(ROOT))
+    before = TRACKED_LEDGER.read_text(encoding="utf-8") if TRACKED_LEDGER.is_file() else ""
+    before_digest = _stable_digest(before)
+
+    if dry_run:
+        print(f"estate-census-record: DUE (interval {interval}h, both clocks stale) — would run the census,")
+        print(f"  then ship {rel} via {SHIP} only if the stable digest moves from {before_digest}")
+        return 0
+
+    full, tracked = collect(workers=workers)
+    report = full["source_report"]
+    SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)
+    SOURCE_REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    PRIVATE_FACTS.parent.mkdir(parents=True, exist_ok=True)
+    PRIVATE_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+    TRACKED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+    TRACKED_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
+    summary = tracked["summary"]
+    debt = summary.get("debt_counts") or {}
+    print(
+        f"estate-census-record: census -> repositories={summary['repository_count']} "
+        f"issues={debt.get('issue')} branches={debt.get('branch')} "
+        f"exhaustive={str(report['exhaustive']).lower()}"
+    )
+
+    if not report["exhaustive"]:
+        # A clipped census is not an observation: restore rather than record a partial estate
+        # as truth (the same fail-toward-caution the --check flag encodes).
+        _git("checkout", "--", rel)
+        print("  ✗ census not exhaustive — partial estate not recorded, ledger restored")
+        return 1
+
+    after = TRACKED_LEDGER.read_text(encoding="utf-8")
+    after_digest = _stable_digest(after)
+    if after_digest is None:
+        _git("checkout", "--", rel)
+        print("  ✗ the census wrote no readable ledger — nothing to record, ledger restored")
+        return 1
+
+    if after_digest == before_digest:
+        _git("checkout", "--", rel)
+        print(f"  · no change (stable digest {after_digest[:12]}) — nothing shipped, ledger restored")
+        return 0
+
+    msg = f"docs(fleet): record estate census observation (issues={debt.get('issue')}, branches={debt.get('branch')})"
+    ship = subprocess.run(
+        ["bash", str(ROOT / SHIP), "estate-census-observation", msg, rel],
+        cwd=str(ROOT),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    tail = (ship.stdout or "").strip().splitlines()
+    print(f"  ship-docs exit {ship.returncode}: {tail[-1] if tail else '(no output)'}")
+    # 0 = merged, 2 = PR open awaiting merge-policy. Both preserve the observation on origin.
+    if ship.returncode in (0, 2):
+        print(f"  ✓ observation recorded ({(before_digest or '')[:12]} -> {after_digest[:12]})")
+        return 0
+    print(f"  ✗ ship-docs refused the observation: {(ship.stderr or '').strip()[:300]}")
+    return 1
 
 
 def _gitvs():
@@ -256,9 +420,15 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="print the redacted report summary")
     parser.add_argument("--write", action="store_true", help="write owner, source, and tracked receipts")
     parser.add_argument("--workers", type=int, default=8, help="bounded concurrent repository packets (1-32)")
+    parser.add_argument(
+        "--record", action="store_true", help="run the census when due; ship the tracked ledger on change"
+    )
+    parser.add_argument("--dry-run", action="store_true", help="with --record: report the decision, touch nothing")
     args = parser.parse_args()
     if args.workers < 1 or args.workers > 32:
         parser.error("--workers must be between 1 and 32")
+    if args.record:
+        return record(workers=args.workers, dry_run=args.dry_run)
     full, tracked = collect(workers=args.workers)
     report = full["source_report"]
     if args.write:
