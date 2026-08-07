@@ -40,7 +40,7 @@ ratchets:
 # exceeds the budget, and must be removed the moment it fits (paying the debt retires the line).
 instruction_surfaces:
   budget_bytes: 32768        # min consumer default cap (codex project_doc_max_bytes default)
-  ceiling_bytes: 35840       # measured 34,062 B (2026-08-06, post-stratification) + slack; shrink-only
+  ceiling_bytes: 33792       # measured 32,740 B (2026-08-06, debt paid: Claude note + ritual prose stratified) + slack; shrink-only
   slack_bytes: 2048          # max dead headroom (S3) — re-measure and lower ceiling when exceeded
   surfaces:
     - AGENTS.md
@@ -54,14 +54,6 @@ instruction_surfaces:
       default_bytes: null
     - name: copilot
       default_bytes: null
-  debt: >
-    AGENTS.md exceeds the 32,768 B budget by ~1.3 KB (34,062 B after the 2026-08-06
-    stratification relocated nine doctrine sections, ~15 KB, to docs/architecture/ pointer
-    stubs — the original debt was 13.3 KB). An UNCONFIGURED codex truncates the final ~1.3 KB;
-    the configured host reads it all (host_bytes 65536). Retirement owner: the next
-    instruction-surface trim (candidates: Session Start Ritual and Agent-Specific Notes bodies,
-    both required-heading sections whose prose can stratify the same way). Check S4 forces this
-    line's removal the moment the surface first fits the budget.
 
 # 1:1 mirror of deploy*.yml `on.push.paths` — check-gates.py enforces exact set equality.
 # A merge to main touching one of these IS a live deploy. Deploy sensitivity is a property
@@ -424,9 +416,9 @@ gates:
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "scripts/check-agent-docs.py", "institutio/governance/gates.yaml"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
-    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+    note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
@@ -670,17 +662,17 @@ gates:
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
-    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva"
-    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
+    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva apps organs"
+    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Lint the whole Python estate whenever any Python surface changes. Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings."
+    note: "Lint the whole Python estate whenever any Python surface changes. apps/ and organs/ joined 2026-08-06 (35 .py files sat outside both ruff gates — a documented component was unlinted); their paths are *.py-scoped so an organs/apps docs change never pays for a lint run, with the direct-child glob listed explicitly (the ** dialect matches only NESTED files). Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings."
   ruff-format:
-    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff format --check cli/src cli/tests web/api mcp ianva"
-    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**"]
+    command: "python3 scripts/check-ruff-pin.py && python3 -m ruff format --check cli/src cli/tests web/api mcp ianva apps organs"
+    paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
-    note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint."
+    note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint; same 2026-08-06 apps/organs extension."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
     paths: ["cli/**", "his-hand-levers.json", "cloud-routines.json"]

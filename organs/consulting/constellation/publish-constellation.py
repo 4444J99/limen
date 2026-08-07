@@ -327,9 +327,16 @@ def main() -> int:
     print(f"\ndeploying to Cloudflare Pages project '{args.project}'…")
     r = run(
         [
-            "npx", "--yes", "wrangler@4", "pages", "deploy", str(DIST),
-            "--project-name", args.project,
-            "--branch", "main",
+            "npx",
+            "--yes",
+            "wrangler@4",
+            "pages",
+            "deploy",
+            str(DIST),
+            "--project-name",
+            args.project,
+            "--branch",
+            "main",
             "--commit-dirty=true",
         ],
         env=env,

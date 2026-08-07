@@ -109,13 +109,9 @@ def _validate_one(path: Path) -> list[str]:
     for primitive in REQUIRED_PRIMITIVES:
         value = doc.get(primitive)
         if not value:
-            violations.append(
-                f"Rule #3 violation: missing required primitive {primitive!r}"
-            )
+            violations.append(f"Rule #3 violation: missing required primitive {primitive!r}")
         elif isinstance(value, str) and not value.strip():
-            violations.append(
-                f"Rule #3 violation: primitive {primitive!r} is empty"
-            )
+            violations.append(f"Rule #3 violation: primitive {primitive!r} is empty")
 
     standing_raw = doc.get("standing")
     if isinstance(standing_raw, dict):
@@ -154,8 +150,7 @@ def _validate_one(path: Path) -> list[str]:
             next_idx = POSTURES.index(str(next_standing).upper())
             if next_idx <= idx:
                 violations.append(
-                    f"Rule #1 violation: next_standing {next_standing!r} does not "
-                    f"advance past current {standing_val}"
+                    f"Rule #1 violation: next_standing {next_standing!r} does not advance past current {standing_val}"
                 )
 
     # Rule #2 — Manual Mode
@@ -176,33 +171,24 @@ def _validate_one(path: Path) -> list[str]:
     gates = doc.get("human_gates", [])
     if not isinstance(gates, list) or len(gates) == 0:
         violations.append(
-            "Rule #2 violation: no explicit human_gates declared — every "
-            "milestone must have a named human gate"
+            "Rule #2 violation: no explicit human_gates declared — every milestone must have a named human gate"
         )
 
     if doc.get("autonomic", False) is True:
         violations.append(
-            "Rule #2 violation: autonomic flag is true — consulting organ "
-            "operates in manual prototype mode only"
+            "Rule #2 violation: autonomic flag is true — consulting organ operates in manual prototype mode only"
         )
 
     # Rule #4 — Scope Integrity
     scope = doc.get("scope", {})
     if not isinstance(scope, dict):
-        violations.append(
-            "Rule #4 violation: scope must be a mapping with 'boundary' and "
-            "'exclusions'"
-        )
+        violations.append("Rule #4 violation: scope must be a mapping with 'boundary' and 'exclusions'")
     else:
         if not scope.get("boundary"):
-            violations.append(
-                "Rule #4 violation: scope must declare an explicit boundary"
-            )
+            violations.append("Rule #4 violation: scope must declare an explicit boundary")
         scope_changes = scope.get("changes", [])
         if not isinstance(scope_changes, list):
-            violations.append(
-                "Rule #4 violation: scope.changes must be a list"
-            )
+            violations.append("Rule #4 violation: scope.changes must be a list")
 
     # Rule #5 — No Overreach
     if isinstance(scope, dict):
@@ -256,11 +242,7 @@ def _posture(standing_raw: Any) -> str:
     if standing_val not in POSTURE_SET:
         return ""
     idx = POSTURES.index(standing_val)
-    next_posture = (
-        POSTURES[idx + 1]
-        if idx + 1 < len(POSTURES)
-        else "(terminus — no further posture)"
-    )
+    next_posture = POSTURES[idx + 1] if idx + 1 < len(POSTURES) else "(terminus — no further posture)"
     held = " → ".join(POSTURES[: idx + 1])
     return f"  posture: {held}  |  next: {next_posture}"
 
@@ -268,8 +250,7 @@ def _posture(standing_raw: Any) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Validate engagement files against Sovereign Systems consulting rules. "
-            "Rules #1-6 are always active."
+            "Validate engagement files against Sovereign Systems consulting rules. Rules #1-6 are always active."
         )
     )
     parser.add_argument(

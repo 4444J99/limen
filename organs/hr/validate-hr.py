@@ -131,15 +131,9 @@ def _validate_one(path: Path) -> list[str]:
     for primitive in REQUIRED_PRIMITIVES:
         value = doc.get(primitive)
         if not value:
-            violations.append(
-                f"Rule #3 violation: missing required primitive {primitive!r}"
-            )
-        elif isinstance(value, dict) and not any(
-            v for v in value.values() if v
-        ):
-            violations.append(
-                f"Rule #3 violation: primitive {primitive!r} is empty"
-            )
+            violations.append(f"Rule #3 violation: missing required primitive {primitive!r}")
+        elif isinstance(value, dict) and not any(v for v in value.values() if v):
+            violations.append(f"Rule #3 violation: primitive {primitive!r} is empty")
 
     # Rule #1 — Valid Posture
     standing_val = ""
@@ -177,16 +171,12 @@ def _validate_one(path: Path) -> list[str]:
             next_idx = POSTURES.index(str(next_standing).upper())
             if next_idx <= idx:
                 violations.append(
-                    f"Rule #1 violation: next_standing {next_standing!r} does not "
-                    f"advance past current {standing_val}"
+                    f"Rule #1 violation: next_standing {next_standing!r} does not advance past current {standing_val}"
                 )
 
     # Rule #2 — Manual Mode
     if doc.get("autonomic", False) is True:
-        violations.append(
-            "Rule #2 violation: autonomic flag is true — HR organ "
-            "operates in human-supervised mode only"
-        )
+        violations.append("Rule #2 violation: autonomic flag is true — HR organ operates in human-supervised mode only")
 
     gates = doc.get("human_gates")
     if not gates and not doc.get("gates"):
@@ -195,16 +185,12 @@ def _validate_one(path: Path) -> list[str]:
         if isinstance(governance, dict):
             ethics_rules = governance.get("ethics", [])
             if not isinstance(ethics_rules, list) or not ethics_rules:
-                violations.append(
-                    "Rule #2 violation: no human gates or ethics rules declared"
-                )
+                violations.append("Rule #2 violation: no human gates or ethics rules declared")
 
     # Rule #5 — No Overreach (check scope boundary and exclusions)
     scope = doc.get("scope", {})
     if not isinstance(scope, dict):
-        violations.append(
-            "Rule #4 violation: scope must be a mapping with 'boundary' and 'exclusions'"
-        )
+        violations.append("Rule #4 violation: scope must be a mapping with 'boundary' and 'exclusions'")
     else:
         boundary_text = str(scope.get("boundary", "")).lower()
         for kw in OVERREACH_KEYWORDS:
@@ -216,23 +202,17 @@ def _validate_one(path: Path) -> list[str]:
 
         exclusions = scope.get("exclusions", [])
         if isinstance(exclusions, list) and not exclusions:
-            violations.append(
-                "Rule #4 violation: scope.exclusions must name at least one exclusion"
-            )
+            violations.append("Rule #4 violation: scope.exclusions must name at least one exclusion")
 
         changes = scope.get("changes")
         if changes is not None:
             if not isinstance(changes, list):
-                violations.append(
-                    "Rule #4 violation: scope.changes must be a list"
-                )
+                violations.append("Rule #4 violation: scope.changes must be a list")
 
     # Rule #4 — Scope boundary declared
     if not isinstance(scope, dict) or not scope.get("boundary"):
         if "Rule #4" not in "".join(v.split(":")[0] for v in violations):
-            violations.append(
-                "Rule #4 violation: scope must declare an explicit boundary"
-            )
+            violations.append("Rule #4 violation: scope must declare an explicit boundary")
 
     # Check mandate for overreach keywords
     mandate = doc.get("mandate", "")
@@ -269,10 +249,7 @@ def _validate_one(path: Path) -> list[str]:
             for boundary in ETHICS_BOUNDARIES:
                 found = any(boundary in str(r).lower() for r in ethics_rules)
                 if not found:
-                    violations.append(
-                        f"Rule #7 violation: ethics rules missing required boundary: "
-                        f"{boundary!r}"
-                    )
+                    violations.append(f"Rule #7 violation: ethics rules missing required boundary: {boundary!r}")
 
         consent = governance.get("consent", {})
         if isinstance(consent, dict):
@@ -291,9 +268,7 @@ def _validate_one(path: Path) -> list[str]:
         authority = governance.get("authority", "")
         authority_lower = str(authority).lower()
         if "practitioner" not in authority_lower and "human" not in authority_lower:
-            violations.append(
-                "Rule #8 violation: governance.authority must name the human practitioner"
-            )
+            violations.append("Rule #8 violation: governance.authority must name the human practitioner")
 
     return violations
 
@@ -309,11 +284,7 @@ def _posture(standing_raw: Any) -> str:
     if standing_val not in POSTURE_SET:
         return ""
     idx = POSTURES.index(standing_val)
-    next_posture = (
-        POSTURES[idx + 1]
-        if idx + 1 < len(POSTURES)
-        else "(terminus — no further posture)"
-    )
+    next_posture = POSTURES[idx + 1] if idx + 1 < len(POSTURES) else "(terminus — no further posture)"
     held = " → ".join(POSTURES[: idx + 1])
     return f"  posture: {held}  |  next: {next_posture}"
 
@@ -335,10 +306,7 @@ def _fleet_paths(base: Path) -> list[Path]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "Validate client posture records against HR organ rules. "
-            "Rules #1-8 are always active."
-        )
+        description=("Validate client posture records against HR organ rules. Rules #1-8 are always active.")
     )
     parser.add_argument(
         "paths",

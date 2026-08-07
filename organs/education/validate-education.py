@@ -69,16 +69,12 @@ def _validate_one(path: Path) -> list[str]:
 
     standing = _standing(doc)
     if standing not in POSTURE_SET:
-        violations.append(
-            f"Rule #1 violation: standing {standing!r} is not in {' -> '.join(POSTURES)}"
-        )
+        violations.append(f"Rule #1 violation: standing {standing!r} is not in {' -> '.join(POSTURES)}")
 
     next_standing = str(doc.get("next_standing") or "").upper()
     if standing in POSTURE_SET and next_standing in POSTURE_SET:
         if next_standing != "HOLD" and POSTURES.index(next_standing) <= POSTURES.index(standing):
-            violations.append(
-                f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}"
-            )
+            violations.append(f"Rule #1 violation: next_standing {next_standing!r} does not advance {standing!r}")
 
     governance = doc.get("governance")
     if not isinstance(governance, dict) or governance.get("manual_mode") is not True:
@@ -97,15 +93,11 @@ def _validate_one(path: Path) -> list[str]:
             lowered = str(item).lower()
             for pattern in PLACEHOLDER_PATTERNS:
                 if pattern in lowered:
-                    violations.append(
-                        f"Rule #4 violation: evidence item {item!r} contains placeholder {pattern!r}"
-                    )
+                    violations.append(f"Rule #4 violation: evidence item {item!r} contains placeholder {pattern!r}")
 
     claim_doc = {k: v for k, v in doc.items() if k != "governance"}
     if isinstance(governance, dict):
-        claim_doc["governance"] = {
-            k: v for k, v in governance.items() if k != "forbidden_acts"
-        }
+        claim_doc["governance"] = {k: v for k, v in governance.items() if k != "forbidden_acts"}
     blob = _text(claim_doc).lower()
     for pattern in OVERREACH_PATTERNS:
         if pattern in blob:

@@ -925,6 +925,22 @@
         "Build, deploy, migrate, restore-test, and close only on the plan's executable predicates"
       ],
       "issue": 1779
+    },
+    {
+      "id": "L-CONSTELLATION-OVERLAY-RESTORE",
+      "label": "Restore the private constellation overlay from the T7 evacuation archive — one cp, then the constellation-registry gate goes green on this host",
+      "owner": "yours",
+      "category": "estate-restore",
+      "cost": "~10 seconds, one copy command (T7Recovery volume must be mounted)",
+      "status": "open",
+      "added": "2026-08-06",
+      "gate": "background-session classifier hard-blocks writes into _people-private (private person-records class); an interactive human shell is the sanctioned writer",
+      "steps": [
+        "cp -p '/Volumes/T7Recovery/laptop-evacuation/20260727/objects/repo_people-private/9f7c23d428eafa0c7fc6732f700dbd99acef2c1126e8a31d21887a4dec797a21/registry-private.yaml' '/Volumes/T7Recovery/laptop-evacuation/20260727/objects/repo_people-private/9f7c23d428eafa0c7fc6732f700dbd99acef2c1126e8a31d21887a4dec797a21/atlas.html' /Users/4jp/Workspace/_people-private/constellation/",
+        "python3 organs/consulting/constellation/check.py  # exit 0 confirms the estate is whole"
+      ],
+      "unlocks": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
+      "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time."
     }
   ]
 }

@@ -222,7 +222,11 @@ adapters carry the contract string, the org-level Copilot profile stays out of `
 Full Lifecycle Closure covenant phrases; **R** — exit-code discipline phrases
 (`PIPESTATUS`, one-command-per-judged-invocation); **S** — the instruction-surface byte budget
 from `institutio/governance/gates.yaml → instruction_surfaces` (budget/ceiling/slack, and a
-`debt:` line required iff a surface exceeds budget). A new check letters itself here when added.
+`debt:` line required iff a surface exceeds budget); **T** — the pointer file
+(`.github/copilot-instructions.md`) and directory-scoped surfaces (`apps/danse/AGENTS.md`) stay
+in the estate: the pointer keeps its self-subordination clause and points at `AGENTS.md`, scoped
+files keep "root wins" deference, and neither presents non-canonical status values. A new check
+letters itself here when added.
 
 ---
 
