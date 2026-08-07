@@ -163491,3 +163491,37 @@ tasks:
     conduct_lease_id: 'lease-582-4909344ffe8b8daa'
     conduct_generation: 582
   updated: '2026-08-07T01:50:14.208Z'
+- id: 'GH-organvm-limen-1929'
+  title: 'Heal the blind Fable weekly meter: transcripts relocation + 16x budget miscalibration'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  urls:
+  - 'https://github.com/organvm/limen/issues/1929'
+  context: 'GitHub issue organvm/limen#1929. The Fable governance estate (50% hard cap, acceptance receipts, tier downgrade) has been blind for five weeks: fable-allotment.py and claude-workflow-guard.py read the empty legacy ~/.claude/projects tree, and the 1B-token weekly budget under-reads the real ~64M-billable ceiling ~16x. Live burn hit 53% with zero warnings. Repoint both scripts through limen.harness_paths and calibrate the divisor s'
+  predicate: 'test "$(gh issue view 1929 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/1929'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#1929'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-06'
+  dispatch_log:
+  - timestamp: '2026-08-07T01:50:19.180Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-7361a8093a1dc1a729861e848452e0d7:583:compatibility'
+    conduct_run_id: 'run-7361a8093a1dc1a729861e848452e0d7'
+    conduct_lease_id: 'lease-583-7361a8093a1dc1a7'
+    conduct_generation: 583
+  updated: '2026-08-07T01:50:19.180Z'
