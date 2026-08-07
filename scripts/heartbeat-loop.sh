@@ -427,6 +427,22 @@ while true; do
   # restart loop. Placed at the TOP of the beat deliberately: the previous beat finished cleanly and
   # this one has done nothing yet, so nothing is cut in half. Waiting one tempo interval is far
   # cheaper than aborting a beat mid-flight, which is what a post-sync placement would do.
+  #
+  # IT ALSO RUNS WHILE AUTONOMY IS PAUSED, and that is a decision, not an oversight. This rung sits
+  # ABOVE the `autonomy-governor.py mode` check below, so a paused beat still reloads its own body.
+  # Observed empirically 2026-08-07 (five sandbox drives printed the self-load line before "autonomy
+  # paused by governor"), and left that way on purpose for two reasons:
+  #
+  #   · The pause governs OUTWARD action — dispatching, spending, sending, writing to the keeper.
+  #     Loading the code this process is already supposed to be running is none of those. It is the
+  #     same reasoning the SessionEnd drain below states for itself: "even when autonomy is paused".
+  #   · A paused beat that could not reload its own body would be the worst case available. A pause
+  #     is exactly when a fix is most likely to be merged and least likely to be noticed as dark, so
+  #     gating self-load on the governor would let the daemon drift arbitrarily far from its own
+  #     script and then resume, on release, still running the stale body.
+  #
+  # Reversing this would be defensible — someone may argue a pause should freeze everything — but it
+  # must be an argued reversal, not a silent reordering. `test_loop_self_load.py` asserts the order.
   if [ "${LIMEN_LOOP_SELF_KICKSTART:-1}" = "1" ] && [ -f "$LIMEN_ROOT/logs/.loop-update-pending" ]; then
     _kick_label="${LIMEN_HEARTBEAT_LABEL:-com.limen.heartbeat}"
     # ASK LAUNCHD FOR THE LABEL, do not grep its table. `launchctl list | grep -q "$_kick_label"`
