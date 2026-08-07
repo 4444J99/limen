@@ -1,0 +1,104 @@
+{
+  "corrections": {
+    "issued_at": "2026-08-07T00:00:00Z",
+    "issued_by": "docs/plans/2026-08-07-pr-estate-drain-full-fix-v2.md (issue #1981)",
+    "cause": "The original measurement of CODE facts was read from the live checkout /Users/4jp/Workspace/limen, which was 29 commits behind origin/main and carries v1 of scripts/pr-lifecycle-estate-manifest.py. origin/main carries v2 (cfd01fb8, PR #1944). GitHub-sourced measurements (the `live` and `sealed_manifest_replay` blocks) are unaffected — they were never read from the tree.",
+    "amended": {
+      "D2_lifecycle_delivery_has_no_writer": {
+        "verdict": "WRONG as stated; conclusion survives on a different mechanism",
+        "corrected": "A writer EXISTS on main: pr-lifecycle-estate-manifest v2 takes --disposition over all five labels (DISPOSITION_META). The defect is that it is enacted by nothing (no sensors.yaml or gates.yaml row, no call in metabolize.sh or drain.sh), has no declared admits-predicate justifying a delivery typing, and its consumer scripts/merge-drain.py:134 still compares against the string literal. Live lifecycle:delivery count remains 0 and the merge rung has still never moved a PR.",
+        "writers_found_corrected": 1
+      },
+      "D5_armed_drain_capacity": {
+        "verdict": "stands for DRAINING; superseded for TYPING",
+        "corrected": "v2's COHORT_SELECTORS (dependabot | operator-active | operator-stale | private | all) widens what can be TYPED. Nothing widens what can be MERGED: armed drain capacity is unchanged at 57 of 1298."
+      }
+    },
+    "unaffected": ["D1_manifest_already_applied", "D3_ledger_label_divergence", "D4_draft_cohort", "live", "ledger_snapshot", "sealed_manifest_replay"],
+    "reverified_against_main": {
+      "D1": "v2 _preflight_repo still raises for all three drift classes (lines 191/193/198)",
+      "D3": "gitvs.py:571 byte-identical on main"
+    },
+    "new": {
+      "D6_typer_is_a_capability_not_an_organ": "grep -rn 'pr-lifecycle-estate-manifest' institutio/ scripts/metabolize.sh scripts/drain.sh returns empty; the typer runs only when a human types it",
+      "D7_lifecycle_axis_has_no_ideal_form": "no entry in docs/IDEAL-FORMS-LEDGER.md (22 entries); vocabulary declared in institutio/github/estate.yaml and re-hardcoded in merge-drain.py:47, pr-lifecycle-manifest.py:15, gitvs.py:554, pr-lifecycle-estate-manifest.py:33; no check-* parity predicate; disposition semantics exist only as code literals"
+    }
+  },
+  "findings": {
+    "D1_manifest_already_applied": {
+      "already_labeled": 249,
+      "closed_since_snapshot": 18,
+      "head_drift": 0,
+      "label_drift_to_active_human": 11,
+      "pending_effects": 0
+    },
+    "D2_lifecycle_delivery_has_no_writer": {
+      "grep_scope": "scripts/ institutio/ docs/*.md",
+      "live_delivery_labeled_prs": 0,
+      "merge_drain_gate": "scripts/merge-drain.py:134 merges only disposition == lifecycle:delivery",
+      "writers_found": 0
+    },
+    "D3_ledger_label_divergence": {
+      "divergent_prs": 124,
+      "live_unlabeled_that_are_ledger_preservation_rows": 130,
+      "mechanism": "gitvs._pr_lifecycle returns lifecycle:preservation from a PR-BODY marker with lifecycle_complete=true and no label; every effector reads labels only",
+      "secondary": "build_plan filters on ledger lifecycle_disposition, so these rows are excluded from every estate manifest by construction"
+    },
+    "D4_draft_cohort": {
+      "drafts": 530,
+      "pct_of_estate": 40.8,
+      "handling": "owner_route_drain.classify returns SKIP(draft); merge-policy holds drafts; no organ marks a PR ready"
+    },
+    "D5_armed_drain_capacity": {
+      "actionable": 57,
+      "archived": 1,
+      "drafts": 250,
+      "estate_total": 1298,
+      "jules_in_scope": 308,
+      "pct_of_estate": 4.4,
+      "scope": "LIMEN_OWNERS=organvm,4444J99 x jules authorship"
+    }
+  },
+  "ledger_snapshot": {
+    "disposition_source_counts": {
+      "label": 889,
+      "legacy-preservation-marker": 124,
+      "missing-label": 278,
+      "repository-archived-immutable": 6
+    },
+    "generated_at": "2026-08-07T00:49:00.823347Z",
+    "lifecycle_untyped_count": 278,
+    "open_pr_count": 1297,
+    "path": "logs/gitvs-pr-debt-facts.json",
+    "refresh_throttle_hours": 20
+  },
+  "live": {
+    "archived_repo_prs": 20,
+    "author_counts": {
+      "4444J99": 627,
+      "app/dependabot": 361,
+      "app/google-labs-jules": 308,
+      "other": 2
+    },
+    "drafts": 530,
+    "label_counts": {
+      "lifecycle:active-human": 14,
+      "lifecycle:blocked": 1146,
+      "lifecycle:delivery": 0,
+      "lifecycle:preservation": 6,
+      "unlabeled": 132
+    },
+    "open_prs": 1298
+  },
+  "measured_at": "2026-08-07T14:05:00Z",
+  "method": "gh repo list over the 10 canonical owners -> 313 repositories (72 archived) -> gh pr list --state open --limit 1000 per repo at 8-way concurrency; 0 fetch errors, so exhaustive rather than sampled; wall clock 18s",
+  "schema": "limen.pr_estate_drain_diagnosis.v1",
+  "sealed_manifest_replay": {
+    "abort_reason": "apply_plan raises on the first of three fatal drift classes across all 278 items in 110 repos; 4444J99/sovereign-systems--elevate-align#277 sorts first, so no effect was written",
+    "items": 278,
+    "labels_applied_by": "actor 4444J99 at 2026-08-07T11:14:48Z (issue-timeline evidence, sibling job, fresher 249-item plan)",
+    "pending_effects": 0,
+    "plan_sha256": "6c9c7197f5ea7aae617da8013a41fcad74ac0ee183fff60367e9696a72e3a17f",
+    "repositories": 110
+  }
+}

@@ -2587,9 +2587,24 @@ def _stable_agent_host_lifetime_fds(
         raise StableAgentHostError("Domus agent host marker has no lifetime identity")
     try:
         lifetime_fd = int(lifetime_raw)
+    except (TypeError, ValueError) as exc:
+        raise StableAgentHostError("Domus agent host lifetime descriptor is malformed") from exc
+    try:
         metadata = os.fstat(lifetime_fd)
-    except (OSError, TypeError, ValueError) as exc:
-        raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+    except OSError as exc:
+        # A nested process inherits the marker ENV (environments always propagate) but NOT the
+        # descriptor (Popen closes fds above stderr by default). EBADF here therefore means "I am
+        # below the process holding the lifetime pipe" — the ordinary state of every grandchild —
+        # not a tampered identity. Reading it as invalid welded the whole dispatch engine shut
+        # inside the beat: heartbeat-loop.sh (fd live) -> beat-sensors Popen (fd closed) ->
+        # dispatch-beat -> engine -> the always-working gate's _run_capture -> here. Every lane
+        # died at that gate before a task was ever selected, and dispatch-beat's exit 0 kept it
+        # silent (measured 2026-08-07: the rung fired, stamped, and dispatched nothing).
+        # Forwarding no descriptor is precisely the no-marker behaviour — the child is simply not
+        # bound to the host lifetime. A caller that REQUIRES the identity still gets the error.
+        if required:
+            raise StableAgentHostError("Domus agent host lifetime descriptor is invalid") from exc
+        return ()
     identity_parts = identity.rsplit(":", 2)
     try:
         handle, device_raw, inode_raw = identity_parts
