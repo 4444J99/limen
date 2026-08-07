@@ -929,6 +929,7 @@
     {
       "id": "L-CONSTELLATION-OVERLAY-RESTORE",
       "label": "Restore the private constellation overlay from the T7 evacuation archive — one cp, then the constellation-registry gate goes green on this host",
+      "source_task": "full-heal-expand-evolve estate plan 2026-08-06 (docs/plans/2026-08-06-full-heal-expand-evolve.md, issue #1922) — storm-heal session, classifier-blocked private-person-records write rerouted to this lever",
       "owner": "yours",
       "category": "estate-restore",
       "cost": "~10 seconds, one copy command (T7Recovery volume must be mounted)",
@@ -940,7 +941,8 @@
         "python3 organs/consulting/constellation/check.py  # exit 0 confirms the estate is whole"
       ],
       "unlocks": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
-      "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time."
+      "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time.",
+      "issue": 1925
     }
   ]
 }
