@@ -166607,3 +166607,37 @@ tasks:
     conduct_lease_id: 'lease-680-e8b6d202c7d48bd0'
     conduct_generation: 680
   updated: '2026-08-08T14:14:14.746Z'
+- id: 'GH-organvm-limen-2106'
+  title: 'POTESTAS 4.3 — the attraction-present protocol: pricing before evidence of reception'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2106'
+  context: 'GitHub issue organvm/limen#2106. Phase: #2082 · Program: #2077 The operator''s second named training failure: *"I fail at interactions where I''m attracted to the person."* ## Same situation, different variable #2082 → 4.2 covers decisions made on a synchronous channel. This covers decisions made **in the presence of wanted regard** — which is the same structural problem (the pause is unavailable) with a second mechanism stacked on'
+  predicate: 'test "$(gh issue view 2106 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2106'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2106'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:19.528Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-e2e7074c5a913bd76dbe6cb78ddfc84c:681:compatibility'
+    conduct_run_id: 'run-e2e7074c5a913bd76dbe6cb78ddfc84c'
+    conduct_lease_id: 'lease-681-e2e7074c5a913bd7'
+    conduct_generation: 681
+  updated: '2026-08-08T14:14:19.528Z'
