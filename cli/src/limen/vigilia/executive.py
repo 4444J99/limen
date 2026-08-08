@@ -83,18 +83,22 @@ def sample_vitals() -> dict:
 
     def merge(current: dict) -> dict:
         status = dict(current)
+        status["institution"] = params.get("INSTITVTIO_NOMEN", "VIGILIA")
+        status.setdefault("completed_at", None)
+        if observed.get("status") == "error":
+            status["sample_error"] = observed
+            status.setdefault("vitals", observed)
+            return status
         current_time = _sample_time(status.get("sampled_at"))
         if current_time is not None and current_time > sampled_time:
-            status.setdefault("completed_at", None)
             return status
         status.update(
             {
-                "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
                 "sampled_at": sampled_at,
                 "vitals": observed,
             }
         )
-        status.setdefault("completed_at", None)
+        status.pop("sample_error", None)
         return status
 
     return _update_status(merge)
