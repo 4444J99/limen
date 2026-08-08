@@ -290,3 +290,30 @@ def test_shipped_baseline_excludes_the_scheduled_executor():
     if sched is None:
         pytest.skip("no runtime install on this host")
     assert str(sched) not in mod.read_baseline()
+
+
+
+def test_direct_python_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        'import subprocess\nsubprocess.run(["osascript", "-e", \'display notification "x"\'])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_direct_shell_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.sh").write_text(
+        'osascript -e "display notification \\"x\\""\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
+
+
+def test_live_tree_has_one_mac_notification_effector(check_gate):
+    assert check_gate.direct_notification_effectors(ROOT) == []
