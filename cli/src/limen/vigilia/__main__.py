@@ -37,8 +37,11 @@ def _sample() -> int:
         print(f"vigilia: sample error — {str(exc)[:160]}")
         return 1
     vitals = status.get("vitals") if isinstance(status, dict) else None
-    if not status.get("sampled_at") or isinstance(vitals, dict) and vitals.get("status") == "error":
-        print(f"vigilia: sample error — {vitals or 'sample receipt missing'}")
+    sample_error = status.get("sample_error") if isinstance(status, dict) else None
+    if sample_error or not status.get("sampled_at") or (
+        isinstance(vitals, dict) and vitals.get("status") == "error"
+    ):
+        print(f"vigilia: sample error — {sample_error or vitals or 'sample receipt missing'}")
         return 1
     print(f"vigilia: sampled {status['sampled_at']}")
     return 0
