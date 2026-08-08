@@ -14,16 +14,25 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import subprocess
+import sys
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _notify import notify
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 USAGE = LOGS / "usage.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
 STATE = LOGS / ".conducting-report-state.json"
+HANDOFF = LOGS / "handoff.json"
+CONTINUITY = LOGS / "dispatch-continuity.json"
+ROUTING_REASONS = frozenset(
+    {"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"}
+)
 
 
 def _load(path, default):
@@ -34,12 +43,7 @@ def _load(path, default):
 
 
 def _notify_macos(title, msg):
-    try:
-        subprocess.run(["osascript", "-e",
-                        f'display notification "{msg.replace(chr(34), chr(39))}" with title "{title}"'],
-                       capture_output=True, timeout=10)
-    except Exception:
-        pass
+    notify(ROOT, msg, title=title)
 
 
 def _notify_ntfy(title, msg):
@@ -53,6 +57,81 @@ def _notify_ntfy(title, msg):
         urllib.request.urlopen(req, timeout=10)
     except Exception:
         pass
+
+
+def _parse_timestamp(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
+
+
+def _continuity_summary() -> str:
+    payload = _load(CONTINUITY, {})
+    lanes = payload.get("lanes") if isinstance(payload, dict) else None
+    if not isinstance(lanes, dict):
+        return "continuity unavailable"
+    counts: dict[str, int] = {}
+    for row in lanes.values():
+        if not isinstance(row, dict):
+            continue
+        verdict = str(row.get("verdict") or "unknown")
+        counts[verdict] = counts.get(verdict, 0) + 1
+    return "continuity " + ", ".join(f"{key}={counts[key]}" for key in sorted(counts))
+
+
+def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
+    """Classify routing from keeper-owned admission, never from vendor consumption."""
+    handoff = _load(HANDOFF, None)
+    if not isinstance(handoff, dict):
+        return "keeper_unavailable", "handoff missing or unreadable"
+    generated = _parse_timestamp(handoff.get("generated"))
+    instant = now or datetime.now(timezone.utc)
+    if instant.tzinfo is None:
+        instant = instant.replace(tzinfo=timezone.utc)
+    if generated is None or (instant.astimezone(timezone.utc) - generated.astimezone(timezone.utc)).total_seconds() > 5400:
+        return "keeper_unavailable", "handoff missing a fresh keeper timestamp"
+
+    admission = handoff.get("dispatch_admission")
+    if not isinstance(admission, dict) or admission.get("schema_version") != "limen.dispatch_admission.v1":
+        return "keeper_unavailable", "canonical dispatch admission unavailable"
+
+    admissible = int(admission.get("admissible") or 0)
+    open_considered = int(admission.get("open_considered") or 0)
+    if admissible > 0 or admission.get("dispatchable_next"):
+        return "routable", f"admissible={admissible}; {_continuity_summary()}"
+
+    reasons = admission.get("reason_counts")
+    reasons = reasons if isinstance(reasons, dict) else {}
+    reason_keys = {str(key).lower() for key, value in reasons.items() if value}
+    vendors = ((handoff.get("provider_headroom") or {}).get("vendors") or {})
+    provider_states = {
+        str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
+        for row in vendors.values()
+        if isinstance(row, dict)
+    }
+    if any("auth" in key or "credential" in key for key in reason_keys) or provider_states & {
+        "auth_needed",
+        "auth_blocked",
+        "unauthenticated",
+    }:
+        reason = "auth_blocked"
+    else:
+        capacity_keys = {"budget_global", "budget_agent", "provider_health", "capacity"}
+        reason = "capacity_blocked" if reason_keys and reason_keys <= capacity_keys else "admission_blocked"
+    detail = f"open={open_considered}; gates=" + (
+        ",".join(f"{key}={reasons[key]}" for key in sorted(reasons)) if reasons else "board_empty"
+    )
+    return reason, f"{detail}; {_continuity_summary()}"
+
+
+def _local_day(now: datetime | None = None) -> str:
+    """Daily dedupe follows the host's local calendar, not a UTC usage timestamp."""
+    instant = now or datetime.now().astimezone()
+    return instant.astimezone().date().isoformat()
 
 
 def _value_verdict() -> str | None:
@@ -94,11 +173,12 @@ def _verdict(v: dict) -> tuple[str, bool]:
     return (f"used {used_pct}% (headroom {hr}%, pace {pace})", used_pct >= 50)
 
 
-def build_report() -> tuple[str, str, str]:
-    """Returns (headline, full_text, day_key)."""
+def build_report() -> tuple[str, str, str, str]:
+    """Returns (headline, full_text, local_day_key, canonical_routing_reason)."""
     usage = _load(USAGE, {}) or {}
     vendors = usage.get("vendors", {})
-    day = (usage.get("generated", "") or datetime.now().isoformat())[:10]
+    day = _local_day()
+    routing_reason, routing_detail = _routing_reason()
     lines, burned, idle = [], 0, 0
     for name in sorted(vendors):
         v = vendors[name]
@@ -115,18 +195,21 @@ def build_report() -> tuple[str, str, str]:
     if tracked and burned >= max(1, tracked - 1):
         headline = f"FULL FORCE — {burned}/{len(lines)} lanes burned to the drops"
     elif idle:
-        headline = f"IDLED — {idle} lane(s) sat at a full tank (no routable work)"
+        if routing_reason == "routable":
+            headline = f"ROUTABLE BUT IDLE — {idle} lane(s) sat at a full tank"
+        else:
+            headline = f"IDLED — {idle} lane(s) sat at a full tank ({routing_reason})"
     else:
         headline = f"partial — {burned}/{len(lines)} lanes burned"
     if disc:
         headline += f"; {disc} repos in value-discovery"
     # the credit side: did the spend earn its keep? (the "was it worth my money?" answer)
     value = _value_verdict()
-    body = f"Conducting report {day}\n{headline}\n"
+    body = f"Conducting report {day}\n{headline}\n  routing: {routing_reason} — {routing_detail}\n"
     if value:
         body += f"  value: {value}\n"
     body += "\n".join(lines)
-    return headline, body, day
+    return headline, body, day, routing_reason
 
 
 def census() -> dict:
@@ -144,6 +227,7 @@ def census() -> dict:
         "value_verdict_present": _value_verdict() is not None,
         "open_value_discovery": _discovery_count(),
         "state_present": STATE.exists(),
+        "routing_reason": _routing_reason()[0],
     }
 
 
@@ -157,7 +241,7 @@ def main() -> int:
         print(json.dumps(census(), indent=2, sort_keys=True))
         return 0
 
-    headline, body, day = build_report()
+    headline, body, day, routing_reason = build_report()
     print(body)
     if args.print_only:
         return 0
@@ -169,7 +253,7 @@ def main() -> int:
     _notify_macos("Limen — conducting", headline)
     _notify_ntfy("Limen — conducting", body)
     try:
-        STATE.write_text(json.dumps({"last_day": day, "headline": headline}))
+        STATE.write_text(json.dumps({"last_day": day, "headline": headline, "routing_reason": routing_reason}))
     except OSError:
         pass
     return 0
