@@ -65,18 +65,20 @@ dispositions:
 # selector so the unresolved human lever cannot be bypassed by another default.
 cohort_precedence:
   - draft
+  - archived-repo
   - dependabot
   - private
   - operator-active
   - operator-stale
-  - archived-repo
   - all
 
 cohorts:
   dependabot:
     selector: {private: false, owner: dependabot}
-    default_disposition: "lifecycle:delivery"
-    drainable: true
+    default_disposition: "lifecycle:blocked"
+    owner_lever: L-DEPENDABOT-DELIVERY-ARM
+    armed_disposition: "lifecycle:delivery"
+    drainable: false
   operator-active:
     selector: {private: false, owner: operator, classification: active_custody}
     default_disposition: "lifecycle:active-human"
@@ -135,4 +137,3 @@ literal_baseline:
 
 live_baseline:
   preservation_materialization_missing_labels: 124
-  lifecycle_label_metadata_drift_count: 0
