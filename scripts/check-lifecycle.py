@@ -256,6 +256,8 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
         precedence = []
     elif precedence[0] != "draft" or precedence[-1] != "all":
         fail("E", "cohort_precedence must evaluate draft first and all last")
+    elif precedence.index("archived-repo") > precedence.index("dependabot"):
+        fail("E", "archived-repo must precede the actionable dependabot cohort")
     for cohort, row in cohorts.items():
         if not isinstance(row, dict):
             fail("E", f"{cohort}: cohort row must be a mapping")
@@ -264,12 +266,15 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
             fail("E", f"{cohort}: selector must be a non-empty mapping")
         disposition = row.get("default_disposition")
         lever = row.get("owner_lever")
+        armed_disposition = row.get("armed_disposition")
         if disposition is None and not lever:
             fail("E", f"{cohort}: requires default_disposition or owner_lever")
         if disposition is not None and disposition not in labels:
             fail("E", f"{cohort}: unknown default_disposition {disposition!r}")
         if lever and lever not in levers:
             fail("E", f"{cohort}: owner_lever {lever!r} does not resolve")
+        if armed_disposition is not None and (not lever or armed_disposition not in labels):
+            fail("E", f"{cohort}: armed_disposition requires a resolving lever and known disposition")
         if disposition is None and lever and levers.get(str(lever)) in TERMINAL_LEVER_STATES:
             fail(
                 "E",
@@ -295,13 +300,14 @@ def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
         fail("A", "schema_version must be 0.1")
     labels = validate_dispositions(registry)
     estate_policy = legacy_estate_policy()
-    estate_labels = legacy_estate_labels(estate_policy)
     ratchets = registry.get("ratchets") or {}
     estate_derives = ratchets.get("estate_yaml_derives")
     if not isinstance(estate_derives, bool):
         fail("A", "ratchets.estate_yaml_derives must be boolean")
-    elif not estate_derives and labels != estate_labels:
-        fail("A", f"registry/estate disposition mismatch: registry={sorted(labels)} estate={sorted(estate_labels)}")
+    elif not estate_derives:
+        estate_labels = legacy_estate_labels(estate_policy)
+        if labels != estate_labels:
+            fail("A", f"registry/estate disposition mismatch: registry={sorted(labels)} estate={sorted(estate_labels)}")
     elif estate_derives:
         if "lifecycle_labels" in estate_policy:
             fail("A", "converted estate.yaml must not retain lifecycle_labels")
@@ -313,7 +319,80 @@ def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
     return registry, labels
 
 
-def measure_unreachable(registry: dict[str, Any]) -> int | None:
+def live_label_metadata_drift(
+    repositories: set[str],
+    dispositions: dict[str, Any],
+) -> int | None:
+    """Read lifecycle label color/description from GitHub in bounded GraphQL batches."""
+
+    valid_repositories = sorted(
+        repository
+        for repository in repositories
+        if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository)
+    )
+    drift = 0
+    for offset in range(0, len(valid_repositories), 40):
+        batch = valid_repositories[offset : offset + 40]
+        fields = []
+        aliases: dict[str, str] = {}
+        for index, repository in enumerate(batch):
+            owner, name = repository.split("/", 1)
+            alias = f"r{index}"
+            aliases[alias] = repository
+            fields.append(
+                f"{alias}: repository(owner: {json.dumps(owner)}, name: {json.dumps(name)}) "
+                '{ labels(first: 100, query: "lifecycle:") { nodes { name color description } } }'
+            )
+        query = "query { " + " ".join(fields) + " }"
+        try:
+            result = subprocess.run(
+                ["gh", "api", "graphql", "-f", f"query={query}"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            payload = json.loads(result.stdout) if result.returncode == 0 else None
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            fail("D", f"live lifecycle-label query failed: {type(exc).__name__}")
+            return None
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict):
+            fail("D", "live lifecycle-label query returned no data")
+            return None
+        for alias, repository in aliases.items():
+            repo_payload = data.get(alias)
+            if not isinstance(repo_payload, dict):
+                fail("D", f"live lifecycle-label query could not resolve {repository}")
+                return None
+            labels_payload = repo_payload.get("labels")
+            nodes = labels_payload.get("nodes") if isinstance(labels_payload, dict) else None
+            if not isinstance(nodes, list):
+                fail("D", f"live lifecycle-label query returned no labels for {repository}")
+                return None
+            actual = {
+                row.get("name"): row
+                for row in nodes
+                if isinstance(row, dict) and isinstance(row.get("name"), str)
+            }
+            for label, expected in dispositions.items():
+                row = actual.get(label)
+                if not isinstance(row, dict):
+                    drift += 1
+                    continue
+                if str(row.get("color") or "").lower() != str(expected.get("label_color") or "").lower():
+                    drift += 1
+                    continue
+                if str(row.get("description") or "") != str(expected.get("description") or ""):
+                    drift += 1
+    return drift
+
+
+def measure_unreachable(
+    registry: dict[str, Any],
+    *,
+    metadata_probe=live_label_metadata_drift,
+) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, ValueError) as exc:
@@ -330,6 +409,17 @@ def measure_unreachable(registry: dict[str, Any]) -> int | None:
     if not isinstance(rows, list):
         fail("D", "PR-debt ledger has no pull_requests census")
         return None
+    dispositions = registry.get("dispositions")
+    if not isinstance(dispositions, dict):
+        fail("D", "registry has no dispositions mapping")
+        return None
+    inferred_unwritten = sum(
+        1
+        for row in rows
+        if isinstance(row, dict)
+        and row.get("lifecycle_disposition") in dispositions
+        and row.get("lifecycle_disposition_source") != "label"
+    )
     preservation_missing = sum(
         1
         for row in rows
@@ -338,15 +428,29 @@ def measure_unreachable(registry: dict[str, Any]) -> int | None:
         and row.get("lifecycle_disposition_source") != "label"
     )
     live_baseline = registry.get("live_baseline")
-    metadata_drift = (
-        live_baseline.get("lifecycle_label_metadata_drift_count")
+    preservation_ceiling = (
+        live_baseline.get("preservation_materialization_missing_labels")
         if isinstance(live_baseline, dict)
         else None
     )
-    if isinstance(metadata_drift, bool) or not isinstance(metadata_drift, int) or metadata_drift < 0:
-        fail("D", "live_baseline has no nonnegative lifecycle_label_metadata_drift_count")
+    if isinstance(preservation_ceiling, bool) or not isinstance(preservation_ceiling, int):
+        fail("D", "live_baseline has no preservation materialization ceiling")
         return None
-    return value + preservation_missing + metadata_drift
+    if preservation_missing > preservation_ceiling:
+        fail(
+            "D",
+            "preservation materialization debt regrew "
+            f"from {preservation_ceiling} to {preservation_missing}",
+        )
+    repositories = {
+        str(row["repository"])
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("repository"), str)
+    }
+    metadata_drift = metadata_probe(repositories, dispositions)
+    if metadata_drift is None:
+        return None
+    return value + inferred_unwritten + metadata_drift
 
 
 def main() -> int:
