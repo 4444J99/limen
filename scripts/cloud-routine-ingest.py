@@ -43,6 +43,17 @@ def load_receipts(paths: list[Path]) -> list[CloudRoutineReceiptV1]:
     return receipts
 
 
+def _tasks_path() -> Path:
+    """Resolve the read-only board projection independently of this script checkout."""
+    explicit = os.environ.get("LIMEN_TASKS")
+    if explicit:
+        return Path(explicit).expanduser()
+    limen_root = os.environ.get("LIMEN_ROOT")
+    if limen_root:
+        return Path(limen_root).expanduser() / "tasks.yaml"
+    return ROOT / "tasks.yaml"
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Ingest typed cloud-routine outcomes through TABVLARIVS."
@@ -61,18 +72,19 @@ def main(argv: list[str] | None = None) -> int:
         print(f"cloud-routine-ingest: invalid receipt: {exc}", file=sys.stderr)
         return 2
 
-    board = load_limen_file(ROOT / "tasks.yaml")
+    tasks_path = _tasks_path()
+    board = load_limen_file(tasks_path)
     plan = plan_task_upserts(
         receipts,
         existing_ids=(task.id for task in board.tasks),
-        pending_ids=pending_task_ids(ROOT / "tasks.yaml"),
+        pending_ids=pending_task_ids(tasks_path),
     )
 
     submitted: list[str] = []
     if args.apply:
         for task in plan.tasks:
             submit_task_upsert(
-                ROOT / "tasks.yaml",
+                tasks_path,
                 task,
                 agent="cloud-routine-ingest",
                 session_id=os.environ.get(
