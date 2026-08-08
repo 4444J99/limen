@@ -2326,15 +2326,15 @@ sensors:
     title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
     gate: LIMEN_DIURNAL
     default: "1"
-    source: [metabolize, heartbeat]
+    source: [fast-wave]
     owner: diurnal
-    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
-    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
-    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
-    # due exits before doing any work.
+    # The heartbeat's independent fast wave visits every declared sample cadence. True
+    # time-of-day gating remains wall-clock inside the script (logs/diurnal/state.json,
+    # one emission per phase per local calendar day), so visits before a phase is due are
+    # cheap no-ops and a multi-hour slow main rung cannot delay the phase notification.
     cadence:
       env: LIMEN_BEAT_DIURNAL
-      default: 2
+      default: 1
     timeout:
       env: LIMEN_DIURNAL_TIMEOUT
       default: 240
