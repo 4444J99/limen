@@ -62,7 +62,8 @@
     "predicate": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 8192
+      "maxLength": 8192,
+      "pattern": "^(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$"
     }
   },
   "allOf": [
@@ -105,6 +106,29 @@
           "owner_ref": {
             "type": "string",
             "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "human_gate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          },
+          "owner_ref": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
