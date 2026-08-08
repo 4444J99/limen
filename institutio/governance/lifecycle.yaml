@@ -61,6 +61,17 @@ dispositions:
     terminal: true
     owner: gitvs
 
+# Cohorts are first-match. Drafts precede every overlapping owner/privacy/archive
+# selector so the unresolved human lever cannot be bypassed by another default.
+cohort_precedence:
+  - draft
+  - dependabot
+  - private
+  - operator-active
+  - operator-stale
+  - archived-repo
+  - all
+
 cohorts:
   dependabot:
     selector: {private: false, owner: dependabot}
@@ -81,7 +92,7 @@ cohorts:
     owner_lever: L-PR-DRAFT-COHORT-DISPOSITION
   archived-repo:
     selector: {repository_archived: true}
-    default_disposition: "lifecycle:superseded"
+    default_disposition: "lifecycle:blocked"
     immutable: true
   all:
     selector: {all: true}
@@ -91,18 +102,22 @@ consumers:
   merge-drain:
     path: scripts/merge-drain.py
     derives: [merge_eligible]
+    loader_markers: [lifecycle.yaml, merge_eligible]
     ratchet: merge_drain_derives
   lifecycle-manifest:
     path: scripts/pr-lifecycle-manifest.py
     derives: [labels]
+    loader_markers: [lifecycle.yaml, dispositions]
     ratchet: lifecycle_manifest_derives
   estate-manifest:
     path: scripts/pr-lifecycle-estate-manifest.py
     derives: [labels, label_color, description, cohorts]
+    loader_markers: [lifecycle.yaml, cohort_precedence]
     ratchet: estate_manifest_derives
   gitvs:
     path: scripts/gitvs.py
     derives: [labels, derived_from]
+    loader_markers: [lifecycle.yaml, derived_from]
     ratchet: gitvs_derives
 
 ratchets:
@@ -120,3 +135,4 @@ literal_baseline:
 
 live_baseline:
   preservation_materialization_missing_labels: 124
+  lifecycle_label_metadata_drift_count: 0
