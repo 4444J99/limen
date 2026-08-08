@@ -353,6 +353,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Seconds allowed for the lightweight VIGILIA host sample inside one fast wave. This stays far below the declared sample cadence so a wedged probe cannot consume the next sample slot."
+  LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:
+    default: 30
+    env: LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Seconds allowed for one independent stale-sample watchdog evaluation. The watchdog is a sibling of the sampler, so this bound cannot delay the declared VITALS sample cadence."
   LIMEN_FAST_WAVE_SENSOR_TIMEOUT:
     default: 260
     env: LIMEN_FAST_WAVE_SENSOR_TIMEOUT
