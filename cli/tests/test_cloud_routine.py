@@ -278,9 +278,7 @@ def test_irf_validator_derives_every_row_owner() -> None:
         (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
     )
     broken = json.loads(json.dumps(receipt))
-    owned_row = next(
-        row for row in broken["rows"] if row["disposition"] == "owned"
-    )
+    owned_row = next(row for row in broken["rows"] if row["disposition"] == "owned")
     owned_row.pop("owner_ref")
 
     failures = module.validate_irf_receipt(
