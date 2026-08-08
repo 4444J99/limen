@@ -186,9 +186,7 @@ def plan_task_upserts(
             continue
         task_id = lineage_id
         if lineage_id in historical:
-            occurrence = receipt.observed_at.astimezone(timezone.utc).strftime(
-                "%Y%m%dT%H%M%SZ"
-            )
+            occurrence = receipt.observed_at.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             task_id = f"{lineage_id}-{occurrence}"
         if task_id in active or task_id in historical or task_id in seen_lineages:
             duplicates += 1
