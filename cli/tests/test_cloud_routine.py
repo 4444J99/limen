@@ -105,16 +105,12 @@ def test_manifest_publishes_the_receipt_contract() -> None:
     manifest = json.loads((ROOT / "cloud-routines.json").read_text())
 
     assert manifest["receipt_schema_version"] == "limen.cloud_routine_receipt.v1"
-    assert manifest["receipt_schema"] == (
-        "spec/contracts/cloud-routine-receipt-v1.schema.json"
-    )
+    assert manifest["receipt_schema"] == ("spec/contracts/cloud-routine-receipt-v1.schema.json")
     assert manifest["consumer"] == "scripts/cloud-routine-ingest.py"
 
 
 def test_current_findings_are_typed_and_already_owned() -> None:
-    payload = json.loads(
-        (ROOT / "docs" / "receipts" / "cloud-routine-findings-20260808.json").read_text()
-    )
+    payload = json.loads((ROOT / "docs" / "receipts" / "cloud-routine-findings-20260808.json").read_text())
     receipts = [CloudRoutineReceiptV1.model_validate(item) for item in payload]
 
     assert len(receipts) == 11
@@ -123,9 +119,7 @@ def test_current_findings_are_typed_and_already_owned() -> None:
 
 
 def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
-    receipt = json.loads(
-        (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
-    )
+    receipt = json.loads((ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text())
     rows = receipt["rows"]
 
     assert receipt["denominator"] == receipt["classified"] == len(rows) == 41
