@@ -103,7 +103,7 @@ sensors:
             args: ["--apply"]
             armed_valve_type: deliverable
         severity: advisory
-        escalation: "configured MCP server(s) fail to boot/reach above — arm LIMEN_MCP_BOOT_HEAL=1 so the beat re-lands dropped agent entries + clears corrupt npx caches; an empty ianva registry is a registry decision (deploy ianva/upstreams.example.json or `ianva add-upstream`). Ω = scripts/verify-mcp-estate.sh"
+        escalation: "configured MCP server failure above — follow its state-specific Cure: auth_needed uses `codex mcp login <name>` for OAuth or populates the named bearer environment through the credential organ; auth_unknown restores `codex mcp list --json` telemetry; only unreachable/boot_failed arms LIMEN_MCP_BOOT_HEAL=1. An empty ianva registry remains a registry decision (`ianva add-upstream`). Ω = scripts/verify-mcp-estate.sh"
     # Fixed-point rung (Phase C, promoted once the estate went green 2026-07-18): the whole-estate
     # predicate — every configured MCP server boots + ianva doorway ≥1 upstream + no placeholder
     # secret. live tier: runs on the host/beat, SKIPs cleanly under omega.sh --offline (CI has no
