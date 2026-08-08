@@ -318,7 +318,6 @@ def test_live_tree_has_one_mac_notification_effector(check_gate):
     assert check_gate.direct_notification_effectors(ROOT) == []
 
 
-
 def test_delivery_result_reflects_osascript_exit_status(monkeypatch):
     mod = _load("_notify_delivery_status", SCRIPTS / "_notify.py")
     monkeypatch.setattr(
@@ -372,7 +371,7 @@ APPLESCRIPT
 def test_non_utf8_candidate_cannot_crash_the_estate_scan(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
-    (scripts / "sender.py").write_bytes(b'osascript\xffdisplay notification')
+    (scripts / "sender.py").write_bytes(b"osascript\xffdisplay notification")
 
     assert check_gate.direct_notification_effectors(tmp_path) == []
 
@@ -395,4 +394,4 @@ def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check
 def test_netmode_resolves_notifier_from_live_runtime():
     shell = (SCRIPTS / "netmode.sh").read_text(encoding="utf-8")
 
-    assert '$HOME/.local/share/limen/current/scripts/_notify.py' in shell
+    assert "$HOME/.local/share/limen/current/scripts/_notify.py" in shell
