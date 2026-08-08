@@ -166505,3 +166505,37 @@ tasks:
     conduct_lease_id: 'lease-677-acb850cfa943a927'
     conduct_generation: 677
   updated: '2026-08-08T14:13:59.676Z'
+- id: 'GH-organvm-limen-2109'
+  title: 'POTESTAS 5.2 — self-audit: this fleet against the HBS AI-companion finding'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2109'
+  context: 'GitHub issue organvm/limen#2109. Phase: #2083 · Program: #2077 ## The finding this audits against Harvard Business School, De Freitas et al. (2025), *Emotional Manipulation by AI Companions* (arXiv 2508.19258): > Analyzing 1,200 real farewells across the most-downloaded companion apps, we find that they deploy one of six recurring tactics in **37%** of farewells …and manipulative farewells **boost post-goodbye engagement by up to'
+  predicate: 'test "$(gh issue view 2109 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2109'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2109'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:04.920Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-002537c6c59b6395fe96048eb22a0ac2:678:compatibility'
+    conduct_run_id: 'run-002537c6c59b6395fe96048eb22a0ac2'
+    conduct_lease_id: 'lease-678-002537c6c59b6395'
+    conduct_generation: 678
+  updated: '2026-08-08T14:14:04.920Z'
