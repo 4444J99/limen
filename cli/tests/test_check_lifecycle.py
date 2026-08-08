@@ -34,6 +34,32 @@ def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
     lever_ids = {row["id"] for row in json.loads((ROOT / "his-hand-levers.json").read_text())["levers"]}
 
     assert merge_eligible == ["lifecycle:delivery"]
+    delivery = dispositions["lifecycle:delivery"]
+    assert delivery["admits"] == {
+        "draft": False,
+        "mergeable": True,
+        "required_checks": "green",
+        "conflicts": "none",
+    }
+    assert registry["cohort_precedence"][0] == "draft"
+    assert registry["cohort_precedence"][-1] == "all"
     assert registry["cohorts"]["draft"]["default_disposition"] is None
     assert registry["cohorts"]["draft"]["owner_lever"] in lever_ids
+    assert registry["cohorts"]["archived-repo"]["default_disposition"] == "lifecycle:blocked"
     assert all(row["ratchet"] in registry["ratchets"] for row in registry["consumers"].values())
+    assert all(row["loader_markers"] for row in registry["consumers"].values())
+    assert isinstance(registry["ratchets"]["estate_yaml_derives"], bool)
+
+
+def test_lifecycle_measure_includes_untyped_and_unmaterialized_prs() -> None:
+    result = subprocess.run(
+        [sys.executable, str(CHECK), "--measure"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "unreachable PRs: 139" in result.stdout
