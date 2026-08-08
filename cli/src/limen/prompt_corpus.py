@@ -3641,14 +3641,6 @@ def _raw_store_signature(paths: LedgerPaths) -> str:
     return digest(rows)
 
 
-def _file_sha256(path: Path) -> str:
-    hasher = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
 def _archive_location_path(paths: LedgerPaths, value: str) -> Path:
     candidate = Path(value).expanduser()
     if not candidate.is_absolute():
@@ -3870,6 +3862,7 @@ def _validate_raw_archive_custody(
                 errors.append(f"{label}: archived raw object archive digest mismatch")
     if errors or archive_path is None:
         return None, errors
+    assert isinstance(archive_sha256, str)
     return {
         "custody_receipt": normalized,
         "archive_path": str(archive_path),
