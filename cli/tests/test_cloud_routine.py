@@ -67,6 +67,7 @@ def test_task_translation_preserves_predicate_and_intake_contract() -> None:
 
     assert task.id == task_id_for(receipt)
     assert task.repo == "organvm/limen"
+    assert task.created.isoformat() == "2026-08-08"
     assert task.predicate == receipt.predicate
     assert validate_intake_contract(task, is_new=True) is not None
 
