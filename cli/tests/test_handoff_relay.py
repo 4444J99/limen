@@ -112,6 +112,7 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
     assert payload["dispatch_admission"]["admissible"] == 1
     assert payload["dispatch_admission"]["reason_counts"] == {"provider_health": 1}
     assert payload["dispatch_admission"]["provider_health_reason_counts"] == {"gemini": 1}
+    assert payload["dispatch_admission"]["admissible_agent_counts"] == {"codex": 1}
     assert payload["board_budget"] == {
         "daily": 10,
         "unit": "runs",
