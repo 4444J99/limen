@@ -166335,3 +166335,37 @@ tasks:
     conduct_lease_id: 'lease-672-1f0b935a86cd0d61'
     conduct_generation: 672
   updated: '2026-08-08T14:13:34.890Z'
+- id: 'GH-organvm-limen-2114'
+  title: 'POTESTAS 7.1 — essay: the replication crisis in the power canon'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2114'
+  context: 'GitHub issue organvm/limen#2114. Phase: #2085 · Program: #2077 **The program''s most publishable artifact**, and the reason POTESTAS is worth doing in public at all. ## The thesis A power curriculum whose loudest chapter is *which famous findings are dead*. Every bestseller, course, and thread in this space cites at least one collapsed result — usually several — and the reader walks away **confidently wrong**, which is worse than'
+  predicate: 'test "$(gh issue view 2114 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2114'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2114'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:13:40.285Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-d12e05e5b54d79dcd595079e4fc28f6a:673:compatibility'
+    conduct_run_id: 'run-d12e05e5b54d79dcd595079e4fc28f6a'
+    conduct_lease_id: 'lease-673-d12e05e5b54d79dc'
+    conduct_generation: 673
+  updated: '2026-08-08T14:13:40.285Z'
