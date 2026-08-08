@@ -103,9 +103,15 @@ export LIMEN_INSIGHT_ROUTE_APPLY="${LIMEN_INSIGHT_ROUTE_APPLY:-1}"
 # Every organ call in this loop used to end `2>&1 | tail -1 || true`, and that idiom has
 # three defects that compound into total blindness:
 #
-#   1. `$?` is TAIL's status, never the organ's — and tail essentially always exits 0. So
-#      the trailing `|| true` is decorative and NOTHING downstream can distinguish a
-#      hard failure from a clean run.
+#   1. The status is DISCARDED — corrected 2026-08-07, this comment first said "destroyed".
+#      This script sets `pipefail` (line 23), so the pipeline really does exit with the
+#      ORGAN's status (measured: rc=9 through `| tail -1` with pipefail, rc=0 without it).
+#      The trailing `|| true` was therefore load-bearing, and what it bore was throwing
+#      that status away at the call site. Nothing captured it, so NOTHING downstream could
+#      distinguish a hard failure from a clean run. Same blindness, different cause — and
+#      the cause is what picks the fix: the status has to be RECORDED, not merely rescued
+#      from tail. (Drop `pipefail` and tail does destroy it, which is why the idiom stays
+#      forbidden outright rather than merely discouraged.)
 #   2. `tail -1` of a Python traceback is the last line of the exception's own repr. For an
 #      HTTP error carrying a JSON body that is a bare `}`. The diagnostic is destroyed at
 #      exactly the moment it is the only thing worth keeping.
