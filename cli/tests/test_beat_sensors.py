@@ -497,6 +497,22 @@ def test_canary_never_ran_fast_wave_exits_1(tmp_path, capsys):
     assert "NEVER-RAN fast-wave-sensor" in capsys.readouterr().out
 
 
+def test_canary_uses_fast_wave_period_for_fast_wave_sources(tmp_path, capsys):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
+        (voice_dir / sid).write_text("stamp\n", encoding="utf-8")
+    os.utime(voice_dir / "fast-wave-sensor", (time.time() - 400, time.time() - 400))
+
+    assert m.canary(
+        registry=registry,
+        loop_max=1800,
+        fast_wave_seconds=60,
+        voice_dir=voice_dir,
+    ) == 1
+    assert "STALE fast-wave-sensor" in capsys.readouterr().out
+
+
 def test_canary_stale_stamp_exits_1(tmp_path, capsys):
     """Bound is cadence × loop_max × 2 (twice the worst-case wall-clock for one cadence window):
     live-lane cadence 4 × loop_max 60 × 2 = 480 s — a stamp backdated past it must read STALE."""
