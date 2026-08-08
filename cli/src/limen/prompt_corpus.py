@@ -3738,13 +3738,70 @@ def _prompt_authority_fast_path_valid(
     )
 
 
+RAW_ARCHIVE_MANIFEST_VERSION = "limen.prompt_raw_archive_manifest.v1"
+
+
+def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Load exact custody proofs for content-addressed raw objects held in cold storage."""
+
+    manifest_path = paths.private_dir / "raw-archive-manifest.json"
+    if not manifest_path.exists():
+        return {}, []
+    payload, errors = load_json_strict(manifest_path)
+    if errors:
+        return {}, errors
+    if payload.get("schema_version") != RAW_ARCHIVE_MANIFEST_VERSION:
+        errors.append(f"{manifest_path.name}: unsupported schema_version")
+    objects = payload.get("objects")
+    if not isinstance(objects, list):
+        errors.append(f"{manifest_path.name}: objects must be a list")
+        return {}, errors
+
+    entries: dict[str, dict[str, str]] = {}
+    for index, item in enumerate(objects):
+        label = f"{manifest_path.name}:objects[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{label}: entry must be an object")
+            continue
+        relative = item.get("raw_object")
+        prompt_hash = item.get("prompt_hash")
+        custody_receipt = item.get("custody_receipt")
+        if not isinstance(relative, str) or not relative:
+            errors.append(f"{label}: raw_object must be a non-empty string")
+            continue
+        if not isinstance(prompt_hash, str) or re.fullmatch(r"[0-9a-f]{64}", prompt_hash) is None:
+            errors.append(f"{label}: prompt_hash must be a lowercase SHA-256 digest")
+            continue
+        expected = str(Path(prompt_hash[:2]) / f"{prompt_hash}.txt.gz")
+        if relative != expected:
+            errors.append(f"{label}: raw_object does not match prompt_hash")
+            continue
+        if (
+            not isinstance(custody_receipt, str)
+            or not custody_receipt.strip()
+            or "\x00" in custody_receipt
+            or len(custody_receipt) > 1024
+        ):
+            errors.append(f"{label}: custody_receipt must be a non-empty bounded reference")
+            continue
+        if relative in entries:
+            errors.append(f"{label}: duplicate raw_object")
+            continue
+        entries[relative] = {
+            "prompt_hash": prompt_hash,
+            "custody_receipt": custody_receipt.strip(),
+        }
+    return entries, errors
+
+
 def validate_raw_references(
     paths: LedgerPaths,
     occurrences: Sequence[dict[str, Any]],
     *,
     verify_content: bool = False,
 ) -> list[str]:
-    errors: list[str] = []
+    archive_entries, manifest_errors = _load_raw_archive_manifest(paths)
+    errors: list[str] = list(manifest_errors)
     verified: set[str] = set()
     for occurrence in occurrences:
         occurrence_id = str(occurrence.get("occurrence_id") or "unknown")
@@ -3757,8 +3814,15 @@ def validate_raw_references(
             errors.append(f"{occurrence_id}: raw object reference does not match prompt hash")
             continue
         candidate = (paths.raw_objects / relative).resolve()
-        if paths.raw_objects.resolve() not in candidate.parents or not candidate.is_file():
-            errors.append(f"{occurrence_id}: private raw object is missing")
+        if paths.raw_objects.resolve() not in candidate.parents:
+            errors.append(f"{occurrence_id}: private raw object reference escapes its store")
+            continue
+        if not candidate.is_file():
+            archived = archive_entries.get(relative)
+            if archived is None:
+                errors.append(f"{occurrence_id}: private raw object is missing")
+            elif archived["prompt_hash"] != prompt_hash:
+                errors.append(f"{occurrence_id}: archived raw object digest mismatch")
             continue
         try:
             mode = candidate.stat().st_mode & 0o777
