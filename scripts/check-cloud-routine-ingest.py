@@ -37,6 +37,9 @@ def main() -> int:
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         raw_receipts = json.loads(receipt_path.read_text(encoding="utf-8"))
         validator = Draft202012Validator(schema, format_checker=FormatChecker())
+        if not isinstance(raw_receipts, list) or len(raw_receipts) != 11:
+            failures.append("current cloud-routine denominator is not exactly 11 receipts")
+            raw_receipts = raw_receipts if isinstance(raw_receipts, list) else []
         receipts: list[CloudRoutineReceiptV1] = []
         for index, raw in enumerate(raw_receipts):
             schema_errors = sorted(
