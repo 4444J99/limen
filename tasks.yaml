@@ -165876,3 +165876,37 @@ tasks:
     conduct_lease_id: 'lease-659-30b6bae24c9a6b72'
     conduct_generation: 659
   updated: '2026-08-08T00:30:40.245Z'
+- id: 'GH-organvm-limen-2022'
+  title: 'armed-valve-audit is chronically RED on two unowned SILENT-OFF valves — a permanently-red gate is no gate'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2022'
+  context: 'GitHub issue organvm/limen#2022. `scripts/armed-valve-audit.py --check` has exited **1 / RED** continuously, on the same two valves, and neither has an owner: ``` armed-valve-audit: RED — 2 deliverable valve(s) silently off: LIMEN_MCP_BOOT_HEAL, LIMEN_DECORUM_APPLY SILENT-OFF LIMEN_MCP_BOOT_HEAL env=<unset> — verify local MCP servers boot (Lane A — every agent CLI''s stdio servers actually start) SILENT-OFF LIMEN_DECORUM_APPLY env'
+  predicate: 'test "$(gh issue view 2022 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2022'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2022'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:45.007Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-99c4d78a94a666af1abfbebbd7b4c817:660:compatibility'
+    conduct_run_id: 'run-99c4d78a94a666af1abfbebbd7b4c817'
+    conduct_lease_id: 'lease-660-99c4d78a94a666af'
+    conduct_generation: 660
+  updated: '2026-08-08T00:30:45.007Z'
