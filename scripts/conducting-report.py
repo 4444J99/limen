@@ -131,7 +131,7 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
 def _local_day(now: datetime | None = None) -> str:
     """Daily dedupe follows the host's local calendar, not a UTC usage timestamp."""
     instant = now or datetime.now().astimezone()
-    return instant.astimezone().date().isoformat()
+    return instant.date().isoformat()
 
 
 def _value_verdict() -> str | None:
