@@ -167332,3 +167332,36 @@ tasks:
     conduct_lease_id: 'lease-701-a66877e39d0dde97'
     conduct_generation: 701
   updated: '2026-08-08T21:00:33.751Z'
+- id: 'GH-organvm-session-meta-169'
+  title: 'CLOUD-session-meta-push-ci: restore push CI on main'
+  repo: 'organvm/session-meta'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/session-meta/issues/169'
+  context: 'GitHub issue organvm/session-meta#169. ## Finding The latest `CI` workflow triggered by a push to `main` is still failing: - failing run: https://github.com/organvm/session-meta/actions/runs/30753722429 - observed head: `48f131300f71982beaa213b6f9ed6106adaf5b50` - observed: 2026-08-08 - source: fleet-audit rolling issue #34 / attached-alert closeout organvm/limen#2120 The separate `Scheduled` workflow recovered on August 7; that receip'
+  predicate: 'test "$(gh issue view 169 --repo organvm/session-meta --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/session-meta/issues/169'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/session-meta#169'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T21:00:39.830Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c43d965d59cd17c2812ce842973c1db5:702:compatibility'
+    conduct_run_id: 'run-c43d965d59cd17c2812ce842973c1db5'
+    conduct_lease_id: 'lease-702-c43d965d59cd17c2'
+    conduct_generation: 702
+  updated: '2026-08-08T21:00:39.830Z'
