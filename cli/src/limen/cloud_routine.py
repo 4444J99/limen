@@ -33,9 +33,7 @@ CloudRoutineDisposition = Literal[
 class CloudRoutineReceiptV1(ProtocolModel):
     """One routine observation with stable ownership and executable closure truth."""
 
-    schema_version: Literal["limen.cloud_routine_receipt.v1"] = (
-        "limen.cloud_routine_receipt.v1"
-    )
+    schema_version: Literal["limen.cloud_routine_receipt.v1"] = "limen.cloud_routine_receipt.v1"
     routine_id: str
     observed_at: datetime
     status: CloudRoutineStatus
@@ -124,10 +122,7 @@ def task_for(receipt: CloudRoutineReceiptV1) -> Task:
         receipt_target=f"github:{receipt.owner_ref}:pull-request:{task_id}",
         origin="system_debt",
         horizon="present",
-        value_case=(
-            "Convert a material recurring cloud observation into one owned, "
-            "predicate-bound correction."
-        ),
+        value_case=("Convert a material recurring cloud observation into one owned, predicate-bound correction."),
         owner_surface=receipt.owner_ref,
         context=(
             f"CloudRoutineReceiptV1 {receipt.schema_version}; "
