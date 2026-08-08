@@ -139,9 +139,7 @@ def test_provider_health_requires_fresh_provider_telemetry(tmp_path, monkeypatch
     logs = tmp_path / "logs"
     _handoff(logs, reasons={"provider_health": 1}, provider_state="auth_needed")
     payload = json.loads((logs / "handoff.json").read_text())
-    payload["provider_headroom"]["generated"] = (
-        datetime.now(timezone.utc) - timedelta(hours=3)
-    ).isoformat()
+    payload["provider_headroom"]["generated"] = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
     (logs / "handoff.json").write_text(json.dumps(payload))
 
     assert module._routing_reason()[0] == "keeper_unavailable"
