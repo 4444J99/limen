@@ -3,9 +3,11 @@
 Every organ call in ``heartbeat-loop.sh`` used to end ``2>&1 | tail -1 || true``. That idiom
 destroys three things at once and they compound into total blindness:
 
-  1. **The exit status.** A pipeline's ``$?`` is the LAST stage's, so it reports *tail's* status —
-     essentially always 0. The trailing ``|| true`` is therefore decorative and nothing downstream
-     can distinguish a hard failure from a clean run.
+  1. **The exit status — discarded, not destroyed** (corrected 2026-08-07). ``heartbeat-loop.sh``
+     sets ``pipefail``, so the pipeline does exit with the ORGAN's status (measured: rc=9 through
+     ``| tail -1`` under ``pipefail``, rc=0 without). The trailing ``|| true`` was load-bearing,
+     and what it bore was dropping that status at the call site, uncaptured — so nothing
+     downstream could distinguish a hard failure from a clean run.
   2. **The diagnostic.** ``tail -1`` of a Python traceback is the closing line of the exception's own
      repr. When the exception carries a JSON body that is a bare ``}``.
   3. **The record.** Nothing is written down, so a rung can fail on every beat forever while the beat
@@ -162,8 +164,14 @@ def test_trim_is_a_noop_below_the_threshold(tmp_path):
 
 
 # ------------------------------------------------------------------------------- the shipped tree
-def test_no_rung_in_the_shipped_loop_hides_its_failure():
-    """The estate-wide claim, checked against the real file rather than remembered."""
+def test_no_tail_1_rung_survives_in_the_shipped_loop():
+    """The estate-wide claim, checked against the real file rather than remembered.
+
+    Scoped to ``tail -1`` deliberately: that is what #2050 converted. The wider-N sites are
+    counted by the gate's ratchet against a declared, non-zero ceiling — see
+    ``test_the_gate_sees_every_tail_width``, which is the check this test used to stand in for
+    and could not.
+    """
     body = [ln for ln in LOOP.read_text().splitlines() if not ln.lstrip().startswith("#")]
     offenders = [ln.strip() for ln in body if "2>&1 | tail -1" in ln]
     assert offenders == [], offenders
@@ -175,6 +183,14 @@ def test_gate_passes_on_the_shipped_tree():
 
 
 # ----------------------------------------------------------------- the gate's own two rungs bite
+def _bare_gate_module():
+    """The gate as shipped, unpatched — for testing its DEFINITION rather than its verdicts."""
+    spec = importlib.util.spec_from_file_location("cbd_bare", GATE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _gate_module(tmp_root: Path):
     spec = importlib.util.spec_from_file_location("cbd", GATE)
     mod = importlib.util.module_from_spec(spec)
@@ -188,8 +204,16 @@ def _gate_module(tmp_root: Path):
 
 @pytest.fixture
 def gate_tree(tmp_path):
+    """A minimal loop: the shipped rung runner, and no blind sites at all.
+
+    Built from the real helper rather than from the whole loop on purpose. Once the ratchet's
+    definition widened to every ``tail -N``, a fixture holding the entire loop carried 19
+    declared-and-baselined sites of its own — so a ratchet test asserting "the gate went red"
+    passed on those instead of on the site the test itself adds. The verdict must be caused by
+    the mutation under test.
+    """
     (tmp_path / "scripts").mkdir()
-    (tmp_path / "scripts" / "heartbeat-loop.sh").write_text(LOOP.read_text())
+    (tmp_path / "scripts" / "heartbeat-loop.sh").write_text(_helper_source() + "\n" + ANCHOR_END + "\n")
     (tmp_path / "baseline.txt").write_text("scripts/heartbeat-loop.sh 0\n")
     return tmp_path
 
@@ -238,6 +262,85 @@ def test_helper_integrity_catches_a_helper_that_stops_the_beat(gate_tree, capsys
     mod = _gate_module(gate_tree)
     assert mod.main(["--check"]) == 1
     assert "fail-open" in capsys.readouterr().err
+
+
+# ------------------------------------------------------ the diagnosis itself, measured not argued
+def test_pipefail_is_why_the_status_was_discarded_rather_than_destroyed():
+    """The corrected defect #1, pinned to observable behaviour instead of prose.
+
+    The first version of this reasoning said a pipeline reports *tail's* status. Under
+    ``pipefail`` it does not — it reports the organ's. That matters because it names the actual
+    hole: the status EXISTED at the call site and ``|| true`` dropped it uncaptured, so the fix
+    had to be a recorder, not a rescue. It also means removing ``pipefail`` from the loop would
+    silently upgrade the estate to the harder defect, which is what this test guards.
+    """
+    fail = 'sh -c "echo boom; exit 9" 2>&1 | tail -1'
+    with_pf = subprocess.run(["bash", "-c", f"set -uo pipefail; {fail}"], capture_output=True, text=True)
+    without_pf = subprocess.run(["bash", "-c", fail], capture_output=True, text=True)
+    assert with_pf.returncode == 9, "pipefail must carry the organ's status through tail"
+    assert without_pf.returncode == 0, "without pipefail tail really does swallow the status"
+    assert "set -uo pipefail" in LOOP.read_text(), "the loop lost pipefail — defect #1 is now real"
+
+
+# ------------------------------------------- the definition itself, which was wrong once already
+@pytest.mark.parametrize(
+    "idiom",
+    [
+        "python3 organ.py 2>&1 | tail -1 || true",
+        "python3 organ.py 2>&1 | tail -2 || true",
+        "python3 organ.py 2>&1 | tail -6 || true",
+        "python3 organ.py 2>&1 | tail -n 1 || true",
+        "python3 organ.py 2>&1 | tail -n 3 || true",
+        "python3 organ.py 2>&1|tail -4 || true",
+        "python3 organ.py 2>&1 | tail",  # bare tail defaults to 10 and loses the status too
+    ],
+)
+def test_the_gate_sees_every_tail_width(idiom):
+    """The correction: the status is forfeited at EVERY N, so the pattern may not pin N.
+
+    The first cut matched only ``-1``/``-n 1``. It therefore certified heartbeat-loop.sh as clean
+    with 19 blind rungs in it, sync-release.sh and drain.sh among them.
+    """
+    assert _bare_gate_module().BLIND.search(idiom), idiom
+
+
+@pytest.mark.parametrize(
+    "benign",
+    [
+        'echo "$out" | tail -4',  # the loop's real case: tail an already-captured variable
+        "git log --oneline | tail -3",
+    ],
+)
+def test_a_display_pipe_without_stderr_merge_is_not_a_site(benign):
+    """`2>&1` is the discriminator. Without it there is no organ status being thrown away."""
+    assert not _bare_gate_module().BLIND.search(benign), benign
+
+
+def test_ratchet_rejects_a_reintroduced_blind_rung_at_a_wider_width(gate_tree, capsys):
+    """The exact regression the narrow pattern let through, now a red check."""
+    loop = gate_tree / "scripts" / "heartbeat-loop.sh"
+    loop.write_text(loop.read_text() + '\nbash "$LIMEN_ROOT/scripts/new-organ.sh" 2>&1 | tail -3 || true\n')
+    assert _gate_module(gate_tree).main(["--check"]) == 1
+    assert "new-organ.sh" in capsys.readouterr().err
+
+
+def test_the_report_does_not_claim_zero_while_sites_remain(gate_tree, capsys):
+    """A gate that prints the all-clear over a non-zero count is how the blindness survived it."""
+    loop = gate_tree / "scripts" / "heartbeat-loop.sh"
+    loop.write_text(loop.read_text() + '\nbash "$LIMEN_ROOT/scripts/held.sh" 2>&1 | tail -3 || true\n')
+    (gate_tree / "baseline.txt").write_text("scripts/heartbeat-loop.sh 1\n")  # declared, not new
+    mod = _gate_module(gate_tree)
+    assert mod.main(["--check"]) == 0  # within its declared ceiling: not a violation
+    out = capsys.readouterr().out
+    assert "no rung hides the reason it failed" not in out
+    assert "1 blind site(s) held at baseline, none new" in out
+
+
+def test_the_report_claims_zero_only_when_it_is_true(gate_tree, capsys):
+    """The fixture is already that state — the helper and no blind sites."""
+    mod = _gate_module(gate_tree)
+    assert mod.main(["--check"]) == 0
+    assert "no rung hides the reason it failed" in capsys.readouterr().out
 
 
 def test_update_refuses_to_grow_the_baseline(gate_tree, capsys):
