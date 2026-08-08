@@ -76,9 +76,10 @@ def _normalized_auth_state(value: object) -> str | None:
     if not isinstance(value, str):
         return None
     label = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
-    if label in _AUTH_NEEDED_STATES:
+    compact = re.sub(r"[^a-z0-9]+", "", value.strip().lower())
+    if label in _AUTH_NEEDED_STATES or compact == "notloggedin":
         return "auth_needed"
-    if label in _AUTHENTICATED_STATES:
+    if label in _AUTHENTICATED_STATES or compact in {"bearertoken", "oauth", "loggedin"}:
         return "authenticated"
     return None
 
