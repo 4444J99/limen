@@ -266,6 +266,26 @@ this section is their generalization):
   scripts/corpus_resolve.py` must name a populated home. The estate has now twice reported "no
   populated corpus" with hundreds of MB on disk (registry header, and again 2026-07-31 from a
   relocated store) — "I found nothing" and "I read nothing" are indistinguishable in the output.
+- **On a "since we last reviewed" ask, the PRIOR SESSIONS are one of the channels — and their
+  findings live in the assistant's prose, not in their tool results.** Reconstructing the watermark
+  from the earlier session's *user prompts* is under-reading it. (2026-08-07: a Charles review did
+  exactly that, then reported "Instagram was never read — no export on disk." It had been read, live
+  via the Chrome bridge, in that same prior session; the four-phase relationship arc, the lifetime
+  money total, and a decisive verbatim exchange were all already established there and had to be
+  recovered from the transcript after the operator said "a lot happened in the previous sessions.")
+  Browser-read evidence leaves **no artifact on disk** — it survives as screenshots, so grep the
+  assistant `text` blocks. Absence of a file is not absence of a reading. Locate the prior work
+  (`grep -rli <subject> .agent-runtime/*/projects/*/*.jsonl`), inherit its findings **with
+  provenance**, then state only what is new — and write the result to a durable artifact so the next
+  session never pays this cost again.
+- **A binary or attachment-backed event is invisible to a text dump, and reads as "it didn't
+  happen."** Rendering a thread by its text column silently drops every non-text event. (2026-08-07,
+  same review: two Apple Cash transfers rendered as `[media]` placeholders and were reported as "no
+  money moved in this window" — they had moved, mid-call, six days after the operator said "dont ask
+  me for money ever again," which was the single most load-bearing fact in the window.) In
+  `chat.db`, payments are `message.balloon_bundle_id LIKE '%PeerPayment%'` with the amount inside
+  `payload_data`; enumerate the distinct `balloon_bundle_id` values before trusting any dump, and
+  never conclude "no X occurred" from a channel rendered in one modality.
 
 ## Edits Policy
 
