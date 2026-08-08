@@ -292,7 +292,6 @@ def test_shipped_baseline_excludes_the_scheduled_executor():
     assert str(sched) not in mod.read_baseline()
 
 
-
 def test_direct_python_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
