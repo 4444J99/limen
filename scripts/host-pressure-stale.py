@@ -4,9 +4,9 @@
 The VITALS gauge (memory + load axes) is the hand that throttles/sheds under host
 pressure; if the gauge itself goes silent, the valve is flying blind and nothing else
 notices — the exact failure mode the sensors registry warns about. This rung fails when
-the vitals record in ``logs/vigilia/status.json`` (written by ``python3 -m limen.vigilia
-beat`` each executive beat) is older than VITALS_STALE_BEATS worst-case beats
-(x LIMEN_LOOP_MAX seconds, the heartbeat's adaptive ceiling), or absent entirely while
+the ``sampled_at`` record in ``logs/vigilia/status.json`` (written by the heartbeat's
+independent fast wave) misses VITALS_STALE_BEATS declared sample cadences
+(x LIMEN_VITALS_SAMPLE_SECONDS), or is absent entirely while
 VIGILIA is on (LIMEN_VIGILIA unset counts as on — the heartbeat's own default).
 
 The alarm is the staleness, not the pressure: the effector for pressure itself remains
@@ -39,6 +39,14 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _positive_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
 def _stale(message: str) -> int:
     print(message)
     _notify.notify_once(_root(), STALE_KEY, message)
@@ -50,27 +58,27 @@ def main() -> int:
         print("host-pressure-stale: VIGILIA off — nothing to watch")
         return 0
 
-    stale_beats = float(os.environ.get("LIMEN_VITALS_STALE_BEATS", "3"))
-    loop_max = float(os.environ.get("LIMEN_LOOP_MAX", "1800"))
-    budget_s = stale_beats * loop_max
+    stale_beats = _positive_float("LIMEN_VITALS_STALE_BEATS", 3)
+    sample_seconds = _positive_float("LIMEN_VITALS_SAMPLE_SECONDS", 300)
+    budget_s = stale_beats * sample_seconds
 
     status_path = _root() / "logs" / "vigilia" / "status.json"
     if not status_path.exists():
         return _stale(f"host-pressure-stale: STALE — {status_path} absent while VIGILIA on")
 
     try:
-        ts_raw = json.loads(status_path.read_text()).get("ts") or ""
-        ts = datetime.fromisoformat(ts_raw)
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=timezone.utc)
+        sampled_raw = json.loads(status_path.read_text()).get("sampled_at") or ""
+        sampled_at = datetime.fromisoformat(sampled_raw)
+        if sampled_at.tzinfo is None:
+            sampled_at = sampled_at.replace(tzinfo=timezone.utc)
     except Exception as exc:
-        return _stale(f"host-pressure-stale: STALE — unreadable ts in {status_path} ({exc})")
+        return _stale(f"host-pressure-stale: STALE — unreadable sampled_at in {status_path} ({exc})")
 
-    age_s = (datetime.now(timezone.utc) - ts).total_seconds()
+    age_s = (datetime.now(timezone.utc) - sampled_at).total_seconds()
     if age_s > budget_s:
         return _stale(
             f"host-pressure-stale: STALE — vitals record is {age_s / 60:.0f} min old "
-            f"(budget {budget_s / 60:.0f} min = {stale_beats:g} x LIMEN_LOOP_MAX); "
+            f"(budget {budget_s / 60:.0f} min = {stale_beats:g} x LIMEN_VITALS_SAMPLE_SECONDS); "
             "the throttle/shed valve is flying blind"
         )
 
