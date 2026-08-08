@@ -2620,7 +2620,7 @@ def generic_gemini_rows(
         if not _discover_candidate(
             rows,
             lifecycle=lifecycle,
-            source=source="gemini-tmp",
+            source="gemini-tmp",
             path=path,
             containment_root=root,
             cutoff=cutoff,
@@ -2655,7 +2655,7 @@ def regular_source_rows(
             if not _discover_candidate(
                 rows,
                 lifecycle=lifecycle,
-                source=source=source,
+                source=source,
                 path=path,
                 containment_root=root,
                 cutoff=cutoff,
@@ -2675,7 +2675,7 @@ def regular_source_rows(
             if not _discover_candidate(
                 rows,
                 lifecycle=lifecycle,
-                source=source=str(row["source"]),
+                source=str(row["source"]),
                 path=Path(row["path"]),
                 containment_root=Path(lifecycle.HOME) / ".gemini" / "tmp",
                 cutoff=cutoff,
