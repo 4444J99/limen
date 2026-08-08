@@ -88,7 +88,11 @@ def _handoff(
             "provider_health_reason_counts": (
                 blocked_providers
                 if blocked_providers is not None
-                else ({"codex": (reasons or {}).get("provider_health", 0)} if (reasons or {}).get("provider_health") else {})
+                else (
+                    {"codex": (reasons or {}).get("provider_health", 0)}
+                    if (reasons or {}).get("provider_health")
+                    else {}
+                )
             ),
             "dispatchable_next": {"id": "TASK-1"} if admissible else None,
         },
