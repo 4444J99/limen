@@ -134,6 +134,17 @@ def test_unrelated_vendor_auth_does_not_override_keeper_gate(tmp_path, monkeypat
     assert module._routing_reason()[0] == "admission_blocked"
 
 
+def test_routable_requires_fresh_provider_telemetry(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["provider_headroom"]["generated"] = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
+    (logs / "handoff.json").write_text(json.dumps(payload))
+
+    assert module._routing_reason()[0] == "keeper_unavailable"
+
+
 def test_provider_health_requires_fresh_provider_telemetry(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
