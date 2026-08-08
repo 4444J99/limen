@@ -36,7 +36,7 @@ from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa:
 # dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
 REPO = Path(__file__).resolve().parents[1]
 HOME = Path.home()
-RUNTIME_ROOT = REPO / ".agent-runtime"
+RUNTIME_ROOT = ROOT / ".agent-runtime"
 DOC_PATH = REPO / "docs" / "prompt-lifecycle-ledger.md"
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -88,7 +88,7 @@ LOCAL_SOURCES = [
     ("claude-plans", RUNTIME_ROOT / "claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
     ("claude-file-history", RUNTIME_ROOT / "claude" / "file-history", ("*",)),
-    ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("*/chats/*.jsonl",)),
+    ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl")),
     ("agy-cli-history", AGY_CLI_ROOT, ("history.jsonl",)),
 ]
 
