@@ -60184,7 +60184,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'user-ask'
   - 'quicken-residue'
@@ -60193,7 +60193,7 @@ tasks:
   context: 'Cheapest path → one login/identity step (your hand: browser/OAuth/portal). Unblocks: exercise app launch. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-24'
-  updated: '2026-08-04T15:40:12.625Z'
+  updated: '2026-08-08T00:10:45.737Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:12.625Z'
     agent: 'codex'
@@ -60206,6 +60206,18 @@ tasks:
     conduct_run_id: 'run-be124fd567fb68dfa7a6aa9c6f56cb13'
     conduct_lease_id: 'lease-514-be124fd567fb68df'
     conduct_generation: 514
+  - timestamp: '2026-08-08T00:10:45.737Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-5bc546110981fb43a1c24fe2d13ce962:642:compatibility'
+    conduct_run_id: 'run-5bc546110981fb43a1c24fe2d13ce962'
+    conduct_lease_id: 'lease-642-5bc546110981fb43'
+    conduct_generation: 642
 - id: GEN-organvm-limen-simplify-0624-refactor-dispatch
   title: "Reduce complexity in organvm/limen \u2014 refactor dispatch.py"
   repo: organvm/limen
