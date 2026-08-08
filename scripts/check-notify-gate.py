@@ -66,6 +66,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import subprocess
 import sys
 import time
@@ -159,6 +160,73 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
     return True, f"{EFFECTOR_FUNC}() is gated on {GATE_FUNC}()"
 
 
+DIRECT_SUFFIXES = {".py", ".sh", ".bash", ".zsh"}
+_DISPLAY_RE = re.compile(r"\bosascript\b.*\bdisplay\s+notification\b", re.IGNORECASE)
+
+
+def _source_paths(root: Path) -> list[Path]:
+    """Tracked executable sources, with a runtime-copy fallback when git metadata is absent."""
+    try:
+        done = subprocess.run(
+            ["git", "-C", str(root), "ls-files"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if done.returncode == 0 and done.stdout.strip():
+            candidates = [root / line for line in done.stdout.splitlines()]
+        else:
+            candidates = list((root / "scripts").rglob("*"))
+    except (OSError, subprocess.SubprocessError):
+        candidates = list((root / "scripts").rglob("*"))
+    return [
+        candidate
+        for candidate in candidates
+        if candidate.is_file()
+        and candidate.suffix in DIRECT_SUFFIXES
+        and candidate != root / NOTIFIER_REL
+        and "tests" not in candidate.parts
+        and not candidate.name.startswith("test_")
+    ]
+
+
+def _python_bypasses(path: Path) -> bool:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return False
+    for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
+        literals = [
+            node.value
+            for node in ast.walk(call)
+            if isinstance(node, ast.Constant) and isinstance(node.value, str)
+        ]
+        if "osascript" in literals and "display notification" in " ".join(literals).lower():
+            return True
+    return False
+
+
+def _shell_bypasses(path: Path) -> bool:
+    try:
+        text = path.read_text(encoding="utf-8").replace("\\\n", " ")
+    except OSError:
+        return False
+    return any(_DISPLAY_RE.search(line.split("#", 1)[0]) for line in text.splitlines())
+
+
+def direct_notification_effectors(root: Path) -> list[str]:
+    """Every notification that bypasses _notify.py, relative to the surveyed root."""
+    found = []
+    for path in _source_paths(root):
+        bypasses = _python_bypasses(path) if path.suffix == ".py" else _shell_bypasses(path)
+        if bypasses:
+            try:
+                found.append(str(path.relative_to(root)))
+            except ValueError:
+                found.append(str(path))
+    return sorted(found)
+
+
 # Rotations ran near-daily (Jul 27→31) and then stopped. A gap this size is a stall, not a
 # cadence — worth saying out loud, because "it will pick up the fix next rotation" is only true
 # while rotations happen.
@@ -226,11 +294,16 @@ def survey(live: Path) -> list[dict]:
         if not notifier.is_file():
             continue  # not every checkout ships the notifier; absent cannot pop the phone
         gated, reason = gate_state(notifier)
+        direct_effectors = direct_notification_effectors(root)
+        if direct_effectors:
+            gated = False
+            reason = "direct display-notification effector(s) bypass _notify.py: " + ", ".join(direct_effectors)
         rows.append(
             {
                 "root": str(root),
                 "gated": gated,
                 "reason": reason,
+                "direct_effectors": direct_effectors,
                 "is_live": root == live,
                 "is_worktree": _root.is_worktree(root),
                 "executor": classify(root, live, scheduled),
@@ -328,7 +401,7 @@ def main(argv: list[str] | None = None) -> int:
             print("      osascript regardless — run-pytest-hermetic.sh exports LIMEN_NOTIFY=0, which")
             print("      every copy on this host honors, gated or not.")
         else:
-            print("  \033[32m✓\033[0m every copy gates osascript on the liveness predicate")
+            print("  \033[32m✓\033[0m every copy gates macOS notifications on the shared liveness predicate")
         return 0
     return 1
 
