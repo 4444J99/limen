@@ -166471,3 +166471,37 @@ tasks:
     conduct_lease_id: 'lease-676-4029fa23a7e6d946'
     conduct_generation: 676
   updated: '2026-08-08T14:13:54.950Z'
+- id: 'GH-organvm-limen-2110'
+  title: 'POTESTAS 5.3 — a predicate so the principal-facing invariant is enforced, not asserted'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2110'
+  context: 'GitHub issue organvm/limen#2110. Phase: #2083 · Program: #2077 An invariant that only exists in prose is an aspiration. This makes #2083 → 5.1 checkable. ## Why prose alone fails here This repo''s own charter states the principle: *if prose and executable predicates disagree, the executable predicate wins.* Behavioral rules that no gate enforces decay silently — and the specific decay mode for this one is dangerous, because a flee'
+  predicate: 'test "$(gh issue view 2110 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2110'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2110'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:13:59.676Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-acb850cfa943a9274ed876c9cb826618:677:compatibility'
+    conduct_run_id: 'run-acb850cfa943a9274ed876c9cb826618'
+    conduct_lease_id: 'lease-677-acb850cfa943a927'
+    conduct_generation: 677
+  updated: '2026-08-08T14:13:59.676Z'
