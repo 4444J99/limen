@@ -526,6 +526,8 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert "BASHPID" not in fast_body
     assert '[ "$FAST_WAVE_SECONDS" -ge 60 ]' not in heartbeat
     assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
+    assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
+    assert "_fast_wave_aux_cleanup" in fast_body
 
 
 def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
@@ -558,6 +560,28 @@ def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypa
     status = json.loads((tmp_path / "status.json").read_text())
     assert status["sampled_at"] == new_time.isoformat()
     assert status["vitals"]["status"] == "new"
+
+
+def test_failed_vitals_probe_does_not_refresh_a_valid_sample(tmp_path, monkeypatch):
+    previous = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:00:00+00:00",
+        "completed_at": "2026-08-08T12:01:00+00:00",
+        "vitals": {"organ": "vitals", "status": "ok", "action": "ok"},
+    }
+    (tmp_path / "status.json").write_text(json.dumps(previous), encoding="utf-8")
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("probe failed")),
+    )
+
+    status = executive.sample_vitals()
+
+    assert status["sampled_at"] == previous["sampled_at"]
+    assert status["vitals"] == previous["vitals"]
+    assert status["sample_error"]["status"] == "error"
 
 
 def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch):
