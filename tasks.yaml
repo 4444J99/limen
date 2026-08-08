@@ -132808,7 +132808,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -132817,7 +132817,7 @@ tasks:
   context: 'Session 0305e50a-e5ba-48e6-8fb1-6fb61264470d (''Audit Codex handoff and validate token-accounting mechanism'') re-stalled after 53 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "Resume and FINISH your original purpose — you stalled at a decision and have been sitting. Decide every open step via th". Resume by hand or with a NEW instruction: claude --resume 0305e50a-e5ba-48e6-8fb1-6fb61264470d   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/ticklish-bubbling-robin). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-08-04T15:40:53.179Z'
+  updated: '2026-08-08T00:11:18.072Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:53.179Z'
     agent: 'codex'
@@ -132830,6 +132830,18 @@ tasks:
     conduct_run_id: 'run-a5ba997bd621d02563bc6fa428f96b5f'
     conduct_lease_id: 'lease-520-a5ba997bd621d025'
     conduct_generation: 520
+  - timestamp: '2026-08-08T00:11:18.072Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-b93cdd1c08a89d64a2aeef64269e2823:648:compatibility'
+    conduct_run_id: 'run-b93cdd1c08a89d64a2aeef64269e2823'
+    conduct_lease_id: 'lease-648-b93cdd1c08a89d64'
+    conduct_generation: 648
 - id: 'ASK-quicken-escalate-e0f151ab'
   title: 'finish stalled session ''bash permission config investigation'' (breathed 53x, still stalling)'
   type: 'ops'
