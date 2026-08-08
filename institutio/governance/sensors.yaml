@@ -1404,7 +1404,7 @@ sensors:
     steps:
       - command: "python3 scripts/host-pressure-stale.py"
         severity: advisory
-        escalation: "VITALS gauge silent past VITALS_STALE_BEATS worst-case beats — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia beat` and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+        escalation: "VITALS gauge missed VITALS_STALE_BEATS declared sample cadences — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia sample`, logs/vigilia/fast-wave.log, and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
 
   runtime-lag:
     section: "0o3"
