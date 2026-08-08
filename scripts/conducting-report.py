@@ -259,12 +259,12 @@ def census() -> dict:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="emit now even if already sent today")
     ap.add_argument("--print", dest="print_only", action="store_true", help="print only; no push")
     ap.add_argument("--census", action="store_true", help="print counts-only public census JSON")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     if args.census:
         print(json.dumps(census(), indent=2, sort_keys=True))
         return 0
@@ -274,14 +274,30 @@ def main() -> int:
     if args.print_only:
         return 0
 
+    usage = _load(USAGE, {})
+    instant = datetime.now(timezone.utc)
+    if not _fresh_timestamp(usage, instant):
+        print("conducting-report: usage telemetry unavailable or stale; delivery withheld")
+        return 0
+    usage_generated = str(usage.get("generated") or usage.get("generated_at"))
+
     state = _load(STATE, {})
     if not args.force and state.get("last_day") == day:
-        return 0  # already reported for this usage-day
+        return 0  # already reported for this fresh local-day snapshot
 
     _notify_macos("Limen — conducting", headline)
     _notify_ntfy("Limen — conducting", body)
     try:
-        STATE.write_text(json.dumps({"last_day": day, "headline": headline, "routing_reason": routing_reason}))
+        STATE.write_text(
+            json.dumps(
+                {
+                    "last_day": day,
+                    "usage_generated": usage_generated,
+                    "headline": headline,
+                    "routing_reason": routing_reason,
+                }
+            )
+        )
     except OSError:
         pass
     return 0
