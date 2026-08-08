@@ -148,7 +148,11 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
         except (KeyError, TypeError, ValueError):
             fail("B", f"{consumer}: literal baseline is missing for {relative}")
             continue
-        text = (ROOT / relative).read_text(encoding="utf-8")
+        try:
+            text = (ROOT / relative).read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            fail("B", f"{consumer}: consumer source is unreadable: {exc}")
+            continue
         actual = sum(text.count(label) for label in labels)
         armed = bool(ratchets[ratchet])
         if armed and actual:
@@ -234,14 +238,16 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="run offline registry parity checks")
     parser.add_argument("--measure", action="store_true", help="also print committed-census lifecycle distance")
     args = parser.parse_args()
-    run_offline_checks()
+    if not (args.check or args.measure):
+        parser.error("one of --check or --measure is required")
+    registry, _labels = run_offline_checks()
     unreachable = measure_unreachable() if args.measure else None
 
     if failures:
         print("PR LIFECYCLE DRIFT — registry does not match its owners:")
         print("\n".join(failures))
         return 1
-    literal_total = sum(int(value) for value in (load_yaml(REGISTRY).get("literal_baseline") or {}).values())
+    literal_total = sum(int(value) for value in (registry.get("literal_baseline") or {}).values())
     print(f"OK: check-lifecycle — 5 dispositions; 7 owned cohorts; literal debt={literal_total}")
     if unreachable is not None:
         print(f"unreachable PRs: {unreachable}")
