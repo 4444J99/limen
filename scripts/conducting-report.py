@@ -103,7 +103,10 @@ def _continuity_summary(instant: datetime) -> str:
     return "continuity " + ", ".join(f"{key}={counts[key]}" for key in sorted(counts))
 
 
-def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
+def _routing_reason(
+    now: datetime | None = None,
+    target_providers: set[str] | None = None,
+) -> tuple[str, str]:
     """Classify routing from keeper-owned admission, never from vendor consumption."""
     handoff = _load(HANDOFF, None)
     if not isinstance(handoff, dict):
@@ -126,7 +129,23 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
     open_considered = _safe_count(admission.get("open_considered"))
     continuity = _continuity_summary(instant)
     if admissible > 0 or admission.get("dispatchable_next"):
-        return "routable", f"admissible={admissible}; {continuity}"
+        if target_providers is None:
+            return "routable", f"admissible={admissible}; {continuity}"
+        agent_counts = admission.get("admissible_agent_counts")
+        if not isinstance(agent_counts, dict):
+            return "keeper_unavailable", "canonical targeted admission unavailable"
+        routable_targets = {
+            str(agent)
+            for agent, count in agent_counts.items()
+            if _safe_count(count) and (str(agent) == "any" or str(agent) in target_providers)
+        }
+        if routable_targets:
+            idle_admissible = sum(_safe_count(agent_counts[key]) for key in routable_targets)
+            return "routable", f"admissible_for_idle={idle_admissible}; {continuity}"
+        return (
+            "admission_blocked",
+            f"admissible={admissible} globally but none target idle providers; {continuity}",
+        )
 
     reasons = admission.get("reason_counts")
     reasons = reasons if isinstance(reasons, dict) else {}
@@ -214,8 +233,8 @@ def build_report() -> tuple[str, str, str, str]:
     usage = _load(USAGE, {}) or {}
     vendors = usage.get("vendors", {})
     day = _local_day()
-    routing_reason, routing_detail = _routing_reason()
     lines, burned, idle = [], 0, 0
+    idle_providers: set[str] = set()
     for name in sorted(vendors):
         v = vendors[name]
         if not isinstance(v, dict):
@@ -225,7 +244,11 @@ def build_report() -> tuple[str, str, str, str]:
             burned += 1
         elif "IDLE" in verdict:
             idle += 1
+            idle_providers.add(str(name))
         lines.append(f"  {name:9} {verdict}")
+    routing_reason, routing_detail = _routing_reason(
+        target_providers=idle_providers if idle_providers else None
+    )
     disc = _discovery_count()
     tracked = burned + idle
     if tracked and burned >= max(1, tracked - 1):
