@@ -40,7 +40,7 @@ from urllib.parse import urlparse
 # Each entry: the on-disk config + the format hint used to parse it. Absent files are skipped
 # silently (an agent that isn't installed on this host simply contributes no servers).
 HOME = Path.home()
-CODEX_HOME = Path(os.environ.get("CODEX_HOME", str(HOME / ".codex"))).expanduser()
+CODEX_HOME = Path(os.environ.get("CODEX_HOME", "").strip() or str(HOME / ".codex")).expanduser()
 CONFIG_PATHS: list[tuple[str, Path, str]] = [
     ("copilot", HOME / ".copilot" / "mcp-config.json", "json"),
     ("codex", CODEX_HOME / "config.toml", "toml"),
@@ -87,7 +87,7 @@ def _normalized_auth_state(value: object) -> str | None:
     return None
 
 
-def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
+def parse_codex_mcp_statuses(payload: object) -> dict[str, str | dict[str, str]]:
     """Parse tolerated Codex MCP-list JSON envelopes into name -> auth state.
 
     Codex owns the command boundary, while this repository owns only the two semantic
@@ -113,7 +113,7 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
     else:
         return {}
 
-    statuses: dict[str, str] = {}
+    statuses: dict[str, str | dict[str, str]] = {}
     for name, row in entries:
         if not isinstance(name, str) or not isinstance(row, dict):
             continue
@@ -138,7 +138,10 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
             elif os.environ.get(env_name):
                 statuses[name.casefold()] = "authenticated"
             else:
-                statuses[name.casefold()] = "auth_needed"
+                statuses[name.casefold()] = {
+                    "state": "auth_needed",
+                    "missing_env": env_name,
+                }
             continue
         state = _normalized_auth_state(auth)
         if state:
@@ -146,7 +149,7 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
     return statuses
 
 
-def _codex_mcp_statuses() -> tuple[dict[str, str], str | None]:
+def _codex_mcp_statuses() -> tuple[dict[str, str | dict[str, str]], str | None]:
     """Return Codex semantic states plus a sanitized probe failure, if any."""
     if not shutil.which("codex"):
         return {}, "Codex CLI unavailable"
@@ -426,7 +429,7 @@ def probe(server: dict, timeout: int) -> dict:
 
 def _apply_codex_semantic_state(
     result: dict,
-    statuses: dict[str, str],
+    statuses: dict[str, str | dict[str, str]],
     status_error: str | None,
 ) -> dict:
     """Overlay Codex authentication truth on a successful HTTP transport probe."""
@@ -439,13 +442,24 @@ def _apply_codex_semantic_state(
             "state": "auth_unknown",
             "detail": f"{result['detail']}; {status_error}",
         }
-    auth_state = statuses.get(result["name"].casefold(), "auth_unknown")
+    auth_status = statuses.get(result["name"].casefold(), "auth_unknown")
+    if isinstance(auth_status, dict):
+        auth_state = auth_status.get("state", "auth_unknown")
+        missing_env = auth_status.get("missing_env")
+    else:
+        auth_state = auth_status
+        missing_env = None
     if auth_state == "auth_needed":
+        auth_detail = (
+            f"missing bearer environment {missing_env}"
+            if missing_env
+            else "Codex OAuth authentication required"
+        )
         return {
             **result,
             "ok": False,
             "state": "auth_needed",
-            "detail": f"{result['detail']}; Codex authentication required",
+            "detail": f"{result['detail']}; {auth_detail}",
         }
     if auth_state == "auth_unknown":
         return {
@@ -478,6 +492,28 @@ def probe_all(servers: list[dict], timeout: int) -> list[dict]:
 def _healable_failures(results: list[dict]) -> list[dict]:
     """Return only failures the bounded config/boot healer can actually repair."""
     return [result for result in results if result.get("state") in _HEALABLE_STATES]
+
+
+def _failure_cures(failed: list[dict]) -> list[str]:
+    """Return state-specific, actionable cures without suggesting an unrelated effector."""
+    cures: list[str] = []
+    for result in failed:
+        state = result.get("state")
+        if state == "auth_needed":
+            missing_env_match = re.search(r"missing bearer environment ([A-Za-z_][A-Za-z0-9_]*)", result.get("detail", ""))
+            if missing_env_match:
+                cure = f"populate {missing_env_match.group(1)} through the credential organ"
+            else:
+                cure = f"codex mcp login {result['name']}"
+        elif state == "auth_unknown":
+            cure = "codex mcp list --json (restore semantic auth telemetry)"
+        elif state in _HEALABLE_STATES:
+            cure = "arm LIMEN_MCP_BOOT_HEAL=1 (re-land config and clear corrupt npx caches)"
+        else:
+            continue
+        if cure not in cures:
+            cures.append(cure)
+    return cures
 
 
 # ── Heal effector (dormant unless --apply, which the sensor only passes when LIMEN_MCP_BOOT_HEAL=1) ─
@@ -574,9 +610,10 @@ def main(argv=None) -> int:
     if failed:
         names = ", ".join(f"{r['agent']}/{r['name']}" for r in failed)
         print(f"mcp-server-boot: {len(failed)} configured server(s) fail to boot/reach — {names}.")
-        print("  Cure: arm LIMEN_MCP_BOOT_HEAL=1 (ianva install-configs re-lands dropped entries, npx-cache clear")
-        print("  cures corrupt-cache crashes); an EMPTY ianva upstream registry is a registry decision — see")
-        print("  verify-mcp-estate.sh doorway check + `ianva add-upstream`. Surfaced in the beat log, non-fatal.")
+        for cure in _failure_cures(failed):
+            print(f"  Cure: {cure}")
+        print("  An EMPTY ianva upstream registry is a registry decision — see verify-mcp-estate.sh")
+        print("  doorway check + `ianva add-upstream`. Surfaced in the beat log, non-fatal.")
         return 1
     print(f"  all {len(results)} configured MCP server(s) boot/reach.")
     return 0
