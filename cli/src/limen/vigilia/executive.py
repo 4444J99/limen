@@ -46,6 +46,16 @@ def _load_status(path: Path) -> dict:
     return payload if isinstance(payload, dict) else {}
 
 
+def _sample_time(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
+
+
 def _update_status(mutator: Callable[[dict], dict]) -> dict:
     """Serialize the fast sampler and full beat, then replace the seat atomically."""
     directory = _status_dir()
@@ -67,11 +77,16 @@ def _update_status(mutator: Callable[[dict], dict]) -> dict:
 
 def sample_vitals() -> dict:
     """Refresh only the host sample while preserving the last full-beat receipt."""
-    sampled_at = _now().isoformat()
+    sampled_time = _now()
+    sampled_at = sampled_time.isoformat()
     observed = _safe(lambda: vitals.beat_gate(shed=False), "vitals")
 
     def merge(current: dict) -> dict:
         status = dict(current)
+        current_time = _sample_time(status.get("sampled_at"))
+        if current_time is not None and current_time > sampled_time:
+            status.setdefault("completed_at", None)
+            return status
         status.update(
             {
                 "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
