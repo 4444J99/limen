@@ -5811,6 +5811,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_NOTIFY_HELPER:
+    default: "<calling checkout>/scripts/_notify.py"
+    env: LIMEN_NOTIFY_HELPER
+    self_update: none
+    owner: diurnal
+    note: "Path to the one permitted macOS notification effector. Shell callers such as netmode derive their sibling scripts/_notify.py when unset; tests and relocated runtime trees may override the path without reintroducing a direct osascript call."
   LIMEN_NOTIFY_GATE:
     default: "1"
     env: LIMEN_NOTIFY_GATE
