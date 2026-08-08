@@ -55,6 +55,14 @@ cleanup() {
 trap cleanup EXIT
 
 git -C "$root" worktree add --quiet -b "$br" "$tmp" origin/main
+# `worktree add` can exit 0 having checked out NOTHING, leaving an unborn HEAD — set -e cannot catch
+# a command that lies about succeeding. Everything downstream then works perfectly on the wrong base:
+# the commit becomes a parentless ROOT, it pushes clean, and the first complaint arrives from GitHub
+# ("has no history in common with main") long after the cause. Measured 2026-08-08 on
+# docs/board-partition-verify-20260808014448. Assert the base before anything commits onto it.
+base="$(git -C "$root" rev-parse origin/main)"
+head="$(git -C "$tmp" rev-parse --verify --quiet HEAD || true)"
+[ "$head" = "$base" ] || die "worktree add did not check out origin/main at $tmp (HEAD='${head:-unborn}', want $base) — committing here would create a parentless root branch GitHub refuses to open a PR for"
 for f in "$@"; do
   mkdir -p "$tmp/$(dirname "$f")"
   cp "$root/$f" "$tmp/$f"
