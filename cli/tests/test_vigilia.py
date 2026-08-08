@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -512,14 +513,51 @@ def test_slow_full_beat_keeps_the_early_sample_clock(tmp_path, monkeypatch):
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
-    launch = heartbeat.index("fast_wave_loop &")
+    launch = heartbeat.index('fast_wave_loop "$" &')
     main_loop = heartbeat.index("while true; do", launch)
-    fast_body = heartbeat[heartbeat.index("fast_wave_once()") : launch]
+    fast_body = heartbeat[heartbeat.index("fast_wave_sample_once()") : launch]
 
     assert launch < main_loop
     assert "python3 -m limen.vigilia sample" in fast_body
+    assert 'fast_wave_aux_once "$FAST_WAVE_BEAT" &' in fast_body
     assert "beat-sensors.py" in fast_body and "--source fast-wave" in fast_body
     assert "scripts/organ-health.py" in fast_body
+    assert 'python3 - "$_fw_timeout" "$@"' in fast_body
+    assert "BASHPID" not in fast_body
+    assert '[ "$FAST_WAVE_SECONDS" -ge 60 ]' not in heartbeat
+    assert '${LIMEN_BEAT_DERIVE:-1}' in fast_body
+
+
+def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
+    old_time = datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)
+    new_time = old_time + timedelta(seconds=1)
+    old_started = threading.Event()
+    release_old = threading.Event()
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        executive,
+        "_now",
+        lambda: old_time if threading.current_thread().name == "old-sample" else new_time,
+    )
+
+    def gate(shed=False):
+        if threading.current_thread().name == "old-sample":
+            old_started.set()
+            assert release_old.wait(timeout=5)
+            return {"organ": "vitals", "status": "old"}
+        return {"organ": "vitals", "status": "new"}
+
+    monkeypatch.setattr(vitals, "beat_gate", gate)
+    old = threading.Thread(target=executive.sample_vitals, name="old-sample")
+    old.start()
+    assert old_started.wait(timeout=5)
+    executive.sample_vitals()
+    release_old.set()
+    old.join(timeout=5)
+
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["sampled_at"] == new_time.isoformat()
+    assert status["vitals"]["status"] == "new"
 
 
 def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch):
