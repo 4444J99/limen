@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 from pydantic import ValidationError
 
 from limen.cloud_routine import (
@@ -70,6 +72,12 @@ def test_human_gate_requires_material_status_and_owner() -> None:
         _receipt(status="ok", disposition="human_gate")
     with pytest.raises(ValidationError, match="require owner_ref"):
         _receipt(status="finding", disposition="human_gate", owner_ref=None)
+    with pytest.raises(ValidationError, match="lever:<id>"):
+        _receipt(
+            status="finding",
+            disposition="human_gate",
+            owner_ref="https://github.com/organvm/limen/issues/2120",
+        )
 
 
 def test_task_translation_preserves_predicate_and_intake_contract() -> None:
@@ -98,6 +106,17 @@ def test_repeated_finding_and_pending_ticket_are_idempotent() -> None:
     assert pending_batch.duplicates == 1
 
 
+def test_terminal_lineage_can_emit_a_new_occurrence() -> None:
+    receipt = _receipt()
+    lineage_id = task_id_for(receipt)
+
+    plan = plan_task_upserts([receipt], historical_ids={lineage_id})
+
+    assert len(plan.tasks) == 1
+    assert plan.tasks[0].id == f"{lineage_id}-20260808T120000Z"
+    assert plan.duplicates == 0
+
+
 def test_owned_and_superseded_findings_do_not_create_tasks() -> None:
     owned = _receipt(
         disposition="owned",
@@ -124,10 +143,18 @@ def test_manifest_publishes_the_receipt_contract() -> None:
 
 def test_published_schema_carries_executable_and_human_gate_constraints() -> None:
     schema = json.loads((ROOT / "spec" / "contracts" / "cloud-routine-receipt-v1.schema.json").read_text())
-    assert "pattern" in schema["properties"]["predicate"]
+    validator = Draft202012Validator(schema)
+    valid = _receipt().model_dump(mode="json")
+    invalid_placeholder = {**valid, "predicate": "python <TODO>"}
+    invalid_quote = {**valid, "predicate": "python '"}
+
+    assert not list(validator.iter_errors(valid))
+    assert list(validator.iter_errors(invalid_placeholder))
+    assert list(validator.iter_errors(invalid_quote))
     human_gate = schema["allOf"][-1]
     assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
     assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
+    assert human_gate["then"]["properties"]["owner_ref"]["pattern"].startswith("^lever:")
 
 
 def test_current_findings_are_typed_and_already_owned() -> None:
@@ -142,12 +169,37 @@ def test_current_findings_are_typed_and_already_owned() -> None:
 def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
     receipt = json.loads((ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text())
     rows = receipt["rows"]
+    by_id = {row["irf_id"]: row for row in rows}
+    human_ids = set(receipt["human_gate_irf_ids"])
 
     assert receipt["denominator"] == receipt["classified"] == len(rows) == 41
-    assert len({row["irf_id"] for row in rows}) == 41
-    assert all(row["owner_kind"] == "irf" and row["owner_ref"] for row in rows)
+    assert len(by_id) == 41
+    assert len(human_ids) == 18
+    assert all(
+        by_id[irf_id]["owner_kind"] == "lever"
+        and by_id[irf_id]["owner_ref"] == receipt["human_gate_owner"]
+        and by_id[irf_id]["disposition"] == "human_gate"
+        for irf_id in human_ids
+    )
     assert receipt["unowned"] == []
     assert receipt["packet_emissions"] == []
+
+
+def test_consumer_rejects_a_nonexistent_human_lever(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    registry = tmp_path / "his-hand-levers.json"
+    registry.write_text('{"levers": []}', encoding="utf-8")
+    receipt = _receipt(
+        disposition="human_gate",
+        owner_ref="lever:L-NOT-REGISTERED",
+    )
+
+    with pytest.raises(ValueError, match="does not resolve"):
+        module.validate_human_gate_owners([receipt], lever_path=registry)
 
 
 def test_cloud_human_gates_have_named_levers() -> None:
@@ -160,4 +212,19 @@ def test_cloud_human_gates_have_named_levers() -> None:
         "L-CLOUD-SESSION-SCOPE-EXPANSION",
         "L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
         "L-LAUNCHDARKLY-OAUTH-CONSENT",
+        "L-IRF-P0-HUMAN-ACTIONS-20260808",
     } <= lever_ids
+
+
+def test_cloud_lever_predicates_require_terminal_status() -> None:
+    rows = json.loads((ROOT / "docs" / "receipts" / "cloud-routine-findings-20260808.json").read_text())
+    by_key = {row["stable_finding_key"]: row for row in rows}
+
+    for key in (
+        "LIMEN-N75",
+        "LIMEN-N77",
+        "hosted-session.repository-scope",
+    ):
+        predicate = by_key[key]["predicate"]
+        assert "{'discharged','retired','done','closed'}" in predicate
+        assert "!= 'open'" not in predicate
