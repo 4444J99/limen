@@ -324,6 +324,27 @@ import signal
 import subprocess
 import sys
 
+process = None
+
+
+def terminate_group(signum, _frame):
+    if process is not None and process.poll() is None:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            except OSError:
+                pass
+    raise SystemExit(128 + signum)
+
+
+signal.signal(signal.SIGHUP, terminate_group)
+signal.signal(signal.SIGINT, terminate_group)
+signal.signal(signal.SIGTERM, terminate_group)
+
 try:
     ceiling = float(sys.argv[1])
     process = subprocess.Popen(sys.argv[2:], start_new_session=True)
@@ -360,7 +381,19 @@ fast_wave_sample_once() {
 
 fast_wave_aux_once() {
   _fw_aux_beat="$1"
-  _fw_tmp="$FAST_WAVE_AUX_LOG.$$.$_fw_aux_beat.tmp"
+  _fw_diurnal_pid=""
+  _fw_health_pid=""
+  _fast_wave_aux_cleanup() {
+    for _fw_child_pid in "$_fw_diurnal_pid" "$_fw_health_pid"; do
+      if [ -n "$_fw_child_pid" ] && kill -0 "$_fw_child_pid" 2>/dev/null; then
+        kill "$_fw_child_pid" 2>/dev/null || true
+        wait "$_fw_child_pid" 2>/dev/null || true
+      fi
+    done
+  }
+  trap _fast_wave_aux_cleanup EXIT
+  trap '_fast_wave_aux_cleanup; exit 143' HUP INT TERM
+  _fw_tmp="$FAST_WAVE_AUX_LOG.$.$_fw_aux_beat.tmp"
   _fw_diurnal_log="$_fw_tmp.diurnal"
   _fw_health_log="$_fw_tmp.health"
   mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null || true
