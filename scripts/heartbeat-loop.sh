@@ -331,9 +331,12 @@ fast_wave_once() {
     echo "fast-wave: start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
     fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
     _fw_sample_rc=$?
-    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}"       python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only         --beat "$FAST_WAVE_BEAT" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED"
+    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" \
+      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only \
+        --beat "$FAST_WAVE_BEAT" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED"
     _fw_diurnal_rc=$?
-    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}"       python3 "$LIMEN_ROOT/scripts/organ-health.py"
+    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" \
+      python3 "$LIMEN_ROOT/scripts/organ-health.py"
     _fw_health_rc=$?
     echo "fast-wave: finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) sample=$_fw_sample_rc diurnal=$_fw_diurnal_rc organ_health=$_fw_health_rc"
   } >"$_fw_tmp" 2>&1
