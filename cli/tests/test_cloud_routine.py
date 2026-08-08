@@ -60,6 +60,18 @@ def test_non_material_observation_can_have_no_owner() -> None:
     assert receipt.owner_ref is None
 
 
+def test_predicate_bound_matches_published_schema() -> None:
+    with pytest.raises(ValidationError, match="at most 8192"):
+        _receipt(predicate="x" * 8193)
+
+
+def test_human_gate_requires_material_status_and_owner() -> None:
+    with pytest.raises(ValidationError, match="material finding"):
+        _receipt(status="ok", disposition="human_gate")
+    with pytest.raises(ValidationError, match="require owner_ref"):
+        _receipt(status="finding", disposition="human_gate", owner_ref=None)
+
+
 def test_task_translation_preserves_predicate_and_intake_contract() -> None:
     receipt = _receipt()
 
@@ -108,6 +120,14 @@ def test_manifest_publishes_the_receipt_contract() -> None:
     assert manifest["receipt_schema_version"] == "limen.cloud_routine_receipt.v1"
     assert manifest["receipt_schema"] == ("spec/contracts/cloud-routine-receipt-v1.schema.json")
     assert manifest["consumer"] == "scripts/cloud-routine-ingest.py"
+
+
+def test_published_schema_carries_executable_and_human_gate_constraints() -> None:
+    schema = json.loads((ROOT / "spec" / "contracts" / "cloud-routine-receipt-v1.schema.json").read_text())
+    assert "pattern" in schema["properties"]["predicate"]
+    human_gate = schema["allOf"][-1]
+    assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
+    assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
 
 
 def test_current_findings_are_typed_and_already_owned() -> None:
