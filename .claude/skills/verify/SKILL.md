@@ -240,7 +240,27 @@ option and does not apply to blob shows).
   `docs/RECLASSIFY-PROPOSAL.md`. Check for generated artifacts after a "read-only" run.
 - **Worktree-isolation guard rejects compound commands.** No `cmd && cmd`, no `>` redirect combined
   with `cd`, no heredoc-into-`cat` chains. Issue plain single commands with absolute paths, or use
-  the Write tool for scratch files (inside the worktree).
+  the Write tool for scratch files (inside the worktree). It also rejects a `cd` into the shared
+  checkout once isolated, and — measured 2026-08-08 — it rejects Write to the background job's own
+  `$CLAUDE_JOB_DIR/tmp` too, because that path lives *under* the shared checkout. A read-only pass
+  that only later needs one scratch file still has to `EnterWorktree` before it can write it; there
+  is no exempt scratch location inside the repo root.
+- **`git archive` silently drops every `*.md` on this host.** `~/.config/git/attributes:131` sets
+  `*.md export-ignore` **globally** (via `core.attributesFile`), so extracting a merged tree with
+  `git archive <rev> <paths> | tar -x` exits 0 and hands back the YAML and the scripts with all prose
+  missing — no warning, nothing on stderr. Measured 2026-08-08 verifying #2118: the potestas track
+  extracted as `mechanisms.yaml` alone, and `check-potestas.py` then reported `2 consumer file(s)
+  scanned` where the real gate scans 7. That run still **exited 0** — a silently weaker verification
+  that reads exactly like a pass, which is the dangerous shape. Extract per file with
+  `git show <rev>:<path> > <dest>` (never `--output=`, which writes nothing — see above), and run
+  `git check-attr export-ignore -- <path>` before trusting any archive-based extraction.
+- **The Bash tool's CWD persists across calls, and a stale CWD makes `git` lie rather than error.**
+  After one `cd` into a scratch tree, `git ls-tree -r --name-only origin/main -- studium/rubric`
+  returned **empty**: pathspecs resolve relative to CWD, and because the scratch dir sat under the
+  repo, git walked up, found the repo, matched nothing, and exited 0. That reads as "those files are
+  not on main" — the exact opposite of the truth. Hit twice in one session, once while checking
+  whether a just-merged tree existed. Use `git -C <root>` and absolute paths for every verification
+  command rather than trusting where a previous call left the shell.
 - **`git worktree add -b <br> <path> origin/main` can exit 0 having checked out NOTHING**, leaving an
   unborn HEAD — and `set -euo pipefail` cannot catch a command that lies about succeeding. Everything
   downstream then works perfectly on the wrong base: `cp` + `git add` + `git commit` produce a **root
