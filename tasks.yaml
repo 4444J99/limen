@@ -166193,3 +166193,40 @@ tasks:
     conduct_lease_id: 'lease-668-ecd6575bf0b5ca27'
     conduct_generation: 668
   updated: '2026-08-08T11:47:29.566Z'
+- id: 'HEAL-review-organvm-domus-genoma-361'
+  title: 'address review feedback on organvm/domus-genoma#361'
+  repo: 'organvm/domus-genoma'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'normal'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'review'
+  - 'self-heal'
+  - 'review-feedback'
+  urls:
+  - 'https://github.com/organvm/domus-genoma/pull/361'
+  context: 'PR organvm/domus-genoma#361 is green and mergeable BUT carries unresolved review threads (or a standing CHANGES_REQUESTED review) from the multi-agent review engine — the ping-pong is waiting on our half. Check out the PR branch and read EVERY unresolved thread. For each one: fix the code and push to the SAME branch, or reply with a short factual reason why not. Then reply on each thread and RESOLVE it; if a reviewer holds CHANGES_REQUESTED, re-request review (post ''@claude'' / ''/gemini review'' to re-summon those agents). Never resolve a thread without either a fix or a reply, and do NOT open a new PR — once threads are resolved and CI is green, merge-drain lands it. PR: https://github.com/organvm/domus-genoma/pull/361 [auto-emitted 2026-08-08 by self-heal so merge-drain can land it]'
+  predicate: 'test "$(gh pr view 361 --repo organvm/domus-genoma --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/domus-genoma/pull/361'
+  origin: 'system_debt'
+  horizon: 'past'
+  value_case: 'Resolve the recurring REVIEW-FEEDBACK pull-request defect for organvm/domus-genoma#361'
+  owner_surface: 'organvm/domus-genoma'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T11:47:34.787Z'
+    agent: 'codex'
+    session_id: 'self-heal-emit'
+    logical_agent: 'self-heal'
+    logical_session_id: 'emit'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-a04ec93c04adc8a41d252025fbff6a14:669:compatibility'
+    conduct_run_id: 'run-a04ec93c04adc8a41d252025fbff6a14'
+    conduct_lease_id: 'lease-669-a04ec93c04adc8a4'
+    conduct_generation: 669
+  updated: '2026-08-08T11:47:34.787Z'
