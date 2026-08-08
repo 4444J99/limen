@@ -513,7 +513,7 @@ def test_slow_full_beat_keeps_the_early_sample_clock(tmp_path, monkeypatch):
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
-    launch = heartbeat.index('fast_wave_loop "$" &')
+    launch = heartbeat.index('fast_wave_loop "$$" &')
     main_loop = heartbeat.index("while true; do", launch)
     fast_body = heartbeat[heartbeat.index("fast_wave_bounded()") : launch]
 
@@ -528,7 +528,7 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
     assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
     assert "_fast_wave_aux_cleanup" in fast_body
-    watchdog_launch = heartbeat.index('stale_watchdog_loop "$" &')
+    watchdog_launch = heartbeat.index('stale_watchdog_loop "$$" &')
     assert watchdog_launch < main_loop
     assert "scripts/host-pressure-stale.py" in heartbeat[heartbeat.index("stale_watchdog_loop()") : launch]
     assert "HOST_PRESSURE_WATCHDOG_PID" in heartbeat[heartbeat.index("cleanup()") : main_loop]
