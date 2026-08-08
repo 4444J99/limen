@@ -142,7 +142,7 @@ def test_bearer_status_requires_the_named_environment_value(
     row = {
         "name": "token",
         "auth_status": "bearerToken",
-        "bearer_token_env_var": "ABSENT_MCP_TOKEN",
+        "transport": {"bearer_token_env_var": "ABSENT_MCP_TOKEN"},
     }
     monkeypatch.delenv("ABSENT_MCP_TOKEN", raising=False)
 
