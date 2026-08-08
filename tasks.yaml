@@ -166913,3 +166913,37 @@ tasks:
     conduct_lease_id: 'lease-689-db3f7a2310ff483b'
     conduct_generation: 689
   updated: '2026-08-08T14:15:01.312Z'
+- id: 'GH-organvm-limen-2097'
+  title: 'POTESTAS 2.4 — reading: attention and surveillance (Zuboff, Berridge, dark patterns)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2097'
+  context: 'GitHub issue organvm/limen#2097. Phase: #2080 · Program: #2077 **Main question: who is paying for your attention, and what are they buying?** ## Sources - **Berridge** on dopamine — the single most important correction in the whole curriculum: **dopamine is about *wanting*, not *liking*.** It spikes in *anticipation* of reward, not during pleasure. This is why a pattern can be compulsive and unenjoyable at the same time. - **Skin'
+  predicate: 'test "$(gh issue view 2097 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2097'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2097'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:15:06.384Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-3d468e756fe6baa40924a3288bc10aa0:690:compatibility'
+    conduct_run_id: 'run-3d468e756fe6baa40924a3288bc10aa0'
+    conduct_lease_id: 'lease-690-3d468e756fe6baa4'
+    conduct_generation: 690
+  updated: '2026-08-08T14:15:06.384Z'
