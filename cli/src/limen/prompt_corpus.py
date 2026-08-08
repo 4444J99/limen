@@ -3739,6 +3739,51 @@ def _prompt_authority_fast_path_valid(
 
 
 RAW_ARCHIVE_MANIFEST_VERSION = "limen.prompt_raw_archive_manifest.v1"
+RAW_ARCHIVE_CUSTODY_RECEIPT_VERSION = "limen.prompt_raw_archive_custody_receipt.v1"
+
+
+def _validate_raw_archive_custody(
+    paths: LedgerPaths,
+    *,
+    raw_object: str,
+    prompt_hash: str,
+    receipt_ref: object,
+    label: str,
+) -> tuple[str | None, list[str]]:
+    """Verify that a local custody receipt binds the cold object to its digest."""
+
+    errors: list[str] = []
+    if not isinstance(receipt_ref, str) or not receipt_ref.strip() or "\x00" in receipt_ref:
+        return None, [f"{label}: custody_receipt must be a non-empty relative receipt path"]
+    normalized = receipt_ref.strip()
+    if len(normalized) > 1024 or Path(normalized).is_absolute():
+        return None, [f"{label}: custody_receipt must be a bounded relative receipt path"]
+    receipt_path = (paths.private_dir / normalized).resolve()
+    private_root = paths.private_dir.resolve()
+    if private_root not in receipt_path.parents:
+        return None, [f"{label}: custody_receipt escapes the private corpus"]
+    if not receipt_path.is_file():
+        return None, [f"{label}: custody_receipt does not resolve to a file"]
+
+    payload, load_errors = load_json_strict(receipt_path)
+    errors.extend(f"{label}: custody_receipt: {error}" for error in load_errors)
+    if load_errors:
+        return None, errors
+    if payload.get("schema_version") != RAW_ARCHIVE_CUSTODY_RECEIPT_VERSION:
+        errors.append(f"{label}: custody_receipt has unsupported schema_version")
+    if payload.get("raw_object") != raw_object:
+        errors.append(f"{label}: custody_receipt raw_object mismatch")
+    if payload.get("prompt_hash") != prompt_hash:
+        errors.append(f"{label}: custody_receipt prompt_hash mismatch")
+    archive_location = payload.get("archive_location")
+    if (
+        not isinstance(archive_location, str)
+        or not archive_location.strip()
+        or "\x00" in archive_location
+        or len(archive_location) > 2048
+    ):
+        errors.append(f"{label}: custody_receipt needs a bounded archive_location")
+    return (normalized if not errors else None), errors
 
 
 def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, str]], list[str]]:
@@ -3765,7 +3810,6 @@ def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, 
             continue
         relative = item.get("raw_object")
         prompt_hash = item.get("prompt_hash")
-        custody_receipt = item.get("custody_receipt")
         if not isinstance(relative, str) or not relative:
             errors.append(f"{label}: raw_object must be a non-empty string")
             continue
@@ -3776,23 +3820,24 @@ def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, 
         if relative != expected:
             errors.append(f"{label}: raw_object does not match prompt_hash")
             continue
-        if (
-            not isinstance(custody_receipt, str)
-            or not custody_receipt.strip()
-            or "\x00" in custody_receipt
-            or len(custody_receipt) > 1024
-        ):
-            errors.append(f"{label}: custody_receipt must be a non-empty bounded reference")
+        custody_receipt, receipt_errors = _validate_raw_archive_custody(
+            paths,
+            raw_object=relative,
+            prompt_hash=prompt_hash,
+            receipt_ref=item.get("custody_receipt"),
+            label=label,
+        )
+        errors.extend(receipt_errors)
+        if custody_receipt is None:
             continue
         if relative in entries:
             errors.append(f"{label}: duplicate raw_object")
             continue
         entries[relative] = {
             "prompt_hash": prompt_hash,
-            "custody_receipt": custody_receipt.strip(),
+            "custody_receipt": custody_receipt,
         }
     return entries, errors
-
 
 def validate_raw_references(
     paths: LedgerPaths,
@@ -3813,11 +3858,15 @@ def validate_raw_references(
         if relative != expected:
             errors.append(f"{occurrence_id}: raw object reference does not match prompt hash")
             continue
-        candidate = (paths.raw_objects / relative).resolve()
+        lexical_candidate = paths.raw_objects / relative
+        candidate = lexical_candidate.resolve()
         if paths.raw_objects.resolve() not in candidate.parents:
             errors.append(f"{occurrence_id}: private raw object reference escapes its store")
             continue
-        if not candidate.is_file():
+        if (lexical_candidate.exists() or lexical_candidate.is_symlink()) and not lexical_candidate.is_file():
+            errors.append(f"{occurrence_id}: private raw object exists but is not a regular file")
+            continue
+        if not lexical_candidate.is_file():
             archived = archive_entries.get(relative)
             if archived is None:
                 errors.append(f"{occurrence_id}: private raw object is missing")
