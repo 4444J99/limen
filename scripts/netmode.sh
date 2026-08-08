@@ -51,6 +51,9 @@ if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
     fi
   done
 fi
+if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -z "${LIMEN_NOTIFY_ROOT:-}" ]; then
+  LIMEN_NOTIFY_ROOT="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
+fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
 MODEFILE="$DIR/mode"
