@@ -19,6 +19,14 @@ from limen.models import Task
 _ROUTINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _FINDING_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_PREDICATE_SCHEMA_RE = re.compile(
+    r"^(?!.*(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b))"
+    r"(?=(?:[^']*'[^']*')*[^']*$)"
+    r'(?=(?:[^"]*"[^"]*")*[^"]*$)'
+    r"(?!.*\\$).+$",
+    re.IGNORECASE,
+)
 
 CloudRoutineStatus = Literal["ok", "finding", "failed"]
 CloudRoutineDisposition = Literal[
@@ -79,6 +87,8 @@ class CloudRoutineReceiptV1(ProtocolModel):
         normalized = value.strip()
         if len(normalized) > 8192:
             raise ValueError("predicate must be at most 8192 characters")
+        if not _PREDICATE_SCHEMA_RE.fullmatch(normalized):
+            raise ValueError("predicate must match the published bounded shell grammar")
         if not is_executable_predicate(normalized):
             raise ValueError("predicate must be one executable command")
         return normalized
@@ -90,6 +100,8 @@ class CloudRoutineReceiptV1(ProtocolModel):
             raise ValueError("human_gate is only valid for a material finding")
         if (material or self.disposition == "human_gate") and not self.owner_ref:
             raise ValueError("material cloud-routine findings require owner_ref")
+        if self.disposition == "human_gate" and not _LEVER_REF_RE.fullmatch(self.owner_ref or ""):
+            raise ValueError("human_gate owner_ref must be a lever:<id> reference")
         if self.disposition == "new_work":
             if not material:
                 raise ValueError("new_work is only valid for a material finding")
@@ -105,11 +117,15 @@ def task_id_for(receipt: CloudRoutineReceiptV1) -> str:
     return f"CLOUD-{digest}"
 
 
-def task_for(receipt: CloudRoutineReceiptV1) -> Task:
+def task_for(
+    receipt: CloudRoutineReceiptV1,
+    *,
+    task_id: str | None = None,
+) -> Task:
     """Translate one new-work disposition into the provider-neutral intake model."""
     if receipt.disposition != "new_work" or not receipt.owner_ref:
         raise ValueError("only new_work receipts can become tasks")
-    task_id = task_id_for(receipt)
+    task_id = task_id or task_id_for(receipt)
     return Task(
         id=task_id,
         title=f"Cloud routine finding: {receipt.stable_finding_key}",
@@ -150,24 +166,34 @@ def plan_task_upserts(
     *,
     existing_ids: Iterable[str] = (),
     pending_ids: Iterable[str] = (),
+    historical_ids: Iterable[str] = (),
 ) -> CloudRoutineIngestPlan:
-    """Plan only novel new-work upserts; repeated observations are idempotent."""
-    known = set(existing_ids) | set(pending_ids)
+    """Plan only novel live work while allowing a terminal lineage to recur."""
+    active = set(existing_ids) | set(pending_ids)
+    historical = set(historical_ids) | active
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
     classified = 0
     duplicates = 0
 
     for receipt in receipts:
-        task_id = task_id_for(receipt)
+        lineage_id = task_id_for(receipt)
         if receipt.disposition != "new_work":
             classified += 1
             continue
-        if task_id in known or task_id in seen_lineages:
+        if lineage_id in active or lineage_id in seen_lineages:
             duplicates += 1
             continue
-        task = task_for(receipt)
+        task_id = lineage_id
+        if lineage_id in historical:
+            occurrence = receipt.observed_at.strftime("%Y%m%dT%H%M%SZ")
+            task_id = f"{lineage_id}-{occurrence}"
+        if task_id in active or task_id in historical or task_id in seen_lineages:
+            duplicates += 1
+            continue
+        task = task_for(receipt, task_id=task_id)
         tasks.append(task)
+        seen_lineages.add(lineage_id)
         seen_lineages.add(task_id)
 
     return CloudRoutineIngestPlan(
