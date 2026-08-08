@@ -166082,3 +166082,40 @@ tasks:
     conduct_lease_id: 'lease-665-6f429ab6cedb2b26'
     conduct_generation: 665
   updated: '2026-08-08T04:39:21.080Z'
+- id: 'REV-4444j99-mirror-mirror-revenue-readiness-0808'
+  title: 'First-paying-customer readiness pass on Mirror Mirror'
+  repo: '4444J99/mirror-mirror'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'revenue-readiness'
+  - 'revenue'
+  - 'product'
+  - 'ship-order'
+  - 'generated'
+  urls: []
+  context: 'In 4444J99/mirror-mirror, find the single highest-leverage gap between the current product and something a stranger would pay for (first-dollar path: paid tier once live) and close it with a real, tested change. One focused PR; keep CI green. [revenue-backlog 2026-08-08: rank 5, stage building — spend tokens on income, not busywork]'
+  predicate: 'test "$(gh pr list --repo 4444J99/mirror-mirror --state merged --search ''REV-4444j99-mirror-mirror-revenue-readiness-0808 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:4444J99/mirror-mirror:pull-request:REV-4444j99-mirror-mirror-revenue-readiness-0808'
+  origin: 'agent_recommendation'
+  horizon: 'present'
+  value_case: 'Advance Mirror Mirror along its recorded first-dollar path: paid tier once live'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T04:39:27.049Z'
+    agent: 'codex'
+    session_id: 'generate-revenue-backlog-generate-revenue-backlog'
+    logical_agent: 'generate-revenue-backlog'
+    logical_session_id: 'generate-revenue-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-100c8b3f5fe18757b708f6e03533a88b:666:compatibility'
+    conduct_run_id: 'run-100c8b3f5fe18757b708f6e03533a88b'
+    conduct_lease_id: 'lease-666-100c8b3f5fe18757'
+    conduct_generation: 666
+  updated: '2026-08-08T04:39:27.049Z'
