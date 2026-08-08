@@ -51,6 +51,13 @@ class CloudRoutineReceiptV1(ProtocolModel):
             raise ValueError("routine_id must be a bounded protocol identifier")
         return value
 
+    @field_validator("observed_at")
+    @classmethod
+    def validate_observed_at(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("observed_at must include a timezone")
+        return value
+
     @field_validator("stable_finding_key")
     @classmethod
     def validate_finding_key(cls, value: str) -> str:
