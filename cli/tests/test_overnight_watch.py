@@ -395,7 +395,14 @@ def test_missing_pause_marker_runs_normal_snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
 
     assert module.run_once(dry_run=True, json_output=False) == 0
-    assert calls == [{"refresh_handoff": False, "record_gate": False, "submit_lane_switch": False}]
+    assert calls == [
+        {
+            "refresh_handoff": False,
+            "record_gate": False,
+            "submit_lane_switch": False,
+            "host_pressure_read_only": True,
+        }
+    ]
 
 
 def test_successful_bounded_lane_preserves_explicit_zero_exit(tmp_path, monkeypatch):
@@ -1664,3 +1671,30 @@ def test_no_heal_when_service_loaded_but_unhealthy(tmp_path, monkeypatch):
 
     assert module.run_once(dry_run=False, json_output=False) == 1
     assert not _bootstrap_calls(calls)
+
+
+def test_host_pressure_read_only_mode_is_forwarded(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    module.HOST_PRESSURE_STALE_SCRIPT.parent.mkdir(parents=True, exist_ok=True)
+    module.HOST_PRESSURE_STALE_SCRIPT.write_text("# probe", encoding="utf-8")
+    calls = []
+
+    def fake_run(command, timeout):
+        calls.append((command, timeout))
+        return _CP(command, rc=1, stdout="stale")
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    snapshot = module.host_pressure_snapshot(read_only=True)
+
+    assert snapshot["ok"] is False
+    assert calls == [
+        (
+            [
+                module.sys.executable,
+                str(module.HOST_PRESSURE_STALE_SCRIPT),
+                "--read-only",
+            ],
+            30,
+        )
+    ]
