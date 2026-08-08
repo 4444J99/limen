@@ -111,6 +111,7 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
     assert payload["next_action"] == payload["dispatchable_next"]
     assert payload["dispatch_admission"]["admissible"] == 1
     assert payload["dispatch_admission"]["reason_counts"] == {"provider_health": 1}
+    assert payload["dispatch_admission"]["provider_health_reason_counts"] == {"gemini": 1}
     assert payload["board_budget"] == {
         "daily": 10,
         "unit": "runs",
@@ -214,6 +215,25 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     }
 
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
+def test_dispatch_admission_names_auth_blocked_provider():
+    mod = _load()
+    tasks = [_task("LOGIN", priority="high", agent="jules"), _task("READY", agent="codex")]
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "jules": {"remaining": 5, "health": "auth_needed"},
+            "codex": {"remaining": 5, "health": "ok"},
+        },
+    }
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["dispatchable_next"]["id"] == "READY"
+    assert admission["reason_counts"] == {"provider_health": 1}
+    assert admission["provider_health_reason_counts"] == {"jules": 1}
 
 
 def test_dispatchable_next_skips_task_with_unavailable_explicit_mount(tmp_path):
