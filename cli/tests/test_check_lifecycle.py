@@ -75,4 +75,3 @@ def test_lifecycle_measure_includes_every_unwritten_disposition() -> None:
 
     assert unreachable == 145
     assert module.failures == []
-
