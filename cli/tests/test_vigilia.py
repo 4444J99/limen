@@ -528,6 +528,10 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
     assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
     assert "_fast_wave_aux_cleanup" in fast_body
+    watchdog_launch = heartbeat.index('stale_watchdog_loop "$" &')
+    assert watchdog_launch < main_loop
+    assert "scripts/host-pressure-stale.py" in heartbeat[heartbeat.index("stale_watchdog_loop()") : launch]
+    assert "HOST_PRESSURE_WATCHDOG_PID" in heartbeat[heartbeat.index("cleanup()") : main_loop]
 
 
 def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
