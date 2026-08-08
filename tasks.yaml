@@ -166981,3 +166981,37 @@ tasks:
     conduct_lease_id: 'lease-691-70974309916bb059'
     conduct_generation: 691
   updated: '2026-08-08T14:15:11.600Z'
+- id: 'GH-organvm-limen-2095'
+  title: 'POTESTAS 2.2 — reading: the strategy canon (Sun Tzu, Machiavelli, Greene) as documentation'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2095'
+  context: 'GitHub issue organvm/limen#2095. Phase: #2080 · Program: #2077 **Main question: what does a strategist do when force is available?** ## Sources - **Sun Tzu, *The Art of War*** — "all warfare is based on deception"; winning without fighting; *"if you know the enemy and know yourself, you need not fear the result of a hundred battles."* - **Machiavelli, *The Prince*** — feared but not hated; the lion and the fox; **virtù vs fortuna'
+  predicate: 'test "$(gh issue view 2095 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2095'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2095'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:15:16.512Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-4515f5ef76ad198bfb3b59100278f2fe:692:compatibility'
+    conduct_run_id: 'run-4515f5ef76ad198bfb3b59100278f2fe'
+    conduct_lease_id: 'lease-692-4515f5ef76ad198b'
+    conduct_generation: 692
+  updated: '2026-08-08T14:15:16.512Z'
