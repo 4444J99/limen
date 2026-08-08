@@ -74,6 +74,7 @@ def _handoff(
     provider_state: str = "ok",
     provider_states: dict[str, str] | None = None,
     blocked_providers: dict[str, int] | None = None,
+    admissible_agents: dict[str, int] | None = None,
 ):
     logs.mkdir(exist_ok=True)
     payload = {
@@ -94,7 +95,10 @@ def _handoff(
                     else {}
                 )
             ),
-            "dispatchable_next": {"id": "TASK-1"} if admissible else None,
+            "admissible_agent_counts": (
+                admissible_agents if admissible_agents is not None else ({"codex": admissible} if admissible else {})
+            ),
+            "dispatchable_next": {"id": "TASK-1", "target_agent": "codex"} if admissible else None,
         },
         "provider_headroom": {
             "generated": datetime.now(timezone.utc).isoformat(),
@@ -121,6 +125,22 @@ def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monke
     assert headline.startswith("ROUTABLE WORK EXISTS")
     assert "no routable work" not in headline
     assert "routing: routable" in body
+
+
+def test_admitted_work_for_another_provider_does_not_accuse_idle_lane(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1, admissible_agents={"claude": 1})
+    (logs / "usage.json").write_text(
+        json.dumps({"vendors": {"codex": {"headroom_pct": 100, "consumed": 0}}}),
+        encoding="utf-8",
+    )
+
+    headline, body, _day, reason = module.build_report()
+
+    assert reason == "admission_blocked"
+    assert headline.startswith("IDLED")
+    assert "none target idle providers" in body
 
 
 def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
