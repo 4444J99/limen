@@ -147,9 +147,9 @@ def test_bearer_status_requires_the_named_environment_value(
     monkeypatch.delenv("ABSENT_MCP_TOKEN", raising=False)
 
     assert module.parse_codex_mcp_statuses([row]) == {"token": "auth_needed"}
-    assert module.parse_codex_mcp_statuses(
-        [{"name": "token", "auth_status": "bearerToken"}]
-    ) == {"token": "auth_unknown"}
+    assert module.parse_codex_mcp_statuses([{"name": "token", "auth_status": "bearerToken"}]) == {
+        "token": "auth_unknown"
+    }
 
     monkeypatch.setenv("ABSENT_MCP_TOKEN", "present")
     assert module.parse_codex_mcp_statuses([row]) == {"token": "authenticated"}
