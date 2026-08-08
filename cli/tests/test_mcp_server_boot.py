@@ -52,6 +52,28 @@ def test_empty_codex_home_falls_back_to_default(monkeypatch: pytest.MonkeyPatch)
     assert module.CODEX_HOME == Path.home() / ".codex"
 
 
+def test_codex_status_probe_honors_registered_executable(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex-home")
+    codex_bin = tmp_path / "fixed" / "codex"
+    codex_bin.parent.mkdir()
+    codex_bin.write_text("#!/bin/sh\n", encoding="utf-8")
+    codex_bin.chmod(0o755)
+    monkeypatch.setenv("LIMEN_CODEX_BIN", str(codex_bin))
+    invocations: list[list[str]] = []
+
+    def fake_run(argv: list[str], **_kwargs: object):
+        invocations.append(argv)
+        return module.subprocess.CompletedProcess(argv, 0, "[]", "")
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module._codex_mcp_statuses() == ({}, None)
+    assert invocations == [[str(codex_bin), "mcp", "list", "--json"]]
+
+
 @pytest.mark.parametrize(
     ("payload", "expected"),
     [
