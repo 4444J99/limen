@@ -135,8 +135,11 @@ def _discover_doors(text):
         derive_match = re.search(r"LIMEN_BEAT_DERIVE:-(\d+)", text)
         derive_default = derive_match.group(1) if derive_match else "0"
         derive_live = _env_flag("LIMEN_BEAT_DERIVE", derive_default) == "1"
+        raw_fast_wave = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+        fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
         for sensor_id, sensor in sensors.items():
-            if sensor_id in seen or not scheduled_sources.intersection(sensor.get("source") or []):
+            sensor_sources = set(sensor.get("source") or [])
+            if sensor_id in seen or not scheduled_sources.intersection(sensor_sources):
                 continue
             cadence_spec = sensor.get("cadence")
             if cadence_spec is None:
@@ -636,7 +639,8 @@ def _doors(text):
                 rung=d["name"],
                 voice=d["key"],
                 cadence_key=None if d.get("registry_sensor") else d["name"],
-                cadence_beats=d["cadence"] if d.get("registry_sensor") else None,
+                cadence_beats=d["cadence"] if d.get("registry_sensor") and not d.get("interval_s") else None,
+                interval_s=d.get("interval_s"),
                 what=d["role"] or f"{d['key']} beat",
                 probe=lambda: None,
                 _dormant=bool(d.get("dormant")),
@@ -661,7 +665,7 @@ def build():
     drift = []
     for o in _doors(text):
         # cadence → expected seconds between fires, worst-case (idle beats run at LOOP_MAX).
-        if "interval_s" in o:
+        if o.get("interval_s"):
             expected = o["interval_s"]
             cadence_desc = f"~{o['interval_s'] // 3600}h"
         else:
