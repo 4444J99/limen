@@ -112,12 +112,13 @@ def _deliver(message: str, title: str) -> bool:
     try:
         msg = message.replace('"', "'")
         ttl = title.replace('"', "'")
-        subprocess.run(
+        delivered = subprocess.run(
             ["osascript", "-e", f'display notification "{msg}" with title "{ttl}"'],
             capture_output=True,
             timeout=10,
+            check=False,
         )
-        return True
+        return delivered.returncode == 0
     except Exception:
         return False
 
