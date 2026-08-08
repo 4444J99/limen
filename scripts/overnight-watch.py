@@ -377,10 +377,13 @@ def resident_fast_wave_pid() -> str | None:
     return value if value.isdigit() else None
 
 
-def host_pressure_snapshot() -> dict[str, Any]:
+def host_pressure_snapshot(*, read_only: bool = False) -> dict[str, Any]:
     if not HOST_PRESSURE_STALE_SCRIPT.is_file():
         return {"ok": None, "returncode": None, "detail": "host-pressure-stale.py missing"}
-    completed = run([sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)], timeout=30)
+    command = [sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)]
+    if read_only:
+        command.append("--read-only")
+    completed = run(command, timeout=30)
     detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
     return {
         "ok": completed.returncode == 0,
@@ -1790,6 +1793,7 @@ def build_snapshot(
     refresh_handoff: bool = True,
     record_gate: bool = True,
     submit_lane_switch: bool = False,
+    host_pressure_read_only: bool = False,
 ) -> dict[str, Any]:
     text = tail_text(HEARTBEAT_LOG)
     heartbeat = parse_heartbeat(text)
@@ -1812,7 +1816,7 @@ def build_snapshot(
         ),
         None,
     )
-    host_pressure = host_pressure_snapshot()
+    host_pressure = host_pressure_snapshot(read_only=host_pressure_read_only)
 
     captured_at = utc_now().replace(microsecond=0)
     snapshot: dict[str, Any] = {
@@ -5631,6 +5635,7 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
         refresh_handoff=not dry_run,
         record_gate=not dry_run,
         submit_lane_switch=not dry_run,
+        host_pressure_read_only=dry_run,
     )
     if not dry_run:
         heal_actions = heal(snapshot)
