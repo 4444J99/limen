@@ -63,7 +63,8 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 8192,
-      "pattern": "^(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$"
+      "pattern": "^(?!.*(?:<[^>]+>|\\b(?:tbd|todo|fixme|replace[-_ ]me)\\b))(?=(?:[^']*'[^']*')*[^']*$)(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?!.*\\\\$)(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$",
+      "$comment": "Kept in parity with CloudRoutineReceiptV1.validate_predicate: no placeholders, balanced quotes, no trailing escape, and one admitted executable."
     }
   },
   "allOf": [
@@ -128,7 +129,8 @@
           },
           "owner_ref": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "pattern": "^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
           }
         }
       }
