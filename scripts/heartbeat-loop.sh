@@ -236,9 +236,11 @@ LANES="${LIMEN_LANES:-auto}"   # planner input only; campaign execution derives 
 MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
 FAST_WAVE_SECONDS="${LIMEN_VITALS_SAMPLE_SECONDS:-300}"
 case "$FAST_WAVE_SECONDS" in ''|*[!0-9]*) FAST_WAVE_SECONDS=300 ;; esac
-[ "$FAST_WAVE_SECONDS" -ge 60 ] || FAST_WAVE_SECONDS=60
+[ "$FAST_WAVE_SECONDS" -gt 0 ] || FAST_WAVE_SECONDS=300
 FAST_WAVE_BEAT=0
 FAST_WAVE_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave.log"
+FAST_WAVE_AUX_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave-aux.log"
+FAST_WAVE_PID_FILE="$LIMEN_ROOT/logs/vigilia/fast-wave.pid"
 PAUSED_BEAT="${LIMEN_HEARTBEAT_PAUSED_SECONDS:-300}"
 case "$PAUSED_BEAT" in
   ''|*[!0-9]*) PAUSED_BEAT=300 ;;
@@ -312,44 +314,106 @@ metabolize_pass_due() {
   [ -n "$last" ] || return 0
   [ $(( now - last )) -ge "${LIMEN_METABOLIZE_SENSORS_SECS:-3600}" ]
 }
-# FAST WAVE — an independent cadence for time-sensitive local truth. It starts before the
-# main loop and therefore keeps sampling even while a later network, corpus, or dispatch rung is
-# slow. Each command is bounded and the latest cycle has one atomic start/finish receipt.
+# FAST WAVE — a dedicated sample clock plus a single-flight auxiliary tier. The sample
+# never waits for diurnal or organ-health, so their bounded work cannot consume its next slot.
 fast_wave_bounded() {
   _fw_timeout="$1"; shift
-  if [ -n "$DISPATCH_TIMEOUT_BIN" ]; then
-    "$DISPATCH_TIMEOUT_BIN" -s KILL "$_fw_timeout" "$@"
-  else
-    "$@"
-  fi
+  python3 - "$_fw_timeout" "$@" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+
+try:
+    ceiling = float(sys.argv[1])
+    process = subprocess.Popen(sys.argv[2:], start_new_session=True)
+    try:
+        code = process.wait(timeout=ceiling)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+        code = 124
+except (OSError, TypeError, ValueError) as exc:
+    print(f"fast-wave timeout wrapper: {exc}", file=sys.stderr)
+    code = 125
+raise SystemExit(code)
+PY
 }
 
-fast_wave_once() {
-  _fw_tmp="$FAST_WAVE_LOG.${BASHPID}.tmp"
+fast_wave_sample_once() {
+  _fw_tmp="$FAST_WAVE_LOG.$$.$FAST_WAVE_BEAT.tmp"
   mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null || true
   {
-    echo "fast-wave: start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
-    fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
-    _fw_sample_rc=$?
-    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" \
-      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only \
-        --beat "$FAST_WAVE_BEAT" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED"
-    _fw_diurnal_rc=$?
-    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" \
-      python3 "$LIMEN_ROOT/scripts/organ-health.py"
-    _fw_health_rc=$?
-    echo "fast-wave: finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) sample=$_fw_sample_rc diurnal=$_fw_diurnal_rc organ_health=$_fw_health_rc"
+    echo "fast-wave: sample start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
+    if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
+      fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
+      _fw_sample_rc=$?
+    else
+      echo "fast-wave: VIGILIA disabled — sample skipped"
+      _fw_sample_rc=0
+    fi
+    echo "fast-wave: sample finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) rc=$_fw_sample_rc"
   } >"$_fw_tmp" 2>&1
   mv "$_fw_tmp" "$FAST_WAVE_LOG" 2>/dev/null || true
+  return "$_fw_sample_rc"
+}
+
+fast_wave_aux_once() {
+  _fw_aux_beat="$1"
+  _fw_tmp="$FAST_WAVE_AUX_LOG.$$.$_fw_aux_beat.tmp"
+  _fw_diurnal_log="$_fw_tmp.diurnal"
+  _fw_health_log="$_fw_tmp.health"
+  mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null || true
+
+  if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
+    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" \
+      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only \
+        --beat "$_fw_aux_beat" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED" \
+        >"$_fw_diurnal_log" 2>&1 &
+    _fw_diurnal_pid=$!
+  else
+    echo "fast-wave: derived sensors disabled" >"$_fw_diurnal_log"
+    _fw_diurnal_pid=""
+  fi
+  fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" \
+    python3 "$LIMEN_ROOT/scripts/organ-health.py" >"$_fw_health_log" 2>&1 &
+  _fw_health_pid=$!
+
+  _fw_diurnal_rc=0
+  if [ -n "$_fw_diurnal_pid" ]; then
+    wait "$_fw_diurnal_pid" || _fw_diurnal_rc=$?
+  fi
+  _fw_health_rc=0
+  wait "$_fw_health_pid" || _fw_health_rc=$?
+  {
+    echo "fast-wave: aux beat=$_fw_aux_beat $(date -u +%FT%TZ)"
+    cat "$_fw_diurnal_log" "$_fw_health_log" 2>/dev/null || true
+    echo "fast-wave: aux finish beat=$_fw_aux_beat diurnal=$_fw_diurnal_rc organ_health=$_fw_health_rc"
+  } >"$_fw_tmp" 2>&1
+  mv "$_fw_tmp" "$FAST_WAVE_AUX_LOG" 2>/dev/null || true
+  rm -f "$_fw_diurnal_log" "$_fw_health_log" 2>/dev/null || true
 }
 
 fast_wave_loop() {
-  # Use the shell's canonical truth command so the main daemon remains the one
-  # structural `while true` loop guarded by the self-load startup invariant.
-  while :; do
+  _fw_parent_pid="$1"
+  _fw_aux_pid=""
+  _fast_wave_cleanup() {
+    if [ -n "$_fw_aux_pid" ] && kill -0 "$_fw_aux_pid" 2>/dev/null; then
+      kill "$_fw_aux_pid" 2>/dev/null || true
+      wait "$_fw_aux_pid" 2>/dev/null || true
+    fi
+  }
+  trap _fast_wave_cleanup EXIT
+  trap 'exit 0' HUP INT TERM
+  while kill -0 "$_fw_parent_pid" 2>/dev/null; do
     _fw_started="$(date +%s)"
     FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
-    fast_wave_once
+    fast_wave_sample_once || true
+    if [ -z "$_fw_aux_pid" ] || ! kill -0 "$_fw_aux_pid" 2>/dev/null; then
+      [ -z "$_fw_aux_pid" ] || wait "$_fw_aux_pid" 2>/dev/null || true
+      fast_wave_aux_once "$FAST_WAVE_BEAT" &
+      _fw_aux_pid=$!
+    fi
     _fw_elapsed=$(( $(date +%s) - _fw_started ))
     _fw_wait=$(( FAST_WAVE_SECONDS - _fw_elapsed ))
     [ "$_fw_wait" -gt 0 ] || _fw_wait=1
@@ -430,6 +494,7 @@ cleanup() {
     kill "$FAST_WAVE_PID" 2>/dev/null || true
     wait "$FAST_WAVE_PID" 2>/dev/null || true
   fi
+  rm -f "$FAST_WAVE_PID_FILE" 2>/dev/null || true
   # beat_run's capture buffer. Named by pid, reused for every rung, and removed after each — so it
   # only survives if the daemon dies mid-rung. launchd's SIGTERM (which the self-load rung relies on
   # to restart the loop) runs this trap, so the ordinary case is covered here; a SIGKILL is what the
@@ -458,8 +523,9 @@ rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
 rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
-fast_wave_loop &
+fast_wave_loop "$" &
 FAST_WAVE_PID=$!
+printf '%s\n' "$FAST_WAVE_PID" > "$FAST_WAVE_PID_FILE" 2>/dev/null || true
 while true; do
   # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
   # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
