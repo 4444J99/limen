@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """BEAT DIAGNOSTICS gate — a beat rung may not hide the reason it failed.
 
-The idiom this forbids is ``<cmd> 2>&1 | tail -1``, and it is not a style preference. It
-destroys three different things at once:
+The idiom this forbids is ``<cmd> 2>&1 | tail -N`` — for ANY N, which is the correction this
+gate's own first cut needed. It is not a style preference. It destroys three things at once:
 
-  1. **The exit status.** ``$?`` of a pipeline is the LAST stage's status, so it reports
-     *tail's* result — essentially always 0. Any trailing ``|| true`` is therefore
-     decorative, and no caller can distinguish a hard failure from a clean run.
+  1. **The exit status — discarded, not destroyed.** Corrected 2026-08-07: this gate first
+     said a pipeline reports *tail's* status. Every script it covers sets ``pipefail``, so
+     the pipeline actually exits with the ORGAN's status (measured: rc=9 through
+     ``| tail -1`` under ``pipefail``, rc=0 without it). The trailing ``|| true`` was
+     therefore load-bearing, and what it bore was throwing that status away at the call
+     site — nothing captured it, so no caller could tell a hard failure from a clean run.
+     Same blindness, different cause, and the cause picks the fix: the status must be
+     RECORDED, not merely rescued from tail. Without ``pipefail`` tail really does destroy
+     it, which is why the idiom is forbidden outright rather than merely discouraged.
   2. **The diagnostic.** ``tail -1`` of a Python traceback is the closing line of the
      exception's own repr. When the exception carries a JSON body that is a bare ``}``.
+     Widening N does not repair this — ``tail -6`` yields six lines of repr instead of one,
+     and the frame that names the failing call is still gone.
   3. **The record.** Nothing is written down, so a rung can fail on every beat forever
      while the beat log, the enactment audit, and the organ-health face all stay green.
 
@@ -20,18 +28,40 @@ log file estate-wide. That is the "signal with no effector" class one level up: 
 failure had no reader, so twelve regressed board atoms stayed regressed behind a rung that
 looked like it was working.
 
-``scripts/heartbeat-loop.sh`` now routes every rung through its ``beat_run`` helper, which
-keeps the happy path to one line, prints a real tail on failure, and records the outcome to
-``logs/beat-rungs.jsonl`` so ``scripts/enactment-audit.py`` can see a failing streak.
+**Corrected 2026-08-07, hours after this gate first shipped.** The first cut matched only
+``tail -1``. It therefore printed ``heartbeat-loop.sh at 0`` and closed with *"no rung hides
+the reason it failed"* while 29 sites across those same six files went on hiding it at
+``tail -2`` … ``tail -8`` — among them ``sync-release.sh`` (whose silent failure IS the #2023
+stale-code class), ``drain.sh`` (the merge rung), ``capture.sh`` (the backup) and
+``limen dispatch --live`` in ``saturate.sh``, the lane whose fifteen silent days started this
+work. Nothing about the three defects depends on N: ``tail -6`` truncates a traceback just as
+surely as ``tail -1``, records just as little, and sits behind the same status-dropping
+``|| true``. A check that is merely *directionally* right is how the defect it polices survives
+inside it — the same failure the ``/verify`` skill records against its own comparison table.
+
+One hazard for whoever converts the remaining sites: ``publish-board-pr.sh`` sets ``-e`` as
+well as ``pipefail``, so a failing rung there currently ABORTS the script. ``beat_run`` is
+fail-open by contract, so converting one of those sites without thought would silently turn a
+fatal error into a continue. The loop and the other four siblings set ``pipefail`` without
+``-e``, where fail-open is already the behaviour.
+
+A bare ``| tail`` with no ``2>&1`` is deliberately NOT a site. The ``2>&1`` is what marks a
+line as an organ invocation whose stderr carries the diagnostic; the loop's one bare case
+tails an already-captured variable, where no exit status is at stake.
+
+``scripts/heartbeat-loop.sh`` routes its ``tail -1`` rungs through its ``beat_run`` helper,
+which keeps the happy path to one line, prints a real tail on failure, and records the outcome
+to ``logs/beat-rungs.jsonl`` so ``scripts/enactment-audit.py`` can see a failing streak.
 
 Two rungs:
 
   A. **RATCHET (shrink-only).** Per-file counts of the blinding idiom may only go DOWN
      versus ``institutio/governance/beat-diagnostics-baseline.txt``. A new one is a red
-     check. The sibling beat scripts are baselined at their current counts rather than
-     rewritten here: ``beat_run`` is deliberately INLINE in heartbeat-loop.sh so the
-     daemon gains no new file dependency, and giving the siblings a shared helper is its
-     own change. The ratchet is what makes that a position rather than a leak.
+     check. Every file carries a non-zero ceiling today, and that is the honest state:
+     ``beat_run`` is deliberately INLINE in heartbeat-loop.sh so the daemon gains no new
+     file dependency, and both the wider-N conversions and a shared helper for the sibling
+     scripts are their own change. The ratchet is what makes that a declared position
+     rather than a leak — and, unlike the first cut, the count it ratchets is the real one.
   B. **HELPER INTEGRITY.** ``beat_run`` must still exist, must still print more than the
      last line on failure, and must still record the outcome. A well-meaning
      "simplification" back to ``tail -1`` inside the helper would restore the blindness
@@ -72,8 +102,13 @@ COVERED = [
     "scripts/deploy-corpus-organs.sh",
 ]
 
-# `2>&1 | tail -1` (or -n 1): merge stderr into stdout, then throw all but one line away.
-BLIND = re.compile(r"2>&1\s*\|\s*tail\s+(?:-1\b|-n\s*1\b)")
+# `2>&1 | tail -N` for ANY N: merge stderr into stdout, then throw all but N lines away — and
+# pair that with a `|| true` that drops the status. The first cut of this gate pinned N to 1 and
+# so declared heartbeat-loop.sh clean while 19 of its rungs were blind at -2..-6. `-N`, `-n N`,
+# and a bare `tail` (which defaults to 10) truncate identically, so all three match.
+# NOT matched, on purpose: `| tail` with no `2>&1`. That marks a display pipe over already
+# captured text, where there is no organ status to lose.
+BLIND = re.compile(r"2>&1\s*\|\s*tail\b")
 
 
 def scan(path: Path) -> list[tuple[int, str]]:
@@ -209,12 +244,12 @@ def main(argv: list[str] | None = None) -> int:
             print("Route each new rung through beat_run instead, or state why the baseline must move.")
             return 1
         lines = [
-            "# BEAT DIAGNOSTICS baseline — per-file ceiling for `2>&1 | tail -1` rungs.",
+            "# BEAT DIAGNOSTICS baseline — per-file ceiling for `2>&1 | tail -N` rungs (any N).",
             "# Shrink-only: scripts/check-beat-diagnostics.py refuses an --update that grows any count.",
-            "# heartbeat-loop.sh is at 0 — every rung goes through beat_run. The siblings are held here",
-            "# because beat_run is inline in the loop by design (the daemon takes on no new file",
-            "# dependency); giving them a shared helper is its own change, and this ceiling is what",
-            "# keeps that a position rather than a leak.",
+            "# beat_run is inline in heartbeat-loop.sh by design (the daemon takes on no new file",
+            "# dependency), so converting the wider-N sites and giving the sibling scripts a shared",
+            "# helper are their own changes. These ceilings are what keep that a declared position",
+            "# rather than a leak.",
         ]
         for rel in COVERED:
             lines.append(f"{rel} {len(current[rel])}")
@@ -248,7 +283,12 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  {v}", file=sys.stderr)
             return 1
         return 0
-    print("OK beat-diagnostics — no rung hides the reason it failed")
+    if total:
+        # Say what is actually true. The first cut printed the zero-claim unconditionally, which
+        # is how a gate ends up certifying the blindness it was built to find.
+        print(f"OK beat-diagnostics — {total} blind site(s) held at baseline, none new")
+    else:
+        print("OK beat-diagnostics — no rung hides the reason it failed")
     return 0
 
 
