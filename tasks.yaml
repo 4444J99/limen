@@ -132848,7 +132848,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -132857,7 +132857,7 @@ tasks:
   context: 'Session e0f151ab-5ba5-43b2-98f7-1540a470aa84 (''bash permission config investigation'') re-stalled after 56 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "Resume and FINISH your original purpose — you stalled at a decision and have been sitting. Decide every open step via th". Resume by hand or with a NEW instruction: claude --resume e0f151ab-5ba5-43b2-98f7-1540a470aa84   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/linear-conjuring-bear). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-08-04T15:40:59.488Z'
+  updated: '2026-08-08T00:11:24.792Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:59.488Z'
     agent: 'codex'
@@ -132870,6 +132870,18 @@ tasks:
     conduct_run_id: 'run-e931c5da40163ad2aed90dab8c2e4c1a'
     conduct_lease_id: 'lease-521-e931c5da40163ad2'
     conduct_generation: 521
+  - timestamp: '2026-08-08T00:11:24.792Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-8af3af378562447aa14cac20eb9a1878:649:compatibility'
+    conduct_run_id: 'run-8af3af378562447aa14cac20eb9a1878'
+    conduct_lease_id: 'lease-649-8af3af378562447a'
+    conduct_generation: 649
 - id: ASK-routine-omega-scorecard
   title: "Routine 'omega-scorecard' is DOWN \u2014 check claude.ai session"
   type: ops
