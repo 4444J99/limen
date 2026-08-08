@@ -238,6 +238,17 @@ def _python_bypasses(path: Path) -> bool:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, SyntaxError):
         return False
+    bindings: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, (ast.Assign, ast.AnnAssign))
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    bindings[target.id] = node.value.value
     for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
         call_name = call.func.id if isinstance(call.func, ast.Name) else (
             call.func.attr if isinstance(call.func, ast.Attribute) else ""
@@ -249,7 +260,18 @@ def _python_bypasses(path: Path) -> bool:
             for node in ast.walk(call)
             if isinstance(node, ast.Constant) and isinstance(node.value, str)
         ]
-        if "osascript" in literals and "display notification" in " ".join(literals).lower():
+        referenced = [
+            bindings[node.id]
+            for node in ast.walk(call)
+            if isinstance(node, ast.Name) and node.id in bindings
+        ]
+        has_osascript = any(
+            value == "osascript" or value.endswith("/osascript")
+            for value in literals
+        )
+        if has_osascript and "display notification" in " ".join(
+            [*literals, *referenced]
+        ).lower():
             return True
     return False
 
