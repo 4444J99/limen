@@ -99,8 +99,7 @@ def _handoff(
         "provider_headroom": {
             "generated": datetime.now(timezone.utc).isoformat(),
             "vendors": {
-                name: {"state": state}
-                for name, state in (provider_states or {"codex": provider_state}).items()
+                name: {"state": state} for name, state in (provider_states or {"codex": provider_state}).items()
             },
         },
     }
