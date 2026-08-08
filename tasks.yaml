@@ -165910,3 +165910,37 @@ tasks:
     conduct_lease_id: 'lease-660-99c4d78a94a666af'
     conduct_generation: 660
   updated: '2026-08-08T00:30:45.007Z'
+- id: 'GH-organvm-limen-2020'
+  title: 'check-plan-decisions is green on plans it cannot parse — 65 of 97 decisions invisible, 10 plans at zero coverage'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2020'
+  context: 'GitHub issue organvm/limen#2020. `scripts/check-plan-decisions.py` reports **green on plans whose decisions it cannot see.** Its decision detector is ```python NUMBERED = re.compile(r"^(\d+)\.\s+(.*)$") ``` so a decision written as `1. **D0 — …**` is checked and a decision written as `- **D0 — …**` is **not parsed at all**. There is no third state: an unparseable decisions section and a plan with no decisions produce the identica'
+  predicate: 'test "$(gh issue view 2020 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2020'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2020'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:50.907Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-babfb026f913f645d1096ba23eefab88:661:compatibility'
+    conduct_run_id: 'run-babfb026f913f645d1096ba23eefab88'
+    conduct_lease_id: 'lease-661-babfb026f913f645'
+    conduct_generation: 661
+  updated: '2026-08-08T00:30:50.907Z'
