@@ -40,9 +40,10 @@ from urllib.parse import urlparse
 # Each entry: the on-disk config + the format hint used to parse it. Absent files are skipped
 # silently (an agent that isn't installed on this host simply contributes no servers).
 HOME = Path.home()
+CODEX_HOME = Path(os.environ.get("CODEX_HOME", str(HOME / ".codex"))).expanduser()
 CONFIG_PATHS: list[tuple[str, Path, str]] = [
     ("copilot", HOME / ".copilot" / "mcp-config.json", "json"),
-    ("codex", HOME / ".codex" / "config.toml", "toml"),
+    ("codex", CODEX_HOME / "config.toml", "toml"),
     ("gemini", HOME / ".gemini" / "settings.json", "json"),
     ("agy", HOME / ".gemini" / "config" / "mcp_config.json", "json"),
     ("claude", HOME / ".claude.json", "json"),
@@ -53,6 +54,94 @@ CONFIG_PATHS: list[tuple[str, Path, str]] = [
 # The doorway everything points at — a bare 127.0.0.1 hub reachability is checked once, separately,
 # by verify-mcp-estate.sh (upstream count). Here we only probe what each agent config declares.
 DEFAULT_TIMEOUT = 15  # seconds per server; the beat wraps the whole sensor in its own ceiling too.
+
+_AUTH_NEEDED_STATES = frozenset(
+    {
+        "auth_needed",
+        "needs_auth",
+        "needs_authentication",
+        "unauthenticated",
+        "not_authenticated",
+        "oauth_required",
+        "login_required",
+    }
+)
+_AUTHENTICATED_STATES = frozenset(
+    {"authenticated", "connected", "ready", "logged_in"}
+)
+
+
+def _normalized_auth_state(value: object) -> str | None:
+    """Reduce Codex CLI authentication labels to the estate's stable semantic states."""
+    if not isinstance(value, str):
+        return None
+    label = re.sub(r"[^a-z0-9]+", "_", value.strip().lower()).strip("_")
+    if label in _AUTH_NEEDED_STATES:
+        return "auth_needed"
+    if label in _AUTHENTICATED_STATES:
+        return "authenticated"
+    return None
+
+
+def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
+    """Parse tolerated Codex MCP-list JSON envelopes into name -> auth state.
+
+    Codex owns the command boundary, while this repository owns only the two semantic
+    states it consumes. Unknown labels are intentionally ignored instead of being
+    guessed into a healthy or unhealthy authentication result.
+    """
+    rows: object = payload
+    if isinstance(payload, dict):
+        for key in ("servers", "mcp_servers", "mcpServers"):
+            candidate = payload.get(key)
+            if isinstance(candidate, (dict, list)):
+                rows = candidate
+                break
+
+    if isinstance(rows, dict):
+        entries = rows.items()
+    elif isinstance(rows, list):
+        entries = (
+            (row.get("name"), row)
+            for row in rows
+            if isinstance(row, dict) and isinstance(row.get("name"), str)
+        )
+    else:
+        return {}
+
+    statuses: dict[str, str] = {}
+    for name, row in entries:
+        if not isinstance(name, str) or not isinstance(row, dict):
+            continue
+        auth = row.get("auth_status") or row.get("authStatus")
+        authentication = row.get("authentication")
+        if auth is None and isinstance(authentication, dict):
+            auth = authentication.get("status") or authentication.get("state")
+        if auth is None:
+            auth = row.get("status")
+        state = _normalized_auth_state(auth)
+        if state:
+            statuses[name.casefold()] = state
+    return statuses
+
+
+def _codex_mcp_statuses() -> dict[str, str]:
+    """Return Codex's semantic MCP authentication states without emitting CLI output."""
+    if not shutil.which("codex"):
+        return {}
+    try:
+        result = subprocess.run(
+            ["codex", "mcp", "list", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=os.environ.copy(),
+        )
+        if result.returncode != 0:
+            return {}
+        return parse_codex_mcp_statuses(json.loads(result.stdout))
+    except (json.JSONDecodeError, OSError, subprocess.SubprocessError):
+        return {}
 
 
 def _strip_jsonc(text: str) -> str:
@@ -300,11 +389,44 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
 def probe(server: dict, timeout: int) -> dict:
     if server["transport"] == "http":
         ok, detail = _probe_http(server["url"], timeout)
+        state = "reachable" if ok else "unreachable"
     elif server["transport"] == "stdio":
         ok, detail = _probe_stdio(server, timeout)
+        state = "boots" if ok else "boot_failed"
     else:
         ok, detail = False, "unknown transport (no command or url)"
-    return {**server, "ok": ok, "detail": detail}
+        state = "invalid"
+    return {**server, "ok": ok, "state": state, "detail": detail}
+
+
+def _apply_codex_semantic_state(result: dict, statuses: dict[str, str]) -> dict:
+    """Overlay Codex OAuth truth on a successful HTTP transport probe."""
+    if result["agent"] != "codex" or result["transport"] != "http" or not result["ok"]:
+        return result
+    auth_state = statuses.get(result["name"].casefold())
+    if auth_state == "auth_needed":
+        return {
+            **result,
+            "ok": False,
+            "state": "auth_needed",
+            "detail": f"{result['detail']}; OAuth authentication required",
+        }
+    if auth_state == "authenticated":
+        return {**result, "state": "authenticated"}
+    return result
+
+
+def probe_all(servers: list[dict], timeout: int) -> list[dict]:
+    """Probe transport once per server and Codex semantic status once per batch."""
+    codex_statuses = (
+        _codex_mcp_statuses()
+        if any(s["agent"] == "codex" and s["transport"] == "http" for s in servers)
+        else {}
+    )
+    return [
+        _apply_codex_semantic_state(probe(server, timeout), codex_statuses)
+        for server in servers
+    ]
 
 
 # ── Heal effector (dormant unless --apply, which the sensor only passes when LIMEN_MCP_BOOT_HEAL=1) ─
@@ -358,20 +480,27 @@ def main(argv=None) -> int:
         print(json.dumps({"exit": 0, "note": "no-servers"}) if args.json else f"mcp-server-boot: {note}")
         return 0
 
-    results = [probe(s, args.timeout) for s in servers]
+    results = probe_all(servers, args.timeout)
     failed = [r for r in results if not r["ok"]]
 
     healed: list[str] = []
     if args.apply and failed:
         healed = _heal(failed)
-        results = [probe(s, args.timeout) for s in servers]  # re-probe once after heal
+        results = probe_all(servers, args.timeout)  # re-probe once after heal
         failed = [r for r in results if not r["ok"]]
 
     if args.json:
         payload = {
             "exit": 1 if failed else 0,
             "servers": [
-                {"agent": r["agent"], "name": r["name"], "transport": r["transport"], "ok": r["ok"], "detail": r["detail"]}
+                {
+                    "agent": r["agent"],
+                    "name": r["name"],
+                    "transport": r["transport"],
+                    "state": r["state"],
+                    "ok": r["ok"],
+                    "detail": r["detail"],
+                }
                 for r in results
             ],
             "failed": [f"{r['agent']}/{r['name']}" for r in failed],
@@ -385,7 +514,7 @@ def main(argv=None) -> int:
     for r in results:
         mark = "✓" if r["ok"] else "✗"
         label = f"{r['agent']}/{r['name']}"
-        print(f"  {mark} {label:34} [{r['transport']}] {r['detail']}")
+        print(f"  {mark} {label:34} [{r['transport']}/{r['state']}] {r['detail']}")
     if healed:
         print("  heal (--apply):")
         for a in healed:
