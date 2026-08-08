@@ -233,6 +233,15 @@ def _source_paths(root: Path) -> list[Path]:
     ]
 
 
+def _static_string(node: ast.AST) -> str | None:
+    """Return the statically visible text of a string or f-string expression."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        return "".join(_static_string(part) or " " for part in node.values)
+    return None
+
+
 def _python_bypasses(path: Path) -> bool:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -240,15 +249,15 @@ def _python_bypasses(path: Path) -> bool:
         return False
     bindings: dict[str, str] = {}
     for node in ast.walk(tree):
-        if (
-            isinstance(node, (ast.Assign, ast.AnnAssign))
-            and isinstance(node.value, ast.Constant)
-            and isinstance(node.value.value, str)
-        ):
-            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            for target in targets:
-                if isinstance(target, ast.Name):
-                    bindings[target.id] = node.value.value
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        value = _static_string(node.value)
+        if value is None:
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        for target in targets:
+            if isinstance(target, ast.Name):
+                bindings[target.id] = value
     for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
         call_name = call.func.id if isinstance(call.func, ast.Name) else (
             call.func.attr if isinstance(call.func, ast.Attribute) else ""
