@@ -165776,3 +165776,36 @@ tasks:
     conduct_lease_id: 'lease-656-a722bba1754cfe04'
     conduct_generation: 656
   updated: '2026-08-08T00:30:20.259Z'
+- id: 'GH-organvm-limen-2046'
+  title: 'DECORVM effector: dry plan observed (3 bounded tickets, 2 real public defects) — arming decision now owned by L-DECORUM-APPLY-ARM'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2046'
+  context: 'GitHub issue organvm/limen#2046. `LIMEN_DECORUM_APPLY` ships DARK by contract: > Ships DARK; observe the DRY plan in the beat log first, and add `fleet_runtime: "1"` here when > arming so enactment-audit locks it live. > — `institutio/governance/parameters.yaml` **The observation the contract asks for is now done.** Run 2026-08-07, `scripts/decorum-keeper.py` with no flags (dry by default): ``` DECORVM — professionalization keepe'
+  predicate: 'test "$(gh issue view 2046 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2046'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2046'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:27.239Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-582f2a64115d450b8706758a138bb5d7:657:compatibility'
+    conduct_run_id: 'run-582f2a64115d450b8706758a138bb5d7'
+    conduct_lease_id: 'lease-657-582f2a64115d450b'
+    conduct_generation: 657
+  updated: '2026-08-08T00:30:27.239Z'
