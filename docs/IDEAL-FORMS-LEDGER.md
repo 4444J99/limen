@@ -76,6 +76,24 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   reading was **+105 over three days**, and the ideal's word is monotonically down.
 - **Owner:** Claude (predicate) + merge daemon.
 
+### IF-PR-LIFECYCLE — every PR is typed by declared capability
+- **Ideal form:** every open PR carries exactly one declared disposition, written by an organ under
+  a declared admits-predicate; every consumer derives policy from the lifecycle registry; and the
+  estate's mechanically reachable population is a registry fact rather than a private code literal.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure` runs
+  `python3 scripts/check-lifecycle.py --measure`; the latter prints the unreachable-PR denominator
+  from the committed exhaustive census. The offline gate separately holds registry parity and
+  shrink-only conversion debt without treating network availability as policy health.
+- **Evidence (2026-08-08):** campaign #1981 established the eighth derive axis at
+  `institutio/governance/lifecycle.yaml`. Four consumers remain explicitly ratcheted false, with
+  25 lifecycle-label literals held to exact shrink-only baselines; the axis is therefore declared
+  but not falsely described as fully converted. The draft cohort's bulk governance decision is
+  owned by `L-PR-DRAFT-COHORT-DISPOSITION` rather than guessed by an effector.
+- **Status:** PARTIAL — registry, predicate, ideal, and cohort ownership are mechanical; consumer
+  conversion, label materialization, and delivery-typer enactment remain campaign #1981 work.
+- **Owner:** Claude (registry + predicate) → lifecycle typer and merge organs; Anthony only for the
+  draft-cohort governance lever.
+
 ### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
 - **Ideal form:** the whole GitHub estate carries its publication policy as declared data — every
   repo classified (vault / operation / portal / floor) with a `why:`, visibility drift a red
