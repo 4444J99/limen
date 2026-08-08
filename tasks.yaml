@@ -166403,3 +166403,37 @@ tasks:
     conduct_lease_id: 'lease-674-f9aab24ccc1ec3ac'
     conduct_generation: 674
   updated: '2026-08-08T14:13:45.488Z'
+- id: 'GH-organvm-limen-2112'
+  title: 'POTESTAS 6.2 — the analysis face: recurrence, recognition latency, coverage'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2112'
+  context: 'GitHub issue organvm/limen#2112. Phase: #2084 · Program: #2077 Reuse `scripts/studium-analysis.py` — the existing "packaging as data analysis" face — rather than building a POTESTAS-specific dashboard. ## What it answers - **Which mechanisms recur** across observations — the personal threat profile, derived rather than assumed. - **Which counters hold** — where a recorded `counter` was applied and the situation changed. - **Recog'
+  predicate: 'test "$(gh issue view 2112 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2112'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2112'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:13:50.265Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-76daff36d7e5adcb3ffd70d2bd83e294:675:compatibility'
+    conduct_run_id: 'run-76daff36d7e5adcb3ffd70d2bd83e294'
+    conduct_lease_id: 'lease-675-76daff36d7e5adcb'
+    conduct_generation: 675
+  updated: '2026-08-08T14:13:50.265Z'
