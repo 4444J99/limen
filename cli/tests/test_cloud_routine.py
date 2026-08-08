@@ -221,9 +221,7 @@ def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
         for irf_id in human_ids
     )
     assert all(
-        row["owner_kind"] == "irf"
-        and row["owner_ref"] == f"irf:{row['irf_id']}"
-        and row["disposition"] == "owned"
+        row["owner_kind"] == "irf" and row["owner_ref"] == f"irf:{row['irf_id']}" and row["disposition"] == "owned"
         for row in rows
         if row["irf_id"] not in human_ids
     )
@@ -274,9 +272,7 @@ def test_irf_validator_derives_every_row_owner() -> None:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    receipt = json.loads(
-        (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
-    )
+    receipt = json.loads((ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text())
     broken = json.loads(json.dumps(receipt))
     owned_row = next(row for row in broken["rows"] if row["disposition"] == "owned")
     owned_row.pop("owner_ref")
