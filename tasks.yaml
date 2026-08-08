@@ -167015,3 +167015,37 @@ tasks:
     conduct_lease_id: 'lease-692-4515f5ef76ad198b'
     conduct_generation: 692
   updated: '2026-08-08T14:15:16.512Z'
+- id: 'GH-organvm-limen-2094'
+  title: 'POTESTAS 2.1 — reading: persuasion science (Cialdini, Kahneman)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2094'
+  context: 'GitHub issue organvm/limen#2094. Phase: #2080 · Program: #2077 **Main question: what is the lever?** One page in `studium/potestas/reading/`, matching the form of `studium/reading/<work>.md` — how to read it, what to watch for, how to portion it, what it is wrong about. ## Sources - **Cialdini, *Influence* (1984; rev. 2021)** — reciprocity, commitment/consistency, social proof, authority, liking, scarcity. - **Cialdini, *Pre-Suas'
+  predicate: 'test "$(gh issue view 2094 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2094'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2094'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:15:21.330Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-f705fd672029632bc3fffe60e906f3e3:693:compatibility'
+    conduct_run_id: 'run-f705fd672029632bc3fffe60e906f3e3'
+    conduct_lease_id: 'lease-693-f705fd672029632b'
+    conduct_generation: 693
+  updated: '2026-08-08T14:15:21.330Z'
