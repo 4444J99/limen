@@ -166011,3 +166011,37 @@ tasks:
     conduct_lease_id: 'lease-663-ffbebf65f1e4b967'
     conduct_generation: 663
   updated: '2026-08-08T02:02:52.393Z'
+- id: 'GH-organvm-limen-2072'
+  title: 'ARCA has not backed up the private estate since 2026-07-30 — the vault clone can no longer complete, and the beat rung fails soft so nothing'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2072'
+  context: 'GitHub issue organvm/limen#2072. ## What is true **The private estate (`~/Workspace/_*-private`) has had no off-machine backup since 2026-07-30.** Eight days, and counting. Measured 2026-08-07: | Fact | Evidence | |---|---| | Local vault absent | `~/.arca-vault` does not exist | | Remote alive but stale | `organvm/arca` — private, 51 MB packed, `refs/heads/main` @ `ca73b48c`, **`pushedAt` 2026-07-30T05:00:31Z** | | ARCA''s own clo'
+  predicate: 'test "$(gh issue view 2072 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2072'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2072'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T03:02:29.573Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c9e1dd6ccbf48547f85694dd9f926f2d:664:compatibility'
+    conduct_run_id: 'run-c9e1dd6ccbf48547f85694dd9f926f2d'
+    conduct_lease_id: 'lease-664-c9e1dd6ccbf48547'
+    conduct_generation: 664
+  updated: '2026-08-08T03:02:29.573Z'
