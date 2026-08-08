@@ -234,6 +234,11 @@ LANES="${LIMEN_LANES:-auto}"   # planner input only; campaign execution derives 
 
 # base tempo (adaptive) + voice subdivisions (configurable)
 MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
+FAST_WAVE_SECONDS="${LIMEN_VITALS_SAMPLE_SECONDS:-300}"
+case "$FAST_WAVE_SECONDS" in ''|*[!0-9]*) FAST_WAVE_SECONDS=300 ;; esac
+[ "$FAST_WAVE_SECONDS" -ge 60 ] || FAST_WAVE_SECONDS=60
+FAST_WAVE_BEAT=0
+FAST_WAVE_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave.log"
 PAUSED_BEAT="${LIMEN_HEARTBEAT_PAUSED_SECONDS:-300}"
 case "$PAUSED_BEAT" in
   ''|*[!0-9]*) PAUSED_BEAT=300 ;;
@@ -307,6 +312,46 @@ metabolize_pass_due() {
   [ -n "$last" ] || return 0
   [ $(( now - last )) -ge "${LIMEN_METABOLIZE_SENSORS_SECS:-3600}" ]
 }
+# FAST WAVE — an independent cadence for time-sensitive local truth. It starts before the
+# main loop and therefore keeps sampling even while a later network, corpus, or dispatch rung is
+# slow. Each command is bounded and the latest cycle has one atomic start/finish receipt.
+fast_wave_bounded() {
+  _fw_timeout="$1"; shift
+  if [ -n "$DISPATCH_TIMEOUT_BIN" ]; then
+    "$DISPATCH_TIMEOUT_BIN" -s KILL "$_fw_timeout" "$@"
+  else
+    "$@"
+  fi
+}
+
+fast_wave_once() {
+  _fw_tmp="$FAST_WAVE_LOG.$.tmp"
+  mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null || true
+  {
+    echo "fast-wave: start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
+    fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
+    _fw_sample_rc=$?
+    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}"       python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only         --beat "$FAST_WAVE_BEAT" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED"
+    _fw_diurnal_rc=$?
+    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}"       python3 "$LIMEN_ROOT/scripts/organ-health.py"
+    _fw_health_rc=$?
+    echo "fast-wave: finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) sample=$_fw_sample_rc diurnal=$_fw_diurnal_rc organ_health=$_fw_health_rc"
+  } >"$_fw_tmp" 2>&1
+  mv "$_fw_tmp" "$FAST_WAVE_LOG" 2>/dev/null || true
+}
+
+fast_wave_loop() {
+  while kill -0 "$" 2>/dev/null; do
+    _fw_started="$(date +%s)"
+    FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
+    fast_wave_once
+    _fw_elapsed=$(( $(date +%s) - _fw_started ))
+    _fw_wait=$(( FAST_WAVE_SECONDS - _fw_elapsed ))
+    [ "$_fw_wait" -gt 0 ] || _fw_wait=1
+    sleep "$_fw_wait"
+  done
+}
+
 # NETWORK REACH — one definition, used by the connectivity gate AND by paused-beat sensing.
 # True when the host the cycle depends on answers; true (fail-open) when the preflight is disabled.
 net_up() {
@@ -376,6 +421,10 @@ print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
 PY
 }
 cleanup() {
+  if [ -n "${FAST_WAVE_PID:-}" ] && kill -0 "$FAST_WAVE_PID" 2>/dev/null; then
+    kill "$FAST_WAVE_PID" 2>/dev/null || true
+    wait "$FAST_WAVE_PID" 2>/dev/null || true
+  fi
   # beat_run's capture buffer. Named by pid, reused for every rung, and removed after each — so it
   # only survives if the daemon dies mid-rung. launchd's SIGTERM (which the self-load rung relies on
   # to restart the loop) runs this trap, so the ordinary case is covered here; a SIGKILL is what the
@@ -404,6 +453,8 @@ rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
 rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
+fast_wave_loop &
+FAST_WAVE_PID=$!
 while true; do
   # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
   # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
@@ -867,7 +918,6 @@ while true; do
   play "$C_REPORT"           && stamp report
   play "$C_QUICKEN"          && stamp quicken
   play "$C_CORPUS_FEED"      && stamp corpus_feed
-  beat_run organ-health python3 "$LIMEN_ROOT/scripts/organ-health.py" || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.
   [ "${LIMEN_VIGILIA:-1}" = "1" ] && { beat_run vigilia python3 -m limen.vigilia beat || true; stamp vigilia; }   # VIGILIA autonomic executive — record vitals/continuity/integrity to the seat (read-only, fail-open)
   play "$C_WEB"     && beat_run usage-telemetry python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || true   # real per-vendor usage
   play "$C_WEB"     && beat_run codex-token-accounting python3 "$LIMEN_ROOT/scripts/codex-token-accounting.py" --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" --limit-sessions "${LIMEN_CODEX_TOKEN_REPORT_LIMIT:-25}" --output "$LIMEN_ROOT/logs/codex-token-report.json" || true   # per-session Codex spend report
