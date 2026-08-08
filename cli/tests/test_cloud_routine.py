@@ -220,6 +220,13 @@ def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
         and by_id[irf_id]["disposition"] == "human_gate"
         for irf_id in human_ids
     )
+    assert all(
+        row["owner_kind"] == "irf"
+        and row["owner_ref"] == f"irf:{row['irf_id']}"
+        and row["disposition"] == "owned"
+        for row in rows
+        if row["irf_id"] not in human_ids
+    )
     assert receipt["unowned"] == []
     assert receipt["packet_emissions"] == []
 
@@ -239,6 +246,49 @@ def test_consumer_rejects_a_nonexistent_human_lever(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="does not resolve"):
         module.validate_human_gate_owners([receipt], lever_path=registry)
+
+
+def test_consumer_rejects_a_terminal_human_lever(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_terminal_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    registry = tmp_path / "his-hand-levers.json"
+    registry.write_text(
+        json.dumps({"levers": [{"id": "L-DONE", "status": "discharged"}]}),
+        encoding="utf-8",
+    )
+    receipt = _receipt(
+        disposition="human_gate",
+        owner_ref="lever:L-DONE",
+    )
+
+    with pytest.raises(ValueError, match="terminal/inactive"):
+        module.validate_human_gate_owners([receipt], lever_path=registry)
+
+
+def test_irf_validator_derives_every_row_owner() -> None:
+    script = ROOT / "scripts" / "check-cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_checker_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    receipt = json.loads(
+        (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
+    )
+    broken = json.loads(json.dumps(receipt))
+    owned_row = next(
+        row for row in broken["rows"] if row["disposition"] == "owned"
+    )
+    owned_row.pop("owner_ref")
+
+    failures = module.validate_irf_receipt(
+        broken,
+        active_levers={str(receipt["human_gate_owner"]).removeprefix("lever:")},
+    )
+
+    assert any("owned-row ownership drift" in failure for failure in failures)
 
 
 def test_cloud_human_gates_have_named_levers() -> None:
