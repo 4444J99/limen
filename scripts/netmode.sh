@@ -38,6 +38,7 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
+LIMEN_NOTIFY_HELPER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_notify.py"
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
 MODEFILE="$DIR/mode"
@@ -580,7 +581,7 @@ health_record() {  # writes "phonelat phoneloss starlat starloss" to $HEALTH + r
 # ---- events / notifications ------------------------------------------------
 log_event() { local ts; ts=$(date "+%Y-%m-%d %H:%M"); printf '%s\t%s\n' "$ts" "$1" >> "$EVENTS"
   [ -f "$EVENTS" ] && { tail -n 60 "$EVENTS" > "$EVENTS.tmp" 2>/dev/null && mv "$EVENTS.tmp" "$EVENTS"; }; }
-notify() { osascript -e "display notification \"$1\" with title \"🌐 netmode\" subtitle \"${2:-}\"" >/dev/null 2>&1; }
+notify() { python3 "$LIMEN_NOTIFY_HELPER" --title "🌐 netmode" --message "$1${2:+ — $2}" >/dev/null 2>&1 || true; }
 
 _nrank() { case "$1" in none)echo 0;; warn)echo 1;; crit)echo 2;; cap)echo 3;; *)echo 0;; esac; }
 notify_check() {  # throttled cap-threshold notifications, per metered link (state lines: "link cyclekey level")
