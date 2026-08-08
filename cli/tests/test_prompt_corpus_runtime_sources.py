@@ -114,7 +114,7 @@ def test_archive_manifest_cannot_bind_the_wrong_digest(tmp_path: Path) -> None:
             {
                 "raw_object": occurrence["raw_object"],
                 "prompt_hash": wrong_hash,
-                "custody_receipt": _write_custody_receipt(paths, relative, prompt_hash),
+                "custody_receipt": "ignored-because-manifest-row-is-invalid.json",
             }
         ],
     )
@@ -139,7 +139,7 @@ def test_manifest_never_masks_a_present_corrupt_object(tmp_path: Path) -> None:
             {
                 "raw_object": relative,
                 "prompt_hash": prompt_hash,
-                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+                "custody_receipt": _write_custody_receipt(paths, relative, prompt_hash),
             }
         ],
     )
