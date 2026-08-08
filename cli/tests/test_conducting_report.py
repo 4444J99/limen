@@ -79,7 +79,10 @@ def _handoff(logs: Path, *, admissible: int = 0, reasons: dict | None = None, pr
             "reason_counts": reasons or {},
             "dispatchable_next": {"id": "TASK-1"} if admissible else None,
         },
-        "provider_headroom": {"vendors": {"codex": {"state": provider_state}}},
+        "provider_headroom": {
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "vendors": {"codex": {"state": provider_state}},
+        },
     }
     (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
 
@@ -96,7 +99,7 @@ def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monke
     headline, body, _day, reason = module.build_report()
 
     assert reason == "routable"
-    assert headline.startswith("ROUTABLE BUT IDLE")
+    assert headline.startswith("ROUTABLE WORK EXISTS")
     assert "no routable work" not in headline
     assert "routing: routable" in body
 
@@ -121,6 +124,59 @@ def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
         "auth_blocked",
         "keeper_unavailable",
     }
+
+
+def test_unrelated_vendor_auth_does_not_override_keeper_gate(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, reasons={"dependencies": 1}, provider_state="auth_needed")
+
+    assert module._routing_reason()[0] == "admission_blocked"
+
+
+def test_provider_health_requires_fresh_provider_telemetry(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, reasons={"provider_health": 1}, provider_state="auth_needed")
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["provider_headroom"]["generated"] = (
+        datetime.now(timezone.utc) - timedelta(hours=3)
+    ).isoformat()
+    (logs / "handoff.json").write_text(json.dumps(payload))
+
+    assert module._routing_reason()[0] == "keeper_unavailable"
+
+
+def test_stale_continuity_is_not_presented_as_current(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "dispatch-continuity.json").write_text(
+        json.dumps(
+            {
+                "generated": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+                "lanes": {"codex": {"verdict": "continuous"}},
+            }
+        )
+    )
+
+    reason, detail = module._routing_reason()
+
+    assert reason == "routable"
+    assert "unavailable or stale" in detail
+    assert "continuous=1" not in detail
+
+
+def test_malformed_admission_counts_do_not_crash_the_report(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs)
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["dispatch_admission"]["admissible"] = "not-a-count"
+    payload["dispatch_admission"]["open_considered"] = object().__class__.__name__
+    (logs / "handoff.json").write_text(json.dumps(payload))
+
+    assert module._routing_reason()[0] == "admission_blocked"
 
 
 def test_daily_key_uses_the_supplied_local_calendar_day(tmp_path, monkeypatch):
