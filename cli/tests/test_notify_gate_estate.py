@@ -19,6 +19,7 @@ import subprocess
 import sys
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -316,3 +317,84 @@ def test_direct_shell_notification_bypass_is_rejected(tmp_path, check_gate):
 
 def test_live_tree_has_one_mac_notification_effector(check_gate):
     assert check_gate.direct_notification_effectors(ROOT) == []
+
+
+
+def test_delivery_result_reflects_osascript_exit_status(monkeypatch):
+    mod = _load("_notify_delivery_status", SCRIPTS / "_notify.py")
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=1),
+    )
+
+    assert mod._deliver("message", "title") is False
+
+
+def test_every_public_delivery_route_must_call_the_gate(tmp_path, check_gate):
+    notifier = _write_notifier(
+        tmp_path,
+        """
+        def _root_may_speak(root):
+            return True
+
+        def _deliver(message, title):
+            return True
+
+        def notify(root, message):
+            if _root_may_speak(root):
+                return _deliver(message, "title")
+
+        def notify_once(root, key, message):
+            return _deliver(message, "title")
+        """,
+    )
+
+    gated, reason = check_gate.gate_state(notifier)
+
+    assert gated is False
+    assert "notify_once" in reason
+
+
+def test_multiline_shell_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.sh").write_text(
+        """osascript <<'APPLESCRIPT'
+display notification "x"
+APPLESCRIPT
+""",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
+
+
+def test_non_utf8_candidate_cannot_crash_the_estate_scan(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_bytes(b'osascript\xffdisplay notification')
+
+    assert check_gate.direct_notification_effectors(tmp_path) == []
+
+
+def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check_gate, monkeypatch):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.sh").write_text(
+        'osascript -e "display notification \\"x\\""
+',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_gate, "enumerate_roots", lambda _live: [tmp_path])
+
+    [row] = check_gate.survey(tmp_path)
+
+    assert row["gated"] is False
+    assert row["direct_effectors"] == ["scripts/sender.sh"]
+
+
+def test_netmode_resolves_notifier_from_live_runtime():
+    shell = (SCRIPTS / "netmode.sh").read_text(encoding="utf-8")
+
+    assert '$HOME/.local/share/limen/current/scripts/_notify.py' in shell
