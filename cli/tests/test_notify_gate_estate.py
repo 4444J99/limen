@@ -309,7 +309,7 @@ def test_variable_bound_python_notification_bypass_is_rejected(tmp_path, check_g
     scripts.mkdir()
     (scripts / "sender.py").write_text(
         "import subprocess\n"
-        "script = 'display notification \\"x\\"'\n"
+        "script = 'display notification \"x\"'\n"
         "subprocess.run(['/usr/bin/osascript', '-e', script])\n",
         encoding="utf-8",
     )
