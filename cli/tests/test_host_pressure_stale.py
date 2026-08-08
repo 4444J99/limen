@@ -50,7 +50,7 @@ def test_fresh_record_is_ok(tmp_path):
 
 def test_stale_record_fails(tmp_path):
     write_status(tmp_path, datetime.now(timezone.utc) - timedelta(hours=6))
-    proc = run_stale(tmp_path)  # budget: 3 x 1800s = 90 min
+    proc = run_stale(tmp_path)  # budget: 3 x 300s = 15 min
     assert proc.returncode == 1
     assert "flying blind" in proc.stdout
 
@@ -66,7 +66,7 @@ def test_vigilia_off_is_ok(tmp_path):
     assert proc.returncode == 0
 
 
-def test_unreadable_ts_fails(tmp_path):
+def test_unreadable_sample_timestamp_fails(tmp_path):
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True, exist_ok=True)
     (seat / "status.json").write_text("{not json")
