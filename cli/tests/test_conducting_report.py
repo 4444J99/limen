@@ -184,3 +184,25 @@ def test_daily_key_uses_the_supplied_local_calendar_day(tmp_path, monkeypatch):
 
     assert before_local_midnight.astimezone(timezone.utc).date().isoformat() == "2026-08-09"
     assert module._local_day(before_local_midnight) == "2026-08-08"
+
+
+def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    delivered = []
+    monkeypatch.setattr(module, "_notify_macos", lambda *_args: delivered.append("macos"))
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: delivered.append("ntfy"))
+
+    assert module.main([]) == 0
+    assert delivered == []
+    assert not module.STATE.exists()
