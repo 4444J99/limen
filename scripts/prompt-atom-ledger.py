@@ -961,6 +961,23 @@ def containing_source_root(lifecycle: Any, source: str, path: Path) -> Path | No
     return canonical_source_root(lifecycle, source)
 
 
+def _isolated_home_for(lifecycle: Any, containment_root: Path) -> Path | None:
+    """Keep home isolation except for explicitly declared shared runtime roots."""
+
+    if SOURCE_HOME_OVERRIDE is None:
+        return None
+    runtime_root = getattr(lifecycle, "RUNTIME_ROOT", None)
+    if runtime_root is None:
+        return SOURCE_HOME_OVERRIDE
+    lexical_root = containment_root.expanduser().absolute()
+    lexical_runtime = Path(runtime_root).expanduser().absolute()
+    try:
+        lexical_root.relative_to(lexical_runtime) if lexical_root != lexical_runtime else None
+    except ValueError:
+        return SOURCE_HOME_OVERRIDE
+    return None
+
+
 def source_path_custody(
     lifecycle: Any,
     source: str,
@@ -973,7 +990,7 @@ def source_path_custody(
         source,
         path,
         root,
-        isolated_home=SOURCE_HOME_OVERRIDE,
+        isolated_home=_isolated_home_for(lifecycle, root),
     )
 
 
@@ -2534,6 +2551,7 @@ def source_path_error(
 def _discover_candidate(
     rows: DiscoveredRows,
     *,
+    lifecycle: Any,
     source: str,
     path: Path,
     containment_root: Path,
@@ -2547,7 +2565,7 @@ def _discover_candidate(
         source,
         path,
         containment_root,
-        isolated_home=SOURCE_HOME_OVERRIDE,
+        isolated_home=_isolated_home_for(lifecycle, containment_root),
     )
     if custody.error is not None:
         rows.discovery_errors.append((source, f"{source}:{path}: {custody.error}"))
@@ -2601,7 +2619,8 @@ def generic_gemini_rows(
     for path in root.rglob("chats/*.jsonl"):
         if not _discover_candidate(
             rows,
-            source="gemini-tmp",
+            lifecycle=lifecycle,
+            source=source="gemini-tmp",
             path=path,
             containment_root=root,
             cutoff=cutoff,
@@ -2635,7 +2654,8 @@ def regular_source_rows(
         for path in candidates:
             if not _discover_candidate(
                 rows,
-                source=source,
+                lifecycle=lifecycle,
+                source=source=source,
                 path=path,
                 containment_root=root,
                 cutoff=cutoff,
@@ -2654,7 +2674,8 @@ def regular_source_rows(
         for row in generic:
             if not _discover_candidate(
                 rows,
-                source=str(row["source"]),
+                lifecycle=lifecycle,
+                source=source=str(row["source"]),
                 path=Path(row["path"]),
                 containment_root=Path(lifecycle.HOME) / ".gemini" / "tmp",
                 cutoff=cutoff,
