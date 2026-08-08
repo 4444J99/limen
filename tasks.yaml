@@ -166573,3 +166573,37 @@ tasks:
     conduct_lease_id: 'lease-679-2ab467a203bb45c7'
     conduct_generation: 679
   updated: '2026-08-08T14:14:09.617Z'
+- id: 'GH-organvm-limen-2107'
+  title: 'POTESTAS 4.4 — the prestige-vs-dominance ledger'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2107'
+  context: 'GitHub issue organvm/limen#2107. Phase: #2082 · Program: #2077 ## The finding Evolutionary psychology distinguishes two routes to rank, and **only one is durable** (report §B.3): - **Dominance** — rank taken through fear, intimidation, and coercion. Produces **compliance without commitment**. Followers comply while watched and defect the moment cost drops. - **Prestige** — rank **freely conferred** for demonstrated competence and'
+  predicate: 'test "$(gh issue view 2107 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2107'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2107'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:14.746Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-e8b6d202c7d48bd0ce7a24c014b8b028:680:compatibility'
+    conduct_run_id: 'run-e8b6d202c7d48bd0ce7a24c014b8b028'
+    conduct_lease_id: 'lease-680-e8b6d202c7d48bd0'
+    conduct_generation: 680
+  updated: '2026-08-08T14:14:14.746Z'
