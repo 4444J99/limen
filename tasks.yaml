@@ -165842,3 +165842,37 @@ tasks:
     conduct_lease_id: 'lease-658-72860a90178bf92d'
     conduct_generation: 658
   updated: '2026-08-08T00:30:34.020Z'
+- id: 'GH-organvm-limen-2026'
+  title: 'opening_verdict gives the pin a third state and the ceiling a silent default — an unreadable ceiling collapses to the cheapest rung and repo'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2026'
+  context: 'GitHub issue organvm/limen#2026. `opening_verdict()` gives the **pin** a third state and gives the **ceiling** a silent default — in the same function, for the same reason, with only one of the two fixed. Observed by driving the SessionStart hook at its real surface on `cc2502b9`: ``` $ printf ''{"model":"claude-opus-5"}'' | python3 scripts/fable-session-guard.py --ceiling banana exit 4 [fable-session-guard] Session OPENS ABOVE THE'
+  predicate: 'test "$(gh issue view 2026 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2026'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2026'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:40.245Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-30b6bae24c9a6b72e4f4536dcc82a5ea:659:compatibility'
+    conduct_run_id: 'run-30b6bae24c9a6b72e4f4536dcc82a5ea'
+    conduct_lease_id: 'lease-659-30b6bae24c9a6b72'
+    conduct_generation: 659
+  updated: '2026-08-08T00:30:40.245Z'
