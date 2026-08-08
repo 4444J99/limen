@@ -121,7 +121,13 @@ def _discover_doors(text):
     # Scheduled sensors are doors too. Membership remains derived from the live loop: registry
     # entries join only when the loop contains the generic scheduled runner. Sensor identity,
     # cadence, gate, and title all come from data, so renamed ids require no consumer edit.
-    if re.search(r"beat-sensors\.py[^\n]*--source\s+heartbeat[^\n]*--scheduled-only", text):
+    scheduled_sources = set(
+        re.findall(
+            r"beat-sensors\.py[^\n]*--source\s+([\w-]+)[^\n]*--scheduled-only",
+            text,
+        )
+    )
+    if scheduled_sources:
         try:
             sensors = (yaml.safe_load(SENSORS.read_text()) or {}).get("sensors") or {}
         except (OSError, ValueError, AttributeError):
@@ -130,7 +136,7 @@ def _discover_doors(text):
         derive_default = derive_match.group(1) if derive_match else "0"
         derive_live = _env_flag("LIMEN_BEAT_DERIVE", derive_default) == "1"
         for sensor_id, sensor in sensors.items():
-            if sensor_id in seen or "heartbeat" not in (sensor.get("source") or []):
+            if sensor_id in seen or not scheduled_sources.intersection(sensor.get("source") or []):
                 continue
             cadence_spec = sensor.get("cadence")
             if cadence_spec is None:
