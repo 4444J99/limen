@@ -19,6 +19,9 @@ from limen.io import load_limen_file  # noqa: E402
 from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 
 
+TERMINAL_LEVER_STATUSES = frozenset({"discharged", "retired", "done", "closed"})
+
+
 def _objects_from_path(path: Path) -> list[object]:
     raw = path.read_text(encoding="utf-8")
     try:
@@ -32,15 +35,24 @@ def _objects_from_path(path: Path) -> list[object]:
     return payload if isinstance(payload, list) else [payload]
 
 
-def _lever_ids(path: Path) -> set[str]:
+def _lever_states(path: Path) -> dict[str, str]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     levers = payload.get("levers") if isinstance(payload, dict) else None
     if not isinstance(levers, list):
         raise ValueError("human-lever registry must contain a levers list")
     return {
-        str(lever["id"])
+        str(lever["id"]): str(lever.get("status") or "")
         for lever in levers
         if isinstance(lever, dict) and isinstance(lever.get("id"), str)
+    }
+
+
+def active_lever_ids(path: Path) -> set[str]:
+    """Return registered levers that still represent live human ownership."""
+    return {
+        lever_id
+        for lever_id, status in _lever_states(path).items()
+        if status and status not in TERMINAL_LEVER_STATUSES
     }
 
 
@@ -55,18 +67,26 @@ def validate_human_gate_owners(
     ]
     if not human_gate_receipts:
         return
-    known = _lever_ids(lever_path)
-    missing = sorted(
-        {
-            (receipt.owner_ref or "").removeprefix("lever:")
-            for receipt in human_gate_receipts
-            if (receipt.owner_ref or "").removeprefix("lever:") not in known
-        }
-    )
+    states = _lever_states(lever_path)
+    owner_ids = {
+        (receipt.owner_ref or "").removeprefix("lever:")
+        for receipt in human_gate_receipts
+    }
+    missing = sorted(owner_ids - states.keys())
     if missing:
         raise ValueError(
             "human_gate owner_ref does not resolve in his-hand-levers.json: "
             + ", ".join(missing)
+        )
+    terminal = sorted(
+        lever_id
+        for lever_id in owner_ids
+        if not states[lever_id] or states[lever_id] in TERMINAL_LEVER_STATUSES
+    )
+    if terminal:
+        raise ValueError(
+            "human_gate owner_ref resolves only to a terminal/inactive lever: "
+            + ", ".join(terminal)
         )
 
 
