@@ -158,7 +158,7 @@ def test_probe_all_distinguishes_oauth_from_reachability(monkeypatch: pytest.Mon
     )
 
     assert (auth_needed["ok"], auth_needed["state"]) == (False, "auth_needed")
-    assert "Codex authentication required" in auth_needed["detail"]
+    assert "Codex OAuth authentication required" in auth_needed["detail"]
     assert (authenticated["ok"], authenticated["state"]) == (True, "authenticated")
 
 
