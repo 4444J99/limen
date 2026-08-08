@@ -174,8 +174,7 @@ def plan_task_upserts(
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
     active_lineages = {
-        match.group(1) if (match := _OCCURRENCE_TASK_RE.fullmatch(task_id)) else task_id
-        for task_id in active
+        match.group(1) if (match := _OCCURRENCE_TASK_RE.fullmatch(task_id)) else task_id for task_id in active
     }
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
