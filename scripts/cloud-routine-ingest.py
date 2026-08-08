@@ -32,14 +32,57 @@ def _objects_from_path(path: Path) -> list[object]:
     return payload if isinstance(payload, list) else [payload]
 
 
-def load_receipts(paths: list[Path]) -> list[CloudRoutineReceiptV1]:
-    """Validate every input before any task ticket can be emitted."""
+def _lever_ids(path: Path) -> set[str]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    levers = payload.get("levers") if isinstance(payload, dict) else None
+    if not isinstance(levers, list):
+        raise ValueError("human-lever registry must contain a levers list")
+    return {
+        str(lever["id"])
+        for lever in levers
+        if isinstance(lever, dict) and isinstance(lever.get("id"), str)
+    }
+
+
+def validate_human_gate_owners(
+    receipts: list[CloudRoutineReceiptV1],
+    *,
+    lever_path: Path,
+) -> None:
+    """Reject human gates whose named durable lever does not exist."""
+    human_gate_receipts = [
+        receipt for receipt in receipts if receipt.disposition == "human_gate"
+    ]
+    if not human_gate_receipts:
+        return
+    known = _lever_ids(lever_path)
+    missing = sorted(
+        {
+            (receipt.owner_ref or "").removeprefix("lever:")
+            for receipt in human_gate_receipts
+            if (receipt.owner_ref or "").removeprefix("lever:") not in known
+        }
+    )
+    if missing:
+        raise ValueError(
+            "human_gate owner_ref does not resolve in his-hand-levers.json: "
+            + ", ".join(missing)
+        )
+
+
+def load_receipts(
+    paths: list[Path],
+    *,
+    lever_path: Path = ROOT / "his-hand-levers.json",
+) -> list[CloudRoutineReceiptV1]:
+    """Validate every input and resolve every human owner before task emission."""
     receipts: list[CloudRoutineReceiptV1] = []
     for path in paths:
         receipts.extend(
             CloudRoutineReceiptV1.model_validate(item)
             for item in _objects_from_path(path)
         )
+    validate_human_gate_owners(receipts, lever_path=lever_path)
     return receipts
 
 
@@ -74,10 +117,21 @@ def main(argv: list[str] | None = None) -> int:
 
     tasks_path = _tasks_path()
     board = load_limen_file(tasks_path)
+    active_statuses = {
+        "open",
+        "dispatched",
+        "in_progress",
+        "failed",
+        "failed_blocked",
+        "needs_human",
+    }
     plan = plan_task_upserts(
         receipts,
-        existing_ids=(task.id for task in board.tasks),
+        existing_ids=(
+            task.id for task in board.tasks if str(task.status) in active_statuses
+        ),
         pending_ids=pending_task_ids(tasks_path),
+        historical_ids=(task.id for task in board.tasks),
     )
 
     submitted: list[str] = []
