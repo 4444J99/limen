@@ -308,8 +308,7 @@ def test_direct_shell_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "sender.sh").write_text(
-        'osascript -e "display notification \\"x\\""\n',
-        encoding="utf-8",
+        """osascript -e 'display notification "x"'\n""",
     )
 
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
