@@ -32,6 +32,7 @@ ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 IDEALS = ROOT / "institutio" / "governance" / "ideal-forms.yaml"
 LEVERS = ROOT / "his-hand-levers.json"
 PR_LEDGER = ROOT / "docs" / "github-pr-debt-ledger.json"
+PR_DEBT_FACTS = ROOT / "logs" / "gitvs-pr-debt-facts.json"
 SELF_COMMAND = "python3 scripts/check-lifecycle.py --check"
 TERMINAL_LEVER_STATES = frozenset({"discharged", "retired", "done", "closed"})
 ADMISSION_CONTRACT = {
@@ -142,8 +143,8 @@ def validate_dispositions(registry: dict[str, Any]) -> set[str]:
     return {str(key) for key in rows}
 
 
-def previous_literal_baseline() -> dict[str, int] | None:
-    """Read the prior exact tree when available so baseline debt cannot regrow."""
+def previous_registry() -> dict[str, Any] | None:
+    """Read the prior exact registry so monotonic migration state cannot regress."""
     relative = REGISTRY.relative_to(ROOT).as_posix()
     for revision in ("HEAD^1", "HEAD^"):
         result = subprocess.run(
@@ -157,12 +158,27 @@ def previous_literal_baseline() -> dict[str, int] | None:
             continue
         try:
             payload = yaml.safe_load(result.stdout) or {}
-            baseline = payload.get("literal_baseline")
-            if isinstance(baseline, dict):
-                return {str(path): int(value) for path, value in baseline.items()}
-        except (TypeError, ValueError, yaml.YAMLError):
+        except yaml.YAMLError:
             return None
+        return payload if isinstance(payload, dict) else None
     return None
+
+
+def validate_ratchet_monotonicity(
+    ratchets: dict[str, Any],
+    prior_registry: dict[str, Any] | None,
+) -> None:
+    """Reject every true-to-false or true-to-missing migration reversal."""
+    prior_ratchets = prior_registry.get("ratchets") if isinstance(prior_registry, dict) else None
+    if not isinstance(prior_ratchets, dict):
+        return
+    reversed_ratchets = sorted(
+        str(name)
+        for name, armed in prior_ratchets.items()
+        if armed is True and ratchets.get(name) is not True
+    )
+    if reversed_ratchets:
+        fail("C", f"armed ratchets cannot be reversed: {reversed_ratchets}")
 
 
 def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
@@ -231,8 +247,9 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     if extra_baselines:
         fail("B", f"literal baselines name undeclared consumers: {sorted(extra_baselines)}")
 
-    previous = previous_literal_baseline()
-    ceiling = previous or INITIAL_LITERAL_CEILING
+    prior_registry = previous_registry()
+    previous_baseline = prior_registry.get("literal_baseline") if isinstance(prior_registry, dict) else None
+    ceiling = previous_baseline if isinstance(previous_baseline, dict) else INITIAL_LITERAL_CEILING
     for relative, value in baseline.items():
         try:
             current = int(value)
@@ -242,6 +259,7 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
             continue
         if current > maximum:
             fail("B", f"{relative}: literal baseline regrew from {maximum} to {current}")
+    validate_ratchet_monotonicity(ratchets, prior_registry)
 
 
 def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
@@ -375,6 +393,7 @@ def live_label_metadata_drift(
                 for row in nodes
                 if isinstance(row, dict) and isinstance(row.get("name"), str)
             }
+            drift += len(set(actual) - set(dispositions))
             for label, expected in dispositions.items():
                 row = actual.get(label)
                 if not isinstance(row, dict):
@@ -388,10 +407,84 @@ def live_label_metadata_drift(
     return drift
 
 
+def _complete_census_rows(
+    ledger: dict[str, Any],
+    *,
+    facts_path: Path = PR_DEBT_FACTS,
+) -> list[dict[str, Any]] | None:
+    """Resolve redacted private rows from the matching gitignored runtime facts."""
+    rows = ledger.get("pull_requests")
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        fail("D", "PR-debt ledger has no pull_requests census")
+        return None
+    redacted_private = [
+        row
+        for row in rows
+        if row.get("private") is True
+        and (
+            not isinstance(row.get("repository"), str)
+            or isinstance(row.get("number"), bool)
+            or not isinstance(row.get("number"), int)
+        )
+    ]
+    if not redacted_private:
+        return rows
+    try:
+        facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError) as exc:
+        fail(
+            "D",
+            "private PR cohort is redacted and therefore unmeasurable without "
+            f"the matching {facts_path.name} runtime census: {exc}",
+        )
+        return None
+    facts_rows = facts.get("pull_requests") if isinstance(facts, dict) else None
+    if (
+        not isinstance(facts, dict)
+        or not facts.get("exhaustive")
+        or facts.get("generated_at") != ledger.get("generated_at")
+        or facts.get("open_pr_count") != ledger.get("open_pr_count")
+        or not isinstance(facts_rows, list)
+        or not all(isinstance(row, dict) for row in facts_rows)
+        or len(facts_rows) != len(rows)
+        or {row.get("pr_key") for row in facts_rows} != {row.get("pr_key") for row in rows}
+    ):
+        fail("D", "private PR runtime census does not match the tracked exhaustive ledger")
+        return None
+    unresolved = [
+        row
+        for row in facts_rows
+        if not isinstance(row.get("repository"), str)
+        or isinstance(row.get("number"), bool)
+        or not isinstance(row.get("number"), int)
+    ]
+    if unresolved:
+        fail("D", f"private PR runtime census retains {len(unresolved)} unresolved coordinate row(s)")
+        return None
+    return facts_rows
+
+
+def mechanically_unreachable_count(
+    rows: list[dict[str, Any]],
+    dispositions: dict[str, Any],
+) -> int:
+    """Count PRs whose current typed state cannot reach merge admission."""
+    return sum(
+        1
+        for row in rows
+        if (
+            not isinstance(dispositions.get(row.get("lifecycle_disposition")), dict)
+            or row.get("lifecycle_disposition_source") != "label"
+            or dispositions[row["lifecycle_disposition"]].get("merge_eligible") is not True
+        )
+    )
+
+
 def measure_unreachable(
     registry: dict[str, Any],
     *,
     metadata_probe=live_label_metadata_drift,
+    rows_probe=_complete_census_rows,
 ) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
@@ -401,30 +494,24 @@ def measure_unreachable(
     if not isinstance(ledger, dict) or not ledger.get("exhaustive"):
         fail("D", "PR-debt ledger is not an exhaustive census")
         return None
-    value = ledger.get("lifecycle_untyped_count")
-    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
-        fail("D", "PR-debt ledger has no nonnegative lifecycle_untyped_count")
+    rows = rows_probe(ledger)
+    if rows is None:
         return None
-    rows = ledger.get("pull_requests")
-    if not isinstance(rows, list):
-        fail("D", "PR-debt ledger has no pull_requests census")
+    open_pr_count = ledger.get("open_pr_count")
+    if isinstance(open_pr_count, bool) or not isinstance(open_pr_count, int) or open_pr_count != len(rows):
+        fail("D", "PR-debt census row count does not match open_pr_count")
         return None
     dispositions = registry.get("dispositions")
     if not isinstance(dispositions, dict):
         fail("D", "registry has no dispositions mapping")
         return None
-    inferred_unwritten = sum(
-        1
-        for row in rows
-        if isinstance(row, dict)
-        and row.get("lifecycle_disposition") in dispositions
-        and row.get("lifecycle_disposition_source") != "label"
-    )
+
+    mechanically_unreachable = mechanically_unreachable_count(rows, dispositions)
+
     preservation_missing = sum(
         1
         for row in rows
-        if isinstance(row, dict)
-        and row.get("lifecycle_disposition") == "lifecycle:preservation"
+        if row.get("lifecycle_disposition") == "lifecycle:preservation"
         and row.get("lifecycle_disposition_source") != "label"
     )
     live_baseline = registry.get("live_baseline")
@@ -442,17 +529,26 @@ def measure_unreachable(
             "preservation materialization debt regrew "
             f"from {preservation_ceiling} to {preservation_missing}",
         )
-    repositories = {
-        str(row["repository"])
-        for row in rows
-        if isinstance(row, dict) and isinstance(row.get("repository"), str)
-    }
+    repositories = {str(row["repository"]) for row in rows}
     metadata_drift = metadata_probe(repositories, dispositions)
     if metadata_drift is None:
         return None
-    return value + inferred_unwritten + metadata_drift
 
-
+    literal_baseline = registry.get("literal_baseline")
+    if not isinstance(literal_baseline, dict):
+        fail("D", "registry has no literal_baseline mapping")
+        return None
+    try:
+        literal_debt = sum(int(value) for value in literal_baseline.values())
+    except (TypeError, ValueError):
+        fail("D", "registry literal_baseline contains a non-integer value")
+        return None
+    ratchets = registry.get("ratchets")
+    if not isinstance(ratchets, dict):
+        fail("D", "registry has no ratchets mapping")
+        return None
+    unarmed_ratchets = sum(value is False for value in ratchets.values())
+    return mechanically_unreachable + literal_debt + unarmed_ratchets + metadata_drift
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="run offline registry parity checks")
