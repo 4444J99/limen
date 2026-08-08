@@ -166777,3 +166777,37 @@ tasks:
     conduct_lease_id: 'lease-685-0a48e190224c6209'
     conduct_generation: 685
   updated: '2026-08-08T14:14:40.586Z'
+- id: 'GH-organvm-limen-2101'
+  title: 'POTESTAS 3.2 — the who-benefits-from-this-emotion instrument'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2101'
+  context: 'GitHub issue organvm/limen#2101. Phase: #2081 · Program: #2077 One page. The report''s Stage-2 benchmark, made into an instrument: > **You can articulate *who benefits* from any strong emotion a piece of content provokes in you.** ## Why this one question does so much Every mechanism in the corpus — reciprocity, scarcity, unity, flak, dark patterns, variable reward, the agitate beat of PAS — converges on producing an emotional sta'
+  predicate: 'test "$(gh issue view 2101 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2101'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2101'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:46.356Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-fc4309cb2b4f5c882a5b0fc91a74d145:686:compatibility'
+    conduct_run_id: 'run-fc4309cb2b4f5c882a5b0fc91a74d145'
+    conduct_lease_id: 'lease-686-fc4309cb2b4f5c88'
+    conduct_generation: 686
+  updated: '2026-08-08T14:14:46.356Z'
