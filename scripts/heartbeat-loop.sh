@@ -241,6 +241,8 @@ FAST_WAVE_BEAT=0
 FAST_WAVE_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave.log"
 FAST_WAVE_AUX_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave-aux.log"
 FAST_WAVE_PID_FILE="$LIMEN_ROOT/logs/vigilia/fast-wave.pid"
+HOST_PRESSURE_WATCHDOG_LOG="$LIMEN_ROOT/logs/vigilia/host-pressure-watchdog.log"
+HOST_PRESSURE_WATCHDOG_PID_FILE="$LIMEN_ROOT/logs/vigilia/host-pressure-watchdog.pid"
 PAUSED_BEAT="${LIMEN_HEARTBEAT_PAUSED_SECONDS:-300}"
 case "$PAUSED_BEAT" in
   ''|*[!0-9]*) PAUSED_BEAT=300 ;;
@@ -427,6 +429,19 @@ fast_wave_aux_once() {
   rm -f "$_fw_diurnal_log" "$_fw_health_log" 2>/dev/null || true
 }
 
+stale_watchdog_loop() {
+  _watchdog_parent_pid="$1"
+  trap 'exit 0' HUP INT TERM
+  while kill -0 "$_watchdog_parent_pid" 2>/dev/null; do
+    sleep "$FAST_WAVE_SECONDS"
+    kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
+    fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+      python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
+      >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>&1 || true
+  done
+}
+
+
 fast_wave_loop() {
   _fw_parent_pid="$1"
   _fw_aux_pid=""
@@ -523,11 +538,13 @@ print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
 PY
 }
 cleanup() {
-  if [ -n "${FAST_WAVE_PID:-}" ] && kill -0 "$FAST_WAVE_PID" 2>/dev/null; then
-    kill "$FAST_WAVE_PID" 2>/dev/null || true
-    wait "$FAST_WAVE_PID" 2>/dev/null || true
-  fi
-  rm -f "$FAST_WAVE_PID_FILE" 2>/dev/null || true
+  for _background_pid in "${FAST_WAVE_PID:-}" "${HOST_PRESSURE_WATCHDOG_PID:-}"; do
+    if [ -n "$_background_pid" ] && kill -0 "$_background_pid" 2>/dev/null; then
+      kill "$_background_pid" 2>/dev/null || true
+      wait "$_background_pid" 2>/dev/null || true
+    fi
+  done
+  rm -f "$FAST_WAVE_PID_FILE" "$HOST_PRESSURE_WATCHDOG_PID_FILE" 2>/dev/null || true
   # beat_run's capture buffer. Named by pid, reused for every rung, and removed after each — so it
   # only survives if the daemon dies mid-rung. launchd's SIGTERM (which the self-load rung relies on
   # to restart the loop) runs this trap, so the ordinary case is covered here; a SIGKILL is what the
@@ -557,9 +574,12 @@ rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
 mkdir -p "$(dirname "$FAST_WAVE_PID_FILE")" 2>/dev/null || true
-fast_wave_loop "$$" &
+fast_wave_loop "$" &
 FAST_WAVE_PID=$!
 printf '%s\n' "$FAST_WAVE_PID" > "$FAST_WAVE_PID_FILE" 2>/dev/null || true
+stale_watchdog_loop "$" &
+HOST_PRESSURE_WATCHDOG_PID=$!
+printf '%s\n' "$HOST_PRESSURE_WATCHDOG_PID" > "$HOST_PRESSURE_WATCHDOG_PID_FILE" 2>/dev/null || true
 while true; do
   # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
   # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
