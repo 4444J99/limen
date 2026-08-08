@@ -166811,3 +166811,37 @@ tasks:
     conduct_lease_id: 'lease-686-fc4309cb2b4f5c88'
     conduct_generation: 686
   updated: '2026-08-08T14:14:46.356Z'
+- id: 'GH-organvm-limen-2100'
+  title: 'POTESTAS 3.1 — studium/potestas/drills/: inoculation drills derived from the registry'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2100'
+  context: 'GitHub issue organvm/limen#2100. Phase: #2081 · Program: #2077 Inoculation theory (McGuire, 1960s; revived by Sander van der Linden and Jon Roozenbeek at Cambridge via the *Bad News* game, and by Google Jigsaw''s prebunking videos) is the **best-evidenced defense in the entire report**: pre-exposure to weakened doses of a manipulation technique builds "mental antibodies." Meta-analyses confirm reduced susceptibility. ## Form One d'
+  predicate: 'test "$(gh issue view 2100 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2100'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2100'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:51.680Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-68484d1d38a5dee165daa101a4b6b38e:687:compatibility'
+    conduct_run_id: 'run-68484d1d38a5dee165daa101a4b6b38e'
+    conduct_lease_id: 'lease-687-68484d1d38a5dee1'
+    conduct_generation: 687
+  updated: '2026-08-08T14:14:51.680Z'
