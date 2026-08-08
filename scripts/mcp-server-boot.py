@@ -125,7 +125,14 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
             auth = row.get("status")
         compact_auth = re.sub(r"[^a-z0-9]+", "", str(auth).strip().lower())
         if compact_auth == "bearertoken":
-            env_name = row.get("bearer_token_env_var") or row.get("bearerTokenEnvVar")
+            transport = row.get("transport")
+            transport = transport if isinstance(transport, dict) else {}
+            env_name = (
+                row.get("bearer_token_env_var")
+                or row.get("bearerTokenEnvVar")
+                or transport.get("bearer_token_env_var")
+                or transport.get("bearerTokenEnvVar")
+            )
             if not isinstance(env_name, str) or not env_name.strip():
                 statuses[name.casefold()] = "auth_unknown"
             elif os.environ.get(env_name):
