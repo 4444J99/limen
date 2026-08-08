@@ -187,15 +187,40 @@ def capture_imessage(chatdb: str, handles: list[str]) -> list[dict]:
     amt = "m.associated_message_type" if "associated_message_type" in cols else "NULL"
     has_attach = "m.cache_has_attachments" if "cache_has_attachments" in cols else "0"
     qm = ",".join("?" * len(handles))
+    # Membership is the UNION of two joins, because NEITHER alone is the thread:
+    #   - chat_message_join -> chat  : the only join that reliably carries SENT messages.
+    #   - message.handle_id -> handle: catches orphan rows attached to no chat at all.
+    # A sent message frequently has handle_id = 0, so the handle join silently drops it. Measured on
+    # one 66,427-row thread: the handle join returned 34,638 rows, missing 31,789 — 31,745 of them
+    # sent. That is a HALF-SILENT tape (their voice kept, yours deleted) that still looks complete,
+    # which is exactly the failure a primary-source tape exists to prevent. The handle join then
+    # contributed 218 rows of its own — all orphans in no chat — so this is a union, not a swap.
+    # The outer FROM deliberately does NOT join chat: a message can belong to several chats, and
+    # joining there fans out into duplicate rows. Membership is tested by ROWID instead.
     q = f"""
         SELECT m.ROWID, m.date, m.is_from_me, m.text, m.attributedBody,
-               {amt} AS amt, {has_attach} AS att, h.id
-        FROM message m JOIN handle h ON m.handle_id = h.ROWID
-        WHERE h.id IN ({qm})
+               {amt} AS amt, {has_attach} AS att,
+               COALESCE(h.id, (
+                   SELECT ch.chat_identifier FROM chat_message_join cmj
+                     JOIN chat ch ON ch.ROWID = cmj.chat_id
+                    WHERE cmj.message_id = m.ROWID AND ch.chat_identifier IN ({qm})
+                    LIMIT 1
+               )) AS counterparty
+        FROM message m
+        LEFT JOIN handle h ON m.handle_id = h.ROWID
+        WHERE m.ROWID IN (
+            SELECT cmj2.message_id FROM chat_message_join cmj2
+              JOIN chat ch2 ON ch2.ROWID = cmj2.chat_id
+             WHERE ch2.chat_identifier IN ({qm})
+            UNION
+            SELECT m2.ROWID FROM message m2
+              JOIN handle h2 ON m2.handle_id = h2.ROWID
+             WHERE h2.id IN ({qm})
+        )
         ORDER BY m.date, m.ROWID
     """
     out = []
-    for rid, date, from_me, text, ab, amt_v, att, hid in c.execute(q, handles):
+    for rid, date, from_me, text, ab, amt_v, att, hid in c.execute(q, handles * 3):
         body = text if text else decode_attributed_body(ab)
         kind = "message"
         if amt_v and amt_v in REACTIONS:
