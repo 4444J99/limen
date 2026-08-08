@@ -38,6 +38,7 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
+_notify_root=""
 if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   for _notify_candidate in \
     "${LIMEN_ROOT:+$LIMEN_ROOT/scripts/_notify.py}" \
@@ -46,13 +47,13 @@ if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   do
     if [ -n "$_notify_candidate" ] && [ -f "$_notify_candidate" ]; then
       LIMEN_NOTIFY_HELPER="$_notify_candidate"
-      LIMEN_NOTIFY_ROOT="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"
+      _notify_root="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"
       break
     fi
   done
 fi
-if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -z "${LIMEN_NOTIFY_ROOT:-}" ]; then
-  LIMEN_NOTIFY_ROOT="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
+if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -z "$_notify_root" ]; then
+  _notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
 fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
@@ -596,7 +597,7 @@ health_record() {  # writes "phonelat phoneloss starlat starloss" to $HEALTH + r
 # ---- events / notifications ------------------------------------------------
 log_event() { local ts; ts=$(date "+%Y-%m-%d %H:%M"); printf '%s\t%s\n' "$ts" "$1" >> "$EVENTS"
   [ -f "$EVENTS" ] && { tail -n 60 "$EVENTS" > "$EVENTS.tmp" 2>/dev/null && mv "$EVENTS.tmp" "$EVENTS"; }; }
-notify() { [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && python3 "$LIMEN_NOTIFY_HELPER" --root "${LIMEN_NOTIFY_ROOT:-${LIMEN_ROOT:-}}" --title "🌐 netmode" --message "$1${2:+ — $2}" >/dev/null 2>&1 || true; }
+notify() { [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && python3 "$LIMEN_NOTIFY_HELPER" --root "$_notify_root" --title "🌐 netmode" --message "$1${2:+ — $2}" >/dev/null 2>&1 || true; }
 
 _nrank() { case "$1" in none)echo 0;; warn)echo 1;; crit)echo 2;; cap)echo 3;; *)echo 0;; esac; }
 notify_check() {  # throttled cap-threshold notifications, per metered link (state lines: "link cyclekey level")
