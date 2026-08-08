@@ -23,6 +23,7 @@ def run_stale(tmp_path: Path, env: dict | None = None):
     child_env.pop("LIMEN_VIGILIA", None)
     child_env.pop("LIMEN_VITALS_STALE_BEATS", None)
     child_env.pop("LIMEN_VITALS_SAMPLE_SECONDS", None)
+    child_env.pop("LIMEN_HOST_PRESSURE_STALE", None)
     if env:
         child_env.update(env)
     return subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True, env=child_env)
@@ -64,6 +65,22 @@ def test_absent_seat_fails_while_vigilia_on(tmp_path):
 def test_vigilia_off_is_ok(tmp_path):
     proc = run_stale(tmp_path, env={"LIMEN_VIGILIA": "0"})
     assert proc.returncode == 0
+
+
+def test_watchdog_off_is_ok_without_a_sample(tmp_path):
+    proc = run_stale(tmp_path, env={"LIMEN_HOST_PRESSURE_STALE": "0"})
+
+    assert proc.returncode == 0
+    assert "watchdog off" in proc.stdout
+
+
+def test_noninteger_sample_period_matches_heartbeat_fallback(tmp_path):
+    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=2))
+
+    proc = run_stale(tmp_path, env={"LIMEN_VITALS_SAMPLE_SECONDS": "30.5"})
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "budget 15 min" in proc.stdout
 
 
 def test_unreadable_sample_timestamp_fails(tmp_path):
