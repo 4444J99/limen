@@ -381,8 +381,8 @@ def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "sender.sh").write_text(
-        'osascript -e "display notification \\"x\\""
-',
+        """osascript -e 'display notification "x"'
+""",
         encoding="utf-8",
     )
     monkeypatch.setattr(check_gate, "enumerate_roots", lambda _live: [tmp_path])
