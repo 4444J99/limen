@@ -524,6 +524,29 @@ def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypat
     assert "heartbeat-progress-stale" in {alert["id"] for alert in snapshot["alerts"]}
 
 
+def test_resident_stale_watchdog_does_not_suppress_stale_progress(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
+    _mock_launchd(module, monkeypatch)
+    _write_heartbeat(module)
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
+        encoding="utf-8",
+    )
+    module.HOST_PRESSURE_WATCHDOG_PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    module.HOST_PRESSURE_WATCHDOG_PID_PATH.write_text("101\n", encoding="utf-8")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda pid: [{"pid": "101", "command": "host-pressure stale resident"}],
+    )
+
+    snapshot = module.build_snapshot()
+
+    assert snapshot["heartbeat_child_count"] == 0
+    assert snapshot["resident_host_pressure_watchdog"]["pid"] == "101"
+    assert snapshot["status"] == "alert"
+
+
 def test_host_pressure_probe_has_an_independent_alert_path(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     snapshot = {
