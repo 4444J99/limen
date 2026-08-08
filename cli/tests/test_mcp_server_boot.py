@@ -80,7 +80,11 @@ def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.Monkey
         (
             [
                 {"name": "login", "auth_status": "notLoggedIn"},
-                {"name": "token", "auth_status": "bearerToken"},
+                {
+                    "name": "token",
+                    "auth_status": "bearerToken",
+                    "bearer_token_env_var": "TEST_MCP_TOKEN",
+                },
                 {"name": "oauth", "auth_status": "oAuth"},
                 {"name": "unsupported", "auth_status": "unsupported"},
             ],
@@ -88,6 +92,7 @@ def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.Monkey
                 "login": "auth_needed",
                 "token": "authenticated",
                 "oauth": "authenticated",
+                "unsupported": "reachable",
             },
         ),
     ],
@@ -99,6 +104,7 @@ def test_codex_status_parser_tolerates_known_envelopes(
     expected: dict[str, str],
 ) -> None:
     module = _load_module(monkeypatch, tmp_path / "codex")
+    monkeypatch.setenv("TEST_MCP_TOKEN", "present")
 
     assert module.parse_codex_mcp_statuses(payload) == expected
 
@@ -108,10 +114,13 @@ def test_probe_all_distinguishes_oauth_from_reachability(monkeypatch: pytest.Mon
     monkeypatch.setattr(
         module,
         "_codex_mcp_statuses",
-        lambda: {
-            "launchdarkly": "auth_needed",
-            "authenticated-server": "authenticated",
-        },
+        lambda: (
+            {
+                "launchdarkly": "auth_needed",
+                "authenticated-server": "authenticated",
+            },
+            None,
+        ),
     )
     monkeypatch.setattr(module, "_probe_http", lambda _url, _timeout: (True, "reachable"))
 
@@ -121,8 +130,62 @@ def test_probe_all_distinguishes_oauth_from_reachability(monkeypatch: pytest.Mon
     )
 
     assert (auth_needed["ok"], auth_needed["state"]) == (False, "auth_needed")
-    assert "OAuth authentication required" in auth_needed["detail"]
+    assert "Codex authentication required" in auth_needed["detail"]
     assert (authenticated["ok"], authenticated["state"]) == (True, "authenticated")
+
+
+def test_bearer_status_requires_the_named_environment_value(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    row = {
+        "name": "token",
+        "auth_status": "bearerToken",
+        "bearer_token_env_var": "ABSENT_MCP_TOKEN",
+    }
+    monkeypatch.delenv("ABSENT_MCP_TOKEN", raising=False)
+
+    assert module.parse_codex_mcp_statuses([row]) == {"token": "auth_needed"}
+    assert module.parse_codex_mcp_statuses(
+        [{"name": "token", "auth_status": "bearerToken"}]
+    ) == {"token": "auth_unknown"}
+
+    monkeypatch.setenv("ABSENT_MCP_TOKEN", "present")
+    assert module.parse_codex_mcp_statuses([row]) == {"token": "authenticated"}
+
+
+def test_codex_status_probe_failure_is_not_transport_success(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    monkeypatch.setattr(
+        module,
+        "_codex_mcp_statuses",
+        lambda: ({}, "Codex status probe timed out"),
+    )
+    monkeypatch.setattr(module, "_probe_http", lambda _url, _timeout: (True, "reachable"))
+
+    [result] = module.probe_all([_http_server("launchdarkly")], timeout=1)
+
+    assert (result["ok"], result["state"]) == (False, "auth_unknown")
+    assert "timed out" in result["detail"]
+
+
+def test_auth_failures_are_not_sent_to_the_boot_healer(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    results = [
+        {"state": "auth_needed"},
+        {"state": "auth_unknown"},
+        {"state": "boot_failed"},
+        {"state": "unreachable"},
+    ]
+
+    assert module._healable_failures(results) == results[2:]
 
 
 def test_non_codex_http_probe_remains_transport_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
