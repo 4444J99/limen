@@ -3641,6 +3641,74 @@ def _raw_store_signature(paths: LedgerPaths) -> str:
     return digest(rows)
 
 
+def _file_sha256(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _archive_location_path(paths: LedgerPaths, value: str) -> Path:
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = paths.private_dir / candidate
+    return candidate.resolve()
+
+
+def _archive_custody_signature(paths: LedgerPaths) -> str:
+    """Hash the complete cold-custody chain without exposing archive locations."""
+
+    manifest_path = paths.private_dir / "raw-archive-manifest.json"
+    rows: list[tuple[str, str, str]] = []
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+    except OSError as exc:
+        return digest([("manifest", "missing", type(exc).__name__)])
+    rows.append(("manifest", "content", hashlib.sha256(manifest_bytes).hexdigest()))
+    try:
+        payload = json.loads(manifest_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return digest(rows + [("manifest", "invalid", "")])
+    objects = payload.get("objects") if isinstance(payload, dict) else None
+    if not isinstance(objects, list):
+        return digest(rows + [("manifest", "objects-invalid", "")])
+    for index, item in enumerate(objects):
+        if not isinstance(item, dict):
+            rows.append(("entry", str(index), "invalid"))
+            continue
+        receipt_ref = item.get("custody_receipt")
+        if not isinstance(receipt_ref, str):
+            rows.append(("receipt", str(index), "invalid-ref"))
+            continue
+        receipt_path = (paths.private_dir / receipt_ref).resolve()
+        if paths.private_dir.resolve() not in receipt_path.parents:
+            rows.append(("receipt", str(index), "escape"))
+            continue
+        try:
+            receipt_bytes = receipt_path.read_bytes()
+        except OSError as exc:
+            rows.append(("receipt", str(index), type(exc).__name__))
+            continue
+        receipt_digest = hashlib.sha256(receipt_bytes).hexdigest()
+        rows.append(("receipt", str(index), receipt_digest))
+        try:
+            receipt = json.loads(receipt_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            rows.append(("archive", receipt_digest, "invalid-receipt"))
+            continue
+        archive_location = receipt.get("archive_location") if isinstance(receipt, dict) else None
+        if not isinstance(archive_location, str) or not archive_location:
+            rows.append(("archive", receipt_digest, "missing-location"))
+            continue
+        try:
+            archive_digest = _file_sha256(_archive_location_path(paths, archive_location))
+        except OSError as exc:
+            archive_digest = type(exc).__name__
+        rows.append(("archive", receipt_digest, archive_digest))
+    return digest(rows)
+
+
 def private_marker(
     snapshot: dict[str, Any],
     public: dict[str, Any],
@@ -3667,6 +3735,7 @@ def private_marker(
             "outcomes": _path_signature(paths.outcome_journal),
             "cursor": _path_signature(paths.cursor),
             "raw_store": _raw_store_signature(paths),
+            "archive_custody": _archive_custody_signature(paths),
         },
     }
 
@@ -3749,8 +3818,8 @@ def _validate_raw_archive_custody(
     prompt_hash: str,
     receipt_ref: object,
     label: str,
-) -> tuple[str | None, list[str]]:
-    """Verify that a local custody receipt binds the cold object to its digest."""
+) -> tuple[dict[str, str] | None, list[str]]:
+    """Verify that a custody receipt binds real archived bytes to their digests."""
 
     errors: list[str] = []
     if not isinstance(receipt_ref, str) or not receipt_ref.strip() or "\x00" in receipt_ref:
@@ -3783,7 +3852,29 @@ def _validate_raw_archive_custody(
         or len(archive_location) > 2048
     ):
         errors.append(f"{label}: custody_receipt needs a bounded archive_location")
-    return (normalized if not errors else None), errors
+        archive_path = None
+    else:
+        archive_path = _archive_location_path(paths, archive_location.strip())
+        if not archive_path.is_file():
+            errors.append(f"{label}: archive_location does not resolve to a file")
+    archive_sha256 = payload.get("archive_sha256")
+    if not isinstance(archive_sha256, str) or re.fullmatch(r"[0-9a-f]{64}", archive_sha256) is None:
+        errors.append(f"{label}: custody_receipt archive_sha256 must be a lowercase SHA-256 digest")
+    elif archive_path is not None and archive_path.is_file():
+        try:
+            actual_archive_sha256 = _file_sha256(archive_path)
+        except OSError as exc:
+            errors.append(f"{label}: archived raw object cannot be read: {exc}")
+        else:
+            if actual_archive_sha256 != archive_sha256:
+                errors.append(f"{label}: archived raw object archive digest mismatch")
+    if errors or archive_path is None:
+        return None, errors
+    return {
+        "custody_receipt": normalized,
+        "archive_path": str(archive_path),
+        "archive_sha256": archive_sha256,
+    }, errors
 
 
 def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, str]], list[str]]:
@@ -3820,7 +3911,7 @@ def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, 
         if relative != expected:
             errors.append(f"{label}: raw_object does not match prompt_hash")
             continue
-        custody_receipt, receipt_errors = _validate_raw_archive_custody(
+        custody, receipt_errors = _validate_raw_archive_custody(
             paths,
             raw_object=relative,
             prompt_hash=prompt_hash,
@@ -3828,17 +3919,18 @@ def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, 
             label=label,
         )
         errors.extend(receipt_errors)
-        if custody_receipt is None:
+        if custody is None:
             continue
         if relative in entries:
             errors.append(f"{label}: duplicate raw_object")
             continue
-        entries[relative] = {
-            "prompt_hash": prompt_hash,
-            "custody_receipt": custody_receipt,
-        }
+        entries[relative] = {"prompt_hash": prompt_hash, **custody}
     return entries, errors
 
+
+def _read_archived_raw(entry: dict[str, str]) -> str:
+    with gzip.open(Path(entry["archive_path"]), "rb") as handle:
+        return handle.read().decode("utf-8")
 
 def validate_raw_references(
     paths: LedgerPaths,
@@ -3873,6 +3965,16 @@ def validate_raw_references(
                 errors.append(f"{occurrence_id}: private raw object is missing")
             elif archived["prompt_hash"] != prompt_hash:
                 errors.append(f"{occurrence_id}: archived raw object digest mismatch")
+            elif verify_content and relative not in verified:
+                try:
+                    raw = _read_archived_raw(archived)
+                except (OSError, EOFError, UnicodeError, ValueError, gzip.BadGzipFile) as exc:
+                    errors.append(f"{occurrence_id}: archived raw object is unreadable: {exc}")
+                else:
+                    actual_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+                    if actual_hash != prompt_hash:
+                        errors.append(f"{occurrence_id}: archived raw object digest mismatch")
+                verified.add(relative)
             continue
         try:
             mode = candidate.stat().st_mode & 0o777
@@ -4139,6 +4241,7 @@ def update_ledger(
                 "outcomes": _path_signature(paths.outcome_journal),
                 "cursor": _path_signature(paths.cursor),
                 "raw_store": _raw_store_signature(paths),
+            "archive_custody": _archive_custody_signature(paths),
             }
             and _public_digest_valid(existing_public)
             and _prompt_authority_fast_path_valid(
