@@ -143991,7 +143991,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -144002,7 +144002,7 @@ tasks:
   receipt_target: 'github:organvm/limen:issue:ASK-quicken-escalate-9feaa902'
   depends_on: []
   created: '2026-07-13'
-  updated: '2026-08-04T15:41:24.784Z'
+  updated: '2026-08-08T00:11:45.137Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:41:24.784Z'
     agent: 'codex'
@@ -144015,6 +144015,18 @@ tasks:
     conduct_run_id: 'run-ca715abf90c57b70488b9ea8d6909e55'
     conduct_lease_id: 'lease-524-ca715abf90c57b70'
     conduct_generation: 524
+  - timestamp: '2026-08-08T00:11:45.137Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-88ad144dc7eebd2326c1d106153e8ca6:652:compatibility'
+    conduct_run_id: 'run-88ad144dc7eebd2326c1d106153e8ca6'
+    conduct_lease_id: 'lease-652-88ad144dc7eebd23'
+    conduct_generation: 652
 - id: HEAL-rebase-organvm-a-i-chat--exporter-121
   title: rebase/resolve conflicts on organvm/a-i-chat--exporter#121
   repo: organvm/a-i-chat--exporter
