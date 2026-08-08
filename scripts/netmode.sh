@@ -38,7 +38,7 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
-_notify_root=""
+_notify_root="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   for _notify_candidate in \
     "${LIMEN_ROOT:+$LIMEN_ROOT/scripts/_notify.py}" \
@@ -47,13 +47,9 @@ if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   do
     if [ -n "$_notify_candidate" ] && [ -f "$_notify_candidate" ]; then
       LIMEN_NOTIFY_HELPER="$_notify_candidate"
-      _notify_root="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"
       break
     fi
   done
-fi
-if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -z "$_notify_root" ]; then
-  _notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
 fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
