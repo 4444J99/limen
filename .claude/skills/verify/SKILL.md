@@ -66,9 +66,10 @@ tail -40 logs/metabolize-sensors.log                                  # what the
 stat -f '%Sm' logs/.voice/metabolize_pass                             # when that pass ran
 ```
 
-Two traps, both measured 2026-08-07 while verifying a sensor shipped hours earlier:
+Three traps, all measured 2026-08-07 while verifying a sensor shipped hours earlier:
 
-- **The pass used to be piped through `tail -5`.** 57 sensors, well over a hundred lines, five kept.
+- **The pass used to be piped through `tail -5`.** 57 sensors and — counted from the first post-fix
+  pass, not estimated — **1,784 lines**, five kept.
   The `review-harvest` sensor ran, reported unresolved findings, and no log recorded a word of it —
   the organ built to prove a finding gets *consumed* had its own finding thrown away by its runner
   (fixed: `logs/metabolize-sensors.log`, #2048). If a sensor's output is missing, check what the
@@ -77,10 +78,30 @@ Two traps, both measured 2026-08-07 while verifying a sensor shipped hours earli
   never what it said, and `_stamp()` only fires for sensors declaring a `cadence` — so a
   cadence-less sensor legitimately has no stamp, and a stamped one may still have been discarded.
   Absence of a stamp proves nothing in either direction.
+- **Absence of the LOG proves nothing either — and that trap is one level up from the stamp.** The
+  redirect truncates on write, so `logs/metabolize-sensors.log` does not exist at all until the first
+  *due* pass after a daemon restart. Measured: #2048 merged 19:19:36, the daemon restarted 19:51:55
+  (so it HAD the fix), and the file stayed missing until 20:33:01 — **74 minutes** during which
+  "the log is missing" was true and meant nothing. Do not read that absence as the discard bug, and
+  do not reach for the loop-body corollary below: check the daemon's start time against the fix's
+  merge time FIRST (`ps -eo pid,lstart,command | grep heartbeat-loop` vs `git log -S`), because a
+  daemon that restarted after the merge already has the change.
 
 `source: [metabolize]` sensors do **not** run every heartbeat tick. `metabolize.sh` has no scheduler;
 the daemon runs them from one wall-clock-throttled rung (`metabolize_pass_due`, hourly by
-`LIMEN_METABOLIZE_SENSORS_SECS`). A sensor absent from the beat log for ten minutes is normal.
+`LIMEN_METABOLIZE_SENSORS_SECS`).
+
+**The throttle is hourly but it is evaluated ONCE PER CYCLE, and a cycle is not a tick.** The
+`── tempo: … → 120s ──` line is the *sleep between cycles*, not the cycle's duration — misreading it
+as the period is what makes a healthy beat look stalled. Measured cycle starts: 19:53:13 → 20:01:04
+→ 20:09:19 → 20:28:29, i.e. **8 to 19 minutes each**, and the sensor pass itself ran **13+ minutes**
+inside one. So the honest bound on "my sensor has not reported yet" is *the hour, plus a full cycle,
+plus the pass* — call it ~90 minutes worst case, not ten. Before concluding a rung is dark, confirm
+the beat is advancing at all (`tail logs/beat-rungs.jsonl`, `grep -a '──── beat' logs/heartbeat.out.log
+| tail`) and check whether the cycle that would have evaluated the rung *started before it came due*.
+A per-sensor `cadence` adds a second gate on top: `_due` wants `beat % cadence == 0` **or** a stamp
+older than `cadence × loop_max` (for `cadence: 12` at the 1800s default, that fallback is **6 hours**),
+so a cadence-declaring sensor legitimately sits out most passes.
 
 ## Comparing shipped vs pre-fix code (the A/B that proves a fix)
 
