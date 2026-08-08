@@ -1104,6 +1104,18 @@
       ],
       "note": "Follow-on the fleet OWNS (not yours): the keeper should answer a quota wall with a structured, machine-readable code instead of an undifferentiated 500. cli/src/limen/conduct/client.py currently classifies this condition on the rejection prose — a documented, narrow exemption from the estate's own rule that callers classify on `status`, taken because a Cloudflare storage refusal carries no other signal. Once web/worker returns a code (and is deployed via wrangler, which does NOT happen on merge), the prose match becomes a compatibility fallback.",
       "issue": 2054
+    },
+    {
+      "id": "L-PR-DRAFT-COHORT-DISPOSITION",
+      "label": "Choose the lifecycle disposition for the estate's draft-PR cohort before any bulk close, conversion, or merge action. The 2026-08-07 exhaustive census measured 530 drafts (40.8% of 1,298 open PRs); remeasure the live cohort at execution time and preserve exact-head receipts.",
+      "owner": "yours",
+      "cost": "one governance decision after reviewing the registry-derived cohort receipt",
+      "unlocks": "a declared default disposition for drafts, allowing the lifecycle converger to classify them without guessing and the PR-estate campaign to reach a complete denominator",
+      "source_task": "PR lifecycle campaign #1981, W4",
+      "gate": "a bulk disposition changes the treatment of hundreds of externally visible PRs; the registry may name the cohort but cannot choose that governance policy for you",
+      "status": "open",
+      "issue": 1981,
+      "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh."
     }
   ]
 }
