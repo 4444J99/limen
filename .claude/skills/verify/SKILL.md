@@ -184,12 +184,29 @@ option and does not apply to blob shows).
   `npm --prefix web/worker ci`. Keep the `--prefix` form everywhere — a bare `npm run check` only
   works from inside `web/worker/`, and "which directory was I in?" is the ambiguity that makes this
   symptom look like a code failure twice over.
-- **`test_campaign_relay_effector::test_full_relay_exec_proof_closes_while_keepalive_remains_live`
-  is load-sensitive, not randomly flaky.** It asserts a spawned provider wrote its pidfile; under
-  host contention the parent races ahead. The tell is duration — passing runs take ~16s, failing
-  runs ~4s, and every failure lands while something heavy is running. Observed failing 4× then
-  passing 3× on the *same commit*. Do not conclude "pre-existing on main" from an isolation
-  argument: re-run it on a quiet host before believing either verdict.
+- **Load-sensitive tests are a CLASS, and every member asserts on something *bounded*** — a
+  deadline, or a race against a process that must get there first. They are not randomly flaky:
+  they fail under contention, which is exactly when the full suite runs, and pass when you re-run
+  them alone to check. That asymmetry is what gets them dismissed. **Isolation does not settle the
+  verdict** — a bare pass is consistent with both a real defect and a timing artifact. Settle it by
+  finding the bound: grep the failure string to the line that emits it and read what it waits on.
+
+  | test | the bound | tell |
+  |---|---|---|
+  | `test_campaign_relay_effector::test_full_relay_exec_proof_closes_while_keepalive_remains_live` | a spawned provider must write its pidfile before the parent reads it | duration — passing ~16s, failing ~4s; observed 4 fails then 3 passes on the *same* commit |
+  | `test_workstream_command.py::test_autonomous_jules_workstream_uses_remote_cloud_transport` | `scripts/lib/workstream-capsule.sh` runs `run-bounded --timeout-seconds … git ls-remote origin HEAD`; the test caps that subprocess at 10s | `launch-environment error: configured remote origin is unavailable` |
+
+  The second is the sharper trap, because **its message names a cause that is not the cause** — the
+  remote is fine; a network round-trip missed a deadline. Nothing in the output says "timeout", so
+  it reads as broken connectivity and sends you to `git`/DNS.
+
+  **Do not use load average as the discriminator.** Measured on one commit, minutes apart: FAILED
+  at 5-min avg **9.02**, then PASSED at **13.75**. The number was higher on the passing run. What
+  differed was a second session holding the heavy-verification lease — competing *heavy* work, not
+  the scalar. So "re-run on a quiet host" means check for another `verify.py`/`pytest` owner
+  (`scripts/verify-scoped.sh` reports `EXIT=75 heavy-lease-held` when one is active), not check
+  `uptime`. And note the suite is itself a load source: `pytest -n auto` drove this host past 13 on
+  its own, so a full-gate run is never quiet in the `uptime` sense and never needs to be.
 - **`git checkout -- <file>` reverts the WHOLE file, including uncommitted work you meant to keep.**
   Commit before mutating an implementation to prove a test can fail, or you will revert the fix
   along with the mutation.
