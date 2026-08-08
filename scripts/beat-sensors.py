@@ -295,7 +295,7 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
 
     For every cadence-declaring sensor: a missing stamp is NEVER-RAN; a stamp older than
     cadence × loop_max × 2 (twice the worst-case wall-clock for one cadence window) is STALE.
-    Exit 1 only for live-lane findings (``heartbeat`` in source) — a metabolize-only scheduled
+    Exit 1 only for live-lane findings (``heartbeat`` or ``fast-wave`` in source) — a registry-only
     sensor that never ran is usually an organ parked behind its activation lever (observatory-run),
     so it is printed and routed to its owner but never reads as red every beat.
 
@@ -321,10 +321,11 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
             if age <= bound:
                 continue
             finding = f"STALE {sid} — stamp {int(age)}s old > bound {int(bound)}s ({s.get('title', sid)})"
-        if "heartbeat" in (s.get("source") or []):
+        sources = set(s.get("source") or [])
+        if sources.intersection({"heartbeat", "fast-wave"}):
             live_findings.append(finding)
         else:
-            routed.append(f"{finding} → owner {s.get('owner', '?')} (metabolize-only; not a live-lane failure)")
+            routed.append(f"{finding} → owner {s.get('owner', '?')} (registry-only; not a live-lane failure)")
     for line in live_findings:
         print(f"  ✗ {line}")
     for line in routed:
