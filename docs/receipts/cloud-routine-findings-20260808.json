@@ -1,0 +1,112 @@
+[
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "fleet-audit",
+    "observed_at": "2026-08-08T13:34:00Z",
+    "status": "finding",
+    "stable_finding_key": "session-meta.scheduled-ci-darkness",
+    "disposition": "superseded",
+    "owner_ref": "https://github.com/organvm/session-meta/actions/runs/31217884467",
+    "predicate": "test \"$(gh run view 31217884467 --repo organvm/session-meta --json conclusion --jq .conclusion)\" = success"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "fleet-audit",
+    "observed_at": "2026-08-08T13:34:00Z",
+    "status": "failed",
+    "stable_finding_key": "session-meta.push-ci",
+    "disposition": "owned",
+    "owner_ref": "https://github.com/organvm/session-meta/issues/169",
+    "predicate": "test \"$(gh run list --repo organvm/session-meta --workflow ci.yml --branch main --event push --status completed --limit 1 --json conclusion --jq '.[0].conclusion')\" = success"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N74",
+    "disposition": "owned",
+    "owner_ref": "https://github.com/organvm/session-meta/issues/170",
+    "predicate": "test \"$(gh issue view 170 --repo organvm/session-meta --json state --jq .state)\" = CLOSED"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N78",
+    "disposition": "owned",
+    "owner_ref": "https://github.com/organvm/limen/issues/1981",
+    "predicate": "test \"$(gh issue view 1981 --repo organvm/limen --json comments --jq '[.comments[].body | select(contains(\"CLOUD-N78-ROUTED\"))] | length')\" -gt 0"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N79",
+    "disposition": "owned",
+    "owner_ref": "https://github.com/organvm/session-meta/issues/34",
+    "predicate": "test \"$(gh issue view 34 --repo organvm/session-meta --json comments --jq '[.comments[].body | select(contains(\"CLOUD-N79-ROUTED\"))] | length')\" -gt 0"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N36",
+    "disposition": "superseded",
+    "owner_ref": "https://github.com/organvm/limen/pull/2121",
+    "predicate": "test \"$(gh pr view 2121 --repo organvm/limen --json state --jq .state)\" = MERGED"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N75",
+    "disposition": "human_gate",
+    "owner_ref": "lever:L-CLOUD-BULK-PR-CLOSE-N75",
+    "predicate": "python3 -c \"import json; d=json.load(open('his-hand-levers.json')); assert next(x for x in d['levers'] if x['id']=='L-CLOUD-BULK-PR-CLOSE-N75')['status'] != 'open'\""
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N77",
+    "disposition": "human_gate",
+    "owner_ref": "lever:L-CLOUD-EXTERNAL-GOVERNANCE-N77",
+    "predicate": "python3 -c \"import json; d=json.load(open('his-hand-levers.json')); assert next(x for x in d['levers'] if x['id']=='L-CLOUD-EXTERNAL-GOVERNANCE-N77')['status'] != 'open'\""
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "jules-backlog-curation",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "finding",
+    "stable_finding_key": "LIMEN-N80",
+    "disposition": "human_gate",
+    "owner_ref": "lever:L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+    "predicate": "test \"$(gh repo view organvm-iii-ergon/enterprise-plugin --json isArchived --jq .isArchived)\" = true"
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "daily-cloud-digest",
+    "observed_at": "2026-08-08T19:09:00Z",
+    "status": "failed",
+    "stable_finding_key": "hosted-session.repository-scope",
+    "disposition": "human_gate",
+    "owner_ref": "lever:L-CLOUD-SESSION-SCOPE-EXPANSION",
+    "predicate": "python3 -c \"import json; d=json.load(open('his-hand-levers.json')); assert next(x for x in d['levers'] if x['id']=='L-CLOUD-SESSION-SCOPE-EXPANSION')['status'] != 'open'\""
+  },
+  {
+    "schema_version": "limen.cloud_routine_receipt.v1",
+    "routine_id": "irf-p0-surface",
+    "observed_at": "2026-08-08T11:38:37Z",
+    "status": "finding",
+    "stable_finding_key": "open-p0.denominator-41",
+    "disposition": "owned",
+    "owner_ref": "https://github.com/organvm/organvm-corpvs-testamentvm/issues/489",
+    "predicate": "python3 -c \"import json; p=json.load(open('docs/receipts/irf-p0-owner-classification-20260808.json')); assert p['denominator']==p['classified']==len(p['rows'])==41; assert not p['unowned']\""
+  }
+]
