@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -483,9 +484,42 @@ def test_executive_run_beat_aggregates_and_writes(tmp_path, monkeypatch):
     monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
 
     status = executive.run_beat()
-    assert set(status) >= {"institution", "vitals", "continuity", "integrity"}
+    assert set(status) >= {"institution", "sampled_at", "completed_at", "vitals", "continuity", "integrity"}
+    assert "ts" not in status
     assert (tmp_path / "status.json").exists()
     assert "vitals=L1/ok" in executive.summary_line(status)
+
+
+def test_slow_full_beat_keeps_the_early_sample_clock(tmp_path, monkeypatch):
+    clock = {"now": datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(executive, "_now", lambda: clock["now"])
+    monkeypatch.setattr(vitals, "beat_gate", lambda shed=False: {"organ": "vitals", "level": 1, "action": "ok"})
+
+    def slow_continuity():
+        clock["now"] += timedelta(hours=4)
+        return {"organ": "continuity", "status": "ok"}
+
+    monkeypatch.setattr(continuity, "beat", slow_continuity)
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["sampled_at"] == "2026-08-08T12:00:00+00:00"
+    assert status["completed_at"] == "2026-08-08T16:00:00+00:00"
+
+
+def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
+    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+
+    launch = heartbeat.index("fast_wave_loop &")
+    main_loop = heartbeat.index("while true; do", launch)
+    fast_body = heartbeat[heartbeat.index("fast_wave_once()"):launch]
+
+    assert launch < main_loop
+    assert "python3 -m limen.vigilia sample" in fast_body
+    assert "beat-sensors.py" in fast_body and "--source fast-wave" in fast_body
+    assert "scripts/organ-health.py" in fast_body
 
 
 def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch):
