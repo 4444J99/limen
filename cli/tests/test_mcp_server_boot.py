@@ -28,9 +28,7 @@ def _http_server(name: str, *, agent: str = "codex") -> dict:
     }
 
 
-def test_codex_config_discovery_honors_relocated_home(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     codex_home = tmp_path / "relocated-codex"
     codex_home.mkdir()
     (codex_home / "config.toml").write_text(
@@ -41,9 +39,7 @@ def test_codex_config_discovery_honors_relocated_home(
 
     codex_config = next(path for agent, path, _ in module.CONFIG_PATHS if agent == "codex")
     discovered = [
-        server
-        for server in module.discover()
-        if server["agent"] == "codex" and server["name"] == "launchdarkly"
+        server for server in module.discover() if server["agent"] == "codex" and server["name"] == "launchdarkly"
     ]
     assert codex_config == codex_home / "config.toml"
     assert discovered[0]["config"] == str(codex_config)
@@ -93,9 +89,7 @@ def test_codex_status_parser_tolerates_known_envelopes(
     assert module.parse_codex_mcp_statuses(payload) == expected
 
 
-def test_probe_all_distinguishes_oauth_from_reachability(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_probe_all_distinguishes_oauth_from_reachability(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     module = _load_module(monkeypatch, tmp_path / "codex")
     monkeypatch.setattr(
         module,
@@ -117,9 +111,7 @@ def test_probe_all_distinguishes_oauth_from_reachability(
     assert (authenticated["ok"], authenticated["state"]) == (True, "authenticated")
 
 
-def test_non_codex_http_probe_remains_transport_only(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_non_codex_http_probe_remains_transport_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     module = _load_module(monkeypatch, tmp_path / "codex")
     monkeypatch.setattr(module, "_probe_http", lambda _url, _timeout: (True, "reachable"))
 
