@@ -166845,3 +166845,37 @@ tasks:
     conduct_lease_id: 'lease-687-68484d1d38a5dee1'
     conduct_generation: 687
   updated: '2026-08-08T14:14:51.680Z'
+- id: 'GH-organvm-limen-2099'
+  title: 'POTESTAS 2.6 — counter-system pairings: the Dao De Jing against the 48 Laws'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2099'
+  context: 'GitHub issue organvm/limen#2099. Phase: #2080 · Program: #2077 **The best issue in the phase.** It makes the existing canon the adversary — which is the whole reason POTESTAS lives in `studium/` rather than in a new directory. ## The doctrine already in the repo `studium/synthesis/counter-systems.md` states it: **the work is its own adversary.** The Gita against Achilles. The Dao against *fatum*. The Heike against martial glory.'
+  predicate: 'test "$(gh issue view 2099 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2099'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2099'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:56.629Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-406f7216a393ed72313639cc885c0abe:688:compatibility'
+    conduct_run_id: 'run-406f7216a393ed72313639cc885c0abe'
+    conduct_lease_id: 'lease-688-406f7216a393ed72'
+    conduct_generation: 688
+  updated: '2026-08-08T14:14:56.629Z'
