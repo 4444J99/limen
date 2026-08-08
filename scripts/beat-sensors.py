@@ -287,7 +287,13 @@ def run(
     return worst
 
 
-def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path | None = None) -> int:
+def canary(
+    *,
+    registry: Path = REGISTRY,
+    loop_max: int = 1800,
+    fast_wave_seconds: int | None = None,
+    voice_dir: Path | None = None,
+) -> int:
     """Mechanize the sensor-canary ritual: "merged but never observed live" is fully derivable from
     the voice stamps the scheduled runner already writes (one ``logs/.voice/<id>`` per visit) — it
     must never again live only in an operator's memory (the post-#921 drain left the 0g4 liveness
@@ -305,6 +311,9 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
     scheduled lane visits them (transient, not a defect)."""
     sensors = load_sensors(registry)
     voice_dir = voice_dir or (ROOT / "logs" / ".voice")
+    if fast_wave_seconds is None:
+        raw_fast_wave = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+        fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
     now = time.time()
     live_findings: list[str] = []
     routed: list[str] = []
@@ -317,7 +326,9 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
         except OSError:
             finding = f"NEVER-RAN {sid} — no voice stamp ({s.get('title', sid)})"
         else:
-            bound = cadence * max(1, loop_max) * 2
+            sources = set(s.get("source") or [])
+            period = fast_wave_seconds if "fast-wave" in sources else loop_max
+            bound = cadence * max(1, period) * 2
             if age <= bound:
                 continue
             finding = f"STALE {sid} — stamp {int(age)}s old > bound {int(bound)}s ({s.get('title', sid)})"
@@ -550,6 +561,7 @@ def main(argv=None) -> int:
     ap.add_argument("--scheduled-only", action="store_true", help="run only sensors declaring cadence")
     ap.add_argument("--beat", type=int, default=0, help="current heartbeat counter for cadence")
     ap.add_argument("--loop-max", type=int, default=1800, help="maximum loop seconds for overdue detection")
+    ap.add_argument("--fast-wave-seconds", type=int, default=None, help="fast-wave sample period for canary bounds")
     ap.add_argument("--voice-dir", type=Path, default=None, help="voice-stamp directory")
     ap.add_argument("--list-omega", action="store_true", help="emit TSV metadata for omega-eligible checks")
     ap.add_argument("--list-omega-json", action="store_true", help="emit stable JSON omega rung discovery")
@@ -558,7 +570,12 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.canary:
-        return canary(registry=args.registry, loop_max=args.loop_max, voice_dir=args.voice_dir)
+        return canary(
+            registry=args.registry,
+            loop_max=args.loop_max,
+            fast_wave_seconds=args.fast_wave_seconds,
+            voice_dir=args.voice_dir,
+        )
     if args.list:
         return list_sensors(args.registry)
     if args.list_omega:
