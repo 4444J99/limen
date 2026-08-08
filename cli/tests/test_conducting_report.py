@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -57,8 +58,76 @@ tasks:
         "value_verdict_present": True,
         "open_value_discovery": 1,
         "state_present": False,
+        "routing_reason": "keeper_unavailable",
     }
     assert "private-codex-name" not in encoded
     assert "private-claude-name" not in encoded
     assert "private value verdict" not in encoded
     assert "private target" not in encoded
+
+
+
+def _handoff(logs: Path, *, admissible: int = 0, reasons: dict | None = None, provider_state: str = "ok"):
+    logs.mkdir(exist_ok=True)
+    payload = {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "dispatchable_next": {"id": "TASK-1"} if admissible else None,
+        "dispatch_admission": {
+            "schema_version": "limen.dispatch_admission.v1",
+            "open_considered": max(admissible, sum((reasons or {}).values())),
+            "admissible": admissible,
+            "gated": sum((reasons or {}).values()),
+            "reason_counts": reasons or {},
+            "dispatchable_next": {"id": "TASK-1"} if admissible else None,
+        },
+        "provider_headroom": {"vendors": {"codex": {"state": provider_state}}},
+    }
+    (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps({"vendors": {"codex": {"headroom_pct": 100, "consumed": 0}}}),
+        encoding="utf-8",
+    )
+
+    headline, body, _day, reason = module.build_report()
+
+    assert reason == "routable"
+    assert headline.startswith("ROUTABLE BUT IDLE")
+    assert "no routable work" not in headline
+    assert "routing: routable" in body
+
+
+def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+
+    _handoff(logs, reasons={"dependencies": 1})
+    assert module._routing_reason()[0] == "admission_blocked"
+
+    _handoff(logs, reasons={"budget_agent": 1})
+    assert module._routing_reason()[0] == "capacity_blocked"
+
+    _handoff(logs, reasons={"provider_health": 1}, provider_state="auth_needed")
+    assert module._routing_reason()[0] == "auth_blocked"
+
+    assert module.ROUTING_REASONS == {
+        "routable",
+        "admission_blocked",
+        "capacity_blocked",
+        "auth_blocked",
+        "keeper_unavailable",
+    }
+
+
+def test_daily_key_uses_the_supplied_local_calendar_day(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    local = timezone(timedelta(hours=-4))
+    before_local_midnight = datetime(2026, 8, 8, 23, 30, tzinfo=local)
+
+    assert before_local_midnight.astimezone(timezone.utc).date().isoformat() == "2026-08-09"
+    assert module._local_day(before_local_midnight) == "2026-08-08"
