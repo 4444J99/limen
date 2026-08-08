@@ -523,7 +523,8 @@ rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
 rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
-fast_wave_loop "$" &
+mkdir -p "$(dirname "$FAST_WAVE_PID_FILE")" 2>/dev/null || true
+fast_wave_loop "$$" &
 FAST_WAVE_PID=$!
 printf '%s\n' "$FAST_WAVE_PID" > "$FAST_WAVE_PID_FILE" 2>/dev/null || true
 while true; do
