@@ -84,7 +84,6 @@ def test_budget_derives_from_env(tmp_path):
     assert proc.returncode == 1
 
 
-
 def test_old_completion_does_not_make_a_fresh_sample_stale(tmp_path):
     now = datetime.now(timezone.utc)
     write_status(tmp_path, now, completed_at=now - timedelta(hours=4))
