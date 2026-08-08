@@ -165709,3 +165709,37 @@ tasks:
     conduct_lease_id: 'lease-654-52db8c5633f16e7c'
     conduct_generation: 654
   updated: '2026-08-08T00:30:09.413Z'
+- id: 'GH-organvm-limen-2054'
+  title: 'needs-human (L-CLOUDFLARE-DO-QUOTA): The conduct keeper''s storage plan is SPENT — every relay write is ref…'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'needs_human'
+  labels:
+  - 'needs-human'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2054'
+  context: 'GitHub issue organvm/limen#2054. **Owner:** Anthony (human-gated lever `L-CLOUDFLARE-DO-QUOTA`). Surfaced once, never nagged, never auto-pulled. This issue is the lever''s permanent, individually-closeable home in the graph — the registry `his-hand-levers.json` is its source of truth. The conduct keeper''s storage plan is SPENT — every relay write is refused with `500 {"detail": "Exceeded allowed rows written in Durable Objects fre'
+  predicate: 'test "$(gh issue view 2054 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2054'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2054'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:15.157Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'needs_human'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-b8215c5d99d6e9b2f3eb1525d12472f7:655:compatibility'
+    conduct_run_id: 'run-b8215c5d99d6e9b2f3eb1525d12472f7'
+    conduct_lease_id: 'lease-655-b8215c5d99d6e9b2'
+    conduct_generation: 655
+  updated: '2026-08-08T00:30:15.157Z'
