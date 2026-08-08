@@ -896,12 +896,13 @@ def load_lifecycle_module() -> Any:
         original_home = Path(module.HOME)
         source_home = SOURCE_HOME_OVERRIDE.resolve()
 
+        provider_roots = tuple(original_home / name for name in (".claude", ".codex", ".gemini", ".local"))
+
         def rebase(path: Any) -> Path:
             candidate = Path(path)
-            try:
-                return source_home / candidate.relative_to(original_home)
-            except ValueError:
+            if not any(candidate == root or root in candidate.parents for root in provider_roots):
                 return candidate
+            return source_home / candidate.relative_to(original_home)
 
         module.HOME = source_home
         for attribute in (
@@ -979,7 +980,7 @@ def source_path_custody(
 def source_relative_path(lifecycle: Any, source: str, path: Path) -> Path | None:
     """Return a source-relative role after typed direct-or-alias custody succeeds."""
 
-    root_path = canonical_source_root(lifecycle, source)
+    root_path = containing_source_root(lifecycle, source, path)
     if root_path is None:
         return None
     custody = source_path_custody(lifecycle, source, path, containment_root=root_path)
