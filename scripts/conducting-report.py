@@ -118,6 +118,10 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
     if not isinstance(admission, dict) or admission.get("schema_version") != "limen.dispatch_admission.v1":
         return "keeper_unavailable", "canonical dispatch admission unavailable"
 
+    provider_headroom = handoff.get("provider_headroom")
+    if not _fresh_timestamp(provider_headroom, instant):
+        return "keeper_unavailable", "provider-headroom telemetry unavailable or stale"
+
     admissible = _safe_count(admission.get("admissible"))
     open_considered = _safe_count(admission.get("open_considered"))
     continuity = _continuity_summary(instant)
@@ -131,9 +135,6 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
     explicit_auth_block = any("auth" in key or "credential" in key for key in reason_keys)
     provider_health_block = "provider_health" in reason_keys
 
-    provider_headroom = handoff.get("provider_headroom")
-    if provider_health_block and not _fresh_timestamp(provider_headroom, instant):
-        return "keeper_unavailable", f"provider-health telemetry unavailable or stale; {continuity}"
     vendors = provider_headroom.get("vendors", {}) if isinstance(provider_headroom, dict) else {}
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
