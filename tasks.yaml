@@ -166641,3 +166641,37 @@ tasks:
     conduct_lease_id: 'lease-681-e2e7074c5a913bd7'
     conduct_generation: 681
   updated: '2026-08-08T14:14:19.528Z'
+- id: 'GH-organvm-limen-2105'
+  title: 'POTESTAS 4.2 — the financial-decision protocol: no consequential decision on a synchronous channel'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2105'
+  context: 'GitHub issue organvm/limen#2105. Phase: #2082 · Program: #2077 The operator''s first named training failure, in his own words: *"I fail at interactions with financial implications."* ## The measurement that produces the rule Every dollar that moved, moved **during a live call**: | When | Amount | Context | |---|---|---| | 2026-07-31 15:23:44 | $20 | mid-call | | 2026-08-06 14:27:24 | $10 | mid-call | | 2026-08-06 14:45:43 | $7 | m'
+  predicate: 'test "$(gh issue view 2105 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2105'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2105'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:25.304Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-833e6522fe59de6e240b2a282bc8442a:682:compatibility'
+    conduct_run_id: 'run-833e6522fe59de6e240b2a282bc8442a'
+    conduct_lease_id: 'lease-682-833e6522fe59de6e'
+    conduct_generation: 682
+  updated: '2026-08-08T14:14:25.304Z'
