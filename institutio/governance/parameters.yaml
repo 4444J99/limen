@@ -5335,6 +5335,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Per-description character cap the Codex slimmer distills to. Lower it if Codex still warns that descriptions were shortened; raise it to preserve more of each description. The knob, not a hardcode."
+  LIMEN_CLOUD_ROUTINE_INGEST_APPLY:
+    default: "0"
+    env: LIMEN_CLOUD_ROUTINE_INGEST_APPLY
+    self_update: none
+    owner: continuity
+    note: "Arms scripts/cloud-routine-ingest.py --apply. The default dry-run validates and classifies CloudRoutineReceiptV1 deliveries without emitting work; 1 permits only novel new_work dispositions to enter TABVLARIVS as idempotent upsert tickets."
   LIMEN_ROUTINE_FRESHNESS:
     default: "1"               # ON — audit cloud-routine delivery freshness each beat
     env: LIMEN_ROUTINE_FRESHNESS
