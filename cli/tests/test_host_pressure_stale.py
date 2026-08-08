@@ -22,16 +22,23 @@ def run_stale(tmp_path: Path, env: dict | None = None):
     child_env["LIMEN_NOTIFY"] = "0"  # dedup bookkeeping only — hermetic runs never pop notifications
     child_env.pop("LIMEN_VIGILIA", None)
     child_env.pop("LIMEN_VITALS_STALE_BEATS", None)
-    child_env.pop("LIMEN_LOOP_MAX", None)
+    child_env.pop("LIMEN_VITALS_SAMPLE_SECONDS", None)
     if env:
         child_env.update(env)
     return subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True, env=child_env)
 
 
-def write_status(tmp_path: Path, ts: datetime) -> None:
+def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | None = None) -> None:
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True, exist_ok=True)
-    (seat / "status.json").write_text(json.dumps({"ts": ts.isoformat()}))
+    (seat / "status.json").write_text(
+        json.dumps(
+            {
+                "sampled_at": sampled_at.isoformat(),
+                "completed_at": completed_at.isoformat() if completed_at else None,
+            }
+        )
+    )
 
 
 def test_fresh_record_is_ok(tmp_path):
@@ -69,6 +76,35 @@ def test_unreadable_ts_fails(tmp_path):
 
 def test_budget_derives_from_env(tmp_path):
     write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=10))
-    # 2 beats x 120s = 4 min budget -> a 10-min-old record is stale
-    proc = run_stale(tmp_path, env={"LIMEN_VITALS_STALE_BEATS": "2", "LIMEN_LOOP_MAX": "120"})
+    # 2 missed declared samples x 120s = 4 min budget -> a 10-min-old record is stale
+    proc = run_stale(
+        tmp_path,
+        env={"LIMEN_VITALS_STALE_BEATS": "2", "LIMEN_VITALS_SAMPLE_SECONDS": "120"},
+    )
     assert proc.returncode == 1
+
+
+
+def test_old_completion_does_not_make_a_fresh_sample_stale(tmp_path):
+    now = datetime.now(timezone.utc)
+    write_status(tmp_path, now, completed_at=now - timedelta(hours=4))
+
+    proc = run_stale(
+        tmp_path,
+        env={"LIMEN_VITALS_STALE_BEATS": "3", "LIMEN_VITALS_SAMPLE_SECONDS": "60"},
+    )
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_fresh_completion_cannot_hide_a_stale_sample(tmp_path):
+    now = datetime.now(timezone.utc)
+    write_status(tmp_path, now - timedelta(minutes=10), completed_at=now)
+
+    proc = run_stale(
+        tmp_path,
+        env={"LIMEN_VITALS_STALE_BEATS": "3", "LIMEN_VITALS_SAMPLE_SECONDS": "60"},
+    )
+
+    assert proc.returncode == 1
+    assert "sample" not in proc.stderr.lower()
