@@ -165809,3 +165809,36 @@ tasks:
     conduct_lease_id: 'lease-657-582f2a64115d450b'
     conduct_generation: 657
   updated: '2026-08-08T00:30:27.239Z'
+- id: 'GH-organvm-limen-2045'
+  title: 'mcp-server-boot: 4 capability servers dead — unpinned `mcp` major removed Server.list_tools, and the sensor''s named cure cannot heal it'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2045'
+  context: 'GitHub issue organvm/limen#2045. Four configured MCP servers are dead across two agent CLIs, and the sensor that finds them prescribes a cure that cannot fix them. ## The failure ``` $ python3 scripts/mcp-server-boot.py ✗ codex/conductor [stdio] exited rc=1 on start ✗ codex/voice-scorer [stdio] exited rc=1 on start ✗ claude/conductor [stdio] exited rc=1 on start ✗ claude/voice-scorer [stdio] exited rc=1 on start mcp-server-boot:'
+  predicate: 'test "$(gh issue view 2045 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2045'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2045'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:34.020Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-72860a90178bf92d0a1c95475bfc3181:658:compatibility'
+    conduct_run_id: 'run-72860a90178bf92d0a1c95475bfc3181'
+    conduct_lease_id: 'lease-658-72860a90178bf92d'
+    conduct_generation: 658
+  updated: '2026-08-08T00:30:34.020Z'
