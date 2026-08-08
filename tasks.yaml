@@ -63752,7 +63752,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'user-ask'
   - 'quicken-residue'
@@ -63761,7 +63761,7 @@ tasks:
   context: 'Cheapest path → the D2L go-live click + cadence confirm (your login + judgment). Unblocks: Continue previous coding session. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-08-04T15:40:27.681Z'
+  updated: '2026-08-08T00:10:57.132Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:27.681Z'
     agent: 'codex'
@@ -63774,6 +63774,18 @@ tasks:
     conduct_run_id: 'run-e0c1b3053eb9f6c46ad8ce3480f2af55'
     conduct_lease_id: 'lease-516-e0c1b3053eb9f6c4'
     conduct_generation: 516
+  - timestamp: '2026-08-08T00:10:57.132Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-84cada2c92b20f1de94f4cc9658d5727:644:compatibility'
+    conduct_run_id: 'run-84cada2c92b20f1de94f4cc9658d5727'
+    conduct_lease_id: 'lease-644-84cada2c92b20f1d'
+    conduct_generation: 644
 - id: GEN-organvm-portfolio-test-coverage-0626
   title: Raise test coverage in organvm/portfolio
   repo: organvm/portfolio
