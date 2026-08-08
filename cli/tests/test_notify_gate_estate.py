@@ -421,5 +421,5 @@ def test_netmode_resolves_notifier_from_live_runtime():
     shell = (SCRIPTS / "netmode.sh").read_text(encoding="utf-8")
 
     assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" in shell
-    assert 'LIMEN_NOTIFY_ROOT="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"' in shell
-    assert '--root "${LIMEN_NOTIFY_ROOT:-${LIMEN_ROOT:-}}"' in shell
+    assert '_notify_root="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"' in shell
+    assert '--root "$_notify_root"' in shell
