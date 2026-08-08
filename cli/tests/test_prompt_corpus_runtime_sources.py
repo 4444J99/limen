@@ -44,6 +44,27 @@ def _write_archive_manifest(paths: LedgerPaths, objects: list[dict[str, str]]) -
     )
 
 
+def _write_custody_receipt(
+    paths: LedgerPaths,
+    raw_object: str,
+    prompt_hash: str,
+    name: str = "custody-receipts/fixture.json",
+) -> str:
+    receipt = paths.private_dir / name
+    receipt.parent.mkdir(parents=True, exist_ok=True)
+    receipt.write_text(
+        json.dumps(
+            {
+                "schema_version": "limen.prompt_raw_archive_custody_receipt.v1",
+                "raw_object": raw_object,
+                "prompt_hash": prompt_hash,
+                "archive_location": "archive4t:prompt-atoms:2026-08-08",
+            }
+        )
+    )
+    return name
+
+
 def _load_atom_script():
     spec = importlib.util.spec_from_file_location("prompt_atom_runtime_source_test", ATOM_SCRIPT)
     assert spec is not None and spec.loader is not None
@@ -71,7 +92,11 @@ def test_exact_archive_manifest_substitutes_for_cold_object(tmp_path: Path) -> N
             {
                 "raw_object": occurrence["raw_object"],
                 "prompt_hash": prompt_hash,
-                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+                "custody_receipt": _write_custody_receipt(
+                    paths,
+                    occurrence["raw_object"],
+                    prompt_hash,
+                ),
             }
         ],
     )
@@ -89,7 +114,7 @@ def test_archive_manifest_cannot_bind_the_wrong_digest(tmp_path: Path) -> None:
             {
                 "raw_object": occurrence["raw_object"],
                 "prompt_hash": wrong_hash,
-                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+                "custody_receipt": _write_custody_receipt(paths, relative, prompt_hash),
             }
         ],
     )
@@ -122,6 +147,59 @@ def test_manifest_never_masks_a_present_corrupt_object(tmp_path: Path) -> None:
     errors = validate_raw_references(paths, [occurrence], verify_content=True)
 
     assert errors == ["po-fixture: private raw object digest mismatch"]
+
+
+def test_archive_receipt_must_bind_the_same_digest(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    wrong_hash = "c" * 64
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], wrong_hash)
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": receipt,
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert "custody_receipt prompt_hash mismatch" in "; ".join(errors)
+    assert "private raw object is missing" in "; ".join(errors)
+
+
+def test_archive_manifest_cannot_mask_a_non_file_object(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    candidate = paths.raw_objects / occurrence["raw_object"]
+    candidate.mkdir(parents=True)
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": receipt,
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert errors == ["po-fixture: private raw object exists but is not a regular file"]
+
+
+def test_runtime_root_follows_limen_root(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+
+    module = _load_atom_script()
+    lifecycle = module.load_lifecycle_module()
+
+    assert lifecycle.RUNTIME_ROOT == tmp_path / ".agent-runtime"
 
 
 def test_runtime_roots_survive_source_home_override(tmp_path: Path, monkeypatch) -> None:
