@@ -29,7 +29,7 @@ behind `origin/main`, so `BrokerQuotaExhausted` (#2057) was demonstrably live on
 rail and **absent from the deployed runtime**:
 
 ```bash
-grep -c BrokerQuotaExhausted \\
+grep -c BrokerQuotaExhausted \
   ~/.local/share/limen/current/venv/lib/python3*/site-packages/limen/conduct/client.py
 # expected: 0
 ```
