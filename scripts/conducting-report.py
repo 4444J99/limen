@@ -33,6 +33,7 @@ CONTINUITY = LOGS / "dispatch-continuity.json"
 ROUTING_REASONS = frozenset(
     {"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"}
 )
+TELEMETRY_MAX_AGE_SECONDS = 5400
 
 
 def _load(path, default):
@@ -69,8 +70,27 @@ def _parse_timestamp(value: object) -> datetime | None:
     return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
 
 
-def _continuity_summary() -> str:
+def _fresh_timestamp(payload: object, instant: datetime) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    generated = _parse_timestamp(payload.get("generated") or payload.get("generated_at"))
+    if generated is None:
+        return False
+    age = (instant.astimezone(timezone.utc) - generated.astimezone(timezone.utc)).total_seconds()
+    return 0 <= age <= TELEMETRY_MAX_AGE_SECONDS
+
+
+def _safe_count(value: object) -> int:
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _continuity_summary(instant: datetime) -> str:
     payload = _load(CONTINUITY, {})
+    if not _fresh_timestamp(payload, instant):
+        return "continuity unavailable or stale"
     lanes = payload.get("lanes") if isinstance(payload, dict) else None
     if not isinstance(lanes, dict):
         return "continuity unavailable"
@@ -88,32 +108,39 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
     handoff = _load(HANDOFF, None)
     if not isinstance(handoff, dict):
         return "keeper_unavailable", "handoff missing or unreadable"
-    generated = _parse_timestamp(handoff.get("generated"))
     instant = now or datetime.now(timezone.utc)
     if instant.tzinfo is None:
         instant = instant.replace(tzinfo=timezone.utc)
-    if generated is None or (instant.astimezone(timezone.utc) - generated.astimezone(timezone.utc)).total_seconds() > 5400:
+    if not _fresh_timestamp(handoff, instant):
         return "keeper_unavailable", "handoff missing a fresh keeper timestamp"
 
     admission = handoff.get("dispatch_admission")
     if not isinstance(admission, dict) or admission.get("schema_version") != "limen.dispatch_admission.v1":
         return "keeper_unavailable", "canonical dispatch admission unavailable"
 
-    admissible = int(admission.get("admissible") or 0)
-    open_considered = int(admission.get("open_considered") or 0)
+    admissible = _safe_count(admission.get("admissible"))
+    open_considered = _safe_count(admission.get("open_considered"))
+    continuity = _continuity_summary(instant)
     if admissible > 0 or admission.get("dispatchable_next"):
-        return "routable", f"admissible={admissible}; {_continuity_summary()}"
+        return "routable", f"admissible={admissible}; {continuity}"
 
     reasons = admission.get("reason_counts")
     reasons = reasons if isinstance(reasons, dict) else {}
-    reason_keys = {str(key).lower() for key, value in reasons.items() if value}
-    vendors = ((handoff.get("provider_headroom") or {}).get("vendors") or {})
+    active_reasons = {str(key): _safe_count(value) for key, value in reasons.items() if _safe_count(value)}
+    reason_keys = {key.lower() for key in active_reasons}
+    explicit_auth_block = any("auth" in key or "credential" in key for key in reason_keys)
+    provider_health_block = "provider_health" in reason_keys
+
+    provider_headroom = handoff.get("provider_headroom")
+    if provider_health_block and not _fresh_timestamp(provider_headroom, instant):
+        return "keeper_unavailable", f"provider-health telemetry unavailable or stale; {continuity}"
+    vendors = provider_headroom.get("vendors", {}) if isinstance(provider_headroom, dict) else {}
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
         for row in vendors.values()
         if isinstance(row, dict)
     }
-    if any("auth" in key or "credential" in key for key in reason_keys) or provider_states & {
+    if explicit_auth_block or provider_health_block and provider_states & {
         "auth_needed",
         "auth_blocked",
         "unauthenticated",
@@ -123,10 +150,11 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
         capacity_keys = {"budget_global", "budget_agent", "provider_health", "capacity"}
         reason = "capacity_blocked" if reason_keys and reason_keys <= capacity_keys else "admission_blocked"
     detail = f"open={open_considered}; gates=" + (
-        ",".join(f"{key}={reasons[key]}" for key in sorted(reasons)) if reasons else "board_empty"
+        ",".join(f"{key}={active_reasons[key]}" for key in sorted(active_reasons))
+        if active_reasons
+        else "board_empty"
     )
-    return reason, f"{detail}; {_continuity_summary()}"
-
+    return reason, f"{detail}; {continuity}"
 
 def _local_day(now: datetime | None = None) -> str:
     """Daily dedupe follows the host's local calendar, not a UTC usage timestamp."""
@@ -196,7 +224,7 @@ def build_report() -> tuple[str, str, str, str]:
         headline = f"FULL FORCE — {burned}/{len(lines)} lanes burned to the drops"
     elif idle:
         if routing_reason == "routable":
-            headline = f"ROUTABLE BUT IDLE — {idle} lane(s) sat at a full tank"
+            headline = f"ROUTABLE WORK EXISTS — fleet admission is open while {idle} lane(s) are idle"
         else:
             headline = f"IDLED — {idle} lane(s) sat at a full tank ({routing_reason})"
     else:
