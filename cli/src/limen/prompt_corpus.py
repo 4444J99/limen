@@ -3839,6 +3839,7 @@ def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, 
         }
     return entries, errors
 
+
 def validate_raw_references(
     paths: LedgerPaths,
     occurrences: Sequence[dict[str, Any]],
