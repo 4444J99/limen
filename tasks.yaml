@@ -165743,3 +165743,36 @@ tasks:
     conduct_lease_id: 'lease-655-b8215c5d99d6e9b2'
     conduct_generation: 655
   updated: '2026-08-08T00:30:15.157Z'
+- id: 'GH-organvm-limen-2049'
+  title: 'The his-hand lever registry has no pre-merge gate — its PII/ownership predicate runs only on the beat, after merge'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2049'
+  context: 'GitHub issue organvm/limen#2049. `his-hand-levers.json` is the permanent, **publishing** home for human-gated atoms. Its integrity predicate — `scripts/no-tasks-on-me.sh` — checks that every lever carries an `issue:` pointer, that no lever id named in prose dangles without an object (§8), and that the file is **PII-clean**. That predicate never runs on a pull request. ## Measured Derived from the GATES registry rather than by rea'
+  predicate: 'test "$(gh issue view 2049 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2049'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2049'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:20.259Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-a722bba1754cfe0451092fd891e69206:656:compatibility'
+    conduct_run_id: 'run-a722bba1754cfe0451092fd891e69206'
+    conduct_lease_id: 'lease-656-a722bba1754cfe04'
+    conduct_generation: 656
+  updated: '2026-08-08T00:30:20.259Z'
