@@ -78,7 +78,8 @@ import _root  # noqa: E402  — hard import: this predicate has no meaning witho
 
 NOTIFIER_REL = Path("scripts") / "_notify.py"
 GATE_FUNC = "_root_may_speak"
-EFFECTOR_FUNC = "notify_once"
+PUBLIC_EFFECTORS = frozenset({"notify", "notify_once"})
+DELIVERY_FUNC = "_deliver"
 
 # The runtime install tree. Domus rotates it under `runtimes/<sha>/source` and points
 # `current` at one; launchd runs overnight-watch from there, so it is a real speaker even
@@ -136,45 +137,87 @@ def enumerate_roots(live: Path) -> list[Path]:
     return list(seen)
 
 
+def _called_names(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+    called: set[str] = set()
+    for node in ast.walk(function):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name):
+            called.add(node.func.id)
+        elif isinstance(node.func, ast.Attribute):
+            called.add(node.func.attr)
+    return called
+
+
 def gate_state(notifier: Path) -> tuple[bool, str]:
-    """(is_gated, reason). Parsed, not grepped — a mention in a comment is not a gate."""
+    """Prove that every public route to the macOS effector checks the live-root gate."""
     try:
         tree = ast.parse(notifier.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError) as exc:
+    except (OSError, UnicodeError, SyntaxError) as exc:
         return False, f"unparseable ({exc})"
 
-    defines = {n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    if GATE_FUNC not in defines:
-        return False, f"no {GATE_FUNC}() — notify_once reaches osascript ungated"
+    functions = {
+        node.name: node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    if GATE_FUNC not in functions:
+        return False, f"no {GATE_FUNC}() — public notification routes are ungated"
 
-    effector = next(
-        (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == EFFECTOR_FUNC),
-        None,
-    )
-    if effector is None:
-        return True, f"{GATE_FUNC}() defined; no {EFFECTOR_FUNC}() to gate"
+    effectors: list[str] = []
+    for name, function in functions.items():
+        called = _called_names(function)
+        literals = {
+            node.value.lower()
+            for node in ast.walk(function)
+            if isinstance(node, ast.Constant) and isinstance(node.value, str)
+        }
+        invokes_osascript = any("osascript" in value for value in literals)
+        if name in PUBLIC_EFFECTORS and (DELIVERY_FUNC in called or invokes_osascript):
+            effectors.append(name)
 
-    called = {n.func.id for n in ast.walk(effector) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-    if GATE_FUNC not in called:
-        return False, f"{GATE_FUNC}() is defined but {EFFECTOR_FUNC}() never calls it"
-    return True, f"{EFFECTOR_FUNC}() is gated on {GATE_FUNC}()"
+    ungated = [name for name in effectors if GATE_FUNC not in _called_names(functions[name])]
+    if ungated:
+        return False, f"public effector(s) bypass {GATE_FUNC}(): {', '.join(sorted(ungated))}"
+    if not effectors:
+        return True, "no public macOS notification effector"
+    return True, f"public effector(s) gated on {GATE_FUNC}(): {', '.join(sorted(effectors))}"
 
 
 DIRECT_SUFFIXES = {".py", ".sh", ".bash", ".zsh"}
-_DISPLAY_RE = re.compile(r"\bosascript\b.*\bdisplay\s+notification\b", re.IGNORECASE)
+_DISPLAY_RE = re.compile(
+    r"\bosascript\b[\s\S]{0,8192}?\bdisplay\s+notification\b",
+    re.IGNORECASE,
+)
+_PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output", "system"})
 
 
 def _source_paths(root: Path) -> list[Path]:
-    """Tracked executable sources, with a runtime-copy fallback when git metadata is absent."""
+    """Return only tracked sources mentioning osascript; avoid estate-wide AST parsing."""
+    candidates: list[Path]
     try:
-        done = subprocess.run(
-            ["git", "-C", str(root), "ls-files"],
+        found = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "grep",
+                "-Il",
+                "-e",
+                "osascript",
+                "--",
+                "*.py",
+                "*.sh",
+                "*.bash",
+                "*.zsh",
+            ],
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
-        if done.returncode == 0 and done.stdout.strip():
-            candidates = [root / line for line in done.stdout.splitlines()]
+        if found.returncode in {0, 1}:
+            candidates = [root / line for line in found.stdout.splitlines() if line.strip()]
         else:
             candidates = list((root / "scripts").rglob("*"))
     except (OSError, subprocess.SubprocessError):
@@ -193,9 +236,14 @@ def _source_paths(root: Path) -> list[Path]:
 def _python_bypasses(path: Path) -> bool:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError):
+    except (OSError, UnicodeError, SyntaxError):
         return False
     for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
+        call_name = call.func.id if isinstance(call.func, ast.Name) else (
+            call.func.attr if isinstance(call.func, ast.Attribute) else ""
+        )
+        if call_name not in _PROCESS_CALLS:
+            continue
         literals = [
             node.value
             for node in ast.walk(call)
@@ -209,9 +257,10 @@ def _python_bypasses(path: Path) -> bool:
 def _shell_bypasses(path: Path) -> bool:
     try:
         text = path.read_text(encoding="utf-8").replace("\\\n", " ")
-    except OSError:
+    except (OSError, UnicodeError):
         return False
-    return any(_DISPLAY_RE.search(line.split("#", 1)[0]) for line in text.splitlines())
+    executable = "\n".join(line.split("#", 1)[0] for line in text.splitlines())
+    return _DISPLAY_RE.search(executable) is not None
 
 
 def direct_notification_effectors(root: Path) -> list[str]:
@@ -291,10 +340,14 @@ def survey(live: Path) -> list[dict]:
     scheduled = scheduled_root()
     for root in enumerate_roots(live):
         notifier = root / NOTIFIER_REL
-        if not notifier.is_file():
-            continue  # not every checkout ships the notifier; absent cannot pop the phone
-        gated, reason = gate_state(notifier)
         direct_effectors = direct_notification_effectors(root)
+        if notifier.is_file():
+            gated, reason = gate_state(notifier)
+        elif direct_effectors:
+            gated = False
+            reason = "shared notifier absent while direct effectors exist"
+        else:
+            continue
         if direct_effectors:
             gated = False
             reason = "direct display-notification effector(s) bypass _notify.py: " + ", ".join(direct_effectors)
@@ -331,7 +384,11 @@ def main(argv: list[str] | None = None) -> int:
         # A scheduled executor is never recorded. The baseline means "known, draining"; writing
         # the launchd-run copy into it would convert a live hazard into an accepted one with a
         # single flag — precisely the shape of guard this lineage keeps learning not to build.
-        recordable = {r["root"] for r in ungated if r["executor"] != "scheduled"}
+        recordable = {
+            r["root"]
+            for r in ungated
+            if r["executor"] != "scheduled" and not r["direct_effectors"]
+        }
         write_baseline(recordable)
         print(f"check-notify-gate: baseline updated — {len(recordable)} dormant ungated copy(ies) recorded")
         return 0
@@ -342,7 +399,11 @@ def main(argv: list[str] | None = None) -> int:
     # are cut from main, so a fresh one inherits the gate; an unrecorded ungated copy means the
     # gate came off somewhere.
     scheduled_ungated = [r for r in ungated if r["executor"] == "scheduled"]
-    regressions = [r for r in ungated if r["root"] not in baseline and r["executor"] != "scheduled"]
+    regressions = [
+        r
+        for r in ungated
+        if r["executor"] != "scheduled" and (r["direct_effectors"] or r["root"] not in baseline)
+    ]
 
     if args.json:
         print(
