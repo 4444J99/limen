@@ -26,6 +26,74 @@ def _load_ingest_module():
     return module
 
 
+def validate_irf_receipt(
+    irf: object,
+    *,
+    active_levers: set[str],
+) -> list[str]:
+    """Derive the complete 41-row ownership partition from row-level evidence."""
+    failures: list[str] = []
+    if not isinstance(irf, dict):
+        return ["IRF receipt must be an object"]
+    rows = irf.get("rows")
+    if not isinstance(rows, list):
+        return ["IRF rows must be a list"]
+    valid_rows = [row for row in rows if isinstance(row, dict)]
+    if len(valid_rows) != len(rows):
+        failures.append("IRF rows contain a non-object entry")
+    by_id = {
+        str(row.get("irf_id")): row
+        for row in valid_rows
+        if isinstance(row.get("irf_id"), str) and row.get("irf_id")
+    }
+    if not (
+        irf.get("denominator")
+        == irf.get("classified")
+        == len(rows)
+        == len(by_id)
+        == 41
+    ):
+        failures.append("IRF denominator/classification is not exactly 41 unique rows")
+    if irf.get("unowned") != []:
+        failures.append(f"IRF receipt has unowned rows: {irf.get('unowned')}")
+
+    declared_human = irf.get("human_gate_irf_ids")
+    human_ids = (
+        {str(irf_id) for irf_id in declared_human}
+        if isinstance(declared_human, list)
+        else set()
+    )
+    if not human_ids:
+        failures.append("IRF human-gate denominator is empty")
+    human_owner = irf.get("human_gate_owner")
+    derived_human: set[str] = set()
+    for irf_id, row in by_id.items():
+        owner_kind = row.get("owner_kind")
+        owner_ref = row.get("owner_ref")
+        disposition = row.get("disposition")
+        if irf_id in human_ids:
+            derived_human.add(irf_id)
+            if (
+                owner_kind != "lever"
+                or owner_ref != human_owner
+                or disposition != "human_gate"
+            ):
+                failures.append(f"IRF human-gate ownership drift: {irf_id}")
+        elif (
+            owner_kind != "irf"
+            or owner_ref != f"irf:{irf_id}"
+            or disposition != "owned"
+        ):
+            failures.append(f"IRF owned-row ownership drift: {irf_id}")
+    if derived_human != human_ids:
+        failures.append("IRF human-gate ID set does not match the row partition")
+
+    owner_id = str(human_owner or "").removeprefix("lever:")
+    if owner_id not in active_levers:
+        failures.append(f"IRF human-gate lever is not active: {owner_id or '<missing>'}")
+    return failures
+
+
 def main() -> int:
     failures: list[str] = []
     schema_path = ROOT / "spec" / "contracts" / "cloud-routine-receipt-v1.schema.json"
@@ -63,31 +131,13 @@ def main() -> int:
 
     try:
         irf = json.loads(irf_path.read_text(encoding="utf-8"))
-        rows = irf["rows"]
-        by_id = {row["irf_id"]: row for row in rows}
-        human_ids = set(irf["human_gate_irf_ids"])
-        if not irf["denominator"] == irf["classified"] == len(rows) == len(by_id) == 41:
-            failures.append("IRF denominator/classification is not exactly 41 unique rows")
-        if irf["unowned"]:
-            failures.append(f"IRF receipt has unowned rows: {irf['unowned']}")
-        if not human_ids:
-            failures.append("IRF human-gate denominator is empty")
-        for irf_id in sorted(human_ids):
-            row = by_id.get(irf_id)
-            if not row:
-                failures.append(f"IRF human-gate row missing: {irf_id}")
-                continue
-            if (
-                row.get("owner_kind") != "lever"
-                or row.get("owner_ref") != irf["human_gate_owner"]
-                or row.get("disposition") != "human_gate"
-            ):
-                failures.append(f"IRF human-gate ownership drift: {irf_id}")
-        lever_payload = json.loads(lever_path.read_text(encoding="utf-8"))
-        lever_ids = {lever["id"] for lever in lever_payload["levers"]}
-        owner_id = str(irf["human_gate_owner"]).removeprefix("lever:")
-        if owner_id not in lever_ids:
-            failures.append(f"IRF human-gate lever is not registered: {owner_id}")
+        active_levers = _load_ingest_module().active_lever_ids(lever_path)
+        failures.extend(
+            validate_irf_receipt(
+                irf,
+                active_levers=active_levers,
+            )
+        )
     except Exception as exc:
         failures.append(f"IRF denominator: {exc}")
 
