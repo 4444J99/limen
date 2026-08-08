@@ -69,6 +69,7 @@ _AUTH_NEEDED_STATES = frozenset(
 _AUTHENTICATED_STATES = frozenset(
     {"authenticated", "connected", "ready", "logged_in"}
 )
+_HEALABLE_STATES = frozenset({"unreachable", "boot_failed", "invalid"})
 
 
 def _normalized_auth_state(value: object) -> str | None:
@@ -79,8 +80,10 @@ def _normalized_auth_state(value: object) -> str | None:
     compact = re.sub(r"[^a-z0-9]+", "", value.strip().lower())
     if label in _AUTH_NEEDED_STATES or compact == "notloggedin":
         return "auth_needed"
-    if label in _AUTHENTICATED_STATES or compact in {"bearertoken", "oauth", "loggedin"}:
+    if label in _AUTHENTICATED_STATES or compact in {"oauth", "loggedin"}:
         return "authenticated"
+    if compact == "unsupported":
+        return "reachable"
     return None
 
 
@@ -120,16 +123,26 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str]:
             auth = authentication.get("status") or authentication.get("state")
         if auth is None:
             auth = row.get("status")
+        compact_auth = re.sub(r"[^a-z0-9]+", "", str(auth).strip().lower())
+        if compact_auth == "bearertoken":
+            env_name = row.get("bearer_token_env_var") or row.get("bearerTokenEnvVar")
+            if not isinstance(env_name, str) or not env_name.strip():
+                statuses[name.casefold()] = "auth_unknown"
+            elif os.environ.get(env_name):
+                statuses[name.casefold()] = "authenticated"
+            else:
+                statuses[name.casefold()] = "auth_needed"
+            continue
         state = _normalized_auth_state(auth)
         if state:
             statuses[name.casefold()] = state
     return statuses
 
 
-def _codex_mcp_statuses() -> dict[str, str]:
-    """Return Codex's semantic MCP authentication states without emitting CLI output."""
+def _codex_mcp_statuses() -> tuple[dict[str, str], str | None]:
+    """Return Codex semantic states plus a sanitized probe failure, if any."""
     if not shutil.which("codex"):
-        return {}
+        return {}, "Codex CLI unavailable"
     try:
         result = subprocess.run(
             ["codex", "mcp", "list", "--json"],
@@ -139,10 +152,14 @@ def _codex_mcp_statuses() -> dict[str, str]:
             env=os.environ.copy(),
         )
         if result.returncode != 0:
-            return {}
-        return parse_codex_mcp_statuses(json.loads(result.stdout))
-    except (json.JSONDecodeError, OSError, subprocess.SubprocessError):
-        return {}
+            return {}, f"Codex status probe exited rc={result.returncode}"
+        return parse_codex_mcp_statuses(json.loads(result.stdout)), None
+    except json.JSONDecodeError:
+        return {}, "Codex status probe returned invalid JSON"
+    except subprocess.TimeoutExpired:
+        return {}, "Codex status probe timed out"
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {}, f"Codex status probe failed ({type(exc).__name__})"
 
 
 def _strip_jsonc(text: str) -> str:
@@ -400,17 +417,35 @@ def probe(server: dict, timeout: int) -> dict:
     return {**server, "ok": ok, "state": state, "detail": detail}
 
 
-def _apply_codex_semantic_state(result: dict, statuses: dict[str, str]) -> dict:
-    """Overlay Codex OAuth truth on a successful HTTP transport probe."""
+def _apply_codex_semantic_state(
+    result: dict,
+    statuses: dict[str, str],
+    status_error: str | None,
+) -> dict:
+    """Overlay Codex authentication truth on a successful HTTP transport probe."""
     if result["agent"] != "codex" or result["transport"] != "http" or not result["ok"]:
         return result
-    auth_state = statuses.get(result["name"].casefold())
+    if status_error:
+        return {
+            **result,
+            "ok": False,
+            "state": "auth_unknown",
+            "detail": f"{result['detail']}; {status_error}",
+        }
+    auth_state = statuses.get(result["name"].casefold(), "auth_unknown")
     if auth_state == "auth_needed":
         return {
             **result,
             "ok": False,
             "state": "auth_needed",
-            "detail": f"{result['detail']}; OAuth authentication required",
+            "detail": f"{result['detail']}; Codex authentication required",
+        }
+    if auth_state == "auth_unknown":
+        return {
+            **result,
+            "ok": False,
+            "state": "auth_unknown",
+            "detail": f"{result['detail']}; Codex authentication state unknown",
         }
     if auth_state == "authenticated":
         return {**result, "state": "authenticated"}
@@ -419,15 +454,23 @@ def _apply_codex_semantic_state(result: dict, statuses: dict[str, str]) -> dict:
 
 def probe_all(servers: list[dict], timeout: int) -> list[dict]:
     """Probe transport once per server and Codex semantic status once per batch."""
-    codex_statuses = (
-        _codex_mcp_statuses()
-        if any(s["agent"] == "codex" and s["transport"] == "http" for s in servers)
-        else {}
-    )
+    if any(s["agent"] == "codex" and s["transport"] == "http" for s in servers):
+        codex_statuses, codex_status_error = _codex_mcp_statuses()
+    else:
+        codex_statuses, codex_status_error = {}, None
     return [
-        _apply_codex_semantic_state(probe(server, timeout), codex_statuses)
+        _apply_codex_semantic_state(
+            probe(server, timeout),
+            codex_statuses,
+            codex_status_error,
+        )
         for server in servers
     ]
+
+
+def _healable_failures(results: list[dict]) -> list[dict]:
+    """Return only failures the bounded config/boot healer can actually repair."""
+    return [result for result in results if result.get("state") in _HEALABLE_STATES]
 
 
 # ── Heal effector (dormant unless --apply, which the sensor only passes when LIMEN_MCP_BOOT_HEAL=1) ─
@@ -485,8 +528,9 @@ def main(argv=None) -> int:
     failed = [r for r in results if not r["ok"]]
 
     healed: list[str] = []
-    if args.apply and failed:
-        healed = _heal(failed)
+    healable = _healable_failures(results)
+    if args.apply and healable:
+        healed = _heal(healable)
         results = probe_all(servers, args.timeout)  # re-probe once after heal
         failed = [r for r in results if not r["ok"]]
 
