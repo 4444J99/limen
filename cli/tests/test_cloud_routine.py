@@ -43,6 +43,11 @@ def test_new_work_requires_exact_repository_owner() -> None:
         _receipt(owner_ref="organvm/limen#2120")
 
 
+def test_observation_time_must_be_timezone_aware() -> None:
+    with pytest.raises(ValidationError, match="include a timezone"):
+        _receipt(observed_at="2026-08-08T12:00:00")
+
+
 def test_non_material_observation_can_have_no_owner() -> None:
     receipt = _receipt(
         status="ok",
