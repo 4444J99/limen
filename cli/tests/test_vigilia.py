@@ -525,7 +525,7 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert 'python3 - "$_fw_timeout" "$@"' in fast_body
     assert "BASHPID" not in fast_body
     assert '[ "$FAST_WAVE_SECONDS" -ge 60 ]' not in heartbeat
-    assert '${LIMEN_BEAT_DERIVE:-1}' in fast_body
+    assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
 
 
 def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
