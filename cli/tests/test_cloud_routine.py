@@ -106,6 +106,20 @@ def test_repeated_finding_and_pending_ticket_are_idempotent() -> None:
     assert pending_batch.duplicates == 1
 
 
+def test_active_recurrence_occurrence_blocks_another_lineage_task() -> None:
+    receipt = _receipt()
+    lineage_id = task_id_for(receipt)
+
+    plan = plan_task_upserts(
+        [receipt],
+        pending_ids={f"{lineage_id}-20260808T110000Z"},
+        historical_ids={lineage_id},
+    )
+
+    assert plan.tasks == ()
+    assert plan.duplicates == 1
+
+
 def test_terminal_lineage_can_emit_a_new_occurrence() -> None:
     receipt = _receipt()
     lineage_id = task_id_for(receipt)
@@ -147,14 +161,39 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     valid = _receipt().model_dump(mode="json")
     invalid_placeholder = {**valid, "predicate": "python <TODO>"}
     invalid_quote = {**valid, "predicate": "python '"}
+    invalid_semicolon = {**valid, "predicate": "python check.py; true"}
+    invalid_pipeline = {**valid, "predicate": "python check.py | true"}
+    invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
 
     assert not list(validator.iter_errors(valid))
     assert list(validator.iter_errors(invalid_placeholder))
     assert list(validator.iter_errors(invalid_quote))
+    assert list(validator.iter_errors(invalid_semicolon))
+    assert list(validator.iter_errors(invalid_pipeline))
+    assert list(validator.iter_errors(invalid_owner))
     human_gate = schema["allOf"][-1]
     assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
     assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
     assert human_gate["then"]["properties"]["owner_ref"]["pattern"].startswith("^lever:")
+
+
+def test_model_rejects_unquoted_shell_composition() -> None:
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate="python check.py; true")
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate="python check.py | true")
+
+
+def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
+    gates = (ROOT / "institutio" / "governance" / "gates.yaml").read_text(encoding="utf-8")
+    for path in (
+        "spec/contracts/cloud-routine-receipt-v1.schema.json",
+        "scripts/cloud-routine-ingest.py",
+        "scripts/check-cloud-routine-ingest.py",
+        "docs/receipts/cloud-routine-findings-20260808.json",
+        "docs/receipts/irf-p0-owner-classification-20260808.json",
+    ):
+        assert path in gates
 
 
 def test_current_findings_are_typed_and_already_owned() -> None:
