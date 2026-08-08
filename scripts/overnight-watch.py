@@ -71,6 +71,8 @@ PRIVATE_SESSION_CORPUS = Path(
 )
 PROMPT_ATOM_SNAPSHOT = PRIVATE_SESSION_CORPUS / "prompt-atoms" / "prompt-atom-ledger.json"
 HEARTBEAT_LOG = LOGS / "heartbeat.out.log"
+FAST_WAVE_PID_PATH = LOGS / "vigilia" / "fast-wave.pid"
+HOST_PRESSURE_STALE_SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
 ASYNC_RUNS = LOGS / "async-runs"
 STATE_PATH = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_STATE", LOGS / "overnight-watch-state.json"))
 RECEIPT_JSONL = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_RECEIPT", LOGS / "overnight-watch.jsonl"))
@@ -365,6 +367,26 @@ def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
             }
         )
     return children
+
+
+def resident_fast_wave_pid() -> str | None:
+    try:
+        value = FAST_WAVE_PID_PATH.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return value if value.isdigit() else None
+
+
+def host_pressure_snapshot() -> dict[str, Any]:
+    if not HOST_PRESSURE_STALE_SCRIPT.is_file():
+        return {"ok": False, "returncode": None, "detail": "host-pressure-stale.py missing"}
+    completed = run([sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)], timeout=30)
+    detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
+    return {
+        "ok": completed.returncode == 0,
+        "returncode": completed.returncode,
+        "detail": detail[-500:],
+    }
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -1776,6 +1798,21 @@ def build_snapshot(
     workers = active_workers()
     launchd = launchd_snapshot()
     children = heartbeat_child_processes(launchd.get("pid"))
+    fast_wave_pid = resident_fast_wave_pid()
+    progress_children = [
+        child
+        for child in children
+        if str(child.get("pid") or "") != str(fast_wave_pid or "")
+    ]
+    resident_fast_wave = next(
+        (
+            child
+            for child in children
+            if str(child.get("pid") or "") == str(fast_wave_pid or "")
+        ),
+        None,
+    )
+    host_pressure = host_pressure_snapshot()
 
     captured_at = utc_now().replace(microsecond=0)
     snapshot: dict[str, Any] = {
@@ -1786,8 +1823,10 @@ def build_snapshot(
         "launchd": launchd,
         "workers": workers,
         "worker_count": len(workers),
-        "heartbeat_children": children,
-        "heartbeat_child_count": len(children),
+        "heartbeat_children": progress_children,
+        "heartbeat_child_count": len(progress_children),
+        "resident_fast_wave": resident_fast_wave,
+        "host_pressure": host_pressure,
         "stale_tick_count": stale_count,
         "thresholds": {
             "max_log_age_sec": MAX_LOG_AGE_SEC,
@@ -1840,6 +1879,14 @@ def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
 def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     alerts: list[dict[str, str]] = []
     launchd = snapshot.get("launchd") or {}
+    host_pressure = snapshot.get("host_pressure") or {}
+    if host_pressure and not host_pressure.get("ok", False):
+        alerts.append(
+            {
+                "id": "vitals-sample-stale",
+                "evidence": str(host_pressure.get("detail") or "host-pressure watcher failed")[:500],
+            }
+        )
     env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
