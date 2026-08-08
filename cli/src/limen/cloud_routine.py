@@ -118,6 +118,7 @@ def task_for(receipt: CloudRoutineReceiptV1) -> Task:
         priority="medium",
         budget_cost=1,
         status="open",
+        created=receipt.observed_at.date(),
         predicate=receipt.predicate,
         receipt_target=f"github:{receipt.owner_ref}:pull-request:{task_id}",
         origin="system_debt",
