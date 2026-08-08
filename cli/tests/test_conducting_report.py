@@ -66,7 +66,15 @@ tasks:
     assert "private target" not in encoded
 
 
-def _handoff(logs: Path, *, admissible: int = 0, reasons: dict | None = None, provider_state: str = "ok"):
+def _handoff(
+    logs: Path,
+    *,
+    admissible: int = 0,
+    reasons: dict | None = None,
+    provider_state: str = "ok",
+    provider_states: dict[str, str] | None = None,
+    blocked_providers: dict[str, int] | None = None,
+):
     logs.mkdir(exist_ok=True)
     payload = {
         "generated": datetime.now(timezone.utc).isoformat(),
@@ -77,11 +85,19 @@ def _handoff(logs: Path, *, admissible: int = 0, reasons: dict | None = None, pr
             "admissible": admissible,
             "gated": sum((reasons or {}).values()),
             "reason_counts": reasons or {},
+            "provider_health_reason_counts": (
+                blocked_providers
+                if blocked_providers is not None
+                else ({"codex": (reasons or {}).get("provider_health", 0)} if (reasons or {}).get("provider_health") else {})
+            ),
             "dispatchable_next": {"id": "TASK-1"} if admissible else None,
         },
         "provider_headroom": {
             "generated": datetime.now(timezone.utc).isoformat(),
-            "vendors": {"codex": {"state": provider_state}},
+            "vendors": {
+                name: {"state": state}
+                for name, state in (provider_states or {"codex": provider_state}).items()
+            },
         },
     }
     (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
@@ -132,6 +148,19 @@ def test_unrelated_vendor_auth_does_not_override_keeper_gate(tmp_path, monkeypat
     _handoff(logs, reasons={"dependencies": 1}, provider_state="auth_needed")
 
     assert module._routing_reason()[0] == "admission_blocked"
+
+
+def test_provider_auth_must_belong_to_the_provider_health_blocker(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(
+        logs,
+        reasons={"provider_health": 1},
+        provider_states={"codex": "exhausted", "claude": "auth_needed"},
+        blocked_providers={"codex": 1},
+    )
+
+    assert module._routing_reason()[0] == "capacity_blocked"
 
 
 def test_routable_requires_fresh_provider_telemetry(tmp_path, monkeypatch):
