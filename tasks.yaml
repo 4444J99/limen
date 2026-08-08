@@ -165676,3 +165676,36 @@ tasks:
     conduct_lease_id: 'lease-641-b92181f8c1923d29'
     conduct_generation: 641
   updated: '2026-08-07T16:55:41.741Z'
+- id: 'GH-organvm-limen-2056'
+  title: 'audit: 86 `tail -N` truncations in heartbeat-loop.sh — which are swallowing findings?'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2056'
+  context: 'GitHub issue organvm/limen#2056. ## The class Two independent PRs today fixed the same defect shape in different rungs of `scripts/heartbeat-loop.sh`: - **#2048** — the metabolize sensor pass ran `beat-sensors.py --run --source metabolize ... 2>&1 | tail -5`. 57 sensors, well over a hundred lines, five kept. The `review-harvest` sensor ran, reported unresolved agent findings, and no log in the estate recorded a word of it. - **#2'
+  predicate: 'test "$(gh issue view 2056 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2056'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2056'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T00:30:09.413Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-52db8c5633f16e7c1b2c8bf921668dc0:654:compatibility'
+    conduct_run_id: 'run-52db8c5633f16e7c1b2c8bf921668dc0'
+    conduct_lease_id: 'lease-654-52db8c5633f16e7c'
+    conduct_generation: 654
+  updated: '2026-08-08T00:30:09.413Z'
