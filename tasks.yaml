@@ -108622,7 +108622,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'user-ask'
   - 'quicken-residue'
@@ -108631,7 +108631,7 @@ tasks:
   context: 'Cheapest path → send the drafted message (never auto-send). Unblocks: mail workstream roadmap. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-08-04T15:40:40.096Z'
+  updated: '2026-08-08T00:11:07.324Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:40.096Z'
     agent: 'codex'
@@ -108644,6 +108644,18 @@ tasks:
     conduct_run_id: 'run-b163d1dff3a0fae6735c6cb0a87b8dde'
     conduct_lease_id: 'lease-518-b163d1dff3a0fae6'
     conduct_generation: 518
+  - timestamp: '2026-08-08T00:11:07.324Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-64a45f490cd321eb915117808c63b2f4:646:compatibility'
+    conduct_run_id: 'run-64a45f490cd321eb915117808c63b2f4'
+    conduct_lease_id: 'lease-646-64a45f490cd321eb'
+    conduct_generation: 646
 - id: HEAL-cifix-organvm-limen-401
   title: fix failing CI on organvm/limen#401
   repo: organvm/limen
