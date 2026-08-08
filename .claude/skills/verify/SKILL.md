@@ -21,6 +21,25 @@ readlink ~/.local/share/limen/current  # -> runtimes/<merged-sha>
 So `limen <verb>` runs **merged code**, never your branch. A change reaches the deployed CLI only
 after merge + `domus-limen-runtime install --sha <merged-sha>`.
 
+**Two rails run different code, and confusing them turns a real verification into a false one.**
+A `scripts/*.py` organ inserts the *live checkout's* `cli/src` at `sys.path[0]`
+(`heal-board.py:49`), so it executes your merged working tree the moment `sync-release.sh`
+fast-forwards it. The installed CLI does not. Measured 2026-08-07: the pin was **62 commits**
+behind `origin/main`, so `BrokerQuotaExhausted` (#2057) was demonstrably live on the heal-board
+rail and **absent from the deployed runtime** — `grep -c BrokerQuotaExhausted
+~/.local/share/limen/current/venv/lib/python3*/site-packages/limen/conduct/client.py` → `0`.
+Verifying a `cli/src` fix by driving a *script* proves nothing about `limen <verb>`, and the
+reverse holds too. State which rail you drove.
+
+The lag is already sensed — do not re-derive it:
+
+```bash
+python3 scripts/check-runtime-lag.py     # exit 1 + the exact `domus-limen-runtime install --sha` line
+readlink ~/.local/share/limen/current    # what is actually installed
+```
+
+It takes no `--check` flag (passing one is an argparse error, i.e. exit 2 — not a verdict).
+
 To drive **your** code through the real entrypoint, shadow the installed package with `PYTHONPATH`
 (it precedes site-packages) while keeping the runtime's venv for dependencies:
 
@@ -81,6 +100,35 @@ Two traps, both measured 2026-08-07 while verifying a sensor shipped hours earli
 `source: [metabolize]` sensors do **not** run every heartbeat tick. `metabolize.sh` has no scheduler;
 the daemon runs them from one wall-clock-throttled rung (`metabolize_pass_due`, hourly by
 `LIMEN_METABOLIZE_SENSORS_SECS`). A sensor absent from the beat log for ten minutes is normal.
+
+## Start here: ask which rungs are failing on EVERY beat
+
+Since #2050 the beat records one `{ts,rung,exit}` per rung per beat, and #2059 folds it into
+per-rung consecutive-failure streaks. That makes "what is quietly broken in the live fleet" a
+one-command question, and it is the cheapest high-yield probe available — **run it before
+anything else.**
+
+```bash
+python3 scripts/enactment-audit.py --efficacy-only        # streaks, with the threshold applied
+grep -v '"exit":0' logs/beat-rungs.jsonl                  # every non-zero outcome, raw
+grep -a "RUNG FAIL" logs/heartbeat.out.log | tail -20     # the banners, with real diagnostics
+sed -n '<start>,<end>p' logs/heartbeat.out.log            # the block, for the actual traceback
+```
+
+Asked once on 2026-08-07 it returned three live defects in minutes, two of them unknown:
+`heal-board-canonical` (exit 75, the filed keeper-quota block), `limen-release-stale` (409 —
+issue #2063), and `generate-organ-backlog` (`IntakeContractError` on a ladder row spanning two
+repos). Read `exit=75` as **blocked on a filed human-owned condition** (`EX_TEMPFAIL`), not as a
+fleet defect — it is deliberately reported without going RED.
+
+Two things to keep in mind when reading a streak:
+
+- **A streak of 1 is noise by design** (`LIMEN_RUNG_FAIL_STREAK_RED`, default 3). Do not chase it
+  until it repeats; do not dismiss it either — check whether the rung even runs every beat.
+- **A rung absent from the ledger is not a healthy rung.** Only ~16 labels appear after a handful
+  of beats because most rungs are cadence-throttled, and a rung invoked without `beat_run` never
+  records at all. `institutio/governance/beat-diagnostics-baseline.txt` names how many sites in
+  each beat script are still unrecorded.
 
 ## Comparing shipped vs pre-fix code (the A/B that proves a fix)
 
@@ -207,6 +255,26 @@ option and does not apply to blob shows).
   (`scripts/verify-scoped.sh` reports `EXIT=75 heavy-lease-held` when one is active), not check
   `uptime`. And note the suite is itself a load source: `pytest -n auto` drove this host past 13 on
   its own, so a full-gate run is never quiet in the `uptime` sense and never needs to be.
+
+  **But the lease only covers verification owners — the BEAT is uncovered heavy work.** The `heavy`
+  lease (`limen.host_admission`, denial reason built as `f"{kind}-lease-held"` at
+  `host_admission.py:1092`, surfaced by `scripts/verify.py:783` as exit **75**) serializes one
+  verification run against another. It knows nothing about `limen dispatch --live`, which the
+  heartbeat launches on its own cadence. So **`EXIT=75` absent is not proof of a quiet host.**
+  Measured 2026-08-07: a scoped run returned plain exit **1** with two contention failures
+  (`test_campaign_relay_effector` plus `test_workstream_contract::test_predecessor_git_probes_fail_at_hard_output_ceilings`,
+  the latter masquerading as `PermissionError: [Errno 1] Operation not permitted`) while
+  `python -m limen dispatch --agent jules --live --limit 10` held 96% CPU. Before re-running, check
+  for the fleet as well as for another verifier:
+
+  ```bash
+  pgrep -fl "limen dispatch .*--live"     # the beat's own heavy work; holds no heavy lease
+  ```
+
+  Wait for it to clear rather than racing it — CLAUDE.md caps concurrent heavy processes on this
+  16GB host. And do not reach for `grep` to check whether a reason string like `heavy-lease-held`
+  exists: it is assembled by f-string, so a literal search returns nothing and "I found nothing"
+  reads identically to "the citation dangles". Grep the *construction*, not the result.
 - **`git checkout -- <file>` reverts the WHOLE file, including uncommitted work you meant to keep.**
   Commit before mutating an implementation to prove a test can fail, or you will revert the fix
   along with the mutation.
