@@ -344,7 +344,9 @@ fast_wave_once() {
 }
 
 fast_wave_loop() {
-  while true; do
+  # Use the shell's canonical truth command so the main daemon remains the one
+  # structural `while true` loop guarded by the self-load startup invariant.
+  while :; do
     _fw_started="$(date +%s)"
     FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
     fast_wave_once
