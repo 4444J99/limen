@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/organvm/limen/spec/contracts/cloud-routine-receipt-v1.schema.json",
+  "title": "CloudRoutineReceiptV1",
+  "description": "One recurring cloud-routine observation with stable ownership and executable closure truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "routine_id",
+    "observed_at",
+    "status",
+    "stable_finding_key",
+    "disposition",
+    "owner_ref",
+    "predicate"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "limen.cloud_routine_receipt.v1"
+    },
+    "routine_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "finding",
+        "failed"
+      ]
+    },
+    "stable_finding_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$"
+    },
+    "disposition": {
+      "enum": [
+        "no_change",
+        "superseded",
+        "owned",
+        "new_work",
+        "human_gate"
+      ]
+    },
+    "owner_ref": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "predicate": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "owner_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "new_work"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          },
+          "owner_ref": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+          }
+        }
+      }
+    }
+  ]
+}
