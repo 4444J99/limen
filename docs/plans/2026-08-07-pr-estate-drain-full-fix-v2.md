@@ -1,7 +1,8 @@
 # PR estate drain — the full fix, v2: the lifecycle axis gets an ideal form
 
 Issue: #1981
-PR: #2127 (W0 axis; campaign remains open for W1–W7 enactment)
+PR: #2127
+Campaign: W0 axis implemented; campaign remains open for W1–W7 enactment
 
 Supersedes the *framing* of `docs/plans/2026-08-07-pr-estate-drain-full-fix.md` (#1975, merged as
 #1976). That plan is not overwritten and not withdrawn: its measurements stand, four of its five
