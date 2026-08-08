@@ -141988,7 +141988,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -141997,7 +141997,7 @@ tasks:
   context: 'Session 0bd3a5ed-3d61-4334-b557-8a4e02422765 (''Design movement ontology and workout composition system'') re-stalled after 2 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "explain to me what is going on". Resume by hand or with a NEW instruction: claude --resume 0bd3a5ed-3d61-4334-b557-8a4e02422765   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-11'
-  updated: '2026-08-04T15:41:17.753Z'
+  updated: '2026-08-08T00:11:38.661Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:41:17.753Z'
     agent: 'codex'
@@ -142010,6 +142010,18 @@ tasks:
     conduct_run_id: 'run-6741519acc771ea43d172d60549218c7'
     conduct_lease_id: 'lease-523-6741519acc771ea4'
     conduct_generation: 523
+  - timestamp: '2026-08-08T00:11:38.661Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-30c65c1bd5b5bfd8596edff4b61b6bde:651:compatibility'
+    conduct_run_id: 'run-30c65c1bd5b5bfd8596edff4b61b6bde'
+    conduct_lease_id: 'lease-651-30c65c1bd5b5bfd8'
+    conduct_generation: 651
 - id: HEAL-cifix-organvm-session-meta-106
   title: fix failing CI on organvm/session-meta#106
   repo: organvm/session-meta
