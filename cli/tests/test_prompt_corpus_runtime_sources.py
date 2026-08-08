@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 from limen.prompt_corpus import (
     LedgerPaths,
+    _archive_custody_signature,
     preserve_raw_object,
     raw_object_reference,
     validate_raw_references,
@@ -49,7 +50,14 @@ def _write_custody_receipt(
     raw_object: str,
     prompt_hash: str,
     name: str = "custody-receipts/fixture.json",
+    text: str = "an exact private prompt",
 ) -> str:
+    archive_relative = Path("cold-archive") / raw_object
+    archive = paths.private_dir / archive_relative
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    archive.write_bytes(gzip.compress(text.encode()))
+    archive.chmod(0o400)
+
     receipt = paths.private_dir / name
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_text(
@@ -58,7 +66,8 @@ def _write_custody_receipt(
                 "schema_version": "limen.prompt_raw_archive_custody_receipt.v1",
                 "raw_object": raw_object,
                 "prompt_hash": prompt_hash,
-                "archive_location": "archive4t:prompt-atoms:2026-08-08",
+                "archive_location": str(archive_relative),
+                "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
             }
         )
     )
@@ -102,6 +111,50 @@ def test_exact_archive_manifest_substitutes_for_cold_object(tmp_path: Path) -> N
     )
 
     assert validate_raw_references(paths, [occurrence], verify_content=True) == []
+
+
+def test_archive_receipt_cannot_stand_in_for_missing_archived_bytes(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
+    receipt_payload = json.loads((paths.private_dir / receipt).read_text())
+    (paths.private_dir / receipt_payload["archive_location"]).unlink()
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": receipt,
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert "archive_location does not resolve to a file" in "; ".join(errors)
+    assert "private raw object is missing" in "; ".join(errors)
+
+
+def test_archive_signature_changes_when_archived_bytes_disappear(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": receipt,
+            }
+        ],
+    )
+    before = _archive_custody_signature(paths)
+    receipt_payload = json.loads((paths.private_dir / receipt).read_text())
+    (paths.private_dir / receipt_payload["archive_location"]).unlink()
+
+    assert _archive_custody_signature(paths) != before
 
 
 def test_archive_manifest_cannot_bind_the_wrong_digest(tmp_path: Path) -> None:
@@ -213,7 +266,30 @@ def test_runtime_roots_survive_source_home_override(tmp_path: Path, monkeypatch)
     assert ("codex-sessions", shim_home / ".codex" / "sessions", ("*",)) in roots
     assert ("codex-sessions", ROOT / ".agent-runtime" / "codex" / "sessions", ("*",)) in roots
     assert ("claude-projects", ROOT / ".agent-runtime" / "claude" / "projects", ("*",)) in roots
-    assert ("gemini-tmp-agy", shim_home / ".gemini" / "tmp", ("*/chats/*.jsonl",)) in roots
+    assert (
+        "gemini-tmp-agy",
+        shim_home / ".gemini" / "tmp",
+        ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl"),
+    ) in roots
+
+
+def test_runtime_source_discovery_survives_source_home_override(tmp_path: Path, monkeypatch) -> None:
+    module = _load_atom_script()
+    runtime_root = tmp_path / ".agent-runtime"
+    session = runtime_root / "codex" / "sessions" / "2026" / "08" / "08" / "rollout.jsonl"
+    session.parent.mkdir(parents=True)
+    session.write_text("{}\n")
+    monkeypatch.setattr(module, "SOURCE_HOME_OVERRIDE", tmp_path / "shim-home")
+    lifecycle = SimpleNamespace(
+        HOME=tmp_path / "shim-home",
+        RUNTIME_ROOT=runtime_root,
+        LOCAL_SOURCES=[("codex-sessions", runtime_root / "codex" / "sessions", ("*",))],
+    )
+
+    rows = module.regular_source_rows(lifecycle, None)
+
+    assert rows.discovery_errors == []
+    assert [Path(row["path"]) for row in rows] == [session]
 
 
 def test_source_relative_path_uses_the_containing_duplicate_root(tmp_path: Path) -> None:
