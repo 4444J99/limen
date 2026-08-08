@@ -379,7 +379,7 @@ def resident_fast_wave_pid() -> str | None:
 
 def host_pressure_snapshot() -> dict[str, Any]:
     if not HOST_PRESSURE_STALE_SCRIPT.is_file():
-        return {"ok": False, "returncode": None, "detail": "host-pressure-stale.py missing"}
+        return {"ok": None, "returncode": None, "detail": "host-pressure-stale.py missing"}
     completed = run([sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)], timeout=30)
     detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
     return {
@@ -1880,7 +1880,7 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     alerts: list[dict[str, str]] = []
     launchd = snapshot.get("launchd") or {}
     host_pressure = snapshot.get("host_pressure") or {}
-    if host_pressure and not host_pressure.get("ok", False):
+    if host_pressure.get("ok") is False:
         alerts.append(
             {
                 "id": "vitals-sample-stale",
