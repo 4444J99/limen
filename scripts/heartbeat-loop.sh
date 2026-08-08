@@ -325,7 +325,7 @@ fast_wave_bounded() {
 }
 
 fast_wave_once() {
-  _fw_tmp="$FAST_WAVE_LOG.$.tmp"
+  _fw_tmp="$FAST_WAVE_LOG.${BASHPID}.tmp"
   mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null || true
   {
     echo "fast-wave: start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
@@ -341,7 +341,7 @@ fast_wave_once() {
 }
 
 fast_wave_loop() {
-  while kill -0 "$" 2>/dev/null; do
+  while true; do
     _fw_started="$(date +%s)"
     FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
     fast_wave_once
