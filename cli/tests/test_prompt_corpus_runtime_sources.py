@@ -1,0 +1,157 @@
+from __future__ import annotations
+
+import gzip
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+from limen.prompt_corpus import (
+    LedgerPaths,
+    preserve_raw_object,
+    raw_object_reference,
+    validate_raw_references,
+)
+
+
+ROOT = Path(__file__).resolve().parents[2]
+ATOM_SCRIPT = ROOT / "scripts" / "prompt-atom-ledger.py"
+
+
+def _occurrence(text: str = "an exact private prompt") -> tuple[dict[str, str], str]:
+    prompt_hash = hashlib.sha256(text.encode()).hexdigest()
+    return (
+        {
+            "occurrence_id": "po-fixture",
+            "prompt_hash": prompt_hash,
+            "raw_object": raw_object_reference(prompt_hash),
+        },
+        prompt_hash,
+    )
+
+
+def _write_archive_manifest(paths: LedgerPaths, objects: list[dict[str, str]]) -> None:
+    paths.private_dir.mkdir(parents=True, exist_ok=True)
+    (paths.private_dir / "raw-archive-manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "limen.prompt_raw_archive_manifest.v1",
+                "objects": objects,
+            }
+        )
+    )
+
+
+def _load_atom_script():
+    spec = importlib.util.spec_from_file_location("prompt_atom_runtime_source_test", ATOM_SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_missing_raw_object_requires_exact_archive_custody(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, _prompt_hash = _occurrence()
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert errors == ["po-fixture: private raw object is missing"]
+
+
+def test_exact_archive_manifest_substitutes_for_cold_object(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+            }
+        ],
+    )
+
+    assert validate_raw_references(paths, [occurrence], verify_content=True) == []
+
+
+def test_archive_manifest_cannot_bind_the_wrong_digest(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, _prompt_hash = _occurrence()
+    wrong_hash = "b" * 64
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": wrong_hash,
+                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert "raw_object does not match prompt_hash" in "; ".join(errors)
+    assert "private raw object is missing" in "; ".join(errors)
+
+
+def test_manifest_never_masks_a_present_corrupt_object(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    relative = preserve_raw_object(paths, prompt_hash, "an exact private prompt")
+    candidate = paths.raw_objects / relative
+    candidate.chmod(0o600)
+    candidate.write_bytes(gzip.compress(b"different content"))
+    candidate.chmod(0o400)
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": relative,
+                "prompt_hash": prompt_hash,
+                "custody_receipt": "archive4t:prompt-atoms:2026-08-08",
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert errors == ["po-fixture: private raw object digest mismatch"]
+
+
+def test_runtime_roots_survive_source_home_override(tmp_path: Path, monkeypatch) -> None:
+    module = _load_atom_script()
+    shim_home = tmp_path / "shim-home"
+    monkeypatch.setattr(module, "SOURCE_HOME_OVERRIDE", shim_home)
+
+    lifecycle = module.load_lifecycle_module()
+    roots = [(source, Path(root), patterns) for source, root, patterns in lifecycle.LOCAL_SOURCES]
+
+    assert ("codex-sessions", shim_home / ".codex" / "sessions", ("*",)) in roots
+    assert ("codex-sessions", ROOT / ".agent-runtime" / "codex" / "sessions", ("*",)) in roots
+    assert ("claude-projects", ROOT / ".agent-runtime" / "claude" / "projects", ("*",)) in roots
+    assert ("gemini-tmp-agy", shim_home / ".gemini" / "tmp", ("*/chats/*.jsonl",)) in roots
+
+
+def test_source_relative_path_uses_the_containing_duplicate_root(tmp_path: Path) -> None:
+    module = _load_atom_script()
+    first = tmp_path / "home-sessions"
+    second = tmp_path / "runtime-sessions"
+    session = second / "2026" / "08" / "08" / "rollout-fixture.jsonl"
+    session.parent.mkdir(parents=True)
+    session.write_text("")
+    lifecycle = SimpleNamespace(
+        LOCAL_SOURCES=[
+            ("codex-sessions", first, ("*",)),
+            ("codex-sessions", second, ("*",)),
+        ]
+    )
+
+    relative = module.source_relative_path(lifecycle, "codex-sessions", session)
+
+    assert relative == Path("2026/08/08/rollout-fixture.jsonl")
