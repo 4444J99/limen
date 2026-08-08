@@ -166709,3 +166709,37 @@ tasks:
     conduct_lease_id: 'lease-683-2c58809bc0a92d37'
     conduct_generation: 683
   updated: '2026-08-08T14:14:30.455Z'
+- id: 'GH-organvm-limen-2103'
+  title: 'POTESTAS 3.4 — beat cadence: one sensors.yaml entry for the detector family'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2103'
+  context: 'GitHub issue organvm/limen#2103. Phase: #2081 · Program: #2077 Give the detectors a heartbeat so immunity is a running property, not a thing someone remembers to check. ## The change **One entry** in `institutio/governance/sensors.yaml` — the SENSORS registry, VIGILIA''s third axis beside GATES and PARAMETERS. Declare gate, cadence, timeout, severity, and section. Then nothing else. `scripts/metabolize.sh` derives its **entire** s'
+  predicate: 'test "$(gh issue view 2103 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2103'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2103'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:35.737Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-693d178843fbdba70e25fb37e49fc617:684:compatibility'
+    conduct_run_id: 'run-693d178843fbdba70e25fb37e49fc617'
+    conduct_lease_id: 'lease-684-693d178843fbdba7'
+    conduct_generation: 684
+  updated: '2026-08-08T14:14:35.737Z'
