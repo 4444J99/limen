@@ -20,10 +20,12 @@ _ROUTINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _FINDING_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}Z)?$")
 _PREDICATE_SCHEMA_RE = re.compile(
     r"^(?!.*(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b))"
     r"(?=(?:[^']*'[^']*')*[^']*$)"
     r'(?=(?:[^"]*"[^"]*")*[^"]*$)'
+    r"""(?=(?:(?:[^'";|&]+)|'[^']*'|"[^"]*")*$)"""
     r"(?!.*\\$).+$",
     re.IGNORECASE,
 )
@@ -171,6 +173,10 @@ def plan_task_upserts(
     """Plan only novel live work while allowing a terminal lineage to recur."""
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
+    active_lineages = {
+        match.group(1) if (match := _OCCURRENCE_TASK_RE.fullmatch(task_id)) else task_id
+        for task_id in active
+    }
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
     classified = 0
@@ -181,7 +187,7 @@ def plan_task_upserts(
         if receipt.disposition != "new_work":
             classified += 1
             continue
-        if lineage_id in active or lineage_id in seen_lineages:
+        if lineage_id in active_lineages or lineage_id in seen_lineages:
             duplicates += 1
             continue
         task_id = lineage_id
