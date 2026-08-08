@@ -358,7 +358,7 @@ parameters:
     env: LIMEN_FAST_WAVE_SENSOR_TIMEOUT
     self_update: none
     owner: diurnal
-    note: "Seconds allowed for phase-sensitive scheduled sensors in one fast wave. The bound fits inside VITALS_SAMPLE_SECONDS while preserving the existing 240-second diurnal refresh allowance."
+    note: "Seconds allowed for phase-sensitive scheduled sensors in the independent fast-wave auxiliary tier. The tier is single-flight and concurrent with organ-health, so this bound can never postpone the dedicated VITALS sample clock."
   LIMEN_ORGAN_HEALTH_TIMEOUT:
     default: 120
     env: LIMEN_ORGAN_HEALTH_TIMEOUT
