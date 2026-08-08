@@ -282,8 +282,8 @@ def _shell_bypasses(path: Path) -> bool:
     except (OSError, UnicodeError):
         return False
     executable = "\n".join(line.split("#", 1)[0] for line in text.splitlines())
-    return bool(re.search(r"\\bosascript\\b", executable, re.IGNORECASE)) and bool(
-        re.search(r"\\bdisplay\\s+notification\\b", executable, re.IGNORECASE)
+    return bool(re.search(r"\bosascript\b", executable, re.IGNORECASE)) and bool(
+        re.search(r"\bdisplay\s+notification\b", executable, re.IGNORECASE)
     )
 
 
