@@ -76,14 +76,19 @@ class CloudRoutineReceiptV1(ProtocolModel):
     @field_validator("predicate")
     @classmethod
     def validate_predicate(cls, value: str) -> str:
-        if not is_executable_predicate(value):
+        normalized = value.strip()
+        if len(normalized) > 8192:
+            raise ValueError("predicate must be at most 8192 characters")
+        if not is_executable_predicate(normalized):
             raise ValueError("predicate must be one executable command")
-        return value.strip()
+        return normalized
 
     @model_validator(mode="after")
     def validate_material_ownership(self) -> "CloudRoutineReceiptV1":
         material = self.status in {"finding", "failed"}
-        if material and not self.owner_ref:
+        if self.disposition == "human_gate" and not material:
+            raise ValueError("human_gate is only valid for a material finding")
+        if (material or self.disposition == "human_gate") and not self.owner_ref:
             raise ValueError("material cloud-routine findings require owner_ref")
         if self.disposition == "new_work":
             if not material:
