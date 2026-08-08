@@ -136442,7 +136442,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -136451,7 +136451,7 @@ tasks:
   context: 'Session 6a48ce1d-1de5-4b35-858d-7b485280737d (''Design movement ontology and workout composition system'') re-stalled after 24 guardrailed breathes — the identical continuation will not move it. Parked purpose (last prompt): "did i not say i did it already? hence the review....wasnt that obvious?". Resume by hand or with a NEW instruction: claude --resume 6a48ce1d-1de5-4b35-858d-7b485280737d   (cwd /Users/4jp/Workspace/limen/.claude/worktrees/fluttering-twirling-abelson). Auto-escalated by QUICKEN.'
   depends_on: []
   created: '2026-07-09'
-  updated: '2026-08-04T15:41:11.475Z'
+  updated: '2026-08-08T00:11:30.392Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:41:11.475Z'
     agent: 'codex'
@@ -136464,6 +136464,18 @@ tasks:
     conduct_run_id: 'run-a624abcab8224feac23cd32f361b853b'
     conduct_lease_id: 'lease-522-a624abcab8224fea'
     conduct_generation: 522
+  - timestamp: '2026-08-08T00:11:30.392Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-459c46287ebc9fabb77d91fc785d2a49:650:compatibility'
+    conduct_run_id: 'run-459c46287ebc9fabb77d91fc785d2a49'
+    conduct_lease_id: 'lease-650-459c46287ebc9fab'
+    conduct_generation: 650
 - id: GH-organvm-limen-827
   title: '[his-hand] Arm the Fable interactive-guard settings snippet'
   repo: organvm/limen
