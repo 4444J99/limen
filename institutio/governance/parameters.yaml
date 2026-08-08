@@ -5194,6 +5194,14 @@ parameters:
     owner: continuity
     note: "Timeout in seconds for the arca-freshness sensor (5c1). Bounds the single `gh repo view` call; on expiry the predicate reports UNDETERMINED, which is a finding rather than a pass."
 
+  # --- POTESTAS exchange guard (organvm/limen#2088) -----------------------------
+  LIMEN_EXCHANGE_GUARD_WINDOW_MIN:
+    default: "15"
+    env: LIMEN_EXCHANGE_GUARD_WINDOW_MIN
+    self_update: none
+    owner: governance
+    note: "Minutes either side of a CONNECTED call within which a money transfer is flagged by scripts/exchange-guard.py. Default 15 — wide enough to catch a transfer decided during a call and executed just after it ends, narrow enough that a same-afternoon-but-unrelated transfer does not register. Widening it does not make the guard stricter, it makes it noisier: at a large enough window every transfer falls inside some call and the signal is gone. Validated against ground truth at 15: 3/3 known in-call transfers flagged, 0 of 383 2024-era transfers flagged (no connected calls were logged that year, so the negative is real rather than vacuous)."
+
   # --- dispatch admission gate (closeout/dispatch-admission-20260709) -----------
   LIMEN_DISPATCH_ADMISSION:
     default: "1"               # ON — gate dispatch on session-value admission evidence
