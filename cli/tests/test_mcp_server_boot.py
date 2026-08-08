@@ -10,7 +10,7 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "mcp-server-boot.py"
 VERIFY = Path(__file__).resolve().parents[2] / "scripts" / "verify-mcp-estate.sh"
 
 
-def _load_module(monkeypatch: pytest.MonkeyPatch, codex_home: Path):
+def _load_module(monkeypatch: pytest.MonkeyPatch, codex_home: Path | str):
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
     spec = importlib.util.spec_from_file_location("mcp_server_boot_test", SCRIPT)
     assert spec is not None
@@ -44,6 +44,12 @@ def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.Monkey
     ]
     assert codex_config == codex_home / "config.toml"
     assert discovered[0]["config"] == str(codex_config)
+
+
+def test_empty_codex_home_falls_back_to_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _load_module(monkeypatch, "")
+
+    assert module.CODEX_HOME == Path.home() / ".codex"
 
 
 @pytest.mark.parametrize(
@@ -101,7 +107,7 @@ def test_codex_status_parser_tolerates_known_envelopes(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     payload: object,
-    expected: dict[str, str],
+    expected: dict[str, object],
 ) -> None:
     module = _load_module(monkeypatch, tmp_path / "codex")
     monkeypatch.setenv("TEST_MCP_TOKEN", "present")
@@ -146,7 +152,9 @@ def test_bearer_status_requires_the_named_environment_value(
     }
     monkeypatch.delenv("ABSENT_MCP_TOKEN", raising=False)
 
-    assert module.parse_codex_mcp_statuses([row]) == {"token": "auth_needed"}
+    assert module.parse_codex_mcp_statuses([row]) == {
+        "token": {"state": "auth_needed", "missing_env": "ABSENT_MCP_TOKEN"}
+    }
     assert module.parse_codex_mcp_statuses([{"name": "token", "auth_status": "bearerToken"}]) == {
         "token": "auth_unknown"
     }
@@ -186,6 +194,36 @@ def test_auth_failures_are_not_sent_to_the_boot_healer(
     ]
 
     assert module._healable_failures(results) == results[2:]
+
+
+def test_failure_cures_match_the_failure_semantics(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    failed = [
+        {
+            "agent": "codex",
+            "name": "launchdarkly",
+            "state": "auth_needed",
+            "detail": "reachable; Codex OAuth authentication required",
+        },
+        {
+            "agent": "codex",
+            "name": "token-server",
+            "state": "auth_needed",
+            "detail": "reachable; missing bearer environment TEST_MCP_TOKEN",
+        },
+        {"agent": "codex", "name": "unknown", "state": "auth_unknown", "detail": "timed out"},
+        {"agent": "cline", "name": "local", "state": "boot_failed", "detail": "exited"},
+    ]
+
+    assert module._failure_cures(failed) == [
+        "codex mcp login launchdarkly",
+        "populate TEST_MCP_TOKEN through the credential organ",
+        "codex mcp list --json (restore semantic auth telemetry)",
+        "arm LIMEN_MCP_BOOT_HEAL=1 (re-land config and clear corrupt npx caches)",
+    ]
 
 
 def test_non_codex_http_probe_remains_transport_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
