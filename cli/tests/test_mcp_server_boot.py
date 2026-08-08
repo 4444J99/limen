@@ -7,6 +7,7 @@ import pytest
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "mcp-server-boot.py"
+VERIFY = Path(__file__).resolve().parents[2] / "scripts" / "verify-mcp-estate.sh"
 
 
 def _load_module(monkeypatch: pytest.MonkeyPatch, codex_home: Path):
@@ -76,6 +77,19 @@ def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.Monkey
                 "ready-server": "authenticated",
             },
         ),
+        (
+            [
+                {"name": "login", "auth_status": "notLoggedIn"},
+                {"name": "token", "auth_status": "bearerToken"},
+                {"name": "oauth", "auth_status": "oAuth"},
+                {"name": "unsupported", "auth_status": "unsupported"},
+            ],
+            {
+                "login": "auth_needed",
+                "token": "authenticated",
+                "oauth": "authenticated",
+            },
+        ),
     ],
 )
 def test_codex_status_parser_tolerates_known_envelopes(
@@ -118,3 +132,10 @@ def test_non_codex_http_probe_remains_transport_only(monkeypatch: pytest.MonkeyP
     [result] = module.probe_all([_http_server("remote", agent="gemini")], timeout=1)
 
     assert (result["ok"], result["state"]) == (True, "reachable")
+
+
+def test_estate_ownership_scan_honors_relocated_codex_home() -> None:
+    shell = VERIFY.read_text(encoding="utf-8")
+
+    assert '"${CODEX_HOME:-$HOME/.codex}/config.toml"' in shell
+    assert '"$HOME/.codex/config.toml"' not in shell
