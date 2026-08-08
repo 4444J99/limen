@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,19 @@ IDEALS = ROOT / "institutio" / "governance" / "ideal-forms.yaml"
 LEVERS = ROOT / "his-hand-levers.json"
 PR_LEDGER = ROOT / "docs" / "github-pr-debt-ledger.json"
 SELF_COMMAND = "python3 scripts/check-lifecycle.py --check"
+TERMINAL_LEVER_STATES = frozenset({"discharged", "retired", "done", "closed"})
+ADMISSION_CONTRACT = {
+    "draft": False,
+    "mergeable": True,
+    "required_checks": "green",
+    "conflicts": "none",
+}
+INITIAL_LITERAL_CEILING = {
+    "scripts/merge-drain.py": 6,
+    "scripts/pr-lifecycle-manifest.py": 5,
+    "scripts/pr-lifecycle-estate-manifest.py": 6,
+    "scripts/gitvs.py": 8,
+}
 
 failures: list[str] = []
 
@@ -52,23 +66,34 @@ def load_yaml(path: Path) -> dict[str, Any]:
     return payload
 
 
-def load_lever_ids() -> set[str]:
+def load_levers() -> dict[str, str]:
     try:
         payload = json.loads(LEVERS.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, ValueError) as exc:
         fail("E", f"{LEVERS.relative_to(ROOT)} is unreadable: {exc}")
-        return set()
+        return {}
     rows = payload.get("levers") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
         fail("E", "his-hand-levers.json has no levers list")
-        return set()
-    return {str(row.get("id")) for row in rows if isinstance(row, dict) and row.get("id")}
+        return {}
+    return {
+        str(row["id"]): str(row.get("status") or "")
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("id"), str)
+    }
 
 
-def legacy_estate_labels() -> set[str]:
+def legacy_estate_policy() -> dict[str, Any]:
     estate = load_yaml(ESTATE)
     policy = estate.get("pr_debt_policy") if isinstance(estate, dict) else None
-    labels = policy.get("lifecycle_labels") if isinstance(policy, dict) else None
+    if not isinstance(policy, dict):
+        fail("A", "estate.yaml has no pr_debt_policy mapping")
+        return {}
+    return policy
+
+
+def legacy_estate_labels(policy: dict[str, Any]) -> set[str]:
+    labels = policy.get("lifecycle_labels")
     if not isinstance(labels, list) or not all(isinstance(label, str) for label in labels):
         fail("A", "estate.yaml pr_debt_policy.lifecycle_labels must be a string list")
         return set()
@@ -109,7 +134,35 @@ def validate_dispositions(registry: dict[str, Any]) -> set[str]:
             merge_eligible.append(disposition)
     if len(merge_eligible) != 1:
         fail("A", f"exactly one disposition must be merge_eligible; found {merge_eligible}")
+    elif rows[merge_eligible[0]].get("admits") != ADMISSION_CONTRACT:
+        fail(
+            "A",
+            f"{merge_eligible[0]}: admits must equal the typed merge admission contract",
+        )
     return {str(key) for key in rows}
+
+
+def previous_literal_baseline() -> dict[str, int] | None:
+    """Read the prior exact tree when available so baseline debt cannot regrow."""
+    relative = REGISTRY.relative_to(ROOT).as_posix()
+    for revision in ("HEAD^1", "HEAD^"):
+        result = subprocess.run(
+            ["git", "show", f"{revision}:{relative}"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            continue
+        try:
+            payload = yaml.safe_load(result.stdout) or {}
+            baseline = payload.get("literal_baseline")
+            if isinstance(baseline, dict):
+                return {str(path): int(value) for path, value in baseline.items()}
+        except (TypeError, ValueError, yaml.YAMLError):
+            return None
+    return None
 
 
 def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
@@ -134,12 +187,20 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
         relative = str(row.get("path") or "")
         ratchet = str(row.get("ratchet") or "")
         derives = row.get("derives")
+        loader_markers = row.get("loader_markers")
         if not relative or not (ROOT / relative).is_file():
             fail("B", f"{consumer}: consumer path does not resolve: {relative!r}")
             continue
         consumer_paths.add(relative)
         if not isinstance(derives, list) or not derives or not all(isinstance(item, str) for item in derives):
             fail("B", f"{consumer}: derives must be a non-empty string list")
+        if (
+            not isinstance(loader_markers, list)
+            or not loader_markers
+            or not all(isinstance(item, str) and item for item in loader_markers)
+        ):
+            fail("C", f"{consumer}: loader_markers must declare observable registry derivation")
+            loader_markers = []
         if ratchet not in ratchets or not isinstance(ratchets.get(ratchet), bool):
             fail("B", f"{consumer}: ratchet {ratchet!r} is missing or non-boolean")
             continue
@@ -155,6 +216,9 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
             continue
         actual = sum(text.count(label) for label in labels)
         armed = bool(ratchets[ratchet])
+        if armed and any(marker not in text for marker in loader_markers):
+            missing_markers = [marker for marker in loader_markers if marker not in text]
+            fail("C", f"{consumer}: armed derivation markers missing: {missing_markers}")
         if armed and actual:
             fail("C", f"{consumer}: conversion ratchet is armed but {actual} disposition literal(s) remain")
         elif armed and expected != 0:
@@ -167,13 +231,31 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     if extra_baselines:
         fail("B", f"literal baselines name undeclared consumers: {sorted(extra_baselines)}")
 
+    previous = previous_literal_baseline()
+    ceiling = previous or INITIAL_LITERAL_CEILING
+    for relative, value in baseline.items():
+        try:
+            current = int(value)
+            maximum = int(ceiling[relative])
+        except (KeyError, TypeError, ValueError):
+            fail("B", f"{relative}: no prior shrink-only literal ceiling")
+            continue
+        if current > maximum:
+            fail("B", f"{relative}: literal baseline regrew from {maximum} to {current}")
+
 
 def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
     cohorts = registry.get("cohorts")
     if not isinstance(cohorts, dict) or not cohorts:
         fail("E", "registry has no cohorts mapping")
         return
-    lever_ids = load_lever_ids()
+    levers = load_levers()
+    precedence = registry.get("cohort_precedence")
+    if not isinstance(precedence, list) or set(precedence) != set(cohorts):
+        fail("E", "cohort_precedence must name every cohort exactly once")
+        precedence = []
+    elif precedence[0] != "draft" or precedence[-1] != "all":
+        fail("E", "cohort_precedence must evaluate draft first and all last")
     for cohort, row in cohorts.items():
         if not isinstance(row, dict):
             fail("E", f"{cohort}: cohort row must be a mapping")
@@ -186,8 +268,13 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
             fail("E", f"{cohort}: requires default_disposition or owner_lever")
         if disposition is not None and disposition not in labels:
             fail("E", f"{cohort}: unknown default_disposition {disposition!r}")
-        if lever and lever not in lever_ids:
+        if lever and lever not in levers:
             fail("E", f"{cohort}: owner_lever {lever!r} does not resolve")
+        if disposition is None and lever and levers.get(str(lever)) in TERMINAL_LEVER_STATES:
+            fail(
+                "E",
+                f"{cohort}: terminal owner_lever {lever!r} cannot replace a default disposition",
+            )
 
 
 def validate_self_reference(registry: dict[str, Any]) -> None:
@@ -207,17 +294,26 @@ def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
     if registry.get("schema_version") != 0.1:
         fail("A", "schema_version must be 0.1")
     labels = validate_dispositions(registry)
-    estate_labels = legacy_estate_labels()
+    estate_policy = legacy_estate_policy()
+    estate_labels = legacy_estate_labels(estate_policy)
     ratchets = registry.get("ratchets") or {}
-    if not ratchets.get("estate_yaml_derives") and labels != estate_labels:
+    estate_derives = ratchets.get("estate_yaml_derives")
+    if not isinstance(estate_derives, bool):
+        fail("A", "ratchets.estate_yaml_derives must be boolean")
+    elif not estate_derives and labels != estate_labels:
         fail("A", f"registry/estate disposition mismatch: registry={sorted(labels)} estate={sorted(estate_labels)}")
+    elif estate_derives:
+        if "lifecycle_labels" in estate_policy:
+            fail("A", "converted estate.yaml must not retain lifecycle_labels")
+        if estate_policy.get("lifecycle_registry") != "../governance/lifecycle.yaml":
+            fail("A", "converted estate.yaml must point to ../governance/lifecycle.yaml")
     validate_consumers(registry, labels)
     validate_cohorts(registry, labels)
     validate_self_reference(registry)
     return registry, labels
 
 
-def measure_unreachable() -> int | None:
+def measure_unreachable(registry: dict[str, Any]) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, ValueError) as exc:
@@ -230,7 +326,27 @@ def measure_unreachable() -> int | None:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         fail("D", "PR-debt ledger has no nonnegative lifecycle_untyped_count")
         return None
-    return value
+    rows = ledger.get("pull_requests")
+    if not isinstance(rows, list):
+        fail("D", "PR-debt ledger has no pull_requests census")
+        return None
+    preservation_missing = sum(
+        1
+        for row in rows
+        if isinstance(row, dict)
+        and row.get("lifecycle_disposition") == "lifecycle:preservation"
+        and row.get("lifecycle_disposition_source") != "label"
+    )
+    live_baseline = registry.get("live_baseline")
+    metadata_drift = (
+        live_baseline.get("lifecycle_label_metadata_drift_count")
+        if isinstance(live_baseline, dict)
+        else None
+    )
+    if isinstance(metadata_drift, bool) or not isinstance(metadata_drift, int) or metadata_drift < 0:
+        fail("D", "live_baseline has no nonnegative lifecycle_label_metadata_drift_count")
+        return None
+    return value + preservation_missing + metadata_drift
 
 
 def main() -> int:
@@ -241,7 +357,7 @@ def main() -> int:
     if not (args.check or args.measure):
         parser.error("one of --check or --measure is required")
     registry, _labels = run_offline_checks()
-    unreachable = measure_unreachable() if args.measure else None
+    unreachable = measure_unreachable(registry) if args.measure else None
 
     if failures:
         print("PR LIFECYCLE DRIFT — registry does not match its owners:")
