@@ -305,6 +305,9 @@ def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
         "rate_limited",
         "unavailable",
         "blocked",
+        "auth_needed",
+        "auth_blocked",
+        "unauthenticated",
     }
 
 
@@ -323,6 +326,7 @@ def _dispatch_admission(
     per_agent = board_budget.get("per_agent") if isinstance(board_budget.get("per_agent"), dict) else {}
     candidates: list[dict[str, Any]] = []
     reasons: Counter[str] = Counter()
+    provider_health_reasons: Counter[str] = Counter()
     for task in tasks:
         if task.get("status") != "open":
             continue
@@ -353,6 +357,8 @@ def _dispatch_admission(
             reason = "execution_requirements"
         if reason is not None:
             reasons[reason] += 1
+            if reason == "provider_health":
+                provider_health_reasons[agent] += 1
             continue
         candidates.append(task)
     top = (
@@ -370,6 +376,7 @@ def _dispatch_admission(
         "admissible": len(candidates),
         "gated": open_count - len(candidates),
         "reason_counts": dict(sorted(reasons.items())),
+        "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
         "dispatchable_next": _task_summary(top) if top else None,
     }
 
