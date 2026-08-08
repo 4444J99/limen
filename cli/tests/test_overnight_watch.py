@@ -493,6 +493,48 @@ def test_heartbeat_child_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
     assert snapshot["heartbeat_child_count"] == 1
 
 
+def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
+    _mock_launchd(module, monkeypatch)
+    _write_heartbeat(module)
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
+        encoding="utf-8",
+    )
+    module.FAST_WAVE_PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    module.FAST_WAVE_PID_PATH.write_text("99\n", encoding="utf-8")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda pid: [{"pid": "99", "command": "heartbeat fast-wave resident"}],
+    )
+
+    snapshot = module.build_snapshot()
+
+    assert snapshot["heartbeat_child_count"] == 0
+    assert snapshot["resident_fast_wave"]["pid"] == "99"
+    assert snapshot["status"] == "alert"
+    assert "heartbeat-progress-stale" in {alert["id"] for alert in snapshot["alerts"]}
+
+
+def test_host_pressure_probe_has_an_independent_alert_path(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = {
+        "launchd": {"ok": True, "state": "active"},
+        "log_age_sec": 0,
+        "heartbeat": {"latest_tick": {"timestamp": "2026-08-08T12:00:00+00:00"}},
+        "stale_tick_count": 0,
+        "worker_count": 0,
+        "heartbeat_child_count": 0,
+        "host_pressure": {"ok": False, "detail": "sample missed three cadences"},
+    }
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {"vitals-sample-stale"}
+
+
 def test_expected_env_mismatch_alerts(tmp_path, monkeypatch):
     module = _fresh_module(
         tmp_path,
