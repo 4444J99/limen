@@ -38,7 +38,9 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
-LIMEN_NOTIFY_HELPER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_notify.py"
+if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
+  LIMEN_NOTIFY_HELPER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_notify.py"
+fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
 MODEFILE="$DIR/mode"
