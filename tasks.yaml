@@ -63712,7 +63712,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'user-ask'
   - 'quicken-residue'
@@ -63721,7 +63721,7 @@ tasks:
   context: 'Cheapest path → land the credential/secret (your account/identity). Unblocks: web estate audit mapping. Auto-hung by QUICKEN (finish-not-park); refreshes each beat until you act.'
   depends_on: []
   created: '2026-06-26'
-  updated: '2026-08-04T15:40:21.228Z'
+  updated: '2026-08-08T00:10:51.969Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:40:21.228Z'
     agent: 'codex'
@@ -63734,6 +63734,18 @@ tasks:
     conduct_run_id: 'run-a79acec9da2eeb9e2312e4588c540441'
     conduct_lease_id: 'lease-515-a79acec9da2eeb9e'
     conduct_generation: 515
+  - timestamp: '2026-08-08T00:10:51.969Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-1d9f4b33d8d6ae08722b2d23a8bc84ef:643:compatibility'
+    conduct_run_id: 'run-1d9f4b33d8d6ae08722b2d23a8bc84ef'
+    conduct_lease_id: 'lease-643-1d9f4b33d8d6ae08'
+    conduct_generation: 643
 - id: 'ASK-quicken-d2l'
   title: 'the D2L go-live click + cadence confirm (your login + judgment)'
   type: 'ops'
