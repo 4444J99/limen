@@ -543,7 +543,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="derive the beat sensor loop from sensors.yaml")
     ap.add_argument("--list", action="store_true", help="print the sensor matrix")
     ap.add_argument("--run", action="store_true", help="run the sensors for --source")
-    ap.add_argument("--source", default="metabolize", help="beat source: metabolize | heartbeat")
+    ap.add_argument("--source", default="metabolize", help="beat source: metabolize | heartbeat | fast-wave")
     ap.add_argument("--dry-run", action="store_true", help="with --run: print commands, don't execute")
     ap.add_argument("--registry", type=Path, default=REGISTRY, help="sensor registry path")
     ap.add_argument("--scheduled-only", action="store_true", help="run only sensors declaring cadence")
