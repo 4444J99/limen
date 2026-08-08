@@ -72,6 +72,7 @@ PRIVATE_SESSION_CORPUS = Path(
 PROMPT_ATOM_SNAPSHOT = PRIVATE_SESSION_CORPUS / "prompt-atoms" / "prompt-atom-ledger.json"
 HEARTBEAT_LOG = LOGS / "heartbeat.out.log"
 FAST_WAVE_PID_PATH = LOGS / "vigilia" / "fast-wave.pid"
+HOST_PRESSURE_WATCHDOG_PID_PATH = LOGS / "vigilia" / "host-pressure-watchdog.pid"
 HOST_PRESSURE_STALE_SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
 ASYNC_RUNS = LOGS / "async-runs"
 STATE_PATH = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_STATE", LOGS / "overnight-watch-state.json"))
@@ -369,12 +370,20 @@ def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
     return children
 
 
-def resident_fast_wave_pid() -> str | None:
+def _resident_pid(path: Path) -> str | None:
     try:
-        value = FAST_WAVE_PID_PATH.read_text(encoding="utf-8").strip()
+        value = path.read_text(encoding="utf-8").strip()
     except OSError:
         return None
     return value if value.isdigit() else None
+
+
+def resident_fast_wave_pid() -> str | None:
+    return _resident_pid(FAST_WAVE_PID_PATH)
+
+
+def resident_host_pressure_watchdog_pid() -> str | None:
+    return _resident_pid(HOST_PRESSURE_WATCHDOG_PID_PATH)
 
 
 def host_pressure_snapshot(*, read_only: bool = False) -> dict[str, Any]:
@@ -1803,16 +1812,26 @@ def build_snapshot(
     launchd = launchd_snapshot()
     children = heartbeat_child_processes(launchd.get("pid"))
     fast_wave_pid = resident_fast_wave_pid()
+    watchdog_pid = resident_host_pressure_watchdog_pid()
+    resident_pids = {str(pid) for pid in (fast_wave_pid, watchdog_pid) if pid}
     progress_children = [
         child
         for child in children
-        if str(child.get("pid") or "") != str(fast_wave_pid or "")
+        if str(child.get("pid") or "") not in resident_pids
     ]
     resident_fast_wave = next(
         (
             child
             for child in children
             if str(child.get("pid") or "") == str(fast_wave_pid or "")
+        ),
+        None,
+    )
+    resident_host_pressure_watchdog = next(
+        (
+            child
+            for child in children
+            if str(child.get("pid") or "") == str(watchdog_pid or "")
         ),
         None,
     )
@@ -1830,6 +1849,7 @@ def build_snapshot(
         "heartbeat_children": progress_children,
         "heartbeat_child_count": len(progress_children),
         "resident_fast_wave": resident_fast_wave,
+        "resident_host_pressure_watchdog": resident_host_pressure_watchdog,
         "host_pressure": host_pressure,
         "stale_tick_count": stale_count,
         "thresholds": {
