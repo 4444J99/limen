@@ -3932,6 +3932,7 @@ def _read_archived_raw(entry: dict[str, str]) -> str:
     with gzip.open(Path(entry["archive_path"]), "rb") as handle:
         return handle.read().decode("utf-8")
 
+
 def validate_raw_references(
     paths: LedgerPaths,
     occurrences: Sequence[dict[str, Any]],
@@ -4241,7 +4242,7 @@ def update_ledger(
                 "outcomes": _path_signature(paths.outcome_journal),
                 "cursor": _path_signature(paths.cursor),
                 "raw_store": _raw_store_signature(paths),
-            "archive_custody": _archive_custody_signature(paths),
+                "archive_custody": _archive_custody_signature(paths),
             }
             and _public_digest_valid(existing_public)
             and _prompt_authority_fast_path_valid(
