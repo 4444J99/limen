@@ -166301,3 +166301,37 @@ tasks:
     conduct_lease_id: 'lease-671-b842da72157b4974'
     conduct_generation: 671
   updated: '2026-08-08T14:13:29.420Z'
+- id: 'GH-organvm-limen-2115'
+  title: 'POTESTAS 7.2 — essay: the Dao De Jing against the 48 Laws'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2115'
+  context: 'GitHub issue organvm/limen#2115. Phase: #2085 · Program: #2077 ## The thesis The strongest argument against *The 48 Laws of Power* was written **two and a half millennia before it**, and it is four thousand characters long. ## Why this is a studium essay rather than a blog post studium''s governing doctrine is already counter-systems: *the work is its own adversary.* The Dao De Jing sits in `studium/reading/tao-te-ching.md` under'
+  predicate: 'test "$(gh issue view 2115 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2115'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2115'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:13:34.890Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-1f0b935a86cd0d619349b564edc590d6:672:compatibility'
+    conduct_run_id: 'run-1f0b935a86cd0d619349b564edc590d6'
+    conduct_lease_id: 'lease-672-1f0b935a86cd0d61'
+    conduct_generation: 672
+  updated: '2026-08-08T14:13:34.890Z'
