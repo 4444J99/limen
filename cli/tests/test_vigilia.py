@@ -514,7 +514,7 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
 
     launch = heartbeat.index("fast_wave_loop &")
     main_loop = heartbeat.index("while true; do", launch)
-    fast_body = heartbeat[heartbeat.index("fast_wave_once()"):launch]
+    fast_body = heartbeat[heartbeat.index("fast_wave_once()") : launch]
 
     assert launch < main_loop
     assert "python3 -m limen.vigilia sample" in fast_body
