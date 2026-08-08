@@ -327,6 +327,7 @@ def _dispatch_admission(
     candidates: list[dict[str, Any]] = []
     reasons: Counter[str] = Counter()
     provider_health_reasons: Counter[str] = Counter()
+    admissible_agents: Counter[str] = Counter()
     for task in tasks:
         if task.get("status") != "open":
             continue
@@ -361,6 +362,7 @@ def _dispatch_admission(
                 provider_health_reasons[agent] += 1
             continue
         candidates.append(task)
+        admissible_agents[agent or "any"] += 1
     top = (
         sorted(
             candidates,
@@ -377,6 +379,7 @@ def _dispatch_admission(
         "gated": open_count - len(candidates),
         "reason_counts": dict(sorted(reasons.items())),
         "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
+        "admissible_agent_counts": dict(sorted(admissible_agents.items())),
         "dispatchable_next": _task_summary(top) if top else None,
     }
 
