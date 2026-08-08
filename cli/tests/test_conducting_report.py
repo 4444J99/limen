@@ -66,7 +66,6 @@ tasks:
     assert "private target" not in encoded
 
 
-
 def _handoff(logs: Path, *, admissible: int = 0, reasons: dict | None = None, provider_state: str = "ok"):
     logs.mkdir(exist_ok=True)
     payload = {
