@@ -14,10 +14,14 @@ missing feed or a network error skips silently, never crashes the beat.
 """
 import json
 import os
-import subprocess
+import sys
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _notify import notify
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -35,13 +39,7 @@ def _load(path, default):
 
 
 def _notify_macos(title, msg):
-    try:
-        safe = msg.replace('"', "'")
-        subprocess.run(
-            ["osascript", "-e", f'display notification "{safe}" with title "{title}"'],
-            capture_output=True, timeout=10)
-    except Exception:
-        pass  # best-effort; never block the beat
+    notify(ROOT, msg, title=title)
 
 
 def _notify_ntfy(title, msg):
