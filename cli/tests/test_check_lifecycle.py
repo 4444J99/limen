@@ -64,14 +64,112 @@ def _load_check_module():
     return module
 
 
-def test_lifecycle_measure_includes_every_unwritten_disposition() -> None:
+def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
+    ledger = json.loads((ROOT / "docs" / "github-pr-debt-ledger.json").read_text())
 
     unreachable = module.measure_unreachable(
         registry,
         metadata_probe=lambda _repositories, _dispositions: 0,
+        rows_probe=lambda payload: payload["pull_requests"],
     )
 
-    assert unreachable == 145
+    literal_debt = sum(registry["literal_baseline"].values())
+    unarmed_ratchets = sum(value is False for value in registry["ratchets"].values())
+    assert unreachable == ledger["open_pr_count"] + literal_debt + unarmed_ratchets
     assert module.failures == []
+
+
+def test_capability_ineligible_prs_are_mechanically_unreachable() -> None:
+    module = _load_check_module()
+    dispositions = {
+        "lifecycle:delivery": {"merge_eligible": True},
+        "lifecycle:blocked": {"merge_eligible": False},
+    }
+    rows = [
+        {
+            "lifecycle_disposition": "lifecycle:delivery",
+            "lifecycle_disposition_source": "label",
+        },
+        {
+            "lifecycle_disposition": "lifecycle:blocked",
+            "lifecycle_disposition_source": "label",
+        },
+        {
+            "lifecycle_disposition": "lifecycle:delivery",
+            "lifecycle_disposition_source": "missing-label",
+        },
+    ]
+
+    assert module.mechanically_unreachable_count(rows, dispositions) == 2
+
+
+def test_private_redaction_requires_matching_runtime_facts(tmp_path: Path) -> None:
+    module = _load_check_module()
+    ledger = {
+        "pull_requests": [
+            {
+                "private": True,
+                "repository": None,
+                "number": None,
+            }
+        ]
+    }
+
+    rows = module._complete_census_rows(ledger, facts_path=tmp_path / "missing-facts.json")
+
+    assert rows is None
+    assert any("private PR cohort is redacted" in failure for failure in module.failures)
+
+
+def test_armed_ratchet_cannot_reverse() -> None:
+    module = _load_check_module()
+
+    module.validate_ratchet_monotonicity(
+        {"estate_yaml_derives": False},
+        {"ratchets": {"estate_yaml_derives": True}},
+    )
+
+    assert any("estate_yaml_derives" in failure for failure in module.failures)
+
+
+def test_surplus_lifecycle_label_is_metadata_drift(monkeypatch) -> None:
+    module = _load_check_module()
+    payload = {
+        "data": {
+            "r0": {
+                "labels": {
+                    "nodes": [
+                        {
+                            "name": "lifecycle:delivery",
+                            "color": "0e8a16",
+                            "description": "delivery",
+                        },
+                        {
+                            "name": "lifecycle:legacy",
+                            "color": "000000",
+                            "description": "undeclared",
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda *_args, **_kwargs: subprocess.CompletedProcess([], 0, json.dumps(payload), ""),
+    )
+    drift = module.live_label_metadata_drift(
+        {"organvm/example"},
+        {
+            "lifecycle:delivery": {
+                "label_color": "0e8a16",
+                "description": "delivery",
+            }
+        },
+    )
+
+    assert drift == 1
