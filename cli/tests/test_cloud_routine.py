@@ -109,3 +109,39 @@ def test_manifest_publishes_the_receipt_contract() -> None:
         "spec/contracts/cloud-routine-receipt-v1.schema.json"
     )
     assert manifest["consumer"] == "scripts/cloud-routine-ingest.py"
+
+
+def test_current_findings_are_typed_and_already_owned() -> None:
+    payload = json.loads(
+        (ROOT / "docs" / "receipts" / "cloud-routine-findings-20260808.json").read_text()
+    )
+    receipts = [CloudRoutineReceiptV1.model_validate(item) for item in payload]
+
+    assert len(receipts) == 11
+    assert all(receipt.owner_ref for receipt in receipts)
+    assert all(receipt.disposition != "new_work" for receipt in receipts)
+
+
+def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
+    receipt = json.loads(
+        (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
+    )
+    rows = receipt["rows"]
+
+    assert receipt["denominator"] == receipt["classified"] == len(rows) == 41
+    assert len({row["irf_id"] for row in rows}) == 41
+    assert all(row["owner_kind"] == "irf" and row["owner_ref"] for row in rows)
+    assert receipt["unowned"] == []
+    assert receipt["packet_emissions"] == []
+
+
+def test_cloud_human_gates_have_named_levers() -> None:
+    lever_data = json.loads((ROOT / "his-hand-levers.json").read_text())
+    lever_ids = {lever["id"] for lever in lever_data["levers"]}
+
+    assert {
+        "L-CLOUD-BULK-PR-CLOSE-N75",
+        "L-CLOUD-EXTERNAL-GOVERNANCE-N77",
+        "L-CLOUD-SESSION-SCOPE-EXPANSION",
+        "L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+    } <= lever_ids
