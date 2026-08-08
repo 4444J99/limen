@@ -317,6 +317,20 @@ def test_variable_bound_python_notification_bypass_is_rejected(tmp_path, check_g
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_fstring_bound_python_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        "message = 'x'\n"
+        "script = f'display notification \"{message}\"'\n"
+        "subprocess.run(['/usr/bin/osascript', '-e', script])\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_variable_bound_shell_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
@@ -421,5 +435,5 @@ def test_netmode_resolves_notifier_from_live_runtime():
     shell = (SCRIPTS / "netmode.sh").read_text(encoding="utf-8")
 
     assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" in shell
-    assert '_notify_root="$(cd "$(dirname "$_notify_candidate")/.." && pwd)"' in shell
+    assert '_notify_root="${LIMEN_ROOT:-$HOME/Workspace/limen}"' in shell
     assert '--root "$_notify_root"' in shell
