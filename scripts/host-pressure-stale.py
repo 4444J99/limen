@@ -48,6 +48,12 @@ def _positive_float(name: str, default: float) -> float:
     return value if value > 0 else default
 
 
+def _sample_seconds() -> float:
+    """Mirror heartbeat-loop.sh: accept positive integers, otherwise use 300."""
+    raw = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+    return float(raw) if raw.isdigit() and int(raw) > 0 else 300.0
+
+
 def _stale(message: str, *, read_only: bool) -> int:
     print(message)
     if not read_only:
@@ -66,9 +72,12 @@ def main(argv: list[str] | None = None) -> int:
     if os.environ.get("LIMEN_VIGILIA", "1") in ("0", "false", "False"):
         print("host-pressure-stale: VIGILIA off — nothing to watch")
         return 0
+    if os.environ.get("LIMEN_HOST_PRESSURE_STALE", "1") in ("0", "false", "False"):
+        print("host-pressure-stale: watchdog off — nothing to evaluate")
+        return 0
 
     stale_beats = _positive_float("LIMEN_VITALS_STALE_BEATS", 3)
-    sample_seconds = _positive_float("LIMEN_VITALS_SAMPLE_SECONDS", 300)
+    sample_seconds = _sample_seconds()
     budget_s = stale_beats * sample_seconds
 
     status_path = _root() / "logs" / "vigilia" / "status.json"
