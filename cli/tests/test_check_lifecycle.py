@@ -31,10 +31,7 @@ def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
     registry = yaml.safe_load(REGISTRY.read_text())
     dispositions = registry["dispositions"]
     merge_eligible = [name for name, row in dispositions.items() if row["merge_eligible"]]
-    lever_ids = {
-        row["id"]
-        for row in json.loads((ROOT / "his-hand-levers.json").read_text())["levers"]
-    }
+    lever_ids = {row["id"] for row in json.loads((ROOT / "his-hand-levers.json").read_text())["levers"]}
 
     assert merge_eligible == ["lifecycle:delivery"]
     assert registry["cohorts"]["draft"]["default_disposition"] is None
