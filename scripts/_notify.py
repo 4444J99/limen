@@ -16,6 +16,7 @@ Kill-switch: LIMEN_NOTIFY=0 keeps the dedup bookkeeping but never calls osascrip
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import os
@@ -106,6 +107,33 @@ def _root_may_speak(root: Path | str) -> bool:
         return False
 
 
+def _deliver(message: str, title: str) -> bool:
+    """Invoke the one machine-global macOS notification effector."""
+    try:
+        msg = message.replace('"', "'")
+        ttl = title.replace('"', "'")
+        subprocess.run(
+            ["osascript", "-e", f'display notification "{msg}" with title "{ttl}"'],
+            capture_output=True,
+            timeout=10,
+        )
+        return True
+    except Exception:
+        return False
+
+
+def notify(
+    root: Path | str,
+    message: str,
+    title: str = "LIMEN",
+    enabled: bool | None = None,
+) -> bool:
+    """Deliver a non-deduplicated notification through the shared liveness gate."""
+    if not _enabled(enabled) or not _root_may_speak(root):
+        return False
+    return _deliver(message, title)
+
+
 def notify_once(
     root: Path | str,
     key: str,
@@ -124,16 +152,7 @@ def notify_once(
     state[key] = {"first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "message": message[:300]}
     _save(root, state)
     if _enabled(enabled) and _root_may_speak(root):
-        try:
-            msg = message.replace('"', "'")
-            ttl = title.replace('"', "'")
-            subprocess.run(
-                ["osascript", "-e", f'display notification "{msg}" with title "{ttl}"'],
-                capture_output=True,
-                timeout=10,
-            )
-        except Exception:
-            pass
+        _deliver(message, title)
     return True
 
 
@@ -149,3 +168,18 @@ def clear_condition(root: Path | str, key: str) -> bool:
 
 def active_conditions(root: Path | str) -> list[str]:
     return sorted(_load(root))
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Small CLI bridge for shell callers such as netmode.sh."""
+    parser = argparse.ArgumentParser(description="deliver a liveness-gated macOS notification")
+    parser.add_argument("--root", default=os.environ.get("LIMEN_ROOT", str(Path(__file__).resolve().parents[1])))
+    parser.add_argument("--title", default="LIMEN")
+    parser.add_argument("--message", required=True)
+    args = parser.parse_args(argv)
+    notify(args.root, args.message, title=args.title)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
