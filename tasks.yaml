@@ -167083,3 +167083,38 @@ tasks:
     conduct_lease_id: 'lease-694-841f8fbd83964339'
     conduct_generation: 694
   updated: '2026-08-08T14:15:26.119Z'
+- id: 'GH-organvm-limen-2085'
+  title: 'Φ7 POTESTAS — Ω PUBLISH: essays through the studium pipeline'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'plan'
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2085'
+  context: 'GitHub issue organvm/limen#2085. Parent: #2077 studium declares a build-in-public pillar (`studium/_seed/directives.md`). This is its POTESTAS output. **Leaves** - `7.1` Essay — the replication-crisis piece - `7.2` Essay — the counter-systems collision (Dao De Jing vs the 48 Laws) - `7.3` Publish staging + the gate **Hard gate:** *''Publishing is his gate — never auto-post/send/invite; reversible staging only.''* Drafts land in `st'
+  predicate: 'test "$(gh issue view 2085 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2085'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2085'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:15:31.778Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-357dcbc8462c1007f31c4d17be53da20:695:compatibility'
+    conduct_run_id: 'run-357dcbc8462c1007f31c4d17be53da20'
+    conduct_lease_id: 'lease-695-357dcbc8462c1007'
+    conduct_generation: 695
+  updated: '2026-08-08T14:15:31.778Z'
