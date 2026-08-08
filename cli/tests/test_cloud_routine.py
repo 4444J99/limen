@@ -139,4 +139,5 @@ def test_cloud_human_gates_have_named_levers() -> None:
         "L-CLOUD-EXTERNAL-GOVERNANCE-N77",
         "L-CLOUD-SESSION-SCOPE-EXPANSION",
         "L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+        "L-LAUNCHDARKLY-OAUTH-CONSENT",
     } <= lever_ids
