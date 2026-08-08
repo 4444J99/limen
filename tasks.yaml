@@ -166369,3 +166369,37 @@ tasks:
     conduct_lease_id: 'lease-673-d12e05e5b54d79dc'
     conduct_generation: 673
   updated: '2026-08-08T14:13:40.285Z'
+- id: 'GH-organvm-limen-2113'
+  title: 'POTESTAS 6.3 — the public/private bridge and its PII predicate'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2113'
+  context: 'GitHub issue organvm/limen#2113. Phase: #2084 · Program: #2077 `organvm/limen` is **public**. The worked instances that make this program specific rather than generic are drawn from a private message corpus. This issue makes the boundary structural instead of careful. ## The split **Public (`studium/potestas/**`)** — mechanisms, definitions, evidence grades, citations, detection signs, counters, drills, rubrics, reading orientati'
+  predicate: 'test "$(gh issue view 2113 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2113'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2113'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:13:45.488Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-f9aab24ccc1ec3acf2cdf94ec7c8f97f:674:compatibility'
+    conduct_run_id: 'run-f9aab24ccc1ec3acf2cdf94ec7c8f97f'
+    conduct_lease_id: 'lease-674-f9aab24ccc1ec3ac'
+    conduct_generation: 674
+  updated: '2026-08-08T14:13:45.488Z'
