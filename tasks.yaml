@@ -145707,7 +145707,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'needs_human'
   labels:
   - 'quicken-residue'
   - 'quicken-escalate'
@@ -145718,7 +145718,7 @@ tasks:
   receipt_target: 'github:organvm/limen:issue:ASK-quicken-escalate-9c934372'
   depends_on: []
   created: '2026-07-15'
-  updated: '2026-08-04T15:41:31.353Z'
+  updated: '2026-08-08T00:11:52.226Z'
   dispatch_log:
   - timestamp: '2026-08-04T15:41:31.353Z'
     agent: 'codex'
@@ -145731,6 +145731,18 @@ tasks:
     conduct_run_id: 'run-63932a34631a48435586c1276f6dd33a'
     conduct_lease_id: 'lease-525-63932a34631a4843'
     conduct_generation: 525
+  - timestamp: '2026-08-08T00:11:52.226Z'
+    agent: 'codex'
+    session_id: 'heal-board-canonical-reconcile'
+    logical_agent: 'heal-board'
+    logical_session_id: 'heal-board'
+    status: 'needs_human'
+    output: 'heal-board: reconciled needs-human label to needs_human status'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-f356253d8b74a812a372b20fe1230cba:653:compatibility'
+    conduct_run_id: 'run-f356253d8b74a812a372b20fe1230cba'
+    conduct_lease_id: 'lease-653-f356253d8b74a812'
+    conduct_generation: 653
 - id: GH-organvm-limen-1130
   title: 'always-working owner packets are capability-unlaunchable: local lanes +
     self-repo + mutating predicates'
