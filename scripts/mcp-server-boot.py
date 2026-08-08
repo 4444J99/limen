@@ -149,13 +149,26 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str | dict[str, str]]
     return statuses
 
 
+def _codex_executable() -> str | None:
+    """Resolve the registry-owned Codex executable without assuming it is on PATH."""
+    reference = os.environ.get("LIMEN_CODEX_BIN", "").strip() or "codex"
+    has_separator = os.sep in reference or bool(os.altsep and os.altsep in reference)
+    if has_separator:
+        candidate = Path(reference).expanduser()
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+        return None
+    return shutil.which(reference)
+
+
 def _codex_mcp_statuses() -> tuple[dict[str, str | dict[str, str]], str | None]:
     """Return Codex semantic states plus a sanitized probe failure, if any."""
-    if not shutil.which("codex"):
+    codex_bin = _codex_executable()
+    if codex_bin is None:
         return {}, "Codex CLI unavailable"
     try:
         result = subprocess.run(
-            ["codex", "mcp", "list", "--json"],
+            [codex_bin, "mcp", "list", "--json"],
             capture_output=True,
             text=True,
             timeout=30,
