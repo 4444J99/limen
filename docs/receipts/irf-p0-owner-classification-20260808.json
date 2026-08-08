@@ -1,0 +1,300 @@
+{
+  "schema_version": "limen.irf_p0_owner_classification.v1",
+  "observed_at": "2026-08-08T11:38:37Z",
+  "source": "https://github.com/organvm/organvm-corpvs-testamentvm/issues/489#issuecomment-5225934939",
+  "denominator": 41,
+  "classified": 41,
+  "unowned": [],
+  "packet_emissions": [],
+  "rows": [
+    {
+      "irf_id": "IRF-SYS-166",
+      "source_key": "**IRF-SYS-166**",
+      "source_status": "S-2026-04-29-prompt-registry-bleed-stop (sessions f14f2d23, d8688a3d, 4330dd64)",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-166",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-APP-087",
+      "source_status": "Human action",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-APP-087",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-APP-088",
+      "source_status": "Human action",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-APP-088",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-CRP-018",
+      "source_status": "Each file requires independent human judgment — three separate decisions.",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-CRP-018",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-III-026",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-III-026",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-III-027",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-III-027",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-III-035",
+      "source_status": "Maddie response",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-III-035",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-III-047",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-III-047",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-INST-001",
+      "source_status": "IRF-INST-015 (human review)",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-INST-001",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-INST-015",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-INST-015",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-INST-016",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-INST-016",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-OPS-014",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-OPS-014",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-OPS-028",
+      "source_status": "Metric generator repair + golden-set test",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-OPS-028",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-OPS-061",
+      "source_status": "Once-run closure unblocked; durable cadence requires scheduling-mechanism choice.",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-OPS-061",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-OPS-069",
+      "source_status": "Agent",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-OPS-069",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-PRT-027",
+      "source_status": "None (5-min checkout)",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-PRT-027",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-PRT-028",
+      "source_status": "IRF-PRT-027 (domain registration)",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-PRT-028",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-PRT-060",
+      "source_status": "User must obtain key",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-PRT-060",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-PRT-061",
+      "source_status": "User must purchase",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-PRT-061",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-003",
+      "source_status": "RP-07 SS7 I1; SYN-02 SS4.4; SYN-04 SS4.1",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-003",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-004",
+      "source_status": "RP-07 SS6.2, SS6.3; SYN-02 SS5.5 R2",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-004",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-006",
+      "source_status": "RP-04 SS5.1 P4; SYN-03 SS6.4",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-006",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-007",
+      "source_status": "RP-02 SS5.5; SYN-02 SS5.5 R1",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-007",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-008",
+      "source_status": "RP-02 SS6.3; SYN-02 SS4.5, SS5.3, SS5.5 R5",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-008",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-009",
+      "source_status": "RP-02 SS6.2, SS6.4; SYN-02 SS5.4",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-009",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-010",
+      "source_status": "RP-02 SS5.7, SS6.4",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-010",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-012",
+      "source_status": "RP-05 SS4.3, SS7.1; SYN-02 SS4.3; SYN-03 SS5.1-5.3",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-012",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-013",
+      "source_status": "RP-02 SS5.1, SS6.1; SYN-02 SS4.1, SS5.2",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-013",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-RES-014",
+      "source_status": "RP-07 SS5.5, SS7 I4; SYN-02 SS5.5 R3; SYN-04 SS5.2",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-RES-014",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SEC-002",
+      "source_status": "Browser login",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SEC-002",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SEC-005",
+      "source_status": "Browser login",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SEC-005",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SEC-011",
+      "source_status": "Rotation precedes any public disclosure",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SEC-011",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SEC-012",
+      "source_status": "Rotation precedes Phase B `--execute`",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SEC-012",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SYS-009",
+      "source_status": "Human action: 2 min at github.com/settings/notifications + Gmail",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-009",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SYS-011",
+      "source_status": "GoDaddy access",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-011",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SYS-087",
+      "source_status": "IRF-SYS-085",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-087",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SYS-137",
+      "source_status": "Google Takeout delivery",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-137",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-SYS-156",
+      "source_status": "None (Human action: ~30min bulk + ~1-2h explicit-12 triage)",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-SYS-156",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-TAX-VAC-001",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-TAX-VAC-001",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-THE-VAC-004",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-THE-VAC-004",
+      "disposition": "owned"
+    },
+    {
+      "irf_id": "IRF-VAC-001a",
+      "source_status": "None",
+      "owner_kind": "irf",
+      "owner_ref": "irf:IRF-VAC-001a",
+      "disposition": "owned"
+    }
+  ],
+  "predicate": "python3 -c \"import json; p=json.load(open('docs/receipts/irf-p0-owner-classification-20260808.json')); assert p['denominator']==p['classified']==len(p['rows'])==41; assert len({r['irf_id'] for r in p['rows']})==41; assert not p['unowned'] and all(r['owner_ref'] for r in p['rows'])\""
+}
