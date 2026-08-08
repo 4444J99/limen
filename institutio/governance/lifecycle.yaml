@@ -1,0 +1,122 @@
+# PR lifecycle is declared policy, not a collection of string literals.
+#
+# Consumers select dispositions by capability (for example merge_eligible), never by id.
+# Conversion is incremental and visible: a false ratchet permits only the exact shrink-only
+# literal baseline below; once true, the consumer must contain zero lifecycle label literals.
+# Live GitHub parity and materialization are measured separately by check-lifecycle.py --measure.
+
+schema_version: 0.1
+predicate: "python3 scripts/check-lifecycle.py --check"
+ideal_form: IF-PR-LIFECYCLE
+
+dispositions:
+  "lifecycle:delivery":
+    label_color: "0e8a16"
+    description: "Merge-eligible once required checks are green"
+    merge_eligible: true
+    fail_closed: false
+    human_owned: false
+    terminal: false
+    admits:
+      draft: false
+      mergeable: true
+      required_checks: green
+      conflicts: none
+    owner: gitvs
+  "lifecycle:preservation":
+    label_color: "6f42c1"
+    description: "Preserved work — not mechanically merged or closed"
+    merge_eligible: false
+    fail_closed: false
+    human_owned: false
+    terminal: true
+    derived_from:
+      labels: ["custody:preservation"]
+      body_markers:
+        - "Lifecycle preservation PR opened by `scripts/worktree-pr-receipts.py`."
+      materialize: true
+    owner: gitvs
+  "lifecycle:active-human":
+    label_color: "0969da"
+    description: "A human is actively driving this PR"
+    merge_eligible: false
+    fail_closed: false
+    human_owned: true
+    terminal: false
+    owner: gitvs
+  "lifecycle:blocked":
+    label_color: "d4a72c"
+    description: "Fail-closed pending explicit lifecycle review"
+    merge_eligible: false
+    fail_closed: true
+    human_owned: false
+    terminal: false
+    owner: gitvs
+  "lifecycle:superseded":
+    label_color: "57606a"
+    description: "Superseded by a named successor"
+    merge_eligible: false
+    fail_closed: false
+    human_owned: false
+    terminal: true
+    owner: gitvs
+
+cohorts:
+  dependabot:
+    selector: {private: false, owner: dependabot}
+    default_disposition: "lifecycle:delivery"
+    drainable: true
+  operator-active:
+    selector: {private: false, owner: operator, classification: active_custody}
+    default_disposition: "lifecycle:active-human"
+  operator-stale:
+    selector: {private: false, owner: operator, classification: owner_route}
+    default_disposition: "lifecycle:blocked"
+  private:
+    selector: {private: true}
+    default_disposition: "lifecycle:blocked"
+  draft:
+    selector: {draft: true}
+    default_disposition: null
+    owner_lever: L-PR-DRAFT-COHORT-DISPOSITION
+  archived-repo:
+    selector: {repository_archived: true}
+    default_disposition: "lifecycle:superseded"
+    immutable: true
+  all:
+    selector: {all: true}
+    default_disposition: "lifecycle:blocked"
+
+consumers:
+  merge-drain:
+    path: scripts/merge-drain.py
+    derives: [merge_eligible]
+    ratchet: merge_drain_derives
+  lifecycle-manifest:
+    path: scripts/pr-lifecycle-manifest.py
+    derives: [labels]
+    ratchet: lifecycle_manifest_derives
+  estate-manifest:
+    path: scripts/pr-lifecycle-estate-manifest.py
+    derives: [labels, label_color, description, cohorts]
+    ratchet: estate_manifest_derives
+  gitvs:
+    path: scripts/gitvs.py
+    derives: [labels, derived_from]
+    ratchet: gitvs_derives
+
+ratchets:
+  merge_drain_derives: false
+  lifecycle_manifest_derives: false
+  estate_manifest_derives: false
+  gitvs_derives: false
+  estate_yaml_derives: false
+
+literal_baseline:
+  scripts/merge-drain.py: 6
+  scripts/pr-lifecycle-manifest.py: 5
+  scripts/pr-lifecycle-estate-manifest.py: 6
+  scripts/gitvs.py: 8
+
+live_baseline:
+  preservation_materialization_missing_labels: 124
