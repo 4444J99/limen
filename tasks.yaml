@@ -166675,3 +166675,37 @@ tasks:
     conduct_lease_id: 'lease-682-833e6522fe59de6e'
     conduct_generation: 682
   updated: '2026-08-08T14:14:25.304Z'
+- id: 'GH-organvm-limen-2104'
+  title: 'POTESTAS 4.1 — studium/rubric/negotiation.md: the Voss instruments, scored'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2104'
+  context: 'GitHub issue organvm/limen#2104. Phase: #2082 · Program: #2077 A third `studium/rubric/` diagnostic, same four-level form as `seminar.md` and `disclosure.md`. Scores **conduct in a negotiation**, not outcome — consistent with the seminar rule that *losing a trial is not a low score; failing to engage one is.* ## The instruments (Voss, *Never Split the Difference*, 2016) - **Tactical empathy** — demonstrating you understand their'
+  predicate: 'test "$(gh issue view 2104 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2104'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2104'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:14:30.455Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2c58809bc0a92d375c6bfea9817534b5:683:compatibility'
+    conduct_run_id: 'run-2c58809bc0a92d375c6bfea9817534b5'
+    conduct_lease_id: 'lease-683-2c58809bc0a92d37'
+    conduct_generation: 683
+  updated: '2026-08-08T14:14:30.455Z'
