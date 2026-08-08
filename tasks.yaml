@@ -165944,3 +165944,36 @@ tasks:
     conduct_lease_id: 'lease-661-babfb026f913f645'
     conduct_generation: 661
   updated: '2026-08-08T00:30:50.907Z'
+- id: 'GH-organvm-limen-2063'
+  title: 'release-stale can never free a non-Jules in_progress claim: keeper 409s in_progress -> open, and the 409 discards the whole batch'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2063'
+  context: 'GitHub issue organvm/limen#2063. Surfaced by `/verify` on the running fleet 2026-08-07, visible only because #2050 gave the beat a rung recorder and #2062 made it honest. The `limen-release-stale` rung fails on **every beat**: ``` ── RUNG FAIL [limen-release-stale] exit=1 ── last 15 lines ── File ".../limen/conduct/client.py", line 103, in _request raise ConductConflict(message, status=exc.code) from exc limen.conduct.broker.Cond'
+  predicate: 'test "$(gh issue view 2063 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2063'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2063'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-07'
+  dispatch_log:
+  - timestamp: '2026-08-08T01:28:05.648Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-984a9639a51a8b4c657b9619cec44902:662:compatibility'
+    conduct_run_id: 'run-984a9639a51a8b4c657b9619cec44902'
+    conduct_lease_id: 'lease-662-984a9639a51a8b4c'
+    conduct_generation: 662
+  updated: '2026-08-08T01:28:05.648Z'
