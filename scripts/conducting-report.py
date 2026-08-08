@@ -136,10 +136,17 @@ def _routing_reason(now: datetime | None = None) -> tuple[str, str]:
     provider_health_block = "provider_health" in reason_keys
 
     vendors = provider_headroom.get("vendors", {}) if isinstance(provider_headroom, dict) else {}
+    blocked_counts = admission.get("provider_health_reason_counts")
+    blocked_counts = blocked_counts if isinstance(blocked_counts, dict) else {}
+    blocked_providers = {
+        str(name)
+        for name, count in blocked_counts.items()
+        if _safe_count(count)
+    }
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
-        for row in vendors.values()
-        if isinstance(row, dict)
+        for name, row in vendors.items()
+        if str(name) in blocked_providers and isinstance(row, dict)
     }
     if explicit_auth_block or provider_health_block and provider_states & {
         "auth_needed",
