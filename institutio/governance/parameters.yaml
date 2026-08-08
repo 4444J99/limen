@@ -341,18 +341,24 @@ parameters:
     self_update: none
     owner: vitals
     note: "A combined-axis 'warn' that persists this many consecutive gate beats escalates to SHED — 2026-07-16 sat at warn for hours while swap filled; sustained warn IS critical. Streak persists in logs/vigilia/vitals-streak.json, counts only on the gate path (beat_gate(shed=True)) at most once per 60 s, resets on ok. 0 disables the escalation."
+  VITALS_SAMPLE_SECONDS:
+    default: 300
+    env: LIMEN_VITALS_SAMPLE_SECONDS
+    self_update: none
+    owner: vitals
+    note: "Declared cadence of the heartbeat's independent fast wave. It refreshes VIGILIA sampled_at, phase-sensitive diurnal checks, and organ-health even while the main beat is inside a slow bounded rung."
   VITALS_STALE_BEATS:
     default: 3
     env: LIMEN_VITALS_STALE_BEATS
     self_update: none
     owner: vitals
-    note: "host-pressure-stale sensor threshold: the vitals record in logs/vigilia/status.json is stale after this many worst-case beats (x LIMEN_LOOP_MAX seconds, the heartbeat's adaptive ceiling). A silent gauge means the throttle/shed valve is flying blind — that is the alarm, not the pressure itself."
+    note: "host-pressure-stale threshold: sampled_at in logs/vigilia/status.json is stale after this many missed VITALS_SAMPLE_SECONDS cadences. completed_at measures the slower full autonomic beat and never substitutes for a fresh host sample."
   LIMEN_HOST_PRESSURE_STALE:
     default: "1"
     env: LIMEN_HOST_PRESSURE_STALE
     self_update: none
     owner: vitals
-    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when sampled_at misses VITALS_STALE_BEATS declared sample cadences while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   LIMEN_RUNTIME_LAG:
     default: "1"
     env: LIMEN_RUNTIME_LAG
