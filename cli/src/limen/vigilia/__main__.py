@@ -33,9 +33,14 @@ def _sample() -> int:
         from . import executive
 
         status = executive.sample_vitals()
-        print(f"vigilia: sampled {status.get('sampled_at', '?')}")
     except Exception as exc:
         print(f"vigilia: sample error — {str(exc)[:160]}")
+        return 1
+    vitals = status.get("vitals") if isinstance(status, dict) else None
+    if not status.get("sampled_at") or isinstance(vitals, dict) and vitals.get("status") == "error":
+        print(f"vigilia: sample error — {vitals or 'sample receipt missing'}")
+        return 1
+    print(f"vigilia: sampled {status['sampled_at']}")
     return 0
 
 
