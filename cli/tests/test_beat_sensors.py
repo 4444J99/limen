@@ -427,6 +427,16 @@ sensors:
       - command: "python3 scripts/example.py"
         severity: silent
         escalation: skipped
+  fast-wave-sensor:
+    section: heartbeat
+    title: fast-wave scheduled sensor
+    gate: null
+    source: [fast-wave]
+    cadence: {env: TEST_CANARY_FAST_CADENCE, default: 1}
+    steps:
+      - command: "python3 scripts/example.py"
+        severity: silent
+        escalation: skipped
   parked-organ:
     section: heartbeat
     title: metabolize-only scheduled organ (lever-parked)
@@ -472,10 +482,19 @@ def test_canary_never_ran_live_lane_exits_1_and_names_the_sensor(tmp_path, capsy
 def test_canary_fresh_stamps_are_green(tmp_path, capsys):
     m = _mod()
     registry, voice_dir = _canary_setup(tmp_path)
-    for sid in ("live-lane-sensor", "parked-organ"):
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
         (voice_dir / sid).write_text("now\n", encoding="utf-8")
     assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
     assert "sensor-canary: OK" in capsys.readouterr().out
+
+
+def test_canary_never_ran_fast_wave_exits_1(tmp_path, capsys):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    (voice_dir / "live-lane-sensor").write_text("now\n", encoding="utf-8")
+
+    assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 1
+    assert "NEVER-RAN fast-wave-sensor" in capsys.readouterr().out
 
 
 def test_canary_stale_stamp_exits_1(tmp_path, capsys):
@@ -499,6 +518,7 @@ def test_canary_metabolize_only_finding_is_owner_routed_not_red(tmp_path, capsys
     m = _mod()
     registry, voice_dir = _canary_setup(tmp_path)
     (voice_dir / "live-lane-sensor").write_text("now\n", encoding="utf-8")
+    (voice_dir / "fast-wave-sensor").write_text("now\n", encoding="utf-8")
     assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
     out = capsys.readouterr().out
     assert "NEVER-RAN parked-organ" in out
