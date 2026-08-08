@@ -167299,3 +167299,36 @@ tasks:
     conduct_lease_id: 'lease-700-e4e087ab3b956b0d'
     conduct_generation: 700
   updated: '2026-08-08T20:21:46.046Z'
+- id: 'GH-organvm-session-meta-170'
+  title: 'CLOUD-N74: rebaseline the expired August-8 stale cohort'
+  repo: 'organvm/session-meta'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/session-meta/issues/170'
+  context: 'GitHub issue organvm/session-meta#170. ## Superseded instruction The prior N74 instruction was to create trivial documentation churn before the cohort crossed a 30-day threshold on 2026-08-08. That deadline has passed. Do **not** execute the obsolete “touch docs to reset the clock” instruction. ## Bounded replacement Re-read the live `pushedAt` values for the cohort named by fleet-audit #34, classify the currently stale repositories by'
+  predicate: 'test "$(gh issue view 170 --repo organvm/session-meta --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/session-meta/issues/170'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/session-meta#170'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T21:00:33.751Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-a66877e39d0dde97a0969f4874667aff:701:compatibility'
+    conduct_run_id: 'run-a66877e39d0dde97a0969f4874667aff'
+    conduct_lease_id: 'lease-701-a66877e39d0dde97'
+    conduct_generation: 701
+  updated: '2026-08-08T21:00:33.751Z'
