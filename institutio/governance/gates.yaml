@@ -283,6 +283,16 @@ gates:
     paths: ["scripts/sync-release.sh", "scripts/tests/sync-release.test.sh", "institutio/governance/parameters.yaml"]
     owner: continuity
     note: "The live daemon preserves only real topic branches before unpark; a mutable release override cannot reclassify, commit, or push the repository's actual default branch."
+  guard-degradation:
+    command: "python3 scripts/check-guard-degradation.py && bash scripts/run-pytest-hermetic.sh cli/tests/test_guard_contract.py -q"
+    paths: ["cli/src/limen/guard_contract.py", "cli/src/limen/model_selection.py", "scripts/check-guard-degradation.py", "cli/tests/test_guard_contract.py", "institutio/governance/parameters.yaml", "institutio/governance/guard-state-baseline.txt"]
+    owner: arms-agents
+    note: "IF-GUARD-FAIL-TOWARD-WARNING's predicate: every guard declared by a `guard_state:` block in parameters.yaml is EXECUTED against its degenerate inputs, and one that returns TRUSTED on an input it cannot resolve is a finding. Executed, never inspected — verify-fable-gate.sh was green through the entire 2026-08-07 incident, all five blocks passing, because the question it asked was answered correctly by a meter that was itself lying; inspection cannot catch a guard whose code looks right and whose input is wrong. The declared population is grow-only (guard-state-baseline.txt): deleting a declaration is exactly how a class-wide invariant quietly stops covering its subject, so a shrink is RED rather than a cleanup."
+  session-opening-floor:
+    command: "python3 scripts/session-opening-floor.py --check && bash scripts/run-pytest-hermetic.sh cli/tests/test_session_opening_floor.py -q"
+    paths: ["cli/src/limen/census.py", "scripts/session-opening-floor.py", "cli/tests/test_session_opening_floor.py", "institutio/governance/sensors.yaml"]
+    owner: arms-agents
+    note: "Every lane in census.VENDORS must declare an OPENING_FLOORS row, and no lane may open above its declared cadence ceiling without a lever citing it. On a CI runner the operator's home configs are absent, so every config-file row reports `unset` and the ONLY failure mode left is UNDECLARED — which is precisely the repo-deterministic half of the contract: adding a vendor without declaring where its interactive session opens lands red. The host-dependent half is the beat's job (sensors.yaml session-opening-floor), because the remedies are operator-owned files an agent reports and never writes."
   fable-cadence:
     command: "bash scripts/verify-fable-gate.sh"
     paths: ["scripts/fable-session-guard.py", "scripts/fable-allotment.py", "scripts/vendor-cancel-advisor.py", "cli/src/limen/model_selection.py", "scripts/verify-fable-gate.sh", "cli/tests/test_claude_tier.py", "cli/tests/test_fable_allotment.py", "cli/tests/test_fable_session_guard.py", "cli/tests/test_vendor_cancel_advisor.py", "scripts/check-live-checkout.py"]
@@ -293,6 +303,16 @@ gates:
     paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]
     owner: substrate
     note: "The deployment-currency probe must persist its answer: coherent/drift/unverifiable-here are three RECORDED states, never two plus a silence. `unverifiable-here` is the load-bearing case — a consumer that cannot establish currency must be able to tell that apart from established-fine, which is the 2026-08-07 defect class in one assertion. The receipt body carries no wall-clock, so consecutive runs are byte-identical and every diff is a real change."
+  review-harvest-test:
+    command: "bash scripts/tests/check-review-harvest.test.sh"
+    paths: ["scripts/check-review-harvest.py", "scripts/tests/check-review-harvest.test.sh", "scripts/check-review-engine.py"]
+    owner: verify
+    note: "The harvest predicate's exit codes ARE its contract — it runs as an advisory sensor, so on a green beat only the code is consumed. Hardest case first: offline/unreadable must print SKIP at exit 0 and must NOT print the green line, because 'I read nothing' and 'I found nothing' are the same count (Data Grounding). Also pins the seam that would fail silent-green: AGENT_LOGINS is written in REST spelling (`coderabbitai[bot]`) while GraphQL returns the bare login. check-review-engine.py is in paths because AGENT_LOGINS is imported from it — a change there changes what this predicate can see."
+  diff-removal-count-test:
+    command: "bash scripts/tests/diff-removal-count.test.sh"
+    paths: [".claude/skills/verify/SKILL.md", "scripts/tests/diff-removal-count.test.sh"]
+    owner: verify
+    note: "The clobber check in the verify skill must count removals correctly, because sessions copy that line verbatim to answer 'did my branch delete someone else's work?'. Both obvious one-liners are wrong in opposite directions: `grep '^-'` over-counts by the `--- a/<file>` header (noisy), and the tidier `grep -E '^-[^-]'` UNDER-counts — a removed BLANK line is a lone `-` and a removed `--flag` line renders `---flag`, so on a 3-removal fixture it reports 1. Under-counting hides the clobber the check exists to find, and that pattern shipped for one merge. The assertion is scoped to a runnable `git diff … | grep` recipe line, not any mention: the prose names the bad pattern on purpose so the trap stays recorded."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
     paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
@@ -314,10 +334,10 @@ gates:
     owner: verify
     note: "CI fail-closed contract (issue #1048): --require-base hard-fails an unresolvable merge-base or empty diff, PR deploy-trigger diffs escalate to the whole matrix, merge-group integration runs scoped current-base seams, and ci_job-covered gates defer only on the PR path."
   enactment-test:
-    command: "bash scripts/tests/enactment-audit.test.sh"
-    paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh"]
+    command: "bash scripts/tests/enactment-audit.test.sh && bash scripts/run-pytest-hermetic.sh cli/tests/test_enactment_audit_root.py -q"
+    paths: ["scripts/enactment-audit.py", "scripts/tests/enactment-audit.test.sh", "cli/tests/test_enactment_audit_root.py", "scripts/run-pytest-hermetic.sh"]
     owner: enactment
-    note: "Declared-ON fleet flags are actually wired live, not just merged."
+    note: "Declared-ON fleet flags are actually wired live, not just merged. Two suites, one gate, because they cover one script from opposite sides: the shell fixture runs --wiring-only ON PURPOSE (the liveness rung reads host state and would flap between CI and the live host), which structurally left the liveness rung untested — and that is exactly where the 2026-08-07 defect lived. heartbeat_pid() is host-global pgrep while the wiring mtime came from the per-worktree LIVE_ROOT, so a linked worktree's checkout-time stamp — always later than the daemon's start — fabricated `running stale env` on a daemon that was current. The Python suite drives liveness_rung directly with the host probes stubbed, so it is deterministic with no daemon, and it carries the negative control: removing a false RED must not cost the true one, since a false GREEN in a staleness auditor is strictly worse than the false RED it replaced."
   enactment-wiring:
     command: "python3 scripts/enactment-audit.py --check --wiring-only"
     paths: ["scripts/enactment-audit.py"]
@@ -505,6 +525,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "SENSORS registry drift: the beat's continuous-runtime sensors are declared data (sensors.yaml), the third VIGILIA axis beside GATES + PARAMETERS. Asserts schema, that every step's script exists, every gate is declared (panel or baseline), and every registry gate appears in the beat sources — a drifted sensor is a red check, not a memory chore."
+  check-beat-diagnostics:
+    command: "python3 scripts/check-beat-diagnostics.py --check"
+    paths: ["scripts/heartbeat-loop.sh", "scripts/heartbeat.sh", "scripts/mail-beat.sh", "scripts/publish-board-pr.sh", "scripts/saturate.sh", "scripts/deploy-corpus-organs.sh", "scripts/check-beat-diagnostics.py", "institutio/governance/beat-diagnostics-baseline.txt"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "A beat rung may not hide the reason it failed. `<cmd> 2>&1 | tail -1` destroys three things at once: the exit status (a pipeline reports TAIL's, ~always 0, so the trailing `|| true` is decorative and nothing can tell a failure from a clean run), the diagnostic (tail -1 of a traceback is the last line of the exception's repr — a bare `}` for a JSON error body), and the record (nothing written down, so a rung fails every beat forever with every observable green). Measured 2026-08-07: the #2014 canonical-heal rung failed on EVERY beat with `Exceeded allowed rows written in Durable Objects free tier`, emitted 61 diagnostic lines, and the beat log received `}` — the string appeared in NO log file estate-wide while twelve regressed board atoms stayed regressed. All 65 heartbeat-loop.sh rungs now route through its inline beat_run helper. Two rungs: a shrink-only per-file ratchet (the 8 sibling sites are a declared position, not a leak — beat_run stays inline so the daemon gains no file dependency), and helper integrity, which catches a `tail -1` simplification INSIDE beat_run that would restore the blindness while every count stayed at zero."
   check-diurnal:
     command: "python3 scripts/check-diurnal.py"
     paths: ["institutio/governance/diurnal.yaml", "scripts/check-diurnal.py", "scripts/diurnal.py"]
@@ -517,6 +543,18 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "RUNNER COVERAGE: the rest of the check-* family asks 'does the registry match the code?' — every member verifies declaration↔file parity and none asks who EXECUTES that file. metabolize.sh passes every existing check (it exists, its gate literals are present, check-sensors' F reachability check is scoped `if heartbeat in source`) while being invoked by no tracked plist, workflow, or script — so 43 sensors are declared, gated on, and have never run, and verify-whole.sh skips three rungs believing that beat covers them. This gate answers 'who runs you?' for every declared enforcement artifact: beat runners reachable from a repo-tracked entrypoint, ideal probes and effector predicates naming real scripts, hooks that claim to block actually emitting permissionDecision, and censor precedents citing scripts that exist. Reachability is proven from tracked artifacts only — the operator's live LaunchAgents are a host fact CI cannot observe. Known-open findings sit in unreachable-runners-baseline.txt; the gate fails on any NEW one."
+  loop-self-load-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_loop_self_load.py -q"
+    paths: ["scripts/heartbeat-loop.sh", "cli/tests/test_loop_self_load.py", "scripts/run-pytest-hermetic.sh"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: limen-daemon
+    note: "The loop-self-load rung lives in scripts/heartbeat-loop.sh but its suite lives in cli/tests/, and pytest-cli implicates only cli/**, ianva/**, his-hand-levers.json and cloud-routines.json — so a heartbeat-loop.sh-ONLY change ran no test of the rung it changed. That is not hypothetical: #2031 rewrote the launchd probe, scoped verification implicated no gate that covers this suite, and main went red for an hour until an unrelated PR's pr-gate surfaced it. #2041 consolidated two duplicate suites into this one and deleted the shell gate that had been covering the script side, which would have left the same hole. A cross-language rung — shell implementation, Python suite — needs the script path named explicitly on the gate that runs its tests."
+  metabolize-pass-output-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_metabolize_pass_output.py -q"
+    paths: ["scripts/heartbeat-loop.sh", "cli/tests/test_metabolize_pass_output.py", "scripts/run-pytest-hermetic.sh"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: limen-daemon
+    note: "The metabolize sensor pass runs 57 source:[metabolize] sensors hourly and the rung piped the whole thing through `| tail -5`, so every finding from every sensor but the last was produced and discarded. Measured 2026-08-07: the review-harvest sensor (§0g3a, line 32 of the pass) ran in the 17:49 pass carrying unresolved agent findings and no log in the estate recorded a word of it — the organ built to prove a finding gets CONSUMED had its own finding thrown away by its runner. Nothing downstream could catch it: beat-sensors.py persists only voice stamps, which record that a sensor VISITED and never what it said, so a stamp check reads a discarded finding as a healthy pass. Same cross-language shape as loop-self-load-test — shell rung, Python suite — so scripts/heartbeat-loop.sh is named explicitly here or a rung-only change runs no test of the rung it changed."
   paused-beat-test:
     command: "bash scripts/tests/paused-sensing.test.sh && bash scripts/tests/paused-coherence.test.sh"
     paths: ["scripts/heartbeat-loop.sh", "scripts/tests/paused-sensing.test.sh", "scripts/tests/paused-coherence.test.sh", "institutio/governance/parameters.yaml"]

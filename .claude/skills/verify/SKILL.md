@@ -51,7 +51,36 @@ PYTHONPATH=<worktree>/cli/src ~/Applications/DomusAgentHost.app/Contents/MacOS/D
 | the conduct relay (`tabularius.py`) | any live `--live` dispatch — the receipt commit runs `apply_limen_file_sync` at the end |
 | `conduct/liveness.py` occupancy | `python3 scripts/session-contention.py probe --root <root>` — exit 0 `free` / exit 1 `OCCUPIED by pid N` / exit 0 `probe UNAVAILABLE` |
 | `status.py` | `limen status \| head -6` |
+| the Cloudflare Worker (`web/worker/`) | `npm --prefix web/worker ci` **once per worktree**, then `npm --prefix web/worker run check` (`node --check` + `node --test`) |
 | the durable board | `git show origin/tabularius/board-projection:tasks.yaml` — the keeper's published projection, which is **not** `main`'s copy |
+| a beat sensor (`sensors.yaml`) | `beat-sensors.py --run --source <src> --dry-run` proves it is in the execution set; its OUTPUT lands in `logs/metabolize-sensors.log` — see below, because being in the matrix is not being read |
+
+### A sensor in the matrix is not a sensor anyone reads
+
+`--list` and `--dry-run` answer "is it wired". Neither answers "does its finding reach a reader",
+and for an advisory sensor whose entire product is a printed finding, only the second matters.
+
+```bash
+python3 scripts/beat-sensors.py --run --source metabolize --dry-run   # in the execution set?
+tail -40 logs/metabolize-sensors.log                                  # what the last pass SAID
+stat -f '%Sm' logs/.voice/metabolize_pass                             # when that pass ran
+```
+
+Two traps, both measured 2026-08-07 while verifying a sensor shipped hours earlier:
+
+- **The pass used to be piped through `tail -5`.** 57 sensors, well over a hundred lines, five kept.
+  The `review-harvest` sensor ran, reported unresolved findings, and no log recorded a word of it —
+  the organ built to prove a finding gets *consumed* had its own finding thrown away by its runner
+  (fixed: `logs/metabolize-sensors.log`, #2048). If a sensor's output is missing, check what the
+  rung does with the runner's stdout before concluding the sensor did not run.
+- **A voice stamp is not evidence of content.** `logs/.voice/<id>` records that a sensor VISITED,
+  never what it said, and `_stamp()` only fires for sensors declaring a `cadence` — so a
+  cadence-less sensor legitimately has no stamp, and a stamped one may still have been discarded.
+  Absence of a stamp proves nothing in either direction.
+
+`source: [metabolize]` sensors do **not** run every heartbeat tick. `metabolize.sh` has no scheduler;
+the daemon runs them from one wall-clock-throttled rung (`metabolize_pass_due`, hourly by
+`LIMEN_METABOLIZE_SENSORS_SECS`). A sensor absent from the beat log for ten minutes is normal.
 
 ## Comparing shipped vs pre-fix code (the A/B that proves a fix)
 
@@ -80,6 +109,62 @@ option and does not apply to blob shows).
   If your tree is N commits behind, the modified files are carried over the newer base whole. Always
   finish with `git diff origin/main -- <files> | grep '^-'` and confirm the only removed lines are
   ones you meant to replace. (This happened, and reverted another lane's feature.)
+- **…but read that check with THREE dots once you have committed, or it lies the other way.**
+  Two-dot `git diff origin/main` compares *trees*, so a branch that is merely **behind** renders every
+  commit `main` gained as lines you deleted. Both failures print the same thing:
+
+  ```bash
+  R="^--- (a/|/dev/null)"                                  # the header, and ONLY the header
+  git diff origin/main -- <files> | grep '^-' | grep -vE "$R"  # uncommitted: catches the clobber
+  git diff origin/main...HEAD    | grep '^-' | grep -vE "$R"  # committed: resolves the merge base
+  git merge-base --is-ancestor origin/main HEAD               # 0 ⟺ up to date or ahead; see below
+  ```
+
+  **Match the header's full shape; every shortcut here under-counts.** A diff prefixes each removed
+  line with `-`, so a source line already starting with a dash gains one: `--flag` renders `---flag`,
+  and `-- sql comment` renders `--- sql comment` — indistinguishable from the header by prefix alone.
+  Measured on a fixture with **four** real removals (an ordinary line, a blank line, a `--flag` line,
+  and a `-- ` comment line):
+
+  | pattern | counts | verdict |
+  |---|---|---|
+  | `grep '^-'` | 5 | over by one per file — counts the header |
+  | `grep -E '^-[^-]'` | **1** | **drops the blank, the `--flag`, and the `-- ` line** |
+  | `grep -v '^--- '` | **3** | still **drops the `-- ` comment** — it looks exactly like a header |
+  | `grep -vE '^--- (a/\|/dev/null)'` | **4** | exact: only the real header forms excluded |
+
+  Those four numbers are asserted against the fixture by `scripts/tests/diff-removal-count.test.sh`,
+  not copied from a run. The first draft of this table carried 2 and 4 where the fixture produces 1
+  and 3 — wrong numbers in a table whose entire subject is counting precisely, and the gate did not
+  notice because it asserted only the *relations* (this one over-counts, that one under-counts).
+  A comparison that is merely directionally right is how the previous two versions of this recipe
+  survived, so the counts are now checked exactly.
+
+  Over-counting is merely noisy: you inspect a phantom line and move on. **Under-counting hides the
+  clobber this check exists to find.** Two successive "fixes" here each traded one direction of error
+  for the other before landing on excluding the header by its actual shape — `--- a/…` for a tracked
+  file, `--- /dev/null` for a new one — rather than by counting dashes or matching `--- ` loosely.
+
+  **`--is-ancestor` nonzero does NOT mean "behind".** It means `origin/main` is not an ancestor of
+  `HEAD` — which is **behind OR diverged**, and those want different repairs (fast-forward vs rebase
+  or merge). Verified while writing this: a branch cut from `origin/main` an hour earlier, one commit
+  ahead with one commit landed underneath it, reads `1` — it is diverged, not behind. Get the actual
+  shape before choosing:
+
+  ```bash
+  git rev-list --left-right --count origin/main...HEAD   # -> "<behind-by>  <ahead-by>"
+  ```
+
+  A long-running background `await-pr.sh` fetches, so `origin/main` advances *under you* mid-session
+  and a branch that was current when you cut it is behind by the time you diff it. Observed: a clean
+  branch appeared to delete an entire merged feature (`repair_canonical`, its params, its tests, its
+  rung). Check ancestry first; if it is not an ancestor, get the counts, rebase, and re-diff rather
+  than interpreting.
+- **Two rungs appended to the same region of `heartbeat-loop.sh` WILL conflict on rebase.** "Both
+  additions are wanted" is semantics; git only sees two edits at one line. Resolve by keeping both and
+  think about **order** — a repair rung belongs before the rung whose gate it unblocks, or the pair
+  converges a beat later than it needs to. Chunking one concern per branch is still right; the
+  mechanical conflict is its price.
 - **The live checkout is permanently dirty by design** (`capture.sh` snapshots it to a side ref), so
   `git status` there is never clean and is not a signal.
 - **Dry-run scripts can still write.** `scripts/reclassify-needs-human.py` with no flags writes
@@ -87,6 +172,27 @@ option and does not apply to blob shows).
 - **Worktree-isolation guard rejects compound commands.** No `cmd && cmd`, no `>` redirect combined
   with `cd`, no heredoc-into-`cat` chains. Issue plain single commands with absolute paths, or use
   the Write tool for scratch files (inside the worktree).
+- **A fresh worktree has no `web/worker/node_modules`,** and `npm --prefix web/worker run check` then
+  reports 4 of 5 test *files* failing with no useful summary — it looks like your change broke the
+  Worker. Run one file directly to see the real cause:
+
+  ```bash
+  node --test web/worker/test/conduct-keeper.test.js   # from the repo root
+  ```
+
+  That prints `ERR_MODULE_NOT_FOUND: ajv`, which the aggregate run swallows. Fix:
+  `npm --prefix web/worker ci`. Keep the `--prefix` form everywhere — a bare `npm run check` only
+  works from inside `web/worker/`, and "which directory was I in?" is the ambiguity that makes this
+  symptom look like a code failure twice over.
+- **`test_campaign_relay_effector::test_full_relay_exec_proof_closes_while_keepalive_remains_live`
+  is load-sensitive, not randomly flaky.** It asserts a spawned provider wrote its pidfile; under
+  host contention the parent races ahead. The tell is duration — passing runs take ~16s, failing
+  runs ~4s, and every failure lands while something heavy is running. Observed failing 4× then
+  passing 3× on the *same commit*. Do not conclude "pre-existing on main" from an isolation
+  argument: re-run it on a quiet host before believing either verdict.
+- **`git checkout -- <file>` reverts the WHOLE file, including uncommitted work you meant to keep.**
+  Commit before mutating an implementation to prove a test can fail, or you will revert the fix
+  along with the mutation.
 
 ## Local vs canonical state — do not confuse them
 
@@ -102,3 +208,34 @@ git show origin/tabularius/board-projection:tasks.yaml | md5 # what the KEEPER s
 A conclusion about board state drawn from the local file is a conclusion about `main`, not about the
 keeper. Every self-heal organ (`heal-board.py`, `reclassify-needs-human.py`, …) reads the local
 file, so canonical-side drift is invisible to all of them.
+
+**This is a class, not two bugs — confirmed in two unrelated gates.** Anything reading `LIMEN_TASKS`
+protects the mirror, not the artifact that publishes, so it goes green while the canonical board is
+red. `heal-board` reported a healthy board while the keeper carried 12 regressed `needs-human` atoms
+(fixed: `--canonical`, #2014). `check-board-partition` reports
+`411 findings — {row: 200, content: 16, slug: 195}` **green** locally while CI on the publication PR
+reports `404 — {row: 207, content: 17, slug: 180}` **red with 8 new** (#1780). Before believing any
+board-derived verdict, run it against the extracted keeper board:
+
+```bash
+git show origin/tabularius/board-projection:tasks.yaml > /tmp/canonical.yaml   # NOT --output=, it writes nothing
+LIMEN_TASKS=/tmp/canonical.yaml python3 scripts/<predicate>.py --check
+```
+
+## Look for signals with no effector
+
+The most durable defects in this estate are not missing checks — they are checks whose finding
+nothing consumes. Every observable looks healthy: a marker gets written, an auditor reports RED, a
+receipt records the state. Nothing acts. Grep the full touchpoint set before assuming a signal is
+handled:
+
+```bash
+grep -rn '<marker-or-flag>' scripts/ organs/ institutio/    # who SETS, who READS, who ACTS?
+```
+
+`logs/.loop-update-pending` had exactly three: `sync-release.sh` set it, `sync-release.sh` reported
+it, `heartbeat-loop.sh` cleared it at startup. **Zero acted** — so the flag was cleared by the very
+restart it was meant to cause, and merged rungs stayed dark behind a daemon older than its own script
+(fixed: #2023). Corollary specific to this repo: **a loop-body edit to `heartbeat-loop.sh` does not
+take effect on merge.** `KeepAlive` restarts on EXIT and a `while true` loop never exits. Confirm with
+`python3 scripts/enactment-audit.py --check`, which prints the daemon's age against its wiring's mtime.

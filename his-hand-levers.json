@@ -533,12 +533,21 @@
     },
     {
       "id": "L-FABLE-GUARD-ARM",
-      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"sonnet\" — the session-OPENING tier, not opus — + appends the SessionStart fable-session-guard.py hook). Only the hook half needs this file: typing `/model sonnet` once sets the same opening tier with no paste at all. Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard. Read-side predicate since 2026-08-07: `armed-valve-audit.py --check` reports FABLE_GUARD_SESSIONSTART_WIRED and SESSION_MODEL_OPENING_PIN as PARKED every beat until pulled.",
+      "label": "Arm the Fable interactive-guard settings snippet: paste docs/keys/fable-guard-settings-snippet.json into ~/.claude/settings.json (sets \"model\":\"opus\" off Fable + appends the SessionStart fable-session-guard.py hook). Dispatch-side Fable cap already live on main (#818); this makes the interactive-bypass closure durable + arms the guard.",
       "owner": "yours",
       "cost": "~2 min, one paste, reversible",
       "unlocks": "durable interactive Fable guard (no session silently defaults to Fable)",
       "source_task": "closeout 2026-07-09 (fable runtime cap)",
       "issue": 827
+    },
+    {
+      "id": "L-LANE-OPENING-FLOOR",
+      "label": "Lower the operator-owned interactive opening pins on the non-Claude lanes: ~/.codex/config.toml model_reasoning_effort ultra -> high (one rung above its declared ceiling), and declare a flash-class model in ~/.gemini/settings.json (no model key today, so the lane opens on an unreadable CLI default). Raising the declared ceiling in census.OPENING_FLOORS is the equally legitimate other answer if ultra is the deliberate house cadence. Read-side predicate: scripts/session-opening-floor.py --check, which reports an above-ceiling lane cited by this lever as PARKED (exit 0) and fails only on an uncited breach or an undeclared vendor.",
+      "owner": "yours",
+      "cost": "~2 min, two config edits, reversible",
+      "unlocks": "every interactive lane opens at or below a declared cadence ceiling, not just Claude",
+      "source_task": "F6 of the cadence-guard arc (plan docs/plans/2026-08-07-cadence-guard-fail-toward-warning.md, parent issue #1990)",
+      "issue": 2000
     },
     {
       "id": "L-STORAGE-DRAIN-PUSHED",
@@ -636,7 +645,8 @@
       "gate": "this widens what the fleet may DELETE without a per-branch human key — an authority boundary, not a mechanism, so the organ files it rather than taking it",
       "unlocks": "80 of the 562 local branches become reapable on the beat's reap rung; local_branches residue (562 vs the LIMEN_RESIDUE_LOCAL_BRANCHES=40 cap) gets its first mechanism that can actually reduce it, rather than a cap measuring a quantity nothing is empowered to lower",
       "source_task": "asked 2026-08-07 (\"why do we need 469 live work branches?\") → measured: of 457 ledger entries, 230 never pushed, 87 closed-unmerged, 49 open-PR, 11 merged-but-missed, 80 genuinely unfulfilled · limen PR feat/branch-reap-decided-proof",
-      "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete — no proof can make an unpushed commit loss-free."
+      "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete — no proof can make an unpushed commit loss-free.",
+      "issue": 2010
     },
     {
       "id": "L-DAILY-ENGINE-PHONE-LEAVES",
@@ -1039,6 +1049,61 @@
       "status": "open",
       "added": "2026-08-07",
       "note": "No collision with L-DEPENDABOT-DELIVERY-ARM (#1947): this rung applies the same fail-closed lifecycle:blocked the drain used; the delivery upgrade (arming autonomous merges) stays that separate lever. Human-authored arrivals are counted and surfaced by the rung, never auto-typed."
+    },
+    {
+      "id": "L-MCP-BOOT-HEAL-ARM",
+      "label": "Arm the local-MCP-boot heal effector — one paste sets LIMEN_MCP_BOOT_HEAL=1. The 0b2 beat sensor already reports every configured stdio/http MCP server that fails to boot across all seven agent CLIs; arming lets it CURE the two failure modes it covers (a dropped agent entry, re-landed via `ianva install-configs --apply`, and a corrupt npx cache, cleared and re-probed once) instead of only naming them in the beat log.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "the local-MCP-boot invariant gains its effector — a dropped or cache-crashed server self-heals on the next beat rather than sitting red until someone reads the log. Today the sensor is a signal with no consumer: it reports failures and nothing acts on them.",
+      "source_task": "/verify observation while closing the cadence-guard arc (#1990). Measured 2026-08-07: 4 of 16 configured servers fail to boot (codex/conductor, codex/voice-scorer, claude/conductor, claude/voice-scorer). IMPORTANT and deliberate: arming heals 0 of those 4 — their root cause is an unpinned `mcp` major (2.0.0) that removed Server.list_tools inside the per-capability venvs, which is neither a dropped entry nor an npx cache. That defect is owned separately by issue #2045, which also carries the finding that the sensor's escalation text prescribes a cure not covering its own most common failure. This lever is about the failure modes the effector DOES cover, so the next occurrence of those self-heals.",
+      "gate": "auto-writing agent CLI config files is an authorization, not a default (the parameters registry's own words, mirroring LIMEN_LAUNCHAGENT_HEAL). Persistence-arming — writing LIMEN_*=1 into ~/.limen.env, what the beat actually reads — is classifier-denied to the session, and an agent arming its own config writer is the self-modification boundary. Only you can persist it.",
+      "steps": [
+        "Prereq: read one beat's 0b2 block (scripts/mcp-server-boot.py runs dry every beat and mutates nothing). Rows are boots/reachable, or a failure with its reason. Confirm the failures you see are the kind the heal covers — a server MISSING from a config (dropped entry) or an npx crash — and not the #2045 venv-import class, which arming will not touch.",
+        "Arm: echo 'LIMEN_MCP_BOOT_HEAL=1' >> ~/.limen.env",
+        "Per the arming contract, flip fleet_runtime: \"1\" on LIMEN_MCP_BOOT_HEAL in institutio/governance/parameters.yaml in the same change, so enactment-audit locks it live.",
+        "Done when: a beat shows the 0b2 step re-probing after a heal attempt, and python3 scripts/armed-valve-audit.py reports LIMEN_MCP_BOOT_HEAL as ARMED rather than PARKED."
+      ],
+      "issue": 2045,
+      "status": "open",
+      "added": "2026-08-07",
+      "note": "Scoped strictly to the heal effector. The estate-wide predicate (scripts/verify-mcp-estate.sh) and the ianva UPSTREAMS set are separate concerns — an empty upstream registry is a registry decision, not a probe result, and the effector never guesses it."
+    },
+    {
+      "id": "L-DECORUM-APPLY-ARM",
+      "label": "Arm the DECORVM professionalization effector — one paste sets LIMEN_DECORUM_APPLY=1. The keeper already federates the estate's quality organs into one verdict every cadence and reports any public egg-face; arming lets it file one bounded, idempotent board ticket per finding through the tabularius broker instead of planning them forever in dry-run.",
+      "owner": "yours",
+      "cost": "~10 sec, one paste, durable",
+      "unlocks": "the estate's public-surface defects become tracked work instead of a line in a log. Unarmed, DECORVM is a beat-wired organ in permanent dry-run — the exact 'the deliverable IS the live effect, and the organ never produces it' shape that armed-valve-audit exists to surface.",
+      "source_task": "/verify observation while closing the cadence-guard arc (#1990). The parameters registry ships this valve DARK with an explicit prerequisite — 'observe the DRY plan in the beat log first' — and that observation is now DONE and recorded in issue #2046. Run 2026-08-07: 3 findings, 2 at/above the 'high' floor, effector would file 3 tickets (0 already on board) against a cap of 8. Both high rows are real live defects: one public page renders body copy and CTAs near-white on near-white while its dynamic content 404s, another ships a ~9.6MB hero PNG with clipped colour bands and CORS/SRI failures on its animation scripts.",
+      "gate": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — and beyond the mechanism, turning on fleet-wide auto-filing is an autonomy decision about whether the estate opens its own work, which is yours by definition. Only you can persist it.",
+      "steps": [
+        "Prereq (already satisfied; re-check if you want a second data point): run python3 scripts/decorum-keeper.py with no flags — it is dry by default and mutates nothing. Confirm the 'effector: DRY-RUN — would file N ticket(s)' line is small, that the ids are the stable DECORUM-<lane>-<surface> form, and that the findings are genuine rather than probe noise.",
+        "Arm: echo 'LIMEN_DECORUM_APPLY=1' >> ~/.limen.env",
+        "Per the arming contract, flip fleet_runtime: \"1\" on LIMEN_DECORUM_APPLY in institutio/governance/parameters.yaml in the same change, so enactment-audit locks it live.",
+        "Done when: the board carries DECORUM-* tickets, a re-run reports them as 'already on board' rather than re-filing (proving the create-only upsert), and python3 scripts/armed-valve-audit.py reports LIMEN_DECORUM_APPLY as ARMED rather than PARKED."
+      ],
+      "issue": 2046,
+      "status": "open",
+      "added": "2026-08-07",
+      "note": "Deliberately scoped to the board-ticket effector only. The sibling valve LIMEN_DECORUM_ISSUES_APPLY mirrors findings to public decorum-labelled GitHub issues and is a strictly larger authorization — opening public issues is not the same step as filing an internal board task — so it stays dark and out of scope here. Filing a ticket is the only mutation either way: the organ never sends and never wipes, and the cap LIMEN_DECORUM_MAX (default 8) bounds board churn while findings drain over successive beats."
+    },
+    {
+      "id": "L-CLOUDFLARE-DO-QUOTA",
+      "label": "The conduct keeper's storage plan is SPENT — every relay write is refused with `500 {\"detail\": \"Exceeded allowed rows written in Durable Objects free tier.\"}`. This is the live blocker on the requested 100 tasks/day: the keeper is the only sanctioned board writer, so while its writes are refused the board cannot advance at all. Raise the plan (Cloudflare Workers Paid, $5/mo, lifts the SQLite-backed Durable Object rows-written ceiling) or accept a board that resumes only at each daily quota reset.",
+      "owner": "yours",
+      "cost": "~2 min in the Cloudflare dashboard + a recurring spend decision (a spend is your lever, never the fleet's)",
+      "unlocks": "every relay WRITE path at once — `_register_relay_session` is on all of them. Concretely: the canonical-heal rung lands its twelve regressed needs-human atoms, dispatch receipts commit, board publication resumes, and the throughput governor can leave `dispatched: 0` / bootstrap cap 25 and climb toward the requested 100/day.",
+      "source_task": "/verify finding 2026-08-07 (limen PR #2050 lineage): driving the #2014 canonical-heal rung with the beat's own environment produced a 61-line traceback ending in ConductError 500 'Exceeded allowed rows written in Durable Objects free tier', raised from cli/src/limen/tabularius.py:1198 _register_relay_session -> POST /api/conduct/sessions. Invisible until then because the rung was piped through `2>&1 | tail -1`, which reduced it to a bare `}` (fixed by the beat_run rung runner + check-beat-diagnostics gate). Last successful keeper write 2026-08-07T12:55:47-04:00, immediately after #2016's merge — unblocking the write path is what consumed the day's remaining allowance.",
+      "gate": "a recurring SPEND. Mass spends are a human-gated lever under CLAUDE.md → Edits Policy; the fleet may neither raise a billing plan nor accept a recurring charge on your behalf.",
+      "status": "open — the keeper's write path stays refused until the plan is raised or the daily quota resets",
+      "steps": [
+        "Cloudflare dashboard → Workers & Pages → Plans → Workers Paid ($5/mo), which lifts the SQLite-backed Durable Object rows-written ceiling that web/worker/wrangler.toml's `new_sqlite_classes = [\"ConductKeeperDurableObject\"]` binding is metered against.",
+        "Or decide explicitly NOT to spend: the free ceiling resets daily, so the board advances in one burst per day and 100/day stays out of reach. That is a legitimate answer — it just needs to be the chosen one rather than the default nobody noticed.",
+        "Either way the fleet needs no follow-up: heal-board.py --canonical now reports this as a named BLOCKED condition citing this lever and exits 75 (EX_TEMPFAIL), so the beat's rung ledger records a non-zero outcome rather than looking healthy, and the rung heals itself the moment writes are accepted again."
+      ],
+      "note": "Follow-on the fleet OWNS (not yours): the keeper should answer a quota wall with a structured, machine-readable code instead of an undifferentiated 500. cli/src/limen/conduct/client.py currently classifies this condition on the rejection prose — a documented, narrow exemption from the estate's own rule that callers classify on `status`, taken because a Cloudflare storage refusal carries no other signal. Once web/worker returns a code (and is deployed via wrangler, which does NOT happen on merge), the prose match becomes a compatibility fallback.",
+      "issue": 2054
     }
   ]
 }

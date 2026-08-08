@@ -931,6 +931,13 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
 
     if phase in ("midday", "evening"):
         claims = prev_morning.get("claims") or []
+        # The claims this phase is ABOUT, carried so the receipt below records them in the one shape
+        # every reader already expects. Set here rather than reconstructed at write time: the sidecar
+        # tried to recover them from the scored rows and produced `text` STRINGS, while morning wrote
+        # claim DICTS under the identical key. score_claims() indexes `c["section"]`, so a consumer
+        # that fed a midday receipt back in the way midday itself consumes the morning one would hit
+        # `TypeError: string indices must be integers`. One key, one type, one place that sets it.
+        ctx["claims"] = claims
         probe = render_phase(root, sections, "morning", dict(ctx, claims=claims))
         scored = score_claims(claims, probe)
         ctx["midflight" if phase == "midday" else "scored"] = scored
@@ -976,14 +983,37 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
         return 0
 
     write_block(root / "docs" / "diurnal" / f"{today}.md", phase, block)
+    # THE RECEIPT MUST CARRY WHAT THE NOTIFICATION ANNOUNCED. `"scored": ctx.get("scored", [])` was
+    # hardcoded, but midday writes its scoring to ctx["midflight"] (see the phase branch above), so
+    # every midday sidecar persisted `claims: []` and `scored: []` — while the push notification,
+    # built from ctx["drift"] a few lines earlier, went out saying "2 drift". The 2026-08-07 receipt
+    # is 539 bytes, byte-for-byte the same empty shell as 2026-08-06's.
+    #
+    # The prose block was never lossy — docs/diurnal/2026-08-07.md carries both drifted claims by
+    # name ("open_levers ... 68 → 73", "open_prs ... 1293 → 1297"). So a human could always answer
+    # "which two?" and a machine could not: it read zero drift out of a run that alerted on two.
+    # That asymmetry is the whole defect, and it is the quiet kind — an empty list is a valid
+    # answer, so nothing anywhere reports an error.
+    #
+    # Derived from the phase rather than looked up under one fixed key: the midday/evening split
+    # lives in exactly one place (that branch), and a receipt that re-guesses it is how the two got
+    # out of step to begin with.
+    scored_this_phase = ctx.get("midflight") if phase == "midday" else ctx.get("scored")
     sidecar = {
         "phase": phase,
         "date": today,
         "generated_at": now.isoformat(timespec="seconds"),
-        "claims": ctx.get("claims", []),
-        "scored": ctx.get("scored", []),
+        # Morning EMITS claims; midday and evening SCORE the morning's. Both now set ctx["claims"]
+        # to the same list-of-dicts shape, so this is a plain read — no phase-dependent fallback,
+        # because that fallback is exactly what made one key carry two types.
+        "claims": ctx.get("claims") or [],
+        "scored": scored_this_phase or [],
         "sections": [{"key": r.key, "metric": r.metric, "stale": r.stale} for r in rendered],
     }
+    # Only midday derives a drift list, and its ABSENCE on the other phases is meaningful rather
+    # than missing data — the same conditional-key discipline `engaged` uses on the ledger row below.
+    if phase == "midday":
+        sidecar["drift"] = ctx.get("drift") or []
     (state_dir(root) / f"{today}-{phase}.json").write_text(
         json.dumps(sidecar, indent=2, sort_keys=True), encoding="utf-8"
     )

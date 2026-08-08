@@ -723,6 +723,36 @@ sensors:
         severity: advisory
         escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
 
+  review-harvest:
+    section: "0g3a"
+    title: "review-harvest — an agent review finding must be CONSUMED, not merged past"
+    gate: LIMEN_REVIEW_HARVEST
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # SIBLING OF trunk-green (§0g3), ONE JOINT LATER. trunk-green asks whether main can merge;
+    # this asks what survived the merge. The gap it fills is real and was measured: scripts/
+    # check-review-engine.py counts distinct reviewer LOGINS and never reads what they said, so
+    # it called all six of 2026-08-07's PRs green while 17 findings sat unresolved across ten
+    # merged PRs. preflight-thread-state.py reads threads but gates an outbound COMMENT, not a
+    # merge. Feedback provably ARRIVED; nothing proved it was spent.
+    #
+    # ADVISORY, AND DOWNSTREAM OF THE MERGE ON PURPOSE. merge-policy.sh deliberately counts only
+    # REQUIRED checks so an advisory check cannot hold a deliverable hostage (the 2026-07-24
+    # insights lineage). Bot reviews are advisory AND slower than the merge — three of the six
+    # landed 2-3 minutes AFTER their PR was in. A gate that waited for them would stall a cadence
+    # that merged sixteen PRs in under an hour to catch findings that are mostly not there yet.
+    # So this never votes on a merge; it harvests after one.
+    #
+    # NO CADENCE, deliberately: a [metabolize]-source sensor WITH a cadence fires in neither beat
+    # path (the launch-agent-liveness incident — see npm-audit-autofix below). --sample 5 keeps the
+    # per-beat cost at ~6 gh calls, well inside the estate's 15% rate-limit headroom floor, while
+    # the CLI default stays 10 for a manual sweep.
+    steps:
+      - command: "python3 scripts/check-review-harvest.py --sample 5"
+        severity: advisory
+        escalation: "a merged PR carries an UNRESOLVED agent review finding (above) — fix it and resolve the thread, or resolve it with a reason; each line prints the exact resolveReviewThread command. Offline/unreadable is a SKIP, never a green. See scripts/check-review-harvest.py"
+
   npm-audit-autofix:
     section: "0g3b"
     title: "npm-audit autofix — a new high/critical transitive advisory auto-produces an overrides fix PR, never a queue jam"
@@ -1710,6 +1740,38 @@ sensors:
       - command: "python3 scripts/check-live-checkout.py"
         severity: advisory
         escalation: "the live checkout is not origin/main — the fleet is executing stale code and every beat-written artifact it produces is suspect; owner is scripts/sync-release.sh (the beat's unpark rung), never a hand fast-forward of a daemon-contended tree"
+
+  session-opening-floor:
+    section: "0e3"
+    title: "session-opening floors — every interactive lane opens at or below its declared cadence ceiling"
+    gate: LIMEN_SESSION_OPENING_FLOOR
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The operator's own framing: "all providers, not just Claude." Every vendor with an
+    # interactive surface has an opening default pinned in its own file, and until 2026-08-07
+    # nothing in the estate could say what any of them were — the Claude cadence had three
+    # enforcement layers while codex sat at `ultra` effort and gemini declared no model at all,
+    # both facts reachable only by hand.
+    #
+    # Rows derive from census.OPENING_FLOORS and are completeness-checked against census.VENDORS,
+    # so a new lane lands as a RED UNDECLARED row rather than inheriting "no cadence applies".
+    # Dispatch is on OpeningFloor.kind, never on a vendor name.
+    #
+    # Advisory because the remedy is operator-owned config in his home directory (lever
+    # L-LANE-OPENING-FLOOR, issue #2000) — an agent reports these, never writes them, the same
+    # boundary that keeps L-FABLE-GUARD-ARM a human lever. --check treats a cited breach as PARKED
+    # and fails only on an uncited one or an undeclared vendor.
+    cadence:
+      env: LIMEN_SESSION_OPENING_FLOOR_CADENCE
+      default: 12
+    timeout:
+      env: LIMEN_SESSION_OPENING_FLOOR_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/session-opening-floor.py --check"
+        severity: advisory
+        escalation: "a lane opens above its declared cadence ceiling with no lever citing it, or a vendor has no OPENING_FLOORS row — lower the pin, raise the declared ceiling, or file it (his-hand-levers.json L-LANE-OPENING-FLOOR)"
 
   work-loan-backfill:
     section: "0z8"
