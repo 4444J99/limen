@@ -395,7 +395,7 @@ fast_wave_aux_once() {
   }
   trap _fast_wave_aux_cleanup EXIT
   trap '_fast_wave_aux_cleanup; exit 143' HUP INT TERM
-  _fw_tmp="$FAST_WAVE_AUX_LOG.$.$_fw_aux_beat.tmp"
+  _fw_tmp="$FAST_WAVE_AUX_LOG.$$.$_fw_aux_beat.tmp"
   _fw_diurnal_log="$_fw_tmp.diurnal"
   _fw_health_log="$_fw_tmp.health"
   mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null || true
@@ -574,10 +574,10 @@ rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
 mkdir -p "$(dirname "$FAST_WAVE_PID_FILE")" 2>/dev/null || true
-fast_wave_loop "$" &
+fast_wave_loop "$$" &
 FAST_WAVE_PID=$!
 printf '%s\n' "$FAST_WAVE_PID" > "$FAST_WAVE_PID_FILE" 2>/dev/null || true
-stale_watchdog_loop "$" &
+stale_watchdog_loop "$$" &
 HOST_PRESSURE_WATCHDOG_PID=$!
 printf '%s\n' "$HOST_PRESSURE_WATCHDOG_PID" > "$HOST_PRESSURE_WATCHDOG_PID_FILE" 2>/dev/null || true
 while true; do
