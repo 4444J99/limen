@@ -241,6 +241,31 @@ option and does not apply to blob shows).
 - **Worktree-isolation guard rejects compound commands.** No `cmd && cmd`, no `>` redirect combined
   with `cd`, no heredoc-into-`cat` chains. Issue plain single commands with absolute paths, or use
   the Write tool for scratch files (inside the worktree).
+- **`git worktree add -b <br> <path> origin/main` can exit 0 having checked out NOTHING**, leaving an
+  unborn HEAD — and `set -euo pipefail` cannot catch a command that lies about succeeding. Everything
+  downstream then works perfectly on the wrong base: `cp` + `git add` + `git commit` produce a **root
+  commit** carrying only the copied files, and it pushes clean. The first complaint arrives from
+  GitHub, hours later and far from the cause:
+
+  ```
+  pull request create failed: GraphQL: The <branch> branch has no history in common with main
+  ```
+
+  Measured on `ship-docs.sh` 2026-08-08 (branch `docs/board-partition-verify-20260808014448`). The
+  **reflog is the discriminator** — `git log` shows only that the commit is parentless, never when the
+  base went missing:
+
+  | run | reflog | worktree dir holds |
+  |---|---|---|
+  | broken | `commit (initial): …` — and **no branch-creation entry at all** | `.claude`, `.git`, `docs` (only what `mkdir -p` made) |
+  | healthy (`docs/pr-debt-observation-20260808094633`) | `branch: Created from origin/main` → `commit: …` | the whole repo |
+
+  Same script, same volume, 8h apart — so this is a degraded run, not a broken tool; the broken one
+  also *hung ~10h48m* between its branch-name timestamp and its commit, which is the real tell. Two
+  checks before trusting any scripted worktree: `git cat-file -p <sha> | head -3` must show a
+  `parent` line, and `git reflog show <branch>` must show `Created from origin/main`. Note
+  `git diff origin/main...<branch>` reports `fatal: … no merge base` here — that is the *symptom* of
+  an orphan, not a fetch problem, and no amount of re-fetching repairs it.
 - **A fresh worktree has no `web/worker/node_modules`,** and `npm --prefix web/worker run check` then
   reports 4 of 5 test *files* failing with no useful summary — it looks like your change broke the
   Worker. Run one file directly to see the real cause:
@@ -299,6 +324,25 @@ option and does not apply to blob shows).
 - **`git checkout -- <file>` reverts the WHOLE file, including uncommitted work you meant to keep.**
   Commit before mutating an implementation to prove a test can fail, or you will revert the fix
   along with the mutation.
+- **`gh pr view --json statusCheckRollup` lists EVERY check run on the head commit, superseded ones
+  included — `gh pr checks` dedupes to the latest.** A `select(.conclusion=="FAILURE")` over the
+  rollup therefore reports a check that currently passes, and it does so on a single unchanged head,
+  so comparing SHAs cannot catch it. Measured on `organvm-i-theoria/.github#512`: **four** rollup
+  entries for the one context `Validate PR Title` —
+
+  | startedAt | conclusion |
+  |---|---|
+  | 01:19:00 | CANCELLED |
+  | 01:19:22 | CANCELLED |
+  | 01:19:53 | **FAILURE** |
+  | 01:27:11 | **SUCCESS** ← the live verdict |
+
+  The rollup query reported `failing: ["Validate PR Title", "review / review"]` on a PR whose
+  required checks were 8/8 green. Re-runs after a retitle, a re-request, or a cancelled concurrency
+  group all produce this. Read a PR's verdict with `gh pr checks <n>` — and `--required` when the
+  question is "can this merge", since an advisory red never gates a non-deploy PR (charter §Merge).
+  Note this is a *different* trap from stale runs on a superseded head: there, the SHA differs and
+  the tell is visible; here the head never moved.
 
 ## Local vs canonical state — do not confuse them
 

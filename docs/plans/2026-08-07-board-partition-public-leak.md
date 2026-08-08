@@ -29,7 +29,7 @@ current head — the 11 red `validate` runs were superseded heads.
 | `GH-organvm-limen-1767` names lane `4444j99/victoroff-os` | `content` | GitHub-issue intake |
 
 Rows landed on 0806 **and** 0807 — an ongoing source, not a one-off. Two couplings: `--update` is
-shrink-only and **refuses to run at all** while fresh findings exist, so these 8 also block the 16
+shrink-only and **refuses to run at all** while fresh findings exist, so these 8 also block the 15
 now-stale baseline entries from being dropped; and growing the baseline needs
 `--accept-new-disclosures`, which the code calls "a human decision, not a re-pin."
 
@@ -91,7 +91,7 @@ Two paths, and both are the operator's call because both are disclosure decision
   of `tasks.yaml`.
 - **B — accept the disclosure.** `check-board-partition.py --update --accept-new-disclosures`, one
   command, consistent with the 200 `row` entries already accepted. Unblocks the board immediately
-  and lets the 16 stale entries drop. Publishes 8 partner attributions permanently.
+  and lets the 15 stale entries drop. Publishes 8 partner attributions permanently.
 
 **Not done unilaterally.** B is one command but it is explicitly flagged in-code as a human
 decision, and A changes the board architecture. Until one is chosen, PR #2001 stays red and the
@@ -121,3 +121,27 @@ code and reads a `FAIL` as green):
 - The target repo's own pre-commit suite passes on both files, including **shellcheck**.
 - **Not verified:** a live scheduled run. The next `0 0 * * *` firing is the real proof, and the
   first run creates the state branch. Stated as unproven rather than claimed green.
+
+### Defect 1 re-derived at runtime (this section's original numbers came from a CI log)
+
+The 8 findings above were first read out of the `pr-gate` log. Re-run locally against the extracted
+keeper board — the check `.claude/skills/verify` prescribes and this plan skipped:
+
+```
+git show origin/tabularius/board-projection:tasks.yaml > /tmp/canonical.yaml
+LIMEN_TASKS=/tmp/canonical.yaml python3 scripts/check-board-partition.py --check   # run BARE
+```
+
+| board | verdict | exit | findings |
+|---|---|---|---|
+| local `tasks.yaml` (main's mirror) | `ok no new partner-lane content` | **0** | 411 — {row 200, content 16, slug 195} |
+| `origin/tabularius/board-projection` (keeper) | 8 × `FAIL` | **1** | 404 — {row 207, content 17, slug 180} |
+
+All 8 ids reproduce exactly as tabled above, so the finding stands on first-hand evidence rather
+than on a CI log. The local run is **green** on the same predicate and the same commit — reading it
+as the board's verdict is the `LIMEN_TASKS`-mirror trap, now confirmed a third time.
+
+**Correction: the stale count is 15, not 16** (stated twice in earlier revisions of this plan). The
+notes are all `slug`-class, and both derivations agree: 195 baselined − 180 reproducing = 15, and
+411 + 8 − 15 = 404. The original 16 was a miscount, not board drift — CI reported the same 404/180
+split. Recorded rather than silently patched, because a count is this finding's whole substance.
