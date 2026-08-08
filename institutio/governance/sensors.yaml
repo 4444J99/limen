@@ -2048,6 +2048,32 @@ sensors:
         severity: advisory
         escalation: "the owner-only collaboration vault did not reach its bounded discover → migrate → encrypted sync → verify fixed point; inspect its private receipt and credential wall without placing paths, keys, or client data in the board"
 
+  arca-freshness:
+    section: "5c1"
+    title: "ARCA freshness — the private estate's off-machine copy is actually ADVANCING, not merely attempted"
+    gate: LIMEN_ARCA_FRESHNESS
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: continuity
+    # The observability sibling of the 5c backup rung, and the reason it exists: metabolize.sh runs
+    # `arca.sh backup || echo "  (arca skipped …)"`. That `|| echo` is correct — the beat is fail-open
+    # and a locked Keychain must not red it — but it makes a PERMANENTLY dead vault indistinguishable
+    # from a momentarily locked one. Measured 2026-08-07: no backup since 2026-07-30, eight days of
+    # skip lines, nothing red; the vault repo had outgrown its own `git clone` (>19 GB expanded).
+    # This asserts the OUTCOME (ciphertext landed off-machine recently) rather than the mechanism, so
+    # it survives any later reshaping of the vault — new generation, new remote, new chunking.
+    # "Cannot determine" is a FINDING, not a pass: undetermined is exactly the state that hid this.
+    cadence:
+      env: LIMEN_BEAT_ARCA_FRESHNESS
+      default: 6
+    timeout:
+      env: LIMEN_ARCA_FRESHNESS_TIMEOUT
+      default: 90
+    steps:
+      - command: "python3 scripts/arca-freshness.py"
+        severity: advisory
+        escalation: "the private estate has no recent off-machine copy — every _*-private store exists on ONE machine; owner organvm/limen#2072 (vault shape), #719 L-ARCA-KEY-ESCROW (key escrow, still open, so a botched vault repair is unrecoverable)"
+
   diurnal:
     section: "0h"
     title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
