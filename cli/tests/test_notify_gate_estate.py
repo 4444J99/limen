@@ -317,6 +317,19 @@ def test_variable_bound_python_notification_bypass_is_rejected(tmp_path, check_g
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_variable_bound_shell_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.sh").write_text(
+        """script='display notification "x"'
+osascript -e "$script"
+""",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
+
+
 def test_direct_shell_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
