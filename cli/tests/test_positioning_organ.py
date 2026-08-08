@@ -118,6 +118,37 @@ sensors:
     assert fused["arbitrary.future.id"]["voice"] == "arbitrary.future.id"
 
 
+def test_organ_health_preserves_fast_wave_period(tmp_path, monkeypatch):
+    governance = tmp_path / "institutio" / "governance"
+    scripts = tmp_path / "scripts"
+    governance.mkdir(parents=True)
+    scripts.mkdir(parents=True)
+    (governance / "sensors.yaml").write_text(
+        """\
+sensors:
+  quick.sensor:
+    section: heartbeat
+    title: quick sensor
+    source: [fast-wave]
+    gate: null
+    cadence: {env: TEST_QUICK_CADENCE, default: 2}
+    steps: []
+""",
+        encoding="utf-8",
+    )
+    loop = (
+        'python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave '
+        "--scheduled-only\n"
+    )
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "90")
+    m = _load(monkeypatch, tmp_path)
+
+    door = next(row for row in m._doors(loop) if row["key"] == "quick.sensor")
+
+    assert door["interval_s"] == 180
+    assert door["cadence_beats"] is None
+
+
 def test_fallback_patterns_mirror_canon(monkeypatch):
     """derive-never-pin: the degraded-mode inline patterns must equal the canon's — else the two
     discovery paths could silently diverge (a solid sneaking back in)."""
