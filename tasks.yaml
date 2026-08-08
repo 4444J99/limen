@@ -166879,3 +166879,37 @@ tasks:
     conduct_lease_id: 'lease-688-406f7216a393ed72'
     conduct_generation: 688
   updated: '2026-08-08T14:14:56.629Z'
+- id: 'GH-organvm-limen-2098'
+  title: 'POTESTAS 2.5 — reading: negotiation and narrative (Voss, Campbell, Jung)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'potestas'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2098'
+  context: 'GitHub issue organvm/limen#2098. Phase: #2080 · Program: #2077 **Main question: how does a story get inside someone, and whose story is it?** ## Sources - **Voss, *Never Split the Difference* (2016)** — tactical empathy, mirroring, labeling, calibrated questions, the accusation audit, *"that''s right."* Full treatment as a scored rubric in #2082 → 4.1; this orientation covers *reading* it. - **Miller, *StoryBrand* (2017)** — appli'
+  predicate: 'test "$(gh issue view 2098 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2098'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2098'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-08T14:15:01.312Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-db3f7a2310ff483b73fd6b1413934484:689:compatibility'
+    conduct_run_id: 'run-db3f7a2310ff483b73fd6b1413934484'
+    conduct_lease_id: 'lease-689-db3f7a2310ff483b'
+    conduct_generation: 689
+  updated: '2026-08-08T14:15:01.312Z'
