@@ -106,7 +106,7 @@ def _sample_timeout_seconds() -> float:
 def _sample_grace_seconds(sample_seconds: float) -> float:
     """Cover the sampler runtime plus the small producer-write boundary."""
     write_grace = min(_positive_float("LIMEN_VITALS_SAMPLE_GRACE_SECONDS", 5.0), sample_seconds)
-    return max(write_grace, _sample_timeout_seconds())
+    return write_grace + _sample_timeout_seconds()
 
 
 def _stale(message: str, *, read_only: bool) -> int:
