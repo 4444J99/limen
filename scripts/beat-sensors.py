@@ -197,11 +197,37 @@ def _format_escalation(step: dict) -> str | None:
     return None  # fatal has no echo — it propagates
 
 
+def _env_file_value(raw: str) -> str:
+    """Parse one shell-style value while preserving ``#`` characters inside quotes."""
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1]
+    return value
+
+
 def _load_env_file(path: Path) -> None:
     """Load a shell-style env file (``KEY=VALUE`` / ``export KEY=VALUE``) into os.environ, mirroring
     ``set -a; . <file>``. A sensor (creds-hydrate) may WRITE this file, and later sensors need those
-    values in their environment — the ordering metabolize.sh hard-codes as a ``. ~/.limen.env`` source
-    right after block 0a. Honoring it here (via the registry's ``reload_env`` field) makes that
+    values in their environment — the ordering metabolize.sh hard-codes as a ``. ~/.limen.env``
+    source right after block 0a. Honoring it here (via the registry's ``reload_env`` field) makes that
     sequencing constraint declared data rather than shell tribal knowledge. Fail-open if absent."""
     try:
         text = path.read_text(encoding="utf-8")
@@ -215,12 +241,9 @@ def _load_env_file(path: Path) -> None:
         if "=" not in line:
             continue
         key, _, val = line.partition("=")
-        key, val = key.strip(), val.strip()
-        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
-            val = val[1:-1]
+        key, val = key.strip(), _env_file_value(val)
         if key:
             os.environ[key] = val
-
 
 def iter_source(sensors: dict, source: str):
     """Sensors that run in the given beat source, in registry (declaration) order."""
