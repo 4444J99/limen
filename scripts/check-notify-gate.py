@@ -290,7 +290,7 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
         function = functions.get(name)
         if function is None:
             continue
-        reaches_delivery, controlled = _gate_controls_delivery(function, functions)
+        controlled, reaches_delivery = _gate_controls_delivery(function, functions)
         if not reaches_delivery:
             continue
         effectors.append(name)
