@@ -310,6 +310,12 @@ _DISPLAY_RE = re.compile(
     re.IGNORECASE,
 )
 _PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output", "system"})
+# Match both argv elements (such as ["osascript", ...]) and shell command strings
+# (such as os.system("osascript -e ...")), without treating prose as an executable token.
+_OSASCRIPT_COMMAND_RE = re.compile(
+    r"(?<![\\w./-])(?:[\\w./-]+/)?osascript(?=\\s|$)",
+    re.IGNORECASE,
+)
 
 
 def _source_paths(root: Path) -> list[Path]:
@@ -410,7 +416,7 @@ def _python_bypasses(path: Path) -> bool:
             if isinstance(node, ast.Name) and node.id in bindings:
                 referenced.extend(bindings[node.id])
         values = [*literals, *referenced]
-        has_osascript = any(value == "osascript" or value.endswith("/osascript") for value in values)
+        has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
         if has_osascript and "display notification" in " ".join(values).lower():
             return True
     return False
