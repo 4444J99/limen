@@ -53,11 +53,26 @@ def test_material_non_new_work_requires_durable_owner() -> None:
             disposition="owned",
             owner_ref="missing-owner",
         )
+    with pytest.raises(ValidationError, match="durable owner_ref"):
+        _receipt(
+            disposition="owned",
+            owner_ref="https://github.com/../limen/issues/1",
+        )
+    with pytest.raises(ValidationError, match="durable owner_ref"):
+        _receipt(
+            disposition="owned",
+            owner_ref="https://github.com/organvm/../issues/1",
+        )
 
 
 def test_observation_time_must_be_timezone_aware() -> None:
     with pytest.raises(ValidationError, match="include a timezone"):
         _receipt(observed_at="2026-08-08T12:00:00")
+
+
+def test_observation_time_rejects_excessive_future_skew() -> None:
+    with pytest.raises(ValidationError, match="more than 300 seconds"):
+        _receipt(observed_at="9999-01-01T00:00:00Z")
 
 
 def test_non_material_observation_can_have_no_owner() -> None:
@@ -258,6 +273,17 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
     invalid_durable_owner = {**valid, "disposition": "owned", "owner_ref": "missing-owner"}
     invalid_path_owner = {**valid, "owner_ref": "../.."}
+    invalid_dotted_owner = {
+        **valid,
+        "disposition": "owned",
+        "owner_ref": "https://github.com/../limen/issues/1",
+    }
+    invalid_dotted_repo_owner = {
+        **valid,
+        "disposition": "owned",
+        "owner_ref": "https://github.com/organvm/../issues/1",
+    }
+    invalid_clustered_shell = {**valid, "predicate": "bash -uc 'false; true'"}
 
     assert not list(validator.iter_errors(valid))
     assert not list(validator.iter_errors(valid_substitution))
@@ -270,6 +296,9 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     assert list(validator.iter_errors(invalid_owner))
     assert list(validator.iter_errors(invalid_durable_owner))
     assert list(validator.iter_errors(invalid_path_owner))
+    assert list(validator.iter_errors(invalid_dotted_owner))
+    assert list(validator.iter_errors(invalid_dotted_repo_owner))
+    assert list(validator.iter_errors(invalid_clustered_shell))
     human_gate = schema["allOf"][-1]
     assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
     assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
@@ -296,6 +325,35 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
 def test_model_rejects_clustered_shell_command_options() -> None:
     with pytest.raises(ValidationError, match="one executable command"):
         _receipt(predicate="bash -uc 'false; true'")
+
+
+def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_tracked_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    receipt = _receipt()
+    lineage = tmp_path / "docs" / "receipts"
+    lineage.mkdir(parents=True)
+    (lineage / "cloud-routine-lineage.json").write_text(
+        json.dumps({
+            "schema_version": "limen.cloud_routine_lineage.v1",
+            "entries": [receipt.model_dump(mode="json")],
+        }),
+        encoding="utf-8",
+    )
+
+    historical_ids, observed = module._historical_cloud_task_state(tmp_path / "tasks.yaml")
+
+    assert task_id_for(receipt) in historical_ids
+    assert observed[task_id_for(receipt)] == receipt.observed_at
+    assert plan_task_upserts(
+        [receipt],
+        historical_ids=historical_ids,
+        historical_observed_at=observed,
+    ).tasks == ()
 
 
 def test_pruned_archive_lineage_remains_a_duplicate(tmp_path: Path) -> None:
@@ -344,6 +402,7 @@ def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
         "scripts/cloud-routine-ingest.py",
         "scripts/check-cloud-routine-ingest.py",
         "docs/receipts/cloud-routine-findings-20260808.json",
+        "docs/receipts/cloud-routine-lineage.json",
         "docs/receipts/irf-p0-owner-classification-20260808.json",
     ):
         assert path in gates
