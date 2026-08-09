@@ -181,6 +181,27 @@ with tempfile.TemporaryDirectory() as td:
     v, _ = m.evaluate()
     check("baseline does NOT exempt a fresh violation", ids_for(v, "A") == {"T-NEW"})
 
+    # A baselined violation is RECORDED debt, not resolved debt. This gate's founding case —
+    # GITVS-UNCAPPED-PR-DEBT-0715 — is in the baseline and still carries the label, so counting
+    # it silently would reproduce, one level up, the exact failure the audit was opened to
+    # explain: a live nag that no surface names. The census must carry the ids, not just a count.
+    stage(
+        tmp,
+        tasks=[
+            {"id": "T-NAG", "status": "open", "labels": ["operator-paused"]},
+            {"id": "T-CLEAN", "status": "open", "labels": []},
+        ],
+        levers=[OK_LEVER],
+        baseline=["T-NAG"],
+    )
+    v, census = m.evaluate()
+    check("a baselined nag still yields no violation", v == [])
+    check(
+        "REGRESSION: the census NAMES the still-labelled task, it does not merely count it",
+        census["operator_paused_ids"] == [{"id": "T-NAG", "status": "open"}],
+    )
+    check("a task without the label is not named", "T-CLEAN" not in str(census["operator_paused_ids"]))
+
     # --- canonical board: the mirror is not the keeper ------------------------------------
     # BOARD is a mirror that refreshes only when a board-publication PR merges to main. Auditing
     # it and calling the result "the board" is the hole heal-board.py carried (#2014). Measured
