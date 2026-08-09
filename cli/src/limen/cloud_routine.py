@@ -188,9 +188,10 @@ def plan_task_upserts(
     lineage. Keep only the newest observation before classifying it, so a later
     owned/superseded receipt can never be resurrected by an older new_work row.
     """
+    receipt_rows = tuple(receipts)
     latest_by_lineage: dict[str, CloudRoutineReceiptV1] = {}
     collapsed = 0
-    for receipt in receipts:
+    for receipt in receipt_rows:
         lineage_id = task_id_for(receipt)
         previous = latest_by_lineage.get(lineage_id)
         if previous is not None:
@@ -210,13 +211,12 @@ def plan_task_upserts(
     # Every terminal observation is classified even when a later receipt for the
     # same lineage controls task emission. This preserves the audit denominator
     # without allowing an older new_work receipt to resurrect superseded work.
-    classified = sum(receipt.disposition != "new_work" for receipt in latest_by_lineage.values())
+    classified = sum(receipt.disposition != "new_work" for receipt in receipt_rows)
     duplicates = collapsed
 
     for receipt in latest_by_lineage.values():
         lineage_id = task_id_for(receipt)
         if receipt.disposition != "new_work":
-            classified += 1
             continue
         if lineage_id in active_lineages or lineage_id in seen_lineages:
             duplicates += 1
