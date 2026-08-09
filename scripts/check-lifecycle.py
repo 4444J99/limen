@@ -21,6 +21,7 @@ import hashlib
 import json
 import re
 import subprocess
+import time
 import sys
 from pathlib import Path
 from typing import Any
@@ -253,6 +254,32 @@ def _source_markers(source: str) -> tuple[set[str], set[str]]:
     return markers, lifecycle_literals
 
 
+def _loads_lifecycle_registry(source: str) -> bool:
+    """Require an executable loader path when a consumer ratchet is armed."""
+    tree = ast.parse(source)
+    has_registry_path = any(
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, str)
+        and "lifecycle.yaml" in node.value
+        for node in ast.walk(tree)
+    )
+    loader_calls = {
+        "load_yaml",
+        "read_text",
+        "safe_load",
+        "load_registry",
+    }
+    has_loader_call = any(
+        isinstance(node, ast.Call)
+        and (
+            (isinstance(node.func, ast.Name) and node.func.id in loader_calls)
+            or (isinstance(node.func, ast.Attribute) and node.func.attr in loader_calls)
+        )
+        for node in ast.walk(tree)
+    )
+    return has_registry_path and has_loader_call
+
+
 def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     consumers = registry.get("consumers")
     ratchets = registry.get("ratchets")
@@ -340,6 +367,11 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
                 marker for marker in loader_markers if marker not in structural_markers
             ]
             fail("C", f"{consumer}: armed derivation markers missing: {missing_markers}")
+        if armed and not _loads_lifecycle_registry(text):
+            fail(
+                "C",
+                f"{consumer}: armed derivation must load lifecycle.yaml in executable code",
+            )
         if armed and actual:
             fail("C", f"{consumer}: conversion ratchet is armed but {actual} disposition literal(s) remain")
         elif armed and expected != 0:
@@ -472,6 +504,12 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
             fail("E", "draft cohort selector must be exactly {draft: true}")
         if cohort == "all" and selector != {"all": True}:
             fail("E", "all cohort selector must be exactly {all: true}")
+        if cohort == "archived-repo" and selector != {"repository_archived": True}:
+            fail(
+                "E",
+                "archived-repo cohort selector must be exactly "
+                "{repository_archived: true}",
+            )
         disposition = row.get("default_disposition")
         lever = row.get("owner_lever")
         armed_disposition = row.get("armed_disposition")
@@ -680,11 +718,10 @@ def live_label_metadata_drift(
 
 
 def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | None:
-    """Return live open-PR identities through disjoint per-repository searches."""
+    """Return live open-PR identities through bounded batched GraphQL searches."""
+    repositories = _complete_estate_repositories() if repositories is None else repositories
     if repositories is None:
-        repositories = _complete_estate_repositories()
-        if repositories is None:
-            return None
+        return None
     valid_repositories = sorted(
         repository
         for repository in repositories
@@ -695,43 +732,45 @@ def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | 
         return None
 
     identities: set[str] = set()
-    for repository in valid_repositories:
-        query = f"""
-        query($cursor: String) {{
-          search(query: "repo:{repository} is:pr is:open", type: ISSUE, first: 100, after: $cursor) {{
-            issueCount
-            nodes {{
-              ... on PullRequest {{
-                repository {{ nameWithOwner }}
-                number
-              }}
-            }}
-            pageInfo {{ hasNextPage endCursor }}
-          }}
-        }}
-        """
-        repository_identities: set[str] = set()
-        expected_count: int | None = None
-        cursor: str | None = None
-        for _page in range(20):
-            args = ["gh", "api", "graphql", "-f", f"query={query}"]
-            if cursor:
-                args.extend(["-F", f"cursor={cursor}"])
-            try:
-                result = subprocess.run(
-                    args,
-                    capture_output=True,
-                    text=True,
-                    timeout=60,
-                    check=False,
-                )
-                payload = json.loads(result.stdout) if result.returncode == 0 else None
-            except (OSError, subprocess.SubprocessError, ValueError) as exc:
-                fail("D", f"live open-PR census query failed for {repository}: {type(exc).__name__}")
+    deadline = time.monotonic() + 240
+    for offset in range(0, len(valid_repositories), 40):
+        batch = valid_repositories[offset : offset + 40]
+        aliases = {f"r{index}": repository for index, repository in enumerate(batch)}
+        fields = []
+        for alias, repository in aliases.items():
+            fields.append(
+                f'{alias}: search(query: "repo:{repository} is:pr is:open", '
+                'type: ISSUE, first: 100) { '
+                'issueCount nodes { ... on PullRequest { repository { nameWithOwner } number } } '
+                'pageInfo { hasNextPage endCursor } }'
+            )
+        query = "query { " + " ".join(fields) + " }"
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            fail("D", "live open-PR census exceeded its aggregate probe deadline")
+            return None
+        try:
+            result = subprocess.run(
+                ["gh", "api", "graphql", "-f", f"query={query}"],
+                capture_output=True,
+                text=True,
+                timeout=max(1, min(60, int(remaining))),
+                check=False,
+            )
+            payload = json.loads(result.stdout) if result.returncode == 0 else None
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            fail("D", f"live open-PR census batch query failed: {type(exc).__name__}")
+            return None
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict):
+            fail("D", "live open-PR census batch query returned no data")
+            return None
+        for alias, repository in aliases.items():
+            search = data.get(alias)
+            if not isinstance(search, dict):
+                fail("D", f"live open-PR census batch omitted {repository}")
                 return None
-            data = payload.get("data") if isinstance(payload, dict) else None
-            search = data.get("search") if isinstance(data, dict) else None
-            count = search.get("issueCount") if isinstance(search, dict) else None
+            count = search.get("issueCount")
             if isinstance(count, bool) or not isinstance(count, int) or count < 0:
                 fail("D", f"live open-PR census query returned no issueCount for {repository}")
                 return None
@@ -741,15 +780,21 @@ def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | 
                     f"live open-PR census repository shard still reaches the 1,000-result cap: {repository}",
                 )
                 return None
-            if expected_count is None:
-                expected_count = count
-            elif count != expected_count:
-                fail("D", f"live open-PR census issueCount changed during {repository} pagination")
-                return None
-            nodes = search.get("nodes") if isinstance(search, dict) else None
+            nodes = search.get("nodes")
             if not isinstance(nodes, list):
                 fail("D", f"live open-PR census query returned no pull-request nodes for {repository}")
                 return None
+            page_info = search.get("pageInfo")
+            if not isinstance(page_info, dict):
+                fail("D", f"live open-PR census query returned no page info for {repository}")
+                return None
+            if page_info.get("hasNextPage") is True:
+                fail(
+                    "D",
+                    f"live open-PR census batch requires pagination beyond the 100-result bound: {repository}",
+                )
+                return None
+            repository_identities: set[str] = set()
             for node in nodes:
                 node_repository = node.get("repository") if isinstance(node, dict) else None
                 repository_name = (
@@ -769,27 +814,16 @@ def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | 
                 repository_identities.add(
                     hashlib.sha256(f"{repository_name}#{number}".encode()).hexdigest()
                 )
-            page_info = search.get("pageInfo") if isinstance(search, dict) else None
-            has_next = page_info.get("hasNextPage") if isinstance(page_info, dict) else None
-            end_cursor = page_info.get("endCursor") if isinstance(page_info, dict) else None
-            if has_next is not True:
-                break
-            if not isinstance(end_cursor, str) or not end_cursor:
-                fail("D", f"live open-PR census pagination has no end cursor for {repository}")
+            if len(repository_identities) != count:
+                fail(
+                    "D",
+                    f"live open-PR census identity count does not match issueCount for {repository} "
+                    f"({len(repository_identities)} != {count})",
+                )
                 return None
-            cursor = end_cursor
-        else:
-            fail("D", f"live open-PR census exceeded the bounded pagination window for {repository}")
-            return None
-        if expected_count is None or len(repository_identities) != expected_count:
-            fail(
-                "D",
-                f"live open-PR census identity count does not match issueCount for {repository} "
-                f"({len(repository_identities)} != {expected_count})",
-            )
-            return None
-        identities.update(repository_identities)
+            identities.update(repository_identities)
     return identities
+
 
 def live_open_pr_count() -> int | None:
     identities = live_open_pr_identities()
