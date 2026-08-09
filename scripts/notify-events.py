@@ -15,13 +15,12 @@ missing feed or a network error skips silently, never crashes the beat.
 import json
 import os
 import sys
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _notify import notify
+from _notify import notify, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -43,17 +42,7 @@ def _notify_macos(title, msg):
 
 
 def _notify_ntfy(title, msg):
-    topic = os.environ.get("LIMEN_NTFY_TOPIC")
-    if not topic:
-        return  # opt-in: no topic -> no phone push (don't spray a public topic)
-    base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
-    try:
-        req = urllib.request.Request(
-            f"{base}/{topic}", data=msg.encode("utf-8"),
-            headers={"Title": title, "Tags": "money_with_wings"})
-        urllib.request.urlopen(req, timeout=10)
-    except Exception:
-        pass  # network down / topic unreachable -> skip, self-corrects next event
+    return notify_ntfy(ROOT, msg, title=title, tags="money_with_wings")
 
 
 def _emit(title, msg):
