@@ -113,15 +113,27 @@ def run_beat() -> dict:
     completed_at = _now().isoformat()
 
     def merge(current: dict) -> dict:
-        return {
+        sampled_at = current.get("sampled_at") or early.get("sampled_at")
+        sample_error = current.get("sample_error")
+        # An early error remains relevant only until a later successful sample advances
+        # the timestamp. Do not resurrect an obsolete failure from the slow beat's copy.
+        if (
+            sample_error is None
+            and early.get("sample_error")
+            and current.get("sampled_at") == early.get("sampled_at")
+        ):
+            sample_error = early["sample_error"]
+        result = {
             "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
-            "sampled_at": current.get("sampled_at") or early.get("sampled_at"),
+            "sampled_at": sampled_at,
             "completed_at": completed_at,
             "vitals": current.get("vitals") or early.get("vitals", {}),
-            "sample_error": current.get("sample_error") or early.get("sample_error"),
             "continuity": continuity_status,
             "integrity": integrity_status,
         }
+        if sample_error is not None:
+            result["sample_error"] = sample_error
+        return result
 
     return _update_status(merge)
 
