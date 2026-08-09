@@ -82,7 +82,9 @@ def load_levers() -> dict[str, str]:
         fail("E", "his-hand-levers.json has no levers list")
         return {}
     return {
-        str(row["id"]): str(row.get("status") or "")
+        str(row["id"]): (
+            "discharged" if row.get("discharged") else str(row.get("status") or "")
+        )
         for row in rows
         if isinstance(row, dict) and isinstance(row.get("id"), str)
     }
@@ -393,6 +395,11 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
         for key in ("owner", "classification"):
             if key in selector and not isinstance(selector[key], str):
                 fail("E", f"{cohort}: selector.{key} must be a string")
+        if cohort == "dependabot" and selector != {"private": False, "owner": "dependabot"}:
+            fail(
+                "E",
+                "dependabot cohort selector must be exactly {private: false, owner: dependabot}",
+            )
         if cohort == "draft" and selector != {"draft": True}:
             fail("E", "draft cohort selector must be exactly {draft: true}")
         if cohort == "all" and selector != {"all": True}:
@@ -560,6 +567,30 @@ def live_label_metadata_drift(
 
 
 
+def live_open_pr_count() -> int | None:
+    """Return the live open-PR denominator for the owning organvm estate."""
+    query = 'query { search(query: "org:organvm is:pr is:open", type: ISSUE, first: 1) { issueCount } }'
+    try:
+        result = subprocess.run(
+            ["gh", "api", "graphql", "-f", f"query={query}"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        payload = json.loads(result.stdout) if result.returncode == 0 else None
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        fail("D", f"live open-PR census query failed: {type(exc).__name__}")
+        return None
+    data = payload.get("data") if isinstance(payload, dict) else None
+    search = data.get("search") if isinstance(data, dict) else None
+    count = search.get("issueCount") if isinstance(search, dict) else None
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        fail("D", "live open-PR census query returned no issueCount")
+        return None
+    return count
+
+
 def _census_identity(row: dict[str, Any]) -> str | None:
     key = row.get("pr_key")
     if isinstance(key, str) and key:
@@ -687,6 +718,25 @@ def _complete_estate_repositories(
     if isinstance(expected, bool) or not isinstance(expected, int) or expected <= 0:
         fail("D", "complete estate repository census has no positive repository_count")
         return None
+    tracked_summary = tracked.get("summary")
+    tracked_summary_count = (
+        tracked_summary.get("repository_count")
+        if isinstance(tracked_summary, dict)
+        else None
+    )
+    tracked_cursor = tracked_report.get("cursor")
+    tracked_cursor_count = tracked_cursor.get("repository") if isinstance(tracked_cursor, dict) else None
+    tracked_counts = [
+        count
+        for count in (tracked_summary_count, tracked_cursor_count)
+        if isinstance(count, int) and not isinstance(count, bool)
+    ]
+    if not tracked_counts:
+        fail("D", "tracked estate census has no repository denominator")
+        return None
+    if len(set(tracked_counts)) != 1 or tracked_counts[0] != expected:
+        fail("D", "tracked and private estate census repository totals do not reconcile")
+        return None
     expected_kinds = {"pull_requests", "issues", "branches", "checks"}
     identities: set[tuple[str, str]] = set()
     repositories: set[str] = set()
@@ -762,6 +812,7 @@ def measure_unreachable(
     metadata_probe=live_label_metadata_drift,
     rows_probe=_complete_census_rows,
     repositories_probe=None,
+    open_pr_count_probe=live_open_pr_count,
 ) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
@@ -777,6 +828,15 @@ def measure_unreachable(
     open_pr_count = ledger.get("open_pr_count")
     if isinstance(open_pr_count, bool) or not isinstance(open_pr_count, int) or open_pr_count != len(rows):
         fail("D", "PR-debt census row count does not match open_pr_count")
+        return None
+    live_count = open_pr_count_probe()
+    if live_count is None:
+        return None
+    if live_count != open_pr_count:
+        fail(
+            "D",
+            f"tracked PR census open count {open_pr_count} does not match live count {live_count}",
+        )
         return None
     dispositions = registry.get("dispositions")
     if not isinstance(dispositions, dict):
