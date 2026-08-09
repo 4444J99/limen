@@ -123,6 +123,17 @@ def test_private_redaction_requires_matching_runtime_facts(tmp_path: Path) -> No
     assert any("private PR cohort is redacted" in failure for failure in module.failures)
 
 
+def test_missing_canonical_consumer_is_rejected() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["consumers"].pop("merge-drain")
+    registry["literal_baseline"].pop("scripts/merge-drain.py")
+
+    module.validate_consumers(registry, set(registry["dispositions"]))
+
+    assert any("canonical lifecycle consumers are undeclared" in failure for failure in module.failures)
+
+
 def test_armed_ratchet_cannot_reverse() -> None:
     module = _load_check_module()
 
