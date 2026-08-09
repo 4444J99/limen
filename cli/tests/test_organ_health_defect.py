@@ -33,7 +33,7 @@ def _load():
 def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
     mod = _load()
     env_file = tmp_path / "limen.env"
-    env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200\n", encoding="utf-8")
+    env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
     mod.ENV_FILE = env_file
     monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
 
