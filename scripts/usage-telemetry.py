@@ -604,6 +604,11 @@ def _provider_outcome_projection() -> dict:
     provider_failure_classes = {
         provider: terminal for provider, (_finished, terminal) in latest_provider_failure.items()
     }
+    latest_terminal_class = (
+        max(latest_provider_failure.values(), key=lambda row: row[0])[1]
+        if latest_provider_failure
+        else None
+    )
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
         "provider_cooldown_count": len(blocked),
@@ -611,7 +616,9 @@ def _provider_outcome_projection() -> dict:
         "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
         # Dispatch needs the terminal class, not only its timestamp, to distinguish an auth
         # cooldown from a capacity/transport failure.
-        "provider_last_terminal_failure_class": provider_failure_classes.get("opencode"),
+        "provider_last_terminal_failure_class": provider_failure_classes.get(
+            "opencode", latest_terminal_class
+        ),
         "provider_terminal_failure_classes": provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
