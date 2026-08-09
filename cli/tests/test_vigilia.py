@@ -526,6 +526,38 @@ def test_full_beat_preserves_early_sample_error(tmp_path, monkeypatch):
     assert status["vitals"]["status"] == "error"
 
 
+def test_later_successful_sample_supersedes_early_error(tmp_path, monkeypatch):
+    clock = {"now": datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)}
+    probes = iter(
+        [
+            RuntimeError("early sample unavailable"),
+            {"organ": "vitals", "status": "ok", "action": "ok"},
+        ]
+    )
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(executive, "_now", lambda: clock["now"])
+
+    def probe(shed=False):
+        result = next(probes)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    def continuity_with_fast_sample():
+        clock["now"] += timedelta(seconds=1)
+        executive.sample_vitals()
+        return {"organ": "continuity", "status": "ok"}
+
+    monkeypatch.setattr(vitals, "beat_gate", probe)
+    monkeypatch.setattr(continuity, "beat", continuity_with_fast_sample)
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["vitals"]["status"] == "ok"
+    assert "sample_error" not in status
+
+
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
@@ -544,6 +576,8 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
     assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
     assert "_fast_wave_aux_cleanup" in fast_body
+    assert "_fast_wave_kill_tree" in fast_body
+    assert "pgrep -P" in fast_body
     watchdog_launch = heartbeat.index('stale_watchdog_loop "$$" &')
     assert watchdog_launch < main_loop
     assert "scripts/host-pressure-stale.py" in heartbeat[heartbeat.index("stale_watchdog_loop()") : launch]
