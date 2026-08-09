@@ -9,6 +9,13 @@ schema_version: 0.1
 predicate: "python3 scripts/check-lifecycle.py --check"
 ideal_form: IF-PR-LIFECYCLE
 
+runtime_bindings:
+  operator_owner:
+    type: string
+    source: cli_argument
+    argument: --owner
+    row_field: owner
+
 dispositions:
   "lifecycle:delivery":
     label_color: "0e8a16"
