@@ -118,6 +118,7 @@ def run_beat() -> dict:
             "sampled_at": current.get("sampled_at") or early.get("sampled_at"),
             "completed_at": completed_at,
             "vitals": current.get("vitals") or early.get("vitals", {}),
+            "sample_error": current.get("sample_error") or early.get("sample_error"),
             "continuity": continuity_status,
             "integrity": integrity_status,
         }
