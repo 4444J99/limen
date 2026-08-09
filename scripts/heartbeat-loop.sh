@@ -318,13 +318,6 @@ metabolize_pass_due() {
 }
 # FAST WAVE — a dedicated sample clock plus a single-flight auxiliary tier. The sample
 # never waits for diurnal or organ-health, so their bounded work cannot consume its next slot.
-_fast_wave_kill_tree() {
-  _fw_tree_root="$1"
-  for _fw_descendant in $(pgrep -P "$_fw_tree_root" 2>/dev/null || true); do
-    _fast_wave_kill_tree "$_fw_descendant"
-    kill "$_fw_descendant" 2>/dev/null || true
-  done
-}
 fast_wave_bounded() {
   _fw_timeout="$1"; shift
   python3 - "$_fw_timeout" "$@" <<'PY'
@@ -368,6 +361,14 @@ except (OSError, TypeError, ValueError) as exc:
     code = 125
 raise SystemExit(code)
 PY
+}
+
+_fast_wave_kill_tree() {
+  _fw_tree_root="$1"
+  for _fw_descendant in $(pgrep -P "$_fw_tree_root" 2>/dev/null || true); do
+    _fast_wave_kill_tree "$_fw_descendant"
+    kill "$_fw_descendant" 2>/dev/null || true
+  done
 }
 
 fast_wave_sample_once() {
