@@ -371,16 +371,15 @@ _fast_wave_kill_tree() {
   done
 }
 
-# Keep shutdown latency bounded by one second. A foreground sleep can defer Bash's TERM trap
-# for the full sample cadence; short sleeps let the trap reap resident loops promptly.
+# Use one interruptible timer per cadence. Bash delivers the resident loop's TERM trap
+# while sleep is active, so there is no per-second process churn across the two permanent loops.
 _interruptible_sleep() {
   _sleep_remaining="$1"
-  while [ "$_sleep_remaining" -gt 0 ]; do
-    sleep 1
-    _sleep_rc=$?
-    [ "$_sleep_rc" -eq 0 ] || return "$_sleep_rc"
-    _sleep_remaining=$(( _sleep_remaining - 1 ))
-  done
+  case "$_sleep_remaining" in
+    ''|*[!0-9]*) return 2 ;;
+  esac
+  [ "$_sleep_remaining" -gt 0 ] || return 0
+  sleep "$_sleep_remaining"
 }
 
 _fast_wave_due_beat() {
