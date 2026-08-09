@@ -484,6 +484,26 @@ def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkey
     }
 
 
+
+def test_progress_excludes_resident_descendant_subtrees(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+
+    children = [
+        {"pid": "111", "ppid": "4242", "command": "fast-wave resident"},
+        {"pid": "211", "ppid": "111", "command": "sleep 300"},
+        {"pid": "311", "ppid": "211", "command": "python fast-wave child"},
+        {"pid": "112", "ppid": "4242", "command": "host-pressure resident"},
+        {"pid": "212", "ppid": "112", "command": "sleep 300"},
+        {"pid": "999", "ppid": "4242", "command": "unrelated heartbeat work"},
+    ]
+
+    resident = module._resident_subtree_pids(children, {"111", "112"})
+
+    assert resident == {"111", "112", "211", "212", "311"}
+    assert [child["pid"] for child in children if child["pid"] not in resident] == ["999"]
+
+
+
 def test_sourced_runtime_env_overrides_stale_launchd_values(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     env_file = tmp_path / "limen.env"
