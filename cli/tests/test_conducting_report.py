@@ -194,6 +194,52 @@ def test_any_admission_does_not_route_to_ineligible_idle_lane(tmp_path, monkeypa
     assert "none target idle providers" in body
 
 
+def test_zero_admission_filters_blockers_to_idle_provider(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(
+        logs,
+        reasons={"provider_health": 1},
+        provider_states={"codex": "ok", "jules": "auth_needed"},
+        blocked_providers={"jules": 1},
+    )
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["dispatch_admission"]["reason_counts_by_agent"] = {
+        "jules": {"auth_blocked": 1}
+    }
+    (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
+    (logs / "usage.json").write_text(
+        json.dumps({"vendors": {"codex": {"headroom_pct": 100, "consumed": 0}}}),
+        encoding="utf-8",
+    )
+
+    headline, body, _day, reason = module.build_report()
+
+    assert reason == "admission_blocked"
+    assert headline.startswith("IDLED")
+    assert "auth_blocked" not in body
+
+
+def test_main_refreshes_admission_before_building_report(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    refreshed = []
+    monkeypatch.setattr(module, "_refresh_admission", lambda: refreshed.append(True) or True)
+
+    assert module.main(["--print"]) == 0
+    assert refreshed == [True]
+
+
 def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
