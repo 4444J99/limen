@@ -420,7 +420,10 @@ def host_pressure_snapshot(
         ):
             if key in effective_env:
                 probe_env[key] = effective_env[key]
-    completed = run(command, timeout=30, env=probe_env)
+    if probe_env is None:
+        completed = run(command, timeout=30)
+    else:
+        completed = run(command, timeout=30, env=probe_env)
     detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
     return {
         "ok": completed.returncode == 0,
