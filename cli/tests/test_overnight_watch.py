@@ -488,8 +488,7 @@ def test_sourced_runtime_env_overrides_stale_launchd_values(tmp_path, monkeypatc
     module = _fresh_module(tmp_path, monkeypatch)
     env_file = tmp_path / "limen.env"
     env_file.write_text(
-        "export LIMEN_VIGILIA=0 # intentionally disabled\n"
-        "LIMEN_HOST_PRESSURE_STALE=1\n",
+        "export LIMEN_VIGILIA=0 # intentionally disabled\nLIMEN_HOST_PRESSURE_STALE=1\n",
         encoding="utf-8",
     )
     monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
