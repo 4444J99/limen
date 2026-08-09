@@ -167555,3 +167555,41 @@ tasks:
     conduct_lease_id: 'lease-707-d80b1e1241293ea2'
     conduct_generation: 707
   updated: '2026-08-09T00:45:58.116Z'
+- id: 'ORG-observation-organ-selffeed-0808'
+  title: 'Wire the observation organ to advance autonomously'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'organ-selffeed'
+  - 'pillar:observation'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  urls: []
+  context: 'Make the observation organ self-feeding like the revenue/studium voices: bump its maturity in organ-ladder.json as slices land, and add/extend a beat or generator hook so the conductor keeps driving it without a human in the loop. Keep it lockless + idempotent. CONSTRAINT: 2026-07-22: the ''professionalization audit + keeper/mentor — no egg-face ever'' ask realized as a FEDERATOR, not a parallel stack (improve-don''t-rewrite): it reads the six existing quality organs'' artifacts and adds the polish/voice lane none covered. Fail-open is law — an unmeasured department is skipped, never failed. Phase-3 prose voice-judge is model-in-the-loop (a decorum-judgments.yaml store + on-change queue, sibling of experience-judge); off-platform surfaces (LinkedIn/social) are designed-in registry slots. Working handle DECORVM (the Roman decorum — the fitting/becoming).. [organ-backlog 2026-08-08: rank 17, maturity 55% stage building — convert idle fleet capacity into institutional weight (VLTIMA).]'
+  predicate: 'test "$(gh pr list --repo organvm/limen --state merged --search ''ORG-observation-organ-selffeed-0808 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:pull-request:ORG-observation-organ-selffeed-0808'
+  origin: 'agent_recommendation'
+  horizon: 'future'
+  value_case: 'Increase durable institutional maturity for observation'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-09T00:46:03.299Z'
+    agent: 'codex'
+    session_id: 'generate-organ-backlog-generate-organ-backlog'
+    logical_agent: 'generate-organ-backlog'
+    logical_session_id: 'generate-organ-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-030a09729ce8dc3fec33bc7ffe4a21d4:708:compatibility'
+    conduct_run_id: 'run-030a09729ce8dc3fec33bc7ffe4a21d4'
+    conduct_lease_id: 'lease-708-030a09729ce8dc3f'
+    conduct_generation: 708
+  updated: '2026-08-09T00:46:03.299Z'
