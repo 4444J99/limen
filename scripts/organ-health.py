@@ -171,6 +171,7 @@ def _discover_doors(text):
                     "role": str(sensor.get("title") or f"{sensor_id} sensor"),
                     "dormant": (not derive_live) or sensor_gate_dormant,
                     "registry_sensor": True,
+                    "interval_s": fast_wave_seconds if "fast-wave" in sensor_sources else None,
                     "gate": gate,
                     "gate_default": gate_default,
                     "bound_lever": (
