@@ -6,7 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -198,6 +200,17 @@ def main(argv: list[str] | None = None) -> int:
         "failed_blocked",
         "needs_human",
     }
+    historical_observed_at: dict[str, datetime] = {}
+    for task in board.tasks:
+        context = str(task.context or "")
+        match = re.search(r"observed_at=([^;]+)", context)
+        if match:
+            try:
+                historical_observed_at[task.id] = datetime.fromisoformat(
+                    match.group(1).replace("Z", "+00:00")
+                )
+            except ValueError:
+                pass
     plan = plan_task_upserts(
         receipts,
         existing_ids=(
@@ -205,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         pending_ids=pending_task_ids(tasks_path),
         historical_ids=(task.id for task in board.tasks),
+        historical_observed_at=historical_observed_at,
     )
 
     submitted: list[str] = []
