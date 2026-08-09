@@ -26,6 +26,8 @@ def _valid_repo_ref(value: str) -> bool:
         return False
     owner, repository = value.split("/", 1)
     return owner not in {".", ".."} and repository not in {".", ".."}
+
+
 _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _DURABLE_OWNER_RE = re.compile(
     r"^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|"
