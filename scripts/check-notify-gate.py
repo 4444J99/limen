@@ -340,7 +340,7 @@ def _source_paths(root: Path) -> list[Path]:
             candidates = [root / line for line in found.stdout.splitlines() if line.strip()]
         else:
             candidates = list((root / "scripts").rglob("*"))
-    except (OSError, subprocess.SubprocessError):
+    except (OSError, UnicodeError, subprocess.SubprocessError):
         candidates = list((root / "scripts").rglob("*"))
     return [
         candidate
