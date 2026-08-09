@@ -251,6 +251,7 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     consumers = registry.get("consumers")
     ratchets = registry.get("ratchets")
     baseline = registry.get("literal_baseline")
+    baseline_by_disposition = registry.get("literal_baseline_by_disposition")
     if not isinstance(consumers, dict) or not consumers:
         fail("B", "registry has no consumers mapping")
         return
@@ -260,6 +261,9 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     if not isinstance(baseline, dict):
         fail("B", "registry has no literal_baseline mapping")
         baseline = {}
+    if not isinstance(baseline_by_disposition, dict):
+        fail("B", "registry has no literal_baseline_by_disposition mapping")
+        baseline_by_disposition = {}
 
     consumer_paths: set[str] = set()
     for consumer, row in consumers.items():
@@ -291,6 +295,21 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
         except (KeyError, TypeError, ValueError):
             fail("B", f"{consumer}: literal baseline is missing for {relative}")
             continue
+        expected_by_disposition = baseline_by_disposition.get(relative)
+        if not isinstance(expected_by_disposition, dict) or set(expected_by_disposition) != labels:
+            fail(
+                "B",
+                f"{consumer}: per-disposition literal baseline must cover every lifecycle label",
+            )
+            expected_by_disposition = {}
+        else:
+            try:
+                expected_by_disposition = {
+                    str(label): int(count) for label, count in expected_by_disposition.items()
+                }
+            except (TypeError, ValueError):
+                fail("B", f"{consumer}: per-disposition literal baseline contains a non-integer")
+                expected_by_disposition = {}
         try:
             text = (ROOT / relative).read_text(encoding="utf-8")
         except (OSError, UnicodeError) as exc:
@@ -307,7 +326,8 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
                 "C",
                 f"{consumer}: undeclared lifecycle literal(s): {undeclared_literals}",
             )
-        actual = sum(text.count(label) for label in labels)
+        actual_by_disposition = {label: text.count(label) for label in labels}
+        actual = sum(actual_by_disposition.values())
         armed = bool(ratchets[ratchet])
         if armed and any(marker not in structural_markers for marker in loader_markers):
             missing_markers = [
@@ -321,6 +341,11 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
         elif not armed and actual != expected:
             direction = "grew" if actual > expected else "shrunk"
             fail("B", f"{consumer}: literal debt {direction} from baseline {expected} to {actual}; update the conversion receipt")
+        if not armed and actual_by_disposition != expected_by_disposition:
+            fail(
+                "B",
+                f"{consumer}: per-disposition literal baseline differs from the registry",
+            )
 
     missing_consumers = set(INITIAL_LITERAL_CEILING) - consumer_paths
     if missing_consumers:
@@ -329,9 +354,20 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     extra_baselines = set(str(key) for key in baseline) - consumer_paths
     if extra_baselines:
         fail("B", f"literal baselines name undeclared consumers: {sorted(extra_baselines)}")
+    extra_disposition_baselines = set(str(key) for key in baseline_by_disposition) - consumer_paths
+    if extra_disposition_baselines:
+        fail(
+            "B",
+            f"per-disposition literal baselines name undeclared consumers: {sorted(extra_disposition_baselines)}",
+        )
 
     prior_registry = previous_registry()
     previous_baseline = prior_registry.get("literal_baseline") if isinstance(prior_registry, dict) else None
+    previous_by_disposition = (
+        prior_registry.get("literal_baseline_by_disposition")
+        if isinstance(prior_registry, dict)
+        else None
+    )
     ceiling = previous_baseline if isinstance(previous_baseline, dict) else INITIAL_LITERAL_CEILING
     for relative, value in baseline.items():
         try:
@@ -353,6 +389,28 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
             continue
         if current > maximum:
             fail("B", f"{relative}: literal baseline regrew from {maximum} to {current}")
+    prior_by_disposition = (
+        previous_by_disposition
+        if isinstance(previous_by_disposition, dict)
+        else baseline_by_disposition
+    )
+    for relative, expected_counts in baseline_by_disposition.items():
+        prior_counts = prior_by_disposition.get(relative) if isinstance(prior_by_disposition, dict) else None
+        if not isinstance(expected_counts, dict) or not isinstance(prior_counts, dict):
+            continue
+        for label, value in expected_counts.items():
+            try:
+                current = int(value)
+                maximum = int(prior_counts.get(label, 0))
+            except (TypeError, ValueError):
+                fail("B", f"{relative}: per-disposition literal baseline is not an integer")
+                continue
+            if current > maximum:
+                fail(
+                    "B",
+                    f"{relative}: per-disposition literal baseline for {label} regrew "
+                    f"from {maximum} to {current}",
+                )
     validate_ratchet_monotonicity(ratchets, prior_registry)
 
 
