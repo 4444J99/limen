@@ -82,7 +82,15 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
 
     literal_debt = sum(registry["literal_baseline"].values())
     unarmed_ratchets = sum(value is False for value in registry["ratchets"].values())
-    assert unreachable == ledger["open_pr_count"] + literal_debt + unarmed_ratchets
+    materialization_missing = sum(
+        1
+        for row in ledger["pull_requests"]
+        if row.get("lifecycle_disposition") in registry["dispositions"]
+        and row.get("lifecycle_disposition_source") != "label"
+    )
+    assert unreachable == (
+        ledger["open_pr_count"] + materialization_missing + literal_debt + unarmed_ratchets
+    )
     assert module.failures == []
 
 
@@ -335,6 +343,7 @@ def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path
         "exhaustive": True,
         "generated_at": "2026-08-08T19:14:15.797769Z",
         "content_sha256": "tracked-estate-sha",
+        "cursor": {"repository": {"expected_total": 1, "known_count": 1}},
     }
     facts = {
         "source_report": source_report,
@@ -384,6 +393,7 @@ def test_repository_census_denominator_must_match_tracked_total(tmp_path: Path) 
         "exhaustive": True,
         "generated_at": "2026-08-08T19:14:15.797769Z",
         "content_sha256": "tracked-estate-sha",
+        "cursor": {"repository": {"expected_total": 1, "known_count": 1}},
     }
     facts = {
         "source_report": source_report,
