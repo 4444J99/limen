@@ -1722,6 +1722,7 @@ def test_host_pressure_read_only_mode_is_forwarded(tmp_path, monkeypatch):
         )
     ]
 
+
 def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     calls = []
