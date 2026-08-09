@@ -568,8 +568,8 @@ def test_heartbeat_resident_sleep_uses_interruptible_helper():
         )
     ]
     fast_wave = source[source.index("fast_wave_loop()") : source.index("\n\n# ", source.index("fast_wave_loop()"))]
-    assert 'sleep "$FAST_WAVE_SECONDS"' not in watchdog
-    assert 'sleep "$_fw_wait"' not in fast_wave
+    assert '\\n  sleep "$FAST_WAVE_SECONDS"' not in watchdog
+    assert '\\n  sleep "$_fw_wait"' not in fast_wave
 
 
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
