@@ -136,9 +136,7 @@ def run_beat() -> dict:
             "sampled_at": sampled_at,
             "completed_at": completed_at,
             "vitals": (
-                early.get("vitals", {})
-                if early_is_new_success
-                else current.get("vitals") or early.get("vitals", {})
+                early.get("vitals", {}) if early_is_new_success else current.get("vitals") or early.get("vitals", {})
             ),
             "continuity": continuity_status,
             "integrity": integrity_status,
