@@ -486,7 +486,11 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
     if value.get("provider_outcome_all_blocked") is True:
         outcome_states = {
             str(value.get(key) or "").strip().lower().replace("-", "_")
-            for key in ("provider_outcome_health", "provider_last_terminal_failure")
+            for key in (
+                "provider_outcome_health",
+                "provider_last_terminal_failure",
+                "provider_last_terminal_failure_class",
+            )
         }
         if any(
             marker in state or "auth" in state or "credential" in state
