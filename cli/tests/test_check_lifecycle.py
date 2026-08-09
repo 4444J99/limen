@@ -111,10 +111,7 @@ def test_armed_consumer_requires_an_executable_registry_load() -> None:
         'MARKERS = ["lifecycle.yaml", "merge_eligible"]'
     )
     assert module._loads_lifecycle_registry(
-        'import yaml
-from pathlib import Path
-yaml.safe_load(Path("lifecycle.yaml").read_text())
-'
+        'import yaml\nfrom pathlib import Path\nyaml.safe_load(Path("lifecycle.yaml").read_text())\n'
     )
 
 
