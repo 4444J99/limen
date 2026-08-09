@@ -176,54 +176,97 @@ def _body_exits(body: list[ast.stmt]) -> bool:
     return bool(body) and isinstance(body[-1], (ast.Return, ast.Raise))
 
 
-def _gate_controls_delivery(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    """Prove every delivery is behind a positive gate or a negative early-return guard."""
-    if not _called_names(function) & {GATE_FUNC}:
-        return False
-    deliveries: list[tuple[ast.Call, bool]] = []
-    stack: list[tuple[ast.If, str]] = []
+def _condition_guarantees_gate(node: ast.AST) -> bool:
+    """Return whether a true branch proves the positive liveness gate."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == GATE_FUNC:
+        return True
+    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And):
+        return any(_condition_guarantees_gate(value) for value in node.values)
+    return False
 
-    class Visitor(ast.NodeVisitor):
-        def visit_If(self, node: ast.If) -> None:
-            self.visit(node.test)
-            stack.append((node, "body"))
-            for child in node.body:
-                self.visit(child)
-            stack.pop()
-            stack.append((node, "orelse"))
-            for child in node.orelse:
-                self.visit(child)
-            stack.pop()
 
-        def visit_Call(self, node: ast.Call) -> None:
+def _condition_returns_when_gate_false(node: ast.AST) -> bool:
+    """Return whether the condition is guaranteed true whenever the gate is false."""
+    if (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, ast.Not)
+        and isinstance(node.operand, ast.Call)
+        and isinstance(node.operand.func, ast.Name)
+        and node.operand.func.id == GATE_FUNC
+    ):
+        return True
+    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+        return any(_condition_returns_when_gate_false(value) for value in node.values)
+    return False
+
+
+def _walk_delivery_paths(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef],
+    *,
+    gate_active: bool = False,
+    stack: frozenset[tuple[str, bool]] = frozenset(),
+) -> tuple[bool, bool]:
+    """Return (found_delivery, every_delivery_controlled) through helper calls."""
+    state = (function.name, gate_active)
+    if state in stack:
+        return False, True
+    next_stack = stack | {state}
+    found = False
+    safe = True
+
+    def inspect_expr(node: ast.AST, active: bool) -> None:
+        nonlocal found, safe
+        if isinstance(node, ast.Call):
             if _has_delivery_call(node):
-                positive_branch = any(
-                    branch == "body"
-                    and _gate_polarities(if_node.test) & {False}
-                    for if_node, branch in stack
+                found = True
+                safe = safe and active
+            if isinstance(node.func, ast.Name) and node.func.id in functions:
+                nested_found, nested_safe = _walk_delivery_paths(
+                    functions[node.func.id],
+                    functions,
+                    gate_active=active,
+                    stack=next_stack,
                 )
-                deliveries.append((node, positive_branch))
-            self.generic_visit(node)
+                found = found or nested_found
+                safe = safe and nested_safe
+            for argument in (*node.args, *(keyword.value for keyword in node.keywords)):
+                inspect_expr(argument, active)
+            return
+        for child in ast.iter_child_nodes(node):
+            inspect_expr(child, active)
 
-    Visitor().visit(function)
-    if not deliveries:
-        return False
-    prior_guards = [
-        statement
-        for statement in function.body
-        if isinstance(statement, ast.If)
-        and _gate_polarities(statement.test) & {True}
-        and _body_exits(statement.body)
-    ]
-    return all(
-        controlled
-        or any(
-            guard.lineno < delivery.lineno
-            and (getattr(guard, "end_lineno", guard.lineno) or guard.lineno) < delivery.lineno
-            for guard in prior_guards
-        )
-        for delivery, controlled in deliveries
-    )
+    def inspect_block(body: list[ast.stmt], active: bool) -> None:
+        nonlocal found, safe
+        after_guard = active
+        for statement in body:
+            if isinstance(statement, ast.If):
+                inspect_expr(statement.test, after_guard)
+                inspect_block(
+                    statement.body,
+                    after_guard or _condition_guarantees_gate(statement.test),
+                )
+                inspect_block(statement.orelse, after_guard)
+                if (
+                    _condition_returns_when_gate_false(statement.test)
+                    and _body_exits(statement.body)
+                ):
+                    after_guard = True
+                continue
+            inspect_expr(statement, after_guard)
+
+    inspect_block(function.body, gate_active)
+    return found, safe
+
+
+def _gate_controls_delivery(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
+) -> tuple[bool, bool]:
+    """Prove delivery safety and whether a route reaches the macOS effector."""
+    function_map = functions or {function.name: function}
+    found, safe = _walk_delivery_paths(function, function_map)
+    return safe, found
 
 
 def gate_state(notifier: Path) -> tuple[bool, str]:
