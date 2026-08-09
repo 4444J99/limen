@@ -374,6 +374,20 @@ def test_list_bound_python_notification_bypass_is_rejected(tmp_path, check_gate)
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_reassigned_python_command_uses_binding_visible_at_each_call(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        "cmd = ['osascript', '-e', 'display notification \"x\"']\n"
+        "subprocess.run(cmd)\n"
+        "cmd = ['echo', 'clean']\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_variable_bound_python_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
@@ -671,9 +685,11 @@ def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check
     assert row["direct_effectors"] == ["scripts/sender.sh"]
 
 
-def test_netmode_resolves_notifier_from_live_runtime():
+def test_netmode_binds_notifier_to_the_invoking_checkout():
     shell = (SCRIPTS / "netmode.sh").read_text(encoding="utf-8")
 
-    assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" in shell
-    assert '_notify_root="${LIMEN_ROOT:-$HOME/Workspace/limen}"' in shell
+    assert '_notify_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"' in shell
+    assert '_notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"' in shell
+    assert '"$_notify_script_dir/_notify.py"' in shell
+    assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" not in shell
     assert '--root "$_notify_root"' in shell
