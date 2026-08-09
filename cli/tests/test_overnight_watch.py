@@ -146,6 +146,14 @@ def _mock_launchd(
     monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "111")
     monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "112")
     monkeypatch.setattr(module, "_resident_alive", lambda _pid: True)
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [
+            {"pid": "111", "command": "heartbeat fast-wave resident"},
+            {"pid": "112", "command": "host-pressure watchdog resident"},
+        ],
+    )
 
     def fake_run(args, timeout=10):
         calls.append(list(args))
@@ -528,6 +536,11 @@ def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypat
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
     monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "99")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [{"pid": "99", "command": "heartbeat fast-wave resident"}],
+    )
     _write_heartbeat(module)
     module.STATE_PATH.write_text(
         json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
@@ -553,6 +566,11 @@ def test_resident_stale_watchdog_does_not_suppress_stale_progress(tmp_path, monk
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
     monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "101")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [{"pid": "101", "command": "host-pressure stale resident"}],
+    )
     _write_heartbeat(module)
     module.STATE_PATH.write_text(
         json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
@@ -571,6 +589,15 @@ def test_resident_stale_watchdog_does_not_suppress_stale_progress(tmp_path, monk
     assert snapshot["heartbeat_child_count"] == 0
     assert snapshot["resident_host_pressure_watchdog"]["pid"] == "101"
     assert snapshot["status"] == "alert"
+
+
+def test_resident_pid_without_matching_heartbeat_child_is_not_alive(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_resident_alive", lambda _pid: True)
+
+    assert module._resident_state("99", None)["alive"] is False
+    assert module._resident_state("99", {"pid": "98"})["alive"] is False
+    assert module._resident_state("99", {"pid": "99"})["alive"] is True
 
 
 def test_host_pressure_probe_has_an_independent_alert_path(tmp_path, monkeypatch):
