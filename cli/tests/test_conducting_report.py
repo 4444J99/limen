@@ -129,6 +129,33 @@ def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monke
     assert "routing: routable" in body
 
 
+def test_routable_idle_work_overrides_burn_headline(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(
+        logs,
+        admissible=1,
+        admissible_agents={"claude": 1},
+        provider_states={"codex": "ok", "claude": "ok"},
+    )
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "codex": {"headroom_pct": 10, "consumed": 9},
+                    "claude": {"headroom_pct": 100, "consumed": 0},
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    headline, _body, _day, reason = module.build_report()
+
+    assert reason == "routable"
+    assert headline.startswith("ROUTABLE WORK EXISTS")
+
+
 def test_admitted_work_for_another_provider_does_not_accuse_idle_lane(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
