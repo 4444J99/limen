@@ -113,7 +113,9 @@ def test_reload_env_loads_written_file(tmp_path):
     ordering, now declared data). conftest autouse restores os.environ after the test."""
     m = _mod()
     envf = tmp_path / ".limen.env"
-    envf.write_text('export FOO_RELOAD_KEY="bar123" # inline note\n# a comment\nBAZ_RELOAD=qux # another note\n', encoding="utf-8")
+    envf.write_text(
+        'export FOO_RELOAD_KEY="bar123" # inline note\n# a comment\nBAZ_RELOAD=qux # another note\n', encoding="utf-8"
+    )
     os.environ.pop("FOO_RELOAD_KEY", None)
     os.environ.pop("BAZ_RELOAD", None)
     m._load_env_file(envf)
