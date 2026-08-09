@@ -1834,3 +1834,22 @@ def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeyp
             "host_pressure_read_only": True,
         }
     ]
+
+    
+def test_effective_runtime_env_redacts_credentials(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    env_file = tmp_path / "limen.env"
+    env_file.write_text(
+        "LIMEN_VIGILIA=1\nLIMEN_API_TOKEN=secret-value\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    effective = module.effective_runtime_env(
+        {
+            "LIMEN_VIGILIA": "0",
+            "LIMEN_API_TOKEN": "launchd-secret",
+        }
+    )
+
+    assert effective == {"LIMEN_VIGILIA": "1"}
+    assert "LIMEN_API_TOKEN" not in effective
