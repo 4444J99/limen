@@ -80848,7 +80848,7 @@ tasks:
   workstream: 'contributions'
   priority: 'medium'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'typing'
   - 'generated'
@@ -80859,7 +80859,7 @@ tasks:
   context: 'Eliminate the worst untyped hotspots in organvm/limen''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-08-09T04:19:52.758Z'
+  updated: '2026-08-09T04:19:57.936Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -80913,6 +80913,17 @@ tasks:
     conduct_run_id: 'run-a1f7c3a56aa6459f8a88750a4d418891'
     conduct_lease_id: 'lease-808-a1f7c3a56aa6459f'
     conduct_generation: 808
+  - timestamp: '2026-08-09T04:19:57.936Z'
+    agent: 'opencode'
+    session_id: 'task-status-1786249191'
+    logical_agent: 'opencode'
+    logical_session_id: 'task-status-1786249191'
+    status: 'dispatched'
+    output: 'Routing through dispatched.'
+    conduct_event_id: 'conduct:run-54611271874958046b2e6546b3861f2f:809:compatibility'
+    conduct_run_id: 'run-54611271874958046b2e6546b3861f2f'
+    conduct_lease_id: 'lease-809-5461127187495804'
+    conduct_generation: 809
   predicate: 'test "$(gh issue view 1565 --repo organvm/limen --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/limen/issues/1565'
   origin: 'system_debt'
