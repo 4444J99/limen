@@ -17,6 +17,12 @@ This is the observability half, deliberately separate from the repair: it assert
 (ciphertext landed off-machine recently) rather than the mechanism, so it stays true regardless of
 how the vault is later reshaped — a new generation, a different remote, a different chunking scheme.
 
+GENERATION RESOLUTION (POTESTAS 0.3, organvm/limen#2089): the vault now rotates across
+generations (organvm/arca → organvm/arca-g2 → …) and the local manifest owns which one is
+CURRENT. So the repo under test is resolved in this order: explicit --repo → $ARCA_REPO → the
+local manifest's `_generation.repo` → the default organvm/arca. That keeps this sensor pointing
+at the LIVE generation through every future rotation with zero reconfiguration.
+
 PREDICATE — exit 0 iff BOTH hold:
   1. the vault remote has been pushed within --max-age-days, AND
   2. a local vault working copy exists (absent ⇒ every run pays a full clone, which is what broke)
@@ -43,9 +49,25 @@ import sys
 from datetime import datetime, timezone
 
 HOME = os.path.expanduser("~")
-DEF_REPO = os.environ.get("ARCA_REPO", "organvm/arca")
+DEF_REPO = "organvm/arca"
 DEF_VAULT_DIR = os.environ.get("ARCA_VAULT_DIR", os.path.join(HOME, ".arca-vault"))
 DEF_MAX_AGE_DAYS = 2
+
+
+def _manifest_generation_repo(vault_dir: str) -> str:
+    """Resolve the CURRENT generation repo from the local vault manifest, or '' if none.
+
+    The manifest is the source of truth once a working vault exists, so the sensor follows
+    rotations without any external reconfiguration. Any failure (no manifest, corrupt JSON,
+    no metadata) yields '' — the caller then falls back to the env/default repo.
+    """
+    try:
+        with open(os.path.join(vault_dir, "manifest.json")) as fh:
+            manifest = json.load(fh)
+        repo = manifest.get("_generation", {}).get("repo", "")
+        return repo if isinstance(repo, str) else ""
+    except Exception:  # noqa: BLE001 — read-only probe; never raise
+        return ""
 
 
 def _remote_pushed_at(repo: str, timeout: int) -> tuple[str | None, str | None]:
@@ -72,20 +94,26 @@ def _remote_pushed_at(repo: str, timeout: int) -> tuple[str | None, str | None]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--repo", default=DEF_REPO)
+    ap.add_argument("--repo", default=None, help="override generation resolution (manifest → env → default)")
     ap.add_argument("--vault-dir", default=DEF_VAULT_DIR)
     ap.add_argument("--max-age-days", type=float, default=DEF_MAX_AGE_DAYS)
     ap.add_argument("--timeout", type=int, default=30)
     ap.add_argument("--json", action="store_true", dest="as_json")
     args = ap.parse_args()
 
+    repo = (
+        args.repo
+        or os.environ.get("ARCA_REPO")
+        or _manifest_generation_repo(args.vault_dir)
+        or DEF_REPO
+    )
     findings: list[str] = []
 
     local_present = os.path.isdir(os.path.join(args.vault_dir, ".git"))
     if not local_present:
         findings.append(f"local vault working copy absent ({args.vault_dir}) — every backup pays a full clone")
 
-    pushed_at, reason = _remote_pushed_at(args.repo, args.timeout)
+    pushed_at, reason = _remote_pushed_at(repo, args.timeout)
     age_days: float | None = None
     if pushed_at is None:
         findings.append(f"vault freshness UNDETERMINED — {reason}")
@@ -109,7 +137,7 @@ def main() -> int:
                 {
                     "schema": "limen.arca_freshness.v1",
                     "ok": ok,
-                    "repo": args.repo,
+                    "repo": repo,
                     "local_vault_present": local_present,
                     "pushed_at": pushed_at,
                     "age_days": round(age_days, 2) if age_days is not None else None,
@@ -121,9 +149,9 @@ def main() -> int:
             )
         )
     elif ok:
-        print(f"arca-freshness: OK — {args.repo} pushed {age_days:.1f}d ago; local vault present")
+        print(f"arca-freshness: OK — {repo} pushed {age_days:.1f}d ago; local vault present")
     else:
-        print(f"arca-freshness: FAIL — {args.repo}")
+        print(f"arca-freshness: FAIL — {repo}")
         for f in findings:
             print(f"  · {f}")
         print("  owner: organvm/limen#2072 (vault shape) · #719 L-ARCA-KEY-ESCROW (key escrow)")

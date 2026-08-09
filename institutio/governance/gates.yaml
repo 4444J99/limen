@@ -700,6 +700,11 @@ gates:
     paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "scripts/tests/gitvs.test.sh"]
     owner: gitvs
     note: "Parity + drift fixtures for the GITVS predicate: an unwired active resource type, a bad required_check, and a missing effector script must each red the doctor; a clean estate must pass."
+  arca-generation-test:
+    command: "bash scripts/tests/arca-generation.test.sh"
+    paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh"]
+    owner: continuity
+    note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
   sync-marketplace-config-test:
     command: "bash scripts/tests/sync-marketplace-config.test.sh"
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
