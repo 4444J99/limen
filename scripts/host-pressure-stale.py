@@ -40,6 +40,32 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _env_value(raw: str) -> str:
+    """Parse one shell-style assignment value without treating quoted ``#`` as a comment."""
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1]
+    return value
+
+
 def _configured_env(name: str, default: str) -> str:
     """Read launchd/interactive env first, then the shared ~/.limen.env declaration."""
     if name in os.environ:
@@ -51,7 +77,7 @@ def _configured_env(name: str, default: str) -> str:
             if line.startswith("export "):
                 line = line[7:].lstrip()
             if line.startswith(f"{name}="):
-                return line.split("=", 1)[1].strip().strip('"').strip("'")
+                return _env_value(line.split("=", 1)[1])
     except OSError:
         pass
     return default
