@@ -86,6 +86,9 @@ def sample_vitals() -> dict:
         status["institution"] = params.get("INSTITVTIO_NOMEN", "VIGILIA")
         status.setdefault("completed_at", None)
         if observed.get("status") == "error":
+            current_time = _sample_time(status.get("sampled_at"))
+            if current_time is not None and current_time > sampled_time:
+                return status
             status["sample_error"] = observed
             status.setdefault("vitals", observed)
             return status
