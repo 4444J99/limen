@@ -308,6 +308,8 @@ MONITORED_ENV_KEYS = frozenset(
         "LIMEN_VIGILIA",
         "LIMEN_HOST_PRESSURE_STALE",
         "LIMEN_VITALS_SAMPLE_SECONDS",
+        "LIMEN_VITALS_SAMPLE_TIMEOUT",
+        "LIMEN_VITALS_SAMPLE_GRACE_SECONDS",
         "LIMEN_VITALS_STALE_BEATS",
     }
 )
@@ -512,6 +514,8 @@ def host_pressure_snapshot(
             "LIMEN_HOST_PRESSURE_STALE",
             "LIMEN_VIGILIA",
             "LIMEN_VITALS_SAMPLE_SECONDS",
+            "LIMEN_VITALS_SAMPLE_TIMEOUT",
+            "LIMEN_VITALS_SAMPLE_GRACE_SECONDS",
             "LIMEN_VITALS_STALE_BEATS",
         ):
             if key in effective_env:
