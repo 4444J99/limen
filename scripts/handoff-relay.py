@@ -233,6 +233,7 @@ def _provider_headroom() -> dict[str, Any]:
                             "provider_last_success",
                             "provider_last_terminal_failure",
                             "provider_last_terminal_failure_class",
+                            "provider_terminal_failure_classes",
                             "provider_cooldown_expiry",
                             "provider_health_snapshot_hash",
                             "provider_outcome_all_blocked",
@@ -492,6 +493,12 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
                 "provider_last_terminal_failure_class",
             )
         }
+        terminal_classes = value.get("provider_terminal_failure_classes")
+        if isinstance(terminal_classes, dict):
+            outcome_states.update(
+                str(terminal).strip().lower().replace("-", "_")
+                for terminal in terminal_classes.values()
+            )
         if any(
             marker in state or "auth" in state or "credential" in state
             for state in outcome_states
