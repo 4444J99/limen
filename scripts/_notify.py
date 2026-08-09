@@ -23,6 +23,7 @@ import os
 import subprocess
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 # The liveness guard lives next to this file ON DISK. Resolving it by path rather than by
@@ -119,6 +120,29 @@ def _deliver(message: str, title: str) -> bool:
             check=False,
         )
         return delivered.returncode == 0
+    except Exception:
+        return False
+
+
+def notify_ntfy(
+    root: Path | str,
+    message: str,
+    title: str = "LIMEN",
+    tags: str = "limen",
+) -> bool:
+    """Deliver an opt-in ntfy push through the same liveness and kill-switch gate."""
+    topic = os.environ.get("LIMEN_NTFY_TOPIC")
+    if not topic or not _enabled(None) or not _root_may_speak(root):
+        return False
+    base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
+    try:
+        request = urllib.request.Request(
+            f"{base}/{topic}",
+            data=message.encode("utf-8"),
+            headers={"Title": title, "Tags": tags},
+        )
+        with urllib.request.urlopen(request, timeout=10):
+            return True
     except Exception:
         return False
 
