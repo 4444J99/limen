@@ -2,15 +2,16 @@
   "audit": "machine-stamped operator gates",
   "census": {
     "baselined": 78,
+    "board_source": "canonical:origin/tabularius/board-projection",
     "levers_total": 82,
     "levers_without_enum_status": 56,
     "marker_present": false,
-    "needs_human_no_provenance": 45,
+    "needs_human_no_provenance": 30,
     "needs_human_set_by_a_human": 0,
-    "needs_human_total": 109,
+    "needs_human_total": 126,
     "operator_paused_labels": 1,
     "runtime_store": "/Users/4jp/Workspace/limen/.agent-runtime",
-    "tasks_total": 3111,
+    "tasks_total": 3299,
     "unevaluated": [],
     "violations": 0
   },
@@ -195,10 +196,10 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-login",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
@@ -286,17 +287,17 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-credential",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-d2l",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/public-record-data-scrapper",
@@ -405,10 +406,10 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-delete",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -439,6 +440,13 @@
       "verdict": "machine-stamped"
     },
     {
+      "repo": "organvm/a-i--skills",
+      "setting_agent": "opencode",
+      "setting_reason": "Human gate: PR #26 requires review/merge - BLOCKED by lifecycle:blocked label.",
+      "task_id": "HEAL-cifix-organvm-a-i--skills-26",
+      "verdict": "machine-stamped"
+    },
+    {
       "repo": "organvm/peer-audited--behavioral-blockchain",
       "setting_agent": "limen",
       "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
@@ -461,10 +469,10 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-send",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/mirror-mirror",
@@ -496,45 +504,45 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-4a4c2aa8",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-0305e50a",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-e0f151ab",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "task.mutate applied through the conduct keeper",
       "task_id": "ASK-lane-starved-agy",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "task.mutate applied through the conduct keeper",
       "task_id": "ASK-lane-starved-gemini",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "task.mutate applied through the conduct keeper",
       "task_id": "ASK-lane-starved-opencode",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -559,10 +567,10 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-6a48ce1d",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -643,10 +651,10 @@
     },
     {
       "repo": null,
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-0bd3a5ed",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -678,10 +686,10 @@
     },
     {
       "repo": "organvm/limen",
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-9feaa902",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -720,10 +728,10 @@
     },
     {
       "repo": "organvm/limen",
-      "setting_agent": null,
-      "setting_reason": "",
+      "setting_agent": "codex",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
       "task_id": "ASK-quicken-escalate-9c934372",
-      "verdict": "no-provenance"
+      "verdict": "machine-stamped"
     },
     {
       "repo": "organvm/limen",
@@ -780,6 +788,118 @@
       "setting_reason": "",
       "task_id": "GH-organvm-limen-1258",
       "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1897",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1851",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1809",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1792",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1776",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1925",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "ASK-routine-limen-disposition-triage",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "ASK-routine-docs-stranger-test",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1947",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "ASK-lane-starved-claude",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "ASK-lane-starved-codex",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "ASK-lane-starved-jules",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-1970",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-2010",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-2054",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Created by codex through the conduct keeper",
+      "task_id": "GH-organvm-limen-2072",
+      "verdict": "machine-stamped"
     }
   ],
   "violations_by_check_after_baseline": {}
