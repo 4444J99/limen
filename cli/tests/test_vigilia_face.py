@@ -54,7 +54,7 @@ def test_live_overlay_parses_status(tmp_path, monkeypatch):
     assert overlay["vitals"] == "L2/shed"
     assert overlay["integrity"] == "ok"
 
-    
+
 def test_live_overlay_surfaces_sample_error(tmp_path, monkeypatch):
     d = tmp_path / "logs" / "vigilia"
     d.mkdir(parents=True)
