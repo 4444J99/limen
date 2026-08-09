@@ -510,6 +510,22 @@ def test_slow_full_beat_keeps_the_early_sample_clock(tmp_path, monkeypatch):
     assert status["completed_at"] == "2026-08-08T16:00:00+00:00"
 
 
+def test_full_beat_preserves_early_sample_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("sample unavailable")),
+    )
+    monkeypatch.setattr(continuity, "beat", lambda: {"organ": "continuity", "status": "ok"})
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["sample_error"]["status"] == "error"
+    assert status["vitals"]["status"] == "error"
+
+
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
