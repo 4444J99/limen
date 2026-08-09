@@ -691,7 +691,6 @@ def test_cloud_lever_predicates_require_terminal_status() -> None:
         predicate = by_key[key]["predicate"]
         assert "{'discharged','retired','done','closed'}" in predicate
         assert "!= 'open'" not in predicate
-false\\ntrue'")
 
 def test_model_rejects_clustered_shell_command_options() -> None:
     with pytest.raises(ValidationError, match="one executable command"):
