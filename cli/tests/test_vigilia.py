@@ -581,7 +581,10 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
 
     assert launch < main_loop
     assert "python3 -m limen.vigilia sample" in fast_body
-    assert 'fast_wave_aux_once "$FAST_WAVE_BEAT" &' in fast_body
+    assert "fast_wave_aux_once diurnal" in fast_body
+    assert "fast_wave_aux_once health" in fast_body
+    assert "_fw_diurnal_pending" in fast_body
+    assert "_fw_health_pending" in fast_body
     assert "beat-sensors.py" in fast_body and "--source fast-wave" in fast_body
     assert "scripts/organ-health.py" in fast_body
     assert 'python3 - "$_fw_timeout" "$@"' in fast_body
