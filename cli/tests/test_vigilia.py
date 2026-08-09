@@ -730,3 +730,38 @@ def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch
     status = executive.run_beat()
     assert status["vitals"]["status"] == "error"  # captured, not raised
     assert status["continuity"]["status"] == "ok"
+
+    
+def test_early_sample_error_survives_transient_seat_write(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    (tmp_path / "status.json").write_text(
+        json.dumps(
+            {
+                "sampled_at": "2026-08-08T11:59:00+00:00",
+                "vitals": {"organ": "vitals", "level": 1, "action": "ok"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("sample unavailable")),
+    )
+    monkeypatch.setattr(continuity, "beat", lambda: {"organ": "continuity", "status": "ok"})
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    real_update = executive._update_status
+    calls = {"count": 0}
+
+    def flaky_update(mutator):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return mutator({})
+        return real_update(mutator)
+
+    monkeypatch.setattr(executive, "_update_status", flaky_update)
+    status = executive.run_beat()
+
+    assert status["sample_error"]["error"] == "sample unavailable"
+    assert status["sample_error_at"]
