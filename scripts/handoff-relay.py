@@ -33,11 +33,15 @@ sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent  # noqa: E402
 from limen.dispatch import (
+    LOCAL_CHECKOUT_AGENTS,
     _down_lanes,
     _effective_target_agent,
     _weak_proxy_exhaustion,
     _window_hours,
+    _worktree_admission_for_task,
+    _worktree_admission_snapshot,
     agent_can_run_task,
+    chronic_dispatch_reason,
     task_passes_value_gate,
 )  # noqa: E402
 from limen.models import Task  # noqa: E402
@@ -322,15 +326,24 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     # explaining the current beat with yesterday's exhaustion.
     now = _now()
     current_date = now.date().isoformat()
-    if track_date != current_date:
-        # The board date is only a projection stamp. Dispatch resets each lane on its own
-        # cadence, so preserve a counter whose per-agent window has not actually elapsed.
-        active_spent = {
-            str(name): value
-            for name, value in spent_by.items()
-            if _reset_window_active(str(name), reset_by.get(name), now)
-        }
-        spent_by = active_spent
+    # Each lane owns a rolling reset window.  The board date is only a projection
+    # stamp, so an expired Codex/Claude window must clear even when the date is unchanged.
+    active_spent: dict[str, Any] = {}
+    expired_window = False
+    for name, value in spent_by.items():
+        reset_at = reset_by.get(name)
+        if reset_at is None:
+            if track_date == current_date:
+                active_spent[str(name)] = value
+            else:
+                expired_window = True
+            continue
+        if _reset_window_active(str(name), reset_at, now):
+            active_spent[str(name)] = value
+        else:
+            expired_window = True
+    spent_by = active_spent
+    if track_date != current_date or expired_window:
         track_spent = sum(_as_int(value) or 0 for value in spent_by.values())
     else:
         track_spent = _as_int(track.get("spent"))
@@ -523,6 +536,32 @@ def _eligible_any_agent(task: dict[str, Any], agent: str) -> bool:
         return False
 
 
+def _chronic_dispatch_gate(task: dict[str, Any]) -> str | None:
+    try:
+        return chronic_dispatch_reason(Task.model_validate(task))
+    except Exception:
+        # Malformed historical rows are handled by the ordinary value/capability gates.
+        return None
+
+
+def _worktree_dispatch_gate(
+    task: dict[str, Any],
+    agent: str,
+    snapshot: dict[str, Any],
+) -> str | None:
+    if canonical_agent(agent) not in {
+        canonical_agent(str(candidate)) for candidate in LOCAL_CHECKOUT_AGENTS
+    }:
+        return None
+    try:
+        task_model = Task.model_validate(task)
+        blocked, _reason = _worktree_admission_for_task(task_model, canonical_agent(agent), snapshot)
+    except Exception:
+        # A local admission probe that cannot prove safety fails closed.
+        return "worktree_admission"
+    return "worktree_admission" if blocked else None
+
+
 def _dispatch_admission(
     tasks: list[dict[str, Any]],
     board_budget: dict[str, Any],
@@ -538,7 +577,16 @@ def _dispatch_admission(
     per_agent = board_budget.get("per_agent") if isinstance(board_budget.get("per_agent"), dict) else {}
     candidates: list[dict[str, Any]] = []
     reasons: Counter[str] = Counter()
+    reason_counts_by_agent: dict[str, Counter[str]] = {}
     provider_health_reasons: Counter[str] = Counter()
+
+    def record_reason(agent_name: str, reason_name: str) -> None:
+        key = canonical_agent(str(agent_name)) if str(agent_name).strip() else "any"
+        reason_counts_by_agent.setdefault(key, Counter())[reason_name] += 1
+
+    # The dispatcher takes one host snapshot per admission pass; local candidates all use
+    # this same bounded observation while remote lanes remain unaffected.
+    worktree_snapshot = _worktree_admission_snapshot()
     down_lanes = {
         canonical_agent(str(agent))
         for agent in (provider_headroom.get("down_lanes") or [])
@@ -594,6 +642,8 @@ def _dispatch_admission(
             if not value_ready:
                 # Automatic handoff admission follows the same partner/value boundary as dispatch.
                 reason = "admission_blocked"
+        if reason is None and _chronic_dispatch_gate(task):
+            reason = "chronic_dispatch"
         cost = _as_int(task.get("budget_cost")) or 1
         if reason is None and global_remaining is not None and cost > global_remaining:
             reason = "budget_global"
@@ -606,6 +656,8 @@ def _dispatch_admission(
             reason = "provider_health"
         if reason is None and agent not in {"", "any"} and not _eligible_any_agent(task, agent):
             reason = "admission_blocked"
+        if reason is None and agent not in {"", "any"}:
+            reason = _worktree_dispatch_gate(task, agent, worktree_snapshot)
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
@@ -616,6 +668,7 @@ def _dispatch_admission(
             reason = "execution_requirements"
         if reason is not None:
             reasons[reason] += 1
+            record_reason(agent, reason)
             if reason in {"provider_health", "auth_blocked"}:
                 provider_health_reasons[agent] += 1
             continue
@@ -631,21 +684,31 @@ def _dispatch_admission(
                 )
                 if candidate_remaining is not None and cost > candidate_remaining:
                     any_blockers["budget_agent"] += 1
+                    record_reason(candidate_agent, "budget_agent")
                     continue
                 if candidate_agent in down_lanes:
                     any_blockers["provider_health"] += 1
+                    record_reason(candidate_agent, "provider_health")
                     provider_health_reasons[candidate_agent] += 1
                     continue
                 if not _eligible_any_agent(task, candidate_agent):
                     any_blockers["admission_blocked"] += 1
+                    record_reason(candidate_agent, "admission_blocked")
                     continue
                 if not lane_reachability.get(candidate_agent, False):
                     any_blockers["provider_health"] += 1
+                    record_reason(candidate_agent, "provider_health")
                     provider_health_reasons[candidate_agent] += 1
+                    continue
+                worktree_reason = _worktree_dispatch_gate(task, candidate_agent, worktree_snapshot)
+                if worktree_reason is not None:
+                    any_blockers[worktree_reason] += 1
+                    record_reason(candidate_agent, worktree_reason)
                     continue
                 provider_reason = _provider_block_reason(candidate_agent, provider_headroom)
                 if provider_reason is not None:
                     any_blockers[provider_reason] += 1
+                    record_reason(candidate_agent, provider_reason)
                     if provider_reason in {"provider_health", "auth_blocked"}:
                         provider_health_reasons[candidate_agent] += 1
                     continue
@@ -678,6 +741,10 @@ def _dispatch_admission(
         "admissible": len(candidates),
         "gated": open_count - len(candidates),
         "reason_counts": dict(sorted(reasons.items())),
+        "reason_counts_by_agent": {
+            agent: dict(sorted(counts.items()))
+            for agent, counts in sorted(reason_counts_by_agent.items())
+        },
         "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
         "down_lanes": sorted(down_lanes),
         "admissible_agent_counts": dict(sorted(admissible_agents.items())),
