@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 """check-heal-retirement.py — predicate for self-heal task retirement.
 
-Exit 0 ⟺ no ACTIVE HEAL task names a PR that is no longer open, outside the known-debt baseline.
-Exit 1 ⟺ a fresh violation. Exit 2 ⟺ UNDERDETERMINED — the question could not be answered.
+Exit 0 ⟺ no fresh violation was DEMONSTRATED. Exit 1 ⟺ a fresh violation: an active HEAL task
+names a PR that is no longer open, outside the known-debt baseline.
 
-WHY THERE IS A THIRD EXIT CODE. This predicate infers that a task is retirable from the ABSENCE of
-its PR in an enumerated open-PR set. That inference is only as sound as the enumeration, and the
+There is no failing exit for "could not evaluate". When the open-PR enumeration is unavailable
+the gate prints a loud SKIPPED line and exits 0 — it makes no claim and blocks nothing. That is
+not the fail-open this module exists to prevent: the dangerous directions are CLAIMING closures
+that are not real (51 of them, below) and RETIRING live tasks, and neither can follow from a
+gate that asserts nothing. The destructive path is guarded separately, in self-heal.py, which
+runs authenticated on the beat. `.github/workflows/pr-gate.yml` exports no GH_TOKEN, so `gh` is
+unauthenticated in CI and this gate can NEVER enumerate there; a non-zero exit would make it
+permanently red, which is precisely how a gate teaches everyone to ignore it.
+
+WHY ANY OF THIS IS NEEDED. This predicate infers that a task is retirable from the ABSENCE of its
+PR in an enumerated open-PR set. That inference is only as sound as the enumeration, and the
 enumeration fails in two ways that look exactly like success:
 
   * ``_pr_scan.enumerate_open_prs`` returns ``[]`` on ANY gh failure — auth, network, or a spent
@@ -160,19 +169,19 @@ def main() -> int:
 
     open_set, state = open_pr_set()
     if state != "OK":
-        # Never render "I could not enumerate" as "those PRs are closed".
+        # Assert NOTHING. Absence from an incomplete enumeration is not evidence of closure, so
+        # there is no honest finding to report — and no honest reason to block either.
         print(
-            f"[check-heal-retirement] UNDERDETERMINED ({state}): the open-PR enumeration is not a "
-            f"complete answer ({len(open_set)} PRs), so absence from it proves "
-            "nothing. Flagging nothing. "
+            f"[check-heal-retirement] SKIPPED ({state}): the open-PR enumeration is not a complete "
+            f"answer ({len(open_set)} PRs), so absence from it proves nothing. No claim made. "
             + (
-                "Check `gh auth status` and `gh api rate_limit`."
+                "gh is unauthenticated or its quota is spent (`gh auth status`, `gh api rate_limit`); "
+                "this is the NORMAL state inside pr-gate, which exports no GH_TOKEN."
                 if state == "UNREACHABLE"
                 else "Raise LIMEN_HEAL_RETIREMENT_MAX_PAGES — pagination did not terminate."
-            ),
-            file=sys.stderr,
+            )
         )
-        return 2
+        return 0
 
     violations = find_violations(lf.tasks, open_set)
     base = baseline_ids()

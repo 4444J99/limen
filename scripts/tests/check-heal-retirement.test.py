@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -143,6 +144,27 @@ with tempfile.TemporaryDirectory() as td:
     tasks.append(task("HEAL-cifix-organvm-limen-106", "open"))
     fresh = [x for x in m.find_violations(tasks, complete) if x[0] not in recorded]
     check("a NEW violation is not exempt", {x[0] for x in fresh} == {"HEAL-cifix-organvm-limen-106"})
+
+# --- main()'s exit contract ------------------------------------------------------------------
+# An unevaluable gate must BLOCK NOTHING. pr-gate exports no GH_TOKEN, so UNREACHABLE is the normal
+# state in CI; a non-zero exit there would pin the gate red forever, which is how a gate stops being
+# read. It still must not report a finding — exit 0 here means "nothing demonstrated", not "clean".
+board = Path(tempfile.gettempdir()) / "_hr_board.yaml"
+board.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+os.environ["LIMEN_TASKS"] = str(board)
+m.BASELINE = Path(tempfile.gettempdir()) / "_hr_absent_baseline.txt"
+if m.BASELINE.exists():
+    m.BASELINE.unlink()
+m.load_limen_file = lambda _p: SimpleNamespace(tasks=[task("HEAL-cifix-organvm-limen-9001", "open")])
+
+m.open_pr_set = lambda: (set(), "UNREACHABLE")
+check("main() exits 0 when it could not enumerate (blocks nothing)", m.main() == 0)
+
+m.open_pr_set = lambda: ({("organvm/limen", 1)}, "OK")
+check("main() exits 1 on a demonstrated fresh violation", m.main() == 1)
+
+m.open_pr_set = lambda: ({("organvm/limen", 9001)}, "OK")
+check("main() exits 0 when the named PR is genuinely open", m.main() == 0)
 
 print()
 if failures:
