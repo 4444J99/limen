@@ -7,7 +7,7 @@ repo by searching their own problem. **Nothing here is applied automatically** �
 setting topics/description on a public repo is an outward-facing change; run the
 commands below when you want them live.
 
-## ChatGPT Conversation Exporter — `organvm/a-i-chat--exporter`
+## AI Chat Exporter — `organvm/a-i-chat--exporter`
 
 - **Recommended topics:** chatgpt, chatgpt-export, chatgpt-exporter, conversation-export, markdown-export, userscript, tampermonkey, data-portability, obsidian, notion, rag, ai-tools
 - **Recommended description:** Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations.
@@ -21,10 +21,10 @@ gh api -X PUT repos/organvm/a-i-chat--exporter/topics \
 gh repo edit organvm/a-i-chat--exporter --description "Export ChatGPT conversations to Markdown, HTML, JSON, PNG, or text — in-browser, no account, no server. Bulk export and your own provider integrations."
 ```
 
-## 50-State UCC Public-Records Intelligence Platform — `organvm/public-record-data-scrapper`
+## UCC Public-Records Intelligence Platform — `organvm/public-record-data-scrapper`
 
 - **Recommended topics:** merchant-cash-advance, mca-leads, ucc-filings, ucc-leads, lead-generation, alternative-lending, small-business-financing, public-records, data-enrichment, lead-scoring
-- **Recommended description:** 50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.
+- **Recommended description:** UCC public-records intelligence on a 50-state architecture — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.
 
 ```sh
 # apply topics (his hand — outward-facing public change):
@@ -32,21 +32,21 @@ gh api -X PUT repos/organvm/public-record-data-scrapper/topics \
   -H 'Accept: application/vnd.github+json' \
   -f 'names[]=merchant-cash-advance' -f 'names[]=mca-leads' -f 'names[]=ucc-filings' -f 'names[]=ucc-leads' -f 'names[]=lead-generation' -f 'names[]=alternative-lending' -f 'names[]=small-business-financing' -f 'names[]=public-records' -f 'names[]=data-enrichment' -f 'names[]=lead-scoring'
 # apply description:
-gh repo edit organvm/public-record-data-scrapper --description "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI."
+gh repo edit organvm/public-record-data-scrapper --description "UCC public-records intelligence on a 50-state architecture — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI."
 ```
 
-## Styx Peer-Audited Behavioral Market — `organvm/peer-audited--behavioral-blockchain`
+## Styx Peer-Audited Behavioral Market — `4444J99/peer-audited--behavioral-blockchain`
 
 - **Recommended topics:** behavioral-economics, accountability, corporate-wellness, peer-review, fintech, stripe, escrow, double-entry-ledger, privacy, proof-of-completion, habit-tracking, incentive-design
 - **Recommended description:** Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests.
 
 ```sh
 # apply topics (his hand — outward-facing public change):
-gh api -X PUT repos/organvm/peer-audited--behavioral-blockchain/topics \
+gh api -X PUT repos/4444J99/peer-audited--behavioral-blockchain/topics \
   -H 'Accept: application/vnd.github+json' \
   -f 'names[]=behavioral-economics' -f 'names[]=accountability' -f 'names[]=corporate-wellness' -f 'names[]=peer-review' -f 'names[]=fintech' -f 'names[]=stripe' -f 'names[]=escrow' -f 'names[]=double-entry-ledger' -f 'names[]=privacy' -f 'names[]=proof-of-completion' -f 'names[]=habit-tracking' -f 'names[]=incentive-design'
 # apply description:
-gh repo edit organvm/peer-audited--behavioral-blockchain --description "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests."
+gh repo edit 4444J99/peer-audited--behavioral-blockchain --description "Peer-audited behavioral market with Stripe escrow, double-entry ledger, proof review, bounty incentives, privacy-firewalled B2B funding, and 1,107 tests."
 ```
 
 ## Autonomous Inbox-Triage & Draft System — `organvm/universal-mail--automation`
@@ -77,7 +77,7 @@ gh api -X PUT repos/organvm/limen/topics \
 gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat."
 ```
 
-## Portfolio & Case Studies — 16 Production Systems — `organvm/portfolio`
+## Portfolio & Case Studies — 16 Systems — `organvm/portfolio`
 
 - **Recommended topics:** portfolio, case-studies, system-design, architecture, production, astro, interactive-design, web-development, systems-thinking, engineering-decisions, technical-writing
 - ⚠ **Invalid topics (fix in seed):** p5.js

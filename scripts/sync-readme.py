@@ -140,7 +140,7 @@ def render_readme(
     L.append("## The systems")
     L.append("")
     L.append(
-        "Each is a working production system — source, tests, and live deploy. The numbers are "
+        "Each is a working system — source, tests, and a deploy path you can read. The numbers are "
         "the repository's own CI output, not adjectives."
     )
     L.append("")
