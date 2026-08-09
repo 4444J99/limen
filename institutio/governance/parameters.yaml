@@ -358,7 +358,7 @@ parameters:
     env: LIMEN_VITALS_SAMPLE_GRACE_SECONDS
     self_update: none
     owner: vitals
-    note: "Bounded write-completion grace at a VITALS sample cadence boundary. The stale watcher and fast-wave scheduler share this allowance so a healthy sample cannot be reported stale merely because the watchdog read during its atomic seat replacement."
+    note: "Bounded sampler/write grace at a VITALS sample cadence boundary. The stale watcher and fast-wave scheduler include LIMEN_VITALS_SAMPLE_TIMEOUT plus this allowance, so a healthy slow sample cannot be reported stale while its atomic seat replacement is still pending."
   LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:
     default: 30
     env: LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT
