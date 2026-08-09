@@ -515,7 +515,8 @@ fast_wave_loop() {
     # Diurnal and organ-health are independent single-flight workers. If a bounded run is still
     # active, retain the latest scheduled beat and launch it as soon as that worker is free.
     if [ -n "$_fw_diurnal_pid" ] && kill -0 "$_fw_diurnal_pid" 2>/dev/null; then
-      _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      # Keep the earliest pending visit. A later non-due beat must not replace a due one.
+      [ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"
     else
       [ -z "$_fw_diurnal_pid" ] || wait "$_fw_diurnal_pid" 2>/dev/null || true
       _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
@@ -525,7 +526,8 @@ fast_wave_loop() {
     fi
 
     if [ -n "$_fw_health_pid" ] && kill -0 "$_fw_health_pid" 2>/dev/null; then
-      _fw_health_pending="$FAST_WAVE_BEAT"
+      # Keep the earliest pending visit for the same single-flight invariant as diurnal.
+      [ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"
     else
       [ -z "$_fw_health_pid" ] || wait "$_fw_health_pid" 2>/dev/null || true
       _fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"
