@@ -389,3 +389,15 @@ def test_delivery_callers_use_shared_ntfy_helper():
     assert "urllib.request" not in events
     assert "notify_ntfy(ROOT" in conducting
     assert "notify_ntfy(ROOT" in events
+
+
+def test_autonomy_pause_marker_blocks_routing_even_with_admitted_work(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "AUTONOMY_PAUSED").write_text("operator pause\n", encoding="utf-8")
+
+    reason, detail = module._routing_reason()
+
+    assert reason == "admission_blocked"
+    assert detail == "autonomy pause marker is present"
