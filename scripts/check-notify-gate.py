@@ -149,8 +149,85 @@ def _called_names(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
     return called
 
 
+def _gate_polarities(node: ast.AST, *, negated: bool = False) -> set[bool]:
+    """Return whether each gate call is positively or negatively tested."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == GATE_FUNC:
+        return {negated}
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return _gate_polarities(node.operand, negated=not negated)
+    polarities: set[bool] = set()
+    for child in ast.iter_child_nodes(node):
+        polarities.update(_gate_polarities(child, negated=negated))
+    return polarities
+
+
+def _has_delivery_call(node: ast.Call) -> bool:
+    if isinstance(node.func, ast.Name) and node.func.id == DELIVERY_FUNC:
+        return True
+    literals = [
+        child.value
+        for child in ast.walk(node)
+        if isinstance(child, ast.Constant) and isinstance(child.value, str)
+    ]
+    return any("osascript" in value.lower() for value in literals)
+
+
+def _body_exits(body: list[ast.stmt]) -> bool:
+    return bool(body) and isinstance(body[-1], (ast.Return, ast.Raise))
+
+
+def _gate_controls_delivery(function: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Prove every delivery is behind a positive gate or a negative early-return guard."""
+    if not _called_names(function) & {GATE_FUNC}:
+        return False
+    deliveries: list[tuple[ast.Call, bool]] = []
+    stack: list[tuple[ast.If, str]] = []
+
+    class Visitor(ast.NodeVisitor):
+        def visit_If(self, node: ast.If) -> None:
+            self.visit(node.test)
+            stack.append((node, "body"))
+            for child in node.body:
+                self.visit(child)
+            stack.pop()
+            stack.append((node, "orelse"))
+            for child in node.orelse:
+                self.visit(child)
+            stack.pop()
+
+        def visit_Call(self, node: ast.Call) -> None:
+            if _has_delivery_call(node):
+                positive_branch = any(
+                    branch == "body"
+                    and _gate_polarities(if_node.test) & {False}
+                    for if_node, branch in stack
+                )
+                deliveries.append((node, positive_branch))
+            self.generic_visit(node)
+
+    Visitor().visit(function)
+    if not deliveries:
+        return False
+    prior_guards = [
+        statement
+        for statement in function.body
+        if isinstance(statement, ast.If)
+        and _gate_polarities(statement.test) & {True}
+        and _body_exits(statement.body)
+    ]
+    return all(
+        controlled
+        or any(
+            guard.lineno < delivery.lineno
+            and (getattr(guard, "end_lineno", guard.lineno) or guard.lineno) < delivery.lineno
+            for guard in prior_guards
+        )
+        for delivery, controlled in deliveries
+    )
+
+
 def gate_state(notifier: Path) -> tuple[bool, str]:
-    """Prove that every public route to the macOS effector checks the live-root gate."""
+    """Prove that every public route to the macOS effector controls delivery with the gate."""
     try:
         tree = ast.parse(notifier.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, SyntaxError) as exc:
@@ -164,19 +241,13 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
     if GATE_FUNC not in functions:
         return False, f"no {GATE_FUNC}() — public notification routes are ungated"
 
-    effectors: list[str] = []
-    for name, function in functions.items():
-        called = _called_names(function)
-        literals = {
-            node.value.lower()
-            for node in ast.walk(function)
-            if isinstance(node, ast.Constant) and isinstance(node.value, str)
-        }
-        invokes_osascript = any("osascript" in value for value in literals)
-        if name in PUBLIC_EFFECTORS and (DELIVERY_FUNC in called or invokes_osascript):
-            effectors.append(name)
-
-    ungated = [name for name in effectors if GATE_FUNC not in _called_names(functions[name])]
+    effectors = [
+        name
+        for name, function in functions.items()
+        if name in PUBLIC_EFFECTORS
+        and any(_has_delivery_call(node) for node in ast.walk(function) if isinstance(node, ast.Call))
+    ]
+    ungated = [name for name in effectors if not _gate_controls_delivery(functions[name])]
     if ungated:
         return False, f"public effector(s) bypass {GATE_FUNC}(): {', '.join(sorted(ungated))}"
     if not effectors:
@@ -242,16 +313,30 @@ def _static_string(node: ast.AST) -> str | None:
     return None
 
 
+def _static_argv(node: ast.AST) -> list[str] | None:
+    if (value := _static_string(node)) is not None:
+        return [value]
+    if isinstance(node, (ast.List, ast.Tuple)):
+        values: list[str] = []
+        for element in node.elts:
+            value = _static_string(element)
+            if value is None:
+                return None
+            values.append(value)
+        return values
+    return None
+
+
 def _python_bypasses(path: Path) -> bool:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, SyntaxError):
         return False
-    bindings: dict[str, str] = {}
+    bindings: dict[str, list[str]] = {}
     for node in ast.walk(tree):
         if not isinstance(node, (ast.Assign, ast.AnnAssign)):
             continue
-        value = _static_string(node.value)
+        value = _static_argv(node.value)
         if value is None:
             continue
         targets = node.targets if isinstance(node, ast.Assign) else [node.target]
@@ -269,18 +354,13 @@ def _python_bypasses(path: Path) -> bool:
             for node in ast.walk(call)
             if isinstance(node, ast.Constant) and isinstance(node.value, str)
         ]
-        referenced = [
-            bindings[node.id]
-            for node in ast.walk(call)
-            if isinstance(node, ast.Name) and node.id in bindings
-        ]
-        has_osascript = any(
-            value == "osascript" or value.endswith("/osascript")
-            for value in literals
-        )
-        if has_osascript and "display notification" in " ".join(
-            [*literals, *referenced]
-        ).lower():
+        referenced: list[str] = []
+        for node in ast.walk(call):
+            if isinstance(node, ast.Name) and node.id in bindings:
+                referenced.extend(bindings[node.id])
+        values = [*literals, *referenced]
+        has_osascript = any(value == "osascript" or value.endswith("/osascript") for value in values)
+        if has_osascript and "display notification" in " ".join(values).lower():
             return True
     return False
 
