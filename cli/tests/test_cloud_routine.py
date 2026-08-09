@@ -160,7 +160,6 @@ def test_terminal_lineage_can_emit_a_new_occurrence() -> None:
     assert plan.duplicates == 0
 
 
-
 def test_terminal_lineage_preserves_subsecond_recurrences() -> None:
     receipt_one = _receipt(observed_at="2026-08-08T12:00:00.000001Z")
     receipt_two = _receipt(observed_at="2026-08-08T12:00:00.000002Z")
