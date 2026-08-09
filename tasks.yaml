@@ -126386,7 +126386,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'done'
+  status: 'archived'
   labels:
   - 'rebase'
   - 'self-heal'
@@ -126430,13 +126430,24 @@ tasks:
     conduct_run_id: 'run-71c50e329b2453a729a6a3926b5800c3'
     conduct_lease_id: 'lease-792-71c50e329b2453a7'
     conduct_generation: 792
+  - timestamp: '2026-08-09T03:14:25.838Z'
+    agent: 'opencode'
+    session_id: 'opencode-org-1786245247'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-org-1786245247'
+    status: 'archived'
+    output: 'Superseded PR closed; task archived.'
+    conduct_event_id: 'conduct:run-a72209c917fc8c5b568fa7fcdd3788b8:793:compatibility'
+    conduct_run_id: 'run-a72209c917fc8c5b568fa7fcdd3788b8'
+    conduct_lease_id: 'lease-793-a72209c917fc8c5b'
+    conduct_generation: 793
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Rebase collab PR organvm/hokage-chess--4444j99#121; analysis determined content already on main (superseded), closed as duplicate.'
   owner_surface: 'board'
   predicate: 'test "$(gh pr view 121 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/121'
-  updated: '2026-08-09T03:14:20.456Z'
+  updated: '2026-08-09T03:14:25.838Z'
 - id: HEAL-rebase-organvm-hokage-chess--4444j99-122
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#122
   repo: organvm/hokage-chess--4444j99
