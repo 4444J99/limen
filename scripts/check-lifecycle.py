@@ -880,6 +880,7 @@ def measure_unreachable(
     rows_probe=_complete_census_rows,
     repositories_probe=None,
     open_pr_count_probe=live_open_pr_count,
+    open_pr_identity_probe=None,
 ) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
@@ -896,15 +897,27 @@ def measure_unreachable(
     if isinstance(open_pr_count, bool) or not isinstance(open_pr_count, int) or open_pr_count != len(rows):
         fail("D", "PR-debt census row count does not match open_pr_count")
         return None
-    live_count = open_pr_count_probe()
-    if live_count is None:
-        return None
+    live_identities = None
+    if open_pr_identity_probe is not None:
+        live_identities = open_pr_identity_probe()
+        if live_identities is None:
+            return None
+        live_count = len(live_identities)
+    else:
+        live_count = open_pr_count_probe()
+        if live_count is None:
+            return None
     if live_count != open_pr_count:
         fail(
             "D",
             f"tracked PR census open count {open_pr_count} does not match live count {live_count}",
         )
         return None
+    if live_identities is not None:
+        ledger_identities = {_census_identity(row) for row in rows}
+        if None in ledger_identities or live_identities != ledger_identities:
+            fail("D", "tracked PR census identities do not match live open PR identities")
+            return None
     dispositions = registry.get("dispositions")
     if not isinstance(dispositions, dict):
         fail("D", "registry has no dispositions mapping")
@@ -980,7 +993,13 @@ def measure_unreachable(
         fail("D", "registry has no ratchets mapping")
         return None
     unarmed_ratchets = sum(value is False for value in ratchets.values())
-    return mechanically_unreachable + literal_debt + unarmed_ratchets + metadata_drift
+    return (
+        mechanically_unreachable
+        + materialization_missing
+        + literal_debt
+        + unarmed_ratchets
+        + metadata_drift
+    )
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="run offline registry parity checks")
@@ -989,7 +1008,11 @@ def main() -> int:
     if not (args.check or args.measure):
         parser.error("one of --check or --measure is required")
     registry, _labels = run_offline_checks()
-    unreachable = measure_unreachable(registry) if args.measure else None
+    unreachable = (
+        measure_unreachable(registry, open_pr_identity_probe=live_open_pr_identities)
+        if args.measure
+        else None
+    )
 
     if failures:
         print("PR LIFECYCLE DRIFT — registry does not match its owners:")
