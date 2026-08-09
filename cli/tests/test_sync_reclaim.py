@@ -235,20 +235,43 @@ def test_parked_unpark_clears_untracked_release_collision(checkout, tmp_path):
     assert (clone / "usage.json").exists()  # non-release runtime untouched
 
 
-def test_parked_on_branch_held_elsewhere_fails_open(checkout, tmp_path):
-    """If the release branch is checked out in ANOTHER worktree, git refuses the switch; the valve
-    must fail open (loudly) and leave the parked checkout intact."""
+def test_parked_on_branch_held_elsewhere_detaches_at_the_release(checkout, tmp_path):
+    """If the release branch is checked out in ANOTHER worktree, git refuses the switch — and the
+    valve takes the release by SHA instead of asking a human.
+
+    This test previously asserted the opposite ("refused" in stdout, HEAD still on `work`). That was
+    a faithful pin of the behaviour AS SHIPPED, and the behaviour was the defect: the organ captured
+    the refusal reason — git's message names the holding worktree — and then did nothing but ask,
+    every beat, forever. Observed 2026-08-08/09 on the live checkout: parked, 36 unpushed commits,
+    14 behind origin/main, three merged fixes dark, and the park FED ITSELF because the daemon kept
+    committing captures onto the branch it could not leave.
+
+    What the docstring called "leave the parked checkout intact" is still asserted, and it is the
+    part that was ever load-bearing: the parked work must not be lost. It is not — preserve-then-push
+    runs BEFORE the switch is attempted, so `work` is safe on origin before HEAD moves anywhere. Only
+    the mechanism changed. Git's constraint is that a branch NAME cannot be checked out twice; it has
+    no objection to the commit, and the fleet needs the code, not the name.
+    """
     clone, bare = checkout
     _git("switch", "-q", "-c", "work", cwd=clone)
     work_sha = _commit(clone, "work.txt", "w\n", "work on branch")
     _git("push", "-q", "-u", "origin", "work", cwd=clone)
-    _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
-    _git("worktree", "add", "-q", str(tmp_path / "holder"), "main", cwd=clone)  # holds main hostage
+    rel_sha = _origin_advance(bare, tmp_path, "rel.txt", "r\n", "release advances")
+    holder = tmp_path / "holder"
+    _git("worktree", "add", "-q", str(holder), "main", cwd=clone)  # holds main hostage
     r = _run_sync(clone)
+
     assert r.returncode == 0
-    assert "refused" in r.stdout, r.stdout + r.stderr
-    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=clone).stdout.strip() == "work"
-    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == work_sha
+    assert "DETACHED at origin/main" in r.stdout, r.stdout + r.stderr
+    # detached, and detached AT THE RELEASE — the whole point is that the fleet stops running stale
+    # code, so landing anywhere else would be a different failure wearing this one's success message.
+    assert _git("symbolic-ref", "--quiet", "--short", "HEAD", cwd=clone, check=False).stdout.strip() == ""
+    assert _git("rev-parse", "HEAD", cwd=clone).stdout.strip() == rel_sha
+    # the invariant the old assertions were really protecting: the parked work is not lost
+    assert _git("rev-parse", "refs/heads/work", cwd=bare).stdout.strip() == work_sha
+    # …and the holding worktree is untouched, which is what makes taking the SHA safe rather than
+    # merely effective. It is very likely someone's live session.
+    assert _git("rev-parse", "--abbrev-ref", "HEAD", cwd=holder).stdout.strip() == "main"
 
 
 # ---------------- reclaim-worktrees.py ----------------

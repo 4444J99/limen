@@ -2640,6 +2640,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Space-separated globs of REGENERABLE daemon receipt files. sync-release.sh re-converges a diverged live checkout when its unique local commits touch ONLY these (loss-free — the beat rewrites them), instead of failing open forever and pinning the daemon to stale code. Genuinely-unique history still fails open to hand-reconcile."
+  LIMEN_SYNC_RELEASE_SCRIPT:
+    default: null              # unset in every runtime path; the tests resolve scripts/sync-release.sh
+    env: LIMEN_SYNC_RELEASE_SCRIPT
+    self_update: none
+    owner: limen-daemon
+    note: "TEST-ONLY: which sync-release.sh the drive tests execute (scripts/tests/sync-release.test.sh and cli/tests/test_session_contention.py's end-to-end section). Unset everywhere at runtime — the daemon always runs $LIMEN_ROOT/scripts/sync-release.sh — and it exists solely so the A/B that PROVES a regression test can be one command: extract the parent commit's script, point this at it, and require a FAIL. Declared here rather than renamed outside the LIMEN_* namespace because a knob that steers which code a gate exercises is exactly what the panel is for; a name chosen to dodge the ratchet would make it invisible on the one surface that enumerates such knobs. Used 2026-08-09 to prove the held-branch detach fallback: the baseline reproduced the live beat's own refusal line verbatim."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING

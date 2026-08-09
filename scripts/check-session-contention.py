@@ -66,6 +66,12 @@ GUARDED_PATHS: dict[str, dict[str, object]] = {
                 "test_the_guard_declines_the_unpark_when_a_session_holds_the_tree",
                 "test_the_unpark_still_fires_when_the_tree_is_free",
                 "test_a_blind_probe_announces_itself_instead_of_passing_for_free",
+                # The re-attach valve (2026-08-09) is a FOURTH destructive site, added with the
+                # detach fallback for a branch name held by another worktree. Both verdicts are
+                # pinned, for the reason this registry's header states in capitals: the marker was
+                # present at every site while the guard was inert.
+                "test_the_guard_declines_the_reattach_when_a_session_holds_the_tree",
+                "test_the_reattach_fires_when_the_tree_is_free",
             ),
         },
         # NB: the prose below deliberately does not put `git` and `push` on one line. This file
@@ -74,9 +80,10 @@ GUARDED_PATHS: dict[str, dict[str, object]] = {
         # and the file lands in a write-seam registry recording a seam that does not exist. It is
         # the same prose-false-positive this predicate declines to build its own scan on.
         "why": (
-            "rewrites the LIVE CHECKOUT every beat — switch (unpark), reset --hard, and a "
-            "stash push. The one path that was unguarded; now probes once and defers at each "
-            "destructive site, while never blocking a clean fast-forward"
+            "rewrites the LIVE CHECKOUT every beat — switch (unpark, plus re-attach once a "
+            "contended detach is no longer needed), reset --hard, and a stash push. The one path "
+            "that was unguarded; now probes once and defers at each destructive site, while never "
+            "blocking a clean fast-forward"
         ),
     },
     "dispatch-allocator": {
