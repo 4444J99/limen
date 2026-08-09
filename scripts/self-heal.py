@@ -64,6 +64,7 @@ from _pr_scan import (  # noqa: E402
     scaled_limit,
     stale_base_verdict,
 )
+from _valve_effects import record as record_valve_effect  # noqa: E402
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -351,6 +352,39 @@ def parse_pr_spec(raw):
     raise argparse.ArgumentTypeError(f"expected owner/repo#number or GitHub PR URL, got {raw!r}")
 
 
+ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
+
+
+def retirement_candidates(tasks, open_pr_nums):
+    """Active HEAL tasks whose PR is ABSENT from ``open_pr_nums`` — the retirement DENOMINATOR.
+
+    Deliberately independent of ``retirement_authorized``. A refused run must still be able to say
+    "I could have retired 257", because a valve that reports only its effects makes "I was blocked"
+    and "there was nothing to do" emit the identical zero — which is how the retirement pass stayed
+    dead for a day while every gate was green (see _valve_effects).
+
+    Also the single definition of "retirable". This predicate was previously written out twice, in
+    the dry-run and live paths, where the two copies could drift into disagreeing about what the
+    organ would do versus what it does.
+    """
+    out = []
+    for t in tasks:
+        if not (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-")):
+            continue
+        if t.id.startswith("HEAL-rebase-stale-"):
+            continue
+        if t.status not in ACTIVE_HEAL_STATUSES:
+            continue
+        parts = t.id.split("-")
+        if not parts[-1].isdigit():
+            continue
+        num = int(parts[-1])
+        repo = t.repo or ""
+        if repo and (repo, num) not in open_pr_nums:
+            out.append((t, repo, num))
+    return out
+
+
 def retirement_authorized(explicit_prs, enumerated, reconcile_scan_max):
     """``(ok, why)`` — may the reconcile pass retire tasks ABSENT from this enumeration?
 
@@ -485,20 +519,20 @@ def main():
         tasks_by_id = {t.id: t for t in tasks}
 
         open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
-        ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
-        would_retire = 0
-        for t in tasks if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
-            if (
-                (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
-                and not t.id.startswith("HEAL-rebase-stale-")
-                and t.status in ACTIVE_HEAL_STATUSES
-            ):
-                parts = t.id.split("-")
-                if parts[-1].isdigit():
-                    num = int(parts[-1])
-                    repo = t.repo or ""
-                    if repo and (repo, num) not in open_pr_nums:
-                        would_retire += 1
+        # Counted whether or not retirement is authorized — see retirement_candidates. An
+        # unauthorized run that reported 0 here would be indistinguishable from a drained backlog,
+        # which is the exact ambiguity that hid the dead valve.
+        candidates = retirement_candidates(tasks, open_pr_nums)
+        would_retire = len(candidates) if retire_ok else 0
+        record_valve_effect(
+            "heal-retirement",
+            authorized=retire_ok,
+            candidates=len(candidates),
+            effects=0,
+            dry_run=True,
+            detail=retire_why or f"dry-run: would retire {would_retire}",
+            root=ROOT,
+        )
 
         would, dup = [], 0
         for verdict, repo, num, url in sick:
@@ -544,38 +578,39 @@ def main():
         # (open_pr_nums was enumerated at startup for all open PRs across active owners)
         open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
         retired = []
-        ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
-        for t in lf.tasks if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
-            if (
-                (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
-                and not t.id.startswith("HEAL-rebase-stale-")
-                and t.status in ACTIVE_HEAL_STATUSES
-            ):
-                parts = t.id.split("-")
-                if parts[-1].isdigit():
-                    num = int(parts[-1])
-                    repo = t.repo or ""
-                    if repo and (repo, num) not in open_pr_nums:
-                        try:
-                            from limen.tabularius import refuse_unfunded_partner_lane
+        # The denominator is computed unconditionally; only ACTING is gated on retire_ok. That
+        # asymmetry is the point — see retirement_candidates.
+        candidates = retirement_candidates(lf.tasks, open_pr_nums)
+        for t, repo, num in candidates if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
+            try:
+                from limen.tabularius import refuse_unfunded_partner_lane
 
-                            refuse_unfunded_partner_lane(repo, t.id)
-                        except Exception:
-                            continue
-                        t.status = "done"
-                        t.dispatch_log.append(
-                            DispatchLogEntry(
-                                timestamp=datetime.datetime.now(datetime.timezone.utc),
-                                agent="self-heal",
-                                session_id="reconcile",
-                                status="done",
-                                lifecycle_repair="pr-closed-reconcile",
-                                pr_observed_ref=f"{repo}#{num}",
-                                pr_observed_state="closed",
-                                context=f"Retired by self-heal because {repo}#{num} is no longer open",
-                            )
-                        )
-                        retired.append(t.id)
+                refuse_unfunded_partner_lane(repo, t.id)
+            except Exception:
+                continue
+            t.status = "done"
+            t.dispatch_log.append(
+                DispatchLogEntry(
+                    timestamp=datetime.datetime.now(datetime.timezone.utc),
+                    agent="self-heal",
+                    session_id="reconcile",
+                    status="done",
+                    lifecycle_repair="pr-closed-reconcile",
+                    pr_observed_ref=f"{repo}#{num}",
+                    pr_observed_state="closed",
+                    context=f"Retired by self-heal because {repo}#{num} is no longer open",
+                )
+            )
+            retired.append(t.id)
+        record_valve_effect(
+            "heal-retirement",
+            authorized=retire_ok,
+            candidates=len(candidates),
+            effects=len(retired),
+            dry_run=False,
+            detail=retire_why or f"retired {len(retired)} of {len(candidates)}",
+            root=ROOT,
+        )
 
         emitted = []
         for verdict, repo, num, url in sick:
