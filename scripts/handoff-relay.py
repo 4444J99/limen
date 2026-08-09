@@ -657,12 +657,13 @@ def _dispatch_admission(
         except Exception:
             limen_file = None
         if limen_file is not None:
+            daily_budget = int(limen_file.portal.budget.daily)
             for candidate_agent in known_agents:
                 try:
                     governed_remaining[candidate_agent] = _remaining_budget(
                         limen_file,
                         candidate_agent,
-                        global_remaining,
+                        daily_budget,
                     )
                 except Exception:
                     continue
