@@ -2063,6 +2063,10 @@ sensors:
     # This asserts the OUTCOME (ciphertext landed off-machine recently) rather than the mechanism, so
     # it survives any later reshaping of the vault — new generation, new remote, new chunking.
     # "Cannot determine" is a FINDING, not a pass: undetermined is exactly the state that hid this.
+    # POTESTAS 0.3 (#2089): the vault rotates across generations (organvm/arca → organvm/arca-g2 → …),
+    # and the local manifest owns which is CURRENT. The sensor resolves the repo under test in order
+    # --repo → $ARCA_REPO → manifest `_generation.repo` → organvm/arca, so it follows every rotation
+    # with zero reconfiguration and escalates on the LIVE generation only.
     cadence:
       env: LIMEN_BEAT_ARCA_FRESHNESS
       default: 6

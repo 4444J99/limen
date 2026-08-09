@@ -44,8 +44,15 @@ surfaces:
     disposition: repository-mutations-deferred-to-tabularius
     expected: {}
   scripts/arca.sh:
+    # Three push seams, all to the private vault upstream (never this repo's protected
+    # branch), all exact-head verified: (1) cmd_backup pushes its own seal commit with
+    # `push -u` (establishes upstream on a fresh clone / freshly cut generation);
+    # (2) cmd_backup's retry rail pushes `origin/main..HEAD` from a prior failed push;
+    # (3) cmd_rotate pushes the fresh generation's first commit with `push -u`. The remote
+    # is the manifest-named private vault repo (organvm/arca → arca-gN); a non-PRIVATE
+    # remote aborts in ensure_vault before any push. #2089.
     disposition: external-encrypted-vault-upstream
-    expected: {git_push: 1}
+    expected: {git_push: 3}
   scripts/capture.sh:
     disposition: main-to-stable-custody-ref-topic-branches-explicit
     expected: {git_push: 3}
