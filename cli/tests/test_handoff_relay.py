@@ -218,7 +218,6 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
-
 def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task():
     mod = _load()
     task = _task("CONTROL", agent="any", labels=["execution:control-host"])
