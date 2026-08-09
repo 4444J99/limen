@@ -162,7 +162,7 @@ run_expect 0 "sealed _finance-private" "case6 changed store" "$ARCA" backup
 
 # ── Case 7: chunking — an oversized store ships as parts and restores byte-identical ──
 mkdir -p "$work/ws/_memories-private"
-dd if=/dev/urandom of="$work/ws/_memories-private/seed.bin" bs=1m count=2 2>/dev/null
+dd if=/dev/urandom of="$work/ws/_memories-private/seed.bin" bs=1M count=2 2>/dev/null
 run_expect 0 "parts" "case7 chunked backup" env ARCA_CHUNK_MB=1 "$ARCA" backup
 parts="$(json_get "$work/vault/manifest.json" "d['_memories-private']['parts']")"
 [ "$parts" -ge 2 ] 2>/dev/null || { echo "  MISMATCH (case7 parts=$parts < 2)"; fail=$((fail+1)); }
