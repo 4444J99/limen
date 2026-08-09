@@ -88418,7 +88418,7 @@ tasks:
   target_agent: 'jules'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'rebase'
   - 'self-heal'
@@ -88429,7 +88429,7 @@ tasks:
   context: 'PR 4444J99/hokage-chess#114 is CONFLICTING with its base branch and merge-drain correctly refuses to merge it. Check out the PR branch, rebase it onto the current base (or merge base in), resolve every conflict preserving the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not open a new PR. PR: https://github.com/4444J99/hokage-chess/pull/114 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-08-09T02:52:08.472Z'
+  updated: '2026-08-09T02:52:13.786Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: 'gemini'
@@ -88465,6 +88465,17 @@ tasks:
     conduct_run_id: 'run-fce44ed029fad2f1488c5c6c44b51602'
     conduct_lease_id: 'lease-743-fce44ed029fad2f1'
     conduct_generation: 743
+  - timestamp: '2026-08-09T02:52:13.786Z'
+    agent: 'opencode'
+    session_id: 'opencode-stale-1786243926'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-stale-1786243926'
+    status: 'in_progress'
+    output: 'Routing duplicate to archive.'
+    conduct_event_id: 'conduct:run-efc346802d66dbfbab6926cf126213b5:744:compatibility'
+    conduct_run_id: 'run-efc346802d66dbfbab6926cf126213b5'
+    conduct_lease_id: 'lease-744-efc346802d66dbfb'
+    conduct_generation: 744
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Wrong-repo duplicate: PR #114 lives in organvm/hokage-chess--4444j99 (tracked by HEAL-rebase-organvm-hokage-chess--4444j99-114); 4444J99/hokage-chess has only 15 PRs. Archiving duplicate.'
