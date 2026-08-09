@@ -312,6 +312,13 @@ def canary(
     sensors = load_sensors(registry)
     voice_dir = voice_dir or (ROOT / "logs" / ".voice")
     if fast_wave_seconds is None:
+        # Direct canary invocations do not inherit launchd's sourced environment. Honor the
+        # deployed env-file fallback unless the caller supplied an explicit process override.
+        if "LIMEN_VITALS_SAMPLE_SECONDS" not in os.environ:
+            env_file = Path(
+                os.environ.get("LIMEN_ENV_FILE", str(Path.home() / ".limen.env"))
+            ).expanduser()
+            _load_env_file(env_file)
         raw_fast_wave = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
         fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
     now = time.time()
