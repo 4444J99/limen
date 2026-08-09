@@ -844,9 +844,7 @@ def test_admission_honors_open_pr_receipts_and_active_repair_owners(monkeypatch,
 
     open_pr = _task(
         "OPEN-PR",
-        dispatch_log=[
-            {"status": "dispatched", "session_id": "https://github.com/organvm/limen/pull/42"}
-        ],
+        dispatch_log=[{"status": "dispatched", "session_id": "https://github.com/organvm/limen/pull/42"}],
     )
     open_admission = mod._dispatch_admission([open_pr], budget, providers)
     assert open_admission["reason_counts"] == {"open_pr_receipt": 1}
