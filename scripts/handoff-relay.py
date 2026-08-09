@@ -32,7 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.capacity import canonical_agent  # noqa: E402
-from limen.dispatch import _effective_target_agent  # noqa: E402
+from limen.dispatch import agent_can_run_task, _effective_target_agent  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -329,6 +329,16 @@ def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
     }
 
 
+
+def _eligible_any_agent(task: dict[str, Any], agent: str) -> bool:
+    """Use the dispatcher's own capability contract for target_agent=any rows."""
+    try:
+        return agent_can_run_task(agent, Task.model_validate(task))
+    except Exception:
+        # A malformed historical row is not evidence that any lane can execute it.
+        return False
+
+
 def _dispatch_admission(
     tasks: list[dict[str, Any]],
     board_budget: dict[str, Any],
@@ -346,6 +356,15 @@ def _dispatch_admission(
     reasons: Counter[str] = Counter()
     provider_health_reasons: Counter[str] = Counter()
     admissible_agents: Counter[str] = Counter()
+    admissible_any_agents: Counter[str] = Counter()
+    raw_vendors = provider_headroom.get("vendors") if isinstance(provider_headroom, dict) else {}
+    known_agents = sorted(
+        {
+            canonical_agent(str(name))
+            for name in (raw_vendors or {})
+            if str(name).strip() and canonical_agent(str(name)) not in {"", "any"}
+        }
+    )
     for task in tasks:
         if task.get("status") != "open":
             continue
@@ -380,6 +399,13 @@ def _dispatch_admission(
                 provider_health_reasons[agent] += 1
             continue
         candidates.append(task)
+        if agent in {"", "any"}:
+            for candidate_agent in known_agents:
+                if (
+                    _provider_available(candidate_agent, provider_headroom)
+                    and _eligible_any_agent(task, candidate_agent)
+                ):
+                    admissible_any_agents[candidate_agent] += 1
         admissible_agents[agent or "any"] += 1
     top = (
         sorted(
@@ -398,6 +424,7 @@ def _dispatch_admission(
         "reason_counts": dict(sorted(reasons.items())),
         "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
         "admissible_agent_counts": dict(sorted(admissible_agents.items())),
+        "admissible_any_agent_counts": dict(sorted(admissible_any_agents.items())),
         "dispatchable_next": _task_summary(top) if top else None,
     }
 
