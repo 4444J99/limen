@@ -33,12 +33,16 @@ def _objects_from_path(path: Path) -> list[object]:
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
-        return [
+        objects = [
             json.loads(line)
             for line in raw.splitlines()
             if line.strip()
         ]
-    return payload if isinstance(payload, list) else [payload]
+    else:
+        objects = payload if isinstance(payload, list) else [payload]
+    if not objects:
+        raise ValueError(f"{path}: receipt delivery is empty")
+    return objects
 
 
 def _lever_states(path: Path) -> dict[str, str]:
