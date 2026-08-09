@@ -122,10 +122,16 @@ def main() -> int:
             except Exception as exc:
                 failures.append(f"receipt[{index}] model: {exc}")
         if len(receipts) == len(raw_receipts):
-            _load_ingest_module().validate_human_gate_owners(
+            ingest = _load_ingest_module()
+            ingest.validate_human_gate_owners(
                 receipts,
                 lever_path=lever_path,
             )
+            if any(receipt.disposition == "new_work" for receipt in receipts):
+                failures.append(
+                    "current cloud-routine denominator contains novel new_work; "
+                    "the broker task upsert is not yet durably classified"
+                )
     except Exception as exc:
         failures.append(f"receipt contract: {exc}")
 
