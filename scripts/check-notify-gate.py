@@ -377,18 +377,145 @@ def _static_string(node: ast.AST) -> str | None:
     return None
 
 
-def _static_argv(node: ast.AST) -> list[str] | None:
+def _static_argv(
+    node: ast.AST,
+    bindings: dict[str, list[str]] | None = None,
+) -> list[str] | None:
+    """Resolve statically visible command fragments against the current lexical bindings."""
+    bindings = bindings or {}
+    if isinstance(node, ast.Name):
+        value = bindings.get(node.id)
+        return list(value) if value is not None else None
     if (value := _static_string(node)) is not None:
         return [value]
-    if isinstance(node, (ast.List, ast.Tuple)):
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
         values: list[str] = []
         for element in node.elts:
-            value = _static_string(element)
-            if value is None:
-                return None
-            values.append(value)
-        return values
+            resolved = _static_argv(element, bindings)
+            if resolved is not None:
+                values.extend(resolved)
+        return values or None
     return None
+
+
+class _PythonBypassVisitor(ast.NodeVisitor):
+    """Flow-sensitive scanner for process calls and the bindings visible at each call."""
+
+    def __init__(self, bindings: dict[str, list[str]] | None = None) -> None:
+        self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
+        self.found = False
+
+    def _assign(self, target: ast.AST, values: list[str] | None) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                self._assign(element, None)
+            return
+        if not isinstance(target, ast.Name):
+            return
+        if values is None:
+            self.bindings.pop(target.id, None)
+        else:
+            self.bindings[target.id] = list(values)
+
+    def _visit_function(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for default in [*node.args.defaults, *node.args.kw_defaults]:
+            if default is not None:
+                self.visit(default)
+        child = _PythonBypassVisitor(self.bindings)
+        arguments = [
+            *node.args.posonlyargs,
+            *node.args.args,
+            *node.args.kwonlyargs,
+        ]
+        if node.args.vararg is not None:
+            arguments.append(node.args.vararg)
+        if node.args.kwarg is not None:
+            arguments.append(node.args.kwarg)
+        for argument in arguments:
+            child.bindings.pop(argument.arg, None)
+        for statement in node.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+        self.bindings.pop(node.name, None)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._visit_function(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for base in node.bases:
+            self.visit(base)
+        child = _PythonBypassVisitor(self.bindings)
+        for statement in node.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+        self.bindings.pop(node.name, None)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self.visit(node.value)
+        values = _static_argv(node.value, self.bindings)
+        for target in node.targets:
+            self._assign(target, values)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value is not None:
+            self.visit(node.value)
+        self._assign(
+            node.target,
+            _static_argv(node.value, self.bindings) if node.value is not None else None,
+        )
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        self.visit(node.value)
+        self._assign(node.target, None)
+
+    def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
+        self.visit(node.value)
+        self._assign(node.target, _static_argv(node.value, self.bindings))
+
+    def visit_If(self, node: ast.If) -> None:
+        self.visit(node.test)
+        before = {name: list(values) for name, values in self.bindings.items()}
+        body = _PythonBypassVisitor(before)
+        for statement in node.body:
+            body.visit(statement)
+        alternate = _PythonBypassVisitor(before)
+        for statement in node.orelse:
+            alternate.visit(statement)
+        self.found = self.found or body.found or alternate.found
+        possible = [body.bindings, alternate.bindings if node.orelse else before]
+        merged: dict[str, list[str]] = {}
+        for name in set().union(*(state.keys() for state in possible)):
+            values = {
+                value
+                for state in possible
+                for value in state.get(name, [])
+            }
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+
+    def visit_Call(self, node: ast.Call) -> None:
+        call_name = node.func.id if isinstance(node.func, ast.Name) else (
+            node.func.attr if isinstance(node.func, ast.Attribute) else ""
+        )
+        if call_name in _PROCESS_CALLS:
+            values: list[str] = []
+            for argument in [*node.args, *(keyword.value for keyword in node.keywords)]:
+                values.extend(_static_argv(argument, self.bindings) or [])
+            has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
+            if has_osascript and "display notification" in " ".join(values).lower():
+                self.found = True
+        self.generic_visit(node)
 
 
 def _python_bypasses(path: Path) -> bool:
@@ -400,38 +527,9 @@ def _python_bypasses(path: Path) -> bool:
             tree = ast.parse(source.read(), filename=str(path))
     except (OSError, UnicodeError, SyntaxError, LookupError):
         return True
-    bindings: dict[str, list[str]] = {}
-    for node in ast.walk(tree):
-        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
-            continue
-        value = _static_argv(node.value)
-        if value is None:
-            continue
-        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-        for target in targets:
-            if isinstance(target, ast.Name):
-                bindings[target.id] = value
-    for call in (node for node in ast.walk(tree) if isinstance(node, ast.Call)):
-        call_name = call.func.id if isinstance(call.func, ast.Name) else (
-            call.func.attr if isinstance(call.func, ast.Attribute) else ""
-        )
-        if call_name not in _PROCESS_CALLS:
-            continue
-        literals = [
-            node.value
-            for node in ast.walk(call)
-            if isinstance(node, ast.Constant) and isinstance(node.value, str)
-        ]
-        referenced: list[str] = []
-        for node in ast.walk(call):
-            if isinstance(node, ast.Name) and node.id in bindings:
-                referenced.extend(bindings[node.id])
-        values = [*literals, *referenced]
-        has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
-        if has_osascript and "display notification" in " ".join(values).lower():
-            return True
-    return False
-
+    visitor = _PythonBypassVisitor()
+    visitor.visit(tree)
+    return visitor.found
 
 def _shell_bypasses(path: Path) -> bool:
     try:
