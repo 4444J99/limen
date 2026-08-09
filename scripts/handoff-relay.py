@@ -338,7 +338,7 @@ def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
 
 
 def _eligible_any_agent(task: dict[str, Any], agent: str) -> bool:
-    """Use the dispatcher's own capability contract for target_agent=any rows."""
+    """Use the dispatcher's own capability contract for every candidate lane."""
     try:
         return agent_can_run_task(agent, Task.model_validate(task))
     except Exception:
@@ -394,6 +394,8 @@ def _dispatch_admission(
         agent = _effective_task_agent(task)
         if reason is None and agent in _PLAN_BUILDER_SENTINELS:
             reason = "admission_blocked"
+        if reason is None and agent not in {"", "any"} and not _eligible_any_agent(task, agent):
+            reason = "admission_blocked"
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
@@ -410,6 +412,14 @@ def _dispatch_admission(
         candidates.append(task)
         if agent in {"", "any"}:
             for candidate_agent in known_agents:
+                candidate_budget = per_agent.get(candidate_agent) if isinstance(per_agent, dict) else None
+                candidate_remaining = (
+                    _as_int(candidate_budget.get("remaining"))
+                    if isinstance(candidate_budget, dict)
+                    else None
+                )
+                if candidate_remaining is not None and cost > candidate_remaining:
+                    continue
                 if (
                     _provider_available(candidate_agent, provider_headroom)
                     and _eligible_any_agent(task, candidate_agent)
