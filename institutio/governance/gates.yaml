@@ -375,6 +375,11 @@ gates:
     scoped: false
     owner: heal
     note: "Chronic heal stalls trip; receipts carry outcomes (fixture rung)."
+  heal-retirement:
+    command: "python3 scripts/check-heal-retirement.py --quiet && bash scripts/tests/check-heal-retirement.test.sh"
+    paths: ["scripts/self-heal.py", "scripts/check-heal-retirement.py", "scripts/tests/check-heal-retirement.test.sh", "cli/tests/test_self_heal.py"]
+    owner: heal
+    note: "HEAL task retirement predicate: no active HEAL task names a closed or merged PR."
   ask-gate-test:
     command: "bash scripts/tests/ask-gate.test.sh"
     paths: ["scripts/ask-gate.py", "scripts/tests/ask-gate.test.sh"]

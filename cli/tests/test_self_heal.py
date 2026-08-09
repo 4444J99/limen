@@ -428,3 +428,35 @@ def test_emits_cifix_when_trunk_repair_done(tmp_path, monkeypatch):
         "must still emit PR-level CI fix when prior trunk-level HEAL is done"
     )
     assert "HEAL-mainred-organvm-exporter" in ids
+
+
+def test_retires_open_heal_tasks_for_closed_prs(tmp_path, monkeypatch):
+    """An open HEAL task whose PR is no longer open is retired to status=done."""
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    board = {
+        "version": "1.0",
+        "portal": {"name": "t"},
+        "tasks": [
+            {
+                "id": "HEAL-cifix-organvm-exporter-999",
+                "title": "fix failing CI on organvm/exporter#999",
+                "repo": "organvm/exporter",
+                "status": "open",
+                "target_agent": "any",
+                "priority": "high",
+                "labels": ["cifix", "self-heal"],
+                "urls": [],
+                "context": "stale heal task for merged PR",
+                "depends_on": [],
+                "created": "2026-07-01",
+                "dispatch_log": [],
+            }
+        ],
+    }
+    p.write_text(yaml.safe_dump(board, sort_keys=False))
+    rc = _run(m, monkeypatch, p)
+    assert rc == 0
+    doc = yaml.safe_load(p.read_text())
+    task999 = next(t for t in doc["tasks"] if t["id"] == "HEAL-cifix-organvm-exporter-999")
+    assert task999["status"] == "done", "open HEAL task for non-open PR #999 must be retired to done"
