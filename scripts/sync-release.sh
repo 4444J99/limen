@@ -34,7 +34,7 @@ BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 # republishes it every beat and the collapse guard restores from the projection branch. Observed
 # park this closes: a local-only "fix validation errors in tasks.yaml" commit (2026-07-19) pinned
 # the live checkout 60 commits behind for 3 days of loud fail-open beats.
-RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md}"
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md docs/always-working.md docs/capacity-fill.md docs/dispatch-health.md docs/diurnal/INDEX.md docs/github-*.json organs/contributions/* organs/financial/* docs/RECLASSIFY-PROPOSAL.md}"
 _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
   local f p matched any=0
   local -a globs
@@ -341,7 +341,11 @@ if ! git diff --quiet 2>/dev/null; then
   # A dirty tree under a live session is that session's UNCOMMITTED WORK. Stashing it is exactly
   # the thing the ideal forbids — and worse than a reset, because the stack is shared across every
   # worktree on this host, so the session cannot even safely pop it back.
-  _contended "skipped-stash-push" && exit 0
+  # EXCEPTION: If the dirty tracked files are purely daemon-regenerable bookkeeping, they are NOT
+  # session work. We stash them so the ff can proceed, and skip the contention exit.
+  if ! git diff --name-only 2>/dev/null | _only_receipts; then
+    _contended "skipped-stash-push" && exit 0
+  fi
   git stash push --quiet 2>/dev/null && stashed=1 || true
 fi
 

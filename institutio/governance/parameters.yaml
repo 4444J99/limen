@@ -5201,7 +5201,24 @@ parameters:
     self_update: none
     owner: governance
     note: "Minutes either side of a CONNECTED call within which a money transfer is flagged by scripts/exchange-guard.py. Default 15 — wide enough to catch a transfer decided during a call and executed just after it ends, narrow enough that a same-afternoon-but-unrelated transfer does not register. Widening it does not make the guard stricter, it makes it noisier: at a large enough window every transfer falls inside some call and the signal is gone. Validated against ground truth at 15: 3/3 known in-call transfers flagged, 0 of 383 2024-era transfers flagged (no connected calls were logged that year, so the negative is real rather than vacuous)."
-
+  LIMEN_EXCHANGE_GUARD:
+    default: "1"
+    env: LIMEN_EXCHANGE_GUARD
+    self_update: none
+    owner: governance
+    note: "Gate for the exchange detector beat sensor. Evaluates whether payments occurred inside a call window."
+  LIMEN_BEAT_EXCHANGE_GUARD:
+    default: "24"
+    env: LIMEN_BEAT_EXCHANGE_GUARD
+    self_update: none
+    owner: governance
+    note: "Cadence for the exchange guard beat sensor."
+  LIMEN_EXCHANGE_GUARD_TIMEOUT:
+    default: "300"
+    env: LIMEN_EXCHANGE_GUARD_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Timeout in seconds for the exchange guard beat sensor."
   # --- dispatch admission gate (closeout/dispatch-admission-20260709) -----------
   LIMEN_DISPATCH_ADMISSION:
     default: "1"               # ON — gate dispatch on session-value admission evidence
