@@ -731,7 +731,7 @@ def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch
     assert status["vitals"]["status"] == "error"  # captured, not raised
     assert status["continuity"]["status"] == "ok"
 
-    
+
 def test_early_sample_error_survives_transient_seat_write(tmp_path, monkeypatch):
     monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
     (tmp_path / "status.json").write_text(
