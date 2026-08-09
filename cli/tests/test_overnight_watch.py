@@ -1835,7 +1835,7 @@ def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeyp
         }
     ]
 
-    
+
 def test_effective_runtime_env_redacts_credentials(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     env_file = tmp_path / "limen.env"
