@@ -379,7 +379,16 @@ _interruptible_sleep() {
     ''|*[!0-9]*) return 2 ;;
   esac
   [ "$_sleep_remaining" -gt 0 ] || return 0
-  sleep "$_sleep_remaining"
+  # A background timer makes wait interruptible by the resident loop's TERM/HUP traps.
+  sleep "$_sleep_remaining" &
+  _sleep_pid=$!
+  wait "$_sleep_pid"
+  _sleep_status=$?
+  if kill -0 "$_sleep_pid" 2>/dev/null; then
+    kill "$_sleep_pid" 2>/dev/null || true
+    wait "$_sleep_pid" 2>/dev/null || true
+  fi
+  return "$_sleep_status"
 }
 
 _fast_wave_due_beat() {
