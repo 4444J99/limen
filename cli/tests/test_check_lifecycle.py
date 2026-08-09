@@ -82,6 +82,72 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
     assert module.failures == []
 
 
+
+
+def test_delivery_without_admission_evidence_is_unreachable() -> None:
+    module = _load_check_module()
+    dispositions = {"lifecycle:delivery": {"merge_eligible": True}}
+    row = {
+        "lifecycle_disposition": "lifecycle:delivery",
+        "lifecycle_disposition_source": "label",
+        "lifecycle_label_matches": ["lifecycle:delivery"],
+    }
+
+    assert module.mechanically_unreachable_count([row], dispositions) == 1
+
+
+def test_cohort_selector_schema_is_closed_and_covered() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["cohorts"]["draft"]["selector"] = {"draft": False}
+    registry["cohorts"]["all"]["selector"] = {"all": True, "private": False}
+
+    module.validate_cohorts(registry, set(registry["dispositions"]))
+
+    assert any("draft cohort selector must be exactly" in failure for failure in module.failures)
+    assert any("all cohort selector must be exactly" in failure for failure in module.failures)
+
+
+def test_new_consumer_requires_zero_initial_baseline() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["consumers"]["new-consumer"] = {
+        "path": "scripts/check-lifecycle.py",
+        "derives": ["labels"],
+        "loader_markers": ["lifecycle.yaml"],
+        "ratchet": "new_consumer_derives",
+    }
+    registry["ratchets"]["new_consumer_derives"] = False
+    registry["literal_baseline"]["scripts/check-lifecycle.py"] = 1
+
+    module.validate_consumers(registry, set(registry["dispositions"]))
+
+    assert any("new consumer requires an explicit zero" in failure for failure in module.failures)
+
+
+def test_preservation_ceiling_cannot_regrow_from_previous_registry(monkeypatch) -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["live_baseline"]["preservation_materialization_missing_labels"] = 125
+    monkeypatch.setattr(
+        module,
+        "previous_registry",
+        lambda: {
+            "live_baseline": {
+                "preservation_materialization_missing_labels": 124,
+            }
+        },
+    )
+
+    module.measure_unreachable(
+        registry,
+        metadata_probe=lambda _repositories, _dispositions: 0,
+        rows_probe=lambda payload: payload["pull_requests"],
+        repositories_probe=lambda _ledger, _rows: {"organvm/example"},
+    )
+
+    assert any("ceiling regrew" in failure for failure in module.failures)
+
 def test_capability_ineligible_prs_are_mechanically_unreachable() -> None:
     module = _load_check_module()
     dispositions = {
@@ -92,6 +158,13 @@ def test_capability_ineligible_prs_are_mechanically_unreachable() -> None:
         {
             "lifecycle_disposition": "lifecycle:delivery",
             "lifecycle_disposition_source": "label",
+            "lifecycle_label_matches": ["lifecycle:delivery"],
+            "admission": {
+                "draft": False,
+                "mergeable": True,
+                "required_checks": "green",
+                "conflicts": "none",
+            },
         },
         {
             "lifecycle_disposition": "lifecycle:blocked",
