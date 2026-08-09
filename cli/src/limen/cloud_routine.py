@@ -6,7 +6,7 @@ import hashlib
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from pydantic import field_validator, model_validator
@@ -19,6 +19,7 @@ from limen.models import Task
 _ROUTINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _FINDING_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+_MAX_FUTURE_SKEW_SECONDS = 300
 
 
 def _valid_repo_ref(value: str) -> bool:
@@ -32,7 +33,8 @@ _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _DURABLE_OWNER_RE = re.compile(
     r"^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|"
     r"irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|"
-    r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
+    r"https://github\.com/(?!\.\.?/)(?![A-Za-z0-9_.-]+/\.\.?/)"
+    r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
     r"(?:issues|pull|actions/runs)/[0-9]+)$"
 )
 _OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}(?:\.[0-9]{6})?Z)?$")
@@ -211,6 +213,13 @@ class CloudRoutineReceiptV1(ProtocolModel):
     def validate_observed_at(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("observed_at must include a timezone")
+        if value.astimezone(timezone.utc) > datetime.now(timezone.utc) + timedelta(
+            seconds=_MAX_FUTURE_SKEW_SECONDS
+        ):
+            raise ValueError(
+                "observed_at cannot be more than "
+                f"{_MAX_FUTURE_SKEW_SECONDS} seconds in the future"
+            )
         return value
 
     @field_validator("stable_finding_key")
@@ -339,7 +348,14 @@ def plan_task_upserts(
         previous = latest_by_lineage.get(lineage_id)
         if previous is not None:
             collapsed += 1
-            if receipt.observed_at >= previous.observed_at:
+            if receipt.observed_at == previous.observed_at:
+                if receipt != previous:
+                    raise ValueError(
+                        "conflicting cloud-routine observations share the same "
+                        f"timestamp for {lineage_id}"
+                    )
+                continue
+            if receipt.observed_at > previous.observed_at:
                 latest_by_lineage[lineage_id] = receipt
             continue
         latest_by_lineage[lineage_id] = receipt
