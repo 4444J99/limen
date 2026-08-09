@@ -10,21 +10,21 @@ Generated from `institutio/positioning/program.yaml` and `institutio/positioning
 
 | Phase | Issue | Leaves | Depends on | Exit gate |
 |---|---:|---:|---|---|
-| `PSP-P00` Program control plane | `PSP-P00` | 7 | — | All P00 leaves close and remote parity reports zero missing, duplicate, or orphan markers. |
-| `PSP-P01` Foundation repair and upstream integration | `PSP-P01` | 5 | `PSP-P00` | PRs 2136 and 2141 have terminal owners; canonical sources are reconciled and baseline receipts are frozen. |
-| `PSP-P02` Truth and evidence control plane | `PSP-P02` | 8 | `PSP-P01` | All selected flagships have evidence packets and every material or disputed claim has separate measurement, inference, implication, prominence, source, date, and staleness verdicts. |
-| `PSP-P03` Position, narrative, and audience architecture | `PSP-P03` | 7 | `PSP-P02` | Target readers understand what is offered, why it is credible, and what to do next without an oral explanation. |
-| `PSP-P04` Offer and commercial architecture | `PSP-P04` | 7 | `PSP-P03` | Audit, install, and retainer each have scope, exclusions, qualification, artifacts, economics, and contract boundaries. |
-| `PSP-P05` Proof-production program | `PSP-P05` | 6 | `PSP-P02`, `PSP-P03`, `PSP-P04` | The six declared proof classes exist, are public-safe, and link back to current evidence rows. |
-| `PSP-P06` Portfolio experience and progressive disclosure | `PSP-P06` | 7 | `PSP-P03`, `PSP-P05` | Tested designs satisfy progressive disclosure, audience routing, accessibility, performance, and visual quality. |
-| `PSP-P07` Public surfaces and deployment | `PSP-P07` | 9 | `PSP-P02`, `PSP-P03`, `PSP-P05`, `PSP-P06` | All tracked public surfaces are coherent, live, linked, rollback-safe, and verified in rendered form. |
-| `PSP-P08` Inbound capture and private lead operations | `PSP-P08` | 7 | `PSP-P04`, `PSP-P07` | Client and recruiter synthetic leads traverse capture, classification, routing, drafting, and reporting while no-send stays enforced. |
-| `PSP-P09` Proof-led content and distribution | `PSP-P09` | 8 | `PSP-P05`, `PSP-P07`, `PSP-P08` | The flagship report and derived series are staged, owner-published where approved, measured, and linked to qualified capture. |
-| `PSP-P10` Qualification, conversation, and conversion system | `PSP-P10` | 8 | `PSP-P04`, `PSP-P08`, `PSP-P09` | Client and recruiter playbooks, pipeline stages, proposal rules, objection capture, and the 90-day experiment work end to end. |
-| `PSP-P11` Service-delivery operating system | `PSP-P11` | 8 | `PSP-P04` | A synthetic engagement traverses intake, evidence, analysis, verdict, implementation, QA, handoff, and closeout under the declared boundaries. |
-| `PSP-P12` External validation and first commercial proof | `PSP-P12` | 6 | `PSP-P09`, `PSP-P10`, `PSP-P11` | The first audit outcome, external proof, and claims refresh are complete or the wedge has an evidence-backed invalidation receipt. |
-| `PSP-P13` Governed foundry and domain-operator handoff | `PSP-P13` | 9 | `PSP-P02`, `PSP-P04`, `PSP-P11`, `PSP-P12` | The entire product estate is scored and one transfer reaches observed operation or an evidence-backed no-go decision. |
-| `PSP-P14` Return loop, measurement, rollback, and Omega | `PSP-P14` | 9 | `PSP-P07`, `PSP-P08`, `PSP-P09`, `PSP-P10`, `PSP-P11`, `PSP-P12`, `PSP-P13` | Two unchanged remote checks prove complete issue coverage, current claims, healthy surfaces, closed loops, and terminal receipts. |
+| `PSP-P00` Program control plane | [#2158](https://github.com/organvm/limen/issues/2158) | 7 | — | All P00 leaves close and remote parity reports zero missing, duplicate, or orphan markers. |
+| `PSP-P01` Foundation repair and upstream integration | [#2166](https://github.com/organvm/limen/issues/2166) | 5 | [#2158](https://github.com/organvm/limen/issues/2158) | PRs 2136 and 2141 have terminal owners; canonical sources are reconciled and baseline receipts are frozen. |
+| `PSP-P02` Truth and evidence control plane | [#2172](https://github.com/organvm/limen/issues/2172) | 8 | [#2166](https://github.com/organvm/limen/issues/2166) | All selected flagships have evidence packets and every material or disputed claim has separate measurement, inference, implication, prominence, source, date, and staleness verdicts. |
+| `PSP-P03` Position, narrative, and audience architecture | [#2181](https://github.com/organvm/limen/issues/2181) | 7 | [#2172](https://github.com/organvm/limen/issues/2172) | Target readers understand what is offered, why it is credible, and what to do next without an oral explanation. |
+| `PSP-P04` Offer and commercial architecture | [#2189](https://github.com/organvm/limen/issues/2189) | 7 | [#2181](https://github.com/organvm/limen/issues/2181) | Audit, install, and retainer each have scope, exclusions, qualification, artifacts, economics, and contract boundaries. |
+| `PSP-P05` Proof-production program | [#2197](https://github.com/organvm/limen/issues/2197) | 6 | [#2172](https://github.com/organvm/limen/issues/2172), [#2181](https://github.com/organvm/limen/issues/2181), [#2189](https://github.com/organvm/limen/issues/2189) | The six declared proof classes exist, are public-safe, and link back to current evidence rows. |
+| `PSP-P06` Portfolio experience and progressive disclosure | [#2204](https://github.com/organvm/limen/issues/2204) | 7 | [#2181](https://github.com/organvm/limen/issues/2181), [#2197](https://github.com/organvm/limen/issues/2197) | Tested designs satisfy progressive disclosure, audience routing, accessibility, performance, and visual quality. |
+| `PSP-P07` Public surfaces and deployment | [#2212](https://github.com/organvm/limen/issues/2212) | 9 | [#2172](https://github.com/organvm/limen/issues/2172), [#2181](https://github.com/organvm/limen/issues/2181), [#2197](https://github.com/organvm/limen/issues/2197), [#2204](https://github.com/organvm/limen/issues/2204) | All tracked public surfaces are coherent, live, linked, rollback-safe, and verified in rendered form. |
+| `PSP-P08` Inbound capture and private lead operations | [#2222](https://github.com/organvm/limen/issues/2222) | 7 | [#2189](https://github.com/organvm/limen/issues/2189), [#2212](https://github.com/organvm/limen/issues/2212) | Client and recruiter synthetic leads traverse capture, classification, routing, drafting, and reporting while no-send stays enforced. |
+| `PSP-P09` Proof-led content and distribution | [#2230](https://github.com/organvm/limen/issues/2230) | 8 | [#2197](https://github.com/organvm/limen/issues/2197), [#2212](https://github.com/organvm/limen/issues/2212), [#2222](https://github.com/organvm/limen/issues/2222) | The flagship report and derived series are staged, owner-published where approved, measured, and linked to qualified capture. |
+| `PSP-P10` Qualification, conversation, and conversion system | [#2239](https://github.com/organvm/limen/issues/2239) | 8 | [#2189](https://github.com/organvm/limen/issues/2189), [#2222](https://github.com/organvm/limen/issues/2222), [#2230](https://github.com/organvm/limen/issues/2230) | Client and recruiter playbooks, pipeline stages, proposal rules, objection capture, and the 90-day experiment work end to end. |
+| `PSP-P11` Service-delivery operating system | [#2248](https://github.com/organvm/limen/issues/2248) | 8 | [#2189](https://github.com/organvm/limen/issues/2189) | A synthetic engagement traverses intake, evidence, analysis, verdict, implementation, QA, handoff, and closeout under the declared boundaries. |
+| `PSP-P12` External validation and first commercial proof | [#2257](https://github.com/organvm/limen/issues/2257) | 6 | [#2230](https://github.com/organvm/limen/issues/2230), [#2239](https://github.com/organvm/limen/issues/2239), [#2248](https://github.com/organvm/limen/issues/2248) | The first audit outcome, external proof, and claims refresh are complete or the wedge has an evidence-backed invalidation receipt. |
+| `PSP-P13` Governed foundry and domain-operator handoff | [#2264](https://github.com/organvm/limen/issues/2264) | 9 | [#2172](https://github.com/organvm/limen/issues/2172), [#2189](https://github.com/organvm/limen/issues/2189), [#2248](https://github.com/organvm/limen/issues/2248), [#2257](https://github.com/organvm/limen/issues/2257) | The entire product estate is scored and one transfer reaches observed operation or an evidence-backed no-go decision. |
+| `PSP-P14` Return loop, measurement, rollback, and Omega | [#2274](https://github.com/organvm/limen/issues/2274) | 9 | [#2212](https://github.com/organvm/limen/issues/2212), [#2222](https://github.com/organvm/limen/issues/2222), [#2230](https://github.com/organvm/limen/issues/2230), [#2239](https://github.com/organvm/limen/issues/2239), [#2248](https://github.com/organvm/limen/issues/2248), [#2257](https://github.com/organvm/limen/issues/2257), [#2264](https://github.com/organvm/limen/issues/2264) | Two unchanged remote checks prove complete issue coverage, current claims, healthy surfaces, closed loops, and terminal receipts. |
 
 ## PSP-P00 — Program control plane
 
@@ -32,13 +32,13 @@ One validated source graph projects a complete, non-duplicative, provider-neutra
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P00-W01` Commit the canonical alpha-to-omega program manifest | `PSP-P00-W01` | `organvm/limen` | `deep` | `write` | — |
-| `PSP-P00-W02` Build structural validation and dependency-cycle detection | `PSP-P00-W02` | `organvm/limen` | `routine` | `write` | `PSP-P00-W01` |
-| `PSP-P00-W03` Build idempotent GitHub milestone, label, and issue projection | `PSP-P00-W03` | `organvm/limen` | `deep` | `external` | `PSP-P00-W02` |
-| `PSP-P00-W04` Publish cross-agent work-packet and relay contracts | `PSP-P00-W04` | `organvm/limen` | `deep` | `write` | `PSP-P00-W01` |
-| `PSP-P00-W05` Expose ready-work and provider-neutral packet seeds | `PSP-P00-W05` | `organvm/limen` | `deep` | `write` | `PSP-P00-W02` |
-| `PSP-P00-W06` Prove issue-map parity and zero orphan program work | `PSP-P00-W06` | `organvm/limen` | `routine` | `read` | `PSP-P00-W03`, `PSP-P00-W05` |
-| `PSP-P00-W07` Connect ready leaves to the authenticated conduct broker | `PSP-P00-W07` | `organvm/limen` | `deep` | `write` | `PSP-P00-W05`, `PSP-P00-W06` |
+| `PSP-P00-W01` Commit the canonical alpha-to-omega program manifest | [#2159](https://github.com/organvm/limen/issues/2159) | `organvm/limen` | `deep` | `write` | — |
+| `PSP-P00-W02` Build structural validation and dependency-cycle detection | [#2160](https://github.com/organvm/limen/issues/2160) | `organvm/limen` | `routine` | `write` | [#2159](https://github.com/organvm/limen/issues/2159) |
+| `PSP-P00-W03` Build idempotent GitHub milestone, label, and issue projection | [#2161](https://github.com/organvm/limen/issues/2161) | `organvm/limen` | `deep` | `external` | [#2160](https://github.com/organvm/limen/issues/2160) |
+| `PSP-P00-W04` Publish cross-agent work-packet and relay contracts | [#2162](https://github.com/organvm/limen/issues/2162) | `organvm/limen` | `deep` | `write` | [#2159](https://github.com/organvm/limen/issues/2159) |
+| `PSP-P00-W05` Expose ready-work and provider-neutral packet seeds | [#2163](https://github.com/organvm/limen/issues/2163) | `organvm/limen` | `deep` | `write` | [#2160](https://github.com/organvm/limen/issues/2160) |
+| `PSP-P00-W06` Prove issue-map parity and zero orphan program work | [#2164](https://github.com/organvm/limen/issues/2164) | `organvm/limen` | `routine` | `read` | [#2161](https://github.com/organvm/limen/issues/2161), [#2163](https://github.com/organvm/limen/issues/2163) |
+| `PSP-P00-W07` Connect ready leaves to the authenticated conduct broker | [#2165](https://github.com/organvm/limen/issues/2165) | `organvm/limen` | `deep` | `write` | [#2163](https://github.com/organvm/limen/issues/2163), [#2164](https://github.com/organvm/limen/issues/2164) |
 
 ## PSP-P01 — Foundation repair and upstream integration
 
@@ -46,11 +46,11 @@ Existing truth and custody foundations merge on green CI and become the program'
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P01-W01` Fix the wall-clock-dependent throughput-governor test | `PSP-P01-W01` | `organvm/limen` | `routine` | `write` | `PSP-P00-W06` |
-| `PSP-P01-W02` Land the positioning truth-reconciliation foundation | `PSP-P01-W02` | `organvm/limen` | `deep` | `external` | `PSP-P01-W01` |
-| `PSP-P01-W03` Land encrypted custody for private evidence artifacts | `PSP-P01-W03` | `organvm/limen` | `deep` | `external` | `PSP-P01-W01` |
-| `PSP-P01-W04` Reconcile old positioning doctrine and generators against the new truth contract | `PSP-P01-W04` | `organvm/limen` | `deep` | `write` | `PSP-P01-W02` |
-| `PSP-P01-W05` Freeze the post-merge public-surface baseline | `PSP-P01-W05` | `organvm/limen` | `routine` | `read` | `PSP-P01-W02`, `PSP-P01-W03`, `PSP-P01-W04` |
+| `PSP-P01-W01` Fix the wall-clock-dependent throughput-governor test | [#2167](https://github.com/organvm/limen/issues/2167) | `organvm/limen` | `routine` | `write` | [#2164](https://github.com/organvm/limen/issues/2164) |
+| `PSP-P01-W02` Land the positioning truth-reconciliation foundation | [#2168](https://github.com/organvm/limen/issues/2168) | `organvm/limen` | `deep` | `external` | [#2167](https://github.com/organvm/limen/issues/2167) |
+| `PSP-P01-W03` Land encrypted custody for private evidence artifacts | [#2169](https://github.com/organvm/limen/issues/2169) | `organvm/limen` | `deep` | `external` | [#2167](https://github.com/organvm/limen/issues/2167) |
+| `PSP-P01-W04` Reconcile old positioning doctrine and generators against the new truth contract | [#2170](https://github.com/organvm/limen/issues/2170) | `organvm/limen` | `deep` | `write` | [#2168](https://github.com/organvm/limen/issues/2168) |
+| `PSP-P01-W05` Freeze the post-merge public-surface baseline | [#2171](https://github.com/organvm/limen/issues/2171) | `organvm/limen` | `routine` | `read` | [#2168](https://github.com/organvm/limen/issues/2168), [#2169](https://github.com/organvm/limen/issues/2169), [#2170](https://github.com/organvm/limen/issues/2170) |
 
 ## PSP-P02 — Truth and evidence control plane
 
@@ -58,14 +58,14 @@ Every public statement is reproducible, classified, dated, bounded, and reversib
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P02-W01` Discover every organization and repository the owner controls | `PSP-P02-W01` | `organvm/limen` | `routine` | `read` | `PSP-P01-W05` |
-| `PSP-P02-W02` Classify the full estate by role, maturity, visibility, and public relevance | `PSP-P02-W02` | `organvm/limen` | `deep` | `write` | `PSP-P02-W01` |
-| `PSP-P02-W03` Score and ratify the flagship proof set | `PSP-P02-W03` | `organvm/limen` | `frontier_review` | `write` | `PSP-P02-W02` |
-| `PSP-P02-W04` Build a complete evidence packet for every selected flagship | `PSP-P02-W04` | `organvm/limen` | `deep` | `write` | `PSP-P02-W03` |
-| `PSP-P02-W05` Make every material metric and claim reproducible | `PSP-P02-W05` | `organvm/limen` | `deep` | `write` | `PSP-P02-W04` |
-| `PSP-P02-W06` Enforce claim policy, staleness, and privacy in generation gates | `PSP-P02-W06` | `organvm/limen` | `deep` | `write` | `PSP-P02-W05` |
-| `PSP-P02-W07` Establish public correction, withdrawal, and source-change protocol | `PSP-P02-W07` | `organvm/limen` | `deep` | `write` | `PSP-P02-W06` |
-| `PSP-P02-W08` Adjudicate research criticisms against the live profile and primary sources | `PSP-P02-W08` | `organvm/limen` | `frontier_review` | `write` | `PSP-P02-W01`, `PSP-P02-W05` |
+| `PSP-P02-W01` Discover every organization and repository the owner controls | [#2173](https://github.com/organvm/limen/issues/2173) | `organvm/limen` | `routine` | `read` | [#2171](https://github.com/organvm/limen/issues/2171) |
+| `PSP-P02-W02` Classify the full estate by role, maturity, visibility, and public relevance | [#2174](https://github.com/organvm/limen/issues/2174) | `organvm/limen` | `deep` | `write` | [#2173](https://github.com/organvm/limen/issues/2173) |
+| `PSP-P02-W03` Score and ratify the flagship proof set | [#2175](https://github.com/organvm/limen/issues/2175) | `organvm/limen` | `frontier_review` | `write` | [#2174](https://github.com/organvm/limen/issues/2174) |
+| `PSP-P02-W04` Build a complete evidence packet for every selected flagship | [#2176](https://github.com/organvm/limen/issues/2176) | `organvm/limen` | `deep` | `write` | [#2175](https://github.com/organvm/limen/issues/2175) |
+| `PSP-P02-W05` Make every material metric and claim reproducible | [#2177](https://github.com/organvm/limen/issues/2177) | `organvm/limen` | `deep` | `write` | [#2176](https://github.com/organvm/limen/issues/2176) |
+| `PSP-P02-W06` Enforce claim policy, staleness, and privacy in generation gates | [#2178](https://github.com/organvm/limen/issues/2178) | `organvm/limen` | `deep` | `write` | [#2177](https://github.com/organvm/limen/issues/2177) |
+| `PSP-P02-W07` Establish public correction, withdrawal, and source-change protocol | [#2179](https://github.com/organvm/limen/issues/2179) | `organvm/limen` | `deep` | `write` | [#2178](https://github.com/organvm/limen/issues/2178) |
+| `PSP-P02-W08` Adjudicate research criticisms against the live profile and primary sources | [#2180](https://github.com/organvm/limen/issues/2180) | `organvm/limen` | `frontier_review` | `write` | [#2173](https://github.com/organvm/limen/issues/2173), [#2177](https://github.com/organvm/limen/issues/2177) |
 
 ## PSP-P03 — Position, narrative, and audience architecture
 
@@ -73,13 +73,13 @@ One legible identity and two audience doors communicate authority without scale 
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P03-W01` Ratify the production-systems architect identity contract | `PSP-P03-W01` | `organvm/limen` | `frontier_review` | `write` | `PSP-P02-W05`, `PSP-P02-W06`, `PSP-P02-W08` |
-| `PSP-P03-W02` Define the client, recruiter, and deeper operator jobs-to-be-done | `PSP-P03-W02` | `organvm/limen` | `deep` | `write` | `PSP-P03-W01` |
-| `PSP-P03-W03` Write the ten-second, five-minute, and diligence narrative ladder | `PSP-P03-W03` | `organvm/limen` | `deep` | `write` | `PSP-P03-W02` |
-| `PSP-P03-W04` Create the client-facing narrative and expensive-problem map | `PSP-P03-W04` | `organvm/limen` | `deep` | `write` | `PSP-P03-W03` |
-| `PSP-P03-W05` Create the recruiter-facing narrative and role map | `PSP-P03-W05` | `organvm/limen` | `deep` | `write` | `PSP-P03-W03` |
-| `PSP-P03-W06` Design language that reduces the spy or takeover threat response | `PSP-P03-W06` | `organvm/limen` | `deep` | `write` | `PSP-P03-W04`, `PSP-P03-W05` |
-| `PSP-P03-W07` Run blinded target-reader comprehension and trust tests | `PSP-P03-W07` | `organvm/limen` | `routine` | `read` | `PSP-P03-W06` |
+| `PSP-P03-W01` Ratify the production-systems architect identity contract | [#2182](https://github.com/organvm/limen/issues/2182) | `organvm/limen` | `frontier_review` | `write` | [#2177](https://github.com/organvm/limen/issues/2177), [#2178](https://github.com/organvm/limen/issues/2178), [#2180](https://github.com/organvm/limen/issues/2180) |
+| `PSP-P03-W02` Define the client, recruiter, and deeper operator jobs-to-be-done | [#2183](https://github.com/organvm/limen/issues/2183) | `organvm/limen` | `deep` | `write` | [#2182](https://github.com/organvm/limen/issues/2182) |
+| `PSP-P03-W03` Write the ten-second, five-minute, and diligence narrative ladder | [#2184](https://github.com/organvm/limen/issues/2184) | `organvm/limen` | `deep` | `write` | [#2183](https://github.com/organvm/limen/issues/2183) |
+| `PSP-P03-W04` Create the client-facing narrative and expensive-problem map | [#2185](https://github.com/organvm/limen/issues/2185) | `organvm/limen` | `deep` | `write` | [#2184](https://github.com/organvm/limen/issues/2184) |
+| `PSP-P03-W05` Create the recruiter-facing narrative and role map | [#2186](https://github.com/organvm/limen/issues/2186) | `organvm/limen` | `deep` | `write` | [#2184](https://github.com/organvm/limen/issues/2184) |
+| `PSP-P03-W06` Design language that reduces the spy or takeover threat response | [#2187](https://github.com/organvm/limen/issues/2187) | `organvm/limen` | `deep` | `write` | [#2185](https://github.com/organvm/limen/issues/2185), [#2186](https://github.com/organvm/limen/issues/2186) |
+| `PSP-P03-W07` Run blinded target-reader comprehension and trust tests | [#2188](https://github.com/organvm/limen/issues/2188) | `organvm/limen` | `routine` | `read` | [#2187](https://github.com/organvm/limen/issues/2187) |
 
 ## PSP-P04 — Offer and commercial architecture
 
@@ -87,13 +87,13 @@ The commercial wedge is sellable, bounded, economically coherent, and expandable
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P04-W01` Productize the Agentic Delivery Audit | `PSP-P04-W01` | `organvm/limen` | `frontier_review` | `write` | `PSP-P03-W04`, `PSP-P02-W04` |
-| `PSP-P04-W02` Productize the Governance Install | `PSP-P04-W02` | `organvm/limen` | `deep` | `write` | `PSP-P04-W01` |
-| `PSP-P04-W03` Define the bounded delivery-governance retainer | `PSP-P04-W03` | `organvm/limen` | `deep` | `write` | `PSP-P04-W02` |
-| `PSP-P04-W04` Define qualification, disqualification, and escalation criteria | `PSP-P04-W04` | `organvm/limen` | `deep` | `write` | `PSP-P04-W01`, `PSP-P04-W02`, `PSP-P04-W03` |
-| `PSP-P04-W05` Model internal pricing, capacity, and discount guardrails | `PSP-P04-W05` | `organvm/limen` | `deep` | `write` | `PSP-P04-W01`, `PSP-P04-W02`, `PSP-P04-W03` |
-| `PSP-P04-W06` Create proposal, SOW, and commercial-decision templates | `PSP-P04-W06` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P04-W04`, `PSP-P04-W05` |
-| `PSP-P04-W07` Define the product-partnership offer without making it a front-door distraction | `PSP-P04-W07` | `organvm/limen` | `frontier_review` | `write` | `PSP-P04-W04` |
+| `PSP-P04-W01` Productize the Agentic Delivery Audit | [#2190](https://github.com/organvm/limen/issues/2190) | `organvm/limen` | `frontier_review` | `write` | [#2185](https://github.com/organvm/limen/issues/2185), [#2176](https://github.com/organvm/limen/issues/2176) |
+| `PSP-P04-W02` Productize the Governance Install | [#2191](https://github.com/organvm/limen/issues/2191) | `organvm/limen` | `deep` | `write` | [#2190](https://github.com/organvm/limen/issues/2190) |
+| `PSP-P04-W03` Define the bounded delivery-governance retainer | [#2192](https://github.com/organvm/limen/issues/2192) | `organvm/limen` | `deep` | `write` | [#2191](https://github.com/organvm/limen/issues/2191) |
+| `PSP-P04-W04` Define qualification, disqualification, and escalation criteria | [#2193](https://github.com/organvm/limen/issues/2193) | `organvm/limen` | `deep` | `write` | [#2190](https://github.com/organvm/limen/issues/2190), [#2191](https://github.com/organvm/limen/issues/2191), [#2192](https://github.com/organvm/limen/issues/2192) |
+| `PSP-P04-W05` Model internal pricing, capacity, and discount guardrails | [#2194](https://github.com/organvm/limen/issues/2194) | `organvm/limen` | `deep` | `write` | [#2190](https://github.com/organvm/limen/issues/2190), [#2191](https://github.com/organvm/limen/issues/2191), [#2192](https://github.com/organvm/limen/issues/2192) |
+| `PSP-P04-W06` Create proposal, SOW, and commercial-decision templates | [#2195](https://github.com/organvm/limen/issues/2195) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2193](https://github.com/organvm/limen/issues/2193), [#2194](https://github.com/organvm/limen/issues/2194) |
+| `PSP-P04-W07` Define the product-partnership offer without making it a front-door distraction | [#2196](https://github.com/organvm/limen/issues/2196) | `organvm/limen` | `frontier_review` | `write` | [#2193](https://github.com/organvm/limen/issues/2193) |
 
 ## PSP-P05 — Proof-production program
 
@@ -101,12 +101,12 @@ High-value claims are demonstrated through compact, reproducible proof objects r
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P05-W01` Publish the Limen engineering report source package | `PSP-P05-W01` | `organvm/limen` | `frontier_review` | `write` | `PSP-P02-W05`, `PSP-P03-W03`, `PSP-P04-W01` |
-| `PSP-P05-W02` Reconcile every public surface against the claims contract | `PSP-P05-W02` | `organvm/limen` | `deep` | `write` | `PSP-P05-W01`, `PSP-P02-W06` |
-| `PSP-P05-W03` Produce cost-per-task and failure-mode analysis | `PSP-P05-W03` | `organvm/limen` | `deep` | `write` | `PSP-P05-W01` |
-| `PSP-P05-W04` Create fresh test-reproduction receipts for flagship claims | `PSP-P05-W04` | `organvm/limen` | `routine` | `read` | `PSP-P02-W04` |
-| `PSP-P05-W05` Build a public-safe Limen architecture demonstration | `PSP-P05-W05` | `organvm/limen` | `deep` | `write` | `PSP-P05-W01`, `PSP-P02-W02` |
-| `PSP-P05-W06` Produce external validation objects | `PSP-P05-W06` | `organvm/limen` | `deep` | `write` | `PSP-P05-W04`, `PSP-P05-W05` |
+| `PSP-P05-W01` Publish the Limen engineering report source package | [#2198](https://github.com/organvm/limen/issues/2198) | `organvm/limen` | `frontier_review` | `write` | [#2177](https://github.com/organvm/limen/issues/2177), [#2184](https://github.com/organvm/limen/issues/2184), [#2190](https://github.com/organvm/limen/issues/2190) |
+| `PSP-P05-W02` Reconcile every public surface against the claims contract | [#2199](https://github.com/organvm/limen/issues/2199) | `organvm/limen` | `deep` | `write` | [#2198](https://github.com/organvm/limen/issues/2198), [#2178](https://github.com/organvm/limen/issues/2178) |
+| `PSP-P05-W03` Produce cost-per-task and failure-mode analysis | [#2200](https://github.com/organvm/limen/issues/2200) | `organvm/limen` | `deep` | `write` | [#2198](https://github.com/organvm/limen/issues/2198) |
+| `PSP-P05-W04` Create fresh test-reproduction receipts for flagship claims | [#2201](https://github.com/organvm/limen/issues/2201) | `organvm/limen` | `routine` | `read` | [#2176](https://github.com/organvm/limen/issues/2176) |
+| `PSP-P05-W05` Build a public-safe Limen architecture demonstration | [#2202](https://github.com/organvm/limen/issues/2202) | `organvm/limen` | `deep` | `write` | [#2198](https://github.com/organvm/limen/issues/2198), [#2174](https://github.com/organvm/limen/issues/2174) |
+| `PSP-P05-W06` Produce external validation objects | [#2203](https://github.com/organvm/limen/issues/2203) | `organvm/limen` | `deep` | `write` | [#2201](https://github.com/organvm/limen/issues/2201), [#2202](https://github.com/organvm/limen/issues/2202) |
 
 ## PSP-P06 — Portfolio experience and progressive disclosure
 
@@ -114,13 +114,13 @@ The public experience feels precise and premium while the estate's density remai
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P06-W01` Establish the design context and taste brief | `PSP-P06-W01` | `organvm/portfolio` | `deep` | `write` | `PSP-P03-W03`, `PSP-P05-W01` |
-| `PSP-P06-W02` Model the content and navigation architecture | `PSP-P06-W02` | `organvm/portfolio` | `deep` | `write` | `PSP-P06-W01`, `PSP-P03-W02` |
-| `PSP-P06-W03` Design L1, L2, and L3 progressive-disclosure flows | `PSP-P06-W03` | `organvm/portfolio` | `frontier_review` | `write` | `PSP-P06-W02` |
-| `PSP-P06-W04` Define reusable components and evidence-bound content interfaces | `PSP-P06-W04` | `organvm/portfolio` | `deep` | `write` | `PSP-P06-W03`, `PSP-P02-W06` |
-| `PSP-P06-W05` Adopt the approved estate design tokens without flattening surface character | `PSP-P06-W05` | `organvm/portfolio` | `deep` | `write` | `PSP-P06-W04` |
-| `PSP-P06-W06` Verify accessibility, responsiveness, performance, and reduced motion | `PSP-P06-W06` | `organvm/portfolio` | `routine` | `write` | `PSP-P06-W04`, `PSP-P06-W05` |
-| `PSP-P06-W07` Run visual and comprehension QA with target-like users | `PSP-P06-W07` | `organvm/portfolio` | `frontier_review` | `read` | `PSP-P06-W06` |
+| `PSP-P06-W01` Establish the design context and taste brief | [#2205](https://github.com/organvm/limen/issues/2205) | `organvm/portfolio` | `deep` | `write` | [#2184](https://github.com/organvm/limen/issues/2184), [#2198](https://github.com/organvm/limen/issues/2198) |
+| `PSP-P06-W02` Model the content and navigation architecture | [#2206](https://github.com/organvm/limen/issues/2206) | `organvm/portfolio` | `deep` | `write` | [#2205](https://github.com/organvm/limen/issues/2205), [#2183](https://github.com/organvm/limen/issues/2183) |
+| `PSP-P06-W03` Design L1, L2, and L3 progressive-disclosure flows | [#2207](https://github.com/organvm/limen/issues/2207) | `organvm/portfolio` | `frontier_review` | `write` | [#2206](https://github.com/organvm/limen/issues/2206) |
+| `PSP-P06-W04` Define reusable components and evidence-bound content interfaces | [#2208](https://github.com/organvm/limen/issues/2208) | `organvm/portfolio` | `deep` | `write` | [#2207](https://github.com/organvm/limen/issues/2207), [#2178](https://github.com/organvm/limen/issues/2178) |
+| `PSP-P06-W05` Adopt the approved estate design tokens without flattening surface character | [#2209](https://github.com/organvm/limen/issues/2209) | `organvm/portfolio` | `deep` | `write` | [#2208](https://github.com/organvm/limen/issues/2208) |
+| `PSP-P06-W06` Verify accessibility, responsiveness, performance, and reduced motion | [#2210](https://github.com/organvm/limen/issues/2210) | `organvm/portfolio` | `routine` | `write` | [#2208](https://github.com/organvm/limen/issues/2208), [#2209](https://github.com/organvm/limen/issues/2209) |
+| `PSP-P06-W07` Run visual and comprehension QA with target-like users | [#2211](https://github.com/organvm/limen/issues/2211) | `organvm/portfolio` | `frontier_review` | `read` | [#2210](https://github.com/organvm/limen/issues/2210) |
 
 ## PSP-P07 — Public surfaces and deployment
 
@@ -128,15 +128,15 @@ Every identity and proof surface derives from the same truth while retaining a r
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P07-W01` Preserve, audit, and evolve the personal GitHub profile front door | `PSP-P07-W01` | `4444J99/4444J99` | `deep` | `write` | `PSP-P02-W08`, `PSP-P03-W03`, `PSP-P05-W02`, `PSP-P06-W04` |
-| `PSP-P07-W02` Rebuild the organization profile as an estate map | `PSP-P07-W02` | `organvm/.github` | `deep` | `write` | `PSP-P02-W02`, `PSP-P03-W03` |
-| `PSP-P07-W03` Implement and deploy the canonical portfolio site | `PSP-P07-W03` | `organvm/portfolio` | `deep` | `external` | `PSP-P06-W07`, `PSP-P05-W02` |
-| `PSP-P07-W04` Rebuild the resume and interview evidence packet | `PSP-P07-W04` | `organvm/portfolio` | `deep` | `write` | `PSP-P03-W05`, `PSP-P05-W02` |
-| `PSP-P07-W05` Upgrade selected flagship repositories as proof destinations | `PSP-P07-W05` | `multi-repository:selected-flagships` | `routine` | `write` | `PSP-P02-W04`, `PSP-P03-W03` |
-| `PSP-P07-W06` Stage the LinkedIn, X, and email-signature identity package | `PSP-P07-W06` | `organvm/limen` | `deep` | `write` | `PSP-P03-W03`, `PSP-P03-W05` |
-| `PSP-P07-W07` Attach the approved custom-domain hierarchy | `PSP-P07-W07` | `organvm/limen` | `routine` | `external` | `PSP-P07-W03` |
-| `PSP-P07-W08` Install privacy-respecting funnel analytics and door tags | `PSP-P07-W08` | `organvm/portfolio` | `deep` | `write` | `PSP-P07-W03`, `PSP-P03-W02` |
-| `PSP-P07-W09` Prove link health, release rollback, and surface parity | `PSP-P07-W09` | `organvm/limen` | `routine` | `write` | `PSP-P07-W01`, `PSP-P07-W02`, `PSP-P07-W03`, `PSP-P07-W04`, `PSP-P07-W05`, `PSP-P07-W06`, `PSP-P07-W07`, `PSP-P07-W08` |
+| `PSP-P07-W01` Preserve, audit, and evolve the personal GitHub profile front door | [#2213](https://github.com/organvm/limen/issues/2213) | `4444J99/4444J99` | `deep` | `write` | [#2180](https://github.com/organvm/limen/issues/2180), [#2184](https://github.com/organvm/limen/issues/2184), [#2199](https://github.com/organvm/limen/issues/2199), [#2208](https://github.com/organvm/limen/issues/2208) |
+| `PSP-P07-W02` Rebuild the organization profile as an estate map | [#2214](https://github.com/organvm/limen/issues/2214) | `organvm/.github` | `deep` | `write` | [#2174](https://github.com/organvm/limen/issues/2174), [#2184](https://github.com/organvm/limen/issues/2184) |
+| `PSP-P07-W03` Implement and deploy the canonical portfolio site | [#2215](https://github.com/organvm/limen/issues/2215) | `organvm/portfolio` | `deep` | `external` | [#2211](https://github.com/organvm/limen/issues/2211), [#2199](https://github.com/organvm/limen/issues/2199) |
+| `PSP-P07-W04` Rebuild the resume and interview evidence packet | [#2216](https://github.com/organvm/limen/issues/2216) | `organvm/portfolio` | `deep` | `write` | [#2186](https://github.com/organvm/limen/issues/2186), [#2199](https://github.com/organvm/limen/issues/2199) |
+| `PSP-P07-W05` Upgrade selected flagship repositories as proof destinations | [#2217](https://github.com/organvm/limen/issues/2217) | `multi-repository:selected-flagships` | `routine` | `write` | [#2176](https://github.com/organvm/limen/issues/2176), [#2184](https://github.com/organvm/limen/issues/2184) |
+| `PSP-P07-W06` Stage the LinkedIn, X, and email-signature identity package | [#2218](https://github.com/organvm/limen/issues/2218) | `organvm/limen` | `deep` | `write` | [#2184](https://github.com/organvm/limen/issues/2184), [#2186](https://github.com/organvm/limen/issues/2186) |
+| `PSP-P07-W07` Attach the approved custom-domain hierarchy | [#2219](https://github.com/organvm/limen/issues/2219) | `organvm/limen` | `routine` | `external` | [#2215](https://github.com/organvm/limen/issues/2215) |
+| `PSP-P07-W08` Install privacy-respecting funnel analytics and door tags | [#2220](https://github.com/organvm/limen/issues/2220) | `organvm/portfolio` | `deep` | `write` | [#2215](https://github.com/organvm/limen/issues/2215), [#2183](https://github.com/organvm/limen/issues/2183) |
+| `PSP-P07-W09` Prove link health, release rollback, and surface parity | [#2221](https://github.com/organvm/limen/issues/2221) | `organvm/limen` | `routine` | `write` | [#2213](https://github.com/organvm/limen/issues/2213), [#2214](https://github.com/organvm/limen/issues/2214), [#2215](https://github.com/organvm/limen/issues/2215), [#2216](https://github.com/organvm/limen/issues/2216), [#2217](https://github.com/organvm/limen/issues/2217), [#2218](https://github.com/organvm/limen/issues/2218), [#2219](https://github.com/organvm/limen/issues/2219), [#2220](https://github.com/organvm/limen/issues/2220) |
 
 ## PSP-P08 — Inbound capture and private lead operations
 
@@ -144,13 +144,13 @@ Qualified interest enters a safe, tagged, private pipeline with no unauthorized 
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P08-W01` Activate a dedicated inbound alias and tagged CTAs | `PSP-P08-W01` | `organvm/limen` | `routine` | `external` | `PSP-P07-W09` |
-| `PSP-P08-W02` Design minimal client and recruiter intake flows | `PSP-P08-W02` | `organvm/portfolio` | `deep` | `write` | `PSP-P04-W04`, `PSP-P08-W01` |
-| `PSP-P08-W03` Normalize inbound mail and form submissions into private lead records | `PSP-P08-W03` | `organvm/universal-mail--automation` | `deep` | `write` | `PSP-P08-W02` |
-| `PSP-P08-W04` Score and route client, recruiter, operator, spam, and ambiguous leads | `PSP-P08-W04` | `organvm/limen` | `deep` | `write` | `PSP-P08-W03`, `PSP-P04-W04` |
-| `PSP-P08-W05` Create reply, scheduling, decline, and recruiter draft templates | `PSP-P08-W05` | `organvm/universal-mail--automation` | `routine` | `write` | `PSP-P08-W04`, `PSP-P04-W04` |
-| `PSP-P08-W06` Build the private opportunity pipeline and decision ledger | `PSP-P08-W06` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P08-W03`, `PSP-P08-W04` |
-| `PSP-P08-W07` Prove the capture funnel end to end with the send valve closed | `PSP-P08-W07` | `multi-repository:limen-portfolio-mail` | `deep` | `read` | `PSP-P08-W01`, `PSP-P08-W02`, `PSP-P08-W03`, `PSP-P08-W04`, `PSP-P08-W05`, `PSP-P08-W06` |
+| `PSP-P08-W01` Activate a dedicated inbound alias and tagged CTAs | [#2223](https://github.com/organvm/limen/issues/2223) | `organvm/limen` | `routine` | `external` | [#2221](https://github.com/organvm/limen/issues/2221) |
+| `PSP-P08-W02` Design minimal client and recruiter intake flows | [#2224](https://github.com/organvm/limen/issues/2224) | `organvm/portfolio` | `deep` | `write` | [#2193](https://github.com/organvm/limen/issues/2193), [#2223](https://github.com/organvm/limen/issues/2223) |
+| `PSP-P08-W03` Normalize inbound mail and form submissions into private lead records | [#2225](https://github.com/organvm/limen/issues/2225) | `organvm/universal-mail--automation` | `deep` | `write` | [#2224](https://github.com/organvm/limen/issues/2224) |
+| `PSP-P08-W04` Score and route client, recruiter, operator, spam, and ambiguous leads | [#2226](https://github.com/organvm/limen/issues/2226) | `organvm/limen` | `deep` | `write` | [#2225](https://github.com/organvm/limen/issues/2225), [#2193](https://github.com/organvm/limen/issues/2193) |
+| `PSP-P08-W05` Create reply, scheduling, decline, and recruiter draft templates | [#2227](https://github.com/organvm/limen/issues/2227) | `organvm/universal-mail--automation` | `routine` | `write` | [#2226](https://github.com/organvm/limen/issues/2226), [#2193](https://github.com/organvm/limen/issues/2193) |
+| `PSP-P08-W06` Build the private opportunity pipeline and decision ledger | [#2228](https://github.com/organvm/limen/issues/2228) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2225](https://github.com/organvm/limen/issues/2225), [#2226](https://github.com/organvm/limen/issues/2226) |
+| `PSP-P08-W07` Prove the capture funnel end to end with the send valve closed | [#2229](https://github.com/organvm/limen/issues/2229) | `multi-repository:limen-portfolio-mail` | `deep` | `read` | [#2223](https://github.com/organvm/limen/issues/2223), [#2224](https://github.com/organvm/limen/issues/2224), [#2225](https://github.com/organvm/limen/issues/2225), [#2226](https://github.com/organvm/limen/issues/2226), [#2227](https://github.com/organvm/limen/issues/2227), [#2228](https://github.com/organvm/limen/issues/2228) |
 
 ## PSP-P09 — Proof-led content and distribution
 
@@ -158,14 +158,14 @@ One flagship proof becomes a durable content engine whose derivatives attract qu
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P09-W01` Build the 90-day proof-led editorial calendar | `PSP-P09-W01` | `organvm/limen` | `deep` | `write` | `PSP-P05-W01`, `PSP-P04-W04` |
-| `PSP-P09-W02` Stage and owner-publish the flagship Limen engineering report | `PSP-P09-W02` | `organvm/portfolio` | `frontier_review` | `external` | `PSP-P05-W01`, `PSP-P07-W09`, `PSP-P08-W07` |
-| `PSP-P09-W03` Derive the agentic-delivery failure-modes essay | `PSP-P09-W03` | `organvm/portfolio` | `deep` | `write` | `PSP-P05-W03`, `PSP-P09-W02` |
-| `PSP-P09-W04` Derive the cost-per-task and control-economics essay | `PSP-P09-W04` | `organvm/portfolio` | `deep` | `write` | `PSP-P05-W03`, `PSP-P09-W02` |
-| `PSP-P09-W05` Derive the delivery-gates walkthrough | `PSP-P09-W05` | `organvm/portfolio` | `deep` | `write` | `PSP-P05-W05`, `PSP-P09-W02` |
-| `PSP-P09-W06` Publish a candid incident and correction case study | `PSP-P09-W06` | `organvm/portfolio` | `deep` | `write` | `PSP-P02-W07`, `PSP-P09-W02` |
-| `PSP-P09-W07` Generate channel-specific derivative assets without claim drift | `PSP-P09-W07` | `organvm/limen` | `routine` | `write` | `PSP-P09-W03`, `PSP-P09-W04`, `PSP-P09-W05`, `PSP-P09-W06` |
-| `PSP-P09-W08` Execute owner-approved distribution and record channel outcomes | `PSP-P09-W08` | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `external` | `PSP-P09-W07`, `PSP-P08-W07` |
+| `PSP-P09-W01` Build the 90-day proof-led editorial calendar | [#2231](https://github.com/organvm/limen/issues/2231) | `organvm/limen` | `deep` | `write` | [#2198](https://github.com/organvm/limen/issues/2198), [#2193](https://github.com/organvm/limen/issues/2193) |
+| `PSP-P09-W02` Stage and owner-publish the flagship Limen engineering report | [#2232](https://github.com/organvm/limen/issues/2232) | `organvm/portfolio` | `frontier_review` | `external` | [#2198](https://github.com/organvm/limen/issues/2198), [#2221](https://github.com/organvm/limen/issues/2221), [#2229](https://github.com/organvm/limen/issues/2229) |
+| `PSP-P09-W03` Derive the agentic-delivery failure-modes essay | [#2233](https://github.com/organvm/limen/issues/2233) | `organvm/portfolio` | `deep` | `write` | [#2200](https://github.com/organvm/limen/issues/2200), [#2232](https://github.com/organvm/limen/issues/2232) |
+| `PSP-P09-W04` Derive the cost-per-task and control-economics essay | [#2234](https://github.com/organvm/limen/issues/2234) | `organvm/portfolio` | `deep` | `write` | [#2200](https://github.com/organvm/limen/issues/2200), [#2232](https://github.com/organvm/limen/issues/2232) |
+| `PSP-P09-W05` Derive the delivery-gates walkthrough | [#2235](https://github.com/organvm/limen/issues/2235) | `organvm/portfolio` | `deep` | `write` | [#2202](https://github.com/organvm/limen/issues/2202), [#2232](https://github.com/organvm/limen/issues/2232) |
+| `PSP-P09-W06` Publish a candid incident and correction case study | [#2236](https://github.com/organvm/limen/issues/2236) | `organvm/portfolio` | `deep` | `write` | [#2179](https://github.com/organvm/limen/issues/2179), [#2232](https://github.com/organvm/limen/issues/2232) |
+| `PSP-P09-W07` Generate channel-specific derivative assets without claim drift | [#2237](https://github.com/organvm/limen/issues/2237) | `organvm/limen` | `routine` | `write` | [#2233](https://github.com/organvm/limen/issues/2233), [#2234](https://github.com/organvm/limen/issues/2234), [#2235](https://github.com/organvm/limen/issues/2235), [#2236](https://github.com/organvm/limen/issues/2236) |
+| `PSP-P09-W08` Execute owner-approved distribution and record channel outcomes | [#2238](https://github.com/organvm/limen/issues/2238) | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `external` | [#2237](https://github.com/organvm/limen/issues/2237), [#2229](https://github.com/organvm/limen/issues/2229) |
 
 ## PSP-P10 — Qualification, conversation, and conversion system
 
@@ -173,14 +173,14 @@ Qualified client and recruiter demand moves through repeatable decisions without
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P10-W01` Define the ideal client profile and live buying signals | `PSP-P10-W01` | `organvm/limen` | `deep` | `write` | `PSP-P04-W04`, `PSP-P09-W01` |
-| `PSP-P10-W02` Build the client discovery-call guide | `PSP-P10-W02` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P10-W01`, `PSP-P04-W01` |
-| `PSP-P10-W03` Build the pre-audit diagnostic questionnaire | `PSP-P10-W03` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P10-W02`, `PSP-P11-W01` |
-| `PSP-P10-W04` Build the Agentic Delivery Audit sales page and intake path | `PSP-P10-W04` | `organvm/portfolio` | `deep` | `write` | `PSP-P04-W01`, `PSP-P08-W02`, `PSP-P10-W01` |
-| `PSP-P10-W05` Implement proposal, follow-up, decision, and close-lost workflow | `PSP-P10-W05` | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `write` | `PSP-P04-W06`, `PSP-P08-W06`, `PSP-P10-W02` |
-| `PSP-P10-W06` Build the recruiter conversation and interview packet | `PSP-P10-W06` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P03-W05`, `PSP-P03-W06`, `PSP-P07-W04` |
-| `PSP-P10-W07` Operate a structured objection and no-outcome ledger | `PSP-P10-W07` | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `write` | `PSP-P10-W05`, `PSP-P10-W06` |
-| `PSP-P10-W08` Run and adjudicate the 90-day demand experiment | `PSP-P10-W08` | `organvm/limen` | `frontier_review` | `write` | `PSP-P09-W08`, `PSP-P10-W07`, `PSP-P12-W02` |
+| `PSP-P10-W01` Define the ideal client profile and live buying signals | [#2240](https://github.com/organvm/limen/issues/2240) | `organvm/limen` | `deep` | `write` | [#2193](https://github.com/organvm/limen/issues/2193), [#2231](https://github.com/organvm/limen/issues/2231) |
+| `PSP-P10-W02` Build the client discovery-call guide | [#2241](https://github.com/organvm/limen/issues/2241) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2240](https://github.com/organvm/limen/issues/2240), [#2190](https://github.com/organvm/limen/issues/2190) |
+| `PSP-P10-W03` Build the pre-audit diagnostic questionnaire | [#2242](https://github.com/organvm/limen/issues/2242) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2241](https://github.com/organvm/limen/issues/2241), [#2249](https://github.com/organvm/limen/issues/2249) |
+| `PSP-P10-W04` Build the Agentic Delivery Audit sales page and intake path | [#2243](https://github.com/organvm/limen/issues/2243) | `organvm/portfolio` | `deep` | `write` | [#2190](https://github.com/organvm/limen/issues/2190), [#2224](https://github.com/organvm/limen/issues/2224), [#2240](https://github.com/organvm/limen/issues/2240) |
+| `PSP-P10-W05` Implement proposal, follow-up, decision, and close-lost workflow | [#2244](https://github.com/organvm/limen/issues/2244) | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `write` | [#2195](https://github.com/organvm/limen/issues/2195), [#2228](https://github.com/organvm/limen/issues/2228), [#2241](https://github.com/organvm/limen/issues/2241) |
+| `PSP-P10-W06` Build the recruiter conversation and interview packet | [#2245](https://github.com/organvm/limen/issues/2245) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2186](https://github.com/organvm/limen/issues/2186), [#2187](https://github.com/organvm/limen/issues/2187), [#2216](https://github.com/organvm/limen/issues/2216) |
+| `PSP-P10-W07` Operate a structured objection and no-outcome ledger | [#2246](https://github.com/organvm/limen/issues/2246) | `organvm-iii-ergon/collaboration-operations-platform` | `routine` | `write` | [#2244](https://github.com/organvm/limen/issues/2244), [#2245](https://github.com/organvm/limen/issues/2245) |
+| `PSP-P10-W08` Run and adjudicate the 90-day demand experiment | [#2247](https://github.com/organvm/limen/issues/2247) | `organvm/limen` | `frontier_review` | `write` | [#2238](https://github.com/organvm/limen/issues/2238), [#2246](https://github.com/organvm/limen/issues/2246), [#2259](https://github.com/organvm/limen/issues/2259) |
 
 ## PSP-P11 — Service-delivery operating system
 
@@ -188,14 +188,14 @@ Audit, install, and retainer engagements can be delivered safely, consistently, 
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P11-W01` Define read-only evidence intake and security boundaries | `PSP-P11-W01` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P04-W01` |
-| `PSP-P11-W02` Build the Agentic Delivery Audit methodology and runbook | `PSP-P11-W02` | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `write` | `PSP-P11-W01`, `PSP-P04-W01` |
-| `PSP-P11-W03` Create the audit report and executive verdict template | `PSP-P11-W03` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W02` |
-| `PSP-P11-W04` Build the Governance Install delivery runbook | `PSP-P11-W04` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W03`, `PSP-P04-W02` |
-| `PSP-P11-W05` Build the bounded retainer operating contract | `PSP-P11-W05` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W04`, `PSP-P04-W03` |
-| `PSP-P11-W06` Build the private client workspace and decision log | `PSP-P11-W06` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W01` |
-| `PSP-P11-W07` Prove delivery QA, acceptance, handoff, and closeout | `PSP-P11-W07` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W02`, `PSP-P11-W03`, `PSP-P11-W04`, `PSP-P11-W05`, `PSP-P11-W06` |
-| `PSP-P11-W08` Define consent and sanitization for public client proof | `PSP-P11-W08` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P11-W07` |
+| `PSP-P11-W01` Define read-only evidence intake and security boundaries | [#2249](https://github.com/organvm/limen/issues/2249) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2190](https://github.com/organvm/limen/issues/2190) |
+| `PSP-P11-W02` Build the Agentic Delivery Audit methodology and runbook | [#2250](https://github.com/organvm/limen/issues/2250) | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `write` | [#2249](https://github.com/organvm/limen/issues/2249), [#2190](https://github.com/organvm/limen/issues/2190) |
+| `PSP-P11-W03` Create the audit report and executive verdict template | [#2251](https://github.com/organvm/limen/issues/2251) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2250](https://github.com/organvm/limen/issues/2250) |
+| `PSP-P11-W04` Build the Governance Install delivery runbook | [#2252](https://github.com/organvm/limen/issues/2252) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2251](https://github.com/organvm/limen/issues/2251), [#2191](https://github.com/organvm/limen/issues/2191) |
+| `PSP-P11-W05` Build the bounded retainer operating contract | [#2253](https://github.com/organvm/limen/issues/2253) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2252](https://github.com/organvm/limen/issues/2252), [#2192](https://github.com/organvm/limen/issues/2192) |
+| `PSP-P11-W06` Build the private client workspace and decision log | [#2254](https://github.com/organvm/limen/issues/2254) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2249](https://github.com/organvm/limen/issues/2249) |
+| `PSP-P11-W07` Prove delivery QA, acceptance, handoff, and closeout | [#2255](https://github.com/organvm/limen/issues/2255) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2250](https://github.com/organvm/limen/issues/2250), [#2251](https://github.com/organvm/limen/issues/2251), [#2252](https://github.com/organvm/limen/issues/2252), [#2253](https://github.com/organvm/limen/issues/2253), [#2254](https://github.com/organvm/limen/issues/2254) |
+| `PSP-P11-W08` Define consent and sanitization for public client proof | [#2256](https://github.com/organvm/limen/issues/2256) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2255](https://github.com/organvm/limen/issues/2255) |
 
 ## PSP-P12 — External validation and first commercial proof
 
@@ -203,12 +203,12 @@ Real users, buyers, recruiters, or partners create evidence beyond self-authored
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P12-W01` Recruit a bounded design-partner cohort | `PSP-P12-W01` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `external` | `PSP-P09-W08`, `PSP-P10-W01`, `PSP-P11-W02` |
-| `PSP-P12-W02` Close and deliver the first paid or explicitly bounded pilot audit | `PSP-P12-W02` | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `external` | `PSP-P12-W01`, `PSP-P10-W05`, `PSP-P11-W07` |
-| `PSP-P12-W03` Deliver the first Governance Install when the audit supports it | `PSP-P12-W03` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `external` | `PSP-P12-W02`, `PSP-P11-W04` |
-| `PSP-P12-W04` Produce the first consented public case study | `PSP-P12-W04` | `organvm/portfolio` | `frontier_review` | `external` | `PSP-P12-W02`, `PSP-P11-W08` |
-| `PSP-P12-W05` Capture testimonials, references, reproductions, and independent review | `PSP-P12-W05` | `organvm/limen` | `routine` | `write` | `PSP-P12-W02` |
-| `PSP-P12-W06` Refresh positioning, proof, and offer claims from real outcomes | `PSP-P12-W06` | `organvm/limen` | `frontier_review` | `write` | `PSP-P12-W02`, `PSP-P12-W04`, `PSP-P12-W05`, `PSP-P02-W08` |
+| `PSP-P12-W01` Recruit a bounded design-partner cohort | [#2258](https://github.com/organvm/limen/issues/2258) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `external` | [#2238](https://github.com/organvm/limen/issues/2238), [#2240](https://github.com/organvm/limen/issues/2240), [#2250](https://github.com/organvm/limen/issues/2250) |
+| `PSP-P12-W02` Close and deliver the first paid or explicitly bounded pilot audit | [#2259](https://github.com/organvm/limen/issues/2259) | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `external` | [#2258](https://github.com/organvm/limen/issues/2258), [#2244](https://github.com/organvm/limen/issues/2244), [#2255](https://github.com/organvm/limen/issues/2255) |
+| `PSP-P12-W03` Deliver the first Governance Install when the audit supports it | [#2260](https://github.com/organvm/limen/issues/2260) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `external` | [#2259](https://github.com/organvm/limen/issues/2259), [#2252](https://github.com/organvm/limen/issues/2252) |
+| `PSP-P12-W04` Produce the first consented public case study | [#2261](https://github.com/organvm/limen/issues/2261) | `organvm/portfolio` | `frontier_review` | `external` | [#2259](https://github.com/organvm/limen/issues/2259), [#2256](https://github.com/organvm/limen/issues/2256) |
+| `PSP-P12-W05` Capture testimonials, references, reproductions, and independent review | [#2262](https://github.com/organvm/limen/issues/2262) | `organvm/limen` | `routine` | `write` | [#2259](https://github.com/organvm/limen/issues/2259) |
+| `PSP-P12-W06` Refresh positioning, proof, and offer claims from real outcomes | [#2263](https://github.com/organvm/limen/issues/2263) | `organvm/limen` | `frontier_review` | `write` | [#2259](https://github.com/organvm/limen/issues/2259), [#2261](https://github.com/organvm/limen/issues/2261), [#2262](https://github.com/organvm/limen/issues/2262), [#2180](https://github.com/organvm/limen/issues/2180) |
 
 ## PSP-P13 — Governed foundry and domain-operator handoff
 
@@ -216,15 +216,15 @@ The estate's product abundance becomes a scored portfolio whose validated produc
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P13-W01` Inventory every product candidate across all owned organizations | `PSP-P13-W01` | `organvm/limen` | `routine` | `read` | `PSP-P02-W01`, `PSP-P02-W02` |
-| `PSP-P13-W02` Score demand and market evidence for every product candidate | `PSP-P13-W02` | `organvm/limen` | `deep` | `write` | `PSP-P13-W01`, `PSP-P08-W06` |
-| `PSP-P13-W03` Score technical readiness, custody, and maintenance risk | `PSP-P13-W03` | `organvm/limen` | `deep` | `write` | `PSP-P13-W01` |
-| `PSP-P13-W04` Define the domain-operator profile and selection scorecard | `PSP-P13-W04` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P13-W02`, `PSP-P13-W03` |
-| `PSP-P13-W05` Establish transfer floors, economics, and kill/park rules | `PSP-P13-W05` | `organvm/limen` | `deep` | `write` | `PSP-P13-W02`, `PSP-P13-W03` |
-| `PSP-P13-W06` Design licensing, equity, revenue-share, custody, and return options | `PSP-P13-W06` | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `write` | `PSP-P13-W04`, `PSP-P13-W05` |
-| `PSP-P13-W07` Build the operator discovery, diligence, and trial pipeline | `PSP-P13-W07` | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | `PSP-P13-W04`, `PSP-P13-W06` |
-| `PSP-P13-W08` Execute one bounded operator-handoff pilot | `PSP-P13-W08` | `multi-repository:selected-product-and-private-platform` | `frontier_review` | `external` | `PSP-P13-W03`, `PSP-P13-W05`, `PSP-P13-W06`, `PSP-P13-W07` |
-| `PSP-P13-W09` Institutionalize foundry governance and product return paths | `PSP-P13-W09` | `organvm/limen` | `deep` | `write` | `PSP-P13-W08` |
+| `PSP-P13-W01` Inventory every product candidate across all owned organizations | [#2265](https://github.com/organvm/limen/issues/2265) | `organvm/limen` | `routine` | `read` | [#2173](https://github.com/organvm/limen/issues/2173), [#2174](https://github.com/organvm/limen/issues/2174) |
+| `PSP-P13-W02` Score demand and market evidence for every product candidate | [#2266](https://github.com/organvm/limen/issues/2266) | `organvm/limen` | `deep` | `write` | [#2265](https://github.com/organvm/limen/issues/2265), [#2228](https://github.com/organvm/limen/issues/2228) |
+| `PSP-P13-W03` Score technical readiness, custody, and maintenance risk | [#2267](https://github.com/organvm/limen/issues/2267) | `organvm/limen` | `deep` | `write` | [#2265](https://github.com/organvm/limen/issues/2265) |
+| `PSP-P13-W04` Define the domain-operator profile and selection scorecard | [#2268](https://github.com/organvm/limen/issues/2268) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2266](https://github.com/organvm/limen/issues/2266), [#2267](https://github.com/organvm/limen/issues/2267) |
+| `PSP-P13-W05` Establish transfer floors, economics, and kill/park rules | [#2269](https://github.com/organvm/limen/issues/2269) | `organvm/limen` | `deep` | `write` | [#2266](https://github.com/organvm/limen/issues/2266), [#2267](https://github.com/organvm/limen/issues/2267) |
+| `PSP-P13-W06` Design licensing, equity, revenue-share, custody, and return options | [#2270](https://github.com/organvm/limen/issues/2270) | `organvm-iii-ergon/collaboration-operations-platform` | `frontier_review` | `write` | [#2268](https://github.com/organvm/limen/issues/2268), [#2269](https://github.com/organvm/limen/issues/2269) |
+| `PSP-P13-W07` Build the operator discovery, diligence, and trial pipeline | [#2271](https://github.com/organvm/limen/issues/2271) | `organvm-iii-ergon/collaboration-operations-platform` | `deep` | `write` | [#2268](https://github.com/organvm/limen/issues/2268), [#2270](https://github.com/organvm/limen/issues/2270) |
+| `PSP-P13-W08` Execute one bounded operator-handoff pilot | [#2272](https://github.com/organvm/limen/issues/2272) | `multi-repository:selected-product-and-private-platform` | `frontier_review` | `external` | [#2267](https://github.com/organvm/limen/issues/2267), [#2269](https://github.com/organvm/limen/issues/2269), [#2270](https://github.com/organvm/limen/issues/2270), [#2271](https://github.com/organvm/limen/issues/2271) |
+| `PSP-P13-W09` Institutionalize foundry governance and product return paths | [#2273](https://github.com/organvm/limen/issues/2273) | `organvm/limen` | `deep` | `write` | [#2272](https://github.com/organvm/limen/issues/2272) |
 
 ## PSP-P14 — Return loop, measurement, rollback, and Omega
 
@@ -232,12 +232,12 @@ Evidence, demand, delivery, and operator results continuously correct the system
 
 | Work ID | Issue | Target | Reasoning | Effect | Depends on |
 |---|---:|---|---|---|---|
-| `PSP-P14-W01` Define the end-to-end event and KPI dictionary | `PSP-P14-W01` | `organvm/limen` | `deep` | `write` | `PSP-P07-W08`, `PSP-P08-W06`, `PSP-P11-W07`, `PSP-P13-W09` |
-| `PSP-P14-W02` Operate the weekly execution and demand review | `PSP-P14-W02` | `organvm/limen` | `routine` | `write` | `PSP-P14-W01`, `PSP-P00-W07` |
-| `PSP-P14-W03` Operate the monthly truth, surface, and privacy audit | `PSP-P14-W03` | `organvm/limen` | `deep` | `write` | `PSP-P02-W06`, `PSP-P02-W07`, `PSP-P07-W09` |
-| `PSP-P14-W04` Operate the quarterly strategy and prominence review | `PSP-P14-W04` | `organvm/limen` | `frontier_review` | `write` | `PSP-P10-W08`, `PSP-P12-W06`, `PSP-P14-W01` |
-| `PSP-P14-W05` Automate claim incident quarantine and correction propagation | `PSP-P14-W05` | `organvm/limen` | `deep` | `write` | `PSP-P02-W07`, `PSP-P07-W09` |
-| `PSP-P14-W06` Automate release-level surface rollback and recovery verification | `PSP-P14-W06` | `multi-repository:public-surfaces` | `deep` | `external` | `PSP-P07-W09`, `PSP-P08-W07` |
-| `PSP-P14-W07` Feed sales objections and demand outcomes back into offers | `PSP-P14-W07` | `organvm/limen` | `deep` | `write` | `PSP-P10-W07`, `PSP-P10-W08` |
-| `PSP-P14-W08` Feed delivery and operator outcomes back into proof and portfolio classification | `PSP-P14-W08` | `organvm/limen` | `deep` | `write` | `PSP-P12-W06`, `PSP-P13-W08`, `PSP-P13-W09` |
-| `PSP-P14-W09` Prove alpha-to-omega convergence in two unchanged passes | `PSP-P14-W09` | `organvm/limen` | `frontier_review` | `read` | `PSP-P14-W02`, `PSP-P14-W03`, `PSP-P14-W04`, `PSP-P14-W05`, `PSP-P14-W06`, `PSP-P14-W07`, `PSP-P14-W08` |
+| `PSP-P14-W01` Define the end-to-end event and KPI dictionary | [#2275](https://github.com/organvm/limen/issues/2275) | `organvm/limen` | `deep` | `write` | [#2220](https://github.com/organvm/limen/issues/2220), [#2228](https://github.com/organvm/limen/issues/2228), [#2255](https://github.com/organvm/limen/issues/2255), [#2273](https://github.com/organvm/limen/issues/2273) |
+| `PSP-P14-W02` Operate the weekly execution and demand review | [#2276](https://github.com/organvm/limen/issues/2276) | `organvm/limen` | `routine` | `write` | [#2275](https://github.com/organvm/limen/issues/2275), [#2165](https://github.com/organvm/limen/issues/2165) |
+| `PSP-P14-W03` Operate the monthly truth, surface, and privacy audit | [#2277](https://github.com/organvm/limen/issues/2277) | `organvm/limen` | `deep` | `write` | [#2178](https://github.com/organvm/limen/issues/2178), [#2179](https://github.com/organvm/limen/issues/2179), [#2221](https://github.com/organvm/limen/issues/2221) |
+| `PSP-P14-W04` Operate the quarterly strategy and prominence review | [#2278](https://github.com/organvm/limen/issues/2278) | `organvm/limen` | `frontier_review` | `write` | [#2247](https://github.com/organvm/limen/issues/2247), [#2263](https://github.com/organvm/limen/issues/2263), [#2275](https://github.com/organvm/limen/issues/2275) |
+| `PSP-P14-W05` Automate claim incident quarantine and correction propagation | [#2279](https://github.com/organvm/limen/issues/2279) | `organvm/limen` | `deep` | `write` | [#2179](https://github.com/organvm/limen/issues/2179), [#2221](https://github.com/organvm/limen/issues/2221) |
+| `PSP-P14-W06` Automate release-level surface rollback and recovery verification | [#2280](https://github.com/organvm/limen/issues/2280) | `multi-repository:public-surfaces` | `deep` | `external` | [#2221](https://github.com/organvm/limen/issues/2221), [#2229](https://github.com/organvm/limen/issues/2229) |
+| `PSP-P14-W07` Feed sales objections and demand outcomes back into offers | [#2281](https://github.com/organvm/limen/issues/2281) | `organvm/limen` | `deep` | `write` | [#2246](https://github.com/organvm/limen/issues/2246), [#2247](https://github.com/organvm/limen/issues/2247) |
+| `PSP-P14-W08` Feed delivery and operator outcomes back into proof and portfolio classification | [#2282](https://github.com/organvm/limen/issues/2282) | `organvm/limen` | `deep` | `write` | [#2263](https://github.com/organvm/limen/issues/2263), [#2272](https://github.com/organvm/limen/issues/2272), [#2273](https://github.com/organvm/limen/issues/2273) |
+| `PSP-P14-W09` Prove alpha-to-omega convergence in two unchanged passes | [#2283](https://github.com/organvm/limen/issues/2283) | `organvm/limen` | `frontier_review` | `read` | [#2276](https://github.com/organvm/limen/issues/2276), [#2277](https://github.com/organvm/limen/issues/2277), [#2278](https://github.com/organvm/limen/issues/2278), [#2279](https://github.com/organvm/limen/issues/2279), [#2280](https://github.com/organvm/limen/issues/2280), [#2281](https://github.com/organvm/limen/issues/2281), [#2282](https://github.com/organvm/limen/issues/2282) |
