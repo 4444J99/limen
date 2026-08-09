@@ -53,10 +53,7 @@ def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
     assert registry["cohorts"]["dependabot"]["owner_lever"] == "L-DEPENDABOT-DELIVERY-ARM"
     assert registry["cohorts"]["dependabot"]["armed_disposition"] == "lifecycle:delivery"
     assert registry["cohorts"]["dependabot"]["arm_decision"]["outcome"] == "arm"
-    assert (
-        registry["cohorts"]["dependabot"]["arm_decision"]["accepted_receipt"]["disposition"]
-        == "lifecycle:delivery"
-    )
+    assert registry["cohorts"]["dependabot"]["arm_decision"]["accepted_receipt"]["disposition"] == "lifecycle:delivery"
     assert all(row["ratchet"] in registry["ratchets"] for row in registry["consumers"].values())
     assert all(row["loader_markers"] for row in registry["consumers"].values())
     assert isinstance(registry["ratchets"]["estate_yaml_derives"], bool)
@@ -304,7 +301,6 @@ def test_preservation_derivation_contract_is_required() -> None:
     assert any("derived_from.materialize must be true" in failure for failure in module.failures)
 
 
-
 def test_armed_cohort_requires_a_matching_arm_receipt() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
@@ -350,13 +346,10 @@ def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path
     tracked_path = tmp_path / "github-estate-census.json"
     tracked_path.write_text(json.dumps({"source_report": source_report}))
 
-    assert (
-        module._complete_estate_repositories(
-            facts_path=facts_path,
-            tracked_path=tracked_path,
-        )
-        == {"organvm/example"}
-    )
+    assert module._complete_estate_repositories(
+        facts_path=facts_path,
+        tracked_path=tracked_path,
+    ) == {"organvm/example"}
     assert module.failures == []
 
 
