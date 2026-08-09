@@ -557,6 +557,7 @@ def _census_identity(row: dict[str, Any]) -> str | None:
         return None
     return hashlib.sha256(f"{repository}#{number}".encode()).hexdigest()
 
+
 def _complete_census_rows(
     ledger: dict[str, Any],
     *,
@@ -590,7 +591,7 @@ def _complete_census_rows(
         return None
     facts_rows = facts.get("pull_requests") if isinstance(facts, dict) else None
     ledger_keys = {_census_identity(row) for row in rows}
-    facts_keys = {_census_identity(row) for row in facts_rows} if isinstance(facts_rows, list) else set()
+    facts_keys = {_census_identity(row) for row in facts_rows if isinstance(row, dict)} if isinstance(facts_rows, list) else set()
     if (
         not isinstance(facts, dict)
         or not facts.get("exhaustive")
