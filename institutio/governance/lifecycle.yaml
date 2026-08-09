@@ -78,6 +78,12 @@ cohorts:
     default_disposition: "lifecycle:blocked"
     owner_lever: L-DEPENDABOT-DELIVERY-ARM
     armed_disposition: "lifecycle:delivery"
+    arm_decision:
+      outcome: "arm"
+      accepted_receipt:
+        source: "https://github.com/organvm/limen/issues/1947"
+        predicate: "comment contains exact standalone token arm"
+        disposition: "lifecycle:delivery"
     drainable: false
   operator-active:
     selector: {private: false, owner: operator, classification: active_custody}
