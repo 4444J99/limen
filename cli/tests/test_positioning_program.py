@@ -30,7 +30,11 @@ def graph_and_map():
     mapping = {
         "schema_version": MODULE.MAP_SCHEMA,
         "repository": "organvm/limen",
-        "milestone": {"number": 1, "title": "Program", "url": "https://example.test/milestone/1"},
+        "milestone": {
+            "number": 1,
+            "title": graph["program"]["issue_projection"]["milestone"],
+            "url": "https://example.test/milestone/1",
+        },
         "issues": {
             object_id: {"number": index, "url": f"https://example.test/issues/{index}"}
             for index, object_id in enumerate(graph["ordered_ids"], 1)
@@ -199,6 +203,55 @@ def test_map_rejects_duplicate_issue_numbers() -> None:
 
     with pytest.raises(MODULE.ProgramError, match="reuses issue"):
         MODULE.validate_map(mapping, graph, complete=True)
+
+
+def test_complete_map_rejects_wrong_milestone() -> None:
+    graph, mapping = graph_and_map()
+    mapping["milestone"]["title"] = "Wrong program"
+
+    with pytest.raises(MODULE.ProgramError, match="map milestone"):
+        MODULE.validate_map(mapping, graph, complete=True)
+
+
+def test_mapped_issue_recovers_after_label_or_marker_drift(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    missing_id = "PSP-P00-W01"
+    remote = {
+        object_id: {"number": row["number"], "body": MODULE.marker(object_id)}
+        for object_id, row in mapping["issues"].items()
+        if object_id != missing_id
+    }
+    recovered_row = {
+        "number": mapping["issues"][missing_id]["number"],
+        "html_url": mapping["issues"][missing_id]["url"],
+        "body": "body and label were edited",
+    }
+    monkeypatch.setattr(MODULE, "_api", lambda *_args, **_kwargs: recovered_row)
+
+    recovered = MODULE.recover_mapped_issues(graph, mapping, remote)
+
+    assert recovered[missing_id] == recovered_row
+
+
+def test_remote_parity_includes_milestone_assignment(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        object_id: {
+            "number": mapping["issues"][object_id]["number"],
+            "title": MODULE.title_for(object_id, graph),
+            "body": MODULE.body_for(object_id, graph, mapping),
+            "labels": [{"name": label} for label in MODULE.labels_for(object_id, graph)],
+            "milestone": {"number": mapping["milestone"]["number"]},
+        }
+        for object_id in graph["ordered_ids"]
+    }
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+
+    assert MODULE.remote_parity(graph, mapping)["ok"] is True
+
+    remote["PSP-ROOT"]["milestone"] = None
+    with pytest.raises(MODULE.ProgramError, match="milestone drift"):
+        MODULE.remote_parity(graph, mapping)
 
 
 def test_index_render_is_deterministic(tmp_path: Path) -> None:
