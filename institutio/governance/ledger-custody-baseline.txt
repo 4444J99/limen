@@ -13,3 +13,4 @@
 ad0565a4ad9062625db6c7a81734dc9384dd9c2b github-pr-debt  # feat: close PR lifecycle estate at fixed point (#1508)
 ff5de9dc7af4a8162d44c8db51542bf5fcb684b5 github-pr-debt  # Type PR lifecycle debt explicitly (#1503)
 5c1727f072dba72771d1f825df422dbb25e04e42 github-pr-debt  # feat: add uncapped exact PR debt census (#1337)
+38e4fdca05839de229c55801e46cc3b4eea6b018 session-contention  # pre-existing passenger merged by #2128 before protected branch update
