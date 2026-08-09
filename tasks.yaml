@@ -126529,7 +126529,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'done'
+  status: 'archived'
   labels:
   - 'rebase'
   - 'self-heal'
@@ -126573,13 +126573,24 @@ tasks:
     conduct_run_id: 'run-a70c79e32f933d30c26a45bdb829a512'
     conduct_lease_id: 'lease-800-a70c79e32f933d30'
     conduct_generation: 800
+  - timestamp: '2026-08-09T03:15:10.220Z'
+    agent: 'opencode'
+    session_id: 'opencode-org-1786245292'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-org-1786245292'
+    status: 'archived'
+    output: 'Superseded PR closed; task archived.'
+    conduct_event_id: 'conduct:run-510c43f9741c736a26c66f6b4c1a99d5:801:compatibility'
+    conduct_run_id: 'run-510c43f9741c736a26c66f6b4c1a99d5'
+    conduct_lease_id: 'lease-801-510c43f9741c736a'
+    conduct_generation: 801
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Rebase collab PR organvm/hokage-chess--4444j99#136; analysis determined content already on main (superseded), closed as duplicate.'
   owner_surface: 'board'
   predicate: 'test "$(gh pr view 136 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/136'
-  updated: '2026-08-09T03:15:04.504Z'
+  updated: '2026-08-09T03:15:10.220Z'
 - id: HEAL-rebase-organvm-peer-audited--behavioral-blockchain-712
   title: rebase/resolve conflicts on organvm/peer-audited--behavioral-blockchain#712
   repo: organvm/peer-audited--behavioral-blockchain
