@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import re
 import subprocess
@@ -540,6 +541,22 @@ def live_label_metadata_drift(
     return drift
 
 
+
+def _census_identity(row: dict[str, Any]) -> str | None:
+    key = row.get("pr_key")
+    if isinstance(key, str) and key:
+        return key
+    repository = row.get("repository")
+    number = row.get("number")
+    if (
+        not isinstance(repository, str)
+        or not repository
+        or isinstance(number, bool)
+        or not isinstance(number, int)
+    ):
+        return None
+    return hashlib.sha256(f"{repository}#{number}".encode()).hexdigest()
+
 def _complete_census_rows(
     ledger: dict[str, Any],
     *,
@@ -572,6 +589,8 @@ def _complete_census_rows(
         )
         return None
     facts_rows = facts.get("pull_requests") if isinstance(facts, dict) else None
+    ledger_keys = {_census_identity(row) for row in rows}
+    facts_keys = {_census_identity(row) for row in facts_rows} if isinstance(facts_rows, list) else set()
     if (
         not isinstance(facts, dict)
         or not facts.get("exhaustive")
@@ -580,7 +599,9 @@ def _complete_census_rows(
         or not isinstance(facts_rows, list)
         or not all(isinstance(row, dict) for row in facts_rows)
         or len(facts_rows) != len(rows)
-        or {row.get("pr_key") for row in facts_rows} != {row.get("pr_key") for row in rows}
+        or None in ledger_keys
+        or None in facts_keys
+        or facts_keys != ledger_keys
     ):
         fail("D", "private PR runtime census does not match the tracked exhaustive ledger")
         return None
