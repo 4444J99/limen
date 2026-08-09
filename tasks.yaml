@@ -126336,7 +126336,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'done'
   labels:
   - 'rebase'
   - 'self-heal'
@@ -126358,13 +126358,27 @@ tasks:
     conduct_run_id: 'run-023f00c1c45a8bcd5d98bb2241032bbe'
     conduct_lease_id: 'lease-788-023f00c1c45a8bcd'
     conduct_generation: 788
+  - timestamp: '2026-08-09T03:14:02.781Z'
+    agent: 'opencode'
+    session_id: 'opencode-org-1786245234'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-org-1786245234'
+    status: 'done'
+    output: 'PR #114 merged.'
+    lifecycle_repair: 'pr-observed-terminal'
+    pr_observed_state: 'merged'
+    pr_observed_ref: 'organvm/hokage-chess--4444j99#114'
+    conduct_event_id: 'conduct:run-c7e3677383cf7642998a5e3cc88c2e0d:789:compatibility'
+    conduct_run_id: 'run-c7e3677383cf7642998a5e3cc88c2e0d'
+    conduct_lease_id: 'lease-789-c7e3677383cf7642'
+    conduct_generation: 789
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Rebase+merge collab PR organvm/hokage-chess--4444j99#114 onto main.'
   owner_surface: 'board'
   predicate: 'test "$(gh pr view 114 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = MERGED'
   receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/114'
-  updated: '2026-08-09T03:13:56.189Z'
+  updated: '2026-08-09T03:14:02.781Z'
 - id: HEAL-rebase-organvm-hokage-chess--4444j99-121
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#121
   repo: organvm/hokage-chess--4444j99
