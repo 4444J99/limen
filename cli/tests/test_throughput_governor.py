@@ -7,7 +7,23 @@ from limen import capacity, dispatch
 from limen.capacity import lane_throughput_cap, lane_throughput_window
 from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
 
-NOW = dt.datetime(2026, 8, 6, 12, 0, tzinfo=dt.timezone.utc)
+# Anchored to the REAL clock, not a literal date, and that is load-bearing rather than tidiness.
+# Most tests here inject `now=NOW` into capacity.* and are therefore time-independent whatever this
+# is. But `dispatch._remaining_budget()` takes no `now` — production always wants the real clock —
+# so the governor it calls resolves its trailing LIMEN_THROUGHPUT_WINDOW_DAYS window against
+# wall-clock while the fixtures below are stamped relative to NOW. A frozen NOW makes those two
+# clocks drift apart at exactly one day per day: entries built at `NOW - 2h` sit inside the 3-day
+# window until real time passes NOW + 3d - 2h, and outside it forever after.
+#
+# That is not hypothetical. NOW was pinned to 2026-08-06 12:00Z, so the window stopped covering the
+# fixtures at 2026-08-09 10:00Z and `test_remaining_budget_untouched_when_earned` began failing
+# `assert 25 == 100` — the governor read 0 dispatches, took the cold-start branch, and clamped
+# 100 -> 25. No commit caused it; the calendar did. It went unnoticed for hours because
+# verify-scoped.sh only implicates `pytest-cli` when a diff touches `cli/`, and the PRs that landed
+# in between did not, so the gate that would have caught it was never asked to run.
+#
+# Keep this dynamic. Pinning it back to a literal re-arms the same bomb with a later fuse.
+NOW = dt.datetime.now(dt.timezone.utc)
 
 
 def _board(
@@ -194,3 +210,22 @@ def test_lane_balance_blocker_when_jules_saturated_and_others_starved(monkeypatc
     )
     ids = [blocker["id"] for blocker in snap["blockers"]]
     assert "lane-balance-jules" in ids
+
+
+def test_fixture_clock_stays_inside_the_governors_real_window():
+    """Rot detector for this file's NOW anchor.
+
+    `dispatch._remaining_budget()` accepts no `now`, so the governor it calls resolves its trailing
+    window against the REAL clock while every fixture here is stamped relative to NOW. That makes
+    "NOW is close enough to real now" a silent precondition of the tests below rather than a style
+    preference. Asserting it directly turns a future drift into an obvious, self-describing failure
+    instead of an `assert 25 == 100` in an unrelated-looking budget test — which is how the 2026-08-06
+    pin actually surfaced, three days later and only once a diff happened to touch `cli/`.
+    """
+    window_days = capacity._throughput_env_int("LIMEN_THROUGHPUT_WINDOW_DAYS", 3)
+    since = dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=max(1, window_days))
+    oldest_fixture_stamp = NOW - dt.timedelta(hours=20)  # the furthest-back offset used below
+    assert oldest_fixture_stamp >= since, (
+        f"NOW ({NOW.isoformat()}) has drifted out of the governor's {window_days}-day real-clock "
+        f"window (since {since.isoformat()}). Anchor NOW to dt.datetime.now(dt.timezone.utc)."
+    )
