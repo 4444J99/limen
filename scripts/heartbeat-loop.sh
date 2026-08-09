@@ -444,9 +444,13 @@ stale_watchdog_loop() {
   while kill -0 "$_watchdog_parent_pid" 2>/dev/null; do
     sleep "$FAST_WAVE_SECONDS"
     kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
-    fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
-      python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
-      >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>&1 || true
+    if [ "${LIMEN_HOST_PRESSURE_STALE:-1}" = "1" ]; then
+      fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+        python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
+        >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>&1 || true
+    else
+      echo "host-pressure watchdog disabled" >>"$HOST_PRESSURE_WATCHDOG_LOG"
+    fi
   done
 }
 
