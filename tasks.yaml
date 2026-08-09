@@ -169172,3 +169172,41 @@ tasks:
     conduct_lease_id: 'lease-814-a012b474462583f6'
     conduct_generation: 814
   updated: '2026-08-09T04:53:17.943Z'
+- id: 'ORG-representation-organ-kernel-0809'
+  title: 'Map the VLTIMA 5-primitive kernel to the representation organ'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'any'
+  priority: 'critical'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'organ-kernel'
+  - 'pillar:representation'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  urls: []
+  context: 'In organvm/limen, author organs/representation/KERNEL.md: map the domain-neutral kernel (Member - Mandate - Standing - Standard - Governance) onto the representation domain (Member=represented subject (creator/professional); Mandate=a representation record (dossier/packet/presence); Standing=packet lifecycle (evidence -> staged -> approved -> sent); Standard=the charter''s role gates (Privacy Sentinel blocks by default, Authority Clerk reports blockers not achieved status); Governance=approval-gated output modes). State the organ''s purpose as an institutional prosthesis, its MACRO deployment (institutional representation any creator or professional can hold — evidence librarian, provenance, opportunity analysis, submission/market-fit packets, public-presence drafts — without taking over their voice) and its MICRO deployment (the shipped proofs (Christopher Notarnicola writer_submission record, ET4L artist-organ bridge) + Anthony''s own professional representation: the job campaign (LinkedIn/work comms, application packets via organvm/application-pipeline, interview-prep dossiers, the ASI north-star campaign)). Generic + nameless underneath, his instance on top. One PR, no lorem. CONSTRAINT: The organ predates its ladder entry (authored under the studio/authority program; first proofs Christopher + ET4L). Admitted to the ladder 2026-07-24 so the `representation` workstream channel derives (the job-getting/professional-presence lane) — channels derive from pillars, so an organ absent from the ladder has no lane. Working name pending an INDEX-NOMINVM pass.. [organ-backlog 2026-08-09: rank 18, maturity 25% stage scaffold — convert idle fleet capacity into institutional weight (VLTIMA).]'
+  predicate: 'test "$(gh pr list --repo organvm/limen --state merged --search ''ORG-representation-organ-kernel-0809 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:pull-request:ORG-representation-organ-kernel-0809'
+  origin: 'agent_recommendation'
+  horizon: 'future'
+  value_case: 'Increase durable institutional maturity for representation'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-09T04:53:23.742Z'
+    agent: 'codex'
+    session_id: 'generate-organ-backlog-generate-organ-backlog'
+    logical_agent: 'generate-organ-backlog'
+    logical_session_id: 'generate-organ-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ab63006720b10a7f15ee00cbcc2b3402:815:compatibility'
+    conduct_run_id: 'run-ab63006720b10a7f15ee00cbcc2b3402'
+    conduct_lease_id: 'lease-815-ab63006720b10a7f'
+    conduct_generation: 815
+  updated: '2026-08-09T04:53:23.742Z'
