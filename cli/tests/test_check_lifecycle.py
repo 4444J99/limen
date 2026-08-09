@@ -130,6 +130,7 @@ def test_new_consumer_requires_zero_initial_baseline() -> None:
 def test_preservation_ceiling_cannot_regrow_from_previous_registry(monkeypatch) -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
+    ledger = json.loads((ROOT / "docs" / "github-pr-debt-ledger.json").read_text())
     registry["live_baseline"]["preservation_materialization_missing_labels"] = 125
     monkeypatch.setattr(
         module,
@@ -146,6 +147,7 @@ def test_preservation_ceiling_cannot_regrow_from_previous_registry(monkeypatch) 
         metadata_probe=lambda _repositories, _dispositions: 0,
         rows_probe=lambda payload: payload["pull_requests"],
         repositories_probe=lambda _ledger, _rows: {"organvm/example"},
+        open_pr_count_probe=lambda: ledger["open_pr_count"],
     )
 
     assert any("ceiling regrew" in failure for failure in module.failures)
@@ -345,9 +347,7 @@ def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path
     facts_path = tmp_path / "github-estate-census-facts.json"
     facts_path.write_text(json.dumps(facts))
     tracked_path = tmp_path / "github-estate-census.json"
-    tracked_path.write_text(
-        json.dumps({"source_report": source_report, "summary": {"repository_count": 1}})
-    )
+    tracked_path.write_text(json.dumps({"source_report": source_report, "summary": {"repository_count": 1}}))
 
     assert module._complete_estate_repositories(
         facts_path=facts_path,
@@ -397,9 +397,7 @@ def test_repository_census_denominator_must_match_tracked_total(tmp_path: Path) 
     facts_path = tmp_path / "github-estate-census-facts.json"
     facts_path.write_text(json.dumps(facts))
     tracked_path = tmp_path / "github-estate-census.json"
-    tracked_path.write_text(
-        json.dumps({"source_report": source_report, "summary": {"repository_count": 1}})
-    )
+    tracked_path.write_text(json.dumps({"source_report": source_report, "summary": {"repository_count": 1}}))
 
     assert module._complete_estate_repositories(facts_path=facts_path, tracked_path=tracked_path) is None
     assert any("repository totals do not reconcile" in failure for failure in module.failures)
