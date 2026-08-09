@@ -230,8 +230,9 @@ def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task
 
     admission = mod._dispatch_admission([task], budget, providers)
 
-    assert admission["admissible"] == 1
-    assert admission["admissible_agent_counts"] == {"any": 1}
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+    assert admission["admissible_agent_counts"] == {}
     assert admission["admissible_any_agent_counts"] == {}
 
 
