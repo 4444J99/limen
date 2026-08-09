@@ -560,7 +560,7 @@ def test_later_successful_sample_supersedes_early_error(tmp_path, monkeypatch):
 
 
 def test_heartbeat_resident_sleep_uses_interruptible_helper():
-    source = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
     assert "_interruptible_sleep()" in source
     watchdog = source[source.index("stale_watchdog_loop()"):source.index("\n\nfast_wave_loop()", source.index("stale_watchdog_loop()"))]
