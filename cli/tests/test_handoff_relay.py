@@ -350,7 +350,7 @@ def test_dispatch_admission_discovers_unmetered_canonical_lane(monkeypatch):
         agent="any",
         type="verification",
         labels=["mode:verification-only"],
-        depends_on=["parent"],
+        depends_on=[],
     )
     budget = {"remaining": 3, "per_agent": {}}
     providers = {"generated": "now", "vendors": {}}
