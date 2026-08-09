@@ -18,12 +18,15 @@ import importlib.machinery
 import importlib.util
 import json
 import sys
+
+import yaml
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
+REGISTRY = ROOT / "institutio" / "governance" / "lifecycle.yaml"
 BASE_SCRIPT = ROOT / "scripts" / "pr-lifecycle-manifest.py"
 SCHEMA = "limen.pr_lifecycle_estate_manifest.v2"
 PUBLIC_RECEIPT_SCHEMA = "limen.pr_lifecycle_estate_receipt.v2"
@@ -41,20 +44,39 @@ DISPOSITION_META = {
 # Cohort selectors partition the untyped estate: public cohorts exclude private rows (the
 # tracked ledger redacts their coordinates anyway; the guard holds even against --facts),
 # and the private cohort requires --facts. `owner` binds the operator cohorts at plan time.
+def _operator_owner_field() -> str:
+    try:
+        payload = yaml.safe_load(REGISTRY.read_text(encoding="utf-8")) or {}
+    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        raise ManifestError(f"lifecycle runtime binding is unreadable: {exc}") from exc
+    bindings = payload.get("runtime_bindings") if isinstance(payload, dict) else None
+    binding = bindings.get("operator_owner") if isinstance(bindings, dict) else None
+    if (
+        not isinstance(binding, dict)
+        or binding.get("type") != "string"
+        or binding.get("source") != "cli_argument"
+        or binding.get("argument") != "--owner"
+        or not isinstance(binding.get("row_field"), str)
+        or not binding.get("row_field")
+    ):
+        raise ManifestError("lifecycle runtime binding operator_owner is invalid")
+    return str(binding["row_field"])
+
+
+def _operator_selector(row: dict[str, Any], owner: str | None, classification: str) -> bool:
+    field = _operator_owner_field()
+    return (
+        not row.get("private")
+        and bool(owner)
+        and str(row.get(field) or "") == owner
+        and str(row.get("classification") or "") == classification
+    )
+
+
 COHORT_SELECTORS = {
     "dependabot": lambda row, owner: not row.get("private") and str(row.get("owner") or "") == "dependabot",
-    "operator-active": lambda row, owner: (
-        not row.get("private")
-        and bool(owner)
-        and str(row.get("owner") or "") == owner
-        and str(row.get("classification") or "") == "active_custody"
-    ),
-    "operator-stale": lambda row, owner: (
-        not row.get("private")
-        and bool(owner)
-        and str(row.get("owner") or "") == owner
-        and str(row.get("classification") or "") == "owner_route"
-    ),
+    "operator-active": lambda row, owner: _operator_selector(row, owner, "active_custody"),
+    "operator-stale": lambda row, owner: _operator_selector(row, owner, "owner_route"),
     "private": lambda row, owner: bool(row.get("private")),
     "all": lambda row, owner: True,
 }

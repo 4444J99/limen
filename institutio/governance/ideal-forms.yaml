@@ -96,6 +96,19 @@ ideals:
       environment: host
       at_ideal_when: exit_zero
 
+  IF-PR-LIFECYCLE:
+    ideal: >
+      Every open PR carries exactly one declared disposition, written under a declared admits
+      predicate; every consumer derives policy from lifecycle capabilities; and the estate's
+      mechanically reachable PR population is a registry fact rather than a code literal.
+    owner: "Claude (registry + predicate) -> lifecycle typer and merge organs"
+    probe:
+      command: "python3 scripts/check-lifecycle.py --measure"
+      derives: "open PRs outside any declared mechanically actionable lifecycle disposition in the committed exhaustive census"
+      environment: network
+      extract: "unreachable PRs: ([0-9]+)"
+      ideal_value: 0
+
   IF-PUBLICATION-ESTATE:
     ideal: >
       The whole GitHub estate carries its publication policy as declared data — every repo
