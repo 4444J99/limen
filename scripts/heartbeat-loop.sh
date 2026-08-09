@@ -384,70 +384,87 @@ _interruptible_sleep() {
 }
 
 fast_wave_sample_once() {
+  # Initialize before any redirection: an unwritable temp log must not kill the resident loop under set -u.
+  _fw_sample_rc=125
   _fw_tmp="$FAST_WAVE_LOG.$$.$FAST_WAVE_BEAT.tmp"
-  mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null || true
-  {
-    echo "fast-wave: sample start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
+  if mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null && : >"$_fw_tmp" 2>/dev/null; then
+    {
+      echo "fast-wave: sample start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
+      if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
+        fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
+        _fw_sample_rc=$?
+      else
+        echo "fast-wave: VIGILIA disabled — sample skipped"
+        _fw_sample_rc=0
+      fi
+      echo "fast-wave: sample finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) rc=$_fw_sample_rc"
+    } >"$_fw_tmp" 2>&1 || true
+    mv "$_fw_tmp" "$FAST_WAVE_LOG" 2>/dev/null || true
+  else
+    # Preserve the sample even when the log directory or temp file is briefly unavailable.
+    echo "fast-wave: sample log unavailable — running without capture" >&2 || true
     if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
       fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
       _fw_sample_rc=$?
     else
-      echo "fast-wave: VIGILIA disabled — sample skipped"
       _fw_sample_rc=0
     fi
-    echo "fast-wave: sample finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) rc=$_fw_sample_rc"
-  } >"$_fw_tmp" 2>&1
-  mv "$_fw_tmp" "$FAST_WAVE_LOG" 2>/dev/null || true
+  fi
   return "$_fw_sample_rc"
 }
 
 fast_wave_aux_once() {
-  _fw_aux_beat="$1"
-  _fw_diurnal_pid=""
-  _fw_health_pid=""
-  _fast_wave_aux_cleanup() {
-    for _fw_child_pid in "$_fw_diurnal_pid" "$_fw_health_pid"; do
-      if [ -n "$_fw_child_pid" ] && kill -0 "$_fw_child_pid" 2>/dev/null; then
-        _fast_wave_kill_tree "$_fw_child_pid"
-        kill "$_fw_child_pid" 2>/dev/null || true
-        wait "$_fw_child_pid" 2>/dev/null || true
-      fi
-    done
-  }
-  trap _fast_wave_aux_cleanup EXIT
-  trap '_fast_wave_aux_cleanup; exit 143' HUP INT TERM
-  _fw_tmp="$FAST_WAVE_AUX_LOG.$$.$_fw_aux_beat.tmp"
-  _fw_diurnal_log="$_fw_tmp.diurnal"
-  _fw_health_log="$_fw_tmp.health"
-  mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null || true
+  _fw_aux_kind="${1:-both}"
+  _fw_aux_beat="${2:-$FAST_WAVE_BEAT}"
 
-  if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
-    fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" \
-      python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only \
-        --beat "$_fw_aux_beat" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED" \
-        >"$_fw_diurnal_log" 2>&1 &
+  # The one-argument form remains a compatibility wrapper; the loop below launches each
+  # bounded sensor independently so a slow organ-health run cannot suppress diurnal work.
+  if [ "$_fw_aux_kind" = "both" ]; then
+    fast_wave_aux_once diurnal "$_fw_aux_beat" &
     _fw_diurnal_pid=$!
-  else
-    echo "fast-wave: derived sensors disabled" >"$_fw_diurnal_log"
-    _fw_diurnal_pid=""
-  fi
-  fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" \
-    python3 "$LIMEN_ROOT/scripts/organ-health.py" >"$_fw_health_log" 2>&1 &
-  _fw_health_pid=$!
-
-  _fw_diurnal_rc=0
-  if [ -n "$_fw_diurnal_pid" ]; then
+    fast_wave_aux_once health "$_fw_aux_beat" &
+    _fw_health_pid=$!
+    _fw_diurnal_rc=0
     wait "$_fw_diurnal_pid" || _fw_diurnal_rc=$?
+    _fw_health_rc=0
+    wait "$_fw_health_pid" || _fw_health_rc=$?
+    [ "$_fw_diurnal_rc" -eq 0 ] || return "$_fw_diurnal_rc"
+    return "$_fw_health_rc"
   fi
-  _fw_health_rc=0
-  wait "$_fw_health_pid" || _fw_health_rc=$?
-  {
-    echo "fast-wave: aux beat=$_fw_aux_beat $(date -u +%FT%TZ)"
-    cat "$_fw_diurnal_log" "$_fw_health_log" 2>/dev/null || true
-    echo "fast-wave: aux finish beat=$_fw_aux_beat diurnal=$_fw_diurnal_rc organ_health=$_fw_health_rc"
-  } >"$_fw_tmp" 2>&1
-  mv "$_fw_tmp" "$FAST_WAVE_AUX_LOG" 2>/dev/null || true
-  rm -f "$_fw_diurnal_log" "$_fw_health_log" 2>/dev/null || true
+
+  _fw_aux_tmp="$FAST_WAVE_AUX_LOG.$_fw_aux_kind.$$.$_fw_aux_beat.tmp"
+  _fw_aux_output="/dev/null"
+  if mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null && : >"$_fw_aux_tmp" 2>/dev/null; then
+    _fw_aux_output="$_fw_aux_tmp"
+  fi
+  _fw_aux_rc=0
+
+  if [ "$_fw_aux_kind" = "diurnal" ]; then
+    if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
+      fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only --beat "$_fw_aux_beat" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED" >"$_fw_aux_output" 2>&1
+      _fw_aux_rc=$?
+    else
+      echo "fast-wave: derived sensors disabled" >"$_fw_aux_output" 2>&1 || true
+    fi
+  elif [ "$_fw_aux_kind" = "health" ]; then
+    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/organ-health.py" >"$_fw_aux_output" 2>&1
+    _fw_aux_rc=$?
+  else
+    echo "fast-wave: unknown auxiliary sensor kind=$_fw_aux_kind" >&2 || true
+    return 2
+  fi
+
+  if [ "$_fw_aux_output" = "$_fw_aux_tmp" ]; then
+    {
+      echo "fast-wave: aux start kind=$_fw_aux_kind beat=$_fw_aux_beat $(date -u +%FT%TZ)"
+      cat "$_fw_aux_tmp" 2>/dev/null || true
+      echo "fast-wave: aux finish kind=$_fw_aux_kind beat=$_fw_aux_beat rc=$_fw_aux_rc"
+    } >>"$FAST_WAVE_AUX_LOG" 2>/dev/null || true
+    rm -f "$_fw_aux_tmp" 2>/dev/null || true
+  else
+    echo "fast-wave: aux log unavailable kind=$_fw_aux_kind — sensor completed without capture" >&2 || true
+  fi
+  return "$_fw_aux_rc"
 }
 
 stale_watchdog_loop() {
@@ -469,13 +486,18 @@ stale_watchdog_loop() {
 
 fast_wave_loop() {
   _fw_parent_pid="$1"
-  _fw_aux_pid=""
+  _fw_diurnal_pid=""
+  _fw_health_pid=""
+  _fw_diurnal_pending=""
+  _fw_health_pending=""
   _fast_wave_cleanup() {
-    if [ -n "$_fw_aux_pid" ] && kill -0 "$_fw_aux_pid" 2>/dev/null; then
-      _fast_wave_kill_tree "$_fw_aux_pid"
-      kill "$_fw_aux_pid" 2>/dev/null || true
-      wait "$_fw_aux_pid" 2>/dev/null || true
-    fi
+    for _fw_child_pid in "$_fw_diurnal_pid" "$_fw_health_pid"; do
+      if [ -n "$_fw_child_pid" ] && kill -0 "$_fw_child_pid" 2>/dev/null; then
+        _fast_wave_kill_tree "$_fw_child_pid"
+        kill "$_fw_child_pid" 2>/dev/null || true
+        wait "$_fw_child_pid" 2>/dev/null || true
+      fi
+    done
   }
   trap _fast_wave_cleanup EXIT
   trap 'exit 0' HUP INT TERM
@@ -483,11 +505,29 @@ fast_wave_loop() {
     _fw_started="$(date +%s)"
     FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
     fast_wave_sample_once || true
-    if [ -z "$_fw_aux_pid" ] || ! kill -0 "$_fw_aux_pid" 2>/dev/null; then
-      [ -z "$_fw_aux_pid" ] || wait "$_fw_aux_pid" 2>/dev/null || true
-      fast_wave_aux_once "$FAST_WAVE_BEAT" &
-      _fw_aux_pid=$!
+
+    # Diurnal and organ-health are independent single-flight workers. If a bounded run is still
+    # active, retain the latest scheduled beat and launch it as soon as that worker is free.
+    if [ -n "$_fw_diurnal_pid" ] && kill -0 "$_fw_diurnal_pid" 2>/dev/null; then
+      _fw_diurnal_pending="$FAST_WAVE_BEAT"
+    else
+      [ -z "$_fw_diurnal_pid" ] || wait "$_fw_diurnal_pid" 2>/dev/null || true
+      _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
+      _fw_diurnal_pending=""
+      fast_wave_aux_once diurnal "$_fw_diurnal_beat" &
+      _fw_diurnal_pid=$!
     fi
+
+    if [ -n "$_fw_health_pid" ] && kill -0 "$_fw_health_pid" 2>/dev/null; then
+      _fw_health_pending="$FAST_WAVE_BEAT"
+    else
+      [ -z "$_fw_health_pid" ] || wait "$_fw_health_pid" 2>/dev/null || true
+      _fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"
+      _fw_health_pending=""
+      fast_wave_aux_once health "$_fw_health_beat" &
+      _fw_health_pid=$!
+    fi
+
     _fw_elapsed=$(( $(date +%s) - _fw_started ))
     _fw_wait=$(( FAST_WAVE_SECONDS - _fw_elapsed ))
     [ "$_fw_wait" -gt 0 ] || _fw_wait=1
