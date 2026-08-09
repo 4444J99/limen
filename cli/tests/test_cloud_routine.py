@@ -652,9 +652,7 @@ def test_irf_validator_allows_terminal_empty_human_partition() -> None:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    receipt = json.loads(
-        (ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text()
-    )
+    receipt = json.loads((ROOT / "docs" / "receipts" / "irf-p0-owner-classification-20260808.json").read_text())
     human_ids = set(receipt["human_gate_irf_ids"])
     for row in receipt["rows"]:
         if row["irf_id"] in human_ids:
