@@ -409,8 +409,8 @@ def _dispatch_admission(
             if reason == "provider_health":
                 provider_health_reasons[agent] += 1
             continue
-        candidates.append(task)
         if agent in {"", "any"}:
+            eligible_any_agents = 0
             for candidate_agent in known_agents:
                 candidate_budget = per_agent.get(candidate_agent) if isinstance(per_agent, dict) else None
                 candidate_remaining = (
@@ -425,6 +425,11 @@ def _dispatch_admission(
                     and _eligible_any_agent(task, candidate_agent)
                 ):
                     admissible_any_agents[candidate_agent] += 1
+                    eligible_any_agents += 1
+            if eligible_any_agents == 0:
+                reasons["admission_blocked"] += 1
+                continue
+        candidates.append(task)
         admissible_agents[agent or "any"] += 1
     top = (
         sorted(
