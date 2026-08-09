@@ -86,7 +86,7 @@ def validate_human_gate_owners(
     terminal = sorted(
         lever_id
         for lever_id in owner_ids
-        if not states[lever_id] or states[lever_id] in TERMINAL_LEVER_STATUSES
+        if states[lever_id] in TERMINAL_LEVER_STATUSES
     )
     if terminal:
         raise ValueError(
