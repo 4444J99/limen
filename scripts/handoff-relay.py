@@ -602,6 +602,9 @@ def _dispatch_admission(
                     any_blockers["provider_health"] += 1
                     provider_health_reasons[candidate_agent] += 1
                     continue
+                if not _eligible_any_agent(task, candidate_agent):
+                    any_blockers["admission_blocked"] += 1
+                    continue
                 if not _lane_reachable(candidate_agent, provider_headroom):
                     any_blockers["provider_health"] += 1
                     provider_health_reasons[candidate_agent] += 1
@@ -611,9 +614,6 @@ def _dispatch_admission(
                     any_blockers[provider_reason] += 1
                     if provider_reason in {"provider_health", "auth_blocked"}:
                         provider_health_reasons[candidate_agent] += 1
-                    continue
-                if not _eligible_any_agent(task, candidate_agent):
-                    any_blockers["admission_blocked"] += 1
                     continue
                 admissible_any_agents[candidate_agent] += 1
                 eligible_any_agents += 1
