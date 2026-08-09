@@ -36,6 +36,7 @@ LEVERS = ROOT / "his-hand-levers.json"
 PR_LEDGER = ROOT / "docs" / "github-pr-debt-ledger.json"
 PR_DEBT_FACTS = ROOT / "logs" / "gitvs-pr-debt-facts.json"
 ESTATE_CENSUS_FACTS = ROOT / "logs" / "github-estate-census-facts.json"
+ESTATE_CENSUS = ROOT / "docs" / "github-estate-census.json"
 SELF_COMMAND = "python3 scripts/check-lifecycle.py --check"
 TERMINAL_LEVER_STATES = frozenset({"discharged", "retired", "done", "closed"})
 ADMISSION_CONTRACT = {
@@ -622,6 +623,7 @@ def _complete_census_rows(
 def _complete_estate_repositories(
     *,
     facts_path: Path = ESTATE_CENSUS_FACTS,
+    tracked_path: Path = ESTATE_CENSUS,
 ) -> set[str] | None:
     """Load the exhaustive per-repository census; never infer the estate from open PR rows."""
     try:
@@ -647,6 +649,23 @@ def _complete_estate_repositories(
     ):
         fail("D", "complete estate repository census is not exhaustive")
         return None
+    try:
+        tracked = json.loads(tracked_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError) as exc:
+        fail("D", f"tracked estate census is unavailable: {exc}")
+        return None
+    tracked_report = tracked.get("source_report") if isinstance(tracked, dict) else None
+    if not isinstance(tracked_report, dict):
+        fail("D", "tracked estate census has no source_report")
+        return None
+    for field in ("generated_at", "content_sha256"):
+        if (
+            not isinstance(report.get(field), str)
+            or not report.get(field)
+            or report.get(field) != tracked_report.get(field)
+        ):
+            fail("D", f"private estate census does not match tracked source_report.{field}")
+            return None
     expected = summary.get("repository_count")
     if isinstance(expected, bool) or not isinstance(expected, int) or expected <= 0:
         fail("D", "complete estate repository census has no positive repository_count")
