@@ -169098,3 +169098,40 @@ tasks:
     conduct_lease_id: 'lease-807-def46040ee9ee82b'
     conduct_generation: 807
   updated: '2026-08-09T03:57:34.135Z'
+- id: 'REV-4444j99-mirror-mirror-revenue-ship-0809'
+  title: 'Drive Mirror Mirror to deploy-ready'
+  repo: '4444J99/mirror-mirror'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'revenue-ship'
+  - 'revenue'
+  - 'product'
+  - 'ship-order'
+  - 'generated'
+  urls: []
+  context: 'In 4444J99/mirror-mirror, clear the concrete blockers between the current state and a DEPLOYABLE product: get open PRs green + merged, fix the critical path, confirm the app runs end-to-end. Output: a deploy-ready build + a short DEPLOY.md listing exactly what remains. [revenue-backlog 2026-08-09: rank 5, stage building — spend tokens on income, not busywork]'
+  predicate: 'test "$(gh pr list --repo 4444J99/mirror-mirror --state merged --search ''REV-4444j99-mirror-mirror-revenue-ship-0809 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:4444J99/mirror-mirror:pull-request:REV-4444j99-mirror-mirror-revenue-ship-0809'
+  origin: 'agent_recommendation'
+  horizon: 'present'
+  value_case: 'Advance Mirror Mirror along its recorded first-dollar path: paid tier once live'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-09T04:53:10.136Z'
+    agent: 'codex'
+    session_id: 'generate-revenue-backlog-generate-revenue-backlog'
+    logical_agent: 'generate-revenue-backlog'
+    logical_session_id: 'generate-revenue-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-12527ff0c2481c9c9184386bb0617470:813:compatibility'
+    conduct_run_id: 'run-12527ff0c2481c9c9184386bb0617470'
+    conduct_lease_id: 'lease-813-12527ff0c2481c9c'
+    conduct_generation: 813
+  updated: '2026-08-09T04:53:10.136Z'
