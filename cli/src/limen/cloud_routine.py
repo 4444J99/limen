@@ -41,9 +41,109 @@ _PREDICATE_SCHEMA_RE = re.compile(
     r"(?=(?:[^']*'[^']*')*[^']*$)"
     r'(?=(?:[^"]*"[^"]*")*[^"]*$)'
     r"""(?=(?:(?:[^'";|&]+)|'[^']*'|"[^"]*")*$)"""
+    r"(?!.*`)"
     r"(?!.*\\$).+$",
     re.IGNORECASE,
 )
+
+def _substitution_end(command: str, start: int) -> int | None:
+    # Return the closing paren for a balanced command substitution.
+    depth = 1
+    quote: str | None = None
+    escaped = False
+    index = start
+    while index < len(command):
+        char = command[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == chr(92):
+            escaped = True
+            index += 1
+            continue
+        if quote is not None:
+            if char == quote:
+                quote = None
+            index += 1
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        elif char == "$" and index + 1 < len(command) and command[index + 1] == "(":
+            depth += 1
+            index += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+        index += 1
+    return None
+
+
+def _contains_shell_composition(command: str) -> bool:
+    # Return whether shell composition occurs outside quoted literals.
+    quote: str | None = None
+    escaped = False
+    for char in command:
+        if escaped:
+            escaped = False
+            continue
+        if char == chr(92):
+            escaped = True
+            continue
+        if quote is not None:
+            if char == quote:
+                quote = None
+            continue
+        if char in {"'", '"'}:
+            quote = char
+        elif char in {";", "|", "&"}:
+            return True
+    return False
+
+
+def _has_unsafe_command_substitution(command: str) -> bool:
+    # Reject legacy backticks and composition hidden inside a command substitution.
+    if "`" in command:
+        return True
+    quote: str | None = None
+    escaped = False
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == chr(92):
+            escaped = True
+            index += 1
+            continue
+        if quote == "'":
+            if char == "'":
+                quote = None
+            index += 1
+            continue
+        if char == "'":
+            quote = "'"
+            index += 1
+            continue
+        if char == '"' and quote is None:
+            quote = '"'
+            index += 1
+            continue
+        if char == '"' and quote == '"':
+            quote = None
+            index += 1
+            continue
+        if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
+            end = _substitution_end(command, index + 2)
+            if end is None or _contains_shell_composition(command[index + 2 : end]):
+                return True
+            index = end + 1
+            continue
+        index += 1
+    return False
 
 CloudRoutineStatus = Literal["ok", "finding", "failed"]
 CloudRoutineDisposition = Literal[
@@ -104,7 +204,7 @@ class CloudRoutineReceiptV1(ProtocolModel):
         normalized = value.strip()
         if len(normalized) > 8192:
             raise ValueError("predicate must be at most 8192 characters")
-        if "$(" in normalized or not _PREDICATE_SCHEMA_RE.fullmatch(normalized):
+        if _has_unsafe_command_substitution(normalized) or not _PREDICATE_SCHEMA_RE.fullmatch(normalized):
             raise ValueError("predicate must match the published bounded shell grammar")
         if not is_executable_predicate(normalized):
             raise ValueError("predicate must be one executable command")
