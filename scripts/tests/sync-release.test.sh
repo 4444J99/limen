@@ -12,7 +12,10 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-script="$here/../sync-release.sh"
+# Overridable so the A/B that PROVES a regression test — run it against the parent commit's script
+# and require a FAIL — is one command rather than a hand-edited copy. A test that has only ever been
+# seen to pass has not been shown to test anything.
+script="${LIMEN_SYNC_RELEASE_SCRIPT:-$here/../sync-release.sh}"
 [ -f "$script" ] || { echo "FAIL: cannot find sync-release.sh at $script" >&2; exit 1; }
 
 tmp="$(mktemp -d)"
@@ -201,4 +204,98 @@ contended_out="$(LIMEN_ROOT="$tmp/contended-live" LIMEN_RELEASE_BRANCH=main bash
 [ "$(git -C "$tmp/contended-live" rev-parse HEAD)" = "$(git --git-dir="$tmp/origin.git" rev-parse refs/heads/main)" ] \
   || { echo "FAIL: receipts-only tracked dirt blocked fast-forward under contention"; echo "$contended_out"; exit 1; }
 
-echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate + contended receipts-only unpark"
+# ── HELD BRANCH NAME: detach → advance → re-attach ──────────────────────────────────────────────
+# The park this closes (observed 2026-08-09): .worktrees/main-checkout held `main`, so the unpark
+# valve's `git switch` was refused every beat and the live checkout sat on a work branch three
+# merges stale, accumulating 21 daemon `capture:` commits onto it. The organ captured the refusal
+# reason and asked a human, forever — a sensor with no effector.
+git init -q --bare "$tmp/held-origin.git"
+git clone -q "$tmp/held-origin.git" "$tmp/held-live" 2>/dev/null
+git -C "$tmp/held-live" checkout -q -b main
+mkdir -p "$tmp/held-live/docs"
+printf 'held-v1\n' > "$tmp/held-live/docs/base.md"
+printf 'task\n' > "$tmp/held-live/tasks.yaml"
+git -C "$tmp/held-live" add -A
+git -C "$tmp/held-live" commit -q -m "held base"
+git -C "$tmp/held-live" push -q -u origin main
+git --git-dir="$tmp/held-origin.git" symbolic-ref HEAD refs/heads/main
+
+# park the live root, THEN let a second worktree take the branch name (the real-world ordering)
+git -C "$tmp/held-live" checkout -q -b codex/held-work
+printf 'held-work\n' > "$tmp/held-live/docs/held-work.md"
+git -C "$tmp/held-live" add docs/held-work.md
+git -C "$tmp/held-live" commit -q -m "parked work"
+git -C "$tmp/held-live" push -q -u origin codex/held-work
+git -C "$tmp/held-live" worktree add -q "$tmp/held-peer" main
+
+git clone -q "$tmp/held-origin.git" "$tmp/held-adv" 2>/dev/null
+( cd "$tmp/held-adv" && git checkout -q main && echo h2 > h2.md && git add -A \
+    && git commit -q -m "held release advance one" && git push -q origin main )
+
+held_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" \
+  || { echo "FAIL: held-branch sync exited nonzero"; echo "$held_out"; exit 1; }
+[ -z "$(git -C "$tmp/held-live" symbolic-ref --quiet --short HEAD 2>/dev/null || echo)" ] \
+  || { echo "FAIL: held branch name did not produce a detached HEAD"; echo "$held_out"; exit 1; }
+grep -Fq "DETACHED at origin/main" <<<"$held_out" \
+  || { echo "FAIL: detach fallback emitted no unpark receipt"; echo "$held_out"; exit 1; }
+[ "$(git -C "$tmp/held-live" rev-parse HEAD)" = "$(git --git-dir="$tmp/held-origin.git" rev-parse refs/heads/main)" ] \
+  || { echo "FAIL: detached HEAD is not at the release"; echo "$held_out"; exit 1; }
+# the other worktree must be entirely untouched — that is the whole point of taking the SHA
+[ "$(git -C "$tmp/held-peer" symbolic-ref --short HEAD)" = main ] \
+  || { echo "FAIL: detach fallback disturbed the holding worktree"; echo "$held_out"; exit 1; }
+# the parked branch's work is still preserved on origin
+git -C "$tmp/held-live" cat-file -e origin/codex/held-work:docs/held-work.md 2>/dev/null \
+  || { echo "FAIL: detach fallback skipped preserve-then-unpark"; echo "$held_out"; exit 1; }
+
+# THE STEADY STATE — the arm that makes the detach a state rather than a one-shot. Without it the
+# organ unparks once and then fails open on every beat afterwards, which reads in the log as an
+# ordinary refusal rather than as a valve that fired once and died.
+( cd "$tmp/held-adv" && echo h3 > h3.md && git add -A \
+    && git commit -q -m "held release advance two" && git push -q origin main )
+held2_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" \
+  || { echo "FAIL: detached steady-state sync exited nonzero"; echo "$held2_out"; exit 1; }
+[ "$(git -C "$tmp/held-live" rev-parse HEAD)" = "$(git --git-dir="$tmp/held-origin.git" rev-parse refs/heads/main)" ] \
+  || { echo "FAIL: detached HEAD did not advance to the new release"; echo "$held2_out"; exit 1; }
+grep -Fq "advancing detached HEAD" <<<"$held2_out" \
+  || { echo "FAIL: detached advance emitted no receipt"; echo "$held2_out"; exit 1; }
+[ -f "$tmp/held-live/h3.md" ] \
+  || { echo "FAIL: detached advance did not deploy the release tree"; echo "$held2_out"; exit 1; }
+
+# --check must call that converged-under-contention state a PASS: it asserts the live root RUNS the
+# release, and no version of it that demands the branch NAME can ever go green while a second
+# worktree holds it.
+held_check_rc=0
+held_check_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || held_check_rc=$?
+[ "$held_check_rc" = 0 ] \
+  || { echo "FAIL: --check should PASS when detached at the release with the name held"; echo "$held_check_out"; exit 1; }
+grep -Fq "DETACHED at exact origin/main" <<<"$held_check_out" \
+  || { echo "FAIL: --check did not distinguish the detached PASS"; echo "$held_check_out"; exit 1; }
+
+# …but a GRATUITOUS detach — nobody holding the name — is still a FAIL. The exemption is bounded by
+# the contention that justifies it, not granted to detached HEADs generally.
+git clone -q "$tmp/held-origin.git" "$tmp/loose-live" 2>/dev/null
+git -C "$tmp/loose-live" checkout -q --detach origin/main
+loose_rc=0
+loose_out="$(LIMEN_ROOT="$tmp/loose-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || loose_rc=$?
+[ "$loose_rc" = 1 ] \
+  || { echo "FAIL: --check should FAIL on a detached HEAD with the branch name free"; echo "$loose_out"; exit 1; }
+
+# RE-ATTACH — the detach is a contingency the organ exits on its own. Release the name and HEAD
+# comes home to the branch, then fast-forwards it normally in the same beat.
+git -C "$tmp/held-live" worktree remove "$tmp/held-peer"
+( cd "$tmp/held-adv" && echo h4 > h4.md && git add -A \
+    && git commit -q -m "held release advance three" && git push -q origin main )
+held3_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" \
+  || { echo "FAIL: re-attach sync exited nonzero"; echo "$held3_out"; exit 1; }
+[ "$(git -C "$tmp/held-live" symbolic-ref --quiet --short HEAD 2>/dev/null || echo)" = main ] \
+  || { echo "FAIL: HEAD did not re-attach to main once the name was free"; echo "$held3_out"; exit 1; }
+grep -Fq "RE-ATTACHED" <<<"$held3_out" \
+  || { echo "FAIL: re-attach emitted no receipt"; echo "$held3_out"; exit 1; }
+[ "$(git -C "$tmp/held-live" rev-parse HEAD)" = "$(git --git-dir="$tmp/held-origin.git" rev-parse refs/heads/main)" ] \
+  || { echo "FAIL: re-attached branch did not fast-forward to the release"; echo "$held3_out"; exit 1; }
+held_check2_rc=0
+held_check2_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$script" --check 2>&1)" || held_check2_rc=$?
+[ "$held_check2_rc" = 0 ] \
+  || { echo "FAIL: --check should PASS after re-attach"; echo "$held_check2_out"; exit 1; }
+
+echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach"
