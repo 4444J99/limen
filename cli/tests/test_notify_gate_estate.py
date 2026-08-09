@@ -181,6 +181,7 @@ def test_python_test_helper_with_concatenated_effector_command_is_detected(tmp_p
 def test_shell_command_regex_accepts_path_and_arguments(check_gate):
     assert check_gate._OSASCRIPT_COMMAND_RE.search("/usr/bin/osascript -e display")
     assert check_gate._OSASCRIPT_COMMAND_RE.search("osascript -e display")
+    assert check_gate._OSASCRIPT_COMMAND_RE.search('"/usr/bin/osascript" -e display')
 
 
 def test_unparseable_copy_counts_as_ungated(tmp_path, check_gate):
