@@ -332,9 +332,20 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
     for relative, value in baseline.items():
         try:
             current = int(value)
+        except (TypeError, ValueError):
+            fail("B", f"{relative}: literal baseline is not an integer")
+            continue
+        if relative not in ceiling:
+            if current != 0:
+                fail(
+                    "B",
+                    f"{relative}: new consumer requires an explicit zero literal baseline",
+                )
+            continue
+        try:
             maximum = int(ceiling[relative])
-        except (KeyError, TypeError, ValueError):
-            fail("B", f"{relative}: no prior shrink-only literal ceiling")
+        except (TypeError, ValueError):
+            fail("B", f"{relative}: prior literal ceiling is not an integer")
             continue
         if current > maximum:
             fail("B", f"{relative}: literal baseline regrew from {maximum} to {current}")
@@ -737,6 +748,22 @@ def measure_unreachable(
     if isinstance(preservation_ceiling, bool) or not isinstance(preservation_ceiling, int):
         fail("D", "live_baseline has no preservation materialization ceiling")
         return None
+    prior_registry = previous_registry()
+    prior_live = prior_registry.get("live_baseline") if isinstance(prior_registry, dict) else None
+    prior_ceiling = (
+        prior_live.get("preservation_materialization_missing_labels")
+        if isinstance(prior_live, dict)
+        else INITIAL_LITERAL_CEILING.get("preservation_materialization_missing_labels", 124)
+    )
+    if isinstance(prior_ceiling, bool) or not isinstance(prior_ceiling, int):
+        fail("D", "prior registry has no preservation materialization ceiling")
+        return None
+    if preservation_ceiling > prior_ceiling:
+        fail(
+            "D",
+            "preservation materialization ceiling regrew "
+            f"from prior {prior_ceiling} to {preservation_ceiling}",
+        )
     if preservation_missing > preservation_ceiling:
         fail(
             "D",
