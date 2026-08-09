@@ -247,10 +247,12 @@ def test_terminal_lineage_replay_is_a_duplicate() -> None:
 
 def test_owned_and_superseded_findings_do_not_create_tasks() -> None:
     owned = _receipt(
+        stable_finding_key="owned-finding",
         disposition="owned",
         owner_ref="https://github.com/organvm/limen/issues/2120",
     )
     superseded = _receipt(
+        stable_finding_key="superseded-finding",
         disposition="superseded",
         owner_ref="https://github.com/organvm/limen/pull/2121",
     )
