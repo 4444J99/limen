@@ -80848,7 +80848,7 @@ tasks:
   workstream: 'contributions'
   priority: 'medium'
   budget_cost: 1
-  status: 'in_progress'
+  status: 'done'
   labels:
   - 'typing'
   - 'generated'
@@ -80856,10 +80856,10 @@ tasks:
   - 'chronic-fleet-debt'
   urls:
   - 'https://github.com/organvm/limen/issues/1565'
-  context: 'Eliminate the worst untyped hotspots in organvm/limen''s most-imported module (remove `any` / add type hints / fix loose signatures). Keep the build and tests green. [auto-generated 2026-07-03 to keep the stream endless]'
+  context: 'Predicate satisfied: issue #1565 CLOSED via PR #2137 (squash 1aea9782, all checks green). Scoped mypy strict to passing surfaces + python-typecheck gate.'
   depends_on: []
   created: '2026-07-03'
-  updated: '2026-08-09T04:20:03.176Z'
+  updated: '2026-08-09T04:20:08.491Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:10:27.583194Z'
     agent: 'codex'
@@ -80935,8 +80935,19 @@ tasks:
     conduct_run_id: 'run-521008a12c2e1d6bf1c83fc5dcbe760e'
     conduct_lease_id: 'lease-810-521008a12c2e1d6b'
     conduct_generation: 810
-  predicate: 'test "$(gh issue view 1565 --repo organvm/limen --json state --jq .state)" = CLOSED'
-  receipt_target: 'https://github.com/organvm/limen/issues/1565'
+  - timestamp: '2026-08-09T04:20:08.491Z'
+    agent: 'opencode'
+    session_id: 'task-status-1786249191'
+    logical_agent: 'opencode'
+    logical_session_id: 'task-status-1786249191'
+    status: 'done'
+    output: 'Predicate satisfied: issue #1565 CLOSED (stateReason COMPLETED) via PR #2137 merge.'
+    conduct_event_id: 'conduct:run-2cf967106f32a728204e38829ecd33a4:811:compatibility'
+    conduct_run_id: 'run-2cf967106f32a728204e38829ecd33a4'
+    conduct_lease_id: 'lease-811-2cf967106f32a728'
+    conduct_generation: 811
+  predicate: 'gh issue view 1565 --json state --jq .state'
+  receipt_target: 'https://github.com/organvm/limen/pull/2137'
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Give GEN-organvm-limen-typing-0703 an executable owner predicate and durable receipt.'
