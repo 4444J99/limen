@@ -207,7 +207,10 @@ def plan_task_upserts(
     }
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
-    classified = 0
+    # Every terminal observation is classified even when a later receipt for the
+    # same lineage controls task emission. This preserves the audit denominator
+    # without allowing an older new_work receipt to resurrect superseded work.
+    classified = sum(receipt.disposition != "new_work" for receipt in latest_by_lineage.values())
     duplicates = collapsed
 
     for receipt in latest_by_lineage.values():
