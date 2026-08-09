@@ -122,6 +122,10 @@ def _routing_reason(
     if not _fresh_timestamp(handoff, instant):
         return "keeper_unavailable", "handoff missing a fresh keeper timestamp"
 
+    pause_marker = ROOT / "logs" / "AUTONOMY_PAUSED"
+    if pause_marker.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
+        return "admission_blocked", "autonomy pause marker is present"
+
     admission = handoff.get("dispatch_admission")
     if not isinstance(admission, dict) or admission.get("schema_version") != "limen.dispatch_admission.v1":
         return "keeper_unavailable", "canonical dispatch admission unavailable"
