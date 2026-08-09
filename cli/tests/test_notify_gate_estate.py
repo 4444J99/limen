@@ -380,6 +380,75 @@ def test_delivery_result_reflects_osascript_exit_status(monkeypatch):
     assert mod._deliver("message", "title") is False
 
 
+def test_gate_state_follows_helper_delivery_route(tmp_path, check_gate):
+    notifier = _write_notifier(
+        tmp_path,
+        """
+        def _root_may_speak(root):
+            return True
+
+        def _deliver(message, title):
+            return True
+
+        def _send(message):
+            return _deliver(message, "title")
+
+        def notify(root, message):
+            if _root_may_speak(root):
+                return _send(message)
+        """,
+    )
+
+    gated, reason = check_gate.gate_state(notifier)
+
+    assert gated, reason
+
+
+def test_gate_state_rejects_or_override_delivery_condition(tmp_path, check_gate):
+    notifier = _write_notifier(
+        tmp_path,
+        """
+        def _root_may_speak(root):
+            return True
+
+        def _deliver(message, title):
+            return True
+
+        def notify(root, message, override=False):
+            if _root_may_speak(root) or override:
+                return _deliver(message, "title")
+        """,
+    )
+
+    gated, reason = check_gate.gate_state(notifier)
+
+    assert gated is False
+    assert "notify" in reason
+
+
+def test_gate_state_rejects_partial_negative_guard(tmp_path, check_gate):
+    notifier = _write_notifier(
+        tmp_path,
+        """
+        def _root_may_speak(root):
+            return True
+
+        def _deliver(message, title):
+            return True
+
+        def notify(root, message, condition):
+            if not _root_may_speak(root) and condition:
+                return
+            return _deliver(message, "title")
+        """,
+    )
+
+    gated, reason = check_gate.gate_state(notifier)
+
+    assert gated is False
+    assert "notify" in reason
+
+
 def test_gate_state_requires_control_dependency(tmp_path, check_gate):
     notifier = _write_notifier(
         tmp_path,
