@@ -573,9 +573,7 @@ def test_heartbeat_resident_sleep_uses_interruptible_helper():
 
 
 def test_interruptible_sleep_uses_one_timer_without_per_second_churn():
-    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(
-        encoding="utf-8"
-    )
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
     helper = source[source.index("_interruptible_sleep()") : source.index("\n}\n\n_fast_wave_due_beat")]
     assert 'sleep "$_sleep_remaining"' in helper
     assert "sleep 1" not in helper
@@ -687,8 +685,12 @@ def test_new_early_sample_survives_transient_seat_write_failure(tmp_path, monkey
     }
     monkeypatch.setattr(executive, "sample_vitals", lambda: early)
     monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
-    monkeypatch.setattr(executive, "continuity", type("Continuity", (), {"beat": staticmethod(lambda: {"status": "ok"})}))
-    monkeypatch.setattr(executive, "integrity", type("Integrity", (), {"check": staticmethod(lambda: {"status": "ok"})}))
+    monkeypatch.setattr(
+        executive, "continuity", type("Continuity", (), {"beat": staticmethod(lambda: {"status": "ok"})})
+    )
+    monkeypatch.setattr(
+        executive, "integrity", type("Integrity", (), {"check": staticmethod(lambda: {"status": "ok"})})
+    )
     monkeypatch.setattr(executive, "_update_status", lambda mutator: mutator(old))
 
     status = executive.run_beat()
