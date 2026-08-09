@@ -35,7 +35,7 @@ _DURABLE_OWNER_RE = re.compile(
     r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
     r"(?:issues|pull|actions/runs)/[0-9]+)$"
 )
-_OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}(?:\\.[0-9]{6})?Z)?$")
+_OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}(?:\.[0-9]{6})?Z)?$")
 _PREDICATE_SCHEMA_RE = re.compile(
     r"^(?!.*(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b))"
     r"(?=(?:[^']*'[^']*')*[^']*$)"
