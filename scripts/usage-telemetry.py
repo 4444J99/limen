@@ -43,12 +43,14 @@ try:
         project_provider_health as _project_provider_health,
         provider_health_policy as _provider_health_policy,
         provider_outcome_ledger_path as _provider_outcome_ledger_path,
+        PROVIDER_TERMINALS as _PROVIDER_TERMINALS,
     )
 except Exception:  # pragma: no cover - installed fleet may briefly precede this module
     _load_provider_outcomes = None
     _project_provider_health = None
     _provider_health_policy = None
     _provider_outcome_ledger_path = None
+    _PROVIDER_TERMINALS = frozenset({"auth_failure", "rate_limit"})
 
 HOME = Path.home()
 NOW = datetime.datetime.now(datetime.timezone.utc)
@@ -564,8 +566,9 @@ def _provider_outcome_projection() -> dict:
     ):
         return {}
     try:
+        outcomes = _load_provider_outcomes(_provider_outcome_ledger_path())
         snapshot = _project_provider_health(
-            _load_provider_outcomes(_provider_outcome_ledger_path()),
+            outcomes,
             _provider_health_policy(),
             now=NOW,
         )
@@ -588,11 +591,28 @@ def _provider_outcome_projection() -> dict:
     cooldown_expiry = max((entry.cooldown_until for entry in entries if entry.cooldown_until), default=None)
     blocked = [entry for entry in entries if entry.blocked(NOW)]
     all_providers_blocked = bool(provider_entries) and len(blocked_provider_entries) == len(provider_entries)
+    latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
+    for outcome in outcomes:
+        provider = str(getattr(outcome, "provider", "") or "")
+        terminal = str(getattr(outcome, "terminal_class", "") or "")
+        finished = getattr(outcome, "finished_at", None)
+        if not provider or terminal not in _PROVIDER_TERMINALS or not isinstance(finished, datetime.datetime):
+            continue
+        previous = latest_provider_failure.get(provider)
+        if previous is None or finished > previous[0]:
+            latest_provider_failure[provider] = (finished, terminal)
+    provider_failure_classes = {
+        provider: terminal for provider, (_finished, terminal) in latest_provider_failure.items()
+    }
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
         "provider_cooldown_count": len(blocked),
         "provider_last_success": last_success.isoformat() if last_success else None,
         "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
+        # Dispatch needs the terminal class, not only its timestamp, to distinguish an auth
+        # cooldown from a capacity/transport failure.
+        "provider_last_terminal_failure_class": provider_failure_classes.get("opencode"),
+        "provider_terminal_failure_classes": provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
         # Dispatch benches OpenCode only when every observed provider is blocked;
