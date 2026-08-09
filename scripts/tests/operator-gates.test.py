@@ -181,6 +181,38 @@ with tempfile.TemporaryDirectory() as td:
     v, _ = m.evaluate()
     check("baseline does NOT exempt a fresh violation", ids_for(v, "A") == {"T-NEW"})
 
+    # --- canonical board: the mirror is not the keeper ------------------------------------
+    # BOARD is a mirror that refreshes only when a board-publication PR merges to main. Auditing
+    # it and calling the result "the board" is the hole heal-board.py carried (#2014). Measured
+    # 2026-08-09: keeper 126 needs_human vs main's 109.
+    stage(tmp, tasks=[{"id": "T-LOCAL", "status": "open"}], levers=[OK_LEVER])
+    m.BOARD_REF = None
+    tasks, source = m.board_tasks()
+    check("default reads the local mirror", [t["id"] for t in tasks] == ["T-LOCAL"] and source.startswith("local:"))
+
+    m.BOARD_REF = m.CANONICAL_REF
+    m.canonical_text = lambda: yaml.safe_dump({"version": "1.0", "tasks": [{"id": "T-KEEPER", "status": "open"}]})
+    tasks, source = m.board_tasks()
+    check(
+        "--canonical reads the keeper, not the mirror",
+        [t["id"] for t in tasks] == ["T-KEEPER"] and source == f"canonical:{m.CANONICAL_REF}",
+    )
+
+    # THE one that matters: an unreachable keeper must be distinguishable from a clean keeper.
+    # Returning [] with a "local" source would render an unfetched remote as a spotless board.
+    m.canonical_text = lambda: None
+    tasks, source = m.board_tasks()
+    check(
+        "REGRESSION: unreadable keeper yields UNREADABLE, not an empty clean board",
+        tasks == [] and source == "CANONICAL-UNREADABLE",
+    )
+    _, census = m.evaluate()
+    check(
+        "REGRESSION: the census carries the board source so a reader cannot be fooled",
+        census["board_source"] == "CANONICAL-UNREADABLE",
+    )
+    m.BOARD_REF = None
+
 print()
 if failures:
     print(f"operator-gates.test: FAIL ({len(failures)} check(s)): {failures}")

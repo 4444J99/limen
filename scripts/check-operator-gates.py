@@ -56,7 +56,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -120,13 +122,62 @@ def baseline_ids() -> set[str]:
     return out
 
 
-def load_board() -> list[dict]:
-    if not BOARD.exists():
-        return []
+CANONICAL_REF = os.environ.get("LIMEN_BOARD_CANONICAL_REF", "origin/tabularius/board-projection")
+
+# Set by --canonical. None => read BOARD (the local mirror).
+BOARD_REF: str | None = None
+
+
+def canonical_text() -> str | None:
+    """The keeper's PUBLISHED tasks.yaml, read offline from its publication ref.
+
+    ``BOARD`` is a *mirror*; it refreshes only when a board-publication PR merges to ``main``, so
+    when that merge stalls the keeper drifts somewhere this gate cannot see. ``heal-board.py``
+    carried the identical hole and it hid twelve regressed ``needs-human`` atoms (#2014).
+
+    Measured here 2026-08-09: the keeper held **126** ``needs_human`` where ``main``'s copy held
+    **109**, and 533 open/blocked HEAL tasks against main's 492. The *verdicts* happened to agree
+    (zero violations either way), but the census this gate publishes as a receipt was understated
+    by 17 — a wrong number in the artifact whose whole job is to be the number.
+
+    Returns ``None`` — never a guess, never an empty board — when the ref is unreadable (a shallow
+    clone, an unfetched remote). The caller surfaces that as UNREADABLE, because "the keeper was
+    unreachable" and "the keeper is clean" must not print the same thing.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(ROOT), "show", f"{CANONICAL_REF}:tasks.yaml"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout if out.returncode == 0 and out.stdout.strip() else None
+
+
+def board_tasks() -> tuple[list[dict], str]:
+    """``(tasks, source)``. ``source`` is carried into the census so no reader can mistake an
+    unreachable keeper for a clean one."""
     import yaml  # imported late so --help works without PyYAML
 
-    data = yaml.safe_load(BOARD.read_text(encoding="utf-8")) or {}
-    return data.get("tasks", []) if isinstance(data, dict) else []
+    if BOARD_REF is not None:
+        text = canonical_text()
+        if text is None:
+            return [], "CANONICAL-UNREADABLE"
+        source = f"canonical:{CANONICAL_REF}"
+    elif BOARD.exists():
+        text = BOARD.read_text(encoding="utf-8")
+        source = f"local:{BOARD}"
+    else:
+        return [], "LOCAL-ABSENT"
+    data = yaml.safe_load(text) or {}
+    tasks = data.get("tasks", []) if isinstance(data, dict) else []
+    return tasks, source
+
+
+def load_board() -> list[dict]:
+    return board_tasks()[0]
 
 
 def setting_entry(task: dict, status: str) -> dict | None:
@@ -159,7 +210,7 @@ def evaluate() -> tuple[list[dict], dict]:
     base = baseline_ids()
     violations: list[dict] = []
     unknowns: list[str] = []  # checks that could not be evaluated — reported, never passed
-    tasks = load_board()
+    tasks, board_source = board_tasks()
 
     # --- A. the label no human can set -------------------------------------------------
     for task in tasks:
@@ -267,6 +318,7 @@ def evaluate() -> tuple[list[dict], dict]:
         )
 
     census = {
+        "board_source": board_source,
         "needs_human_set_by_a_human": 0,
         "needs_human_no_provenance": sum(1 for r in provenance if r["verdict"] == "no-provenance"),
         "tasks_total": len(tasks),
@@ -297,9 +349,29 @@ def main() -> int:
         help="record the CURRENT violations as known debt (shrink-only; never run to silence a new one)",
     )
     ap.add_argument("--receipt", metavar="PATH", help="write the durable provenance receipt to PATH")
+    ap.add_argument(
+        "--canonical",
+        action="store_true",
+        help=f"audit the KEEPER's published board ({CANONICAL_REF}) instead of the local mirror",
+    )
     args = ap.parse_args()
 
+    global BOARD_REF
+    if args.canonical:
+        BOARD_REF = CANONICAL_REF
+
     violations, census = evaluate()
+
+    # An unreadable keeper must never print like a clean one. Bail before any verdict, receipt, or
+    # baseline write can be derived from an empty board.
+    if census["board_source"] == "CANONICAL-UNREADABLE":
+        print(
+            f"check-operator-gates: UNREADABLE — {CANONICAL_REF}:tasks.yaml could not be read "
+            "(unfetched remote or shallow clone). No verdict derived. "
+            f"Try: git fetch origin {CANONICAL_REF.split('/', 1)[-1]}",
+            file=sys.stderr,
+        )
+        return 2
 
     if args.receipt:
         provenance = census.pop("provenance", [])
