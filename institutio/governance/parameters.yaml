@@ -353,6 +353,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Seconds allowed for the lightweight VIGILIA host sample inside one fast wave. This stays far below the declared sample cadence so a wedged probe cannot consume the next sample slot."
+  VITALS_SAMPLE_GRACE_SECONDS:
+    default: 5
+    env: LIMEN_VITALS_SAMPLE_GRACE_SECONDS
+    self_update: none
+    owner: vitals
+    note: "Bounded write-completion grace at a VITALS sample cadence boundary. The stale watcher and fast-wave scheduler share this allowance so a healthy sample cannot be reported stale merely because the watchdog read during its atomic seat replacement."
   LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:
     default: 30
     env: LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT
@@ -376,7 +382,7 @@ parameters:
     env: LIMEN_VITALS_STALE_BEATS
     self_update: none
     owner: vitals
-    note: "host-pressure-stale threshold: sampled_at in logs/vigilia/status.json is stale after this many missed VITALS_SAMPLE_SECONDS cadences. completed_at measures the slower full autonomic beat and never substitutes for a fresh host sample."
+    note: "host-pressure-stale threshold: sampled_at in logs/vigilia/status.json is stale after this many declared VITALS_SAMPLE_SECONDS cadences, plus VITALS_SAMPLE_GRACE_SECONDS for the producer write. completed_at measures the slower full autonomic beat and never substitutes for a fresh host sample."
   LIMEN_HOST_PRESSURE_STALE:
     default: "1"
     env: LIMEN_HOST_PRESSURE_STALE
