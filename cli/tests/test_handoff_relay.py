@@ -47,8 +47,7 @@ def _configure(mod, monkeypatch, tmp_path, board):
         encoding="utf-8",
     )
     overnight = logs / "overnight-watch.out.log"
-    overnight.write_text("watch ok spent=1/100
-", encoding="utf-8")
+    overnight.write_text("watch ok spent=1/100\n", encoding="utf-8")
     monkeypatch.setattr(mod, "TASKS", tasks)
     monkeypatch.setattr(mod, "HANDOFF", logs / "handoff.json")
     monkeypatch.setattr(mod, "USAGE", usage)
