@@ -53,6 +53,8 @@ def _configure(mod, monkeypatch, tmp_path, board):
     monkeypatch.setattr(mod, "OVERNIGHT", overnight)
     monkeypatch.setattr(mod, "SELF_HEAL", logs / "self-heal.log")
     monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 12, 12, 5, tzinfo=dt.timezone.utc))
+    # The fixture represents a healthy provider receipt without requiring host binaries.
+    monkeypatch.setattr(mod, "agent_status", lambda _agent: {"reachable": True})
     return logs
 
 
@@ -340,6 +342,67 @@ def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
     assert admission["admissible"] == 0
     assert admission["reason_counts"] == {"auth_blocked": 1}
     assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_preserves_agy_weak_proxy_lane():
+    mod = _load()
+    task = _task("AGY-PROXY", agent="agy")
+    budget = {"remaining": 3, "per_agent": {"agy": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "agy": {
+                "remaining": 0,
+                "health": "low",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap",
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
+
+
+def test_dispatch_admission_filters_unreachable_any_lane(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("github_actions", "codex"))
+    monkeypatch.setattr(mod, "agent_status", lambda agent: {"reachable": agent == "codex"})
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    task = _task("ANY-LIVE", agent="any")
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_any_agent_counts"] == {"codex": 1}
+
+
+def test_board_budget_preserves_active_per_agent_reset_window(monkeypatch):
+    mod = _load()
+    now = dt.datetime(2026, 7, 13, 2, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(mod, "_now", lambda: now)
+    monkeypatch.setattr(mod, "_window_hours", lambda agent: 5.0 if agent == "codex" else 24.0)
+    board = _board([])
+    board["portal"]["budget"]["track"] = {
+        "date": "2026-07-12",
+        "spent": 9,
+        "per_agent": {"codex": 2, "gemini": 7},
+        "per_agent_reset": {
+            "codex": "2026-07-13T00:00:00+00:00",
+            "gemini": "2026-07-12T00:00:00+00:00",
+        },
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 2
+    assert budget["remaining"] == 8
+    assert budget["per_agent"]["codex"]["spent"] == 2
+    assert budget["per_agent"]["gemini"]["spent"] == 0
 
 
 def test_dispatch_admission_discovers_unmetered_canonical_lane(monkeypatch):
