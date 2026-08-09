@@ -141,7 +141,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-fix-macos-fork-oslog-crash` — 414ded13 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
 - `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 
-## Live-work branches (328) — decide each
+## Live-work branches (329) — decide each
 
 - `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `archive/danse-predecessor-experiments-20260802` — a232f2d7 archive(danse): preserve predecessor experiments
@@ -158,6 +158,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `corpus-verify` — d45b030d photos: extend duplicate proof batch
 - `discover-organvm-browser-state` — 7fb6478b docs: preserve gens discovery thesis
 - `discovery-organvm-palimpsest` — 73808950 feat: discover organvm/palimpsest and add to value-repos
+- `docs/board-partition-verify-20260808014448` — b254c279 docs(verify): the stale count was 15, and a PR rollup reports failures that pass
 - `docs/covenant-agent-docs` — dc7ecd51 docs(covenant): keeper law on every agent surface — AGENTS/GEMINI clauses + parity assertions + IF entry
 - `docs/enc1101-eot-catchalls-20260804` — d86a575d capture(sync-release): preserve parked dirt before unpark [skip ci]
 - `docs/quicken-residue` — 1890688b docs: QUICKEN residue — irreducible human atoms (daemon capture)
