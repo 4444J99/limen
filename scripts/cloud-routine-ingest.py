@@ -128,6 +128,42 @@ def validate_human_gate_owners(
         )
 
 
+def validate_lever_owners(
+    receipts: list[CloudRoutineReceiptV1],
+    *,
+    lever_path: Path,
+) -> None:
+    """Reject any material receipt that names a missing or terminal lever."""
+    lever_receipts = [
+        receipt
+        for receipt in receipts
+        if (receipt.owner_ref or "").startswith("lever:")
+    ]
+    if not lever_receipts:
+        return
+    states = _lever_states(lever_path)
+    owner_ids = {
+        (receipt.owner_ref or "").removeprefix("lever:")
+        for receipt in lever_receipts
+    }
+    missing = sorted(owner_ids - states.keys())
+    if missing:
+        raise ValueError(
+            "lever owner_ref does not resolve in his-hand-levers.json: "
+            + ", ".join(missing)
+        )
+    terminal = sorted(
+        lever_id
+        for lever_id in owner_ids
+        if states[lever_id] in TERMINAL_LEVER_STATUSES
+    )
+    if terminal:
+        raise ValueError(
+            "lever owner_ref resolves only to a terminal/inactive lever: "
+            + ", ".join(terminal)
+        )
+
+
 def registered_routine_ids(path: Path = ROOT / "cloud-routines.json") -> set[str]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     routines = payload.get("routines") if isinstance(payload, dict) else None
@@ -168,10 +204,12 @@ def load_receipts(
             for item in _objects_from_path(path)
         )
     validate_routine_ids(receipts, manifest_path=manifest_path)
+    latest = latest_receipts_by_lineage(receipts)
     validate_human_gate_owners(
-        latest_receipts_by_lineage(receipts),
+        latest,
         lever_path=lever_path,
     )
+    validate_lever_owners(latest, lever_path=lever_path)
     return receipts
 
 
