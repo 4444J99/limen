@@ -586,12 +586,13 @@ APPLESCRIPT
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
 
 
-def test_non_utf8_candidate_cannot_crash_the_estate_scan(tmp_path, check_gate):
+def test_non_utf8_candidate_is_reported_without_crashing_the_estate_scan(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "sender.py").write_bytes(b"osascript\xffdisplay notification")
 
-    assert check_gate.direct_notification_effectors(tmp_path) == []
+    # An undecodable source is unsafe evidence: report it so the estate gate fails closed.
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
 def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check_gate, monkeypatch):
