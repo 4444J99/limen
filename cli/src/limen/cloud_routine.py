@@ -42,15 +42,24 @@ _PREDICATE_SCHEMA_RE = re.compile(
     r"^(?!.*(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b))"
     r"(?=(?:[^']*'[^']*')*[^']*$)"
     r'(?=(?:[^"]*"[^"]*")*[^"]*$)'
-    r"""(?=(?:(?:[^'";|&]+)|'[^']*'|"[^"]*")*$)"""
+    r"""(?=(?:(?:[^'";|&])|'[^']*'|"[^"]*")*$)"""
     r"(?!.*`)"
     r"(?!.*\\$).+$",
     re.IGNORECASE,
 )
 
 
-def _substitution_end(command: str, start: int) -> int | None:
+_MAX_SUBSTITUTION_DEPTH = 32
+
+
+def _substitution_end(
+    command: str,
+    start: int,
+    depth: int = 0,
+) -> int | None:
     """Find a command substitution's closing parenthesis with nested quote contexts."""
+    if depth > _MAX_SUBSTITUTION_DEPTH:
+        return None
     quote: str | None = None
     escaped = False
     index = start
@@ -75,7 +84,7 @@ def _substitution_end(command: str, start: int) -> int | None:
                 index += 1
                 continue
             if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
-                nested_end = _substitution_end(command, index + 2)
+                nested_end = _substitution_end(command, index + 2, depth + 1)
                 if nested_end is None:
                     return None
                 index = nested_end + 1
@@ -87,7 +96,7 @@ def _substitution_end(command: str, start: int) -> int | None:
             index += 1
             continue
         if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
-            nested_end = _substitution_end(command, index + 2)
+            nested_end = _substitution_end(command, index + 2, depth + 1)
             if nested_end is None:
                 return None
             index = nested_end + 1
@@ -120,8 +129,10 @@ def _contains_shell_composition(command: str) -> bool:
     return False
 
 
-def _has_unsafe_command_substitution(command: str) -> bool:
+def _has_unsafe_command_substitution(command: str, depth: int = 0) -> bool:
     # Reject legacy backticks and composition hidden inside a command substitution.
+    if depth > _MAX_SUBSTITUTION_DEPTH:
+        return True
     if "`" in command:
         return True
     quote: str | None = None
@@ -148,11 +159,11 @@ def _has_unsafe_command_substitution(command: str) -> bool:
                 index += 1
                 continue
             if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
-                end = _substitution_end(command, index + 2)
+                end = _substitution_end(command, index + 2, depth + 1)
                 if end is None:
                     return True
                 body = command[index + 2 : end]
-                if _contains_shell_composition(body) or _has_unsafe_command_substitution(body):
+                if _contains_shell_composition(body) or _has_unsafe_command_substitution(body, depth + 1):
                     return True
                 index = end + 1
                 continue
@@ -167,11 +178,11 @@ def _has_unsafe_command_substitution(command: str) -> bool:
             index += 1
             continue
         if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
-            end = _substitution_end(command, index + 2)
+            end = _substitution_end(command, index + 2, depth + 1)
             if end is None:
                 return True
             body = command[index + 2 : end]
-            if _contains_shell_composition(body) or _has_unsafe_command_substitution(body):
+            if _contains_shell_composition(body) or _has_unsafe_command_substitution(body, depth + 1):
                 return True
             index = end + 1
             continue
@@ -337,22 +348,28 @@ def plan_task_upserts(
     """
     receipt_rows = tuple(receipts)
     latest_by_lineage: dict[str, CloudRoutineReceiptV1] = {}
+    receipts_by_timestamp: dict[str, dict[datetime, CloudRoutineReceiptV1]] = {}
     collapsed = 0
     for receipt in receipt_rows:
         lineage_id = task_id_for(receipt)
-        previous = latest_by_lineage.get(lineage_id)
-        if previous is not None:
+        by_timestamp = receipts_by_timestamp.setdefault(lineage_id, {})
+        previous_at_timestamp = by_timestamp.get(receipt.observed_at)
+        if previous_at_timestamp is not None:
             collapsed += 1
-            if receipt.observed_at == previous.observed_at:
-                if receipt != previous:
-                    raise ValueError(
-                        f"conflicting cloud-routine observations share the same timestamp for {lineage_id}"
-                    )
-                continue
-            if receipt.observed_at > previous.observed_at:
-                latest_by_lineage[lineage_id] = receipt
+            if previous_at_timestamp != receipt:
+                raise ValueError(
+                    f"conflicting cloud-routine observations share the same "
+                    f"timestamp for {lineage_id}"
+                )
             continue
-        latest_by_lineage[lineage_id] = receipt
+        by_timestamp[receipt.observed_at] = receipt
+        previous = latest_by_lineage.get(lineage_id)
+        if previous is None:
+            latest_by_lineage[lineage_id] = receipt
+            continue
+        collapsed += 1
+        if receipt.observed_at > previous.observed_at:
+            latest_by_lineage[lineage_id] = receipt
 
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
