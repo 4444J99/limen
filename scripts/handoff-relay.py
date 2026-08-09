@@ -37,6 +37,10 @@ from limen.dispatch import (
     _down_lanes,
     _effective_target_agent,
     _weak_proxy_exhaustion,
+    _has_pr_open_transition,
+    _remaining_budget,
+    _superseded_by_rebase_task,
+    _superseded_by_trunk_repair,
     _window_hours,
     _worktree_admission_for_task,
     _worktree_admission_snapshot,
@@ -44,6 +48,7 @@ from limen.dispatch import (
     chronic_dispatch_reason,
     task_passes_value_gate,
 )  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -403,6 +408,39 @@ def _has_terminal_transition(task: dict[str, Any]) -> bool:
     return False
 
 
+def _has_open_pr_receipt(task: dict[str, Any]) -> bool:
+    """Match the dispatcher’s durable open-PR receipt gate for a raw board row."""
+    try:
+        return _has_pr_open_transition(Task.model_validate(task))
+    except Exception:
+        return any(
+            isinstance(entry, dict)
+            and (
+                str(entry.get("status") or "") == "pr_open"
+                or (
+                    str(entry.get("status") or "") == "dispatched"
+                    and "/pull/" in str(entry.get("session_id") or "").lower()
+                )
+            )
+            for entry in task.get("dispatch_log") or []
+        )
+
+
+def _superseded_by_active_repair(
+    task: dict[str, Any],
+    typed_tasks: dict[str, Task],
+) -> bool:
+    """Apply both dispatcher-owned active repair supersession predicates."""
+    try:
+        candidate = Task.model_validate(task)
+    except Exception:
+        return False
+    return _superseded_by_rebase_task(candidate, typed_tasks) or _superseded_by_trunk_repair(
+        candidate,
+        typed_tasks,
+    )
+
+
 def _dependency_merged(task: dict[str, Any] | None) -> bool:
     if not isinstance(task, dict):
         return False
@@ -573,6 +611,13 @@ def _dispatch_admission(
     subprocess. Each open row receives one primary reason in deterministic gate order.
     """
     by_id = {str(task.get("id")): task for task in tasks if task.get("id")}
+    typed_tasks: dict[str, Task] = {}
+    for task in tasks:
+        try:
+            typed = Task.model_validate(task)
+        except Exception:
+            continue
+        typed_tasks[typed.id] = typed
     global_remaining = _as_int(board_budget.get("remaining"))
     per_agent = board_budget.get("per_agent") if isinstance(board_budget.get("per_agent"), dict) else {}
     candidates: list[dict[str, Any]] = []
@@ -605,6 +650,23 @@ def _dispatch_admission(
             if str(name).strip() and canonical_agent(str(name)) not in {"", "any"}
         }
     )
+    governed_remaining: dict[str, int] = {}
+    if global_remaining is not None:
+        try:
+            limen_file = load_limen_file(TASKS)
+        except Exception:
+            limen_file = None
+        if limen_file is not None:
+            for candidate_agent in known_agents:
+                try:
+                    governed_remaining[candidate_agent] = _remaining_budget(
+                        limen_file,
+                        candidate_agent,
+                        global_remaining,
+                    )
+                except Exception:
+                    continue
+
     # Reachability probes can hit local binaries or external launchers. Snapshot each lane once
     # before evaluating tasks so a large any-task queue cannot multiply the same slow probe.
     reachability_agents = set(known_agents)
@@ -624,6 +686,8 @@ def _dispatch_admission(
         reason: str | None = None
         if _has_terminal_transition(task):
             reason = "terminal_history"
+        if reason is None and _has_open_pr_receipt(task):
+            reason = "open_pr_receipt"
         labels = {str(label) for label in task.get("labels") or []}
         held = labels & HOLD_LABELS
         if reason is None and held:
@@ -644,6 +708,8 @@ def _dispatch_admission(
                 reason = "admission_blocked"
         if reason is None and _chronic_dispatch_gate(task):
             reason = "chronic_dispatch"
+        if reason is None and _superseded_by_active_repair(task, typed_tasks):
+            reason = "superseded_active_owner"
         cost = _as_int(task.get("budget_cost")) or 1
         if reason is None and global_remaining is not None and cost > global_remaining:
             reason = "budget_global"
@@ -668,7 +734,11 @@ def _dispatch_admission(
             reason = "execution_requirements"
         if reason is not None:
             reasons[reason] += 1
-            record_reason(agent, reason)
+            if reason == "budget_global" and agent == "any":
+                for candidate_agent in known_agents:
+                    record_reason(candidate_agent, reason)
+            else:
+                record_reason(agent, reason)
             if reason in {"provider_health", "auth_blocked"}:
                 provider_health_reasons[agent] += 1
             continue
@@ -682,7 +752,11 @@ def _dispatch_admission(
                     if isinstance(candidate_budget, dict)
                     else None
                 )
-                if candidate_remaining is not None and cost > candidate_remaining:
+                governed = governed_remaining.get(candidate_agent)
+                if (
+                    (candidate_remaining is not None and cost > candidate_remaining)
+                    or (governed is not None and cost > governed)
+                ):
                     any_blockers["budget_agent"] += 1
                     record_reason(candidate_agent, "budget_agent")
                     continue
