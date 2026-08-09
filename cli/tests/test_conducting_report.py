@@ -401,3 +401,18 @@ def test_autonomy_pause_marker_blocks_routing_even_with_admitted_work(tmp_path, 
 
     assert reason == "admission_blocked"
     assert detail == "autonomy pause marker is present"
+
+def test_keeper_load_failure_cannot_render_as_empty_board(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs)
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["dispatch_admission"]["keeper_available"] = False
+    payload["dispatch_admission"]["reason_counts"] = {"keeper_unavailable": 1}
+    (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    reason, detail = module._routing_reason()
+
+    assert reason == "keeper_unavailable"
+    assert "board unavailable" in detail
+
