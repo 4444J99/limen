@@ -516,6 +516,22 @@ def test_canary_uses_fast_wave_period_for_fast_wave_sources(tmp_path, capsys):
     assert "STALE fast-wave-sensor" in capsys.readouterr().out
 
 
+def test_canary_reads_fast_wave_cadence_from_deployed_env_file(tmp_path, capsys, monkeypatch):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
+        (voice_dir / sid).write_text("stamp\n", encoding="utf-8")
+    os.utime(voice_dir / "fast-wave-sensor", (time.time() - 1000, time.time() - 1000))
+    env_file = tmp_path / ".limen.env"
+    env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200\n", encoding="utf-8")
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+
+    assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
+    assert "STALE fast-wave-sensor" not in capsys.readouterr().out
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+
+
 def test_canary_stale_stamp_exits_1(tmp_path, capsys):
     """Bound is cadence × loop_max × 2 (twice the worst-case wall-clock for one cadence window):
     live-lane cadence 4 × loop_max 60 × 2 = 480 s — a stamp backdated past it must read STALE."""
