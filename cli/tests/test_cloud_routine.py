@@ -485,6 +485,37 @@ def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
     assert receipt["packet_emissions"] == []
 
 
+def test_submitted_lineage_append_is_idempotent(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_lineage_append_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    tasks_path = tmp_path / "tasks.yaml"
+    receipt = _receipt()
+
+    module._append_cloud_lineage_receipt(tasks_path, receipt)
+    module._append_cloud_lineage_receipt(tasks_path, receipt)
+
+    lineage = json.loads((tmp_path / "docs" / "receipts" / "cloud-routine-lineage.json").read_text())
+    assert len(lineage["entries"]) == 1
+    assert lineage["entries"][0]["stable_finding_key"] == receipt.stable_finding_key
+
+
+def test_consumer_rejects_a_nonexistent_non_human_lever(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_non_human_lever_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    registry = tmp_path / "his-hand-levers.json"
+    registry.write_text('{"levers": []}', encoding="utf-8")
+    receipt = _receipt(disposition="owned", owner_ref="lever:L-NOT-REGISTERED")
+
+    with pytest.raises(ValueError, match="does not resolve"):
+        module.validate_lever_owners([receipt], lever_path=registry)
+
+
 def test_consumer_rejects_a_nonexistent_human_lever(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location("cloud_routine_ingest_test", script)
