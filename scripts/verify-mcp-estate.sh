@@ -100,7 +100,7 @@ fi
 step "MCP config ownership — no placeholder secret; each config cartridge-owned (WARN until Phase C)"
 CONFIGS=(
   "$HOME/.copilot/mcp-config.json"
-  "$HOME/.codex/config.toml"
+  "${CODEX_HOME:-$HOME/.codex}/config.toml"
   "$HOME/.gemini/settings.json"
   "$HOME/.gemini/config/mcp_config.json"
   "$HOME/.claude.json"
