@@ -350,17 +350,18 @@ def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    historical_ids, observed = module._historical_cloud_task_state(
-        tmp_path / "tasks.yaml"
-    )
+    historical_ids, observed = module._historical_cloud_task_state(tmp_path / "tasks.yaml")
 
     assert task_id_for(receipt) in historical_ids
     assert observed[task_id_for(receipt)] == receipt.observed_at
-    assert plan_task_upserts(
-        [receipt],
-        historical_ids=historical_ids,
-        historical_observed_at=observed,
-    ).tasks == ()
+    assert (
+        plan_task_upserts(
+            [receipt],
+            historical_ids=historical_ids,
+            historical_observed_at=observed,
+        ).tasks
+        == ()
+    )
 
 
 def test_pruned_archive_lineage_remains_a_duplicate(tmp_path: Path) -> None:
