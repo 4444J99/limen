@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -194,6 +195,35 @@ def test_private_redaction_requires_matching_runtime_facts(tmp_path: Path) -> No
 
     assert rows is None
     assert any("private PR cohort is redacted" in failure for failure in module.failures)
+
+
+def test_private_redaction_accepts_unredacted_runtime_coordinates(tmp_path: Path) -> None:
+    module = _load_check_module()
+    private_key = hashlib.sha256(b"secret/private#7").hexdigest()
+    ledger = {
+        "generated_at": "2026-08-08T12:00:00Z",
+        "open_pr_count": 2,
+        "pull_requests": [
+            {"private": True, "repository": None, "number": None, "pr_key": private_key},
+            {"private": False, "repository": "organvm/public", "number": 1},
+        ],
+    }
+    facts = {
+        "exhaustive": True,
+        "generated_at": ledger["generated_at"],
+        "open_pr_count": ledger["open_pr_count"],
+        "pull_requests": [
+            {"private": True, "repository": "secret/private", "number": 7},
+            {"private": False, "repository": "organvm/public", "number": 1},
+        ],
+    }
+    facts_path = tmp_path / "gitvs-pr-debt-facts.json"
+    facts_path.write_text(json.dumps(facts), encoding="utf-8")
+
+    rows = module._complete_census_rows(ledger, facts_path=facts_path)
+
+    assert rows == facts["pull_requests"]
+    assert module.failures == []
 
 
 def test_missing_canonical_consumer_is_rejected() -> None:
