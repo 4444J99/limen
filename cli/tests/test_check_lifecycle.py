@@ -122,9 +122,7 @@ def test_disposition_owner_must_resolve_to_declared_consumer() -> None:
 
     module.validate_dispositions(registry)
 
-    assert any(
-        "does not resolve to a declared consumer" in failure for failure in module.failures
-    )
+    assert any("does not resolve to a declared consumer" in failure for failure in module.failures)
 
 
 def test_archived_cohort_selector_is_pinned() -> None:
@@ -134,9 +132,7 @@ def test_archived_cohort_selector_is_pinned() -> None:
 
     module.validate_cohorts(registry, set(registry["dispositions"]))
 
-    assert any(
-        "archived-repo cohort selector" in failure for failure in module.failures
-    )
+    assert any("archived-repo cohort selector" in failure for failure in module.failures)
 
 
 def test_cohort_selector_schema_is_closed_and_covered() -> None:
@@ -147,12 +143,8 @@ def test_cohort_selector_schema_is_closed_and_covered() -> None:
 
     module.validate_cohorts(registry, set(registry["dispositions"]))
 
-    assert any(
-        "draft cohort selector must be exactly" in failure for failure in module.failures
-    )
-    assert any(
-        "all cohort selector must be exactly" in failure for failure in module.failures
-    )
+    assert any("draft cohort selector must be exactly" in failure for failure in module.failures)
+    assert any("all cohort selector must be exactly" in failure for failure in module.failures)
 
 
 def test_cohort_precedence_rejects_duplicate_entries() -> None:
