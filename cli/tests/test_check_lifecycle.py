@@ -111,10 +111,7 @@ def test_armed_consumer_requires_an_executable_registry_load() -> None:
         'MARKERS = ["lifecycle.yaml", "merge_eligible"]'
     )
     assert module._loads_lifecycle_registry(
-        """import yaml
-from pathlib import Path
-yaml.safe_load(Path("lifecycle.yaml").read_text())
-"""
+        'import yaml\nfrom pathlib import Path\nyaml.safe_load(Path("lifecycle.yaml").read_text())\n'
     )
 
 
@@ -125,7 +122,9 @@ def test_disposition_owner_must_resolve_to_declared_consumer() -> None:
 
     module.validate_dispositions(registry)
 
-    assert any("does not resolve to a declared consumer" in failure for failure in module.failures)
+    assert any(
+        "does not resolve to a declared consumer" in failure for failure in module.failures
+    )
 
 
 def test_archived_cohort_selector_is_pinned() -> None:
@@ -135,7 +134,9 @@ def test_archived_cohort_selector_is_pinned() -> None:
 
     module.validate_cohorts(registry, set(registry["dispositions"]))
 
-    assert any("archived-repo cohort selector" in failure for failure in module.failures)
+    assert any(
+        "archived-repo cohort selector" in failure for failure in module.failures
+    )
 
 
 def test_cohort_selector_schema_is_closed_and_covered() -> None:
@@ -146,8 +147,12 @@ def test_cohort_selector_schema_is_closed_and_covered() -> None:
 
     module.validate_cohorts(registry, set(registry["dispositions"]))
 
-    assert any("draft cohort selector must be exactly" in failure for failure in module.failures)
-    assert any("all cohort selector must be exactly" in failure for failure in module.failures)
+    assert any(
+        "draft cohort selector must be exactly" in failure for failure in module.failures
+    )
+    assert any(
+        "all cohort selector must be exactly" in failure for failure in module.failures
+    )
 
 
 def test_cohort_precedence_rejects_duplicate_entries() -> None:
@@ -200,7 +205,7 @@ def test_live_pr_identity_queries_seed_from_complete_estate(monkeypatch) -> None
         return _Result(
             {
                 "data": {
-                    "search": {
+                    "r0": {
                         "issueCount": 0,
                         "nodes": [],
                         "pageInfo": {"hasNextPage": False, "endCursor": None},
@@ -209,7 +214,9 @@ def test_live_pr_identity_queries_seed_from_complete_estate(monkeypatch) -> None
             }
         )
 
-    monkeypatch.setattr(module, "_complete_estate_repositories", lambda: {"organvm/empty"})
+    monkeypatch.setattr(
+        module, "_complete_estate_repositories", lambda: {"organvm/empty"}
+    )
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
     assert module.live_open_pr_identities() == set()
@@ -464,11 +471,16 @@ def test_armed_cohort_requires_a_matching_arm_receipt() -> None:
 def test_consumer_markers_ignore_comments_and_docstrings() -> None:
     module = _load_check_module()
     markers, lifecycle_literals = module._source_markers(
-        '"""lifecycle:legacy lifecycle.yaml"""\n'
-        "# lifecycle:comment\n"
-        'value = "lifecycle:legacy"\n'
-        "name = lifecycle_name\n"
-        'path = "lifecycle.yaml"\n'
+        '"""lifecycle:legacy lifecycle.yaml"""
+'
+        "# lifecycle:comment
+"
+        'value = "lifecycle:legacy"
+'
+        "name = lifecycle_name
+"
+        'path = "lifecycle.yaml"
+'
     )
 
     assert "lifecycle.yaml" in markers
