@@ -4,7 +4,9 @@
 
 A working system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
 
-**Built to production weight:** 400+ tests · Cloudflare Worker deploy (wrangler) · Gmail + Apple Mail, keyless · draft-only by design — composes replies, never sends · obligations ledger — every owed reply tracked.
+**Current state:** Working prototype; internal operation evidenced; external adoption unvalidated.
+
+**Evidence:** repository-asserted: 400+ tests reported by the repository · repository-asserted: Cloudflare Worker deployment path (wrangler) · repository-asserted: Gmail + Apple Mail adapters · verified: draft-only design — composes replies, never sends · repository-asserted: obligations ledger tracks owed replies.
 
 **Who this is for:** Founders, operators, and the people who run their comms — anyone drowning in multi-account email who will not (and should not) hand an AI the send button.
 

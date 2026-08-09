@@ -65,16 +65,16 @@ gh repo edit organvm/universal-mail--automation --description "Autonomous inbox 
 
 ## Self-Healing Agent Fleet Infrastructure — `organvm/limen`
 
-- **Recommended topics:** agent-orchestration, autonomous-systems, fleet-management, self-healing, infrastructure-automation, zero-ops, heartbeat-driven, organ-architecture, agent-reliability
-- **Recommended description:** Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.
+- **Recommended topics:** agent-orchestration, autonomous-systems, fleet-management, self-healing, infrastructure-automation, autonomic-ops, heartbeat-driven, organ-architecture, agent-reliability
+- **Recommended description:** Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat.
 
 ```sh
 # apply topics (his hand — outward-facing public change):
 gh api -X PUT repos/organvm/limen/topics \
   -H 'Accept: application/vnd.github+json' \
-  -f 'names[]=agent-orchestration' -f 'names[]=autonomous-systems' -f 'names[]=fleet-management' -f 'names[]=self-healing' -f 'names[]=infrastructure-automation' -f 'names[]=zero-ops' -f 'names[]=heartbeat-driven' -f 'names[]=organ-architecture' -f 'names[]=agent-reliability'
+  -f 'names[]=agent-orchestration' -f 'names[]=autonomous-systems' -f 'names[]=fleet-management' -f 'names[]=self-healing' -f 'names[]=infrastructure-automation' -f 'names[]=autonomic-ops' -f 'names[]=heartbeat-driven' -f 'names[]=organ-architecture' -f 'names[]=agent-reliability'
 # apply description:
-gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat."
+gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat."
 ```
 
 ## Portfolio & Case Studies — 16 Systems — `organvm/portfolio`

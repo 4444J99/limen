@@ -140,7 +140,8 @@ def render_readme(
     L.append("## The systems")
     L.append("")
     L.append(
-        "Each is a working system — source, tests, and a deploy path you can read. The numbers are "
+        "Each entry states its current maturity and evidence basis. Source, tests, and deploy paths are "
+        "shown only when verified or clearly repository-reported. The numbers are "
         "the repository's own CI output, not adjectives."
     )
     L.append("")

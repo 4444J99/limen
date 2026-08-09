@@ -5,7 +5,7 @@
 
 # I build production systems that solve expensive problems.
 
-Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:
+Selected systems range from live infrastructure to deployed tools and working prototypes. Every card states its current maturity and evidence basis. Two doors:
 
 **[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
 > Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
@@ -21,7 +21,9 @@ Not demos. Live platforms — tested, deployed, and running. Each repo below is 
 
 A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.
 
-`170 tests across 16 suites` · `~5,900 lines of TypeScript` · `distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages` · `5 export formats` · `9-language UI` · `MIT-licensed · 549 commits, actively maintained`
+**Current state:** Deployed distribution surfaces; external adoption unvalidated.
+
+**Evidence:** repository-asserted: 170 tests across 16 suites reported by the repository · repository-asserted: about 5,900 lines of TypeScript · repository-asserted: distribution paths for GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages · repository-asserted: 5 export formats · repository-asserted: 9-language UI · verified: MIT license and active repository history.
 
 **Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
 
@@ -31,7 +33,9 @@ A browser userscript that exports your AI chat conversations into five portable,
 
 A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.
 
-`3,399 passing tests` · `Terraform AWS (multi-AZ RDS, Redis, S3)` · `60+ collection agents` · `4 state collectors implemented on a 50-state architecture`
+**Current state:** Working prototype; four collectors implemented; deployment and adoption unvalidated.
+
+**Evidence:** repository-asserted: 3,399 tests reported by the repository · repository-asserted: Terraform AWS architecture (multi-AZ RDS, Redis, S3) · verified: 4 state collectors implemented on a 50-state architecture.
 
 **Solves:** Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.
 
@@ -39,9 +43,11 @@ A platform that collects UCC-1 filings from Secretary-of-State portals — four 
 
 ### [Styx Peer-Audited Behavioral Market](https://github.com/4444J99/peer-audited--behavioral-blockchain)
 
-A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.
+A working prototype for commitments with financial stakes: a Stripe escrow model, double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.
 
-`1,107 tests across workspaces` · `public pitch surface returns 200 OK` · `NestJS + Next.js + React Native + Tauri monorepo` · `Stripe escrow and double-entry ledger` · `CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates`
+**Current state:** Working prototype; public pitch reachable; deployment and adoption unvalidated.
+
+**Evidence:** repository-asserted: 1,107 tests reported across workspaces · verified: public pitch surface returned 200 during the evidence sweep · repository-asserted: NestJS + Next.js + React Native + Tauri monorepo · repository-asserted: Stripe escrow model and double-entry ledger · repository-asserted: CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates.
 
 **Solves:** Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.
 
@@ -51,7 +57,9 @@ A production-grade enforcement layer for commitments with real financial stakes:
 
 A working system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
 
-`400+ tests` · `Cloudflare Worker deploy (wrangler)` · `Gmail + Apple Mail, keyless` · `draft-only by design — composes replies, never sends` · `obligations ledger — every owed reply tracked`
+**Current state:** Working prototype; internal operation evidenced; external adoption unvalidated.
+
+**Evidence:** repository-asserted: 400+ tests reported by the repository · repository-asserted: Cloudflare Worker deployment path (wrangler) · repository-asserted: Gmail + Apple Mail adapters · verified: draft-only design — composes replies, never sends · repository-asserted: obligations ledger tracks owed replies.
 
 **Solves:** Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.
 
@@ -59,11 +67,13 @@ A working system that sweeps Gmail and Apple Mail across accounts, classifies ev
 
 ### [Self-Healing Agent Fleet Infrastructure](https://github.com/organvm/limen)
 
-A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.
+A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that automates recurring fleet maintenance on a heartbeat: monitoring liveness, reaping stale work, syncing state, and escalating failures. Built-in organs include proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, and health monitoring.
 
-`9-rung organ ladder (each self-* owns its own domain)` · `Heartbeat-driven autonomic loop (scripts/metabolize.sh)` · `Self-healing on regression (heal/ branch pattern)` · `Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall` · `Zero manual upkeep — runs forever once seeded`
+**Current state:** Live in the owner's environment; external adoption unvalidated; human gates remain explicit.
 
-**Solves:** Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.
+**Evidence:** repository-asserted: 9-rung organ ladder (each self-* owns its own domain) · verified: heartbeat-driven autonomic loop (scripts/metabolize.sh) · repository-asserted: self-healing branch pattern for known regressions · verified: proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present · verified: failure states and human gates are explicit.
+
+**Solves:** Every agent fleet needs health checks, credential refresh, stale-work cleanup, state reconciliation, and failure escalation. When those controls are manual or absent, routine drift can become lost work or cascading failure.
 
 → **Adopt self-healing fleet ops** · see [the ways to work together](docs/positioning/limen.md)
 
@@ -71,7 +81,9 @@ A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, s
 
 A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.
 
-`609 files · Astro + TypeScript · p5.js interactive visualizations` · `69 test files across the portfolio + content` · `16 case studies with architecture, decisions, and outcomes` · `Live demos & interactive diagrams` · `Netlify deployment + CI/CD` · `SEO-optimized content sites`
+**Current state:** Deployed and live; case-study outcome claims require project-level evidence.
+
+**Evidence:** repository-asserted: 609 files · Astro + TypeScript · p5.js interactive visualizations · repository-asserted: 69 test files across the portfolio and content · repository-asserted: 16 case studies with architecture and decision narratives · verified: public portfolio endpoint returned 200 during the evidence sweep · repository-asserted: Netlify deployment and CI/CD configuration.
 
 **Solves:** A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.
 
@@ -81,7 +93,7 @@ A public portfolio site presenting 16 built systems — each with a case study, 
 
 ## Built with partners
 
-Systems the same engine produced with collaborators — each a working venture where the partner drives the domain and the engine builds the machine.
+Collaborative systems and ventures produced through the same engine. Maturity varies; each project page is the source of truth.
 
 - **[mirror-mirror](https://github.com/4444J99/mirror-mirror)** — with charles
 - **[your-fit-tailored](https://github.com/4444J99/your-fit-tailored)** — with charles

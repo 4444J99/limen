@@ -23,7 +23,11 @@ def _seed(extra_price_in_public: bool = False) -> dict:
     seed = {
         "display_name": "Test Platform",
         "what_it_is": "A production platform that does a serious thing.",
-        "proof_signals": ["3,399 passing tests", "Terraform AWS", "50 states"],
+        "product_state": "Working prototype; deployment and adoption unvalidated.",
+        "proof_signals": [
+            {"claim": "3,399 passing tests", "status": "repository-asserted"},
+            {"claim": "four collectors implemented", "status": "verified"},
+        ],
         "buyer": "People with an expensive problem.",
         "expensive_problem": "Commodity data is worthless; exclusive scored data wins deals.",
         "cost_of_not_having_it": "Real money per conversion.",
@@ -101,6 +105,20 @@ def test_apply_writes_public_and_internal(tmp_path: Path):
     pub = public.read_text()
     assert "Deploy this for your shop" in pub
     assert "Work with the team that built this" in pub
+    assert "Current state:** Working prototype; deployment and adoption unvalidated" in pub
+    assert "repository-asserted: 3,399 passing tests" in pub
+    assert "verified: four collectors implemented" in pub
+
+
+def test_unlabeled_proof_defaults_to_repository_asserted(tmp_path: Path):
+    seed = _seed()
+    seed["proof_signals"] = ["170 tests reported by the repository"]
+    env = _env(tmp_path, seed)
+    r = _run(env, "--repo", REPO, "--apply")
+    assert r.returncode == 0, r.stderr
+    pub = (tmp_path / "out" / f"{SLUG}.md").read_text()
+    assert "repository-asserted: 170 tests reported by the repository" in pub
+    assert "Built to production weight" not in pub
 
 
 def test_public_page_has_no_prices(tmp_path: Path):
@@ -211,6 +229,8 @@ def test_frontdoor_renders_both_doors_and_systems(tmp_path: Path):
     assert "Work with the builder" in fd  # recruiter door
     assert "Test Platform" in fd  # the system card
     assert f"github.com/{REPO}" in fd  # links to the repo
+    assert "Current state:** Working prototype; deployment and adoption unvalidated" in fd
+    assert "repository-asserted: 3,399 passing tests" in fd
 
 
 def test_frontdoor_has_no_prices(tmp_path: Path):

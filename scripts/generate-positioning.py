@@ -193,6 +193,43 @@ def _fetch_signals(repo: str) -> dict:
         return {}
 
 
+_EVIDENCE_STATUSES = {"verified", "repository-asserted", "derived", "conflicted"}
+
+
+def _product_state(seed: dict) -> str:
+    """Return a conservative maturity label for every public surface."""
+    return str(
+        seed.get("product_state")
+        or "Unclassified; deployment and adoption are not established."
+    ).strip()
+
+
+def _proof_items(seed: dict) -> list[tuple[str, str]]:
+    """Normalize proof signals and default unlabeled claims to repository-asserted.
+
+    The safe default matters: a test count or deployment phrase copied from a README is useful
+    evidence, but it is not independently verified merely because it reached this generator.
+    """
+    normalized: list[tuple[str, str]] = []
+    for item in seed.get("proof_signals", []):
+        if isinstance(item, dict):
+            claim = str(item.get("claim") or "").strip()
+            status = str(item.get("status") or "repository-asserted").strip()
+        else:
+            claim = str(item).strip()
+            status = "repository-asserted"
+        if not claim:
+            continue
+        if status not in _EVIDENCE_STATUSES:
+            raise ValueError(f"unsupported proof status {status!r} for claim {claim!r}")
+        normalized.append((claim, status))
+    return normalized
+
+
+def _proof_text(items: list[tuple[str, str]]) -> str:
+    return " · ".join(f"{status}: {claim}" for claim, status in items)
+
+
 def render_public(repo: str, seed: dict, signals: dict | None = None,
                   contact: str | None = None) -> str:
     """Render the public positioning page. No prices — enforced by the caller's guard."""
@@ -207,14 +244,17 @@ def render_public(repo: str, seed: dict, signals: dict | None = None,
         lines.append(seed["what_it_is"])
         lines.append("")
 
-    # Proof signals — the production-grade weight that signals "this is not free," not a price.
-    proof = list(seed.get("proof_signals", []))
+    lines.append(f"**Current state:** {_product_state(seed)}")
+    lines.append("")
+
+    # Proof signals retain their evidence status instead of silently upgrading repository claims.
+    proof = _proof_items(seed)
     if signals.get("topics"):
         proof_topics = ", ".join(signals["topics"][:8])
         if proof_topics:
-            proof.append(f"topics: {proof_topics}")
+            proof.append((f"topics: {proof_topics}", "verified"))
     if proof:
-        lines.append("**Built to production weight:** " + " · ".join(proof) + ".")
+        lines.append("**Evidence:** " + _proof_text(proof) + ".")
         lines.append("")
 
     if seed.get("buyer"):
@@ -311,9 +351,11 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
         if seed.get("what_it_is"):
             lines.append(seed["what_it_is"])
             lines.append("")
-        proof = seed.get("proof_signals", [])
+        lines.append(f"**Current state:** {_product_state(seed)}")
+        lines.append("")
+        proof = _proof_items(seed)
         if proof:
-            lines.append("`" + "` · `".join(proof) + "`")
+            lines.append("**Evidence:** " + _proof_text(proof) + ".")
             lines.append("")
         if seed.get("expensive_problem"):
             lines.append(f"**Solves:** {seed['expensive_problem']}")

@@ -46,7 +46,7 @@ preserve the disagreement explicitly.
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
 | 313 repositories total (235 public, 78 private) | `verified` (census 2026-08-08T19:14Z) | Exhaustive authenticated census, `docs/github-estate-census.json` | "As of August 2026, the GitHub estate contains 313 repositories — 235 public and 78 private — across a personal account and ten organizations." | L1 (dated) |
-| Live count 2026-08-09: 309 repos (236 public, 74 private) | `verified` (live API sweep) | Authenticated per-org `gh api` listing, deduped | Use the dated census number with its date; note drift in L3 only | L3 |
+| Live count 2026-08-09: 309 repos (235 public, 74 private) | `verified` (live API sweep) | Authenticated per-org `gh api` listing, deduped | Use the dated census number with its date; note drift in L3 only | L3 |
 | 1 personal account + 10 organizations | `verified` | Census + live org listing | as-is | L1 |
 | "~280 repositories" (voice memo) | `superseded` | Census supersedes | never use | nowhere |
 | 307/308 repository counts (older records) | `superseded` | Census supersedes | never use | nowhere |

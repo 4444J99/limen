@@ -4,7 +4,9 @@
 
 A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.
 
-**Built to production weight:** 3,399 passing tests · Terraform AWS (multi-AZ RDS, Redis, S3) · 60+ collection agents · 4 state collectors implemented on a 50-state architecture.
+**Current state:** Working prototype; four collectors implemented; deployment and adoption unvalidated.
+
+**Evidence:** repository-asserted: 3,399 tests reported by the repository · repository-asserted: Terraform AWS architecture (multi-AZ RDS, Redis, S3) · verified: 4 state collectors implemented on a 50-state architecture.
 
 **Who this is for:** MCA funders, ISOs, and brokers who buy financing leads constantly.
 
@@ -25,7 +27,7 @@ Pick the depth that fits. Each level is a deeper build than the last.
 
 ## What's open — and what you're buying
 
-**Open:** the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.
+**Open:** the platform source, repository-reported test suite, Terraform architecture, four implemented state collectors, and scoring method. Read every line and inspect the evidence labels.
 
 **What you're buying:** the live, fed instance — fresh state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.
 

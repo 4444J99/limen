@@ -4,7 +4,9 @@
 
 A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.
 
-**Built to production weight:** 609 files · Astro + TypeScript · p5.js interactive visualizations · 69 test files across the portfolio + content · 16 case studies with architecture, decisions, and outcomes · Live demos & interactive diagrams · Netlify deployment + CI/CD · SEO-optimized content sites.
+**Current state:** Deployed and live; case-study outcome claims require project-level evidence.
+
+**Evidence:** repository-asserted: 609 files · Astro + TypeScript · p5.js interactive visualizations · repository-asserted: 69 test files across the portfolio and content · repository-asserted: 16 case studies with architecture and decision narratives · verified: public portfolio endpoint returned 200 during the evidence sweep · repository-asserted: Netlify deployment and CI/CD configuration.
 
 **Who this is for:** Prospects who want to see the builder's decision-making process, architects and design teams evaluating a platform partner, companies studying real production systems.
 
