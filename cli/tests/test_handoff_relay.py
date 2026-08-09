@@ -559,7 +559,6 @@ def test_heartbeat_loop_drains_before_paused_and_offline_early_continues_once():
     assert "consume-session-end-breadcrumbs.py" not in heartbeat[drain_call:]
 
 
-
 def test_dispatch_admission_keeps_opencode_route_when_one_provider_is_healthy():
     mod = _load()
     task = _task("OPENCODE-FALLBACK", agent="opencode")
