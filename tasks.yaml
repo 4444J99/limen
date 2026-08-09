@@ -167705,3 +167705,37 @@ tasks:
     conduct_lease_id: 'lease-711-0bb3328e7c2d6882'
     conduct_generation: 711
   updated: '2026-08-09T01:18:43.164Z'
+- id: 'GH-organvm-limen-2134'
+  title: 'POTESTAS 0.3 (#2130) merged but not live: beat runs pre-merge arca.sh/arca-freshness from stale live root'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2134'
+  context: 'GitHub issue organvm/limen#2134. ## Runtime-verification finding (verify skill, 2026-08-09) PR #2130 (generation rotation) is merged at `fa87fe5c` and the **data plane is live and verified**: `organvm/arca-g2` seeded (gen 2, private), 4 stores sealed+roundtrip, `backup` idempotent, merged `arca-freshness.py` follows the manifest to g2 → `OK — organvm/arca-g2 pushed 0.0d ago`. But the **control plane (the beat) still runs pre-merg'
+  predicate: 'test "$(gh issue view 2134 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2134'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2134'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-09T01:27:59.013Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-1f16afe3f8de08114c31e97ef747afdb:712:compatibility'
+    conduct_run_id: 'run-1f16afe3f8de08114c31e97ef747afdb'
+    conduct_lease_id: 'lease-712-1f16afe3f8de0811'
+    conduct_generation: 712
+  updated: '2026-08-09T01:27:59.013Z'
