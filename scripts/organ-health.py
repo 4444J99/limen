@@ -374,6 +374,16 @@ def _json_nested_error(path, *trails, stamp=None):
     return None
 
 
+def _vitals_sample_interval() -> int:
+    """Return the declared fast-wave sample cadence, with a safe positive fallback."""
+    raw = _env_flag("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+    try:
+        seconds = int(raw)
+    except (TypeError, ValueError):
+        return 300
+    return seconds if seconds > 0 else 300
+
+
 # ── the enrichment table ──────────────────────────────────────────────────────────────────────
 # NOT the door-list (that is DISCOVERED from the heartbeat — see _doors). This only ENRICHES a
 # discovered beat with the signal specifics the loop can't express: which VOICE stamps it, which
@@ -475,6 +485,8 @@ def _registry():
             rung="VIGILIA",
             voice="vigilia",
             cadence_beats=1,
+            interval_s=_vitals_sample_interval(),
+            probe_first=True,
             gate="LIMEN_VIGILIA",
             gate_default="1",
             what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
@@ -751,12 +763,20 @@ def build():
                     }
                 )
 
-        # best signal: voice-stamp (ground truth) else artifact probe
-        src = "voice-stamp"
-        ts = _voice_stamp(o["voice"])
-        if ts is None:
+        # Most organs use the heartbeat voice stamp first. VIGILIA is different: its early
+        # sampled_at artifact is the fast-wave clock, while the voice stamp marks slow completion.
+        if o.get("probe_first"):
             ts = o["probe"]()
             src = "artifact"
+            if ts is None:
+                ts = _voice_stamp(o["voice"])
+                src = "voice-stamp"
+        else:
+            src = "voice-stamp"
+            ts = _voice_stamp(o["voice"])
+            if ts is None:
+                ts = o["probe"]()
+                src = "artifact"
         if ts is None:
             src = "none"
 
