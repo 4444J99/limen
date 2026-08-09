@@ -3,52 +3,52 @@
   "derived_from": "workspace dependency manifests (the inward gaze)",
   "pool": [
     {
-      "dependency": "pytest",
-      "used_in_repos": 35
+      "dependency": "pyyaml",
+      "used_in_repos": 6
+    },
+    {
+      "dependency": "playwright",
+      "used_in_repos": 5
     },
     {
       "dependency": "typescript",
-      "used_in_repos": 30
-    },
-    {
-      "dependency": "vitest",
-      "used_in_repos": 24
-    },
-    {
-      "dependency": "ruff",
-      "used_in_repos": 23
-    },
-    {
-      "dependency": "pyyaml",
-      "used_in_repos": 22
-    },
-    {
-      "dependency": "eslint",
-      "used_in_repos": 21
-    },
-    {
-      "dependency": "react",
-      "used_in_repos": 15
-    },
-    {
-      "dependency": "react-dom",
-      "used_in_repos": 14
+      "used_in_repos": 5
     },
     {
       "dependency": "node",
-      "used_in_repos": 13
+      "used_in_repos": 4
     },
     {
-      "dependency": "pytest-cov",
-      "used_in_repos": 12
+      "dependency": "pytest",
+      "used_in_repos": 4
     },
     {
-      "dependency": "js",
-      "used_in_repos": 10
+      "dependency": "ruff",
+      "used_in_repos": 4
     },
     {
-      "dependency": "httpx",
-      "used_in_repos": 9
+      "dependency": "vitest",
+      "used_in_repos": 4
+    },
+    {
+      "dependency": "cryptography",
+      "used_in_repos": 3
+    },
+    {
+      "dependency": "jsonschema",
+      "used_in_repos": 3
+    },
+    {
+      "dependency": "pydantic",
+      "used_in_repos": 3
+    },
+    {
+      "dependency": "test",
+      "used_in_repos": 3
+    },
+    {
+      "dependency": "tsx",
+      "used_in_repos": 3
     }
   ]
 }

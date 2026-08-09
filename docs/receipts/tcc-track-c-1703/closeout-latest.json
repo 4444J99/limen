@@ -16,13 +16,15 @@
     "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
   ],
   "normalized_inventory": {
-    "active_leaks": 1,
+    "active_leaks": 3,
     "automatic_updates_enabled": true,
     "failures": [
+      "rotating_identity_active_grants",
       "active_managed_tcc_leak",
+      "visible_app_management_path_client",
       "claude_helper_registration_unreadable"
     ],
-    "new_managed_identities": 1,
+    "new_managed_identities": 3,
     "ok": false,
     "schema": "limen.tcc_identity_audit.v2",
     "stable_host_app_management_grants": 1,
@@ -30,34 +32,37 @@
     "stable_host_ok": true,
     "status": "blocked",
     "summary": {
-      "active_leaks": 1,
+      "active_leaks": 3,
       "baseline_managed": 28,
       "managed_unbaselined": 0,
-      "new_managed": 1,
+      "new_managed": 3,
+      "rotating_identity_active_grants": 28,
       "stable_host": 1,
       "unhosted_configured_ingresses": 0,
-      "unrelated": 268,
-      "visible_app_management_path_rows": 0
+      "unrelated": 269,
+      "visible_app_management_path_rows": 1
     },
     "unhosted_configured_ingresses": 0,
     "unrelated_grants_preserved": true,
-    "visible_app_management_path_rows": 0
+    "visible_app_management_path_rows": 1
   },
-  "observed_at": "2026-08-05T20:01:51Z",
+  "observed_at": "2026-08-08T21:50:07Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260805T200151Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260808T215007Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
     "exit_code": 1,
     "normalized": {
-      "active_leaks": 1,
+      "active_leaks": 3,
       "automatic_updates_enabled": true,
       "failures": [
+        "rotating_identity_active_grants",
         "active_managed_tcc_leak",
+        "visible_app_management_path_client",
         "claude_helper_registration_unreadable"
       ],
-      "new_managed_identities": 1,
+      "new_managed_identities": 3,
       "ok": false,
       "schema": "limen.tcc_identity_audit.v2",
       "stable_host_app_management_grants": 1,
@@ -65,18 +70,19 @@
       "stable_host_ok": true,
       "status": "blocked",
       "summary": {
-        "active_leaks": 1,
+        "active_leaks": 3,
         "baseline_managed": 28,
         "managed_unbaselined": 0,
-        "new_managed": 1,
+        "new_managed": 3,
+        "rotating_identity_active_grants": 28,
         "stable_host": 1,
         "unhosted_configured_ingresses": 0,
-        "unrelated": 268,
-        "visible_app_management_path_rows": 0
+        "unrelated": 269,
+        "visible_app_management_path_rows": 1
       },
       "unhosted_configured_ingresses": 0,
       "unrelated_grants_preserved": true,
-      "visible_app_management_path_rows": 0
+      "visible_app_management_path_rows": 1
     },
     "ok": false
   },
@@ -86,16 +92,17 @@
     "failure_classes": [
       "strict_audit_not_ok",
       "active_leaks_nonzero",
+      "visible_app_management_path_rows_nonzero",
       "new_managed_identities_nonzero"
     ],
     "met": false,
-    "met_reason": "Track C blocked: strict_audit_not_ok, active_leaks_nonzero, new_managed_identities_nonzero",
+    "met_reason": "Track C blocked: strict_audit_not_ok, active_leaks_nonzero, visible_app_management_path_rows_nonzero, new_managed_identities_nonzero",
     "non_noop": true,
     "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
     "status": "blocked",
     "update_attempted": false,
-    "version_after": "2.1.222",
-    "version_before": "2.1.222"
+    "version_after": "2.1.226",
+    "version_before": "2.1.226"
   },
   "update": null,
   "version_probe_after": {
@@ -108,8 +115,8 @@
     ],
     "exit_code": 0,
     "ok": true,
-    "output": "2.1.222 (Claude Code)",
-    "version": "2.1.222"
+    "output": "2.1.226 (Claude Code)",
+    "version": "2.1.226"
   },
   "version_probe_before": {
     "command": [
@@ -121,7 +128,7 @@
     ],
     "exit_code": 0,
     "ok": true,
-    "output": "2.1.222 (Claude Code)",
-    "version": "2.1.222"
+    "output": "2.1.226 (Claude Code)",
+    "version": "2.1.226"
   }
 }
