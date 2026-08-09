@@ -408,6 +408,7 @@ def test_board_budget_preserves_active_per_agent_reset_window(monkeypatch):
 def test_dispatch_admission_discovers_unmetered_canonical_lane(monkeypatch):
     mod = _load()
     monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("github_actions",))
+    monkeypatch.setattr(mod, "agent_status", lambda _agent: {"reachable": True})
     monkeypatch.setattr(mod, "_eligible_any_agent", lambda task, agent: agent == "github_actions")
     task = _task(
         "ANY-VERIFY",
@@ -668,6 +669,7 @@ def test_board_budget_discards_expired_track_counters(monkeypatch):
     mod = _load()
     board = _board([])
     monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 13, tzinfo=dt.timezone.utc))
+    monkeypatch.setattr(mod, "_window_hours", lambda _agent: 5.0)
 
     budget = mod._board_budget(board)
 
