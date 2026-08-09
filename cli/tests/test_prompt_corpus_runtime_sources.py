@@ -136,6 +136,57 @@ def test_archive_receipt_cannot_stand_in_for_missing_archived_bytes(tmp_path: Pa
     assert "private raw object is missing" in "; ".join(errors)
 
 
+def test_archive_signature_normalizes_receipt_and_archive_paths(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
+    receipt_path = paths.private_dir / receipt
+    payload = json.loads(receipt_path.read_text())
+    payload["archive_location"] = f"  {payload["archive_location"]}  "
+    receipt_path.write_text(json.dumps(payload))
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": f"  {receipt}  ",
+            }
+        ],
+    )
+
+    assert validate_raw_references(paths, [occurrence], verify_content=True) == []
+    before = _archive_custody_signature(paths)
+    (paths.private_dir / payload["archive_location"].strip()).unlink()
+
+    assert _archive_custody_signature(paths) != before
+
+
+def test_archive_signature_rejects_non_regular_archive(tmp_path: Path) -> None:
+    paths = LedgerPaths.for_root(tmp_path)
+    occurrence, prompt_hash = _occurrence()
+    receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
+    receipt_payload = json.loads((paths.private_dir / receipt).read_text())
+    archive = paths.private_dir / receipt_payload["archive_location"]
+    archive.unlink()
+    archive.mkdir()
+    _write_archive_manifest(
+        paths,
+        [
+            {
+                "raw_object": occurrence["raw_object"],
+                "prompt_hash": prompt_hash,
+                "custody_receipt": receipt,
+            }
+        ],
+    )
+
+    errors = validate_raw_references(paths, [occurrence], verify_content=True)
+
+    assert "archive_location does not resolve to a regular file" in "; ".join(errors)
+    assert _archive_custody_signature(paths)
+
+
 def test_archive_signature_changes_when_archived_bytes_disappear(tmp_path: Path) -> None:
     paths = LedgerPaths.for_root(tmp_path)
     occurrence, prompt_hash = _occurrence()
