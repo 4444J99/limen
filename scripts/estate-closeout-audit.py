@@ -371,7 +371,13 @@ def summarize_local(rows: list[dict[str, Any]], discovery: dict[str, Any]) -> di
 
 def disk_snapshot() -> dict[str, Any]:
     rows = []
-    for path in (Path("/System/Volumes/Data"), HOME, HOME / "Workspace", Path("/Volumes/Scratch"), Path("/Volumes/Archive4T")):
+    for path in (
+        Path("/System/Volumes/Data"),
+        HOME,
+        HOME / "Workspace",
+        Path("/Volumes/Scratch"),
+        Path("/Volumes/Archive4T"),
+    ):
         if not path.exists():
             rows.append({"path": stable(path), "exists": False})
             continue
@@ -389,20 +395,14 @@ def disk_snapshot() -> dict[str, Any]:
         required = current_required_free_gib()
     except (RuntimeError, ValueError):
         required = None
-    headroom = (
-        round(float(free) - required, 1)
-        if isinstance(free, (int, float)) and required is not None
-        else None
-    )
+    headroom = round(float(free) - required, 1) if isinstance(free, (int, float)) and required is not None else None
     return {
         "required_free_gib": required,
         "internal_free_gib": free,
         "resource_headroom_gib": headroom,
         "filesystems": rows,
         "status": (
-            "resource-envelope-unavailable"
-            if headroom is None
-            else ("needs-owner-gates" if headroom < 0 else "clear")
+            "resource-envelope-unavailable" if headroom is None else ("needs-owner-gates" if headroom < 0 else "clear")
         ),
     }
 
@@ -541,7 +541,9 @@ def classify_remote_prs(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         except ValueError:
             data = {}
         checks = data.get("statusCheckRollup") if isinstance(data.get("statusCheckRollup"), list) else []
-        states = [status_state(check.get("conclusion") or check.get("state")) for check in checks if isinstance(check, dict)]
+        states = [
+            status_state(check.get("conclusion") or check.get("state")) for check in checks if isinstance(check, dict)
+        ]
         if data.get("isDraft"):
             classification = "draft"
         elif data.get("mergeable") == "CONFLICTING":
@@ -701,7 +703,7 @@ def render(snapshot: dict[str, Any]) -> str:
     local = snapshot.get("local_estate", {})
     remote = snapshot.get("remote_prs", {})
     remote_ok = remote.get("ok") is True
-    session = ((snapshot.get("session_value_gate") or {}).get("data") or {})
+    session = (snapshot.get("session_value_gate") or {}).get("data") or {}
     dispatch = snapshot.get("dispatch_health") or {}
     live = snapshot.get("live_root_gate") or {}
 
@@ -812,7 +814,7 @@ def render(snapshot: dict[str, Any]) -> str:
         "",
         "- `python3 scripts/estate-closeout-audit.py --write --remote-pr-classify-limit 250`",
         "- `python3 scripts/worktree-pr-receipts.py --apply` only for clean local work that needs draft PR custody.",
-        "- `python3 scripts/self-heal.py --dry-run --scan 1000 --scan-max 1000` to queue exact PR repair candidates without mutating.",
+        "- `python3 scripts/self-heal.py --dry-run --scan 1000 --reconcile-scan-max 1000` to queue exact PR repair candidates without mutating.",
         "- `python3 scripts/merge-drain.py --dry-run --scan 1000 --scan-max 1000 --limit 0` to refresh merge-ready candidates without merging.",
         "- `python3 scripts/substrate-storage-pressure.py --write` to keep byte owners current.",
     ]
