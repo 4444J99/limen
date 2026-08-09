@@ -484,7 +484,6 @@ def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkey
     }
 
 
-
 def test_progress_excludes_resident_descendant_subtrees(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
 
@@ -501,7 +500,6 @@ def test_progress_excludes_resident_descendant_subtrees(tmp_path, monkeypatch):
 
     assert resident == {"111", "112", "211", "212", "311"}
     assert [child["pid"] for child in children if child["pid"] not in resident] == ["999"]
-
 
 
 def test_sourced_runtime_env_overrides_stale_launchd_values(tmp_path, monkeypatch):
