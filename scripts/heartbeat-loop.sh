@@ -371,6 +371,18 @@ _fast_wave_kill_tree() {
   done
 }
 
+# Keep shutdown latency bounded by one second. A foreground sleep can defer Bash's TERM trap
+# for the full sample cadence; short sleeps let the trap reap resident loops promptly.
+_interruptible_sleep() {
+  _sleep_remaining="$1"
+  while [ "$_sleep_remaining" -gt 0 ]; do
+    sleep 1
+    _sleep_rc=$?
+    [ "$_sleep_rc" -eq 0 ] || return "$_sleep_rc"
+    _sleep_remaining=$(( _sleep_remaining - 1 ))
+  done
+}
+
 fast_wave_sample_once() {
   _fw_tmp="$FAST_WAVE_LOG.$$.$FAST_WAVE_BEAT.tmp"
   mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null || true
@@ -442,7 +454,7 @@ stale_watchdog_loop() {
   _watchdog_parent_pid="$1"
   trap 'exit 0' HUP INT TERM
   while kill -0 "$_watchdog_parent_pid" 2>/dev/null; do
-    sleep "$FAST_WAVE_SECONDS"
+    _interruptible_sleep "$FAST_WAVE_SECONDS" || exit 0
     kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
     if [ "${LIMEN_HOST_PRESSURE_STALE:-1}" = "1" ]; then
       fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
@@ -479,7 +491,7 @@ fast_wave_loop() {
     _fw_elapsed=$(( $(date +%s) - _fw_started ))
     _fw_wait=$(( FAST_WAVE_SECONDS - _fw_elapsed ))
     [ "$_fw_wait" -gt 0 ] || _fw_wait=1
-    sleep "$_fw_wait"
+    _interruptible_sleep "$_fw_wait" || exit 0
   done
 }
 
