@@ -142,7 +142,7 @@ def test_archive_signature_normalizes_receipt_and_archive_paths(tmp_path: Path) 
     receipt = _write_custody_receipt(paths, occurrence["raw_object"], prompt_hash)
     receipt_path = paths.private_dir / receipt
     payload = json.loads(receipt_path.read_text())
-    payload["archive_location"] = f"  {payload["archive_location"]}  "
+    payload["archive_location"] = f"  {payload['archive_location']}  "
     receipt_path.write_text(json.dumps(payload))
     _write_archive_manifest(
         paths,
