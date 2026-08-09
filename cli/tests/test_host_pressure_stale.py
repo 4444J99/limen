@@ -91,6 +91,20 @@ def test_unreadable_sample_timestamp_fails(tmp_path):
     assert proc.returncode == 1
 
 
+def test_budget_reads_shared_env_file(tmp_path):
+    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=10))
+    env_file = tmp_path / "limen.env"
+    env_file.write_text(
+        "LIMEN_VITALS_STALE_BEATS=2\nLIMEN_VITALS_SAMPLE_SECONDS=120\n",
+        encoding="utf-8",
+    )
+
+    proc = run_stale(tmp_path, env={"LIMEN_ENV_FILE": str(env_file)})
+
+    assert proc.returncode == 1
+    assert "budget 4 min" in proc.stdout
+
+
 def test_budget_derives_from_env(tmp_path):
     write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=10))
     # 2 missed declared samples x 120s = 4 min budget -> a 10-min-old record is stale
