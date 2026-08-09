@@ -218,6 +218,36 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
+def test_dispatch_admission_uses_effective_route_for_provider_health():
+    mod = _load()
+    routed = _task(
+        "ROUTED",
+        agent="codex",
+        dispatch_log=[
+            {
+                "timestamp": "2026-07-12T12:00:00+00:00",
+                "agent": "codex",
+                "session_id": "route-receipt",
+                "status": "open",
+                "route_to": "claude",
+            }
+        ],
+    )
+    budget = {"remaining": 3, "per_agent": {"claude": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "codex": {"remaining": 0, "health": "auth_needed"},
+            "claude": {"remaining": 5, "health": "ok"},
+        },
+    }
+
+    admission = mod._dispatch_admission([routed], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_agent_counts"] == {"claude": 1}
+
+
 def test_dispatch_admission_names_auth_blocked_provider():
     mod = _load()
     tasks = [_task("LOGIN", priority="high", agent="jules"), _task("READY", agent="codex")]
