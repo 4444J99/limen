@@ -11,7 +11,7 @@ fleet enabled it; and every gate went green on the dark state. The only thing th
 could see the gap was the operator, by hand, repeatedly. This script is that missing
 gate — it makes "enacted" a predicate, not a memory.
 
-Three rungs, each catching one real trap:
+Four rungs, each catching one real trap the previous one is structurally blind to:
 
   1. WIRING (static, CI-safe, ALWAYS enforced). For every ``parameters.yaml`` flag that
      declares ``fleet_runtime:`` (the value the LIVE FLEET must resolve it to), re-derive
@@ -36,6 +36,17 @@ Three rungs, each catching one real trap:
      ``logs/beat-rungs.jsonl`` that ``heartbeat-loop.sh``'s ``beat_run`` writes, and goes RED on
      a rung failing N consecutive beats. Catches "enacted but ineffective".
 
+  4. POTENCY (live-host only; SKIP with no ledger — CI-safe). A rung that is wired, live AND
+     exiting 0 can still produce no EFFECT, and rungs 1-3 are blind to that too, because a valve
+     that succeeds at doing nothing looks identical to one with nothing to do. Measured 2026-08-09
+     (#2150): ``self-heal.py``'s retirement pass ran every beat, exited 0 every beat, and retired
+     nothing for a day — its enumeration was capped below the live open-PR count, so its truncation
+     guard refused to retire from a prefix, correctly and silently. The same run at a sufficient cap
+     found 257 retirable tasks. Reads ``logs/valve-effects.jsonl`` (see ``_valve_effects``) and goes
+     RED on N consecutive runs where the valve COULD have acted and did not. The candidate count is
+     what makes that decidable: "0 effects" is ambiguous, "0 of 257" is not. Catches "effective but
+     INERT".
+
 Usage:
   scripts/enactment-audit.py            # human report (all rungs, with live context)
   scripts/enactment-audit.py --check    # gate: exit 1 on any RED rung (SKIP/INFO never fail)
@@ -59,6 +70,7 @@ if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _root  # noqa: E402  — sibling helper, importable only after the sys.path insert above
+import _valve_effects  # noqa: E402  — sibling helper; the POTENCY rung's ledger reader
 
 SCRIPT_ROOT = Path(__file__).resolve().parent.parent  # the checkout THIS script lives in
 LIVE_ROOT = Path(os.environ.get("LIMEN_ROOT", str(SCRIPT_ROOT)))
@@ -494,6 +506,112 @@ def efficacy_rung() -> list[dict]:
     return rows
 
 
+# --------------------------------------------------------------------------- potency
+def potency_rung() -> list[dict]:
+    """RED when a DESTRUCTIVE valve has been able to act and has not, N runs running.
+
+    The axis the other three cannot see, and the progression is exact:
+
+      WIRING   proves the flag resolves ON.
+      LIVENESS proves the daemon post-dates its wiring.
+      EFFICACY proves the rung is not exiting NON-ZERO.
+      POTENCY  proves a zero exit came with an EFFECT.
+
+    A valve that succeeds at doing nothing passes the first three. Measured 2026-08-09 (#2150):
+    self-heal.py's retirement pass was wired, live, and exited 0 on every beat for a day while
+    retiring nothing — its enumeration was capped below the live open-PR count, so the truncation
+    guard refused to retire from a prefix. Correctly. Silently. The same run at a sufficient cap
+    reported 257 retirable tasks.
+
+    Why a naive "effects == 0" alarm would be worse than nothing: a healthy valve on a drained
+    backlog also reports zero, forever. An alarm that cannot tell those apart gets muted, and takes
+    the real signal with it. The separator is the DENOMINATOR — ``_valve_effects`` requires every
+    valve to report the candidates it evaluated, computed independently of whether it was
+    authorized to act, so "0 of 0" (healthy idle) and "0 of 257" (dead) stop looking alike.
+
+    SKIP when no ledger exists (CI, or no valve has run yet) — never a silent GREEN, because
+    "I read nothing" and "nothing is wrong" must not print the same thing.
+    """
+    override = os.environ.get("LIMEN_VALVE_EFFECT_LOG")
+    if override:
+        ledger = Path(override)
+    else:
+        # Same daemon-root resolution as the efficacy rung, for the same #2053 reason: run from a
+        # session worktree, the writer and reader would sit in different logs/ directories and the
+        # rung would SKIP while the real evidence exists one directory over.
+        root = live_checkout() or LIVE_ROOT
+        ledger = root / "logs" / _valve_effects.LEDGER_NAME
+    if not ledger.is_file():
+        return [
+            {
+                "rung": "potency",
+                "name": "valve-effects",
+                "status": SKIP,
+                "detail": f"no valve-effect ledger at {ledger} — no destructive valve has recorded a run (rung N/A)",
+            }
+        ]
+    rows_in = _valve_effects.read_rows(ledger)
+    if not rows_in:
+        return [
+            {
+                "rung": "potency",
+                "name": "valve-effects",
+                "status": SKIP,
+                "detail": f"valve-effect ledger at {ledger} holds no readable records yet (rung N/A)",
+            }
+        ]
+    try:
+        threshold = int(os.environ.get("LIMEN_VALVE_IDLE_STREAK_RED", "3"))
+    except ValueError:
+        threshold = 3
+    threshold = max(1, threshold)
+
+    streaks = _valve_effects.idle_streaks(rows_in)
+    rows: list[dict] = []
+    for valve, info in sorted(streaks.items(), key=lambda kv: (-kv[1]["streak"], kv[0])):
+        streak, why = info["streak"], info["why"]
+        if streak >= threshold:
+            rows.append(
+                {
+                    "rung": "potency",
+                    "name": valve,
+                    "status": RED,
+                    "detail": (
+                        f"armed but INERT — {streak} consecutive run(s) with no effect: {why}. "
+                        f"The valve is wired, live and exiting 0; it is simply not firing. A dead "
+                        f"valve and a healthy idle one emit the same quiet beat, which is why this "
+                        f"reads the candidate count rather than the effect count alone."
+                    ),
+                }
+            )
+        else:
+            rows.append(
+                {
+                    "rung": "potency",
+                    "name": valve,
+                    "status": INFO,
+                    "detail": (
+                        f"no effect on the last {streak} run(s) — {why}; under the {threshold}-run "
+                        f"threshold, so still noise rather than a dead valve"
+                    ),
+                }
+            )
+    if not rows:
+        valves = sorted({str(r.get("valve")) for r in rows_in})
+        rows.append(
+            {
+                "rung": "potency",
+                "name": "valve-effects",
+                "status": GREEN,
+                "detail": (
+                    f"every one of {len(valves)} destructive valve(s) either acted or had nothing to "
+                    f"act on, on its most recent run ({len(rows_in)} record(s)): {', '.join(valves)}"
+                ),
+            }
+        )
+    return rows
+
+
 # ------------------------------------------------------------------------------ main
 def run(
     heartbeat: Path,
@@ -501,7 +619,10 @@ def run(
     *,
     wiring_only: bool = False,
     efficacy_only: bool = False,
+    potency_only: bool = False,
 ) -> list[dict]:
+    if potency_only:
+        return potency_rung()
     if efficacy_only:
         # One axis at a time, so a test can drive it against a fixture ledger without the
         # host-dependent liveness rung flapping the result between CI and the live host.
@@ -509,9 +630,10 @@ def run(
     params = yaml.safe_load(params_path.read_text()) or {}
     live = LIVE_ROOT == SCRIPT_ROOT or (LIVE_ROOT / "scripts" / "heartbeat-loop.sh").exists()
     rows = wiring_rung(params, heartbeat, live=live)
-    if not wiring_only:  # liveness + efficacy read live host state; tests pin the code contract only
+    if not wiring_only:  # liveness/efficacy/potency read live host state; tests pin the code contract only
         rows += liveness_rung(params)
         rows += efficacy_rung()
+        rows += potency_rung()
     return rows
 
 
@@ -528,6 +650,11 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run ONLY the rung-outcome efficacy rung (point LIMEN_BEAT_RUNG_LOG at a fixture ledger)",
     )
+    ap.add_argument(
+        "--potency-only",
+        action="store_true",
+        help="run ONLY the valve-effect potency rung (point LIMEN_VALVE_EFFECT_LOG at a fixture ledger)",
+    )
     ap.add_argument("--heartbeat", default=str(SCRIPT_ROOT / "scripts" / "heartbeat-loop.sh"))
     ap.add_argument("--params", default=str(SCRIPT_ROOT / "institutio" / "governance" / "parameters.yaml"))
     args = ap.parse_args(argv)
@@ -537,6 +664,7 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.params),
         wiring_only=args.wiring_only,
         efficacy_only=args.efficacy_only,
+        potency_only=args.potency_only,
     )
     reds = [r for r in rows if r["status"] == RED]
 
