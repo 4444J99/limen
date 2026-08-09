@@ -3,12 +3,18 @@
   "census": {
     "baselined": 78,
     "board_source": "canonical:origin/tabularius/board-projection",
-    "levers_total": 82,
+    "levers_total": 83,
     "levers_without_enum_status": 56,
     "marker_present": false,
     "needs_human_no_provenance": 30,
     "needs_human_set_by_a_human": 0,
     "needs_human_total": 126,
+    "operator_paused_ids": [
+      {
+        "id": "GITVS-UNCAPPED-PR-DEBT-0715",
+        "status": "open"
+      }
+    ],
     "operator_paused_labels": 1,
     "runtime_store": "/Users/4jp/Workspace/limen/.agent-runtime",
     "tasks_total": 3299,

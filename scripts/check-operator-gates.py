@@ -324,6 +324,9 @@ def evaluate() -> tuple[list[dict], dict]:
         "tasks_total": len(tasks),
         "needs_human_total": len(needs_human),
         "operator_paused_labels": sum(1 for t in tasks if FORBIDDEN_LABEL in (t.get("labels") or [])),
+        "operator_paused_ids": [
+            {"id": t["id"], "status": t.get("status")} for t in tasks if FORBIDDEN_LABEL in (t.get("labels") or [])
+        ],
         "levers_total": len(levers),
         "levers_without_enum_status": sum(1 for x in levers if x.get("status") not in LEVER_STATUSES),
         "marker_present": MARKER.exists(),
@@ -450,7 +453,24 @@ def main() -> int:
         print(f"\nFAIL — {len(violations)} surface(s) claim an operator gate with no human act behind them")
         return 1
     if args.check:
-        print("\n✓ no surface claims an operator gate without a human act behind it")
+        print("\n✓ no NEW surface claims an operator gate without a human act behind it")
+        # Name the still-live machine-stamped nags every run. A baselined violation is recorded
+        # debt, not a resolved one — and this gate's founding case, GITVS-UNCAPPED-PR-DEBT-0715,
+        # is IN that baseline: it still carries `operator-paused`, still surfaces in every morning
+        # brief as `"operator_paused": 1`, and the operator still sees it. Counting it silently
+        # would reproduce the exact failure the audit was opened to explain, one level up.
+        #
+        # It is baselined rather than failed on purpose: this gate implicates `tasks.yaml`, the
+        # board fast lane, so a red here stalls the keeper's publication PRs — a worse outcome
+        # than a loud green. Retiring it needs an authenticated keeper transition (agy's receipt
+        # docs/receipts/heal-stale-reconcile-limen-20260809.json already proposes `done` with
+        # `gitvs pr-debt --check` exit-0 evidence); an agent session has no broker token and must
+        # never write the projection directly.
+        for row in census.get("operator_paused_ids", []):
+            print(
+                f"  [!] STILL LABELLED {FORBIDDEN_LABEL}: {row['id']} (status={row['status']}) — "
+                "baselined as known debt, NOT resolved; awaiting a keeper transition."
+            )
     return 0
 
 
