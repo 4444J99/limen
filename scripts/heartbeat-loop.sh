@@ -383,6 +383,15 @@ _interruptible_sleep() {
   done
 }
 
+_fast_wave_due_beat() {
+  _fw_cadence="$1"
+  _fw_candidate_beat="$2"
+  if [ "$_fw_cadence" -le 1 ] || [ $((_fw_candidate_beat % _fw_cadence)) -eq 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
 fast_wave_sample_once() {
   # Initialize before any redirection: an unwritable temp log must not kill the resident loop under set -u.
   _fw_sample_rc=125
@@ -515,8 +524,13 @@ fast_wave_loop() {
     # Diurnal and organ-health are independent single-flight workers. If a bounded run is still
     # active, retain the latest scheduled beat and launch it as soon as that worker is free.
     if [ -n "$_fw_diurnal_pid" ] && kill -0 "$_fw_diurnal_pid" 2>/dev/null; then
-      # Keep the earliest pending visit. A later non-due beat must not replace a due one.
-      [ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      # Prefer a later beat that is due by cadence; retain the first non-due beat
+      # only as an age-based fallback when no due visit has appeared.
+      if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then
+        _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      else
+        [ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      fi
     else
       [ -z "$_fw_diurnal_pid" ] || wait "$_fw_diurnal_pid" 2>/dev/null || true
       _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
