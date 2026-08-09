@@ -664,9 +664,7 @@ def test_handoff_refresh_is_wired_across_heartbeat_metabolize_and_breadcrumb_con
 
 def test_heartbeat_sh_drains_only_after_singleton_acquisition():
     heartbeat = (ROOT / "scripts" / "heartbeat.sh").read_text(encoding="utf-8")
-    drain_call = heartbeat.index("
-drain_session_end_breadcrumbs
-")
+    drain_call = heartbeat.index("\ndrain_session_end_breadcrumbs\n")
 
     assert heartbeat.index("flock -n 9") < drain_call
     assert heartbeat.index('mkdir "$LOCK.d"') < drain_call
@@ -682,11 +680,9 @@ def test_heartbeat_drains_resolve_timeout_with_direct_fail_open_fallback():
     for filename, timeout_var in scripts.items():
         source = (ROOT / "scripts" / filename).read_text(encoding="utf-8")
         function_start = source.index("drain_session_end_breadcrumbs() {")
-        function_end = source.index("
-}", function_start)
+        function_end = source.index("\n}", function_start)
         function = source[function_start:function_end]
-        bounded, direct = function.split("  else
-", 1)
+        bounded, direct = function.split("  else\n", 1)
 
         assert "command -v timeout || command -v gtimeout || true" in source
         assert f'if [ -n "${timeout_var}" ]; then' in bounded
@@ -703,17 +699,11 @@ def test_heartbeat_loop_drains_before_paused_and_offline_early_continues_once():
     heartbeat = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
     lines = [line.strip() for line in heartbeat.splitlines()]
     ownership = heartbeat.index('if [ "$(cat "$DAEMON_LOCK" 2>/dev/null)" != "$$" ]; then')
-    drain_call = heartbeat.index("
-  drain_session_end_breadcrumbs
-")
+    drain_call = heartbeat.index("\n  drain_session_end_breadcrumbs\n")
     mode = heartbeat.index('  MODE="$(python3 "$LIMEN_ROOT/scripts/autonomy-governor.py"')
-    paused_continue = heartbeat.index("
-    continue
-", mode)
+    paused_continue = heartbeat.index("\n    continue\n", mode)
     connectivity = heartbeat.index("  # CONNECTIVITY GATE", paused_continue)
-    offline_continue = heartbeat.index("
-    continue
-", connectivity)
+    offline_continue = heartbeat.index("\n    continue\n", connectivity)
 
     assert heartbeat.index('echo $$ > "$DAEMON_LOCK"') < ownership < drain_call
     assert drain_call < mode < paused_continue < connectivity < offline_continue
