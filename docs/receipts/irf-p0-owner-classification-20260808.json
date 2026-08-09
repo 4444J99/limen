@@ -6,6 +6,7 @@
   "classified": 41,
   "unowned": [],
   "packet_emissions": [],
+  "ownership_contract": "Rows with owner_kind=irf and owner_ref=irf:<same id> are machine-ownable IRF rows; human actions use the named lever owner instead of self-referential IRF ownership.",
   "rows": [
     {
       "irf_id": "IRF-SYS-166",
