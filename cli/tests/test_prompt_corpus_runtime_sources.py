@@ -292,6 +292,27 @@ def test_runtime_source_discovery_survives_source_home_override(tmp_path: Path, 
     assert [Path(row["path"]) for row in rows] == [session]
 
 
+def test_regular_source_rows_deduplicate_symlinked_runtime_aliases(tmp_path: Path) -> None:
+    module = _load_atom_script()
+    runtime = tmp_path / ".agent-runtime" / "codex" / "sessions"
+    runtime.mkdir(parents=True)
+    session = runtime / "rollout.jsonl"
+    session.write_text("{}\n")
+    shim = tmp_path / "shim-home"
+    shim.mkdir()
+    (shim / ".codex").symlink_to(tmp_path / ".agent-runtime", target_is_directory=True)
+    lifecycle = SimpleNamespace(
+        LOCAL_SOURCES=[
+            ("codex-sessions", shim / ".codex" / "codex" / "sessions", ("*",)),
+            ("codex-sessions", runtime, ("*",)),
+        ]
+    )
+
+    rows = module.regular_source_rows(lifecycle, None)
+
+    assert [Path(row["path"]).resolve() for row in rows] == [session.resolve()]
+
+
 def test_source_relative_path_uses_the_containing_duplicate_root(tmp_path: Path) -> None:
     module = _load_atom_script()
     first = tmp_path / "home-sessions"
