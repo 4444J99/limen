@@ -518,7 +518,6 @@ def test_submitted_lineage_append_is_idempotent(tmp_path: Path, monkeypatch: pyt
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     monkeypatch.setattr(module, "ROOT", tmp_path)
-    tasks_path = tmp_path / "tasks.yaml"
     receipt = _receipt()
 
     module._append_cloud_lineage_receipt(receipt)
