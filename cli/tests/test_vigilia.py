@@ -603,6 +603,30 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert "HOST_PRESSURE_WATCHDOG_PID" in heartbeat[heartbeat.index("cleanup()") : main_loop]
 
 
+def test_fast_wave_preserves_the_earliest_pending_visit():
+    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(
+        encoding="utf-8"
+    )
+    diurnal_start = heartbeat.index('    if [ -n "$_fw_diurnal_pid" ]')
+    health_start = heartbeat.index('    if [ -n "$_fw_health_pid" ]')
+    assert '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"' in heartbeat[
+        diurnal_start:health_start
+    ]
+    assert '[ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"' in heartbeat[health_start:]
+    assert '_fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"' in heartbeat
+    assert '_fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"' in heartbeat
+
+
+def test_metabolize_host_pressure_probe_is_read_only():
+    sensors = (Path(__file__).resolve().parents[2] / "institutio" / "governance" / "sensors.yaml").read_text(
+        encoding="utf-8"
+    )
+    start = sensors.index("  host-pressure-stale:")
+    end = sensors.index("\n  ", start + 4)
+    assert "source: [metabolize]" in sensors[start:end]
+    assert "host-pressure-stale.py --read-only" in sensors[start:end]
+
+
 def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
     old_time = datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)
     new_time = old_time + timedelta(seconds=1)
