@@ -200,9 +200,21 @@ def parse_iso(value: str | None) -> dt.datetime | None:
     return parsed.astimezone(dt.timezone.utc)
 
 
-def run(args: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str],
+    timeout: int = 10,
+    *,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        kwargs: dict[str, Any] = {
+            "capture_output": True,
+            "text": True,
+            "timeout": timeout,
+        }
+        if env is not None:
+            kwargs["env"] = env
+        return subprocess.run(args, **kwargs)
     except Exception as exc:
         return subprocess.CompletedProcess(args, 1, "", str(exc))
 
@@ -386,13 +398,29 @@ def resident_host_pressure_watchdog_pid() -> str | None:
     return _resident_pid(HOST_PRESSURE_WATCHDOG_PID_PATH)
 
 
-def host_pressure_snapshot(*, read_only: bool = False) -> dict[str, Any]:
+def host_pressure_snapshot(
+    *,
+    read_only: bool = False,
+    effective_env: dict[str, str] | None = None,
+) -> dict[str, Any]:
     if not HOST_PRESSURE_STALE_SCRIPT.is_file():
         return {"ok": None, "returncode": None, "detail": "host-pressure-stale.py missing"}
     command = [sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)]
     if read_only:
         command.append("--read-only")
-    completed = run(command, timeout=30)
+    probe_env = None
+    if effective_env:
+        probe_env = os.environ.copy()
+        for key in (
+            "LIMEN_ENV_FILE",
+            "LIMEN_HOST_PRESSURE_STALE",
+            "LIMEN_VIGILIA",
+            "LIMEN_VITALS_SAMPLE_SECONDS",
+            "LIMEN_VITALS_STALE_BEATS",
+        ):
+            if key in effective_env:
+                probe_env[key] = effective_env[key]
+    completed = run(command, timeout=30, env=probe_env)
     detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
     return {
         "ok": completed.returncode == 0,
@@ -1835,7 +1863,10 @@ def build_snapshot(
         ),
         None,
     )
-    host_pressure = host_pressure_snapshot(read_only=host_pressure_read_only)
+    host_pressure = host_pressure_snapshot(
+        read_only=host_pressure_read_only,
+        effective_env=launchd.get("env") if isinstance(launchd.get("env"), dict) else None,
+    )
 
     captured_at = utc_now().replace(microsecond=0)
     snapshot: dict[str, Any] = {
