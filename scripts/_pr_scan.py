@@ -33,14 +33,35 @@ QUEUE_ACTIVE = "active"
 QUEUE_ABSENT = "absent"
 QUEUE_UNKNOWN = "unknown"
 
+# GitHub's search API will not return more than 1000 results, and `gh search --limit N` for N above
+# that comes back EMPTY rather than erroring. To every caller here that is indistinguishable from
+# "the estate has no open PRs" — the organ prints `no open PRs (or gh unavailable)` and does nothing,
+# which reads as a quiet beat rather than as a blackout. Measured 2026-08-09: `--limit 1500` → `[]`,
+# `--limit 1000` → 818. Clamping converts the worst failure available (silent total blindness) into
+# the largest true answer the API can give, and says so on stderr.
+SEARCH_RESULT_CEILING = 1000
+
 
 def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"):
     """One cheap `gh search prs` call → the FULL open-PR set across `owners`, stably sorted.
     Returns (repo, num, url) tuples when want_url else (repo, num). Empty list on any gh failure
     (fail-open: the caller treats it as 'no PRs this beat'). ``author=None`` is the estate-wide
-    census mode; worker loops retain the narrower current-actor default."""
+    census mode; worker loops retain the narrower current-actor default.
+
+    ``max_total`` is clamped to ``SEARCH_RESULT_CEILING`` — see that constant. A caller that needs a
+    PROVABLY complete set (rather than a bounded sample) cannot get one from search at all once the
+    estate passes the ceiling; ``scripts/check-heal-retirement.py`` paginates REST for that reason.
+    """
     fields = "number,repository,url" if want_url else "number,repository"
-    cmd = ["search", "prs", "--state", "open", "--limit", str(max_total)]
+    capped = min(int(max_total), SEARCH_RESULT_CEILING)
+    if capped < int(max_total):
+        print(
+            f"[_pr_scan] requested --limit {max_total} exceeds GitHub's {SEARCH_RESULT_CEILING}-result "
+            f"search ceiling, which returns an EMPTY list rather than an error; clamped to {capped}. "
+            "The result may be truncated — do not treat absence from it as proof of closure.",
+            file=sys.stderr,
+        )
+    cmd = ["search", "prs", "--state", "open", "--limit", str(capped)]
     if author:
         cmd.extend(["--author", str(author)])
     cmd.extend([*sum([["--owner", o] for o in owners], []), "--json", fields])

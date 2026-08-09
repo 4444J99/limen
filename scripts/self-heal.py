@@ -26,7 +26,10 @@ Safety / shape (matches the sibling organs exactly):
     run (default 10, lifted up to 3x when vendor capacity is idle). Never dispatches/merges/pushes.
 
   --scan N      assess WINDOW per run — PRs classified this beat, rotating (default 30)
-  --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 500)
+  --scan-max N  cap on the cheap full-fleet enumeration the window draws from (default 1000, the
+                GitHub search ceiling). Below the live open-PR count it silently disables the
+                retirement pass — the enumeration is then a prefix, and absence from a prefix is
+                not closure. Raise nothing above 1000: search returns EMPTY past it.
   --limit N     max heal tasks to EMIT this run, headroom-scaled (default 10)
   --dry-run     assess + report what WOULD be emitted; make ZERO writes (cursor + lock untouched)
 """
@@ -342,6 +345,25 @@ def parse_pr_spec(raw):
     raise argparse.ArgumentTypeError(f"expected owner/repo#number or GitHub PR URL, got {raw!r}")
 
 
+def retirement_authorized(explicit_prs, enumerated, scan_max):
+    """``(ok, why)`` — may the reconcile pass retire tasks ABSENT from this enumeration?
+
+    Retirement reads absence as closure, so it is sound only over a COMPLETE set. Emission has the
+    opposite tolerance (a short list merely emits fewer tasks), which is why one enumeration feeding
+    both consumers needs this gate rather than a comment. Lives at module scope so the boundary is
+    assertable: the off-by-one between ``>`` and ``>=`` here is the difference between refusing a
+    truncated set and retiring from one, and it was previously reachable only by running the organ
+    against the live fleet.
+    """
+    if explicit_prs:
+        return False, "--pr narrowed the enumeration to the named PR(s)"
+    # `>=`, not `>`: a result count EQUAL to the cap is exactly what a truncated search returns, and
+    # a set that happens to be complete at the cap is indistinguishable from one that is not.
+    if enumerated >= scan_max:
+        return False, f"enumeration hit the --scan-max cap ({scan_max}); it is truncated"
+    return True, ""
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -353,8 +375,9 @@ def main():
     ap.add_argument(
         "--scan-max",
         type=int,
-        default=env_int("LIMEN_HEAL_SCAN_MAX", 500),
-        help="cap on the cheap full-fleet enumeration the rotating window draws from",
+        default=env_int("LIMEN_HEAL_SCAN_MAX", 1000),
+        help="cap on the cheap full-fleet enumeration the rotating window draws from "
+        "(1000 = GitHub's search ceiling; below the live open-PR count it silently disables retirement)",
     )
     ap.add_argument(
         "--limit",
@@ -388,16 +411,19 @@ def main():
     # neither announces itself:
     #   --pr        deliberately narrows the enumeration to the named PRs, making every OTHER
     #               task's PR trivially "absent" — a one-PR debugging run would retire the backlog.
-    #   --scan-max  `gh search --limit N` truncates SILENTLY at N. Measured 2026-08-09: 822 open
-    #               PRs across the owners against a default cap of 1000 (82% of it), in an estate
-    #               that opened and merged 54 PRs that day.
+    #   --scan-max  `gh search --limit N` truncates SILENTLY at N.
+    # And the cap is not a hypothetical: the guard below is only as useful as a default that clears
+    # the real estate, and the shipped default did NOT. Measured 2026-08-09 by running the beat's
+    # own invocation (`--scan 30`, no --scan-max) against the live fleet: 818-822 open PRs versus a
+    # default cap of 500, so `len(allprs) >= scan_max` was TRUE every beat and the reconcile pass
+    # this organ had just gained never ran once — `retirement SKIPPED ... would-retire=0`, while the
+    # same run at --scan-max 900 reported `would-retire=257`. The valve was wired, beat-scheduled,
+    # and dead. Raising the default to GitHub's 1000-result search ceiling clears the live count;
+    # past that ceiling search cannot answer completely at all (see _pr_scan.SEARCH_RESULT_CEILING)
+    # and the guard correctly, loudly, stops retiring rather than retiring from a prefix.
     # Emission is unaffected — a short list merely emits fewer tasks. Retirement is destructive, so
     # it requires a COMPLETE enumeration or it does not run at all.
-    retire_ok, retire_why = True, ""
-    if a.pr:
-        retire_ok, retire_why = False, "--pr narrowed the enumeration to the named PR(s)"
-    elif len(allprs) >= a.scan_max:
-        retire_ok, retire_why = False, f"enumeration hit the --scan-max cap ({a.scan_max}); it is truncated"
+    retire_ok, retire_why = retirement_authorized(a.pr, len(allprs), a.scan_max)
     if not retire_ok:
         print(f"[self-heal] retirement SKIPPED — {retire_why}. Absence from a partial set is not evidence of closure.")
     if a.pr:
