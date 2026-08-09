@@ -408,6 +408,23 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
             fail("E", f"{cohort}: owner_lever {lever!r} does not resolve")
         if armed_disposition is not None and (not lever or armed_disposition not in labels):
             fail("E", f"{cohort}: armed_disposition requires a resolving lever and known disposition")
+        if armed_disposition is not None:
+            arm_decision = row.get("arm_decision")
+            receipt = arm_decision.get("accepted_receipt") if isinstance(arm_decision, dict) else None
+            if (
+                not isinstance(arm_decision, dict)
+                or arm_decision.get("outcome") != "arm"
+                or not isinstance(receipt, dict)
+                or not isinstance(receipt.get("source"), str)
+                or not receipt.get("source")
+                or not isinstance(receipt.get("predicate"), str)
+                or not receipt.get("predicate")
+                or receipt.get("disposition") != armed_disposition
+            ):
+                fail(
+                    "E",
+                    f"{cohort}: armed_disposition requires an explicit arm outcome and accepted receipt",
+                )
         if disposition is None and lever and levers.get(str(lever)) in TERMINAL_LEVER_STATES:
             fail(
                 "E",
