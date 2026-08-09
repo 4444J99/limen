@@ -612,10 +612,7 @@ def test_fast_wave_prefers_due_pending_visits():
     assert "_fast_wave_due_beat" in heartbeat
     assert 'if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then' in diurnal
     assert '_fw_diurnal_pending="$FAST_WAVE_BEAT"' in diurnal
-    assert (
-        '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"'
-        in diurnal
-    )
+    assert '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"' in diurnal
     assert '[ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"' in heartbeat[health_start:]
     assert '_fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"' in heartbeat
     assert '_fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"' in heartbeat
