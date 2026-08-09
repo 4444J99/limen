@@ -184,6 +184,32 @@ def _discover_doors(text):
     return out
 
 
+def _env_file_value(raw: str) -> str:
+    """Parse a sourced env value while preserving hash characters inside quotes."""
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\\\"":
+        value = value[1:-1]
+    return value
+
+
 def _env_flag(name, default=""):
     """Read a gate flag from the live env, falling back to ~/.limen.env, then default. Read-only."""
     if name in os.environ:
@@ -192,7 +218,7 @@ def _env_flag(name, default=""):
         for ln in ENV_FILE.read_text().splitlines():
             ln = ln.strip()
             if ln.startswith(f"{name}=") or ln.startswith(f"export {name}="):
-                return ln.split("=", 1)[1].strip().strip('"').strip("'")
+                return _env_file_value(ln.split("=", 1)[1])
     except OSError:
         pass
     return default
