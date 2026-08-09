@@ -449,7 +449,13 @@ def _registry():
             gate="LIMEN_VIGILIA",
             gate_default="1",
             what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
-            probe=lambda: _json_field_ts(LOGS / "vigilia" / "status.json", "ts"),
+            # VIGILIA has separate clocks: prefer the early sample, then the full beat
+            # completion. The retired single ``ts`` field must not make a healthy sample stale.
+            probe=lambda: _json_field_ts(
+                LOGS / "vigilia" / "status.json",
+                "sampled_at",
+                "completed_at",
+            ),
         ),
         dict(
             key="nomenclator",
