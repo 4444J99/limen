@@ -31,6 +31,9 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
+from limen.capacity import canonical_agent  # noqa: E402
+from limen.dispatch import _effective_target_agent  # noqa: E402
+from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
 from limen.work_loan import task_work_loan_readiness  # noqa: E402
@@ -285,6 +288,21 @@ def _dependency_merged(task: dict[str, Any] | None) -> bool:
     return False
 
 
+def _effective_task_agent(task: dict[str, Any]) -> str:
+    """Resolve the provider that dispatch will actually execute, without mutating ownership."""
+    try:
+        return _effective_target_agent(Task.model_validate(task))
+    except Exception:
+        # Historical fixture rows may omit required Task fields; still honor their latest
+        # explicit route receipt rather than falling back to the stale target_agent.
+        for entry in reversed(task.get("dispatch_log") or []):
+            if not isinstance(entry, dict):
+                continue
+            if str(entry.get("status") or "") == "open" and entry.get("route_to"):
+                return canonical_agent(str(entry["route_to"]))
+        return canonical_agent(str(task.get("target_agent") or ""))
+
+
 def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
     if agent in {"", "any"}:
         return True
@@ -347,7 +365,7 @@ def _dispatch_admission(
         cost = _as_int(task.get("budget_cost")) or 1
         if reason is None and global_remaining is not None and cost > global_remaining:
             reason = "budget_global"
-        agent = str(task.get("target_agent") or "")
+        agent = _effective_task_agent(task)
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
