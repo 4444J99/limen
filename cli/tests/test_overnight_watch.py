@@ -484,6 +484,42 @@ def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkey
     }
 
 
+def test_sourced_runtime_env_overrides_stale_launchd_values(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    env_file = tmp_path / "limen.env"
+    env_file.write_text(
+        "export LIMEN_VIGILIA=0 # intentionally disabled\n"
+        "LIMEN_HOST_PRESSURE_STALE=1\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    monkeypatch.delenv("LIMEN_VIGILIA", raising=False)
+
+    effective = module.effective_runtime_env({"LIMEN_VIGILIA": "1"})
+
+    assert effective["LIMEN_VIGILIA"] == "0"
+    assert effective["LIMEN_HOST_PRESSURE_STALE"] == "1"
+
+
+def test_absent_resident_records_alert_while_heartbeat_is_active(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot.update(
+        {
+            "launchd": {"ok": True, "state": "active", "env": {}},
+            "heartbeat": {"latest_tick": {"timestamp": "2026-07-01T09:53:57+00:00"}},
+        }
+    )
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {
+        "vigilia-fast-wave-missing",
+        "host-pressure-watchdog-missing",
+    }
+
+
 def test_repeated_tick_alerts_when_no_workers(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
