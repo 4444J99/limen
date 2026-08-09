@@ -155,6 +155,31 @@ def test_opencode_usage_includes_provider_outcome_health(tmp_path):
     assert len(vendors["opencode"]["provider_health_snapshot_hash"]) == 64
 
 
+def test_opencode_usage_preserves_provider_auth_terminal_class(tmp_path):
+    now = datetime.now(timezone.utc)
+    rows = []
+    for index in range(2):
+        finished = now - timedelta(seconds=5 - index)
+        rows.append(
+            {
+                "schema": "limen.provider_outcome.v1",
+                "provider": "opencode",
+                "runtime_model": "opencode/arbitrary-runtime",
+                "catalog_hash": "a" * 64,
+                "execution_profile_hash": "b" * 64,
+                "terminal_class": "auth_failure",
+                "started_at": (finished - timedelta(seconds=1)).isoformat(),
+                "finished_at": finished.isoformat(),
+                "retry_count": index,
+                "receipt_reference": "task:auth-fixture",
+            }
+        )
+
+    vendors = _run(tmp_path, ["beat ok"], provider_outcomes=rows)
+
+    assert vendors["opencode"]["provider_last_terminal_failure_class"] == "auth_failure"
+
+
 def test_malformed_cooldown_env_does_not_crash(tmp_path):
     vendors = _run(
         tmp_path,
