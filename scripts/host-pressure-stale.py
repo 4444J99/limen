@@ -6,7 +6,8 @@ pressure; if the gauge itself goes silent, the valve is flying blind and nothing
 notices — the exact failure mode the sensors registry warns about. This rung fails when
 the ``sampled_at`` record in ``logs/vigilia/status.json`` (written by the heartbeat's
 independent fast wave) misses VITALS_STALE_BEATS declared sample cadences
-(x LIMEN_VITALS_SAMPLE_SECONDS), or is absent entirely while
+(x LIMEN_VITALS_SAMPLE_SECONDS), allowing one bounded producer-write grace
+(LIMEN_VITALS_SAMPLE_GRACE_SECONDS) at the cadence boundary, or is absent entirely while
 VIGILIA is on (LIMEN_VIGILIA unset counts as on — the heartbeat's own default).
 
 The alarm is the staleness, not the pressure: the effector for pressure itself remains
@@ -97,6 +98,12 @@ def _sample_seconds() -> float:
     return float(raw) if raw.isdigit() and int(raw) > 0 else 300.0
 
 
+def _sample_grace_seconds(sample_seconds: float) -> float:
+    """Allow the current producer write to finish without widening missed-cadence truth."""
+    default = min(5.0, sample_seconds)
+    return min(_positive_float("LIMEN_VITALS_SAMPLE_GRACE_SECONDS", default), sample_seconds)
+
+
 def _stale(message: str, *, read_only: bool) -> int:
     print(message)
     if not read_only:
@@ -122,6 +129,8 @@ def main(argv: list[str] | None = None) -> int:
     stale_beats = _positive_float("LIMEN_VITALS_STALE_BEATS", 3)
     sample_seconds = _sample_seconds()
     budget_s = stale_beats * sample_seconds
+    grace_s = _sample_grace_seconds(sample_seconds)
+    stale_after_s = budget_s + grace_s
 
     status_path = _root() / "logs" / "vigilia" / "status.json"
     if not status_path.exists():
@@ -142,11 +151,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     age_s = (datetime.now(timezone.utc) - sampled_at).total_seconds()
-    if age_s > budget_s:
+    if age_s >= stale_after_s:
         return _stale(
             f"host-pressure-stale: STALE — vitals record is {age_s / 60:.0f} min old "
-            f"(budget {budget_s / 60:.0f} min = {stale_beats:g} x LIMEN_VITALS_SAMPLE_SECONDS); "
-            "the throttle/shed valve is flying blind",
+            f"(budget {budget_s / 60:.0f} min = {stale_beats:g} x LIMEN_VITALS_SAMPLE_SECONDS "
+            f"+ {grace_s:.0f}s write grace); the throttle/shed valve is flying blind",
             read_only=args.read_only,
         )
 
