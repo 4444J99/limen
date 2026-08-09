@@ -126117,36 +126117,47 @@ tasks:
   predicate: 'test "$(gh pr view 102 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = CLOSED'
   receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/102'
   updated: '2026-08-09T03:12:42.204Z'
-- id: HEAL-rebase-organvm-hokage-chess--4444j99-103
-  title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#103
-  repo: organvm/hokage-chess--4444j99
-  type: code
-  target_agent: agy
-  priority: high
+- id: 'HEAL-rebase-organvm-hokage-chess--4444j99-103'
+  title: 'rebase/resolve conflicts on organvm/hokage-chess--4444j99#103'
+  repo: 'organvm/hokage-chess--4444j99'
+  type: 'code'
+  target_agent: 'agy'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - rebase
-  - self-heal
-  - conflict
+  - 'rebase'
+  - 'self-heal'
+  - 'conflict'
   urls:
-  - https://github.com/organvm/hokage-chess--4444j99/pull/103
-  context: 'PR organvm/hokage-chess--4444j99#103 is CONFLICTING with its base branch
-    and merge-drain correctly refuses to merge it. Check out the PR branch, rebase
-    it onto the current base (or merge base in), resolve every conflict preserving
-    the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE
-    with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/103
-    [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
+  - 'https://github.com/organvm/hokage-chess--4444j99/pull/103'
+  context: 'PR organvm/hokage-chess--4444j99#103 is CONFLICTING with its base branch and merge-drain correctly refuses to merge it. Check out the PR branch, rebase it onto the current base (or merge base in), resolve every conflict preserving the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not open a new PR. PR: https://github.com/organvm/hokage-chess--4444j99/pull/103 [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  updated: '2026-07-09T20:14:20.997983Z'
+  updated: '2026-08-09T03:12:48.889Z'
   dispatch_log:
   - timestamp: '2026-07-09T20:14:20.997983Z'
-    agent: codex
-    session_id: codex-local-fill-20260709
-    status: open
-    output: 'fleet fill: retargeted codex->agy to saturate OpenCode/Agy local async
-      slots after Jules live runway'
+    agent: 'codex'
+    session_id: 'codex-local-fill-20260709'
+    status: 'open'
+    output: 'fleet fill: retargeted codex->agy to saturate OpenCode/Agy local async slots after Jules live runway'
+  - timestamp: '2026-08-09T03:12:48.889Z'
+    agent: 'opencode'
+    session_id: 'opencode-org-1786245167'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-org-1786245167'
+    status: 'dispatched'
+    output: 'PR #103 closed as superseded; no merge needed.'
+    conduct_event_id: 'conduct:run-339e8a786d3f5b8a924363f4ee3088f8:776:compatibility'
+    conduct_run_id: 'run-339e8a786d3f5b8a924363f4ee3088f8'
+    conduct_lease_id: 'lease-776-339e8a786d3f5b8a'
+    conduct_generation: 776
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Rebase collab PR organvm/hokage-chess--4444j99#103; analysis determined content already on main (superseded), closed as duplicate.'
+  owner_surface: 'board'
+  predicate: 'test "$(gh pr view 103 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/103'
 - id: HEAL-rebase-organvm-hokage-chess--4444j99-107
   title: rebase/resolve conflicts on organvm/hokage-chess--4444j99#107
   repo: organvm/hokage-chess--4444j99
