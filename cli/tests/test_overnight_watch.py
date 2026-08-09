@@ -1721,3 +1721,25 @@ def test_host_pressure_read_only_mode_is_forwarded(tmp_path, monkeypatch):
             30,
         )
     ]
+
+def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    calls = []
+
+    def fake_snapshot(**kwargs):
+        calls.append(kwargs)
+        return _minimal_ok_snapshot()
+
+    monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
+    monkeypatch.setattr(module, "write_receipts", lambda _snapshot: None)
+    monkeypatch.setattr(module, "heal", lambda _snapshot: [])
+    monkeypatch.setattr(module, "append_trial_observation", lambda _snapshot: None)
+    monkeypatch.setattr(module, "maybe_finalize_trial", lambda: None)
+
+    assert module.run_once(dry_run=False, json_output=True) == 0
+    assert calls == [{
+        "refresh_handoff": True,
+        "record_gate": True,
+        "submit_lane_switch": True,
+        "host_pressure_read_only": True,
+    }]
