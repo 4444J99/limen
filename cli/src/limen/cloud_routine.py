@@ -361,9 +361,7 @@ def plan_task_upserts(
         previous = latest_historical_observed_at.get(lineage_id)
         if previous is None or observed_at > previous:
             latest_historical_observed_at[lineage_id] = observed_at
-    active_lineages = {
-        lineage_for(task_id) for task_id in active
-    }
+    active_lineages = {lineage_for(task_id) for task_id in active}
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
     # Every terminal observation is classified even when a later receipt for the
