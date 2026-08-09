@@ -167807,3 +167807,41 @@ tasks:
     conduct_lease_id: 'lease-714-b4ce187ef5f7b4af'
     conduct_generation: 714
   updated: '2026-08-09T01:28:47.949Z'
+- id: 'HEAL-rebase-stale-organvm-limen-2126'
+  title: 'rebase organvm/limen#2126 onto current base — stale base touches the daemon body'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'rebase'
+  - 'self-heal'
+  - 'stale-base'
+  - 'core'
+  urls:
+  - 'https://github.com/organvm/limen/pull/2126'
+  context: 'PR organvm/limen#2126 is MERGEABLE + green BUT its base is STALE and its diff touches CORE daemon files (cli/src/limen, scripts/*.py|sh, mcp/src, web/api, container). Merging as-is would silently REVERT newer code on the base — the #111 failure mode. Check out the PR branch and REBASE it onto the CURRENT base (git fetch origin && git rebase origin/<base>). During the rebase, KEEP every change that is genuinely this PR''s own work and DROP any hunk that would revert a file the PR did not intend to change (especially core files it only carries because it branched old). Push --force-with-lease to the SAME PR branch; confirm it reports MERGEABLE, current with base, and green. Do NOT open a new PR and do NOT drop any unique work — absorb the branch toward current ideal form. PR: https://github.com/organvm/limen/pull/2126 [auto-emitted 2026-08-08 by self-heal so merge-drain can land it]'
+  predicate: 'test "$(gh pr view 2126 --repo organvm/limen --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/limen/pull/2126'
+  origin: 'system_debt'
+  horizon: 'past'
+  value_case: 'Resolve the recurring STALE-CORE pull-request defect for organvm/limen#2126'
+  owner_surface: 'organvm/limen'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-09T02:40:53.917Z'
+    agent: 'codex'
+    session_id: 'self-heal-emit'
+    logical_agent: 'self-heal'
+    logical_session_id: 'emit'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0214b82efd8fbfb1a85272eb3a795005:715:compatibility'
+    conduct_run_id: 'run-0214b82efd8fbfb1a85272eb3a795005'
+    conduct_lease_id: 'lease-715-0214b82efd8fbfb1'
+    conduct_generation: 715
+  updated: '2026-08-09T02:40:53.917Z'
