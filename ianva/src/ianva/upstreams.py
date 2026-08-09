@@ -11,6 +11,7 @@ a {"servers": [...]} envelope, or a {name: def} map, and individual keys vary by
 
 from __future__ import annotations
 
+from typing import Any
 import json
 import shlex
 from dataclasses import dataclass, field
@@ -36,7 +37,7 @@ class Upstream:
         return self.transport in ("http", "sse") or bool(self.url)
 
 
-def _as_list(value) -> list[str]:
+def _as_list(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, list):
@@ -51,13 +52,13 @@ def _as_list(value) -> list[str]:
     return [str(value)]
 
 
-def _as_dict(value) -> dict[str, str]:
+def _as_dict(value: Any) -> dict[str, str]:
     if not isinstance(value, dict):
         return {}
     return {str(k): str(v) for k, v in value.items()}
 
 
-def _as_bool(value, default: bool = False) -> bool:
+def _as_bool(value: Any, default: bool = False) -> bool:
     if value is None:
         return default
     if isinstance(value, bool):
@@ -116,7 +117,7 @@ def _coerce(name: str, raw: dict) -> Upstream:
     )
 
 
-def _iter_raw(blob) -> dict[str, dict]:
+def _iter_raw(blob: Any) -> dict[str, dict]:
     """Yield name->def from any of the accepted container shapes."""
     if blob is None:
         return {}

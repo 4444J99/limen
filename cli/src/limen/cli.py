@@ -801,7 +801,7 @@ def workstream(
         args.append("--no-readme")
     args.extend([repo, slug])
     if agent_name or launch_shell:
-        result = subprocess.run(args)
+        result = subprocess.run(args, text=True)
     else:
         result = subprocess.run(args, text=True, capture_output=True)
         if result.stdout:

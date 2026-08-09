@@ -126,12 +126,16 @@ def _xattrs_sha256(path: Path) -> str:
     """Digest names and bytes for every extended attribute, without following links."""
 
     try:
-        names = sorted(os.listxattr(path, follow_symlinks=False))
+        listxattr = getattr(os, "listxattr", None)
+        getxattr = getattr(os, "getxattr", None)
+        if listxattr is None or getxattr is None:
+            raise AttributeError("xattr functions unavailable")
+        names = sorted(listxattr(path, follow_symlinks=False))
         payload = [
             (
                 name,
                 hashlib.sha256(
-                    os.getxattr(path, name, follow_symlinks=False),
+                    getxattr(path, name, follow_symlinks=False),
                 ).hexdigest(),
             )
             for name in names

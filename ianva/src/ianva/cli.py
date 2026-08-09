@@ -20,6 +20,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from typing import Any
+
 from . import __version__, creds, paths
 from .config import load_config
 from .gen import Endpoint, build_entries, write_golden
@@ -28,18 +30,18 @@ from .preflight import unreachable
 from .upstreams import load_upstreams
 
 
-def _endpoint(cfg) -> Endpoint:
+def _endpoint(cfg: Any) -> Endpoint:
     return Endpoint(**cfg.endpoint_kwargs())
 
 
-def _ups(cfg):
+def _ups(cfg: Any) -> Any:
     return load_upstreams(
         registry=Path(cfg.registry).expanduser() if cfg.registry else None,
         extra=Path(cfg.extra).expanduser() if cfg.extra else None,
     )
 
 
-def cmd_up(args) -> int:
+def cmd_up(args: argparse.Namespace) -> int:
     cfg = load_config()
     ups = _ups(cfg)
     bearer = creds.bearer_token()
@@ -61,12 +63,12 @@ def cmd_up(args) -> int:
     return 0
 
 
-def cmd_down(args) -> int:
+def cmd_down(args: argparse.Namespace) -> int:
     print(stop(load_config()))
     return 0
 
 
-def cmd_status(args) -> int:
+def cmd_status(args: argparse.Namespace) -> int:
     cfg = load_config()
     st = backend_status(cfg)
     ups = _ups(cfg)
@@ -82,7 +84,7 @@ def _which(name: str) -> str:
     return shutil.which(name) or "(absent)"
 
 
-def cmd_doctor(args) -> int:
+def cmd_doctor(args: argparse.Namespace) -> int:
     cfg = load_config()
     ep = _endpoint(cfg)
     print("ianva doctor — dependencies & wiring (no secret values are ever printed)\n")
@@ -130,7 +132,7 @@ def cmd_doctor(args) -> int:
     return 0
 
 
-def cmd_gen_configs(args) -> int:
+def cmd_gen_configs(args: argparse.Namespace) -> int:
     cfg = load_config()
     entries = build_entries(_endpoint(cfg))
     outdir = write_golden(entries)
@@ -141,7 +143,7 @@ def cmd_gen_configs(args) -> int:
     return 0
 
 
-def cmd_install_configs(args) -> int:
+def cmd_install_configs(args: argparse.Namespace) -> int:
     here = Path(__file__).resolve().parents[2]
     installer = here / "scripts" / "install_agent_configs.py"
     if not installer.exists():
@@ -155,7 +157,7 @@ def cmd_install_configs(args) -> int:
     return subprocess.call(cmd)
 
 
-def cmd_add_upstream(args) -> int:
+def cmd_add_upstream(args: argparse.Namespace) -> int:
     paths.ensure_dirs()
     f = paths.UPSTREAMS_JSON
     data = json.loads(f.read_text()) if f.exists() else {}
@@ -174,7 +176,7 @@ def cmd_add_upstream(args) -> int:
     return 0
 
 
-def cmd_probe(args) -> int:
+def cmd_probe(args: argparse.Namespace) -> int:
     cfg = load_config()
     ups = _ups(cfg)
     down = unreachable(ups)
@@ -184,7 +186,7 @@ def cmd_probe(args) -> int:
     return 0
 
 
-def cmd_bearer(args) -> int:
+def cmd_bearer(args: argparse.Namespace) -> int:
     if args.new:
         tok = creds.new_bearer()
         print("New gateway bearer (store it, then restart ianva before exposing the endpoint):\n")
@@ -198,7 +200,7 @@ def cmd_bearer(args) -> int:
     return 0
 
 
-def cmd_version(args) -> int:
+def cmd_version(args: argparse.Namespace) -> int:
     print(f"ianva {__version__}")
     return 0
 

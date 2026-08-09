@@ -9,6 +9,7 @@ DOWN for this beat (and surfaced), never re-auth'd.
 
 from __future__ import annotations
 
+from typing import Any, Iterable
 import socket
 from urllib.parse import urlparse
 
@@ -40,7 +41,7 @@ def url_reachable(url: str, timeout: float = 2.0) -> bool:
     return reachable(p.hostname, port, timeout)
 
 
-def unreachable(upstreams, timeout: float = 2.0) -> list[str]:
+def unreachable(upstreams: Iterable[Any], timeout: float = 2.0) -> list[str]:
     """Names of remote (http/sse) upstreams that are unreachable right now. stdio upstreams
     are always considered reachable (local process spawn)."""
     down: list[str] = []

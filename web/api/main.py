@@ -228,7 +228,7 @@ class TaskCreate(BaseModel):
     @field_validator("urls", mode="before")
     @classmethod
     def validate_urls(cls, v: list[str]) -> list[str]:
-        return validate_url_list(v)
+        return validate_url_list(v) or []
 
 
 class TaskUpdate(BaseModel):
@@ -766,7 +766,7 @@ def submit_task_mutation(
     receipts = result.get("projection_receipts")
     receipt = receipts[-1] if isinstance(receipts, list) and receipts else None
     task = receipt.get("task") if isinstance(receipt, dict) else None
-    if not isinstance(task, dict):
+    if not isinstance(receipt, dict) or not isinstance(task, dict):
         raise HTTPException(status_code=502, detail="conduct broker response lacks a task projection receipt")
     return ConductMutation(
         task=task,

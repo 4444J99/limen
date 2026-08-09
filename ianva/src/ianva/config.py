@@ -16,9 +16,9 @@ from pathlib import Path
 from . import paths
 
 try:  # py3.11+
-    import tomllib  # type: ignore
+    import tomllib
 except ModuleNotFoundError:  # py3.10
-    tomllib = None  # type: ignore
+    tomllib = None  # type: ignore[assignment]
 
 
 @dataclass

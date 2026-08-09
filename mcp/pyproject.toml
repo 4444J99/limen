@@ -20,3 +20,22 @@ limen-mcp = "limen_mcp.server:mcp.run"
 
 [tool.uv.sources]
 limen = { path = "../cli", editable = true }
+
+[tool.mypy]
+strict = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_return_any = false
+warn_unused_ignores = true
+mypy_path = ["src", "../cli/src"]
+
+[[tool.mypy.overrides]]
+module = [
+  "limen.*",
+  "yaml",
+  "fastmcp",
+  "mcp.*",
+  "cryptography.*",
+]
+ignore_missing_imports = true

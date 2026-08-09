@@ -5,7 +5,7 @@ import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 import json
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, cast
 
 import yaml
 from mcp.server.fastmcp import FastMCP
@@ -215,7 +215,7 @@ TASK_LOOP_TRACKER: Dict[str, int] = {}
 STATE_FILE = Path.home() / "Workspace" / "limen" / ".mcp_state.json"
 
 
-def _load_state():
+def _load_state() -> None:
     global CIRCUIT_BREAKER_TRIPPED, TASK_LOOP_TRACKER
     if STATE_FILE.exists():
         try:
@@ -227,7 +227,7 @@ def _load_state():
             pass
 
 
-def _save_state():
+def _save_state() -> None:
     try:
         with open(STATE_FILE, "w") as f:
             json.dump({"circuit_breaker": CIRCUIT_BREAKER_TRIPPED, "task_loops": TASK_LOOP_TRACKER}, f)
@@ -238,7 +238,7 @@ def _save_state():
 _load_state()
 
 
-def _check_circuit_breaker():
+def _check_circuit_breaker() -> None:
     if CIRCUIT_BREAKER_TRIPPED:
         raise RuntimeError(
             "SYSTEM OFFLINE - GO TO SLEEP. Circuit breaker is tripped due to API rate limits or severance."
@@ -264,7 +264,7 @@ def _load_data() -> LimenFile:
     return LimenFile(**data)
 
 
-def _conduct_client():
+def _conduct_client() -> Any:
     """Resolve the authenticated broker for each call; never cache credentials in process state."""
 
     return client_from_env()
@@ -281,7 +281,7 @@ def _mcp_identity(agent: str | None = None, *, session_suffix: str = "mcp") -> A
     )
 
 
-def _register_submitter(client, identity: AgentIdentityV1) -> None:
+def _register_submitter(client: Any, identity: AgentIdentityV1) -> None:
     client.register(
         ConductorSessionV1(
             session_id=identity.session_id,
@@ -563,13 +563,13 @@ def add_task(
     if type(budget_cost) is not int or budget_cost < 1 or budget_cost > 100:
         raise ValueError("budget_cost must be an integer between 1 and 100")
     WorkLoanV1(
-        source_origin=origin,
-        horizon=horizon,
+        source_origin=cast(Any, origin),
+        horizon=cast(Any, horizon),
         value_case=value_case,
         budget_cost=budget_cost,
         owner_surface=owner_surface or repo,
         external_deadline=external_deadline,
-        due_at=due_at,
+        due_at=cast(Any, due_at),
     )
     _check_circuit_breaker()
     data = _load_data()

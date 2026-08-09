@@ -9,6 +9,7 @@ import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
+from typing import Any
 
 from limen.capacity import PAID_AGENT_ORDER
 from limen.io import load_limen_file
@@ -72,7 +73,7 @@ def _bar(fraction: float, width: int = 24) -> str:
     return "#" * full + "." * (width - full)
 
 
-def snapshot():
+def snapshot() -> tuple[Any, Any, Any, Any, Any, Any]:
     limen = load_limen_file(TASKS)
     board = Counter(task.status for task in limen.tasks)
     per_lane: dict[str, Counter[str]] = defaultdict(Counter)
@@ -87,7 +88,7 @@ def snapshot():
     return limen, board, per_lane, working, proc_counts(), limen.portal.budget
 
 
-def render_compact(board, per_lane, procs, budget) -> str:
+def render_compact(board: Any, per_lane: Any, procs: Any, budget: Any) -> str:
     total = sum(board.values())
     done = board.get("done", 0)
     active = sum(board.get(status, 0) for status in ACTIVE)
@@ -106,7 +107,7 @@ def render_compact(board, per_lane, procs, budget) -> str:
     return " | ".join(parts)
 
 
-def render(board, per_lane, working, procs, budget) -> str:
+def render(board: Any, per_lane: Any, working: Any, procs: Any, budget: Any) -> str:
     total = sum(board.values())
     done = board.get("done", 0)
     active = sum(board.get(status, 0) for status in ACTIVE)
@@ -137,7 +138,7 @@ def render(board, per_lane, working, procs, budget) -> str:
     return "\n".join(lines)
 
 
-def emit_json(board, per_lane, working, procs, budget) -> None:
+def emit_json(board: Any, per_lane: Any, working: Any, procs: Any, budget: Any) -> None:
     data = {
         "board": dict(board),
         "budget": {"spent": budget.track.spent, "daily": budget.daily},
