@@ -385,6 +385,10 @@ _interruptible_sleep() {
 
 _fast_wave_due_beat() {
   _fw_cadence="$1"
+  case "$_fw_cadence" in
+    ''|*[!0-9]*) _fw_cadence=1 ;;
+  esac
+  [ "$_fw_cadence" -gt 0 ] || _fw_cadence=1
   _fw_candidate_beat="$2"
   if [ "$_fw_cadence" -le 1 ] || [ $((_fw_candidate_beat % _fw_cadence)) -eq 0 ]; then
     return 0
@@ -489,9 +493,20 @@ stale_watchdog_loop() {
     _interruptible_sleep "$FAST_WAVE_SECONDS" || exit 0
     kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
     if [ "${LIMEN_HOST_PRESSURE_STALE:-1}" = "1" ]; then
-      fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
-        python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
-        >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>&1 || true
+      _watchdog_output="/dev/null"
+      if mkdir -p "$(dirname "$HOST_PRESSURE_WATCHDOG_LOG")" 2>/dev/null \
+        && : >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>/dev/null; then
+        _watchdog_output="$HOST_PRESSURE_WATCHDOG_LOG"
+      fi
+      if [ "$_watchdog_output" = "$HOST_PRESSURE_WATCHDOG_LOG" ]; then
+        fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+          python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
+          >>"$_watchdog_output" 2>&1 || true
+      else
+        echo "fast-wave: watchdog log unavailable — running stale probe without capture" >&2 || true
+        fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+          python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" || true
+      fi
     else
       echo "host-pressure watchdog disabled" >>"$HOST_PRESSURE_WATCHDOG_LOG"
     fi
@@ -533,7 +548,11 @@ fast_wave_loop() {
       fi
     else
       [ -z "$_fw_diurnal_pid" ] || wait "$_fw_diurnal_pid" 2>/dev/null || true
-      _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
+      if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then
+        _fw_diurnal_beat="$FAST_WAVE_BEAT"
+      else
+        _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
+      fi
       _fw_diurnal_pending=""
       fast_wave_aux_once diurnal "$_fw_diurnal_beat" &
       _fw_diurnal_pid=$!
@@ -1206,114 +1225,3 @@ while true; do
   # hits `gh api` per beat unless LIMEN_VVLTVS_REFRESH=1). READ-ONLY — never writes his public face;
   # the re-stamp (--apply prints the plan) stays his lever. Lockless, fail-open. Gate off LIMEN_VVLTVS=0.
   due_voice vvltvs "$C_VVLTVS" && [ "${LIMEN_VVLTVS:-1}" = "1" ] && \
-    { beat_run vvltvs-organ python3 "$LIMEN_ROOT/scripts/vvltvs-organ.py" || true; stamp vvltvs; }
-  # SPECVLVM — the contributions mirror (the OSPO organ: outward to learn inward; proof, never
-  # outreach). Every C_CONTRIB beats: re-render organs/contributions/MIRROR.md + the
-  # logs/contributions.json signal from hub-ledger outputs (organvm/contrib LEDGER or the committed
-  # cache). OFFLINE on the beat — never hits `gh api` unless LIMEN_CONTRIB_REFRESH=1. NEVER sends:
-  # no comments, bumps, PRs, or posts — outbound stays his hand (the PLAN-06 planner decision).
-  # Lockless, idempotent (writes only on change), fail-open. Gate off with LIMEN_CONTRIB=0.
-  due_voice contrib "$C_CONTRIB" && [ "${LIMEN_CONTRIB:-1}" = "1" ] && \
-    { beat_run contributions-organ python3 "$LIMEN_ROOT/scripts/contributions-organ.py" || true; stamp contrib; }
-  # WALLS — regenerate the credential Wall (#320) + his-hand aggregate Wall (#330) every C_WALLS beats
-  # so the published walls never drift from reality. Idempotent (writes only on change), fail-open.
-  play "$C_WALLS"   && { beat_run credential-wall-sync python3 "$LIMEN_ROOT/scripts/credential-wall.py" --sync || true
-                        beat_run sync-hishand-issues-wall python3 "$LIMEN_ROOT/scripts/sync-hishand-issues.py" --wall --apply || true
-                        stamp walls; }
-  play "$C_REPORT"  && beat_run conducting-report python3 "$LIMEN_ROOT/scripts/conducting-report.py" || true   # RELAY: did the fleet burn its full force? (once/day push — so you never have to ask)
-  play "$C_WEB"     && bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.   # web auto-refresh (best-effort; money.html is primary)
-  # QUICKEN — a session has a lifecycle that ends in COMPLETION; a sitting (no-movement) FleetView
-  # session is stalled work, not a thing to file away. --apply records the lifecycle + deduped
-  # residue every beat (read-only on sessions, no spend). Breathing — headless `claude --resume` to
-  # finish a stalled purpose — is a token spend, so it is gated OFF behind LIMEN_QUICKEN_BREATHE=1
-  # (his knob); deploy alone never auto-fires resumes. Bounded + fail-open — never gates the beat.
-  if play "$C_QUICKEN"; then
-    python3 "$LIMEN_ROOT/scripts/quicken.py" --apply 2>&1 | tail -2 || true
-    [ "${LIMEN_QUICKEN_BREATHE:-0}" = "1" ] && \
-      python3 "$LIMEN_ROOT/scripts/quicken.py" --breathe all 2>&1 | tail -3 || true
-  fi
-  # POSITIONING — keep the inbound-magnet surfaces fresh as seeds/repos drift: the form/operation
-  # buyer pages + the two-door front door + the discoverability recommendations. No --fetch (no
-  # network, can't time out on a stuck API); writes ONLY the public docs/positioning artifacts, and
-  # the no-price guard refuses any page that leaks a currency token. Gated OFF behind LIMEN_POSITIONING=1
-  # (his knob) so the surfaces auto-refresh only once he arms it — generation alone never publishes.
-  # Runs just before CAPTURE so a refreshed surface is committed+pushed the same beat. Bounded + fail-open.
-  if play "$C_POSITIONING" && [ "${LIMEN_POSITIONING:-0}" = "1" ]; then
-    beat_run generate-positioning timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --apply || true
-    beat_run generate-positioning-frontdoor timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --frontdoor --apply || true
-    beat_run generate-positioning-discoverability timeout "${LIMEN_POSITIONING_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/generate-positioning.py" --discoverability --apply || true
-    stamp positioning
-  fi
-  # CAPTURE — get every workspace repo OFF disk into the canonical universal context (commit+push,
-  # additive only). Implements the old backup voice; falls back to a legacy backup.sh if present.
-  if play "$C_BACKUP"; then
-    if [ -x "$LIMEN_ROOT/scripts/capture.sh" ]; then bash "$LIMEN_ROOT/scripts/capture.sh" 2>&1 | tail -3 || true
-    elif [ -x "$LIMEN_ROOT/scripts/backup.sh" ]; then bash "$LIMEN_ROOT/scripts/backup.sh" 2>&1 | tail -2 || true; fi
-    # LIBRARY PRESERVE — process ~/Library toward ideal form WITHOUT his hand: preserve the
-    # irreplaceable sliver to Archive4T (copy→verify, Backblaze-offsite), census regenerable
-    # caches, and propose reversible iCloud local-cache levers. Physical cache removal is separate
-    # acceptance-gated work; preservation fails open if Archive4T is unmounted.
-    LIMEN_LIB_APPLY="${LIMEN_LIB_APPLY:-1}" python3 "$LIMEN_ROOT/scripts/library-preserve.py" 2>&1 | tail -4 || true
-    stamp backup
-  fi
-  # FEED his WORDS — atomize his FULL multi-provider transcript corpus (Claude Code,
-  # codex, opencode, + gemini/chatgpt once re-hydrated) into the SINGLE session-meta
-  # manifest+atoms, BEFORE converge, so the conductor holds his ENTIRE prompt corpus
-  # across every agent (the structural answer to "I am not repeating myself again").
-  # Canonical producer = session-meta's ingest/refresh-atoms.sh: it DERIVES providers at
-  # run time (a source dir is walked only if present, so new providers auto-join) and
-  # routes opencode through the atomize DB-extractor. --merge preserves the offloaded
-  # historical index; redaction is enforced at ingest. Until refresh-atoms.sh has synced
-  # into the session-meta tree it falls back to the legacy single-source command, so the
-  # cutover is zero-gap. Default-ON (LIMEN_CORPUS_FEED=1; set 0 to roll back). Content-
-  # addressed + idempotent → cheap re-run. The WHOLE feed is timeout-bounded so it can
-  # NEVER wedge the beat (the prior wedge bug); the multi-provider rescan is heavier than
-  # the old one-provider run, hence the larger default budget.
-  if play "$C_CORPUS_FEED" && [ "${LIMEN_CORPUS_FEED:-1}" = "1" ]; then
-    timeout "${LIMEN_CORPUS_FEED_OUTER_TIMEOUT:-900}" python3 "$LIMEN_ROOT/scripts/corpus-feed.py" 2>&1 | tail -6 || true
-    stamp corpus_feed
-  fi
-  # CONVERGE his WORDS — distill the knowledge base toward ONE. Gated OFF by default
-  # (LIMEN_CORPUS_CONVERGE=1); the script self-selects live synthesis (LIMEN_CORPUS_CONVERGE_LIVE=1)
-  # + graph shots (LIMEN_CORPUS_GRAPH=1). Bounded + fail-open — never gates the beat.
-  play "$C_CORPUS"  && [ "${LIMEN_CORPUS_CONVERGE:-0}" = "1" ] && \
-    { python3 "$LIMEN_ROOT/scripts/corpus-converge.py" --apply 2>&1 | tail -3 || true; stamp corpus; }
-  # ATOMIZE his personal MEDIA — strand D slice 1: docs (from the durable Archive4T copy) → first-class
-  # Shot atoms in the SAME converge engine, so his media remixes with his words. Gated OFF by default
-  # (LIMEN_MEDIA_ATOMIZE=1); bounded + fail-open; READ-ONLY on sources (never deletes/evicts in slice 1).
-  play "$C_CORPUS"  && [ "${LIMEN_MEDIA_ATOMIZE:-0}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/media-atomize.py" --apply 2>&1 | tail -3 || true
-  # NOMENCLATOR — hold the roll of names (INDEX·NOMINVM) to the canon. --apply records liveness for
-  # organ-health. Gated OFF by default (LIMEN_NOMENCLATOR=1) so estate-wide enforcement is your knob;
-  # the CI gate already protects the canon on every PR. Bounded + fail-open — never gates the beat.
-  play "$C_NOMENCLATOR"  && [ "${LIMEN_NOMENCLATOR:-0}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/nomenclator.py" --apply 2>&1 | tail -2 || true
-
-  # AVTOPOIESIS — does each door (heartbeat beat) actually live in all three tenses (past/present/
-  # future)? Reports distance-from-ideal; discovers its door-list from THIS loop and includes itself
-  # (operational closure). Gated OFF by default (LIMEN_AVTOPOIESIS=1 your knob); never gates the beat.
-  play "$C_AVTOPOIESIS"  && [ "${LIMEN_AVTOPOIESIS:-0}" = "1" ] && \
-    python3 "$LIMEN_ROOT/scripts/avtopoiesis.py" 2>&1 | tail -3 || true
-
-  # EVOCATOR — the SVMMONER: keep every canonical truth (spec/evocator/canon.yaml) present in every
-  # channel a found truth must live in — FLAME (so every beat holds it — the reach the memory dir and
-  # corpus never had), the knowledge-corpus collection (so it converges into THE ONE), and a read-only
-  # verify of the memory dir (per-session channel) — and self-heal drift. "find" = build this portal:
-  # register one truth, it lands everywhere, forever. Idempotent (writes only on change → NO git churn),
-  # no network, no tokens, can't time out. Default-ON (LIMEN_EVOCATOR=1; set 0 to roll back) — a portal
-  # that doesn't run isn't a portal. Bounded + fail-open — never gates the beat.
-  if due_voice evocator "$C_EVOCATOR" && [ "${LIMEN_EVOCATOR:-1}" = "1" ]; then
-    python3 "$LIMEN_ROOT/scripts/evocator.py" --apply 2>&1 | tail -2 || true
-    stamp evocator
-  fi
-  # HANDOFF — final read after this beat's board, usage, reconciliation, and provider mutations.
-  # metabolize.sh has its own caller, but the live heartbeat never invokes metabolize.
-  beat_run handoff-relay python3 "$LIMEN_ROOT/scripts/handoff-relay.py" || true
-  # adaptive tempo: tighten to MIN whenever work is flowing OR the OPEN QUEUE is non-empty (so a
-  # beat that produced no PR this cycle — all no-op / still-running — doesn't back off to 30min
-  # while tasks wait); exponential backoff to MAX only when genuinely idle (empty queue, no PR).
-  open_n=$(python3 -c "import sys;sys.path.insert(0,'$LIMEN_ROOT/cli/src');from pathlib import Path;from limen.io import load_limen_file;print(sum(1 for t in load_limen_file(Path('$LIMEN_ROOT/tasks.yaml')).tasks if t.status=='open'))" 2>/dev/null || echo 0)
-  if [ "$worked" = 1 ] || [ "${open_n:-0}" -gt 0 ]; then beat="$MIN"; echo "── tempo: work pending (open=${open_n}) → ${beat}s ──"
-  else beat=$(( beat*2 > MAX ? MAX : beat*2 )); echo "── tempo: idle (queue empty) → ${beat}s ──"; fi
-  sleep "$beat"
-done
