@@ -293,3 +293,29 @@ def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch)
     assert module.main([]) == 0
     assert delivered == []
     assert not module.STATE.exists()
+
+
+
+def test_live_down_lanes_cannot_be_reported_as_routable(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    payload = json.loads((logs / "handoff.json").read_text())
+    payload["dispatch_admission"]["down_lanes"] = ["codex"]
+    payload["provider_headroom"]["down_lanes"] = ["codex"]
+    (logs / "handoff.json").write_text(json.dumps(payload))
+
+    reason, detail = module._routing_reason()
+
+    assert reason == "admission_blocked"
+    assert "all admitted lanes are down" in detail
+
+
+def test_delivery_callers_use_shared_ntfy_helper():
+    conducting = SCRIPT.read_text(encoding="utf-8")
+    events = SCRIPT.with_name("notify-events.py").read_text(encoding="utf-8")
+
+    assert "urllib.request" not in conducting
+    assert "urllib.request" not in events
+    assert "notify_ntfy(ROOT" in conducting
+    assert "notify_ntfy(ROOT" in events
