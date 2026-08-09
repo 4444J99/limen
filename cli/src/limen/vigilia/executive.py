@@ -116,17 +116,30 @@ def run_beat() -> dict:
     completed_at = _now().isoformat()
 
     def merge(current: dict) -> dict:
-        sampled_at = current.get("sampled_at") or early.get("sampled_at")
+        current_sampled_at = current.get("sampled_at")
+        early_sampled_at = early.get("sampled_at")
+        current_time = _sample_time(current_sampled_at)
+        early_time = _sample_time(early_sampled_at)
+        early_is_new_success = (
+            early_time is not None
+            and early.get("sample_error") is None
+            and (current_time is None or early_time > current_time)
+        )
+        sampled_at = early_sampled_at if early_is_new_success else (current_sampled_at or early_sampled_at)
         sample_error = current.get("sample_error")
         # An early error remains relevant only until a later successful sample advances
         # the timestamp. Do not resurrect an obsolete failure from the slow beat's copy.
-        if sample_error is None and early.get("sample_error") and current.get("sampled_at") == early.get("sampled_at"):
+        if sample_error is None and early.get("sample_error") and sampled_at == early_sampled_at:
             sample_error = early["sample_error"]
         result = {
             "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
             "sampled_at": sampled_at,
             "completed_at": completed_at,
-            "vitals": current.get("vitals") or early.get("vitals", {}),
+            "vitals": (
+                early.get("vitals", {})
+                if early_is_new_success
+                else current.get("vitals") or early.get("vitals", {})
+            ),
             "continuity": continuity_status,
             "integrity": integrity_status,
         }
