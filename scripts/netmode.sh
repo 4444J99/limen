@@ -38,12 +38,12 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
-_notify_root="${LIMEN_ROOT:-$HOME/Workspace/limen}"
+_notify_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"
 if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   for _notify_candidate in \
     "${LIMEN_ROOT:+$LIMEN_ROOT/scripts/_notify.py}" \
-    "$HOME/.local/share/limen/current/source/scripts/_notify.py" \
-    "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_notify.py"
+    "$_notify_script_dir/_notify.py"
   do
     if [ -n "$_notify_candidate" ] && [ -f "$_notify_candidate" ]; then
       LIMEN_NOTIFY_HELPER="$_notify_candidate"
