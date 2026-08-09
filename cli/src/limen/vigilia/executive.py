@@ -70,9 +70,20 @@ def _update_status(mutator: Callable[[dict], dict]) -> dict:
             tmp.write_text(json.dumps(status, indent=2), encoding="utf-8")
             tmp.replace(path)
             return status
-    except Exception:
-        # The executive is fail-open, including its diagnostic seat.
-        return mutator({})
+    except Exception as exc:
+        # The executive remains fail-open, but a sampler must not claim a timestamp that
+        # never reached the watchdog-visible seat. The private marker is added only to
+        # this in-memory fallback; successful receipts never persist diagnostic metadata.
+        try:
+            fallback = mutator({})
+        except Exception as fallback_exc:
+            return {
+                "status": "error",
+                "error": str(fallback_exc)[:200],
+                "_persistence_error": str(exc)[:200],
+            }
+        fallback["_persistence_error"] = str(exc)[:200]
+        return fallback
 
 
 def sample_vitals() -> dict:
@@ -106,7 +117,12 @@ def sample_vitals() -> dict:
         status.pop("sample_error_at", None)
         return status
 
-    return _update_status(merge)
+    status = _update_status(merge)
+    # Keep this bit out of status.json: it is a delivery receipt for the caller, not
+    # another freshness clock. A failed seat write is therefore visible to the sampler.
+    result = dict(status)
+    result["sample_persisted"] = "_persistence_error" not in status
+    return result
 
 
 def run_beat() -> dict:
