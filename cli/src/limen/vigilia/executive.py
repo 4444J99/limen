@@ -58,10 +58,10 @@ def _sample_time(value: object) -> datetime | None:
 
 def _update_status(mutator: Callable[[dict], dict]) -> dict:
     """Serialize the fast sampler and full beat, then replace the seat atomically."""
-    directory = _status_dir()
-    path = directory / "status.json"
-    lock_path = directory / ".status.lock"
     try:
+        directory = _status_dir()
+        path = directory / "status.json"
+        lock_path = directory / ".status.lock"
         with lock_path.open("a+", encoding="utf-8") as lock:
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
             status = mutator(_load_status(path))
