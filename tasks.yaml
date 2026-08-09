@@ -93697,58 +93697,70 @@ tasks:
     status: failed_blocked
     output: "heal-dispatch: chronic escalation re-homed needs_human \u2192 failed_blocked\
       \ (fleet-debt, not a human atom)"
-- id: HEAL-cifix-organvm-public-process-35
-  title: fix failing CI on organvm/public-process#35
-  repo: organvm/public-process
-  type: code
-  target_agent: gemini
-  priority: high
+- id: 'HEAL-cifix-organvm-public-process-35'
+  title: 'fix failing CI on organvm/public-process#35'
+  repo: 'organvm/public-process'
+  type: 'code'
+  target_agent: 'gemini'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - cifix
-  - self-heal
-  - ci-red
+  - 'cifix'
+  - 'self-heal'
+  - 'ci-red'
   urls:
-  - https://github.com/organvm/public-process/pull/35
-  context: "PR organvm/public-process#35 has FAILING CI checks and merge-drain correctly\
-    \ refuses to merge it. Check out the PR branch, find the root cause of the red\
-    \ checks (lint / types / failing test / config), fix it, push to the SAME PR branch,\
-    \ and confirm every check goes green. Do not open a new PR \u2014 repair the existing\
-    \ one so merge-drain lands it. PR: https://github.com/organvm/public-process/pull/35\
-    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  - 'https://github.com/organvm/public-process/pull/35'
+  context: 'PR organvm/public-process#35 has FAILING CI checks and merge-drain correctly refuses to merge it. Check out the PR branch, find the root cause of the red checks (lint / types / failing test / config), fix it, push to the SAME PR branch, and confirm every check goes green. Do not open a new PR — repair the existing one so merge-drain lands it. PR: https://github.com/organvm/public-process/pull/35 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-08T15:06:03.051885Z'
+  updated: '2026-08-09T02:47:12.102Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:05:58.861134Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-06T14:10:53.219645Z'
-    agent: jules
+    agent: 'jules'
     session_id: '17738361240750980792'
-    status: dispatched
+    status: 'dispatched'
   - timestamp: '2026-07-07T14:14:57.860506Z'
-    agent: limen
-    session_id: cli
-    status: open
-    output: Released stale claim after 24h
+    agent: 'limen'
+    session_id: 'cli'
+    status: 'open'
+    output: 'Released stale claim after 24h'
   - timestamp: '2026-07-07T14:26:11.027168Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-07T14:31:23.439445Z'
-    agent: jules
+    agent: 'jules'
     session_id: '13315421563949382407'
-    status: dispatched
+    status: 'dispatched'
   - timestamp: '2026-07-08T15:06:03.051885Z'
-    agent: limen
-    session_id: cli
-    status: open
-    output: Released stale claim after 24h
+    agent: 'limen'
+    session_id: 'cli'
+    status: 'open'
+    output: 'Released stale claim after 24h'
+  - timestamp: '2026-08-09T02:47:12.102Z'
+    agent: 'opencode'
+    session_id: 'opencode-pickup-1786243630'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-pickup-1786243630'
+    status: 'dispatched'
+    output: 'Agy fixed: PR #35 CLEAN/MERGEABLE.'
+    conduct_event_id: 'conduct:run-3a775417395182c4a6b4ededd5a2664b:727:compatibility'
+    conduct_run_id: 'run-3a775417395182c4a6b4ededd5a2664b'
+    conduct_lease_id: 'lease-727-3a775417395182c4'
+    conduct_generation: 727
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Agy fixed public-process CI. PR #35 CLEAN/MERGEABLE.'
+  owner_surface: 'board'
+  predicate: 'test "$(gh pr view 35 --repo organvm/public-process --json mergeStateStatus --jq .mergeStateStatus)" = CLEAN'
+  receipt_target: 'https://github.com/organvm/public-process/pull/35'
 - id: HEAL-cifix-organvm-public-record-data-scrapper-315
   title: fix failing CI on organvm/public-record-data-scrapper#315
   repo: organvm/public-record-data-scrapper
