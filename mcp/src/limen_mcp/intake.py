@@ -164,7 +164,11 @@ def is_executable_predicate(value: Any) -> bool:
                     or "\\n" in program
                     or "\\r" in program
                     or (
-                        ("$" + "'" in command)
+                        ("$" + "'") in command
+                        and ("\\n" in command or "\\r" in command)
+                    )
+                ):
+                    return False
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
 
 
