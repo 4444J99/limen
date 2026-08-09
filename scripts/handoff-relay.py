@@ -39,6 +39,7 @@ from limen.dispatch import (
     _weak_proxy_exhaustion,
     _has_pr_open_transition,
     _remaining_budget,
+    _routine_generated_buildout_allowed,
     _superseded_by_rebase_task,
     _superseded_by_trunk_repair,
     _window_hours,
@@ -91,16 +92,17 @@ def _load_json(path: Path, default: Any) -> Any:
         return default
 
 
-def _load_board() -> dict[str, Any]:
+def _load_board() -> dict[str, Any] | None:
+    """Load the keeper projection while preserving unavailable versus genuinely empty."""
     try:
         import yaml
     except Exception:
-        return {}
+        return None
     try:
         board = yaml.safe_load(TASKS.read_text())
     except Exception:
-        return {}
-    return board if isinstance(board, dict) else {}
+        return None
+    return board if isinstance(board, dict) else None
 
 
 def _load_tasks(board: dict[str, Any] | None = None) -> list[dict[str, Any]]:
@@ -604,12 +606,29 @@ def _dispatch_admission(
     tasks: list[dict[str, Any]],
     board_budget: dict[str, Any],
     provider_headroom: dict[str, Any],
+    *,
+    keeper_available: bool = True,
 ) -> dict[str, Any]:
     """Explain the same stable gates that make an open task broker-admissible.
 
     Admission itself reads this handoff, so the relay cannot recursively launch the admission
     subprocess. Each open row receives one primary reason in deterministic gate order.
     """
+    if not keeper_available:
+        return {
+            "schema_version": "limen.dispatch_admission.v1",
+            "keeper_available": False,
+            "open_considered": 0,
+            "admissible": 0,
+            "gated": 0,
+            "reason_counts": {"keeper_unavailable": 1},
+            "reason_counts_by_agent": {},
+            "provider_health_reason_counts": {},
+            "down_lanes": [],
+            "admissible_agent_counts": {},
+            "admissible_any_agent_counts": {},
+            "dispatchable_next": None,
+        }
     by_id = {str(task.get("id")): task for task in tasks if task.get("id")}
     typed_tasks: dict[str, Task] = {}
     for task in tasks:
@@ -658,7 +677,14 @@ def _dispatch_admission(
             limen_file = None
         if limen_file is not None:
             daily_budget = int(limen_file.portal.budget.daily)
-            for candidate_agent in known_agents:
+            governed_agents = set(known_agents)
+            governed_agents.update(
+                candidate_agent
+                for task in tasks
+                if task.get("status") == "open"
+                and (candidate_agent := _effective_task_agent(task)) not in {"", "any"}
+            )
+            for candidate_agent in sorted(governed_agents):
                 try:
                     governed_remaining[candidate_agent] = _remaining_budget(
                         limen_file,
@@ -701,11 +727,14 @@ def _dispatch_admission(
             reason = str(underwriting.reason_code)
         if reason is None:
             try:
-                value_ready = task_passes_value_gate(Task.model_validate(task))
+                typed_task = Task.model_validate(task)
+                value_ready = task_passes_value_gate(typed_task)
+                generated_buildout_ready = _routine_generated_buildout_allowed(typed_task)
             except Exception:
                 value_ready = False
-            if not value_ready:
-                # Automatic handoff admission follows the same partner/value boundary as dispatch.
+                generated_buildout_ready = False
+            if not value_ready or not generated_buildout_ready:
+                # Automatic handoff admission follows the same partner/value boundaries as dispatch.
                 reason = "admission_blocked"
         if reason is None and _chronic_dispatch_gate(task):
             reason = "chronic_dispatch"
@@ -728,6 +757,9 @@ def _dispatch_admission(
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
+            reason = "budget_agent"
+        governed = governed_remaining.get(agent)
+        if reason is None and governed is not None and cost > governed:
             reason = "budget_agent"
         if reason is None:
             reason = _provider_block_reason(agent, provider_headroom)
@@ -812,6 +844,7 @@ def _dispatch_admission(
     open_count = sum(task.get("status") == "open" for task in tasks)
     return {
         "schema_version": "limen.dispatch_admission.v1",
+        "keeper_available": True,
         "open_considered": open_count,
         "admissible": len(candidates),
         "gated": open_count - len(candidates),
@@ -839,11 +872,18 @@ def _dispatchable_next(
 def build() -> dict[str, Any]:
     now = _now()
     board = _load_board()
-    tasks = _load_tasks(board)
+    keeper_available = board is not None
+    board_data = board if board is not None else {}
+    tasks = _load_tasks(board_data)
     provider_headroom = _provider_headroom()
-    board_budget = _board_budget(board)
+    board_budget = _board_budget(board_data)
     ostensible_next = _ostensible_next(tasks)
-    dispatch_admission = _dispatch_admission(tasks, board_budget, provider_headroom)
+    dispatch_admission = _dispatch_admission(
+        tasks,
+        board_budget,
+        provider_headroom,
+        keeper_available=keeper_available,
+    )
     dispatchable_next = dispatch_admission["dispatchable_next"]
     return {
         "generated": now.isoformat(timespec="seconds"),
