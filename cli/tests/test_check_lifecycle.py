@@ -82,8 +82,6 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
     assert module.failures == []
 
 
-
-
 def test_delivery_without_admission_evidence_is_unreachable() -> None:
     module = _load_check_module()
     dispositions = {"lifecycle:delivery": {"merge_eligible": True}}
