@@ -107,6 +107,6 @@
     "stable_finding_key": "open-p0.denominator-41",
     "disposition": "owned",
     "owner_ref": "https://github.com/organvm/organvm-corpvs-testamentvm/issues/489",
-    "predicate": "python3 -c \"import json; p=json.load(open('docs/receipts/irf-p0-owner-classification-20260808.json')); assert p['denominator']==p['classified']==len(p['rows'])==41; assert not p['unowned']\""
+    "predicate": "python3 scripts/check-cloud-routine-ingest.py"
   }
 ]
