@@ -376,6 +376,42 @@ def test_direct_shell_notification_bypass_is_rejected(tmp_path, check_gate):
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.sh"]
 
 
+def test_declared_python_encoding_is_decoded(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    sender = scripts / "sender.py"
+    sender.write_bytes(
+        (
+            "# -*- coding: latin-1 -*-\n"
+            "import subprocess\n"
+            "# café\n"
+            "subprocess.run([\"osascript\", \"-e\", 'display notification \\\"x\\\"'])\n"
+        ).encode("latin-1")
+    )
+
+    assert check_gate._python_bypasses(sender) is True
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_undecodable_notification_sources_fail_closed(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    python_sender = scripts / "python_sender.py"
+    shell_sender = scripts / "shell_sender.sh"
+    python_sender.write_bytes(
+        b'import subprocess\n# undecodable: \\xff\n'
+        b'subprocess.run(["osascript", "-e", "display notification \\"x\\\""])\n'
+    )
+    shell_sender.write_bytes(b'osascript -e \'display notification "x"\' # \\xff\n')
+
+    assert check_gate._python_bypasses(python_sender) is True
+    assert check_gate._shell_bypasses(shell_sender) is True
+    assert set(check_gate.direct_notification_effectors(tmp_path)) == {
+        "scripts/python_sender.py",
+        "scripts/shell_sender.sh",
+    }
+
+
 def test_live_tree_has_one_mac_notification_effector(check_gate):
     assert check_gate.direct_notification_effectors(ROOT) == []
 
