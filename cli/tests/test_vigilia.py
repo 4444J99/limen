@@ -558,7 +558,6 @@ def test_later_successful_sample_supersedes_early_error(tmp_path, monkeypatch):
     assert "sample_error" not in status
 
 
-
 def test_heartbeat_resident_sleep_uses_interruptible_helper():
     source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
