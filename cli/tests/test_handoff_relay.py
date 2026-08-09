@@ -798,3 +798,60 @@ def test_board_budget_discards_expired_track_counters(monkeypatch):
     assert budget["remaining"] == 10
     assert budget["per_agent"]["codex"]["spent"] == 0
     assert budget["per_agent"]["codex"]["remaining"] == 5
+
+
+def test_admission_attributes_global_budget_block_to_candidate_lanes(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+
+    admission = mod._dispatch_admission(
+        [_task("GLOBAL", agent="any", budget_cost=8)],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["reason_counts"] == {"budget_global": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_global"] == 1
+
+
+def test_any_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    monkeypatch.setattr(mod, "_remaining_budget", lambda *_args: 0)
+
+    admission = mod._dispatch_admission(
+        [_task("ANY", agent="any", budget_cost=1)],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_agent"] == 1
+
+
+def test_admission_honors_open_pr_receipts_and_active_repair_owners(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    open_pr = _task(
+        "OPEN-PR",
+        dispatch_log=[
+            {"status": "dispatched", "session_id": "https://github.com/organvm/limen/pull/42"}
+        ],
+    )
+    open_admission = mod._dispatch_admission([open_pr], budget, providers)
+    assert open_admission["reason_counts"] == {"open_pr_receipt": 1}
+
+    stale = _task("HEAL-cifix-foo-123")
+    owner = _task("HEAL-rebase-foo-123", status="in_progress")
+    repair_admission = mod._dispatch_admission([stale, owner], budget, providers)
+    assert repair_admission["reason_counts"]["superseded_active_owner"] == 1
