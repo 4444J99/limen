@@ -145,7 +145,6 @@ def test_admitted_work_for_another_provider_does_not_accuse_idle_lane(tmp_path, 
     assert "none target idle providers" in body
 
 
-
 def test_any_admission_does_not_route_to_ineligible_idle_lane(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
