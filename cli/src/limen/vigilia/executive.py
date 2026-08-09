@@ -140,10 +140,7 @@ def run_beat() -> dict:
         sample_error_at = current_error_at
         if early_error is not None and (
             sample_error is None
-            or (
-                early_error_at is not None
-                and (sample_error_at is None or early_error_at > sample_error_at)
-            )
+            or (early_error_at is not None and (sample_error_at is None or early_error_at > sample_error_at))
         ):
             sample_error = early_error
             sample_error_at = early_error_at
@@ -176,6 +173,7 @@ def run_beat() -> dict:
             if sample_error_at is not None:
                 result["sample_error_at"] = sample_error_at.isoformat()
         return result
+
     return _update_status(merge)
 
 
@@ -189,7 +187,4 @@ def summary_line(status: dict) -> str:
         vitals_summary = f"ERROR/{error_detail}"
     else:
         vitals_summary = f"L{v.get('level', '?')}/{v.get('action', '?')}"
-    return (
-        f"vigilia: vitals={vitals_summary} "
-        f"continuity={c.get('status', '?')} integrity={i.get('status', '?')}"
-    )
+    return f"vigilia: vitals={vitals_summary} continuity={c.get('status', '?')} integrity={i.get('status', '?')}"
