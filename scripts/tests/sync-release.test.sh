@@ -188,4 +188,17 @@ bookkeeping_out="$(LIMEN_ROOT="$tmp/check-live" LIMEN_RELEASE_BRANCH=main bash "
 [ "$bookkeeping_rc" = 0 ] \
   || { echo "FAIL: --check should PASS with only regenerable bookkeeping dirty"; echo "$bookkeeping_out"; exit 1; }
 
-echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate"
+# A contended session (limen.occupant set) should NOT block ff if dirt is entirely regenerable receipts.
+git clone -q "$tmp/origin.git" "$tmp/contended-live" 2>/dev/null
+( cd "$tmp/contended-live" && git checkout -q main )
+git -C "$tmp/contended-live" config limen.occupant "test-contended-session"
+# We need to advance origin so a fast-forward is actually needed
+git clone -q "$tmp/origin.git" "$tmp/contended-peer" 2>/dev/null
+( cd "$tmp/contended-peer" && git checkout -q main && echo r3 > rel3.md && git add -A && git commit -q -m "release advance three" && git push -q origin main )
+mkdir -p "$tmp/contended-live/docs"
+echo "v4-dirty" >> "$tmp/contended-live/docs/branch-hygiene.md"
+contended_out="$(LIMEN_ROOT="$tmp/contended-live" LIMEN_RELEASE_BRANCH=main bash "$script" 2>&1)" || true
+[ "$(git -C "$tmp/contended-live" rev-parse HEAD)" = "$(git --git-dir="$tmp/origin.git" rev-parse refs/heads/main)" ] \
+  || { echo "FAIL: receipts-only tracked dirt blocked fast-forward under contention"; echo "$contended_out"; exit 1; }
+
+echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate + contended receipts-only unpark"
