@@ -357,10 +357,7 @@ def plan_task_upserts(
         if previous_at_timestamp is not None:
             collapsed += 1
             if previous_at_timestamp != receipt:
-                raise ValueError(
-                    f"conflicting cloud-routine observations share the same "
-                    f"timestamp for {lineage_id}"
-                )
+                raise ValueError(f"conflicting cloud-routine observations share the same timestamp for {lineage_id}")
             continue
         by_timestamp[receipt.observed_at] = receipt
         previous = latest_by_lineage.get(lineage_id)
