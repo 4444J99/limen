@@ -13,6 +13,8 @@ Mutation is explicit:
   python3 scripts/positioning-program.py --sync --apply      # GitHub writes + map/index rewrite
   python3 scripts/positioning-program.py --verify-remote
   python3 scripts/positioning-program.py --verify-model-assignments
+  python3 scripts/positioning-program.py --render-chunks
+  python3 scripts/positioning-program.py --chunk PSP-C00
   python3 scripts/positioning-program.py --ready --json
   python3 scripts/positioning-program.py --seed PSP-P01-W01
   python3 scripts/positioning-program.py --receipt-template PSP-P01-W01
@@ -42,12 +44,14 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
 DEFAULT_MAP = ROOT / "institutio" / "positioning" / "github-map.json"
 DEFAULT_INDEX = ROOT / "docs" / "positioning" / "program" / "ISSUE-INDEX.md"
+DEFAULT_CHUNKS = ROOT / "docs" / "positioning" / "program" / "EXECUTION-CHUNKS.md"
 OMEGA_DIR = ROOT / "docs" / "receipts" / "positioning"
 PROGRAM_SCHEMA = "limen.positioning_program.v1"
 MAP_SCHEMA = "limen.positioning_github_map.v1"
 SEED_SCHEMA = "limen.positioning_packet_seed.v1"
 RECEIPT_SCHEMA = "limen.positioning_work_receipt.v1"
 MODEL_ASSIGNMENT_SCHEMA = "limen.positioning_model_assignments.v1"
+EXECUTION_CHUNKS_SCHEMA = "limen.positioning_execution_chunks.v1"
 MARKER_RE = re.compile(r"<!--\s*positioning-program:(PSP-(?:ROOT|P\d{2}(?:-W\d{2})?))\s*-->")
 RECEIPT_MARKER_RE = re.compile(r"<!--\s*positioning-receipt:(PSP-P\d{2}-W\d{2})\s*-->")
 RECEIPT_BLOCK_RE = re.compile(
@@ -60,6 +64,7 @@ RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]
 URL_RE = re.compile(r"https://[^\s]+\Z")
 PHASE_RE = re.compile(r"PSP-P\d{2}\Z")
 WORK_RE = re.compile(r"PSP-P\d{2}-W\d{2}\Z")
+CHUNK_RE = re.compile(r"PSP-C\d{2}\Z")
 REASONING = frozenset({"routine", "deep", "frontier_review"})
 EFFECTS = frozenset({"read", "write", "external"})
 EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max", "ultra"})
@@ -155,6 +160,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     external = data.get("external_references")
     gates = data.get("human_gates")
     assignments = data.get("model_assignments")
+    execution_chunks = data.get("execution_chunks")
     if not isinstance(program, dict):
         failures.append("program must be a mapping")
         program = {}
@@ -170,6 +176,9 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(assignments, dict):
         failures.append("model_assignments must be a mapping")
         assignments = {}
+    if not isinstance(execution_chunks, dict):
+        failures.append("execution_chunks must be a mapping")
+        execution_chunks = {}
     if program.get("id") != "PSP-ROOT":
         failures.append("program.id must be PSP-ROOT")
     for key in ("title", "repository", "outcome", "terminal_predicate"):
@@ -336,6 +345,79 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         failures.append(f"model_assignments.object_overrides has unknown work ids: {sorted(unknown_overrides)}")
     for work_id, assignment in object_overrides.items():
         failures.extend(_assignment_failures(assignment, f"model_assignments.object_overrides.{work_id}"))
+
+    if execution_chunks.get("schema_version") != EXECUTION_CHUNKS_SCHEMA:
+        failures.append(f"execution_chunks.schema_version must be {EXECUTION_CHUNKS_SCHEMA}")
+    for key in ("authority", "relay_template"):
+        if not _is_nonempty_text(execution_chunks.get(key)):
+            failures.append(f"execution_chunks.{key} must be non-empty text")
+    chunk_rows = execution_chunks.get("chunks")
+    if not isinstance(chunk_rows, list) or not chunk_rows:
+        failures.append("execution_chunks.chunks must be a non-empty list")
+        chunk_rows = []
+    chunk_by_id: dict[str, dict[str, Any]] = {}
+    chunk_work: dict[str, list[str]] = {}
+    work_owners: dict[str, list[str]] = {}
+    for chunk in chunk_rows:
+        if not isinstance(chunk, dict):
+            failures.append(f"execution chunk is not a mapping: {chunk!r}")
+            continue
+        chunk_id = str(chunk.get("id") or "")
+        if not CHUNK_RE.fullmatch(chunk_id):
+            failures.append(f"invalid execution chunk id: {chunk_id!r}")
+            continue
+        if chunk_id in chunk_by_id:
+            failures.append(f"duplicate execution chunk id: {chunk_id}")
+            continue
+        chunk_by_id[chunk_id] = chunk
+        for key in ("title", "objective", "exit_gate"):
+            if not _is_nonempty_text(chunk.get(key)):
+                failures.append(f"{chunk_id}.{key} must be non-empty text")
+        for key in ("depends_on", "phase_ids", "exclude_work_ids", "extra_work_ids"):
+            if not _is_text_list(chunk.get(key), nonempty=key == "phase_ids"):
+                failures.append(f"{chunk_id}.{key} must be a valid text list")
+        failures.extend(_assignment_failures(chunk.get("conductor"), f"{chunk_id}.conductor"))
+        phase_ids = chunk.get("phase_ids") if isinstance(chunk.get("phase_ids"), list) else []
+        exclude_ids = set(chunk.get("exclude_work_ids") or [])
+        extra_ids = chunk.get("extra_work_ids") if isinstance(chunk.get("extra_work_ids"), list) else []
+        if len(phase_ids) != len(set(phase_ids)):
+            failures.append(f"{chunk_id}.phase_ids contains duplicates")
+        if len(extra_ids) != len(set(extra_ids)):
+            failures.append(f"{chunk_id}.extra_work_ids contains duplicates")
+        expanded: list[str] = []
+        for phase_id in phase_ids:
+            phase = phase_by_id.get(phase_id)
+            if phase is None:
+                failures.append(f"{chunk_id} has unknown phase {phase_id}")
+                continue
+            expanded.extend(packet["id"] for packet in phase.get("work") or [] if isinstance(packet, dict))
+        unknown_excludes = exclude_ids - set(expanded)
+        if unknown_excludes:
+            failures.append(f"{chunk_id} excludes work outside its phases: {sorted(unknown_excludes)}")
+        unknown_extras = set(extra_ids) - set(work_by_id)
+        if unknown_extras:
+            failures.append(f"{chunk_id} has unknown extra work ids: {sorted(unknown_extras)}")
+        resolved = [work_id for work_id in expanded if work_id not in exclude_ids]
+        resolved.extend(work_id for work_id in extra_ids if work_id not in resolved)
+        if not resolved:
+            failures.append(f"{chunk_id} resolves to no work packets")
+        chunk_work[chunk_id] = resolved
+        for work_id in resolved:
+            work_owners.setdefault(work_id, []).append(chunk_id)
+
+    for chunk_id, chunk in chunk_by_id.items():
+        for dependency in chunk.get("depends_on") or []:
+            if dependency not in chunk_by_id:
+                failures.append(f"{chunk_id} has unknown execution chunk dependency {dependency}")
+            if dependency == chunk_id:
+                failures.append(f"{chunk_id} cannot depend on itself")
+    missing_chunk_work = set(work_by_id) - set(work_owners)
+    duplicate_chunk_work = {work_id: owners for work_id, owners in work_owners.items() if len(owners) != 1}
+    if missing_chunk_work:
+        failures.append(f"execution chunks do not cover work ids: {sorted(missing_chunk_work)}")
+    if duplicate_chunk_work:
+        failures.append(f"execution chunks assign work more than once: {duplicate_chunk_work}")
+    work_chunk = {work_id: owners[0] for work_id, owners in work_owners.items() if len(owners) == 1}
 
     def assert_acyclic(nodes: dict[str, dict[str, Any]], label: str) -> None:
         visiting: set[str] = set()

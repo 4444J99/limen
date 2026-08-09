@@ -99,6 +99,129 @@ model_assignments:
     PSP-P00-W07: {slug: gpt-5.6-sol, effort: max, rationale: Authenticated broker integration is control-plane critical.}
     PSP-P14-W09: {slug: gpt-5.6-sol, effort: ultra, rationale: Final two-pass Omega proof requires full-graph orchestration.}
 
+execution_chunks:
+  schema_version: limen.positioning_execution_chunks.v1
+  authority: Human logical-chunk execution order requested 2026-08-09
+  relay_template: docs/positioning/program/EXECUTION-CHUNKS.md
+  chunks:
+    - id: PSP-C00
+      title: Land the program control plane
+      depends_on: []
+      phase_ids: [PSP-P00]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Control-plane landing and broker integration require architectural oversight.}
+      objective: Land the existing program PR, close the seven control-plane leaves with receipts, and prove remote parity.
+      exit_gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and broker integration are green.
+    - id: PSP-C01
+      title: Repair and freeze the foundation
+      depends_on: [PSP-C00]
+      phase_ids: [PSP-P01]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-terra, effort: high, rationale: Bounded integration and baseline repair have explicit predicates.}
+      objective: Land the upstream truth and private-custody foundations, reconcile generators, and freeze the post-merge baseline.
+      exit_gate: P01 is closed and PRs 2136 and 2141 have terminal durable owners with a frozen baseline receipt.
+    - id: PSP-C02
+      title: Establish estate truth and evidence
+      depends_on: [PSP-C01]
+      phase_ids: [PSP-P02]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Estate-wide evidence and disputed-claim adjudication are high-consequence decisions.}
+      objective: Discover the full owned estate, select flagships, build reproducible evidence packets, and adjudicate contested claims.
+      exit_gate: P02 is closed; every selected flagship and material claim has current, reproducible, privacy-reviewed evidence.
+    - id: PSP-C03
+      title: Ratify identity and commercial offers
+      depends_on: [PSP-C02]
+      phase_ids: [PSP-P03, PSP-P04]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Identity, audience, offer, pricing, and boundary decisions form one canonical commercial contract.}
+      objective: Ratify the production-systems identity, audience narratives, offer ladder, qualification rules, economics, and commercial templates.
+      exit_gate: P03 and P04 are closed; target readers understand the offer and each commercial path has bounded scope and economics.
+    - id: PSP-C04
+      title: Produce proof and design the experience
+      depends_on: [PSP-C03]
+      phase_ids: [PSP-P05, PSP-P06]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: xhigh, rationale: Proof synthesis and progressive-disclosure experience design require cross-source judgment.}
+      objective: Produce the flagship proof classes and turn them into a tested, accessible progressive-disclosure experience.
+      exit_gate: P05 and P06 are closed; public-safe proof exists and the approved experience passes visual, comprehension, accessibility, and performance gates.
+    - id: PSP-C05
+      title: Build the service-delivery operating system
+      depends_on: [PSP-C03]
+      phase_ids: [PSP-P11]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Secure client boundaries and delivery methodology require frontier-level contract judgment.}
+      objective: Build and prove the audit, install, retainer, client workspace, QA, handoff, and consent operating system.
+      exit_gate: P11 is closed and a synthetic engagement traverses the complete delivery lifecycle under declared security boundaries.
+    - id: PSP-C06
+      title: Implement and verify public surfaces
+      depends_on: [PSP-C04]
+      phase_ids: [PSP-P07]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-terra, effort: high, rationale: Multi-surface implementation is substantial but bounded by approved proof and design contracts.}
+      objective: Implement the profile, organization map, portfolio, resume, repositories, identity package, domains, and analytics.
+      exit_gate: P07 is closed and every tracked public surface is coherent, live, linked, measurable, and rollback-safe.
+    - id: PSP-C07
+      title: Build private inbound operations
+      depends_on: [PSP-C06]
+      phase_ids: [PSP-P08]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: xhigh, rationale: Inbound capture combines privacy-sensitive data flows with external account boundaries.}
+      objective: Build tagged intake, normalization, scoring, routing, drafting, and the private opportunity ledger with no-send enforced.
+      exit_gate: P08 is closed and synthetic client and recruiter leads traverse the complete private funnel while the send valve remains closed.
+    - id: PSP-C08
+      title: Stage and distribute proof-led content
+      depends_on: [PSP-C07]
+      phase_ids: [PSP-P09]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-terra, effort: high, rationale: Content derivation is bounded by the claims contract; publication remains human-gated.}
+      objective: Build the editorial program, stage the flagship report and derivatives, and record owner-approved distribution outcomes.
+      exit_gate: P09 is closed; the proof-led series is staged or owner-published where approved, measured, and connected to qualified capture.
+    - id: PSP-C09
+      title: Build qualification and conversion before the pilot
+      depends_on: [PSP-C05, PSP-C08]
+      phase_ids: [PSP-P10]
+      exclude_work_ids: [PSP-P10-W08]
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: xhigh, rationale: Conversion architecture and objection instrumentation require integrated commercial judgment.}
+      objective: Complete P10-W01 through P10-W07 so client and recruiter conversations, proposals, decisions, and objections are operational before validation.
+      exit_gate: P10-W01 through P10-W07 are closed with receipts; only the post-pilot 90-day experiment adjudication remains open in P10.
+    - id: PSP-C10
+      title: Obtain commercial proof and close the demand experiment
+      depends_on: [PSP-C05, PSP-C09]
+      phase_ids: [PSP-P12]
+      exclude_work_ids: []
+      extra_work_ids: [PSP-P10-W08]
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: First commercial proof and strategy adjudication cross human, contract, delivery, and claims boundaries.}
+      objective: Recruit and deliver a bounded pilot, gather external proof, refresh claims, and adjudicate the 90-day demand experiment.
+      exit_gate: P10 and P12 are closed with either commercial proof or an evidence-backed wedge invalidation and revision receipt.
+    - id: PSP-C11
+      title: Prove the governed foundry handoff
+      depends_on: [PSP-C10]
+      phase_ids: [PSP-P13]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Product economics, legal structures, custody, and operator transfer are high-consequence.}
+      objective: Inventory and score the product estate, define operator and transfer contracts, and run one bounded handoff pilot.
+      exit_gate: P13 is closed and one product reaches observed operator transfer or an evidence-backed no-go decision.
+    - id: PSP-C12
+      title: Close the return loops and prove Omega
+      depends_on: [PSP-C11]
+      phase_ids: [PSP-P14]
+      exclude_work_ids: []
+      extra_work_ids: []
+      conductor: {slug: gpt-5.6-sol, effort: ultra, rationale: Final convergence spans every phase, feedback loop, rollback path, and terminal receipt.}
+      objective: Operate measurement and review loops, automate correction and rollback, feed outcomes upstream, and prove two unchanged passes.
+      exit_gate: P14 and the root program are closed after two unchanged remote checks satisfy the terminal Omega predicate.
+
 external_references:
   PR-2136:
     kind: pull_request
@@ -1688,7 +1811,7 @@ phases:
   - id: PSP-P12
     title: External validation and first commercial proof
     outcome: Real users, buyers, recruiters, or partners create evidence beyond self-authored technical output.
-    depends_on: [PSP-P09, PSP-P10, PSP-P11]
+    depends_on: [PSP-P09, PSP-P11]
     exit_gate: The first audit outcome, external proof, and claims refresh are complete or the wedge has an evidence-backed invalidation receipt.
     work:
       - id: PSP-P12-W01
