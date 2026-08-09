@@ -347,8 +347,6 @@ def _source_paths(root: Path) -> list[Path]:
         if candidate.is_file()
         and candidate.suffix in DIRECT_SUFFIXES
         and candidate != root / NOTIFIER_REL
-        and "tests" not in candidate.parts
-        and not candidate.name.startswith("test_")
     ]
 
 
