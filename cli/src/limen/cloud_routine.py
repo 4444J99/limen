@@ -94,6 +94,8 @@ def _substitution_end(command: str, start: int) -> int | None:
             return index
         index += 1
     return None
+
+
 def _contains_shell_composition(command: str) -> bool:
     # Return whether shell composition occurs outside quoted literals.
     quote: str | None = None
@@ -173,6 +175,8 @@ def _has_unsafe_command_substitution(command: str) -> bool:
             continue
         index += 1
     return False
+
+
 CloudRoutineStatus = Literal["ok", "finding", "failed"]
 CloudRoutineDisposition = Literal[
     "no_change",
