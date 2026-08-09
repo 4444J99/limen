@@ -334,6 +334,11 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
         _receipt(predicate="test `false` = success")
 
 
+def test_shell_option_scan_advances_past_valid_options() -> None:
+    assert is_executable_predicate("bash -e check.sh")
+    assert is_executable_predicate("bash -c 'test -f marker'")
+
+
 def test_shell_predicate_parsing_stops_at_script_and_rejects_ansi_c_newline() -> None:
     assert is_executable_predicate("bash check.sh -c 'value;literal'")
     with pytest.raises(ValidationError, match="one executable command"):
