@@ -104,6 +104,22 @@ def test_delivery_without_admission_evidence_is_unreachable() -> None:
     assert module.mechanically_unreachable_count([row], dispositions) == 1
 
 
+def test_armed_consumer_requires_an_executable_registry_load() -> None:
+    module = _load_check_module()
+
+    assert not module._loads_lifecycle_registry(
+        'MARKERS = ["lifecycle.yaml", "merge_eligible"]'
+    )
+    assert module._loads_lifecycle_registry(
+        'import yaml
+'
+        'from pathlib import Path
+'
+        'yaml.safe_load(Path("lifecycle.yaml").read_text())
+'
+    )
+
+
 def test_disposition_owner_must_resolve_to_declared_consumer() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
@@ -112,6 +128,16 @@ def test_disposition_owner_must_resolve_to_declared_consumer() -> None:
     module.validate_dispositions(registry)
 
     assert any("does not resolve to a declared consumer" in failure for failure in module.failures)
+
+
+def test_archived_cohort_selector_is_pinned() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["cohorts"]["archived-repo"]["selector"] = {"repository_archived": False}
+
+    module.validate_cohorts(registry, set(registry["dispositions"]))
+
+    assert any("archived-repo cohort selector" in failure for failure in module.failures)
 
 
 def test_cohort_selector_schema_is_closed_and_covered() -> None:
@@ -205,24 +231,22 @@ def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> 
 
     def fake_run(args, **_kwargs):
         calls.append(" ".join(args))
-        repository = "organvm/example" if "repo:organvm/example" in calls[-1] else "owner/other"
-        number = 7 if repository == "organvm/example" else 8
-        return _Result(
-            {
-                "data": {
-                    "search": {
-                        "issueCount": 1,
-                        "nodes": [
-                            {
-                                "repository": {"nameWithOwner": repository},
-                                "number": number,
-                            }
-                        ],
-                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+        payload = {}
+        for repository, number, alias in (
+            ("organvm/example", 7, "r0"),
+            ("owner/other", 8, "r1"),
+        ):
+            payload[alias] = {
+                "issueCount": 1,
+                "nodes": [
+                    {
+                        "repository": {"nameWithOwner": repository},
+                        "number": number,
                     }
-                }
+                ],
+                "pageInfo": {"hasNextPage": False, "endCursor": None},
             }
-        )
+        return _Result({"data": payload})
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
@@ -232,7 +256,7 @@ def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> 
         hashlib.sha256(b"organvm/example#7").hexdigest(),
         hashlib.sha256(b"owner/other#8").hexdigest(),
     }
-    assert len(calls) == 2
+    assert len(calls) == 1
 
 
 def test_new_consumer_requires_zero_initial_baseline() -> None:
