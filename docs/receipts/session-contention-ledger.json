@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-08T20:38:37Z",
-  "incident_count": 14,
+  "generated_at": "2026-08-09T00:59:59Z",
+  "incident_count": 17,
   "incidents": [
     {
       "action": "skipped-stash-push",
@@ -84,6 +84,24 @@
       "action": "skipped-stash-push",
       "observed_at": "2026-08-08T19:41:49Z",
       "pid": 31336,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:12:03Z",
+      "pid": 88466,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:41:49Z",
+      "pid": 31336,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T00:58:33Z",
+      "pid": 44702,
       "root": "/Users/4jp/Workspace/limen"
     }
   ],
