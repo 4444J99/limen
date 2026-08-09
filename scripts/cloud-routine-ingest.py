@@ -14,7 +14,11 @@ from pydantic import ValidationError
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
-from limen.cloud_routine import CloudRoutineReceiptV1, plan_task_upserts  # noqa: E402
+from limen.cloud_routine import (
+    CloudRoutineReceiptV1,
+    plan_task_upserts,
+    task_id_for,
+)  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 
@@ -60,6 +64,19 @@ def active_lever_ids(path: Path) -> set[str]:
         if status not in TERMINAL_LEVER_STATUSES
     }
 
+
+
+def latest_receipts_by_lineage(
+    receipts: list[CloudRoutineReceiptV1],
+) -> list[CloudRoutineReceiptV1]:
+    """Keep only the newest observation for live owner resolution."""
+    latest: dict[str, CloudRoutineReceiptV1] = {}
+    for receipt in receipts:
+        lineage_id = task_id_for(receipt)
+        previous = latest.get(lineage_id)
+        if previous is None or receipt.observed_at >= previous.observed_at:
+            latest[lineage_id] = receipt
+    return list(latest.values())
 
 def validate_human_gate_owners(
     receipts: list[CloudRoutineReceiptV1],
@@ -135,7 +152,10 @@ def load_receipts(
             for item in _objects_from_path(path)
         )
     validate_routine_ids(receipts, manifest_path=manifest_path)
-    validate_human_gate_owners(receipts, lever_path=lever_path)
+    validate_human_gate_owners(
+        latest_receipts_by_lineage(receipts),
+        lever_path=lever_path,
+    )
     return receipts
 
 
