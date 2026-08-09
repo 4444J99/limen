@@ -32,7 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.capacity import PAID_AGENT_ORDER, canonical_agent  # noqa: E402
-from limen.dispatch import _effective_target_agent, agent_can_run_task  # noqa: E402
+from limen.dispatch import _down_lanes, _effective_target_agent, agent_can_run_task  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -156,6 +156,26 @@ def _last_blocker(tasks: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _live_down_lanes() -> list[str]:
+    """Snapshot the dispatcher's live lane gates for truthful admission reporting.
+
+    This calls the dispatcher-owned union: manual lanes-down entries, usage
+    exhaustion, browser-OAuth preflight, and provider-outcome health must not
+    acquire a second handoff-only implementation.
+    """
+    try:
+        return sorted(
+            {
+                canonical_agent(str(agent))
+                for agent in _down_lanes()
+                if str(agent).strip() and canonical_agent(str(agent)) not in {"", "any"}
+            }
+        )
+    except Exception:
+        # A broken probe must not crash a beat; provider rows remain authoritative.
+        return []
+
+
 def _provider_headroom() -> dict[str, Any]:
     """Timestamped provider capacity from the owning usage receipt."""
     usage = _load_json(USAGE, {})
@@ -187,6 +207,11 @@ def _provider_headroom() -> dict[str, Any]:
                             "provider_last_terminal_failure",
                             "provider_cooldown_expiry",
                             "provider_health_snapshot_hash",
+                            "provider_outcome_all_blocked",
+                            "provider_outcome_provider_count",
+                            "provider_outcome_blocked_provider_count",
+                            "provider_outcome_model_count",
+                            "provider_outcome_blocked_model_count",
                         )
                         if key in value
                     }
@@ -194,7 +219,7 @@ def _provider_headroom() -> dict[str, Any]:
                     if reset_at is not None:
                         projected["resets_at"] = reset_at
                     vendors[str(name)] = projected
-    return {"generated": generated, "vendors": vendors}
+    return {"generated": generated, "vendors": vendors, "down_lanes": _live_down_lanes()}
 
 
 def _legacy_budget(provider_headroom: dict[str, Any]) -> dict[str, Any]:
@@ -335,15 +360,15 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
     if not isinstance(value, dict):
         return None  # unknown is not the same as measured-down
 
-    normalized = {
+    down_lanes = provider_headroom.get("down_lanes")
+    if isinstance(down_lanes, (list, tuple, set)) and agent in {
+        canonical_agent(str(lane)) for lane in down_lanes
+    }:
+        return "provider_health"
+
+    ordinary_states = {
         str(value.get(key) or "").strip().lower().replace("-", "_")
-        for key in (
-            "health",
-            "state",
-            "status",
-            "provider_outcome_health",
-            "provider_last_terminal_failure",
-        )
+        for key in ("health", "state", "status")
     }
     auth_markers = {
         "auth",
@@ -359,7 +384,7 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
     }
     if any(
         marker in state or "auth" in state or "credential" in state
-        for state in normalized
+        for state in ordinary_states
         for marker in auth_markers
     ):
         return "auth_blocked"
@@ -367,18 +392,20 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
     remaining = value.get("remaining")
     if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
         return "provider_health"
-    cooldowns = _as_int(value.get("provider_cooldown_count"))
-    outcome = next(
-        (
-            state
-            for state in normalized
-            if state and state not in {"ok", "healthy", "none", "null"}
-        ),
-        "",
-    )
-    if outcome in {"down", "disabled", "exhausted", "low", "rate_limited", "unavailable", "blocked"}:
-        return "provider_health"
-    if outcome == "degraded" or (cooldowns is not None and cooldowns > 0):
+
+    # Provider telemetry aggregates model/provider entries. Match dispatch's
+    # all-provider gate: a cooldown on one model is not a whole-lane outage.
+    if value.get("provider_outcome_all_blocked") is True:
+        outcome_states = {
+            str(value.get(key) or "").strip().lower().replace("-", "_")
+            for key in ("provider_outcome_health", "provider_last_terminal_failure")
+        }
+        if any(
+            marker in state or "auth" in state or "credential" in state
+            for state in outcome_states
+            for marker in auth_markers
+        ):
+            return "auth_blocked"
         return "provider_health"
     return None
 
@@ -413,6 +440,11 @@ def _dispatch_admission(
     candidates: list[dict[str, Any]] = []
     reasons: Counter[str] = Counter()
     provider_health_reasons: Counter[str] = Counter()
+    down_lanes = {
+        canonical_agent(str(agent))
+        for agent in (provider_headroom.get("down_lanes") or [])
+        if str(agent).strip() and canonical_agent(str(agent)) not in {"", "any"}
+    }
     admissible_agents: Counter[str] = Counter()
     admissible_any_agents: Counter[str] = Counter()
     raw_vendors = provider_headroom.get("vendors") if isinstance(provider_headroom, dict) else {}
@@ -448,6 +480,8 @@ def _dispatch_admission(
         agent = _effective_task_agent(task)
         if reason is None and agent in _PLAN_BUILDER_SENTINELS:
             reason = "admission_blocked"
+        if reason is None and agent in down_lanes:
+            reason = "provider_health"
         if reason is None and agent not in {"", "any"} and not _eligible_any_agent(task, agent):
             reason = "admission_blocked"
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
@@ -475,6 +509,10 @@ def _dispatch_admission(
                 )
                 if candidate_remaining is not None and cost > candidate_remaining:
                     any_blockers["budget_agent"] += 1
+                    continue
+                if candidate_agent in down_lanes:
+                    any_blockers["provider_health"] += 1
+                    provider_health_reasons[candidate_agent] += 1
                     continue
                 provider_reason = _provider_block_reason(candidate_agent, provider_headroom)
                 if provider_reason is not None:
@@ -515,6 +553,7 @@ def _dispatch_admission(
         "gated": open_count - len(candidates),
         "reason_counts": dict(sorted(reasons.items())),
         "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
+        "down_lanes": sorted(down_lanes),
         "admissible_agent_counts": dict(sorted(admissible_agents.items())),
         "admissible_any_agent_counts": dict(sorted(admissible_any_agents.items())),
         "dispatchable_next": _task_summary(top) if top else None,
