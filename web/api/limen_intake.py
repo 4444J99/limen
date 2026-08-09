@@ -143,6 +143,14 @@ def is_executable_predicate(value: Any) -> bool:
     if command_index >= len(argv):
         return False
     first = argv[command_index]
+    if first in {"bash", "sh", "zsh"}:
+        for index in range(command_index + 1, len(argv) - 1):
+            option = argv[index]
+            if option not in {"-c", "-lc", "-ic", "--command"}:
+                continue
+            program = argv[index + 1]
+            if any(token in program for token in (";", "|", "&", "$(", "`")):
+                return False
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
 
 
