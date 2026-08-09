@@ -207,6 +207,8 @@ def test_model_rejects_unquoted_shell_composition() -> None:
         _receipt(predicate="python check.py; true")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="python check.py | true")
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate='test "$(false; echo success)" = success')
 
 
 def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
@@ -289,6 +291,40 @@ def test_consumer_accepts_a_statusless_active_human_lever(tmp_path: Path) -> Non
 
     module.validate_human_gate_owners([receipt], lever_path=registry)
     assert "L-ACTIVE" in module.active_lever_ids(registry)
+
+
+def test_consumer_collapses_lineages_before_live_owner_resolution(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_lineage_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    registry = tmp_path / "his-hand-levers.json"
+    registry.write_text(
+        json.dumps({"levers": [{"id": "L-CLOSED", "status": "discharged"}]}),
+        encoding="utf-8",
+    )
+    receipt_path = tmp_path / "receipts.json"
+    receipt_path.write_text(
+        json.dumps(
+            [
+                _receipt(
+                    observed_at="2026-08-08T11:00:00Z",
+                    disposition="human_gate",
+                    owner_ref="lever:L-CLOSED",
+                ).model_dump(mode="json"),
+                _receipt(
+                    observed_at="2026-08-08T12:00:00Z",
+                    disposition="owned",
+                    owner_ref="https://github.com/organvm/limen/issues/2120",
+                ).model_dump(mode="json"),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    loaded = module.load_receipts([receipt_path], lever_path=registry)
+    assert len(loaded) == 2
 
 
 def test_consumer_rejects_a_terminal_human_lever(tmp_path: Path) -> None:
