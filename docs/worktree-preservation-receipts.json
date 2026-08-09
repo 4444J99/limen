@@ -4665,6 +4665,30 @@
       "root": "codex-runaway-prevention-20260717",
       "status": "active_process_owned",
       "worktree": "/Users/4jp/Workspace/limen/.worktrees/codex-runaway-prevention-20260717"
+    },
+    {
+      "status": "reclaimed",
+      "root": "ceiling-unresolved-speaks",
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+merged+idle:abandonment=e5b44e1da66e74e653d1ec7cfbb0d985d8580a546372bd14db9b30c5ddd991e2.json",
+        "root": "ceiling-unresolved-speaks"
+      }
+    },
+    {
+      "status": "reclaimed",
+      "root": "ship-docs-board-partition-verify-20260808014448-76312",
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+pushed+idle:abandonment=64c9b01eecc860706ded5aaaf0cf55497ad964ae375643e1df99dffc6b86d6b9.json",
+        "root": "ship-docs-board-partition-verify-20260808014448-76312"
+      }
+    },
+    {
+      "status": "reclaimed",
+      "root": "ship-docs-board-partition-verify-20260808124816-28816",
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+merged+idle:abandonment=2bc098515b8ab95cd2044a3e7910e8f9cdec0922487349f91c11250cca83db5d.json",
+        "root": "ship-docs-board-partition-verify-20260808124816-28816"
+      }
     }
   ],
   "schema": 1
