@@ -31,7 +31,7 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
-from limen.capacity import canonical_agent  # noqa: E402
+from limen.capacity import PAID_AGENT_ORDER, canonical_agent  # noqa: E402
 from limen.dispatch import _effective_target_agent, agent_can_run_task  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
@@ -178,6 +178,15 @@ def _provider_headroom() -> dict[str, Any]:
                             "health",
                             "headroom_pct",
                             "effective_reserve_pct",
+                            # Provider-health receipts are the live admission signal. Keep
+                            # them beside ordinary usage headroom instead of silently dropping
+                            # auth failures/cooldowns on the way into the handoff.
+                            "provider_outcome_health",
+                            "provider_cooldown_count",
+                            "provider_last_success",
+                            "provider_last_terminal_failure",
+                            "provider_cooldown_expiry",
+                            "provider_health_snapshot_hash",
                         )
                         if key in value
                     }
@@ -310,30 +319,72 @@ def _effective_task_agent(task: dict[str, Any]) -> str:
         return canonical_agent(str(task.get("target_agent") or ""))
 
 
-def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
+def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str | None:
+    """Return the dispatch-relevant reason for a measured provider block.
+
+    Usage telemetry carries ordinary budget/health fields and a provider-outcome receipt.
+    The latter is deliberately interpreted here: a lane in an auth-failure cooldown is not
+    merely health=ok with a stale usage row, and should never be advertised as routable.
+    Missing rows remain available because unmetered lanes are intentionally absent from the
+    usage-budget projection; capability admission is the next gate for those lanes.
+    """
     if agent in {"", "any"}:
-        return True
+        return None
     vendors = provider_headroom.get("vendors")
     value = vendors.get(agent) if isinstance(vendors, dict) else None
     if not isinstance(value, dict):
-        return True  # unknown is not the same as measured-down
-    remaining = value.get("remaining")
-    if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
-        return False
-    state = str(value.get("health") or value.get("state") or value.get("status") or "")
-    state = state.strip().lower().replace("-", "_")
-    return state not in {
-        "down",
-        "disabled",
-        "exhausted",
-        "low",
-        "rate_limited",
-        "unavailable",
-        "blocked",
+        return None  # unknown is not the same as measured-down
+
+    normalized = {
+        str(value.get(key) or "").strip().lower().replace("-", "_")
+        for key in (
+            "health",
+            "state",
+            "status",
+            "provider_outcome_health",
+            "provider_last_terminal_failure",
+        )
+    }
+    auth_markers = {
+        "auth",
         "auth_needed",
         "auth_blocked",
+        "auth_failure",
+        "authentication",
         "unauthenticated",
+        "unauthorized",
+        "credentials",
+        "credential",
+        "login_required",
     }
+    if any(
+        marker in state or "auth" in state or "credential" in state
+        for state in normalized
+        for marker in auth_markers
+    ):
+        return "auth_blocked"
+
+    remaining = value.get("remaining")
+    if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
+        return "provider_health"
+    cooldowns = _as_int(value.get("provider_cooldown_count"))
+    outcome = next(
+        (
+            state
+            for state in normalized
+            if state and state not in {"ok", "healthy", "none", "null"}
+        ),
+        "",
+    )
+    if outcome in {"down", "disabled", "exhausted", "low", "rate_limited", "unavailable", "blocked"}:
+        return "provider_health"
+    if outcome == "degraded" or (cooldowns is not None and cooldowns > 0):
+        return "provider_health"
+    return None
+
+
+def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
+    return _provider_block_reason(agent, provider_headroom) is None
 
 
 
@@ -365,10 +416,13 @@ def _dispatch_admission(
     admissible_agents: Counter[str] = Counter()
     admissible_any_agents: Counter[str] = Counter()
     raw_vendors = provider_headroom.get("vendors") if isinstance(provider_headroom, dict) else {}
+    # Usage telemetry is a metered-budget view. The dispatcher can also claim canonical
+    # unmetered lanes (for example github_actions, Ollama, Copilot, Warp, or Oz), so any-task
+    # admission starts from the capability census and only overlays measured provider rows.
     known_agents = sorted(
         {
             canonical_agent(str(name))
-            for name in (raw_vendors or {})
+            for name in [*PAID_AGENT_ORDER, *(raw_vendors or {})]
             if str(name).strip() and canonical_agent(str(name)) not in {"", "any"}
         }
     )
@@ -400,17 +454,18 @@ def _dispatch_admission(
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
             reason = "budget_agent"
-        if reason is None and not _provider_available(agent, provider_headroom):
-            reason = "provider_health"
+        if reason is None:
+            reason = _provider_block_reason(agent, provider_headroom)
         if reason is None and not task_execution_ready(task):
             reason = "execution_requirements"
         if reason is not None:
             reasons[reason] += 1
-            if reason == "provider_health":
+            if reason in {"provider_health", "auth_blocked"}:
                 provider_health_reasons[agent] += 1
             continue
         if agent in {"", "any"}:
             eligible_any_agents = 0
+            any_blockers: Counter[str] = Counter()
             for candidate_agent in known_agents:
                 candidate_budget = per_agent.get(candidate_agent) if isinstance(per_agent, dict) else None
                 candidate_remaining = (
@@ -419,15 +474,28 @@ def _dispatch_admission(
                     else None
                 )
                 if candidate_remaining is not None and cost > candidate_remaining:
+                    any_blockers["budget_agent"] += 1
                     continue
-                if (
-                    _provider_available(candidate_agent, provider_headroom)
-                    and _eligible_any_agent(task, candidate_agent)
-                ):
-                    admissible_any_agents[candidate_agent] += 1
-                    eligible_any_agents += 1
+                provider_reason = _provider_block_reason(candidate_agent, provider_headroom)
+                if provider_reason is not None:
+                    any_blockers[provider_reason] += 1
+                    if provider_reason in {"provider_health", "auth_blocked"}:
+                        provider_health_reasons[candidate_agent] += 1
+                    continue
+                if not _eligible_any_agent(task, candidate_agent):
+                    any_blockers["admission_blocked"] += 1
+                    continue
+                admissible_any_agents[candidate_agent] += 1
+                eligible_any_agents += 1
             if eligible_any_agents == 0:
-                reasons["admission_blocked"] += 1
+                # Preserve the strongest observed cause so conducting-report can distinguish
+                # auth/capacity blocks from a genuinely unavailable capability route.
+                for blocker in ("auth_blocked", "provider_health", "budget_agent", "admission_blocked"):
+                    if any_blockers.get(blocker):
+                        reasons[blocker] += 1
+                        break
+                else:
+                    reasons["admission_blocked"] += 1
                 continue
         candidates.append(task)
         admissible_agents[agent or "any"] += 1
