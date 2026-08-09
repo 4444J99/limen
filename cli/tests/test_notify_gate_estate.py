@@ -308,9 +308,7 @@ def test_list_bound_python_notification_bypass_is_rejected(tmp_path, check_gate)
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "sender.py").write_text(
-        "import subprocess\n"
-        "cmd = [\"osascript\", \"-e\", 'display notification \"x\"']\n"
-        "subprocess.run(cmd)\n",
+        'import subprocess\ncmd = ["osascript", "-e", \'display notification "x"\']\nsubprocess.run(cmd)\n',
         encoding="utf-8",
     )
 
