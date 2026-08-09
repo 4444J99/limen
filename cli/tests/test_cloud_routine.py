@@ -45,6 +45,14 @@ def test_new_work_requires_exact_repository_owner() -> None:
         _receipt(owner_ref="organvm/limen#2120")
 
 
+def test_material_non_new_work_requires_durable_owner() -> None:
+    with pytest.raises(ValidationError, match="durable owner_ref"):
+        _receipt(
+            disposition="owned",
+            owner_ref="missing-owner",
+        )
+
+
 def test_observation_time_must_be_timezone_aware() -> None:
     with pytest.raises(ValidationError, match="include a timezone"):
         _receipt(observed_at="2026-08-08T12:00:00")
@@ -106,6 +114,21 @@ def test_repeated_finding_and_pending_ticket_are_idempotent() -> None:
     assert pending_batch.duplicates == 1
 
 
+def test_latest_lineage_disposition_wins_before_task_planning() -> None:
+    older = _receipt(observed_at="2026-08-08T11:00:00Z")
+    newer = _receipt(
+        observed_at="2026-08-08T12:00:00Z",
+        disposition="owned",
+        owner_ref="https://github.com/organvm/limen/issues/2120",
+    )
+
+    plan = plan_task_upserts([older, newer])
+
+    assert plan.tasks == ()
+    assert plan.classified == 1
+    assert plan.duplicates == 1
+
+
 def test_active_recurrence_occurrence_blocks_another_lineage_task() -> None:
     receipt = _receipt()
     lineage_id = task_id_for(receipt)
@@ -164,6 +187,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     invalid_semicolon = {**valid, "predicate": "python check.py; true"}
     invalid_pipeline = {**valid, "predicate": "python check.py | true"}
     invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
+    invalid_durable_owner = {**valid, "disposition": "owned", "owner_ref": "missing-owner"}
 
     assert not list(validator.iter_errors(valid))
     assert list(validator.iter_errors(invalid_placeholder))
@@ -171,6 +195,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     assert list(validator.iter_errors(invalid_semicolon))
     assert list(validator.iter_errors(invalid_pipeline))
     assert list(validator.iter_errors(invalid_owner))
+    assert list(validator.iter_errors(invalid_durable_owner))
     human_gate = schema["allOf"][-1]
     assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
     assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
@@ -246,6 +271,26 @@ def test_consumer_rejects_a_nonexistent_human_lever(tmp_path: Path) -> None:
         module.validate_human_gate_owners([receipt], lever_path=registry)
 
 
+def test_consumer_accepts_a_statusless_active_human_lever(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_statusless_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    registry = tmp_path / "his-hand-levers.json"
+    registry.write_text(
+        json.dumps({"levers": [{"id": "L-ACTIVE"}]}),
+        encoding="utf-8",
+    )
+    receipt = _receipt(
+        disposition="human_gate",
+        owner_ref="lever:L-ACTIVE",
+    )
+
+    module.validate_human_gate_owners([receipt], lever_path=registry)
+    assert "L-ACTIVE" in module.active_lever_ids(registry)
+
+
 def test_consumer_rejects_a_terminal_human_lever(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location("cloud_routine_ingest_terminal_test", script)
@@ -264,6 +309,24 @@ def test_consumer_rejects_a_terminal_human_lever(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="terminal/inactive"):
         module.validate_human_gate_owners([receipt], lever_path=registry)
+
+
+def test_consumer_rejects_a_routine_absent_from_manifest(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_manifest_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text(
+        json.dumps([_receipt(routine_id="fleat-audit").model_dump(mode="json")]),
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "cloud-routines.json"
+    manifest.write_text(json.dumps({"routines": [{"name": "fleet-audit"}]}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="absent from cloud-routines.json"):
+        module.load_receipts([receipt_path], manifest_path=manifest)
 
 
 def test_irf_validator_derives_every_row_owner() -> None:
