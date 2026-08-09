@@ -93704,7 +93704,7 @@ tasks:
   target_agent: 'gemini'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'done'
   labels:
   - 'cifix'
   - 'self-heal'
@@ -93714,7 +93714,7 @@ tasks:
   context: 'PR organvm/public-process#35 has FAILING CI checks and merge-drain correctly refuses to merge it. Check out the PR branch, find the root cause of the red checks (lint / types / failing test / config), fix it, push to the SAME PR branch, and confirm every check goes green. Do not open a new PR — repair the existing one so merge-drain lands it. PR: https://github.com/organvm/public-process/pull/35 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-08-09T02:47:12.102Z'
+  updated: '2026-08-09T02:47:19.305Z'
   dispatch_log:
   - timestamp: '2026-07-06T14:05:58.861134Z'
     agent: 'jules'
@@ -93755,6 +93755,20 @@ tasks:
     conduct_run_id: 'run-3a775417395182c4a6b4ededd5a2664b'
     conduct_lease_id: 'lease-727-3a775417395182c4'
     conduct_generation: 727
+  - timestamp: '2026-08-09T02:47:19.305Z'
+    agent: 'opencode'
+    session_id: 'opencode-pickup-1786243630'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-pickup-1786243630'
+    status: 'done'
+    output: 'PR #35 CLEAN/MERGEABLE - awaiting merge.'
+    lifecycle_repair: 'pr-observed-terminal'
+    pr_observed_state: 'open'
+    pr_observed_ref: 'organvm/public-process#35'
+    conduct_event_id: 'conduct:run-985f57ce8a0f21db1c4e1e610bb6c4d3:728:compatibility'
+    conduct_run_id: 'run-985f57ce8a0f21db1c4e1e610bb6c4d3'
+    conduct_lease_id: 'lease-728-985f57ce8a0f21db'
+    conduct_generation: 728
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Agy fixed public-process CI. PR #35 CLEAN/MERGEABLE.'
