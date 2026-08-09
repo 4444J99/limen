@@ -46,7 +46,6 @@ def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
     assert diurnal["interval_s"] == 1200 * diurnal["cadence"]
 
 
-
 def _fresh_logs(mod, tmp_path: Path, *, escalation: dict[str, Any] | None, artifact_age_h: float = 0.0) -> None:
     """A logs dir where routine-freshness looks maximally healthy on every age-based signal.
 
