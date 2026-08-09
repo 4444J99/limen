@@ -116,6 +116,83 @@ def test_cohort_selector_schema_is_closed_and_covered() -> None:
     assert any("all cohort selector must be exactly" in failure for failure in module.failures)
 
 
+def test_cohort_precedence_rejects_duplicate_entries() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["cohort_precedence"].append("all")
+
+    module.validate_cohorts(registry, set(registry["dispositions"]))
+
+    assert any("exactly once" in failure for failure in module.failures)
+
+
+def test_per_disposition_literal_baseline_detects_swapped_literal() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["literal_baseline_by_disposition"]["scripts/merge-drain.py"]["lifecycle:delivery"] = 1
+
+    module.validate_consumers(registry, set(registry["dispositions"]))
+
+    assert any("per-disposition literal baseline differs" in failure for failure in module.failures)
+
+
+def test_preservation_ceiling_is_checked_by_offline_predicate(monkeypatch) -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["live_baseline"]["preservation_materialization_missing_labels"] = 125
+    monkeypatch.setattr(
+        module,
+        "previous_registry",
+        lambda: {"live_baseline": {"preservation_materialization_missing_labels": 124}},
+    )
+
+    module.validate_preservation_ceiling(registry)
+
+    assert any("ceiling regrew" in failure for failure in module.failures)
+
+
+def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> None:
+    module = _load_check_module()
+    calls = []
+
+    class _Result:
+        returncode = 0
+
+        def __init__(self, payload):
+            self.stdout = json.dumps(payload)
+
+    def fake_run(args, **_kwargs):
+        calls.append(" ".join(args))
+        repository = "organvm/example" if "repo:organvm/example" in calls[-1] else "owner/other"
+        number = 7 if repository == "organvm/example" else 8
+        return _Result(
+            {
+                "data": {
+                    "search": {
+                        "issueCount": 1,
+                        "nodes": [
+                            {
+                                "repository": {"nameWithOwner": repository},
+                                "number": number,
+                            }
+                        ],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    identities = module.live_open_pr_identities({"organvm/example", "owner/other"})
+
+    assert identities == {
+        hashlib.sha256(b"organvm/example#7").hexdigest(),
+        hashlib.sha256(b"owner/other#8").hexdigest(),
+    }
+    assert len(calls) == 2
+
+
 def test_new_consumer_requires_zero_initial_baseline() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
