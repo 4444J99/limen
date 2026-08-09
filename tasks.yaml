@@ -88622,18 +88622,19 @@ tasks:
   target_agent: 'jules'
   priority: 'high'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'needs_human'
   labels:
   - 'cifix'
   - 'self-heal'
   - 'ci-red'
   - 'slow'
+  - 'needs-human'
   urls:
   - 'https://github.com/organvm/a-i--skills/pull/26'
   context: 'PR organvm/a-i--skills#26 has FAILING CI checks and merge-drain correctly refuses to merge it. Check out the PR branch, find the root cause of the red checks (lint / types / failing test / config), fix it, push to the SAME PR branch, and confirm every check goes green. Do not open a new PR — repair the existing one so merge-drain lands it. PR: https://github.com/organvm/a-i--skills/pull/26 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-08-09T02:47:40.612Z'
+  updated: '2026-08-09T02:47:46.761Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:35:01.040512Z'
     agent: 'gemini'
@@ -88669,6 +88670,18 @@ tasks:
     conduct_run_id: 'run-ebc392bb945bd42619060a9360f78328'
     conduct_lease_id: 'lease-729-ebc392bb945bd426'
     conduct_generation: 729
+  - timestamp: '2026-08-09T02:47:46.761Z'
+    agent: 'opencode'
+    session_id: 'opencode-pickup-1786243659'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-pickup-1786243659'
+    status: 'needs_human'
+    output: 'Human gate: PR #26 requires review/merge - BLOCKED by lifecycle:blocked label.'
+    lifecycle_repair: 'human-gate-reconcile'
+    conduct_event_id: 'conduct:run-e015cf1825177f02b95bb2c11b16ab64:730:compatibility'
+    conduct_run_id: 'run-e015cf1825177f02b95bb2c11b16ab64'
+    conduct_lease_id: 'lease-730-e015cf1825177f02'
+    conduct_generation: 730
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'a-i--skills PR #26 CI repaired by Agy but BLOCKED by lifecycle:blocked label + REVIEW_REQUIRED - needs human review/merge.'
