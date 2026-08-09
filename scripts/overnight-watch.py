@@ -409,9 +409,11 @@ def _resident_alive(pid: str | None) -> bool:
 
 
 def _resident_state(pid: str | None, child: dict[str, Any] | None) -> dict[str, Any]:
+    child_pid = str(child.get("pid") or "") if child else ""
+    alive = bool(pid and child_pid == str(pid) and _resident_alive(pid))
     return {
         "pid": pid,
-        "alive": _resident_alive(pid),
+        "alive": alive,
         "process": child,
     }
 
