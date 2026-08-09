@@ -6,6 +6,7 @@ so the organs are exercised by logic, not by the host machine's current state.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import threading
@@ -218,6 +219,33 @@ def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
     monkeypatch.setattr(vitals, "_update_warn_streak", lambda action, update: 3)
     g = vitals.beat_gate(shed=True)
     assert g["action"] == "shed" and g["sustained_warn"] is True and g["warn_streak"] == 3
+
+
+def test_organ_health_vigilia_uses_fast_sample_clock(monkeypatch):
+    script = Path(__file__).resolve().parents[2] / "scripts" / "organ-health.py"
+    spec = importlib.util.spec_from_file_location("organ_health_vigilia_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    vigilia = next(row for row in module._registry() if row["key"] == "vigilia")
+    assert vigilia["probe_first"] is True
+    assert vigilia["interval_s"] == 300
+
+    monkeypatch.setattr(module, "_loop_text", lambda: "")
+    monkeypatch.setattr(
+        module,
+        "_doors",
+        lambda _text: [dict(vigilia, probe=lambda: 200)],
+    )
+    monkeypatch.setattr(module, "_voice_stamp", lambda _voice: 100)
+    monkeypatch.setattr(module.time, "time", lambda: 250)
+
+    row = module.build()["organs"][0]
+
+    assert row["source"] == "artifact"
+    assert row["last_fired"] == datetime.fromtimestamp(200).isoformat(timespec="seconds")
+    assert row["expected_h"] == 0.1
 
 
 def test_heartbeat_vitals_leaves_provider_admission_to_the_campaign_supervisor():
