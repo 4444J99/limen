@@ -572,6 +572,15 @@ def test_heartbeat_resident_sleep_uses_interruptible_helper():
     assert '\\n  sleep "$_fw_wait"' not in fast_wave
 
 
+def test_interruptible_sleep_uses_one_timer_without_per_second_churn():
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(
+        encoding="utf-8"
+    )
+    helper = source[source.index("_interruptible_sleep()") : source.index("\n}\n\n_fast_wave_due_beat")]
+    assert 'sleep "$_sleep_remaining"' in helper
+    assert "sleep 1" not in helper
+
+
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
@@ -662,6 +671,30 @@ def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypa
     status = json.loads((tmp_path / "status.json").read_text())
     assert status["sampled_at"] == new_time.isoformat()
     assert status["vitals"]["status"] == "new"
+
+
+def test_new_early_sample_survives_transient_seat_write_failure(tmp_path, monkeypatch):
+    old = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:00:00+00:00",
+        "completed_at": "2026-08-08T12:01:00+00:00",
+        "vitals": {"organ": "vitals", "status": "old", "action": "ok"},
+    }
+    early = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:02:00+00:00",
+        "vitals": {"organ": "vitals", "status": "new", "action": "ok"},
+    }
+    monkeypatch.setattr(executive, "sample_vitals", lambda: early)
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(executive, "continuity", type("Continuity", (), {"beat": staticmethod(lambda: {"status": "ok"})}))
+    monkeypatch.setattr(executive, "integrity", type("Integrity", (), {"check": staticmethod(lambda: {"status": "ok"})}))
+    monkeypatch.setattr(executive, "_update_status", lambda mutator: mutator(old))
+
+    status = executive.run_beat()
+
+    assert status["sampled_at"] == early["sampled_at"]
+    assert status["vitals"] == early["vitals"]
 
 
 def test_failed_vitals_probe_does_not_refresh_a_valid_sample(tmp_path, monkeypatch):
