@@ -1,0 +1,15 @@
+{
+  "generated": "2026-08-09T23:12:00Z",
+  "lane": "agy",
+  "scope": "organvm/hospes",
+  "items": [
+    {
+      "task_id": "HEAL-cifix-organvm-hospes-8",
+      "pr": "organvm/hospes#8",
+      "pr_state": "MERGED",
+      "evidence": "PR #8 (branch limen/gh-organvm-hospes-3-fe1ddf24) state is MERGED. Predicate `test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED` exits 0. Task shows status=open in tasks.yaml projection but predicate is satisfied.",
+      "proposed": "done",
+      "blocker": "conduct broker not configured (LIMEN_CONDUCT_URL unset) — broker transition must be submitted by next session with broker access or via limen harvest when the predicate-based harvest path is wired for organvm/hospes tasks."
+    }
+  ]
+}
