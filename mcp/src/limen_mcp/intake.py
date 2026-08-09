@@ -183,6 +183,8 @@ def is_executable_predicate(value: Any) -> bool:
                 break
             index += 1
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
+
+
 def is_durable_receipt_target(value: Any) -> bool:
     if not isinstance(value, str):
         return False
