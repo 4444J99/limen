@@ -385,7 +385,8 @@ def test_declared_python_encoding_is_decoded(tmp_path, check_gate):
             "# -*- coding: latin-1 -*-\n"
             "import subprocess\n"
             "# café\n"
-            "subprocess.run([\"osascript\", \"-e\", 'display notification \\\"x\\\"'])\n"
+            "subprocess.run([\"osascript\", \"-e\", "
+            "'display notification \\\"x\\\"'])\\n"
         ).encode("latin-1")
     )
 
