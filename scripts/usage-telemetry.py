@@ -571,7 +571,15 @@ def _provider_outcome_projection() -> dict:
         )
     except Exception:
         return {}
+    provider_entries = list(snapshot.providers.items())
+    model_entries = list(snapshot.models.items())
     entries = [*snapshot.providers.values(), *snapshot.models.values()]
+    blocked_provider_entries = [
+        (name, entry) for name, entry in provider_entries if entry.blocked(NOW)
+    ]
+    blocked_model_entries = [
+        (name, entry) for name, entry in model_entries if entry.blocked(NOW)
+    ]
     last_success = max((entry.last_success for entry in entries if entry.last_success), default=None)
     last_failure = max(
         (entry.last_terminal_failure for entry in entries if entry.last_terminal_failure),
@@ -579,6 +587,7 @@ def _provider_outcome_projection() -> dict:
     )
     cooldown_expiry = max((entry.cooldown_until for entry in entries if entry.cooldown_until), default=None)
     blocked = [entry for entry in entries if entry.blocked(NOW)]
+    all_providers_blocked = bool(provider_entries) and len(blocked_provider_entries) == len(provider_entries)
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
         "provider_cooldown_count": len(blocked),
@@ -586,6 +595,13 @@ def _provider_outcome_projection() -> dict:
         "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
+        # Dispatch benches OpenCode only when every observed provider is blocked;
+        # model-level cooldowns remain available for live model selection.
+        "provider_outcome_all_blocked": all_providers_blocked,
+        "provider_outcome_provider_count": len(provider_entries),
+        "provider_outcome_blocked_provider_count": len(blocked_provider_entries),
+        "provider_outcome_model_count": len(model_entries),
+        "provider_outcome_blocked_model_count": len(blocked_model_entries),
     }
 
 
