@@ -136,10 +136,7 @@ sensors:
 """,
         encoding="utf-8",
     )
-    loop = (
-        'python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave '
-        "--scheduled-only\n"
-    )
+    loop = 'python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only\n'
     monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "90")
     m = _load(monkeypatch, tmp_path)
 
