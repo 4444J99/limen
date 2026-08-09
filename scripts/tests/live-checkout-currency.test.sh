@@ -84,4 +84,58 @@ rm -f "$receipt"
 run "$work/live" --no-receipt >/dev/null 2>&1 || true
 [ ! -f "$receipt" ] || { echo "FAIL: --no-receipt still wrote a receipt" >&2; exit 1; }
 
-echo "live-checkout-currency.test: all cases pass"
+# ── the contended detach (2026-08-09) ─────────────────────────────────────────────────────────
+# sync-release.sh's unpark valve takes the release by SHA when another worktree holds the branch
+# NAME, so a live root can be legitimately DETACHED at the exact release. Before these cases the
+# probe called that "parked on 'HEAD'" and exited 1 forever — reporting the organ's own repair as
+# the failure it had just fixed, and poisoning model_selection.deployment_currency(), which read
+# the receipt and told every caller "the tree the beat executes is 0 commit(s) behind origin/main
+# — every artifact it wrote is suspect". Observed live, with that exact self-contradiction.
+#
+# Cases 7 and 8 are the load-bearing ones. An exemption is only as good as the states it still
+# REFUSES, and both failure directions are cheap to reintroduce by "simplifying" case 6's guard.
+"${G[@]}" clone --quiet "$work/origin.git" "$work/held-live" 2>/dev/null
+cd "$work/held-live"
+"${G[@]}" fetch --quiet origin 2>/dev/null
+"${G[@]}" checkout --quiet --detach origin/main 2>/dev/null   # detach FIRST: git will not hand the
+"${G[@]}" worktree add --quiet "$work/held-peer" main 2>/dev/null   # same name to two worktrees
+cd "$here"
+
+echo "case 6: detached at the exact release, name held by another worktree → coherent, drift=0, exit 0"
+rm -f "$receipt"
+out="$(run "$work/held-live")" || { echo "FAIL: contended detach at the exact release exited non-zero: $out" >&2; exit 1; }
+grep -q "state=coherent" <<<"$out" || { echo "FAIL: expected state=coherent, got: $out" >&2; exit 1; }
+grep -q "drift=0" <<<"$out" || { echo "FAIL: expected drift=0 for a converged detach, got: $out" >&2; exit 1; }
+grep -q "detached at exact origin/main" <<<"$out" || { echo "FAIL: probe went green without SAYING why: $out" >&2; exit 1; }
+[ "$(field detached_at_release)" = "True" ] || { echo "FAIL: receipt detached_at_release != True ($(field detached_at_release))" >&2; exit 1; }
+[ "$(field drift)" = "0" ] || { echo "FAIL: receipt drift != 0 ($(field drift)) — the state and the number must agree" >&2; exit 1; }
+
+echo "case 7: gratuitous detach with the name FREE → still drift, exit 1"
+"${G[@]}" clone --quiet "$work/origin.git" "$work/loose-live" 2>/dev/null
+cd "$work/loose-live"
+"${G[@]}" fetch --quiet origin 2>/dev/null
+"${G[@]}" checkout --quiet --detach origin/main 2>/dev/null   # nobody else holds 'main' here
+cd "$here"
+rm -f "$receipt"
+if out="$(run "$work/loose-live" 2>&1)"; then
+  echo "FAIL: a detach with the branch name FREE was exempted — the exemption is unbounded: $out" >&2; exit 1
+fi
+grep -q "state=drift" <<<"$out" || { echo "FAIL: expected state=drift for a gratuitous detach, got: $out" >&2; exit 1; }
+
+echo "case 8: detached at a STALE commit while the name is held → still drift, exit 1"
+cd "$work/pusher"
+echo three > file3.txt
+"${G[@]}" add file3.txt
+"${G[@]}" commit --quiet -m "three"
+"${G[@]}" push --quiet origin main 2>/dev/null
+cd "$work/held-live"
+"${G[@]}" fetch --quiet origin 2>/dev/null   # objects present; HEAD deliberately left at the old release
+cd "$here"
+rm -f "$receipt"
+if out="$(run "$work/held-live" 2>&1)"; then
+  echo "FAIL: a detach at a STALE commit was exempted — the exemption laundered real drift: $out" >&2; exit 1
+fi
+grep -q "state=drift" <<<"$out" || { echo "FAIL: expected state=drift for a stale detach, got: $out" >&2; exit 1; }
+[ "$(field behind)" -ge 1 ] || { echo "FAIL: receipt behind < 1 ($(field behind)) — stale detach must still count" >&2; exit 1; }
+
+echo "live-checkout-currency.test: all cases pass (incl. contended-detach exemption + its two bounds)"
