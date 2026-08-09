@@ -52,6 +52,11 @@ def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
     assert registry["cohorts"]["dependabot"]["default_disposition"] == "lifecycle:blocked"
     assert registry["cohorts"]["dependabot"]["owner_lever"] == "L-DEPENDABOT-DELIVERY-ARM"
     assert registry["cohorts"]["dependabot"]["armed_disposition"] == "lifecycle:delivery"
+    assert registry["cohorts"]["dependabot"]["arm_decision"]["outcome"] == "arm"
+    assert (
+        registry["cohorts"]["dependabot"]["arm_decision"]["accepted_receipt"]["disposition"]
+        == "lifecycle:delivery"
+    )
     assert all(row["ratchet"] in registry["ratchets"] for row in registry["consumers"].values())
     assert all(row["loader_markers"] for row in registry["consumers"].values())
     assert isinstance(registry["ratchets"]["estate_yaml_derives"], bool)
@@ -299,6 +304,17 @@ def test_preservation_derivation_contract_is_required() -> None:
     assert any("derived_from.materialize must be true" in failure for failure in module.failures)
 
 
+
+def test_armed_cohort_requires_a_matching_arm_receipt() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["cohorts"]["dependabot"].pop("arm_decision")
+
+    module.validate_cohorts(registry, set(registry["dispositions"]))
+
+    assert any("explicit arm outcome and accepted receipt" in failure for failure in module.failures)
+
+
 def test_consumer_markers_ignore_comments_and_docstrings() -> None:
     module = _load_check_module()
     markers, lifecycle_literals = module._source_markers(
@@ -316,8 +332,13 @@ def test_consumer_markers_ignore_comments_and_docstrings() -> None:
 
 def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path) -> None:
     module = _load_check_module()
+    source_report = {
+        "exhaustive": True,
+        "generated_at": "2026-08-08T19:14:15.797769Z",
+        "content_sha256": "tracked-estate-sha",
+    }
     facts = {
-        "source_report": {"exhaustive": True},
+        "source_report": source_report,
         "summary": {"repository_count": 1},
         "cursors": [
             {"repository": "organvm/example", "kind": kind, "exhaustive": True, "error": None}
@@ -326,8 +347,16 @@ def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path
     }
     facts_path = tmp_path / "github-estate-census-facts.json"
     facts_path.write_text(json.dumps(facts))
+    tracked_path = tmp_path / "github-estate-census.json"
+    tracked_path.write_text(json.dumps({"source_report": source_report}))
 
-    assert module._complete_estate_repositories(facts_path=facts_path) == {"organvm/example"}
+    assert (
+        module._complete_estate_repositories(
+            facts_path=facts_path,
+            tracked_path=tracked_path,
+        )
+        == {"organvm/example"}
+    )
     assert module.failures == []
 
 
