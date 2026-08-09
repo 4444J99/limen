@@ -406,6 +406,66 @@ def test_dispatch_admission_filters_unreachable_any_lane(monkeypatch):
     assert admission["admissible_any_agent_counts"] == {"codex": 1}
 
 
+def test_board_budget_clears_expired_same_day_reset_window(monkeypatch):
+    mod = _load()
+    now = dt.datetime(2026, 7, 12, 16, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(mod, "_now", lambda: now)
+    monkeypatch.setattr(mod, "_window_hours", lambda _agent: 5.0)
+    board = _board([])
+    board["portal"]["budget"]["track"] = {
+        "date": "2026-07-12",
+        "spent": 9,
+        "per_agent": {"codex": 2, "gemini": 1},
+        "per_agent_reset": {"codex": "2026-07-12T10:00:00+00:00"},
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 1
+    assert budget["per_agent"]["codex"]["spent"] == 0
+    assert budget["per_agent"]["gemini"]["spent"] == 1
+
+
+def test_dispatch_admission_applies_chronic_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "chronic_dispatch_reason", lambda _task: "repeated-no-op")
+    monkeypatch.setattr(mod, "_worktree_admission_snapshot", lambda: {"active": False})
+    task = _task("CHRONIC")
+    admission = mod._dispatch_admission(
+        [task],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"chronic_dispatch": 1}
+    assert admission["reason_counts_by_agent"] == {"codex": {"chronic_dispatch": 1}}
+
+
+def test_dispatch_admission_applies_local_worktree_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(
+        mod,
+        "_worktree_admission_snapshot",
+        lambda: {"active": True, "block_new_local": True},
+    )
+    monkeypatch.setattr(
+        mod,
+        "_worktree_admission_for_task",
+        lambda _task, _agent, _snapshot: (True, "disk-pressure"),
+    )
+    task = _task("LOCAL-BLOCKED")
+    admission = mod._dispatch_admission(
+        [task],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"worktree_admission": 1}
+    assert admission["reason_counts_by_agent"] == {"codex": {"worktree_admission": 1}}
+
+
 def test_board_budget_preserves_active_per_agent_reset_window(monkeypatch):
     mod = _load()
     now = dt.datetime(2026, 7, 13, 2, 0, tzinfo=dt.timezone.utc)
