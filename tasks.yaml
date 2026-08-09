@@ -167631,3 +167631,40 @@ tasks:
     conduct_lease_id: 'lease-709-ff3afd448c536805'
     conduct_generation: 709
   updated: '2026-08-09T00:46:08.670Z'
+- id: 'HEAL-cifix-organvm-limen-2001'
+  title: 'fix failing CI on organvm/limen#2001'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'cifix'
+  - 'self-heal'
+  - 'ci-red'
+  urls:
+  - 'https://github.com/organvm/limen/pull/2001'
+  context: 'PR organvm/limen#2001 has FAILING CI checks and merge-drain correctly refuses to merge it. Check out the PR branch, find the root cause of the red checks (lint / types / failing test / config), fix it, push to the SAME PR branch, and confirm every check goes green. If the branch ALSO rolls back base content its title/body never declared (a poisoned/stale generated tree), restore base''s side of those paths rather than repairing on top of a rollback. Do not open a new PR — repair the existing one so merge-drain lands it. PR: https://github.com/organvm/limen/pull/2001 [auto-emitted 2026-08-08 by self-heal so merge-drain can land it]'
+  predicate: 'test "$(gh pr view 2001 --repo organvm/limen --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/limen/pull/2001'
+  origin: 'system_debt'
+  horizon: 'past'
+  value_case: 'Resolve the recurring CI-RED pull-request defect for organvm/limen#2001'
+  owner_surface: 'organvm/limen'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-08'
+  dispatch_log:
+  - timestamp: '2026-08-09T01:18:37.570Z'
+    agent: 'codex'
+    session_id: 'self-heal-emit'
+    logical_agent: 'self-heal'
+    logical_session_id: 'emit'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-c9a422b0ed0b4414245deced8eeb03b1:710:compatibility'
+    conduct_run_id: 'run-c9a422b0ed0b4414245deced8eeb03b1'
+    conduct_lease_id: 'lease-710-c9a422b0ed0b4414'
+    conduct_generation: 710
+  updated: '2026-08-09T01:18:37.570Z'
