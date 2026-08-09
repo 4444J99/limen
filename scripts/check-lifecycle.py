@@ -234,7 +234,7 @@ def _source_markers(source: str) -> tuple[set[str], set[str]]:
                 continue
             markers.add(node.value)
             lifecycle_literals.update(
-                re.findall(r"(?<![\\w-])lifecycle:[A-Za-z0-9_-]+", node.value)
+                re.findall(r"(?<![\w-])lifecycle:[A-Za-z0-9_-]+", node.value)
             )
         elif isinstance(node, ast.Name):
             markers.add(node.id)
@@ -645,6 +645,7 @@ def measure_unreachable(
     *,
     metadata_probe=live_label_metadata_drift,
     rows_probe=_complete_census_rows,
+    repositories_probe=None,
 ) -> int | None:
     try:
         ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
@@ -674,6 +675,12 @@ def measure_unreachable(
         if row.get("lifecycle_disposition") in dispositions
         and row.get("lifecycle_disposition_source") != "label"
     )
+    preservation_missing = sum(
+        1
+        for row in rows
+        if row.get("lifecycle_disposition") == "lifecycle:preservation"
+        and row.get("lifecycle_disposition_source") != "label"
+    )
     live_baseline = registry.get("live_baseline")
     preservation_ceiling = (
         live_baseline.get("preservation_materialization_missing_labels")
@@ -683,13 +690,17 @@ def measure_unreachable(
     if isinstance(preservation_ceiling, bool) or not isinstance(preservation_ceiling, int):
         fail("D", "live_baseline has no preservation materialization ceiling")
         return None
-    if materialization_missing > preservation_ceiling:
+    if preservation_missing > preservation_ceiling:
         fail(
             "D",
-            "lifecycle materialization debt regrew "
-            f"from {preservation_ceiling} to {materialization_missing}",
+            "preservation materialization debt regrew "
+            f"from {preservation_ceiling} to {preservation_missing}",
         )
-    repositories = _complete_estate_repositories()
+    repositories = (
+        _complete_estate_repositories()
+        if repositories_probe is None
+        else repositories_probe(ledger, rows)
+    )
     if repositories is None:
         return None
     metadata_drift = metadata_probe(repositories, dispositions)
