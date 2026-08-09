@@ -143,7 +143,7 @@ def test_python_test_helper_with_concatenated_effector_command_is_detected(tmp_p
         "import subprocess\n"
         'command = "osa" + "script"\n'
         'message = "display " + "notification"\n'
-        "subprocess.run([command, \"-e\", message])\n",
+        'subprocess.run([command, "-e", message])\n',
         encoding="utf-8",
     )
 
