@@ -40,9 +40,26 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _configured_env(name: str, default: str) -> str:
+    """Read launchd/interactive env first, then the shared ~/.limen.env declaration."""
+    if name in os.environ:
+        return os.environ[name]
+    env_file = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env")).expanduser()
+    try:
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("export "):
+                line = line[7:].lstrip()
+            if line.startswith(f"{name}="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return default
+
+
 def _positive_float(name: str, default: float) -> float:
     try:
-        value = float(os.environ.get(name, str(default)))
+        value = float(_configured_env(name, str(default)))
     except (TypeError, ValueError):
         return default
     return value if value > 0 else default
@@ -50,7 +67,7 @@ def _positive_float(name: str, default: float) -> float:
 
 def _sample_seconds() -> float:
     """Mirror heartbeat-loop.sh: accept positive integers, otherwise use 300."""
-    raw = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+    raw = _configured_env("LIMEN_VITALS_SAMPLE_SECONDS", "300")
     return float(raw) if raw.isdigit() and int(raw) > 0 else 300.0
 
 
@@ -69,10 +86,10 @@ def main(argv: list[str] | None = None) -> int:
         help="evaluate freshness without notification or dedupe-state writes",
     )
     args = parser.parse_args(argv)
-    if os.environ.get("LIMEN_VIGILIA", "1") in ("0", "false", "False"):
+    if _configured_env("LIMEN_VIGILIA", "1") in ("0", "false", "False"):
         print("host-pressure-stale: VIGILIA off — nothing to watch")
         return 0
-    if os.environ.get("LIMEN_HOST_PRESSURE_STALE", "1") in ("0", "false", "False"):
+    if _configured_env("LIMEN_HOST_PRESSURE_STALE", "1") in ("0", "false", "False"):
         print("host-pressure-stale: watchdog off — nothing to evaluate")
         return 0
 
