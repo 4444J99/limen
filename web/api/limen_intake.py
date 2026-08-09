@@ -351,12 +351,6 @@ def normalize_selected_legacy_task(task: MutableMapping[str, Any] | object) -> I
     if contract is None:  # pragma: no cover - defensive, required open tasks return a contract
         raise IntakeContractError("selected task lacks a typed intake contract")
     return contract
-" in command
-                        and ("\\n" in command or "\\r" in command)
-                    )
-                ):
-                    return False
-            index += 1
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
 
 
