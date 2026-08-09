@@ -24,10 +24,12 @@ and the self-contained organ-health.html face. Every probe fails OPEN — a miss
 "unknown", never a crash, and never blocks the beat.
 """
 
+import fcntl
 import json
 import os
 import re
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -663,6 +665,12 @@ def _doors(text):
     return rungs
 
 
+def _interval_label(seconds: int) -> str:
+    if seconds < 3600:
+        return f"~{max(1, seconds // 60)}m"
+    return f"~{seconds // 3600}h"
+
+
 def build():
     text = _loop_text()
     cadences = _parse_cadences(text)
@@ -674,7 +682,7 @@ def build():
         # cadence → expected seconds between fires, worst-case (idle beats run at LOOP_MAX).
         if o.get("interval_s"):
             expected = o["interval_s"]
-            cadence_desc = f"~{o['interval_s'] // 3600}h"
+            cadence_desc = _interval_label(o["interval_s"])
         else:
             beats = o.get("cadence_beats") or cadences.get(o.get("cadence_key", ""), 0) or 1
             expected = beats * loop_max
