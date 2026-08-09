@@ -188,9 +188,7 @@ def test_historical_occurrence_timestamp_blocks_older_replay() -> None:
     first = plan_task_upserts(
         [receipt],
         historical_ids={lineage_id},
-        historical_observed_at={
-            lineage_id: _receipt(observed_at="2026-08-08T11:00:00Z").observed_at
-        },
+        historical_observed_at={lineage_id: _receipt(observed_at="2026-08-08T11:00:00Z").observed_at},
     )
     occurrence_id = first.tasks[0].id
 
