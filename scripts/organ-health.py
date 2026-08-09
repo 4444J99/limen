@@ -497,6 +497,11 @@ def _registry():
                 "sampled_at",
                 "completed_at",
             ),
+            defect=lambda: _json_nested_error(
+                LOGS / "vigilia" / "status.json",
+                ("sample_error", "error"),
+                stamp="sample_error_at",
+            ),
         ),
         dict(
             key="nomenclator",
