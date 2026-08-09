@@ -230,7 +230,6 @@ def plan_task_upserts(
         seen_lineages.add(lineage_id)
         seen_lineages.add(task_id)
 
-
     return CloudRoutineIngestPlan(
         tasks=tuple(tasks),
         classified=classified,
