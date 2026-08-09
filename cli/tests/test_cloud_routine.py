@@ -43,6 +43,8 @@ def test_material_finding_without_owner_is_rejected() -> None:
 def test_new_work_requires_exact_repository_owner() -> None:
     with pytest.raises(ValidationError, match="exact owner/repo"):
         _receipt(owner_ref="organvm/limen#2120")
+    with pytest.raises(ValidationError, match="exact owner/repo"):
+        _receipt(owner_ref="../..")
 
 
 def test_material_non_new_work_requires_durable_owner() -> None:
@@ -147,11 +149,29 @@ def test_terminal_lineage_can_emit_a_new_occurrence() -> None:
     receipt = _receipt()
     lineage_id = task_id_for(receipt)
 
-    plan = plan_task_upserts([receipt], historical_ids={lineage_id})
+    plan = plan_task_upserts(
+        [receipt],
+        historical_ids={lineage_id},
+        historical_observed_at={lineage_id: _receipt(observed_at="2026-08-08T11:00:00Z").observed_at},
+    )
 
     assert len(plan.tasks) == 1
     assert plan.tasks[0].id == f"{lineage_id}-20260808T120000Z"
     assert plan.duplicates == 0
+
+
+def test_terminal_lineage_replay_is_a_duplicate() -> None:
+    receipt = _receipt()
+    lineage_id = task_id_for(receipt)
+
+    plan = plan_task_upserts(
+        [receipt],
+        historical_ids={lineage_id},
+        historical_observed_at={lineage_id: receipt.observed_at},
+    )
+
+    assert plan.tasks == ()
+    assert plan.duplicates == 1
 
 
 def test_owned_and_superseded_findings_do_not_create_tasks() -> None:
