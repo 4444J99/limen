@@ -12,6 +12,7 @@ can and never crashes the beat. Read-only on the fleet's data; writes only its o
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import sys
@@ -40,6 +41,20 @@ def _load(path, default):
         return json.loads(Path(path).read_text())
     except (OSError, ValueError):
         return default
+
+
+def _refresh_admission() -> bool:
+    """Refresh keeper-owned admission before pairing it with the current usage feed."""
+    try:
+        path = Path(__file__).with_name("handoff-relay.py")
+        spec = importlib.util.spec_from_file_location("_limen_handoff_relay", path)
+        if spec is None or spec.loader is None:
+            return False
+        relay = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(relay)
+        return relay.write() == 0
+    except Exception:
+        return False
 
 
 def _notify_macos(title, msg):
@@ -175,6 +190,26 @@ def _routing_reason(
 
     reasons = admission.get("reason_counts")
     reasons = reasons if isinstance(reasons, dict) else {}
+    target_names = {
+        str(name).strip().lower().replace("-", "_")
+        for name in (target_providers or set())
+        if str(name).strip()
+    }
+    if target_providers is not None:
+        # Handoff admission preserves the effective provider for each gated row.  Use only
+        # those rows for an idle lane; a Jules-only failure must not become a Codex alert.
+        by_agent = admission.get("reason_counts_by_agent")
+        if isinstance(by_agent, dict):
+            filtered: dict[str, int] = {}
+            for agent, counts in by_agent.items():
+                normalized = str(agent).strip().lower().replace("-", "_")
+                if normalized not in target_names or not isinstance(counts, dict):
+                    continue
+                for key, value in counts.items():
+                    amount = _safe_count(value)
+                    if amount:
+                        filtered[str(key)] = filtered.get(str(key), 0) + amount
+            reasons = filtered
     active_reasons = {str(key): _safe_count(value) for key, value in reasons.items() if _safe_count(value)}
     reason_keys = {key.lower() for key in active_reasons}
     explicit_auth_block = any("auth" in key or "credential" in key for key in reason_keys)
@@ -188,6 +223,12 @@ def _routing_reason(
         for name, count in blocked_counts.items()
         if _safe_count(count)
     }
+    if target_providers is not None:
+        blocked_providers = {
+            name
+            for name in blocked_providers
+            if name.strip().lower().replace("-", "_") in target_names
+        }
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
         for name, row in vendors.items()
@@ -327,6 +368,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(census(), indent=2, sort_keys=True))
         return 0
 
+    # Usage and admission are emitted by separate heartbeat rungs. Refresh the keeper
+    # snapshot immediately before pairing them so a once-daily report cannot reuse a prior beat's
+    # routing decision after budgets, auth, or worktree pressure changed.
+    _refresh_admission()
     headline, body, day, routing_reason = build_report()
     print(body)
     if args.print_only:
