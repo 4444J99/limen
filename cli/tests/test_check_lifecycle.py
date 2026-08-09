@@ -88,9 +88,7 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
         if row.get("lifecycle_disposition") in registry["dispositions"]
         and row.get("lifecycle_disposition_source") != "label"
     )
-    assert unreachable == (
-        ledger["open_pr_count"] + materialization_missing + literal_debt + unarmed_ratchets
-    )
+    assert unreachable == (ledger["open_pr_count"] + materialization_missing + literal_debt + unarmed_ratchets)
     assert module.failures == []
 
 
@@ -391,10 +389,7 @@ def test_live_pr_identity_denominator_must_match() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
     ledger = json.loads((ROOT / "docs" / "github-pr-debt-ledger.json").read_text())
-    identities = {
-        module._census_identity(row)
-        for row in ledger["pull_requests"]
-    }
+    identities = {module._census_identity(row) for row in ledger["pull_requests"]}
     identities.remove(next(iter(identities)))
     identities.add("f" * 64)
 
