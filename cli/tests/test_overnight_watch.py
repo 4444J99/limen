@@ -143,6 +143,9 @@ def _mock_launchd(
     gate_next_command="python3 scripts/session-value-review.py --gate --hours 1.5",
 ):
     calls = []
+    monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "111")
+    monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "112")
+    monkeypatch.setattr(module, "_resident_alive", lambda _pid: True)
 
     def fake_run(args, timeout=10):
         calls.append(list(args))
@@ -450,6 +453,26 @@ def test_root_defaults_to_invoking_worktree_and_explicit_limen_root_wins(tmp_pat
 
     assert explicit_root_module.ROOT == explicit_root.resolve()
     assert explicit_root_module.PAUSE_MARKER == explicit_root.resolve() / "logs" / "AUTONOMY_PAUSED"
+
+
+def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot.update(
+        {
+            "launchd": {"ok": True, "state": "active", "env": {}},
+            "resident_fast_wave": {"pid": None, "alive": False},
+            "resident_host_pressure_watchdog": {"pid": None, "alive": False},
+        }
+    )
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {
+        "vigilia-fast-wave-missing",
+        "host-pressure-watchdog-missing",
+    }
 
 
 def test_repeated_tick_alerts_when_no_workers(tmp_path, monkeypatch):
