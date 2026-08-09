@@ -56,6 +56,7 @@ check-note-links' docs/some-note.md
 # NOT pull in an AST scan.
 expect cli-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params
@@ -68,6 +69,7 @@ pytest-api' cli/src/limen/io.py
 
 expect api-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 check-params
 check-note-links
@@ -77,6 +79,7 @@ pytest-api' web/api/main.py
 
 expect mcp-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 agent-docs
 check-note-links
@@ -211,6 +214,7 @@ check-note-links' scripts/tests/verify-parallel.test.sh
 
 expect mixed-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params

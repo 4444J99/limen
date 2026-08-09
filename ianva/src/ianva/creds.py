@@ -17,6 +17,8 @@ Rules encoded here:
 
 from __future__ import annotations
 
+from typing import Iterator
+
 import contextlib
 import fcntl
 import os
@@ -41,7 +43,7 @@ def is_auth_blip(text: str) -> bool:
 
 
 @contextlib.contextmanager
-def refresh_lock(name: str = "oauth-refresh"):
+def refresh_lock(name: str = "oauth-refresh") -> Iterator[None]:
     """Serialize OAuth refreshes fleet-wide. Only one process refreshes a given upstream's
     token at a time, so single-use rotating refresh tokens are never double-spent."""
     paths.ensure_dirs()
