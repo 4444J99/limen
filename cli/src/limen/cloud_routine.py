@@ -23,7 +23,7 @@ _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _DURABLE_OWNER_RE = re.compile(
     r"^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|"
     r"irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|"
-    r"https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
+    r"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
     r"(?:issues|pull|actions/runs)/[0-9]+)$"
 )
 _OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}Z)?$")
