@@ -204,9 +204,7 @@ def test_zero_admission_filters_blockers_to_idle_provider(tmp_path, monkeypatch)
         blocked_providers={"jules": 1},
     )
     payload = json.loads((logs / "handoff.json").read_text())
-    payload["dispatch_admission"]["reason_counts_by_agent"] = {
-        "jules": {"auth_blocked": 1}
-    }
+    payload["dispatch_admission"]["reason_counts_by_agent"] = {"jules": {"auth_blocked": 1}}
     (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
     (logs / "usage.json").write_text(
         json.dumps({"vendors": {"codex": {"headroom_pct": 100, "consumed": 0}}}),
