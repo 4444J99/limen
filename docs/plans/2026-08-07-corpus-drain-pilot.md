@@ -1,7 +1,7 @@
 # Corpus drain pilot: point the atomizer at the real stores, refresh the cursor, run one bounded disposition batch
 
 Issue: #1957
-PR: (pending)
+PR: #2126
 
 ## Context
 

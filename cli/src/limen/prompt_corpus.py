@@ -20,6 +20,7 @@ import math
 import os
 import re
 import secrets
+import stat
 import tempfile
 import threading
 import unicodedata
@@ -841,6 +842,13 @@ def canonical_evidence_ref(kind: str, value: Any) -> str | None:
             return None
         return ref if _REPO_EVIDENCE_RE.fullmatch(ref) else None
     return None
+
+
+def _is_regular_file(path: Path) -> bool:
+    try:
+        return stat.S_ISREG(path.stat().st_mode)
+    except OSError:
+        return False
 
 
 def _file_sha256(path: Path) -> str:
@@ -3641,6 +3649,75 @@ def _raw_store_signature(paths: LedgerPaths) -> str:
     return digest(rows)
 
 
+def _archive_location_path(paths: LedgerPaths, value: str) -> Path:
+    candidate = Path(value).expanduser()
+    if not candidate.is_absolute():
+        candidate = paths.private_dir / candidate
+    return candidate.resolve()
+
+
+def _archive_custody_signature(paths: LedgerPaths) -> str:
+    """Hash the complete cold-custody chain without exposing archive locations."""
+
+    manifest_path = paths.private_dir / "raw-archive-manifest.json"
+    rows: list[tuple[str, str, str]] = []
+    try:
+        manifest_bytes = manifest_path.read_bytes()
+    except OSError as exc:
+        return digest([("manifest", "missing", type(exc).__name__)])
+    rows.append(("manifest", "content", hashlib.sha256(manifest_bytes).hexdigest()))
+    try:
+        payload = json.loads(manifest_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return digest(rows + [("manifest", "invalid", "")])
+    objects = payload.get("objects") if isinstance(payload, dict) else None
+    if not isinstance(objects, list):
+        return digest(rows + [("manifest", "objects-invalid", "")])
+    for index, item in enumerate(objects):
+        if not isinstance(item, dict):
+            rows.append(("entry", str(index), "invalid"))
+            continue
+        receipt_ref = item.get("custody_receipt")
+        if not isinstance(receipt_ref, str) or not receipt_ref.strip() or "\x00" in receipt_ref:
+            rows.append(("receipt", str(index), "invalid-ref"))
+            continue
+        normalized_receipt_ref = receipt_ref.strip()
+        receipt_path = (paths.private_dir / normalized_receipt_ref).resolve()
+        if paths.private_dir.resolve() not in receipt_path.parents:
+            rows.append(("receipt", str(index), "escape"))
+            continue
+        if not _is_regular_file(receipt_path):
+            rows.append(("receipt", str(index), "non-regular"))
+            continue
+        try:
+            receipt_bytes = receipt_path.read_bytes()
+        except OSError as exc:
+            rows.append(("receipt", str(index), type(exc).__name__))
+            continue
+        receipt_digest = hashlib.sha256(receipt_bytes).hexdigest()
+        rows.append(("receipt", str(index), receipt_digest))
+        try:
+            receipt = json.loads(receipt_bytes)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            rows.append(("archive", receipt_digest, "invalid-receipt"))
+            continue
+        archive_location = receipt.get("archive_location") if isinstance(receipt, dict) else None
+        if not isinstance(archive_location, str) or not archive_location.strip() or "\x00" in archive_location:
+            rows.append(("archive", receipt_digest, "missing-location"))
+            continue
+        normalized_archive_location = archive_location.strip()
+        archive_path = _archive_location_path(paths, normalized_archive_location)
+        if not _is_regular_file(archive_path):
+            rows.append(("archive", receipt_digest, "non-regular"))
+            continue
+        try:
+            archive_digest = _file_sha256(archive_path)
+        except OSError as exc:
+            archive_digest = type(exc).__name__
+        rows.append(("archive", receipt_digest, archive_digest))
+    return digest(rows)
+
+
 def private_marker(
     snapshot: dict[str, Any],
     public: dict[str, Any],
@@ -3667,6 +3744,7 @@ def private_marker(
             "outcomes": _path_signature(paths.outcome_journal),
             "cursor": _path_signature(paths.cursor),
             "raw_store": _raw_store_signature(paths),
+            "archive_custody": _archive_custody_signature(paths),
         },
     }
 
@@ -3738,13 +3816,141 @@ def _prompt_authority_fast_path_valid(
     )
 
 
+RAW_ARCHIVE_MANIFEST_VERSION = "limen.prompt_raw_archive_manifest.v1"
+RAW_ARCHIVE_CUSTODY_RECEIPT_VERSION = "limen.prompt_raw_archive_custody_receipt.v1"
+
+
+def _validate_raw_archive_custody(
+    paths: LedgerPaths,
+    *,
+    raw_object: str,
+    prompt_hash: str,
+    receipt_ref: object,
+    label: str,
+) -> tuple[dict[str, str] | None, list[str]]:
+    """Verify that a custody receipt binds real archived bytes to their digests."""
+
+    errors: list[str] = []
+    if not isinstance(receipt_ref, str) or not receipt_ref.strip() or "\x00" in receipt_ref:
+        return None, [f"{label}: custody_receipt must be a non-empty relative receipt path"]
+    normalized = receipt_ref.strip()
+    if len(normalized) > 1024 or Path(normalized).is_absolute():
+        return None, [f"{label}: custody_receipt must be a bounded relative receipt path"]
+    receipt_path = (paths.private_dir / normalized).resolve()
+    private_root = paths.private_dir.resolve()
+    if private_root not in receipt_path.parents:
+        return None, [f"{label}: custody_receipt escapes the private corpus"]
+    if not _is_regular_file(receipt_path):
+        return None, [f"{label}: custody_receipt does not resolve to a regular file"]
+
+    payload, load_errors = load_json_strict(receipt_path)
+    errors.extend(f"{label}: custody_receipt: {error}" for error in load_errors)
+    if load_errors:
+        return None, errors
+    if payload.get("schema_version") != RAW_ARCHIVE_CUSTODY_RECEIPT_VERSION:
+        errors.append(f"{label}: custody_receipt has unsupported schema_version")
+    if payload.get("raw_object") != raw_object:
+        errors.append(f"{label}: custody_receipt raw_object mismatch")
+    if payload.get("prompt_hash") != prompt_hash:
+        errors.append(f"{label}: custody_receipt prompt_hash mismatch")
+    archive_location = payload.get("archive_location")
+    if (
+        not isinstance(archive_location, str)
+        or not archive_location.strip()
+        or "\x00" in archive_location
+        or len(archive_location) > 2048
+    ):
+        errors.append(f"{label}: custody_receipt needs a bounded archive_location")
+        archive_path = None
+    else:
+        archive_path = _archive_location_path(paths, archive_location.strip())
+        if not _is_regular_file(archive_path):
+            errors.append(f"{label}: archive_location does not resolve to a regular file")
+    archive_sha256 = payload.get("archive_sha256")
+    if not isinstance(archive_sha256, str) or re.fullmatch(r"[0-9a-f]{64}", archive_sha256) is None:
+        errors.append(f"{label}: custody_receipt archive_sha256 must be a lowercase SHA-256 digest")
+    elif archive_path is not None and _is_regular_file(archive_path):
+        try:
+            actual_archive_sha256 = _file_sha256(archive_path)
+        except OSError as exc:
+            errors.append(f"{label}: archived raw object cannot be read: {exc}")
+        else:
+            if actual_archive_sha256 != archive_sha256:
+                errors.append(f"{label}: archived raw object archive digest mismatch")
+    if errors or archive_path is None:
+        return None, errors
+    assert isinstance(archive_sha256, str)
+    return {
+        "custody_receipt": normalized,
+        "archive_path": str(archive_path),
+        "archive_sha256": archive_sha256,
+    }, errors
+
+
+def _load_raw_archive_manifest(paths: LedgerPaths) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Load exact custody proofs for content-addressed raw objects held in cold storage."""
+
+    manifest_path = paths.private_dir / "raw-archive-manifest.json"
+    if not manifest_path.exists():
+        return {}, []
+    payload, errors = load_json_strict(manifest_path)
+    if errors:
+        return {}, errors
+    if payload.get("schema_version") != RAW_ARCHIVE_MANIFEST_VERSION:
+        errors.append(f"{manifest_path.name}: unsupported schema_version")
+    objects = payload.get("objects")
+    if not isinstance(objects, list):
+        errors.append(f"{manifest_path.name}: objects must be a list")
+        return {}, errors
+
+    entries: dict[str, dict[str, str]] = {}
+    for index, item in enumerate(objects):
+        label = f"{manifest_path.name}:objects[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{label}: entry must be an object")
+            continue
+        relative = item.get("raw_object")
+        prompt_hash = item.get("prompt_hash")
+        if not isinstance(relative, str) or not relative:
+            errors.append(f"{label}: raw_object must be a non-empty string")
+            continue
+        if not isinstance(prompt_hash, str) or re.fullmatch(r"[0-9a-f]{64}", prompt_hash) is None:
+            errors.append(f"{label}: prompt_hash must be a lowercase SHA-256 digest")
+            continue
+        expected = str(Path(prompt_hash[:2]) / f"{prompt_hash}.txt.gz")
+        if relative != expected:
+            errors.append(f"{label}: raw_object does not match prompt_hash")
+            continue
+        custody, receipt_errors = _validate_raw_archive_custody(
+            paths,
+            raw_object=relative,
+            prompt_hash=prompt_hash,
+            receipt_ref=item.get("custody_receipt"),
+            label=label,
+        )
+        errors.extend(receipt_errors)
+        if custody is None:
+            continue
+        if relative in entries:
+            errors.append(f"{label}: duplicate raw_object")
+            continue
+        entries[relative] = {"prompt_hash": prompt_hash, **custody}
+    return entries, errors
+
+
+def _read_archived_raw(entry: dict[str, str]) -> str:
+    with gzip.open(Path(entry["archive_path"]), "rb") as handle:
+        return handle.read().decode("utf-8")
+
+
 def validate_raw_references(
     paths: LedgerPaths,
     occurrences: Sequence[dict[str, Any]],
     *,
     verify_content: bool = False,
 ) -> list[str]:
-    errors: list[str] = []
+    archive_entries, manifest_errors = _load_raw_archive_manifest(paths)
+    errors: list[str] = list(manifest_errors)
     verified: set[str] = set()
     for occurrence in occurrences:
         occurrence_id = str(occurrence.get("occurrence_id") or "unknown")
@@ -3756,9 +3962,30 @@ def validate_raw_references(
         if relative != expected:
             errors.append(f"{occurrence_id}: raw object reference does not match prompt hash")
             continue
-        candidate = (paths.raw_objects / relative).resolve()
-        if paths.raw_objects.resolve() not in candidate.parents or not candidate.is_file():
-            errors.append(f"{occurrence_id}: private raw object is missing")
+        lexical_candidate = paths.raw_objects / relative
+        candidate = lexical_candidate.resolve()
+        if paths.raw_objects.resolve() not in candidate.parents:
+            errors.append(f"{occurrence_id}: private raw object reference escapes its store")
+            continue
+        if (lexical_candidate.exists() or lexical_candidate.is_symlink()) and not lexical_candidate.is_file():
+            errors.append(f"{occurrence_id}: private raw object exists but is not a regular file")
+            continue
+        if not lexical_candidate.is_file():
+            archived = archive_entries.get(relative)
+            if archived is None:
+                errors.append(f"{occurrence_id}: private raw object is missing")
+            elif archived["prompt_hash"] != prompt_hash:
+                errors.append(f"{occurrence_id}: archived raw object digest mismatch")
+            elif verify_content and relative not in verified:
+                try:
+                    raw = _read_archived_raw(archived)
+                except (OSError, EOFError, UnicodeError, ValueError, gzip.BadGzipFile) as exc:
+                    errors.append(f"{occurrence_id}: archived raw object is unreadable: {exc}")
+                else:
+                    actual_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+                    if actual_hash != prompt_hash:
+                        errors.append(f"{occurrence_id}: archived raw object digest mismatch")
+                verified.add(relative)
             continue
         try:
             mode = candidate.stat().st_mode & 0o777
@@ -4025,6 +4252,7 @@ def update_ledger(
                 "outcomes": _path_signature(paths.outcome_journal),
                 "cursor": _path_signature(paths.cursor),
                 "raw_store": _raw_store_signature(paths),
+                "archive_custody": _archive_custody_signature(paths),
             }
             and _public_digest_valid(existing_public)
             and _prompt_authority_fast_path_valid(
