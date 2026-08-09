@@ -140,13 +140,9 @@ def _routing_reason(
             for agent, count in agent_counts.items()
             if str(agent) != "any" and str(agent) in target_providers and _safe_count(count)
         }
-        target_counts.update(
-            {
-                str(agent): _safe_count(count)
-                for agent, count in any_agent_counts.items()
-                if str(agent) in target_providers and _safe_count(count)
-            }
-        )
+        for agent, count in any_agent_counts.items():
+            if str(agent) in target_providers and _safe_count(count):
+                target_counts[str(agent)] = target_counts.get(str(agent), 0) + _safe_count(count)
         if target_counts:
             idle_admissible = sum(target_counts.values())
             return "routable", f"admissible_for_idle={idle_admissible}; {continuity}"
