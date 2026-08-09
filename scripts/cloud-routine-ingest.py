@@ -456,8 +456,14 @@ def main(argv: list[str] | None = None) -> int:
             f"{len(plan.tasks)} novel task(s) "
             f"[{payload['mode']}]"
         )
+        submitted_ids = set(submitted)
         for task in plan.tasks:
-            verb = "submitted" if args.apply else "would submit"
+            if not args.apply:
+                verb = "would submit"
+            elif task.id in submitted_ids:
+                verb = "submitted"
+            else:
+                verb = "not submitted"
             print(f"  {verb} {task.id} -> {task.repo}")
         if submit_error:
             print(f"  submit_error: {submit_error}", file=sys.stderr)
