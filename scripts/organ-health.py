@@ -135,7 +135,7 @@ def _discover_doors(text):
         derive_match = re.search(r"LIMEN_BEAT_DERIVE:-(\d+)", text)
         derive_default = derive_match.group(1) if derive_match else "0"
         derive_live = _env_flag("LIMEN_BEAT_DERIVE", derive_default) == "1"
-        raw_fast_wave = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+        raw_fast_wave = _env_flag("LIMEN_VITALS_SAMPLE_SECONDS", "300")
         fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
         for sensor_id, sensor in sensors.items():
             sensor_sources = set(sensor.get("source") or [])
