@@ -165,6 +165,46 @@ def load_receipts(
     return receipts
 
 
+def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, datetime]]:
+    """Recover cloud lineages from immutable keeper tickets after board pruning."""
+    archive = tasks_path.parent / "logs" / "tickets" / "archive"
+    historical_ids: set[str] = set()
+    observed_at: dict[str, datetime] = {}
+    if not archive.is_dir():
+        return historical_ids, observed_at
+    observed_pattern = re.compile(r"observed_at=([^;]+)")
+    for path in sorted(archive.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        patch = payload.get("patch") if isinstance(payload.get("patch"), dict) else {}
+        candidates = {
+            value
+            for value in (payload.get("task_id"), patch.get("id"))
+            if isinstance(value, str) and value.startswith("CLOUD-")
+        }
+        if not candidates:
+            continue
+        context = str(patch.get("context") or "")
+        match = observed_pattern.search(context)
+        stamp = None
+        if match:
+            try:
+                stamp = datetime.fromisoformat(match.group(1).replace("Z", "+00:00"))
+            except ValueError:
+                stamp = None
+        historical_ids.update(candidates)
+        if stamp is not None:
+            for task_id in candidates:
+                previous = observed_at.get(task_id)
+                if previous is None or stamp > previous:
+                    observed_at[task_id] = stamp
+    return historical_ids, observed_at
+
+
 def _tasks_path() -> Path:
     """Resolve the read-only board projection independently of this script checkout."""
     explicit = os.environ.get("LIMEN_TASKS")
@@ -205,6 +245,7 @@ def main(argv: list[str] | None = None) -> int:
         "needs_human",
     }
     historical_observed_at: dict[str, datetime] = {}
+    historical_ids = {task.id for task in board.tasks}
     for task in board.tasks:
         context = str(task.context or "")
         match = re.search(r"observed_at=([^;]+)", context)
@@ -215,13 +256,16 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except ValueError:
                 pass
+    archived_ids, archived_observed_at = _historical_cloud_task_state(tasks_path)
+    historical_ids.update(archived_ids)
+    historical_observed_at.update(archived_observed_at)
     plan = plan_task_upserts(
         receipts,
         existing_ids=(
             task.id for task in board.tasks if str(task.status) in active_statuses
         ),
         pending_ids=pending_task_ids(tasks_path),
-        historical_ids=(task.id for task in board.tasks),
+        historical_ids=historical_ids,
         historical_observed_at=historical_observed_at,
     )
 
