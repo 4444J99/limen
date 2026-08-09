@@ -301,14 +301,29 @@ def parse_heartbeat(text: str) -> dict[str, Any]:
     }
 
 
-def parse_launchd_env(stdout: str) -> dict[str, str]:
-    env: dict[str, str] = {}
+MONITORED_ENV_KEYS = frozenset(
+    {
+        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
+        "LIMEN_ROOT",
+        "LIMEN_VIGILIA",
+        "LIMEN_HOST_PRESSURE_STALE",
+        "LIMEN_VITALS_SAMPLE_SECONDS",
+        "LIMEN_VITALS_STALE_BEATS",
+    }
+)
+
+
+def _safe_runtime_env(values: dict[str, str]) -> dict[str, str]:
+    return {key: str(value) for key, value in values.items() if key in MONITORED_ENV_KEYS}
+
+
+def parse_launchd_env(stdout: str) -> dict[str, str]:    env: dict[str, str] = {}
     for line in stdout.splitlines():
         match = re.match(r"\s*([A-Z][A-Z0-9_]+)\s*=>\s*(.+?)\s*$", line)
         if not match:
             continue
         env[match.group(1)] = match.group(2).strip().strip('"')
-    return env
+    return _safe_runtime_env(env)
 
 
 def _env_file_value(raw: str) -> str:
@@ -355,21 +370,14 @@ def _env_file_overrides(path: Path) -> dict[str, str]:
 
 
 def effective_runtime_env(launchd_env: dict[str, str] | None = None) -> dict[str, str]:
-    """Merge launchd, sourced env-file, and explicit monitor overrides in precedence order."""
-    effective = dict(launchd_env or {})
+    """Merge only non-sensitive monitor settings from runtime sources."""
+    effective = _safe_runtime_env(launchd_env or {})
     env_file = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env")).expanduser()
-    effective.update(_env_file_overrides(env_file))
-    for key in (
-        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
-        "LIMEN_ROOT",
-        "LIMEN_VIGILIA",
-        "LIMEN_HOST_PRESSURE_STALE",
-        "LIMEN_VITALS_SAMPLE_SECONDS",
-        "LIMEN_VITALS_STALE_BEATS",
-    ):
+    effective.update(_safe_runtime_env(_env_file_overrides(env_file)))
+    for key in MONITORED_ENV_KEYS:
         if key in os.environ:
             effective[key] = os.environ[key]
-    return effective
+    return _safe_runtime_env(effective)
 
 
 def launchd_snapshot() -> dict[str, Any]:
