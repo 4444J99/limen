@@ -261,8 +261,18 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     caps = budget.get("per_agent") if isinstance(budget.get("per_agent"), dict) else {}
     spent_by = track.get("per_agent") if isinstance(track.get("per_agent"), dict) else {}
     reset_by = track.get("per_agent_reset") if isinstance(track.get("per_agent_reset"), dict) else {}
+    track_date = str(track.get("date") or "")
+    # Dispatch refreshes the budget clock before admission. If the projection
+    # still carries an earlier date, discard its expired counters rather than
+    # explaining the current beat with yesterday's exhaustion.
+    current_date = _now().date().isoformat()
+    if track_date != current_date:
+        spent_by = {}
+        track_spent = 0
+    else:
+        track_spent = _as_int(track.get("spent"))
     daily = _as_int(budget.get("daily"))
-    spent = _as_int(track.get("spent"))
+    spent = track_spent
     global_remaining = max(0, daily - spent) if daily is not None and spent is not None else None
     agents: dict[str, Any] = {}
     for name in sorted(set(caps) | set(spent_by) | set(reset_by)):
