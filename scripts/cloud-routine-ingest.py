@@ -40,11 +40,16 @@ def _lever_states(path: Path) -> dict[str, str]:
     levers = payload.get("levers") if isinstance(payload, dict) else None
     if not isinstance(levers, list):
         raise ValueError("human-lever registry must contain a levers list")
-    return {
-        str(lever["id"]): str(lever.get("status") or "")
-        for lever in levers
-        if isinstance(lever, dict) and isinstance(lever.get("id"), str)
-    }
+    states: dict[str, str] = {}
+    for lever in levers:
+        if not isinstance(lever, dict) or not isinstance(lever.get("id"), str):
+            continue
+        status = str(lever.get("status") or "").strip().lower()
+        # Legacy active levers often omit status; only an explicit discharge closes one.
+        if lever.get("discharged"):
+            status = "discharged"
+        states[str(lever["id"])] = status
+    return states
 
 
 def active_lever_ids(path: Path) -> set[str]:
@@ -52,7 +57,7 @@ def active_lever_ids(path: Path) -> set[str]:
     return {
         lever_id
         for lever_id, status in _lever_states(path).items()
-        if status and status not in TERMINAL_LEVER_STATUSES
+        if status not in TERMINAL_LEVER_STATUSES
     }
 
 
@@ -90,10 +95,37 @@ def validate_human_gate_owners(
         )
 
 
+def registered_routine_ids(path: Path = ROOT / "cloud-routines.json") -> set[str]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    routines = payload.get("routines") if isinstance(payload, dict) else None
+    if not isinstance(routines, list):
+        raise ValueError("cloud-routines.json must contain a routines list")
+    routine_ids = {
+        str(routine.get("name"))
+        for routine in routines
+        if isinstance(routine, dict) and isinstance(routine.get("name"), str)
+    }
+    if not routine_ids:
+        raise ValueError("cloud-routines.json contains no routine names")
+    return routine_ids
+
+
+def validate_routine_ids(
+    receipts: list[CloudRoutineReceiptV1],
+    *,
+    manifest_path: Path = ROOT / "cloud-routines.json",
+) -> None:
+    registered = registered_routine_ids(manifest_path)
+    unknown = sorted({receipt.routine_id for receipt in receipts} - registered)
+    if unknown:
+        raise ValueError("routine_id is absent from cloud-routines.json: " + ", ".join(unknown))
+
+
 def load_receipts(
     paths: list[Path],
     *,
     lever_path: Path = ROOT / "his-hand-levers.json",
+    manifest_path: Path = ROOT / "cloud-routines.json",
 ) -> list[CloudRoutineReceiptV1]:
     """Validate every input and resolve every human owner before task emission."""
     receipts: list[CloudRoutineReceiptV1] = []
@@ -102,6 +134,7 @@ def load_receipts(
             CloudRoutineReceiptV1.model_validate(item)
             for item in _objects_from_path(path)
         )
+    validate_routine_ids(receipts, manifest_path=manifest_path)
     validate_human_gate_owners(receipts, lever_path=lever_path)
     return receipts
 
