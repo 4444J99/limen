@@ -1738,9 +1738,11 @@ def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeyp
     monkeypatch.setattr(module, "maybe_finalize_trial", lambda: None)
 
     assert module.run_once(dry_run=False, json_output=True) == 0
-    assert calls == [{
-        "refresh_handoff": True,
-        "record_gate": True,
-        "submit_lane_switch": True,
-        "host_pressure_read_only": True,
-    }]
+    assert calls == [
+        {
+            "refresh_handoff": True,
+            "record_gate": True,
+            "submit_lane_switch": True,
+            "host_pressure_read_only": True,
+        }
+    ]
