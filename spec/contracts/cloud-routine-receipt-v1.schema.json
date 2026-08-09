@@ -81,6 +81,15 @@
       }
     },
     {
+      "not": {
+        "properties": {
+          "predicate": {
+            "pattern": "(?:^|\\s)(?:bash|sh|zsh)\\s+[^\\r\\n]*-[^\\s]*c[^\\s]*\\s+[^\\r\\n]*[$]'[^']*\\\\(?:n|r)"
+          }
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "status": {
