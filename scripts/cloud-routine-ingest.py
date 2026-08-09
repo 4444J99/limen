@@ -200,18 +200,18 @@ def _tracked_cloud_task_state(
         return historical_ids, observed_at
     try:
         payload = json.loads(source.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError):
-        return historical_ids, observed_at
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"tracked cloud lineage is unreadable: {source}") from exc
     entries = payload.get("entries") if isinstance(payload, dict) else None
     if not isinstance(entries, list):
-        return historical_ids, observed_at
-    for entry in entries:
+        raise ValueError(f"tracked cloud lineage entries must be a list: {source}")
+    for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
-            continue
+            raise ValueError(f"tracked cloud lineage entry[{index}] is not an object")
         try:
             receipt = CloudRoutineReceiptV1.model_validate(entry)
-        except ValidationError:
-            continue
+        except ValidationError as exc:
+            raise ValueError(f"tracked cloud lineage entry[{index}] is invalid: {exc}") from exc
         _merge_historical_observation(
             historical_ids,
             observed_at,
@@ -312,7 +312,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
             except ValueError:
                 pass
-    archived_ids, archived_observed_at = _historical_cloud_task_state(tasks_path)
+    try:
+        archived_ids, archived_observed_at = _historical_cloud_task_state(tasks_path)
+    except (OSError, ValueError) as exc:
+        print(f"cloud-routine-ingest: invalid tracked lineage: {exc}", file=sys.stderr)
+        return 2
     historical_ids.update(archived_ids)
     historical_observed_at.update(archived_observed_at)
     plan = plan_task_upserts(
