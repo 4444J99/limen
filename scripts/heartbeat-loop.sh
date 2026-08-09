@@ -415,7 +415,13 @@ fast_wave_sample_once() {
 
 fast_wave_aux_once() {
   _fw_aux_kind="${1:-both}"
-  _fw_aux_beat="${2:-$FAST_WAVE_BEAT}"
+  if [ "$_fw_aux_kind" = "diurnal" ] || [ "$_fw_aux_kind" = "health" ] || [ "$_fw_aux_kind" = "both" ]; then
+    _fw_aux_beat="${2:-$FAST_WAVE_BEAT}"
+  else
+    # Legacy callers passed only the beat; normalize that form to the compatibility wrapper.
+    _fw_aux_beat="$_fw_aux_kind"
+    _fw_aux_kind="both"
+  fi
 
   # The one-argument form remains a compatibility wrapper; the loop below launches each
   # bounded sensor independently so a slow organ-health run cannot suppress diurnal work.
