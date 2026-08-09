@@ -558,6 +558,17 @@ def test_later_successful_sample_supersedes_early_error(tmp_path, monkeypatch):
     assert "sample_error" not in status
 
 
+
+def test_heartbeat_resident_sleep_uses_interruptible_helper():
+    source = (ROOT / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+
+    assert "_interruptible_sleep()" in source
+    watchdog = source[source.index("stale_watchdog_loop()"):source.index("\n\nfast_wave_loop()", source.index("stale_watchdog_loop()"))]
+    fast_wave = source[source.index("fast_wave_loop()"):source.index("\n\n# ", source.index("fast_wave_loop()"))]
+    assert 'sleep "$FAST_WAVE_SECONDS"' not in watchdog
+    assert 'sleep "$_fw_wait"' not in fast_wave
+
+
 def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
 
