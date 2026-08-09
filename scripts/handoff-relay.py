@@ -31,8 +31,14 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
-from limen.capacity import PAID_AGENT_ORDER, canonical_agent  # noqa: E402
-from limen.dispatch import _down_lanes, _effective_target_agent, agent_can_run_task  # noqa: E402
+from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent  # noqa: E402
+from limen.dispatch import (
+    _down_lanes,
+    _effective_target_agent,
+    _weak_proxy_exhaustion,
+    _window_hours,
+    agent_can_run_task,
+)  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -176,6 +182,26 @@ def _live_down_lanes() -> list[str]:
         return []
 
 
+def _lane_reachable(agent: str, provider_headroom: dict[str, Any]) -> bool:
+    """Return live reachability for a candidate lane.
+
+    Fresh handoffs carry the dispatcher-owned reachability bit beside each usage row. Older
+    handoffs and hermetic unit fixtures may omit it; a present usage row remains a valid legacy
+    snapshot, while a lane absent from telemetry must prove reachability through the capacity
+    registry instead of inheriting the static roster's optimistic default.
+    """
+    vendors = provider_headroom.get("vendors") if isinstance(provider_headroom, dict) else {}
+    value = vendors.get(agent) if isinstance(vendors, dict) else None
+    if isinstance(value, dict):
+        if "reachable" in value:
+            return bool(value["reachable"])
+        return True
+    try:
+        return bool(agent_status(agent).get("reachable"))
+    except Exception:
+        return False
+
+
 def _provider_headroom() -> dict[str, Any]:
     """Timestamped provider capacity from the owning usage receipt."""
     usage = _load_json(USAGE, {})
@@ -218,6 +244,15 @@ def _provider_headroom() -> dict[str, Any]:
                     reset_at = value.get("resets_at", value.get("reset_at"))
                     if reset_at is not None:
                         projected["resets_at"] = reset_at
+                    # A usage row alone is not a capability census: preserve the live dispatcher
+                    # reachability result so the any-task roster cannot route into a missing binary,
+                    # workflow, or unauthenticated hosted lane.
+                    try:
+                        projected["reachable"] = bool(
+                            agent_status(canonical_agent(str(name))).get("reachable")
+                        )
+                    except Exception:
+                        projected["reachable"] = False
                     vendors[str(name)] = projected
     return {"generated": generated, "vendors": vendors, "down_lanes": _live_down_lanes()}
 
@@ -252,6 +287,23 @@ def _as_int(value: Any) -> int | None:
         return None
 
 
+def _reset_window_active(agent: str, reset_at: Any, now: dt.datetime) -> bool:
+    """Whether a stale board counter still belongs to the lane's active reset window."""
+    if not reset_at:
+        return False
+    try:
+        stamp = dt.datetime.fromisoformat(str(reset_at).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return False
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=dt.timezone.utc)
+    try:
+        window_hours = _window_hours(agent)
+    except Exception:
+        window_hours = 24.0
+    return now < stamp + dt.timedelta(hours=float(window_hours))
+
+
 def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     """Authoritative budget from ``tasks.yaml`` rather than the overnight log proxy."""
     portal = board.get("portal") if isinstance(board, dict) else None
@@ -265,10 +317,18 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     # Dispatch refreshes the budget clock before admission. If the projection
     # still carries an earlier date, discard its expired counters rather than
     # explaining the current beat with yesterday's exhaustion.
-    current_date = _now().date().isoformat()
+    now = _now()
+    current_date = now.date().isoformat()
     if track_date != current_date:
-        spent_by = {}
-        track_spent = 0
+        # The board date is only a projection stamp. Dispatch resets each lane on its own
+        # cadence, so preserve a counter whose per-agent window has not actually elapsed.
+        active_spent = {
+            str(name): value
+            for name, value in spent_by.items()
+            if _reset_window_active(str(name), reset_by.get(name), now)
+        }
+        spent_by = active_spent
+        track_spent = sum(_as_int(value) or 0 for value in spent_by.values())
     else:
         track_spent = _as_int(track.get("spent"))
     daily = _as_int(budget.get("daily"))
@@ -375,6 +435,12 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         canonical_agent(str(lane)) for lane in down_lanes
     }:
         return "provider_health"
+
+    # Dispatch deliberately exempts Agy's board-derived dispatch-count proxy from hard-down
+    # treatment; only a real rate-limit signal benches that lane. Keep this report aligned with
+    # that exemption so a healthy Agy task is not mislabeled provider_health/capacity_blocked.
+    if _weak_proxy_exhaustion(agent, value):
+        return None
 
     ordinary_states = {
         str(value.get(key) or "").strip().lower().replace("-", "_")
@@ -502,6 +568,8 @@ def _dispatch_admission(
             reason = "admission_blocked"
         if reason is None and agent in down_lanes:
             reason = "provider_health"
+        if reason is None and agent not in {"", "any"} and not _lane_reachable(agent, provider_headroom):
+            reason = "provider_health"
         if reason is None and agent not in {"", "any"} and not _eligible_any_agent(task, agent):
             reason = "admission_blocked"
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
@@ -531,6 +599,10 @@ def _dispatch_admission(
                     any_blockers["budget_agent"] += 1
                     continue
                 if candidate_agent in down_lanes:
+                    any_blockers["provider_health"] += 1
+                    provider_health_reasons[candidate_agent] += 1
+                    continue
+                if not _lane_reachable(candidate_agent, provider_headroom):
                     any_blockers["provider_health"] += 1
                     provider_health_reasons[candidate_agent] += 1
                     continue
