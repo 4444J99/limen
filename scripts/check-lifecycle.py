@@ -567,28 +567,95 @@ def live_label_metadata_drift(
 
 
 
-def live_open_pr_count() -> int | None:
-    """Return the live open-PR denominator for the owning organvm estate."""
-    query = 'query { search(query: "org:organvm is:pr is:open", type: ISSUE, first: 1) { issueCount } }'
-    try:
-        result = subprocess.run(
-            ["gh", "api", "graphql", "-f", f"query={query}"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            check=False,
+def live_open_pr_identities() -> set[str] | None:
+    """Return the live open-PR coordinate set, paginating the complete org search."""
+    query = """
+    query($cursor: String) {
+      search(query: "org:organvm is:pr is:open", type: ISSUE, first: 100, after: $cursor) {
+        issueCount
+        nodes {
+          ... on PullRequest {
+            repository { nameWithOwner }
+            number
+          }
+        }
+        pageInfo { hasNextPage endCursor }
+      }
+    }
+    """
+    identities: set[str] = set()
+    expected_count: int | None = None
+    cursor: str | None = None
+    for _page in range(20):
+        args = ["gh", "api", "graphql", "-f", f"query={query}"]
+        if cursor:
+            args.extend(["-f", f"cursor={cursor}"])
+        try:
+            result = subprocess.run(
+                args,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            payload = json.loads(result.stdout) if result.returncode == 0 else None
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            fail("D", f"live open-PR census query failed: {type(exc).__name__}")
+            return None
+        data = payload.get("data") if isinstance(payload, dict) else None
+        search = data.get("search") if isinstance(data, dict) else None
+        count = search.get("issueCount") if isinstance(search, dict) else None
+        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+            fail("D", "live open-PR census query returned no issueCount")
+            return None
+        if expected_count is None:
+            expected_count = count
+        elif count != expected_count:
+            fail("D", "live open-PR census issueCount changed during pagination")
+            return None
+        nodes = search.get("nodes") if isinstance(search, dict) else None
+        if not isinstance(nodes, list):
+            fail("D", "live open-PR census query returned no pull-request nodes")
+            return None
+        for node in nodes:
+            repository = node.get("repository") if isinstance(node, dict) else None
+            repository_name = repository.get("nameWithOwner") if isinstance(repository, dict) else None
+            number = node.get("number") if isinstance(node, dict) else None
+            if (
+                not isinstance(repository_name, str)
+                or not repository_name
+                or isinstance(number, bool)
+                or not isinstance(number, int)
+                or number <= 0
+            ):
+                fail("D", "live open-PR census returned a malformed pull-request identity")
+                return None
+            identities.add(hashlib.sha256(f"{repository_name}#{number}".encode()).hexdigest())
+        page_info = search.get("pageInfo") if isinstance(search, dict) else None
+        has_next = page_info.get("hasNextPage") if isinstance(page_info, dict) else None
+        end_cursor = page_info.get("endCursor") if isinstance(page_info, dict) else None
+        if has_next is not True:
+            break
+        if not isinstance(end_cursor, str) or not end_cursor:
+            fail("D", "live open-PR census pagination has no end cursor")
+            return None
+        cursor = end_cursor
+    else:
+        fail("D", "live open-PR census exceeded the bounded pagination window")
+        return None
+    if expected_count is None or len(identities) != expected_count:
+        fail(
+            "D",
+            "live open-PR census identity count does not match issueCount "
+            f"({len(identities)} != {expected_count})",
         )
-        payload = json.loads(result.stdout) if result.returncode == 0 else None
-    except (OSError, subprocess.SubprocessError, ValueError) as exc:
-        fail("D", f"live open-PR census query failed: {type(exc).__name__}")
         return None
-    data = payload.get("data") if isinstance(payload, dict) else None
-    search = data.get("search") if isinstance(data, dict) else None
-    count = search.get("issueCount") if isinstance(search, dict) else None
-    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
-        fail("D", "live open-PR census query returned no issueCount")
-        return None
-    return count
+    return identities
+
+
+def live_open_pr_count() -> int | None:
+    identities = live_open_pr_identities()
+    return len(identities) if identities is not None else None
 
 
 def _census_identity(row: dict[str, Any]) -> str | None:
