@@ -150,11 +150,7 @@ def is_executable_predicate(value: Any) -> bool:
             if option == "--" or not option.startswith("-"):
                 # After a script operand, later -c-like values are positional arguments.
                 break
-            combined_shell_option = (
-                option.startswith("-")
-                and not option.startswith("--")
-                and "c" in option[1:]
-            )
+            combined_shell_option = option.startswith("-") and not option.startswith("--") and "c" in option[1:]
             if option in {"-c", "-lc", "-ic", "--command"} or combined_shell_option:
                 if index + 1 >= len(argv):
                     return False
@@ -163,10 +159,7 @@ def is_executable_predicate(value: Any) -> bool:
                     any(token in program for token in (";", "|", "&", "$(", "`"))
                     or "\\n" in program
                     or "\\r" in program
-                    or (
-                        ("$" + "'") in command
-                        and ("\\n" in command or "\\r" in command)
-                    )
+                    or (("$" + "'") in command and ("\\n" in command or "\\r" in command))
                 ):
                     return False
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
