@@ -125930,32 +125930,42 @@ tasks:
     status: open
     output: 'fleet fill: retargeted codex->opencode to saturate OpenCode/Agy local
       async slots after Jules live runway'
-- id: HEAL-rebase-stale-organvm-hokage-chess--4444j99-85
-  title: "rebase organvm/hokage-chess--4444j99#85 onto current base \u2014 branched\
-    \ far behind"
-  repo: organvm/hokage-chess--4444j99
-  type: code
-  target_agent: agy
-  priority: medium
+- id: 'HEAL-rebase-stale-organvm-hokage-chess--4444j99-85'
+  title: 'rebase organvm/hokage-chess--4444j99#85 onto current base — branched far behind'
+  repo: 'organvm/hokage-chess--4444j99'
+  type: 'code'
+  target_agent: 'agy'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - rebase
-  - self-heal
-  - stale-base
+  - 'rebase'
+  - 'self-heal'
+  - 'stale-base'
   urls:
-  - https://github.com/organvm/hokage-chess--4444j99/pull/85
-  context: "PR organvm/hokage-chess--4444j99#85 is MERGEABLE + green but branched\
-    \ well behind its current base \u2014 the structural condition for a stale-base\
-    \ silent revert. Check out the branch, REBASE it onto the current base, KEEP all\
-    \ of the PR's genuine changes and DROP any hunk that merely reverts base files\
-    \ it didn't mean to touch, push --force-with-lease to the SAME branch, and confirm\
-    \ MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work.\
-    \ PR: https://github.com/organvm/hokage-chess--4444j99/pull/85 [auto-emitted 2026-07-08\
-    \ by self-heal so merge-drain can land it]"
+  - 'https://github.com/organvm/hokage-chess--4444j99/pull/85'
+  context: 'PR organvm/hokage-chess--4444j99#85 is MERGEABLE + green but branched well behind its current base — the structural condition for a stale-base silent revert. Check out the branch, REBASE it onto the current base, KEEP all of the PR''s genuine changes and DROP any hunk that merely reverts base files it didn''t mean to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/organvm/hokage-chess--4444j99/pull/85 [auto-emitted 2026-07-08 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-08'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-08-09T03:15:28.753Z'
+    agent: 'opencode'
+    session_id: 'opencode-org-1786245327'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-org-1786245327'
+    status: 'dispatched'
+    output: 'Driving rebase+merge of PR #85.'
+    conduct_event_id: 'conduct:run-7cc9a30903a35dbacca65ae61d9506e4:804:compatibility'
+    conduct_run_id: 'run-7cc9a30903a35dbacca65ae61d9506e4'
+    conduct_lease_id: 'lease-804-7cc9a30903a35dba'
+    conduct_generation: 804
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Rebase+merge collab PR organvm/hokage-chess--4444j99#85 onto main.'
+  owner_surface: 'board'
+  predicate: 'test "$(gh pr view 85 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = MERGED'
+  receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/85'
+  updated: '2026-08-09T03:15:28.753Z'
 - id: 'HEAL-rebase-organvm-hokage-chess--4444j99-94'
   title: 'rebase/resolve conflicts on organvm/hokage-chess--4444j99#94'
   repo: 'organvm/hokage-chess--4444j99'
