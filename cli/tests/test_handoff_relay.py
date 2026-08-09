@@ -91,6 +91,7 @@ def _task(task_id, *, priority="medium", agent="codex", **extra):
         "predicate": "pytest -q cli/tests/test_handoff_relay.py",
         "receipt_target": f"github:organvm/limen:pull-request:{task_id}",
         "status": "open",
+        "created": "2026-07-12",
         "labels": [],
         "depends_on": [],
         "dispatch_log": [],
