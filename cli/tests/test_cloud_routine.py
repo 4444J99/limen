@@ -140,6 +140,7 @@ def test_equal_timestamp_conflicts_are_rejected_deterministically() -> None:
     with pytest.raises(ValueError, match="conflicting cloud-routine observations"):
         plan_task_upserts([_receipt(), owned])
 
+
 def test_latest_lineage_disposition_wins_before_task_planning() -> None:
     older = _receipt(observed_at="2026-08-08T11:00:00Z")
     newer = _receipt(
@@ -390,6 +391,7 @@ def test_tracked_lineage_rejects_invalid_entry(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="tracked cloud lineage entry\[0\] is invalid"):
         module._historical_cloud_task_state(tmp_path / "tasks.yaml")
+
 
 def test_pruned_archive_lineage_remains_a_duplicate(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
@@ -664,6 +666,7 @@ def test_irf_validator_allows_terminal_empty_human_partition() -> None:
     receipt["human_gate_irf_ids"] = []
 
     assert module.validate_irf_receipt(receipt, active_levers=set()) == []
+
 
 def test_cloud_human_gates_have_named_levers() -> None:
     lever_data = json.loads((ROOT / "his-hand-levers.json").read_text())
