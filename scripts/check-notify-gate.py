@@ -313,7 +313,7 @@ _PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output"
 # Match both argv elements (such as ["osascript", ...]) and shell command strings
 # (such as os.system("osascript -e ...")), without treating prose as an executable token.
 _OSASCRIPT_COMMAND_RE = re.compile(
-    r"(?<![\\w./-])(?:[\\w./-]+/)?osascript(?=\\s|$)",
+    r"(?<![\w./-])(?:[\w./-]+/)?osascript(?=\s|$)",
     re.IGNORECASE,
 )
 
@@ -363,6 +363,11 @@ def _static_string(node: ast.AST) -> str | None:
         return node.value
     if isinstance(node, ast.JoinedStr):
         return "".join(_static_string(part) or " " for part in node.values)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = _static_string(node.left)
+        right = _static_string(node.right)
+        if left is not None and right is not None:
+            return left + right
     return None
 
 
