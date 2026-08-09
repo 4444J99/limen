@@ -311,6 +311,67 @@ def parse_launchd_env(stdout: str) -> dict[str, str]:
     return env
 
 
+def _env_file_value(raw: str) -> str:
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\\\"":
+        value = value[1:-1]
+    return value
+
+
+def _env_file_overrides(path: Path) -> dict[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+    values: dict[str, str] = {}
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        line = line.removeprefix("export ")
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key and re.fullmatch(r"[A-Z][A-Z0-9_]+", key):
+            values[key] = _env_file_value(value)
+    return values
+
+
+def effective_runtime_env(launchd_env: dict[str, str] | None = None) -> dict[str, str]:
+    """Merge launchd, sourced env-file, and explicit monitor overrides in precedence order."""
+    effective = dict(launchd_env or {})
+    env_file = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env")).expanduser()
+    effective.update(_env_file_overrides(env_file))
+    for key in (
+        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
+        "LIMEN_ROOT",
+        "LIMEN_VIGILIA",
+        "LIMEN_HOST_PRESSURE_STALE",
+        "LIMEN_VITALS_SAMPLE_SECONDS",
+        "LIMEN_VITALS_STALE_BEATS",
+    ):
+        if key in os.environ:
+            effective[key] = os.environ[key]
+    return effective
+
+
 def launchd_snapshot() -> dict[str, Any]:
     proc = run(["launchctl", "print", f"gui/{os.getuid()}/{LABEL}"])
     stdout = proc.stdout or ""
@@ -1888,9 +1949,12 @@ def build_snapshot(
     )
     resident_fast_wave = _resident_state(fast_wave_pid, resident_fast_wave_child)
     resident_host_pressure_watchdog = _resident_state(watchdog_pid, resident_host_pressure_watchdog_child)
+    effective_env = effective_runtime_env(
+        launchd.get("env") if isinstance(launchd.get("env"), dict) else None
+    )
     host_pressure = host_pressure_snapshot(
         read_only=host_pressure_read_only,
-        effective_env=launchd.get("env") if isinstance(launchd.get("env"), dict) else None,
+        effective_env=effective_env,
     )
 
     captured_at = utc_now().replace(microsecond=0)
@@ -1907,6 +1971,7 @@ def build_snapshot(
         "resident_fast_wave": resident_fast_wave,
         "resident_host_pressure_watchdog": resident_host_pressure_watchdog,
         "host_pressure": host_pressure,
+        "effective_env": effective_env,
         "stale_tick_count": stale_count,
         "thresholds": {
             "max_log_age_sec": MAX_LOG_AGE_SEC,
@@ -1967,7 +2032,7 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
                 "evidence": str(host_pressure.get("detail") or "host-pressure watcher failed")[:500],
             }
         )
-    env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
+    env = snapshot.get("effective_env") if isinstance(snapshot.get("effective_env"), dict) else launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
@@ -1985,22 +2050,24 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     if heartbeat_active:
         fast_wave = snapshot.get("resident_fast_wave")
         watchdog = snapshot.get("resident_host_pressure_watchdog")
-        if env.get("LIMEN_VIGILIA", "1") == "1" and isinstance(fast_wave, dict) and not fast_wave.get("alive"):
+        if env.get("LIMEN_VIGILIA", "1") == "1" and (
+            not isinstance(fast_wave, dict) or not fast_wave.get("alive")
+        ):
+            fast_wave_pid = fast_wave.get("pid") if isinstance(fast_wave, dict) else None
             alerts.append(
                 {
                     "id": "vigilia-fast-wave-missing",
-                    "evidence": f"resident fast-wave pid={fast_wave.get('pid') or 'missing'} is not alive",
+                    "evidence": f"resident fast-wave pid={fast_wave_pid or 'missing'} is not alive",
                 }
             )
-        if (
-            env.get("LIMEN_HOST_PRESSURE_STALE", "1") == "1"
-            and isinstance(watchdog, dict)
-            and not watchdog.get("alive")
+        if env.get("LIMEN_HOST_PRESSURE_STALE", "1") == "1" and (
+            not isinstance(watchdog, dict) or not watchdog.get("alive")
         ):
+            watchdog_pid = watchdog.get("pid") if isinstance(watchdog, dict) else None
             alerts.append(
                 {
                     "id": "host-pressure-watchdog-missing",
-                    "evidence": f"resident watchdog pid={watchdog.get('pid') or 'missing'} is not alive",
+                    "evidence": f"resident watchdog pid={watchdog_pid or 'missing'} is not alive",
                 }
             )
 
