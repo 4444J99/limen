@@ -98,6 +98,27 @@ UNGATED = """
         subprocess.run(["osascript"])
 """
 
+NTFY_GATED = """
+    import urllib.request
+
+    def _root_may_speak(root):
+        return True
+
+    def notify_ntfy(root, message):
+        if not _root_may_speak(root):
+            return False
+        urllib.request.urlopen("https://example.invalid", data=message.encode())
+        return True
+"""
+
+NTFY_UNGATED = """
+    import urllib.request
+
+    def notify_ntfy(root, message):
+        urllib.request.urlopen("https://example.invalid", data=message.encode())
+"""
+
+
 # The exact false positive a substring scan would produce: the identifier appears, but only
 # in prose. sensors.yaml:478 records 3 such hits when the plan-mode probe was prototyped.
 MENTIONS_ONLY = '''
@@ -118,7 +139,14 @@ DEFINED_NOT_CALLED = """
 
 @pytest.mark.parametrize(
     ("body", "gated"),
-    [(GATED, True), (UNGATED, False), (MENTIONS_ONLY, False), (DEFINED_NOT_CALLED, False)],
+    [
+        (GATED, True),
+        (UNGATED, False),
+        (MENTIONS_ONLY, False),
+        (DEFINED_NOT_CALLED, False),
+        (NTFY_GATED, True),
+        (NTFY_UNGATED, False),
+    ],
 )
 def test_gate_state_is_structural_not_substring(tmp_path, check_gate, body, gated):
     path = _write_notifier(tmp_path, body)
