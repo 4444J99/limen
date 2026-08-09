@@ -329,7 +329,10 @@ def test_model_rejects_clustered_shell_command_options() -> None:
 
 def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
-    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_tracked_test", script)
+    spec = importlib.util.spec_from_file_location(
+        "cloud_routine_ingest_tracked_test",
+        script,
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -338,14 +341,18 @@ def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
     lineage = tmp_path / "docs" / "receipts"
     lineage.mkdir(parents=True)
     (lineage / "cloud-routine-lineage.json").write_text(
-        json.dumps({
-            "schema_version": "limen.cloud_routine_lineage.v1",
-            "entries": [receipt.model_dump(mode="json")],
-        }),
+        json.dumps(
+            {
+                "schema_version": "limen.cloud_routine_lineage.v1",
+                "entries": [receipt.model_dump(mode="json")],
+            }
+        ),
         encoding="utf-8",
     )
 
-    historical_ids, observed = module._historical_cloud_task_state(tmp_path / "tasks.yaml")
+    historical_ids, observed = module._historical_cloud_task_state(
+        tmp_path / "tasks.yaml"
+    )
 
     assert task_id_for(receipt) in historical_ids
     assert observed[task_id_for(receipt)] == receipt.observed_at
