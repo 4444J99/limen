@@ -24,6 +24,7 @@ def run_stale(tmp_path: Path, env: dict | None = None):
     child_env.pop("LIMEN_VIGILIA", None)
     child_env.pop("LIMEN_VITALS_STALE_BEATS", None)
     child_env.pop("LIMEN_VITALS_SAMPLE_SECONDS", None)
+    child_env.pop("LIMEN_VITALS_SAMPLE_TIMEOUT", None)
     child_env.pop("LIMEN_HOST_PRESSURE_STALE", None)
     if env:
         child_env.update(env)
@@ -146,7 +147,11 @@ def test_cadence_boundary_grace_allows_the_due_sample_to_finish(tmp_path):
 
     proc = run_stale(
         tmp_path,
-        env={"LIMEN_VITALS_STALE_BEATS": "1", "LIMEN_VITALS_SAMPLE_SECONDS": "300"},
+        env={
+            "LIMEN_VITALS_STALE_BEATS": "1",
+            "LIMEN_VITALS_SAMPLE_SECONDS": "300",
+            "LIMEN_VITALS_SAMPLE_TIMEOUT": "1",
+        },
     )
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
@@ -157,7 +162,22 @@ def test_missing_sample_is_stale_after_the_boundary_grace(tmp_path):
 
     proc = run_stale(
         tmp_path,
-        env={"LIMEN_VITALS_STALE_BEATS": "1", "LIMEN_VITALS_SAMPLE_SECONDS": "300"},
+        env={
+            "LIMEN_VITALS_STALE_BEATS": "1",
+            "LIMEN_VITALS_SAMPLE_SECONDS": "300",
+            "LIMEN_VITALS_SAMPLE_TIMEOUT": "1",
+        },
     )
 
     assert proc.returncode == 1, proc.stdout + proc.stderr
+
+
+def test_sampler_timeout_is_inside_staleness_grace(tmp_path):
+    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(seconds=333))
+
+    proc = run_stale(
+        tmp_path,
+        env={"LIMEN_VITALS_STALE_BEATS": "1", "LIMEN_VITALS_SAMPLE_SECONDS": "300"},
+    )
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
