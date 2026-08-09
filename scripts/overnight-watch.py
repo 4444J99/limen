@@ -5655,7 +5655,9 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
         refresh_handoff=not dry_run,
         record_gate=not dry_run,
         submit_lane_switch=not dry_run,
-        host_pressure_read_only=dry_run,
+        # The resident stale watchdog is the sole notification effector. The watcher's
+        # host-pressure probe remains read-only in both dry-run and receipt modes.
+        host_pressure_read_only=True,
     )
     if not dry_run:
         heal_actions = heal(snapshot)
