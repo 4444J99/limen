@@ -146,11 +146,7 @@ def is_executable_predicate(value: Any) -> bool:
     if first in {"bash", "sh", "zsh"}:
         for index in range(command_index + 1, len(argv) - 1):
             option = argv[index]
-            combined_shell_option = (
-                option.startswith("-")
-                and not option.startswith("--")
-                and "c" in option[1:]
-            )
+            combined_shell_option = option.startswith("-") and not option.startswith("--") and "c" in option[1:]
             if option not in {"-c", "-lc", "-ic", "--command"} and not combined_shell_option:
                 continue
             program = argv[index + 1]
