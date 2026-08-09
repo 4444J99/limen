@@ -317,7 +317,8 @@ def _safe_runtime_env(values: dict[str, str]) -> dict[str, str]:
     return {key: str(value) for key, value in values.items() if key in MONITORED_ENV_KEYS}
 
 
-def parse_launchd_env(stdout: str) -> dict[str, str]:    env: dict[str, str] = {}
+def parse_launchd_env(stdout: str) -> dict[str, str]:
+    env: dict[str, str] = {}
     for line in stdout.splitlines():
         match = re.match(r"\s*([A-Z][A-Z0-9_]+)\s*=>\s*(.+?)\s*$", line)
         if not match:
