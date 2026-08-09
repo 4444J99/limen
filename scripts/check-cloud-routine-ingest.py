@@ -123,6 +123,10 @@ def main() -> int:
                 failures.append(f"receipt[{index}] model: {exc}")
         if len(receipts) == len(raw_receipts):
             ingest = _load_ingest_module()
+            ingest.validate_routine_ids(
+                receipts,
+                manifest_path=ROOT / "cloud-routines.json",
+            )
             ingest.validate_human_gate_owners(
                 receipts,
                 lever_path=lever_path,
