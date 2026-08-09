@@ -146,6 +146,7 @@ def test_preservation_ceiling_cannot_regrow_from_previous_registry(monkeypatch) 
 
     assert any("ceiling regrew" in failure for failure in module.failures)
 
+
 def test_capability_ineligible_prs_are_mechanically_unreachable() -> None:
     module = _load_check_module()
     dispositions = {
