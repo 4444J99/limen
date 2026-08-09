@@ -791,19 +791,40 @@ def _complete_estate_repositories(
         if isinstance(tracked_summary, dict)
         else None
     )
-    tracked_cursor = tracked_report.get("cursor")
-    tracked_cursor_count = tracked_cursor.get("repository") if isinstance(tracked_cursor, dict) else None
-    tracked_counts = [
-        count
-        for count in (tracked_summary_count, tracked_cursor_count)
-        if isinstance(count, int) and not isinstance(count, bool)
-    ]
-    if not tracked_counts:
-        fail("D", "tracked estate census has no repository denominator")
-        return None
-    if len(set(tracked_counts)) != 1 or tracked_counts[0] != expected:
+    if (
+        isinstance(tracked_summary_count, bool)
+        or not isinstance(tracked_summary_count, int)
+        or tracked_summary_count != expected
+    ):
         fail("D", "tracked and private estate census repository totals do not reconcile")
         return None
+    for source_name, source in (("private", report), ("tracked", tracked_report)):
+        cursor = source.get("cursor") if isinstance(source, dict) else None
+        repository_cursor = cursor.get("repository") if isinstance(cursor, dict) else None
+        expected_total = (
+            repository_cursor.get("expected_total")
+            if isinstance(repository_cursor, dict)
+            else None
+        )
+        known_count = (
+            repository_cursor.get("known_count")
+            if isinstance(repository_cursor, dict)
+            else None
+        )
+        if (
+            isinstance(expected_total, bool)
+            or not isinstance(expected_total, int)
+            or isinstance(known_count, bool)
+            or not isinstance(known_count, int)
+            or expected_total != known_count
+            or expected_total != expected
+        ):
+            fail(
+                "D",
+                f"{source_name} estate census repository cursor does not match "
+                "the tracked repository denominator",
+            )
+            return None
     expected_kinds = {"pull_requests", "issues", "branches", "checks"}
     identities: set[tuple[str, str]] = set()
     repositories: set[str] = set()
