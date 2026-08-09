@@ -647,20 +647,44 @@ def _complete_estate_repositories(
     return repositories
 
 
+def _admission_evidence_is_green(
+    row: dict[str, Any],
+    disposition: dict[str, Any],
+) -> bool:
+    """Require the typed admission proof before a delivery label counts as reachable."""
+    if disposition.get("merge_eligible") is not True:
+        return False
+    admission = row.get("admission")
+    if not isinstance(admission, dict):
+        return False
+    return (
+        admission.get("draft") is False
+        and admission.get("mergeable") is True
+        and admission.get("required_checks") == "green"
+        and admission.get("conflicts") == "none"
+        and row.get("lifecycle_disposition_source") == "label"
+        and row.get("lifecycle_label_matches") == [row.get("lifecycle_disposition")]
+    )
+
+
 def mechanically_unreachable_count(
     rows: list[dict[str, Any]],
     dispositions: dict[str, Any],
 ) -> int:
     """Count PRs whose current typed state cannot reach merge admission."""
-    return sum(
-        1
-        for row in rows
+    unreachable = 0
+    for row in rows:
+        disposition = dispositions.get(row.get("lifecycle_disposition"))
         if (
-            not isinstance(dispositions.get(row.get("lifecycle_disposition")), dict)
+            not isinstance(disposition, dict)
             or row.get("lifecycle_disposition_source") != "label"
-            or dispositions[row["lifecycle_disposition"]].get("merge_eligible") is not True
-        )
-    )
+            or disposition.get("merge_eligible") is not True
+        ):
+            unreachable += 1
+            continue
+        if not _admission_evidence_is_green(row, disposition):
+            unreachable += 1
+    return unreachable
 
 
 def measure_unreachable(
