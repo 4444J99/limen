@@ -80,7 +80,17 @@ def latest_receipts_by_lineage(
     for receipt in receipts:
         lineage_id = task_id_for(receipt)
         previous = latest.get(lineage_id)
-        if previous is None or receipt.observed_at >= previous.observed_at:
+        if previous is None:
+            latest[lineage_id] = receipt
+            continue
+        if receipt.observed_at == previous.observed_at:
+            if receipt != previous:
+                raise ValueError(
+                    "conflicting cloud-routine observations share the same "
+                    f"timestamp for {lineage_id}"
+                )
+            continue
+        if receipt.observed_at > previous.observed_at:
             latest[lineage_id] = receipt
     return list(latest.values())
 
@@ -165,14 +175,59 @@ def load_receipts(
     return receipts
 
 
-def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, datetime]]:
-    """Recover cloud lineages from immutable keeper tickets after board pruning."""
-    archive = tasks_path.parent / "logs" / "tickets" / "archive"
+def _merge_historical_observation(
+    historical_ids: set[str],
+    observed_at: dict[str, datetime],
+    task_id: str,
+    stamp: datetime | None,
+) -> None:
+    historical_ids.add(task_id)
+    if stamp is None:
+        return
+    previous = observed_at.get(task_id)
+    if previous is None or stamp > previous:
+        observed_at[task_id] = stamp
+
+
+def _tracked_cloud_task_state(
+    tasks_path: Path,
+) -> tuple[set[str], dict[str, datetime]]:
+    """Read append-only cloud lineage from a tracked receipt envelope."""
+    source = tasks_path.parent / "docs" / "receipts" / "cloud-routine-lineage.json"
     historical_ids: set[str] = set()
     observed_at: dict[str, datetime] = {}
+    if not source.is_file():
+        return historical_ids, observed_at
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return historical_ids, observed_at
+    entries = payload.get("entries") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        return historical_ids, observed_at
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        try:
+            receipt = CloudRoutineReceiptV1.model_validate(entry)
+        except ValidationError:
+            continue
+        _merge_historical_observation(
+            historical_ids,
+            observed_at,
+            task_id_for(receipt),
+            receipt.observed_at,
+        )
+    return historical_ids, observed_at
+
+
+def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, datetime]]:
+    """Combine tracked lineage with legacy keeper tickets after board pruning."""
+    historical_ids, observed_at = _tracked_cloud_task_state(tasks_path)
+    archive = tasks_path.parent / "logs" / "tickets" / "archive"
+    observed_pattern = re.compile(r"observed_at=([^;]+)")
     if not archive.is_dir():
         return historical_ids, observed_at
-    observed_pattern = re.compile(r"observed_at=([^;]+)")
     for path in sorted(archive.glob("*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -196,12 +251,13 @@ def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, 
                 stamp = datetime.fromisoformat(match.group(1).replace("Z", "+00:00"))
             except ValueError:
                 stamp = None
-        historical_ids.update(candidates)
-        if stamp is not None:
-            for task_id in candidates:
-                previous = observed_at.get(task_id)
-                if previous is None or stamp > previous:
-                    observed_at[task_id] = stamp
+        for task_id in candidates:
+            _merge_historical_observation(
+                historical_ids,
+                observed_at,
+                task_id,
+                stamp,
+            )
     return historical_ids, observed_at
 
 
