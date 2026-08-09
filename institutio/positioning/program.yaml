@@ -1,0 +1,2038 @@
+schema_version: limen.positioning_program.v1
+program:
+  id: PSP-ROOT
+  title: Production-Systems Positioning — Alpha to Omega
+  repository: organvm/limen
+  outcome: >-
+    An evidence-backed production-systems identity, proof-led public front door, qualified inbound
+    motion, repeatable delivery practice, and governed operator-handoff loop that any registered
+    agent can continue without transcript inheritance.
+  terminal_predicate: >-
+    python3 scripts/positioning-program.py --omega --require-two-pass
+  issue_projection:
+    milestone: Production Systems Program — Alpha to Omega
+    program_label: program:production-systems
+    phase_label: program:phase
+    work_label: work-packet
+  success_90_day:
+    qualified_door_mails: 5
+    decision: one paid audit OR five documented no outcomes with reasons and a recorded revision
+  critical_path:
+    - PSP-P00-W06
+    - PSP-P01-W01
+    - PSP-P01-W02
+    - PSP-P02-W05
+    - PSP-P03-W01
+    - PSP-P04-W01
+    - PSP-P05-W01
+    - PSP-P06-W03
+    - PSP-P07-W03
+    - PSP-P08-W07
+    - PSP-P09-W02
+    - PSP-P10-W08
+    - PSP-P11-W07
+    - PSP-P12-W06
+    - PSP-P13-W08
+    - PSP-P14-W09
+
+execution_contract:
+  provider_selection: dynamic_live_capability_discovery
+  reasoning_classes:
+    routine: Mechanical collection, rendering, straightforward implementation, and QA.
+    deep: Architecture, diagnosis, synthesis, economics, or cross-repository work.
+    frontier_review: Bounded challenge pass at a high-consequence decision or publication gate.
+  default_authority: reversible changes within the named repository and path scope only
+  mutation_rule: a GitHub issue is not a lease; claim through the conduct broker before mutation
+  public_effect_rule: no send, publish, DNS, spend, merge, signature, or account mutation without explicit authority
+  completion_rule: predicate plus durable receipt; prose, a branch, or an unmerged draft is not done
+
+external_references:
+  PR-2136:
+    kind: pull_request
+    repository: organvm/limen
+    number: 2136
+    purpose: truth reconciliation, claims ledger, authorship policy, proof program, and portfolio IA
+  PR-2141:
+    kind: pull_request
+    repository: organvm/limen
+    number: 2141
+    purpose: encrypted private-artifact custody
+  ISSUE-267:
+    kind: issue
+    repository: organvm/limen
+    number: 267
+    purpose: existing positioning activation and public-identity human gate
+  ISSUE-533:
+    kind: issue
+    repository: organvm/limen
+    number: 533
+    purpose: existing per-publication human send gate
+  ISSUE-687:
+    kind: issue
+    repository: organvm/limen
+    number: 687
+    purpose: contribution-balance proof and routing
+  ISSUE-1245:
+    kind: issue
+    repository: organvm/limen
+    number: 1245
+    purpose: existing profile-engine follow-ups
+  ISSUE-1258:
+    kind: issue
+    repository: organvm/limen
+    number: 1258
+    purpose: URL hierarchy sign-off
+  ISSUE-1261:
+    kind: issue
+    repository: organvm/limen
+    number: 1261
+    purpose: design-token sign-off
+  ISSUE-1412:
+    kind: issue
+    repository: organvm/limen
+    number: 1412
+    purpose: current portfolio visual failure
+  ISSUE-1426:
+    kind: issue
+    repository: organvm/limen
+    number: 1426
+    purpose: current LinkedIn headline capture gate
+  ISSUE-1427:
+    kind: issue
+    repository: organvm/limen
+    number: 1427
+    purpose: current X bio capture gate
+  ISSUE-1428:
+    kind: issue
+    repository: organvm/limen
+    number: 1428
+    purpose: current email-signature capture gate
+  ISSUE-1429:
+    kind: issue
+    repository: organvm/limen
+    number: 1429
+    purpose: current resume-PDF capture gate
+
+human_gates:
+  HG-PUBLIC-IDENTITY:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-267]
+    gate: approval and act of publishing material under the owner's public identity
+  HG-PUBLICATION-SEND:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-533]
+    gate: per-instance social, newsletter, community, or direct-message send
+  HG-PRICE-ANCHORS:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-267]
+    gate: approve internal pricing hypotheses before they govern proposals
+  HG-URL-MAP:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-1258]
+    gate: approve hostname-to-surface identity before DNS attachment
+  HG-DESIGN-TOKENS:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-1261]
+    gate: approve the estate design language before broad adoption
+  HG-LINKEDIN:
+    owner: Anthony
+    registry: his-hand-levers.json
+    references: [ISSUE-1426]
+    gate: inspect and change LinkedIn public profile/account settings
+  HG-CONTRACT:
+    owner: Anthony plus qualified counsel where needed
+    registry: his-hand-levers.json
+    references: []
+    gate: approve or sign client terms, spend, liability, data-processing, or service commitments
+  HG-OPERATOR-TERMS:
+    owner: Anthony plus qualified counsel
+    registry: his-hand-levers.json
+    references: []
+    gate: approve licensing, equity, revenue share, custody, access, or product-transfer terms
+
+phases:
+  - id: PSP-P00
+    title: Program control plane
+    outcome: One validated source graph projects a complete, non-duplicative, provider-neutral issue system.
+    depends_on: []
+    exit_gate: All P00 leaves close and remote parity reports zero missing, duplicate, or orphan markers.
+    work:
+      - id: PSP-P00-W01
+        title: Commit the canonical alpha-to-omega program manifest
+        outcome: Strategy, phases, dependencies, gates, targets, predicates, and return paths have one tracked owner.
+        target_repo: organvm/limen
+        target_paths: [institutio/positioning/program.yaml]
+        capabilities: [architecture, documentation]
+        reasoning: deep
+        effect: write
+        depends_on: []
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Validated program manifest with stable IDs and no private source paths]
+        acceptance: python3 scripts/positioning-program.py --check
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W01
+        rollback: Revert the program PR; existing issues remain inert and recoverable by their stable markers.
+        return_evidence: [Merged commit and validator output]
+      - id: PSP-P00-W02
+        title: Build structural validation and dependency-cycle detection
+        outcome: Malformed fields, unknown references, duplicate IDs, cycles, and unsafe model pinning fail closed.
+        target_repo: organvm/limen
+        target_paths: [scripts/positioning-program.py, cli/tests/test_positioning_program.py]
+        capabilities: [python, testing]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P00-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Validator, focused unit tests]
+        acceptance: pytest -q cli/tests/test_positioning_program.py
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W02
+        rollback: Revert validator and tests together; keep the manifest untouched.
+        return_evidence: [Exact test receipt]
+      - id: PSP-P00-W03
+        title: Build idempotent GitHub milestone, label, and issue projection
+        outcome: Root, phase, and leaf issues are recoverable from stable markers and never duplicate on rerun.
+        target_repo: organvm/limen
+        target_paths: [scripts/positioning-program.py, institutio/positioning/github-map.json]
+        capabilities: [python, github_write]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P00-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Dry-run plan, apply mode, deterministic issue map, remote verifier]
+        acceptance: python3 scripts/positioning-program.py --verify-remote
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W03
+        rollback: Stop projection; labels, milestone, and open issues are non-destructive and remain traceable by marker.
+        return_evidence: [Remote parity JSON and GitHub URLs]
+      - id: PSP-P00-W04
+        title: Publish cross-agent work-packet and relay contracts
+        outcome: A cold agent can resume a leaf without transcript inheritance or authority confusion.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/program/AGENT-RUNBOOK.md, docs/positioning/program/WORK-PACKET-TEMPLATE.md, docs/positioning/program/RELAY-TEMPLATE.md]
+        capabilities: [documentation, conduct_protocol]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P00-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Agent runbook, packet template, relay template]
+        acceptance: python3 scripts/positioning-program.py --check
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W04
+        rollback: Revert templates; issue bodies retain the complete execution contract.
+        return_evidence: [Reviewed documentation commit]
+      - id: PSP-P00-W05
+        title: Expose ready-work and provider-neutral packet seeds
+        outcome: Any healthy lane can discover unblocked work and create a live WorkPacketV1 without a model-name table.
+        target_repo: organvm/limen
+        target_paths: [scripts/positioning-program.py]
+        capabilities: [python, conduct_protocol]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P00-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Ready-work JSON, single-leaf packet seed, tests for dependency filtering]
+        acceptance: python3 scripts/positioning-program.py --ready --json
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W05
+        rollback: Remove seed output; agents may still work directly from issue bodies after live claims.
+        return_evidence: [Sample seed validated against the current conduct schema boundary]
+      - id: PSP-P00-W06
+        title: Prove issue-map parity and zero orphan program work
+        outcome: Every manifest object has exactly one issue and every marked issue has exactly one manifest owner.
+        target_repo: organvm/limen
+        target_paths: [scripts/positioning-program.py, docs/positioning/program/ISSUE-INDEX.md]
+        capabilities: [github_read, verification]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P00-W03, PSP-P00-W05]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Rendered index, remote parity receipt]
+        acceptance: python3 scripts/positioning-program.py --verify-remote
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W06
+        rollback: No mutation; repair the manifest or projection and rerun.
+        return_evidence: [Counts and exact orphan or duplicate set]
+      - id: PSP-P00-W07
+        title: Connect ready leaves to the authenticated conduct broker
+        outcome: A program leaf can be claimed by any registered native lane with bounded authority and a durable receipt.
+        target_repo: organvm/limen
+        target_paths: [scripts/positioning-program.py, cli/src/limen/conduct]
+        capabilities: [conduct, python, integration_testing]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P00-W05, PSP-P00-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Issue-to-WorkPacketV1 adapter, dry-run, canary receipt]
+        acceptance: A registered non-Codex canary claims one no-op/read leaf and reports a schema-valid receipt.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W07
+        rollback: Disable the adapter; the manifest and GitHub graph remain usable manually.
+        return_evidence: [Native lane identity, run ID, lease receipt, and no-op predicate]
+
+  - id: PSP-P01
+    title: Foundation repair and upstream integration
+    outcome: Existing truth and custody foundations merge on green CI and become the program's baseline.
+    depends_on: [PSP-P00]
+    exit_gate: PRs 2136 and 2141 have terminal owners; canonical sources are reconciled and baseline receipts are frozen.
+    work:
+      - id: PSP-P01-W01
+        title: Fix the wall-clock-dependent throughput-governor test
+        outcome: The test evaluates its fixture time rather than the host wall clock while production semantics remain unchanged.
+        target_repo: organvm/limen
+        target_paths: [cli/src/limen/dispatch.py, cli/tests/test_throughput_governor.py]
+        capabilities: [python, diagnosis, testing]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P00-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Narrow time-injection or time-freeze fix, regression test]
+        acceptance: pytest -q cli/tests/test_throughput_governor.py::test_remaining_budget_untouched_when_earned
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P01-W01
+        rollback: Revert the narrow testability seam; do not alter throughput policy to satisfy the fixture.
+        return_evidence: [Focused test and scoped verification receipt]
+      - id: PSP-P01-W02
+        title: Land the positioning truth-reconciliation foundation
+        outcome: PR 2136 merges with claims, authorship, proof, estate, URL, and IA documents intact.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, link-surfaces.json, scripts]
+        capabilities: [github_review, ci, documentation]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P01-W01]
+        external_dependencies: [PR-2136]
+        human_gates: []
+        deliverables: [Green exact-head checks, resolved reviews, merged PR receipt]
+        acceptance: gh pr view 2136 --repo organvm/limen --json state --jq '.state == "MERGED"'
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P01-W02
+        rollback: Revert only through a reviewed correction PR; preserve the claims ledger as the audit trail.
+        return_evidence: [Merge commit, exact-head CI, review-thread count]
+      - id: PSP-P01-W03
+        title: Land encrypted custody for private evidence artifacts
+        outcome: PR 2141 merges and private research/evidence can be preserved without public-path leakage.
+        target_repo: organvm/limen
+        target_paths: [private-vault, docs, scripts]
+        capabilities: [github_review, security, ci]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P01-W01]
+        external_dependencies: [PR-2141]
+        human_gates: []
+        deliverables: [Green exact-head checks, security review, merged PR receipt]
+        acceptance: gh pr view 2141 --repo organvm/limen --json state --jq '.state == "MERGED"'
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P01-W03
+        rollback: Revert code through review while retaining encrypted custody and recovery receipts.
+        return_evidence: [Merge commit, exact-head CI, custody recovery test]
+      - id: PSP-P01-W04
+        title: Reconcile old positioning doctrine and generators against the new truth contract
+        outcome: No older document or generator can silently republish superseded or unsupported claims.
+        target_repo: organvm/limen
+        target_paths: [docs/inbound-magnet-system.md, docs/positioning, scripts/sync-readme.py, scripts]
+        capabilities: [search, documentation, python]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P01-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Conflict inventory, corrected sources, regression fixture for forbidden overclaims]
+        acceptance: No tracked public generator emits a claim forbidden by the canonical claims ledger.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P01-W04
+        rollback: Restore prior copy only if its evidence row is reinstated with source and date.
+        return_evidence: [Search receipt, generator diff, focused tests]
+      - id: PSP-P01-W05
+        title: Freeze the post-merge public-surface baseline
+        outcome: The program records current URLs, rendered states, claims, checks, and known failures before public redesign.
+        target_repo: organvm/limen
+        target_paths: [docs/receipts, link-surfaces.json, institutio/identity/url-map.yaml]
+        capabilities: [browser, github_read, evidence_collection]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P01-W02, PSP-P01-W03, PSP-P01-W04]
+        external_dependencies: [ISSUE-1412]
+        human_gates: []
+        deliverables: [Dated baseline receipt with screenshots, URLs, and exact heads]
+        acceptance: A tracked baseline covers every surface in link-surfaces.json and every selected flagship.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P01-W05
+        rollback: Read-only; supersede the baseline with a newer dated receipt, never rewrite it.
+        return_evidence: [Baseline digest and coverage count]
+
+  - id: PSP-P02
+    title: Truth and evidence control plane
+    outcome: Every public statement is reproducible, classified, dated, bounded, and reversible.
+    depends_on: [PSP-P01]
+    exit_gate: All selected flagships have evidence packets and every material or disputed claim has separate measurement, inference, implication, prominence, source, date, and staleness verdicts.
+    work:
+      - id: PSP-P02-W01
+        title: Discover every organization and repository the owner controls
+        outcome: The estate denominator comes from live GitHub ownership and includes all organizations, not a remembered subset.
+        target_repo: organvm/limen
+        target_paths: [institutio/github/estate.yaml, docs/receipts]
+        capabilities: [github_read, data_collection]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P01-W05]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Paginated owner/org/repository census with visibility and archival state]
+        acceptance: Two complete live censuses produce zero newly discovered owner, organization, or repository keys.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W01
+        rollback: Read-only; preserve both census receipts and correct ownership overrides in the registry.
+        return_evidence: [Denominator, organization list digest, pagination proof]
+      - id: PSP-P02-W02
+        title: Classify the full estate by role, maturity, visibility, and public relevance
+        outcome: Infrastructure, proof, experiments, products, archives, private operations, and partner work are distinguishable.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/estate-classification.md, institutio/github/estate.yaml]
+        capabilities: [classification, repository_analysis]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Complete classification, uncertainty queue, public/private rule]
+        acceptance: Every census repository has exactly one primary estate class and an evidence-backed visibility disposition.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W02
+        rollback: Restore prior class only with a new repository-state receipt; never expose a private artifact by default.
+        return_evidence: [Coverage counts by class and unresolved count]
+      - id: PSP-P02-W03
+        title: Score and ratify the flagship proof set
+        outcome: A small proof set carries the story while the full estate remains available for diligence.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/estate-classification.md, docs/positioning/proof-production-program.md]
+        capabilities: [product_strategy, evidence_synthesis]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P02-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Scoring rubric, selected flagships, alternates, exclusion reasons]
+        acceptance: Each selected flagship has a distinct claim role, live evidence anchor, and no private-only dependency.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W03
+        rollback: Revert selection without deleting evidence; keep alternates and reasons in the ledger.
+        return_evidence: [Reviewer verdict and scored matrix]
+      - id: PSP-P02-W04
+        title: Build a complete evidence packet for every selected flagship
+        outcome: Architecture, code, tests, deployments, metrics, limitations, authorship, and status are available for synthesis.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/evidence, private-vault]
+        capabilities: [github_read, code_analysis, evidence_collection]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [One public-safe packet per flagship, encrypted addendum for private evidence]
+        acceptance: Every flagship packet passes the evidence checklist and links reproducible source receipts.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W04
+        rollback: Withdraw a packet from public use while preserving encrypted source custody and correction history.
+        return_evidence: [Packet paths, source count, last-verified date]
+      - id: PSP-P02-W05
+        title: Make every material metric and claim reproducible
+        outcome: Throughput, scale, reliability, deployment, and adoption claims can be regenerated or are explicitly withheld.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/claims-ledger.md, scripts]
+        capabilities: [data_analysis, python, github_read]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W04]
+        external_dependencies: [ISSUE-687]
+        human_gates: []
+        deliverables: [Metric definitions, source queries, observation dates, machine-assistance treatment, caveats]
+        acceptance: Every publishable numeric claim regenerates within its documented tolerance or is marked not publishable.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W05
+        rollback: Demote a failed metric to internal-only and regenerate all dependent copy.
+        return_evidence: [Reproduction receipts and publishable/withheld counts]
+      - id: PSP-P02-W06
+        title: Enforce claim policy, staleness, and privacy in generation gates
+        outcome: Unsupported, expired, private, or prohibited claims cannot reach generated public surfaces.
+        target_repo: organvm/limen
+        target_paths: [scripts, docs/positioning/claims-ledger.md]
+        capabilities: [python, policy_testing]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W05]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Claims linter, staleness policy, privacy fixture, forbidden-language regression tests]
+        acceptance: Focused tests reject unsourced, stale, private, and explicitly forbidden claim fixtures.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W06
+        rollback: Disable public generation rather than weakening the gate; retain the last known-green surfaces.
+        return_evidence: [Test receipt and blocked-fixture examples]
+      - id: PSP-P02-W07
+        title: Establish public correction, withdrawal, and source-change protocol
+        outcome: A discovered error has a deterministic route from quarantine through correction and republication.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, docs/positioning/program]
+        capabilities: [governance, documentation]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Incident classes, quarantine rule, correction record, republish checklist]
+        acceptance: A synthetic false-claim drill removes the claim from every generated public surface and records restoration criteria.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W07
+        rollback: Restore only from a corrected evidence row and reviewed regeneration receipt.
+        return_evidence: [Drill receipt and affected-surface set]
+      - id: PSP-P02-W08
+        title: Adjudicate research criticisms against the live profile and primary sources
+        outcome: Stale or mistaken research cannot suppress valid evidence, while contestable inferences remain honestly bounded.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/program/RESEARCH-ADJUDICATION.md, docs/positioning/claims-ledger.md, scripts]
+        capabilities: [github_read, research, statistical_reasoning, claim_adjudication]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P02-W01, PSP-P02-W05]
+        external_dependencies: [ISSUE-1245]
+        human_gates: []
+        deliverables: [Contested-claim ledger, live profile receipt, LAVREA baseline audit, correction verdicts]
+        acceptance: Every research-rebuked profile claim has distinct measurement, inference, implication, and prominence dispositions with primary citations.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P02-W08
+        rollback: Keep the current generated profile live until a replacement claim decision passes review; never remove a verified measurement on research prose alone.
+        return_evidence: [Exact profile head, API query receipts, baseline-source audit, reviewer verdict]
+
+  - id: PSP-P03
+    title: Position, narrative, and audience architecture
+    outcome: One legible identity and two audience doors communicate authority without scale theater or takeover threat.
+    depends_on: [PSP-P02]
+    exit_gate: Target readers understand what is offered, why it is credible, and what to do next without an oral explanation.
+    work:
+      - id: PSP-P03-W01
+        title: Ratify the production-systems architect identity contract
+        outcome: Canonical title, headline, disclosure, proof hierarchy, and forbidden claims are settled in one source.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, positioning-seeds.json]
+        capabilities: [positioning, editorial]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P02-W05, PSP-P02-W06, PSP-P02-W08]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Canonical identity contract, verified supporting-claim register, prominence decisions, change-control rule]
+        acceptance: All generated identity surfaces derive the same title, headline, and authorship disclosure while retaining every verified supporting claim at its approved disclosure level.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W01
+        rollback: Revert the contract and regenerate; preserve the rejected rationale for the next evidence checkpoint.
+        return_evidence: [Frontier-review verdict and generated-copy diff]
+      - id: PSP-P03-W02
+        title: Define the client, recruiter, and deeper operator jobs-to-be-done
+        outcome: Each audience sees only the proof and action relevant to its decision.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/portfolio-information-architecture.md, docs/positioning/program]
+        capabilities: [audience_research, information_architecture]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Audience jobs, questions, proof needs, CTA, disqualifiers]
+        acceptance: Every public content block has one named audience job and one level in the disclosure hierarchy.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W02
+        rollback: Remove ambiguous blocks; do not create a third front-door CTA for operators.
+        return_evidence: [Content-to-audience mapping]
+      - id: PSP-P03-W03
+        title: Write the ten-second, five-minute, and diligence narrative ladder
+        outcome: Visitors can stop at the level of detail they need while evidence remains discoverable.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/portfolio-information-architecture.md, docs/positioning]
+        capabilities: [editorial, information_architecture]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [L1 front door, L2 flagship/method narrative, L3 diligence index]
+        acceptance: A reader can identify role, buyer, expensive problem, strongest proof, and CTA from L1 alone.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W03
+        rollback: Fall back to the prior approved narrative while preserving deeper evidence links.
+        return_evidence: [Comprehension-test script and copy set]
+      - id: PSP-P03-W04
+        title: Create the client-facing narrative and expensive-problem map
+        outcome: The story begins with stalled delivery and governance risk, not with tools or repository volume.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, docs/positioning/program]
+        capabilities: [sales_strategy, editorial]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Problem taxonomy, outcome language, proof mapping, CTA copy]
+        acceptance: Client copy names a costly before-state, bounded intervention, expected decision, and evidence anchor.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W04
+        rollback: Restore last approved client copy; update the objection ledger before rewriting again.
+        return_evidence: [Copy review and problem-to-proof map]
+      - id: PSP-P03-W05
+        title: Create the recruiter-facing narrative and role map
+        outcome: Senior hiring readers see systems leadership, operating judgment, and delivery scope without an unsupported title claim.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, portfolio/resume]
+        capabilities: [career_strategy, editorial]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W03]
+        external_dependencies: [ISSUE-1429]
+        human_gates: []
+        deliverables: [Role families, recruiter summary, resume spine, interview proof map]
+        acceptance: Every target role maps to demonstrated scope and evidence without leading with COO or percentile claims.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W05
+        rollback: Narrow role targets to the last evidence-supported set.
+        return_evidence: [Role-to-proof matrix]
+      - id: PSP-P03-W06
+        title: Design language that reduces the spy or takeover threat response
+        outcome: Interviews and sales conversations communicate additive leverage, bounded authority, and partnership.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, docs/positioning/program]
+        capabilities: [behavioral_messaging, editorial]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W04, PSP-P03-W05]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Threat triggers, reframes, interview answers, authority-boundary language]
+        acceptance: Reviewers score the language as high-authority and collaborative rather than territorial or evasive.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W06
+        rollback: Withdraw untested reframes and return to evidence-first plain language.
+        return_evidence: [Rubric scores and revised objection language]
+      - id: PSP-P03-W07
+        title: Run blinded target-reader comprehension and trust tests
+        outcome: The narrative is judged by what qualified readers infer, not by author intent.
+        target_repo: organvm/limen
+        target_paths: [docs/receipts, docs/positioning]
+        capabilities: [research, qualitative_analysis]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P03-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Test protocol, anonymized responses, comprehension/trust scores, revision verdict]
+        acceptance: At least five target-like readers identify the role, buyer, problem, proof, and CTA without prompting.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P03-W07
+        rollback: Keep the prior narrative live and return failed inferences to PSP-P03-W03 through W06.
+        return_evidence: [Response set and decision memo]
+
+  - id: PSP-P04
+    title: Offer and commercial architecture
+    outcome: The commercial wedge is sellable, bounded, economically coherent, and expandable without becoming unbounded consulting.
+    depends_on: [PSP-P03]
+    exit_gate: Audit, install, and retainer each have scope, exclusions, qualification, artifacts, economics, and contract boundaries.
+    work:
+      - id: PSP-P04-W01
+        title: Productize the Agentic Delivery Audit
+        outcome: A CTO can buy a fixed, read-only diagnostic that ends in a written verdict and gate specification.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers, docs/positioning]
+        capabilities: [offer_design, technical_delivery]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P03-W04, PSP-P02-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Buyer, trigger, scope, 2-3 week timeline, inputs, outputs, exclusions, success criteria]
+        acceptance: A reviewer can price, scope, deliver, and decline the audit without an oral exception list.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W01
+        rollback: Keep the offer internal and return ambiguous scope to the offer decision record.
+        return_evidence: [Offer contract and review verdict]
+      - id: PSP-P04-W02
+        title: Productize the Governance Install
+        outcome: The audit can expand into a 4-8 week implementation for one team or pipeline with bounded change authority.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers]
+        capabilities: [offer_design, systems_architecture]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Scope, prerequisites, implementation modules, exclusions, acceptance criteria, expansion boundary]
+        acceptance: The install has one-team scope, named handoff, finite acceptance tests, and no implied platform rewrite.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W02
+        rollback: Revert to audit-only recommendation if prerequisites or authority are absent.
+        return_evidence: [Install offer contract]
+      - id: PSP-P04-W03
+        title: Define the bounded delivery-governance retainer
+        outcome: Ongoing support has a finite cadence, decision rights, response envelope, and no on-call ambiguity.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers]
+        capabilities: [service_design, operations]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Cadence, included days, artifacts, exclusions, escalation, renewal and exit]
+        acceptance: The retainer can be fulfilled without hidden on-call, unlimited implementation, or executive substitution.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W03
+        rollback: Do not sell the retainer; close with an install handoff instead.
+        return_evidence: [Retainer contract and capacity model]
+      - id: PSP-P04-W04
+        title: Define qualification, disqualification, and escalation criteria
+        outcome: Bad-fit leads are declined early and good-fit leads enter the correct offer without custom invention.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers, docs/positioning/program]
+        capabilities: [sales_strategy, risk_analysis]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W01, PSP-P04-W02, PSP-P04-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Fit rubric, red flags, routing logic, decline language]
+        acceptance: Synthetic lead scenarios route deterministically to audit, install, retainer, recruiter, decline, or human review.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W04
+        rollback: Route uncertain leads to manual review; never broaden offer authority automatically.
+        return_evidence: [Scenario test matrix]
+      - id: PSP-P04-W05
+        title: Model internal pricing, capacity, and discount guardrails
+        outcome: Price hypotheses cover delivery effort, risk, opportunity cost, and capacity while staying private.
+        target_repo: organvm/limen
+        target_paths: [positioning-seeds.json, private-vault]
+        capabilities: [financial_modeling, service_operations]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W01, PSP-P04-W02, PSP-P04-W03]
+        external_dependencies: []
+        human_gates: [HG-PRICE-ANCHORS]
+        deliverables: [Internal price bands, margin/capacity model, discount and walk-away rules]
+        acceptance: Each offer has an approved internal anchor and a capacity-safe floor; no price appears publicly.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W05
+        rollback: Revert to unpriced qualification and require owner review per proposal.
+        return_evidence: [Private model digest and gate receipt]
+      - id: PSP-P04-W06
+        title: Create proposal, SOW, and commercial-decision templates
+        outcome: Qualified demand can become a bounded written agreement without recreating scope each time.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [templates/production-systems]
+        capabilities: [business_writing, legal_issue_spotting]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W04, PSP-P04-W05]
+        external_dependencies: []
+        human_gates: [HG-CONTRACT]
+        deliverables: [Proposal, SOW, assumptions, change control, acceptance, closeout templates]
+        acceptance: Templates cover scope, exclusions, data access, IP, payment, acceptance, change, termination, and signatures.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W06
+        rollback: Keep templates draft-only; no agreement is sent or signed without the per-instance gate.
+        return_evidence: [Private template commit and counsel/owner review status]
+      - id: PSP-P04-W07
+        title: Define the product-partnership offer without making it a front-door distraction
+        outcome: Qualified operators can understand transfer hypotheses after diligence while public positioning remains focused.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers, docs/positioning/program]
+        capabilities: [venture_design, partnership_strategy]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P04-W04]
+        external_dependencies: []
+        human_gates: [HG-OPERATOR-TERMS]
+        deliverables: [Operator hypothesis, readiness floor, diligence path, explicit non-offer language]
+        acceptance: Operator material is absent from L1 CTAs and present only behind evidence and qualification layers.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P04-W07
+        rollback: Remove operator material from public surfaces while retaining the internal foundry plan.
+        return_evidence: [IA review and offer-boundary verdict]
+
+  - id: PSP-P05
+    title: Proof-production program
+    outcome: High-value claims are demonstrated through compact, reproducible proof objects rather than volume theater.
+    depends_on: [PSP-P02, PSP-P03, PSP-P04]
+    exit_gate: The six declared proof classes exist, are public-safe, and link back to current evidence rows.
+    work:
+      - id: PSP-P05-W01
+        title: Publish the Limen engineering report source package
+        outcome: Limen demonstrates governed multi-agent delivery through architecture, decisions, failure modes, metrics, and limits.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/proof, docs/receipts]
+        capabilities: [technical_writing, architecture, data_analysis]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P02-W05, PSP-P03-W03, PSP-P04-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Long-form report source, executive summary, evidence appendix, limitations]
+        acceptance: Every report claim resolves to a dated evidence row and an independent reviewer returns publishable or explicit findings.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W01
+        rollback: Keep the report staged and remove any failed claim before publication.
+        return_evidence: [Review verdict, claim coverage, report commit]
+      - id: PSP-P05-W02
+        title: Reconcile every public surface against the claims contract
+        outcome: Existing profile, portfolio, resume, organization, and repository copy cannot contradict the report or ledger.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning, scripts, link-surfaces.json]
+        capabilities: [content_audit, search, verification]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W01, PSP-P02-W06]
+        external_dependencies: [PR-2136]
+        human_gates: []
+        deliverables: [Surface-by-claim matrix, corrected source copy, drift gate]
+        acceptance: The public-surface audit reports zero unsupported, contradictory, private, or stale material claims.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W02
+        rollback: Disable regeneration and retain the last known-green public release.
+        return_evidence: [Audit receipt and corrected-surface list]
+      - id: PSP-P05-W03
+        title: Produce cost-per-task and failure-mode analysis
+        outcome: The commercial claim is grounded in delivery economics and control behavior, not only software output.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/proof, docs/receipts]
+        capabilities: [data_analysis, reliability_engineering]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Metric definitions, sampled data, failure taxonomy, cost analysis, caveats]
+        acceptance: Analysis regenerates from documented inputs and distinguishes model cost, human time, retries, and failed work.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W03
+        rollback: Withhold the analysis if sampling or attribution cannot support publication.
+        return_evidence: [Reproduction command, data digest, reviewer notes]
+      - id: PSP-P05-W04
+        title: Create fresh test-reproduction receipts for flagship claims
+        outcome: Visitors and reviewers can see recent proof that selected systems still work.
+        target_repo: organvm/limen
+        target_paths: [docs/receipts/positioning]
+        capabilities: [testing, github_actions, evidence_collection]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P02-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Exact-head test receipts, environment metadata, bounded failure notes]
+        acceptance: Every selected flagship has a fresh exact-head predicate receipt or an explicit not-current status.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W04
+        rollback: Read-only; expire stale receipts instead of editing their observed result.
+        return_evidence: [Receipt paths and age distribution]
+      - id: PSP-P05-W05
+        title: Build a public-safe Limen architecture demonstration
+        outcome: The governed system can be understood visually and interactively without exposing private operations or secrets.
+        target_repo: organvm/limen
+        target_paths: [web, docs/positioning/proof, assets]
+        capabilities: [frontend, visualization, security_review]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W01, PSP-P02-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Architecture visual, bounded walkthrough, synthetic dataset, privacy review]
+        acceptance: Demo passes synthetic-only, no-secret, accessibility, responsive, and link-health checks.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W05
+        rollback: Unpublish the demo route and retain the static report if any disclosure risk appears.
+        return_evidence: [Deployed URL, security checklist, browser verification]
+      - id: PSP-P05-W06
+        title: Produce external validation objects
+        outcome: Third-party observations, reviews, reproductions, or outcomes provide evidence beyond self-authored claims.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/proof, docs/receipts]
+        capabilities: [research, partner_coordination, evidence_curation]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W04, PSP-P05-W05]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND]
+        deliverables: [Validation rubric, request package, public-safe received objects, consent record]
+        acceptance: At least two independent validation objects exist or the outreach outcomes and objections are durably recorded.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P05-W06
+        rollback: Withdraw an object on consent or accuracy change and recalculate dependent claims.
+        return_evidence: [Validation URLs, consent status, objection ledger]
+
+  - id: PSP-P06
+    title: Portfolio experience and progressive disclosure
+    outcome: The public experience feels precise and premium while the estate's density remains available on demand.
+    depends_on: [PSP-P03, PSP-P05]
+    exit_gate: Tested designs satisfy progressive disclosure, audience routing, accessibility, performance, and visual quality.
+    work:
+      - id: PSP-P06-W01
+        title: Establish the design context and taste brief
+        outcome: Visual decisions derive from the positioning, audience, content density, and existing estate design language.
+        target_repo: organvm/portfolio
+        target_paths: [docs/design, design]
+        capabilities: [product_design, visual_direction]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W03, PSP-P05-W01]
+        external_dependencies: [ISSUE-1412]
+        human_gates: []
+        deliverables: [Design brief, reference board, anti-patterns, content-density rules]
+        acceptance: The brief explicitly maps position, audiences, proof hierarchy, accessibility, and density to design principles.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W01
+        rollback: Preserve current public release while the brief is revised.
+        return_evidence: [Approved design-context document]
+      - id: PSP-P06-W02
+        title: Model the content and navigation architecture
+        outcome: Every content object has an owner, disclosure level, audience, route, and evidence link.
+        target_repo: organvm/portfolio
+        target_paths: [docs, content]
+        capabilities: [information_architecture, content_modeling]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P06-W01, PSP-P03-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Site map, content schema, route map, navigation contract]
+        acceptance: Every public artifact maps to exactly one canonical route and no private object is routable.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W02
+        rollback: Revert route changes and keep content in the source model until resolved.
+        return_evidence: [Content-to-route coverage report]
+      - id: PSP-P06-W03
+        title: Design L1, L2, and L3 progressive-disclosure flows
+        outcome: Symbols, summaries, and compact proof lead to deeper detail through deliberate interaction rather than visual overload.
+        target_repo: organvm/portfolio
+        target_paths: [design, docs/design]
+        capabilities: [interaction_design, prototyping]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P06-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Wireframes, interaction states, client/recruiter flows, mobile flow]
+        acceptance: Usability review confirms the L1 promise and CTA remain visible while L2/L3 detail is reachable in two deliberate actions.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W03
+        rollback: Retain the previous information architecture and archive rejected prototypes.
+        return_evidence: [Prototype links, review verdict, issue list]
+      - id: PSP-P06-W04
+        title: Define reusable components and evidence-bound content interfaces
+        outcome: Proof cards, claim badges, disclosure panels, case studies, and CTAs render from typed content rather than hand-copied prose.
+        target_repo: organvm/portfolio
+        target_paths: [src/components, src/content, docs]
+        capabilities: [design_systems, frontend_architecture]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P06-W03, PSP-P02-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Component inventory, typed content interfaces, state matrix]
+        acceptance: Components reject missing evidence/status fields and render loading, empty, stale, error, and private states safely.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W04
+        rollback: Fall back to static approved content and disable dynamic evidence rendering.
+        return_evidence: [Story/demo states and type/test receipts]
+      - id: PSP-P06-W05
+        title: Adopt the approved estate design tokens without flattening surface character
+        outcome: The portfolio leads a coherent design language while editorial and operational surfaces retain appropriate registers.
+        target_repo: organvm/portfolio
+        target_paths: [src/styles, web/tokens]
+        capabilities: [visual_design, css, design_systems]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P06-W04]
+        external_dependencies: [ISSUE-1261]
+        human_gates: [HG-DESIGN-TOKENS]
+        deliverables: [Pinned token adoption, semantic mappings, visual regression fixtures]
+        acceptance: Token sign-off is recorded and visual regression covers utility, editorial, and portfolio registers.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W05
+        rollback: Revert the vendored token version and restore the prior release's semantic map.
+        return_evidence: [Token version, sign-off, visual diff]
+      - id: PSP-P06-W06
+        title: Verify accessibility, responsiveness, performance, and reduced motion
+        outcome: The experience works across devices and access modes without sacrificing hierarchy.
+        target_repo: organvm/portfolio
+        target_paths: [src, tests]
+        capabilities: [accessibility, frontend_testing, performance]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P06-W04, PSP-P06-W05]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Automated checks, keyboard review, screen-reader notes, responsive screenshots, budgets]
+        acceptance: Accessibility and performance gates pass at declared desktop/mobile viewports with reduced-motion support.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W06
+        rollback: Roll back the failing component or interaction to the last known-green release.
+        return_evidence: [Audit reports and screenshots]
+      - id: PSP-P06-W07
+        title: Run visual and comprehension QA with target-like users
+        outcome: The built experience is judged as clear, credible, intentional, and easy to navigate.
+        target_repo: organvm/portfolio
+        target_paths: [docs/receipts, tests]
+        capabilities: [user_research, visual_qa]
+        reasoning: frontier_review
+        effect: read
+        depends_on: [PSP-P06-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Test tasks, target-reader results, visual-quality rubric, prioritized corrections]
+        acceptance: Experience and comprehension reviewers pass the declared quality floor with no critical accessibility or trust defect.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P06-W07
+        rollback: Keep the redesign staged and retain the last known-green site.
+        return_evidence: [Scores, findings, final design verdict]
+
+  - id: PSP-P07
+    title: Public surfaces and deployment
+    outcome: Every identity and proof surface derives from the same truth while retaining a reversible release path.
+    depends_on: [PSP-P02, PSP-P03, PSP-P05, PSP-P06]
+    exit_gate: All tracked public surfaces are coherent, live, linked, rollback-safe, and verified in rendered form.
+    work:
+      - id: PSP-P07-W01
+        title: Preserve, audit, and evolve the personal GitHub profile front door
+        outcome: The current daily-generated profile keeps its verified scale evidence, organization library, self-hosted visuals, two tagged doors, and live navigation while improving hierarchy and proof selection.
+        target_repo: 4444J99/4444J99
+        target_paths: [README.md, assets]
+        capabilities: [github_profile, editorial, svg]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W08, PSP-P03-W03, PSP-P05-W02, PSP-P06-W04]
+        external_dependencies: [ISSUE-1245, ISSUE-267]
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Before/after evidence audit, generated profile README, verified assets, preserved API-attested metrics, client/recruiter links]
+        acceptance: Profile generator, claim-adjudication, and link-integrity gates pass; no verified live claim or working mechanism disappears without an explicit evidence-backed prominence decision; owner approves publication.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W01
+        rollback: Restore the previous generated README release and repair the source before republishing.
+        return_evidence: [Commit, rendered screenshot, link-check receipt]
+      - id: PSP-P07-W02
+        title: Rebuild the organization profile as an estate map
+        outcome: The organization surface explains what the estate is without competing with the personal front door.
+        target_repo: organvm/.github
+        target_paths: [profile/README.md, agents]
+        capabilities: [github_profile, information_architecture]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W02, PSP-P03-W03]
+        external_dependencies: [PR-2136]
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Organization README, estate map, flagship links, private-boundary language]
+        acceptance: Organization README passes claim and link gates and sends individual buyers to the personal front door.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W02
+        rollback: Restore the prior organization README and keep the source staged.
+        return_evidence: [Commit, screenshot, link-check receipt]
+      - id: PSP-P07-W03
+        title: Implement and deploy the canonical portfolio site
+        outcome: The approved progressive-disclosure experience becomes the durable apex front door.
+        target_repo: organvm/portfolio
+        target_paths: [src, public, tests, deploy]
+        capabilities: [frontend, deployment, browser_testing]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P06-W07, PSP-P05-W02]
+        external_dependencies: [ISSUE-1412, ISSUE-267]
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Production build, preview, deployment, release receipt, rollback target]
+        acceptance: Build, browser verification, accessibility, link health, and owner publication gate are green at the live URL.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W03
+        rollback: Route traffic to the prior known-green release and retain the failed deployment for diagnosis.
+        return_evidence: [Live URL, deployment ID, screenshots, checks]
+      - id: PSP-P07-W04
+        title: Rebuild the resume and interview evidence packet
+        outcome: Recruiter material tells the same story with role-specific evidence and no unsupported scope claims.
+        target_repo: organvm/portfolio
+        target_paths: [resume, public, docs]
+        capabilities: [career_writing, document_generation, qa]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W05, PSP-P05-W02]
+        external_dependencies: [ISSUE-1429]
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Web resume, PDF, recruiter summary, interview proof appendix]
+        acceptance: Web/PDF parity, link, claim, typography, and current-date checks pass.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W04
+        rollback: Re-publish the prior approved resume while fixing the source.
+        return_evidence: [PDF digest, live URL, QA receipt]
+      - id: PSP-P07-W05
+        title: Upgrade selected flagship repositories as proof destinations
+        outcome: A visitor arriving at a flagship sees problem, status, architecture, proof, limitations, and next action.
+        target_repo: multi-repository:selected-flagships
+        target_paths: [README.md, docs, releases, repository metadata]
+        capabilities: [github_write, technical_writing, repository_analysis]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P02-W04, PSP-P03-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [README/case-study upgrades, status badges, releases, topics/descriptions]
+        acceptance: Every selected flagship passes the case-study template, claim gate, and live-link checks.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W05
+        rollback: Revert each repository independently to its prior known-green README and metadata.
+        return_evidence: [Per-repository PRs and verification receipts]
+      - id: PSP-P07-W06
+        title: Stage the LinkedIn, X, and email-signature identity package
+        outcome: Off-platform identity surfaces have approved copy aligned with the canonical position and fastest contact route.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/off-platform]
+        capabilities: [editorial, platform_copy]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W03, PSP-P03-W05]
+        external_dependencies: [ISSUE-1426, ISSUE-1427, ISSUE-1428]
+        human_gates: [HG-LINKEDIN, HG-PUBLIC-IDENTITY]
+        deliverables: [Headline, About, bio, signature, contact-info instructions, before/after checklist]
+        acceptance: Copy passes claims and voice review; owner-applied surfaces are captured back into their existing decorum levers.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W06
+        rollback: Owner restores prior platform copy; source package records the reverted version.
+        return_evidence: [Staged copy, owner gate receipts, captured live text]
+      - id: PSP-P07-W07
+        title: Attach the approved custom-domain hierarchy
+        outcome: Portfolio, Limen, exporter, and other approved surfaces resolve at stable branded URLs.
+        target_repo: organvm/limen
+        target_paths: [institutio/identity/url-map.yaml, scripts/cf-wrangler.sh, link-surfaces.json]
+        capabilities: [dns, cloudflare, deployment]
+        reasoning: routine
+        effect: external
+        depends_on: [PSP-P07-W03]
+        external_dependencies: [ISSUE-1258]
+        human_gates: [HG-URL-MAP]
+        deliverables: [Approved attach plan, DNS/custom-domain receipts, redirect map]
+        acceptance: Every approved hostname resolves with valid TLS to its declared surface and canonical redirects preserve old URLs.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W07
+        rollback: Detach the custom route and restore canonical secondary URLs without deleting the deployment.
+        return_evidence: [DNS/TLS probes and attach receipts]
+      - id: PSP-P07-W08
+        title: Install privacy-respecting funnel analytics and door tags
+        outcome: Report reads, proof interactions, client/recruiter clicks, and qualified contact sources are measurable without invasive tracking.
+        target_repo: organvm/portfolio
+        target_paths: [src/analytics, docs/analytics, tests]
+        capabilities: [analytics, privacy, frontend]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P07-W03, PSP-P03-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Event dictionary, implementation, privacy disclosure, test fixtures]
+        acceptance: Synthetic events distinguish client/recruiter doors and contain no prohibited personal or content data.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W08
+        rollback: Disable analytics collection and preserve aggregate historical reports only under the privacy policy.
+        return_evidence: [Event test receipt and privacy review]
+      - id: PSP-P07-W09
+        title: Prove link health, release rollback, and surface parity
+        outcome: Broken links, stale builds, and inconsistent public copy are detected before they damage trust.
+        target_repo: organvm/limen
+        target_paths: [link-surfaces.json, scripts/link-health.py, scripts]
+        capabilities: [verification, deployment, browser]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P07-W01, PSP-P07-W02, PSP-P07-W03, PSP-P07-W04, PSP-P07-W05, PSP-P07-W06, PSP-P07-W07, PSP-P07-W08]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Tracked surfaces, release manifest, rollback drill, parity check]
+        acceptance: Link health passes and a synthetic bad release rolls back to the prior release without losing capture or evidence links.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P07-W09
+        rollback: The drill itself restores the known-green release and records the failed release ID.
+        return_evidence: [Link report, rollback timestamps, restored release ID]
+
+  - id: PSP-P08
+    title: Inbound capture and private lead operations
+    outcome: Qualified interest enters a safe, tagged, private pipeline with no unauthorized outbound effect.
+    depends_on: [PSP-P04, PSP-P07]
+    exit_gate: Client and recruiter synthetic leads traverse capture, classification, routing, drafting, and reporting while no-send stays enforced.
+    work:
+      - id: PSP-P08-W01
+        title: Activate a dedicated inbound alias and tagged CTAs
+        outcome: Every public CTA carries surface, proof, and audience provenance into the mail lane.
+        target_repo: organvm/limen
+        target_paths: [positioning-seeds.json, docs/positioning, link-surfaces.json]
+        capabilities: [email_routing, configuration]
+        reasoning: routine
+        effect: external
+        depends_on: [PSP-P07-W09]
+        external_dependencies: [ISSUE-267]
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Approved alias, door tags, generated CTAs, deliverability check]
+        acceptance: Synthetic client and recruiter messages arrive with distinct source tags and no address appears before owner activation.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W01
+        rollback: Remove the alias from seeds and regenerate plain-text CTAs while preserving received mail.
+        return_evidence: [Deliverability and tag receipts]
+      - id: PSP-P08-W02
+        title: Design minimal client and recruiter intake flows
+        outcome: A qualified visitor can provide just enough context for routing without a burdensome form.
+        target_repo: organvm/portfolio
+        target_paths: [src/intake, docs]
+        capabilities: [form_design, privacy, frontend]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W04, PSP-P08-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Field schema, progressive form/mail fallback, privacy copy, validation]
+        acceptance: Intake captures required routing fields, rejects sensitive overcollection, and degrades to tagged email.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W02
+        rollback: Disable the form and retain the tagged email route.
+        return_evidence: [Form tests and privacy review]
+      - id: PSP-P08-W03
+        title: Normalize inbound mail and form submissions into private lead records
+        outcome: Contact data, source tags, requests, and consent remain private and queryable.
+        target_repo: organvm/universal-mail--automation
+        target_paths: [protocols, schemas, tests]
+        capabilities: [python, email_automation, privacy]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P08-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Lead schema, parser, dedupe key, private storage contract, fixtures]
+        acceptance: Synthetic leads normalize idempotently with provenance and no public or cross-client leakage.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W03
+        rollback: Disable normalization and retain raw inbound mail in its existing provider custody.
+        return_evidence: [Fixture tests and storage-path review]
+      - id: PSP-P08-W04
+        title: Score and route client, recruiter, operator, spam, and ambiguous leads
+        outcome: The system suggests the next lane without pretending uncertainty is certainty.
+        target_repo: organvm/limen
+        target_paths: [scripts, institutio, docs/positioning]
+        capabilities: [classification, sales_operations, python]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P08-W03, PSP-P04-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Scoring rubric, thresholds, ambiguity route, test corpus]
+        acceptance: Labeled synthetic scenarios meet the declared routing accuracy and all low-confidence cases go to review.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W04
+        rollback: Route every lead to manual review and retain the scores only as non-authoritative metadata.
+        return_evidence: [Confusion matrix and threshold decision]
+      - id: PSP-P08-W05
+        title: Create reply, scheduling, decline, and recruiter draft templates
+        outcome: The mail lane can prepare high-quality responses while the owner retains send authority.
+        target_repo: organvm/universal-mail--automation
+        target_paths: [templates, protocols, tests]
+        capabilities: [business_writing, email_automation]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P08-W04, PSP-P04-W04]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND]
+        deliverables: [Acknowledgment, discovery, decline, recruiter, operator-review templates]
+        acceptance: Templates preserve source context, avoid invented commitments, and remain drafts under the send valve.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W05
+        rollback: Disable the template family and retain manual reply handling.
+        return_evidence: [Rendered fixtures and no-send test]
+      - id: PSP-P08-W06
+        title: Build the private opportunity pipeline and decision ledger
+        outcome: Lead stage, fit, owner, next action, outcomes, and objections have one private durable home.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [schemas, pipelines, views]
+        capabilities: [crm_design, privacy, data_modeling]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P08-W03, PSP-P08-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Pipeline schema, stage rules, decision/objection ledger, aggregate view]
+        acceptance: Synthetic multi-client records remain owner-partitioned and reproduce stage and outcome metrics.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W06
+        rollback: Export records, disable the view, and retain source custody in the private platform.
+        return_evidence: [Schema tests, privacy boundary test, dashboard sample]
+      - id: PSP-P08-W07
+        title: Prove the capture funnel end to end with the send valve closed
+        outcome: Both public doors produce private, routed, reportable opportunities without an external reply.
+        target_repo: multi-repository:limen-portfolio-mail
+        target_paths: [tests, docs/receipts]
+        capabilities: [integration_testing, email, browser]
+        reasoning: deep
+        effect: read
+        depends_on: [PSP-P08-W01, PSP-P08-W02, PSP-P08-W03, PSP-P08-W04, PSP-P08-W05, PSP-P08-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Synthetic client/recruiter journeys, no-send proof, pipeline receipts]
+        acceptance: Two complete journeys create correct private records and drafts while external send count remains zero.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P08-W07
+        rollback: Keep capture disabled until the failing stage is repaired; preserve synthetic receipts only.
+        return_evidence: [Journey timeline, record IDs, zero-send evidence]
+
+  - id: PSP-P09
+    title: Proof-led content and distribution
+    outcome: One flagship proof becomes a durable content engine whose derivatives attract qualified demand without claim drift.
+    depends_on: [PSP-P05, PSP-P07, PSP-P08]
+    exit_gate: The flagship report and derived series are staged, owner-published where approved, measured, and linked to qualified capture.
+    work:
+      - id: PSP-P09-W01
+        title: Build the 90-day proof-led editorial calendar
+        outcome: Content cadence follows the flagship evidence and buyer questions rather than generic personal branding.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/content]
+        capabilities: [editorial_strategy, sales_strategy]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W01, PSP-P04-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Audience/topic/channel calendar, proof source, CTA, success signal, stop rule]
+        acceptance: Every planned asset maps to one evidence object, one audience problem, one door, and one measurable signal.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W01
+        rollback: Pause unsourced assets and preserve the calendar as a decision record.
+        return_evidence: [Calendar review and claim-source coverage]
+      - id: PSP-P09-W02
+        title: Stage and owner-publish the flagship Limen engineering report
+        outcome: The strongest proof object is live at a durable URL with clear client and recruiter routes.
+        target_repo: organvm/portfolio
+        target_paths: [src/content, public, deploy]
+        capabilities: [publishing, frontend, technical_editing]
+        reasoning: frontier_review
+        effect: external
+        depends_on: [PSP-P05-W01, PSP-P07-W09, PSP-P08-W07]
+        external_dependencies: []
+        human_gates: [HG-PUBLIC-IDENTITY]
+        deliverables: [Web report, downloadable artifact, evidence links, CTAs, release receipt]
+        acceptance: Owner publication is recorded and the live report passes claims, links, accessibility, analytics, and capture checks.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W02
+        rollback: Repoint the URL to the prior approved version and quarantine the failed report revision.
+        return_evidence: [Live URL, release ID, owner gate, checks]
+      - id: PSP-P09-W03
+        title: Derive the agentic-delivery failure-modes essay
+        outcome: Buyers recognize the expensive problem through a source-backed taxonomy and practical diagnostic frame.
+        target_repo: organvm/portfolio
+        target_paths: [src/content]
+        capabilities: [technical_writing, reliability]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W03, PSP-P09-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Essay, diagram, audit CTA, evidence footnotes]
+        acceptance: Claims lint passes and each failure mode links to evidence or is explicitly framed as a hypothesis.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W03
+        rollback: Keep the essay unpublished and return disputed claims to the ledger.
+        return_evidence: [Editorial review and claim coverage]
+      - id: PSP-P09-W04
+        title: Derive the cost-per-task and control-economics essay
+        outcome: Prospects understand why governed delivery economics matter more than raw token or commit volume.
+        target_repo: organvm/portfolio
+        target_paths: [src/content]
+        capabilities: [data_storytelling, technical_writing]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W03, PSP-P09-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Essay, reproducible chart, definitions, limitations, audit CTA]
+        acceptance: Chart regenerates from the published analysis and copy preserves all caveats.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W04
+        rollback: Remove the chart/essay from release if the metric reproduction fails.
+        return_evidence: [Chart digest and editorial review]
+      - id: PSP-P09-W05
+        title: Derive the delivery-gates walkthrough
+        outcome: Technical buyers see how authority, leases, predicates, receipts, and rollback compose in practice.
+        target_repo: organvm/portfolio
+        target_paths: [src/content, assets]
+        capabilities: [technical_writing, visualization]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P05-W05, PSP-P09-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Walkthrough, architecture visual, synthetic example, audit CTA]
+        acceptance: Walkthrough uses public-safe synthetic data and matches the current conduct protocol.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W05
+        rollback: Remove the walkthrough from navigation and correct protocol drift before republishing.
+        return_evidence: [Protocol review and rendered artifact]
+      - id: PSP-P09-W06
+        title: Publish a candid incident and correction case study
+        outcome: Reliability credibility includes failure detection, bounded repair, and learning rather than perfection claims.
+        target_repo: organvm/portfolio
+        target_paths: [src/content, docs/receipts]
+        capabilities: [incident_analysis, technical_writing]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W07, PSP-P09-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Sanitized timeline, impact, cause, detection, repair, prevention, limits]
+        acceptance: Incident source is verifiable, sensitive details are removed, and the prevention claim has a live predicate.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W06
+        rollback: Unpublish if privacy, consent, or causal accuracy changes; preserve the internal incident record.
+        return_evidence: [Sanitization review and live URL]
+      - id: PSP-P09-W07
+        title: Generate channel-specific derivative assets without claim drift
+        outcome: Threads, newsletter blurbs, community posts, and visuals remain compact pointers to the canonical proof.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/content, assets]
+        capabilities: [content_repurposing, design]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P09-W03, PSP-P09-W04, PSP-P09-W05, PSP-P09-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Channel copy, visual assets, source links, CTA tags, expiration dates]
+        acceptance: Every derivative passes claims lint and resolves to one canonical source URL and door tag.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W07
+        rollback: Retire the derivative and leave the canonical proof untouched.
+        return_evidence: [Asset inventory and lint receipt]
+      - id: PSP-P09-W08
+        title: Execute owner-approved distribution and record channel outcomes
+        outcome: Proof reaches relevant communities and owned channels with attribution and a stop rule.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [campaigns, analytics]
+        capabilities: [distribution_operations, analytics]
+        reasoning: routine
+        effect: external
+        depends_on: [PSP-P09-W07, PSP-P08-W07]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND]
+        deliverables: [Approved send plan, per-channel receipts, attributed visits/leads, objections]
+        acceptance: Every send has owner approval, canonical source, door tag, receipt, and no prohibited cold automation.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P09-W08
+        rollback: Stop the channel, retract where possible, and preserve the outcome/incident record.
+        return_evidence: [Publication URLs, approvals, attributed outcomes]
+
+  - id: PSP-P10
+    title: Qualification, conversation, and conversion system
+    outcome: Qualified client and recruiter demand moves through repeatable decisions without over-selling or custom-scope sprawl.
+    depends_on: [PSP-P04, PSP-P08, PSP-P09]
+    exit_gate: Client and recruiter playbooks, pipeline stages, proposal rules, objection capture, and the 90-day experiment work end to end.
+    work:
+      - id: PSP-P10-W01
+        title: Define the ideal client profile and live buying signals
+        outcome: The audit targets teams with expensive agentic-delivery pain, sufficient authority, and a decision they can act on.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/sales]
+        capabilities: [sales_strategy, market_research]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W04, PSP-P09-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [ICP, trigger events, buying committee, pains, disqualifiers, evidence signals]
+        acceptance: Ten synthetic or historical accounts can be scored consistently with explicit evidence and uncertainty.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W01
+        rollback: Revert to the broader qualified-lead rubric and record why the ICP was too narrow or noisy.
+        return_evidence: [Scored sample and rubric agreement]
+      - id: PSP-P10-W02
+        title: Build the client discovery-call guide
+        outcome: Conversations surface the delivery decision, failure cost, constraints, authority, and fit before pitching implementation.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/production-systems]
+        capabilities: [sales_conversation, technical_discovery]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P10-W01, PSP-P04-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Agenda, questions, evidence prompts, fit decision, next-step rules]
+        acceptance: A role-play produces enough information to route, price, decline, or request one bounded follow-up.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W02
+        rollback: Use the minimal qualification rubric and stop before solutioning.
+        return_evidence: [Role-play transcript rubric and revisions]
+      - id: PSP-P10-W03
+        title: Build the pre-audit diagnostic questionnaire
+        outcome: Technical context arrives before the call without requesting credentials, secrets, or broad access.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [forms, playbooks/production-systems]
+        capabilities: [technical_discovery, privacy, form_design]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P10-W02, PSP-P11-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Questionnaire, data classification, optional evidence checklist, deletion rule]
+        acceptance: Security review confirms no credential request, no unnecessary personal data, and a bounded answer burden.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W03
+        rollback: Withdraw the form and collect only the discovery-call minimum.
+        return_evidence: [Security review and completion-time test]
+      - id: PSP-P10-W04
+        title: Build the Agentic Delivery Audit sales page and intake path
+        outcome: A qualified buyer can understand the audit, assess fit, and start the correct conversation without a pricing spectacle.
+        target_repo: organvm/portfolio
+        target_paths: [src/pages, src/content, src/intake]
+        capabilities: [sales_copy, frontend, conversion_design]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W01, PSP-P08-W02, PSP-P10-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Offer page, fit/exclusion section, proof links, tagged intake]
+        acceptance: Page passes claims, accessibility, analytics, intake, and target-reader comprehension checks.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W04
+        rollback: Remove the route from navigation and retain direct qualified intake.
+        return_evidence: [Preview URL, tests, comprehension result]
+      - id: PSP-P10-W05
+        title: Implement proposal, follow-up, decision, and close-lost workflow
+        outcome: Every qualified conversation reaches a dated decision or explicit next owner rather than indefinite follow-up.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [pipelines, playbooks, templates]
+        capabilities: [sales_operations, automation]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P04-W06, PSP-P08-W06, PSP-P10-W02]
+        external_dependencies: []
+        human_gates: [HG-CONTRACT, HG-PUBLICATION-SEND]
+        deliverables: [Stage transitions, owner reminders, proposal checklist, close-lost reasons]
+        acceptance: Synthetic deals traverse every terminal route without an unauthorized send, signature, or scope mutation.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W05
+        rollback: Disable automation and retain manual stage ownership in the private ledger.
+        return_evidence: [Scenario receipts and no-send proof]
+      - id: PSP-P10-W06
+        title: Build the recruiter conversation and interview packet
+        outcome: Recruiter and hiring conversations present the same systems-leadership story with role-specific evidence and bounded authority language.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/recruiter, evidence]
+        capabilities: [career_strategy, interview_preparation]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P03-W05, PSP-P03-W06, PSP-P07-W04]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Recruiter screen guide, interview stories, role filters, questions, evidence links]
+        acceptance: Every story uses a verified situation, decision, action, outcome/limit, and proof link; no title inflation remains.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W06
+        rollback: Narrow target roles and return failed stories to the evidence packet.
+        return_evidence: [Mock-interview rubric and role fit matrix]
+      - id: PSP-P10-W07
+        title: Operate a structured objection and no-outcome ledger
+        outcome: Lost demand changes the offer only through accumulated evidence rather than anecdotal overreaction.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [pipelines, ledgers]
+        capabilities: [sales_analysis, data_modeling]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P10-W05, PSP-P10-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Objection taxonomy, evidence fields, aggregation, revision threshold]
+        acceptance: Every closed-lost or declined opportunity has a reason, evidence quality, audience, stage, and follow-up disposition.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W07
+        rollback: Preserve raw outcomes and discard only a faulty derived taxonomy.
+        return_evidence: [Ledger coverage and top objection report]
+      - id: PSP-P10-W08
+        title: Run and adjudicate the 90-day demand experiment
+        outcome: Actual qualified outcomes validate the audit wedge or force a documented revision without another broad speculative research cycle.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/decisions, docs/receipts]
+        capabilities: [sales_analysis, strategy, decision_review]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P09-W08, PSP-P10-W07, PSP-P12-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Qualified denominator, paid/no outcomes, reasons, keep/narrow/pivot decision]
+        acceptance: At least five qualified door-mails exist and either one paid audit or five documented no outcomes support an explicit decision.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P10-W08
+        rollback: Continue the prior offer only under a time-boxed extension with a named missing-evidence condition.
+        return_evidence: [90-day decision memo and source outcome links]
+
+  - id: PSP-P11
+    title: Service-delivery operating system
+    outcome: Audit, install, and retainer engagements can be delivered safely, consistently, and with reusable evidence.
+    depends_on: [PSP-P04]
+    exit_gate: A synthetic engagement traverses intake, evidence, analysis, verdict, implementation, QA, handoff, and closeout under the declared boundaries.
+    work:
+      - id: PSP-P11-W01
+        title: Define read-only evidence intake and security boundaries
+        outcome: Clients can provide enough evidence for diagnosis without surrendering secrets, production write access, or unrelated data.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [security, schemas, playbooks/production-systems]
+        capabilities: [security, privacy, technical_audit]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P04-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Data classification, accepted evidence, prohibited inputs, transfer/custody/deletion rules]
+        acceptance: Threat review proves least privilege, client partitioning, no plaintext secrets, and a tested deletion/export path.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W01
+        rollback: Stop intake, return/delete client material per contract, and retain synthetic fixtures only.
+        return_evidence: [Threat model and boundary tests]
+      - id: PSP-P11-W02
+        title: Build the Agentic Delivery Audit methodology and runbook
+        outcome: Different qualified agents can execute the same diagnostic and reach explainable verdicts.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/production-systems, rubrics]
+        capabilities: [technical_audit, reliability, governance]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P11-W01, PSP-P04-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Audit stages, interview/evidence protocol, failure taxonomy, scoring, verdict rules]
+        acceptance: Two reviewers independently audit the same synthetic case within the declared agreement tolerance.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W02
+        rollback: Mark methodology experimental and require a single accountable reviewer until calibrated.
+        return_evidence: [Inter-rater receipt and method version]
+      - id: PSP-P11-W03
+        title: Create the audit report and executive verdict template
+        outcome: Findings convert technical evidence into a prioritized decision, gate specification, and bounded next step.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [templates/production-systems, rubrics]
+        capabilities: [executive_writing, technical_audit]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Executive summary, evidence table, risk ranking, gate spec, options, limitations]
+        acceptance: Synthetic report traces every finding to evidence and every recommendation to an owner, predicate, and expected decision.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W03
+        rollback: Withhold the report and return unresolved findings to the audit evidence table.
+        return_evidence: [Synthetic report and review rubric]
+      - id: PSP-P11-W04
+        title: Build the Governance Install delivery runbook
+        outcome: A recommended gate can be installed for one team or pipeline without accidental enterprise-wide authority.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/production-systems, templates]
+        capabilities: [systems_architecture, implementation_planning]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W03, PSP-P04-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Discovery, design, implementation, migration, acceptance, training, handoff modules]
+        acceptance: Synthetic install has one-team scope, change control, rollback, acceptance tests, and named post-install owner.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W04
+        rollback: Remove installed gates through the documented reversible path and restore prior delivery controls.
+        return_evidence: [Dry-run plan and rollback drill]
+      - id: PSP-P11-W05
+        title: Build the bounded retainer operating contract
+        outcome: Recurring governance support produces a predictable monthly artifact and decision cadence.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/production-systems, templates]
+        capabilities: [operations, service_delivery]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W04, PSP-P04-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Monthly cadence, scorecard, change budget, escalation, capacity, renewal/exit]
+        acceptance: Capacity simulation proves the retainer fits its declared days and has no hidden on-call or unlimited build obligation.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W05
+        rollback: End at the last monthly closeout and hand ownership back under the exit checklist.
+        return_evidence: [Capacity model and sample monthly packet]
+      - id: PSP-P11-W06
+        title: Build the private client workspace and decision log
+        outcome: Evidence, decisions, deliverables, approvals, and receipts remain partitioned and recoverable per engagement.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [schemas, workspaces, tests]
+        capabilities: [data_modeling, privacy, collaboration_operations]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Workspace template, owner partition, decision log, artifact index, export/delete]
+        acceptance: Cross-client isolation, synthetic-only fixtures, export, deletion, and audit-log tests pass.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W06
+        rollback: Export and remove the affected workspace under the custody contract; never merge client data into shared templates.
+        return_evidence: [Isolation tests and workspace fixture]
+      - id: PSP-P11-W07
+        title: Prove delivery QA, acceptance, handoff, and closeout
+        outcome: An engagement cannot be called done while deliverables, acceptance, ownership, access, or residual work dangles.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks, checklists, receipts]
+        capabilities: [quality_assurance, closeout, governance]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W02, PSP-P11-W03, PSP-P11-W04, PSP-P11-W05, PSP-P11-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [QA rubric, acceptance receipt, access return, handoff, residual owner, closeout]
+        acceptance: A synthetic engagement reaches an idempotent closeout twice with zero dangling access, artifact, task, decision, or invoice owner.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W07
+        rollback: Reopen the engagement only through a new scoped packet or documented correction, not by mutating the closed receipt.
+        return_evidence: [Two-pass closeout receipts]
+      - id: PSP-P11-W08
+        title: Define consent and sanitization for public client proof
+        outcome: Delivery evidence can become a case study only with explicit rights, factual review, and privacy-safe transformation.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [templates, security, playbooks]
+        capabilities: [privacy, legal_issue_spotting, case_study]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P11-W07]
+        external_dependencies: []
+        human_gates: [HG-CONTRACT]
+        deliverables: [Consent options, anonymization rubric, client review, withdrawal path]
+        acceptance: Synthetic case study transformation contains no client-confidential fact and models consent withdrawal end to end.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P11-W08
+        rollback: Unpublish and invalidate dependent claims immediately on consent withdrawal or factual dispute.
+        return_evidence: [Consent template and sanitization drill]
+
+  - id: PSP-P12
+    title: External validation and first commercial proof
+    outcome: Real users, buyers, recruiters, or partners create evidence beyond self-authored technical output.
+    depends_on: [PSP-P09, PSP-P10, PSP-P11]
+    exit_gate: The first audit outcome, external proof, and claims refresh are complete or the wedge has an evidence-backed invalidation receipt.
+    work:
+      - id: PSP-P12-W01
+        title: Recruit a bounded design-partner cohort
+        outcome: A small set of qualified teams reviews or pilots the audit without turning the program into unpaid open-ended consulting.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [campaigns, pipelines]
+        capabilities: [partner_strategy, sales_operations]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P09-W08, PSP-P10-W01, PSP-P11-W02]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND, HG-CONTRACT]
+        deliverables: [Cohort criteria, invitation package, bounds, consent, outcome schedule]
+        acceptance: Up to three qualified partners have explicit scope and outcome terms, or every declined invitation is recorded with reason.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W01
+        rollback: End the cohort at the agreed boundary and return/delete material per terms.
+        return_evidence: [Partner decisions and terms receipts]
+      - id: PSP-P12-W02
+        title: Close and deliver the first paid or explicitly bounded pilot audit
+        outcome: The commercial wedge is tested against a real decision and produces a complete delivery receipt.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [clients, receipts]
+        capabilities: [sales, technical_audit, delivery]
+        reasoning: frontier_review
+        effect: external
+        depends_on: [PSP-P12-W01, PSP-P10-W05, PSP-P11-W07]
+        external_dependencies: []
+        human_gates: [HG-CONTRACT]
+        deliverables: [Signed scope, evidence intake, report, verdict, closeout, outcome interview]
+        acceptance: Engagement closes under PSP-P11-W07 and payment/pilot terms plus client acceptance have durable receipts.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W02
+        rollback: Stop under the contract, return access/data, and record the exact failed assumption without fabricating a case study.
+        return_evidence: [Private engagement receipt and public-safe outcome summary]
+      - id: PSP-P12-W03
+        title: Deliver the first Governance Install when the audit supports it
+        outcome: A real team receives one bounded delivery-control improvement with measured before/after behavior.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [clients, receipts]
+        capabilities: [systems_architecture, implementation, client_delivery]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P12-W02, PSP-P11-W04]
+        external_dependencies: []
+        human_gates: [HG-CONTRACT]
+        deliverables: [Install plan, implementation, acceptance, before/after measure, handoff]
+        acceptance: Client acceptance passes and the installed gate improves its declared outcome without exceeding one-team authority.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W03
+        rollback: Execute the contracted rollback and retain the before/after failure as an internal learning receipt.
+        return_evidence: [Acceptance, metric, and handoff receipts]
+      - id: PSP-P12-W04
+        title: Produce the first consented public case study
+        outcome: Commercial proof shows problem, decisions, intervention, outcome, limitations, and authorship without client leakage.
+        target_repo: organvm/portfolio
+        target_paths: [src/content/case-studies, public]
+        capabilities: [case_study, editorial, privacy]
+        reasoning: frontier_review
+        effect: external
+        depends_on: [PSP-P12-W02, PSP-P11-W08]
+        external_dependencies: []
+        human_gates: [HG-PUBLIC-IDENTITY, HG-CONTRACT]
+        deliverables: [Case study, evidence anchors, client review, consent, live release]
+        acceptance: Client and owner approve exact copy; claims, privacy, links, accessibility, and rollback checks pass live.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W04
+        rollback: Unpublish immediately under the withdrawal path and demote dependent claims.
+        return_evidence: [Live URL, consent, review, release ID]
+      - id: PSP-P12-W05
+        title: Capture testimonials, references, reproductions, and independent review
+        outcome: The story includes externally authored validation with provenance and consent.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/proof, docs/receipts]
+        capabilities: [evidence_curation, partner_coordination]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P12-W02]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND, HG-CONTRACT]
+        deliverables: [Request templates, provenance, consent, public-safe validation objects]
+        acceptance: Each object identifies author, date, context, consent, permitted wording, and withdrawal path.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W05
+        rollback: Withdraw the object and recalculate dependent trust claims.
+        return_evidence: [Validation inventory and consent status]
+      - id: PSP-P12-W06
+        title: Refresh positioning, proof, and offer claims from real outcomes
+        outcome: External results strengthen, narrow, or invalidate the narrative through the same claims control plane.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/claims-ledger.md, docs/positioning, positioning-seeds.json]
+        capabilities: [claim_adjudication, strategy, data_analysis]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P12-W02, PSP-P12-W04, PSP-P12-W05, PSP-P02-W08]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Outcome-linked claims, rejections, prominence decisions, regenerated surfaces]
+        acceptance: Every changed claim cites an external outcome and all dependent generated surfaces pass parity and staleness checks.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P12-W06
+        rollback: Restore the prior claim set and quarantine disputed outcome interpretation.
+        return_evidence: [Claims diff, reviewer verdict, regeneration receipt]
+
+  - id: PSP-P13
+    title: Governed foundry and domain-operator handoff
+    outcome: The estate's product abundance becomes a scored portfolio whose validated products can transfer to accountable operators.
+    depends_on: [PSP-P02, PSP-P04, PSP-P11, PSP-P12]
+    exit_gate: The entire product estate is scored and one transfer reaches observed operation or an evidence-backed no-go decision.
+    work:
+      - id: PSP-P13-W01
+        title: Inventory every product candidate across all owned organizations
+        outcome: Generated products, experiments, infrastructure, archives, partner work, and actual transfer candidates are no longer conflated.
+        target_repo: organvm/limen
+        target_paths: [institutio/github/estate.yaml, docs/positioning/foundry]
+        capabilities: [github_read, product_inventory, classification]
+        reasoning: routine
+        effect: read
+        depends_on: [PSP-P02-W01, PSP-P02-W02]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Complete product-candidate denominator, lineage, owner, visibility, current state]
+        acceptance: Two live owner-wide censuses produce zero new unclassified product-candidate keys.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W01
+        rollback: Read-only; supersede the inventory with a new dated receipt rather than rewriting history.
+        return_evidence: [Candidate count, organization coverage, census digests]
+      - id: PSP-P13-W02
+        title: Score demand and market evidence for every product candidate
+        outcome: Transfer attention follows observed demand, pain, audience, and willingness-to-pay evidence rather than build enthusiasm.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/foundry, institutio]
+        capabilities: [product_strategy, market_analysis, data_modeling]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W01, PSP-P08-W06]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Demand rubric, evidence tiers, scored portfolio, uncertainty flags]
+        acceptance: Every candidate has sourced demand evidence or an explicit zero-evidence score and next experiment.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W02
+        rollback: Remove only the derived score; preserve source observations and candidate history.
+        return_evidence: [Score distribution and top-candidate rationale]
+      - id: PSP-P13-W03
+        title: Score technical readiness, custody, and maintenance risk
+        outcome: A product cannot be handed off because it demos well while tests, deploy, security, docs, data, or ownership remain unsafe.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/foundry, docs/receipts]
+        capabilities: [technical_due_diligence, security, operations]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Readiness rubric, per-product checks, custody map, maintenance estimate, blockers]
+        acceptance: Every candidate has reproducible build/test/deploy status, data/IP custody, security class, and named maintenance owner or blocker.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W03
+        rollback: Mark the product non-transferable and keep it in its current custody until blockers close.
+        return_evidence: [Readiness scores and blocker owners]
+      - id: PSP-P13-W04
+        title: Define the domain-operator profile and selection scorecard
+        outcome: Operators are selected for domain access, demand ownership, execution discipline, trust, and fit—not enthusiasm alone.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [playbooks/operators, rubrics]
+        capabilities: [partnership_strategy, operator_assessment]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W02, PSP-P13-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Operator profile, scorecard, references, conflicts, decision rights]
+        acceptance: Synthetic operator cases route consistently to proceed, diligence, trial, decline, or human review.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W04
+        rollback: Keep product operation with the current owner and retain candidate assessments privately.
+        return_evidence: [Scenario matrix and scorecard version]
+      - id: PSP-P13-W05
+        title: Establish transfer floors, economics, and kill/park rules
+        outcome: A handoff begins only after demand and economics cross declared thresholds, and weak products stop consuming narrative attention.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/foundry, private-vault]
+        capabilities: [financial_modeling, portfolio_strategy]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W02, PSP-P13-W03]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Experiment floor, transfer floor, institutional threshold, maintenance budget, park/kill criteria]
+        acceptance: Each shortlisted product has a sourced economic hypothesis, runway, transfer trigger, and stop condition.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W05
+        rollback: Park the product and remove transfer messaging while retaining code and evidence custody.
+        return_evidence: [Private economics digest and threshold review]
+      - id: PSP-P13-W06
+        title: Design licensing, equity, revenue-share, custody, and return options
+        outcome: The first operator conversation starts from reviewed legal/economic structures rather than improvised promises.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [templates/operators, playbooks/operators]
+        capabilities: [legal_issue_spotting, partnership_design, finance]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P13-W04, PSP-P13-W05]
+        external_dependencies: []
+        human_gates: [HG-OPERATOR-TERMS]
+        deliverables: [Structure comparison, IP/data/access boundaries, vesting/performance, termination, return clauses]
+        acceptance: Owner and qualified counsel approve the structure selected for any real pilot before access or rights transfer.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W06
+        rollback: Keep all rights/access with the current owner and mark templates draft-only.
+        return_evidence: [Private legal review status and selected-structure rationale]
+      - id: PSP-P13-W07
+        title: Build the operator discovery, diligence, and trial pipeline
+        outcome: Qualified operators move through a private, comparable process with no premature product or data access.
+        target_repo: organvm-iii-ergon/collaboration-operations-platform
+        target_paths: [pipelines/operators, playbooks/operators]
+        capabilities: [partnership_operations, privacy, due_diligence]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W04, PSP-P13-W06]
+        external_dependencies: []
+        human_gates: [HG-PUBLICATION-SEND, HG-OPERATOR-TERMS]
+        deliverables: [Sourcing criteria, diligence checklist, trial plan, access stages, decision ledger]
+        acceptance: Synthetic candidates traverse the pipeline without receiving rights, credentials, customer data, or production access before the corresponding gate.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W07
+        rollback: Revoke trial access through the documented path and retain the private decision receipt.
+        return_evidence: [Pipeline test and access-stage audit]
+      - id: PSP-P13-W08
+        title: Execute one bounded operator-handoff pilot
+        outcome: One evidence-qualified product and operator test the transfer model under finite scope, telemetry, and return rights.
+        target_repo: multi-repository:selected-product-and-private-platform
+        target_paths: [pilot, receipts]
+        capabilities: [product_operations, partnership_delivery, security]
+        reasoning: frontier_review
+        effect: external
+        depends_on: [PSP-P13-W03, PSP-P13-W05, PSP-P13-W06, PSP-P13-W07]
+        external_dependencies: []
+        human_gates: [HG-OPERATOR-TERMS, HG-CONTRACT]
+        deliverables: [Signed pilot, bounded access, operating plan, telemetry, cadence, close/continue/return decision]
+        acceptance: Pilot reaches its decision date with complete telemetry, access/custody accounting, and an executed continue, revise, return, or terminate receipt.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W08
+        rollback: Invoke the signed return clause, revoke access, restore custody, and preserve operational data under the agreed boundary.
+        return_evidence: [Pilot decision, telemetry digest, access/custody receipt]
+      - id: PSP-P13-W09
+        title: Institutionalize foundry governance and product return paths
+        outcome: Future product transfers reuse a scored, observable, reversible operating model rather than one-off partnerships.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/foundry, institutio, scripts]
+        capabilities: [governance, portfolio_operations, automation]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P13-W08]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Foundry review cadence, score refresh, operator telemetry contract, return/park/kill workflow]
+        acceptance: The pilot's complete lifecycle can be reproduced from the institutional templates with no client/operator-specific data leakage.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P13-W09
+        rollback: Disable new transfers and continue monitoring or park existing products under their signed terms.
+        return_evidence: [Template diff, lifecycle replay, governance review]
+
+  - id: PSP-P14
+    title: Return loop, measurement, rollback, and Omega
+    outcome: Evidence, demand, delivery, and operator results continuously correct the system and converge without orphan work.
+    depends_on: [PSP-P07, PSP-P08, PSP-P09, PSP-P10, PSP-P11, PSP-P12, PSP-P13]
+    exit_gate: Two unchanged remote checks prove complete issue coverage, current claims, healthy surfaces, closed loops, and terminal receipts.
+    work:
+      - id: PSP-P14-W01
+        title: Define the end-to-end event and KPI dictionary
+        outcome: Trust, discovery, engagement, demand, sales, delivery, and foundry metrics have stable definitions and owners.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/analytics, institutio]
+        capabilities: [analytics, kpi_design, governance]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P07-W08, PSP-P08-W06, PSP-P11-W07, PSP-P13-W09]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Metric names, formulas, denominators, sources, cadence, owner, guardrails]
+        acceptance: Every program success metric regenerates from a named source and no vanity metric lacks a decision use.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W01
+        rollback: Retire only the faulty derived metric; preserve raw privacy-compliant events.
+        return_evidence: [Metric dictionary and reproduction tests]
+      - id: PSP-P14-W02
+        title: Operate the weekly execution and demand review
+        outcome: Ready work, blockers, qualified demand, delivery risk, and evidence changes receive one bounded weekly decision.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/reviews, scripts]
+        capabilities: [program_management, analytics]
+        reasoning: routine
+        effect: write
+        depends_on: [PSP-P14-W01, PSP-P00-W07]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Review template, generated brief, decisions, packet routing]
+        acceptance: Four consecutive reviews link live metrics, issue changes, decisions, owners, and next predicates without duplicating closed work.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W02
+        rollback: Pause automation and conduct the review from the same source ledgers manually.
+        return_evidence: [Four review receipts]
+      - id: PSP-P14-W03
+        title: Operate the monthly truth, surface, and privacy audit
+        outcome: Claims, sources, links, public/private boundaries, and generated surfaces cannot drift silently.
+        target_repo: organvm/limen
+        target_paths: [scripts, docs/receipts, link-surfaces.json]
+        capabilities: [audit, privacy, link_check, claim_adjudication]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W06, PSP-P02-W07, PSP-P07-W09]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Monthly audit, stale/changed source list, correction packets]
+        acceptance: Two consecutive audits report zero unowned stale claim, broken link, private leak, or surface parity defect.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W03
+        rollback: Quarantine affected claims/surfaces and restore the last known-green release.
+        return_evidence: [Two audit receipts and correction links]
+      - id: PSP-P14-W04
+        title: Operate the quarterly strategy and prominence review
+        outcome: Identity, proof hierarchy, offers, and channels change only when accumulated audience and outcome evidence warrants it.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/decisions, docs/receipts]
+        capabilities: [strategy, claim_adjudication, sales_analysis]
+        reasoning: frontier_review
+        effect: write
+        depends_on: [PSP-P10-W08, PSP-P12-W06, PSP-P14-W01]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Evidence summary, keep/narrow/promote/withdraw decisions, next experiment]
+        acceptance: Decision cites conversation, funnel, delivery, and claim evidence and distinguishes truth from messaging prominence.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W04
+        rollback: Retain the prior approved strategy under a time-boxed missing-evidence note.
+        return_evidence: [Quarterly decision memo]
+      - id: PSP-P14-W05
+        title: Automate claim incident quarantine and correction propagation
+        outcome: A false, stale, or privacy-unsafe claim is removed everywhere before a corrected version can republish.
+        target_repo: organvm/limen
+        target_paths: [scripts, docs/positioning/claims-ledger.md, docs/receipts]
+        capabilities: [python, incident_response, content_generation]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P02-W07, PSP-P07-W09]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Quarantine flag, dependency graph, regeneration block, correction receipt]
+        acceptance: Synthetic incident removes one claim from every dependent generated surface, blocks republish, then restores only after evidence correction.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W05
+        rollback: Disable public generation and serve the last known-green static release.
+        return_evidence: [Incident drill timeline and surface set]
+      - id: PSP-P14-W06
+        title: Automate release-level surface rollback and recovery verification
+        outcome: A failed profile, site, report, or URL release can return to a known-green state without losing evidence or capture ownership.
+        target_repo: multi-repository:public-surfaces
+        target_paths: [deploy, scripts, docs/receipts]
+        capabilities: [deployment, incident_response, browser_testing]
+        reasoning: deep
+        effect: external
+        depends_on: [PSP-P07-W09, PSP-P08-W07]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Release manifest, rollback commands, health verification, capture continuity check]
+        acceptance: A synthetic bad release restores the exact prior release and all tracked health/capture predicates pass afterward.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W06
+        rollback: The predicate is the rollback; stop further releases if restoration itself fails.
+        return_evidence: [Before/bad/restored release IDs and health checks]
+      - id: PSP-P14-W07
+        title: Feed sales objections and demand outcomes back into offers
+        outcome: Offer scope, qualification, pricing, and copy evolve from aggregated market evidence without corrupting historical outcomes.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/offers, docs/positioning/decisions]
+        capabilities: [sales_analysis, offer_design]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P10-W07, PSP-P10-W08]
+        external_dependencies: []
+        human_gates: [HG-PRICE-ANCHORS]
+        deliverables: [Revision thresholds, offer diffs, retained outcome history, price decision]
+        acceptance: Every offer revision cites the threshold-crossing outcome set and preserves prior version/results for comparison.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W07
+        rollback: Restore the prior offer version and continue collecting outcomes under a named test window.
+        return_evidence: [Offer decision and before/after conversion measures]
+      - id: PSP-P14-W08
+        title: Feed delivery and operator outcomes back into proof and portfolio classification
+        outcome: Reliability, impact, maintenance, and operator evidence update what products and systems may credibly claim.
+        target_repo: organvm/limen
+        target_paths: [docs/positioning/claims-ledger.md, docs/positioning/estate-classification.md, docs/positioning/proof]
+        capabilities: [product_analysis, claim_adjudication, portfolio_strategy]
+        reasoning: deep
+        effect: write
+        depends_on: [PSP-P12-W06, PSP-P13-W08, PSP-P13-W09]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Outcome-to-claim mapping, class changes, proof updates, failed-assumption record]
+        acceptance: Every delivery/operator outcome has a recorded claim, classification, and proof impact—even when the impact is none.
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W08
+        rollback: Revert the derived claim/class change while preserving the immutable outcome receipt.
+        return_evidence: [Outcome impact matrix and regenerated proof]
+      - id: PSP-P14-W09
+        title: Prove alpha-to-omega convergence in two unchanged passes
+        outcome: The program reaches a provider-neutral fixed point with no orphan issue, stale claim, broken surface, unowned result, or hidden human gate.
+        target_repo: organvm/limen
+        target_paths: [institutio/positioning, docs/positioning/program, docs/receipts]
+        capabilities: [verification, github_read, governance, closeout]
+        reasoning: frontier_review
+        effect: read
+        depends_on: [PSP-P14-W02, PSP-P14-W03, PSP-P14-W04, PSP-P14-W05, PSP-P14-W06, PSP-P14-W07, PSP-P14-W08]
+        external_dependencies: []
+        human_gates: []
+        deliverables: [Complete remote graph, phase receipts, two-pass Omega receipts, successor cadence owner]
+        acceptance: python3 scripts/positioning-program.py --omega --require-two-pass
+        predicate: python3 scripts/positioning-program.py --verify-work PSP-P14-W09
+        rollback: No mutation; any drift reopens only the owning leaf or creates a reviewed successor work ID.
+        return_evidence: [Two byte-stable Omega receipts and zero-orphan counts]
