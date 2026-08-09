@@ -592,7 +592,9 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
     assert '[ "$FAST_WAVE_SECONDS" -ge 60 ]' not in heartbeat
     assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
     assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
-    assert "_fast_wave_aux_cleanup" in fast_body
+    assert "_fast_wave_cleanup" in fast_body
+    assert "_fw_sample_rc=125" in fast_body
+    assert "running without capture" in fast_body
     assert "_fast_wave_kill_tree" in fast_body
     assert "pgrep -P" in fast_body
     watchdog_launch = heartbeat.index('stale_watchdog_loop "$$" &')
