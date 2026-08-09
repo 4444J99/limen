@@ -793,3 +793,22 @@ def test_early_sample_error_survives_transient_seat_write(tmp_path, monkeypatch)
 
     assert status["sample_error"]["error"] == "sample unavailable"
     assert status["sample_error_at"]
+
+
+def test_sample_reports_unpersisted_receipt(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: {"organ": "vitals", "status": "ok", "action": "ok"},
+    )
+    monkeypatch.setattr(
+        executive,
+        "_update_status",
+        lambda mutator: {**mutator({}), "_persistence_error": "disk full"},
+    )
+
+    status = executive.sample_vitals()
+
+    assert status["sample_persisted"] is False
+    assert status["_persistence_error"] == "disk full"
