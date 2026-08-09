@@ -581,91 +581,127 @@ def live_label_metadata_drift(
 
 
 
-def live_open_pr_identities() -> set[str] | None:
-    """Return the live open-PR coordinate set, paginating the complete org search."""
-    query = """
-    query($cursor: String) {
-      search(query: "org:organvm is:pr is:open", type: ISSUE, first: 100, after: $cursor) {
-        issueCount
-        nodes {
-          ... on PullRequest {
-            repository { nameWithOwner }
-            number
-          }
-        }
-        pageInfo { hasNextPage endCursor }
-      }
-    }
-    """
-    identities: set[str] = set()
-    expected_count: int | None = None
-    cursor: str | None = None
-    for _page in range(20):
-        args = ["gh", "api", "graphql", "-f", f"query={query}"]
-        if cursor:
-            args.extend(["-f", f"cursor={cursor}"])
+def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | None:
+    """Return live open-PR identities through disjoint per-repository searches."""
+    if repositories is None:
         try:
-            result = subprocess.run(
-                args,
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=False,
-            )
-            payload = json.loads(result.stdout) if result.returncode == 0 else None
-        except (OSError, subprocess.SubprocessError, ValueError) as exc:
-            fail("D", f"live open-PR census query failed: {type(exc).__name__}")
+            ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, ValueError) as exc:
+            fail("D", f"PR-debt ledger is unreadable while deriving live repositories: {exc}")
             return None
-        data = payload.get("data") if isinstance(payload, dict) else None
-        search = data.get("search") if isinstance(data, dict) else None
-        count = search.get("issueCount") if isinstance(search, dict) else None
-        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
-            fail("D", "live open-PR census query returned no issueCount")
+        rows = _complete_census_rows(ledger) if isinstance(ledger, dict) else None
+        if rows is None:
             return None
-        if expected_count is None:
-            expected_count = count
-        elif count != expected_count:
-            fail("D", "live open-PR census issueCount changed during pagination")
-            return None
-        nodes = search.get("nodes") if isinstance(search, dict) else None
-        if not isinstance(nodes, list):
-            fail("D", "live open-PR census query returned no pull-request nodes")
-            return None
-        for node in nodes:
-            repository = node.get("repository") if isinstance(node, dict) else None
-            repository_name = repository.get("nameWithOwner") if isinstance(repository, dict) else None
-            number = node.get("number") if isinstance(node, dict) else None
-            if (
-                not isinstance(repository_name, str)
-                or not repository_name
-                or isinstance(number, bool)
-                or not isinstance(number, int)
-                or number <= 0
-            ):
-                fail("D", "live open-PR census returned a malformed pull-request identity")
-                return None
-            identities.add(hashlib.sha256(f"{repository_name}#{number}".encode()).hexdigest())
-        page_info = search.get("pageInfo") if isinstance(search, dict) else None
-        has_next = page_info.get("hasNextPage") if isinstance(page_info, dict) else None
-        end_cursor = page_info.get("endCursor") if isinstance(page_info, dict) else None
-        if has_next is not True:
-            break
-        if not isinstance(end_cursor, str) or not end_cursor:
-            fail("D", "live open-PR census pagination has no end cursor")
-            return None
-        cursor = end_cursor
-    else:
-        fail("D", "live open-PR census exceeded the bounded pagination window")
+        repositories = {
+            str(row.get("repository"))
+            for row in rows
+            if isinstance(row, dict) and isinstance(row.get("repository"), str)
+        }
+    valid_repositories = sorted(
+        repository
+        for repository in repositories
+        if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository)
+    )
+    if not valid_repositories or len(valid_repositories) != len(repositories):
+        fail("D", "live open-PR census has an invalid or empty repository owner set")
         return None
-    if expected_count is None or len(identities) != expected_count:
-        fail(
-            "D",
-            "live open-PR census identity count does not match issueCount "
-            f"({len(identities)} != {expected_count})",
-        )
-        return None
-    return identities
 
+    identities: set[str] = set()
+    for repository in valid_repositories:
+        query = f"""
+        query($cursor: String) {{
+          search(query: "repo:{repository} is:pr is:open", type: ISSUE, first: 100, after: $cursor) {{
+            issueCount
+            nodes {{
+              ... on PullRequest {{
+                repository {{ nameWithOwner }}
+                number
+              }}
+            }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
+        }}
+        """
+        repository_identities: set[str] = set()
+        expected_count: int | None = None
+        cursor: str | None = None
+        for _page in range(20):
+            args = ["gh", "api", "graphql", "-f", f"query={query}"]
+            if cursor:
+                args.extend(["-F", f"cursor={cursor}"])
+            try:
+                result = subprocess.run(
+                    args,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+                payload = json.loads(result.stdout) if result.returncode == 0 else None
+            except (OSError, subprocess.SubprocessError, ValueError) as exc:
+                fail("D", f"live open-PR census query failed for {repository}: {type(exc).__name__}")
+                return None
+            data = payload.get("data") if isinstance(payload, dict) else None
+            search = data.get("search") if isinstance(data, dict) else None
+            count = search.get("issueCount") if isinstance(search, dict) else None
+            if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                fail("D", f"live open-PR census query returned no issueCount for {repository}")
+                return None
+            if count >= 1000:
+                fail(
+                    "D",
+                    f"live open-PR census repository shard still reaches the 1,000-result cap: {repository}",
+                )
+                return None
+            if expected_count is None:
+                expected_count = count
+            elif count != expected_count:
+                fail("D", f"live open-PR census issueCount changed during {repository} pagination")
+                return None
+            nodes = search.get("nodes") if isinstance(search, dict) else None
+            if not isinstance(nodes, list):
+                fail("D", f"live open-PR census query returned no pull-request nodes for {repository}")
+                return None
+            for node in nodes:
+                node_repository = node.get("repository") if isinstance(node, dict) else None
+                repository_name = (
+                    node_repository.get("nameWithOwner")
+                    if isinstance(node_repository, dict)
+                    else None
+                )
+                number = node.get("number") if isinstance(node, dict) else None
+                if (
+                    repository_name != repository
+                    or isinstance(number, bool)
+                    or not isinstance(number, int)
+                    or number <= 0
+                ):
+                    fail("D", f"live open-PR census returned a malformed identity for {repository}")
+                    return None
+                repository_identities.add(
+                    hashlib.sha256(f"{repository_name}#{number}".encode()).hexdigest()
+                )
+            page_info = search.get("pageInfo") if isinstance(search, dict) else None
+            has_next = page_info.get("hasNextPage") if isinstance(page_info, dict) else None
+            end_cursor = page_info.get("endCursor") if isinstance(page_info, dict) else None
+            if has_next is not True:
+                break
+            if not isinstance(end_cursor, str) or not end_cursor:
+                fail("D", f"live open-PR census pagination has no end cursor for {repository}")
+                return None
+            cursor = end_cursor
+        else:
+            fail("D", f"live open-PR census exceeded the bounded pagination window for {repository}")
+            return None
+        if expected_count is None or len(repository_identities) != expected_count:
+            fail(
+                "D",
+                f"live open-PR census identity count does not match issueCount for {repository} "
+                f"({len(repository_identities)} != {expected_count})",
+            )
+            return None
+        identities.update(repository_identities)
+    return identities
 
 def live_open_pr_count() -> int | None:
     identities = live_open_pr_identities()
