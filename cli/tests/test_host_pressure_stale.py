@@ -96,7 +96,7 @@ def test_budget_reads_shared_env_file(tmp_path):
     write_status(tmp_path, datetime.now(timezone.utc) - timedelta(minutes=10))
     env_file = tmp_path / "limen.env"
     env_file.write_text(
-        "LIMEN_VITALS_STALE_BEATS=2\nLIMEN_VITALS_SAMPLE_SECONDS=120\n",
+        "LIMEN_VITALS_STALE_BEATS=2 # two missed samples\nLIMEN_VITALS_SAMPLE_SECONDS=120 # two minutes\n",
         encoding="utf-8",
     )
 
