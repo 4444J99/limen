@@ -354,8 +354,9 @@ def github_profile_surface() -> dict[str, Any]:
         "readme_present": bool(readme_text),
         "readme_sha": (readme_payload or {}).get("sha"),
         "readme_total_repos": readme_marker(readme_text, "total_repos"),
-        "old_portfolio_link_count": readme_text.count("4444j99.github.io/portfolio"),
-        "live_portfolio_link_count": readme_text.count("organvm.github.io/portfolio"),
+        "old_portfolio_link_count": readme_text.count("4444j99.github.io/portfolio")
+        + readme_text.count("organvm.github.io/portfolio"),
+        "live_portfolio_link_count": readme_text.count("organvm-vii-kerygma.github.io/portfolio"),
         "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(readme_text)),
         "account_bio": bio,
         "account_blog": blog,
@@ -542,8 +543,9 @@ def profile_receipt() -> dict[str, Any]:
         "ssot_total_repos": ssot_repos,
         "ssot_public_repos_all": public_repos_all,
         "ssot_total_words_numeric": ssot_words,
-        "old_portfolio_link_count": text.count("4444j99.github.io/portfolio"),
-        "live_portfolio_link_count": text.count("organvm.github.io/portfolio"),
+        "old_portfolio_link_count": text.count("4444j99.github.io/portfolio")
+        + text.count("organvm.github.io/portfolio"),
+        "live_portfolio_link_count": text.count("organvm-vii-kerygma.github.io/portfolio"),
         "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(text)),
         "frontdoor_present": (ROOT / "docs" / "positioning" / "_frontdoor.md").exists(),
     }
@@ -1261,17 +1263,9 @@ def substrate_receipt() -> dict[str, Any]:
     debt = worktree_debt.get("debt")
     reapable = worktree_debt.get("reapable")
     storage_pressure = load_json(SUBSTRATE_STORAGE_INDEX, {})
-    headroom_gib = (
-        round(float(disk["free_gib"]) - required_free_gib, 1)
-        if required_free_gib is not None
-        else None
-    )
+    headroom_gib = round(float(disk["free_gib"]) - required_free_gib, 1) if required_free_gib is not None else None
     envelope_ok = headroom_gib is not None and headroom_gib >= 0
-    open_substrate = bool(
-        not envelope_ok
-        or not disk["tmp_ok"]
-        or not lifecycle["predicate_ok"]
-    )
+    open_substrate = bool(not envelope_ok or not disk["tmp_ok"] or not lifecycle["predicate_ok"])
     owner_gated = bool(
         headroom_gib is not None
         and headroom_gib < 0
@@ -1297,9 +1291,7 @@ def substrate_receipt() -> dict[str, Any]:
             reclaim_parts.append(f"ollama-models {last_ollama_reclaim['cumulative_reclaimed_size']}")
         suffix = f"; recorded reclaim freed {', '.join(reclaim_parts)}" if reclaim_parts else ""
         if owner_gated:
-            verdict = (
-                f"resource envelope is {-headroom_gib} GiB negative{suffix}; remaining bytes require owner gates"
-            )
+            verdict = f"resource envelope is {-headroom_gib} GiB negative{suffix}; remaining bytes require owner gates"
         else:
             verdict = f"resource envelope is {-headroom_gib} GiB negative{suffix}"
     elif not disk["tmp_ok"]:

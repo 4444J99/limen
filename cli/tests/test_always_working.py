@@ -531,7 +531,7 @@ def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_pa
         "<!-- v:contributed_repos -->321<!-- /v --> contributed repositories.\n\n"
         "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
         "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
-        "[Portfolio](https://organvm.github.io/portfolio/)\n\n"
+        "[Portfolio](https://organvm-vii-kerygma.github.io/portfolio/)\n\n"
         "Computed laurels -- top 0.1% engineering throughput.\n",
         encoding="utf-8",
     )
@@ -579,7 +579,7 @@ def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
         "**Top-tier Creative Technologist / Systems Architect**\n\n"
         "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
         "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
-        "[Portfolio](https://organvm.github.io/portfolio/)\n",
+        "[Portfolio](https://organvm-vii-kerygma.github.io/portfolio/)\n",
         encoding="utf-8",
     )
     (profile / "data" / "ecosystem.yml").write_text("total_repos: 171\n", encoding="utf-8")

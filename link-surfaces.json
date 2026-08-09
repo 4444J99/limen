@@ -27,13 +27,13 @@
     {
       "id": "portfolio",
       "type": "url",
-      "ref": "https://organvm.github.io/portfolio/",
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/",
       "label": "Portfolio site (GitHub Pages)"
     },
     {
       "id": "resume",
       "type": "url",
-      "ref": "https://organvm.github.io/portfolio/resume/",
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/resume/",
       "label": "Resume (portfolio subpage)"
     }
   ]

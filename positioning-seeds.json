@@ -8,7 +8,7 @@
   "_bio_note": "The GitHub sidebar bio. STABLE IDENTITY ONLY — never a count that changes daily (repos / code files / tests / CI workflows). Volatile numbers live in the README, which regenerates; the bio does not, so any count baked here rots. always-working.py checks the live bio against this value and flags drift. <=160 chars (GitHub's limit).",
   "bio": "Builder of production systems — data, infra, AI, deploy, end-to-end. Python · TypeScript · React · FastAPI · Docker.",
   "_blog_note": "The GitHub sidebar website link. Must resolve 200 — the old 4444j99.github.io/portfolio was a dead 404; the live portfolio is under organvm.github.io. profile-bio-sync.py owns + applies this and always-working.py flags drift, so a dead link can't silently sit on the profile.",
-  "blog": "https://organvm.github.io/portfolio/",
+  "blog": "https://organvm-vii-kerygma.github.io/portfolio/",
   "door_client": {
    "label": "Have a problem one of these solves? — Deploy it for your shop",
    "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
@@ -31,7 +31,7 @@
    "rows": [
     {"org": "organvm-i-theoria", "label": "I · THEORIA", "blurb": "Epistemological frameworks and recursive systems"},
     {"org": "organvm-ii-poiesis", "label": "II · POIESIS", "blurb": "Generative art and interactive systems"},
-    {"org": "organvm-iii-ergon", "label": "III · ERGON", "blurb": "Revenue-generating autonomous systems — the product ledger"},
+    {"org": "organvm-iii-ergon", "label": "III · ERGON", "blurb": "Autonomous product systems — the product ledger"},
     {"org": "organvm-iv-taxis", "label": "IV · TAXIS", "blurb": "Orchestration: governance, registry, automation"},
     {"org": "organvm-v-logos", "label": "V · LOGOS", "blurb": "Public process: essays, methodology, thought leadership"},
     {"org": "organvm-vi-koinonia", "label": "VI · KOINONIA", "blurb": "Community infrastructure and facilitation"},
@@ -43,20 +43,19 @@
  },
  "repos": {
   "organvm/public-record-data-scrapper": {
-   "display_name": "50-State UCC Public-Records Intelligence Platform",
-   "what_it_is": "A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+   "display_name": "UCC Public-Records Intelligence Platform",
+   "what_it_is": "A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
    "proof_signals": [
     "3,399 passing tests",
     "Terraform AWS (multi-AZ RDS, Redis, S3)",
     "60+ collection agents",
-    "all 50 states",
-    "live deploy"
+    "4 state collectors implemented on a 50-state architecture"
    ],
    "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
    "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
    "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion — and bad data burns your closers' hours on the dead numbers everyone else already called.",
    "public_face": "the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.",
-   "private_operation": "the live, fed instance — fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
+   "private_operation": "the live, fed instance — fresh state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
    "ladder": [
     {
      "level": 1,
@@ -94,7 +93,7 @@
    "cta_client": "Deploy this for your shop",
    "cta_recruiter": "Work with the team that built this",
    "recruiter_bridge_level": 4,
-   "seo_description": "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
+   "seo_description": "UCC public-records intelligence on a 50-state architecture — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
    "search_topics": [
     "merchant-cash-advance",
     "mca-leads",
@@ -178,7 +177,7 @@
   },
   "organvm/universal-mail--automation": {
    "display_name": "Autonomous Inbox-Triage & Draft System",
-   "what_it_is": "A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
+   "what_it_is": "A working system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
    "proof_signals": [
     "400+ tests",
     "Cloudflare Worker deploy (wrangler)",
@@ -524,8 +523,8 @@
    ]
   },
   "organvm/portfolio": {
-   "display_name": "Portfolio & Case Studies — 16 Production Systems",
-   "what_it_is": "A public portfolio site showcasing 16 completed production systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
+   "display_name": "Portfolio & Case Studies — 16 Systems",
+   "what_it_is": "A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
    "proof_signals": [
     "609 files · Astro + TypeScript · p5.js interactive visualizations",
     "69 test files across the portfolio + content",
