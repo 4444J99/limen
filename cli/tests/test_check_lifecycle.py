@@ -77,6 +77,7 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
         metadata_probe=lambda _repositories, _dispositions: 0,
         rows_probe=lambda payload: payload["pull_requests"],
         repositories_probe=lambda _ledger, _rows: {"organvm/example"},
+        open_pr_count_probe=lambda: ledger["open_pr_count"],
     )
 
     literal_debt = sum(registry["literal_baseline"].values())
@@ -344,13 +345,80 @@ def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path
     facts_path = tmp_path / "github-estate-census-facts.json"
     facts_path.write_text(json.dumps(facts))
     tracked_path = tmp_path / "github-estate-census.json"
-    tracked_path.write_text(json.dumps({"source_report": source_report}))
+    tracked_path.write_text(
+        json.dumps({"source_report": source_report, "summary": {"repository_count": 1}})
+    )
 
     assert module._complete_estate_repositories(
         facts_path=facts_path,
         tracked_path=tracked_path,
     ) == {"organvm/example"}
     assert module.failures == []
+
+
+def test_legacy_discharged_receipt_is_terminal(tmp_path: Path, monkeypatch) -> None:
+    module = _load_check_module()
+    levers_path = tmp_path / "his-hand-levers.json"
+    levers_path.write_text(
+        json.dumps({"levers": [{"id": "L-LEGACY", "discharged": "2026-08-01"}]}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "LEVERS", levers_path)
+
+    assert module.load_levers()["L-LEGACY"] == "discharged"
+
+
+def test_dependabot_selector_is_pinned() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["cohorts"]["dependabot"]["selector"] = {"private": False}
+
+    module.validate_cohorts(registry, set(registry["dispositions"]))
+
+    assert any("dependabot cohort selector must be exactly" in failure for failure in module.failures)
+
+
+def test_repository_census_denominator_must_match_tracked_total(tmp_path: Path) -> None:
+    module = _load_check_module()
+    source_report = {
+        "exhaustive": True,
+        "generated_at": "2026-08-08T19:14:15.797769Z",
+        "content_sha256": "tracked-estate-sha",
+    }
+    facts = {
+        "source_report": source_report,
+        "summary": {"repository_count": 2},
+        "cursors": [
+            {"repository": f"organvm/example-{index}", "kind": kind, "exhaustive": True, "error": None}
+            for index in (1, 2)
+            for kind in ("pull_requests", "issues", "branches", "checks")
+        ],
+    }
+    facts_path = tmp_path / "github-estate-census-facts.json"
+    facts_path.write_text(json.dumps(facts))
+    tracked_path = tmp_path / "github-estate-census.json"
+    tracked_path.write_text(
+        json.dumps({"source_report": source_report, "summary": {"repository_count": 1}})
+    )
+
+    assert module._complete_estate_repositories(facts_path=facts_path, tracked_path=tracked_path) is None
+    assert any("repository totals do not reconcile" in failure for failure in module.failures)
+
+
+def test_live_pr_census_denominator_must_match(tmp_path: Path) -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    ledger = json.loads((ROOT / "docs" / "github-pr-debt-ledger.json").read_text())
+
+    module.measure_unreachable(
+        registry,
+        metadata_probe=lambda _repositories, _dispositions: 0,
+        rows_probe=lambda payload: payload["pull_requests"],
+        repositories_probe=lambda _ledger, _rows: {"organvm/example"},
+        open_pr_count_probe=lambda: ledger["open_pr_count"] + 1,
+    )
+
+    assert any("does not match live count" in failure for failure in module.failures)
 
 
 def test_lifecycle_ideal_probe_is_reciprocal() -> None:
