@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-08T18:31:33+00:00`
+Generated: `2026-08-09T00:32:28+00:00`
 
 Status: `blocked`
 
@@ -27,7 +27,7 @@ Status: `blocked`
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-08T18:31:33.895818+00:00 UNHEALTHY sig=beating`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-09T00:32:28.544754+00:00 UNHEALTHY sig=beating`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -52,12 +52,12 @@ Status: `blocked`
 - Reconciliation index present: `True`.
 - Reconciliation status: `needs-work`.
 - Required open workstreams: `5`.
-- Blocked workstreams: `2`.
-- Done from receipt: `4`.
+- Blocked workstreams: `1`.
+- Done from receipt: `5`.
 - Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 70.5%, PRs 17.8%, issues 10.7%, reviews 0.9%.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 70.5%, PRs 17.9%, issues 10.7%, reviews 0.9%.
   - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 236 active flagged non-deleted messages require classification.
   - `REPO-BOIL-UP`: `repo-boil-up` / `needs_assignment`; repo surface ledger missing; assignment must refresh existing roots before new work.
   - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 19 value repos define the funded work lane.
@@ -65,29 +65,14 @@ Status: `blocked`
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 16]`.
-- HEAD: `bf68718fdc05a22a561e558850f2cfc301ec3277`.
-- origin/main: `8f1d5d8119b5f8d1a465cc34145d805ff1c2c258`.
-- Matches origin/main: `False`; ahead `0` behind `16`.
-- Dirty entries: `50`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
-  - `docs/RECLASSIFY-PROPOSAL.md`
-  - `docs/always-working.md`
-  - `docs/branch-hygiene.md`
+- Branch: `main`; status `## main...origin/main`.
+- HEAD: `38e4fdca05839de229c55801e46cc3b4eea6b018`.
+- origin/main: `38e4fdca05839de229c55801e46cc3b4eea6b018`.
+- Matches origin/main: `True`; ahead `0` behind `0`.
+- Dirty entries: `39`.
   - `docs/capacity-fill.md`
-  - `docs/diurnal/INDEX.md`
-  - `docs/github-actions-usage.json`
-  - `docs/github-pr-debt-ledger.json`
-  - `docs/receipts/session-contention-ledger.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
   - `logs/overnight-watch.md`
-  - `organs/contributions/MIRROR.md`
-  - `organs/contributions/opportunities.json`
-  - `organs/financial/STATUS.md`
-  - `organs/financial/cashflow.md`
   - `docs/diurnal/2026-08-06.md`
-  - `docs/diurnal/2026-08-07.md`
   - `docs/diurnal/2026-08-08.md`
   - `docs/receipts/tcc-track-c-1703/closeout-20260805T222100Z.json`
   - `docs/receipts/tcc-track-c-1703/closeout-20260806T022247Z.json`
@@ -102,19 +87,31 @@ Status: `blocked`
   - `docs/receipts/tcc-track-c-1703/closeout-20260806T215728Z.json`
   - `docs/receipts/tcc-track-c-1703/closeout-20260807T000415Z.json`
   - `docs/receipts/tcc-track-c-1703/closeout-20260807T015152Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T032817Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T051706Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T070333Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T084228Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T105537Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T133517Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T152313Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T172014Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T210509Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260807T230147Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260808T013735Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260808T035621Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260808T060613Z.json`
   - `<truncated>`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 16]`.
-- HEAD matches origin/main: `False`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD matches origin/main: `True`.
 
 ## Blockers
 
 - `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `live-root-not-at-origin-main`: live root branch main head bf68718fdc05 differs from origin/main 8f1d5d8119b5.
-- `live-root-dirty`: live root has 50 dirty entries.
+- `live-root-dirty`: live root has 39 dirty entries.
 - `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
