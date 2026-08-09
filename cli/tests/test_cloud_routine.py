@@ -160,6 +160,29 @@ def test_terminal_lineage_can_emit_a_new_occurrence() -> None:
     assert plan.duplicates == 0
 
 
+
+def test_terminal_lineage_preserves_subsecond_recurrences() -> None:
+    receipt_one = _receipt(observed_at="2026-08-08T12:00:00.000001Z")
+    receipt_two = _receipt(observed_at="2026-08-08T12:00:00.000002Z")
+    lineage_id = task_id_for(receipt_one)
+    baseline = _receipt(observed_at="2026-08-08T11:00:00Z").observed_at
+
+    first = plan_task_upserts(
+        [receipt_one],
+        historical_ids={lineage_id},
+        historical_observed_at={lineage_id: baseline},
+    )
+    first_id = first.tasks[0].id
+    second = plan_task_upserts(
+        [receipt_two],
+        historical_ids={lineage_id, first_id},
+        historical_observed_at={lineage_id: baseline},
+    )
+
+    assert first_id != second.tasks[0].id
+    assert second.duplicates == 0
+
+
 def test_terminal_lineage_replay_is_a_duplicate() -> None:
     receipt = _receipt()
     lineage_id = task_id_for(receipt)
@@ -210,6 +233,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     invalid_pipeline = {**valid, "predicate": "python check.py | true"}
     invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
     invalid_durable_owner = {**valid, "disposition": "owned", "owner_ref": "missing-owner"}
+    invalid_path_owner = {**valid, "owner_ref": "../.."}
 
     assert not list(validator.iter_errors(valid))
     assert not list(validator.iter_errors(valid_substitution))
@@ -220,6 +244,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     assert list(validator.iter_errors(invalid_pipeline))
     assert list(validator.iter_errors(invalid_owner))
     assert list(validator.iter_errors(invalid_durable_owner))
+    assert list(validator.iter_errors(invalid_path_owner))
     human_gate = schema["allOf"][-1]
     assert human_gate["if"]["properties"]["disposition"]["const"] == "human_gate"
     assert human_gate["then"]["properties"]["status"]["enum"] == ["finding", "failed"]
@@ -353,6 +378,20 @@ def test_consumer_collapses_lineages_before_live_owner_resolution(tmp_path: Path
 
     loaded = module.load_receipts([receipt_path], lever_path=registry)
     assert len(loaded) == 2
+
+
+@pytest.mark.parametrize("payload", ["[]", "\n"])
+def test_consumer_rejects_empty_delivery(tmp_path: Path, payload: str) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_empty_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    receipt_path = tmp_path / "empty.json"
+    receipt_path.write_text(payload, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="receipt delivery is empty"):
+        module.load_receipts([receipt_path])
 
 
 def test_consumer_rejects_a_terminal_human_lever(tmp_path: Path) -> None:
