@@ -2047,7 +2047,13 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
         )
 
     heartbeat_active = launchd.get("ok") and launchd.get("state") in (None, "active", "running")
-    if heartbeat_active:
+    resident_telemetry_present = (
+        "resident_fast_wave" in snapshot
+        or "resident_host_pressure_watchdog" in snapshot
+        or "effective_env" in snapshot
+        or isinstance(launchd.get("env"), dict)
+    )
+    if heartbeat_active and resident_telemetry_present:
         fast_wave = snapshot.get("resident_fast_wave")
         watchdog = snapshot.get("resident_host_pressure_watchdog")
         if env.get("LIMEN_VIGILIA", "1") == "1" and (
