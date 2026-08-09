@@ -132,15 +132,23 @@ def _routing_reason(
         if target_providers is None:
             return "routable", f"admissible={admissible}; {continuity}"
         agent_counts = admission.get("admissible_agent_counts")
-        if not isinstance(agent_counts, dict):
+        any_agent_counts = admission.get("admissible_any_agent_counts")
+        if not isinstance(agent_counts, dict) or not isinstance(any_agent_counts, dict):
             return "keeper_unavailable", "canonical targeted admission unavailable"
-        routable_targets = {
-            str(agent)
+        target_counts = {
+            str(agent): _safe_count(count)
             for agent, count in agent_counts.items()
-            if _safe_count(count) and (str(agent) == "any" or str(agent) in target_providers)
+            if str(agent) != "any" and str(agent) in target_providers and _safe_count(count)
         }
-        if routable_targets:
-            idle_admissible = sum(_safe_count(agent_counts[key]) for key in routable_targets)
+        target_counts.update(
+            {
+                str(agent): _safe_count(count)
+                for agent, count in any_agent_counts.items()
+                if str(agent) in target_providers and _safe_count(count)
+            }
+        )
+        if target_counts:
+            idle_admissible = sum(target_counts.values())
             return "routable", f"admissible_for_idle={idle_admissible}; {continuity}"
         return (
             "admission_blocked",
