@@ -47,6 +47,13 @@ _HOLD_LABEL_REASONS = {
     WORKSTREAM_SUCCESSOR_REQUIRED_LABEL: "successor_required",
 }
 
+# These are control-plane failure sentinels, not provider identities. Treating them as
+# unknown-but-healthy providers would turn a failed route derivation into dispatchable work.
+_PLAN_BUILDER_SENTINELS = frozenset({
+    "__plan_builder_invalid__",
+    "__plan_builder_unavailable__",
+})
+
 HANDOFF = ROOT / "logs" / "handoff.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS") or ROOT / "tasks.yaml")
 USAGE = ROOT / "logs" / "usage.json"
@@ -385,6 +392,8 @@ def _dispatch_admission(
         if reason is None and global_remaining is not None and cost > global_remaining:
             reason = "budget_global"
         agent = _effective_task_agent(task)
+        if reason is None and agent in _PLAN_BUILDER_SENTINELS:
+            reason = "admission_blocked"
         agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
         if reason is None and agent_remaining is not None and cost > agent_remaining:
