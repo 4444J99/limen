@@ -107,9 +107,7 @@ def test_delivery_without_admission_evidence_is_unreachable() -> None:
 def test_armed_consumer_requires_an_executable_registry_load() -> None:
     module = _load_check_module()
 
-    assert not module._loads_lifecycle_registry(
-        'MARKERS = ["lifecycle.yaml", "merge_eligible"]'
-    )
+    assert not module._loads_lifecycle_registry('MARKERS = ["lifecycle.yaml", "merge_eligible"]')
     assert module._loads_lifecycle_registry(
         'import yaml\nfrom pathlib import Path\nyaml.safe_load(Path("lifecycle.yaml").read_text())\n'
     )
@@ -206,9 +204,7 @@ def test_live_pr_identity_queries_seed_from_complete_estate(monkeypatch) -> None
             }
         )
 
-    monkeypatch.setattr(
-        module, "_complete_estate_repositories", lambda: {"organvm/empty"}
-    )
+    monkeypatch.setattr(module, "_complete_estate_repositories", lambda: {"organvm/empty"})
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
     assert module.live_open_pr_identities() == set()
