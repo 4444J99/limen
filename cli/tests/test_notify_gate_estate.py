@@ -595,6 +595,17 @@ def test_non_utf8_candidate_is_reported_without_crashing_the_estate_scan(tmp_pat
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_shell_string_python_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import os\nos.system('osascript -e \\\"display notification \\\\\"x\\\\\"\\"')\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_direct_effector_is_scanned_even_without_shared_notifier(tmp_path, check_gate, monkeypatch):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
