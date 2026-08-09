@@ -116,11 +116,20 @@ vault_key() {
 store_hash() {
   # Content identity of a store: every file outside .git, plus the git HEAD if it is a repo
   # (so committed history counts as content). Stable across runs; changes ⟺ real change.
-  local s="$1"
+  # Portable hash: coreutils sha256sum (Linux) or perl shasum (macOS) — identical digests.
+  local s="$1" hash_tool tmp
+  if command -v sha256sum >/dev/null 2>&1; then hash_tool="sha256sum"; else hash_tool="shasum -a 256"; fi
+  tmp=$(mktemp)
   {
-    find "$s" -type f ! -path '*/.git/*' -print0 | sort -z | xargs -0 shasum -a 256 2>/dev/null || true
+    find "$s" -type f ! -path '*/.git/*' -print0 | sort -z | xargs -0 $hash_tool 2>/dev/null || true
     git -C "$s" rev-parse HEAD 2>/dev/null || true
-  } | shasum -a 256 | cut -d' ' -f1
+  } > "$tmp"
+  $hash_tool "$tmp" | cut -d' ' -f1
+  rm -f "$tmp"
+}
+
+file_bytes() { # file_bytes <file> — portable byte count (wc -c works on BSD and GNU; stat -f%z is BSD-only)
+  wc -c < "$1" | tr -d ' '
 }
 
 manifest_get() { # manifest_get <name> <field>
@@ -241,7 +250,7 @@ seal_store() { # seal_store <name> <force> — seal one store into the current g
   ARCA_KEY="$key" openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
     -in "$VAULT_DIR/$name.tar.enc" -out "$tmp/roundtrip.tar" -pass env:ARCA_KEY
   cmp -s "$tmp/$name.tar" "$tmp/roundtrip.tar" || die "roundtrip verify FAILED for $name — ciphertext untrusted, aborting before commit"
-  enc_bytes=$(stat -f%z "$VAULT_DIR/$name.tar.enc")
+  enc_bytes=$(file_bytes "$VAULT_DIR/$name.tar.enc")
   # Chunk oversized ciphertext: GitHub hard-rejects any blob >100MB, so a big store must
   # ship as parts. Stale parts are cleared first so a shrunken store falls back to one file.
   rm -f "$VAULT_DIR/$name.tar.enc.part."*
@@ -425,7 +434,7 @@ cmd_seal() {
   cmp -s "$tmp/payload.tar" "$tmp/roundtrip.tar" \
     || die "roundtrip verify FAILED for $name — ciphertext untrusted"
   rm -rf "$tmp"
-  log "sealed $name → $out ($(stat -f%z "$out") bytes, roundtrip verified)"
+  log "sealed $name → $out ($(file_bytes "$out") bytes, roundtrip verified)"
 }
 
 cmd_unseal() {
