@@ -2590,10 +2590,13 @@ def _discover_candidate(
     rows.discovered_count += 1
     if cutoff is not None and source_mtime < cutoff:
         return True
-    try:
-        path_key = str(path.resolve())
-    except OSError:
-        path_key = str(path)
+    if custody.alias_contract_id is not None:
+        path_key = str(path.expanduser().absolute())
+    else:
+        try:
+            path_key = str(path.resolve())
+        except OSError:
+            path_key = str(path)
     if path_key in known_paths:
         return True
     known_paths.add(path_key)
