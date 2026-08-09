@@ -32,7 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.capacity import canonical_agent  # noqa: E402
-from limen.dispatch import agent_can_run_task, _effective_target_agent  # noqa: E402
+from limen.dispatch import _effective_target_agent, agent_can_run_task  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
