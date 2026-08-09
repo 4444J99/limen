@@ -145,12 +145,30 @@ def is_executable_predicate(value: Any) -> bool:
     first = argv[command_index]
     if first in {"bash", "sh", "zsh"}:
         index = command_index + 1
+        value_options = {"-o", "+o", "--rcfile", "--init-file"}
         while index < len(argv):
             option = argv[index]
             if option == "--" or not option.startswith("-"):
                 # After a script operand, later -c-like values are positional arguments.
                 break
-            combined_shell_option = option.startswith("-") and not option.startswith("--") and "c" in option[1:]
+            if option in value_options:
+                if index + 1 >= len(argv) or argv[index + 1].startswith("-"):
+                    return False
+                index += 2
+                continue
+            if option.startswith(("--rcfile=", "--init-file=")):
+                index += 1
+                continue
+            short_flags = option[1:] if not option.startswith("--") else ""
+            if short_flags and "o" in short_flags:
+                # Ambiguous clusters such as -oc are safer to reject than to misparse.
+                if "c" in short_flags:
+                    return False
+                if index + 1 >= len(argv) or argv[index + 1].startswith("-"):
+                    return False
+                index += 2
+                continue
+            combined_shell_option = bool(short_flags and "c" in short_flags)
             if option in {"-c", "-lc", "-ic", "--command"} or combined_shell_option:
                 if index + 1 >= len(argv):
                     return False
@@ -165,8 +183,6 @@ def is_executable_predicate(value: Any) -> bool:
                 break
             index += 1
     return bool(first in EXECUTABLES or "/" in first or first.endswith((".py", ".sh")))
-
-
 def is_durable_receipt_target(value: Any) -> bool:
     if not isinstance(value, str):
         return False
