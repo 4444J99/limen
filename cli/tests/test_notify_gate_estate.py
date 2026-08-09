@@ -136,6 +136,25 @@ def test_python_test_helper_with_direct_effector_is_detected(tmp_path, check_gat
     assert check_gate._python_bypasses(helper) is True
 
 
+def test_python_test_helper_with_concatenated_effector_command_is_detected(tmp_path, check_gate):
+    helper = tmp_path / "tests" / "test_concat.py"
+    helper.parent.mkdir()
+    helper.write_text(
+        "import subprocess\n"
+        'command = "osa" + "script"\n'
+        'message = "display " + "notification"\n'
+        "subprocess.run([command, \"-e\", message])\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate._python_bypasses(helper) is True
+
+
+def test_shell_command_regex_accepts_path_and_arguments(check_gate):
+    assert check_gate._OSASCRIPT_COMMAND_RE.search("/usr/bin/osascript -e display")
+    assert check_gate._OSASCRIPT_COMMAND_RE.search("osascript -e display")
+
+
 def test_unparseable_copy_counts_as_ungated(tmp_path, check_gate):
     """Fail closed on the roster too — a file we cannot read is not a file we can clear."""
     path = _write_notifier(tmp_path, "def notify_once(:::")
