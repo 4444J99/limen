@@ -273,7 +273,7 @@ def test_manifest_publishes_the_receipt_contract() -> None:
 
 def test_published_schema_carries_executable_and_human_gate_constraints() -> None:
     schema = json.loads((ROOT / "spec" / "contracts" / "cloud-routine-receipt-v1.schema.json").read_text())
-    validator = Draft202012Validator(schema)
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
     valid = _receipt().model_dump(mode="json")
     invalid_placeholder = {**valid, "predicate": "python <TODO>"}
     invalid_quote = {**valid, "predicate": "python '"}
