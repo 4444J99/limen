@@ -293,7 +293,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
         "owner_ref": "https://github.com/organvm/../issues/1",
     }
     invalid_clustered_shell = {**valid, "predicate": "bash -uc 'false; true'"}
-    invalid_ansi_c = {**valid, "predicate": "bash -c 
+    invalid_ansi_c = {**valid, "predicate": "bash -c $'false\\ntrue'"}
     assert not list(validator.iter_errors(valid_substitution))
     assert list(validator.iter_errors(invalid_placeholder))
     assert list(validator.iter_errors(invalid_quote))
