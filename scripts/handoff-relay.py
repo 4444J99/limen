@@ -398,6 +398,16 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         for marker in auth_markers
     ):
         return "auth_blocked"
+    if ordinary_states & {
+        "down",
+        "disabled",
+        "exhausted",
+        "low",
+        "rate_limited",
+        "unavailable",
+        "blocked",
+    }:
+        return "provider_health"
 
     remaining = value.get("remaining")
     if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
