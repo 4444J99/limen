@@ -319,7 +319,7 @@ _PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output"
 # Match both argv elements (such as ["osascript", ...]) and shell command strings
 # (such as os.system("osascript -e ...")), without treating prose as an executable token.
 _OSASCRIPT_COMMAND_RE = re.compile(
-    r"(?<![\w./-])(?:[\w./-]+/)?osascript(?=\s|$)",
+    r"(?<![\w./-])(?:[\w./-]+/)?osascript(?=[\s\"'`]|$)",
     re.IGNORECASE,
 )
 
