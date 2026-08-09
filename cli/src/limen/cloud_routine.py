@@ -95,7 +95,7 @@ class CloudRoutineReceiptV1(ProtocolModel):
         normalized = value.strip()
         if len(normalized) > 8192:
             raise ValueError("predicate must be at most 8192 characters")
-        if not _PREDICATE_SCHEMA_RE.fullmatch(normalized):
+        if "$(" in normalized or not _PREDICATE_SCHEMA_RE.fullmatch(normalized):
             raise ValueError("predicate must match the published bounded shell grammar")
         if not is_executable_predicate(normalized):
             raise ValueError("predicate must be one executable command")
