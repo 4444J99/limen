@@ -38,8 +38,14 @@ def _sample() -> int:
         return 1
     vitals = status.get("vitals") if isinstance(status, dict) else None
     sample_error = status.get("sample_error") if isinstance(status, dict) else None
-    if sample_error or not status.get("sampled_at") or (isinstance(vitals, dict) and vitals.get("status") == "error"):
-        print(f"vigilia: sample error — {sample_error or vitals or 'sample receipt missing'}")
+    if (
+        sample_error
+        or status.get("sample_persisted") is False
+        or not status.get("sampled_at")
+        or (isinstance(vitals, dict) and vitals.get("status") == "error")
+    ):
+        detail = sample_error or status.get("_persistence_error") or vitals or "sample receipt missing"
+        print(f"vigilia: sample error — {detail}")
         return 1
     print(f"vigilia: sampled {status['sampled_at']}")
     return 0
