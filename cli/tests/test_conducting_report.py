@@ -295,7 +295,6 @@ def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch)
     assert not module.STATE.exists()
 
 
-
 def test_live_down_lanes_cannot_be_reported_as_routable(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
