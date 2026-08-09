@@ -73,6 +73,7 @@ def test_lifecycle_measure_counts_capability_and_conversion_debt() -> None:
         registry,
         metadata_probe=lambda _repositories, _dispositions: 0,
         rows_probe=lambda payload: payload["pull_requests"],
+        repositories_probe=lambda _ledger, _rows: {"organvm/example"},
     )
 
     literal_debt = sum(registry["literal_baseline"].values())
@@ -184,3 +185,57 @@ def test_surplus_lifecycle_label_is_metadata_drift(monkeypatch) -> None:
     )
 
     assert drift == 1
+
+
+def test_preservation_derivation_contract_is_required() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["dispositions"]["lifecycle:preservation"]["derived_from"]["materialize"] = False
+
+    module.validate_dispositions(registry)
+
+    assert any("derived_from.materialize must be true" in failure for failure in module.failures)
+
+
+def test_consumer_markers_ignore_comments_and_docstrings() -> None:
+    module = _load_check_module()
+    markers, lifecycle_literals = module._source_markers(
+        '"""lifecycle:legacy lifecycle.yaml"""\n'
+        '# lifecycle:comment\n'
+        'value = "lifecycle:legacy"\n'
+        'name = lifecycle_name\n'
+        'path = "lifecycle.yaml"\n'
+    )
+
+    assert "lifecycle.yaml" in markers
+    assert "lifecycle_name" in markers
+    assert lifecycle_literals == {"lifecycle:legacy"}
+
+
+def test_complete_estate_repository_census_reconciles_connections(tmp_path: Path) -> None:
+    module = _load_check_module()
+    facts = {
+        "source_report": {"exhaustive": True},
+        "summary": {"repository_count": 1},
+        "cursors": [
+            {"repository": "organvm/example", "kind": kind, "exhaustive": True, "error": None}
+            for kind in ("pull_requests", "issues", "branches", "checks")
+        ],
+    }
+    facts_path = tmp_path / "github-estate-census-facts.json"
+    facts_path.write_text(json.dumps(facts))
+
+    assert module._complete_estate_repositories(facts_path=facts_path) == {"organvm/example"}
+    assert module.failures == []
+
+
+def test_lifecycle_ideal_probe_is_reciprocal() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    ideals = yaml.safe_load((ROOT / "institutio" / "governance" / "ideal-forms.yaml").read_text())
+    ideals["ideals"]["IF-PR-LIFECYCLE"]["probe"]["extract"] = "wrong: ([0-9]+)"
+    module.load_yaml = lambda _path: ideals
+
+    module.validate_self_reference(registry)
+
+    assert any("probe.extract" in failure for failure in module.failures)
