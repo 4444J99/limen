@@ -1456,6 +1456,15 @@ def chunk_launch_prompt(chunk_id: str, graph: dict[str, Any], mapping: dict[str,
     extras = ", ".join(chunk.get("extra_work_ids") or []) or "none"
     root_row = mapping.get("issues", {}).get("PSP-ROOT") or {}
     root_url = str(root_row.get("url") or "https://github.com/organvm/limen/issues/2157")
+    if chunk_id == "PSP-C00":
+        bootstrap = (
+            "Continue draft PR #2156 on branch `codex/production-systems-program`; do not recreate the graph or "
+            "its issues. Use the repository merge rail only when live authority permits it."
+        )
+    else:
+        bootstrap = (
+            "Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00."
+        )
     return f"""Execute Production-Systems Program chunk {chunk_id}: {chunk["title"]}.
 
 Run this conductor session with `{assignment["slug"]}` at `{assignment["effort"]}` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
@@ -1463,6 +1472,7 @@ Run this conductor session with `{assignment["slug"]}` at `{assignment["effort"]
 Scope
 - Repository: `{graph["program"]["repository"]}`
 - Root program: {root_url}
+- Bootstrap: {bootstrap}
 - Phase scope: {phase_scope}
 - Resolved leaf count: {len(work_ids)}
 - Excluded leaves: {excluded}

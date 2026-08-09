@@ -77,6 +77,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Continue draft PR #2156 on branch `codex/production-systems-program`; do not recreate the graph or its issues. Use the repository merge rail only when live authority permits it.
 - Phase scope: PSP-P00
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -110,6 +111,7 @@ Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P01
 - Resolved leaf count: 5
 - Excluded leaves: none
@@ -143,6 +145,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P02
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -176,6 +179,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P03, PSP-P04
 - Resolved leaf count: 14
 - Excluded leaves: none
@@ -209,6 +213,7 @@ Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors 
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P05, PSP-P06
 - Resolved leaf count: 13
 - Excluded leaves: none
@@ -242,6 +247,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P11
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -275,6 +281,7 @@ Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P07
 - Resolved leaf count: 9
 - Excluded leaves: none
@@ -308,6 +315,7 @@ Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors 
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P08
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -341,6 +349,7 @@ Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P09
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -374,6 +383,7 @@ Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors 
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P10
 - Resolved leaf count: 7
 - Excluded leaves: PSP-P10-W08
@@ -407,6 +417,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P12
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -440,6 +451,7 @@ Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors mu
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P13
 - Resolved leaf count: 9
 - Excluded leaves: none
@@ -473,6 +485,7 @@ Run this conductor session with `gpt-5.6-sol` at `ultra` effort. Leaf executors 
 Scope
 - Repository: `organvm/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
+- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
 - Phase scope: PSP-P14
 - Resolved leaf count: 9
 - Excluded leaves: none

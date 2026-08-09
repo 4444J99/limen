@@ -373,6 +373,7 @@ def test_index_render_is_deterministic(tmp_path: Path) -> None:
 
 def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     graph, mapping = graph_and_map()
+    bootstrap = MODULE.chunk_packet("PSP-C00", graph, mapping)
     packet = MODULE.chunk_packet("PSP-C10", graph, mapping)
     first = tmp_path / "first.md"
     second = tmp_path / "second.md"
@@ -380,6 +381,8 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     assert packet["conductor_assignment"]["slug"] == "gpt-5.6-sol"
     assert packet["conductor_assignment"]["effort"] == "max"
     assert packet["work"][-1]["id"] == "PSP-P10-W08"
+    assert "Continue draft PR #2156" in bootstrap["launch_prompt"]
+    assert "Start from current `main` only after C00 is closed" in packet["launch_prompt"]
     assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
     assert MODULE.render_execution_chunks(graph, mapping, first) == MODULE.render_execution_chunks(
         graph, mapping, second
