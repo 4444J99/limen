@@ -331,7 +331,8 @@ def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
                 "health": "ok",
                 "provider_outcome_health": "degraded",
                 "provider_cooldown_count": 1,
-                "provider_last_terminal_failure": "auth_failure",
+                "provider_last_terminal_failure": "2026-07-12T12:00:00+00:00",
+                "provider_last_terminal_failure_class": "auth_failure",
                 "provider_outcome_all_blocked": True,
             }
         },
@@ -663,6 +664,40 @@ def test_dispatch_admission_honors_live_down_lane_snapshot():
     assert admission["reason_counts"] == {"provider_health": 1}
     assert admission["provider_health_reason_counts"] == {"agy": 1}
     assert admission["down_lanes"] == ["agy"]
+
+
+def test_dispatch_admission_applies_value_gate_before_counting(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: False)
+    task = _task("PARTNER-GATED", agent="codex")
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 5, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+
+
+def test_dispatch_admission_caches_lane_reachability(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex", "jules"))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: True)
+    calls = []
+    monkeypatch.setattr(
+        mod,
+        "_lane_reachable",
+        lambda agent, _providers: calls.append(agent) or True,
+    )
+    tasks = [_task("ANY-1", agent="any"), _task("ANY-2", agent="any")]
+    budget = {"remaining": 10, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["admissible"] == 2
+    assert calls == ["codex", "jules"]
 
 
 def test_board_budget_discards_expired_track_counters(monkeypatch):
