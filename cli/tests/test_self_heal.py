@@ -13,6 +13,7 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -119,7 +120,7 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
 
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_HEAL_SCAN", "bad")
-    monkeypatch.setenv("LIMEN_HEAL_SCAN_MAX", "bad")
+    monkeypatch.setenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", "bad")
     monkeypatch.setenv("LIMEN_HEAL_LIMIT", "bad")
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
@@ -493,5 +494,23 @@ def test_scan_max_default_clears_the_search_ceiling(tmp_path, monkeypatch):
     """A default at or above the ceiling would be clamped to a value it then equals — re-arming the
     truncation guard permanently. It must sit exactly AT the ceiling, never past it."""
     m = _load(tmp_path, monkeypatch)
-    monkeypatch.delenv("LIMEN_HEAL_SCAN_MAX", raising=False)
-    assert m.env_int("LIMEN_HEAL_SCAN_MAX", 1000) == 1000
+    monkeypatch.delenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", raising=False)
+    assert m.env_int("LIMEN_HEAL_RECONCILE_SCAN_MAX", 1000) == 1000
+
+
+def test_the_cost_knob_spelling_is_not_offered(tmp_path, monkeypatch):
+    """`--scan-max` must NOT be accepted here, and that is the whole point of the rename.
+
+    Four sibling organs (merge-drain, pr-lifecycle-autotype, owner-route-drain) cap the identical
+    enumeration under that name, and for them it genuinely is only cost — none reads absence from
+    the list. Here a second consumer retires tasks that are absent, so the same number is a closure
+    proof. A reader who transfers the sibling meaning picks a small value and silently kills
+    retirement, which is exactly what shipped at 500. An alias would preserve the spelling that
+    carries the wrong model, so the failure has to be loud: argparse rejects it.
+    """
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    with pytest.raises(SystemExit) as excinfo:
+        _run(m, monkeypatch, p, "--dry-run", "--scan-max", "500")
+    assert excinfo.value.code == 2  # argparse "unrecognized arguments", not a silent default
