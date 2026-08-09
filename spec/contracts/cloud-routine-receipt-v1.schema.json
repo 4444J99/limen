@@ -66,7 +66,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 8192,
-      "pattern": "^(?!.*`)(?!.*\"[^\"]*[$][(][^;|&]*[;|&])(?=(?:(?:[^'\";|&]+)|'[^']*'|\"[^\"]*\")*$)(?!.*(?:<[^>]+>|\\b(?:tbd|todo|fixme|replace[-_ ]me)\\b))(?=(?:[^']*'[^']*')*[^']*$)(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?!.*\\\\$)(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$",
+      "pattern": "^(?!.*`)(?!.*\"[^\"]*[$][(][^;|&]*[;|&])(?=(?:(?:[^'\";|&])|'[^']*'|\"[^\"]*\")*$)(?!.*(?:<[^>]+>|\\b(?:tbd|todo|fixme|replace[-_ ]me)\\b))(?=(?:[^']*'[^']*')*[^']*$)(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?!.*\\\\$)(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$",
       "$comment": "Kept in parity with CloudRoutineReceiptV1.validate_predicate: nonblank input, no placeholders, balanced quotes, no trailing escape or unquoted shell composition, clustered shell -c/-uc options with composition are rejected, and one admitted executable."
     }
   },
