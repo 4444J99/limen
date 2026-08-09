@@ -622,7 +622,7 @@ def test_metabolize_host_pressure_probe_is_read_only():
         encoding="utf-8"
     )
     start = sensors.index("  host-pressure-stale:")
-    end = sensors.index("\n  ", start + 4)
+    end = sensors.index("\n  runtime-lag:", start)
     assert "source: [metabolize]" in sensors[start:end]
     assert "host-pressure-stale.py --read-only" in sensors[start:end]
 
