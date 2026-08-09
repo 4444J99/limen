@@ -599,9 +599,9 @@ def test_shell_string_python_notification_bypass_is_rejected(tmp_path, check_gat
     scripts = tmp_path / "scripts"
     scripts.mkdir()
     (scripts / "sender.py").write_text(
-        '''import os
+        """import os
 os.system('osascript -e "display notification \\"x\\""')
-''',
+""",
         encoding="utf-8",
     )
 
