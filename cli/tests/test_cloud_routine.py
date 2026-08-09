@@ -293,6 +293,47 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
         _receipt(predicate="test `false` = success")
 
 
+def test_model_rejects_clustered_shell_command_options() -> None:
+    with pytest.raises(ValidationError, match="one executable command"):
+        _receipt(predicate="bash -uc 'false; true'")
+
+
+def test_pruned_archive_lineage_remains_a_duplicate(tmp_path: Path) -> None:
+    script = ROOT / "scripts" / "cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_ingest_archive_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    receipt = _receipt()
+    lineage_id = task_id_for(receipt)
+    archive = tmp_path / "logs" / "tickets" / "archive"
+    archive.mkdir(parents=True)
+    (archive / "removed.json").write_text(
+        json.dumps(
+            {
+                "intent": "task.upsert",
+                "task_id": lineage_id,
+                "patch": {
+                    "id": lineage_id,
+                    "context": "CloudRoutineReceiptV1; observed_at=2026-08-08T12:00:00+00:00",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    historical_ids, observed = module._historical_cloud_task_state(tmp_path / "tasks.yaml")
+
+    assert lineage_id in historical_ids
+    assert observed[lineage_id].isoformat() == "2026-08-08T12:00:00+00:00"
+    assert plan_task_upserts(
+        [receipt],
+        historical_ids=historical_ids,
+        historical_observed_at=observed,
+    ).tasks == ()
+
+
 def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
     gates = (ROOT / "institutio" / "governance" / "gates.yaml").read_text(encoding="utf-8")
     for path in (
