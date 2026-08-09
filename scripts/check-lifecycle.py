@@ -16,6 +16,7 @@ kept outside the offline gate because live GitHub reach is environment evidence,
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -33,6 +34,7 @@ IDEALS = ROOT / "institutio" / "governance" / "ideal-forms.yaml"
 LEVERS = ROOT / "his-hand-levers.json"
 PR_LEDGER = ROOT / "docs" / "github-pr-debt-ledger.json"
 PR_DEBT_FACTS = ROOT / "logs" / "gitvs-pr-debt-facts.json"
+ESTATE_CENSUS_FACTS = ROOT / "logs" / "github-estate-census-facts.json"
 SELF_COMMAND = "python3 scripts/check-lifecycle.py --check"
 TERMINAL_LEVER_STATES = frozenset({"discharged", "retired", "done", "closed"})
 ADMISSION_CONTRACT = {
@@ -140,6 +142,33 @@ def validate_dispositions(registry: dict[str, Any]) -> set[str]:
             "A",
             f"{merge_eligible[0]}: admits must equal the typed merge admission contract",
         )
+
+    preservation = rows.get("lifecycle:preservation")
+    derived_from = preservation.get("derived_from") if isinstance(preservation, dict) else None
+    if not isinstance(derived_from, dict):
+        fail("A", "lifecycle:preservation must declare a derived_from mapping")
+    else:
+        required_derivation = {"labels", "body_markers", "materialize"}
+        missing_derivation = sorted(required_derivation - set(derived_from))
+        if missing_derivation:
+            fail(
+                "A",
+                "lifecycle:preservation.derived_from is missing fields "
+                f"{missing_derivation}",
+            )
+        for field in ("labels", "body_markers"):
+            value = derived_from.get(field)
+            if (
+                not isinstance(value, list)
+                or not value
+                or not all(isinstance(item, str) and item for item in value)
+            ):
+                fail(
+                    "A",
+                    f"lifecycle:preservation.derived_from.{field} must be a non-empty string list",
+                )
+        if derived_from.get("materialize") is not True:
+            fail("A", "lifecycle:preservation.derived_from.materialize must be true")
     return {str(key) for key in rows}
 
 
@@ -179,6 +208,39 @@ def validate_ratchet_monotonicity(
     )
     if reversed_ratchets:
         fail("C", f"armed ratchets cannot be reversed: {reversed_ratchets}")
+
+
+def _source_markers(source: str) -> tuple[set[str], set[str]]:
+    """Collect executable marker names and lifecycle ids, excluding comments/docstrings."""
+    tree = ast.parse(source)
+    docstring_nodes: set[int] = set()
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if not isinstance(body, list) or not body:
+            continue
+        first = body[0]
+        if (
+            isinstance(first, ast.Expr)
+            and isinstance(first.value, ast.Constant)
+            and isinstance(first.value.value, str)
+        ):
+            docstring_nodes.add(id(first.value))
+
+    markers: set[str] = set()
+    lifecycle_literals: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if id(node) in docstring_nodes:
+                continue
+            markers.add(node.value)
+            lifecycle_literals.update(
+                re.findall(r"(?<![\\w-])lifecycle:[A-Za-z0-9_-]+", node.value)
+            )
+        elif isinstance(node, ast.Name):
+            markers.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            markers.add(node.attr)
+    return markers, lifecycle_literals
 
 
 def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
@@ -230,10 +292,23 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
         except (OSError, UnicodeError) as exc:
             fail("B", f"{consumer}: consumer source is unreadable: {exc}")
             continue
+        try:
+            structural_markers, lifecycle_literals = _source_markers(text)
+        except SyntaxError as exc:
+            fail("C", f"{consumer}: consumer source is not parseable for derivation checks: {exc}")
+            continue
+        undeclared_literals = sorted(lifecycle_literals - labels)
+        if undeclared_literals:
+            fail(
+                "C",
+                f"{consumer}: undeclared lifecycle literal(s): {undeclared_literals}",
+            )
         actual = sum(text.count(label) for label in labels)
         armed = bool(ratchets[ratchet])
-        if armed and any(marker not in text for marker in loader_markers):
-            missing_markers = [marker for marker in loader_markers if marker not in text]
+        if armed and any(marker not in structural_markers for marker in loader_markers):
+            missing_markers = [
+                marker for marker in loader_markers if marker not in structural_markers
+            ]
             fail("C", f"{consumer}: armed derivation markers missing: {missing_markers}")
         if armed and actual:
             fail("C", f"{consumer}: conversion ratchet is armed but {actual} disposition literal(s) remain")
@@ -310,8 +385,28 @@ def validate_self_reference(registry: dict[str, Any]) -> None:
     if registry.get("ideal_form") != "IF-PR-LIFECYCLE":
         fail("G", "ideal_form must be IF-PR-LIFECYCLE")
     ideals = load_yaml(IDEALS).get("ideals") or {}
-    if not isinstance(ideals, dict) or "IF-PR-LIFECYCLE" not in ideals:
+    ideal = ideals.get("IF-PR-LIFECYCLE") if isinstance(ideals, dict) else None
+    if not isinstance(ideal, dict):
         fail("G", "IF-PR-LIFECYCLE does not resolve in ideal-forms.yaml")
+    else:
+        probe = ideal.get("probe")
+        if not isinstance(probe, dict):
+            fail("G", "IF-PR-LIFECYCLE must declare a measurement probe")
+        else:
+            expected_probe = {
+                "command": "python3 scripts/check-lifecycle.py --measure",
+                "environment": "network",
+                "extract": "unreachable PRs: ([0-9]+)",
+                "ideal_value": 0,
+            }
+            for field, expected in expected_probe.items():
+                if probe.get(field) != expected:
+                    fail(
+                        "G",
+                        f"IF-PR-LIFECYCLE probe.{field} must equal {expected!r}",
+                    )
+            if not isinstance(probe.get("derives"), str) or not probe["derives"].strip():
+                fail("G", "IF-PR-LIFECYCLE probe.derives must be a non-empty string")
     if not Path(__file__).is_file():
         fail("G", "predicate script does not resolve")
 
@@ -468,6 +563,67 @@ def _complete_census_rows(
     return facts_rows
 
 
+def _complete_estate_repositories(
+    *,
+    facts_path: Path = ESTATE_CENSUS_FACTS,
+) -> set[str] | None:
+    """Load the exhaustive per-repository census; never infer the estate from open PR rows."""
+    try:
+        facts = json.loads(facts_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError) as exc:
+        fail(
+            "D",
+            "complete estate repository census is unavailable; refusing a partial "
+            f"label measurement: {exc}",
+        )
+        return None
+    if not isinstance(facts, dict):
+        fail("D", "complete estate repository census must contain a mapping")
+        return None
+    report = facts.get("source_report")
+    summary = facts.get("summary")
+    cursors = facts.get("cursors")
+    if (
+        not isinstance(report, dict)
+        or report.get("exhaustive") is not True
+        or not isinstance(summary, dict)
+        or not isinstance(cursors, list)
+    ):
+        fail("D", "complete estate repository census is not exhaustive")
+        return None
+    expected = summary.get("repository_count")
+    if isinstance(expected, bool) or not isinstance(expected, int) or expected <= 0:
+        fail("D", "complete estate repository census has no positive repository_count")
+        return None
+    expected_kinds = {"pull_requests", "issues", "branches", "checks"}
+    identities: set[tuple[str, str]] = set()
+    repositories: set[str] = set()
+    for row in cursors:
+        if not isinstance(row, dict):
+            fail("D", "complete estate repository census contains a malformed cursor row")
+            return None
+        repository = row.get("repository")
+        kind = row.get("kind")
+        if (
+            not isinstance(repository, str)
+            or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository)
+            or kind not in expected_kinds
+            or row.get("exhaustive") is not True
+            or row.get("error") not in (None, "")
+        ):
+            fail("D", "complete estate repository census contains an incomplete cursor row")
+            return None
+        repositories.add(repository)
+        identities.add((repository, kind))
+    if len(repositories) != expected or len(identities) != expected * len(expected_kinds):
+        fail(
+            "D",
+            "complete estate repository census repository/connection totals do not reconcile",
+        )
+        return None
+    return repositories
+
+
 def mechanically_unreachable_count(
     rows: list[dict[str, Any]],
     dispositions: dict[str, Any],
@@ -512,10 +668,10 @@ def measure_unreachable(
 
     mechanically_unreachable = mechanically_unreachable_count(rows, dispositions)
 
-    preservation_missing = sum(
+    materialization_missing = sum(
         1
         for row in rows
-        if row.get("lifecycle_disposition") == "lifecycle:preservation"
+        if row.get("lifecycle_disposition") in dispositions
         and row.get("lifecycle_disposition_source") != "label"
     )
     live_baseline = registry.get("live_baseline")
@@ -527,13 +683,15 @@ def measure_unreachable(
     if isinstance(preservation_ceiling, bool) or not isinstance(preservation_ceiling, int):
         fail("D", "live_baseline has no preservation materialization ceiling")
         return None
-    if preservation_missing > preservation_ceiling:
+    if materialization_missing > preservation_ceiling:
         fail(
             "D",
-            "preservation materialization debt regrew "
-            f"from {preservation_ceiling} to {preservation_missing}",
+            "lifecycle materialization debt regrew "
+            f"from {preservation_ceiling} to {materialization_missing}",
         )
-    repositories = {str(row["repository"]) for row in rows}
+    repositories = _complete_estate_repositories()
+    if repositories is None:
+        return None
     metadata_drift = metadata_probe(repositories, dispositions)
     if metadata_drift is None:
         return None
