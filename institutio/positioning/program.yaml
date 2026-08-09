@@ -46,6 +46,59 @@ execution_contract:
   public_effect_rule: no send, publish, DNS, spend, merge, signature, or account mutation without explicit authority
   completion_rule: predicate plus durable receipt; prose, a branch, or an unmerged draft is not done
 
+model_assignments:
+  schema_version: limen.positioning_model_assignments.v1
+  authority: Human model/effort override requested 2026-08-09
+  adapter: codex
+  catalog_command: codex debug models
+  catalog_validated_at: '2026-08-09T16:15:43Z'
+  unavailable_action: fail blocked, refresh the live catalog, and obtain a new explicit assignment; never silently substitute
+  root:
+    slug: gpt-5.6-sol
+    effort: ultra
+    rationale: Master-plan orchestration across the entire dependency graph and all execution lanes.
+  phases:
+    PSP-P00: {slug: gpt-5.6-sol, effort: max, rationale: Control-plane architecture and authority integrity.}
+    PSP-P01: {slug: gpt-5.6-terra, effort: high, rationale: Bounded foundation repair with known predicates.}
+    PSP-P02: {slug: gpt-5.6-sol, effort: max, rationale: Estate-wide truth, evidence, and contested-claim adjudication.}
+    PSP-P03: {slug: gpt-5.6-sol, effort: max, rationale: Canonical identity and narrative decision.}
+    PSP-P04: {slug: gpt-5.6-sol, effort: max, rationale: Offer architecture, economics, and commercial boundaries.}
+    PSP-P05: {slug: gpt-5.6-sol, effort: xhigh, rationale: Cross-source proof synthesis and publication readiness.}
+    PSP-P06: {slug: gpt-5.6-sol, effort: xhigh, rationale: Progressive-disclosure experience architecture.}
+    PSP-P07: {slug: gpt-5.6-terra, effort: high, rationale: Multi-surface implementation and deployment coordination.}
+    PSP-P08: {slug: gpt-5.6-sol, effort: xhigh, rationale: Privacy-sensitive inbound and private lead operations.}
+    PSP-P09: {slug: gpt-5.6-terra, effort: high, rationale: Proof-led content production and distribution execution.}
+    PSP-P10: {slug: gpt-5.6-sol, effort: xhigh, rationale: Qualification, conversion, and demand-experiment judgment.}
+    PSP-P11: {slug: gpt-5.6-sol, effort: max, rationale: Secure delivery operating system and client boundaries.}
+    PSP-P12: {slug: gpt-5.6-sol, effort: max, rationale: Commercial validation and outcome-based strategy revision.}
+    PSP-P13: {slug: gpt-5.6-sol, effort: max, rationale: Product custody, economics, legal structure, and operator handoff.}
+    PSP-P14: {slug: gpt-5.6-sol, effort: ultra, rationale: Estate-wide return loop, rollback proof, and Omega convergence.}
+  work_matrix:
+    routine:
+      read: {slug: gpt-5.4-mini, effort: low, rationale: Simple bounded inspection or evidence collection.}
+      write: {slug: gpt-5.6-luna, effort: medium, rationale: Straightforward implementation with a narrow predicate.}
+      external: {slug: gpt-5.6-terra, effort: high, rationale: Routine work with an external-effect boundary.}
+    deep:
+      read: {slug: gpt-5.6-terra, effort: high, rationale: Nontrivial analysis without mutation.}
+      write: {slug: gpt-5.6-terra, effort: high, rationale: Substantial architecture or implementation work.}
+      external: {slug: gpt-5.6-sol, effort: xhigh, rationale: Complex work that crosses an external-effect boundary.}
+    frontier_review:
+      read: {slug: gpt-5.6-sol, effort: max, rationale: High-consequence independent review.}
+      write: {slug: gpt-5.6-sol, effort: max, rationale: Canonical high-consequence decision and implementation contract.}
+      external: {slug: gpt-5.6-sol, effort: max, rationale: High-consequence external action behind explicit authority.}
+  sensitive_capabilities: [conduct, conduct_protocol, security, privacy, legal_issue_spotting]
+  sensitive_assignment:
+    slug: gpt-5.6-sol
+    effort: xhigh
+    rationale: Security, privacy, legal, or conduct-boundary work receives a stronger execution profile.
+  multi_repository_assignment:
+    slug: gpt-5.6-sol
+    effort: xhigh
+    rationale: Cross-repository coordination receives a stronger execution profile.
+  object_overrides:
+    PSP-P00-W07: {slug: gpt-5.6-sol, effort: max, rationale: Authenticated broker integration is control-plane critical.}
+    PSP-P14-W09: {slug: gpt-5.6-sol, effort: ultra, rationale: Final two-pass Omega proof requires full-graph orchestration.}
+
 external_references:
   PR-2136:
     kind: pull_request
