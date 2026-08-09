@@ -122,6 +122,7 @@ def validate_dispositions(registry: dict[str, Any]) -> set[str]:
         "owner",
     }
     merge_eligible: list[str] = []
+    consumers = registry.get("consumers")
     for disposition, row in rows.items():
         if not isinstance(disposition, str) or not disposition.startswith("lifecycle:"):
             fail("A", f"{disposition!r}: disposition id must start with lifecycle:")
@@ -132,6 +133,11 @@ def validate_dispositions(registry: dict[str, Any]) -> set[str]:
         missing = sorted(required - set(row))
         if missing:
             fail("A", f"{disposition}: missing fields {missing}")
+        owner = row.get("owner")
+        if not isinstance(owner, str) or not owner.strip():
+            fail("A", f"{disposition}: owner must be a non-empty declared consumer")
+        elif isinstance(consumers, dict) and owner not in consumers:
+            fail("A", f"{disposition}: owner {owner!r} does not resolve to a declared consumer")
         if re.fullmatch(r"[0-9a-f]{6}", str(row.get("label_color") or "")) is None:
             fail("A", f"{disposition}: label_color must be a lowercase six-digit hex color")
         for capability in ("merge_eligible", "fail_closed", "human_owned", "terminal"):
@@ -676,19 +682,9 @@ def live_label_metadata_drift(
 def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | None:
     """Return live open-PR identities through disjoint per-repository searches."""
     if repositories is None:
-        try:
-            ledger = json.loads(PR_LEDGER.read_text(encoding="utf-8"))
-        except (OSError, UnicodeError, ValueError) as exc:
-            fail("D", f"PR-debt ledger is unreadable while deriving live repositories: {exc}")
+        repositories = _complete_estate_repositories()
+        if repositories is None:
             return None
-        rows = _complete_census_rows(ledger) if isinstance(ledger, dict) else None
-        if rows is None:
-            return None
-        repositories = {
-            str(row.get("repository"))
-            for row in rows
-            if isinstance(row, dict) and isinstance(row.get("repository"), str)
-        }
     valid_repositories = sorted(
         repository
         for repository in repositories
