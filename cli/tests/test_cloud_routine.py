@@ -334,9 +334,7 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
 def test_shell_predicate_parsing_stops_at_script_and_rejects_ansi_c_newline() -> None:
     assert is_executable_predicate("bash check.sh -c 'value;literal'")
     with pytest.raises(ValidationError, match="one executable command"):
-        _receipt(predicate="bash -c 
-    with pytest.raises(ValidationError, match="one executable command"):
-        _receipt(predicate="bash -uc 'false; true'")
+        _receipt(predicate="bash -c $'false\\ntrue'")
 
 
 def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
