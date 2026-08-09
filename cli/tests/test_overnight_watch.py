@@ -461,6 +461,7 @@ def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkey
     snapshot.update(
         {
             "launchd": {"ok": True, "state": "active", "env": {}},
+            "heartbeat": {"latest_tick": {"timestamp": "2026-07-01T09:53:57+00:00"}},
             "resident_fast_wave": {"pid": None, "alive": False},
             "resident_host_pressure_watchdog": {"pid": None, "alive": False},
         }
@@ -526,6 +527,7 @@ def test_heartbeat_child_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
 def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
+    monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "99")
     _write_heartbeat(module)
     module.STATE_PATH.write_text(
         json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
@@ -550,6 +552,7 @@ def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypat
 def test_resident_stale_watchdog_does_not_suppress_stale_progress(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
+    monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "101")
     _write_heartbeat(module)
     module.STATE_PATH.write_text(
         json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
