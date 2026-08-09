@@ -281,6 +281,8 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
     assert _receipt(predicate=safe).predicate == safe
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="python check.py; true")
+    with pytest.raises(ValidationError, match="one executable command"):
+        _receipt(predicate="bash -c 'false; true'")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="python check.py | true")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
