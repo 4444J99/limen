@@ -104,6 +104,16 @@ def test_delivery_without_admission_evidence_is_unreachable() -> None:
     assert module.mechanically_unreachable_count([row], dispositions) == 1
 
 
+def test_disposition_owner_must_resolve_to_declared_consumer() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["dispositions"]["lifecycle:blocked"]["owner"] = "not-a-consumer"
+
+    module.validate_dispositions(registry)
+
+    assert any("does not resolve to a declared consumer" in failure for failure in module.failures)
+
+
 def test_cohort_selector_schema_is_closed_and_covered() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
@@ -149,6 +159,38 @@ def test_preservation_ceiling_is_checked_by_offline_predicate(monkeypatch) -> No
     module.validate_preservation_ceiling(registry)
 
     assert any("ceiling regrew" in failure for failure in module.failures)
+
+
+def test_live_pr_identity_queries_seed_from_complete_estate(monkeypatch) -> None:
+    module = _load_check_module()
+    calls = []
+
+    class _Result:
+        returncode = 0
+
+        def __init__(self, payload):
+            self.stdout = json.dumps(payload)
+
+    def fake_run(args, **_kwargs):
+        calls.append(" ".join(args))
+        return _Result(
+            {
+                "data": {
+                    "search": {
+                        "issueCount": 0,
+                        "nodes": [],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module, "_complete_estate_repositories", lambda: {"organvm/empty"})
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module.live_open_pr_identities() == set()
+    assert len(calls) == 1
+    assert "repo:organvm/empty" in calls[0]
 
 
 def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> None:
