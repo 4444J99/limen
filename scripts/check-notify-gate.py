@@ -70,6 +70,7 @@ import re
 import subprocess
 import sys
 import time
+import tokenize
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -321,7 +322,7 @@ def _source_paths(root: Path) -> list[Path]:
                 "-C",
                 str(root),
                 "grep",
-                "-Il",
+                "-l",
                 "-e",
                 "osascript",
                 "--",
@@ -375,9 +376,13 @@ def _static_argv(node: ast.AST) -> list[str] | None:
 
 def _python_bypasses(path: Path) -> bool:
     try:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, SyntaxError):
-        return False
+        # tokenize.open honors a PEP 263 encoding cookie; decoding with a hard-coded UTF-8
+        # would turn a valid source into a false clean result. An unreadable source is unsafe
+        # evidence, so the estate gate fails closed rather than clearing it.
+        with tokenize.open(path) as source:
+            tree = ast.parse(source.read(), filename=str(path))
+    except (OSError, UnicodeError, SyntaxError, LookupError):
+        return True
     bindings: dict[str, list[str]] = {}
     for node in ast.walk(tree):
         if not isinstance(node, (ast.Assign, ast.AnnAssign)):
@@ -413,9 +418,15 @@ def _python_bypasses(path: Path) -> bool:
 
 def _shell_bypasses(path: Path) -> bool:
     try:
-        text = path.read_text(encoding="utf-8").replace("\\\n", " ")
-    except (OSError, UnicodeError):
-        return False
+        raw = path.read_bytes()
+    except OSError:
+        return True
+    try:
+        text = raw.decode("utf-8").replace("\\\n", " ")
+    except UnicodeDecodeError:
+        # Shell accepts arbitrary non-NUL bytes. We cannot prove the source is harmless, so
+        # represent undecodable content as a finding and let the estate predicate fail closed.
+        return True
     executable = "\n".join(line.split("#", 1)[0] for line in text.splitlines())
     return bool(re.search(r"\bosascript\b", executable, re.IGNORECASE)) and bool(
         re.search(r"\bdisplay\s+notification\b", executable, re.IGNORECASE)
