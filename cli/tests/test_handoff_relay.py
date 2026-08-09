@@ -345,6 +345,30 @@ def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
     assert admission["provider_health_reason_counts"] == {"opencode": 1}
 
 
+def test_dispatch_admission_projects_provider_map_auth_cooldown():
+    mod = _load()
+    task = _task("HOSTED-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_outcome_all_blocked": True,
+                "provider_terminal_failure_classes": {"openrouter": "auth_failure"},
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
 def test_dispatch_admission_preserves_agy_weak_proxy_lane():
     mod = _load()
     task = _task("AGY-PROXY", agent="agy")
