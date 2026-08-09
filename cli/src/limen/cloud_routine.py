@@ -213,13 +213,8 @@ class CloudRoutineReceiptV1(ProtocolModel):
     def validate_observed_at(cls, value: datetime) -> datetime:
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("observed_at must include a timezone")
-        if value.astimezone(timezone.utc) > datetime.now(timezone.utc) + timedelta(
-            seconds=_MAX_FUTURE_SKEW_SECONDS
-        ):
-            raise ValueError(
-                "observed_at cannot be more than "
-                f"{_MAX_FUTURE_SKEW_SECONDS} seconds in the future"
-            )
+        if value.astimezone(timezone.utc) > datetime.now(timezone.utc) + timedelta(seconds=_MAX_FUTURE_SKEW_SECONDS):
+            raise ValueError(f"observed_at cannot be more than {_MAX_FUTURE_SKEW_SECONDS} seconds in the future")
         return value
 
     @field_validator("stable_finding_key")
@@ -351,8 +346,7 @@ def plan_task_upserts(
             if receipt.observed_at == previous.observed_at:
                 if receipt != previous:
                     raise ValueError(
-                        "conflicting cloud-routine observations share the same "
-                        f"timestamp for {lineage_id}"
+                        f"conflicting cloud-routine observations share the same timestamp for {lineage_id}"
                     )
                 continue
             if receipt.observed_at > previous.observed_at:
