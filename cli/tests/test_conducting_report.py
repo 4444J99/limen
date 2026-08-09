@@ -99,9 +99,7 @@ def _handoff(
             "admissible_agent_counts": (
                 admissible_agents if admissible_agents is not None else ({"codex": admissible} if admissible else {})
             ),
-            "admissible_any_agent_counts": (
-                admissible_any_agents if admissible_any_agents is not None else {}
-            ),
+            "admissible_any_agent_counts": (admissible_any_agents if admissible_any_agents is not None else {}),
             "dispatchable_next": {"id": "TASK-1", "target_agent": "codex"} if admissible else None,
         },
         "provider_headroom": {
