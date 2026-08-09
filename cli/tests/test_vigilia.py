@@ -604,14 +604,13 @@ def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
 
 
 def test_fast_wave_preserves_the_earliest_pending_visit():
-    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(
-        encoding="utf-8"
-    )
+    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
     diurnal_start = heartbeat.index('    if [ -n "$_fw_diurnal_pid" ]')
     health_start = heartbeat.index('    if [ -n "$_fw_health_pid" ]')
-    assert '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"' in heartbeat[
-        diurnal_start:health_start
-    ]
+    assert (
+        '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"'
+        in heartbeat[diurnal_start:health_start]
+    )
     assert '[ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"' in heartbeat[health_start:]
     assert '_fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"' in heartbeat
     assert '_fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"' in heartbeat
