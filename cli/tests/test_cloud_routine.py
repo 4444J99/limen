@@ -204,14 +204,18 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     valid = _receipt().model_dump(mode="json")
     invalid_placeholder = {**valid, "predicate": "python <TODO>"}
     invalid_quote = {**valid, "predicate": "python '"}
+    valid_substitution = {**valid, "predicate": 'test "$(git rev-parse --show-toplevel)" = /tmp'}
+    invalid_backtick = {**valid, "predicate": "test `false` = success"}
     invalid_semicolon = {**valid, "predicate": "python check.py; true"}
     invalid_pipeline = {**valid, "predicate": "python check.py | true"}
     invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
     invalid_durable_owner = {**valid, "disposition": "owned", "owner_ref": "missing-owner"}
 
     assert not list(validator.iter_errors(valid))
+    assert not list(validator.iter_errors(valid_substitution))
     assert list(validator.iter_errors(invalid_placeholder))
     assert list(validator.iter_errors(invalid_quote))
+    assert list(validator.iter_errors(invalid_backtick))
     assert list(validator.iter_errors(invalid_semicolon))
     assert list(validator.iter_errors(invalid_pipeline))
     assert list(validator.iter_errors(invalid_owner))
@@ -222,13 +226,17 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     assert human_gate["then"]["properties"]["owner_ref"]["pattern"].startswith("^lever:")
 
 
-def test_model_rejects_unquoted_shell_composition() -> None:
+def test_model_allows_safe_substitution_but_rejects_composition() -> None:
+    safe = 'test "$(git rev-parse --show-toplevel)" = /tmp'
+    assert _receipt(predicate=safe).predicate == safe
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="python check.py; true")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="python check.py | true")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate='test "$(false; echo success)" = success')
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate="test `false` = success")
 
 
 def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
