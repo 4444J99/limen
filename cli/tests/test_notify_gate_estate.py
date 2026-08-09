@@ -304,6 +304,19 @@ def test_direct_python_notification_bypass_is_rejected(tmp_path, check_gate):
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_list_bound_python_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        "cmd = [\"osascript\", \"-e\", 'display notification \"x\"']\n"
+        "subprocess.run(cmd)\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_variable_bound_python_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
@@ -367,6 +380,28 @@ def test_delivery_result_reflects_osascript_exit_status(monkeypatch):
     )
 
     assert mod._deliver("message", "title") is False
+
+
+def test_gate_state_requires_control_dependency(tmp_path, check_gate):
+    notifier = _write_notifier(
+        tmp_path,
+        """
+        def _root_may_speak(root):
+            return True
+
+        def _deliver(message, title):
+            return True
+
+        def notify(root, message):
+            _root_may_speak(root)
+            return _deliver(message, "title")
+        """,
+    )
+
+    gated, reason = check_gate.gate_state(notifier)
+
+    assert gated is False
+    assert "notify" in reason
 
 
 def test_every_public_delivery_route_must_call_the_gate(tmp_path, check_gate):
