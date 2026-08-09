@@ -399,10 +399,12 @@ def test_undecodable_notification_sources_fail_closed(tmp_path, check_gate):
     python_sender = scripts / "python_sender.py"
     shell_sender = scripts / "shell_sender.sh"
     python_sender.write_bytes(
-        b'import subprocess\n# undecodable: \\xff\n'
-        b'subprocess.run(["osascript", "-e", "display notification \\"x\\\""])\n'
+        b'import subprocess\n# undecodable: ' + bytes([0xFF]) + b'\n'
+        b'subprocess.run(["osascript", "-e", "display notification x"])\n'
     )
-    shell_sender.write_bytes(b'osascript -e \'display notification "x"\' # \\xff\n')
+    shell_sender.write_bytes(
+        b'osascript -e \'display notification "x"\' # ' + bytes([0xFF]) + b'\n'
+    )
 
     assert check_gate._python_bypasses(python_sender) is True
     assert check_gate._shell_bypasses(shell_sender) is True
