@@ -180,6 +180,30 @@ def test_opencode_usage_preserves_provider_auth_terminal_class(tmp_path):
     assert vendors["opencode"]["provider_last_terminal_failure_class"] == "auth_failure"
 
 
+def test_opencode_usage_derives_terminal_class_from_actual_provider_id(tmp_path):
+    now = datetime.now(timezone.utc)
+    finished = now - timedelta(seconds=1)
+    rows = [
+        {
+            "schema": "limen.provider_outcome.v1",
+            "provider": "openrouter",
+            "runtime_model": "openrouter/hosted-runtime",
+            "catalog_hash": "a" * 64,
+            "execution_profile_hash": "b" * 64,
+            "terminal_class": "auth_failure",
+            "started_at": (finished - timedelta(seconds=1)).isoformat(),
+            "finished_at": finished.isoformat(),
+            "retry_count": 0,
+            "receipt_reference": "task:hosted-auth-fixture",
+        }
+    ]
+
+    vendors = _run(tmp_path, ["beat ok"], provider_outcomes=rows)
+
+    assert vendors["opencode"]["provider_last_terminal_failure_class"] == "auth_failure"
+    assert vendors["opencode"]["provider_terminal_failure_classes"] == {"openrouter": "auth_failure"}
+
+
 def test_malformed_cooldown_env_does_not_crash(tmp_path):
     vendors = _run(
         tmp_path,
