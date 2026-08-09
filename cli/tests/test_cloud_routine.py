@@ -182,6 +182,32 @@ def test_terminal_lineage_preserves_subsecond_recurrences() -> None:
     assert second.duplicates == 0
 
 
+def test_historical_occurrence_timestamp_blocks_older_replay() -> None:
+    receipt = _receipt(observed_at="2026-08-08T12:00:00Z")
+    lineage_id = task_id_for(receipt)
+    first = plan_task_upserts(
+        [receipt],
+        historical_ids={lineage_id},
+        historical_observed_at={
+            lineage_id: _receipt(observed_at="2026-08-08T11:00:00Z").observed_at
+        },
+    )
+    occurrence_id = first.tasks[0].id
+
+    delayed = _receipt(observed_at="2026-08-08T11:30:00Z")
+    plan = plan_task_upserts(
+        [delayed],
+        historical_ids={lineage_id, occurrence_id},
+        historical_observed_at={
+            lineage_id: _receipt(observed_at="2026-08-08T11:00:00Z").observed_at,
+            occurrence_id: receipt.observed_at,
+        },
+    )
+
+    assert plan.tasks == ()
+    assert plan.duplicates == 1
+
+
 def test_terminal_lineage_replay_is_a_duplicate() -> None:
     receipt = _receipt()
     lineage_id = task_id_for(receipt)
@@ -229,6 +255,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     valid_substitution = {**valid, "predicate": 'test "$(git rev-parse --show-toplevel)" = /tmp'}
     invalid_backtick = {**valid, "predicate": "test `false` = success"}
     invalid_semicolon = {**valid, "predicate": "python check.py; true"}
+    invalid_nested_substitution = {**valid, "predicate": 'test "$(false; echo success)" = success'}
     invalid_pipeline = {**valid, "predicate": "python check.py | true"}
     invalid_owner = {**valid, "disposition": "owned", "owner_ref": "   "}
     invalid_durable_owner = {**valid, "disposition": "owned", "owner_ref": "missing-owner"}
@@ -240,6 +267,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     assert list(validator.iter_errors(invalid_quote))
     assert list(validator.iter_errors(invalid_backtick))
     assert list(validator.iter_errors(invalid_semicolon))
+    assert list(validator.iter_errors(invalid_nested_substitution))
     assert list(validator.iter_errors(invalid_pipeline))
     assert list(validator.iter_errors(invalid_owner))
     assert list(validator.iter_errors(invalid_durable_owner))
@@ -259,6 +287,8 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
         _receipt(predicate="python check.py | true")
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate='test "$(false; echo success)" = success')
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate='test -z "$(printf \'%s\' "$(false \\"x; true \\")")"')
     with pytest.raises(ValidationError, match="bounded shell grammar"):
         _receipt(predicate="test `false` = success")
 
