@@ -2433,6 +2433,12 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_HEAL_RETIREMENT_MAX_PAGES:
+    default: 20                 # runaway guard on REST pagination in check-heal-retirement.py
+    env: LIMEN_HEAL_RETIREMENT_MAX_PAGES
+    self_update: none
+    owner: heal
+    note: "Runaway bound on the paginated REST open-PR enumeration behind scripts/check-heal-retirement.py — NOT a coverage cap. REST pagination proves its own completeness by ending on a short page, so this only stops a pathological loop; hitting it reports TRUNCATED (exit 2, flags nothing) because a prefix must never pass as the whole set. That distinction is load-bearing: absence from the enumerated set is what marks a HEAL task retirable, so an incomplete list makes open PRs read as closed. The predicate uses REST rather than `gh search` for exactly this reason, plus pool isolation — measured 2026-08-09 with two lanes sweeping PRs, `graphql` sat at 0/5000 (gh search runs on it, returning an EMPTY list) while `core` held 4887/5000, and the search-based gate on main reported '51 active HEAL tasks name closed/merged PRs' when the true count was 15."
   LIMEN_HEAL_DISPATCH:
     default: 1                  # default-ON: apply verify-dispatch.py's findings each HEAL beat
     env: LIMEN_HEAL_DISPATCH

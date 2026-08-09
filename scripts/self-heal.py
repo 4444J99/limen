@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
-from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
+from limen.models import DispatchLogEntry, Task  # noqa: E402
 from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs,
@@ -381,6 +381,25 @@ def main():
     if not allprs:
         print("[self-heal] no open PRs (or gh unavailable)")
         return 0
+
+    # RETIREMENT SAFETY. The reconcile pass below retires any active HEAL task whose PR is ABSENT
+    # from `allprs`, so every way of getting a SHORT list is a way of retiring live work. The
+    # `not allprs` guard above only catches total emptiness; these two are the partial cases, and
+    # neither announces itself:
+    #   --pr        deliberately narrows the enumeration to the named PRs, making every OTHER
+    #               task's PR trivially "absent" — a one-PR debugging run would retire the backlog.
+    #   --scan-max  `gh search --limit N` truncates SILENTLY at N. Measured 2026-08-09: 822 open
+    #               PRs across the owners against a default cap of 1000 (82% of it), in an estate
+    #               that opened and merged 54 PRs that day.
+    # Emission is unaffected — a short list merely emits fewer tasks. Retirement is destructive, so
+    # it requires a COMPLETE enumeration or it does not run at all.
+    retire_ok, retire_why = True, ""
+    if a.pr:
+        retire_ok, retire_why = False, "--pr narrowed the enumeration to the named PR(s)"
+    elif len(allprs) >= a.scan_max:
+        retire_ok, retire_why = False, f"enumeration hit the --scan-max cap ({a.scan_max}); it is truncated"
+    if not retire_ok:
+        print(f"[self-heal] retirement SKIPPED — {retire_why}. Absence from a partial set is not evidence of closure.")
     if a.pr:
         prs = allprs
     else:
@@ -423,7 +442,7 @@ def main():
         open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
         ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
         would_retire = 0
-        for t in tasks:
+        for t in tasks if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
             if (
                 (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
                 and not t.id.startswith("HEAL-rebase-stale-")
@@ -481,7 +500,7 @@ def main():
         open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
         retired = []
         ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
-        for t in lf.tasks:
+        for t in lf.tasks if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
             if (
                 (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
                 and not t.id.startswith("HEAL-rebase-stale-")
@@ -540,7 +559,8 @@ def main():
         f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
         f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
         f"stale-base={b['STALE-BASE']} review-feedback={review_fb} chronic-frozen={len(frozen)} "
-        f"| emitted={len(emitted)} (limit={limit})"
+        f"| emitted={len(emitted)} retired={len(retired)}"
+        f"{'' if retire_ok else ' (retire SKIPPED: ' + retire_why + ')'} (limit={limit})"
     )
     print(summary)
     for tid in emitted:

@@ -1,0 +1,18 @@
+# HEAL tasks naming a non-open PR when the retirement gate shipped (2026-08-09).
+# SHRINK-ONLY: --write-baseline refuses to grow this file. A line leaves when the task
+# is genuinely retired by self-heal.py's reconcile pass, never to silence a fresh one.
+HEAL-cifix-organvm-limen-1101
+HEAL-cifix-organvm-limen-1316
+HEAL-cifix-organvm-limen-1325
+HEAL-cifix-organvm-limen-1328
+HEAL-cifix-organvm-limen-1329
+HEAL-cifix-organvm-limen-419
+HEAL-cifix-organvm-limen-423
+HEAL-cifix-organvm-limen-430
+HEAL-cifix-organvm-limen-435
+HEAL-cifix-organvm-limen-439
+HEAL-cifix-organvm-limen-445
+HEAL-cifix-organvm-limen-446
+HEAL-cifix-organvm-limen-846
+HEAL-cifix-organvm-limen-968
+HEAL-rebase-organvm-limen-682
