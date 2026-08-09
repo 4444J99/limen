@@ -88106,30 +88106,42 @@ tasks:
     session_id: heal
     status: done
     output: "heal-dispatch: PR merged \u2192 done"
-- id: HEAL-rebase-stale-4444j99-hokage-chess-101
-  title: "rebase 4444J99/hokage-chess#101 onto current base \u2014 branched far behind"
-  repo: organvm/hokage-chess
-  type: code
-  target_agent: codex
-  priority: medium
+- id: 'HEAL-rebase-stale-4444j99-hokage-chess-101'
+  title: 'rebase 4444J99/hokage-chess#101 onto current base — branched far behind'
+  repo: 'organvm/hokage-chess'
+  type: 'code'
+  target_agent: 'codex'
+  priority: 'medium'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - rebase
-  - self-heal
-  - stale-base
+  - 'rebase'
+  - 'self-heal'
+  - 'stale-base'
   urls:
-  - https://github.com/4444J99/hokage-chess/pull/101
-  context: "PR 4444J99/hokage-chess#101 is MERGEABLE + green but branched well behind\
-    \ its current base \u2014 the structural condition for a stale-base silent revert.\
-    \ Check out the branch, REBASE it onto the current base, KEEP all of the PR's\
-    \ genuine changes and DROP any hunk that merely reverts base files it didn't mean\
-    \ to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE\
-    \ + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/4444J99/hokage-chess/pull/101\
-    \ [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]"
+  - 'https://github.com/4444J99/hokage-chess/pull/101'
+  context: 'PR 4444J99/hokage-chess#101 is MERGEABLE + green but branched well behind its current base — the structural condition for a stale-base silent revert. Check out the branch, REBASE it onto the current base, KEEP all of the PR''s genuine changes and DROP any hunk that merely reverts base files it didn''t mean to touch, push --force-with-lease to the SAME branch, and confirm MERGEABLE + current + green. Do NOT open a new PR; preserve all unique work. PR: https://github.com/4444J99/hokage-chess/pull/101 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  dispatch_log: []
+  dispatch_log:
+  - timestamp: '2026-08-09T02:55:09.412Z'
+    agent: 'opencode'
+    session_id: 'opencode-arch-101-1786244107'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-arch-101-1786244107'
+    status: 'dispatched'
+    output: 'Duplicate: PR #101 not in 4444J99/hokage-chess; real PR in organvm/hokage-chess--4444j99.'
+    conduct_event_id: 'conduct:run-01b9d34fbd3d271cb2a8772256671c42:756:compatibility'
+    conduct_run_id: 'run-01b9d34fbd3d271cb2a8772256671c42'
+    conduct_lease_id: 'lease-756-01b9d34fbd3d271c'
+    conduct_generation: 756
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Wrong-repo duplicate: PR #101 lives in organvm/hokage-chess--4444j99 (tracked by HEAL-rebase-organvm-hokage-chess--4444j99-101); 4444J99/hokage-chess has only 15 PRs. Archiving duplicate.'
+  owner_surface: 'board'
+  predicate: 'test "$(gh pr view 101 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = OPEN'
+  receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/101'
+  updated: '2026-08-09T02:55:09.412Z'
 - id: HEAL-rebase-stale-4444j99-hokage-chess-102
   title: "rebase 4444J99/hokage-chess#102 onto current base \u2014 branched far behind"
   repo: organvm/hokage-chess
