@@ -90,6 +90,7 @@ def sample_vitals() -> dict:
             if current_time is not None and current_time > sampled_time:
                 return status
             status["sample_error"] = observed
+            status["sample_error_at"] = sampled_at
             status.setdefault("vitals", observed)
             return status
         current_time = _sample_time(status.get("sampled_at"))
@@ -102,6 +103,7 @@ def sample_vitals() -> dict:
             }
         )
         status.pop("sample_error", None)
+        status.pop("sample_error_at", None)
         return status
 
     return _update_status(merge)
@@ -126,11 +128,39 @@ def run_beat() -> dict:
             and (current_time is None or early_time > current_time)
         )
         sampled_at = early_sampled_at if early_is_new_success else (current_sampled_at or early_sampled_at)
-        sample_error = current.get("sample_error")
-        # An early error remains relevant only until a later successful sample advances
-        # the timestamp. Do not resurrect an obsolete failure from the slow beat's copy.
-        if sample_error is None and early.get("sample_error") and sampled_at == early_sampled_at:
-            sample_error = early["sample_error"]
+        current_error = current.get("sample_error")
+        current_error_at = _sample_time(current.get("sample_error_at"))
+        if current_error is not None and current_error_at is None:
+            current_error_at = current_time
+        early_error = early.get("sample_error")
+        early_error_at = _sample_time(early.get("sample_error_at"))
+        if early_error is not None and early_error_at is None:
+            early_error_at = early_time
+        sample_error = current_error
+        sample_error_at = current_error_at
+        if early_error is not None and (
+            sample_error is None
+            or (
+                early_error_at is not None
+                and (sample_error_at is None or early_error_at > sample_error_at)
+            )
+        ):
+            sample_error = early_error
+            sample_error_at = early_error_at
+        successful_samples = []
+        if current_error is None and current_time is not None:
+            successful_samples.append(current_time)
+        if early.get("sample_error") is None and early_time is not None:
+            successful_samples.append(early_time)
+        latest_success = max(successful_samples) if successful_samples else None
+        if (
+            sample_error is not None
+            and sample_error_at is not None
+            and latest_success is not None
+            and sample_error_at < latest_success
+        ):
+            sample_error = None
+            sample_error_at = None
         result = {
             "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
             "sampled_at": sampled_at,
@@ -143,8 +173,9 @@ def run_beat() -> dict:
         }
         if sample_error is not None:
             result["sample_error"] = sample_error
+            if sample_error_at is not None:
+                result["sample_error_at"] = sample_error_at.isoformat()
         return result
-
     return _update_status(merge)
 
 
@@ -152,7 +183,13 @@ def summary_line(status: dict) -> str:
     v = status.get("vitals", {})
     c = status.get("continuity", {})
     i = status.get("integrity", {})
+    sample_error = status.get("sample_error")
+    if isinstance(sample_error, dict):
+        error_detail = str(sample_error.get("error") or "sample failed")[:120]
+        vitals_summary = f"ERROR/{error_detail}"
+    else:
+        vitals_summary = f"L{v.get('level', '?')}/{v.get('action', '?')}"
     return (
-        f"vigilia: vitals=L{v.get('level', '?')}/{v.get('action', '?')} "
+        f"vigilia: vitals={vitals_summary} "
         f"continuity={c.get('status', '?')} integrity={i.get('status', '?')}"
     )
