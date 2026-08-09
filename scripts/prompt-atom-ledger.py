@@ -896,12 +896,13 @@ def load_lifecycle_module() -> Any:
         original_home = Path(module.HOME)
         source_home = SOURCE_HOME_OVERRIDE.resolve()
 
+        provider_roots = tuple(original_home / name for name in (".claude", ".codex", ".gemini", ".local"))
+
         def rebase(path: Any) -> Path:
             candidate = Path(path)
-            try:
-                return source_home / candidate.relative_to(original_home)
-            except ValueError:
+            if not any(candidate == root or root in candidate.parents for root in provider_roots):
                 return candidate
+            return source_home / candidate.relative_to(original_home)
 
         module.HOME = source_home
         for attribute in (
@@ -960,6 +961,23 @@ def containing_source_root(lifecycle: Any, source: str, path: Path) -> Path | No
     return canonical_source_root(lifecycle, source)
 
 
+def _isolated_home_for(lifecycle: Any, containment_root: Path) -> Path | None:
+    """Keep home isolation except for explicitly declared shared runtime roots."""
+
+    if SOURCE_HOME_OVERRIDE is None:
+        return None
+    runtime_root = getattr(lifecycle, "RUNTIME_ROOT", None)
+    if runtime_root is None:
+        return SOURCE_HOME_OVERRIDE
+    lexical_root = containment_root.expanduser().absolute()
+    lexical_runtime = Path(runtime_root).expanduser().absolute()
+    try:
+        lexical_root.relative_to(lexical_runtime) if lexical_root != lexical_runtime else None
+    except ValueError:
+        return SOURCE_HOME_OVERRIDE
+    return None
+
+
 def source_path_custody(
     lifecycle: Any,
     source: str,
@@ -972,14 +990,14 @@ def source_path_custody(
         source,
         path,
         root,
-        isolated_home=SOURCE_HOME_OVERRIDE,
+        isolated_home=_isolated_home_for(lifecycle, root),
     )
 
 
 def source_relative_path(lifecycle: Any, source: str, path: Path) -> Path | None:
     """Return a source-relative role after typed direct-or-alias custody succeeds."""
 
-    root_path = canonical_source_root(lifecycle, source)
+    root_path = containing_source_root(lifecycle, source, path)
     if root_path is None:
         return None
     custody = source_path_custody(lifecycle, source, path, containment_root=root_path)
@@ -2533,6 +2551,7 @@ def source_path_error(
 def _discover_candidate(
     rows: DiscoveredRows,
     *,
+    lifecycle: Any,
     source: str,
     path: Path,
     containment_root: Path,
@@ -2546,7 +2565,7 @@ def _discover_candidate(
         source,
         path,
         containment_root,
-        isolated_home=SOURCE_HOME_OVERRIDE,
+        isolated_home=_isolated_home_for(lifecycle, containment_root),
     )
     if custody.error is not None:
         rows.discovery_errors.append((source, f"{source}:{path}: {custody.error}"))
@@ -2571,7 +2590,13 @@ def _discover_candidate(
     rows.discovered_count += 1
     if cutoff is not None and source_mtime < cutoff:
         return True
-    path_key = str(path)
+    if custody.alias_contract_id is not None:
+        path_key = str(path.expanduser().absolute())
+    else:
+        try:
+            path_key = str(path.resolve())
+        except OSError:
+            path_key = str(path)
     if path_key in known_paths:
         return True
     known_paths.add(path_key)
@@ -2600,6 +2625,7 @@ def generic_gemini_rows(
     for path in root.rglob("chats/*.jsonl"):
         if not _discover_candidate(
             rows,
+            lifecycle=lifecycle,
             source="gemini-tmp",
             path=path,
             containment_root=root,
@@ -2634,6 +2660,7 @@ def regular_source_rows(
         for path in candidates:
             if not _discover_candidate(
                 rows,
+                lifecycle=lifecycle,
                 source=source,
                 path=path,
                 containment_root=root,
@@ -2653,6 +2680,7 @@ def regular_source_rows(
         for row in generic:
             if not _discover_candidate(
                 rows,
+                lifecycle=lifecycle,
                 source=str(row["source"]),
                 path=Path(row["path"]),
                 containment_root=Path(lifecycle.HOME) / ".gemini" / "tmp",
