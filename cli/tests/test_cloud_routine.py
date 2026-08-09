@@ -327,11 +327,14 @@ def test_pruned_archive_lineage_remains_a_duplicate(tmp_path: Path) -> None:
 
     assert lineage_id in historical_ids
     assert observed[lineage_id].isoformat() == "2026-08-08T12:00:00+00:00"
-    assert plan_task_upserts(
-        [receipt],
-        historical_ids=historical_ids,
-        historical_observed_at=observed,
-    ).tasks == ()
+    assert (
+        plan_task_upserts(
+            [receipt],
+            historical_ids=historical_ids,
+            historical_observed_at=observed,
+        ).tasks
+        == ()
+    )
 
 
 def test_scoped_gate_covers_every_external_cloud_contract_artifact() -> None:
