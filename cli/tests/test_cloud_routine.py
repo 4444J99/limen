@@ -461,6 +461,32 @@ def test_consumer_rejects_a_routine_absent_from_manifest(tmp_path: Path) -> None
         module.load_receipts([receipt_path], manifest_path=manifest)
 
 
+def test_closure_checker_delegates_manifest_validation(capsys, monkeypatch) -> None:
+    script = ROOT / "scripts" / "check-cloud-routine-ingest.py"
+    spec = importlib.util.spec_from_file_location("cloud_routine_checker_manifest_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    class _FakeIngest:
+        @staticmethod
+        def validate_routine_ids(_receipts, *, manifest_path):
+            raise ValueError(f"manifest sentinel: {manifest_path.name}")
+
+        @staticmethod
+        def validate_human_gate_owners(_receipts, *, lever_path):
+            return None
+
+        @staticmethod
+        def active_lever_ids(_path):
+            return {"L-IRF-P0-HUMAN-ACTIONS-20260808"}
+
+    monkeypatch.setattr(module, "_load_ingest_module", lambda: _FakeIngest)
+
+    assert module.main() == 1
+    assert "manifest sentinel" in capsys.readouterr().out
+
+
 def test_irf_validator_derives_every_row_owner() -> None:
     script = ROOT / "scripts" / "check-cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location("cloud_routine_checker_test", script)
