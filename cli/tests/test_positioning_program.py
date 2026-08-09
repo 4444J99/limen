@@ -5,6 +5,7 @@ import importlib.machinery
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -88,7 +89,8 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "## Acceptance condition" in work
     assert "## Executable completion predicate" in work
     assert "measurement, inference, implication, and prominence" in work
-    assert "model/provider selected dynamically" in work
+    assert "Assigned model: `gpt-5.6-sol`" in work
+    assert "Assigned effort: `max`" in work
 
 
 def test_every_projected_issue_fits_github_limits() -> None:
@@ -112,7 +114,47 @@ def test_every_leaf_has_an_executable_non_provider_pinned_predicate() -> None:
         assert packet["acceptance"].strip()
 
 
-def test_packet_seed_is_provider_neutral_and_not_a_lease() -> None:
+def test_every_object_has_an_explicit_model_and_effort_assignment() -> None:
+    graph, _mapping = graph_and_map()
+    assignments = {object_id: MODULE.model_assignment_for(object_id, graph) for object_id in graph["ordered_ids"]}
+
+    assert len(assignments) == 127
+    assert assignments["PSP-ROOT"]["slug"] == "gpt-5.6-sol"
+    assert assignments["PSP-ROOT"]["effort"] == "ultra"
+    assert assignments["PSP-P01"]["slug"] == "gpt-5.6-terra"
+    assert assignments["PSP-P01"]["effort"] == "high"
+    assert assignments["PSP-P00-W07"]["effort"] == "max"
+    assert assignments["PSP-P02-W08"]["effort"] == "max"
+    assert assignments["PSP-P14-W09"]["effort"] == "ultra"
+    assert all(row["effort"] in MODULE.EFFORTS for row in assignments.values())
+
+
+def test_live_catalog_validator_checks_every_assigned_pair(monkeypatch) -> None:
+    graph, _mapping = graph_and_map()
+    catalog: dict[str, set[str]] = {}
+    for object_id in graph["ordered_ids"]:
+        assignment = MODULE.model_assignment_for(object_id, graph)
+        catalog.setdefault(assignment["slug"], set()).add(assignment["effort"])
+    payload = {
+        "models": [
+            {"slug": slug, "supported_reasoning_levels": [{"effort": effort} for effort in sorted(efforts)]}
+            for slug, efforts in sorted(catalog.items())
+        ]
+    }
+    monkeypatch.setattr(
+        MODULE.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=json.dumps(payload), stderr=""),
+    )
+
+    result = MODULE.verify_model_assignments(graph)
+
+    assert result["status"] == "ok"
+    assert result["objects"] == 127
+    assert sum(result["assignments"].values()) == 127
+
+
+def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> None:
     graph, mapping = graph_and_map()
 
     seed = MODULE.packet_seed("PSP-P01-W01", graph, mapping)
@@ -120,7 +162,8 @@ def test_packet_seed_is_provider_neutral_and_not_a_lease() -> None:
     assert seed["schema_version"] == MODULE.SEED_SCHEMA
     assert seed["not_a_lease"] is True
     assert seed["execution_requirements"]["reasoning_class"] == "routine"
-    assert "model" not in json.dumps(seed).lower()
+    assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
+    assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
     assert seed["receipt_target"] == "github:organvm/limen:issue:11"
 
 
@@ -262,3 +305,4 @@ def test_index_render_is_deterministic(tmp_path: Path) -> None:
     assert MODULE.render_index(graph, mapping, first) == MODULE.render_index(graph, mapping, second)
     assert first.read_bytes() == second.read_bytes()
     assert "Atomic work packets: **111**" in first.read_text()
+    assert "Root model / effort: **`gpt-5.6-sol` / `ultra`**" in first.read_text()

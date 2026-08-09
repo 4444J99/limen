@@ -29,8 +29,10 @@ The program is represented once in the tracked manifest and projected idempotent
 - one deterministic issue-number map and generated human-readable index.
 
 The GitHub graph is a coordination projection, not a lease. Every mutation leaf is claimed by a
-registered native lane through the conduct broker. Provider and model selection remain live and
-capability-based; no static fallback table is part of the plan.
+registered native lane through the conduct broker. Under the owner’s 2026-08-09 override, every
+root/phase/leaf has an exact model and effort assignment validated against the live Codex catalog.
+An unavailable assignment fails blocked and requires reviewed reassignment; there is no silent
+fallback table.
 
 ## Sequence
 

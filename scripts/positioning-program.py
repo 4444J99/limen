@@ -12,6 +12,7 @@ Mutation is explicit:
   python3 scripts/positioning-program.py --sync              # dry run
   python3 scripts/positioning-program.py --sync --apply      # GitHub writes + map/index rewrite
   python3 scripts/positioning-program.py --verify-remote
+  python3 scripts/positioning-program.py --verify-model-assignments
   python3 scripts/positioning-program.py --ready --json
   python3 scripts/positioning-program.py --seed PSP-P01-W01
   python3 scripts/positioning-program.py --receipt-template PSP-P01-W01
@@ -46,6 +47,7 @@ PROGRAM_SCHEMA = "limen.positioning_program.v1"
 MAP_SCHEMA = "limen.positioning_github_map.v1"
 SEED_SCHEMA = "limen.positioning_packet_seed.v1"
 RECEIPT_SCHEMA = "limen.positioning_work_receipt.v1"
+MODEL_ASSIGNMENT_SCHEMA = "limen.positioning_model_assignments.v1"
 MARKER_RE = re.compile(r"<!--\s*positioning-program:(PSP-(?:ROOT|P\d{2}(?:-W\d{2})?))\s*-->")
 RECEIPT_MARKER_RE = re.compile(r"<!--\s*positioning-receipt:(PSP-P\d{2}-W\d{2})\s*-->")
 RECEIPT_BLOCK_RE = re.compile(
@@ -60,6 +62,7 @@ PHASE_RE = re.compile(r"PSP-P\d{2}\Z")
 WORK_RE = re.compile(r"PSP-P\d{2}-W\d{2}\Z")
 REASONING = frozenset({"routine", "deep", "frontier_review"})
 EFFECTS = frozenset({"read", "write", "external"})
+EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max", "ultra"})
 FORBIDDEN_ROUTING_KEYS = frozenset({"model", "model_id", "provider", "preferred_agent"})
 REQUIRED_WORK_FIELDS = (
     "id",
@@ -91,6 +94,21 @@ def _is_nonempty_text(value: object) -> bool:
 
 def _is_text_list(value: object, *, nonempty: bool = False) -> bool:
     return isinstance(value, list) and (not nonempty or bool(value)) and all(_is_nonempty_text(item) for item in value)
+
+
+def _assignment_failures(value: object, label: str) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{label} must be a mapping"]
+    failures = []
+    if set(value) != {"slug", "effort", "rationale"}:
+        failures.append(f"{label} must contain exactly slug, effort, and rationale")
+    if not _is_nonempty_text(value.get("slug")):
+        failures.append(f"{label}.slug must be non-empty text")
+    if value.get("effort") not in EFFORTS:
+        failures.append(f"{label}.effort must be one of {sorted(EFFORTS)}")
+    if not _is_nonempty_text(value.get("rationale")):
+        failures.append(f"{label}.rationale must be non-empty text")
+    return failures
 
 
 def load_manifest(path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
@@ -136,6 +154,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     phases = data.get("phases")
     external = data.get("external_references")
     gates = data.get("human_gates")
+    assignments = data.get("model_assignments")
     if not isinstance(program, dict):
         failures.append("program must be a mapping")
         program = {}
@@ -148,6 +167,9 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(gates, dict):
         failures.append("human_gates must be a mapping")
         gates = {}
+    if not isinstance(assignments, dict):
+        failures.append("model_assignments must be a mapping")
+        assignments = {}
     if program.get("id") != "PSP-ROOT":
         failures.append("program.id must be PSP-ROOT")
     for key in ("title", "repository", "outcome", "terminal_predicate"):
@@ -262,6 +284,59 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         if work_id not in work_by_id:
             failures.append(f"critical_path has unknown work id {work_id}")
 
+    if assignments.get("schema_version") != MODEL_ASSIGNMENT_SCHEMA:
+        failures.append(f"model_assignments.schema_version must be {MODEL_ASSIGNMENT_SCHEMA}")
+    for key in ("authority", "adapter", "catalog_command", "catalog_validated_at", "unavailable_action"):
+        if not _is_nonempty_text(assignments.get(key)):
+            failures.append(f"model_assignments.{key} must be non-empty text")
+    if assignments.get("adapter") != "codex":
+        failures.append("model_assignments.adapter must be codex for the current human override")
+    observed_at = assignments.get("catalog_validated_at")
+    if isinstance(observed_at, str) and not RFC3339_RE.fullmatch(observed_at):
+        failures.append("model_assignments.catalog_validated_at must be RFC3339")
+    failures.extend(_assignment_failures(assignments.get("root"), "model_assignments.root"))
+
+    phase_assignments = assignments.get("phases")
+    if not isinstance(phase_assignments, dict):
+        failures.append("model_assignments.phases must be a mapping")
+        phase_assignments = {}
+    if set(phase_assignments) != set(phase_by_id):
+        failures.append("model_assignments.phases must assign every phase exactly once")
+    for phase_id, assignment in phase_assignments.items():
+        failures.extend(_assignment_failures(assignment, f"model_assignments.phases.{phase_id}"))
+
+    work_matrix = assignments.get("work_matrix")
+    if not isinstance(work_matrix, dict) or set(work_matrix) != set(REASONING):
+        failures.append("model_assignments.work_matrix must assign every reasoning class")
+        work_matrix = {}
+    for reasoning in REASONING:
+        effect_rows = work_matrix.get(reasoning)
+        if not isinstance(effect_rows, dict) or set(effect_rows) != set(EFFECTS):
+            failures.append(f"model_assignments.work_matrix.{reasoning} must assign every effect")
+            continue
+        for effect, assignment in effect_rows.items():
+            failures.extend(_assignment_failures(assignment, f"model_assignments.work_matrix.{reasoning}.{effect}"))
+
+    if not _is_text_list(assignments.get("sensitive_capabilities"), nonempty=True):
+        failures.append("model_assignments.sensitive_capabilities must be a non-empty text list")
+    failures.extend(
+        _assignment_failures(assignments.get("sensitive_assignment"), "model_assignments.sensitive_assignment")
+    )
+    failures.extend(
+        _assignment_failures(
+            assignments.get("multi_repository_assignment"), "model_assignments.multi_repository_assignment"
+        )
+    )
+    object_overrides = assignments.get("object_overrides")
+    if not isinstance(object_overrides, dict):
+        failures.append("model_assignments.object_overrides must be a mapping")
+        object_overrides = {}
+    unknown_overrides = set(object_overrides) - set(work_by_id)
+    if unknown_overrides:
+        failures.append(f"model_assignments.object_overrides has unknown work ids: {sorted(unknown_overrides)}")
+    for work_id, assignment in object_overrides.items():
+        failures.extend(_assignment_failures(assignment, f"model_assignments.object_overrides.{work_id}"))
+
     def assert_acyclic(nodes: dict[str, dict[str, Any]], label: str) -> None:
         visiting: set[str] = set()
         visited: set[str] = set()
@@ -294,6 +369,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         "work_phase": work_phase,
         "external": external,
         "gates": gates,
+        "model_assignments": assignments,
         "ordered_ids": ordered_ids,
     }
 
@@ -346,6 +422,96 @@ def acceptance_digest(packet: dict[str, Any]) -> str:
     return hashlib.sha256(str(packet["acceptance"]).encode("utf-8")).hexdigest()
 
 
+def model_assignment_for(object_id: str, graph: dict[str, Any]) -> dict[str, str]:
+    routing = graph["model_assignments"]
+    if object_id == "PSP-ROOT":
+        selected = routing["root"]
+        basis = "root override"
+    elif object_id in graph["phase_by_id"]:
+        selected = routing["phases"][object_id]
+        basis = "phase plan override"
+    else:
+        packet = graph["work_by_id"][object_id]
+        overrides = routing["object_overrides"]
+        sensitive = set(routing["sensitive_capabilities"])
+        if object_id in overrides:
+            selected = overrides[object_id]
+            basis = "work override"
+        elif packet["reasoning"] != "frontier_review" and sensitive.intersection(packet["capabilities"]):
+            selected = routing["sensitive_assignment"]
+            basis = "sensitive-capability override"
+        elif packet["reasoning"] != "frontier_review" and packet["target_repo"].startswith("multi-repository:"):
+            selected = routing["multi_repository_assignment"]
+            basis = "multi-repository override"
+        else:
+            selected = routing["work_matrix"][packet["reasoning"]][packet["effect"]]
+            basis = f"{packet['reasoning']}/{packet['effect']} matrix"
+    return {
+        "adapter": str(routing["adapter"]),
+        "slug": str(selected["slug"]),
+        "effort": str(selected["effort"]),
+        "rationale": str(selected["rationale"]),
+        "basis": basis,
+        "authority": str(routing["authority"]),
+        "catalog_validated_at": str(routing["catalog_validated_at"]),
+        "unavailable_action": str(routing["unavailable_action"]),
+    }
+
+
+def verify_model_assignments(graph: dict[str, Any]) -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            ["codex", "debug", "models"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ProgramError(f"live Codex model catalog is unavailable: {exc}") from exc
+    if result.returncode != 0:
+        raise ProgramError(result.stderr.strip() or "live Codex model catalog query failed")
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise ProgramError("live Codex model catalog returned invalid JSON") from exc
+    entries = payload.get("models") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        raise ProgramError("live Codex model catalog has an unsupported shape")
+    catalog: dict[str, set[str]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict) or not _is_nonempty_text(entry.get("slug")):
+            continue
+        levels = entry.get("supported_reasoning_levels")
+        if not isinstance(levels, list):
+            continue
+        catalog[str(entry["slug"])] = {
+            str(level if isinstance(level, str) else level.get("effort"))
+            for level in levels
+            if isinstance(level, str) or isinstance(level, dict)
+        }
+    failures: list[str] = []
+    counts: dict[str, int] = {}
+    for object_id in graph["ordered_ids"]:
+        assignment = model_assignment_for(object_id, graph)
+        slug = assignment["slug"]
+        effort = assignment["effort"]
+        if slug not in catalog:
+            failures.append(f"{object_id}: {slug!r} is absent from the live catalog")
+        elif effort not in catalog[slug]:
+            failures.append(f"{object_id}: {slug!r} does not support effort {effort!r}")
+        key = f"{slug}/{effort}"
+        counts[key] = counts.get(key, 0) + 1
+    if failures:
+        raise ProgramError("model assignment validation failed:\n- " + "\n- ".join(failures))
+    return {
+        "status": "ok",
+        "objects": len(graph["ordered_ids"]),
+        "catalog_entries": len(catalog),
+        "assignments": dict(sorted(counts.items())),
+    }
+
+
 def _issue_row(mapping: dict[str, Any], object_id: str) -> dict[str, Any] | None:
     row = (mapping.get("issues") or {}).get(object_id)
     return row if isinstance(row, dict) else None
@@ -375,6 +541,22 @@ def _checklist(items: Iterable[str], mapping: dict[str, Any], labels: dict[str, 
     return [f"- [ ] {_link(mapping, item)} — {labels[item]}" for item in items]
 
 
+def _assignment_lines(object_id: str, graph: dict[str, Any]) -> list[str]:
+    assignment = model_assignment_for(object_id, graph)
+    return [
+        "## Assigned model / effort",
+        "",
+        f"- Adapter: `{assignment['adapter']}`",
+        f"- Model: `{assignment['slug']}`",
+        f"- Effort: `{assignment['effort']}`",
+        f"- Basis: {assignment['basis']}",
+        f"- Rationale: {assignment['rationale']}",
+        f"- Human override: {assignment['authority']}",
+        f"- Catalog observed: `{assignment['catalog_validated_at']}`",
+        f"- If unavailable: {assignment['unavailable_action']}",
+    ]
+
+
 def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> str:
     if object_id == "PSP-ROOT":
         phases = [phase["id"] for phase in graph["phases"]]
@@ -384,6 +566,8 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
                 "# Alpha-to-Omega program",
                 "",
                 graph["program"]["outcome"],
+                "",
+                *_assignment_lines(object_id, graph),
                 "",
                 "The tracked source is `institutio/positioning/program.yaml`; this issue is its GitHub index. "
                 "Agents must claim bounded leaves through the Limen conduct broker before mutation.",
@@ -420,6 +604,8 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
                 "",
                 phase["outcome"],
                 "",
+                *_assignment_lines(object_id, graph),
+                "",
                 "## Upstream phases",
                 "",
                 *[f"- {_link(mapping, item)}" for item in dependencies],
@@ -440,6 +626,7 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
             ]
         )
     packet = graph["work_by_id"][object_id]
+    assignment = model_assignment_for(object_id, graph)
     phase_id = graph["work_phase"][object_id]
     dependencies = packet.get("depends_on") or []
     externals = packet.get("external_dependencies") or []
@@ -469,7 +656,13 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         "## Effect and authority",
         "",
         f"- Effect: `{packet['effect']}`",
-        f"- Reasoning class: `{packet['reasoning']}` (model/provider selected dynamically at execution time)",
+        f"- Reasoning class: `{packet['reasoning']}`",
+        f"- Assigned model: `{assignment['slug']}` via `{assignment['adapter']}`",
+        f"- Assigned effort: `{assignment['effort']}`",
+        f"- Assignment basis: {assignment['basis']} — {assignment['rationale']}",
+        f"- Model authority: {assignment['authority']}",
+        f"- Catalog observed: `{assignment['catalog_validated_at']}`",
+        f"- If unavailable: {assignment['unavailable_action']}",
         f"- Required capabilities: {', '.join(f'`{item}`' for item in packet['capabilities'])}",
         "- GitHub issue is not a lease; a registered native lane must obtain current broker authority before mutation.",
     ]
@@ -519,11 +712,13 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
 
 def labels_for(object_id: str, graph: dict[str, Any]) -> list[str]:
     projection = graph["program"]["issue_projection"]
+    assignment = model_assignment_for(object_id, graph)
+    routing_labels = [f"model:{assignment['slug']}", f"effort:{assignment['effort']}"]
     if object_id == "PSP-ROOT":
-        return [projection["program_label"], "plan", "meta"]
+        return [projection["program_label"], "plan", "meta", *routing_labels]
     if object_id in graph["phase_by_id"]:
-        return [projection["program_label"], projection["phase_label"], "plan", "meta"]
-    labels = [projection["program_label"], projection["work_label"], "lane:fleet"]
+        return [projection["program_label"], projection["phase_label"], "plan", "meta", *routing_labels]
+    labels = [projection["program_label"], projection["work_label"], "lane:fleet", *routing_labels]
     if graph["work_by_id"][object_id]["effect"] == "write":
         labels.append("lifecycle:delivery")
     return labels
@@ -582,8 +777,34 @@ def _ensure_labels(graph: dict[str, Any], *, apply: bool) -> list[str]:
     definitions = {
         projection["program_label"]: ("1f6feb", "Production-systems positioning and commercial foundry program"),
         projection["phase_label"]: ("8250df", "Program phase / aggregate exit gate"),
-        projection["work_label"]: ("0e8a16", "Atomic provider-neutral work packet with executable predicate"),
+        projection["work_label"]: (
+            "0e8a16",
+            "Atomic cross-agent work packet with model assignment and executable predicate",
+        ),
     }
+    model_colors = {
+        "gpt-5.4-mini": "6b7280",
+        "gpt-5.6-luna": "06b6d4",
+        "gpt-5.6-terra": "3b82f6",
+        "gpt-5.6-sol": "8b5cf6",
+    }
+    effort_colors = {
+        "low": "c2e0c6",
+        "medium": "0e8a16",
+        "high": "fbca04",
+        "xhigh": "f97316",
+        "max": "d93f0b",
+        "ultra": "5319e7",
+    }
+    for object_id in graph["ordered_ids"]:
+        assignment = model_assignment_for(object_id, graph)
+        slug = assignment["slug"]
+        effort = assignment["effort"]
+        definitions[f"model:{slug}"] = (model_colors.get(slug, "6b7280"), f"Assigned execution model: {slug}")
+        definitions[f"effort:{effort}"] = (
+            effort_colors.get(effort, "6b7280"),
+            f"Assigned reasoning effort: {effort}",
+        )
     missing = [name for name in definitions if name not in existing]
     if apply:
         for name in missing:
@@ -903,10 +1124,13 @@ def sync(
         row = remote[object_id]
         required_labels = labels_for(object_id, graph)
         current_labels = {str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)}
+        stale_routing_labels = {
+            label for label in current_labels if label.startswith("model:") or label.startswith("effort:")
+        }
         payload = {
             "title": title_for(object_id, graph),
             "body": body_for(object_id, graph, mapping),
-            "labels": sorted(current_labels | set(required_labels)),
+            "labels": sorted((current_labels - stale_routing_labels) | set(required_labels)),
             "milestone": int(milestone["number"]),
         }
         _api(repository, f"issues/{row['number']}", method="PATCH", payload=payload)
@@ -940,6 +1164,14 @@ def remote_parity(graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, A
         }
         if not set(labels_for(object_id, graph)).issubset(current_labels):
             drift.append(f"{object_id}: required label drift")
+        expected_routing_labels = {
+            label for label in labels_for(object_id, graph) if label.startswith("model:") or label.startswith("effort:")
+        }
+        current_routing_labels = {
+            label for label in current_labels if label.startswith("model:") or label.startswith("effort:")
+        }
+        if current_routing_labels != expected_routing_labels:
+            drift.append(f"{object_id}: stale model/effort label drift")
     result = {
         "expected": len(expected_ids),
         "observed": len(actual_ids),
@@ -979,6 +1211,7 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "target_paths": packet["target_paths"],
                     "capabilities": packet["capabilities"],
                     "reasoning": packet["reasoning"],
+                    "model_assignment": model_assignment_for(work_id, graph),
                     "effect": packet["effect"],
                     "predicate": packet["predicate"],
                     "human_gates": packet["human_gates"],
@@ -1009,6 +1242,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
             "path_prefixes": packet["target_paths"],
             "required_capabilities": packet["capabilities"],
             "reasoning_class": packet["reasoning"],
+            "model_override": model_assignment_for(work_id, graph),
             "effect": packet["effect"],
             "human_gates": packet["human_gates"],
             "dependencies": packet["depends_on"],
@@ -1023,6 +1257,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
 
 
 def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DEFAULT_INDEX) -> str:
+    root_assignment = model_assignment_for("PSP-ROOT", graph)
     lines = [
         "# Production-Systems Program issue index",
         "",
@@ -1032,17 +1267,19 @@ def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DE
         f"- Phases: **{len(graph['phase_by_id'])}**",
         f"- Atomic work packets: **{len(graph['work_by_id'])}**",
         f"- Total projected GitHub objects: **{len(graph['ordered_ids'])}**",
+        f"- Root model / effort: **`{root_assignment['slug']}` / `{root_assignment['effort']}`**",
         "",
         "## Phases",
         "",
-        "| Phase | Issue | Leaves | Depends on | Exit gate |",
-        "|---|---:|---:|---|---|",
+        "| Phase | Issue | Model | Effort | Leaves | Depends on | Exit gate |",
+        "|---|---:|---|---|---:|---|---|",
     ]
     for phase in graph["phases"]:
+        assignment = model_assignment_for(phase["id"], graph)
         dependencies = ", ".join(_link(mapping, item) for item in phase.get("depends_on") or []) or "—"
         lines.append(
-            f"| `{phase['id']}` {phase['title']} | {_link(mapping, phase['id'])} | {len(phase['work'])} | "
-            f"{dependencies} | {phase['exit_gate']} |"
+            f"| `{phase['id']}` {phase['title']} | {_link(mapping, phase['id'])} | `{assignment['slug']}` | "
+            f"`{assignment['effort']}` | {len(phase['work'])} | {dependencies} | {phase['exit_gate']} |"
         )
     for phase in graph["phases"]:
         lines += [
@@ -1051,14 +1288,16 @@ def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DE
             "",
             phase["outcome"],
             "",
-            "| Work ID | Issue | Target | Reasoning | Effect | Depends on |",
-            "|---|---:|---|---|---|---|",
+            "| Work ID | Issue | Model | Effort | Target | Reasoning | Effect | Depends on |",
+            "|---|---:|---|---|---|---|---|---|",
         ]
         for packet in phase["work"]:
+            assignment = model_assignment_for(packet["id"], graph)
             dependencies = ", ".join(_link(mapping, item) for item in packet.get("depends_on") or []) or "—"
             lines.append(
-                f"| `{packet['id']}` {packet['title']} | {_link(mapping, packet['id'])} | "
-                f"`{packet['target_repo']}` | `{packet['reasoning']}` | `{packet['effect']}` | {dependencies} |"
+                f"| `{packet['id']}` {packet['title']} | {_link(mapping, packet['id'])} | `{assignment['slug']}` | "
+                f"`{assignment['effort']}` | `{packet['target_repo']}` | `{packet['reasoning']}` | "
+                f"`{packet['effect']}` | {dependencies} |"
             )
     text = "\n".join(lines) + "\n"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1131,6 +1370,7 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--render", action="store_true")
     mode.add_argument("--sync", action="store_true")
     mode.add_argument("--verify-remote", action="store_true")
+    mode.add_argument("--verify-model-assignments", action="store_true")
     mode.add_argument("--ready", action="store_true")
     mode.add_argument("--seed", metavar="WORK_ID")
     mode.add_argument("--receipt-template", metavar="WORK_ID")
@@ -1165,6 +1405,8 @@ def main(argv: list[str] | None = None) -> int:
             result = sync(graph, mapping, apply=args.apply, map_path=args.github_map, index_path=args.index)
         elif args.verify_remote:
             result = remote_parity(graph, mapping)
+        elif args.verify_model_assignments:
+            result = verify_model_assignments(graph)
         elif args.ready:
             result = ready_work(graph, mapping)
             if not args.json:

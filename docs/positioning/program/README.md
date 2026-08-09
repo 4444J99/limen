@@ -114,19 +114,44 @@ or five documented “no” outcomes whose reasons produce an explicit offer or 
 Do not commission another broad research pass before ten qualified conversations, the first paid
 engagement, or strong contradictory evidence. Research is reopened by evidence, not anxiety.
 
-## Provider-neutral execution
+## Assigned model and effort
 
-No work packet promises a model name. Each leaf declares capabilities, authority, effect, and one
-of three reasoning classes:
+Every root, phase plan, and work issue carries one explicit Codex model and reasoning-effort
+assignment under the owner’s 2026-08-09 override. The assignment is visible in the issue body,
+labels, generated index, ready-work output, and packet seed. Before execution, validate all 127
+pairs against the current local catalog:
+
+```bash
+python3 scripts/positioning-program.py --verify-model-assignments
+```
+
+The base work matrix is:
+
+| Work class | Assigned model | Effort |
+|---|---|---|
+| Routine read | `gpt-5.4-mini` | `low` |
+| Routine write | `gpt-5.6-luna` | `medium` |
+| Routine external | `gpt-5.6-terra` | `high` |
+| Deep read/write | `gpt-5.6-terra` | `high` |
+| Deep external or sensitive/multi-repository | `gpt-5.6-sol` | `xhigh` |
+| Frontier review | `gpt-5.6-sol` | `max` |
+| Root plan, P14 plan, and final Omega proof | `gpt-5.6-sol` | `ultra` |
+
+Phase plans have explicit overrides in the manifest. Security, privacy, legal, conduct, and
+multi-repository leaves are promoted above their ordinary matrix row. If an assigned pair is no
+longer in the live catalog, the leaf fails blocked and the manifest receives a new explicit
+assignment; agents never silently substitute another model.
+
+Each leaf also retains one of three reasoning classes:
 
 - `routine`: mechanical collection, link repair, rendering, straightforward implementation, or QA;
 - `deep`: architecture, nontrivial diagnosis, offer design, data interpretation, or cross-repo work;
 - `frontier_review`: a bounded challenge pass at a high-consequence decision or publication gate.
 
-At execution time, the conductor discovers healthy providers and chooses the lowest-cost available
-lane that satisfies the packet. Frontier review is reserved for the identity decision, offer
-contract, flagship proof, experience approval, 90-day strategy review, and first operator-transfer
-terms. Routine agents can perform the majority of the program.
+Frontier review is reserved for the identity decision, offer contract, flagship proof, experience
+approval, 90-day strategy review, and first operator-transfer terms. Fable remains an optional,
+acceptance-gated plan-only challenge pass; it is not the default executor and never performs the
+build. Routine agents can perform the majority of the program from the explicit issue assignment.
 
 ## How any agent resumes
 
@@ -151,6 +176,7 @@ python3 scripts/positioning-program.py --render
 python3 scripts/positioning-program.py --sync
 python3 scripts/positioning-program.py --sync --apply
 python3 scripts/positioning-program.py --verify-remote
+python3 scripts/positioning-program.py --verify-model-assignments
 python3 scripts/positioning-program.py --ready --json
 python3 scripts/positioning-program.py --seed PSP-P01-W01
 python3 scripts/positioning-program.py --receipt-template PSP-P01-W01

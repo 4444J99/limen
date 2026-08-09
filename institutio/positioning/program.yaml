@@ -60,19 +60,19 @@ model_assignments:
   phases:
     PSP-P00: {slug: gpt-5.6-sol, effort: max, rationale: Control-plane architecture and authority integrity.}
     PSP-P01: {slug: gpt-5.6-terra, effort: high, rationale: Bounded foundation repair with known predicates.}
-    PSP-P02: {slug: gpt-5.6-sol, effort: max, rationale: Estate-wide truth, evidence, and contested-claim adjudication.}
+    PSP-P02: {slug: gpt-5.6-sol, effort: max, rationale: 'Estate-wide truth, evidence, and contested-claim adjudication.'}
     PSP-P03: {slug: gpt-5.6-sol, effort: max, rationale: Canonical identity and narrative decision.}
-    PSP-P04: {slug: gpt-5.6-sol, effort: max, rationale: Offer architecture, economics, and commercial boundaries.}
+    PSP-P04: {slug: gpt-5.6-sol, effort: max, rationale: 'Offer architecture, economics, and commercial boundaries.'}
     PSP-P05: {slug: gpt-5.6-sol, effort: xhigh, rationale: Cross-source proof synthesis and publication readiness.}
     PSP-P06: {slug: gpt-5.6-sol, effort: xhigh, rationale: Progressive-disclosure experience architecture.}
     PSP-P07: {slug: gpt-5.6-terra, effort: high, rationale: Multi-surface implementation and deployment coordination.}
     PSP-P08: {slug: gpt-5.6-sol, effort: xhigh, rationale: Privacy-sensitive inbound and private lead operations.}
     PSP-P09: {slug: gpt-5.6-terra, effort: high, rationale: Proof-led content production and distribution execution.}
-    PSP-P10: {slug: gpt-5.6-sol, effort: xhigh, rationale: Qualification, conversion, and demand-experiment judgment.}
+    PSP-P10: {slug: gpt-5.6-sol, effort: xhigh, rationale: 'Qualification, conversion, and demand-experiment judgment.'}
     PSP-P11: {slug: gpt-5.6-sol, effort: max, rationale: Secure delivery operating system and client boundaries.}
     PSP-P12: {slug: gpt-5.6-sol, effort: max, rationale: Commercial validation and outcome-based strategy revision.}
-    PSP-P13: {slug: gpt-5.6-sol, effort: max, rationale: Product custody, economics, legal structure, and operator handoff.}
-    PSP-P14: {slug: gpt-5.6-sol, effort: ultra, rationale: Estate-wide return loop, rollback proof, and Omega convergence.}
+    PSP-P13: {slug: gpt-5.6-sol, effort: max, rationale: 'Product custody, economics, legal structure, and operator handoff.'}
+    PSP-P14: {slug: gpt-5.6-sol, effort: ultra, rationale: 'Estate-wide return loop, rollback proof, and Omega convergence.'}
   work_matrix:
     routine:
       read: {slug: gpt-5.4-mini, effort: low, rationale: Simple bounded inspection or evidence collection.}
@@ -211,7 +211,7 @@ human_gates:
 phases:
   - id: PSP-P00
     title: Program control plane
-    outcome: One validated source graph projects a complete, non-duplicative, provider-neutral issue system.
+    outcome: One validated source graph projects a complete, non-duplicative, cross-agent issue system.
     depends_on: []
     exit_gate: All P00 leaves close and remote parity reports zero missing, duplicate, or orphan markers.
     work:
@@ -280,7 +280,7 @@ phases:
         rollback: Revert templates; issue bodies retain the complete execution contract.
         return_evidence: [Reviewed documentation commit]
       - id: PSP-P00-W05
-        title: Expose ready-work and provider-neutral packet seeds
+        title: Expose ready-work and model-assigned packet seeds
         outcome: Any healthy lane can discover unblocked work and create a live WorkPacketV1 without a model-name table.
         target_repo: organvm/limen
         target_paths: [scripts/positioning-program.py]
@@ -2075,7 +2075,7 @@ phases:
         return_evidence: [Outcome impact matrix and regenerated proof]
       - id: PSP-P14-W09
         title: Prove alpha-to-omega convergence in two unchanged passes
-        outcome: The program reaches a provider-neutral fixed point with no orphan issue, stale claim, broken surface, unowned result, or hidden human gate.
+        outcome: The program reaches a cross-agent fixed point with no orphan issue, stale claim, broken surface, unowned result, or hidden human gate.
         target_repo: organvm/limen
         target_paths: [institutio/positioning, docs/positioning/program, docs/receipts]
         capabilities: [verification, github_read, governance, closeout]

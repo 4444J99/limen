@@ -18,8 +18,9 @@ python3 scripts/positioning-program.py --ready --json
 python3 scripts/positioning-program.py --seed <WORK-ID>
 ```
 
-The seed is not a lease. It is the provider-neutral input from which a registered conductor creates
-a live `WorkPacketV1` with current identity, deadline, resource claims, spend, retry, and authority.
+The seed is not a lease. It is cross-agent input carrying the human model override, from which a
+registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource
+claims, spend, retry, and authority.
 
 ## 2. Claim before mutation
 
@@ -106,7 +107,15 @@ transfer merely because a relay file exists.
 
 ## 7. Model allocation
 
-Use live capability discovery. Do not encode fixed provider fallbacks.
+Read the exact assigned model and effort from the issue or generated ready-work row. Before claiming
+a leaf, run `python3 scripts/positioning-program.py --verify-model-assignments`. These values are a
+human override validated against `codex debug models`, not a fallback table. If the assigned pair is
+absent, report blocked and update the manifest through review; do not silently substitute.
+
+The assignment ladder uses Mini/low for simple reads, Luna/medium for routine construction,
+Terra/high for substantial bounded work, Sol/xhigh for sensitive or cross-repository work, Sol/max
+for frontier decisions, and Sol/ultra only for root/P14 orchestration and final Omega. Exact phase
+overrides and the full matrix live in `institutio/positioning/program.yaml`.
 
 | Reasoning class | Appropriate work |
 |---|---|
@@ -116,6 +125,9 @@ Use live capability discovery. Do not encode fixed provider fallbacks.
 
 A frontier reviewer should return findings and a verdict, not silently own the entire implementation.
 Once the decision is made, routine or deep lanes execute its bounded leaves.
+
+Fable may be added only as a separately accepted, plan-only challenge pass under
+`docs/fable-allotment.md`. It never replaces the assigned builder or mutates the implementation.
 
 ## 8. Return and rollback
 

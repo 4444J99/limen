@@ -27,6 +27,8 @@ calendar order is not a dependency.
 
 - Required capabilities
 - Reasoning class (`routine`, `deep`, or `frontier_review`)
+- Assigned model slug and reasoning effort
+- Assignment basis, catalog observation time, and fail-blocked unavailability rule
 - Effect (`read`, `write`, or `external`)
 - Authority boundary
 - Finite retry and output expectations supplied by the live conductor
