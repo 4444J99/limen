@@ -2063,6 +2063,10 @@ sensors:
     # This asserts the OUTCOME (ciphertext landed off-machine recently) rather than the mechanism, so
     # it survives any later reshaping of the vault — new generation, new remote, new chunking.
     # "Cannot determine" is a FINDING, not a pass: undetermined is exactly the state that hid this.
+    # POTESTAS 0.3 (#2089): the vault rotates across generations (organvm/arca → organvm/arca-g2 → …),
+    # and the local manifest owns which is CURRENT. The sensor resolves the repo under test in order
+    # --repo → $ARCA_REPO → manifest `_generation.repo` → organvm/arca, so it follows every rotation
+    # with zero reconfiguration and escalates on the LIVE generation only.
     cadence:
       env: LIMEN_BEAT_ARCA_FRESHNESS
       default: 6
@@ -2125,3 +2129,23 @@ sensors:
       - command: "python3 scripts/check-notify-gate.py"
         severity: advisory
         escalation: "a notifier copy reaches osascript ungated in a way the baseline does not already own — either the launchd-run install (~/.local/share/limen/current, which speaks on a timer and is cleared by `domus-limen-runtime install --sha <merged-main-sha>`) or a NEW copy that is not in institutio/governance/notify-ungated-baseline.txt. For a new one: rebase it onto origin/main so it inherits the gate, or reap it via python3 scripts/reclaim-worktrees.py; if it is legitimately known, record it with check-notify-gate.py --update. Gate-run tests cannot reach osascript regardless — run-pytest-hermetic.sh exports LIMEN_NOTIFY=0, which every copy on this host honors"
+
+  exchange-guard:
+    section: "heartbeat"
+    title: "exchange detector — flags money moved inside a connected call window"
+    gate: LIMEN_EXCHANGE_GUARD
+    default: "1"
+    source: [heartbeat]
+    owner: governance
+    cadence:
+      env: LIMEN_BEAT_EXCHANGE_GUARD
+      default: 24
+    timeout:
+      env: LIMEN_EXCHANGE_GUARD_TIMEOUT
+      default: 300
+    # DECISION: Ban `--detail` from the beat. The beat log is public, so amounts and timestamps
+    # must not be emitted. A single pass/attention token (counts only) is the safe public signal.
+    steps:
+      - command: "python3 scripts/exchange-guard.py"
+        severity: advisory
+        escalation: "exchange detector found payments within connected call windows — run `python3 scripts/exchange-guard.py --detail` locally to review amounts and times safely"
