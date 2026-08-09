@@ -132,7 +132,7 @@ def test_archive_receipt_cannot_stand_in_for_missing_archived_bytes(tmp_path: Pa
 
     errors = validate_raw_references(paths, [occurrence], verify_content=True)
 
-    assert "archive_location does not resolve to a file" in "; ".join(errors)
+    assert "archive_location does not resolve to a regular file" in "; ".join(errors)
     assert "private raw object is missing" in "; ".join(errors)
 
 
