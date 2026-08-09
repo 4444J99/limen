@@ -143,6 +143,6 @@ Status: `blocked`
 
 - `python3 scripts/estate-closeout-audit.py --write --remote-pr-classify-limit 250`
 - `python3 scripts/worktree-pr-receipts.py --apply` only for clean local work that needs draft PR custody.
-- `python3 scripts/self-heal.py --dry-run --scan 1000 --scan-max 1000` to queue exact PR repair candidates without mutating.
+- `python3 scripts/self-heal.py --dry-run --scan 1000 --reconcile-scan-max 1000` to queue exact PR repair candidates without mutating.
 - `python3 scripts/merge-drain.py --dry-run --scan 1000 --scan-max 1000 --limit 0` to refresh merge-ready candidates without merging.
 - `python3 scripts/substrate-storage-pressure.py --write` to keep byte owners current.
