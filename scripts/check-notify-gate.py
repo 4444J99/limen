@@ -79,8 +79,9 @@ import _root  # noqa: E402  — hard import: this predicate has no meaning witho
 
 NOTIFIER_REL = Path("scripts") / "_notify.py"
 GATE_FUNC = "_root_may_speak"
-PUBLIC_EFFECTORS = frozenset({"notify", "notify_once"})
+PUBLIC_EFFECTORS = frozenset({"notify", "notify_once", "notify_ntfy"})
 DELIVERY_FUNC = "_deliver"
+NETWORK_DELIVERY_FUNCS = frozenset({"urlopen"})
 
 # The runtime install tree. Domus rotates it under `runtimes/<sha>/source` and points
 # `current` at one; launchd runs overnight-watch from there, so it is a real speaker even
@@ -163,7 +164,12 @@ def _gate_polarities(node: ast.AST, *, negated: bool = False) -> set[bool]:
 
 
 def _has_delivery_call(node: ast.Call) -> bool:
-    if isinstance(node.func, ast.Name) and node.func.id == DELIVERY_FUNC:
+    if isinstance(node.func, ast.Name) and node.func.id in {
+        DELIVERY_FUNC,
+        *NETWORK_DELIVERY_FUNCS,
+    }:
+        return True
+    if isinstance(node.func, ast.Attribute) and node.func.attr in NETWORK_DELIVERY_FUNCS:
         return True
     literals = [
         child.value
@@ -301,7 +307,7 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
         return False, f"public effector(s) bypass {GATE_FUNC}(): {', '.join(sorted(ungated))}"
     if not effectors:
         return True, "no public macOS notification effector"
-    return True, f"public effector(s) gated on {GATE_FUNC}(): {', '.join(sorted(effectors))}"
+    return True, f"public delivery effector(s) gated on {GATE_FUNC}(): {', '.join(sorted(effectors))}"
 
 
 DIRECT_SUFFIXES = {".py", ".sh", ".bash", ".zsh"}
