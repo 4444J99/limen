@@ -107,6 +107,7 @@ check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
 diff-hygiene
+operator-gates
 task-board
 tasks-parse
 check-root-manifest
