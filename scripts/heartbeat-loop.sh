@@ -237,9 +237,12 @@ MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
 FAST_WAVE_SECONDS="${LIMEN_VITALS_SAMPLE_SECONDS:-300}"
 case "$FAST_WAVE_SECONDS" in ''|*[!0-9]*) FAST_WAVE_SECONDS=300 ;; esac
 [ "$FAST_WAVE_SECONDS" -gt 0 ] || FAST_WAVE_SECONDS=300
-VITALS_SAMPLE_GRACE_SECONDS="${LIMEN_VITALS_SAMPLE_GRACE_SECONDS:-5}"
-case "$VITALS_SAMPLE_GRACE_SECONDS" in ''|*[!0-9]*) VITALS_SAMPLE_GRACE_SECONDS=5 ;; esac
+VITALS_SAMPLE_GRACE_SECONDS="${LIMEN_VITALS_SAMPLE_GRACE_SECONDS:-5}
+case "$VITALS_SAMPLE_GRACE_SECONDS" in ""|*[!0-9]*) VITALS_SAMPLE_GRACE_SECONDS=5 ;; esac
 [ "$VITALS_SAMPLE_GRACE_SECONDS" -gt 0 ] || VITALS_SAMPLE_GRACE_SECONDS=5
+VITALS_SAMPLE_TIMEOUT_SECONDS="${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}
+case "$VITALS_SAMPLE_TIMEOUT_SECONDS" in ""|*[!0-9]*) VITALS_SAMPLE_TIMEOUT_SECONDS=30 ;; esac
+[ "$VITALS_SAMPLE_TIMEOUT_SECONDS" -gt 0 ] || VITALS_SAMPLE_TIMEOUT_SECONDS=30
 FAST_WAVE_BEAT=0
 FAST_WAVE_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave.log"
 FAST_WAVE_AUX_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave-aux.log"
@@ -415,7 +418,7 @@ fast_wave_sample_once() {
     {
       echo "fast-wave: sample start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
       if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
-        fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
+        fast_wave_bounded "$VITALS_SAMPLE_TIMEOUT_SECONDS" python3 -m limen.vigilia sample
         _fw_sample_rc=$?
       else
         echo "fast-wave: VIGILIA disabled — sample skipped"
@@ -428,7 +431,7 @@ fast_wave_sample_once() {
     # Preserve the sample even when the log directory or temp file is briefly unavailable.
     echo "fast-wave: sample log unavailable — running without capture" >&2 || true
     if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
-      fast_wave_bounded "${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}" python3 -m limen.vigilia sample
+      fast_wave_bounded "$VITALS_SAMPLE_TIMEOUT_SECONDS" python3 -m limen.vigilia sample
       _fw_sample_rc=$?
     else
       _fw_sample_rc=0
@@ -502,7 +505,7 @@ stale_watchdog_loop() {
   trap 'exit 0' HUP INT TERM
   while kill -0 "$_watchdog_parent_pid" 2>/dev/null; do
     # Let the fast-wave producer complete its boundary write before reading the seat.
-    _interruptible_sleep "$((FAST_WAVE_SECONDS + VITALS_SAMPLE_GRACE_SECONDS))" || exit 0
+    _interruptible_sleep "$((FAST_WAVE_SECONDS + VITALS_SAMPLE_TIMEOUT_SECONDS + VITALS_SAMPLE_GRACE_SECONDS))" || exit 0
     kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
     if [ "${LIMEN_HOST_PRESSURE_STALE:-1}" = "1" ]; then
       _watchdog_output="/dev/null"
