@@ -221,6 +221,51 @@ def _tracked_cloud_task_state(
     return historical_ids, observed_at
 
 
+def _append_cloud_lineage_receipt(tasks_path: Path, receipt: CloudRoutineReceiptV1) -> None:
+    """Append one accepted receipt to the tracked duplicate boundary idempotently."""
+    source = tasks_path.parent / "docs" / "receipts" / "cloud-routine-lineage.json"
+    payload: dict[str, object] = {
+        "schema_version": "limen.cloud_routine_lineage.v1",
+        "description": "Tracked append-only cloud receipt lineage; consumers may use this as the durable duplicate boundary.",
+        "entries": [],
+    }
+    if source.is_file():
+        try:
+            loaded = json.loads(source.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError(f"tracked cloud lineage is unreadable: {source}") from exc
+        if not isinstance(loaded, dict) or not isinstance(loaded.get("entries"), list):
+            raise ValueError(f"tracked cloud lineage entries must be a list: {source}")
+        payload = loaded
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        raise ValueError(f"tracked cloud lineage entries must be a list: {source}")
+    existing: list[CloudRoutineReceiptV1] = []
+    for index, entry in enumerate(entries):
+        try:
+            existing.append(CloudRoutineReceiptV1.model_validate(entry))
+        except ValidationError as exc:
+            raise ValueError(f"tracked cloud lineage entry[{index}] is invalid: {exc}") from exc
+    if any(previous == receipt for previous in existing):
+        return
+    entries.append(receipt.model_dump(mode="json"))
+    source.parent.mkdir(parents=True, exist_ok=True)
+    temporary = source.with_suffix(source.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(source)
+
+
+def _receipt_for_task(task_id: str, receipts: list[CloudRoutineReceiptV1]) -> CloudRoutineReceiptV1:
+    matches = [
+        receipt
+        for receipt in latest_receipts_by_lineage(receipts)
+        if task_id == task_id_for(receipt) or task_id.startswith(task_id_for(receipt) + "-")
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"cannot map submitted cloud task to one receipt: {task_id}")
+    return matches[0]
+
+
 def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, datetime]]:
     """Combine tracked lineage with legacy keeper tickets after board pruning."""
     historical_ids, observed_at = _tracked_cloud_task_state(tasks_path)
@@ -331,17 +376,23 @@ def main(argv: list[str] | None = None) -> int:
 
     submitted: list[str] = []
     if args.apply:
-        for task in plan.tasks:
-            submit_task_upsert(
-                tasks_path,
-                task,
-                agent="cloud-routine-ingest",
-                session_id=os.environ.get(
-                    "LIMEN_SESSION_ID",
-                    "cloud-routine-ingest",
-                ),
-            )
-            submitted.append(task.id)
+        try:
+            for task in plan.tasks:
+                receipt = _receipt_for_task(task.id, receipts)
+                submit_task_upsert(
+                    tasks_path,
+                    task,
+                    agent="cloud-routine-ingest",
+                    session_id=os.environ.get(
+                        "LIMEN_SESSION_ID",
+                        "cloud-routine-ingest",
+                    ),
+                )
+                _append_cloud_lineage_receipt(tasks_path, receipt)
+                submitted.append(task.id)
+        except (OSError, ValueError, RuntimeError) as exc:
+            print(f"cloud-routine-ingest: apply failed: {exc}", file=sys.stderr)
+            return 2
 
     payload = {
         "schema_version": "limen.cloud_routine_ingest_result.v1",
