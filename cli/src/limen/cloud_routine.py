@@ -19,6 +19,13 @@ from limen.models import Task
 _ROUTINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _FINDING_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+
+
+def _valid_repo_ref(value: str) -> bool:
+    if not _REPO_RE.fullmatch(value):
+        return False
+    owner, repository = value.split("/", 1)
+    return owner not in {".", ".."} and repository not in {".", ".."}
 _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _DURABLE_OWNER_RE = re.compile(
     r"^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|"
@@ -119,7 +126,7 @@ class CloudRoutineReceiptV1(ProtocolModel):
         if self.disposition == "new_work":
             if not material:
                 raise ValueError("new_work is only valid for a material finding")
-            if not self.owner_ref or not _REPO_RE.fullmatch(self.owner_ref):
+            if not self.owner_ref or not _valid_repo_ref(self.owner_ref):
                 raise ValueError("new_work owner_ref must be an exact owner/repo")
         return self
 
@@ -163,7 +170,8 @@ def task_for(
         context=(
             f"CloudRoutineReceiptV1 {receipt.schema_version}; "
             f"disposition={receipt.disposition}; "
-            f"stable_finding_key={receipt.stable_finding_key}"
+            f"stable_finding_key={receipt.stable_finding_key}; "
+            f"observed_at={receipt.observed_at.isoformat()}"
         ),
     )
 
@@ -181,6 +189,7 @@ def plan_task_upserts(
     existing_ids: Iterable[str] = (),
     pending_ids: Iterable[str] = (),
     historical_ids: Iterable[str] = (),
+    historical_observed_at: dict[str, datetime] | None = None,
 ) -> CloudRoutineIngestPlan:
     """Plan only novel live work while allowing a terminal lineage to recur.
 
@@ -203,6 +212,7 @@ def plan_task_upserts(
 
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
+    observed_history = historical_observed_at or {}
     active_lineages = {
         match.group(1) if (match := _OCCURRENCE_TASK_RE.fullmatch(task_id)) else task_id for task_id in active
     }
@@ -223,6 +233,10 @@ def plan_task_upserts(
             continue
         task_id = lineage_id
         if lineage_id in historical:
+            previous_observed_at = observed_history.get(lineage_id)
+            if previous_observed_at is None or receipt.observed_at <= previous_observed_at:
+                duplicates += 1
+                continue
             occurrence = receipt.observed_at.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             task_id = f"{lineage_id}-{occurrence}"
         if task_id in active or task_id in historical or task_id in seen_lineages:
