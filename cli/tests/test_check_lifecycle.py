@@ -111,7 +111,10 @@ def test_armed_consumer_requires_an_executable_registry_load() -> None:
         'MARKERS = ["lifecycle.yaml", "merge_eligible"]'
     )
     assert module._loads_lifecycle_registry(
-        'import yaml\nfrom pathlib import Path\nyaml.safe_load(Path("lifecycle.yaml").read_text())\n'
+        'import yaml
+from pathlib import Path
+yaml.safe_load(Path("lifecycle.yaml").read_text())
+'
     )
 
 
@@ -471,16 +474,11 @@ def test_armed_cohort_requires_a_matching_arm_receipt() -> None:
 def test_consumer_markers_ignore_comments_and_docstrings() -> None:
     module = _load_check_module()
     markers, lifecycle_literals = module._source_markers(
-        '"""lifecycle:legacy lifecycle.yaml"""
-'
-        "# lifecycle:comment
-"
-        'value = "lifecycle:legacy"
-'
-        "name = lifecycle_name
-"
-        'path = "lifecycle.yaml"
-'
+        '"""lifecycle:legacy lifecycle.yaml"""\n'
+        "# lifecycle:comment\n"
+        'value = "lifecycle:legacy"\n'
+        "name = lifecycle_name\n"
+        'path = "lifecycle.yaml"\n'
     )
 
     assert "lifecycle.yaml" in markers
