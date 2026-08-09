@@ -232,6 +232,7 @@ def _provider_headroom() -> dict[str, Any]:
                             "provider_cooldown_count",
                             "provider_last_success",
                             "provider_last_terminal_failure",
+                            "provider_last_terminal_failure_class",
                             "provider_cooldown_expiry",
                             "provider_health_snapshot_hash",
                             "provider_outcome_all_blocked",
