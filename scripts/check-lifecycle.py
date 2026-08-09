@@ -363,7 +363,11 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
         return
     levers = load_levers()
     precedence = registry.get("cohort_precedence")
-    if not isinstance(precedence, list) or set(precedence) != set(cohorts):
+    if (
+        not isinstance(precedence, list)
+        or len(precedence) != len(cohorts)
+        or set(precedence) != set(cohorts)
+    ):
         fail("E", "cohort_precedence must name every cohort exactly once")
         precedence = []
     elif precedence[0] != "draft" or precedence[-1] != "all":
