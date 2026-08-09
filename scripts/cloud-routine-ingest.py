@@ -227,11 +227,13 @@ def _merge_historical_observation(
         observed_at[task_id] = stamp
 
 
-def _tracked_cloud_task_state(
-    tasks_path: Path,
-) -> tuple[set[str], dict[str, datetime]]:
+def _tracked_cloud_lineage_path() -> Path:
+    return ROOT / "docs" / "receipts" / "cloud-routine-lineage.json"
+
+
+def _tracked_cloud_task_state() -> tuple[set[str], dict[str, datetime]]:
     """Read append-only cloud lineage from a tracked receipt envelope."""
-    source = tasks_path.parent / "docs" / "receipts" / "cloud-routine-lineage.json"
+    source = _tracked_cloud_lineage_path()
     historical_ids: set[str] = set()
     observed_at: dict[str, datetime] = {}
     if not source.is_file():
@@ -259,9 +261,9 @@ def _tracked_cloud_task_state(
     return historical_ids, observed_at
 
 
-def _append_cloud_lineage_receipt(tasks_path: Path, receipt: CloudRoutineReceiptV1) -> None:
+def _append_cloud_lineage_receipt(receipt: CloudRoutineReceiptV1) -> None:
     """Append one accepted receipt to the tracked duplicate boundary idempotently."""
-    source = tasks_path.parent / "docs" / "receipts" / "cloud-routine-lineage.json"
+    source = _tracked_cloud_lineage_path()
     payload: dict[str, object] = {
         "schema_version": "limen.cloud_routine_lineage.v1",
         "description": "Tracked append-only cloud receipt lineage; consumers may use this as the durable duplicate boundary.",
@@ -306,7 +308,7 @@ def _receipt_for_task(task_id: str, receipts: list[CloudRoutineReceiptV1]) -> Cl
 
 def _historical_cloud_task_state(tasks_path: Path) -> tuple[set[str], dict[str, datetime]]:
     """Combine tracked lineage with legacy keeper tickets after board pruning."""
-    historical_ids, observed_at = _tracked_cloud_task_state(tasks_path)
+    historical_ids, observed_at = _tracked_cloud_task_state()
     archive = tasks_path.parent / "logs" / "tickets" / "archive"
     observed_pattern = re.compile(r"observed_at=([^;]+)")
     if not archive.is_dir():
@@ -413,9 +415,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     submitted: list[str] = []
+    submit_error: str | None = None
     if args.apply:
-        try:
-            for task in plan.tasks:
+        for task in plan.tasks:
+            try:
                 receipt = _receipt_for_task(task.id, receipts)
                 submit_task_upsert(
                     tasks_path,
@@ -426,11 +429,11 @@ def main(argv: list[str] | None = None) -> int:
                         "cloud-routine-ingest",
                     ),
                 )
-                _append_cloud_lineage_receipt(tasks_path, receipt)
                 submitted.append(task.id)
-        except (OSError, ValueError, RuntimeError) as exc:
-            print(f"cloud-routine-ingest: apply failed: {exc}", file=sys.stderr)
-            return 2
+                _append_cloud_lineage_receipt(receipt)
+            except Exception as exc:
+                submit_error = f"{task.id}: {exc}"
+                break
 
     payload = {
         "schema_version": "limen.cloud_routine_ingest_result.v1",
@@ -440,6 +443,7 @@ def main(argv: list[str] | None = None) -> int:
         "duplicates": plan.duplicates,
         "new_work": [task.id for task in plan.tasks],
         "submitted": submitted,
+        "submit_error": submit_error,
     }
     if args.json:
         print(json.dumps(payload, sort_keys=True))
@@ -455,7 +459,9 @@ def main(argv: list[str] | None = None) -> int:
         for task in plan.tasks:
             verb = "submitted" if args.apply else "would submit"
             print(f"  {verb} {task.id} -> {task.repo}")
-    return 0
+        if submit_error:
+            print(f"  submit_error: {submit_error}", file=sys.stderr)
+    return 1 if submit_error else 0
 
 
 if __name__ == "__main__":
