@@ -855,3 +855,48 @@ def test_admission_honors_open_pr_receipts_and_active_repair_owners(monkeypatch,
     owner = _task("HEAL-rebase-foo-123", status="in_progress")
     repair_admission = mod._dispatch_admission([stale, owner], budget, providers)
     assert repair_admission["reason_counts"]["superseded_active_owner"] == 1
+
+def test_targeted_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_remaining_budget", lambda *_args: 0)
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+
+    admission = mod._dispatch_admission(
+        [_task("TARGETED", agent="codex", budget_cost=1)],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_agent"] == 1
+
+
+def test_admission_preserves_generated_buildout_registry_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: True)
+    monkeypatch.setattr(mod, "_routine_generated_buildout_allowed", lambda _task: False)
+    task = _task("GENERATED", labels=["generated", "build-out"])
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+
+
+def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "_load_board", lambda: None)
+
+    payload = mod.build()
+
+    admission = payload["dispatch_admission"]
+    assert admission["keeper_available"] is False
+    assert admission["reason_counts"] == {"keeper_unavailable": 1}
+    assert admission["dispatchable_next"] is None
+
