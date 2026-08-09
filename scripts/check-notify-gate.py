@@ -284,13 +284,18 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
     if GATE_FUNC not in functions:
         return False, f"no {GATE_FUNC}() — public notification routes are ungated"
 
-    effectors = [
-        name
-        for name, function in functions.items()
-        if name in PUBLIC_EFFECTORS
-        and any(_has_delivery_call(node) for node in ast.walk(function) if isinstance(node, ast.Call))
-    ]
-    ungated = [name for name in effectors if not _gate_controls_delivery(functions[name])]
+    effectors: list[str] = []
+    ungated: list[str] = []
+    for name in sorted(PUBLIC_EFFECTORS):
+        function = functions.get(name)
+        if function is None:
+            continue
+        reaches_delivery, controlled = _gate_controls_delivery(function, functions)
+        if not reaches_delivery:
+            continue
+        effectors.append(name)
+        if not controlled:
+            ungated.append(name)
     if ungated:
         return False, f"public effector(s) bypass {GATE_FUNC}(): {', '.join(sorted(ungated))}"
     if not effectors:
