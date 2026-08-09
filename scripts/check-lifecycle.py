@@ -546,6 +546,35 @@ def validate_self_reference(registry: dict[str, Any]) -> None:
         fail("G", "predicate script does not resolve")
 
 
+def validate_preservation_ceiling(registry: dict[str, Any]) -> None:
+    """Enforce the live preservation-materialization ceiling without GitHub access."""
+    live_baseline = registry.get("live_baseline")
+    current = (
+        live_baseline.get("preservation_materialization_missing_labels")
+        if isinstance(live_baseline, dict)
+        else None
+    )
+    if isinstance(current, bool) or not isinstance(current, int):
+        fail("D", "live_baseline has no preservation materialization ceiling")
+        return
+    prior_registry = previous_registry()
+    prior_live = prior_registry.get("live_baseline") if isinstance(prior_registry, dict) else None
+    previous = (
+        prior_live.get("preservation_materialization_missing_labels")
+        if isinstance(prior_live, dict)
+        else INITIAL_LITERAL_CEILING.get("preservation_materialization_missing_labels", 124)
+    )
+    if isinstance(previous, bool) or not isinstance(previous, int):
+        fail("D", "prior registry has no preservation materialization ceiling")
+        return
+    if current > previous:
+        fail(
+            "D",
+            "preservation materialization ceiling regrew "
+            f"from prior {previous} to {current}",
+        )
+
+
 def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
     registry = load_yaml(REGISTRY)
     if registry.get("schema_version") != 0.1:
@@ -568,6 +597,7 @@ def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
     validate_consumers(registry, labels)
     validate_runtime_bindings(registry)
     validate_cohorts(registry, labels)
+    validate_preservation_ceiling(registry)
     validate_self_reference(registry)
     return registry, labels
 
