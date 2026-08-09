@@ -64,6 +64,7 @@ withdraws the public story.
 | Program graph and work definitions | `institutio/positioning/program.yaml` |
 | GitHub issue identifiers | `institutio/positioning/github-map.json` |
 | Human-readable issue index | `docs/positioning/program/ISSUE-INDEX.md` |
+| Validated chunk order and copy/paste prompts | `docs/positioning/program/EXECUTION-CHUNKS.md` |
 | Positioning claims | `docs/positioning/claims-ledger.md` after PR #2136 lands |
 | Research challenges and live adjudication | `docs/positioning/program/RESEARCH-ADJUDICATION.md` |
 | Public/private estate classification | `docs/positioning/estate-classification.md` after PR #2136 lands |
@@ -96,6 +97,19 @@ a stable HTML marker, repairs drift idempotently, and never edits `tasks.yaml`.
 | P13 | Foundry and operator handoff | Products are scored; one handoff is piloted or explicitly rejected by evidence-backed criteria |
 | P14 | Return loop and Omega | Two unchanged end-to-end checks show no orphan packet, stale claim, broken surface, or unowned result |
 
+## Execution order
+
+Issue numbers are identifiers, not execution order. The canonical 13-chunk order is generated in
+`EXECUTION-CHUNKS.md`, including one intended parallel branch: proof/experience (C04) and the
+service-delivery operating system (C05) may run concurrently after identity/offers (C03). They
+rejoin before commercial validation.
+
+P10 and P12 deliberately interleave. Build P10-W01 through P10-W07 first; then P12-W01 and W02
+unlock P10-W08 while the remaining P12 evidence work proceeds. P12 therefore depends on P09 and
+P11 at phase level, while its leaf dependencies enforce the required completed P10 work. This
+avoids the former impossible condition in which P12 waited for all of P10 while P10-W08 waited for
+P12-W02.
+
 ## Delivery waves
 
 The dates are planning envelopes, not permission to skip dependencies.
@@ -104,8 +118,9 @@ The dates are planning envelopes, not permission to skip dependencies.
   position and offers, and produce the first flagship proof.
 - **Wave B — days 15–30:** P06–P09. Design and build the front door, activate safe capture, and
   stage the proof-led publication system.
-- **Wave C — days 31–90:** P10–P12. Run qualified conversations, sell or invalidate the audit,
-  deliver the first engagement, and convert results into external proof.
+- **Wave C — days 31–90:** P10–P12, interleaved by leaf dependency. Build conversion through
+  P10-W07, deliver the first engagement through P12-W02, then adjudicate P10-W08 and finish the
+  external-proof leaves.
 - **Wave D — months 4–12:** P13–P14. Score the product estate, pilot an operator transfer, and
   prove that the whole system learns, rolls back, and reaches a repeatable fixed point.
 
@@ -157,15 +172,17 @@ build. Routine agents can perform the majority of the program from the explicit 
 
 1. Read this file and `AGENT-RUNBOOK.md`.
 2. Run `python3 scripts/positioning-program.py --check`.
-3. Run `python3 scripts/positioning-program.py --ready --json` and select one ready leaf whose
-   capabilities and authority fit the live lane.
-4. Register and claim through the Limen conduct broker. Do not begin mutation if the broker cannot
+3. Read `EXECUTION-CHUNKS.md`, select the earliest incomplete chunk whose predecessors are closed,
+   and run `python3 scripts/positioning-program.py --chunk <CHUNK-ID>`.
+4. Run `python3 scripts/positioning-program.py --ready --json` and select only a leaf that is both
+   ready and in that chunk’s resolved scope.
+5. Register and claim through the Limen conduct broker. Do not begin mutation if the broker cannot
    issue the required lease.
-5. Work in an isolated worktree, meet the acceptance condition, and run a task-specific executable
+6. Work in an isolated worktree, meet the acceptance condition, and run a task-specific executable
    check that is narrower than the issue’s receipt verifier.
-6. Generate and post the structured receipt, run `--verify-work <WORK-ID>`, and close the issue only
+7. Generate and post the structured receipt, run `--verify-work <WORK-ID>`, and close the issue only
    when that executable predicate passes. Then recalculate downstream readiness.
-7. If the lane ends first, write the relay envelope described in `RELAY-TEMPLATE.md`; the next agent
+8. If the lane ends first, write the relay envelope described in `RELAY-TEMPLATE.md`; the next agent
    continues from the issue and receipt, not from a private transcript.
 
 ## Commands
@@ -177,6 +194,8 @@ python3 scripts/positioning-program.py --sync
 python3 scripts/positioning-program.py --sync --apply
 python3 scripts/positioning-program.py --verify-remote
 python3 scripts/positioning-program.py --verify-model-assignments
+python3 scripts/positioning-program.py --render-chunks
+python3 scripts/positioning-program.py --chunk PSP-C00
 python3 scripts/positioning-program.py --ready --json
 python3 scripts/positioning-program.py --seed PSP-P01-W01
 python3 scripts/positioning-program.py --receipt-template PSP-P01-W01

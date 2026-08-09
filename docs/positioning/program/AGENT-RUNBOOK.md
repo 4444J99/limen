@@ -14,9 +14,15 @@ Run:
 
 ```bash
 python3 scripts/positioning-program.py --check
+python3 scripts/positioning-program.py --chunk <CHUNK-ID>
 python3 scripts/positioning-program.py --ready --json
 python3 scripts/positioning-program.py --seed <WORK-ID>
 ```
+
+Select the earliest incomplete chunk in `EXECUTION-CHUNKS.md` whose named predecessors have durable
+completion receipts. A leaf is actionable only when it appears in both the chunk’s resolved scope
+and live ready-work output. C04 and C05 are the only planned parallel branch; isolate their
+worktrees and leases. C10 interleaves P12 with P10-W08 and must follow its prompt exactly.
 
 The seed is not a lease. It is cross-agent input carrying the human model override, from which a
 registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource

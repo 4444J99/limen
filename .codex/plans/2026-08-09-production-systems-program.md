@@ -4,7 +4,7 @@ Date: 2026-08-09
 
 Owner: Anthony
 
-Implementation owner: provider-neutral Limen conduct graph
+Implementation owner: cross-agent Limen conduct graph
 
 Canonical graph: `institutio/positioning/program.yaml`
 
@@ -26,7 +26,8 @@ The program is represented once in the tracked manifest and projected idempotent
   reasoning class, effect boundary, human gates, deliverables, acceptance, executable receipt
   predicate, return evidence, and rollback path;
 - one milestone and three dedicated labels;
-- one deterministic issue-number map and generated human-readable index.
+- one deterministic issue-number map and generated human-readable index;
+- thirteen validated execution chunks with assigned conductor models and copy/paste relay prompts.
 
 The GitHub graph is a coordination projection, not a lease. Every mutation leaf is claimed by a
 registered native lane through the conduct broker. Under the owner’s 2026-08-09 override, every
@@ -42,14 +43,16 @@ fallback table.
    PRs 2136 and 2141.
 3. P02 inventories the complete live estate, creates evidence packets, audits LAVREA percentile
    inference, and adjudicates stale research claim by claim.
-4. P03–P05 settle the production-systems identity, bounded offers, and flagship proof objects.
-5. P06–P09 design progressive disclosure, build and verify public surfaces, create safe capture,
-   and publish proof-led material only through named owner gates.
-6. P10–P12 qualify real conversations, deliver through a secure repeatable operating system, and
-   let commercial outcomes validate or revise the wedge.
-7. P13 inventories product candidates and pilots a legally and operationally bounded domain-operator
+4. P03–P04 settle the production-systems identity and bounded offers.
+5. P05–P06 produce flagship proof and design progressive disclosure while P11 builds the secure
+   delivery operating system on its own parallel branch.
+6. P07–P09 build and verify public surfaces, create safe capture, and stage or owner-publish
+   proof-led material only through named gates.
+7. P10-W01 through W07 build conversion before the pilot. P12-W01 and W02 then unlock P10-W08 while
+   the remaining P12 evidence work proceeds; P10 and P12 close together without a phase deadlock.
+8. P13 inventories product candidates and pilots a legally and operationally bounded domain-operator
    handoff or records an evidence-backed no-go.
-8. P14 returns every result to the claims and decision systems, proves rollback, and requires two
+9. P14 returns every result to the claims and decision systems, proves rollback, and requires two
    unchanged Omega passes before the root closes.
 
 ## Completion contract

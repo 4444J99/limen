@@ -137,7 +137,7 @@ execution_chunks:
       phase_ids: [PSP-P03, PSP-P04]
       exclude_work_ids: []
       extra_work_ids: []
-      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Identity, audience, offer, pricing, and boundary decisions form one canonical commercial contract.}
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: 'Identity, audience, offer, pricing, and boundary decisions form one canonical commercial contract.'}
       objective: Ratify the production-systems identity, audience narratives, offer ladder, qualification rules, economics, and commercial templates.
       exit_gate: P03 and P04 are closed; target readers understand the offer and each commercial path has bounded scope and economics.
     - id: PSP-C04
@@ -200,7 +200,7 @@ execution_chunks:
       phase_ids: [PSP-P12]
       exclude_work_ids: []
       extra_work_ids: [PSP-P10-W08]
-      conductor: {slug: gpt-5.6-sol, effort: max, rationale: First commercial proof and strategy adjudication cross human, contract, delivery, and claims boundaries.}
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: 'First commercial proof and strategy adjudication cross human, contract, delivery, and claims boundaries.'}
       objective: Recruit and deliver a bounded pilot, gather external proof, refresh claims, and adjudicate the 90-day demand experiment.
       exit_gate: P10 and P12 are closed with either commercial proof or an evidence-backed wedge invalidation and revision receipt.
     - id: PSP-C11
@@ -209,7 +209,7 @@ execution_chunks:
       phase_ids: [PSP-P13]
       exclude_work_ids: []
       extra_work_ids: []
-      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Product economics, legal structures, custody, and operator transfer are high-consequence.}
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: 'Product economics, legal structures, custody, and operator transfer are high-consequence.'}
       objective: Inventory and score the product estate, define operator and transfer contracts, and run one bounded handoff pilot.
       exit_gate: P13 is closed and one product reaches observed operator transfer or an evidence-backed no-go decision.
     - id: PSP-C12
@@ -218,7 +218,7 @@ execution_chunks:
       phase_ids: [PSP-P14]
       exclude_work_ids: []
       extra_work_ids: []
-      conductor: {slug: gpt-5.6-sol, effort: ultra, rationale: Final convergence spans every phase, feedback loop, rollback path, and terminal receipt.}
+      conductor: {slug: gpt-5.6-sol, effort: ultra, rationale: 'Final convergence spans every phase, feedback loop, rollback path, and terminal receipt.'}
       objective: Operate measurement and review loops, automate correction and rollback, feed outcomes upstream, and prove two unchanged passes.
       exit_gate: P14 and the root program are closed after two unchanged remote checks satisfy the terminal Omega predicate.
 

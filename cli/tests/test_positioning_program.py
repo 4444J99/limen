@@ -91,6 +91,8 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "measurement, inference, implication, and prominence" in work
     assert "Assigned model: `gpt-5.6-sol`" in work
     assert "Assigned effort: `max`" in work
+    assert "**Execution chunk:** `PSP-C02`" in work
+    assert "`PSP-C00` — Land the program control plane" in root
 
 
 def test_every_projected_issue_fits_github_limits() -> None:
@@ -129,11 +131,35 @@ def test_every_object_has_an_explicit_model_and_effort_assignment() -> None:
     assert all(row["effort"] in MODULE.EFFORTS for row in assignments.values())
 
 
+def test_execution_chunks_cover_every_leaf_once_and_respect_the_crossover() -> None:
+    graph, _mapping = graph_and_map()
+
+    assert len(graph["chunks"]) == 13
+    assert len(graph["work_chunk"]) == 111
+    assert set(graph["work_chunk"]) == set(graph["work_by_id"])
+    assert graph["work_chunk"]["PSP-P10-W07"] == "PSP-C09"
+    assert graph["work_chunk"]["PSP-P10-W08"] == "PSP-C10"
+    assert graph["work_chunk"]["PSP-P12-W01"] == "PSP-C10"
+    assert "PSP-P10" not in graph["phase_by_id"]["PSP-P12"]["depends_on"]
+    assert set(graph["chunk_by_id"]["PSP-C09"]["depends_on"]) == {"PSP-C05", "PSP-C08"}
+
+
+def test_execution_chunk_cycle_fails_closed() -> None:
+    data = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    data["execution_chunks"]["chunks"][0]["depends_on"] = ["PSP-C12"]
+
+    with pytest.raises(MODULE.ProgramError, match="execution chunk dependency cycle"):
+        MODULE.index_program(data)
+
+
 def test_live_catalog_validator_checks_every_assigned_pair(monkeypatch) -> None:
     graph, _mapping = graph_and_map()
     catalog: dict[str, set[str]] = {}
     for object_id in graph["ordered_ids"]:
         assignment = MODULE.model_assignment_for(object_id, graph)
+        catalog.setdefault(assignment["slug"], set()).add(assignment["effort"])
+    for chunk in graph["chunks"]:
+        assignment = MODULE.chunk_assignment_for(chunk["id"], graph)
         catalog.setdefault(assignment["slug"], set()).add(assignment["effort"])
     payload = {
         "models": [
@@ -151,7 +177,9 @@ def test_live_catalog_validator_checks_every_assigned_pair(monkeypatch) -> None:
 
     assert result["status"] == "ok"
     assert result["objects"] == 127
+    assert result["execution_chunks"] == 13
     assert sum(result["assignments"].values()) == 127
+    assert sum(result["chunk_assignments"].values()) == 13
 
 
 def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> None:
@@ -231,6 +259,40 @@ def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> 
     assert "PSP-P01-W01" not in after_first
 
 
+def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        object_id: {
+            "number": row["number"],
+            "html_url": row["url"],
+            "state": "open",
+            "body": MODULE.marker(object_id),
+            "title": MODULE.title_for(object_id, graph),
+            "labels": [],
+        }
+        for object_id, row in mapping["issues"].items()
+    }
+    for phase in graph["phases"]:
+        if phase["id"] in {"PSP-P10", "PSP-P12", "PSP-P13", "PSP-P14"}:
+            continue
+        remote[phase["id"]]["state"] = "closed"
+        for packet in phase["work"]:
+            remote[packet["id"]]["state"] = "closed"
+    for index in range(1, 8):
+        remote[f"PSP-P10-W{index:02d}"]["state"] = "closed"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+    )
+
+    ready = {row["id"] for row in MODULE.ready_work(graph, mapping)}
+
+    assert "PSP-P12-W01" in ready
+    assert "PSP-P10-W08" not in ready
+
+
 def test_closed_phase_cannot_hide_open_children() -> None:
     graph, mapping = graph_and_map()
     remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
@@ -306,3 +368,23 @@ def test_index_render_is_deterministic(tmp_path: Path) -> None:
     assert first.read_bytes() == second.read_bytes()
     assert "Atomic work packets: **111**" in first.read_text()
     assert "Root model / effort: **`gpt-5.6-sol` / `ultra`**" in first.read_text()
+    assert "`PSP-C10`" in first.read_text()
+
+
+def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
+    graph, mapping = graph_and_map()
+    packet = MODULE.chunk_packet("PSP-C10", graph, mapping)
+    first = tmp_path / "first.md"
+    second = tmp_path / "second.md"
+
+    assert packet["conductor_assignment"]["slug"] == "gpt-5.6-sol"
+    assert packet["conductor_assignment"]["effort"] == "max"
+    assert packet["work"][-1]["id"] == "PSP-P10-W08"
+    assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
+    assert MODULE.render_execution_chunks(graph, mapping, first) == MODULE.render_execution_chunks(
+        graph, mapping, second
+    )
+    assert first.read_bytes() == second.read_bytes()
+    rendered = first.read_text()
+    assert "C04 (proof/experience) and C05 (service delivery) may run in parallel" in rendered
+    assert "former P10↔P12 phase-gating deadlock" in rendered

@@ -441,6 +441,39 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
 
     assert_acyclic(phase_by_id, "phase")
     assert_acyclic(work_by_id, "work")
+    assert_acyclic(chunk_by_id, "execution chunk")
+
+    def chunk_ancestors(chunk_id: str) -> set[str]:
+        seen: set[str] = set()
+        pending = list(chunk_by_id.get(chunk_id, {}).get("depends_on") or [])
+        while pending:
+            dependency = pending.pop()
+            if dependency in seen or dependency not in chunk_by_id:
+                continue
+            seen.add(dependency)
+            pending.extend(chunk_by_id[dependency].get("depends_on") or [])
+        return seen
+
+    for work_id, packet in work_by_id.items():
+        owner = work_chunk.get(work_id)
+        if owner is None:
+            continue
+        allowed_chunks = {owner, *chunk_ancestors(owner)}
+        for dependency in packet.get("depends_on") or []:
+            dependency_owner = work_chunk.get(dependency)
+            if dependency_owner is not None and dependency_owner not in allowed_chunks:
+                failures.append(
+                    f"{work_id} in {owner} depends on {dependency} in non-ancestor chunk {dependency_owner}"
+                )
+        phase_id = work_phase[work_id]
+        for phase_dependency in phase_by_id[phase_id].get("depends_on") or []:
+            for dependency_packet in phase_by_id.get(phase_dependency, {}).get("work") or []:
+                dependency_owner = work_chunk.get(str(dependency_packet.get("id") or ""))
+                if dependency_owner is not None and dependency_owner not in allowed_chunks:
+                    failures.append(
+                        f"{work_id} in {owner} is phase-gated by {phase_dependency} work in "
+                        f"non-ancestor chunk {dependency_owner}"
+                    )
     if failures:
         raise ProgramError("program validation failed:\n- " + "\n- ".join(failures))
     return {
@@ -452,6 +485,11 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         "external": external,
         "gates": gates,
         "model_assignments": assignments,
+        "execution_chunks": execution_chunks,
+        "chunks": chunk_rows,
+        "chunk_by_id": chunk_by_id,
+        "chunk_work": chunk_work,
+        "work_chunk": work_chunk,
         "ordered_ids": ordered_ids,
     }
 
@@ -540,6 +578,35 @@ def model_assignment_for(object_id: str, graph: dict[str, Any]) -> dict[str, str
     }
 
 
+def chunk_assignment_for(chunk_id: str, graph: dict[str, Any]) -> dict[str, str]:
+    chunk = graph["chunk_by_id"].get(chunk_id)
+    if chunk is None:
+        raise ProgramError(f"unknown execution chunk: {chunk_id}")
+    selected = chunk["conductor"]
+    routing = graph["model_assignments"]
+    return {
+        "adapter": str(routing["adapter"]),
+        "slug": str(selected["slug"]),
+        "effort": str(selected["effort"]),
+        "rationale": str(selected["rationale"]),
+        "basis": "execution-chunk conductor override",
+        "authority": str(graph["execution_chunks"]["authority"]),
+        "catalog_validated_at": str(routing["catalog_validated_at"]),
+        "unavailable_action": str(routing["unavailable_action"]),
+    }
+
+
+def chunks_for_object(object_id: str, graph: dict[str, Any]) -> list[str]:
+    if object_id == "PSP-ROOT":
+        return [chunk["id"] for chunk in graph["chunks"]]
+    if object_id in graph["work_by_id"]:
+        return [graph["work_chunk"][object_id]]
+    if object_id in graph["phase_by_id"]:
+        phase_work = {packet["id"] for packet in graph["phase_by_id"][object_id]["work"]}
+        return [chunk["id"] for chunk in graph["chunks"] if phase_work.intersection(graph["chunk_work"][chunk["id"]])]
+    raise ProgramError(f"unknown program object: {object_id}")
+
+
 def verify_model_assignments(graph: dict[str, Any]) -> dict[str, Any]:
     try:
         result = subprocess.run(
@@ -574,6 +641,7 @@ def verify_model_assignments(graph: dict[str, Any]) -> dict[str, Any]:
         }
     failures: list[str] = []
     counts: dict[str, int] = {}
+    chunk_counts: dict[str, int] = {}
     for object_id in graph["ordered_ids"]:
         assignment = model_assignment_for(object_id, graph)
         slug = assignment["slug"]
@@ -584,13 +652,26 @@ def verify_model_assignments(graph: dict[str, Any]) -> dict[str, Any]:
             failures.append(f"{object_id}: {slug!r} does not support effort {effort!r}")
         key = f"{slug}/{effort}"
         counts[key] = counts.get(key, 0) + 1
+    for chunk in graph["chunks"]:
+        chunk_id = chunk["id"]
+        assignment = chunk_assignment_for(chunk_id, graph)
+        slug = assignment["slug"]
+        effort = assignment["effort"]
+        if slug not in catalog:
+            failures.append(f"{chunk_id}: {slug!r} is absent from the live catalog")
+        elif effort not in catalog[slug]:
+            failures.append(f"{chunk_id}: {slug!r} does not support effort {effort!r}")
+        key = f"{slug}/{effort}"
+        chunk_counts[key] = chunk_counts.get(key, 0) + 1
     if failures:
         raise ProgramError("model assignment validation failed:\n- " + "\n- ".join(failures))
     return {
         "status": "ok",
         "objects": len(graph["ordered_ids"]),
+        "execution_chunks": len(graph["chunks"]),
         "catalog_entries": len(catalog),
         "assignments": dict(sorted(counts.items())),
+        "chunk_assignments": dict(sorted(chunk_counts.items())),
     }
 
 
@@ -639,6 +720,17 @@ def _assignment_lines(object_id: str, graph: dict[str, Any]) -> list[str]:
     ]
 
 
+def _chunk_lines(object_id: str, graph: dict[str, Any]) -> list[str]:
+    chunk_ids = chunks_for_object(object_id, graph)
+    heading = "## Execution chunk" if len(chunk_ids) == 1 else "## Execution chunks"
+    lines = [heading, ""]
+    for chunk_id in chunk_ids:
+        chunk = graph["chunk_by_id"][chunk_id]
+        assignment = chunk_assignment_for(chunk_id, graph)
+        lines.append(f"- `{chunk_id}` — {chunk['title']} · conductor `{assignment['slug']}` / `{assignment['effort']}`")
+    return lines
+
+
 def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> str:
     if object_id == "PSP-ROOT":
         phases = [phase["id"] for phase in graph["phases"]]
@@ -650,6 +742,8 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
                 graph["program"]["outcome"],
                 "",
                 *_assignment_lines(object_id, graph),
+                "",
+                *_chunk_lines(object_id, graph),
                 "",
                 "The tracked source is `institutio/positioning/program.yaml`; this issue is its GitHub index. "
                 "Agents must claim bounded leaves through the Limen conduct broker before mutation.",
@@ -688,6 +782,8 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
                 "",
                 *_assignment_lines(object_id, graph),
                 "",
+                *_chunk_lines(object_id, graph),
+                "",
                 "## Upstream phases",
                 "",
                 *[f"- {_link(mapping, item)}" for item in dependencies],
@@ -709,6 +805,8 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         )
     packet = graph["work_by_id"][object_id]
     assignment = model_assignment_for(object_id, graph)
+    chunk_id = graph["work_chunk"][object_id]
+    chunk = graph["chunk_by_id"][chunk_id]
     phase_id = graph["work_phase"][object_id]
     dependencies = packet.get("depends_on") or []
     externals = packet.get("external_dependencies") or []
@@ -717,6 +815,7 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         f"# {object_id} — {packet['title']}",
         "",
         f"**Parent:** {_link(mapping, phase_id)}",
+        f"**Execution chunk:** `{chunk_id}` — {chunk['title']}",
         f"**Target:** `{packet['target_repo']}` · " + ", ".join(f"`{path}`" for path in packet["target_paths"]),
         "",
         "## Outcome",
@@ -1153,7 +1252,13 @@ def _write_map(
 
 
 def sync(
-    graph: dict[str, Any], mapping: dict[str, Any], *, apply: bool, map_path: Path, index_path: Path
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    *,
+    apply: bool,
+    map_path: Path,
+    index_path: Path,
+    chunks_path: Path = DEFAULT_CHUNKS,
 ) -> dict[str, Any]:
     repository = graph["program"]["repository"]
     missing_labels = _ensure_labels(graph, apply=apply)
@@ -1217,6 +1322,7 @@ def sync(
         }
         _api(repository, f"issues/{row['number']}", method="PATCH", payload=payload)
     render_index(graph, mapping, index_path)
+    render_execution_chunks(graph, mapping, chunks_path)
     return {"mode": "apply", "created": create_ids, "updated": graph["ordered_ids"], "milestone": milestone}
 
 
@@ -1338,6 +1444,150 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
     }
 
 
+def chunk_launch_prompt(chunk_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> str:
+    chunk = graph["chunk_by_id"].get(chunk_id)
+    if chunk is None:
+        raise ProgramError(f"unknown execution chunk: {chunk_id}")
+    assignment = chunk_assignment_for(chunk_id, graph)
+    work_ids = graph["chunk_work"][chunk_id]
+    phase_scope = ", ".join(chunk["phase_ids"])
+    dependency_scope = ", ".join(chunk.get("depends_on") or []) or "none"
+    excluded = ", ".join(chunk.get("exclude_work_ids") or []) or "none"
+    extras = ", ".join(chunk.get("extra_work_ids") or []) or "none"
+    root_row = mapping.get("issues", {}).get("PSP-ROOT") or {}
+    root_url = str(root_row.get("url") or "https://github.com/organvm/limen/issues/2157")
+    return f"""Execute Production-Systems Program chunk {chunk_id}: {chunk["title"]}.
+
+Run this conductor session with `{assignment["slug"]}` at `{assignment["effort"]}` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+
+Scope
+- Repository: `{graph["program"]["repository"]}`
+- Root program: {root_url}
+- Phase scope: {phase_scope}
+- Resolved leaf count: {len(work_ids)}
+- Excluded leaves: {excluded}
+- Extra cross-phase leaves: {extras}
+- Required predecessor chunks: {dependency_scope}
+- Objective: {chunk["objective"]}
+- Exit gate: {chunk["exit_gate"]}
+
+Execution contract
+1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
+2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json`.
+3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
+4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
+7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
+8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+
+Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete."""
+
+
+def chunk_packet(chunk_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+    chunk = graph["chunk_by_id"].get(chunk_id)
+    if chunk is None:
+        raise ProgramError(f"unknown execution chunk: {chunk_id}")
+    return {
+        "schema_version": EXECUTION_CHUNKS_SCHEMA,
+        "id": chunk_id,
+        "title": chunk["title"],
+        "depends_on": chunk.get("depends_on") or [],
+        "objective": chunk["objective"],
+        "exit_gate": chunk["exit_gate"],
+        "conductor_assignment": chunk_assignment_for(chunk_id, graph),
+        "phase_ids": chunk["phase_ids"],
+        "exclude_work_ids": chunk.get("exclude_work_ids") or [],
+        "extra_work_ids": chunk.get("extra_work_ids") or [],
+        "work": [
+            {
+                "id": work_id,
+                "title": graph["work_by_id"][work_id]["title"],
+                "issue": mapping.get("issues", {}).get(work_id),
+                "leaf_assignment": model_assignment_for(work_id, graph),
+            }
+            for work_id in graph["chunk_work"][chunk_id]
+        ],
+        "launch_prompt": chunk_launch_prompt(chunk_id, graph, mapping),
+    }
+
+
+def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DEFAULT_CHUNKS) -> str:
+    lines = [
+        "# Production-Systems Program execution chunks",
+        "",
+        "Generated from `institutio/positioning/program.yaml`. Do not edit by hand. The manifest and live GitHub "
+        "state outrank this projection.",
+        "",
+        "These prompts are conductor envelopes: the chunk conductor coordinates the work, while every leaf retains "
+        "its own exact model/effort assignment, lease, authority boundary, predicate, and receipt.",
+        "",
+        "## Dependency order",
+        "",
+        "```mermaid",
+        "flowchart LR",
+    ]
+    for chunk in graph["chunks"]:
+        chunk_id = chunk["id"]
+        safe_title = str(chunk["title"]).replace('"', "'")
+        lines.append(f'  {chunk_id}["{chunk_id} · {safe_title}"]')
+    for chunk in graph["chunks"]:
+        for dependency in chunk.get("depends_on") or []:
+            lines.append(f"  {dependency} --> {chunk['id']}")
+    lines += [
+        "```",
+        "",
+        "C04 (proof/experience) and C05 (service delivery) may run in parallel after C03. They rejoin before "
+        "commercial validation. C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, "
+        "eliminating the former P10↔P12 phase-gating deadlock.",
+        "",
+        "## Chunk index",
+        "",
+        "| Chunk | Scope | Conductor | Depends on | Leaves | Exit gate |",
+        "|---|---|---|---|---:|---|",
+    ]
+    for chunk in graph["chunks"]:
+        chunk_id = chunk["id"]
+        assignment = chunk_assignment_for(chunk_id, graph)
+        scope = ", ".join(f"`{item}`" for item in chunk["phase_ids"])
+        if chunk.get("extra_work_ids"):
+            scope += " + " + ", ".join(f"`{item}`" for item in chunk["extra_work_ids"])
+        if chunk.get("exclude_work_ids"):
+            scope += " − " + ", ".join(f"`{item}`" for item in chunk["exclude_work_ids"])
+        dependencies = ", ".join(f"`{item}`" for item in chunk.get("depends_on") or []) or "—"
+        lines.append(
+            f"| `{chunk_id}` {chunk['title']} | {scope} | `{assignment['slug']}` / `{assignment['effort']}` | "
+            f"{dependencies} | {len(graph['chunk_work'][chunk_id])} | {chunk['exit_gate']} |"
+        )
+    lines += [
+        "",
+        "## How to use the prompts",
+        "",
+        "1. Start with C00. Do not launch a chunk until every named predecessor has a durable completion receipt.",
+        "2. C04 and C05 are the only intended parallel branch. Run them in isolated worktrees and broker leases.",
+        "3. Paste one prompt below into a fresh conductor session using its assigned model/effort.",
+        "4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk "
+        "rather than skipping ahead.",
+        "5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.",
+    ]
+    for index, chunk in enumerate(graph["chunks"], 1):
+        chunk_id = chunk["id"]
+        lines += [
+            "",
+            f"## {index}. {chunk_id} — {chunk['title']}",
+            "",
+            "Copy and paste:",
+            "",
+            "```text",
+            chunk_launch_prompt(chunk_id, graph, mapping),
+            "```",
+        ]
+    text = "\n".join(lines) + "\n"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return text
+
+
 def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DEFAULT_INDEX) -> str:
     root_assignment = model_assignment_for("PSP-ROOT", graph)
     lines = [
@@ -1353,14 +1603,16 @@ def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DE
         "",
         "## Phases",
         "",
-        "| Phase | Issue | Model | Effort | Leaves | Depends on | Exit gate |",
-        "|---|---:|---|---|---:|---|---|",
+        "| Phase | Issue | Chunk(s) | Model | Effort | Leaves | Depends on | Exit gate |",
+        "|---|---:|---|---|---|---:|---|---|",
     ]
     for phase in graph["phases"]:
         assignment = model_assignment_for(phase["id"], graph)
+        chunk_ids = ", ".join(f"`{item}`" for item in chunks_for_object(phase["id"], graph))
         dependencies = ", ".join(_link(mapping, item) for item in phase.get("depends_on") or []) or "—"
         lines.append(
-            f"| `{phase['id']}` {phase['title']} | {_link(mapping, phase['id'])} | `{assignment['slug']}` | "
+            f"| `{phase['id']}` {phase['title']} | {_link(mapping, phase['id'])} | {chunk_ids} | "
+            f"`{assignment['slug']}` | "
             f"`{assignment['effort']}` | {len(phase['work'])} | {dependencies} | {phase['exit_gate']} |"
         )
     for phase in graph["phases"]:
@@ -1370,14 +1622,16 @@ def render_index(graph: dict[str, Any], mapping: dict[str, Any], path: Path = DE
             "",
             phase["outcome"],
             "",
-            "| Work ID | Issue | Model | Effort | Target | Reasoning | Effect | Depends on |",
-            "|---|---:|---|---|---|---|---|---|",
+            "| Work ID | Issue | Chunk | Model | Effort | Target | Reasoning | Effect | Depends on |",
+            "|---|---:|---|---|---|---|---|---|---|",
         ]
         for packet in phase["work"]:
             assignment = model_assignment_for(packet["id"], graph)
+            chunk_id = graph["work_chunk"][packet["id"]]
             dependencies = ", ".join(_link(mapping, item) for item in packet.get("depends_on") or []) or "—"
             lines.append(
-                f"| `{packet['id']}` {packet['title']} | {_link(mapping, packet['id'])} | `{assignment['slug']}` | "
+                f"| `{packet['id']}` {packet['title']} | {_link(mapping, packet['id'])} | `{chunk_id}` | "
+                f"`{assignment['slug']}` | "
                 f"`{assignment['effort']}` | `{packet['target_repo']}` | `{packet['reasoning']}` | "
                 f"`{packet['effect']}` | {dependencies} |"
             )
@@ -1453,6 +1707,8 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--sync", action="store_true")
     mode.add_argument("--verify-remote", action="store_true")
     mode.add_argument("--verify-model-assignments", action="store_true")
+    mode.add_argument("--render-chunks", action="store_true")
+    mode.add_argument("--chunk", metavar="CHUNK_ID")
     mode.add_argument("--ready", action="store_true")
     mode.add_argument("--seed", metavar="WORK_ID")
     mode.add_argument("--receipt-template", metavar="WORK_ID")
@@ -1464,6 +1720,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--github-map", type=Path, default=DEFAULT_MAP)
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
+    parser.add_argument("--chunks", type=Path, default=DEFAULT_CHUNKS)
     args = parser.parse_args(argv)
     try:
         if args.apply and not args.sync:
@@ -1476,6 +1733,7 @@ def main(argv: list[str] | None = None) -> int:
             result: object = {
                 "status": "ok",
                 "phases": len(graph["phase_by_id"]),
+                "execution_chunks": len(graph["chunks"]),
                 "work_packets": len(graph["work_by_id"]),
                 "projected_objects": len(graph["ordered_ids"]),
                 "mapped_objects": len(mapping.get("issues") or {}),
@@ -1484,11 +1742,23 @@ def main(argv: list[str] | None = None) -> int:
             render_index(graph, mapping, args.index)
             result = {"status": "rendered", "path": str(args.index), "objects": len(graph["ordered_ids"])}
         elif args.sync:
-            result = sync(graph, mapping, apply=args.apply, map_path=args.github_map, index_path=args.index)
+            result = sync(
+                graph,
+                mapping,
+                apply=args.apply,
+                map_path=args.github_map,
+                index_path=args.index,
+                chunks_path=args.chunks,
+            )
         elif args.verify_remote:
             result = remote_parity(graph, mapping)
         elif args.verify_model_assignments:
             result = verify_model_assignments(graph)
+        elif args.render_chunks:
+            render_execution_chunks(graph, mapping, args.chunks)
+            result = {"status": "rendered", "path": str(args.chunks), "chunks": len(graph["chunks"])}
+        elif args.chunk:
+            result = chunk_packet(args.chunk, graph, mapping)
         elif args.ready:
             result = ready_work(graph, mapping)
             if not args.json:
