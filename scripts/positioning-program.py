@@ -311,6 +311,16 @@ def validate_map(mapping: dict[str, Any], graph: dict[str, Any], *, complete: bo
         failures.append(f"map has orphan ids: {sorted(actual - expected)}")
     if complete and expected - actual:
         failures.append(f"map is missing ids: {sorted(expected - actual)}")
+    milestone = mapping.get("milestone")
+    if complete:
+        expected_milestone = graph["program"]["issue_projection"]["milestone"]
+        if (
+            not isinstance(milestone, dict)
+            or not isinstance(milestone.get("number"), int)
+            or milestone.get("title") != expected_milestone
+            or not _is_nonempty_text(milestone.get("url"))
+        ):
+            failures.append(f"map milestone must identify {expected_milestone!r}")
     numbers: dict[int, str] = {}
     for object_id, row in issues.items():
         if not isinstance(row, dict) or not isinstance(row.get("number"), int) or not _is_nonempty_text(row.get("url")):
@@ -625,6 +635,30 @@ def fetch_program_issues(graph: dict[str, Any], *, label_may_be_missing: bool = 
     return by_id
 
 
+def recover_mapped_issues(
+    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Recover label or marker drift by exact mapped number without creating duplicates."""
+    repository = graph["program"]["repository"]
+    recovered = dict(remote)
+    for object_id in graph["ordered_ids"]:
+        if object_id in recovered:
+            continue
+        map_row = _issue_row(mapping, object_id)
+        if map_row is None:
+            continue
+        row = _api(repository, f"issues/{int(map_row['number'])}", allow_failure=True)
+        if not isinstance(row, dict) or "pull_request" in row:
+            continue
+        found = MARKER_RE.findall(str(row.get("body") or ""))
+        if found and found != [object_id]:
+            raise ProgramError(
+                f"mapped {object_id} issue #{map_row['number']} carries conflicting program markers: {found}"
+            )
+        recovered[object_id] = row
+    return recovered
+
+
 def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
     if work_id not in graph["work_by_id"]:
         raise ProgramError(f"unknown work id: {work_id}")
@@ -822,16 +856,17 @@ def sync(
     missing_labels = _ensure_labels(graph, apply=apply)
     milestone = _ensure_milestone(graph, apply=apply)
     if not apply and (missing_labels or milestone is None):
+        remote = recover_mapped_issues(graph, mapping, {})
         return {
             "mode": "dry-run",
             "missing_labels": missing_labels,
             "missing_milestone": milestone is None,
-            "create": graph["ordered_ids"],
-            "update": [],
+            "create": [object_id for object_id in graph["ordered_ids"] if object_id not in remote],
+            "update": [object_id for object_id in graph["ordered_ids"] if object_id in remote],
         }
     if milestone is None:
         raise ProgramError("milestone is unavailable")
-    remote = fetch_program_issues(graph)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     create_ids = [object_id for object_id in graph["ordered_ids"] if object_id not in remote]
     if not apply:
         provisional = dict(mapping)
@@ -881,7 +916,7 @@ def sync(
 
 def remote_parity(graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
     validate_map(mapping, graph, complete=True)
-    remote = fetch_program_issues(graph)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     expected_ids = set(graph["ordered_ids"])
     actual_ids = set(remote)
     missing = sorted(expected_ids - actual_ids)
@@ -896,6 +931,10 @@ def remote_parity(graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, A
             drift.append(f"{object_id}: title drift")
         if str(remote_row.get("body") or "") != body_for(object_id, graph, mapping):
             drift.append(f"{object_id}: body drift")
+        remote_milestone = remote_row.get("milestone")
+        expected_milestone = mapping["milestone"]["number"]
+        if not isinstance(remote_milestone, dict) or int(remote_milestone.get("number") or 0) != expected_milestone:
+            drift.append(f"{object_id}: milestone drift")
         current_labels = {
             str(item.get("name") or "") for item in remote_row.get("labels") or [] if isinstance(item, dict)
         }
@@ -916,7 +955,7 @@ def remote_parity(graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, A
 
 def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str, Any]]:
     validate_map(mapping, graph, complete=True)
-    remote = fetch_program_issues(graph)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     if set(remote) != set(graph["ordered_ids"]):
         raise ProgramError("remote graph is incomplete; run --verify-remote")
     closed = {object_id for object_id, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
@@ -1045,7 +1084,7 @@ def _state_digest(graph: dict[str, Any], mapping: dict[str, Any], remote: dict[s
 
 def omega(graph: dict[str, Any], mapping: dict[str, Any], *, require_two_pass: bool) -> dict[str, Any]:
     parity = remote_parity(graph, mapping)
-    remote = fetch_program_issues(graph)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     open_ids = [
         object_id for object_id in graph["ordered_ids"] if str(remote[object_id].get("state") or "").lower() != "closed"
     ]
