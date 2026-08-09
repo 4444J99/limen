@@ -46,7 +46,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
 from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
-from limen.models import Task  # noqa: E402
+from limen.models import DispatchLogEntry, LimenFile, Task  # noqa: E402
 from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs,
@@ -377,7 +377,7 @@ def main():
     # assess a rotating window of --scan PRs this beat. Over a full rotation every red/conflict PR
     # gets seen → a heal task → merge-drain lands it. The cursor is per-organ so HEAL and MERGE
     # rotate independently. ([[self-star-ladder-shipped-live]])
-    allprs = list(a.pr) if a.pr else enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True)
+    allprs = list(a.pr) if a.pr else enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=True, author=None)
     if not allprs:
         print("[self-heal] no open PRs (or gh unavailable)")
         return 0
@@ -419,6 +419,23 @@ def main():
     if a.dry_run:
         tasks = load_limen_file(tasks_path).tasks if tasks_path.exists() else []
         tasks_by_id = {t.id: t for t in tasks}
+
+        open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
+        ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
+        would_retire = 0
+        for t in tasks:
+            if (
+                (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
+                and not t.id.startswith("HEAL-rebase-stale-")
+                and t.status in ACTIVE_HEAL_STATUSES
+            ):
+                parts = t.id.split("-")
+                if parts[-1].isdigit():
+                    num = int(parts[-1])
+                    repo = t.repo or ""
+                    if repo and (repo, num) not in open_pr_nums:
+                        would_retire += 1
+
         would, dup = [], 0
         for verdict, repo, num, url in sick:
             tid = task_id(KINDS[verdict]["slug"], repo, num)
@@ -439,7 +456,7 @@ def main():
             f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
             f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
             f"review-feedback={review_fb} "
-            f"chronic-frozen={len(frozen)} | would-emit={len(would)} already-queued={dup}"
+            f"chronic-frozen={len(frozen)} | would-emit={len(would)} would-retire={would_retire} already-queued={dup}"
         )
         print("| heal task id (would emit) | kind | repo | pr |")
         print("|---|---|---|---|")
@@ -458,6 +475,44 @@ def main():
     try:
         lf = load_limen_file(tasks_path)
         tasks_by_id = {t.id: t for t in lf.tasks}
+
+        # RECONCILE: retire open/active HEAL tasks whose PR is no longer open
+        # (open_pr_nums was enumerated at startup for all open PRs across active owners)
+        open_pr_nums = {(repo, num) for (repo, num, _url) in allprs}
+        retired = []
+        ACTIVE_HEAL_STATUSES = {"open", "dispatched", "in_progress", "failed", "failed_blocked", "needs_human"}
+        for t in lf.tasks:
+            if (
+                (t.id.startswith("HEAL-cifix-") or t.id.startswith("HEAL-rebase-"))
+                and not t.id.startswith("HEAL-rebase-stale-")
+                and t.status in ACTIVE_HEAL_STATUSES
+            ):
+                parts = t.id.split("-")
+                if parts[-1].isdigit():
+                    num = int(parts[-1])
+                    repo = t.repo or ""
+                    if repo and (repo, num) not in open_pr_nums:
+                        try:
+                            from limen.tabularius import refuse_unfunded_partner_lane
+
+                            refuse_unfunded_partner_lane(repo, t.id)
+                        except Exception:
+                            continue
+                        t.status = "done"
+                        t.dispatch_log.append(
+                            DispatchLogEntry(
+                                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                                agent="self-heal",
+                                session_id="reconcile",
+                                status="done",
+                                lifecycle_repair="pr-closed-reconcile",
+                                pr_observed_ref=f"{repo}#{num}",
+                                pr_observed_state="closed",
+                                context=f"Retired by self-heal because {repo}#{num} is no longer open",
+                            )
+                        )
+                        retired.append(t.id)
+
         emitted = []
         for verdict, repo, num, url in sick:
             tid = task_id(KINDS[verdict]["slug"], repo, num)
@@ -472,7 +527,7 @@ def main():
                     continue
             lf.tasks.append(build_task(verdict, repo, num, url, stamp))
             emitted.append(tid)
-        if emitted:
+        if emitted or retired:
             apply_limen_file_sync(tasks_path, lf, agent="self-heal", session_id="emit")
     finally:
         try:
