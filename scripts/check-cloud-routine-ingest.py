@@ -63,8 +63,6 @@ def validate_irf_receipt(
         if isinstance(declared_human, list)
         else set()
     )
-    if not human_ids:
-        failures.append("IRF human-gate denominator is empty")
     human_owner = irf.get("human_gate_owner")
     derived_human: set[str] = set()
     for irf_id, row in by_id.items():
@@ -88,9 +86,13 @@ def validate_irf_receipt(
     if derived_human != human_ids:
         failures.append("IRF human-gate ID set does not match the row partition")
 
-    owner_id = str(human_owner or "").removeprefix("lever:")
-    if owner_id not in active_levers:
-        failures.append(f"IRF human-gate lever is not active: {owner_id or '<missing>'}")
+    # A non-empty human partition must remain attached to a live lever. Once every
+    # human action is discharged and rows are reclassified as ordinary owned work,
+    # the empty partition is the terminal green state rather than a false failure.
+    if human_ids:
+        owner_id = str(human_owner or "").removeprefix("lever:")
+        if owner_id not in active_levers:
+            failures.append(f"IRF human-gate lever is not active: {owner_id or '<missing>'}")
     return failures
 
 
