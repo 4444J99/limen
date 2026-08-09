@@ -38,6 +38,7 @@ from limen.dispatch import (
     _weak_proxy_exhaustion,
     _window_hours,
     agent_can_run_task,
+    task_passes_value_gate,
 )  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
@@ -544,6 +545,19 @@ def _dispatch_admission(
             if str(name).strip() and canonical_agent(str(name)) not in {"", "any"}
         }
     )
+    # Reachability probes can hit local binaries or external launchers. Snapshot each lane once
+    # before evaluating tasks so a large any-task queue cannot multiply the same slow probe.
+    reachability_agents = set(known_agents)
+    for task in tasks:
+        if task.get("status") != "open":
+            continue
+        candidate_agent = _effective_task_agent(task)
+        if candidate_agent not in {"", "any"}:
+            reachability_agents.add(candidate_agent)
+    lane_reachability = {
+        agent: _lane_reachable(agent, provider_headroom)
+        for agent in sorted(reachability_agents)
+    }
     for task in tasks:
         if task.get("status") != "open":
             continue
@@ -560,6 +574,14 @@ def _dispatch_admission(
         underwriting = task_work_loan_readiness(task)
         if reason is None and not underwriting.ready:
             reason = str(underwriting.reason_code)
+        if reason is None:
+            try:
+                value_ready = task_passes_value_gate(Task.model_validate(task))
+            except Exception:
+                value_ready = False
+            if not value_ready:
+                # Automatic handoff admission follows the same partner/value boundary as dispatch.
+                reason = "admission_blocked"
         cost = _as_int(task.get("budget_cost")) or 1
         if reason is None and global_remaining is not None and cost > global_remaining:
             reason = "budget_global"
@@ -568,7 +590,7 @@ def _dispatch_admission(
             reason = "admission_blocked"
         if reason is None and agent in down_lanes:
             reason = "provider_health"
-        if reason is None and agent not in {"", "any"} and not _lane_reachable(agent, provider_headroom):
+        if reason is None and agent not in {"", "any"} and not lane_reachability.get(agent, False):
             reason = "provider_health"
         if reason is None and agent not in {"", "any"} and not _eligible_any_agent(task, agent):
             reason = "admission_blocked"
@@ -605,7 +627,7 @@ def _dispatch_admission(
                 if not _eligible_any_agent(task, candidate_agent):
                     any_blockers["admission_blocked"] += 1
                     continue
-                if not _lane_reachable(candidate_agent, provider_headroom):
+                if not lane_reachability.get(candidate_agent, False):
                     any_blockers["provider_health"] += 1
                     provider_health_reasons[candidate_agent] += 1
                     continue
