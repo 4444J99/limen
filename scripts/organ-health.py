@@ -863,6 +863,23 @@ def render_html(v):
 </div></body></html>"""
 
 
+def _atomic_write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if "--help" in argv or "-h" in argv:
@@ -873,17 +890,22 @@ def main(argv=None):
     strict = "--strict" in argv
     view = build()
     LOGS.mkdir(parents=True, exist_ok=True)
-    (LOGS / "organ-health.json").write_text(json.dumps(view, indent=2))
+    payload = json.dumps(view, indent=2)
     html = render_html(view)
     wrote = []
-    for d in OUT_DIRS:
-        try:
-            d.mkdir(parents=True, exist_ok=True)
-            (d / "organ-health.html").write_text(html)
-            (d / "organ-health.json").write_text(json.dumps(view, indent=2))
-            wrote.append(str(d / "organ-health.html"))
-        except OSError:
-            continue
+    lock_path = LOGS / ".organ-health.lock"
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _atomic_write_text(LOGS / "organ-health.json", payload)
+        for d in OUT_DIRS:
+            try:
+                d.mkdir(parents=True, exist_ok=True)
+                _atomic_write_text(d / "organ-health.html", html)
+                _atomic_write_text(d / "organ-health.json", payload)
+                wrote.append(str(d / "organ-health.html"))
+            except OSError:
+                continue
+        fcntl.flock(lock, fcntl.LOCK_UN)
     s = view["summary"]
     detail = " ".join(f"{o['rung']}:{o['status']}" for o in view["organs"])
     print(
