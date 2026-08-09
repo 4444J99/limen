@@ -562,6 +562,8 @@ def test_heartbeat_child_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
         lambda pid: [{"pid": "99", "command": "scripts/clone-maintenance.sh"}],
     )
 
+    monkeypatch.setenv("LIMEN_VIGILIA", "0")
+    monkeypatch.setenv("LIMEN_HOST_PRESSURE_STALE", "0")
     snapshot = module.build_snapshot()
     assert snapshot["status"] == "ok"
     assert snapshot["heartbeat_child_count"] == 1
@@ -1851,5 +1853,6 @@ def test_effective_runtime_env_redacts_credentials(tmp_path, monkeypatch):
         }
     )
 
-    assert effective == {"LIMEN_VIGILIA": "1"}
+    assert effective["LIMEN_VIGILIA"] == "1"
+    assert effective["LIMEN_ROOT"] == str(tmp_path)
     assert "LIMEN_API_TOKEN" not in effective
