@@ -20,6 +20,12 @@ _ROUTINE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _FINDING_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
 _REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 _LEVER_REF_RE = re.compile(r"^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_DURABLE_OWNER_RE = re.compile(
+    r"^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|"
+    r"irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|"
+    r"https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/"
+    r"(?:issues|pull|actions/runs)/[0-9]+)$"
+)
 _OCCURRENCE_TASK_RE = re.compile(r"^(CLOUD-[0-9A-F]{20})(?:-[0-9]{8}T[0-9]{6}Z)?$")
 _PREDICATE_SCHEMA_RE = re.compile(
     r"^(?!.*(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b))"
@@ -104,6 +110,12 @@ class CloudRoutineReceiptV1(ProtocolModel):
             raise ValueError("material cloud-routine findings require owner_ref")
         if self.disposition == "human_gate" and not _LEVER_REF_RE.fullmatch(self.owner_ref or ""):
             raise ValueError("human_gate owner_ref must be a lever:<id> reference")
+        if (
+            material
+            and self.disposition not in {"new_work", "human_gate"}
+            and not _DURABLE_OWNER_RE.fullmatch(self.owner_ref or "")
+        ):
+            raise ValueError("material cloud-routine findings require a durable owner_ref")
         if self.disposition == "new_work":
             if not material:
                 raise ValueError("new_work is only valid for a material finding")
@@ -170,7 +182,24 @@ def plan_task_upserts(
     pending_ids: Iterable[str] = (),
     historical_ids: Iterable[str] = (),
 ) -> CloudRoutineIngestPlan:
-    """Plan only novel live work while allowing a terminal lineage to recur."""
+    """Plan only novel live work while allowing a terminal lineage to recur.
+
+    A delivery can contain retries or delayed observations for the same stable
+    lineage. Keep only the newest observation before classifying it, so a later
+    owned/superseded receipt can never be resurrected by an older new_work row.
+    """
+    latest_by_lineage: dict[str, CloudRoutineReceiptV1] = {}
+    collapsed = 0
+    for receipt in receipts:
+        lineage_id = task_id_for(receipt)
+        previous = latest_by_lineage.get(lineage_id)
+        if previous is not None:
+            collapsed += 1
+            if receipt.observed_at >= previous.observed_at:
+                latest_by_lineage[lineage_id] = receipt
+            continue
+        latest_by_lineage[lineage_id] = receipt
+
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
     active_lineages = {
@@ -179,9 +208,9 @@ def plan_task_upserts(
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
     classified = 0
-    duplicates = 0
+    duplicates = collapsed
 
-    for receipt in receipts:
+    for receipt in latest_by_lineage.values():
         lineage_id = task_id_for(receipt)
         if receipt.disposition != "new_work":
             classified += 1
@@ -200,6 +229,7 @@ def plan_task_upserts(
         tasks.append(task)
         seen_lineages.add(lineage_id)
         seen_lineages.add(task_id)
+
 
     return CloudRoutineIngestPlan(
         tasks=tuple(tasks),
