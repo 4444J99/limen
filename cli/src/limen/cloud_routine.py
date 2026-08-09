@@ -46,6 +46,7 @@ _PREDICATE_SCHEMA_RE = re.compile(
     re.IGNORECASE,
 )
 
+
 def _substitution_end(command: str, start: int) -> int | None:
     # Return the closing paren for a balanced command substitution.
     depth = 1
@@ -144,6 +145,7 @@ def _has_unsafe_command_substitution(command: str) -> bool:
             continue
         index += 1
     return False
+
 
 CloudRoutineStatus = Literal["ok", "finding", "failed"]
 CloudRoutineDisposition = Literal[
