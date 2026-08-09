@@ -48,8 +48,7 @@ _PREDICATE_SCHEMA_RE = re.compile(
 
 
 def _substitution_end(command: str, start: int) -> int | None:
-    # Return the closing paren for a balanced command substitution.
-    depth = 1
+    """Find a command substitution's closing parenthesis with nested quote contexts."""
     quote: str | None = None
     escaped = False
     index = start
@@ -63,24 +62,38 @@ def _substitution_end(command: str, start: int) -> int | None:
             escaped = True
             index += 1
             continue
-        if quote is not None:
-            if char == quote:
+        if quote == "'":
+            if char == "'":
                 quote = None
+            index += 1
+            continue
+        if quote == '"':
+            if char == '"':
+                quote = None
+                index += 1
+                continue
+            if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
+                nested_end = _substitution_end(command, index + 2)
+                if nested_end is None:
+                    return None
+                index = nested_end + 1
+                continue
             index += 1
             continue
         if char in {"'", '"'}:
             quote = char
-        elif char == "$" and index + 1 < len(command) and command[index + 1] == "(":
-            depth += 1
             index += 1
-        elif char == ")":
-            depth -= 1
-            if depth == 0:
-                return index
+            continue
+        if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
+            nested_end = _substitution_end(command, index + 2)
+            if nested_end is None:
+                return None
+            index = nested_end + 1
+            continue
+        if char == ")":
+            return index
         index += 1
     return None
-
-
 def _contains_shell_composition(command: str) -> bool:
     # Return whether shell composition occurs outside quoted literals.
     quote: str | None = None
@@ -125,28 +138,41 @@ def _has_unsafe_command_substitution(command: str) -> bool:
                 quote = None
             index += 1
             continue
+        if quote == '"':
+            if char == '"':
+                quote = None
+                index += 1
+                continue
+            if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
+                end = _substitution_end(command, index + 2)
+                if end is None:
+                    return True
+                body = command[index + 2 : end]
+                if _contains_shell_composition(body) or _has_unsafe_command_substitution(body):
+                    return True
+                index = end + 1
+                continue
+            index += 1
+            continue
         if char == "'":
             quote = "'"
             index += 1
             continue
-        if char == '"' and quote is None:
+        if char == '"':
             quote = '"'
-            index += 1
-            continue
-        if char == '"' and quote == '"':
-            quote = None
             index += 1
             continue
         if char == "$" and index + 1 < len(command) and command[index + 1] == "(":
             end = _substitution_end(command, index + 2)
-            if end is None or _contains_shell_composition(command[index + 2 : end]):
+            if end is None:
+                return True
+            body = command[index + 2 : end]
+            if _contains_shell_composition(body) or _has_unsafe_command_substitution(body):
                 return True
             index = end + 1
             continue
         index += 1
     return False
-
-
 CloudRoutineStatus = Literal["ok", "finding", "failed"]
 CloudRoutineDisposition = Literal[
     "no_change",
@@ -317,8 +343,22 @@ def plan_task_upserts(
     active = set(existing_ids) | set(pending_ids)
     historical = set(historical_ids) | active
     observed_history = historical_observed_at or {}
+
+    def lineage_for(task_id: str) -> str:
+        match = _OCCURRENCE_TASK_RE.fullmatch(task_id)
+        return match.group(1) if match else task_id
+
+    latest_historical_observed_at: dict[str, datetime] = {}
+    for historical_id in historical:
+        observed_at = observed_history.get(historical_id)
+        if observed_at is None:
+            continue
+        lineage_id = lineage_for(historical_id)
+        previous = latest_historical_observed_at.get(lineage_id)
+        if previous is None or observed_at > previous:
+            latest_historical_observed_at[lineage_id] = observed_at
     active_lineages = {
-        match.group(1) if (match := _OCCURRENCE_TASK_RE.fullmatch(task_id)) else task_id for task_id in active
+        lineage_for(task_id) for task_id in active
     }
     seen_lineages: set[str] = set()
     tasks: list[Task] = []
@@ -337,7 +377,7 @@ def plan_task_upserts(
             continue
         task_id = lineage_id
         if lineage_id in historical:
-            previous_observed_at = observed_history.get(lineage_id)
+            previous_observed_at = latest_historical_observed_at.get(lineage_id)
             if previous_observed_at is None or receipt.observed_at <= previous_observed_at:
                 duplicates += 1
                 continue
