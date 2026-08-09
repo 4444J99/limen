@@ -15,13 +15,12 @@ import argparse
 import json
 import os
 import sys
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _notify import notify
+from _notify import notify, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -48,16 +47,7 @@ def _notify_macos(title, msg):
 
 
 def _notify_ntfy(title, msg):
-    topic = os.environ.get("LIMEN_NTFY_TOPIC")
-    if not topic:
-        return
-    base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
-    try:
-        req = urllib.request.Request(f"{base}/{topic}", data=msg.encode("utf-8"),
-                                     headers={"Title": title, "Tags": "battery"})
-        urllib.request.urlopen(req, timeout=10)
-    except Exception:
-        pass
+    return notify_ntfy(ROOT, msg, title=title, tags="battery")
 
 
 def _parse_timestamp(value: object) -> datetime | None:
@@ -128,8 +118,31 @@ def _routing_reason(
     admissible = _safe_count(admission.get("admissible"))
     open_considered = _safe_count(admission.get("open_considered"))
     continuity = _continuity_summary(instant)
+    raw_down_lanes = admission.get("down_lanes")
+    if not isinstance(raw_down_lanes, (list, tuple, set)):
+        raw_down_lanes = provider_headroom.get("down_lanes", [])
+    down_lanes = {
+        str(lane).strip().lower().replace("-", "_")
+        for lane in raw_down_lanes
+        if str(lane).strip()
+    }
     if admissible > 0 or admission.get("dispatchable_next"):
         if target_providers is None:
+            lane_counts = admission.get("admissible_agent_counts")
+            any_lane_counts = admission.get("admissible_any_agent_counts")
+            lane_counts = lane_counts if isinstance(lane_counts, dict) else {}
+            any_lane_counts = any_lane_counts if isinstance(any_lane_counts, dict) else {}
+            live_available = sum(
+                _safe_count(count)
+                for name, count in [*lane_counts.items(), *any_lane_counts.items()]
+                if str(name).strip().lower().replace("-", "_") not in down_lanes
+            )
+            if down_lanes and live_available == 0:
+                return (
+                    "admission_blocked",
+                    f"admissible={admissible} but all admitted lanes are down; "
+                    f"down={','.join(sorted(down_lanes))}; {continuity}",
+                )
             return "routable", f"admissible={admissible}; {continuity}"
         agent_counts = admission.get("admissible_agent_counts")
         any_agent_counts = admission.get("admissible_any_agent_counts")
@@ -138,17 +151,26 @@ def _routing_reason(
         target_counts = {
             str(agent): _safe_count(count)
             for agent, count in agent_counts.items()
-            if str(agent) != "any" and str(agent) in target_providers and _safe_count(count)
+            if str(agent) != "any"
+            and str(agent) in target_providers
+            and str(agent).strip().lower().replace("-", "_") not in down_lanes
+            and _safe_count(count)
         }
         for agent, count in any_agent_counts.items():
-            if str(agent) in target_providers and _safe_count(count):
+            if (
+                str(agent) in target_providers
+                and str(agent).strip().lower().replace("-", "_") not in down_lanes
+                and _safe_count(count)
+            ):
                 target_counts[str(agent)] = target_counts.get(str(agent), 0) + _safe_count(count)
         if target_counts:
             idle_admissible = sum(target_counts.values())
             return "routable", f"admissible_for_idle={idle_admissible}; {continuity}"
+        down_detail = f"; live down lanes={','.join(sorted(down_lanes))}" if down_lanes else ""
         return (
             "admission_blocked",
-            f"admissible={admissible} globally but none target idle providers; {continuity}",
+            f"admissible={admissible} globally but none target idle providers"
+            f"{down_detail}; {continuity}",
         )
 
     reasons = admission.get("reason_counts")
