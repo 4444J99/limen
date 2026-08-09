@@ -174,6 +174,13 @@ gates:
     paths: ["**"]
     owner: verify
     note: "Whitespace/conflict-marker hygiene; closes every run, scoped and whole."
+  python-typecheck:
+    command: "PYTHONPATH=cli/src:mcp/src:ianva/src:web/api python3 -m mypy --config-file cli/pyproject.toml cli/src/limen mcp/src/limen_mcp ianva/src/ianva web/api"
+    paths: ["cli/src/limen/**", "mcp/src/limen_mcp/**", "ianva/src/ianva/**", "web/api/**", "cli/pyproject.toml", "mcp/pyproject.toml", "ianva/pyproject.toml"]
+    ci_job: "ci.yml:python"
+    owner: verify
+    note: "Static type checking across Limen Python codebase using mypy."
+
 
   # ── whole-matrix file-set syntax (derived from file_sets above in PR4) ──────
   py-syntax-set:

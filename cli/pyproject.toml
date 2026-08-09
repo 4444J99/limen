@@ -35,12 +35,14 @@ limen = "limen.cli:main"
 
 [tool.mypy]
 strict = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
 warn_return_any = false
 warn_unused_ignores = true
 exclude = ["tests/"]
+mypy_path = ["src", "../mcp/src", "../ianva/src", "../web/api"]
+
 
 [[tool.mypy.overrides]]
 module = [

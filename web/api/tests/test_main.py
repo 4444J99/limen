@@ -7,6 +7,7 @@ import stat
 import sys
 import os
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -386,6 +387,7 @@ def test_github_storage_refuses_every_branch_before_contents_access(
 
     assert exc_info.value.status_code == 409
     receipt = exc_info.value.detail
+    assert isinstance(receipt, dict)
     assert receipt["status"] == "mutation_deferred"
     assert receipt["code"] == "board_mutation_deferred"
     assert receipt["retryable"] is True
@@ -1745,12 +1747,12 @@ def test_a_4xx_from_the_conduct_keeper_reaches_the_caller_with_its_own_code(
     monkeypatch.setenv("LIMEN_CONDUCT_URL", "https://keeper.example/api")
     monkeypatch.setenv("LIMEN_CONDUCT_TOKEN", "token")
 
-    def refuse(*_args, **_kwargs):
+    def refuse(*_args: Any, **_kwargs: Any) -> Any:
         raise urllib.error.HTTPError(
             url="https://keeper.example/api/conduct/runs",
             code=upstream,
             msg="rejected",
-            hdrs=None,
+            hdrs=cast(Any, None),
             # Keeper-authored prose, deliberately not the Worker's wording: the caller must
             # never need this text, only the code.
             fp=io.BytesIO(b"ASK-routine-x is no longer absent"),
