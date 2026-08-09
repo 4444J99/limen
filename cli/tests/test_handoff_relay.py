@@ -219,8 +219,9 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
-def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task():
+def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task(monkeypatch):
     mod = _load()
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: False)
     task = _task("CONTROL", agent="any", labels=["execution:control-host"])
     budget = {"remaining": 3, "per_agent": {}}
     providers = {
@@ -236,8 +237,9 @@ def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task
     assert admission["admissible_any_agent_counts"] == {}
 
 
-def test_dispatch_admission_excludes_any_lane_over_per_agent_budget():
+def test_dispatch_admission_excludes_any_lane_over_per_agent_budget(monkeypatch):
     mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
     task = _task("ANY-EXPENSIVE", agent="any", budget_cost=2)
     budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 1}}}
     providers = {
@@ -311,8 +313,66 @@ def test_dispatch_admission_names_auth_blocked_provider():
     admission = mod._dispatch_admission(tasks, budget, providers)
 
     assert admission["dispatchable_next"]["id"] == "READY"
-    assert admission["reason_counts"] == {"provider_health": 1}
+    assert admission["reason_counts"] == {"auth_blocked": 1}
     assert admission["provider_health_reason_counts"] == {"jules": 1}
+
+
+def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
+    mod = _load()
+    task = _task("OPENCODE-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_cooldown_count": 1,
+                "provider_last_terminal_failure": "auth_failure",
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_discovers_unmetered_canonical_lane(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("github_actions",))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda task, agent: agent == "github_actions")
+    task = _task(
+        "ANY-VERIFY",
+        agent="any",
+        type="verification",
+        labels=["mode:verification-only"],
+        depends_on=["parent"],
+    )
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_any_agent_counts"] == {"github_actions": 1}
+
+
+def test_dispatch_admission_preserves_any_budget_block(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    task = _task("ANY-BUDGET", agent="any", budget_cost=2)
+    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 1}}}
+    providers = {"generated": "now", "vendors": {"jules": {"remaining": 5, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
 
 
 def test_dispatchable_next_skips_task_with_unavailable_explicit_mount(tmp_path):
