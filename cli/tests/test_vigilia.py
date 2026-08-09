@@ -618,7 +618,7 @@ def test_fast_wave_prefers_due_pending_visits():
     assert 'if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then' in heartbeat
     assert '_fw_diurnal_beat="$FAST_WAVE_BEAT"' in heartbeat
     assert 'case "$_fw_cadence" in' in heartbeat
-    assert 'fast-wave: watchdog log unavailable' in heartbeat
+    assert "fast-wave: watchdog log unavailable" in heartbeat
     assert '_fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"' in heartbeat
 
 
