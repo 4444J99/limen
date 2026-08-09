@@ -359,8 +359,31 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
         if not isinstance(row, dict):
             fail("E", f"{cohort}: cohort row must be a mapping")
             continue
-        if not isinstance(row.get("selector"), dict) or not row["selector"]:
+        selector = row.get("selector")
+        if not isinstance(selector, dict) or not selector:
             fail("E", f"{cohort}: selector must be a non-empty mapping")
+            selector = {}
+        supported_selector_keys = {
+            "all",
+            "classification",
+            "draft",
+            "owner",
+            "private",
+            "repository_archived",
+        }
+        unknown_selector_keys = set(selector) - supported_selector_keys
+        if unknown_selector_keys:
+            fail("E", f"{cohort}: selector has unsupported key(s) {sorted(unknown_selector_keys)}")
+        for key in ("all", "draft", "private", "repository_archived"):
+            if key in selector and not isinstance(selector[key], bool):
+                fail("E", f"{cohort}: selector.{key} must be boolean")
+        for key in ("owner", "classification"):
+            if key in selector and not isinstance(selector[key], str):
+                fail("E", f"{cohort}: selector.{key} must be a string")
+        if cohort == "draft" and selector != {"draft": True}:
+            fail("E", "draft cohort selector must be exactly {draft: true}")
+        if cohort == "all" and selector != {"all": True}:
+            fail("E", "all cohort selector must be exactly {all: true}")
         disposition = row.get("default_disposition")
         lever = row.get("owner_lever")
         armed_disposition = row.get("armed_disposition")
