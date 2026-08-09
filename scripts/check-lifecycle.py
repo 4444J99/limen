@@ -243,6 +243,10 @@ def validate_consumers(registry: dict[str, Any], labels: set[str]) -> None:
             direction = "grew" if actual > expected else "shrunk"
             fail("B", f"{consumer}: literal debt {direction} from baseline {expected} to {actual}; update the conversion receipt")
 
+    missing_consumers = set(INITIAL_LITERAL_CEILING) - consumer_paths
+    if missing_consumers:
+        fail("B", f"canonical lifecycle consumers are undeclared: {sorted(missing_consumers)}")
+
     extra_baselines = set(str(key) for key in baseline) - consumer_paths
     if extra_baselines:
         fail("B", f"literal baselines name undeclared consumers: {sorted(extra_baselines)}")
