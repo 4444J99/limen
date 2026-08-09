@@ -456,6 +456,16 @@ gates:
     paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+  operator-gates:
+    command: "python3 scripts/check-operator-gates.py --check"
+    paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]
+    owner: docs
+    note: "Exit 0 ⟺ no surface claims an operator gate without a real human act behind it. Born 2026-08-09 from the `operator-paused` nag: GITVS-UNCAPPED-PR-DEBT-0715 carried that label from keeper commit c34b016d (a machine projection write), its own predicate already exited 0, and logs/handoff.json re-surfaced it every morning for three weeks. The audit behind it found 0 of 109 needs_human tasks were human-set, and that git cannot answer provenance here — the keeper commits under the operator's identity, so only the subject prefix discriminates. Holds: (A) `operator-paused` is not a board label — the one governed pause surface is scripts/pause.py → logs/AUTONOMY_PAUSED, which is also its only writer; (B) projection bookkeeping is not a human atom; (C) an escalation naming a session absent from .agent-runtime is a ghost; (D) every his-hand-levers.json entry needs an enum status, else 'what does he owe?' has no machine answer; (E) a present marker must be attributable. Baseline is shrink-only: institutio/governance/operator-gate-baseline.txt."
+  operator-gates-test:
+    command: "python3 scripts/tests/operator-gates.test.py"
+    paths: ["scripts/check-operator-gates.py", "scripts/tests/operator-gates.test.py"]
+    owner: docs
+    note: "Hermetic. Covers A–E, the shrink-only baseline ratchet, and the regression that an unreachable .agent-runtime store surfaces as UNEVALUATED rather than a silent pass (the first cut resolved the store against the git worktree, fail-opened, and reported 7 ghost escalations as live sessions)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]

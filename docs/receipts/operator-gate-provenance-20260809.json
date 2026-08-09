@@ -1,0 +1,786 @@
+{
+  "audit": "machine-stamped operator gates",
+  "census": {
+    "baselined": 78,
+    "levers_total": 82,
+    "levers_without_enum_status": 56,
+    "marker_present": false,
+    "needs_human_no_provenance": 45,
+    "needs_human_set_by_a_human": 0,
+    "needs_human_total": 109,
+    "operator_paused_labels": 1,
+    "runtime_store": "/Users/4jp/Workspace/limen/.agent-runtime",
+    "tasks_total": 3111,
+    "unevaluated": [],
+    "violations": 0
+  },
+  "generated": "2026-08-09",
+  "known_debt_baselined": 78,
+  "method": "the board's own dispatch_log. git cannot answer provenance here: every recent tasks.yaml commit is authored with the operator's git identity because the keeper commits as him, so only the subject prefix (tabularius:/limen:) discriminates.",
+  "needs_human_provenance": [
+    {
+      "repo": "organvm/organvm-engine",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "LIMEN-072",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/organvm-engine",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "LIMEN-077",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/public-record-data-scrapper",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "LIMEN-091",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/a-i-chat--exporter",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-a-i-chat--exporter-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/public-record-data-scrapper",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-public-record-data-scrapper-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/mirror-mirror",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-mirror-mirror-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/universal-mail--automation",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-universal-mail--automation-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/peer-audited--behavioral-blockchain",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-peer-audited--behavioral-blockchain-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/the-invisible-ledger",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: append current status to reconcile latest transition log",
+      "task_id": "BLD2-the-invisible-ledger-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/promptscope",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-promptscope-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/writelens",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-writelens-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/edgarflash",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-edgarflash-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/trendpulse",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-trendpulse-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/essay-pipeline",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-essay-pipeline-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/tab-bookmark-manager",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-tab-bookmark-manager-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/narratological-algorithmic-lenses",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-narratological-algorithmic-lenses-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/card-trade-social",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: appended canonical dispatch_log head for task.status=needs_human; preserved legacy head timeout->jules",
+      "task_id": "BLD2-card-trade-social-deploy",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/bountyscope",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "BLD2-bountyscope-deploy",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/vulnpulse",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "BLD2-vulnpulse-deploy",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": "limen",
+      "setting_reason": "Awaiting human: open release gate + provide external backup target, then run gated container/migrate.sh.",
+      "task_id": "ASK-2-one-container-cutover",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": "limen",
+      "setting_reason": "Awaiting human: open the merge gate to run the ~111 merge-ready PR pass.",
+      "task_id": "ASK-5-open-merge-gate",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": "limen",
+      "setting_reason": "Awaiting human: set autonomy-policy to dispatch+enabled to allow live multi-vendor drain.",
+      "task_id": "ASK-7-dispatch-drain-open",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": "limen",
+      "setting_reason": "Awaiting human: authorize state-dir relocation (irreversible move of ~/.claude etc).",
+      "task_id": "ASK-20-container-relocate-state",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/styx",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-styx-revenue-ship-0623",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/styx",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-styx-revenue-readiness-0623",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-login",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REVENUE-exporter-first-dollar",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: human-gated task is non-dispatchable; dispatch selector now skips needs-human labels",
+      "task_id": "GH-organvm-limen-265",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: human-gated task is non-dispatchable; dispatch selector now skips needs-human labels",
+      "task_id": "GH-organvm-limen-264",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: human-gated task is non-dispatchable; dispatch selector now skips needs-human labels",
+      "task_id": "GH-organvm-limen-263",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-262",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-260",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-259",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-258",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-257",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-255",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-254",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "board-heal: needs-human label is non-dispatchable; surface to human, do not reserve",
+      "task_id": "GH-organvm-limen-253",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-credential",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-d2l",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/public-record-data-scrapper",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-public-record-data-scrapper-revenue-ship-0628",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/universal-mail--automation",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-universal-mail--automation-revenue-readiness-0628",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/the-invisible-ledger",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-the-invisible-ledger-revenue-readiness-0628",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/public-record-data-scrapper",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-public-record-data-scrapper-revenue-readiness-0629",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/universal-mail--automation",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-universal-mail--automation-revenue-ship-0630",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/the-invisible-ledger",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-the-invisible-ledger-revenue-ship-0630",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/mirror-mirror",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REV-organvm-mirror-mirror-revenue-readiness-0630",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-535",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-534",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-533",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-532",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-531",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-530",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-529",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "heal-board",
+      "setting_reason": "heal-board: reconciled needs-human label to needs_human status",
+      "task_id": "GH-organvm-limen-538",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-delete",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-563",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "Codex corrective pass opened draft PR #639 after OpenCode timeout: obligation-action-plan.md, full 11-obligation fallback, generator/tests. Local verify-whole.s",
+      "task_id": "ORG-financial-organ-deepen-0703",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "ORG-governance-organ-deepen-0703",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "ORG-governance-organ-selffeed-0703",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/peer-audited--behavioral-blockchain",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "REVIEW-peer-audited-726-thread-remediation-0707",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-651",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-657",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-send",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/mirror-mirror",
+      "setting_agent": "limen",
+      "setting_reason": "recover: repeated no-op failures (2) -> needs_human; stop fresh cascade",
+      "task_id": "REV-organvm-mirror-mirror-revenue-ship-0707",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "GH-organvm-limen-686",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "ownership rule (PR #1044 _human_signals): human-gated task kept on the human surface \u2014 reverse-parked from failed_blocked",
+      "task_id": "RETRO-0708-CODEX-BUDGET-RESET",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "ask-gate-migration-2026-07-12: parents:needs_human; receipt=https://github.com/organvm/limen/issues/719",
+      "task_id": "GH-organvm-limen-719",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-4a4c2aa8",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-0305e50a",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-e0f151ab",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-lane-starved-agy",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-lane-starved-gemini",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-lane-starved-opencode",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-791",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-790",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-789",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-6a48ce1d",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "ask-gate-migration-2026-07-12: parents:needs_human; receipt=https://github.com/organvm/limen/issues/827",
+      "task_id": "GH-organvm-limen-827",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/mirror-mirror",
+      "setting_agent": "limen",
+      "setting_reason": "recover: repeated no-op failures (2) -> needs_human; stop fresh cascade",
+      "task_id": "REV-organvm-mirror-mirror-revenue-ship-0709",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-961",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-960",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-934",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-933",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-928",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-927",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-926",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-912",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-910",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": null,
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-0bd3a5ed",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-UID",
+      "task_id": "SOVEREIGN-0708-GPG-UID",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-ESCROW",
+      "task_id": "SOVEREIGN-0708-GPG-ESCROW",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "codex",
+      "setting_reason": "ask-gate-migration-2026-07-12: children:create; receipt=github:organvm/limen:issue:SOVEREIGN-0708-GPG-DISCOVERABILITY",
+      "task_id": "SOVEREIGN-0708-GPG-DISCOVERABILITY",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": "limen",
+      "setting_reason": "heal-dispatch: chronic (reopened \u22653\u00d7, never a PR) \u2192 needs_human (kept: human-gated)",
+      "task_id": "SUBSTRATE-REMOTE-EXECUTOR-0712",
+      "verdict": "machine-stamped"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-9feaa902",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1057",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1053",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1046",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1090",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1087",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "ASK-quicken-escalate-9c934372",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1202",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1191",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1190",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1189",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1188",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1227",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1261",
+      "verdict": "no-provenance"
+    },
+    {
+      "repo": "organvm/limen",
+      "setting_agent": null,
+      "setting_reason": "",
+      "task_id": "GH-organvm-limen-1258",
+      "verdict": "no-provenance"
+    }
+  ],
+  "violations_by_check_after_baseline": {}
+}
