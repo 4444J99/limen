@@ -88098,64 +88098,76 @@ tasks:
   depends_on: []
   created: '2026-07-04'
   dispatch_log: []
-- id: HEAL-rebase-4444j99-hokage-chess-103
-  title: rebase/resolve conflicts on 4444J99/hokage-chess#103
-  repo: organvm/hokage-chess
-  type: code
-  target_agent: jules
-  priority: high
+- id: 'HEAL-rebase-4444j99-hokage-chess-103'
+  title: 'rebase/resolve conflicts on 4444J99/hokage-chess#103'
+  repo: 'organvm/hokage-chess'
+  type: 'code'
+  target_agent: 'jules'
+  priority: 'high'
   budget_cost: 1
-  status: open
+  status: 'dispatched'
   labels:
-  - rebase
-  - self-heal
-  - conflict
-  - tried:claude
-  - slow
+  - 'rebase'
+  - 'self-heal'
+  - 'conflict'
+  - 'tried:claude'
+  - 'slow'
   urls:
-  - https://github.com/4444J99/hokage-chess/pull/103
-  context: 'PR 4444J99/hokage-chess#103 is CONFLICTING with its base branch and merge-drain
-    correctly refuses to merge it. Check out the PR branch, rebase it onto the current
-    base (or merge base in), resolve every conflict preserving the PR''s intent, push
-    to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not
-    open a new PR. PR: https://github.com/4444J99/hokage-chess/pull/103 [auto-emitted
-    2026-07-04 by self-heal so merge-drain can land it]'
+  - 'https://github.com/4444J99/hokage-chess/pull/103'
+  context: 'PR 4444J99/hokage-chess#103 is CONFLICTING with its base branch and merge-drain correctly refuses to merge it. Check out the PR branch, rebase it onto the current base (or merge base in), resolve every conflict preserving the PR''s intent, push to the SAME PR branch, and confirm it reports MERGEABLE with green CI. Do not open a new PR. PR: https://github.com/4444J99/hokage-chess/pull/103 [auto-emitted 2026-07-04 by self-heal so merge-drain can land it]'
   depends_on: []
   created: '2026-07-04'
-  updated: '2026-07-07T15:17:57.832919Z'
+  updated: '2026-08-09T02:50:59.872Z'
   dispatch_log:
   - timestamp: '2026-07-06T13:54:10.420000Z'
-    agent: claude
-    session_id: async-reserve
-    status: dispatched
+    agent: 'claude'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-06T14:05:45.790245Z'
-    agent: claude
-    session_id: cli
-    status: failed->opencode
+    agent: 'claude'
+    session_id: 'cli'
+    status: 'failed->opencode'
   - timestamp: '2026-07-06T14:11:02.708379Z'
-    agent: opencode
-    session_id: async-reserve
-    status: dispatched
+    agent: 'opencode'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-06T14:58:41.522424Z'
-    agent: opencode
-    session_id: cli
-    status: timeout->jules
+    agent: 'opencode'
+    session_id: 'cli'
+    status: 'timeout->jules'
   - timestamp: '2026-07-06T14:58:55.312907Z'
-    agent: jules
-    session_id: async-reserve
-    status: dispatched
+    agent: 'jules'
+    session_id: 'async-reserve'
+    status: 'dispatched'
     output: 'dispatch-async: reserved before detached worker launch'
   - timestamp: '2026-07-06T15:02:20.122937Z'
-    agent: jules
+    agent: 'jules'
     session_id: '4647051810707266886'
-    status: dispatched
+    status: 'dispatched'
   - timestamp: '2026-07-07T15:17:57.832919Z'
-    agent: limen
-    session_id: cli
-    status: open
-    output: Released stale claim after 24h
+    agent: 'limen'
+    session_id: 'cli'
+    status: 'open'
+    output: 'Released stale claim after 24h'
+  - timestamp: '2026-08-09T02:50:59.872Z'
+    agent: 'opencode'
+    session_id: 'opencode-stale-1786243857'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-stale-1786243857'
+    status: 'dispatched'
+    output: 'Duplicate: PR #103 not in 4444J99/hokage-chess; real PR in organvm/hokage-chess--4444j99.'
+    conduct_event_id: 'conduct:run-d0ec07e6e1f8f5fec420e0e1692061ca:731:compatibility'
+    conduct_run_id: 'run-d0ec07e6e1f8f5fec420e0e1692061ca'
+    conduct_lease_id: 'lease-731-d0ec07e6e1f8f5fe'
+    conduct_generation: 731
+  origin: 'system_debt'
+  horizon: 'present'
+  value_case: 'Wrong-repo duplicate: PR #103 lives in organvm/hokage-chess--4444j99 (tracked by HEAL-rebase-organvm-hokage-chess--4444j99-103); 4444J99/hokage-chess has only 15 PRs. Archiving duplicate.'
+  owner_surface: 'board'
+  predicate: 'test "$(gh pr view 103 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = OPEN'
+  receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/103'
 - id: HEAL-rebase-4444j99-hokage-chess-107
   title: rebase/resolve conflicts on 4444J99/hokage-chess#107
   repo: organvm/hokage-chess
