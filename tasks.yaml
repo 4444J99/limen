@@ -88113,7 +88113,7 @@ tasks:
   target_agent: 'codex'
   priority: 'medium'
   budget_cost: 1
-  status: 'dispatched'
+  status: 'in_progress'
   labels:
   - 'rebase'
   - 'self-heal'
@@ -88135,13 +88135,24 @@ tasks:
     conduct_run_id: 'run-01b9d34fbd3d271cb2a8772256671c42'
     conduct_lease_id: 'lease-756-01b9d34fbd3d271c'
     conduct_generation: 756
+  - timestamp: '2026-08-09T02:55:14.805Z'
+    agent: 'opencode'
+    session_id: 'opencode-arch-101-1786244107'
+    logical_agent: 'opencode'
+    logical_session_id: 'opencode-arch-101-1786244107'
+    status: 'in_progress'
+    output: 'Routing duplicate to archive.'
+    conduct_event_id: 'conduct:run-0b401ffb4c79c6175c6452eedffd8235:757:compatibility'
+    conduct_run_id: 'run-0b401ffb4c79c6175c6452eedffd8235'
+    conduct_lease_id: 'lease-757-0b401ffb4c79c617'
+    conduct_generation: 757
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Wrong-repo duplicate: PR #101 lives in organvm/hokage-chess--4444j99 (tracked by HEAL-rebase-organvm-hokage-chess--4444j99-101); 4444J99/hokage-chess has only 15 PRs. Archiving duplicate.'
   owner_surface: 'board'
   predicate: 'test "$(gh pr view 101 --repo organvm/hokage-chess--4444j99 --json state --jq .state)" = OPEN'
   receipt_target: 'https://github.com/organvm/hokage-chess--4444j99/pull/101'
-  updated: '2026-08-09T02:55:09.412Z'
+  updated: '2026-08-09T02:55:14.805Z'
 - id: HEAL-rebase-stale-4444j99-hokage-chess-102
   title: "rebase 4444J99/hokage-chess#102 onto current base \u2014 branched far behind"
   repo: organvm/hokage-chess
