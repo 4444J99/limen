@@ -427,31 +427,37 @@ def active_workers() -> list[dict[str, Any]]:
 
 
 def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
+    """Return the heartbeat's full descendant tree, not only its wrapper child."""
     if not pid:
         return []
-    pgrep = run(["pgrep", "-P", str(pid)], timeout=5)
-    if pgrep.returncode != 0:
-        return []
+    pending = [str(pid)]
+    seen = {str(pid)}
     children: list[dict[str, Any]] = []
-    for child_pid in [line.strip() for line in pgrep.stdout.splitlines() if line.strip()]:
-        ps = run(["ps", "-o", "pid=,ppid=,stat=,etime=,command=", "-p", child_pid], timeout=5)
-        line = (ps.stdout or "").strip()
-        if ps.returncode != 0 or not line:
-            children.append({"pid": child_pid})
+    while pending:
+        parent_pid = pending.pop(0)
+        pgrep = run(["pgrep", "-P", parent_pid], timeout=5)
+        if pgrep.returncode != 0:
             continue
-        parts = line.split(None, 4)
-        children.append(
-            {
-                "pid": parts[0] if len(parts) > 0 else child_pid,
-                "ppid": parts[1] if len(parts) > 1 else None,
-                "stat": parts[2] if len(parts) > 2 else None,
-                "etime": parts[3] if len(parts) > 3 else None,
-                "command": parts[4] if len(parts) > 4 else "",
-            }
-        )
+        for child_pid in [line.strip() for line in pgrep.stdout.splitlines() if line.strip()]:
+            if child_pid in seen:
+                continue
+            seen.add(child_pid)
+            ps = run(["ps", "-o", "pid=,ppid=,stat=,etime=,command=", "-p", child_pid], timeout=5)
+            line = (ps.stdout or "").strip()
+            if ps.returncode != 0 or not line:
+                child = {"pid": child_pid}
+            else:
+                parts = line.split(None, 4)
+                child = {
+                    "pid": parts[0] if len(parts) > 0 else child_pid,
+                    "ppid": parts[1] if len(parts) > 1 else parent_pid,
+                    "stat": parts[2] if len(parts) > 2 else None,
+                    "etime": parts[3] if len(parts) > 3 else None,
+                    "command": parts[4] if len(parts) > 4 else "",
+                }
+            children.append(child)
+            pending.append(child_pid)
     return children
-
-
 def _resident_pid(path: Path) -> str | None:
     try:
         value = path.read_text(encoding="utf-8").strip()
