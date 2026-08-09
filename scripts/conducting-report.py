@@ -277,13 +277,14 @@ def build_report() -> tuple[str, str, str, str]:
     )
     disc = _discovery_count()
     tracked = burned + idle
-    if tracked and burned >= max(1, tracked - 1):
+    # Actionable admission truth outranks the burn-rate summary: an idle lane with admitted
+    # work must never be headlined as FULL FORCE while the macOS notification hides the route.
+    if idle and routing_reason == "routable":
+        headline = f"ROUTABLE WORK EXISTS — fleet admission is open while {idle} lane(s) are idle"
+    elif tracked and burned >= max(1, tracked - 1):
         headline = f"FULL FORCE — {burned}/{len(lines)} lanes burned to the drops"
     elif idle:
-        if routing_reason == "routable":
-            headline = f"ROUTABLE WORK EXISTS — fleet admission is open while {idle} lane(s) are idle"
-        else:
-            headline = f"IDLED — {idle} lane(s) sat at a full tank ({routing_reason})"
+        headline = f"IDLED — {idle} lane(s) sat at a full tank ({routing_reason})"
     else:
         headline = f"partial — {burned}/{len(lines)} lanes burned"
     if disc:
