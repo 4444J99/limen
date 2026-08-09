@@ -377,6 +377,38 @@ def test_legacy_discharged_receipt_is_terminal(tmp_path: Path, monkeypatch) -> N
     assert module.load_levers()["L-LEGACY"] == "discharged"
 
 
+def test_runtime_operator_owner_binding_is_typed() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    registry["runtime_bindings"]["operator_owner"]["row_field"] = "author"
+
+    module.validate_runtime_bindings(registry)
+
+    assert any("typed --owner row binding" in failure for failure in module.failures)
+
+
+def test_live_pr_identity_denominator_must_match() -> None:
+    module = _load_check_module()
+    registry = yaml.safe_load(REGISTRY.read_text())
+    ledger = json.loads((ROOT / "docs" / "github-pr-debt-ledger.json").read_text())
+    identities = {
+        module._census_identity(row)
+        for row in ledger["pull_requests"]
+    }
+    identities.remove(next(iter(identities)))
+    identities.add("f" * 64)
+
+    module.measure_unreachable(
+        registry,
+        metadata_probe=lambda _repositories, _dispositions: 0,
+        rows_probe=lambda payload: payload["pull_requests"],
+        repositories_probe=lambda _ledger, _rows: {"organvm/example"},
+        open_pr_identity_probe=lambda: identities,
+    )
+
+    assert any("identities do not match" in failure for failure in module.failures)
+
+
 def test_dependabot_selector_is_pinned() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
