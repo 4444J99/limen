@@ -19,6 +19,7 @@ def _load():
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
+    module._worktree_admission_snapshot = lambda: {"active": False, "block_new_local": False}
     return module
 
 
