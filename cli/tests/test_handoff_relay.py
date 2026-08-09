@@ -330,6 +330,7 @@ def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
                 "provider_outcome_health": "degraded",
                 "provider_cooldown_count": 1,
                 "provider_last_terminal_failure": "auth_failure",
+                "provider_outcome_all_blocked": True,
             }
         },
     }
@@ -556,3 +557,60 @@ def test_heartbeat_loop_drains_before_paused_and_offline_early_continues_once():
     assert drain_call < mode < paused_continue < connectivity < offline_continue
     assert lines.count("drain_session_end_breadcrumbs") == 1
     assert "consume-session-end-breadcrumbs.py" not in heartbeat[drain_call:]
+
+
+
+def test_dispatch_admission_keeps_opencode_route_when_one_provider_is_healthy():
+    mod = _load()
+    task = _task("OPENCODE-FALLBACK", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_cooldown_count": 1,
+                "provider_outcome_all_blocked": False,
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
+    assert admission["admissible_agent_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_honors_live_down_lane_snapshot():
+    mod = _load()
+    task = _task("AGY-DOWN", agent="agy")
+    budget = {"remaining": 3, "per_agent": {"agy": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "down_lanes": ["agy"],
+        "vendors": {"agy": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"provider_health": 1}
+    assert admission["provider_health_reason_counts"] == {"agy": 1}
+    assert admission["down_lanes"] == ["agy"]
+
+
+def test_board_budget_discards_expired_track_counters(monkeypatch):
+    mod = _load()
+    board = _board([])
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 13, tzinfo=dt.timezone.utc))
+
+    budget = mod._board_budget(board)
+
+    assert budget["track_date"] == "2026-07-12"
+    assert budget["spent"] == 0
+    assert budget["remaining"] == 10
+    assert budget["per_agent"]["codex"]["spent"] == 0
+    assert budget["per_agent"]["codex"]["remaining"] == 5
