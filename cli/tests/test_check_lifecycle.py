@@ -201,9 +201,9 @@ def test_consumer_markers_ignore_comments_and_docstrings() -> None:
     module = _load_check_module()
     markers, lifecycle_literals = module._source_markers(
         '"""lifecycle:legacy lifecycle.yaml"""\n'
-        '# lifecycle:comment\n'
+        "# lifecycle:comment\n"
         'value = "lifecycle:legacy"\n'
-        'name = lifecycle_name\n'
+        "name = lifecycle_name\n"
         'path = "lifecycle.yaml"\n'
     )
 
