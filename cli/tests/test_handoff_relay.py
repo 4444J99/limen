@@ -80,7 +80,7 @@ def _task(task_id, *, priority="medium", agent="codex", **extra):
     return {
         "id": task_id,
         "title": task_id,
-        "repo": "organvm/limen",
+        "repo": "organvm/session-meta",
         "target_agent": agent,
         "priority": priority,
         "budget_cost": 1,
