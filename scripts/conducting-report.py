@@ -129,6 +129,8 @@ def _routing_reason(
     admission = handoff.get("dispatch_admission")
     if not isinstance(admission, dict) or admission.get("schema_version") != "limen.dispatch_admission.v1":
         return "keeper_unavailable", "canonical dispatch admission unavailable"
+    if admission.get("keeper_available") is False:
+        return "keeper_unavailable", "keeper board unavailable during admission refresh"
 
     provider_headroom = handoff.get("provider_headroom")
     if not _fresh_timestamp(provider_headroom, instant):
