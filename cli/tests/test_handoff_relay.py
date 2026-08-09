@@ -234,6 +234,36 @@ def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task
     assert admission["admissible_any_agent_counts"] == {}
 
 
+def test_dispatch_admission_excludes_any_lane_over_per_agent_budget():
+    mod = _load()
+    task = _task("ANY-EXPENSIVE", agent="any", budget_cost=2)
+    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 1}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"jules": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible_any_agent_counts"] == {}
+
+
+def test_dispatch_admission_rejects_ineligible_explicit_lane():
+    mod = _load()
+    task = _task("CONTROL", agent="jules", labels=["execution:control-host"])
+    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"jules": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+    assert admission["admissible_agent_counts"] == {}
+
+
 def test_dispatch_admission_uses_effective_route_for_provider_health():
     mod = _load()
     routed = _task(
