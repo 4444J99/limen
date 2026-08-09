@@ -439,6 +439,19 @@ def validate_cohorts(registry: dict[str, Any], labels: set[str]) -> None:
             )
 
 
+def validate_runtime_bindings(registry: dict[str, Any]) -> None:
+    bindings = registry.get("runtime_bindings")
+    binding = bindings.get("operator_owner") if isinstance(bindings, dict) else None
+    expected = {
+        "type": "string",
+        "source": "cli_argument",
+        "argument": "--owner",
+        "row_field": "owner",
+    }
+    if binding != expected:
+        fail("E", "runtime_bindings.operator_owner must declare the typed --owner row binding")
+
+
 def validate_self_reference(registry: dict[str, Any]) -> None:
     if registry.get("predicate") != SELF_COMMAND:
         fail("G", f"predicate must be exactly {SELF_COMMAND!r}")
@@ -491,6 +504,7 @@ def run_offline_checks() -> tuple[dict[str, Any], set[str]]:
         if estate_policy.get("lifecycle_registry") != "../governance/lifecycle.yaml":
             fail("A", "converted estate.yaml must point to ../governance/lifecycle.yaml")
     validate_consumers(registry, labels)
+    validate_runtime_bindings(registry)
     validate_cohorts(registry, labels)
     validate_self_reference(registry)
     return registry, labels
