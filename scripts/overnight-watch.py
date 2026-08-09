@@ -1924,6 +1924,21 @@ def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> i
     return int(previous.get("stale_tick_count") or 0) + 1
 
 
+def _resident_subtree_pids(children: list[dict[str, Any]], roots: set[str]) -> set[str]:
+    """Return resident roots plus every descendant process below them."""
+    resident = set(roots)
+    changed = True
+    while changed:
+        changed = False
+        for child in children:
+            child_pid = str(child.get("pid") or "")
+            parent_pid = str(child.get("ppid") or "")
+            if child_pid and parent_pid in resident and child_pid not in resident:
+                resident.add(child_pid)
+                changed = True
+    return resident
+
+
 def build_snapshot(
     *,
     refresh_handoff: bool = True,
@@ -1941,10 +1956,11 @@ def build_snapshot(
     fast_wave_pid = resident_fast_wave_pid()
     watchdog_pid = resident_host_pressure_watchdog_pid()
     resident_pids = {str(pid) for pid in (fast_wave_pid, watchdog_pid) if pid}
+    resident_tree_pids = _resident_subtree_pids(children, resident_pids)
     progress_children = [
         child
         for child in children
-        if str(child.get("pid") or "") not in resident_pids
+        if str(child.get("pid") or "") not in resident_tree_pids
     ]
     resident_fast_wave_child = next(
         (
