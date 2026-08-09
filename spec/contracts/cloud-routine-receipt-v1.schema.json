@@ -119,7 +119,7 @@
         "properties": {
           "owner_ref": {
             "type": "string",
-            "pattern": "^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|https://github\\\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(?:issues|pull|actions/runs)/[0-9]+)$"
+            "pattern": "^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(?:issues|pull|actions/runs)/[0-9]+)$"
           }
         }
       }
