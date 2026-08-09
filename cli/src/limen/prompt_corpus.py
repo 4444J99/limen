@@ -20,6 +20,7 @@ import math
 import os
 import re
 import secrets
+import stat
 import tempfile
 import threading
 import unicodedata
@@ -841,6 +842,13 @@ def canonical_evidence_ref(kind: str, value: Any) -> str | None:
             return None
         return ref if _REPO_EVIDENCE_RE.fullmatch(ref) else None
     return None
+
+
+def _is_regular_file(path: Path) -> bool:
+    try:
+        return stat.S_ISREG(path.stat().st_mode)
+    except OSError:
+        return False
 
 
 def _file_sha256(path: Path) -> str:
@@ -3670,12 +3678,16 @@ def _archive_custody_signature(paths: LedgerPaths) -> str:
             rows.append(("entry", str(index), "invalid"))
             continue
         receipt_ref = item.get("custody_receipt")
-        if not isinstance(receipt_ref, str):
+        if not isinstance(receipt_ref, str) or not receipt_ref.strip() or "\x00" in receipt_ref:
             rows.append(("receipt", str(index), "invalid-ref"))
             continue
-        receipt_path = (paths.private_dir / receipt_ref).resolve()
+        normalized_receipt_ref = receipt_ref.strip()
+        receipt_path = (paths.private_dir / normalized_receipt_ref).resolve()
         if paths.private_dir.resolve() not in receipt_path.parents:
             rows.append(("receipt", str(index), "escape"))
+            continue
+        if not _is_regular_file(receipt_path):
+            rows.append(("receipt", str(index), "non-regular"))
             continue
         try:
             receipt_bytes = receipt_path.read_bytes()
@@ -3690,11 +3702,16 @@ def _archive_custody_signature(paths: LedgerPaths) -> str:
             rows.append(("archive", receipt_digest, "invalid-receipt"))
             continue
         archive_location = receipt.get("archive_location") if isinstance(receipt, dict) else None
-        if not isinstance(archive_location, str) or not archive_location:
+        if not isinstance(archive_location, str) or not archive_location.strip() or "\x00" in archive_location:
             rows.append(("archive", receipt_digest, "missing-location"))
             continue
+        normalized_archive_location = archive_location.strip()
+        archive_path = _archive_location_path(paths, normalized_archive_location)
+        if not _is_regular_file(archive_path):
+            rows.append(("archive", receipt_digest, "non-regular"))
+            continue
         try:
-            archive_digest = _file_sha256(_archive_location_path(paths, archive_location))
+            archive_digest = _file_sha256(archive_path)
         except OSError as exc:
             archive_digest = type(exc).__name__
         rows.append(("archive", receipt_digest, archive_digest))
@@ -3823,8 +3840,8 @@ def _validate_raw_archive_custody(
     private_root = paths.private_dir.resolve()
     if private_root not in receipt_path.parents:
         return None, [f"{label}: custody_receipt escapes the private corpus"]
-    if not receipt_path.is_file():
-        return None, [f"{label}: custody_receipt does not resolve to a file"]
+    if not _is_regular_file(receipt_path):
+        return None, [f"{label}: custody_receipt does not resolve to a regular file"]
 
     payload, load_errors = load_json_strict(receipt_path)
     errors.extend(f"{label}: custody_receipt: {error}" for error in load_errors)
@@ -3847,12 +3864,12 @@ def _validate_raw_archive_custody(
         archive_path = None
     else:
         archive_path = _archive_location_path(paths, archive_location.strip())
-        if not archive_path.is_file():
-            errors.append(f"{label}: archive_location does not resolve to a file")
+        if not _is_regular_file(archive_path):
+            errors.append(f"{label}: archive_location does not resolve to a regular file")
     archive_sha256 = payload.get("archive_sha256")
     if not isinstance(archive_sha256, str) or re.fullmatch(r"[0-9a-f]{64}", archive_sha256) is None:
         errors.append(f"{label}: custody_receipt archive_sha256 must be a lowercase SHA-256 digest")
-    elif archive_path is not None and archive_path.is_file():
+    elif archive_path is not None and _is_regular_file(archive_path):
         try:
             actual_archive_sha256 = _file_sha256(archive_path)
         except OSError as exc:
