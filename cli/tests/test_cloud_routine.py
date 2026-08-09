@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import pytest
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, FormatChecker
 from pydantic import ValidationError
 
 from limen.cloud_routine import (
@@ -297,6 +297,7 @@ def test_published_schema_carries_executable_and_human_gate_constraints() -> Non
     }
     invalid_clustered_shell = {**valid, "predicate": "bash -uc 'false; true'"}
     invalid_ansi_c = {**valid, "predicate": "bash -c $'false\\ntrue'"}
+    assert not list(validator.iter_errors(valid))
     assert not list(validator.iter_errors(valid_substitution))
     assert list(validator.iter_errors(invalid_placeholder))
     assert list(validator.iter_errors(invalid_quote))
@@ -334,9 +335,30 @@ def test_model_allows_safe_substitution_but_rejects_composition() -> None:
         _receipt(predicate="test `false` = success")
 
 
+def test_deep_substitution_is_rejected_without_recursion_error() -> None:
+    predicate = "test " + "$(" * 40 + "true" + ")" * 40
+    with pytest.raises(ValidationError, match="bounded shell grammar"):
+        _receipt(predicate=predicate)
+
+
+def test_lineage_conflicts_are_order_independent() -> None:
+    first = _receipt(observed_at="2026-08-08T12:00:00Z")
+    newer = _receipt(observed_at="2026-08-08T13:00:00Z")
+    conflicting = _receipt(
+        observed_at="2026-08-08T12:00:00Z",
+        disposition="owned",
+        owner_ref="https://github.com/organvm/limen/issues/2120",
+    )
+    with pytest.raises(ValueError, match="conflicting cloud-routine observations"):
+        plan_task_upserts([first, newer, conflicting])
+
+
 def test_shell_option_scan_advances_past_valid_options() -> None:
     assert is_executable_predicate("bash -e check.sh")
     assert is_executable_predicate("bash -c 'test -f marker'")
+    assert not is_executable_predicate("bash -o pipefail -c 'echo x; rm -rf /'")
+    assert not is_executable_predicate("bash --rcfile /tmp/rc -c 'echo x; rm -rf /'")
+    assert not is_executable_predicate("bash --init-file /tmp/rc -c 'echo x; rm -rf /'")
 
 
 def test_shell_predicate_parsing_stops_at_script_and_rejects_ansi_c_newline() -> None:
@@ -345,7 +367,7 @@ def test_shell_predicate_parsing_stops_at_script_and_rejects_ansi_c_newline() ->
         _receipt(predicate="bash -c $'false\\ntrue'")
 
 
-def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
+def test_tracked_lineage_remains_a_duplicate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location(
         "cloud_routine_ingest_tracked_test",
@@ -354,6 +376,7 @@ def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
 
     receipt = _receipt()
     lineage = tmp_path / "docs" / "receipts"
@@ -382,12 +405,13 @@ def test_tracked_lineage_remains_a_duplicate(tmp_path: Path) -> None:
     )
 
 
-def test_tracked_lineage_rejects_invalid_entry(tmp_path: Path) -> None:
+def test_tracked_lineage_rejects_invalid_entry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location("cloud_routine_ingest_invalid_test", script)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
 
     lineage = tmp_path / "docs" / "receipts"
     lineage.mkdir(parents=True)
@@ -459,6 +483,8 @@ def test_current_findings_are_typed_and_already_owned() -> None:
     assert len(receipts) == 11
     assert all(receipt.owner_ref for receipt in receipts)
     assert all(receipt.disposition != "new_work" for receipt in receipts)
+    irf = next(receipt for receipt in receipts if receipt.stable_finding_key == "open-p0.denominator-41")
+    assert "human_gate_irf_ids" in irf.predicate
 
 
 def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
@@ -485,17 +511,18 @@ def test_irf_denominator_is_fully_classified_without_packet_emissions() -> None:
     assert receipt["packet_emissions"] == []
 
 
-def test_submitted_lineage_append_is_idempotent(tmp_path: Path) -> None:
+def test_submitted_lineage_append_is_idempotent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     script = ROOT / "scripts" / "cloud-routine-ingest.py"
     spec = importlib.util.spec_from_file_location("cloud_routine_ingest_lineage_append_test", script)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
     tasks_path = tmp_path / "tasks.yaml"
     receipt = _receipt()
 
-    module._append_cloud_lineage_receipt(tasks_path, receipt)
-    module._append_cloud_lineage_receipt(tasks_path, receipt)
+    module._append_cloud_lineage_receipt(receipt)
+    module._append_cloud_lineage_receipt(receipt)
 
     lineage = json.loads((tmp_path / "docs" / "receipts" / "cloud-routine-lineage.json").read_text())
     assert len(lineage["entries"]) == 1
