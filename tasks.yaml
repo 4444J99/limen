@@ -170227,3 +170227,37 @@ tasks:
     conduct_lease_id: 'lease-845-1bc871b3c353f8dc'
     conduct_generation: 845
   updated: '2026-08-10T00:56:26.277Z'
+- id: 'GH-organvm-limen-2285'
+  title: 'opencode lane cannot complete under --pure: 2 consecutive runs killed by external_directory (/tmp/*)'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'bug'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2285'
+  context: 'GitHub issue organvm/limen#2285. ## The opencode lane cannot complete a run under `--pure` Three dispatches on 2026-08-09, reconciled against `gh` rather than self-reports: | run | merges (GitHub-verified) | receipt | ended by | |---|---|---|---| | 1 | 54 non-limen | full, but wrong | completed — 138/154 tasks labeled `exceeds_bound` without the time being spent, and a self-reported "167 merged" against a real 54 (3.1x) | | 2 | 1'
+  predicate: 'test "$(gh issue view 2285 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2285'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2285'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:31.575Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-4f81b56e7efa4cb02da9ef961b0ea8e5:846:compatibility'
+    conduct_run_id: 'run-4f81b56e7efa4cb02da9ef961b0ea8e5'
+    conduct_lease_id: 'lease-846-4f81b56e7efa4cb0'
+    conduct_generation: 846
+  updated: '2026-08-10T00:56:31.575Z'
