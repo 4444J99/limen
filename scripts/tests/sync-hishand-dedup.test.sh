@@ -43,6 +43,14 @@ check(got is not None and got["number"] == 892 and got["state"] == "OPEN",
       "a stamped issue lacking the marker is recognised (the #892/#827 re-mint bug)")
 check(m.issue_by_number(5) is None, "a PR number is rejected, never mistaken for the lever's issue")
 check(m.issue_by_number(999999) is None, "an absent issue number resolves to None (no crash, no mint)")
+active = m.active_levers([
+    {"id": "L-OPEN", "status": "open"},
+    {"id": "L-LEGACY"},
+    {"id": "L-DONE", "status": "discharged"},
+    {"id": "L-RETIRED", "status": "retired"},
+])
+check([lever["id"] for lever in active] == ["L-OPEN", "L-LEGACY"],
+      "terminal lever history cannot be projected back onto the human wall")
 
 sys.exit(1 if fails else 0)
 PY
