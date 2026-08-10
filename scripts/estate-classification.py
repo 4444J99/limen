@@ -65,8 +65,8 @@ def load_gitvs() -> Any:
     return module
 
 
-def command_json(args: list[str]) -> Any:
-    result = subprocess.run(args, cwd=ROOT, text=True, capture_output=True, check=False, timeout=60)
+def command_json(args: list[str], *, timeout: int = 60) -> Any:
+    result = subprocess.run(args, cwd=ROOT, text=True, capture_output=True, check=False, timeout=timeout)
     if result.returncode != 0:
         raise ClassificationError((result.stderr or result.stdout or "GitHub query failed").strip())
     try:
@@ -75,30 +75,26 @@ def command_json(args: list[str]) -> Any:
         raise ClassificationError("GitHub query returned invalid JSON") from exc
 
 
-def paginated_repositories(endpoint: str) -> list[dict[str, Any]]:
-    result = subprocess.run(
-        ["gh", "api", "--paginate", endpoint], cwd=ROOT, text=True, capture_output=True, check=False, timeout=180
-    )
-    if result.returncode != 0:
-        raise ClassificationError((result.stderr or result.stdout or "GitHub repository query failed").strip())
+def paginated_objects(endpoint: str, *, kind: str) -> list[dict[str, Any]]:
+    pages = command_json(["gh", "api", "--paginate", "--slurp", endpoint], timeout=180)
+    if not isinstance(pages, list):
+        raise ClassificationError(f"GitHub {kind} pages were not a list")
     rows: list[dict[str, Any]] = []
-    for line in result.stdout.splitlines():
-        if not line.strip():
-            continue
-        try:
-            page = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise ClassificationError("GitHub repository page returned invalid JSON") from exc
+    for page in pages:
         if not isinstance(page, list):
-            raise ClassificationError("GitHub repository page was not a list")
-        rows.extend(row for row in page if isinstance(row, dict))
+            raise ClassificationError(f"GitHub {kind} page was not a list")
+        if any(not isinstance(row, dict) for row in page):
+            raise ClassificationError(f"GitHub {kind} page contained a non-object record")
+        rows.extend(page)
     return rows
 
 
+def paginated_repositories(endpoint: str) -> list[dict[str, Any]]:
+    return paginated_objects(endpoint, kind="repository")
+
+
 def collect_live_repositories() -> list[dict[str, Any]]:
-    orgs = command_json(["gh", "api", "--paginate", "/user/orgs?per_page=100"])
-    if not isinstance(orgs, list):
-        raise ClassificationError("GitHub organization query was not a list")
+    orgs = paginated_objects("/user/orgs?per_page=100", kind="organization")
     pages = [paginated_repositories("/user/repos?affiliation=owner&per_page=100")]
     for org in orgs:
         login = str((org or {}).get("login") or "").strip()
@@ -283,29 +279,40 @@ def summary(rows: list[dict[str, Any]], classifications: list[dict[str, str]]) -
     }
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", action="store_true", help="fail unless policy, live coverage, and private-diff guard pass")
     parser.add_argument("--json", action="store_true", help="print public-safe aggregate counts")
-    parser.add_argument("--base", default="HEAD", help="review base used by the new-private-name diff guard")
-    args = parser.parse_args()
+    parser.add_argument("--base", default="origin/main", help="review base used by the new-private-name diff guard")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     try:
         estate = load_yaml(ESTATE)
         access = load_yaml(ACCESS)
-        errors = verify_policy(estate)
-        if errors:
-            raise ClassificationError("; ".join(errors))
+        if args.verify:
+            errors = verify_policy(estate)
+            if errors:
+                raise ClassificationError("; ".join(errors))
         rows = collect_live_repositories()
         classifications = classify(rows, estate, access, dt.datetime.now(dt.UTC))
-        expected = (estate["positioning_estate_classification"].get("expected_denominator") or {})
         counts = summary(rows, classifications)
-        if counts["repository_count"] != expected.get("repositories"):
-            raise ClassificationError(f"census denominator mismatch: {counts['repository_count']} != {expected.get('repositories')}")
-        if counts["visibility"] != {"private": expected.get("private"), "public": expected.get("public")}:
-            raise ClassificationError("census visibility counts do not match the W01 receipt")
-        leaks = private_leaks_added(args.base, {str(row["full_name"]) for row in rows if bool(row.get("private"))})
-        if leaks:
-            raise ClassificationError(f"new private repository name(s) in public diff: {len(leaks)}")
+        if args.verify:
+            expected = (estate["positioning_estate_classification"].get("expected_denominator") or {})
+            if counts["repository_count"] != expected.get("repositories"):
+                raise ClassificationError(
+                    f"census denominator mismatch: {counts['repository_count']} != {expected.get('repositories')}"
+                )
+            if counts["visibility"] != {"private": expected.get("private"), "public": expected.get("public")}:
+                raise ClassificationError("census visibility counts do not match the W01 receipt")
+            leaks = private_leaks_added(
+                args.base,
+                {str(row["full_name"]) for row in rows if bool(row.get("private"))},
+            )
+            if leaks:
+                raise ClassificationError(f"new private repository name(s) in public diff: {len(leaks)}")
         if args.json:
             print(json.dumps(counts, indent=2, sort_keys=True))
         else:

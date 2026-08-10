@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.util
+import io
 import sys
 import unittest
 from pathlib import Path
@@ -21,6 +22,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class EstateClassificationTests(unittest.TestCase):
+    def test_paginated_objects_slurps_and_flattens_every_page(self) -> None:
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout='[[{"login": "example-a"}], [{"login": "example-b"}]]',
+            stderr="",
+        )
+        with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+            self.assertEqual(
+                MODULE.paginated_objects("/user/orgs?per_page=100", kind="organization"),
+                [{"login": "example-a"}, {"login": "example-b"}],
+            )
+
+        self.assertEqual(
+            run.call_args.args[0],
+            ["gh", "api", "--paginate", "--slurp", "/user/orgs?per_page=100"],
+        )
+
     def test_partner_precedes_private_and_product(self) -> None:
         row = {"private": True, "archived": False}
         self.assertTrue(MODULE.selector_matches({"audience": "collab"}, governance_class="operation_private", audience="collab", product=True, row=row))
@@ -61,6 +79,48 @@ class EstateClassificationTests(unittest.TestCase):
         )
         with mock.patch.object(MODULE.subprocess, "run", return_value=completed):
             self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [])
+
+    def test_verify_uses_origin_main_and_is_the_strict_gate(self) -> None:
+        estate = {
+            "positioning_estate_classification": {
+                "expected_denominator": {"repositories": 1, "private": 0, "public": 1}
+            }
+        }
+        rows = [{"full_name": "example/public-proof", "private": False}]
+        classifications = [{
+            "primary_class": "proof",
+            "maturity": "active",
+            "visibility_disposition": "public_evidence",
+            "public_relevance": "primary",
+            "governance_class": "proof_public",
+            "uncertainty": [],
+        }]
+        counts = {
+            "repository_count": 1,
+            "visibility": {"private": 0, "public": 1},
+            "uncertainty_queue": {},
+        }
+        load_yaml = mock.patch.object(
+            MODULE,
+            "load_yaml",
+            side_effect=lambda path: estate if path == MODULE.ESTATE else {},
+        )
+        with (
+            load_yaml,
+            mock.patch.object(MODULE, "collect_live_repositories", return_value=rows),
+            mock.patch.object(MODULE, "classify", return_value=classifications),
+            mock.patch.object(MODULE, "summary", return_value=counts),
+            mock.patch.object(MODULE, "verify_policy", return_value=[]) as verify_policy,
+            mock.patch.object(MODULE, "private_leaks_added", return_value=[]) as private_guard,
+            mock.patch("sys.stdout", new_callable=io.StringIO),
+        ):
+            self.assertEqual(MODULE.main([]), 0)
+            verify_policy.assert_not_called()
+            private_guard.assert_not_called()
+
+            self.assertEqual(MODULE.main(["--verify"]), 0)
+            verify_policy.assert_called_once_with(estate)
+            private_guard.assert_called_once_with("origin/main", set())
 
 
 if __name__ == "__main__":
