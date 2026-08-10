@@ -1,0 +1,90 @@
+{
+  "schema": "limen.psp_p01_w05_baseline_preflight.v1",
+  "task": "PSP-P01-W05",
+  "status": "PREFLIGHT",
+  "dependency_status": {
+    "psp_p01_w03": "pending_merge",
+    "psp_p02_flagship_integration": "pending_merge",
+    "w05_admission": "not_yet_admitted"
+  },
+  "captured_at_utc": "2026-08-10T19:07:47Z",
+  "branch": "codex/psp-p01-w05-baseline-preflight",
+  "repo_head": "2d620442522df1858bdb32c83b87eb0472af9259",
+  "candidate_state": {
+    "source_branch": "feat/private-artifact-vault",
+    "source_head": "2d620442522df1858bdb32c83b87eb0472af9259"
+  },
+  "local_surface_revisions": {
+    "docs/positioning/limen.md": "92af7ce26c2c26d8ab3eecaf4cc58509056f090fe195809ff4ceea62d860f225",
+    "docs/positioning/public-record-data-scrapper.md": "26250acd16300fe6133f1eb0da161e267441306207aabb77f1937e84962501ba",
+    "docs/positioning/a-i-chat--exporter.md": "b4c463bf3201059e1d1c72c897dfd4ad52a66382b28f7bcb60857261b8afc7f8",
+    "docs/positioning/portfolio.md": "6e4143b32f0c3b2d2620a0a8fd43fb6d3fc67b0022df3ae678357cc10d5b8814",
+    "docs/positioning/_discoverability.md": "7187d83c1423dfd613562c2baa45a70b5e863d988728f3f031e561c3f948fc44",
+    "docs/positioning/_frontdoor.md": "e06578ea5120b07f68b21f6556e988af72b81d6941ac97818a7581e520a5299c"
+  },
+  "public_surfaces": [
+    {
+      "id": "profile-readme",
+      "url": "https://github.com/organvm/4444J99",
+      "probe": {
+        "status": 200,
+        "title": "GitHub - organvm/4444J99: Profile README — Creative Technologist building autonomous systems · GitHub"
+      },
+      "repo_head": "667fc943e9487b1322f0c8645d3d43e5ac84e780"
+    },
+    {
+      "id": "portfolio",
+      "url": "https://organvm.github.io/portfolio/",
+      "probe": {
+        "status": 404,
+        "title": null,
+        "note": "GitHub Pages returned 404 during preflight"
+      },
+      "repo_head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa"
+    },
+    {
+      "id": "resume",
+      "url": "https://organvm.github.io/portfolio/resume/",
+      "probe": {
+        "status": 404,
+        "title": null,
+        "note": "GitHub Pages returned 404 during preflight"
+      },
+      "repo_head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa"
+    }
+  ],
+  "selected_flagships": [
+    {
+      "name": "Limen",
+      "repo": "organvm/limen",
+      "repo_head": "5c0dd2eb1783beb38e45e43039cbf79887e50c14",
+      "surface_docs": [
+        "docs/positioning/limen.md"
+      ]
+    },
+    {
+      "name": "UCC Public-Records Intelligence Platform",
+      "repo": "organvm/public-record-data-scrapper",
+      "repo_head": "139fa7b40d875ecfe3a8c693dedfab46671739fd",
+      "surface_docs": [
+        "docs/positioning/public-record-data-scrapper.md"
+      ]
+    },
+    {
+      "name": "AI Chat Exporter",
+      "repo": "organvm/a-i-chat--exporter",
+      "repo_head": "e3a0b8d9a47183163cd92d18f479fc580eaf314d",
+      "surface_docs": [
+        "docs/positioning/a-i-chat--exporter.md"
+      ]
+    }
+  ],
+  "acceptance_notes": [
+    "This is a preflight baseline only.",
+    "Do not claim PSP-P01-W05 done or close issue #2171 until PR #2141 merges, the live registry admits W05, and the W05 predicate passes on the refreshed merged baseline."
+  ],
+  "verification": {
+    "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P01-W05",
+    "not_run_reason": "exact verifier entrypoint is not present in this worktree; preflight capture is prepared instead"
+  }
+}
