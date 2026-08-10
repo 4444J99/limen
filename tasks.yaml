@@ -169903,3 +169903,39 @@ tasks:
     conduct_lease_id: 'lease-836-9bf2c0a29119eb7c'
     conduct_generation: 836
   updated: '2026-08-10T00:55:37.571Z'
+- id: 'GH-organvm-hospes-22'
+  title: '[P1-4] Relationship Graph: hospes network-map --guest ''Theo Von'' → second-degree paths'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:1'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/22'
+  context: 'GitHub issue organvm/hospes#22. ## Phase 1: Ari''s Workflow — Leverage His Network (Week 1-2) ### Problem Ari knows Theo, Theo knows Mark, Mark knows X — no way to see these paths. ### Solution Add `hospes network-map` CLI that builds graph from archive + known connections, exports Mermaid/Graphviz. ### Acceptance Criteria - [ ] `hospes network-map --guest "Theo Von" --depth 2` → Mermaid diagram to stdout - [ ] Nodes: people (Ari'
+  predicate: 'test "$(gh issue view 22 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/22'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#22'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:42.396Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-66039eaf7c79bdc73a5601e218a7b797:837:compatibility'
+    conduct_run_id: 'run-66039eaf7c79bdc73a5601e218a7b797'
+    conduct_lease_id: 'lease-837-66039eaf7c79bdc7'
+    conduct_generation: 837
+  updated: '2026-08-10T00:55:42.396Z'
