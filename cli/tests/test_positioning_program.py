@@ -192,6 +192,38 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
         MODULE.index_program(stale)
 
 
+def test_repository_identity_sources_and_slug_history_are_collision_safe() -> None:
+    mismatched_source = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = mismatched_source["repository_identities"]["repositories"]["portfolio"]
+    portfolio["source"] = "https://api.github.com/repositories/999"
+    with pytest.raises(MODULE.ProgramError, match="must exactly bind github_repository_id"):
+        MODULE.index_program(mismatched_source)
+
+    retired_collides_with_canonical = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = retired_collides_with_canonical["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "example/second",
+        "previous_slugs": ["organvm-vii-kerygma/portfolio"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="contains canonical repository slug"):
+        MODULE.index_program(retired_collides_with_canonical)
+
+    canonical_collides_with_retired = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = canonical_collides_with_retired["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "organvm/portfolio",
+        "previous_slugs": ["example/retired-second"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="already declared as a retired repository slug"):
+        MODULE.index_program(canonical_collides_with_retired)
+
+
 def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
     graph, mapping = graph_and_map()
     packet = graph["work_by_id"]["PSP-P00-W07"]

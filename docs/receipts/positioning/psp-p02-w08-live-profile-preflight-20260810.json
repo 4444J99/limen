@@ -6,19 +6,21 @@
   "formal_completion": {
     "allowed": false,
     "reason": "The adjudication artifact is preflight evidence only. PSP-P02-W01 and PSP-P02-W05 remain open, so no completion receipt, issue closure, or merge is permitted.",
+    "stack_reconciled_at": "2026-08-10T19:54:38Z",
     "dependencies": [
       {
         "work_id": "PSP-P02-W01",
         "issue": "https://github.com/organvm/limen/issues/2173",
         "issue_state": "open",
         "draft_pull_request": "https://github.com/organvm/limen/pull/2305",
-        "draft_head": "a9878cd5d366ddbf7b5222cb3210ca177dbfac71"
+        "draft_head": "2d591e630a3b3fbcdfeb7ac12500f374c607af30"
       },
       {
         "work_id": "PSP-P02-W05",
         "issue": "https://github.com/organvm/limen/issues/2177",
         "issue_state": "open",
-        "pull_request": null
+        "draft_pull_request": "https://github.com/organvm/limen/pull/2310",
+        "draft_head": "b66fc01fb276f0733d4e122bc5db1c9e41c9aa1a"
       }
     ],
     "live_reference": {

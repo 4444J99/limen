@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -30,7 +31,16 @@ PORTFOLIO_REPOSITORY_ID = 1155412125
 PORTFOLIO_CANONICAL_SLUG = "organvm-vii-kerygma/portfolio"
 PORTFOLIO_RETIRED_SLUG = "organvm/portfolio"
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
+CLAIM_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+SOURCE_ID_RE = re.compile(r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*\Z")
+EXPECTED_CLAIM_COUNT = 13
 LAYERS = ("measurement", "inference", "implication", "prominence")
+DISPOSITION_VOCABULARIES = {
+    "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
+    "inference": ("supported", "bounded", "contradicted", "unsupported", "not_applicable"),
+    "implication": ("supported", "bounded", "contradicted", "not_established", "not_applicable"),
+    "prominence": ("retain_l1", "retain_l2", "supporting_only", "narrow", "correct_immediately", "withhold"),
+}
 LAVREA_AXES = {
     "contributions_year",
     "pull_requests_year",
@@ -69,6 +79,22 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 def _text(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _credential_free_https_url(value: object) -> bool:
+    if not isinstance(value, str) or value != value.strip():
+        return False
+    try:
+        parsed = urlsplit(value)
+        _ = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme == "https"
+        and bool(parsed.hostname)
+        and parsed.username is None
+        and parsed.password is None
+    )
 
 
 def _work_rows(program: dict[str, Any]) -> list[dict[str, Any]]:
@@ -112,6 +138,16 @@ def validate_bundle(
     }
     if dependency_states != {"PSP-P02-W01": "open", "PSP-P02-W05": "open"}:
         errors.append("formal completion must be gated on open W01 and W05 dependencies")
+    for dependency in dependencies:
+        if not isinstance(dependency, dict):
+            continue
+        work_id = dependency.get("work_id")
+        if not _credential_free_https_url(dependency.get("issue")):
+            errors.append(f"dependency {work_id} needs a public issue URL")
+        if not _credential_free_https_url(dependency.get("draft_pull_request")):
+            errors.append(f"dependency {work_id} needs its current draft pull request URL")
+        if not HEAD_RE.fullmatch(str(dependency.get("draft_head") or "")):
+            errors.append(f"dependency {work_id} needs its current 40-character draft head")
     if (formal.get("live_reference") or {}).get("issue_state") != "open":
         errors.append("the profile-engine live reference must remain recorded as open")
 
@@ -126,6 +162,8 @@ def validate_bundle(
     if not isinstance(claims, list):
         errors.append("claims must be a list")
         claims = []
+    if len(claims) != EXPECTED_CLAIM_COUNT:
+        errors.append(f"claims must contain exactly {EXPECTED_CLAIM_COUNT} adjudicated rows")
     if coverage.get("denominator") != len(claims) or coverage.get("adjudicated") != len(claims):
         errors.append("claim coverage denominator and adjudicated count must match the claim rows")
     if not _text(coverage.get("basis")) or not _text(coverage.get("rule")):
@@ -134,8 +172,9 @@ def validate_bundle(
     vocabularies = artifact.get("disposition_vocabularies") or {}
     for layer in LAYERS:
         vocabulary = vocabularies.get(layer)
-        if not isinstance(vocabulary, list) or not vocabulary or len(vocabulary) != len(set(vocabulary)):
-            errors.append(f"{layer} disposition vocabulary must be a nonempty unique list")
+        expected_vocabulary = list(DISPOSITION_VOCABULARIES[layer])
+        if vocabulary != expected_vocabulary:
+            errors.append(f"{layer} disposition vocabulary must match the canonical ordered vocabulary")
 
     sources = artifact.get("sources")
     if not isinstance(sources, dict) or not sources:
@@ -143,14 +182,16 @@ def validate_bundle(
         sources = {}
     for source_id, source in sources.items():
         prefix = f"source {source_id}"
+        if not isinstance(source_id, str) or not SOURCE_ID_RE.fullmatch(source_id):
+            errors.append(f"{prefix} id must use the public-safe uppercase token format")
         if not isinstance(source, dict):
             errors.append(f"{prefix} must be a mapping")
             continue
         if source.get("public") is not True:
             errors.append(f"{prefix} must be public")
         url = source.get("url")
-        if not isinstance(url, str) or not url.startswith("https://"):
-            errors.append(f"{prefix} must use an HTTPS public URL")
+        if not _credential_free_https_url(url):
+            errors.append(f"{prefix} must use a credential-free HTTPS public URL")
         if str(source.get("kind", "")).startswith("head_pinned"):
             head = source.get("head")
             if not isinstance(head, str) or not HEAD_RE.fullmatch(head):
@@ -169,8 +210,8 @@ def validate_bundle(
             errors.append(f"{prefix} must be a mapping")
             continue
         claim_id = claim.get("id")
-        if not _text(claim_id):
-            errors.append(f"{prefix}.id must be nonempty text")
+        if not isinstance(claim_id, str) or not CLAIM_ID_RE.fullmatch(claim_id):
+            errors.append(f"{prefix}.id must use the public-safe lowercase token format")
             claim_id = prefix
         claim_ids.append(str(claim_id))
         prefix = str(claim_id)

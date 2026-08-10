@@ -245,10 +245,11 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             failures.append(f"{label}.default_branch must be non-empty text")
         if not isinstance(value.get("archived"), bool):
             failures.append(f"{label}.archived must be boolean")
-        if not _is_nonempty_text(value.get("source")) or not str(value.get("source")).startswith(
-            "https://api.github.com/repositories/"
-        ):
-            failures.append(f"{label}.source must be a stable GitHub repository API URL")
+        expected_source = f"https://api.github.com/repositories/{repository_id}"
+        if value.get("source") != expected_source:
+            failures.append(
+                f"{label}.source must exactly bind github_repository_id to {expected_source!r}"
+            )
         if not _is_nonempty_text(value.get("resolution_rule")):
             failures.append(f"{label}.resolution_rule must be non-empty text")
         if not _is_text_list(previous_slugs, nonempty=True):
@@ -256,6 +257,10 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             previous_slugs = []
         if canonical_slug in previous_slugs:
             failures.append(f"{label}.previous_slugs cannot contain the canonical slug")
+        if canonical_slug in retired_repository_slugs:
+            failures.append(
+                f"{label}.canonical_slug is already declared as a retired repository slug"
+            )
         normalized = {**value, "identity": str(identity_name), "observed_at": identity_observed_at}
         repository_identity_by_slug[canonical_slug] = normalized
         for previous_slug in previous_slugs:
@@ -264,6 +269,11 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
                 continue
             if previous_slug in retired_repository_slugs:
                 failures.append(f"retired repository slug is declared more than once: {previous_slug}")
+                continue
+            if previous_slug in repository_identity_by_slug:
+                failures.append(
+                    f"{label}.previous_slugs contains canonical repository slug {previous_slug!r}"
+                )
                 continue
             retired_repository_slugs[previous_slug] = canonical_slug
 
