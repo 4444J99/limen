@@ -7,7 +7,8 @@
 - Limen draft checkpoint: https://github.com/organvm/limen/pull/2313
 - Portfolio owner: `organvm-vii-kerygma/portfolio` (repository id `1155412125`)
 - Portfolio branch: `codex/psp-p06-experience-preflight`
-- Portfolio draft checkpoint: https://github.com/organvm-vii-kerygma/portfolio/pull/220
+- Portfolio draft checkpoint: https://github.com/organvm-vii-kerygma/portfolio/pull/220 at exact head
+  `fa86b67a7283c15ab801302ffac655c30898b6a1`
 
 ## Dependency boundary
 
