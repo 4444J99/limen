@@ -466,6 +466,11 @@ gates:
     paths: ["docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
     owner: positioning-program
     note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
+  positioning-commercial-contract-test:
+    command: "python3 scripts/tests/positioning-commercial-contract.test.py"
+    paths: ["institutio/positioning/commercial-contract.yaml", "docs/positioning/commercial-contract.md", "docs/receipts/positioning/preflights", "docs/receipts/positioning/relays/2026-08-10-psp-c03-identity-offers-preflight.md", "scripts/positioning-commercial-contract.py", "scripts/tests/positioning-commercial-contract.test.py"]
+    owner: positioning-program
+    note: "PSP-C03 identity, audiences, narrative ladder, offers, authority, qualification, symbolic economics, evidence links, privacy boundary, and C04/C05 dependency relay stay mutually coherent while evidence-sensitive claims remain blocked on PSP-C02."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]
