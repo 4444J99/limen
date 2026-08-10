@@ -69,8 +69,14 @@
     "org_lookup_utc": "2026-08-10T14:13:06Z",
     "repo_lookup_utc": "2026-08-10T14:13:06Z"
   },
+  "private_facts_custody": {
+    "storage": "gitignored local custody receipt",
+    "file_mode": "0600",
+    "write_semantics": "atomic replacement",
+    "tracked_projection": "opaque private leaf keys and aggregate counts only"
+  },
   "visibility_notes": [
     "Public receipt only; private repository names are intentionally omitted.",
-    "The raw live facts were observed through GitHub API pagination and retained in the working tree logs, not this receipt."
+    "The raw live facts were observed through GitHub API pagination and retained in the owner-only local custody receipt, not this public receipt."
   ]
 }
