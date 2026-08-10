@@ -170705,3 +170705,41 @@ tasks:
     conduct_lease_id: 'lease-868-91e67749a7b5f437'
     conduct_generation: 868
   updated: '2026-08-10T04:30:43.598Z'
+- id: 'ORG-governance-organ-face-0810'
+  title: 'Make the governance organ''s macro + micro face excellent'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'organ-face'
+  - 'pillar:governance'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  urls: []
+  context: 'In organvm/limen institutio/github/ + scripts/gitvs.py, author the polished MACRO face (GitHub as ONE declarative resource graph under ONE closed loop — observe→diff→reconcile, invariant drift=∅; any operator holds their whole GitHub estate (owned resources + rented ecosystem apps) as DATA, not 115 scattered scripts — the platform anyone can hold) AND the MICRO instance (Anthony''s 308-repo estate: estate.yaml the SSOT with the FULL publication taxonomy — 308/308 classified (108 judgment rows: 38 vault / 59 operation w/ 37 publish-wave candidates / 11 portal), the Lens sees the private estate, doctor rungs G/J/K/M armed, publish-sweep gates history exposure, repo-metadata-sync + seo-audit + seo-backlog converge the lure surface (baseline 166 audited / 6 pass), split protocol executable (check-split-hygiene P1-P5) — his own), grounded in what the organ actually does. Real copy, ready to show. One PR. CONSTRAINT: Convergence, not rewrite: ~90% orchestration of the existing ~115 GitHub-touching scripts as pluggable effectors behind the reclaim-worktrees safety-gate model. Lives in limen (institutio/github/); the estate publishes the governing form. Naming: GITVS is a working handle — final name via nomenclator (INDEX·NOMINVM).. [organ-backlog 2026-08-10: rank 14, maturity 55% stage maturing — convert idle fleet capacity into institutional weight (VLTIMA).]'
+  predicate: 'test "$(gh pr list --repo organvm/limen --state merged --search ''ORG-governance-organ-face-0810 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:pull-request:ORG-governance-organ-face-0810'
+  origin: 'agent_recommendation'
+  horizon: 'future'
+  value_case: 'Increase durable institutional maturity for governance'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-10'
+  dispatch_log:
+  - timestamp: '2026-08-10T04:30:49.398Z'
+    agent: 'codex'
+    session_id: 'generate-organ-backlog-generate-organ-backlog-675fff6bc45c'
+    logical_agent: 'generate-organ-backlog'
+    logical_session_id: 'generate-organ-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-321c9f6eab9bf4d3313bcea5ee3cdcd2:869:compatibility'
+    conduct_run_id: 'run-321c9f6eab9bf4d3313bcea5ee3cdcd2'
+    conduct_lease_id: 'lease-869-321c9f6eab9bf4d3'
+    conduct_generation: 869
+  updated: '2026-08-10T04:30:49.398Z'
