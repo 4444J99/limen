@@ -1163,13 +1163,40 @@ def _destination_identity(directory_fd: int) -> tuple[int, int]:
     return info.st_dev, info.st_ino
 
 
-def _require_destination_identity(destination_root: Path, identity: tuple[int, int]) -> None:
+def _is_private_repository_destination(relative: Path) -> bool:
+    value = relative.as_posix()
+    return any(
+        value == root or value.startswith(prefix)
+        for root, prefix in zip(PRIVATE_TRACKING_ROOTS, PRIVATE_TRACKING_PREFIXES, strict=True)
+    )
+
+
+def _require_destination_route(destination_root: Path, *, repository_local_requested: bool) -> None:
+    try:
+        resolved_destination = destination_root.resolve(strict=False)
+        resolved_relative = resolved_destination.relative_to(ROOT.resolve())
+    except (OSError, RuntimeError, ValueError) as exc:
+        if repository_local_requested:
+            raise VaultError("repository-local restore destination must remain in a private namespace") from exc
+        return
+    if not _is_private_repository_destination(resolved_relative):
+        raise VaultError("repository-local restore destination must remain in a private namespace")
+
+
+def _require_destination_identity(
+    destination_root: Path,
+    identity: tuple[int, int],
+    *,
+    repository_local_requested: bool,
+) -> None:
+    _require_destination_route(destination_root, repository_local_requested=repository_local_requested)
     try:
         current = destination_root.stat(follow_symlinks=False)
     except OSError as exc:
         raise VaultError("restore destination changed during operation") from exc
     if not stat.S_ISDIR(current.st_mode) or (current.st_dev, current.st_ino) != identity:
         raise VaultError("restore destination changed during operation")
+    _require_destination_route(destination_root, repository_local_requested=repository_local_requested)
 
 
 def _entry_exists_at(directory_fd: int, name: str) -> bool:
@@ -1202,14 +1229,13 @@ def cmd_restore(args: argparse.Namespace) -> int:
         raise VaultError("restore is mutating; rerun with --apply")
     destination_root = Path(os.path.abspath(os.fspath(Path(args.dest).expanduser())))
     try:
-        repository_destination = destination_root.relative_to(Path(os.path.abspath(ROOT))).as_posix()
+        repository_destination = destination_root.relative_to(ROOT.resolve())
     except ValueError:
-        repository_destination = ""
-    if repository_destination and not any(
-        repository_destination == root or repository_destination.startswith(prefix)
-        for root, prefix in zip(PRIVATE_TRACKING_ROOTS, PRIVATE_TRACKING_PREFIXES, strict=True)
-    ):
+        repository_destination = None
+    repository_local_requested = repository_destination is not None
+    if repository_destination is not None and not _is_private_repository_destination(repository_destination):
         raise VaultError("repository-local restore destination must use a private namespace")
+    _require_destination_route(destination_root, repository_local_requested=repository_local_requested)
     try:
         destination_root.mkdir(parents=True, mode=0o700)
     except FileExistsError:
@@ -1243,17 +1269,33 @@ def cmd_restore(args: argparse.Namespace) -> int:
     published: list[tuple[str, tuple[int, int]]] = []
     succeeded = False
     try:
-        _require_destination_identity(destination_root, destination_identity)
+        _require_destination_identity(
+            destination_root,
+            destination_identity,
+            repository_local_requested=repository_local_requested,
+        )
         for row in targets:
             artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
             cipher_path = _cipher_path(row)
-            _require_destination_identity(destination_root, destination_identity)
+            _require_destination_identity(
+                destination_root,
+                destination_identity,
+                repository_local_requested=repository_local_requested,
+            )
             cipher_name, cipher_fd = _temporary_file_at(destination_fd, artifact_id, ".ciphertext.gpg")
             temporaries.append((cipher_name, cipher_fd))
-            _require_destination_identity(destination_root, destination_identity)
+            _require_destination_identity(
+                destination_root,
+                destination_identity,
+                repository_local_requested=repository_local_requested,
+            )
             envelope_name, envelope_fd = _temporary_file_at(destination_fd, artifact_id, ".envelope")
             temporaries.append((envelope_name, envelope_fd))
-            _require_destination_identity(destination_root, destination_identity)
+            _require_destination_identity(
+                destination_root,
+                destination_identity,
+                repository_local_requested=repository_local_requested,
+            )
             plaintext_name, plaintext_fd = _temporary_file_at(destination_fd, artifact_id, ".plaintext")
             temporaries.append((plaintext_name, plaintext_fd))
             _snapshot_ciphertext(cipher_path, cipher_fd)
@@ -1279,7 +1321,11 @@ def cmd_restore(args: argparse.Namespace) -> int:
                 )
             )
 
-        _require_destination_identity(destination_root, destination_identity)
+        _require_destination_identity(
+            destination_root,
+            destination_identity,
+            repository_local_requested=repository_local_requested,
+        )
         for (
             _artifact_id,
             _cipher_name,
@@ -1291,7 +1337,11 @@ def cmd_restore(args: argparse.Namespace) -> int:
             final,
         ) in prepared:
             published.append((final, _link_no_replace_at(destination_fd, plaintext, final)))
-        _require_destination_identity(destination_root, destination_identity)
+        _require_destination_identity(
+            destination_root,
+            destination_identity,
+            repository_local_requested=repository_local_requested,
+        )
         for temporary_name, _file_descriptor in temporaries:
             os.unlink(temporary_name, dir_fd=destination_fd)
         succeeded = True
@@ -1319,7 +1369,11 @@ def cmd_restore(args: argparse.Namespace) -> int:
                 os.close(file_descriptor)
         if created_destination and not succeeded:
             try:
-                _require_destination_identity(destination_root, destination_identity)
+                _require_destination_identity(
+                    destination_root,
+                    destination_identity,
+                    repository_local_requested=repository_local_requested,
+                )
             except OSError:
                 pass
             except VaultError:

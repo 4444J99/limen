@@ -1207,6 +1207,55 @@ def test_restore_rejects_unprotected_repository_destination(vault, tmp_path: Pat
     assert not destination.exists()
 
 
+@pytest.mark.parametrize("private_root", [".limen-private", ".agent-runtime", ".limen-workstream"])
+def test_restore_allows_each_repository_private_destination(vault, tmp_path: Path, private_root: str):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    destination = vault.ROOT / private_root / "restore"
+
+    assert (
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+        == 0
+    )
+    assert (destination / "artifact-001--private.md").read_text(encoding="utf-8") == "synthetic"
+
+
+def test_restore_rejects_private_destination_redirected_into_public_repository_path(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    private_root = vault.ROOT / ".limen-private"
+    private_root.mkdir()
+    public_root = vault.ROOT / "public"
+    public_root.mkdir()
+    (private_root / "redirect").symlink_to(public_root, target_is_directory=True)
+    destination = private_root / "redirect" / "nested"
+
+    with pytest.raises(vault.VaultError, match="remain in a private namespace"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert not (public_root / "nested").exists()
+    assert list(public_root.iterdir()) == []
+
+
+def test_restore_rejects_external_alias_into_public_repository_path(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    public_root = vault.ROOT / "public"
+    public_root.mkdir()
+    external_alias = tmp_path / "external-alias"
+    external_alias.symlink_to(public_root, target_is_directory=True)
+    destination = external_alias / "nested"
+
+    with pytest.raises(vault.VaultError, match="remain in a private namespace"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert not (public_root / "nested").exists()
+    assert list(public_root.iterdir()) == []
+
+
 def test_successful_restore_is_verified_atomic_and_owner_only(vault, tmp_path: Path):
     source = tmp_path / "private notes.md"
     payload = b"valuable private research\n"
