@@ -37,22 +37,27 @@ entries:
     target_surface: portfolio
     description: >
       Front door for the personal/professional identity. Today the portfolio is served
-      at organvm.github.io/portfolio (GitHub Pages, organvm/portfolio repo). Intended
-      target is a Cloudflare Pages custom domain once the Cloudflare Pages project is
-      attached (the existing Netlify deploy 4444j99-portfolio.netlify.app is the
-      links-registry observed entry; organvm.github.io/portfolio is the live Pages face).
-    current_url: https://organvm.github.io/portfolio
+      at organvm-vii-kerygma.github.io/portfolio (GitHub Pages, organvm-vii-kerygma/portfolio
+      repo — transferred from organvm/portfolio; Pages URLs do not follow repo transfers, so
+      the old organvm.github.io/portfolio face is now 404). Intended target is a Cloudflare
+      Pages custom domain once the Cloudflare Pages project is attached (the existing Netlify
+      deploy 4444j99-portfolio.netlify.app is the links-registry observed entry;
+      organvm-vii-kerygma.github.io/portfolio is the live Pages face).
+    current_url: https://organvm-vii-kerygma.github.io/portfolio
     canonical_secondary:
       - https://4444j99-portfolio.netlify.app
-      - https://organvm.github.io/portfolio
+      - https://organvm-vii-kerygma.github.io/portfolio
     deploy_mechanism: github-pages
     status: proposed
     owner_lever: L-URL-HIERARCHY-SIGNOFF
     notes: >
       Dead profile links (4444j99.github.io/portfolio -> 404) noted in L-POSITIONING-ACTIVATE
-      step 4b; the live face is organvm.github.io/portfolio. The Cloudflare Pages attach
-      makes the apex domain point at the Cloudflare-CDN-backed version; no new build
-      pipeline is required if the Pages project is created from the same repo.
+      step 4b; the live face is organvm-vii-kerygma.github.io/portfolio (verified 200
+      2026-08-09 — the organvm/portfolio repo transfer to organvm-vii-kerygma broke the prior
+      organvm.github.io/portfolio face, which is the second link-rot event of this class).
+      The Cloudflare Pages attach makes the apex domain point at the Cloudflare-CDN-backed
+      version and is the durable fix: a custom domain survives future repo transfers. No new
+      build pipeline is required if the Pages project is created from the same repo.
 
   - id: mint-4444j99-dev
     hostname: mint.4444j99.dev

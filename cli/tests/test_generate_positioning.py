@@ -23,7 +23,11 @@ def _seed(extra_price_in_public: bool = False) -> dict:
     seed = {
         "display_name": "Test Platform",
         "what_it_is": "A production platform that does a serious thing.",
-        "proof_signals": ["3,399 passing tests", "Terraform AWS", "50 states"],
+        "product_state": "Working prototype; deployment and adoption unvalidated.",
+        "proof_signals": [
+            {"claim": "3,399 passing tests", "status": "repository-asserted"},
+            {"claim": "four collectors implemented", "status": "verified"},
+        ],
         "buyer": "People with an expensive problem.",
         "expensive_problem": "Commodity data is worthless; exclusive scored data wins deals.",
         "cost_of_not_having_it": "Real money per conversion.",
@@ -101,6 +105,20 @@ def test_apply_writes_public_and_internal(tmp_path: Path):
     pub = public.read_text()
     assert "Deploy this for your shop" in pub
     assert "Work with the team that built this" in pub
+    assert "Current state:** Working prototype; deployment and adoption unvalidated" in pub
+    assert "repository-asserted: 3,399 passing tests" in pub
+    assert "verified: four collectors implemented" in pub
+
+
+def test_unlabeled_proof_defaults_to_repository_asserted(tmp_path: Path):
+    seed = _seed()
+    seed["proof_signals"] = ["170 tests reported by the repository"]
+    env = _env(tmp_path, seed)
+    r = _run(env, "--repo", REPO, "--apply")
+    assert r.returncode == 0, r.stderr
+    pub = (tmp_path / "out" / f"{SLUG}.md").read_text()
+    assert "repository-asserted: 170 tests reported by the repository" in pub
+    assert "Built to production weight" not in pub
 
 
 def test_public_page_has_no_prices(tmp_path: Path):
@@ -181,6 +199,7 @@ def _frontdoor() -> dict:
     return {
         "headline": "I build production systems that solve expensive problems.",
         "subhead": "Live platforms. Two doors:",
+        "authorship": "Architected and directed by one person through a governed, multi-agent production system.",
         "door_client": {"label": "Deploy it for your shop", "blurb": "Pick the depth that fits."},
         "door_recruiter": {"label": "Work with the builder", "blurb": "This is the evidence."},
         "closing": "Reach out. This conversation starts at serious.",
@@ -211,6 +230,40 @@ def test_frontdoor_renders_both_doors_and_systems(tmp_path: Path):
     assert "Work with the builder" in fd  # recruiter door
     assert "Test Platform" in fd  # the system card
     assert f"github.com/{REPO}" in fd  # links to the repo
+    assert "Current state:** Working prototype; deployment and adoption unvalidated" in fd
+    assert "repository-asserted: 3,399 passing tests" not in fd
+    assert "verified: four collectors implemented" in fd
+    assert "Architected and directed by one person" in fd
+    assert "https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md" in fd
+
+
+def test_frontdoor_uses_curated_flagships_and_verified_external_surfaces(tmp_path: Path):
+    frontdoor = _frontdoor()
+    frontdoor["flagships"] = [
+        REPO,
+        {
+            "url": "https://mint.example.test",
+            "display_name": "Mint",
+            "what_it_is": "A live licence mint.",
+            "product_state": "Live; adoption unverified.",
+            "proof_signals": [
+                {"claim": "endpoint returned HTTP 200 on 2026-08-09", "status": "verified"},
+                {"claim": "revenue exists", "status": "repository-asserted"},
+            ],
+            "details_url": "https://example.test/evidence",
+        },
+    ]
+    env = _env_fd(tmp_path, _seed(), frontdoor)
+
+    r = _run(env, "--frontdoor", "--out-profile", "--apply")
+
+    assert r.returncode == 0, r.stderr
+    profile = (tmp_path / "out" / "org-profile-README.md").read_text()
+    assert "Test Platform" in profile
+    assert "[Mint](https://mint.example.test)" in profile
+    assert "verified: endpoint returned HTTP 200 on 2026-08-09" in profile
+    assert "revenue exists" not in profile
+    assert "https://example.test/evidence" in profile
 
 
 def test_frontdoor_has_no_prices(tmp_path: Path):
