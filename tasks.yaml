@@ -169651,3 +169651,39 @@ tasks:
     conduct_lease_id: 'lease-829-2291ff602d1e61ad'
     conduct_generation: 829
   updated: '2026-08-10T00:54:59.847Z'
+- id: 'GH-organvm-hospes-29'
+  title: '[P3-2] Analytics Hook: Pluggable providers (Spotify, YouTube, Chartable) → dashboard metrics'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:3'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/29'
+  context: 'GitHub issue organvm/hospes#29. ## Phase 3: Distribution & Analytics (Week 4-6) ### Problem No analytics. Can''t see downloads, retention, clip performance. ### Solution Analytics schema + adapter interface + scheduled pull + dashboard metrics. ### Acceptance Criteria - [ ] `spec/analytics.schema.json` (new): `provider` (spotify/youtube/chartable/custom), `episode_id`, `metrics` (downloads, streams, retention_%, avg_consumption,'
+  predicate: 'test "$(gh issue view 29 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/29'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#29'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:05.350Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-9e9a6c6a359a4e5eb9b107d5c4596d84:830:compatibility'
+    conduct_run_id: 'run-9e9a6c6a359a4e5eb9b107d5c4596d84'
+    conduct_lease_id: 'lease-830-9e9a6c6a359a4e5e'
+    conduct_generation: 830
+  updated: '2026-08-10T00:55:05.350Z'
