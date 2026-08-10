@@ -469,7 +469,7 @@ gates:
     note: "A governed measurement document is written only by its keeper: every commit touching it is a keeper ship (A), every production toucher is declared (B), every committed row is a distinct correctly-ordered census (C). tasks.yaml had this via task-writer-audit.py; the debt ledger had a convention and nothing enforcing it — five of its six observations rode in as passengers on unrelated feature PRs. Registry: institutio/governance/ledger-custody.yaml; adding a governed document is one entry."
   private-vault:
     command: "python3 scripts/private-vault.py verify && bash scripts/run-pytest-hermetic.sh cli/tests/test_private_vault.py -q"
-    paths: ["institutio/vault/**", "scripts/private-vault.py", "cli/tests/test_private_vault.py", "docs/keys/anthony-padavano-gpg.asc"]
+    paths: ["institutio/vault/**", ".limen-private/**", ".agent-runtime/**", ".limen-workstream/**", "scripts/private-vault.py", "cli/tests/test_private_vault.py", "docs/keys/anthony-padavano-gpg.asc"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: custody
     note: "Git-tracked ciphertext custody for high-value private artifacts (research dossiers, strategy memos): every manifest row's .gpg exists, sha-matches, and is tracked; no plaintext source is ever tracked (leak check); no unmanifested ciphertext. .gitignore is secrecy, not custody — a gitignored dossier bought with real research spend has zero replication. Encrypt-only to the committed pubkey; decrypt requires Anthony's private key."

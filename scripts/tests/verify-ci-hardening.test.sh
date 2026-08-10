@@ -72,7 +72,7 @@ gates:
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
   deleted-custody:
     command: "touch ran-deleted-custody"
-    paths: ["vault/**"]
+    paths: ["vault/**", ".limen-private/**", ".agent-runtime/**", ".limen-workstream/**"]
     owner: custody
     note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
@@ -126,6 +126,25 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
 [[ -f "$sb/ran-deleted-custody" ]] \
   && pass deleted-path-selects-gate \
   || flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
+
+# ── 4b: every private namespace selects the custody gate ─────────────────────
+for private_path in \
+  ".limen-private/probe" \
+  ".agent-runtime/probe" \
+  ".limen-workstream/probe"
+do
+  sb="$(make_sandbox)"
+  base_sha="$(git -C "$sb" rev-parse HEAD)"
+  mkdir -p "$(dirname "$sb/$private_path")"
+  printf 'private\n' >"$sb/$private_path"
+  git -C "$sb" -c user.email=t@t -c user.name=t add -f "$private_path"
+  git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add private namespace"
+  out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+    || flunk private-namespace-selects-gate "private namespace run exited non-zero: $out"
+  [[ -f "$sb/ran-deleted-custody" ]] \
+    && pass "private-namespace-selects-gate:$private_path" \
+    || flunk private-namespace-selects-gate "private namespace did not select custody gate: $private_path"
+done
 
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"

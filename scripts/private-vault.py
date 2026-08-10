@@ -44,7 +44,7 @@ ENCRYPTION_SUBKEY_ID = "7C99B54C1ED4B555"
 SCHEMA = "private-vault-manifest-v2"
 MAGIC = b"LIMEN-PRIVATE-VAULT-V2\n"
 MAX_HEADER_BYTES = 64 * 1024
-ARTIFACT_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
+ARTIFACT_ID_RE = re.compile(r"^artifact-[0-9]{3,55}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 PUBLIC_FIELDS = {
     "schema",
@@ -60,7 +60,7 @@ BOOTSTRAP_ARTIFACT_IDS = frozenset(
         "artifact-001",
         "artifact-002",
         "artifact-003",
-        "styx-effort-brief-20260809",
+        "artifact-004",
     }
 )
 PRIVATE_TRACKING_PREFIXES = (".limen-private/", ".agent-runtime/", ".limen-workstream/")
@@ -141,7 +141,7 @@ def _sha256(path: Path) -> str:
 
 def _safe_artifact_id(value: str) -> str:
     if not ARTIFACT_ID_RE.fullmatch(value or ""):
-        raise VaultError("artifact id must match [a-z0-9][a-z0-9-]{0,63}")
+        raise VaultError("artifact id must use the neutral artifact-NNN form")
     return value
 
 
@@ -262,7 +262,8 @@ def _historical_artifact_ids() -> set[str]:
             artifact_id = row.get("artifact_id")
             if not isinstance(artifact_id, str):
                 raise VaultError("committed manifest history contains a non-string artifact id")
-            artifact_ids.add(_safe_artifact_id(artifact_id))
+            if ARTIFACT_ID_RE.fullmatch(artifact_id):
+                artifact_ids.add(artifact_id)
     return artifact_ids
 
 
@@ -284,8 +285,8 @@ def _gpg_env(gnupghome: str) -> dict:
 
 
 def _import_pubkey(gnupghome: str) -> None:
-    if not PUBKEY.exists():
-        raise VaultError("committed public key is missing")
+    if not PUBKEY.is_file() or PUBKEY.is_symlink():
+        raise VaultError("committed public key must be a regular non-symlink file")
     run = _run_command(
         ["gpg", "--batch", "--import", str(PUBKEY)],
         env=_gpg_env(gnupghome),

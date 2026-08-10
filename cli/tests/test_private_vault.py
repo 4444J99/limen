@@ -90,7 +90,7 @@ def test_add_requires_apply_before_any_write(vault, tmp_path: Path):
     assert list(vault.VAULT_DIR.iterdir()) == []
 
 
-@pytest.mark.parametrize("artifact_id", ["../escape", "nested/path", "/absolute", "Uppercase"])
+@pytest.mark.parametrize("artifact_id", ["../escape", "nested/path", "/absolute", "Uppercase", "descriptive-name"])
 def test_add_rejects_traversal_and_non_neutral_ids(vault, tmp_path: Path, artifact_id: str):
     source = tmp_path / "private.md"
     source.write_text("secret", encoding="utf-8")
@@ -137,6 +137,7 @@ def test_historical_baseline_is_monotonic_across_commits(vault):
     first_rows = [
         {"schema": vault.SCHEMA, "artifact_id": "artifact-001"},
         {"schema": vault.SCHEMA, "artifact_id": "artifact-002"},
+        {"schema": vault.SCHEMA, "artifact_id": "descriptive-name"},
     ]
     vault.MANIFEST.write_text("".join(json.dumps(row) + "\n" for row in first_rows), encoding="utf-8")
     run_git("add", "institutio/vault/manifest.jsonl")
@@ -188,6 +189,17 @@ def test_verify_rejects_invalid_committed_public_key(vault, monkeypatch: pytest.
     monkeypatch.setattr(vault, "_validate_committed_pubkey", reject_key)
 
     assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_import_rejects_symlinked_public_key(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    target = tmp_path / "public-key.asc"
+    target.write_text("synthetic public key", encoding="utf-8")
+    symlink = tmp_path / "committed-key.asc"
+    symlink.symlink_to(target)
+    monkeypatch.setattr(vault, "PUBKEY", symlink)
+
+    with pytest.raises(vault.VaultError, match="non-symlink"):
+        vault._import_pubkey(str(tmp_path / "gnupg"))
 
 
 def test_committed_public_key_validation_rejects_unusable_subkey(vault, monkeypatch: pytest.MonkeyPatch):
@@ -355,7 +367,7 @@ def test_restore_preserves_existing_directory_permissions(vault, tmp_path: Path)
 def test_restore_bounds_output_name(vault, tmp_path: Path):
     source = tmp_path / ("n" * 240)
     source.write_text("secret", encoding="utf-8")
-    artifact_id = "a" * 64
+    artifact_id = "artifact-" + "1" * 55
     _add(vault, source, artifact_id)
     destination = tmp_path / "restore"
 
