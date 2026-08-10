@@ -8,6 +8,7 @@ manifest contains only a neutral artifact id plus ciphertext custody metadata.
   add      encrypt a file into a v2 envelope and append a public-safe manifest row
   verify   validate manifest schema, containment, ciphertext integrity, and git custody
   restore  decrypt, verify, and atomically publish one artifact (or --all)
+  recovery-check  prove the real private key can round-trip a synthetic canary
   list     list neutral artifact ids, newest first
 
 The committed public key is the encryption source of truth. Decryption uses the operator's
@@ -17,22 +18,28 @@ normal GPG keyring and therefore still requires the private key.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Iterator
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBKEY = ROOT / "docs" / "keys" / "anthony-padavano-gpg.asc"
 VAULT_DIR = ROOT / "institutio" / "vault"
 MANIFEST = VAULT_DIR / "manifest.jsonl"
 FINGERPRINT = "205A566A5FFE43D2E28E05A4C5B98FFAF8ED000E"
+ENCRYPTION_SUBKEY_ID = "7C99B54C1ED4B555"
 
 SCHEMA = "private-vault-manifest-v2"
 MAGIC = b"LIMEN-PRIVATE-VAULT-V2\n"
@@ -48,10 +55,80 @@ PUBLIC_FIELDS = {
     "recipient_fpr",
     "vaulted_at",
 }
+REQUIRED_ARTIFACT_IDS = frozenset(
+    {
+        "artifact-001",
+        "artifact-002",
+        "artifact-003",
+        "styx-effort-brief-20260809",
+    }
+)
+PRIVATE_TRACKING_PREFIXES = (".limen-private/", ".agent-runtime/", ".limen-workstream/")
+COMMAND_TIMEOUT_SECONDS = 120
+LOCK_TIMEOUT_SECONDS = 30
+DIAGNOSTIC_LIMIT = 4096
+RECOVERY_CANARY = b"LIMEN-PRIVATE-VAULT-RECOVERY-CANARY-V1\n"
 
 
 class VaultError(RuntimeError):
     """A user-facing vault contract failure."""
+
+
+def _diagnostic(run: subprocess.CompletedProcess[str]) -> str:
+    value = (run.stderr or run.stdout or "").strip()
+    if len(value) > DIAGNOSTIC_LIMIT:
+        return value[:DIAGNOSTIC_LIMIT] + "... [truncated]"
+    return value
+
+
+def _run_command(args: list[str], *, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(
+            args,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT_SECONDS,
+        )
+    except FileNotFoundError as exc:
+        raise VaultError(f"required executable is unavailable: {args[0]}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise VaultError(f"{args[0]} exceeded the {COMMAND_TIMEOUT_SECONDS}s command deadline") from exc
+
+
+@contextmanager
+def _vault_lock() -> Iterator[None]:
+    identity = hashlib.sha256(str(ROOT.resolve()).encode("utf-8")).hexdigest()[:16]
+    lock_path = Path(tempfile.gettempdir()) / f"limen-private-vault-{os.getuid()}-{identity}.lock"
+    flags = os.O_CREAT | os.O_RDWR | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(lock_path, flags, 0o600)
+    except OSError as exc:
+        raise VaultError(f"cannot open the bounded vault lock ({exc.errno})") from exc
+    lock_info = os.fstat(descriptor)
+    if (
+        not stat.S_ISREG(lock_info.st_mode)
+        or lock_info.st_uid != os.getuid()
+        or stat.S_IMODE(lock_info.st_mode) != 0o600
+    ):
+        os.close(descriptor)
+        raise VaultError("vault lock must be an owner-only regular file")
+    deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+    try:
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise VaultError(f"vault lock exceeded the {LOCK_TIMEOUT_SECONDS}s deadline")
+                time.sleep(0.05)
+        yield
+    finally:
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+        finally:
+            os.close(descriptor)
 
 
 def _sha256(path: Path) -> str:
@@ -132,7 +209,7 @@ def _validate_public_row(row: dict, line_number: int) -> list[str]:
 
 def _write_manifest(rows: list[dict]) -> None:
     VAULT_DIR.mkdir(parents=True, exist_ok=True)
-    fd, temporary_name = tempfile.mkstemp(prefix=".manifest.", dir=VAULT_DIR)
+    fd, temporary_name = tempfile.mkstemp(prefix=".private-vault-manifest.", dir=ROOT)
     temporary = Path(temporary_name)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
@@ -147,13 +224,9 @@ def _write_manifest(rows: list[dict]) -> None:
 
 
 def _tracked_files() -> set[str]:
-    run = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files"],
-        capture_output=True,
-        text=True,
-    )
+    run = _run_command(["git", "-C", str(ROOT), "ls-files"])
     if run.returncode != 0:
-        raise VaultError(f"cannot inspect git custody: {run.stderr.strip()}")
+        raise VaultError(f"cannot inspect git custody: {_diagnostic(run)}")
     return set(run.stdout.splitlines())
 
 
@@ -164,6 +237,8 @@ def _reject_tracked_plaintext(source: Path) -> None:
         return
     if relative in _tracked_files():
         raise VaultError("refusing to vault plaintext that is already git-tracked")
+    if not any(relative.startswith(prefix) for prefix in PRIVATE_TRACKING_PREFIXES):
+        raise VaultError("repository-local plaintext must remain under a gitignored private namespace")
 
 
 def _gpg_env(gnupghome: str) -> dict:
@@ -175,21 +250,19 @@ def _gpg_env(gnupghome: str) -> dict:
 def _import_pubkey(gnupghome: str) -> None:
     if not PUBKEY.exists():
         raise VaultError("committed public key is missing")
-    run = subprocess.run(
+    run = _run_command(
         ["gpg", "--batch", "--import", str(PUBKEY)],
         env=_gpg_env(gnupghome),
-        capture_output=True,
-        text=True,
     )
     if run.returncode != 0:
-        raise VaultError(f"public-key import failed: {run.stderr.strip()}")
+        raise VaultError(f"public-key import failed: {_diagnostic(run)}")
 
 
 def _encrypt_file(source: Path, destination: Path) -> None:
     with tempfile.TemporaryDirectory() as gnupghome:
         os.chmod(gnupghome, 0o700)
         _import_pubkey(gnupghome)
-        run = subprocess.run(
+        run = _run_command(
             [
                 "gpg",
                 "--batch",
@@ -204,34 +277,81 @@ def _encrypt_file(source: Path, destination: Path) -> None:
                 str(source),
             ],
             env=_gpg_env(gnupghome),
-            capture_output=True,
-            text=True,
         )
     if run.returncode != 0 or not destination.is_file():
-        raise VaultError(f"encryption failed: {run.stderr.strip()}")
+        raise VaultError(f"encryption failed: {_diagnostic(run)}")
 
 
 def _decrypt_file(source: Path, destination: Path) -> None:
-    run = subprocess.run(
-        ["gpg", "--batch", "--yes", "--output", str(destination), "--decrypt", str(source)],
-        capture_output=True,
-        text=True,
-    )
+    run = _run_command(["gpg", "--batch", "--yes", "--output", str(destination), "--decrypt", str(source)])
     if run.returncode != 0 or not destination.is_file():
-        raise VaultError(f"decryption failed (private key required): {run.stderr.strip()}")
+        raise VaultError(f"decryption failed (private key required): {_diagnostic(run)}")
 
 
-def _write_envelope(source: Path, artifact_id: str, destination: Path) -> None:
+def _ciphertext_recipient_keyids(ciphertext: Path) -> set[str]:
+    run = _run_command(["gpg", "--batch", "--list-only", "--status-fd", "1", "--decrypt", str(ciphertext)])
+    if run.returncode != 0:
+        raise VaultError(f"cannot inspect ciphertext recipient: {_diagnostic(run)}")
+    recipients = {
+        fields[2].upper()
+        for line in run.stdout.splitlines()
+        if line.startswith("[GNUPG:] ENC_TO ") and len(fields := line.split()) >= 3
+    }
+    if not recipients:
+        raise VaultError("ciphertext has no inspectable OpenPGP recipient")
+    return recipients
+
+
+def _ciphertext_failures(row: dict, path: Path) -> list[str]:
+    name = str(row.get("ciphertext") or "")
+    failures: list[str] = []
+    if not path.is_file() or path.is_symlink():
+        return [f"missing or unsafe ciphertext: {name}"]
+    if _sha256(path) != row.get("ciphertext_sha256"):
+        failures.append(f"ciphertext sha mismatch: {name}")
+    if path.stat().st_size != row.get("ciphertext_bytes"):
+        failures.append(f"ciphertext byte count mismatch: {name}")
+    if not failures:
+        try:
+            recipients = _ciphertext_recipient_keyids(path)
+        except VaultError as exc:
+            failures.append(f"ciphertext recipient inspection failed: {name}: {exc}")
+        else:
+            if recipients != {ENCRYPTION_SUBKEY_ID}:
+                failures.append(f"ciphertext recipient mismatch: {name}")
+    return failures
+
+
+def _snapshot_source(source: Path, destination: Path) -> tuple[str, int]:
+    digest = hashlib.sha256()
+    count = 0
+    with source.open("rb") as input_handle, destination.open("wb") as output:
+        for chunk in iter(lambda: input_handle.read(1 << 20), b""):
+            output.write(chunk)
+            digest.update(chunk)
+            count += len(chunk)
+    os.chmod(destination, 0o600)
+    return digest.hexdigest(), count
+
+
+def _write_envelope(
+    snapshot: Path,
+    artifact_id: str,
+    original_name: str,
+    plaintext_sha256: str,
+    plaintext_bytes: int,
+    destination: Path,
+) -> None:
     header = {
         "artifact_id": artifact_id,
-        "original_name": source.name,
-        "plaintext_sha256": _sha256(source),
-        "plaintext_bytes": source.stat().st_size,
+        "original_name": original_name,
+        "plaintext_sha256": plaintext_sha256,
+        "plaintext_bytes": plaintext_bytes,
     }
     encoded_header = json.dumps(header, sort_keys=True, separators=(",", ":")).encode("utf-8")
     if len(encoded_header) > MAX_HEADER_BYTES:
         raise VaultError("encrypted envelope header is too large")
-    with destination.open("wb") as output, source.open("rb") as input_handle:
+    with destination.open("wb") as output, snapshot.open("rb") as input_handle:
         output.write(MAGIC)
         output.write(encoded_header + b"\n")
         shutil.copyfileobj(input_handle, output, length=1 << 20)
@@ -272,50 +392,63 @@ def _extract_envelope(envelope: Path, artifact_id: str, destination: Path) -> st
 
 
 def cmd_add(args: argparse.Namespace) -> int:
+    if not getattr(args, "apply", False):
+        raise VaultError("add is mutating; rerun with --apply")
     artifact_id = _safe_artifact_id(args.artifact_id)
     source = Path(args.file).expanduser().resolve()
     if not source.is_file():
         raise VaultError("source is not a file")
     _reject_tracked_plaintext(source)
-    rows = _read_manifest()
-    for line_number, row in enumerate(rows, 1):
-        errors = _validate_public_row(row, line_number)
-        if errors:
-            raise VaultError("; ".join(errors))
-        if row["artifact_id"] == artifact_id:
-            print(f"OK: {artifact_id} is already vaulted as {row['ciphertext']}")
-            return 0
+    with _vault_lock():
+        rows = _read_manifest()
+        for line_number, row in enumerate(rows, 1):
+            errors = _validate_public_row(row, line_number)
+            if errors:
+                raise VaultError("; ".join(errors))
+            if row["artifact_id"] == artifact_id:
+                raise VaultError(f"artifact id is already vaulted: {artifact_id}")
 
-    VAULT_DIR.mkdir(parents=True, exist_ok=True)
-    cipher_name = f"{artifact_id}.gpg"
-    cipher_path = _contained_file(VAULT_DIR, cipher_name)
-    if cipher_path.exists():
-        raise VaultError(f"ciphertext already exists without a matching manifest row: {cipher_name}")
+        VAULT_DIR.mkdir(parents=True, exist_ok=True)
+        cipher_name = f"{artifact_id}.gpg"
+        cipher_path = _contained_file(VAULT_DIR, cipher_name)
+        if cipher_path.exists():
+            raise VaultError(f"ciphertext already exists without a matching manifest row: {cipher_name}")
 
-    with tempfile.TemporaryDirectory() as temporary_directory:
-        temporary_root = Path(temporary_directory)
-        envelope = temporary_root / "envelope"
-        temporary_cipher = temporary_root / "ciphertext.gpg"
-        envelope.touch(mode=0o600)
-        _write_envelope(source, artifact_id, envelope)
-        _encrypt_file(envelope, temporary_cipher)
-        os.chmod(temporary_cipher, 0o644)
-        os.replace(temporary_cipher, cipher_path)
+        temporary_cipher = _temporary_file(VAULT_DIR, artifact_id, ".ciphertext.gpg")
+        try:
+            with tempfile.TemporaryDirectory() as temporary_directory:
+                temporary_root = Path(temporary_directory)
+                snapshot = temporary_root / "snapshot"
+                envelope = temporary_root / "envelope"
+                plaintext_sha256, plaintext_bytes = _snapshot_source(source, snapshot)
+                _write_envelope(
+                    snapshot,
+                    artifact_id,
+                    source.name,
+                    plaintext_sha256,
+                    plaintext_bytes,
+                    envelope,
+                )
+                _encrypt_file(envelope, temporary_cipher)
+            os.chmod(temporary_cipher, 0o644)
+            os.replace(temporary_cipher, cipher_path)
+        finally:
+            temporary_cipher.unlink(missing_ok=True)
 
-    row = {
-        "schema": SCHEMA,
-        "artifact_id": artifact_id,
-        "ciphertext": cipher_name,
-        "ciphertext_sha256": _sha256(cipher_path),
-        "ciphertext_bytes": cipher_path.stat().st_size,
-        "recipient_fpr": FINGERPRINT,
-        "vaulted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
-    try:
-        _write_manifest([*rows, row])
-    except Exception:
-        cipher_path.unlink(missing_ok=True)
-        raise
+        row = {
+            "schema": SCHEMA,
+            "artifact_id": artifact_id,
+            "ciphertext": cipher_name,
+            "ciphertext_sha256": _sha256(cipher_path),
+            "ciphertext_bytes": cipher_path.stat().st_size,
+            "recipient_fpr": FINGERPRINT,
+            "vaulted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+        try:
+            _write_manifest([*rows, row])
+        except Exception:
+            cipher_path.unlink(missing_ok=True)
+            raise
     print(f"OK: vaulted {artifact_id} -> institutio/vault/{cipher_name}")
     print("    next: git add the ciphertext and public-safe manifest")
     return 0
@@ -326,8 +459,13 @@ def cmd_verify(_args: argparse.Namespace) -> int:
     tracked = _tracked_files()
     failures: list[str] = []
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
-    if rows and manifest_relative not in tracked:
+    if not MANIFEST.is_file():
+        failures.append(f"required manifest is missing: {manifest_relative}")
+    if manifest_relative not in tracked:
         failures.append(f"manifest not git-tracked (custody gap): {manifest_relative}")
+    for prefix in PRIVATE_TRACKING_PREFIXES:
+        if any(path.startswith(prefix) for path in tracked):
+            failures.append(f"private plaintext namespace contains git-tracked content: {prefix}")
     seen_ids: set[str] = set()
     seen_ciphers: set[str] = set()
     for line_number, row in enumerate(rows, 1):
@@ -344,21 +482,21 @@ def cmd_verify(_args: argparse.Namespace) -> int:
             path = _cipher_path(row)
         except VaultError:
             continue
+        failures.extend(_ciphertext_failures(row, path))
         if not path.is_file() or path.is_symlink():
-            failures.append(f"missing or unsafe ciphertext: {name}")
             continue
-        if _sha256(path) != row.get("ciphertext_sha256"):
-            failures.append(f"ciphertext sha mismatch: {name}")
-        if path.stat().st_size != row.get("ciphertext_bytes"):
-            failures.append(f"ciphertext byte count mismatch: {name}")
         relative = path.relative_to(ROOT).as_posix()
         if relative not in tracked:
             failures.append(f"ciphertext not git-tracked (custody gap): {relative}")
-    for stray in VAULT_DIR.glob("*.gpg"):
-        if stray.name not in seen_ciphers:
-            failures.append(f"unmanifested ciphertext: {stray.name}")
+    missing_required = sorted(REQUIRED_ARTIFACT_IDS - seen_ids)
+    if missing_required:
+        failures.append(f"required custody baseline is missing neutral ids: {', '.join(missing_required)}")
     for stray in VAULT_DIR.iterdir() if VAULT_DIR.exists() else []:
-        if stray.is_file() and stray != MANIFEST and stray.suffix != ".gpg":
+        if stray.is_dir():
+            failures.append(f"unsupported vault directory: {stray.name}")
+        elif stray.suffix == ".gpg" and stray.name not in seen_ciphers:
+            failures.append(f"unmanifested ciphertext: {stray.name}")
+        elif stray.is_file() and stray != MANIFEST and stray.suffix != ".gpg":
             failures.append(f"unsupported vault file: {stray.name}")
     if failures:
         print("FAIL: private-vault custody:")
@@ -377,6 +515,17 @@ def _temporary_file(directory: Path, artifact_id: str, suffix: str) -> Path:
     return path
 
 
+def _restore_name(destination_root: Path, artifact_id: str, original_name: str) -> str:
+    proposed = f"{artifact_id}--{original_name}"
+    try:
+        name_max = os.pathconf(destination_root, "PC_NAME_MAX")
+    except (OSError, ValueError):
+        name_max = 255
+    if len(os.fsencode(proposed)) <= name_max:
+        return proposed
+    return f"{artifact_id}--restored"
+
+
 def cmd_restore(args: argparse.Namespace) -> int:
     rows = _read_manifest()
     for line_number, row in enumerate(rows, 1):
@@ -390,8 +539,15 @@ def cmd_restore(args: argparse.Namespace) -> int:
         targets = [row for row in rows if row.get("artifact_id") == artifact_id]
     if not targets:
         raise VaultError("no matching vault entry (use list)")
+    for row in targets:
+        failures = _ciphertext_failures(row, _cipher_path(row))
+        if failures:
+            raise VaultError("; ".join(failures))
+    if not getattr(args, "apply", False):
+        raise VaultError("restore is mutating; rerun with --apply")
     destination_root = Path(args.dest).expanduser().resolve()
-    destination_root.mkdir(parents=True, exist_ok=True)
+    destination_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(destination_root, 0o700)
     for row in targets:
         artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
         cipher_path = _cipher_path(row)
@@ -400,13 +556,13 @@ def cmd_restore(args: argparse.Namespace) -> int:
         try:
             _decrypt_file(cipher_path, envelope)
             original_name = _extract_envelope(envelope, artifact_id, plaintext)
-            final_name = f"{artifact_id}--{original_name}"
+            final_name = _restore_name(destination_root, artifact_id, original_name)
             final_path = _contained_file(destination_root, final_name)
             if final_path.exists():
                 raise VaultError(f"restore target already exists: {final_name}")
             os.replace(plaintext, final_path)
             os.chmod(final_path, 0o600)
-            print(f"OK: restored {artifact_id} (encrypted hash verified)")
+            print(f"OK: restored {artifact_id} (pinned ciphertext and plaintext verified)")
         finally:
             envelope.unlink(missing_ok=True)
             plaintext.unlink(missing_ok=True)
@@ -423,6 +579,27 @@ def cmd_list(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_recovery_check(args: argparse.Namespace) -> int:
+    if not getattr(args, "apply", False):
+        raise VaultError("recovery-check writes a temporary plaintext canary; rerun with --apply")
+    with tempfile.TemporaryDirectory() as temporary_directory:
+        temporary_root = Path(temporary_directory)
+        source = temporary_root / "synthetic-canary"
+        ciphertext = temporary_root / "synthetic-canary.gpg"
+        restored = temporary_root / "synthetic-canary.restored"
+        source.write_bytes(RECOVERY_CANARY)
+        os.chmod(source, 0o600)
+        _encrypt_file(source, ciphertext)
+        if _ciphertext_recipient_keyids(ciphertext) != {ENCRYPTION_SUBKEY_ID}:
+            raise VaultError("synthetic recovery canary has the wrong recipient")
+        _decrypt_file(ciphertext, restored)
+        if restored.read_bytes() != RECOVERY_CANARY:
+            raise VaultError("synthetic recovery canary content mismatch")
+        os.chmod(restored, 0o600)
+    print("OK: real-key recovery canary passed (synthetic content only)")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -430,27 +607,35 @@ def main() -> int:
     add = sub.add_parser("add", help="encrypt a file into the vault")
     add.add_argument("file")
     add.add_argument("--artifact-id", required=True, help="neutral public id (lowercase letters, digits, hyphens)")
+    add.add_argument("--apply", action="store_true", help="authorize ciphertext and manifest writes")
     add.set_defaults(fn=cmd_add)
 
     verify = sub.add_parser("verify", help="validate public-safe ciphertext custody")
     verify.set_defaults(fn=cmd_verify)
 
     restore = sub.add_parser("restore", help="decrypt entries (requires private key)")
-    restore.add_argument("--artifact-id", help="neutral id to restore")
-    restore.add_argument("--all", action="store_true")
+    selectors = restore.add_mutually_exclusive_group(required=True)
+    selectors.add_argument("--artifact-id", help="neutral id to restore")
+    selectors.add_argument("--all", action="store_true")
     restore.add_argument("--dest", default=str(Path.home() / ".limen-restore"))
+    restore.add_argument("--apply", action="store_true", help="authorize plaintext restoration")
     restore.set_defaults(fn=cmd_restore)
+
+    recovery = sub.add_parser("recovery-check", help="round-trip a synthetic canary with the real private key")
+    recovery.add_argument("--apply", action="store_true", help="authorize temporary plaintext canary writes")
+    recovery.set_defaults(fn=cmd_recovery_check)
 
     listing = sub.add_parser("list", help="list neutral artifact ids, newest first")
     listing.set_defaults(fn=cmd_list)
 
     args = parser.parse_args()
-    if args.cmd == "restore" and not args.all and not args.artifact_id:
-        parser.error("restore requires --artifact-id or --all")
     try:
         return args.fn(args)
     except VaultError as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"FAIL: filesystem operation failed ({exc.errno})", file=sys.stderr)
         return 1
 
 

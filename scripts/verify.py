@@ -167,7 +167,11 @@ def integration_base(base: str | None) -> str:
 
 
 def changed_set(base: str | None) -> list[str]:
-    """Branch diff vs merge-base + staged + unstaged + untracked, existing-or-tracked only."""
+    """Branch diff vs merge-base plus staged, unstaged, and untracked paths.
+
+    Deleted paths stay in the set so removing every file matched by a custody or
+    security gate still selects that gate in PR and merge-group verification.
+    """
     paths: set[str] = set()
     merge_base = resolve_merge_base(base)
     if merge_base:
@@ -175,8 +179,7 @@ def changed_set(base: str | None) -> list[str]:
     paths.update(git("diff", "--name-only").splitlines())
     paths.update(git("diff", "--name-only", "--cached").splitlines())
     paths.update(git("ls-files", "--others", "--exclude-standard").splitlines())
-    tracked = set(git("ls-files").splitlines())
-    return sorted(p for p in paths if p and ((ROOT / p).exists() or p in tracked))
+    return sorted(p for p in paths if p)
 
 
 def gate_paths(gate_id: str, gate: dict, file_sets: dict) -> list[str]:

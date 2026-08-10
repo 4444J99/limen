@@ -44,7 +44,7 @@ flunk() { printf 'FAIL %s\n  %s\n' "$1" "$2"; fails=$((fails + 1)); }
 make_sandbox() {
   local dir
   dir="$(mktemp -d "${TMPDIR:-/tmp}/verify-ci-hardening.XXXXXX")"
-  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/src" "$dir/web/app" "$dir/webish"
+  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/src" "$dir/vault" "$dir/web/app" "$dir/webish"
   cp "$ROOT/scripts/verify.py" "$dir/scripts/verify.py"
   cat >"$dir/institutio/governance/gates.yaml" <<'YAML'
 schema_version: 0.1
@@ -70,8 +70,13 @@ gates:
     ci_job: "ci.yml:web"
     owner: verify
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
+  deleted-custody:
+    command: "touch ran-deleted-custody"
+    paths: ["vault/**"]
+    owner: custody
+    note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
-  touch "$dir/src/.keep" "$dir/web/app/.keep" "$dir/webish/.keep"
+  touch "$dir/src/.keep" "$dir/vault/artifact.gpg" "$dir/web/app/.keep" "$dir/webish/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
@@ -110,7 +115,19 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base HEAD 2>&1)" \
          || flunk empty-diff-local "missing nothing-to-verify message: $out"; } \
   || flunk empty-diff-local "non-zero exit without --require-base: $out"
 
-# ── 4: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
+# ── 4: deleting every custody file still selects its scoped gate ──────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+rm "$sb/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add -u vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete custody"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk deleted-path-selects-gate "deleted-path run exited non-zero: $out"
+[[ -f "$sb/ran-deleted-custody" ]] \
+  && pass deleted-path-selects-gate \
+  || flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
+
+# ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" web/app/page.txt
@@ -129,7 +146,7 @@ out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
   && pass deploy-no-escalation-local \
   || flunk deploy-no-escalation-local "escalated without --require-base"
 
-# ── 5: queue integration reuses head matrix and runs scoped composition ────────
+# ── 6: queue integration reuses head matrix and runs scoped composition ────────
 rm -f "$sb/whole-ran"
 out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
        python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --integration 2>&1)" \
@@ -164,7 +181,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$competing_sha" --integ
          && pass integration-rejects-common-ancestor \
          || flunk integration-rejects-common-ancestor "missing exact-base refusal: $out"; }
 
-# ── 6: --skip-ci-covered defers foreign-job mirrors, runs everything else ──────
+# ── 7: --skip-ci-covered defers foreign-job mirrors, runs everything else ──────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" webish/x.txt
@@ -188,7 +205,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   && pass own-job-still-runs \
   || flunk own-job-still-runs "unmirrored/own-job gates were skipped: $out"
 
-# ── 7: PR-lane opt-out — deploy diff stays scoped, never execs the matrix ──────
+# ── 8: PR-lane opt-out — deploy diff stays scoped, never execs the matrix ──────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" web/app/page.txt
