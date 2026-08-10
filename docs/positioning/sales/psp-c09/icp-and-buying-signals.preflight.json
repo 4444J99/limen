@@ -1,0 +1,181 @@
+{
+  "schemaVersion": "limen.psp-c09.icp-preflight.v1",
+  "status": "prepared_preflight",
+  "workId": "PSP-P10-W01",
+  "formalPredicateRun": false,
+  "formalIssueClosed": false,
+  "syntheticOnly": true,
+  "externalEffects": [],
+  "sourceLock": {
+    "commercialContract": "organvm/limen#2312@b5bc01585a10615e85e1ef5b31a2356c24fb9bc9",
+    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@4ae8e81665e35e6a5d403a3e13935021ce6544ec",
+    "proofLedContent": "organvm/limen#2316@36bf386c22e64785db8e7843899bf9aabf85bf89"
+  },
+  "idealClientProfile": {
+    "buyer": "A technical or product leader who owns one material agentic/software delivery decision.",
+    "situation": "A live initiative has activity but lacks a trusted keep, kill, narrow, or govern decision.",
+    "minimumAuthority": "A named sponsor can approve read-only evidence access and accept or reject the decision.",
+    "minimumScope": "One initiative, workflow, team, or pipeline with a named decision window.",
+    "minimumEvidence": "Read-only decision records, workflow material, sanitized failure examples, and current acceptance criteria.",
+    "handoff": "A named internal owner can receive the evidence register, decision, controls, and rollback path."
+  },
+  "buyingCommittee": [
+    { "role": "decision_sponsor", "question": "Can this work start, stop, or narrow?" },
+    { "role": "technical_owner", "question": "Can the evidence and proposed controls be judged?" },
+    { "role": "handoff_owner", "question": "Can the result be operated after the engagement?" },
+    { "role": "security_or_legal_gate", "question": "Do data, access, terms, or regulated constraints require human review?" }
+  ],
+  "triggerEvents": [
+    "a pilot cannot reach a keep, kill, narrow, or govern decision",
+    "delivery activity grows while verified-done and authority remain ambiguous",
+    "cost, risk, or failure evidence exists but is not decision-ready",
+    "a handoff, leadership change, or vendor transition exposes key-person dependence",
+    "an installed governance loop is drifting and the internal owner needs a bounded review"
+  ],
+  "painTypes": [
+    "decision_ambiguity",
+    "ungoverned_delivery",
+    "governance_drift",
+    "key_person_handoff"
+  ],
+  "hardDisqualifiers": [
+    "no_sponsor",
+    "unbounded_scope",
+    "emergency_on_call",
+    "organization_takeover",
+    "outcome_guarantee",
+    "security_or_approval_bypass",
+    "production_write_access_required"
+  ],
+  "liveEvidenceSignals": [
+    "named decision and date",
+    "named sponsor and internal owner roles",
+    "bounded initiative/workflow/team/pipeline",
+    "read-only evidence categories and known gaps",
+    "observed failure cost with source and uncertainty",
+    "willingness to stop or narrow",
+    "explicit exclusions, approvals, and handoff owner"
+  ],
+  "scorecard": {
+    "weights": {
+      "decision_owner": 2,
+      "bounded_initiative": 2,
+      "material_failure_cost": 2,
+      "read_only_evidence": 1,
+      "decision_window": 1,
+      "handoff_owner": 1,
+      "willing_to_stop_or_narrow": 1
+    },
+    "requiredForQualifiedAudit": [
+      "decision_owner",
+      "bounded_initiative",
+      "read_only_evidence",
+      "decision_window"
+    ],
+    "qualifiedAuditMinimum": 8,
+    "boundedFollowUpMinimum": 5,
+    "rule": "Hard disqualifiers decline. Missing required signals or high uncertainty route to one bounded follow-up. Otherwise score >=8 qualifies; score 5-7 gets one bounded follow-up; lower scores decline."
+  },
+  "syntheticAccounts": [
+    {
+      "id": "synthetic_account_01",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_decision_record_01", "synthetic_workflow_map_01"],
+      "uncertainty": "low",
+      "expectedScore": 10,
+      "expectedDisposition": "qualified_audit"
+    },
+    {
+      "id": "synthetic_account_02",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": false, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_sponsor_attestation_02", "synthetic_ci_summary_02"],
+      "uncertainty": "medium",
+      "expectedScore": 9,
+      "expectedDisposition": "qualified_audit"
+    },
+    {
+      "id": "synthetic_account_03",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": false, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_decision_record_03", "synthetic_evidence_gap_03"],
+      "uncertainty": "medium",
+      "expectedScore": 9,
+      "expectedDisposition": "one_bounded_follow_up"
+    },
+    {
+      "id": "synthetic_account_04",
+      "facts": { "decision_owner": false, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": ["no_sponsor"],
+      "evidenceRefs": ["synthetic_intake_note_04", "synthetic_authority_gap_04"],
+      "uncertainty": "low",
+      "expectedScore": 8,
+      "expectedDisposition": "decline"
+    },
+    {
+      "id": "synthetic_account_05",
+      "facts": { "decision_owner": true, "bounded_initiative": false, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": false },
+      "hardDisqualifiers": ["unbounded_scope"],
+      "evidenceRefs": ["synthetic_scope_request_05", "synthetic_discovery_note_05"],
+      "uncertainty": "low",
+      "expectedScore": 7,
+      "expectedDisposition": "decline"
+    },
+    {
+      "id": "synthetic_account_06",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": false, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_workflow_map_06", "synthetic_missing_date_06"],
+      "uncertainty": "medium",
+      "expectedScore": 9,
+      "expectedDisposition": "one_bounded_follow_up"
+    },
+    {
+      "id": "synthetic_account_07",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": false, "read_only_evidence": true, "decision_window": false, "handoff_owner": false, "willing_to_stop_or_narrow": false },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_early_signal_07", "synthetic_gap_register_07"],
+      "uncertainty": "medium",
+      "expectedScore": 5,
+      "expectedDisposition": "one_bounded_follow_up"
+    },
+    {
+      "id": "synthetic_account_08",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": ["security_or_approval_bypass"],
+      "evidenceRefs": ["synthetic_bypass_request_08", "synthetic_security_note_08"],
+      "uncertainty": "low",
+      "expectedScore": 10,
+      "expectedDisposition": "decline"
+    },
+    {
+      "id": "synthetic_account_09",
+      "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": false, "willing_to_stop_or_narrow": false },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_decision_record_09", "synthetic_uncertainty_register_09"],
+      "uncertainty": "high",
+      "expectedScore": 8,
+      "expectedDisposition": "one_bounded_follow_up"
+    },
+    {
+      "id": "synthetic_account_10",
+      "facts": { "decision_owner": true, "bounded_initiative": false, "material_failure_cost": false, "read_only_evidence": false, "decision_window": false, "handoff_owner": true, "willing_to_stop_or_narrow": true },
+      "hardDisqualifiers": [],
+      "evidenceRefs": ["synthetic_weak_signal_10", "synthetic_unknowns_10"],
+      "uncertainty": "medium",
+      "expectedScore": 4,
+      "expectedDisposition": "decline"
+    }
+  ],
+  "assignments": {
+    "PSP-C09": { "model": "gpt-5.6-sol", "effort": "xhigh" },
+    "PSP-P10-W01": { "model": "gpt-5.6-terra", "effort": "high" },
+    "PSP-P10-W02": { "model": "gpt-5.6-terra", "effort": "high" },
+    "PSP-P10-W03": { "model": "gpt-5.6-sol", "effort": "xhigh" },
+    "PSP-P10-W04": { "model": "gpt-5.6-terra", "effort": "high" },
+    "PSP-P10-W05": { "model": "gpt-5.6-luna", "effort": "medium" },
+    "PSP-P10-W06": { "model": "gpt-5.6-terra", "effort": "high" },
+    "PSP-P10-W07": { "model": "gpt-5.6-luna", "effort": "medium" }
+  }
+}
