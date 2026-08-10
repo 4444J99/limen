@@ -31,6 +31,9 @@ class CommercialContractTests(unittest.TestCase):
     def test_canonical_contract_is_semantically_valid(self) -> None:
         self.assertEqual([], self.errors())
 
+    def test_repository_artifacts_match_live_registry_contract(self) -> None:
+        self.assertEqual([], MODULE.validate_repository(self.contract))
+
     def test_contradictory_headline_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["identity"]["headline"] = "A different unregistered headline."

@@ -5,7 +5,9 @@
 - Source branch: `codex/psp-c03-identity-offers-preflight`
 - Stacked base: `codex/psp-p02-w03-flagship-proof-preflight`
 - Exact stacked-base head at branch creation: `48bb826d875dfb905a0c5a15c64e370ab73492a7`
-- Implementation anchor: the commit containing this relay on the source branch; consumers must resolve the current exact head from the draft PR before starting.
+- Core-contract checkpoint: `2a1a01149adc2c036b7d3da624740a78d140a672`
+- Draft stacked PR: [#2312](https://github.com/organvm/limen/pull/2312), labeled `lifecycle:blocked` on PSP-C02
+- Continuation anchor: consumers must resolve the current exact PR head and confirm it descends from the core-contract checkpoint before starting.
 - Canonical source: `institutio/positioning/commercial-contract.yaml`
 - Validation: `python3 scripts/positioning-commercial-contract.py --check`
 - State: preflight is blocked on PSP-C02. PSP-P03/P04 leaves remain open; their formal receipt predicates have not run.
@@ -25,7 +27,7 @@ The checkpoint ratifies the strategy shape, not C02 evidence: production-systems
 | PSP-P05-W01 | #2198 | gpt-5.6-sol / max | `organvm/limen`: `docs/positioning/proof`, `docs/receipts` | Inventory source-package inputs and draft the report skeleton with provisional claim IDs. |
 | PSP-P05-W02 | #2199 | gpt-5.6-terra / high | `organvm/limen`: `docs/positioning`, `scripts`, `link-surfaces.json` | Read-only surface reconciliation and a no-write replacement map. |
 | PSP-P05-W03 | #2200 | gpt-5.6-terra / high | `organvm/limen`: `docs/positioning/proof`, `docs/receipts` | Inventory cost/failure evidence and mark every missing denominator or private input. |
-| PSP-P05-W04 | #2201 | gpt-5.6-mini / low | `organvm/limen`: `docs/receipts/positioning` (read effect) | Inspect existing receipts only; do not mint a fresh flagship receipt early. |
+| PSP-P05-W04 | #2201 | gpt-5.4-mini / low | `organvm/limen`: `docs/receipts/positioning` (read effect) | Inspect existing receipts only; do not mint a fresh flagship receipt early. |
 | PSP-P05-W05 | #2202 | gpt-5.6-terra / high | `organvm/limen`: `web`, `docs/positioning/proof`, `assets` | Draft a non-published demo plan and bind each scene to provisional claim IDs. |
 | PSP-P05-W06 | #2203 | gpt-5.6-terra / high | `organvm/limen`: `docs/positioning/proof`, `docs/receipts` | Inventory candidate external validation objects without soliciting or publishing them. |
 | PSP-P06-W01 | #2205 | gpt-5.6-terra / high | `organvm/portfolio`: `docs/design`, `design` | Draft a taste brief from the identity, audience, threat, and disclosure contracts. |

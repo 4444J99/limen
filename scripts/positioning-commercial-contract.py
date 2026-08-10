@@ -14,6 +14,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT_PATH = ROOT / "institutio/positioning/commercial-contract.yaml"
+PROGRAM_PATH = ROOT / "institutio/positioning/program.yaml"
 RENDER_PATH = ROOT / "docs/positioning/commercial-contract.md"
 P03_MATRIX_PATH = ROOT / "docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md"
 P04_MATRIX_PATH = ROOT / "docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md"
@@ -80,6 +81,19 @@ def _rule_matches(rule: dict[str, Any], facts: dict[str, bool]) -> bool:
         and (not any_terms or any(facts.get(term, False) for term in any_terms))
         and not any(facts.get(term, False) for term in none_terms)
     )
+
+
+def _program_assignment(work: dict[str, Any], program: dict[str, Any]) -> dict[str, str]:
+    assignments = program["model_assignments"]
+    work_id = work["id"]
+    if work_id in assignments["object_overrides"]:
+        return assignments["object_overrides"][work_id]
+    sensitive = set(assignments["sensitive_capabilities"])
+    if work["reasoning"] != "frontier_review" and sensitive.intersection(work["capabilities"]):
+        return assignments["sensitive_assignment"]
+    if work["reasoning"] != "frontier_review" and work["target_repo"].startswith("multi-repository:"):
+        return assignments["multi_repository_assignment"]
+    return assignments["work_matrix"][work["reasoning"]][work["effect"]]
 
 
 def validate_contract(data: dict[str, Any]) -> list[str]:
@@ -342,7 +356,57 @@ def validate_repository(data: dict[str, Any]) -> list[str]:
         for required in ("PSP-C04", "PSP-P05", "PSP-P06", "Sol / xhigh", "PSP-C05", "PSP-P11", "Sol / max", "blocked on PSP-C02"):
             if required not in relay:
                 errors.append(f"successor relay missing exact marker: {required}")
+    if PROGRAM_PATH.exists():
+        program = yaml.safe_load(PROGRAM_PATH.read_text())
+        registered_gates = set(program.get("human_gates", {}))
+        referenced_gates = set(data.get("economics_contract", {}).get("gates", []))
+        referenced_gates.update(_gate_ids(data.get("commercial_templates", {}).get("required_gates", [])))
+        missing_gates = sorted(referenced_gates - registered_gates)
+        if missing_gates:
+            errors.append(f"commercial contract references unregistered human gates: {missing_gates}")
+        phase_artifacts = {
+            "PSP-P03": artifacts.get(P03_MATRIX_PATH, ""),
+            "PSP-P04": artifacts.get(P04_MATRIX_PATH, ""),
+            "PSP-P05": artifacts.get(RELAY_PATH, ""),
+            "PSP-P06": artifacts.get(RELAY_PATH, ""),
+            "PSP-P11": artifacts.get(RELAY_PATH, ""),
+        }
+        for phase in program.get("phases", []):
+            if phase.get("id") not in phase_artifacts:
+                continue
+            artifact = phase_artifacts[phase["id"]]
+            for work in phase.get("work", []):
+                rows = [line for line in artifact.splitlines() if f"| {work['id']} |" in line]
+                if len(rows) != 1:
+                    errors.append(f"{work['id']} must appear in exactly one registry-aligned row")
+                    continue
+                row = rows[0]
+                assignment = _program_assignment(work, program)
+                expected_model = f"{assignment['slug']} / {assignment['effort']}"
+                if expected_model not in row:
+                    errors.append(f"{work['id']} model drift: expected {expected_model}")
+                if phase["id"] in {"PSP-P05", "PSP-P06", "PSP-P11"}:
+                    for target_path in work.get("target_paths", []):
+                        if f"`{target_path}`" not in row:
+                            errors.append(f"{work['id']} relay omits registered target path {target_path}")
+        chunks = {chunk["id"]: chunk for chunk in program.get("execution_chunks", {}).get("chunks", [])}
+        relay = artifacts.get(RELAY_PATH, "")
+        for chunk_id in ("PSP-C04", "PSP-C05"):
+            chunk = chunks.get(chunk_id, {})
+            conductor = chunk.get("conductor", {})
+            expected = f"{conductor.get('slug')} / {conductor.get('effort')}"
+            if expected not in relay:
+                errors.append(f"{chunk_id} conductor drift: expected {expected}")
+            if chunk.get("depends_on") != ["PSP-C03"]:
+                errors.append(f"{chunk_id} dependency drift: expected only PSP-C03")
     return errors
+
+
+def _gate_ids(values: Iterable[Any]) -> set[str]:
+    found: set[str] = set()
+    for value in values:
+        found.update(re.findall(r"\bHG-[A-Z-]+\b", str(value)))
+    return found
 
 
 def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
