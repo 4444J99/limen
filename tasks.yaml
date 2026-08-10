@@ -169795,3 +169795,39 @@ tasks:
     conduct_lease_id: 'lease-833-178705cbb7cab75e'
     conduct_generation: 833
   updated: '2026-08-10T00:55:22.021Z'
+- id: 'GH-organvm-hospes-25'
+  title: '[P2-3] Sponsor / Ad Inventory Tracker: sold/available slots, revenue dashboard'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:2'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/25'
+  context: 'GitHub issue organvm/hospes#25. ## Phase 2: Productization — Sell to Other Podcasters (Week 2-4) ### Problem No sponsor tracking. Can''t see what slots are sold, revenue per episode. ### Solution Expand `sponsor.schema.json` + new dashboard "Revenue" view. ### Acceptance Criteria - [ ] `spec/sponsor.schema.json` — add: `slots` (array of {type: pre/mid/post, rate, sold, episode_range}), `contact`, `terms` - [ ] `hospes/store.py` —'
+  predicate: 'test "$(gh issue view 25 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/25'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#25'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:27.136Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-195a607957e7229b231dc413f07f89ef:834:compatibility'
+    conduct_run_id: 'run-195a607957e7229b231dc413f07f89ef'
+    conduct_lease_id: 'lease-834-195a607957e7229b'
+    conduct_generation: 834
+  updated: '2026-08-10T00:55:27.136Z'
