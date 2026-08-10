@@ -1,0 +1,251 @@
+{
+  "authority": {
+    "external_gates": {
+      "REAL-AGREEMENT": "not_satisfied",
+      "REAL-DELIVERY-ACCEPTANCE": "not_satisfied",
+      "REAL-EXTERNAL-OUTCOME": "not_satisfied",
+      "REAL-OUTREACH": "not_satisfied",
+      "REAL-PAYMENT-OR-BOUNDED-PILOT": "not_satisfied",
+      "REAL-TESTIMONIAL-OR-REFERENCE": "not_satisfied"
+    },
+    "human_gates": {
+      "HG-CONTRACT": "not_granted_by_synthetic_run",
+      "HG-PUBLIC-IDENTITY": "not_granted_by_synthetic_run",
+      "HG-PUBLICATION-SEND": "not_granted_by_synthetic_run"
+    },
+    "real_human_gate_grants": 0
+  },
+  "bindings": {
+    "contract_path": "docs/positioning/program/psp-c10-readiness/protocol.yaml",
+    "contract_sha256": "01dcffa580b4b2cd9abe8e79964da9d1100407428f3a8211da00d5b32eb925dc",
+    "fixture_path": "docs/positioning/program/psp-c10-readiness/synthetic-fixture.json",
+    "fixture_sha256": "49600347a9fe8c7197115cc06260ea61ec503a289afb9376af916c3948db07ff",
+    "program_manifest_path": "institutio/positioning/program.yaml",
+    "program_manifest_sha256": "6e9e9a5dbc77de1f2c655acd5dfb5ae2b1ffd413eade9114fb2a33972147295a"
+  },
+  "claim_refresh": {
+    "applied": 0,
+    "claims_ledger_changed": false,
+    "proposals_only": true,
+    "publishable": 0
+  },
+  "commercial_proof": {
+    "established": false,
+    "public_claims_refreshed": 0,
+    "real_agreements": 0,
+    "real_delivery_acceptances": 0,
+    "real_external_outcomes": 0,
+    "real_outreach": 0,
+    "real_payments_or_bounded_pilots": 0,
+    "real_qualified_denominator": 0,
+    "real_testimonials_or_references": 0
+  },
+  "dry_run_id": "PSP-C10-SYNTHETIC-2026-08-10",
+  "external_effects": [],
+  "fixture_time_anchor": "2026-08-10T20:00:00Z",
+  "mode": "synthetic",
+  "model_routing": {
+    "conductor": {
+      "effort": "max",
+      "slug": "gpt-5.6-sol"
+    },
+    "leaves": {
+      "PSP-P10-W08": {
+        "effort": "max",
+        "slug": "gpt-5.6-sol"
+      },
+      "PSP-P12-W01": {
+        "effort": "xhigh",
+        "slug": "gpt-5.6-sol"
+      },
+      "PSP-P12-W02": {
+        "effort": "max",
+        "slug": "gpt-5.6-sol"
+      },
+      "PSP-P12-W03": {
+        "effort": "xhigh",
+        "slug": "gpt-5.6-sol"
+      },
+      "PSP-P12-W04": {
+        "effort": "max",
+        "slug": "gpt-5.6-sol"
+      },
+      "PSP-P12-W05": {
+        "effort": "medium",
+        "slug": "gpt-5.6-luna"
+      },
+      "PSP-P12-W06": {
+        "effort": "max",
+        "slug": "gpt-5.6-sol"
+      }
+    },
+    "verified_against_registry": true
+  },
+  "operational_readiness": {
+    "adjudication_branches_validated": [
+      "insufficient_evidence",
+      "keep",
+      "narrow",
+      "pivot"
+    ],
+    "authority_receipt_types_validated": 3,
+    "bounded_fixture_cohort": 3,
+    "claim_refresh_proposals_validated": 3,
+    "consent_receipt_types_validated": 4,
+    "evidence_records_validated": 10,
+    "experiment_duration_days": 90,
+    "pilot_stages_validated": 11,
+    "qualified_fixture_candidates": 5,
+    "recruitment_criteria_validated": 6,
+    "status": "synthetic_dry_run_pass"
+  },
+  "pilot_stage_results": [
+    {
+      "human_gates": [],
+      "real_effect_status": "not_performed",
+      "requires_real_outcome": false,
+      "stage_id": "qualify",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLICATION-SEND"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "invite",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "agree_terms",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "intake",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "audit_and_verdict",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "acceptance_and_closeout",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "conditional_install",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLIC-IDENTITY",
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "consented_case_study",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLICATION-SEND",
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "independent_validation",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "claim_refresh",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "demand_adjudication",
+      "synthetic_status": "pass"
+    }
+  ],
+  "program_completion": {
+    "chunk_exit_gate_satisfied": false,
+    "issues_closed": [],
+    "leaf_predicates_satisfied": [],
+    "phase_predicate_satisfied": false
+  },
+  "scenario_results": {
+    "SYN-SCENARIO-INSUFFICIENT": {
+      "hypothetical_decision": "insufficient_evidence",
+      "outcome_count": 3,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-KEEP": {
+      "hypothetical_decision": "keep",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-NARROW": {
+      "hypothetical_decision": "narrow",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-PIVOT": {
+      "hypothetical_decision": "pivot",
+      "outcome_count": 5,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    }
+  },
+  "schema_version": "limen.positioning_c10_synthetic_receipt.v1",
+  "scope": {
+    "chunk_id": "PSP-C10",
+    "formal_predecessor_chunks": [
+      "PSP-C05",
+      "PSP-C09"
+    ],
+    "formal_predecessors_satisfied": "not_evaluated_by_synthetic_dry_run",
+    "leaf_ids": [
+      "PSP-P12-W01",
+      "PSP-P12-W02",
+      "PSP-P12-W03",
+      "PSP-P12-W04",
+      "PSP-P12-W05",
+      "PSP-P12-W06",
+      "PSP-P10-W08"
+    ]
+  },
+  "status": "prepared_preflight",
+  "truth_statement": "Synthetic readiness passed. No outreach, agreement, payment, delivery acceptance, testimonial, external outcome, public claim refresh, leaf completion, phase completion, or chunk completion is established."
+}
