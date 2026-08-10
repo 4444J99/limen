@@ -302,29 +302,52 @@ def _validate_committed_pubkey() -> None:
             ["gpg", "--batch", "--with-colons", "--fingerprint", "--fingerprint", "--list-keys"],
             env=_gpg_env(gnupghome),
         )
-    if listing.returncode != 0:
-        raise VaultError(f"committed public-key inspection failed: {_diagnostic(listing)}")
+        if listing.returncode != 0:
+            raise VaultError(f"committed public-key inspection failed: {_diagnostic(listing)}")
 
-    primary_fingerprints: set[str] = set()
-    encryption_subkeys: set[str] = set()
-    pending_key: tuple[str, str, str] | None = None
-    for line in listing.stdout.splitlines():
-        fields = line.split(":")
-        record_type = fields[0] if fields else ""
-        if record_type in {"pub", "sub"} and len(fields) > 11:
-            pending_key = (record_type, fields[4].upper(), fields[11].lower())
-        elif record_type == "fpr" and len(fields) > 9 and pending_key is not None:
-            key_type, key_id, capabilities = pending_key
-            if key_type == "pub":
-                primary_fingerprints.add(fields[9].upper())
-            elif "e" in capabilities:
-                encryption_subkeys.add(key_id)
-            pending_key = None
+        primary_fingerprints: set[str] = set()
+        encryption_subkeys: set[str] = set()
+        pending_key: tuple[str, str, str] | None = None
+        for line in listing.stdout.splitlines():
+            fields = line.split(":")
+            record_type = fields[0] if fields else ""
+            if record_type in {"pub", "sub"} and len(fields) > 11:
+                pending_key = (record_type, fields[4].upper(), fields[11].lower())
+            elif record_type == "fpr" and len(fields) > 9 and pending_key is not None:
+                key_type, key_id, capabilities = pending_key
+                if key_type == "pub":
+                    primary_fingerprints.add(fields[9].upper())
+                elif "e" in capabilities:
+                    encryption_subkeys.add(key_id)
+                pending_key = None
 
-    if primary_fingerprints != {FINGERPRINT}:
-        raise VaultError("committed public key does not match the pinned primary fingerprint")
-    if ENCRYPTION_SUBKEY_ID not in encryption_subkeys:
-        raise VaultError("committed public key lacks the pinned encryption subkey")
+        if primary_fingerprints != {FINGERPRINT}:
+            raise VaultError("committed public key does not match the pinned primary fingerprint")
+        if ENCRYPTION_SUBKEY_ID not in encryption_subkeys:
+            raise VaultError("committed public key lacks the pinned encryption subkey")
+
+        canary = Path(gnupghome) / "synthetic-canary"
+        ciphertext = Path(gnupghome) / "synthetic-canary.gpg"
+        canary.write_bytes(RECOVERY_CANARY)
+        os.chmod(canary, 0o600)
+        probe = _run_command(
+            [
+                "gpg",
+                "--batch",
+                "--yes",
+                "--trust-model",
+                "always",
+                "--recipient",
+                f"{ENCRYPTION_SUBKEY_ID}!",
+                "--output",
+                str(ciphertext),
+                "--encrypt",
+                str(canary),
+            ],
+            env=_gpg_env(gnupghome),
+        )
+        if probe.returncode != 0 or not ciphertext.is_file():
+            raise VaultError("pinned encryption subkey is unusable")
 
 
 def _encrypt_file(source: Path, destination: Path) -> None:

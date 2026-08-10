@@ -190,6 +190,37 @@ def test_verify_rejects_invalid_committed_public_key(vault, monkeypatch: pytest.
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
+def test_committed_public_key_validation_rejects_unusable_subkey(vault, monkeypatch: pytest.MonkeyPatch):
+    primary = [""] * 12
+    primary[0] = "pub"
+    primary[4] = vault.FINGERPRINT[-16:]
+    primary[11] = "scESC"
+    primary_fingerprint = [""] * 10
+    primary_fingerprint[0] = "fpr"
+    primary_fingerprint[9] = vault.FINGERPRINT
+    subkey = [""] * 12
+    subkey[0] = "sub"
+    subkey[4] = vault.ENCRYPTION_SUBKEY_ID
+    subkey[11] = "e"
+    subkey_fingerprint = [""] * 10
+    subkey_fingerprint[0] = "fpr"
+    subkey_fingerprint[9] = "0" * 24 + vault.ENCRYPTION_SUBKEY_ID
+    listing = "\n".join(":".join(fields) for fields in (primary, primary_fingerprint, subkey, subkey_fingerprint))
+
+    monkeypatch.setattr(vault, "_import_pubkey", lambda _gnupghome: None)
+
+    def reject_probe(args, *, env=None):
+        del env
+        if "--list-keys" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=listing, stderr="")
+        return subprocess.CompletedProcess(args, 2, stdout="", stderr="Unusable public key")
+
+    monkeypatch.setattr(vault, "_run_command", reject_probe)
+
+    with pytest.raises(vault.VaultError, match="unusable"):
+        vault._real_validate_committed_pubkey()
+
+
 def test_verify_rejects_tracked_private_namespace(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     source = vault.ROOT / ".limen-private" / "private.md"
     source.parent.mkdir(parents=True)
