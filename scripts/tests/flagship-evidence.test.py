@@ -69,6 +69,15 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["packets"][0]["metrics"][0]["observed_value"] = "many"
         self.assert_error_contains(index, "observed metric values must be numeric")
 
+    def test_rejects_credentialed_or_private_network_sources(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["sources"][1]["url"] = "https://token@127.0.0.1/private"
+        self.assert_error_contains(index, "credential-free selected public host")
+
+    def test_fetch_rejects_unselected_hosts_before_network_access(self) -> None:
+        with self.assertRaises(MODULE.EvidenceError):
+            MODULE.fetch("https://example.test/untrusted")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -23,10 +24,47 @@ INDEX = ROOT / "docs/positioning/evidence/flagship-evidence.yaml"
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 SCHEMA = "limen.positioning_flagship_evidence.v1"
 EXPECTED_IDS = {"limen", "public_records", "ai_chat_exporter"}
+ALLOWED_PUBLIC_HOSTS = frozenset(
+    {
+        "api.github.com",
+        "github.com",
+        "limen-dashboard.pages.dev",
+        "organvm-iii-ergon.github.io",
+    }
+)
+MAX_RESPONSE_BYTES = 2_000_000
 
 
 class EvidenceError(RuntimeError):
     """Raised for invalid public evidence or an unavailable public anchor."""
+
+
+def validate_public_fetch_url(value: object) -> str:
+    if not isinstance(value, str) or value != value.strip():
+        raise EvidenceError("public anchor must be a normalized HTTPS URL")
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise EvidenceError("public anchor URL is malformed") from exc
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname not in ALLOWED_PUBLIC_HOSTS
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+    ):
+        raise EvidenceError("public anchor must use a credential-free selected public host")
+    return value
+
+
+class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001, ANN201
+        validate_public_fetch_url(newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+SAFE_OPENER = urllib.request.build_opener(_SafeRedirectHandler())
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -49,12 +87,19 @@ def nested_value(value: object, path: str) -> object:
 
 
 def fetch(url: str) -> tuple[int, bytes]:
+    url = validate_public_fetch_url(url)
     request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "limen-evidence-verifier"})
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            return response.status, response.read()
+        with SAFE_OPENER.open(request, timeout=20) as response:
+            payload = response.read(MAX_RESPONSE_BYTES + 1)
+            if len(payload) > MAX_RESPONSE_BYTES:
+                raise EvidenceError(f"public anchor exceeds {MAX_RESPONSE_BYTES} bytes")
+            return response.status, payload
     except urllib.error.HTTPError as exc:
-        return exc.code, exc.read()
+        payload = exc.read(MAX_RESPONSE_BYTES + 1)
+        if len(payload) > MAX_RESPONSE_BYTES:
+            raise EvidenceError(f"public anchor error body exceeds {MAX_RESPONSE_BYTES} bytes") from exc
+        return exc.code, payload
     except urllib.error.URLError as exc:
         raise EvidenceError(f"public anchor unavailable: {url}: {exc.reason}") from exc
 
@@ -143,10 +188,16 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
         else:
             for source in sources:
                 url = source.get("url")
-                if not isinstance(url, str) or not url.startswith("https://"):
-                    errors.append(f"{label}: source URLs must use public HTTPS anchors")
+                try:
+                    validate_public_fetch_url(url)
+                except EvidenceError as exc:
+                    errors.append(f"{label}: {exc}")
                 if source.get("kind") == "workflow_run":
                     api_url = source.get("api_url")
+                    try:
+                        validate_public_fetch_url(api_url)
+                    except EvidenceError:
+                        errors.append(f"{label}: workflow API URL must use the public GitHub endpoint")
                     if not isinstance(api_url, str) or not api_url.startswith("https://api.github.com/repos/"):
                         errors.append(f"{label}: workflow API URL must use the public GitHub endpoint")
         metrics = packet.get("metrics")
@@ -166,8 +217,10 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 errors.append(f"{label}: invalid metric status")
             if isinstance(metric.get("observed_value"), bool) or not isinstance(metric.get("observed_value"), (int, float)):
                 errors.append(f"{label}: observed metric values must be numeric")
-            if not isinstance(metric.get("source_url"), str) or not metric["source_url"].startswith("https://"):
-                errors.append(f"{label}: metric source must use a public HTTPS anchor")
+            try:
+                validate_public_fetch_url(metric.get("source_url"))
+            except EvidenceError as exc:
+                errors.append(f"{label}: metric source {exc}")
     return errors
 
 
