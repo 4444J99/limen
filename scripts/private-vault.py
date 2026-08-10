@@ -287,10 +287,20 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
 
     artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for revision in history.stdout.splitlines():
-        snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
-        # A deletion commit is part of the path history but has no file at that revision.
-        if snapshot.returncode != 0:
+        presence = _run_command(
+            ["git", "-C", str(ROOT), "ls-tree", "--name-only", "-z", revision, "--", manifest_relative]
+        )
+        if presence.returncode != 0:
+            raise VaultError("cannot inspect a committed manifest history tree")
+        historical_paths = [path for path in presence.stdout.split("\0") if path]
+        if not historical_paths:
+            # A deletion commit is part of the fixed-path history but has no file at that revision.
             continue
+        if historical_paths != [manifest_relative]:
+            raise VaultError("committed manifest history tree returned an unexpected path")
+        snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
+        if snapshot.returncode != 0:
+            raise VaultError("cannot read a committed manifest history snapshot")
         for line_number, raw in enumerate(snapshot.stdout.splitlines(), 1):
             if not raw.strip():
                 continue
@@ -356,6 +366,18 @@ def _import_pubkey(gnupghome: str) -> None:
     )
     if run.returncode != 0:
         raise VaultError(f"public-key import failed: {_diagnostic(run)}")
+    exported = _run_command(
+        ["gpg", "--batch", "--armor", "--export", FINGERPRINT],
+        env=_gpg_env(gnupghome),
+    )
+    if exported.returncode != 0 or not exported.stdout:
+        raise VaultError("canonical public-key export failed")
+    try:
+        committed_armor = PUBKEY.read_text(encoding="ascii")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise VaultError("committed public-key file is not canonical ASCII armor") from exc
+    if committed_armor != exported.stdout:
+        raise VaultError("committed public-key file must contain only canonical public-key armor")
     secret_listing = _run_command(
         ["gpg", "--batch", "--with-colons", "--list-secret-keys"],
         env=_gpg_env(gnupghome),
@@ -580,8 +602,16 @@ def cmd_add(args: argparse.Namespace) -> int:
 
         temporary_cipher = _temporary_file(VAULT_DIR, artifact_id, ".ciphertext.gpg")
         try:
-            with tempfile.TemporaryDirectory() as temporary_directory:
+            try:
+                temporary_context = tempfile.TemporaryDirectory(
+                    prefix=".limen-vault-plaintext-",
+                    dir=source.parent,
+                )
+            except OSError as exc:
+                raise VaultError("cannot create a secure temporary directory on the source filesystem") from exc
+            with temporary_context as temporary_directory:
                 temporary_root = Path(temporary_directory)
+                os.chmod(temporary_root, 0o700)
                 snapshot = temporary_root / "snapshot"
                 envelope = temporary_root / "envelope"
                 plaintext_sha256, plaintext_bytes = _snapshot_source(source, snapshot)

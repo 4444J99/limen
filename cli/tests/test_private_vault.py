@@ -307,6 +307,25 @@ def test_historical_manifest_rejects_duplicate_json_fields(vault):
         vault._real_historical_artifacts()
 
 
+def test_historical_manifest_fails_when_present_snapshot_is_unreadable(vault, monkeypatch: pytest.MonkeyPatch):
+    manifest_relative = "institutio/vault/manifest.jsonl"
+
+    def missing_snapshot(args, *, env=None):
+        del env
+        if "rev-list" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="a" * 40 + "\n", stderr="")
+        if "ls-tree" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=manifest_relative + "\0", stderr="")
+        if "show" in args:
+            return subprocess.CompletedProcess(args, 128, stdout="", stderr="missing blob")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(vault, "_run_command", missing_snapshot)
+
+    with pytest.raises(vault.VaultError, match="cannot read a committed manifest history snapshot"):
+        vault._real_historical_artifacts()
+
+
 def test_tracked_files_preserve_non_ascii_private_paths(vault):
     subprocess.run(
         ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
@@ -421,18 +440,41 @@ def test_import_rejects_symlinked_public_key(vault, monkeypatch: pytest.MonkeyPa
 
 def test_import_rejects_secret_key_material(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     public_key = tmp_path / "committed-key.asc"
-    public_key.write_text("synthetic key material", encoding="utf-8")
+    canonical_armor = "synthetic canonical public-key armor\n"
+    public_key.write_text(canonical_armor, encoding="utf-8")
     monkeypatch.setattr(vault, "PUBKEY", public_key)
 
     def expose_secret(args, *, env=None):
         del env
         if "--import" in args:
             return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        if "--export" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=canonical_armor, stderr="")
         return subprocess.CompletedProcess(args, 0, stdout="sec:u:255:22:SECRET\n", stderr="")
 
     monkeypatch.setattr(vault, "_run_command", expose_secret)
 
     with pytest.raises(vault.VaultError, match="secret-key material"):
+        vault._import_pubkey(str(tmp_path / "gnupg"))
+
+
+def test_import_rejects_non_key_bytes(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    canonical_armor = "synthetic canonical public-key armor\n"
+    public_key = tmp_path / "committed-key.asc"
+    public_key.write_text(canonical_armor + "synthetic trailing bytes\n", encoding="utf-8")
+    monkeypatch.setattr(vault, "PUBKEY", public_key)
+
+    def canonical_export(args, *, env=None):
+        del env
+        if "--import" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        if "--export" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=canonical_armor, stderr="")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(vault, "_run_command", canonical_export)
+
+    with pytest.raises(vault.VaultError, match="only canonical public-key armor"):
         vault._import_pubkey(str(tmp_path / "gnupg"))
 
 
@@ -683,6 +725,24 @@ def test_add_encrypts_one_immutable_snapshot(vault, monkeypatch: pytest.MonkeyPa
     destination = tmp_path / "restore"
     vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
     assert (destination / "artifact-001--private.md").read_text(encoding="utf-8") == "initial"
+
+
+def test_add_stages_plaintext_on_source_filesystem(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "source-custody" / "private.md"
+    source.parent.mkdir()
+    source.write_text("synthetic", encoding="utf-8")
+    real_temporary_directory = tempfile.TemporaryDirectory
+    observed_directories: list[Path] = []
+
+    def custody_temporary_directory(*args, **kwargs):
+        observed_directories.append(Path(kwargs["dir"]))
+        return real_temporary_directory(*args, **kwargs)
+
+    monkeypatch.setattr(vault.tempfile, "TemporaryDirectory", custody_temporary_directory)
+
+    _add(vault, source)
+
+    assert observed_directories == [source.parent]
 
 
 def test_add_holds_lock_through_manifest_publication(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
