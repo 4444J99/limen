@@ -1463,6 +1463,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Remote-keeper HMAC secret for loss-recoverable executor lease capabilities bound to lease ID, generation, and executor principal. It is never returned; only the derived executor capability is delivered by the authenticated claim route."
+  LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY:
+    default: "1"
+    env: LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY
+    self_update: "deployment rollback valve only"
+    owner: dispatch
+    note: "Remote-keeper liveness write path. Enabled writes one generation-bound per-lease overlay for an ordinary active heartbeat. Set to 0 before rollback; the next authenticated request materializes selected overlays into the cold manifest and removes them before an older binary is restored."
   LIMEN_CONDUCT_STATE:
     default: ""
     env: LIMEN_CONDUCT_STATE
