@@ -7,6 +7,7 @@ import {
   publicBoardProjection,
   savePrivateBoard,
 } from "../src/conduct/private-board.js";
+import { parseBody } from "../src/conduct/durable-object.js";
 
 class FakeStorage {
   constructor() { this.values = new Map(); }
@@ -70,3 +71,10 @@ test("private board custody is separate from conduct state and survives reload",
   assert.equal(storage.values.has(privateBoardStoreContract().manifest_key), true);
 });
 
+test("parseBody enforces the limit from actual bytes without Content-Length", async () => {
+  const body = JSON.stringify({ board: { payload: "x".repeat(1024 * 1024 + 1) } });
+  await assert.rejects(
+    parseBody(new Request("https://limen.example/api/board/initialize", { method: "POST", body }), 1024 * 1024),
+    /body exceeds 1 MiB/,
+  );
+});
