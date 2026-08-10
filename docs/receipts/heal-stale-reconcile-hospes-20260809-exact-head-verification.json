@@ -1,0 +1,26 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-10T02:54:55Z",
+  "target": {
+    "repository": "organvm/limen",
+    "pull_request": 2289,
+    "head": "ba7b67dd2c7ca3a6fe2e3a0676be152ca14c9346",
+    "source_receipt": "docs/receipts/heal-stale-reconcile-hospes-20260809.json"
+  },
+  "verification": {
+    "command": "scripts/verify-scoped.sh",
+    "executed_at": "2026-08-10T02:54:55Z",
+    "exit_status": 0,
+    "changed_paths": [
+      "docs/receipts/heal-stale-reconcile-hospes-20260809.json"
+    ],
+    "cheap_wave": {
+      "syntax-changed": "PASS",
+      "diff-hygiene": "PASS",
+      "check-docs-exports": "PASS",
+      "check-note-links": "PASS"
+    },
+    "result": "Scoped verification passed"
+  },
+  "integrity_note": "The command ran bare from the clean, immutable PR 2289 head after every field in the source receipt was committed. This separate receipt avoids modifying the tree it attests."
+}
