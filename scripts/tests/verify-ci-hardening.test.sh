@@ -44,7 +44,7 @@ flunk() { printf 'FAIL %s\n  %s\n' "$1" "$2"; fails=$((fails + 1)); }
 make_sandbox() {
   local dir
   dir="$(mktemp -d "${TMPDIR:-/tmp}/verify-ci-hardening.XXXXXX")"
-  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/src" "$dir/web/app" "$dir/webish"
+  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/institutio/vault" "$dir/docs/keys" "$dir/src" "$dir/web/app" "$dir/webish"
   cp "$ROOT/scripts/verify.py" "$dir/scripts/verify.py"
   cat >"$dir/institutio/governance/gates.yaml" <<'YAML'
 schema_version: 0.1
@@ -70,8 +70,13 @@ gates:
     ci_job: "ci.yml:web"
     owner: verify
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
+  deleted-custody:
+    command: "touch ran-deleted-custody"
+    paths: ["institutio/vault/**", "docs/keys/anthony-padavano-gpg.asc", ".limen-private", ".limen-private/**", ".agent-runtime", ".agent-runtime/**", ".limen-workstream", ".limen-workstream/**"]
+    owner: custody
+    note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
-  touch "$dir/src/.keep" "$dir/web/app/.keep" "$dir/webish/.keep"
+  touch "$dir/src/.keep" "$dir/institutio/vault/artifact.gpg" "$dir/docs/keys/anthony-padavano-gpg.asc" "$dir/web/app/.keep" "$dir/webish/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
@@ -110,7 +115,276 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base HEAD 2>&1)" \
          || flunk empty-diff-local "missing nothing-to-verify message: $out"; } \
   || flunk empty-diff-local "non-zero exit without --require-base: $out"
 
-# ── 4: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
+# ── 4: deleting every custody file still selects its scoped gate ──────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+rm "$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add -u institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete custody"
+out_file="$sb/verify.out"
+if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+then
+  :
+else
+  out="$(<"$out_file")"
+  flunk deleted-path-selects-gate "deleted-path run exited non-zero: $out"
+fi
+if [[ -f "$sb/ran-deleted-custody" ]]
+then
+  pass deleted-path-selects-gate
+else
+  out="$(<"$out_file")"
+  flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
+fi
+
+# ── 4a: renaming every custody file still selects its scoped gate ────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir "$sb/elsewhere"
+git -C "$sb" mv institutio/vault/artifact.gpg elsewhere/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "rename custody away"
+out_file="$sb/verify.out"
+if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+then
+  :
+else
+  out="$(<"$out_file")"
+  flunk renamed-path-selects-gate "renamed-path run exited non-zero: $out"
+fi
+if [[ -f "$sb/ran-deleted-custody" ]]
+then
+  pass renamed-path-selects-gate
+else
+  out="$(<"$out_file")"
+  flunk renamed-path-selects-gate "renamed custody source path was filtered out: $out"
+fi
+
+# ── 4b: every private namespace selects the custody gate ─────────────────────
+for private_path in \
+  ".limen-private" \
+  ".limen-private/probe" \
+  ".limen-private/résumé.md" \
+  ".agent-runtime" \
+  ".agent-runtime/probe" \
+  ".limen-workstream" \
+  ".limen-workstream/probe"
+do
+  sb="$(make_sandbox)"
+  base_sha="$(git -C "$sb" rev-parse HEAD)"
+  mkdir -p "$(dirname "$sb/$private_path")"
+  printf 'private\n' >"$sb/$private_path"
+  git -C "$sb" -c user.email=t@t -c user.name=t add -f "$private_path"
+  git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add private namespace"
+  out_file="$sb/verify.out"
+  if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+  then
+    :
+  else
+    out="$(<"$out_file")"
+    flunk private-namespace-selects-gate "private namespace run exited non-zero: $out"
+  fi
+  if [[ -f "$sb/ran-deleted-custody" ]]
+  then
+    pass "private-namespace-selects-gate:$private_path"
+  else
+    flunk private-namespace-selects-gate "private namespace did not select custody gate: $private_path"
+  fi
+done
+
+# ── 4bc: one final public custody version is eligible for vault validation ─────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'ciphertext\n' >"$sb/institutio/vault/artifact-new.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact-new.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add final custody version"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk final-custody-version "single final custody version exited non-zero: $out"
+[[ -f "$sb/ran-deleted-custody" ]] \
+  && pass final-custody-version \
+  || flunk final-custody-version "single final custody version did not select its gate: $out"
+
+# ── 4c: add-then-delete private content is rejected without naming it ─────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/sensitive-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/sensitive-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient private content"
+git -C "$sb" rm -q .limen-private/sensitive-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient private content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-private-history "exit 0 despite committed transient private content" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "sensitive-probe" <<<"$out" \
+         && pass transient-private-history \
+         || flunk transient-private-history "missing neutral refusal or leaked path: $out"; }
+
+# ── 4d: historical-only custody names fail without log leakage ────────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'ciphertext\n' >"$sb/institutio/vault/sensitive-probe.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/sensitive-probe.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient custody path"
+git -C "$sb" rm -q institutio/vault/sensitive-probe.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient custody path"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk historical-custody-redaction "exit 0 despite deleted transient custody" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "sensitive-probe" <<<"$out" \
+         && pass historical-custody-redaction \
+         || flunk historical-custody-redaction "missing neutral refusal or leaked path: $out"; }
+
+# ── 4e: reverted versions of tracked custody files fail without path leakage ──
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient bytes\n' >>"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "mutate tracked custody"
+git -C "$sb" restore --source "$base_sha" -- institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "restore tracked custody"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-custody-reversion "exit 0 despite an unvalidated intermediate custody version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "artifact.gpg" <<<"$out" \
+         && pass transient-custody-reversion \
+         || flunk transient-custody-reversion "missing neutral refusal or leaked path: $out"; }
+
+# ── 4e1: superseded custody versions fail even when the final path changed ─────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'first version\n' >"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "first custody version"
+printf 'final version\n' >"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "supersede custody version"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk superseded-custody-version "exit 0 despite an unvalidated superseded custody version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "artifact.gpg" <<<"$out" \
+         && pass superseded-custody-version \
+         || flunk superseded-custody-version "missing neutral refusal or leaked path: $out"; }
+
+# ── 4e2: reverted public-key versions receive the same neutral refusal ─────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient key bytes\n' >>"$sb/docs/keys/anthony-padavano-gpg.asc"
+git -C "$sb" -c user.email=t@t -c user.name=t add docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "mutate public key"
+git -C "$sb" restore --source "$base_sha" -- docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t add docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "restore public key"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-public-key "exit 0 despite an unvalidated intermediate public-key version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "anthony-padavano" <<<"$out" \
+         && pass transient-public-key \
+         || flunk transient-public-key "missing neutral refusal or leaked path: $out"; }
+
+# ── 4ea: add-then-delete public custody files fail without path leakage ────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient bytes\n' >"$sb/institutio/vault/résumé-cipher.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/résumé-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient custody blob"
+git -C "$sb" rm -q institutio/vault/résumé-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient custody blob"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk deleted-transient-custody "exit 0 despite a deleted transient custody blob" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "résumé-cipher" <<<"$out" \
+         && pass deleted-transient-custody \
+         || flunk deleted-transient-custody "missing neutral refusal or leaked path: $out"; }
+
+# ── 4f: synthetic merge inventory excludes paths changed only on the base ──────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false merge -q --no-ff feature -m "synthetic PR merge"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk merge-base-path-exclusion "synthetic merge run exited non-zero: $out"
+[[ -f "$sb/ran-runs-here" ]] \
+  && ! grep -q "base-only" <<<"$out" \
+  && pass merge-base-path-exclusion \
+  || flunk merge-base-path-exclusion "feature gate missing or base-only path leaked into scope: $out"
+
+# ── 4g: merge-resolution-only private content remains in the inventory ─────────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" switch -q feature
+git -C "$sb" -c user.email=t@t -c user.name=t merge -q --no-ff --no-commit main
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/merge-only-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/merge-only-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "merge with private resolution"
+git -C "$sb" rm -q .limen-private/merge-only-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete merge-only private content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk merge-resolution-private "exit 0 despite merge-created private history" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "merge-only-probe" <<<"$out" \
+         && pass merge-resolution-private \
+         || flunk merge-resolution-private "missing neutral refusal or leaked path: $out"; }
+
+# ── 4h: merge-resolution-only public custody content is also rejected ──────────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" switch -q feature
+git -C "$sb" -c user.email=t@t -c user.name=t merge -q --no-ff --no-commit main
+printf 'ciphertext\n' >"$sb/institutio/vault/merge-only-cipher.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/merge-only-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "merge with custody resolution"
+git -C "$sb" rm -q institutio/vault/merge-only-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete merge-only custody content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk merge-resolution-custody "exit 0 despite merge-created custody history" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "merge-only-cipher" <<<"$out" \
+         && pass merge-resolution-custody \
+         || flunk merge-resolution-custody "missing neutral refusal or leaked path: $out"; }
+
+# ── 4i: replacement refs cannot rewrite the committed path inventory ──────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/replace-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/replace-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add replace probe"
+private_commit="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" rm -q .limen-private/replace-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete replace probe"
+git -C "$sb" replace "$private_commit" "$base_sha"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk replace-objects-disabled "exit 0 after replacement history hid private content" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "replace-probe" <<<"$out" \
+         && pass replace-objects-disabled \
+         || flunk replace-objects-disabled "replacement object influenced inventory or leaked a path: $out"; }
+
+# ── 4j: legacy grafts are an explicit fail-closed history state ────────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+commit_touch "$sb" src/graft-probe.txt
+printf '%s\n' "$(git -C "$sb" rev-parse HEAD)" >"$sb/.git/info/grafts"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk legacy-grafts-rejected "exit 0 with a legacy graft installed" \
+  || { grep -q "refusing to verify rewritten Git history" <<<"$out" \
+         && pass legacy-grafts-rejected \
+         || flunk legacy-grafts-rejected "missing neutral graft refusal: $out"; }
+
+# ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" web/app/page.txt
@@ -129,7 +403,7 @@ out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
   && pass deploy-no-escalation-local \
   || flunk deploy-no-escalation-local "escalated without --require-base"
 
-# ── 5: queue integration reuses head matrix and runs scoped composition ────────
+# ── 6: queue integration reuses head matrix and runs scoped composition ────────
 rm -f "$sb/whole-ran"
 out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
        python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --integration 2>&1)" \
@@ -164,7 +438,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$competing_sha" --integ
          && pass integration-rejects-common-ancestor \
          || flunk integration-rejects-common-ancestor "missing exact-base refusal: $out"; }
 
-# ── 6: --skip-ci-covered defers foreign-job mirrors, runs everything else ──────
+# ── 7: --skip-ci-covered defers foreign-job mirrors, runs everything else ──────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" webish/x.txt
@@ -188,7 +462,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   && pass own-job-still-runs \
   || flunk own-job-still-runs "unmirrored/own-job gates were skipped: $out"
 
-# ── 7: PR-lane opt-out — deploy diff stays scoped, never execs the matrix ──────
+# ── 8: PR-lane opt-out — deploy diff stays scoped, never execs the matrix ──────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" web/app/page.txt
