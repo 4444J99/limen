@@ -170516,3 +170516,42 @@ tasks:
     conduct_lease_id: 'lease-863-bbc558eb6d70905d'
     conduct_generation: 863
   updated: '2026-08-10T04:30:15.935Z'
+- id: 'GH-organvm-limen-2276'
+  title: '[PSP-P14-W02] Operate the weekly execution and demand review'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'lane:fleet'
+  - 'lifecycle:delivery'
+  - 'program:production-systems'
+  - 'work-packet'
+  - 'model:gpt-5.6-luna'
+  - 'effort:medium'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2276'
+  context: 'GitHub issue organvm/limen#2276. # PSP-P14-W02 — Operate the weekly execution and demand review **Parent:** [#2274](https://github.com/organvm/limen/issues/2274) **Execution chunk:** `PSP-C12` — Close the return loops and prove Omega **Target:** `organvm/limen` · `docs/positioning/reviews`, `scripts` ## Outcome Ready work, blockers, qualified demand, delivery risk, and evidence changes receive one bounded weekly decision. ## Deli'
+  predicate: 'test "$(gh issue view 2276 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2276'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2276'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-10'
+  dispatch_log:
+  - timestamp: '2026-08-10T04:30:21.253Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog-675fff6bc45c'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-2f8d3e7184e5c34bd471515e710ce5e8:864:compatibility'
+    conduct_run_id: 'run-2f8d3e7184e5c34bd471515e710ce5e8'
+    conduct_lease_id: 'lease-864-2f8d3e7184e5c34b'
+    conduct_generation: 864
+  updated: '2026-08-10T04:30:21.253Z'
