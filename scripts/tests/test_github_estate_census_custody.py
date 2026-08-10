@@ -44,3 +44,43 @@ def test_private_receipt_replaces_symlink_without_touching_its_target(tmp_path: 
     assert not target.is_symlink()
     assert _mode(target) == 0o600
     assert external.read_text(encoding="utf-8") == "unchanged"
+
+
+def test_repository_only_check_accepts_complete_denominator_with_partial_leaf_connections(monkeypatch):
+    full = {
+        "source_report": {
+            "exhaustive": False,
+            "cursor": {
+                "repository": {
+                    "exhaustive": True,
+                    "expected_total": 314,
+                    "known_count": 314,
+                }
+            },
+        }
+    }
+    tracked = {"summary": {"repository_count": 314}}
+    monkeypatch.setattr(MODULE, "collect", lambda **_kwargs: (full, tracked))
+    monkeypatch.setattr(sys, "argv", ["github-estate-census.py", "--check-repositories", "--json"])
+
+    assert MODULE.main() == 0
+
+
+def test_repository_only_check_rejects_incomplete_denominator(monkeypatch):
+    full = {
+        "source_report": {
+            "exhaustive": False,
+            "cursor": {
+                "repository": {
+                    "exhaustive": True,
+                    "expected_total": 314,
+                    "known_count": 313,
+                }
+            },
+        }
+    }
+    tracked = {"summary": {"repository_count": 313}}
+    monkeypatch.setattr(MODULE, "collect", lambda **_kwargs: (full, tracked))
+    monkeypatch.setattr(sys, "argv", ["github-estate-census.py", "--check-repositories", "--json"])
+
+    assert MODULE.main() == 1
