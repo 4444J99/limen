@@ -251,6 +251,150 @@ def test_quarantine_copies_and_removes_each_declared_public_surface(tmp_path: Pa
         assert "positioning-claim: claim.synthetic.false:quarantined" in quarantined
 
 
+def test_quarantine_removes_claim_absent_from_policy_report_with_public_safe_reason(tmp_path: Path):
+    accepted = _claim()
+    rejected = _claim()
+    rejected["id"] = "claim.public.rejected"
+    rejected["source"]["current_sha256"] = "b" * 64
+    policy, policy_report = _policy(tmp_path / "policy", accepted, rejected)
+    assert policy.returncode == 1, policy.stderr
+    report_path = tmp_path / "policy-report.json"
+    report_path.write_text(json.dumps(policy_report), encoding="utf-8")
+
+    source = tmp_path / "generated"
+    source.mkdir()
+    rendered = """# Generated public surface
+<!-- positioning-claim: claim.public.safe:start -->
+ACCEPTED PUBLIC CLAIM
+<!-- positioning-claim: claim.public.safe:end -->
+<!-- positioning-claim: claim.public.rejected:start -->
+REJECTED PUBLIC CLAIM
+<!-- positioning-claim: claim.public.rejected:end -->
+<!-- positioning-claim: claim.surface.unknown:start -->
+UNKNOWN PUBLIC CLAIM
+<!-- positioning-claim: claim.surface.unknown:end -->
+"""
+    surface = source / "frontdoor.md"
+    surface.write_text(rendered, encoding="utf-8")
+    manifest = {
+        "schema_version": "limen.positioning.public-surface-manifest.v1",
+        "surfaces": [{
+            "id": "frontdoor",
+            "path": "frontdoor.md",
+            "claim_ids": [
+                "claim.public.safe",
+                "claim.public.rejected",
+                "claim.surface.unknown",
+            ],
+        }],
+    }
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable,
+        str(QUARANTINE),
+        "--source-root",
+        str(source),
+        "--output-root",
+        str(output),
+        "--manifest",
+        str(manifest_path),
+        "--policy-report",
+        str(report_path),
+        "--json",
+    )
+    assert quarantine.returncode == 0, quarantine.stderr
+    result = json.loads(quarantine.stdout)
+    assert result["quarantined_claims"] == [
+        {"claim_id": "claim.public.rejected", "reasons": ["source_changed"]},
+        {"claim_id": "claim.surface.unknown", "reasons": ["absent_from_policy_report"]},
+    ]
+    assert result["publication_effect"] == "none"
+    staged = (output / "frontdoor.md").read_text(encoding="utf-8")
+    assert "ACCEPTED PUBLIC CLAIM" in staged
+    assert "REJECTED PUBLIC CLAIM" not in staged
+    assert "UNKNOWN PUBLIC CLAIM" not in staged
+    assert surface.read_text(encoding="utf-8") == rendered
+
+
+def test_quarantine_rejects_unknown_marker_undeclared_by_surface_manifest(tmp_path: Path):
+    policy, policy_report = _policy(tmp_path / "policy", _claim())
+    assert policy.returncode == 0, policy.stderr
+    report_path = tmp_path / "policy-report.json"
+    report_path.write_text(json.dumps(policy_report), encoding="utf-8")
+    source = tmp_path / "generated"
+    source.mkdir()
+    (source / "frontdoor.md").write_text(
+        """<!-- positioning-claim: claim.public.safe:start -->safe<!-- positioning-claim: claim.public.safe:end -->
+<!-- positioning-claim: claim.surface.unknown:start -->unknown<!-- positioning-claim: claim.surface.unknown:end -->
+""",
+        encoding="utf-8",
+    )
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps({
+        "schema_version": "limen.positioning.public-surface-manifest.v1",
+        "surfaces": [{
+            "id": "frontdoor",
+            "path": "frontdoor.md",
+            "claim_ids": ["claim.public.safe"],
+        }],
+    }), encoding="utf-8")
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable,
+        str(QUARANTINE),
+        "--source-root",
+        str(source),
+        "--output-root",
+        str(output),
+        "--manifest",
+        str(manifest_path),
+        "--policy-report",
+        str(report_path),
+    )
+    assert quarantine.returncode == 2
+    assert "marker/manifest mismatch" in quarantine.stderr
+    assert not output.exists()
+
+
+def test_quarantine_validates_accepted_and_rejected_policy_universe_before_writing(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    policy, base_report = _policy(tmp_path / "policy", {
+        **_claim(),
+        "id": "claim.synthetic.false",
+        "source": {
+            **_claim()["source"],
+            "current_sha256": "b" * 64,
+        },
+    })
+    assert policy.returncode == 1, policy.stderr
+    cases = {
+        "missing-accepted": {key: value for key, value in base_report.items() if key != "accepted_claim_ids"},
+        "invalid-accepted": {**base_report, "accepted_claim_ids": ["NOT-PUBLIC-SAFE"]},
+        "overlap": {**base_report, "accepted_claim_ids": ["claim.synthetic.false"]},
+    }
+    for suffix, report in cases.items():
+        report_path = tmp_path / f"{suffix}-report.json"
+        report_path.write_text(json.dumps(report), encoding="utf-8")
+        output = tmp_path / f"{suffix}-quarantined"
+        quarantine = _run(
+            sys.executable,
+            str(QUARANTINE),
+            "--source-root",
+            str(source),
+            "--output-root",
+            str(output),
+            "--manifest",
+            str(FIXTURE / "public-surfaces.json"),
+            "--policy-report",
+            str(report_path),
+        )
+        assert quarantine.returncode == 2
+        assert not output.exists()
+
+
 def test_quarantine_rejects_incomplete_manifest_before_writing(tmp_path: Path):
     source = tmp_path / "generated"
     shutil.copytree(FIXTURE / "generated", source)

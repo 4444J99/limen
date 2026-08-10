@@ -52,6 +52,13 @@ Each rendered claim must be bounded by
 `<!-- positioning-claim: claim.id:end -->`. The generator writes to a fresh
 staging directory outside the source root. Every surface's bounded marker IDs
 must equal that surface's manifest `claim_ids` before any output is written.
+The policy report's `accepted_claim_ids` plus `rejected_claims[].claim_id` form
+the complete adjudicated claim universe. A manifest claim outside that universe
+is quarantined with the public-safe reason `absent_from_policy_report`; it never
+passes through unchanged. A bounded marker omitted from its own surface manifest
+is a malformed generation contract and stops the batch before any write. The
+quarantine report contains public-safe IDs and reason codes only and always
+records `publication_effect: none`.
 The generator runs W06 and promotes no files when the policy report has a
 rejected claim. This is the exact seam; neither this protocol nor W06 modifies
 the W05 ledger or its evidence files.
@@ -69,13 +76,16 @@ the W05 ledger or its evidence files.
 | `future_source` | source observation is later than the fixed evaluation time | quarantine | a real, non-future observation passes W06 |
 | `invalid_validity_window` | validity ends before the source observation | quarantine | a chronologically valid evidence window passes W06 |
 | `withdrawn_or_unapproved` | status is not `publishable` | quarantine | a new approved source row passes W06 |
+| `absent_from_policy_report` | a surface manifest names a claim absent from both accepted and rejected policy verdicts | quarantine | the claim enters the W05 export, passes W06, and the surface is regenerated |
 
 1. Create a correction record before regeneration. Do not repair public copy by hand.
 2. Run `claim-policy.py` at a fixed RFC3339 `--as-of` time. A nonzero result is a
    quarantine decision, not a release decision.
 3. Run `claim-surface-quarantine.py` against a fresh generated staging tree and
    the complete public-surface manifest. It produces quarantined copies only;
-   it does not alter the source tree or publish.
+   it does not alter the source tree or publish. Claims absent from the complete
+   policy verdict are quarantined with `absent_from_policy_report`, never copied
+   through by omission.
 4. Correct the ledger through its W05 owner, regenerate all declared public
    surfaces into a new staging tree, and require a clean policy report plus
    surface-manifest coverage before review.
