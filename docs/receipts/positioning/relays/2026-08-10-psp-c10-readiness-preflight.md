@@ -21,7 +21,7 @@ compression_level: medium
 - Branch: `codex/psp-c10-readiness-preflight`
 - Draft PR: [organvm/limen#2321](https://github.com/organvm/limen/pull/2321)
 - Tested implementation commit: `0209b46b416c0922aabe26a82a093a956cba0bad`
-- Relay carrier commit: added in the next local commit and pinned by the follow-up relay-only commit
+- Relay carrier commit: `4240ca216573aa30486362c25abf1ddde1992fac`
 - Conduct root/run/lease: none. The conduct client was unconfigured in this environment; the human
   explicitly authorized a direct-session reversible preflight. No formal leaf claim, mutation,
   transition, receipt, or closure was attempted.
@@ -150,6 +150,7 @@ Observed from live GitHub and the local exact tree through `2026-08-10T20:24:16Z
 - C10 contract: `docs/positioning/program/psp-c10-readiness/protocol.yaml`
 - Synthetic receipt: `docs/receipts/positioning/preflights/2026-08-10-psp-c10-readiness-synthetic.json`
 - Pull request: [organvm/limen#2321](https://github.com/organvm/limen/pull/2321)
+- Immutable relay carrier: [commit `4240ca216573aa30486362c25abf1ddde1992fac`](https://github.com/organvm/limen/blob/4240ca216573aa30486362c25abf1ddde1992fac/docs/receipts/positioning/relays/2026-08-10-psp-c10-readiness-preflight.md)
 
 The fresh-agent injection phrase is:
 
