@@ -156,8 +156,11 @@ test("chunked durable store migrates a legacy value that cannot be rewritten who
   const manifest = storage.values.get(durableStateStoreContract.manifest_key);
   assert.equal(manifest.schema_version, "limen.conduct_state_chunks.v1");
   assert.ok(storage.values.size > 2);
-  for (const value of storage.values.values()) {
+  for (const [key, value] of storage.values) {
     assert.ok(storedBytes(value) <= storage.limit);
+    if (key.startsWith(durableStateStoreContract.chunk_prefix)) {
+      assert.ok(storedBytes(value) <= durableStateStoreContract.chunk_bytes);
+    }
   }
   assert.deepEqual(await store.load(), state);
 });
@@ -191,7 +194,10 @@ test("chunked durable store fails closed when the selected generation is incompl
   storage.values.delete(missing);
   storage.seed(durableStateStoreContract.legacy_key, oversizedState("stale-fallback"));
 
-  await assert.rejects(store.load());
+  await assert.rejects(store.load(), (error) => {
+    assert.equal(error.message, `stored conduct state is missing chunk ${missing}`);
+    return true;
+  });
 });
 
 test("chunked durable store removes the prior selected generation after a manifest switch", async () => {
