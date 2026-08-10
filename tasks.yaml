@@ -170300,3 +170300,41 @@ tasks:
     conduct_lease_id: 'lease-847-64d0fa4cad49f4fe'
     conduct_generation: 847
   updated: '2026-08-10T00:56:37.407Z'
+- id: 'GH-organvm-limen-2283'
+  title: '[PSP-P14-W09] Prove alpha-to-omega convergence in two unchanged passes'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'lane:fleet'
+  - 'program:production-systems'
+  - 'work-packet'
+  - 'model:gpt-5.6-sol'
+  - 'effort:ultra'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2283'
+  context: 'GitHub issue organvm/limen#2283. # PSP-P14-W09 — Prove alpha-to-omega convergence in two unchanged passes **Parent:** [#2274](https://github.com/organvm/limen/issues/2274) **Execution chunk:** `PSP-C12` — Close the return loops and prove Omega **Target:** `organvm/limen` · `institutio/positioning`, `docs/positioning/program`, `docs/receipts` ## Outcome The program reaches a cross-agent fixed point with no orphan issue, stale clai'
+  predicate: 'test "$(gh issue view 2283 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2283'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2283'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:42.683Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-793ea35e46cc7cf646dde3300e48e0d5:848:compatibility'
+    conduct_run_id: 'run-793ea35e46cc7cf646dde3300e48e0d5'
+    conduct_lease_id: 'lease-848-793ea35e46cc7cf6'
+    conduct_generation: 848
+  updated: '2026-08-10T00:56:42.683Z'
