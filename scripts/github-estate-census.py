@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,6 +40,25 @@ SHIP = "scripts/ship-docs.sh"
 # `content_sha256` is computed over clock-driven fields, so it moves on every run and cannot
 # answer "did anything but the clock move?".
 VOLATILE_KEYS = frozenset({"generated_at", "content_sha256"})
+
+
+def _write_private_json(path: Path, value: object) -> None:
+    """Atomically replace a private local receipt with owner-only permissions."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            json.dump(value, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            temporary = Path(handle.name)
+        temporary.chmod(0o600)
+        temporary.replace(path)
+        path.chmod(0o600)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def _int(name: str, default: int) -> int:
@@ -147,8 +167,7 @@ def record(*, workers: int, dry_run: bool) -> int:
     report = full["source_report"]
     SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)
     SOURCE_REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-    PRIVATE_FACTS.parent.mkdir(parents=True, exist_ok=True)
-    PRIVATE_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+    _write_private_json(PRIVATE_FACTS, full)
     TRACKED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
     TRACKED_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
     summary = tracked["summary"]
@@ -434,8 +453,7 @@ def main() -> int:
     if args.write:
         SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)
         SOURCE_REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-        PRIVATE_FACTS.parent.mkdir(parents=True, exist_ok=True)
-        PRIVATE_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+        _write_private_json(PRIVATE_FACTS, full)
         TRACKED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
         TRACKED_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
     if args.json:

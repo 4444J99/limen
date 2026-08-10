@@ -191,6 +191,7 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+github-estate-census-custody-test
 flagship-evidence-test
 claim-policy-test
 check-gates
