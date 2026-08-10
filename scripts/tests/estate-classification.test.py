@@ -8,6 +8,8 @@ import importlib.util
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -35,6 +37,30 @@ class EstateClassificationTests(unittest.TestCase):
     def test_policy_is_complete(self) -> None:
         estate = MODULE.load_yaml(ROOT / "institutio/github/estate.yaml")
         self.assertEqual(MODULE.verify_policy(estate), [])
+
+    def test_private_name_guard_scans_the_entire_reviewed_diff(self) -> None:
+        private_name = "private-owner/private-repository"
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=f"diff --git a/docs/receipts/example.md b/docs/receipts/example.md\n+{private_name}\n",
+        )
+        with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+            self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [private_name])
+
+        command = run.call_args.args[0]
+        self.assertEqual(command, ["git", "diff", "--unified=0", "base-ref...HEAD"])
+
+    def test_private_name_guard_does_not_match_a_longer_public_slug(self) -> None:
+        private_name = "private-owner/private-repository"
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "diff --git a/docs/positioning/example.md b/docs/positioning/example.md\n"
+                f"+https://github.com/{private_name}-public\n"
+            ),
+        )
+        with mock.patch.object(MODULE.subprocess, "run", return_value=completed):
+            self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [])
 
 
 if __name__ == "__main__":
