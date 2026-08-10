@@ -132,7 +132,19 @@ def load_registry() -> dict:
 
 
 def git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    return subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        errors="surrogateescape",
+        check=True,
+    ).stdout
+
+
+def git_paths(*args: str) -> list[str]:
+    """Return a NUL-delimited Git path list without core.quotePath rewriting."""
+    return [path for path in git(*args).split("\0") if path]
 
 
 def resolve_merge_base(base: str | None) -> str:
@@ -175,10 +187,10 @@ def changed_set(base: str | None) -> list[str]:
     paths: set[str] = set()
     merge_base = resolve_merge_base(base)
     if merge_base:
-        paths.update(git("diff", "--name-only", merge_base, "HEAD").splitlines())
-    paths.update(git("diff", "--name-only").splitlines())
-    paths.update(git("diff", "--name-only", "--cached").splitlines())
-    paths.update(git("ls-files", "--others", "--exclude-standard").splitlines())
+        paths.update(git_paths("diff", "--name-only", "-z", merge_base, "HEAD"))
+    paths.update(git_paths("diff", "--name-only", "-z"))
+    paths.update(git_paths("diff", "--name-only", "-z", "--cached"))
+    paths.update(git_paths("ls-files", "--others", "--exclude-standard", "-z"))
     return sorted(p for p in paths if p)
 
 
@@ -249,7 +261,7 @@ def deploy_hits(registry: dict, changed: list[str]) -> list[str]:
 
 def expand_file_set(registry: dict, name: str) -> list[str]:
     spec = (registry.get("file_sets") or {})[name]
-    tracked = git("ls-files").splitlines()
+    tracked = git_paths("ls-files", "-z")
     excluded = {e.get("path") if isinstance(e, dict) else e for e in spec.get("exclude") or []}
     files: list[str] = []
     for pattern in spec.get("include") or []:

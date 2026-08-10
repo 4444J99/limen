@@ -31,6 +31,7 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setattr(module, "VAULT_DIR", vault_dir)
     monkeypatch.setattr(module, "MANIFEST", vault_dir / "manifest.jsonl")
     monkeypatch.setattr(module, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001"}))
+    module._real_tracked_files = module._tracked_files
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
     module._real_historical_artifacts = module._historical_artifacts
     monkeypatch.setattr(module, "_historical_artifacts", lambda: {})
@@ -171,6 +172,96 @@ def test_historical_baseline_is_monotonic_across_commits(vault):
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "attempt deletion")
 
     assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
+
+
+def test_historical_baseline_survives_fixed_path_replacement(vault):
+    def run_git(*args: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(vault.ROOT), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    def history_row(artifact_id: str, digest: str) -> dict:
+        return {
+            "schema": vault.SCHEMA,
+            "artifact_id": artifact_id,
+            "ciphertext": f"{artifact_id}.gpg",
+            "ciphertext_sha256": digest,
+            "ciphertext_bytes": 1,
+            "recipient_fpr": vault.FINGERPRINT,
+            "vaulted_at": "2026-08-09T00:00:00+00:00",
+        }
+
+    run_git("init", "-b", "main")
+    run_git("config", "user.email", "vault-test@example.invalid")
+    run_git("config", "user.name", "Vault Test")
+    vault.MANIFEST.write_text(json.dumps(history_row("artifact-001", "1" * 64)) + "\n", encoding="utf-8")
+    run_git("add", "institutio/vault/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "admit original custody")
+    run_git("mv", "institutio/vault/manifest.jsonl", "institutio/vault/original.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "rename fixed manifest away")
+    replacement = vault.ROOT / "replacement" / "manifest.jsonl"
+    replacement.parent.mkdir()
+    replacement.write_text(json.dumps(history_row("artifact-002", "2" * 64)) + "\n", encoding="utf-8")
+    run_git("add", "replacement/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "add replacement elsewhere")
+    run_git("mv", "replacement/manifest.jsonl", "institutio/vault/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "restore fixed manifest path")
+
+    assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
+
+
+def test_tracked_files_preserve_non_ascii_private_paths(vault):
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    private_path = vault.ROOT / ".limen-private" / "résumé.md"
+    private_path.parent.mkdir()
+    private_path.write_text("synthetic", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "add", "-f", ".limen-private/résumé.md"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    assert ".limen-private/résumé.md" in vault._real_tracked_files()
+
+
+def test_accepted_repository_private_namespaces_are_gitignored(vault, tmp_path: Path):
+    repository = tmp_path / "ignore-repository"
+    repository.mkdir()
+    shutil.copyfile(SCRIPT.parents[1] / ".gitignore", repository / ".gitignore")
+    subprocess.run(
+        ["git", "-C", str(repository), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["git", "-C", str(repository), "config", "core.excludesFile", "/dev/null"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    for prefix in vault.PRIVATE_TRACKING_PREFIXES:
+        probe = f"{prefix}vault-ignore-probe"
+        ignored = subprocess.run(
+            ["git", "-C", str(repository), "check-ignore", "--no-index", "--quiet", probe],
+            check=False,
+            timeout=60,
+        )
+        assert ignored.returncode == 0, probe
 
 
 def test_verify_rejects_changed_historical_ciphertext_metadata(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -327,6 +418,16 @@ def test_verify_rejects_symlinked_ciphertext(vault, monkeypatch: pytest.MonkeyPa
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
+def test_verify_rejects_dangling_vault_symlink(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    (vault.VAULT_DIR / "alias").symlink_to(tmp_path / "missing")
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault) | {"institutio/vault/alias"})
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
 def test_verify_rejects_manifest_ciphertext_traversal(vault, monkeypatch: pytest.MonkeyPatch):
     row = {
         "schema": vault.SCHEMA,
@@ -421,6 +522,7 @@ def test_restore_preserves_existing_directory_permissions(vault, tmp_path: Path)
     _add(vault, source)
     destination = tmp_path / "restore"
     destination.mkdir(mode=0o750)
+    destination.chmod(0o750)
 
     with pytest.raises(vault.VaultError, match="owner-only"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))

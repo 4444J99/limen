@@ -44,7 +44,7 @@ flunk() { printf 'FAIL %s\n  %s\n' "$1" "$2"; fails=$((fails + 1)); }
 make_sandbox() {
   local dir
   dir="$(mktemp -d "${TMPDIR:-/tmp}/verify-ci-hardening.XXXXXX")"
-  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/src" "$dir/vault" "$dir/web/app" "$dir/webish"
+  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/institutio/vault" "$dir/src" "$dir/web/app" "$dir/webish"
   cp "$ROOT/scripts/verify.py" "$dir/scripts/verify.py"
   cat >"$dir/institutio/governance/gates.yaml" <<'YAML'
 schema_version: 0.1
@@ -72,11 +72,11 @@ gates:
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
   deleted-custody:
     command: "touch ran-deleted-custody"
-    paths: ["vault/**", ".limen-private/**", ".agent-runtime/**", ".limen-workstream/**"]
+    paths: ["institutio/vault/**", ".limen-private/**", ".agent-runtime/**", ".limen-workstream/**"]
     owner: custody
     note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
-  touch "$dir/src/.keep" "$dir/vault/artifact.gpg" "$dir/web/app/.keep" "$dir/webish/.keep"
+  touch "$dir/src/.keep" "$dir/institutio/vault/artifact.gpg" "$dir/web/app/.keep" "$dir/webish/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
@@ -118,18 +118,29 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base HEAD 2>&1)" \
 # ── 4: deleting every custody file still selects its scoped gate ──────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
-rm "$sb/vault/artifact.gpg"
-git -C "$sb" -c user.email=t@t -c user.name=t add -u vault/artifact.gpg
+rm "$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add -u institutio/vault/artifact.gpg
 git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete custody"
-out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
-  || flunk deleted-path-selects-gate "deleted-path run exited non-zero: $out"
-[[ -f "$sb/ran-deleted-custody" ]] \
-  && pass deleted-path-selects-gate \
-  || flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
+out_file="$sb/verify.out"
+if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+then
+  :
+else
+  out="$(<"$out_file")"
+  flunk deleted-path-selects-gate "deleted-path run exited non-zero: $out"
+fi
+if [[ -f "$sb/ran-deleted-custody" ]]
+then
+  pass deleted-path-selects-gate
+else
+  out="$(<"$out_file")"
+  flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
+fi
 
 # ── 4b: every private namespace selects the custody gate ─────────────────────
 for private_path in \
   ".limen-private/probe" \
+  ".limen-private/résumé.md" \
   ".agent-runtime/probe" \
   ".limen-workstream/probe"
 do
@@ -139,11 +150,20 @@ do
   printf 'private\n' >"$sb/$private_path"
   git -C "$sb" -c user.email=t@t -c user.name=t add -f "$private_path"
   git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add private namespace"
-  out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
-    || flunk private-namespace-selects-gate "private namespace run exited non-zero: $out"
-  [[ -f "$sb/ran-deleted-custody" ]] \
-    && pass "private-namespace-selects-gate:$private_path" \
-    || flunk private-namespace-selects-gate "private namespace did not select custody gate: $private_path"
+  out_file="$sb/verify.out"
+  if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+  then
+    :
+  else
+    out="$(<"$out_file")"
+    flunk private-namespace-selects-gate "private namespace run exited non-zero: $out"
+  fi
+  if [[ -f "$sb/ran-deleted-custody" ]]
+  then
+    pass "private-namespace-selects-gate:$private_path"
+  else
+    flunk private-namespace-selects-gate "private namespace did not select custody gate: $private_path"
+  fi
 done
 
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────

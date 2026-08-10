@@ -88,6 +88,7 @@ def _run_command(args: list[str], *, env: dict[str, str] | None = None) -> subpr
             env=env,
             capture_output=True,
             text=True,
+            errors="surrogateescape",
             timeout=COMMAND_TIMEOUT_SECONDS,
         )
     except FileNotFoundError as exc:
@@ -231,10 +232,10 @@ def _write_manifest(rows: list[dict]) -> None:
 
 
 def _tracked_files() -> set[str]:
-    run = _run_command(["git", "-C", str(ROOT), "ls-files"])
+    run = _run_command(["git", "-C", str(ROOT), "ls-files", "-z"])
     if run.returncode != 0:
         raise VaultError(f"cannot inspect git custody: {_diagnostic(run)}")
-    return set(run.stdout.splitlines())
+    return {path for path in run.stdout.split("\0") if path}
 
 
 def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
@@ -260,7 +261,9 @@ def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
 def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     """Return immutable metadata for every neutral v2 artifact admitted to custody."""
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
-    history = _run_command(["git", "-C", str(ROOT), "log", "--format=%H", "--follow", "--", manifest_relative])
+    history = _run_command(
+        ["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative]
+    )
     if history.returncode != 0:
         raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
 
@@ -641,12 +644,16 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         if current_metadata is not None and current_metadata != expected_metadata:
             failures.append(f"immutable custody metadata changed: {artifact_id}")
     for stray in VAULT_DIR.iterdir() if VAULT_DIR.exists() else []:
-        if stray.is_dir():
+        if stray.is_symlink():
+            failures.append(f"unsupported vault symlink: {stray.name}")
+        elif stray.is_dir():
             failures.append(f"unsupported vault directory: {stray.name}")
         elif stray.suffix == ".gpg" and stray.name not in seen_ciphers:
             failures.append(f"unmanifested ciphertext: {stray.name}")
         elif stray.is_file() and stray != MANIFEST and stray.suffix != ".gpg":
             failures.append(f"unsupported vault file: {stray.name}")
+        elif not stray.is_file():
+            failures.append(f"unsupported vault entry: {stray.name}")
     if failures:
         print("FAIL: private-vault custody:")
         for failure in failures:
