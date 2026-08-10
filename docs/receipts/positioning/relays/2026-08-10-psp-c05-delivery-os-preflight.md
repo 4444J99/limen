@@ -24,12 +24,12 @@ compression_level: high
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `2468894102b7b5c434cebde93c909eec50e833e7` |
-| Exact remote branch head | `2468894102b7b5c434cebde93c909eec50e833e7` |
+| Exact implementation head | `4ae8e81665e35e6a5d403a3e13935021ce6544ec` |
+| Exact remote branch head | `4ae8e81665e35e6a5d403a3e13935021ce6544ec` |
 | C03 dependency head consumed | PR #2312 at `b5bc01585a10615e85e1ef5b31a2356c24fb9bc9`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
 | Working tree | Clean at checkpoint |
 | Acceptance condition | PREPARED/PREFLIGHT only; formal P11 acceptance is unmet while PSP-C03 and registry admission remain open |
-| Underlying predicate | `/opt/homebrew/bin/bash scripts/verify-scoped.sh` passed at the exact implementation head: lint, typecheck, 15 tests, build, scoped dispatch |
+| Underlying predicate | Lockfile sync restored clean installation; `/opt/homebrew/bin/bash scripts/verify-scoped.sh` passed at the exact implementation tree: lint, typecheck, 15 tests, build, scoped dispatch |
 | Receipt verifier | Formal `--verify-work` predicates intentionally not run |
 | Phase exit proof | `python3 scripts/positioning-program.py --phase-proof PSP-P11` intentionally not run |
 | External effects | None; no client data, send, terms, account action, publication, spend, DNS, or production effect |
@@ -69,7 +69,7 @@ compression_level: high
   implementation bodies may enter Limen.
 - Do not touch `tasks.yaml`, close P11 issues, merge either draft, publish proof, send terms, or grant
   access before the formal dependency and authority predicates pass.
-- Rollback: revert target commit `2468894102b7b5c434cebde93c909eec50e833e7` or close target draft
+- Rollback: revert target commits through `4ae8e81665e35e6a5d403a3e13935021ce6544ec` or close target draft
   PR #135; all checked-in delivery fixtures are synthetic.
 
 ## References
