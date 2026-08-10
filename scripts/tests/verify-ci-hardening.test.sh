@@ -191,6 +191,38 @@ do
   fi
 done
 
+# ── 4c: add-then-delete private content is rejected without naming it ─────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/sensitive-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/sensitive-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient private content"
+git -C "$sb" rm -q .limen-private/sensitive-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient private content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-private-history "exit 0 despite committed transient private content" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "sensitive-probe" <<<"$out" \
+         && pass transient-private-history \
+         || flunk transient-private-history "missing neutral refusal or leaked path: $out"; }
+
+# ── 4d: historical-only custody names select the gate without log leakage ─────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'ciphertext\n' >"$sb/institutio/vault/sensitive-probe.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/sensitive-probe.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient custody path"
+git -C "$sb" rm -q institutio/vault/sensitive-probe.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient custody path"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk historical-custody-redaction "historical custody run exited non-zero: $out"
+[[ -f "$sb/ran-deleted-custody" ]] \
+  && grep -q "Historical-only paths (1): \[redacted" <<<"$out" \
+  && ! grep -q "sensitive-probe" <<<"$out" \
+  && pass historical-custody-redaction \
+  || flunk historical-custody-redaction "gate missing or historical path leaked: $out"
+
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"

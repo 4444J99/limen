@@ -132,6 +132,15 @@ def test_add_requires_apply_before_any_write(vault, tmp_path: Path):
     assert list(vault.VAULT_DIR.iterdir()) == []
 
 
+def test_add_rejects_unattested_id_before_any_write(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+
+    with pytest.raises(vault.VaultError, match="recovery admission proof"):
+        _add(vault, source, "artifact-002")
+    assert list(vault.VAULT_DIR.iterdir()) == []
+
+
 @pytest.mark.parametrize("artifact_id", ["../escape", "nested/path", "/absolute", "Uppercase", "descriptive-name"])
 def test_add_rejects_traversal_and_non_neutral_ids(vault, tmp_path: Path, artifact_id: str):
     source = tmp_path / "private.md"
@@ -626,7 +635,9 @@ def test_verify_rejects_non_bootstrap_artifact_without_recovery_proof(
 ):
     source = tmp_path / "private.md"
     source.write_text("synthetic", encoding="utf-8")
-    _add(vault, source, "artifact-002")
+    with monkeypatch.context() as allow_synthetic_admission:
+        allow_synthetic_admission.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001", "artifact-002"}))
+        _add(vault, source, "artifact-002")
     monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault, "artifact-002"))
 
     assert vault.cmd_verify(SimpleNamespace()) == 1
@@ -839,11 +850,12 @@ def test_restore_refuses_dangling_target(vault, tmp_path: Path):
     assert final_path.is_symlink()
 
 
-def test_restore_all_preflights_every_target_before_publish(vault, tmp_path: Path):
+def test_restore_all_preflights_every_target_before_publish(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     first = tmp_path / "first.md"
     first.write_text("first", encoding="utf-8")
     second = tmp_path / "second.md"
     second.write_text("second", encoding="utf-8")
+    monkeypatch.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001", "artifact-002"}))
     _add(vault, first, "artifact-001")
     _add(vault, second, "artifact-002")
     destination = tmp_path / "restore"
@@ -858,10 +870,11 @@ def test_restore_all_preflights_every_target_before_publish(vault, tmp_path: Pat
     assert existing.read_text(encoding="utf-8") == "existing"
 
 
-def test_restore_bounds_output_name(vault, tmp_path: Path):
+def test_restore_bounds_output_name(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     source = tmp_path / ("n" * 240)
     source.write_text("secret", encoding="utf-8")
     artifact_id = "artifact-" + "1" * 55
+    monkeypatch.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({artifact_id}))
     _add(vault, source, artifact_id)
     destination = tmp_path / "restore"
 

@@ -6,8 +6,8 @@ this resolver derives behavior from it. Scoped verification and the whole matrix
 being two scripts and become two selections over the same data:
 
   verify.py --changed [--base REF]   the scoped push gate: compute the changed set
-                                     (merge-base vs origin/main + staged + unstaged +
-                                     untracked), run exactly the implicated gates —
+                                     (every commit after the merge-base + staged +
+                                     unstaged + untracked), run exactly the implicated gates —
                                      each independent cheap/heavy tier runs as one
                                      parallel wave, then the explicitly serialized tail
                                      runs under the machine-wide flock verify-whole.sh
@@ -72,6 +72,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
+PRIVATE_CUSTODY_ROOTS = (".limen-private", ".agent-runtime", ".limen-workstream")
 
 
 class HostAdmissionFailure(RuntimeError):
@@ -178,11 +179,67 @@ def integration_base(base: str | None) -> str:
     return supplied
 
 
-def changed_set(base: str | None) -> list[str]:
-    """Branch diff vs merge-base plus staged, unstaged, and untracked paths.
+def committed_path_changes(merge_base: str) -> list[tuple[str, str]]:
+    """Return every status/path pair introduced by commits after ``merge_base``.
 
-    Deleted paths stay in the set so removing every file matched by a custody or
-    security gate still selects that gate in PR and merge-group verification.
+    Endpoint diffs omit a path added in one PR commit and deleted in another. The
+    per-commit inventory keeps those paths visible to gate selection. Rename
+    detection stays disabled so both custody source and destination remain present.
+    """
+    if not merge_base:
+        return []
+    fields = [
+        field
+        for field in git(
+            "log",
+            "-m",
+            "--format=",
+            "--name-status",
+            "--no-renames",
+            "-z",
+            f"{merge_base}..HEAD",
+        ).split("\0")
+        if field
+    ]
+    if len(fields) % 2:
+        raise RuntimeError("git returned a malformed committed path inventory")
+    return list(zip(fields[::2], fields[1::2], strict=True))
+
+
+def private_history_leak(base: str | None) -> bool:
+    """Detect transient committed private-namespace content without naming it."""
+    merge_base = resolve_merge_base(base)
+    if not merge_base:
+        return False
+    tracked = set(git_paths("ls-files", "-z"))
+    return any(
+        status != "D"
+        and path not in tracked
+        and any(path == root or path.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS)
+        for status, path in committed_path_changes(merge_base)
+    )
+
+
+def changed_set(base: str | None) -> list[str]:
+    """Per-commit branch paths plus staged, unstaged, and untracked paths.
+
+    Per-commit paths keep add-then-delete changes visible. Deleted paths stay in
+    the set so removing every file matched by a custody or security gate still
+    selects that gate in PR and merge-group verification.
+    """
+    paths: set[str] = set()
+    merge_base = resolve_merge_base(base)
+    if merge_base:
+        paths.update(path for _status, path in committed_path_changes(merge_base))
+    paths.update(endpoint_changed_set(base))
+    return sorted(p for p in paths if p)
+
+
+def endpoint_changed_set(base: str | None) -> list[str]:
+    """Return only paths visible in the final branch diff or local checkout.
+
+    Historical-only paths are intentionally excluded from display because a
+    transient private filename must not be copied into public CI logs.
     """
     paths: set[str] = set()
     merge_base = resolve_merge_base(base)
@@ -667,6 +724,13 @@ def cmd_changed(
             file=sys.stderr,
         )
         return 1
+    if private_history_leak(base):
+        print(
+            "private-history: a committed private namespace entry is absent from HEAD; "
+            "refusing to expose or certify transient private content.",
+            file=sys.stderr,
+        )
+        return 1
     changed = changed_set(base)
     if not changed:
         if require_base:
@@ -678,9 +742,13 @@ def cmd_changed(
             return 1
         print("No changes vs the base and no local modifications — nothing to verify.")
         return 0
-    print(f"Changed paths ({len(changed)}):")
-    for p in changed:
+    display_paths = endpoint_changed_set(base)
+    hidden_history_count = len(set(changed) - set(display_paths))
+    print(f"Changed paths ({len(display_paths)}):")
+    for p in display_paths:
         print(f"  {p}")
+    if hidden_history_count:
+        print(f"Historical-only paths ({hidden_history_count}): [redacted; retained internally for gate selection]")
 
     if require_base and not integration and deploy_hits(registry, changed):
         if os.environ.get("LIMEN_VERIFY_NO_DEPLOY_ESCALATION") == "1":

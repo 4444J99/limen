@@ -668,6 +668,8 @@ def cmd_add(args: argparse.Namespace) -> int:
     if not getattr(args, "apply", False):
         raise VaultError("add is mutating; rerun with --apply")
     artifact_id = _safe_artifact_id(args.artifact_id)
+    if artifact_id not in BOOTSTRAP_ARTIFACT_IDS:
+        raise VaultError("artifact id has no public recovery admission proof")
     source = Path(args.file).expanduser().resolve()
     if not source.is_file():
         raise VaultError("source is not a file")
