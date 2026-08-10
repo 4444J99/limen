@@ -170857,3 +170857,41 @@ tasks:
     conduct_lease_id: 'lease-872-b9b02d049478d2fa'
     conduct_generation: 872
   updated: '2026-08-10T04:31:05.751Z'
+- id: 'ORG-representation-organ-firstslice-0810'
+  title: 'Build the first working vertical slice of the representation organ'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'any'
+  priority: 'high'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'organ-firstslice'
+  - 'pillar:representation'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  urls: []
+  context: 'In organvm/limen organs/representation/, deliver one real end-to-end artifact the organ produces: organs/representation/ substrate already authored (CHARTER.md, KERNEL.md, representation_substrate.py, validate-representation.py, records/packets/opportunities/approvals) — this ladder entry is the organ''s census admission, which derives its workstream channel. A tangible proof the institution works for ONE real case. One PR; tested where it is code; drafts only for anything outbound (his hand on send/sign). CONSTRAINT: The organ predates its ladder entry (authored under the studio/authority program; first proofs Christopher + ET4L). Admitted to the ladder 2026-07-24 so the `representation` workstream channel derives (the job-getting/professional-presence lane) — channels derive from pillars, so an organ absent from the ladder has no lane. Working name pending an INDEX-NOMINVM pass.. [organ-backlog 2026-08-10: rank 18, maturity 25% stage scaffold — convert idle fleet capacity into institutional weight (VLTIMA).]'
+  predicate: 'test "$(gh pr list --repo organvm/limen --state merged --search ''ORG-representation-organ-firstslice-0810 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:pull-request:ORG-representation-organ-firstslice-0810'
+  origin: 'agent_recommendation'
+  horizon: 'future'
+  value_case: 'Increase durable institutional maturity for representation'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-10'
+  dispatch_log:
+  - timestamp: '2026-08-10T04:31:11.566Z'
+    agent: 'codex'
+    session_id: 'generate-organ-backlog-generate-organ-backlog-675fff6bc45c'
+    logical_agent: 'generate-organ-backlog'
+    logical_session_id: 'generate-organ-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0e07704d0980b9df799cb8dc334b7371:873:compatibility'
+    conduct_run_id: 'run-0e07704d0980b9df799cb8dc334b7371'
+    conduct_lease_id: 'lease-873-0e07704d0980b9df'
+    conduct_generation: 873
+  updated: '2026-08-10T04:31:11.566Z'
