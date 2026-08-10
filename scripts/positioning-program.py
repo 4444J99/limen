@@ -1067,12 +1067,17 @@ def fetch_program_issues(graph: dict[str, Any], *, label_may_be_missing: bool = 
 
 
 def recover_mapped_issues(
-    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    remote: dict[str, dict[str, Any]],
+    *,
+    object_ids: Iterable[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Recover label or marker drift by exact mapped number without creating duplicates."""
     repository = graph["program"]["repository"]
     recovered = dict(remote)
-    for object_id in graph["ordered_ids"]:
+    candidates = graph["ordered_ids"] if object_ids is None else object_ids
+    for object_id in candidates:
         if object_id in recovered:
             continue
         map_row = _issue_row(mapping, object_id)
@@ -1501,7 +1506,12 @@ def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -
         raise ProgramError(f"unknown phase id: {phase_id}")
     phase_proof_command(phase_id, graph)
     validate_map(mapping, graph, complete=True)
-    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    initial_remote = fetch_program_issues(graph)
+    phase_object_ids = [
+        phase_id,
+        *(packet["id"] for packet in graph["phase_by_id"][phase_id]["work"]),
+    ]
+    remote = recover_mapped_issues(graph, mapping, initial_remote, object_ids=phase_object_ids)
     _validate_phase_projection(phase_id, graph, mapping, remote)
     phase = graph["phase_by_id"][phase_id]
     child_receipts: dict[str, dict[str, Any]] = {}

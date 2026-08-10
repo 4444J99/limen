@@ -412,6 +412,34 @@ def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(m
         MODULE.phase_proof("PSP-P00", graph, mapping)
 
 
+def test_phase_proof_recovers_only_missing_phase_objects(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
+    recovered = remote.pop("PSP-P00-W01")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    requested: list[str] = []
+
+    def recover(repository, path, *, allow_failure=False):
+        del repository, allow_failure
+        object_id = path.rsplit("/", 1)[-1]
+        requested.append(object_id)
+        if object_id != str(mapping["issues"]["PSP-P00-W01"]["number"]):
+            raise AssertionError(f"unrelated recovery requested: {object_id}")
+        return recovered
+
+    monkeypatch.setattr(MODULE, "_api", recover)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    result = MODULE.phase_proof("PSP-P00", graph, mapping)
+
+    assert result["status"] == "pass"
+    assert requested == [str(mapping["issues"]["PSP-P00-W01"]["number"])]
+
+
 def test_phase_proof_rejects_stale_child_receipt(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
