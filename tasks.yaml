@@ -13,14 +13,14 @@ portal:
       agy: 100
       claude: 100
     track:
-      date: '2026-07-27'
-      spent: 4
+      date: '2026-08-10'
+      spent: 1
       per_agent:
-        jules: 4
+        jules: 0
         gemini: 0
         codex: 0
         opencode: 0
-        agy: 0
+        agy: 1
         claude: 0
       per_agent_reset:
         jules: '2026-07-21T01:53:14.706904+00:00'
@@ -146883,7 +146883,7 @@ tasks:
   target_agent: 'agy'
   priority: 'high'
   budget_cost: 1
-  status: 'open'
+  status: 'dispatched'
   labels:
   - 'cifix'
   - 'self-heal'
@@ -146895,7 +146895,7 @@ tasks:
   receipt_target: 'https://github.com/organvm/hospes/pull/8'
   depends_on: []
   created: '2026-07-16'
-  updated: '2026-08-10T03:46:46.632Z'
+  updated: '2026-08-10T03:59:29.695Z'
   dispatch_log:
   - timestamp: '2026-07-19T01:23:46.482693Z'
     agent: 'gemini'
@@ -146918,6 +146918,15 @@ tasks:
     conduct_run_id: 'run-dd89c8ed73a7e0a0e4683d551edd3c28'
     conduct_lease_id: 'lease-858-dd89c8ed73a7e0a0'
     conduct_generation: 858
+  - timestamp: '2026-08-10T03:59:29.695Z'
+    agent: 'agy'
+    session_id: 'run-645535be309f49211266dffeffddd6b0'
+    status: 'dispatched'
+    output: 'Conduct broker reserved run-645535be309f49211266dffeffddd6b0 for agy'
+    conduct_event_id: 'conduct:run-645535be309f49211266dffeffddd6b0:859:reserved'
+    conduct_run_id: 'run-645535be309f49211266dffeffddd6b0'
+    conduct_lease_id: 'lease-859-645535be309f4921'
+    conduct_generation: 859
   origin: 'system_debt'
   horizon: 'present'
   value_case: 'Board-debt conversion on the value tier: fix failing CI on organvm/hospes#8. Landing this closes HEAL-cifix-organvm-hospes-8 on organvm/hospes with a merged-PR receipt instead of leaving it structurally undispatchable.'
