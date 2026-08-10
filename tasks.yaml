@@ -170781,3 +170781,41 @@ tasks:
     conduct_lease_id: 'lease-870-aebcce43478f4118'
     conduct_generation: 870
   updated: '2026-08-10T04:30:54.739Z'
+- id: 'ORG-observation-organ-charter-0810'
+  title: 'Charter the observation organ as an institution rivaling a growth/DevRel + competitive-intelligence team (a launch-analytics desk fused with a positioning studio)'
+  repo: 'organvm/limen'
+  type: 'content'
+  target_agent: 'any'
+  priority: 'critical'
+  budget_cost: 2
+  status: 'open'
+  labels:
+  - 'organ-charter'
+  - 'pillar:observation'
+  - 'organ'
+  - 'institution'
+  - 'vltima'
+  - 'generated'
+  urls: []
+  context: 'In organvm/limen organs/observation/ + cli/src/limen/observatory/, write CHARTER.md: the org-chart of AI roles (the ''virtual firm/team''), the workflows it runs, its inputs/outputs, and exactly how it gives one person the institutional weight of a growth/DevRel + competitive-intelligence team (a launch-analytics desk fused with a positioning studio). Concrete and buildable. No invented capabilities. CONSTRAINT: Convergence, not greenfield: reuses GITVS gh-helpers, the JSONL keeper discipline, value-repos/revenue-ladder/estate-ledger as ground truth, face-ownership.json/VVLTVS as the internal-legibility sensor. The imported ChatGPT spec''s greenfield stack (organvm/observatory repo + DuckDB + Astro + Playwright) is overruled by codebase idiom (in-repo organ + JSONL + Next.js); Playwright website capture is the one recorded phase-3 residual. Working handle OBSERVATORY — final name via nomenclator (INDEX·NOMINVM). VERIFIED 2026-07-12: full vertical slice complete — 17 engine modules, 60 hermetic tests (44 scaffold + 16 capture/synthesis/interpret), doctor --offline green, ruff clean, beat wiring wired (observatory-beat.py + sensors.yaml + parameters.yaml + L-OBSERVATORY-ACTIVATE lever), CLI integrated as `limen observatory` subcommand. Ships DARK behind LIMEN_OBSERVATORY=0. Next step: arm L-OBSERVATORY-ACTIVATE and fire the first live beat.. [organ-backlog 2026-08-10: rank 15, maturity 28% stage scaffold — convert idle fleet capacity into institutional weight (VLTIMA).]'
+  predicate: 'test "$(gh pr list --repo organvm/limen --state merged --search ''ORG-observation-organ-charter-0810 in:body'' --json number --jq length)" -gt 0'
+  receipt_target: 'github:organvm/limen:pull-request:ORG-observation-organ-charter-0810'
+  origin: 'agent_recommendation'
+  horizon: 'future'
+  value_case: 'Increase durable institutional maturity for observation'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-10'
+  dispatch_log:
+  - timestamp: '2026-08-10T04:31:00.333Z'
+    agent: 'codex'
+    session_id: 'generate-organ-backlog-generate-organ-backlog-675fff6bc45c'
+    logical_agent: 'generate-organ-backlog'
+    logical_session_id: 'generate-organ-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-80872c3a5cb526dcae6538a1934ac51b:871:compatibility'
+    conduct_run_id: 'run-80872c3a5cb526dcae6538a1934ac51b'
+    conduct_lease_id: 'lease-871-80872c3a5cb526dc'
+    conduct_generation: 871
+  updated: '2026-08-10T04:31:00.333Z'
