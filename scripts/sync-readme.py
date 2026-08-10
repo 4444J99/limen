@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _profile as P  # noqa: E402
+from positioning_claims import assert_public_claims  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BIG_NUM = re.compile(r"\b\d{1,3}(?:,\d{3})+\b|\b\d{4,}\b")
@@ -162,8 +163,7 @@ def render_readme(
         if public_set and not is_url_target and repo not in public_set:
             continue
         name = seed.get("display_name", repo.split("/")[-1])
-        what = str(seed.get("frontdoor_summary") or seed.get("what_it_is", "")).strip()
-        solves = str(seed.get("expensive_problem", "")).strip()
+        what = str(seed.get("frontdoor_summary", "")).strip()
         product_state = positioning._product_state(seed)
         proof = [item for item in positioning._proof_items(seed) if item[1] == "verified"]
         signals = [f"{status}: {claim}" for claim, status in proof]
@@ -173,28 +173,13 @@ def render_readme(
             L.append("")
         L.append(f"**Current state:** {product_state}")
         L.append("")
-        if solves:
-            # the buyer-recognition line — owned copy from the seed, not invented
-            L.append(f"**Solves —** {solves}")
-            L.append("")
         if signals:
             L.append(" · ".join(f"`{s}`" for s in signals))
             L.append("")
-        # per-system doors (the contextual CTA each system had before the provability pass dropped it)
-        ctas = []
-        if seed.get("cta_client"):
-            ctas.append(_door_link(str(seed["cta_client"]).strip(), contact, f"deploy:{repo}"))
-        if seed.get("cta_recruiter"):
-            ctas.append(_door_link(str(seed["cta_recruiter"]).strip(), contact, f"hire:{repo}"))
-        if ctas:
-            L.append(
-                "→ "
-                + " &nbsp;·&nbsp; ".join(ctas)
-                + f" &nbsp;·&nbsp; [Evidence and details]({positioning._details_url(repo, seed)})"
-            )
-            L.append("")
+        L.append(f"→ [Inspect the documented current state]({positioning._details_url(repo, seed)})")
+        L.append("")
         if not is_url_target:
-            _register_repo_numbers(what + " " + solves + " " + " ".join(signals), repo, manifest)
+            _register_repo_numbers(what + " " + " ".join(signals), repo, manifest)
 
     # --- adapted from the builders I follow ---
     if digest and digest.get("techniques"):
@@ -292,6 +277,7 @@ def main(argv: list[str] | None = None) -> int:
         public_set = set(json.loads(public_index.read_text(encoding="utf-8")).get("public_repos", []))
 
     readme = render_readme(manifest, seeds, digest, value_order, public_set, gp)
+    assert_public_claims(readme, "PROFILE README")
     (out / "README.md").write_text(readme, encoding="utf-8")
     # rewrite the manifest with the repo-attested numbers we just emitted
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")

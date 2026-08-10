@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -36,7 +39,7 @@ def test_profile_renderer_emits_maturity_and_verified_proof_without_raw_dicts():
         "repos": {
             repo: {
                 "display_name": "Example System",
-                "what_it_is": "An inspectable system.",
+                "frontdoor_summary": "An inspectable system.",
                 "product_state": "Working prototype; deployment unvalidated.",
                 "proof_signals": [
                     {"claim": "four collectors implemented", "status": "verified"},
@@ -54,4 +57,46 @@ def test_profile_renderer_emits_maturity_and_verified_proof_without_raw_dicts():
     assert "3,399 tests" not in rendered
     assert "{'claim':" not in rendered
     assert "Architected and directed by one person" in rendered
+    assert "Solves —" not in rendered
     assert "https://github.com/organvm/limen/blob/main/docs/positioning/example.md" in rendered
+
+
+def test_profile_generator_refuses_forbidden_overclaim(tmp_path: Path):
+    out = tmp_path / "out"
+    assets = out / "assets"
+    assets.mkdir(parents=True)
+    (assets / "stats-manifest.json").write_text(json.dumps({"display_name": "Example", "stats": {}}))
+    seeds = tmp_path / "seeds.json"
+    seeds.write_text(
+        json.dumps(
+            {
+                "repos": {
+                    "organvm/example": {
+                        "display_name": "Example",
+                        "product_state": "Top 1% platform with paying customers.",
+                    }
+                }
+            }
+        )
+    )
+    value_repos = tmp_path / "value-repos.json"
+    value_repos.write_text(json.dumps({"repos": ["organvm/example"]}))
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SYNC_README),
+            "--out",
+            str(out),
+            "--seeds",
+            str(seeds),
+            "--value-repos",
+            str(value_repos),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "unreproducible-ranking" in result.stderr
+    assert not (out / "README.md").exists()
