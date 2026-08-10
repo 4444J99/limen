@@ -170011,3 +170011,39 @@ tasks:
     conduct_lease_id: 'lease-839-eb56baf58f1cd8c2'
     conduct_generation: 839
   updated: '2026-08-10T00:55:53.451Z'
+- id: 'GH-organvm-hospes-19'
+  title: '[P1-1] Guest Suggestion: hospes suggest-guests → auto-suggest C2 alumni from Unlicensed Therapy archive'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:1'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/19'
+  context: 'GitHub issue organvm/hospes#19. ## Phase 1: Ari''s Workflow — Leverage His Network (Week 1-2) ### Problem Ari asks: "Who else from Unlicensed Therapy should I ask?" Current answer: manually curate CSV. ### Solution Add `hospes suggest-guests` CLI command that reads `data/unlicensed-therapy/archive.json` and outputs actionable CSV. ### Acceptance Criteria - [ ] `hospes suggest-guests --min-gap-years 2 --max-social-cost 3` → CSV to'
+  predicate: 'test "$(gh issue view 19 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/19'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#19'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:58.696Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-0aacaa852f9ab7e5521afdeaa44b0638:840:compatibility'
+    conduct_run_id: 'run-0aacaa852f9ab7e5521afdeaa44b0638'
+    conduct_lease_id: 'lease-840-0aacaa852f9ab7e5'
+    conduct_generation: 840
+  updated: '2026-08-10T00:55:58.696Z'
