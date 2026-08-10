@@ -169975,3 +169975,39 @@ tasks:
     conduct_lease_id: 'lease-838-224c4315dcf2bbff'
     conduct_generation: 838
   updated: '2026-08-10T00:55:48.016Z'
+- id: 'GH-organvm-hospes-20'
+  title: '[P1-2] Contact Roster per Guest: publicist, manager, agent, direct in candidate schema'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:1'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/20'
+  context: 'GitHub issue organvm/hospes#20. ## Phase 1: Ari''s Workflow — Leverage His Network (Week 1-2) ### Problem No structured contact info per guest. Ari knows Theo''s publicist, Mark''s manager — nowhere to store this. ### Solution Add `contact_roster` field to candidate schema + storage + dashboard UI. ### Acceptance Criteria - [ ] `spec/candidate.schema.json` — add `contact_roster` (object with keys: `publicist`, `manager`, `agent`, `'
+  predicate: 'test "$(gh issue view 20 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/20'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#20'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:53.451Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-eb56baf58f1cd8c2ae47da8dca4e0b8b:839:compatibility'
+    conduct_run_id: 'run-eb56baf58f1cd8c2ae47da8dca4e0b8b'
+    conduct_lease_id: 'lease-839-eb56baf58f1cd8c2'
+    conduct_generation: 839
+  updated: '2026-08-10T00:55:53.451Z'
