@@ -473,7 +473,7 @@ gates:
     note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
   flagship-evidence-test:
     command: "python3 scripts/tests/flagship-evidence.test.py"
-    paths: ["docs/positioning/evidence", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
+    paths: ["docs/positioning/evidence/**", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
     note: "PSP-P02-W04/W05 evidence packets remain public-safe, match the selected W03 triad, keep W03/W04/W05 formally dependency-blocked, and make each material numeric statement exact and reproducible. Live source checks are an explicit focused preflight because they require GitHub and HTTP access."
   operator-gates:
