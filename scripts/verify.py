@@ -180,10 +180,12 @@ def integration_base(base: str | None) -> str:
 
 
 def committed_path_changes(merge_base: str) -> list[tuple[str, str]]:
-    """Return every status/path pair introduced by commits after ``merge_base``.
+    """Return PR-side non-merge status/path pairs after ``merge_base``.
 
     Endpoint diffs omit a path added in one PR commit and deleted in another. The
-    per-commit inventory keeps those paths visible to gate selection. Rename
+    non-merge inventory keeps those paths visible to gate selection, while the
+    endpoint diff covers merge results. Merge commits are not expanded against
+    every parent because that misclassifies base-only paths as PR changes. Rename
     detection stays disabled so both custody source and destination remain present.
     """
     if not merge_base:
@@ -192,7 +194,7 @@ def committed_path_changes(merge_base: str) -> list[tuple[str, str]]:
         field
         for field in git(
             "log",
-            "-m",
+            "--no-merges",
             "--format=",
             "--name-status",
             "--no-renames",
@@ -216,6 +218,23 @@ def private_history_leak(base: str | None) -> bool:
         status != "D"
         and path not in tracked
         and any(path == root or path.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS)
+        for status, path in committed_path_changes(merge_base)
+    )
+
+
+def _is_public_custody_path(path: str) -> bool:
+    return path == "docs/keys/anthony-padavano-gpg.asc" or path.startswith("institutio/vault/")
+
+
+def transient_custody_reversion(base: str | None) -> bool:
+    """Detect restored HEAD custody blobs that had unvalidated PR versions."""
+    merge_base = resolve_merge_base(base)
+    if not merge_base:
+        return False
+    tracked = set(git_paths("ls-files", "-z"))
+    endpoint = set(git_paths("diff", "--name-only", "--no-renames", "-z", merge_base, "HEAD"))
+    return any(
+        status != "D" and path in tracked and path not in endpoint and _is_public_custody_path(path)
         for status, path in committed_path_changes(merge_base)
     )
 
@@ -728,6 +747,13 @@ def cmd_changed(
         print(
             "private-history: a committed private namespace entry is absent from HEAD; "
             "refusing to expose or certify transient private content.",
+            file=sys.stderr,
+        )
+        return 1
+    if transient_custody_reversion(base):
+        print(
+            "custody-history: a tracked custody file changed transiently and was restored in HEAD; "
+            "refusing to certify an unvalidated intermediate version.",
             file=sys.stderr,
         )
         return 1

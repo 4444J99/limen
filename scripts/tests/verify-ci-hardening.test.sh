@@ -223,6 +223,37 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   && pass historical-custody-redaction \
   || flunk historical-custody-redaction "gate missing or historical path leaked: $out"
 
+# ── 4e: reverted versions of tracked custody files fail without path leakage ──
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient bytes\n' >>"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "mutate tracked custody"
+git -C "$sb" restore --source "$base_sha" -- institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "restore tracked custody"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-custody-reversion "exit 0 despite an unvalidated intermediate custody version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "artifact.gpg" <<<"$out" \
+         && pass transient-custody-reversion \
+         || flunk transient-custody-reversion "missing neutral refusal or leaked path: $out"; }
+
+# ── 4f: synthetic merge inventory excludes paths changed only on the base ──────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false merge -q --no-ff feature -m "synthetic PR merge"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk merge-base-path-exclusion "synthetic merge run exited non-zero: $out"
+[[ -f "$sb/ran-runs-here" ]] \
+  && ! grep -q "base-only" <<<"$out" \
+  && pass merge-base-path-exclusion \
+  || flunk merge-base-path-exclusion "feature gate missing or base-only path leaked into scope: $out"
+
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
