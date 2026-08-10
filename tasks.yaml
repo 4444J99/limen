@@ -169759,3 +169759,39 @@ tasks:
     conduct_lease_id: 'lease-832-7d076032c579b05a'
     conduct_generation: 832
   updated: '2026-08-10T00:55:16.663Z'
+- id: 'GH-organvm-hospes-26'
+  title: '[P2-4] Rights / Clearance Gate: music, clip, IP checklist per episode'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:2'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/26'
+  context: 'GitHub issue organvm/hospes#26. ## Phase 2: Productization — Sell to Other Podcasters (Week 2-4) ### Problem No clearance workflow. Music, clips, IP issues block publishing silently. ### Solution Clearance schema + Workbench "Clearance" tab + publish gate. ### Acceptance Criteria - [ ] `spec/clearance.schema.json` (new): `clearance_id`, `type` (music/clip/IP/footage/guest_likeness), `status` (pending/cleared/denied), `cost`, `ri'
+  predicate: 'test "$(gh issue view 26 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/26'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#26'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:22.021Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-178705cbb7cab75ea185af93b9a2a5dc:833:compatibility'
+    conduct_run_id: 'run-178705cbb7cab75ea185af93b9a2a5dc'
+    conduct_lease_id: 'lease-833-178705cbb7cab75e'
+    conduct_generation: 833
+  updated: '2026-08-10T00:55:22.021Z'
