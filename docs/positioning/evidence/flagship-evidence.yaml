@@ -30,6 +30,82 @@ withheld_claim_classes:
   - percentile, ranking, and throughput-superiority claims
   - private implementation, source-custody, or repository claims
 
+w08_research_import:
+  source_pr: https://github.com/organvm/limen/pull/2314
+  source_head: 96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa
+  source_path: docs/positioning/program/research-adjudication.json
+  claim_count: 13
+  preservation_rule: >-
+    Keep measurement, inference, implication, and prominence independent. Citation sets remain
+    normative in the immutable source artifact; this W05 projection imports the resulting
+    publication contract without treating private dossier prose as evidence.
+  claims:
+    - id: profile-production-systems-headline
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: retain_l1}
+      publishable_status: provisional_verified_wording
+      public_wording: I build production systems that solve expensive problems.
+      required_receipts: [W03 flagship packets, W05 reproducibility rows]
+    - id: profile-portfolio-link
+      layers: {measurement: contradicted, inference: supported, implication: contradicted, prominence: correct_immediately}
+      publishable_status: broken_link_with_live_successor
+      public_wording: "Portfolio: https://organvm-vii-kerygma.github.io/portfolio/"
+      required_receipts: [profile metadata mutation receipt, HTTP 200 after approved mutation]
+    - id: profile-has-no-proof
+      layers: {measurement: partially_verified, inference: contradicted, implication: bounded, prominence: narrow}
+      publishable_status: partially_reproducible
+      public_wording: GitHub counts are generated from the API at the stated observation time; see the source manifest for basis and caveats.
+      required_receipts: [exact executable queries, token/private-contribution treatment, generator head]
+    - id: profile-public-repository-counts
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: supporting_only}
+      publishable_status: verified_dated_profile_basis
+      public_wording: "At the stated generation time: 227 public organization repositories, including 198 non-forks."
+      required_receipts: [W01 accepted census, fresh profile manifest]
+    - id: profile-contributions-last-year
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: supporting_only}
+      publishable_status: verified_when_dated_and_context_labeled
+      public_wording: "33,130 GitHub contribution-calendar events for the trailing year at 2026-08-10T08:05:30Z; token context disclosed in the source receipt."
+      required_receipts: [date range, viewer/token context, fresh GraphQL total and daily sum]
+    - id: profile-federation-coverage
+      layers: {measurement: partially_verified, inference: bounded, implication: not_established, prominence: retain_l2}
+      publishable_status: verified_public_nonempty_org_coverage
+      public_wording: Nine organizations currently contain public repositories; the public library links all nine.
+      required_receipts: [W01 organization roster, fresh public-repository counts]
+    - id: profile-daily-regeneration
+      layers: {measurement: verified, inference: supported, implication: bounded, prominence: retain_l2}
+      publishable_status: verified_observation_window
+      public_wording: Daily regeneration succeeded on eight consecutive scheduled runs observed 2026-08-03 through 2026-08-10.
+      required_receipts: [workflow run window, resulting exact heads]
+    - id: profile-universal-production-claim
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: narrow}
+      publishable_status: mixed_featured_system_evidence
+      public_wording: Each featured system carries its own source, test, and operating-status receipt.
+      required_receipts: [per-system current CI, public endpoint or bounded operating receipt]
+    - id: profile-limen-operating-proof
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: retain_l2}
+      publishable_status: verified_owner_environment_operation
+      public_wording: Limen operates in the owner's environment with current public status and exact-head verification receipts.
+      required_receipts: [current public status, exact-head workflow]
+    - id: profile-zero-manual-upkeep
+      layers: {measurement: unverified, inference: unsupported, implication: contradicted, prominence: withhold}
+      publishable_status: withheld
+      public_wording: Automates monitoring, stale-work cleanup, state reconciliation, and failure escalation.
+      required_receipts: [intervention ledger, bounded reliability window]
+    - id: lavrea-top-01-throughput
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: withhold}
+      publishable_status: withheld_as_ranking
+      public_wording: Use raw dated GitHub output measurements; no percentile ranking is currently publishable.
+      required_receipts: [primary comparison dataset, defined population, threshold reproduction]
+    - id: lavrea-top-1-python-full-stack
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: withhold}
+      publishable_status: withheld_as_ranking
+      public_wording: Python is the plurality primary language in the measured corpus; stack coverage is a declared rule-based classification.
+      required_receipts: [current language census, mapping version, primary percentile baselines]
+    - id: profile-one-creator-authorship
+      layers: {measurement: verified, inference: bounded, implication: contradicted, prominence: narrow}
+      publishable_status: publishable_with_disclosure
+      public_wording: Architected and directed by one person through a governed, multi-agent production system.
+      required_receipts: [authorship disclosure policy link]
+
 packets:
   - id: limen
     path: docs/positioning/evidence/limen.md
