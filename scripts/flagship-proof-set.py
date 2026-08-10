@@ -11,11 +11,14 @@ from __future__ import annotations
 import argparse
 import collections
 import datetime as dt
+import ipaddress
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 import yaml
 
@@ -24,6 +27,14 @@ ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 SCHEMA = "limen.positioning_flagship_proof_set.v1"
 STATUSES = {"selected", "alternate", "excluded"}
+REPOSITORY_RE = re.compile(r"[^/\s]+/[^/\s]+\Z")
+WORKFLOW_API_PATH_RE = re.compile(r"repos/([^/\s]+/[^/\s]+)/actions/runs/[1-9][0-9]*\Z")
+LIVE_ENDPOINT_HOSTS = frozenset(
+    {
+        "limen-dashboard.pages.dev",
+        "organvm-iii-ergon.github.io",
+    }
+)
 
 
 class ProofSetError(RuntimeError):
@@ -48,6 +59,48 @@ def parse_time(value: object) -> dt.datetime | None:
     except ValueError:
         return None
     return parsed.astimezone(dt.UTC)
+
+
+def public_https_url(value: object) -> bool:
+    if not isinstance(value, str) or value != value.strip():
+        return False
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return False
+    hostname = parsed.hostname
+    if (
+        parsed.scheme != "https"
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+    ):
+        return False
+    if hostname == "localhost" or hostname.endswith((".localhost", ".local")):
+        return False
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        return True
+    return False
+
+
+def validate_live_endpoint_url(url: object) -> str:
+    if not public_https_url(url):
+        raise ProofSetError("live endpoint must use a credential-free public HTTPS hostname")
+    assert isinstance(url, str)
+    if urlsplit(url).hostname not in LIVE_ENDPOINT_HOSTS:
+        raise ProofSetError("live endpoint host is not in the selected-flagship allowlist")
+    return url
+
+
+def repository_workflow_api_path(value: object, repository: object) -> str | None:
+    match = WORKFLOW_API_PATH_RE.fullmatch(str(value or ""))
+    if match is None or match.group(1) != repository:
+        return None
+    return str(value)
 
 
 def weighted_total(scores: dict[str, Any], dimensions: dict[str, Any]) -> int | None:
@@ -134,10 +187,13 @@ def validate_matrix(
         status_ids[status].append(candidate_id)
 
         public_url = candidate.get("public_url")
-        if not isinstance(public_url, str) or not public_url.startswith("https://"):
-            errors.append(f"{prefix}: public_url must be HTTPS")
-        if candidate.get("kind") == "repository" and not candidate.get("repository"):
-            errors.append(f"{prefix}: repository candidates need repository")
+        if not public_https_url(public_url):
+            errors.append(f"{prefix}: public_url must use a credential-free public HTTPS hostname")
+        repository = candidate.get("repository")
+        if candidate.get("kind") == "repository" and (
+            not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository)
+        ):
+            errors.append(f"{prefix}: repository candidates need a valid owner/repository slug")
 
         scores = candidate.get("scores")
         if not isinstance(scores, dict) or set(scores) != set(dimensions):
@@ -189,8 +245,10 @@ def validate_matrix(
                 if anchor.get("status") != "pass":
                     errors.append(f"{anchor_prefix}: live anchor must be passing")
                 url = anchor.get("url")
-                if not isinstance(url, str) or not url.startswith("https://"):
-                    errors.append(f"{anchor_prefix}: live anchor URL must be HTTPS")
+                if not public_https_url(url):
+                    errors.append(
+                        f"{anchor_prefix}: live anchor URL must use a credential-free public HTTPS hostname"
+                    )
                 if not anchor.get("reproduction"):
                     errors.append(f"{anchor_prefix}: live anchor needs a reproduction command")
                 observed = parse_time(anchor.get("observed_at"))
@@ -239,10 +297,12 @@ def command_json(args: list[str]) -> Any:
 
 
 def http_status(url: str) -> int:
+    url = validate_live_endpoint_url(url)
     result = subprocess.run(
         [
             "curl",
-            "--location",
+            "--proto",
+            "=https",
             "--silent",
             "--show-error",
             "--output",
@@ -292,9 +352,11 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 continue
             kind = anchor.get("kind")
             if kind == "workflow_run":
-                api_path = anchor.get("github_api_path")
-                if not isinstance(api_path, str) or not api_path:
-                    errors.append(f"{candidate_id}: workflow anchor lacks github_api_path")
+                api_path = repository_workflow_api_path(
+                    anchor.get("github_api_path"), candidate.get("repository")
+                )
+                if api_path is None:
+                    errors.append(f"{candidate_id}: workflow anchor needs its repository-bound API path")
                     continue
                 try:
                     run = command_json(["gh", "api", api_path])
