@@ -337,6 +337,7 @@ phases:
     outcome: One validated source graph projects a complete, non-duplicative, cross-agent issue system.
     depends_on: []
     exit_gate: All P00 leaves close and remote parity reports zero missing, duplicate, or orphan markers.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P00
     work:
       - id: PSP-P00-W01
         title: Commit the canonical alpha-to-omega program manifest
@@ -456,6 +457,7 @@ phases:
     outcome: Existing truth and custody foundations merge on green CI and become the program's baseline.
     depends_on: [PSP-P00]
     exit_gate: PRs 2136 and 2141 have terminal owners; canonical sources are reconciled and baseline receipts are frozen.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P01
     work:
       - id: PSP-P01-W01
         title: Fix the wall-clock-dependent throughput-governor test
@@ -543,6 +545,7 @@ phases:
     outcome: Every public statement is reproducible, classified, dated, bounded, and reversible.
     depends_on: [PSP-P01]
     exit_gate: All selected flagships have evidence packets and every material or disputed claim has separate measurement, inference, implication, prominence, source, date, and staleness verdicts.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P02
     work:
       - id: PSP-P02-W01
         title: Discover every organization and repository the owner controls
@@ -678,6 +681,7 @@ phases:
     outcome: One legible identity and two audience doors communicate authority without scale theater or takeover threat.
     depends_on: [PSP-P02]
     exit_gate: Target readers understand what is offered, why it is credible, and what to do next without an oral explanation.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P03
     work:
       - id: PSP-P03-W01
         title: Ratify the production-systems architect identity contract
@@ -797,6 +801,7 @@ phases:
     outcome: The commercial wedge is sellable, bounded, economically coherent, and expandable without becoming unbounded consulting.
     depends_on: [PSP-P03]
     exit_gate: Audit, install, and retainer each have scope, exclusions, qualification, artifacts, economics, and contract boundaries.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P04
     work:
       - id: PSP-P04-W01
         title: Productize the Agentic Delivery Audit
@@ -916,6 +921,7 @@ phases:
     outcome: High-value claims are demonstrated through compact, reproducible proof objects rather than volume theater.
     depends_on: [PSP-P02, PSP-P03, PSP-P04]
     exit_gate: The six declared proof classes exist, are public-safe, and link back to current evidence rows.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P05
     work:
       - id: PSP-P05-W01
         title: Publish the Limen engineering report source package
@@ -1019,6 +1025,7 @@ phases:
     outcome: The public experience feels precise and premium while the estate's density remains available on demand.
     depends_on: [PSP-P03, PSP-P05]
     exit_gate: Tested designs satisfy progressive disclosure, audience routing, accessibility, performance, and visual quality.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P06
     work:
       - id: PSP-P06-W01
         title: Establish the design context and taste brief
@@ -1138,6 +1145,7 @@ phases:
     outcome: Every identity and proof surface derives from the same truth while retaining a reversible release path.
     depends_on: [PSP-P02, PSP-P03, PSP-P05, PSP-P06]
     exit_gate: All tracked public surfaces are coherent, live, linked, rollback-safe, and verified in rendered form.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P07
     work:
       - id: PSP-P07-W01
         title: Preserve, audit, and evolve the personal GitHub profile front door
@@ -1289,6 +1297,7 @@ phases:
     outcome: Qualified interest enters a safe, tagged, private pipeline with no unauthorized outbound effect.
     depends_on: [PSP-P04, PSP-P07]
     exit_gate: Client and recruiter synthetic leads traverse capture, classification, routing, drafting, and reporting while no-send stays enforced.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P08
     work:
       - id: PSP-P08-W01
         title: Activate a dedicated inbound alias and tagged CTAs
@@ -1408,6 +1417,7 @@ phases:
     outcome: One flagship proof becomes a durable content engine whose derivatives attract qualified demand without claim drift.
     depends_on: [PSP-P05, PSP-P07, PSP-P08]
     exit_gate: The flagship report and derived series are staged, owner-published where approved, measured, and linked to qualified capture.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P09
     work:
       - id: PSP-P09-W01
         title: Build the 90-day proof-led editorial calendar
@@ -1543,6 +1553,7 @@ phases:
     outcome: Qualified client and recruiter demand moves through repeatable decisions without over-selling or custom-scope sprawl.
     depends_on: [PSP-P04, PSP-P08, PSP-P09]
     exit_gate: Client and recruiter playbooks, pipeline stages, proposal rules, objection capture, and the 90-day experiment work end to end.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P10
     work:
       - id: PSP-P10-W01
         title: Define the ideal client profile and live buying signals
@@ -1678,6 +1689,7 @@ phases:
     outcome: Audit, install, and retainer engagements can be delivered safely, consistently, and with reusable evidence.
     depends_on: [PSP-P04]
     exit_gate: A synthetic engagement traverses intake, evidence, analysis, verdict, implementation, QA, handoff, and closeout under the declared boundaries.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P11
     work:
       - id: PSP-P11-W01
         title: Define read-only evidence intake and security boundaries
@@ -1813,6 +1825,7 @@ phases:
     outcome: Real users, buyers, recruiters, or partners create evidence beyond self-authored technical output.
     depends_on: [PSP-P09, PSP-P11]
     exit_gate: The first audit outcome, external proof, and claims refresh are complete or the wedge has an evidence-backed invalidation receipt.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P12
     work:
       - id: PSP-P12-W01
         title: Recruit a bounded design-partner cohort
@@ -1916,6 +1929,7 @@ phases:
     outcome: The estate's product abundance becomes a scored portfolio whose validated products can transfer to accountable operators.
     depends_on: [PSP-P02, PSP-P04, PSP-P11, PSP-P12]
     exit_gate: The entire product estate is scored and one transfer reaches observed operation or an evidence-backed no-go decision.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P13
     work:
       - id: PSP-P13-W01
         title: Inventory every product candidate across all owned organizations
@@ -2067,6 +2081,7 @@ phases:
     outcome: Evidence, demand, delivery, and operator results continuously correct the system and converge without orphan work.
     depends_on: [PSP-P07, PSP-P08, PSP-P09, PSP-P10, PSP-P11, PSP-P12, PSP-P13]
     exit_gate: Two unchanged remote checks prove complete issue coverage, current claims, healthy surfaces, closed loops, and terminal receipts.
+    exit_predicate: python3 scripts/positioning-program.py --phase-proof PSP-P14
     work:
       - id: PSP-P14-W01
         title: Define the end-to-end event and KPI dictionary
