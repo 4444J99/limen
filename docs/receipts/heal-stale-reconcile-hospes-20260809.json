@@ -1,15 +1,68 @@
 {
-  "generated": "2026-08-09T23:12:00Z",
-  "lane": "agy",
+  "schema": "limen.heal_reconciliation.v1",
+  "generated": "2026-08-10T01:26:59Z",
+  "conductor_lane": "codex",
+  "requested_executor_lane": "agy",
   "scope": "organvm/hospes",
-  "items": [
-    {
-      "task_id": "HEAL-cifix-organvm-hospes-8",
-      "pr": "organvm/hospes#8",
-      "pr_state": "MERGED",
-      "evidence": "PR #8 (branch limen/gh-organvm-hospes-3-fe1ddf24) state is MERGED. Predicate `test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED` exits 0. Task shows status=open in tasks.yaml projection but predicate is satisfied.",
-      "proposed": "done",
-      "blocker": "conduct broker not configured (LIMEN_CONDUCT_URL unset) — broker transition must be submitted by next session with broker access or via limen harvest when the predicate-based harvest path is wired for organvm/hospes tasks."
+  "task": {
+    "task_id": "HEAL-cifix-organvm-hospes-8",
+    "canonical_projection_status": "open",
+    "pr": "organvm/hospes#8",
+    "predicate": {
+      "command": "test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED",
+      "observed_pr_state": "MERGED",
+      "exit_status": 0,
+      "executed_at": "2026-08-10T01:26:47Z"
     }
-  ]
+  },
+  "agy_workstream": {
+    "branch": "work/hospes-heal-reconcile-20260809",
+    "remote_head": "6de49b29fc33090b58a8500568f98ff0ceb0bdbf",
+    "receipt": "docs/continuations/hospes-heal-reconcile-20260809/workstream.json",
+    "session_ids": [
+      "workstream-hospes-heal-reconcile-20260809-20260810T010443Z-43635",
+      "workstream-hospes-heal-reconcile-20260809-20260810T010500Z-43947"
+    ],
+    "human_protected": true,
+    "run_id": null,
+    "lease_id": null
+  },
+  "admission": {
+    "broker_capabilities": "available after the documented mode-0600 environment-cache bootstrap",
+    "session_registration": "accepted",
+    "task_reservation": "denied before run/lease allocation",
+    "missing_work_loan_fields": [
+      "source_origin",
+      "horizon",
+      "value_case"
+    ]
+  },
+  "provider_attempts": [
+    {
+      "model": "Claude Sonnet 4.6 Thinking",
+      "result": "quota_exhausted",
+      "error_id": "4090a9e8-04af-476c-a094-099a0ec9f9c7-10"
+    },
+    {
+      "model": "Gemini 3.6 Flash",
+      "result": "quota_exhausted",
+      "error_id": "4090a9e8-04af-476c-a094-099a0ec9f9c7-19"
+    },
+    {
+      "model": "GPT-OSS 120B",
+      "result": "quota_exhausted",
+      "error_id": "4090a9e8-04af-476c-a094-099a0ec9f9c7-26"
+    }
+  ],
+  "scoped_verification": {
+    "command": "scripts/verify-scoped.sh",
+    "executed_at": "2026-08-10T01:28:20Z",
+    "exit_status": 0,
+    "output": "Changed paths (1): docs/receipts/heal-stale-reconcile-hospes-20260809.json. WAVE cheap gates=4: syntax-changed PASS, diff-hygiene PASS, check-docs-exports PASS, check-note-links PASS. Scoped verification passed."
+  },
+  "outcome": "blocked_before_reservation",
+  "responsible_owner": "agy via work/hospes-heal-reconcile-20260809",
+  "next_command": "bash .limen-workstream/kickstart.sh",
+  "next_predicate": "After Agy quota resets, the registered Agy session must underwrite and submit HEAL-cifix-organvm-hospes-8 through the broker, run the stored predicate bare, submit its native RunReceiptV1, run `limen conduct harvest <root-run>`, and require canonical status done.",
+  "integrity_note": "No run or lease receipt is claimed because the broker allocated neither. GH-organvm-hospes-9 remains in_progress and human-owned."
 }
