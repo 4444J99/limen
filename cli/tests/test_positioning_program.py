@@ -346,7 +346,9 @@ def test_phase_binding_digest_is_local_and_stable(monkeypatch) -> None:
     assert MODULE._phase_remote_state_digest("PSP-P00", graph, mapping, remote) != original
     assert MODULE._phase_parity_digest("PSP-P00", graph, mapping, remote) == original_parity
 
-    receipts = {packet["id"]: {"receipt": packet["id"], "revision": 1} for packet in graph["phase_by_id"]["PSP-P00"]["work"]}
+    receipts = {
+        packet["id"]: {"receipt": packet["id"], "revision": 1} for packet in graph["phase_by_id"]["PSP-P00"]["work"]
+    }
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
@@ -393,9 +395,7 @@ def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(m
 
     assert result["status"] == "pass"
     assert result["phase_id"] == "PSP-P00"
-    assert set(result["child_receipt_evidence"]) == {
-        packet["id"] for packet in graph["phase_by_id"]["PSP-P00"]["work"]
-    }
+    assert set(result["child_receipt_evidence"]) == {packet["id"] for packet in graph["phase_by_id"]["PSP-P00"]["work"]}
 
     remote["PSP-P00-W01"]["state"] = "open"
     with pytest.raises(MODULE.ProgramError, match="PSP-P00-W01 is not closed"):
@@ -447,11 +447,11 @@ def test_phase_proof_rejects_stale_child_receipt(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: (_ for _ in ()).throw(
-            MODULE.ProgramError(f"{work_id} stale receipt")
-        )
-        if work_id == "PSP-P00-W01"
-        else ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping: (
+            (_ for _ in ()).throw(MODULE.ProgramError(f"{work_id} stale receipt"))
+            if work_id == "PSP-P00-W01"
+            else ({"work_id": work_id}, f"https://example.test/{work_id}")
+        ),
     )
 
     with pytest.raises(MODULE.ProgramError, match="stale receipt"):
@@ -472,9 +472,7 @@ def test_phase_proof_rejects_stale_routing_labels_and_phase_local_orphans(monkey
     with pytest.raises(MODULE.ProgramError, match="routing label drift"):
         MODULE.phase_proof("PSP-P00", graph, mapping)
 
-    remote["PSP-P00-W01"]["labels"] = [
-        {"name": label} for label in MODULE.labels_for("PSP-P00-W01", graph)
-    ]
+    remote["PSP-P00-W01"]["labels"] = [{"name": label} for label in MODULE.labels_for("PSP-P00-W01", graph)]
     remote["PSP-P00-W99"] = {
         "number": 999,
         "title": "orphan",
@@ -541,14 +539,17 @@ def test_phase_receipt_template_is_read_only_cli_output(monkeypatch, capsys) -> 
     output["predicate"]["output_sha256"] = "b" * 64
     output["predicate"]["observed_at"] = "2026-08-09T12:00:00Z"
     bindings = MODULE._phase_binding_values("PSP-P00", graph, mapping, remote)
-    assert MODULE.validate_phase_receipt(
-        output,
-        "PSP-P00",
-        graph,
-        child_receipt_digest=bindings["child_receipt_digest"],
-        remote_state_digest=bindings["remote_state_digest"],
-        parity_digest=bindings["parity_digest"],
-    ) == output
+    assert (
+        MODULE.validate_phase_receipt(
+            output,
+            "PSP-P00",
+            graph,
+            child_receipt_digest=bindings["child_receipt_digest"],
+            remote_state_digest=bindings["remote_state_digest"],
+            parity_digest=bindings["parity_digest"],
+        )
+        == output
+    )
 
 
 def test_omega_pass_schema_requires_pass_number_and_distinct_observation() -> None:
@@ -575,7 +576,10 @@ def test_omega_pass_schema_requires_pass_number_and_distinct_observation() -> No
 
 def test_omega_digest_covers_remote_completion_facts() -> None:
     graph, mapping = graph_and_map()
-    remote = {object_id: {"state": "closed", "body": MODULE.marker(object_id), "labels": []} for object_id in graph["ordered_ids"]}
+    remote = {
+        object_id: {"state": "closed", "body": MODULE.marker(object_id), "labels": []}
+        for object_id in graph["ordered_ids"]
+    }
     first = MODULE._state_digest(graph, mapping, remote)
     remote["PSP-P00"]["labels"] = [{"name": "changed"}]
     second = MODULE._state_digest(graph, mapping, remote)
