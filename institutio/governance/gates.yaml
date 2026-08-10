@@ -475,7 +475,7 @@ gates:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q"
     paths: ["scripts/claim-policy.py", "scripts/claim-surface-quarantine.py", "scripts/claim-quarantine-drill.py", "scripts/tests/test_claim_policy.py", "scripts/tests/fixtures/positioning-claim-drill/**", "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md", "institutio/governance/gates.yaml"]
     owner: positioning-program
-    note: "PSP-P02-W06/W07 stay fail-closed and source-safe: a public claim export is rejected for unsupported, stale, private, forbidden, withdrawn, or source-changed rows; every manifest-declared staged public surface receives a bounded quarantine marker in the synthetic false-claim drill; neither command publishes or modifies the source tree."
+    note: "PSP-P02-W06/W07 stay fail-closed and source-safe: a public claim export is rejected for unsupported, stale, future-dated, private, forbidden, withdrawn, invalid-window, or source-changed rows; complete-manifest coverage and bounded markers are validated before any quarantined staging copy is written; neither command publishes or modifies the source tree."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

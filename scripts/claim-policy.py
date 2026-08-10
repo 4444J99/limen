@@ -13,6 +13,7 @@ import json
 import re
 import sys
 import tempfile
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -89,17 +90,31 @@ def evaluate_export(document: dict[str, Any], as_of: dt.datetime) -> dict[str, A
         if claim.get("visibility") != "public":
             reasons.append("private_or_restricted")
         source = claim.get("source")
+        observed_at: dt.datetime | None = None
         if not isinstance(source, dict) or not isinstance(source.get("url"), str) or not source["url"]:
             reasons.append("unsourced")
         else:
-            _parse_time(source.get("observed_at"), f"claim {claim_id} source.observed_at")
+            parsed_url = urllib.parse.urlsplit(source["url"])
+            if (
+                parsed_url.scheme != "https"
+                or not parsed_url.netloc
+                or parsed_url.username is not None
+                or parsed_url.password is not None
+            ):
+                reasons.append("private_or_restricted")
+            observed_at = _parse_time(source.get("observed_at"), f"claim {claim_id} source.observed_at")
             recorded = source.get("sha256")
             current = source.get("current_sha256")
             if not isinstance(recorded, str) or not re.fullmatch(r"[a-f0-9]{64}", recorded):
                 reasons.append("unsourced")
             if current is not None and current != recorded:
                 reasons.append("source_changed")
-        if _parse_time(claim.get("valid_until"), f"claim {claim_id} valid_until") < as_of:
+        valid_until = _parse_time(claim.get("valid_until"), f"claim {claim_id} valid_until")
+        if observed_at is not None and observed_at > as_of:
+            reasons.append("future_source")
+        if observed_at is not None and valid_until < observed_at:
+            reasons.append("invalid_validity_window")
+        if valid_until < as_of:
             reasons.append("stale")
         if any(term.casefold() in statement.casefold() for term in forbidden):
             reasons.append("forbidden_language")

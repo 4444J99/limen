@@ -81,6 +81,21 @@ def test_policy_rejects_changed_source_without_fetching(tmp_path: Path):
     assert report["rejected_claims"] == [{"claim_id": "claim.public.safe", "reasons": ["source_changed"]}]
 
 
+def test_policy_rejects_nonpublic_future_and_invalid_source_windows(tmp_path: Path):
+    cases = {
+        "private_or_restricted": {"source": {**_claim()["source"], "url": "file:///private/evidence"}},
+        "future_source": {"source": {**_claim()["source"], "observed_at": "2026-08-11T00:00:00Z"}},
+        "invalid_validity_window": {"valid_until": "2026-07-31T23:59:59Z"},
+    }
+    for reason, update in cases.items():
+        claim = _claim()
+        claim.update(update)
+        result, report = _policy(tmp_path / reason, claim)
+        assert result.returncode == 1, result.stderr
+        reported = report["rejected_claims"][0]["reasons"]
+        assert reason in reported
+
+
 def test_quarantine_copies_and_removes_each_declared_public_surface(tmp_path: Path):
     source = tmp_path / "generated"
     shutil.copytree(FIXTURE / "generated", source)
@@ -92,14 +107,78 @@ def test_quarantine_copies_and_removes_each_declared_public_surface(tmp_path: Pa
     output = tmp_path / "quarantined"
     quarantine = _run(
         sys.executable, str(QUARANTINE), "--source-root", str(source), "--output-root", str(output),
-        "--manifest", str(FIXTURE / "public-surfaces.json"), "--policy-report", str(report)
+        "--manifest", str(FIXTURE / "public-surfaces.json"), "--policy-report", str(report), "--json"
     )
     assert quarantine.returncode == 0, quarantine.stderr
+    quarantine_report = json.loads(quarantine.stdout)
+    assert quarantine_report["affected_surface_count"] == 2
+    assert quarantine_report["quarantined_occurrence_count"] == 2
     for path in ("frontdoor.md", "profile.md"):
         assert "SYNTHETIC FALSE CLAIM" in (source / path).read_text(encoding="utf-8")
         quarantined = (output / path).read_text(encoding="utf-8")
         assert "SYNTHETIC FALSE CLAIM" not in quarantined
         assert "positioning-claim: claim.synthetic.false:quarantined" in quarantined
+
+
+def test_quarantine_rejects_incomplete_manifest_before_writing(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    manifest = json.loads((FIXTURE / "public-surfaces.json").read_text(encoding="utf-8"))
+    for surface in manifest["surfaces"]:
+        surface["claim_ids"] = ["claim.some-other-id"]
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    report = tmp_path / "policy-report.json"
+    policy = _run(
+        sys.executable, str(POLICY), "--claims", str(FIXTURE / "claims.json"), "--as-of", "2026-08-10T00:00:00Z", "--report", str(report)
+    )
+    assert policy.returncode == 1, policy.stderr
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable, str(QUARANTINE), "--source-root", str(source), "--output-root", str(output),
+        "--manifest", str(manifest_path), "--policy-report", str(report)
+    )
+    assert quarantine.returncode == 2
+    assert not output.exists()
+
+
+def test_quarantine_validates_all_markers_before_writing(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    (source / "profile.md").write_text("# Missing bounded marker\n", encoding="utf-8")
+    report = tmp_path / "policy-report.json"
+    policy = _run(
+        sys.executable, str(POLICY), "--claims", str(FIXTURE / "claims.json"), "--as-of", "2026-08-10T00:00:00Z", "--report", str(report)
+    )
+    assert policy.returncode == 1, policy.stderr
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable, str(QUARANTINE), "--source-root", str(source), "--output-root", str(output),
+        "--manifest", str(FIXTURE / "public-surfaces.json"), "--policy-report", str(report)
+    )
+    assert quarantine.returncode == 2
+    assert not output.exists()
+
+
+def test_quarantine_rejects_source_symlink(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    external = tmp_path / "external.md"
+    external.write_text("private source material", encoding="utf-8")
+    (source / "profile.md").unlink()
+    (source / "profile.md").symlink_to(external)
+    report = tmp_path / "policy-report.json"
+    policy = _run(
+        sys.executable, str(POLICY), "--claims", str(FIXTURE / "claims.json"), "--as-of", "2026-08-10T00:00:00Z", "--report", str(report)
+    )
+    assert policy.returncode == 1, policy.stderr
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable, str(QUARANTINE), "--source-root", str(source), "--output-root", str(output),
+        "--manifest", str(FIXTURE / "public-surfaces.json"), "--policy-report", str(report)
+    )
+    assert quarantine.returncode == 2
+    assert not output.exists()
 
 
 def test_synthetic_false_claim_drill_proves_full_surface_quarantine():

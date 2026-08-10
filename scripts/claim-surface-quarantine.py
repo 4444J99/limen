@@ -63,18 +63,41 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
     rejected_ids = _rejected_ids(report)
     if output_root.exists():
         raise QuarantineError("output root already exists; quarantine requires a fresh staging directory")
+    if not source_root.is_dir() or source_root.is_symlink():
+        raise QuarantineError("source root must be a real staging directory")
 
-    affected = 0
-    copied = 0
+    root_resolved = source_root.resolve()
+    declared_claim_ids: set[str] = set()
+    seen_surface_ids: set[str] = set()
+    seen_paths: set[Path] = set()
+    staged: list[tuple[Path, str]] = []
+    affected_surfaces = 0
+    quarantined_occurrences = 0
     for index, surface in enumerate(surfaces):
         if not isinstance(surface, dict):
             raise QuarantineError(f"surfaces[{index}] must be an object")
+        surface_id = surface.get("id")
+        if not isinstance(surface_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", surface_id):
+            raise QuarantineError(f"surfaces[{index}].id must be a public-safe identifier")
+        if surface_id in seen_surface_ids:
+            raise QuarantineError(f"duplicate surface identifier: {surface_id}")
+        seen_surface_ids.add(surface_id)
         path = _relative_path(surface.get("path"), f"surfaces[{index}].path")
+        if path in seen_paths:
+            raise QuarantineError(f"duplicate public surface path: {path}")
+        seen_paths.add(path)
         claim_ids = surface.get("claim_ids")
-        if not isinstance(claim_ids, list) or not all(isinstance(item, str) for item in claim_ids):
-            raise QuarantineError(f"surfaces[{index}].claim_ids must be a list of identifiers")
+        if (
+            not isinstance(claim_ids, list)
+            or not claim_ids
+            or not all(isinstance(item, str) and re.fullmatch(r"[a-z0-9][a-z0-9._-]*", item) for item in claim_ids)
+        ):
+            raise QuarantineError(f"surfaces[{index}].claim_ids must be public-safe identifiers")
+        if len(set(claim_ids)) != len(claim_ids):
+            raise QuarantineError(f"surfaces[{index}].claim_ids must not contain duplicates")
+        declared_claim_ids.update(claim_ids)
         source = source_root / path
-        if not source.is_file():
+        if not source.is_file() or source.is_symlink() or not source.resolve().is_relative_to(root_resolved):
             raise QuarantineError(f"declared public surface is missing: {path}")
         rendered = source.read_text(encoding="utf-8")
         linked = rejected_ids.intersection(claim_ids)
@@ -88,15 +111,24 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
             )
             if substitutions != 1:
                 raise QuarantineError(f"surface {path} must carry exactly one bounded marker for {claim_id}")
-            affected += 1
+            quarantined_occurrences += substitutions
+        if linked:
+            affected_surfaces += 1
+        staged.append((path, rendered))
+
+    undeclared = rejected_ids - declared_claim_ids
+    if undeclared:
+        raise QuarantineError(f"rejected claim is absent from the complete surface manifest: {sorted(undeclared)}")
+
+    for path, rendered in staged:
         destination = output_root / path
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(rendered, encoding="utf-8")
-        copied += 1
     return {
         "schema_version": "limen.positioning.claim-quarantine-report.v1",
-        "input_surface_count": copied,
-        "affected_surface_count": affected,
+        "input_surface_count": len(staged),
+        "affected_surface_count": affected_surfaces,
+        "quarantined_occurrence_count": quarantined_occurrences,
         "quarantined_claim_ids": sorted(rejected_ids),
         "publication_effect": "none",
     }

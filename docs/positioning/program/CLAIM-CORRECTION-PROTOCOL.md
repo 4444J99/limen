@@ -30,7 +30,8 @@ packets. When it is ready, it exports the following minimal contract for W06:
 ```
 
 `scripts/claim-policy.py` rejects private/restricted, withdrawn, unsourced,
-stale, source-changed, or prohibited-language claims. Its report contains only
+stale, future-dated, source-changed, inverted-validity, or prohibited-language claims. Public
+sources must use credential-free HTTPS URLs. Its report contains only
 claim IDs and reason codes, never statements, source URLs, or private data.
 
 The generator-side surface manifest is likewise a small contract:
@@ -55,9 +56,11 @@ the W05 ledger or its evidence files.
 | --- | --- | --- | --- |
 | `unsupported` | missing statement or source contract | quarantine | an evidence-backed export row passes W06 |
 | `stale` | `valid_until` predates the evaluation time | quarantine | refreshed evidence and a later validity bound pass W06 |
-| `private_or_restricted` | non-public visibility | quarantine | a public-safe replacement is independently reviewed |
+| `private_or_restricted` | non-public visibility or a source URL that is not credential-free HTTPS | quarantine | a public-safe replacement is independently reviewed |
 | `forbidden_language` | configured prohibited wording | quarantine | corrected bounded wording passes W06 |
 | `source_changed` | recorded and current source digests differ | quarantine | source is re-adjudicated and its digest is refreshed |
+| `future_source` | source observation is later than the fixed evaluation time | quarantine | a real, non-future observation passes W06 |
+| `invalid_validity_window` | validity ends before the source observation | quarantine | a chronologically valid evidence window passes W06 |
 | `withdrawn_or_unapproved` | status is not `publishable` | quarantine | a new approved source row passes W06 |
 
 1. Create a correction record before regeneration. Do not repair public copy by hand.
