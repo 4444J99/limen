@@ -248,7 +248,7 @@ def verify_policy(estate: dict[str, Any]) -> list[str]:
 
 def private_leaks_added(base: str, private_names: set[str]) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--unified=0", f"{base}...HEAD", "--", "docs/positioning", "institutio/github/estate.yaml"],
+        ["git", "diff", "--unified=0", f"{base}...HEAD"],
         cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
     )
     if result.returncode != 0:
