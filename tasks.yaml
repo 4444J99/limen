@@ -170155,3 +170155,39 @@ tasks:
     conduct_lease_id: 'lease-843-0c5c8d18112dfb18'
     conduct_generation: 843
   updated: '2026-08-10T00:56:15.218Z'
+- id: 'GH-organvm-hospes-15'
+  title: '[P0-2] Mobile Dashboard Touch Polish: 44px targets, no horizontal scroll, sticky header'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:0'
+  - 'priority:P0'
+  - 'area:demo'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/15'
+  context: 'GitHub issue organvm/hospes#15. ## Phase 0: Demo Polish — Before Ari Arrives ### Problem Dashboard works on desktop but is unusable on phone: touch targets too small, horizontal overflow, no sticky header, tabs hard to reach. ### Solution Update `dashboard/assets/styles.css` with mobile-first touch polish. ### Acceptance Criteria - [ ] All buttons, tabs, form inputs ≥44×44px touch targets - [ ] No horizontal overflow at 375px (i'
+  predicate: 'test "$(gh issue view 15 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/15'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#15'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:20.536Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-06e523fa58ca7ce6d6de311280379bf3:844:compatibility'
+    conduct_run_id: 'run-06e523fa58ca7ce6d6de311280379bf3'
+    conduct_lease_id: 'lease-844-06e523fa58ca7ce6'
+    conduct_generation: 844
+  updated: '2026-08-10T00:56:20.536Z'
