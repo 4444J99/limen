@@ -31,6 +31,11 @@ write the board -- TABVLARIVS is its only logical writer and transitions go thro
 this predicate cannot fix what it finds. It pins the known leak, fails on anything NEW, and the
 baseline may only shrink. The existing rows are homed on the broker scrub, not on a chat list.
 
+The repaired form is an aggregate projection: ``portal.public_projection`` carries counts and
+``tasks`` is empty. The full board is authenticated Durable Object custody, not a second public
+branch. An aggregate projection therefore has no partner rows to scan and is the intended green
+state; a non-empty task list remains subject to the disclosure scan below.
+
   python3 scripts/check-board-partition.py            # report
   python3 scripts/check-board-partition.py --check    # exit 1 on a finding outside the baseline
   python3 scripts/check-board-partition.py --json     # machine-readable, for a doctor rung

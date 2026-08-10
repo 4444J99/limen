@@ -3085,6 +3085,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "The Limen task ID injected into the opencode lane run environment so the agent knows which task it is executing. Set by dispatch.py at dispatch time."
+  LIMEN_PRIVATE_TASKS:
+    default: ""
+    env: LIMEN_PRIVATE_TASKS
+    self_update: none
+    owner: vigilia
+    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty reads the configured public projection; never point this at public tasks.yaml."
   LIMEN_ISOLATION_PROMPT_GUARD:
     default: "1"
     env: LIMEN_ISOLATION_PROMPT_GUARD
