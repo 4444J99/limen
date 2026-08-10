@@ -23,14 +23,14 @@ compression_level: medium
 
 | Item | Live state |
 |---|---|
-| Exact implementation head | `973872567bad19a4432201ce58252caf9e90c0fd` — full-diff private-name guard and focused regression included |
-| Exact remote branch checkpoint | `973872567bad19a4432201ce58252caf9e90c0fd` on `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay refresh; fetch before resuming |
+| Exact implementation head | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` — full-diff, exact-repository-token private-name guard and focused regressions included |
+| Exact remote branch checkpoint | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` on `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay refresh; fetch before resuming |
 | Exact target repository heads | `organvm/limen` only; the focused live classifier ran against the W01 denominator on 2026-08-10 |
 | Working tree | Relay pending commit; otherwise clean |
 | Acceptance condition | Partial: the policy and live classifier satisfy coverage, but #2173 remains open and W02 has no conduct-backed receipt |
 | Task-specific predicate | Not run as a completion claim; it must remain deferred until #2173 formally closes and a receipt is attached |
-| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed: 314 total, 235 public, 79 private, exactly one primary role each; the private-name guard now scans the entire reviewed diff |
-| Scoped verification | `scripts/verify-scoped.sh` passed all 15 implicated cheap-wave gates on exact implementation head `973872567bad19a4432201ce58252caf9e90c0fd` |
+| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed: 314 total, 235 public, 79 private, exactly one primary role each; the private-name guard scans the entire reviewed diff and matches only complete repository tokens, avoiding public-name prefix false positives |
+| Scoped verification | `scripts/verify-scoped.sh` passed all 15 implicated cheap-wave gates on exact implementation head `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` |
 | Receipt verifier | No W02 receipt and no issue comment posted |
 | Phase exit proof | Not applicable; P02 remains open |
 | Omega observation | Not applicable |

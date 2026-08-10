@@ -15,6 +15,7 @@ import collections
 import datetime as dt
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -254,7 +255,18 @@ def private_leaks_added(base: str, private_names: set[str]) -> list[str]:
     if result.returncode != 0:
         raise ClassificationError(f"cannot inspect reviewed diff against {base}")
     added = [line[1:] for line in result.stdout.splitlines() if line.startswith("+") and not line.startswith("+++")]
-    return sorted(name for name in private_names if any(name in line for line in added))
+    repository_character = r"A-Za-z0-9_.-"
+    return sorted(
+        name
+        for name in private_names
+        if any(
+            re.search(
+                rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])",
+                line,
+            )
+            for line in added
+        )
+    )
 
 
 def summary(rows: list[dict[str, Any]], classifications: list[dict[str, str]]) -> dict[str, Any]:
