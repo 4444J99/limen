@@ -96,7 +96,7 @@ model_assignments:
     effort: xhigh
     rationale: Cross-repository coordination receives a stronger execution profile.
   object_overrides:
-    PSP-P00-W07: {slug: gpt-5.6-sol, effort: max, rationale: Authenticated broker integration is control-plane critical.}
+    PSP-P00-W07: {slug: gpt-5.6-sol, effort: max, rationale: Correcting the strategy-execution gate and preserving exact Codex task routing are control-plane critical.}
     PSP-P14-W09: {slug: gpt-5.6-sol, effort: ultra, rationale: Final two-pass Omega proof requires full-graph orchestration.}
 
 execution_chunks:
@@ -110,9 +110,9 @@ execution_chunks:
       phase_ids: [PSP-P00]
       exclude_work_ids: []
       extra_work_ids: []
-      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Control-plane landing and broker integration require architectural oversight.}
-      objective: Land the existing program PR, close the seven control-plane leaves with receipts, and prove remote parity.
-      exit_gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and broker integration are green.
+      conductor: {slug: gpt-5.6-sol, effort: max, rationale: Control-plane landing and Codex task orchestration require architectural oversight.}
+      objective: Land the existing program PR, close the seven control-plane leaves with receipts, prove remote parity, and route ready strategy work into fresh Codex tasks.
+      exit_gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and registry-derived Codex task routing are green.
     - id: PSP-C01
       title: Repair and freeze the foundation
       depends_on: [PSP-C00]
@@ -436,21 +436,21 @@ phases:
         rollback: No mutation; repair the manifest or projection and rerun.
         return_evidence: [Counts and exact orphan or duplicate set]
       - id: PSP-P00-W07
-        title: Connect ready leaves to the authenticated conduct broker
-        outcome: A program leaf can be claimed by any registered native lane with bounded authority and a durable receipt.
+        title: Route ready expert-positioning work into fresh Codex tasks
+        outcome: Ready strategy work is handed to fresh Codex tasks with exact registry-derived model, effort, dependencies, scope, and a durable receipt.
         target_repo: organvm/limen
-        target_paths: [scripts/positioning-program.py, cli/src/limen/conduct]
-        capabilities: [conduct, python, integration_testing]
+        target_paths: [institutio/positioning/program.yaml, scripts/positioning-program.py, docs/positioning/program]
+        capabilities: [codex_tasks, program_management, verification]
         reasoning: deep
         effect: write
         depends_on: [PSP-P00-W05, PSP-P00-W06]
         external_dependencies: []
         human_gates: []
-        deliverables: [Issue-to-WorkPacketV1 adapter, dry-run, canary receipt]
-        acceptance: A registered non-Codex canary claims one no-op/read leaf and reports a schema-valid receipt.
+        deliverables: [Registry-derived Codex task launch contract, ready-work dry-run, orchestration receipt]
+        acceptance: A human-protected Codex conductor derives the next ready expert-positioning work from the live registry and records a schema-valid orchestration receipt without requiring a non-Codex canary.
         predicate: python3 scripts/positioning-program.py --verify-work PSP-P00-W07
-        rollback: Disable the adapter; the manifest and GitHub graph remain usable manually.
-        return_evidence: [Native lane identity, run ID, lease receipt, and no-op predicate]
+        rollback: Revert the gate correction; the ready-work registry and truthful superseded history remain available.
+        return_evidence: [Codex task identity, registry row, exact model and effort, dependencies, and orchestration predicate]
 
   - id: PSP-P01
     title: Foundation repair and upstream integration

@@ -117,6 +117,20 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "`PSP-C00` — Land the program control plane" in root
 
 
+def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
+    graph, mapping = graph_and_map()
+    packet = graph["work_by_id"]["PSP-P00-W07"]
+    body = MODULE.body_for("PSP-P00-W07", graph, mapping)
+
+    assert packet["title"] == "Route ready expert-positioning work into fresh Codex tasks"
+    assert packet["capabilities"] == ["codex_tasks", "program_management", "verification"]
+    assert "human-protected Codex conductor" in packet["acceptance"]
+    assert "without requiring a non-Codex canary" in packet["acceptance"]
+    assert "registered non-Codex canary" not in packet["acceptance"]
+    assert "fresh human-protected Codex task" in body
+    assert "registered native lane" not in body
+
+
 def test_every_projected_issue_fits_github_limits() -> None:
     graph, mapping = graph_and_map()
 
