@@ -1,0 +1,19 @@
+{
+  "schema_version": "limen.positioning.claim-ledger-export.v1",
+  "forbidden_language": ["guaranteed outcome"],
+  "claims": [
+    {
+      "id": "claim.synthetic.false",
+      "statement": "SYNTHETIC FALSE CLAIM for the deterministic withdrawal drill.",
+      "publication_status": "publishable",
+      "visibility": "public",
+      "source": {
+        "url": "https://example.invalid/synthetic-source",
+        "observed_at": "2026-08-01T00:00:00Z",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "current_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "valid_until": "2026-08-30T00:00:00Z"
+    }
+  ]
+}
