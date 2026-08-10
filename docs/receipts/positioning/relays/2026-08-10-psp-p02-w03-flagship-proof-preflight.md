@@ -26,22 +26,23 @@ compression_level: medium
 
 | Item | Value |
 | --- | --- |
-| W02 base branch head | `ee26b101879ca65e05cfabd3e0cc5253b82c2e74` |
+| W02 base branch head | `4f138589b68bcbb3618ee68327bac1f8137d8bd4` |
 | Verified W03 implementation commit | `10104e541ef9ec227c3a92d18595f2490a89f6fd` |
-| Integrated implementation checkpoint | `a897a8cc96a816a7da7f6283a8581e42d27613c3` — W03 plus the full-diff, exact-token W02 privacy guard |
-| Published remote branch checkpoint before this relay refresh | `48bb826d875dfb905a0c5a15c64e370ab73492a7`; fetch the PR head before resuming |
+| Hardened implementation checkpoint | `b64f64279dc167a3d5f503fb78b5fe07a905c62f` — W03 plus the full-diff W02 privacy guard and constrained public live probes |
+| Published remote branch checkpoint before this relay refresh | `b64f64279dc167a3d5f503fb78b5fe07a905c62f`; fetch the PR head before resuming |
 | Selected preflight set | Limen; UCC Public-Records Intelligence Platform; AI Chat Exporter |
 | Named alternates | Universal Mail; Styx; a-i--skills; MONETA |
 | Public candidate denominator | 20 |
 | Private names in the public matrix | 0 |
 | External effects | Draft PR and branch push only; no merge, publication, visibility, account, or issue-state change |
 
-This relay is the only authored diff after the integrated implementation checkpoint. Resolve the live
-PR head before formal work rather than treating the relay commit as a new implementation batch.
+Resolve the live PR head before formal work rather than treating this relay refresh as a new
+implementation batch.
 
 ## Verified preflight state
 
-- `python3 scripts/tests/flagship-proof-set.test.py` — 7 tests passed.
+- `python3 scripts/tests/flagship-proof-set.test.py` — 10 tests passed, including credentialed,
+  local-network, redirect, repository-substitution, and workflow-API-path failures.
 - `python3 scripts/tests/estate-classification.test.py` — 5 tests passed, including full-diff and
   longer-public-slug prefix regressions.
 - `python3 scripts/flagship-proof-set.py --verify-live --json` — passed; all 20 named repository
@@ -49,7 +50,7 @@ PR head before formal work rather than treating the relay commit as a new implem
 - `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w02-estate-classification-preflight`
   — passed: 314 repositories, 235 public, 79 private, 15 front-door proof, no newly added private
   repository token.
-- `scripts/verify-scoped.sh` — passed all 21 implicated cheap-wave gates. No heavy gate was selected,
+- `scripts/verify-scoped.sh` — passed all 22 implicated cheap-wave gates. No heavy gate was selected,
   so the sanctioned verifier did not require a machine-wide heavy lease.
 - `python3 scripts/positioning-program.py --verify-work PSP-P02-W03` — intentionally not run; no
   marked W03 receipt exists and #2174 remains open.
@@ -64,8 +65,10 @@ numeric rank. The preflight selects three unique roles:
 3. AI Chat Exporter — privacy-first data portability.
 
 Every selected claim has current public exact-head evidence, a live public endpoint, a bounded claim,
-and no private-only dependency. The four alternates retain explicit promotion conditions; the 13
-remaining candidates retain explicit exclusion reasons. No live profile generator was changed.
+and no private-only dependency. Public HTTP probes are restricted to the selected hosts without
+redirect following, and workflow API paths are bound to the selected repository and positive run ID.
+The four alternates retain explicit promotion conditions; the 13 remaining candidates retain explicit
+exclusion reasons. No live profile generator was changed.
 
 ## Dependency boundary
 
