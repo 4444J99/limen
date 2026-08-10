@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -74,6 +75,21 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["w08_research_import"]["claims"].pop()
         self.assert_error_contains(index, "classify each ratified claim exactly once")
 
+    def test_rejects_w08_wording_drift_from_immutable_source(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["w08_research_import"]["claims"][0]["public_wording"] = "Replacement wording"
+        self.assert_error_contains(index, "wording and receipt sets must match")
+
+    def test_rejects_w08_receipt_drift_from_immutable_source(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["w08_research_import"]["claims"][0]["required_receipts"] = ["replacement"]
+        self.assert_error_contains(index, "wording and receipt sets must match")
+
+    def test_rejects_w08_source_artifact_digest_drift(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["w08_research_import"]["source_sha256"] = "0" * 64
+        self.assert_error_contains(index, "immutable source artifact SHA-256")
+
     def test_rejects_collapsed_w08_adjudication_layers(self) -> None:
         index = copy.deepcopy(self.index)
         del index["w08_research_import"]["claims"][0]["layers"]["implication"]
@@ -93,6 +109,83 @@ class FlagshipEvidenceTests(unittest.TestCase):
     def test_fetch_rejects_unselected_hosts_before_network_access(self) -> None:
         with self.assertRaises(MODULE.EvidenceError):
             MODULE.fetch("https://example.test/untrusted")
+
+    def test_gate_covers_every_consumed_evidence_input(self) -> None:
+        registry = MODULE.load_yaml(ROOT / "institutio/governance/gates.yaml")
+        paths = registry["gates"]["flagship-evidence-test"]["paths"]
+        self.assertIn("docs/positioning/evidence/**", paths)
+        self.assertIn("docs/positioning/claims-ledger.md", paths)
+        self.assertIn("docs/positioning/flagship-proof-set.yaml", paths)
+
+    def test_term_metric_derives_exact_count_instead_of_presence_only(self) -> None:
+        metric = self.index["packets"][1]["metrics"][0]
+        paths = ["california", "texas", "florida", "newyork", "illinois"]
+        payload = json.dumps(
+            {
+                "truncated": False,
+                "tree": [
+                    {"type": "blob", "path": f"scripts/scrapers/states/{name}.ts"}
+                    for name in paths
+                ],
+            }
+        ).encode("utf-8")
+        errors = MODULE.exact_count_errors("public_records", metric, payload)
+        self.assertTrue(any("derived 5, expected 4" in error for error in errors), errors)
+
+    def test_term_metric_rejects_truncated_count_source(self) -> None:
+        metric = self.index["packets"][1]["metrics"][0]
+        payload = json.dumps({"truncated": True, "tree": []}).encode("utf-8")
+        errors = MODULE.exact_count_errors("public_records", metric, payload)
+        self.assertTrue(any("truncated" in error for error in errors), errors)
+
+    def test_rejects_term_metric_without_count_observation(self) -> None:
+        index = copy.deepcopy(self.index)
+        del index["packets"][1]["metrics"][0]["count_observation"]
+        self.assert_error_contains(index, "term-based metric must declare an exact count observation")
+
+    def test_rejects_count_source_not_pinned_to_repository_and_workflow_head(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][1]["metrics"][0]["count_observation"]["api_url"] = (
+            "https://api.github.com/repos/organvm/limen/git/trees/"
+            "139fa7b40d875ecfe3a8c693dedfab46671739fd?recursive=1"
+        )
+        self.assert_error_contains(index, "count source must bind public_repository and workflow head")
+
+    def test_packet_markdown_must_match_machine_index(self) -> None:
+        packet = self.index["packets"][0]
+        packet_text = (ROOT / packet["path"]).read_text(encoding="utf-8")
+        drifted = packet_text.replace(packet["metrics"][0]["public_safe_claim"], "Unsupported replacement.")
+        errors = MODULE.validate_packet_markdown(packet, drifted)
+        self.assertTrue(any("public_tasks_total claim" in error for error in errors), errors)
+
+    def test_workflow_urls_must_bind_the_selected_repository(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["sources"][0]["api_url"] = (
+            "https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31404705695"
+        )
+        self.assert_error_contains(index, "workflow API and human URLs must bind")
+
+    def test_live_workflow_response_must_match_repository_and_human_url(self) -> None:
+        packet = self.index["packets"][0]
+        source = packet["sources"][0]
+        run = {
+            "repository": {"full_name": "organvm-iii-ergon/a-i-chat--exporter"},
+            "html_url": "https://github.com/organvm/limen/actions/runs/1",
+            "url": source["api_url"],
+        }
+        errors = MODULE.validate_workflow_run_response(packet, source, run)
+        self.assertTrue(any("repository" in error for error in errors), errors)
+        self.assertTrue(any("html_url" in error for error in errors), errors)
+
+    def test_static_validation_requires_all_live_source_fields(self) -> None:
+        index = copy.deepcopy(self.index)
+        del index["packets"][0]["sources"][0]["expected_conclusion"]
+        del index["packets"][0]["sources"][0]["observed_head"]
+        del index["packets"][0]["sources"][1]["expected_http_status"]
+        errors = MODULE.verify_evidence(index, live=True)
+        self.assertTrue(any("expected_conclusion" in error for error in errors), errors)
+        self.assertTrue(any("observed_head" in error for error in errors), errors)
+        self.assertTrue(any("expected_http_status" in error for error in errors), errors)
 
 
 if __name__ == "__main__":

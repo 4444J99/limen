@@ -34,6 +34,9 @@ w08_research_import:
   source_pr: https://github.com/organvm/limen/pull/2314
   source_head: 96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa
   source_path: docs/positioning/program/research-adjudication.json
+  source_blob: f0db657dde5cc27bb2db67e495fa410f6483646f
+  source_sha256: 26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6
+  projection_sha256: 918cc029a78b67b10eec73c4483cc2a2d56f983491a5efd66b166b37de190596
   claim_count: 13
   preservation_rule: >-
     Keep measurement, inference, implication, and prominence independent. Citation sets remain
@@ -165,6 +168,10 @@ packets:
         observed_value: 4
         comparison: exact
         corroborating_terms: [CA, TX, FL, NY]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/git/trees/139fa7b40d875ecfe3a8c693dedfab46671739fd?recursive=1"
+          path_regex: '^scripts/scrapers/states/[a-z]+\.ts$'
 
   - id: ai_chat_exporter
     path: docs/positioning/evidence/ai-chat-exporter.md
@@ -191,3 +198,7 @@ packets:
         observed_value: 5
         comparison: exact
         corroborating_terms: [Markdown, HTML, JSON, PNG, text]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/git/trees/e3a0b8d9a47183163cd92d18f479fc580eaf314d?recursive=1"
+          path_regex: '^src/exporter/[^/]+\.ts$'

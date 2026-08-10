@@ -9,7 +9,9 @@ receipts, endpoint status, JSON observations, and visible corroborating terms.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -26,6 +28,10 @@ CLAIMS_LEDGER = ROOT / "docs/positioning/claims-ledger.md"
 SCHEMA = "limen.positioning_flagship_evidence.v1"
 EXPECTED_IDS = {"limen", "public_records", "ai_chat_exporter"}
 EXPECTED_W08_SOURCE_HEAD = "96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa"
+EXPECTED_W08_SOURCE_PATH = "docs/positioning/program/research-adjudication.json"
+EXPECTED_W08_SOURCE_BLOB = "f0db657dde5cc27bb2db67e495fa410f6483646f"
+EXPECTED_W08_SOURCE_SHA256 = "26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6"
+EXPECTED_W08_PROJECTION_SHA256 = "918cc029a78b67b10eec73c4483cc2a2d56f983491a5efd66b166b37de190596"
 EXPECTED_W08_CLAIM_IDS = {
     "lavrea-top-01-throughput",
     "lavrea-top-1-python-full-stack",
@@ -51,6 +57,7 @@ ALLOWED_PUBLIC_HOSTS = frozenset(
     }
 )
 MAX_RESPONSE_BYTES = 2_000_000
+FULL_SHA1_RE = re.compile(r"[0-9a-f]{40}")
 
 
 class EvidenceError(RuntimeError):
@@ -134,6 +141,139 @@ def selected_repositories(matrix: dict[str, Any]) -> dict[str, str]:
     return selected
 
 
+def normalized_packet_text(value: str) -> str:
+    """Collapse Markdown wrapping without erasing visible packet content."""
+
+    return " ".join(value.split())
+
+
+def validate_packet_markdown(packet: dict[str, Any], packet_text: str) -> list[str]:
+    """Prove that public prose contains every material machine-index projection."""
+
+    label = str(packet.get("id") or "packet")
+    normalized = normalized_packet_text(packet_text)
+    required: list[tuple[str, object]] = [("authorship", packet.get("authorship"))]
+    required.extend(("limitation", value) for value in packet.get("limitations", []))
+    for source in packet.get("sources", []):
+        if not isinstance(source, dict):
+            continue
+        required.append(("source URL", source.get("url")))
+        if source.get("kind") == "workflow_run":
+            required.append(("workflow head", source.get("observed_head")))
+    for metric in packet.get("metrics", []):
+        if isinstance(metric, dict):
+            required.append((f"{metric.get('id', 'metric')} claim", metric.get("public_safe_claim")))
+
+    errors: list[str] = []
+    for field, value in required:
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"{label}: {field} must be a nonempty packet projection")
+        elif normalized_packet_text(value) not in normalized:
+            errors.append(f"{label}: packet Markdown is missing indexed {field}")
+    return errors
+
+
+def w08_projection_sha256(claims: list[object]) -> str:
+    """Hash the exact wording/receipt subset imported from the immutable W08 artifact."""
+
+    projection = []
+    for claim in claims:
+        if not isinstance(claim, dict):
+            continue
+        projection.append(
+            {
+                "id": claim.get("id"),
+                "public_wording": claim.get("public_wording"),
+                "required_receipts": claim.get("required_receipts"),
+            }
+        )
+    projection.sort(key=lambda row: str(row["id"]))
+    encoded = json.dumps(projection, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def workflow_binding_errors(packet: dict[str, Any], source: dict[str, Any]) -> list[str]:
+    """Bind both workflow URLs to the selected public repository and one run ID."""
+
+    label = str(packet.get("id") or "packet")
+    repository = packet.get("public_repository")
+    if not isinstance(repository, str) or not repository:
+        return [f"{label}: public_repository is required before workflow binding"]
+    api_url = source.get("api_url")
+    human_url = source.get("url")
+    api_pattern = rf"https://api\.github\.com/repos/{re.escape(repository)}/actions/runs/([0-9]+)"
+    human_pattern = rf"https://github\.com/{re.escape(repository)}/actions/runs/([0-9]+)"
+    api_match = re.fullmatch(api_pattern, api_url) if isinstance(api_url, str) else None
+    human_match = re.fullmatch(human_pattern, human_url) if isinstance(human_url, str) else None
+    if api_match is None or human_match is None or api_match.group(1) != human_match.group(1):
+        return [f"{label}: workflow API and human URLs must bind one run in public_repository"]
+    return []
+
+
+def validate_workflow_run_response(
+    packet: dict[str, Any], source: dict[str, Any], run: object
+) -> list[str]:
+    """Validate the live workflow response against the selected public repository."""
+
+    label = str(packet.get("id") or "packet")
+    if not isinstance(run, dict):
+        return [f"{label}: workflow API response must be a mapping"]
+    errors: list[str] = []
+    repository = run.get("repository")
+    full_name = repository.get("full_name") if isinstance(repository, dict) else None
+    if full_name != packet.get("public_repository"):
+        errors.append(f"{label}: workflow response repository does not match public_repository")
+    if run.get("html_url") != source.get("url"):
+        errors.append(f"{label}: workflow response html_url does not match the human receipt URL")
+    if run.get("url") != source.get("api_url"):
+        errors.append(f"{label}: workflow response API URL does not match the indexed receipt")
+    return errors
+
+
+def derive_tree_path_count(observation: dict[str, Any], payload: bytes) -> int:
+    """Derive an exact file count from a complete, head-pinned Git tree response."""
+
+    try:
+        document = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise EvidenceError(f"count source returned invalid JSON: {exc}") from exc
+    if not isinstance(document, dict) or not isinstance(document.get("tree"), list):
+        raise EvidenceError("count source must return a Git tree mapping")
+    if document.get("truncated") is True:
+        raise EvidenceError("count source Git tree is truncated")
+    pattern = observation.get("path_regex")
+    if not isinstance(pattern, str):
+        raise EvidenceError("count observation path_regex is required")
+    try:
+        compiled = re.compile(pattern)
+    except re.error as exc:
+        raise EvidenceError(f"count observation path_regex is invalid: {exc}") from exc
+    return sum(
+        1
+        for entry in document["tree"]
+        if isinstance(entry, dict)
+        and entry.get("type") == "blob"
+        and isinstance(entry.get("path"), str)
+        and compiled.fullmatch(entry["path"])
+    )
+
+
+def exact_count_errors(label: str, metric: dict[str, Any], payload: bytes) -> list[str]:
+    """Compare a term metric's derived denominator with its indexed exact value."""
+
+    observation = metric.get("count_observation")
+    if not isinstance(observation, dict):
+        return [f"{label}/{metric.get('id', 'metric')}: term metric needs an exact count observation"]
+    try:
+        derived = derive_tree_path_count(observation, payload)
+    except EvidenceError as exc:
+        return [f"{label}/{metric.get('id', 'metric')}: {exc}"]
+    expected = metric.get("observed_value")
+    if derived != expected:
+        return [f"{label}/{metric.get('id', 'metric')}: derived {derived!r}, expected {expected!r}"]
+    return []
+
+
 def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
     errors: list[str] = []
     imported = index.get("w08_research_import")
@@ -141,6 +281,14 @@ def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
         return ["w08_research_import must be a mapping"]
     if imported.get("source_head") != EXPECTED_W08_SOURCE_HEAD:
         errors.append("W08 import must bind the reviewed immutable source head")
+    if imported.get("source_path") != EXPECTED_W08_SOURCE_PATH:
+        errors.append("W08 import must bind the immutable source artifact path")
+    if imported.get("source_blob") != EXPECTED_W08_SOURCE_BLOB:
+        errors.append("W08 import must bind the immutable source artifact blob")
+    if imported.get("source_sha256") != EXPECTED_W08_SOURCE_SHA256:
+        errors.append("W08 import must bind the immutable source artifact SHA-256")
+    if imported.get("projection_sha256") != EXPECTED_W08_PROJECTION_SHA256:
+        errors.append("W08 import must declare the immutable wording/receipt projection SHA-256")
     if imported.get("claim_count") != len(EXPECTED_W08_CLAIM_IDS):
         errors.append("W08 import claim_count must equal the 13-claim denominator")
     claims = imported.get("claims")
@@ -149,6 +297,8 @@ def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
     identifiers = [claim.get("id") for claim in claims if isinstance(claim, dict)]
     if len(identifiers) != len(set(identifiers)) or set(identifiers) != EXPECTED_W08_CLAIM_IDS:
         errors.append("W08 import must classify each ratified claim exactly once")
+    if w08_projection_sha256(claims) != EXPECTED_W08_PROJECTION_SHA256:
+        errors.append("W08 wording and receipt sets must match the immutable source artifact")
     for claim in claims:
         if not isinstance(claim, dict):
             errors.append("every W08 import claim must be a mapping")
@@ -233,6 +383,7 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
         label = str(packet.get("id") or "packet")
         path = packet.get("path")
         packet_path = Path(path) if isinstance(path, str) else None
+        packet_text: str | None = None
         if (
             packet_path is None
             or packet_path.is_absolute()
@@ -240,6 +391,11 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
             or not (root / packet_path).is_file()
         ):
             errors.append(f"{label}: packet path must exist")
+        else:
+            try:
+                packet_text = (root / packet_path).read_text(encoding="utf-8")
+            except OSError as exc:
+                errors.append(f"{label}: cannot load packet Markdown: {exc}")
         if packet.get("public_repository") != selected.get(label):
             errors.append(f"{label}: public_repository must match the W03-selected public repository")
         if not isinstance(packet.get("limitations"), list) or not packet["limitations"]:
@@ -256,6 +412,9 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
             errors.append(f"{label}: exactly one workflow and public endpoint source are required")
         else:
             for source in sources:
+                if not isinstance(source, dict):
+                    errors.append(f"{label}: every source must be a mapping")
+                    continue
                 url = source.get("url")
                 try:
                     validate_public_fetch_url(url)
@@ -269,6 +428,18 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                         errors.append(f"{label}: workflow API URL must use the public GitHub endpoint")
                     if not isinstance(api_url, str) or not api_url.startswith("https://api.github.com/repos/"):
                         errors.append(f"{label}: workflow API URL must use the public GitHub endpoint")
+                    errors.extend(workflow_binding_errors(packet, source))
+                    observed_head = source.get("observed_head")
+                    if not isinstance(observed_head, str) or FULL_SHA1_RE.fullmatch(observed_head) is None:
+                        errors.append(f"{label}: workflow observed_head must be a full lowercase SHA-1")
+                    if source.get("expected_conclusion") != "success":
+                        errors.append(f"{label}: workflow expected_conclusion must be success")
+                elif source.get("kind") == "public_endpoint":
+                    expected_status = source.get("expected_http_status")
+                    if isinstance(expected_status, bool) or not isinstance(expected_status, int):
+                        errors.append(f"{label}: public endpoint expected_http_status must be an integer")
+                    elif expected_status != 200:
+                        errors.append(f"{label}: public endpoint expected_http_status must be 200")
         metrics = packet.get("metrics")
         if not isinstance(metrics, list) or not metrics:
             errors.append(f"{label}: at least one material metric is required")
@@ -290,17 +461,88 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 validate_public_fetch_url(metric.get("source_url"))
             except EvidenceError as exc:
                 errors.append(f"{label}: metric source {exc}")
+            observation_path = metric.get("observation_path")
+            count_observation = metric.get("count_observation")
+            if observation_path is not None:
+                if not isinstance(observation_path, str) or not observation_path.strip():
+                    errors.append(f"{label}: observation_path must be a nonempty string")
+                if count_observation is not None:
+                    errors.append(f"{label}: metric may not mix JSON and term-count observations")
+            else:
+                if not isinstance(count_observation, dict):
+                    errors.append(f"{label}: term-based metric must declare an exact count observation")
+                else:
+                    if count_observation.get("kind") != "github_tree_path_regex":
+                        errors.append(f"{label}: count observation kind must be github_tree_path_regex")
+                    count_url = count_observation.get("api_url")
+                    try:
+                        validate_public_fetch_url(count_url)
+                    except EvidenceError as exc:
+                        errors.append(f"{label}: count source {exc}")
+                    workflow = next(
+                        (source for source in sources if isinstance(source, dict) and source.get("kind") == "workflow_run"),
+                        {},
+                    )
+                    expected_count_url = (
+                        f"https://api.github.com/repos/{packet.get('public_repository')}/git/trees/"
+                        f"{workflow.get('observed_head')}?recursive=1"
+                    )
+                    if count_url != expected_count_url:
+                        errors.append(f"{label}: count source must bind public_repository and workflow head")
+                    path_regex = count_observation.get("path_regex")
+                    if not isinstance(path_regex, str) or not path_regex:
+                        errors.append(f"{label}: count observation path_regex is required")
+                    else:
+                        try:
+                            re.compile(path_regex)
+                        except re.error as exc:
+                            errors.append(f"{label}: count observation path_regex is invalid: {exc}")
+                    if isinstance(metric.get("observed_value"), bool) or not isinstance(metric.get("observed_value"), int):
+                        errors.append(f"{label}: term-count observed_value must be an integer")
+            terms = metric.get("corroborating_terms")
+            if count_observation is not None and (
+                not isinstance(terms, list)
+                or not terms
+                or any(not isinstance(term, str) or not term for term in terms)
+            ):
+                errors.append(f"{label}: term-count metric needs nonempty corroborating_terms")
+        if packet_text is not None:
+            errors.extend(validate_packet_markdown(packet, packet_text))
     return errors
 
 
 def verify_live(index: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    for packet in index["packets"]:
-        label = packet["id"]
+    fetch_cache: dict[str, tuple[int, bytes]] = {}
+
+    def cached_fetch(url: str) -> tuple[int, bytes]:
+        if url not in fetch_cache:
+            fetch_cache[url] = fetch(url)
+        return fetch_cache[url]
+
+    packets = index.get("packets")
+    if not isinstance(packets, list):
+        return ["packets must contain exactly three flagships"]
+    for packet in packets:
+        if not isinstance(packet, dict):
+            errors.append("every packet must be a mapping")
+            continue
+        label = str(packet.get("id") or "packet")
         endpoint_text = ""
-        for source in packet["sources"]:
-            if source["kind"] == "workflow_run":
-                status, payload = fetch(source["api_url"])
+        sources = packet.get("sources")
+        if not isinstance(sources, list):
+            errors.append(f"{label}: sources must be a list")
+            continue
+        for source in sources:
+            if not isinstance(source, dict):
+                errors.append(f"{label}: every source must be a mapping")
+                continue
+            if source.get("kind") == "workflow_run":
+                api_url = source.get("api_url")
+                if not isinstance(api_url, str):
+                    errors.append(f"{label}: workflow API URL is required")
+                    continue
+                status, payload = cached_fetch(api_url)
                 if status != 200:
                     errors.append(f"{label}: workflow API returned HTTP {status}")
                     continue
@@ -309,36 +551,80 @@ def verify_live(index: dict[str, Any]) -> list[str]:
                 except json.JSONDecodeError as exc:
                     errors.append(f"{label}: workflow API returned invalid JSON: {exc}")
                     continue
-                if run.get("conclusion") != source["expected_conclusion"]:
+                errors.extend(validate_workflow_run_response(packet, source, run))
+                if run.get("conclusion") != source.get("expected_conclusion"):
                     errors.append(f"{label}: workflow conclusion is {run.get('conclusion')!r}")
-                if run.get("head_sha") != source["observed_head"]:
+                if run.get("head_sha") != source.get("observed_head"):
                     errors.append(f"{label}: workflow head no longer matches the packet snapshot")
-            elif source["kind"] == "public_endpoint":
-                status, payload = fetch(source["url"])
-                if status != source["expected_http_status"]:
+            elif source.get("kind") == "public_endpoint":
+                endpoint_url = source.get("url")
+                if not isinstance(endpoint_url, str):
+                    errors.append(f"{label}: public endpoint URL is required")
+                    continue
+                status, payload = cached_fetch(endpoint_url)
+                if status != source.get("expected_http_status"):
                     errors.append(f"{label}: public endpoint returned HTTP {status}")
                 endpoint_text = payload.decode("utf-8", errors="replace")
-        for metric in packet["metrics"]:
+        metrics = packet.get("metrics")
+        if not isinstance(metrics, list):
+            errors.append(f"{label}: metrics must be a list")
+            continue
+        public_endpoint_url = next(
+            (
+                source.get("url")
+                for source in sources
+                if isinstance(source, dict) and source.get("kind") == "public_endpoint"
+            ),
+            None,
+        )
+        for metric in metrics:
+            if not isinstance(metric, dict):
+                errors.append(f"{label}: metric must be a mapping")
+                continue
             if metric.get("observation_path"):
                 try:
                     value = nested_value(json.loads(endpoint_text), metric["observation_path"])
                 except (json.JSONDecodeError, EvidenceError) as exc:
-                    errors.append(f"{label}/{metric['id']}: {exc}")
+                    errors.append(f"{label}/{metric.get('id', 'metric')}: {exc}")
                     continue
-                if value != metric["observed_value"]:
-                    errors.append(f"{label}/{metric['id']}: observed {value!r}, expected {metric['observed_value']!r}")
+                if value != metric.get("observed_value"):
+                    errors.append(
+                        f"{label}/{metric.get('id', 'metric')}: observed {value!r}, "
+                        f"expected {metric.get('observed_value')!r}"
+                    )
+            elif isinstance(metric.get("count_observation"), dict):
+                count_url = metric["count_observation"].get("api_url")
+                if not isinstance(count_url, str):
+                    errors.append(f"{label}/{metric.get('id', 'metric')}: count source URL is required")
+                else:
+                    status, payload = cached_fetch(count_url)
+                    if status != 200:
+                        errors.append(f"{label}/{metric.get('id', 'metric')}: count source returned HTTP {status}")
+                    else:
+                        errors.extend(exact_count_errors(label, metric, payload))
             evidence_text = endpoint_text
-            if metric.get("corroborating_terms") and metric["source_url"] != next(
-                source["url"] for source in packet["sources"] if source["kind"] == "public_endpoint"
-            ):
-                status, payload = fetch(metric["source_url"])
+            source_url = metric.get("source_url")
+            if metric.get("corroborating_terms") and source_url != public_endpoint_url:
+                if not isinstance(source_url, str):
+                    errors.append(f"{label}/{metric.get('id', 'metric')}: metric source URL is required")
+                    continue
+                status, payload = cached_fetch(source_url)
                 if status != 200:
-                    errors.append(f"{label}/{metric['id']}: metric source returned HTTP {status}")
+                    errors.append(f"{label}/{metric.get('id', 'metric')}: metric source returned HTTP {status}")
                     continue
                 evidence_text = payload.decode("utf-8", errors="replace")
             for term in metric.get("corroborating_terms", []):
                 if term not in evidence_text:
-                    errors.append(f"{label}/{metric['id']}: public evidence is missing {term!r}")
+                    errors.append(f"{label}/{metric.get('id', 'metric')}: public evidence is missing {term!r}")
+    return errors
+
+
+def verify_evidence(index: dict[str, Any], *, live: bool = False) -> list[str]:
+    """Run static validation first so malformed live fields fail as data, never exceptions."""
+
+    errors = validate_index(index)
+    if not errors and live:
+        errors.extend(verify_live(index))
     return errors
 
 
@@ -349,9 +635,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         index = load_yaml(INDEX)
-        errors = validate_index(index)
-        if not errors and args.verify_live:
-            errors.extend(verify_live(index))
+        errors = verify_evidence(index, live=args.verify_live)
     except EvidenceError as exc:
         errors = [str(exc)]
     result = {"status": "pass" if not errors else "fail", "errors": errors}
