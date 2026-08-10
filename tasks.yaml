@@ -169438,3 +169438,36 @@ tasks:
     conduct_lease_id: 'lease-821-719fadf478100f7a'
     conduct_generation: 821
   updated: '2026-08-09T04:53:57.843Z'
+- id: 'GH-organvm-limen-2288'
+  title: 'Two RED rungs with no owner: enactment-audit-check''s streak is self-sustaining, and heal-dispatch''s remediation pointer dangles'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels: []
+  urls:
+  - 'https://github.com/organvm/limen/issues/2288'
+  context: 'GitHub issue organvm/limen#2288. Surfaced while verifying #2286/#2287 against the live fleet. Four rungs are RED on `enactment-audit.py --efficacy-only`; two already have owners (`limen-release-stale` → #2063, `self-heal-scan`''s broker-quota blocker → #2284). These two do not, and both are instances of this estate''s own named failure class — **a signal with no effector** — rather than ordinary rung failures. ``` ❌ [efficacy] enac'
+  predicate: 'test "$(gh issue view 2288 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2288'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2288'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:54:31.802Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-607deb1e54d9433a6d655008c700bcbd:824:compatibility'
+    conduct_run_id: 'run-607deb1e54d9433a6d655008c700bcbd'
+    conduct_lease_id: 'lease-824-607deb1e54d9433a'
+    conduct_generation: 824
+  updated: '2026-08-10T00:54:31.802Z'
