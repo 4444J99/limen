@@ -29,12 +29,19 @@ SCHEMA = "limen.positioning_flagship_proof_set.v1"
 STATUSES = {"selected", "alternate", "excluded"}
 REPOSITORY_RE = re.compile(r"[^/\s]+/[^/\s]+\Z")
 WORKFLOW_API_PATH_RE = re.compile(r"repos/([^/\s]+/[^/\s]+)/actions/runs/[1-9][0-9]*\Z")
+HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 LIVE_ENDPOINT_HOSTS = frozenset(
     {
         "limen-dashboard.pages.dev",
         "organvm-iii-ergon.github.io",
     }
 )
+EXPLICIT_ENDPOINT_BINDINGS = {
+    "limen": {
+        "deployment_identity": "cloudflare-pages:limen-dashboard",
+        "url": "https://limen-dashboard.pages.dev/public-status.json",
+    }
+}
 
 
 class ProofSetError(RuntimeError):
@@ -96,6 +103,27 @@ def validate_live_endpoint_url(url: object) -> str:
     return url
 
 
+def expected_endpoint_binding(candidate: dict[str, Any]) -> dict[str, str] | None:
+    """Derive a selected candidate's exact public deployment identity."""
+
+    candidate_id = candidate.get("id")
+    if candidate_id in EXPLICIT_ENDPOINT_BINDINGS:
+        return EXPLICIT_ENDPOINT_BINDINGS[candidate_id]
+    repository = candidate.get("repository")
+    if not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository):
+        return None
+    owner, name = repository.split("/", 1)
+    return {
+        "deployment_identity": f"github-pages:{repository}",
+        "url": f"https://{owner}.github.io/{name}/",
+    }
+
+
+def endpoint_matches_candidate(anchor: dict[str, Any], candidate: dict[str, Any]) -> bool:
+    binding = expected_endpoint_binding(candidate)
+    return binding is not None and all(anchor.get(key) == value for key, value in binding.items())
+
+
 def repository_workflow_api_path(value: object, repository: object) -> str | None:
     match = WORKFLOW_API_PATH_RE.fullmatch(str(value or ""))
     if match is None or match.group(1) != repository:
@@ -118,6 +146,12 @@ def weighted_total(scores: dict[str, Any], dimensions: dict[str, Any]) -> int | 
     return total // 5
 
 
+def strict_int(value: Any) -> bool:
+    """Return true for YAML integers while rejecting booleans."""
+
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def validate_matrix(
     matrix: dict[str, Any],
     *,
@@ -134,7 +168,7 @@ def validate_matrix(
         errors.append("rubric.dimensions must be a nonempty mapping")
         dimensions = {}
     weights = [spec.get("weight") for spec in dimensions.values() if isinstance(spec, dict)]
-    if len(weights) != len(dimensions) or any(not isinstance(weight, int) for weight in weights):
+    if len(weights) != len(dimensions) or any(not strict_int(weight) for weight in weights):
         errors.append("every rubric dimension needs an integer weight")
     elif sum(weights) != 100:
         errors.append("rubric weights must sum to 100")
@@ -157,13 +191,19 @@ def validate_matrix(
     minimum_selected = policy.get("minimum_selected")
     maximum_selected = policy.get("maximum_selected")
     minimum_total = policy.get("minimum_weighted_total")
-    dimension_minima = policy.get("minimum_dimension_scores") or {}
-    if not isinstance(minimum_selected, int) or not isinstance(maximum_selected, int):
+    dimension_minima = policy.get("minimum_dimension_scores")
+    if not isinstance(dimension_minima, dict) or not dimension_minima:
+        errors.append("selection_policy.minimum_dimension_scores must be a nonempty mapping")
+        dimension_minima = {}
+    if not strict_int(minimum_selected) or not strict_int(maximum_selected):
         errors.append("selection_policy needs integer selected bounds")
-    if not isinstance(minimum_total, int):
+    if not strict_int(minimum_total):
         errors.append("selection_policy.minimum_weighted_total must be an integer")
 
     ids: list[str] = []
+    repositories: list[str] = []
+    endpoint_identities: list[str] = []
+    endpoint_urls: list[str] = []
     status_ids: dict[str, list[str]] = collections.defaultdict(list)
     selected_roles: dict[str, list[str]] = collections.defaultdict(list)
     check_now = (now or dt.datetime.now(dt.UTC)).astimezone(dt.UTC)
@@ -194,6 +234,8 @@ def validate_matrix(
             not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository)
         ):
             errors.append(f"{prefix}: repository candidates need a valid owner/repository slug")
+        elif isinstance(repository, str) and repository:
+            repositories.append(repository)
 
         scores = candidate.get("scores")
         if not isinstance(scores, dict) or set(scores) != set(dimensions):
@@ -215,8 +257,20 @@ def validate_matrix(
         if not isinstance(anchors, list):
             errors.append(f"{prefix}: evidence_anchors must be a list")
             anchors = []
+        for anchor in anchors:
+            if not isinstance(anchor, dict) or anchor.get("kind") != "public_endpoint":
+                continue
+            identity = anchor.get("deployment_identity")
+            endpoint_url = anchor.get("url")
+            if isinstance(identity, str) and identity:
+                endpoint_identities.append(identity)
+            if isinstance(endpoint_url, str) and endpoint_url:
+                endpoint_urls.append(endpoint_url)
 
         if status == "selected":
+            claim = candidate.get("flagship_claim")
+            if not isinstance(claim, str) or not claim.strip():
+                errors.append(f"{prefix}: selected candidate needs a nonempty flagship_claim")
             role = candidate.get("story_role")
             if not isinstance(role, str) or not role:
                 errors.append(f"{prefix}: selected candidate needs a story_role")
@@ -230,11 +284,11 @@ def validate_matrix(
                 errors.append(f"{prefix}: selected candidate has a private-only dependency")
             if candidate.get("hard_gate_failures"):
                 errors.append(f"{prefix}: selected candidate has hard-gate failures")
-            if isinstance(minimum_total, int) and candidate.get("weighted_total", -1) < minimum_total:
+            if strict_int(minimum_total) and candidate.get("weighted_total", -1) < minimum_total:
                 errors.append(f"{prefix}: selected score is below the minimum")
             if isinstance(scores, dict):
                 for dimension, minimum in dimension_minima.items():
-                    if not isinstance(minimum, int) or scores.get(dimension, -1) < minimum:
+                    if not strict_int(minimum) or scores.get(dimension, -1) < minimum:
                         errors.append(f"{prefix}: {dimension} is below the selected minimum")
 
             live_anchors = [anchor for anchor in anchors if isinstance(anchor, dict) and anchor.get("live") is True]
@@ -244,6 +298,8 @@ def validate_matrix(
                 anchor_prefix = f"{prefix}.evidence_anchors[{anchor_index}]"
                 if anchor.get("status") != "pass":
                     errors.append(f"{anchor_prefix}: live anchor must be passing")
+                if anchor.get("kind") == "public_endpoint" and not endpoint_matches_candidate(anchor, candidate):
+                    errors.append(f"{anchor_prefix}: endpoint identity is not bound to this candidate")
                 url = anchor.get("url")
                 if not public_https_url(url):
                     errors.append(
@@ -253,7 +309,7 @@ def validate_matrix(
                     errors.append(f"{anchor_prefix}: live anchor needs a reproduction command")
                 observed = parse_time(anchor.get("observed_at"))
                 max_age = anchor.get("max_age_days")
-                if observed is None or not isinstance(max_age, int) or max_age <= 0:
+                if observed is None or not strict_int(max_age) or max_age <= 0:
                     errors.append(f"{anchor_prefix}: live anchor needs a valid observation and max age")
                 elif enforce_freshness and check_now - observed > dt.timedelta(days=max_age):
                     errors.append(f"{anchor_prefix}: live anchor is stale")
@@ -268,6 +324,21 @@ def validate_matrix(
     duplicate_ids = sorted(name for name, count in collections.Counter(ids).items() if count > 1)
     if duplicate_ids:
         errors.append(f"duplicate candidate ids: {', '.join(duplicate_ids)}")
+    duplicate_repositories = sorted(
+        name for name, count in collections.Counter(repositories).items() if count > 1
+    )
+    if duplicate_repositories:
+        errors.append(f"duplicate candidate repositories: {', '.join(duplicate_repositories)}")
+    duplicate_endpoint_identities = sorted(
+        name for name, count in collections.Counter(endpoint_identities).items() if count > 1
+    )
+    if duplicate_endpoint_identities:
+        errors.append(f"duplicate endpoint identities: {', '.join(duplicate_endpoint_identities)}")
+    duplicate_endpoint_urls = sorted(
+        name for name, count in collections.Counter(endpoint_urls).items() if count > 1
+    )
+    if duplicate_endpoint_urls:
+        errors.append(f"duplicate endpoint URLs: {', '.join(duplicate_endpoint_urls)}")
     duplicate_roles = sorted(role for role, members in selected_roles.items() if len(members) > 1)
     if duplicate_roles:
         errors.append(f"duplicate selected story roles: {', '.join(duplicate_roles)}")
@@ -278,9 +349,9 @@ def validate_matrix(
     if verdict.get("alternate_ids") != status_ids["alternate"]:
         errors.append("reviewer_verdict.alternate_ids must match alternate matrix rows in order")
     selected_count = len(status_ids["selected"])
-    if isinstance(minimum_selected, int) and selected_count < minimum_selected:
+    if strict_int(minimum_selected) and selected_count < minimum_selected:
         errors.append("selected set is smaller than selection_policy.minimum_selected")
-    if isinstance(maximum_selected, int) and selected_count > maximum_selected:
+    if strict_int(maximum_selected) and selected_count > maximum_selected:
         errors.append("selected set is larger than selection_policy.maximum_selected")
     return errors
 
@@ -328,6 +399,7 @@ def http_status(url: str) -> int:
 def validate_live(matrix: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     candidates = matrix.get("candidates") or []
+    current_heads: dict[str, str] = {}
     for candidate in candidates:
         if not isinstance(candidate, dict) or candidate.get("kind") != "repository":
             continue
@@ -342,6 +414,21 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
             errors.append(f"{candidate_id}: public matrix names a private repository")
         if candidate.get("status") == "selected" and bool(metadata.get("archived")):
             errors.append(f"{candidate_id}: selected repository is archived")
+        if candidate.get("status") == "selected":
+            default_branch = metadata.get("default_branch")
+            if not isinstance(default_branch, str) or not default_branch:
+                errors.append(f"{candidate_id}: repository has no readable default branch")
+                continue
+            try:
+                commit = command_json(["gh", "api", f"repos/{repository}/commits/{default_branch}"])
+            except ProofSetError as exc:
+                errors.append(f"{candidate_id}: cannot inspect current default-branch head: {exc}")
+                continue
+            current_head = commit.get("sha") if isinstance(commit, dict) else None
+            if not isinstance(current_head, str) or not HEAD_RE.fullmatch(current_head):
+                errors.append(f"{candidate_id}: current default-branch head is invalid")
+                continue
+            current_heads[repository] = current_head
 
     for candidate in candidates:
         if not isinstance(candidate, dict) or candidate.get("status") != "selected":
@@ -367,7 +454,12 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                     errors.append(f"{candidate_id}: workflow anchor is not a completed success")
                 if run.get("head_sha") != anchor.get("observed_head"):
                     errors.append(f"{candidate_id}: workflow anchor head does not match the matrix")
+                if run.get("head_sha") != current_heads.get(str(candidate.get("repository") or "")):
+                    errors.append(f"{candidate_id}: workflow anchor is not on the current default-branch head")
             elif kind == "public_endpoint":
+                if not endpoint_matches_candidate(anchor, candidate):
+                    errors.append(f"{candidate_id}: endpoint identity is not bound to this candidate")
+                    continue
                 expected = anchor.get("expected_http_status")
                 try:
                     observed = http_status(str(anchor.get("url") or ""))

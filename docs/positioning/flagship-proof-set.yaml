@@ -1,6 +1,6 @@
 schema_version: limen.positioning_flagship_proof_set.v1
 work_id: PSP-P02-W03
-generated_at: "2026-08-10T16:57:12Z"
+generated_at: "2026-08-10T21:58:55Z"
 verdict: preflight_ratified_dependency_blocked
 formal_completion_blocker: "PSP-P02-W02 / issue #2174 remains open; refresh this matrix after its exact classification merges."
 
@@ -133,13 +133,14 @@ candidates:
       - kind: workflow_run
         live: true
         status: pass
-        url: https://github.com/organvm/limen/actions/runs/31404705695
-        github_api_path: repos/organvm/limen/actions/runs/31404705695
-        observed_head: d169c7d8ad9fc8f75d7e9200658758b2715eae97
-        observed_at: "2026-08-10T16:57:12Z"
+        url: https://github.com/organvm/limen/actions/runs/31432531450
+        github_api_path: repos/organvm/limen/actions/runs/31432531450
+        observed_head: 16d841f962da5faec273b11c97a8a2ee7049c25b
+        observed_at: "2026-08-10T21:58:55Z"
         max_age_days: 30
-        reproduction: "gh api repos/organvm/limen/actions/runs/31404705695 --jq '{status,conclusion,head_sha,html_url}'"
+        reproduction: "gh api repos/organvm/limen/actions/runs/31432531450 --jq '{status,conclusion,head_sha,html_url}'"
       - kind: public_endpoint
+        deployment_identity: cloudflare-pages:limen-dashboard
         live: true
         status: pass
         url: https://limen-dashboard.pages.dev/public-status.json
@@ -175,6 +176,7 @@ candidates:
         max_age_days: 30
         reproduction: "gh api repos/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594 --jq '{status,conclusion,head_sha,html_url}'"
       - kind: public_endpoint
+        deployment_identity: github-pages:organvm-iii-ergon/public-record-data-scrapper
         live: true
         status: pass
         url: https://organvm-iii-ergon.github.io/public-record-data-scrapper/
@@ -210,6 +212,7 @@ candidates:
         max_age_days: 30
         reproduction: "gh api repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405 --jq '{status,conclusion,head_sha,html_url}'"
       - kind: public_endpoint
+        deployment_identity: github-pages:organvm-iii-ergon/a-i-chat--exporter
         live: true
         status: pass
         url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
