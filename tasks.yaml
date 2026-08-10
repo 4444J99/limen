@@ -170047,3 +170047,39 @@ tasks:
     conduct_lease_id: 'lease-840-0aacaa852f9ab7e5'
     conduct_generation: 840
   updated: '2026-08-10T00:55:58.696Z'
+- id: 'GH-organvm-hospes-18'
+  title: '[P0-5] Coverage 86% → 90%+: Close all P0 error-branch gaps in 7 modules'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:0'
+  - 'priority:P0'
+  - 'area:demo'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/18'
+  context: 'GitHub issue organvm/hospes#18. ## Phase 0: Demo Polish — Before Ari Arrives ### Problem Test coverage is 86%. Critical modules have untested error branches that could break demo: - `hospes/__main__.py` (38%) — CLI commands untested - `hospes/pilot_service.py` (79%) — all PilotError branches - `hospes/partnership_records.py` (78%) — all PartnershipError branches - `hospes/api.py` (91%) — partnership + pilot HTTP routes untested'
+  predicate: 'test "$(gh issue view 18 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/18'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#18'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:03.950Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-49332d35ed721ce57c6601a085ca273b:841:compatibility'
+    conduct_run_id: 'run-49332d35ed721ce57c6601a085ca273b'
+    conduct_lease_id: 'lease-841-49332d35ed721ce5'
+    conduct_generation: 841
+  updated: '2026-08-10T00:56:03.950Z'
