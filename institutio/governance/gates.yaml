@@ -466,6 +466,11 @@ gates:
     paths: ["cli/src/limen/github_estate_census.py", "cli/tests/test_github_estate_census.py", "scripts/github-estate-census.py", "scripts/tests/test_github_estate_census_custody.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
     note: "The exhaustive estate census keeps raw private repository evidence only in its gitignored custody receipt, atomically replaces permissive files or symlinks, and enforces owner-only mode 0600; the tracked ledger remains redacted."
+  estate-classification-test:
+    command: "python3 scripts/tests/estate-classification.test.py"
+    paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]
+    owner: positioning-program
+    note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

@@ -573,6 +573,49 @@ audience_policy:
   predicate: scripts/check-audience.py
   note: "Coverage expansion = declaring intent on the rows that need it or landing an access.yaml grant — never editing this block."
 
+# ── POSITIONING ESTATE CLASSIFICATION (PSP-P02-W02 preflight) ───────────────────────────────
+# This is deliberately a policy, not a second public repository inventory. The verifier reads the
+# live owner/org census and returns only aggregate public-safe counts; private repository names and
+# metadata remain in GitHub and the arca-sealed private overlay. Rule order is the primary-class
+# precedence, so every live record has one, and only one, role.
+positioning_estate_classification:
+  schema_version: limen.positioning_estate_classification.v1
+  owner: positioning-program
+  census_receipt: docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json
+  expected_denominator: {repositories: 314, public: 235, private: 79, organizations: 10}
+  primary_classes: [infrastructure, proof, experiments, products, archives, private_operations, partner_work]
+  primary_order:
+    - {class: partner_work, when: {audience: collab}}
+    - {class: archives, when: {archived: true}}
+    - {class: infrastructure, when: {governance_classes: [conductor]}}
+    - {class: proof, when: {governance_classes: [portal_public]}}
+    - {class: products, when: {product_ledger: true}}
+    - {class: private_operations, when: {visibility: private}}
+    - {class: experiments, when: {fallback: true}}
+  maturity:
+    active_within_days: 90
+    maintained_within_days: 365
+    values: [active, maintained, dormant, archived, unvalidated]
+  visibility_dispositions: [public_evidence, public_partner, private_internal, private_partner]
+  public_relevance:
+    infrastructure: technical_diligence
+    proof: front_door_proof
+    experiments: public_reference
+    products: product_diligence
+    archives: historical_reference
+    private_operations: private_only
+    partner_work: partner_scoped
+  uncertainty_queue:
+    owner: PSP-P02-W02
+    records: opaque live-census identifiers only; public reports aggregate by missing evidence
+    evidence_needed:
+      role: repository purpose or product-ledger decision
+      maturity: a usable pushed_at timestamp or explicit archive decision
+      public_relevance: partner/collaboration disposition or public proof selection
+  predicate: python3 scripts/estate-classification.py --verify --base codex/psp-p02-w01-estate-census-preflight
+  rollback: Restore the preceding policy only with a newer live census receipt; do not publish a private record while rolling back.
+  note: "The public registry carries rules and aggregates only. A live verifier may inspect private metadata, but rejects any private repository name newly added to the reviewed public diff."
+
 # ── LICENSE POSTURE (Phase 4 — the doctrine gap the 2026-07-29 excavation named, now owned) ─
 license_policy:
   provenance: "Phase 4 2026-07-30 — first written license doctrine for the estate"

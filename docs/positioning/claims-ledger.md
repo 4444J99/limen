@@ -5,8 +5,8 @@ positioning. Before any claim appears on a public surface (README, portfolio, bi
 essay, application), it must have a row here with a status that permits that surface.
 
 Maintained beside `positioning-seeds.json` (the judgment layer) and
-`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-09 against live
-authenticated evidence.
+`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-10 against the stable
+two-pass W01 receipt and live authenticated evidence.
 
 ## Evidence-authority ladder
 
@@ -45,14 +45,14 @@ preserve the disagreement explicitly.
 
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
-| 313 repositories total (235 public, 78 private) | `verified` (census 2026-08-08T19:14Z) | Exhaustive authenticated census, `docs/github-estate-census.json` | "As of August 2026, the GitHub estate contains 313 repositories — 235 public and 78 private — across a personal account and ten organizations." | L1 (dated) |
-| Live count 2026-08-09: 309 repos (235 public, 74 private) | `verified` (live API sweep) | Authenticated per-org `gh api` listing, deduped | Use the dated census number with its date; note drift in L3 only | L3 |
+| 314 repositories total (235 public, 79 private) | `verified` (stable two-pass census 2026-08-10T21:20:04Z) | `docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json`; both authenticated passes share the same repository identity/visibility digest | "As of August 2026, the GitHub estate contains 314 repositories — 235 public and 79 private — across a personal account and ten organizations." | L1 (dated) |
+| Live count 2026-08-09: 309 repos (235 public, 74 private) | `superseded` by the newer exhaustive two-pass census | Historical authenticated per-org `gh api` listing, deduped | never use as the current estate count; retain only as historical drift evidence | L3 historical |
 | 1 personal account + 10 organizations | `verified` | Census + live org listing | as-is | L1 |
 | "~280 repositories" (voice memo) | `superseded` | Census supersedes | never use | nowhere |
 | 307/308 repository counts (older records) | `superseded` | Census supersedes | never use | nowhere |
 | Profile repository counts | `derived` on a distinct live-profile basis | `scripts/profile-visuals.py` writes `public-repos.json` from the live GitHub API; `scripts/sync-readme.py` renders its dated manifest. This is not the exhaustive census basis. | Label as live profile/API counts with the generation date; never present them as the estate census or use them to revise the dated census row above | L1 when dated and basis-labeled |
 | Org README shows "215 repositories" | `superseded` (stale generation 2026-07-30) | Org profile README vs census | regenerate from census | fix, then L1 |
-| Repository count ≠ product count | `verified` (classification) | `docs/positioning/estate-classification.md` | "A 313-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
+| Repository count ≠ product count | `verified` (classification over the W01 denominator) | `docs/positioning/estate-classification.md`; W01 two-pass receipt | "A 314-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
 
 ## 2. Product claims
 
