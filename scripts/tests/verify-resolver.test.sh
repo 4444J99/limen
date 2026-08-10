@@ -191,6 +191,7 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+github-estate-census-custody-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
