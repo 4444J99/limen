@@ -1,0 +1,245 @@
+{
+  "schema_version": "limen.psp_c07_private_inbound_preflight.v1",
+  "chunk_id": "PSP-C07",
+  "phase_id": "PSP-P08",
+  "status": "PREPARED/PREFLIGHT",
+  "leaf_assignments": {
+    "PSP-P08-W01": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    },
+    "PSP-P08-W02": {
+      "model": "gpt-5.6-sol",
+      "effort": "xhigh"
+    },
+    "PSP-P08-W03": {
+      "model": "gpt-5.6-sol",
+      "effort": "xhigh"
+    },
+    "PSP-P08-W04": {
+      "model": "gpt-5.6-terra",
+      "effort": "high"
+    },
+    "PSP-P08-W05": {
+      "model": "gpt-5.6-luna",
+      "effort": "medium"
+    },
+    "PSP-P08-W06": {
+      "model": "gpt-5.6-sol",
+      "effort": "xhigh"
+    },
+    "PSP-P08-W07": {
+      "model": "gpt-5.6-sol",
+      "effort": "xhigh"
+    }
+  },
+  "formal_dependency_gate": {
+    "required_chunk": "PSP-C06",
+    "required_phase": "PSP-P07",
+    "current_state": "open",
+    "selected_capture_surface": null,
+    "live_capture_activation": "forbidden_until_predicate_receipt"
+  },
+  "safety": {
+    "mode": "synthetic_only",
+    "send_valve": "hard_closed",
+    "transport_capabilities": [],
+    "allowed_effects": [
+      "adapt",
+      "normalize",
+      "score",
+      "route_suggestion",
+      "draft",
+      "private_ledger"
+    ],
+    "forbidden_effects": [
+      "send",
+      "publish",
+      "deploy",
+      "dns",
+      "account_mutation"
+    ],
+    "pii_log_policy": "field_names_and_counts_only",
+    "private_storage_owner": "integration_time_private_adapter",
+    "public_receipt_allowlist": [
+      "schema_version",
+      "status",
+      "mode",
+      "dependency_gate",
+      "journeys",
+      "aggregate",
+      "evaluation",
+      "external_send_count",
+      "blocked_send_attempt_count"
+    ],
+    "public_journey_allowlist": [
+      "fixture_id",
+      "record_id",
+      "stages",
+      "category",
+      "route",
+      "confidence",
+      "draft_kind"
+    ]
+  },
+  "capture_contract": {
+    "accepted_kinds": [
+      "tagged_mail",
+      "form_submission"
+    ],
+    "required_common_fields": [
+      "fixture_id",
+      "kind",
+      "event_id",
+      "received_at",
+      "owner_partition",
+      "contact",
+      "request",
+      "consent"
+    ],
+    "allowed_kind_fields": {
+      "tagged_mail": [
+        "subject",
+        "proof_tag"
+      ],
+      "form_submission": [
+        "source_tags"
+      ]
+    },
+    "minimal_contact_fields": [
+      "name",
+      "email"
+    ],
+    "minimal_request_fields": [
+      "summary",
+      "details"
+    ],
+    "minimal_consent_fields": [
+      "process_contact"
+    ],
+    "required_source_tags": [
+      "surface",
+      "proof",
+      "audience"
+    ],
+    "forbidden_field_names": [
+      "password",
+      "secret",
+      "token",
+      "credential",
+      "social_security_number",
+      "ssn",
+      "date_of_birth",
+      "bank_account",
+      "card_number",
+      "medical_record"
+    ],
+    "max_request_characters": 2000
+  },
+  "integration_adapters": {
+    "tagged_mail": {
+      "selection_state": "contract_only",
+      "tag_pattern": "[surface · audience] — inbound",
+      "future_owner": "organvm/universal-mail--automation"
+    },
+    "form_submission": {
+      "selection_state": "contract_only",
+      "tag_source": "source_tags",
+      "future_owner": "selected PSP-C06 capture surface"
+    }
+  },
+  "scoring": {
+    "minimum_auto_score": 4,
+    "minimum_margin": 2,
+    "routes": {
+      "client": {
+        "audience_hints": [
+          "client",
+          "deploy"
+        ],
+        "signals": [
+          "audit",
+          "deployment",
+          "integration",
+          "retainer",
+          "system"
+        ],
+        "route": "client_review"
+      },
+      "recruiter": {
+        "audience_hints": [
+          "recruiter",
+          "hire"
+        ],
+        "signals": [
+          "role",
+          "interview",
+          "position",
+          "team",
+          "employment"
+        ],
+        "route": "recruiter_review"
+      },
+      "operator": {
+        "audience_hints": [
+          "operator"
+        ],
+        "signals": [
+          "incident",
+          "handoff",
+          "runbook",
+          "maintenance"
+        ],
+        "route": "operator_review"
+      },
+      "spam": {
+        "audience_hints": [
+          "spam"
+        ],
+        "signals": [
+          "buy followers",
+          "crypto promotion",
+          "guest post fee",
+          "seo package"
+        ],
+        "route": "discard_spam"
+      }
+    },
+    "ambiguous_route": "manual_review"
+  },
+  "drafts": {
+    "status": "draft_only",
+    "families": [
+      "client_acknowledgment",
+      "client_discovery",
+      "recruiter_acknowledgment",
+      "operator_review",
+      "decline",
+      "manual_review"
+    ],
+    "prohibited_commitments": [
+      "price",
+      "availability",
+      "acceptance",
+      "signature",
+      "send"
+    ]
+  },
+  "ledger": {
+    "persistence": "adapter_required_at_integration",
+    "partition_key": "owner_partition",
+    "record_key": "record_id",
+    "synthetic_record_id_strategy": "deterministic_fixture_only",
+    "live_record_id_strategy": "private_random_or_keyed_identifier_never_public",
+    "stages": [
+      "captured",
+      "normalized",
+      "scored",
+      "routed",
+      "drafted",
+      "review_pending",
+      "closed"
+    ],
+    "public_projection": "aggregate_counts_only"
+  }
+}
