@@ -29,10 +29,12 @@ compression_level: medium
 |---|---|
 | C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
 | Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
-| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `5cd79b4c0d7863842f40b3d46cdf99f1c6f99638`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `beaff2b77959b60dd1fd3546149a6efae4b73c6e` |
+| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `7283219f98053aabfede5c41467c7cc1010165c3`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `f5c5a03749a3ec44cf7eab278735b07f841bf60a` |
+| C06 durable visual artifacts | the portfolio head tracks the manifest and exactly three source-grounded PNG mockups; all remain explicitly unselected |
 | C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
-| Exact local implementation head | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` before this relay-only follow-up |
-| Exact remote implementation head | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` on the draft branch before this relay-only follow-up |
+| Initial private-inbound implementation commit | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` |
+| Dependency-binding baseline | `bbd0f0135858f7cf5e5de68b45c7c5c94ee2d9a7`; superseded only by this durable C06-head refresh |
+| Final draft-PR head | recorded after push in the #2318 body and exact-head receipt comment; this tracked file does not self-name its containing commit |
 | Acceptance condition | preflight prepared; every W01-W07 and P08 completion predicate remains unmet and open |
 | External effects | branch push and draft PR only; no form, alias, CTA, mail, publish, deploy, DNS, spend, signature, merge, account, board, or send effect |
 | Private evidence | none consumed or emitted; tracked fixtures use reserved `.invalid` data and synthetic owner partitions only |

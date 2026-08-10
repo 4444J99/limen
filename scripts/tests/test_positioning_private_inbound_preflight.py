@@ -33,10 +33,15 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         upstream = self.contract["formal_dependency_gate"]["upstream_preflight"]
         self.assertEqual("PREPARED", upstream["status"])
         self.assertEqual(
-            "5cd79b4c0d7863842f40b3d46cdf99f1c6f99638",
+            "7283219f98053aabfede5c41467c7cc1010165c3",
             upstream["portfolio_draft"]["exact_head"],
         )
         self.assertEqual(3, upstream["visual_selection"]["grounded_direction_count"])
+        self.assertEqual(
+            "tracked_unselected",
+            upstream["visual_selection"]["durable_artifacts_status"],
+        )
+        self.assertEqual(3, len(upstream["visual_selection"]["mockup_paths"]))
         self.assertFalse(upstream["visual_selection"]["implementation_authorized"])
         self.assertFalse(upstream["visual_selection"]["deployment_authorized"])
         self.assertEqual(11, upstream["link_health"]["dead_legacy_link_count"])

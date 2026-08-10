@@ -109,6 +109,14 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     visual = upstream.get("visual_selection", {})
     if visual.get("grounded_direction_count") != 3:
         errors.append("C06 preflight must preserve exactly three grounded directions")
+    if visual.get("durable_artifacts_status") != "tracked_unselected":
+        errors.append("C06 durable visual artifacts must remain tracked and unselected")
+    if visual.get("manifest_path") != (
+        "docs/positioning/visual-directions/psp-c06/manifest.json"
+    ):
+        errors.append("C06 visual manifest must use its durable portfolio path")
+    if len(visual.get("mockup_paths", [])) != 3:
+        errors.append("C06 preflight must preserve exactly three durable mockup paths")
     if visual.get("status") != "awaiting_operator_selection":
         errors.append("C06 visual selection must remain operator-gated")
     if visual.get("implementation_authorized") is not False:

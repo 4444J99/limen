@@ -8,12 +8,14 @@ Scope: `PSP-P08-W01` through `PSP-P08-W07` contract preparation only
 
 The current upstream C06 preflight receipts are portfolio draft
 [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at
-`5cd79b4c0d7863842f40b3d46cdf99f1c6f99638` and Limen relay
+`7283219f98053aabfede5c41467c7cc1010165c3` and Limen relay
 [PR #2317](https://github.com/organvm/limen/pull/2317) at
-`beaff2b77959b60dd1fd3546149a6efae4b73c6e`. Both are `PREPARED/PREFLIGHT`, not
-C06 closure: exactly three grounded visual directions await operator selection, no visual
-implementation or deployment is authorized, 11 legacy `organvm.github.io/portfolio` links remain
-dead, and the canonical `organvm-vii-kerygma/portfolio` paths resolve.
+`f5c5a03749a3ec44cf7eab278735b07f841bf60a`. The portfolio head durably tracks the
+manifest and exactly three source-grounded mockup PNGs; all three remain explicitly
+unselected. Both receipts are `PREPARED/PREFLIGHT`, not C06 closure: operator selection
+is still required, no visual implementation or deployment is authorized, 11 legacy
+`organvm.github.io/portfolio` links remain dead, and the canonical
+`organvm-vii-kerygma/portfolio` paths resolve.
 
 This package prepares the reversible, privacy-sensitive interior of the inbound funnel without
 choosing, wiring, or publishing a public capture surface. It consumes two capture-neutral envelope

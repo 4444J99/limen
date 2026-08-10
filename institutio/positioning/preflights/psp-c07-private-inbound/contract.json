@@ -43,14 +43,21 @@
       "status": "PREPARED",
       "portfolio_draft": {
         "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/221",
-        "exact_head": "5cd79b4c0d7863842f40b3d46cdf99f1c6f99638"
+        "exact_head": "7283219f98053aabfede5c41467c7cc1010165c3"
       },
       "limen_relay": {
         "url": "https://github.com/organvm/limen/pull/2317",
-        "exact_head": "beaff2b77959b60dd1fd3546149a6efae4b73c6e"
+        "exact_head": "f5c5a03749a3ec44cf7eab278735b07f841bf60a"
       },
       "visual_selection": {
         "grounded_direction_count": 3,
+        "durable_artifacts_status": "tracked_unselected",
+        "manifest_path": "docs/positioning/visual-directions/psp-c06/manifest.json",
+        "mockup_paths": [
+          "docs/positioning/visual-directions/psp-c06/option-1-evidence-ledger.png",
+          "docs/positioning/visual-directions/psp-c06/option-2-systems-field-guide.png",
+          "docs/positioning/visual-directions/psp-c06/option-3-decision-brief.png"
+        ],
         "status": "awaiting_operator_selection",
         "implementation_authorized": false,
         "deployment_authorized": false
