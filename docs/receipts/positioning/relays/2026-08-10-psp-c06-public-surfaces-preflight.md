@@ -19,7 +19,7 @@ not close PSP-P07, any P07 leaf, or a formal dependency.
 
 Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221), branch
 `codex/psp-c06-public-surfaces-preflight`, exact head
-`5cd79b4c0d7863842f40b3d46cdf99f1c6f99638`, stages only:
+`7283219f98053aabfede5c41467c7cc1010165c3`, stages only:
 
 - one W01–W09 source and release/rollback inventory;
 - a disabled-by-default, allowlist-only analytics schema that differentiates client and
@@ -27,6 +27,17 @@ Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221), 
   cross-site fields;
 - selection-gated visual and analytics implementation; and
 - a public-safe link-health finding and a source-owned repair path.
+
+The exact three review PNGs are now durable in the portfolio branch at:
+
+- `docs/positioning/visual-directions/psp-c06/option-1-evidence-ledger.png`
+- `docs/positioning/visual-directions/psp-c06/option-2-systems-field-guide.png`
+- `docs/positioning/visual-directions/psp-c06/option-3-decision-brief.png`
+
+Their public-safe manifest pins the source capture, direction names, SHA-256 digests,
+`UNSELECTED` status, and the no-build boundary at
+`docs/positioning/visual-directions/psp-c06/manifest.json`. The portfolio predicate verifies all
+three digests before passing.
 
 The portfolio predicate passed on that exact checkpoint:
 
