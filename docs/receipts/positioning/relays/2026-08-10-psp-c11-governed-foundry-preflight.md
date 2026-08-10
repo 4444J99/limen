@@ -37,7 +37,7 @@ compression_level: medium
 | Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
 | Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
 | Model assignment parity | `--verify-model-assignments`: all 127 objects valid; C11 Sol/max and all nine leaf pairs unchanged |
-| Live ready-work | Empty; formal C11/P13 dependencies remain open |
+| Live ready-work | No C11/P13 leaf was ready at relay creation; a later whole-program refresh exposed `PSP-P01-W03` outside this lane |
 | Candidate census | Two identical passes: 10 organizations, 314 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
 | Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 60 diligence-required, 2 archived; 0 transfer-eligible |
