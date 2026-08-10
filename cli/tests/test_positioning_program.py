@@ -164,9 +164,6 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
     body = MODULE.body_for("PSP-P06-W01", graph, mapping)
     assert "`organvm-vii-kerygma/portfolio`" in body
     assert "stable GitHub repository ID `1155412125`" in body
-    seed = MODULE.packet_seed("PSP-P06-W01", graph, mapping)
-    assert seed["execution_requirements"]["target_repository_identity"]["github_repository_id"] == 1155412125
-
     calls: list[list[str]] = []
 
     def resolve(args, **_kwargs):
@@ -174,6 +171,16 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
         return live_portfolio_repository()
 
     monkeypatch.setattr(MODULE, "_gh", resolve)
+    seed = MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    seed_identity = seed["execution_requirements"]["target_repository_identity"]
+    assert seed["not_a_lease"] is True
+    assert seed_identity["github_repository_id"] == 1155412125
+    assert seed_identity["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+    assert seed_identity["resolution"] == "verified_live_by_immutable_repository_id_before_seed"
+    assert MODULE.RFC3339_RE.fullmatch(seed_identity["resolved_at"])
+    assert calls == [["api", "repositories/1155412125"]]
+
+    calls.clear()
     result = MODULE.verify_repository_identities(graph)
 
     assert result["status"] == "ok"
@@ -183,6 +190,8 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
     moved = live_portfolio_repository()
     moved["full_name"] = "future-owner/portfolio"
     monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: moved)
+    with pytest.raises(MODULE.ProgramError, match="seed repository identity validation failed"):
+        MODULE.packet_seed("PSP-P06-W01", graph, mapping)
     with pytest.raises(MODULE.ProgramError, match="full_name drift"):
         MODULE.verify_repository_identities(graph)
 

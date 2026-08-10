@@ -79,6 +79,22 @@ def test_public_sources_reject_embedded_credentials() -> None:
     assert any("credential-free HTTPS public URL" in error for error in _errors(bundle))
 
 
+def test_public_sources_reject_query_and_fragment_credentials() -> None:
+    for unsafe_url in (
+        "https://example.test/public-source?access_token=SECRET",
+        "https://example.test/public-source#access_token=SECRET",
+    ):
+        bundle = _bundle()
+        bundle["artifact"] = copy.deepcopy(bundle["artifact"])
+        bundle["artifact"]["sources"]["PROFILE_README"]["url"] = unsafe_url
+
+        assert any("credential-free HTTPS public URL" in error for error in _errors(bundle))
+
+    assert MODULE._credential_free_https_url(
+        "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
+    )
+
+
 def test_claim_ids_reject_non_public_tokens() -> None:
     bundle = _bundle()
     bundle["artifact"] = copy.deepcopy(bundle["artifact"])
@@ -106,3 +122,68 @@ def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
 
     assert MODULE.validate_live_identity(bundle["program"], fetch) == []
     assert calls == [["api", f"repositories/{MODULE.PORTFOLIO_REPOSITORY_ID}"]]
+
+
+def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -> None:
+    missing = _bundle()
+    missing["receipt"] = copy.deepcopy(missing["receipt"])
+    result = next(
+        row
+        for row in missing["receipt"]["api_query_receipts"]
+        if row["id"] == "contribution_calendar_fresh_observation"
+    )["result"]
+    del result["total_contributions"]
+    del result["sum_of_daily_counts"]
+    assert "fresh contribution total and daily-count sum must be non-negative integers" in _errors(missing)
+
+    arbitrary = _bundle()
+    arbitrary["receipt"] = copy.deepcopy(arbitrary["receipt"])
+    result = next(
+        row
+        for row in arbitrary["receipt"]["api_query_receipts"]
+        if row["id"] == "contribution_calendar_fresh_observation"
+    )["result"]
+    result["total_contributions"] = 42
+    result["sum_of_daily_counts"] = 42
+    assert "fresh contribution total must preserve the recorded 33168 observation" in _errors(arbitrary)
+
+
+def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
+    bundle = _bundle()
+    bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+    row = bundle["receipt"]["http_receipts"][0]
+    row["url"] = "https://example.test/"
+    row["observed_at"] = "not-a-date"
+    row["reproduction"] = "curl https://example.test/"
+
+    errors = _errors(bundle)
+    assert any("must bind the exact credential-free endpoint URL" in error for error in errors)
+    assert any("needs an RFC3339 observation time" in error for error in errors)
+    assert any("must reproduce the exact endpoint URL" in error for error in errors)
+
+
+def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
+    duplicate = _bundle()
+    duplicate["receipt"] = copy.deepcopy(duplicate["receipt"])
+    runs = duplicate["receipt"]["daily_generation_receipt"]["runs"]
+    runs[1] = copy.deepcopy(runs[0])
+    assert "daily generation runs must use distinct run IDs and URLs" in _errors(duplicate)
+
+    wrong_event = _bundle()
+    wrong_event["receipt"] = copy.deepcopy(wrong_event["receipt"])
+    wrong_event["receipt"]["daily_generation_receipt"]["runs"][0]["event"] = "workflow_dispatch"
+    assert any("must record event=schedule" in error for error in _errors(wrong_event))
+
+    outside_window = _bundle()
+    outside_window["receipt"] = copy.deepcopy(outside_window["receipt"])
+    outside_window["receipt"]["daily_generation_receipt"]["runs"][0]["created_at"] = (
+        "2026-08-11T08:05:20Z"
+    )
+    assert "daily generation run times must fall inside the observation window" in _errors(outside_window)
+
+
+def test_issue_map_change_selects_the_research_adjudication_gate() -> None:
+    gates = MODULE._load_yaml(ROOT / "institutio" / "governance" / "gates.yaml")
+    gate = gates["gates"]["research-adjudication-test"]
+
+    assert "institutio/positioning/github-map.json" in gate["paths"]

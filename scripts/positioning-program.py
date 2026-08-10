@@ -38,7 +38,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import yaml
 
@@ -654,6 +654,40 @@ def public_repository_identity(identity: dict[str, Any]) -> dict[str, Any]:
         "archived": identity["archived"],
         "source": identity["source"],
         "observed_at": identity.get("observed_at"),
+    }
+
+
+def resolve_repository_identity_for_seed(
+    identity: dict[str, Any],
+    fetch: Callable[[list[str]], Any] | None = None,
+) -> dict[str, Any]:
+    """Resolve a stable repository ID immediately before emitting repository scope."""
+
+    resolver = fetch or _gh
+    repository_id = int(identity["github_repository_id"])
+    value = resolver(["api", f"repositories/{repository_id}"])
+    if not isinstance(value, dict):
+        raise ProgramError(f"repository ID {repository_id} returned a non-object during seed resolution")
+    live_visibility = str(value.get("visibility") or ("private" if value.get("private") else "public"))
+    checks = {
+        "id": (value.get("id"), repository_id),
+        "full_name": (value.get("full_name"), identity["canonical_slug"]),
+        "visibility": (live_visibility, identity["visibility"]),
+        "default_branch": (value.get("default_branch"), identity["default_branch"]),
+        "archived": (value.get("archived"), identity["archived"]),
+    }
+    failures = [
+        f"repository ID {repository_id} {field} drift: expected {expected!r}, observed {actual!r}"
+        for field, (actual, expected) in checks.items()
+        if actual != expected
+    ]
+    if failures:
+        raise ProgramError("seed repository identity validation failed:\n- " + "\n- ".join(failures))
+    return {
+        **public_repository_identity(identity),
+        "resolved_full_name": value["full_name"],
+        "resolved_at": datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        "resolution": "verified_live_by_immutable_repository_id_before_seed",
     }
 
 
@@ -2007,7 +2041,9 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
         "live_references": packet["external_dependencies"],
     }
     if repository_identity is not None:
-        execution_requirements["target_repository_identity"] = public_repository_identity(repository_identity)
+        execution_requirements["target_repository_identity"] = resolve_repository_identity_for_seed(
+            repository_identity
+        )
     return {
         "schema_version": SEED_SCHEMA,
         "work_id": work_id,

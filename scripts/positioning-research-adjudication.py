@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date, datetime, timedelta, timezone
 import json
 import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 
 import yaml
 
@@ -31,9 +32,25 @@ PORTFOLIO_REPOSITORY_ID = 1155412125
 PORTFOLIO_CANONICAL_SLUG = "organvm-vii-kerygma/portfolio"
 PORTFOLIO_RETIRED_SLUG = "organvm/portfolio"
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
+RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\Z")
 CLAIM_ID_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 SOURCE_ID_RE = re.compile(r"[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*\Z")
+SAFE_PUBLIC_FRAGMENT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._~-]*\Z")
+CREDENTIAL_FRAGMENT_RE = re.compile(
+    r"(?:^|[-_.])(?:access[-_]?token|api[-_]?key|authorization|bearer|credential|jwt|oauth|password|passwd|secret|session|signature)(?:$|[-_.])",
+    re.IGNORECASE,
+)
 EXPECTED_CLAIM_COUNT = 13
+PROFILE_RENDERED_CONTRIBUTIONS = 33130
+PROFILE_FRESH_CONTRIBUTIONS = 33168
+PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
+EXPECTED_HTTP_RECEIPTS = {
+    "current_profile_blog_field": ("https://organvm.github.io/portfolio/", 404),
+    "canonical_transferred_portfolio_pages": (
+        "https://organvm-vii-kerygma.github.io/portfolio/",
+        200,
+    ),
+}
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
     "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
@@ -89,12 +106,44 @@ def _credential_free_https_url(value: object) -> bool:
         _ = parsed.port
     except ValueError:
         return False
+    fragment = unquote(parsed.fragment)
     return (
         parsed.scheme == "https"
         and bool(parsed.hostname)
         and parsed.username is None
         and parsed.password is None
+        and not parsed.query
+        and (
+            not fragment
+            or (
+                SAFE_PUBLIC_FRAGMENT_RE.fullmatch(fragment) is not None
+                and CREDENTIAL_FRAGMENT_RE.search(fragment) is None
+            )
+        )
+        and not any(character.isspace() for character in value)
     )
+
+
+def _rfc3339(value: object) -> datetime | None:
+    if not isinstance(value, str) or RFC3339_RE.fullmatch(value) is None:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _iso_date(value: object) -> date | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _nonnegative_integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
 def _work_rows(program: dict[str, Any]) -> list[dict[str, Any]]:
@@ -375,29 +424,117 @@ def validate_bundle(
     }
     org_public = api_receipts.get("public_organization_repository_counts") or {}
     org_original = api_receipts.get("public_original_organization_repository_counts") or {}
-    contributions = (api_receipts.get("contribution_calendar_fresh_observation") or {}).get("result") or {}
+    contribution_receipt = api_receipts.get("contribution_calendar_fresh_observation") or {}
+    contributions = contribution_receipt.get("result") or {}
     w01_result = (api_receipts.get("w01_public_safe_census") or {}).get("result") or {}
     if sum((org_public.get("counts") or {}).values()) != 227 or org_public.get("total") != 227:
         errors.append("fresh public organization repository counts must sum to 227")
     if sum((org_original.get("counts") or {}).values()) != 198 or org_original.get("total") != 198:
         errors.append("fresh public original repository counts must sum to 198")
-    if contributions.get("total_contributions") != contributions.get("sum_of_daily_counts"):
+    rendered_contributions = rendered.get("contributions_last_year")
+    total_contributions = contributions.get("total_contributions")
+    sum_of_daily_counts = contributions.get("sum_of_daily_counts")
+    if not _nonnegative_integer(rendered_contributions):
+        errors.append("rendered contribution count must be a non-negative integer")
+    elif rendered_contributions != PROFILE_RENDERED_CONTRIBUTIONS:
+        errors.append(
+            f"rendered contribution count must preserve the adjudicated {PROFILE_RENDERED_CONTRIBUTIONS} observation"
+        )
+    if not _nonnegative_integer(total_contributions) or not _nonnegative_integer(sum_of_daily_counts):
+        errors.append("fresh contribution total and daily-count sum must be non-negative integers")
+    elif total_contributions != sum_of_daily_counts:
         errors.append("fresh contribution total must equal its daily-count sum")
+    elif total_contributions != PROFILE_FRESH_CONTRIBUTIONS:
+        errors.append(
+            f"fresh contribution total must preserve the recorded {PROFILE_FRESH_CONTRIBUTIONS} observation"
+        )
+    contribution_observed_at = _rfc3339(contribution_receipt.get("observed_at"))
+    contribution_start = _iso_date(contributions.get("starts_at"))
+    contribution_end = _iso_date(contributions.get("ends_at"))
+    if contribution_observed_at is None or contribution_start is None or contribution_end is None:
+        errors.append("fresh contribution observation needs valid dates and an RFC3339 observation time")
+    elif contribution_end != contribution_observed_at.date() or contribution_end - contribution_start != timedelta(
+        days=365
+    ):
+        errors.append("fresh contribution observation must cover the recorded trailing-year window")
+    if contribution_receipt.get("source") != (
+        "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
+    ) or not _text(contribution_receipt.get("reproduction")):
+        errors.append("fresh contribution observation must retain its public source and reproduction")
+    contribution_claim = next(
+        (claim for claim in claims if isinstance(claim, dict) and claim.get("id") == "profile-contributions-last-year"),
+        {},
+    )
+    if contribution_claim.get("exact_public_wording") != PROFILE_CONTRIBUTION_WORDING or (
+        f"{PROFILE_RENDERED_CONTRIBUTIONS:,}"
+        not in str((contribution_claim.get("w05_integration") or {}).get("public_wording") or "")
+    ):
+        errors.append("contribution claim wording must remain bound to the rendered observation")
     if w01_result.get("public_repository_count") != 8 + 227:
         errors.append("W01 public count must reconcile 8 personal plus 227 organization repositories")
 
-    http = {row.get("id"): row for row in receipt.get("http_receipts") or [] if isinstance(row, dict)}
-    if (http.get("current_profile_blog_field") or {}).get("status") != 404:
-        errors.append("receipt must preserve the observed 404 for the retired Pages URL")
-    if (http.get("canonical_transferred_portfolio_pages") or {}).get("status") != 200:
-        errors.append("receipt must preserve the observed 200 for the canonical Pages URL")
+    http_rows = receipt.get("http_receipts") or []
+    http = {row.get("id"): row for row in http_rows if isinstance(row, dict)}
+    if len(http_rows) != len(http) or set(http) != set(EXPECTED_HTTP_RECEIPTS):
+        errors.append("HTTP receipts must contain each expected endpoint exactly once")
+    for receipt_id, (expected_url, expected_status) in EXPECTED_HTTP_RECEIPTS.items():
+        row = http.get(receipt_id) or {}
+        if row.get("url") != expected_url or not _credential_free_https_url(row.get("url")):
+            errors.append(f"HTTP receipt {receipt_id} must bind the exact credential-free endpoint URL")
+        if row.get("status") != expected_status:
+            errors.append(f"HTTP receipt {receipt_id} must preserve observed status {expected_status}")
+        if _rfc3339(row.get("observed_at")) is None:
+            errors.append(f"HTTP receipt {receipt_id} needs an RFC3339 observation time")
+        reproduction = row.get("reproduction")
+        if not _text(reproduction) or "curl " not in str(reproduction) or expected_url not in str(reproduction):
+            errors.append(f"HTTP receipt {receipt_id} must reproduce the exact endpoint URL")
 
     daily = receipt.get("daily_generation_receipt") or {}
     runs = daily.get("runs") or []
     if daily.get("scheduled_runs_observed") != 8 or daily.get("successful_runs") != 8 or len(runs) != 8:
         errors.append("daily generation receipt must contain eight observed successful runs")
-    if any(not isinstance(row, dict) or row.get("conclusion") != "success" for row in runs):
-        errors.append("every daily generation run must be a success")
+    window_start = _rfc3339(daily.get("window_start"))
+    window_end = _rfc3339(daily.get("window_end"))
+    if window_start is None or window_end is None or window_start > window_end:
+        errors.append("daily generation receipt needs a valid bounded observation window")
+    run_ids: set[int] = set()
+    run_urls: set[str] = set()
+    run_times: list[datetime] = []
+    for row in runs:
+        if not isinstance(row, dict):
+            errors.append("every daily generation run must be a mapping")
+            continue
+        run_id = row.get("run_id")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            errors.append("every daily generation run needs a positive integer run_id")
+            continue
+        expected_url = f"https://github.com/4444J99/4444J99/actions/runs/{run_id}"
+        if row.get("url") != expected_url or not _credential_free_https_url(row.get("url")):
+            errors.append(f"daily generation run {run_id} must bind its exact credential-free URL")
+        if row.get("event") != "schedule":
+            errors.append(f"daily generation run {run_id} must record event=schedule")
+        if row.get("conclusion") != "success":
+            errors.append(f"daily generation run {run_id} must be a success")
+        if not HEAD_RE.fullmatch(str(row.get("resulting_head") or "")):
+            errors.append(f"daily generation run {run_id} needs an exact resulting head")
+        created_at = _rfc3339(row.get("created_at"))
+        if created_at is None:
+            errors.append(f"daily generation run {run_id} needs an RFC3339 creation time")
+        else:
+            run_times.append(created_at)
+        run_ids.add(run_id)
+        run_urls.add(str(row.get("url") or ""))
+    if len(run_ids) != len(runs) or len(run_urls) != len(runs):
+        errors.append("daily generation runs must use distinct run IDs and URLs")
+    if window_start is not None and window_end is not None and run_times:
+        if any(created_at < window_start or created_at > window_end for created_at in run_times):
+            errors.append("daily generation run times must fall inside the observation window")
+        observed_days = sorted({created_at.date() for created_at in run_times})
+        expected_days = [observed_days[0] + timedelta(days=offset) for offset in range(8)]
+        if len(observed_days) != 8 or observed_days != expected_days:
+            errors.append("daily generation receipt must contain one scheduled run on eight consecutive UTC days")
+        elif window_start.date() != observed_days[0] or window_end.date() != observed_days[-1]:
+            errors.append("daily generation window must bind the first and last observed UTC days")
 
     ledger = receipt.get("claims_ledger_integration") or {}
     if ledger.get("ledger_edited_in_this_lane") is not False or ledger.get("consumer") != "PSP-P02-W05":

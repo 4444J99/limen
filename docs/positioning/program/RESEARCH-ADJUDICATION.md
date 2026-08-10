@@ -37,8 +37,9 @@ the receipt.
    manifest records 33,130 at `2026-08-10T08:05:30Z`; a later live query returned 33,168 and its
    daily-count sum matched. Any public use must state the range, observation time, and viewer/token
    treatment.
-4. **The profile is actively regenerated, not a one-time boast.** Eight consecutive scheduled
-   runs succeeded from 2026-08-03 through 2026-08-10. That window does not establish an uptime SLO,
+4. **The profile is actively regenerated, not a one-time boast.** Eight distinct workflow run IDs,
+   each recorded as a scheduled event on one of eight consecutive UTC days, succeeded from
+   2026-08-03 through 2026-08-10. That bounded window does not establish an uptime SLO,
    perpetual availability, or zero manual intervention. The workflow also checks out a floating
    generator dependency and does not record that generator head in the manifest.
 5. **The blanket production claim is too broad.** W03 found exact-head CI for both featured systems
@@ -101,4 +102,7 @@ projector refresh; this preflight did not mutate them:
 | `PSP-P12-W04` | #2261 |
 
 The confirmed private collaboration target is unchanged. The next authorized projection action is
-recorded in the machine-readable artifact; it was not executed here.
+recorded in the machine-readable artifact; it was not executed here. A packet seed remains a
+non-lease, but seeds for identity-managed repositories now fail closed unless a live lookup of the
+immutable repository ID still resolves the canonical owner, visibility, default branch, and archive
+state immediately before seed emission.

@@ -167,14 +167,14 @@
     "scheduled_runs_observed": 8,
     "successful_runs": 8,
     "runs": [
-      {"run_id": 31368535222, "url": "https://github.com/4444J99/4444J99/actions/runs/31368535222", "created_at": "2026-08-10T08:05:20Z", "conclusion": "success", "resulting_head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f"},
-      {"run_id": 31300809491, "url": "https://github.com/4444J99/4444J99/actions/runs/31300809491", "created_at": "2026-08-09T07:17:29Z", "conclusion": "success", "resulting_head": "aca01aeac520ab3ca6c2c8f38c41109b6f276818"},
-      {"run_id": 31245797888, "url": "https://github.com/4444J99/4444J99/actions/runs/31245797888", "created_at": "2026-08-08T07:16:32Z", "conclusion": "success", "resulting_head": "c02ce0cdeeb68e217a369e126d6d59df119213db"},
-      {"run_id": 31158741886, "url": "https://github.com/4444J99/4444J99/actions/runs/31158741886", "created_at": "2026-08-07T07:42:50Z", "conclusion": "success", "resulting_head": "9314f463b23635e7361f084133cabc0ed7ab2a91"},
-      {"run_id": 31087768149, "url": "https://github.com/4444J99/4444J99/actions/runs/31087768149", "created_at": "2026-08-06T09:07:37Z", "conclusion": "success", "resulting_head": "44d9e702e85cde48f7ca3307472cdaefedb692f3"},
-      {"run_id": 30991871145, "url": "https://github.com/4444J99/4444J99/actions/runs/30991871145", "created_at": "2026-08-05T09:06:48Z", "conclusion": "success", "resulting_head": "c33bc86e64ca73869481d0fdbd4586a85078aaad"},
-      {"run_id": 30895089335, "url": "https://github.com/4444J99/4444J99/actions/runs/30895089335", "created_at": "2026-08-04T09:09:39Z", "conclusion": "success", "resulting_head": "f410271bd64fcad6c56b07cd7a1238a55cb6be85"},
-      {"run_id": 30804228187, "url": "https://github.com/4444J99/4444J99/actions/runs/30804228187", "created_at": "2026-08-03T10:06:46Z", "conclusion": "success", "resulting_head": "9b70fd8520e5f752c62d23807f8be9fdba388c10"}
+      {"run_id": 31368535222, "url": "https://github.com/4444J99/4444J99/actions/runs/31368535222", "created_at": "2026-08-10T08:05:20Z", "event": "schedule", "conclusion": "success", "resulting_head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f"},
+      {"run_id": 31300809491, "url": "https://github.com/4444J99/4444J99/actions/runs/31300809491", "created_at": "2026-08-09T07:17:29Z", "event": "schedule", "conclusion": "success", "resulting_head": "aca01aeac520ab3ca6c2c8f38c41109b6f276818"},
+      {"run_id": 31245797888, "url": "https://github.com/4444J99/4444J99/actions/runs/31245797888", "created_at": "2026-08-08T07:16:32Z", "event": "schedule", "conclusion": "success", "resulting_head": "c02ce0cdeeb68e217a369e126d6d59df119213db"},
+      {"run_id": 31158741886, "url": "https://github.com/4444J99/4444J99/actions/runs/31158741886", "created_at": "2026-08-07T07:42:50Z", "event": "schedule", "conclusion": "success", "resulting_head": "9314f463b23635e7361f084133cabc0ed7ab2a91"},
+      {"run_id": 31087768149, "url": "https://github.com/4444J99/4444J99/actions/runs/31087768149", "created_at": "2026-08-06T09:07:37Z", "event": "schedule", "conclusion": "success", "resulting_head": "44d9e702e85cde48f7ca3307472cdaefedb692f3"},
+      {"run_id": 30991871145, "url": "https://github.com/4444J99/4444J99/actions/runs/30991871145", "created_at": "2026-08-05T09:06:48Z", "event": "schedule", "conclusion": "success", "resulting_head": "c33bc86e64ca73869481d0fdbd4586a85078aaad"},
+      {"run_id": 30895089335, "url": "https://github.com/4444J99/4444J99/actions/runs/30895089335", "created_at": "2026-08-04T09:09:39Z", "event": "schedule", "conclusion": "success", "resulting_head": "f410271bd64fcad6c56b07cd7a1238a55cb6be85"},
+      {"run_id": 30804228187, "url": "https://github.com/4444J99/4444J99/actions/runs/30804228187", "created_at": "2026-08-03T10:06:46Z", "event": "schedule", "conclusion": "success", "resulting_head": "9b70fd8520e5f752c62d23807f8be9fdba388c10"}
     ],
     "bounded_interpretation": "Eight consecutive successful scheduled runs establish active daily regeneration in this window. They do not establish zero maintenance, perpetual availability, or an SLO."
   },
