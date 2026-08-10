@@ -170438,3 +170438,42 @@ tasks:
     conduct_lease_id: 'lease-861-a5e02e7945b021db'
     conduct_generation: 861
   updated: '2026-08-10T04:30:05.163Z'
+- id: 'GH-organvm-limen-2279'
+  title: '[PSP-P14-W05] Automate claim incident quarantine and correction propagation'
+  repo: 'organvm/limen'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'lane:fleet'
+  - 'lifecycle:delivery'
+  - 'program:production-systems'
+  - 'work-packet'
+  - 'model:gpt-5.6-terra'
+  - 'effort:high'
+  urls:
+  - 'https://github.com/organvm/limen/issues/2279'
+  context: 'GitHub issue organvm/limen#2279. # PSP-P14-W05 — Automate claim incident quarantine and correction propagation **Parent:** [#2274](https://github.com/organvm/limen/issues/2274) **Execution chunk:** `PSP-C12` — Close the return loops and prove Omega **Target:** `organvm/limen` · `scripts`, `docs/positioning/claims-ledger.md`, `docs/receipts` ## Outcome A false, stale, or privacy-unsafe claim is removed everywhere before a correcte'
+  predicate: 'test "$(gh issue view 2279 --repo organvm/limen --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/limen/issues/2279'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/limen#2279'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-10'
+  dispatch_log:
+  - timestamp: '2026-08-10T04:30:10.761Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog-675fff6bc45c'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-ec10ba802571b59e959ebfd9f59982c0:862:compatibility'
+    conduct_run_id: 'run-ec10ba802571b59e959ebfd9f59982c0'
+    conduct_lease_id: 'lease-862-ec10ba802571b59e'
+    conduct_generation: 862
+  updated: '2026-08-10T04:30:10.761Z'
