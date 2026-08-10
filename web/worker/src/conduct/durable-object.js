@@ -51,15 +51,20 @@ function duration(env, name, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed * 1000 : fallback;
 }
 
-async function parseBody(request, maxBytes = 1024 * 1024) {
+export async function parseBody(request, maxBytes = 1024 * 1024) {
   const length = Number(request.headers.get("content-length") || 0);
   if (Number.isFinite(length) && length > maxBytes) {
     throw new ConductValidationError(`conduct request body exceeds ${Math.round(maxBytes / (1024 * 1024))} MiB`);
   }
   let value;
   try {
-    value = await request.json();
-  } catch {
+    const bytes = await request.arrayBuffer();
+    if (bytes.byteLength > maxBytes) {
+      throw new ConductValidationError(`conduct request body exceeds ${Math.round(maxBytes / (1024 * 1024))} MiB`);
+    }
+    value = JSON.parse(new TextDecoder().decode(bytes));
+  } catch (error) {
+    if (error instanceof ConductValidationError) throw error;
     throw new ConductValidationError("invalid JSON body");
   }
   if (!value || typeof value !== "object" || Array.isArray(value)) {
