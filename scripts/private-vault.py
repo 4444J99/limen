@@ -316,6 +316,20 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     return artifacts
 
 
+def _require_committed_custody(rows: list[dict]) -> None:
+    historical_artifacts = _historical_artifacts()
+    for row in rows:
+        artifact_id_value = row.get("artifact_id")
+        if not isinstance(artifact_id_value, str):
+            raise VaultError("restore target has an invalid artifact id")
+        artifact_id = _safe_artifact_id(artifact_id_value)
+        expected_metadata = historical_artifacts.get(artifact_id)
+        if expected_metadata is None:
+            raise VaultError(f"restore target is not admitted to committed custody: {artifact_id}")
+        if _custody_metadata(row) != expected_metadata:
+            raise VaultError(f"restore target differs from committed custody history: {artifact_id}")
+
+
 def _reject_tracked_plaintext(source: Path) -> None:
     try:
         relative = source.relative_to(ROOT.resolve()).as_posix()
@@ -717,6 +731,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
         targets = [row for row in rows if row.get("artifact_id") == artifact_id]
     if not targets:
         raise VaultError("no matching vault entry (use list)")
+    _require_committed_custody(targets)
     for row in targets:
         failures = _ciphertext_failures(row, _cipher_path(row))
         if failures:

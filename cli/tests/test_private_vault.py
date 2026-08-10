@@ -34,7 +34,17 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     module._real_tracked_files = module._tracked_files
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
     module._real_historical_artifacts = module._historical_artifacts
-    monkeypatch.setattr(module, "_historical_artifacts", lambda: {})
+
+    def synthetic_historical_artifacts():
+        if not module.MANIFEST.is_file():
+            return {}
+        return {
+            row["artifact_id"]: module._custody_metadata(row)
+            for row in module._read_manifest()
+            if row.get("schema") == module.SCHEMA and isinstance(row.get("artifact_id"), str)
+        }
+
+    monkeypatch.setattr(module, "_historical_artifacts", synthetic_historical_artifacts)
     module._real_validate_committed_pubkey = module._validate_committed_pubkey
     monkeypatch.setattr(module, "_validate_committed_pubkey", lambda: None)
     module._real_encrypt_file = module._encrypt_file
@@ -567,6 +577,27 @@ def test_restore_rejects_unpinned_ciphertext_before_writing(vault, tmp_path: Pat
 
     with pytest.raises(vault.VaultError, match="ciphertext"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+    assert not destination.exists()
+
+
+def test_restore_rejects_substitution_against_committed_custody(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    original_row = vault._read_manifest()[0]
+    expected_metadata = vault._custody_metadata(original_row)
+    ciphertext = vault.VAULT_DIR / "artifact-001.gpg"
+    ciphertext.write_bytes(b"synthetic replacement ciphertext")
+    substituted_row = dict(original_row)
+    substituted_row["ciphertext_sha256"] = vault._sha256(ciphertext)
+    substituted_row["ciphertext_bytes"] = ciphertext.stat().st_size
+    vault._write_manifest([substituted_row])
+    monkeypatch.setattr(vault, "_historical_artifacts", lambda: {"artifact-001": expected_metadata})
+    destination = tmp_path / "restore"
+
+    with pytest.raises(vault.VaultError, match="committed custody history"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
     assert not destination.exists()
 
 
