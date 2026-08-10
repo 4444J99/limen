@@ -34,6 +34,8 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
     module._real_historical_artifact_ids = module._historical_artifact_ids
     monkeypatch.setattr(module, "_historical_artifact_ids", lambda: {"artifact-001"})
+    module._real_validate_committed_pubkey = module._validate_committed_pubkey
+    monkeypatch.setattr(module, "_validate_committed_pubkey", lambda: None)
     module._real_encrypt_file = module._encrypt_file
     module._real_decrypt_file = module._decrypt_file
     module._real_ciphertext_recipient_keyids = module._ciphertext_recipient_keyids
@@ -120,35 +122,31 @@ def test_verify_rejects_deletion_from_committed_custody(vault, monkeypatch: pyte
 
 
 def test_historical_baseline_is_monotonic_across_commits(vault):
-    subprocess.run(["git", "-C", str(vault.ROOT), "init"], check=True, capture_output=True, text=True)
-    subprocess.run(
-        ["git", "-C", str(vault.ROOT), "config", "user.email", "vault-test@example.invalid"],
-        check=True,
-    )
-    subprocess.run(["git", "-C", str(vault.ROOT), "config", "user.name", "Vault Test"], check=True)
+    def run_git(*args: str) -> None:
+        subprocess.run(
+            ["git", "-C", str(vault.ROOT), *args],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    run_git("init", "-b", "main")
+    run_git("config", "user.email", "vault-test@example.invalid")
+    run_git("config", "user.name", "Vault Test")
     first_rows = [
         {"schema": vault.SCHEMA, "artifact_id": "artifact-001"},
         {"schema": vault.SCHEMA, "artifact_id": "artifact-002"},
     ]
     vault.MANIFEST.write_text("".join(json.dumps(row) + "\n" for row in first_rows), encoding="utf-8")
-    subprocess.run(["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"], check=True)
-    subprocess.run(
-        ["git", "-C", str(vault.ROOT), "commit", "-m", "admit custody"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    run_git("add", "institutio/vault/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "admit custody")
     vault.MANIFEST.write_text(
         json.dumps({"schema": vault.SCHEMA, "artifact_id": "artifact-001"}) + "\n",
         encoding="utf-8",
     )
-    subprocess.run(["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"], check=True)
-    subprocess.run(
-        ["git", "-C", str(vault.ROOT), "commit", "-m", "attempt deletion"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    run_git("add", "institutio/vault/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "attempt deletion")
 
     assert vault._real_historical_artifact_ids() == {"artifact-001", "artifact-002"}
 
@@ -174,6 +172,20 @@ def test_verify_rejects_symlinked_manifest(vault, monkeypatch: pytest.MonkeyPatc
     target.write_text("{}\n", encoding="utf-8")
     vault.MANIFEST.symlink_to(target)
     monkeypatch.setattr(vault, "_tracked_files", lambda: {"institutio/vault/manifest.jsonl"})
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_verify_rejects_invalid_committed_public_key(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
+
+    def reject_key() -> None:
+        raise vault.VaultError("pinned identity mismatch")
+
+    monkeypatch.setattr(vault, "_validate_committed_pubkey", reject_key)
 
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
@@ -296,6 +308,19 @@ def test_successful_restore_is_verified_atomic_and_owner_only(vault, tmp_path: P
     assert [path for path in destination.iterdir() if path.name.startswith(".artifact-001.")] == []
 
 
+def test_restore_preserves_existing_directory_permissions(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o750)
+
+    with pytest.raises(vault.VaultError, match="owner-only"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o750
+
+
 def test_restore_bounds_output_name(vault, tmp_path: Path):
     source = tmp_path / ("n" * 240)
     source.write_text("secret", encoding="utf-8")
@@ -385,7 +410,10 @@ def test_real_gpg_round_trip_with_scratch_key(
     request: pytest.FixtureRequest,
     tmp_path: Path,
 ):
-    gnupghome = Path(tempfile.mkdtemp(prefix="limen-vault-gpg-", dir="/tmp"))
+    if shutil.which("gpg") is None:
+        pytest.skip("gpg is unavailable on this host")
+    # Keep the GnuPG agent socket path short while respecting the configured temp directory.
+    gnupghome = Path(tempfile.mkdtemp(prefix="limen-vault-gpg-"))
     request.addfinalizer(lambda: shutil.rmtree(gnupghome, ignore_errors=True))
     gnupghome.chmod(0o700)
     identity = "Limen Vault Recovery Test <vault-recovery@example.invalid>"

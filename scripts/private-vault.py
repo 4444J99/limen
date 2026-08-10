@@ -294,6 +294,39 @@ def _import_pubkey(gnupghome: str) -> None:
         raise VaultError(f"public-key import failed: {_diagnostic(run)}")
 
 
+def _validate_committed_pubkey() -> None:
+    with tempfile.TemporaryDirectory() as gnupghome:
+        os.chmod(gnupghome, 0o700)
+        _import_pubkey(gnupghome)
+        listing = _run_command(
+            ["gpg", "--batch", "--with-colons", "--fingerprint", "--fingerprint", "--list-keys"],
+            env=_gpg_env(gnupghome),
+        )
+    if listing.returncode != 0:
+        raise VaultError(f"committed public-key inspection failed: {_diagnostic(listing)}")
+
+    primary_fingerprints: set[str] = set()
+    encryption_subkeys: set[str] = set()
+    pending_key: tuple[str, str, str] | None = None
+    for line in listing.stdout.splitlines():
+        fields = line.split(":")
+        record_type = fields[0] if fields else ""
+        if record_type in {"pub", "sub"} and len(fields) > 11:
+            pending_key = (record_type, fields[4].upper(), fields[11].lower())
+        elif record_type == "fpr" and len(fields) > 9 and pending_key is not None:
+            key_type, key_id, capabilities = pending_key
+            if key_type == "pub":
+                primary_fingerprints.add(fields[9].upper())
+            elif "e" in capabilities:
+                encryption_subkeys.add(key_id)
+            pending_key = None
+
+    if primary_fingerprints != {FINGERPRINT}:
+        raise VaultError("committed public key does not match the pinned primary fingerprint")
+    if ENCRYPTION_SUBKEY_ID not in encryption_subkeys:
+        raise VaultError("committed public key lacks the pinned encryption subkey")
+
+
 def _encrypt_file(source: Path, destination: Path) -> None:
     with tempfile.TemporaryDirectory() as gnupghome:
         os.chmod(gnupghome, 0o700)
@@ -306,7 +339,7 @@ def _encrypt_file(source: Path, destination: Path) -> None:
                 "--trust-model",
                 "always",
                 "--recipient",
-                FINGERPRINT,
+                f"{ENCRYPTION_SUBKEY_ID}!",
                 "--output",
                 str(destination),
                 "--encrypt",
@@ -502,6 +535,10 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         rows = _read_manifest()
     if manifest_relative not in tracked:
         failures.append(f"manifest not git-tracked (custody gap): {manifest_relative}")
+    try:
+        _validate_committed_pubkey()
+    except VaultError as exc:
+        failures.append(f"committed public-key validation failed: {exc}")
     for prefix in PRIVATE_TRACKING_PREFIXES:
         if any(path.startswith(prefix) for path in tracked):
             failures.append(f"private plaintext namespace contains git-tracked content: {prefix}")
@@ -590,8 +627,16 @@ def cmd_restore(args: argparse.Namespace) -> int:
     if not getattr(args, "apply", False):
         raise VaultError("restore is mutating; rerun with --apply")
     destination_root = Path(args.dest).expanduser().resolve()
-    destination_root.mkdir(parents=True, exist_ok=True, mode=0o700)
-    os.chmod(destination_root, 0o700)
+    try:
+        destination_root.mkdir(parents=True, mode=0o700)
+    except FileExistsError:
+        created_destination = False
+    else:
+        created_destination = True
+    if created_destination:
+        os.chmod(destination_root, 0o700)
+    elif not destination_root.is_dir() or stat.S_IMODE(destination_root.stat().st_mode) & 0o077:
+        raise VaultError("restore destination must be an owner-only directory")
     for row in targets:
         artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
         cipher_path = _cipher_path(row)
