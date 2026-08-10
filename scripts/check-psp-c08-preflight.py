@@ -14,6 +14,7 @@ MEASUREMENT = CONTENT / "measurement-contract.json"
 MANIFEST = CONTENT / "staging-manifest.json"
 REQUIRED_FILES = (
     "README.md",
+    "RELAY.md",
     "claim-source-register.json",
     "editorial-calendar.md",
     "flagship-engineering-report.md",
@@ -81,6 +82,17 @@ def main() -> None:
         fail("measurement contract must keep its fixture explicitly synthetic")
     if measurement.get("external_effect_boundary", {}).get("send_gate") != "HG-PUBLICATION-SEND":
         fail("measurement contract must name the publication-send gate")
+
+    relay = (CONTENT / "RELAY.md").read_text(encoding="utf-8")
+    for marker in (
+        "fb77c679b84064162675f6851e816e46e5ee07be",
+        "https://github.com/organvm/limen/pull/2316",
+        "HG-PUBLIC-IDENTITY",
+        "HG-PUBLICATION-SEND",
+        "no publishing, distribution, capture activation",
+    ):
+        if marker not in relay:
+            fail(f"relay lacks required public-safe receipt marker: {marker}")
 
     print("PSP-C08 private content preflight passed: staged sources, gates, and synthetic measurement contract are intact")
 
