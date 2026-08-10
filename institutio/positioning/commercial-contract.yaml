@@ -241,10 +241,7 @@ narrative_ladder:
     label: Ten seconds
     audience_ids: [direct_client, recruiter_executive]
     beats:
-      - >-
-        Production-systems architect. I build the operating system around complex software delivery—
-        decision rights, verification, cost boundaries, and handoff—so engineering teams can own what
-        ships. Limen is the inspectable proof.
+      - Production-systems architect. I build the operating system around complex software delivery—decision rights, verification, cost boundaries, and handoff—so engineering teams can own what ships. Limen is the inspectable proof.
     next_actions:
       direct_client: Start with a fixed-scope Agentic Delivery Audit.
       recruiter_executive: Start with the role mandate and the system evidence relevant to it.
@@ -298,30 +295,30 @@ interview_threat_contract:
     - id: why_this_role
       prompt: Why do you want this role?
       answer: >-
-        The mandate is a systems problem I want to own with this team. My public work is evidence of
-        how I reason and deliver; it is not a competing operating obligation. I want to make the
-        sponsor's bet work at a scale and in a domain that require collaboration.
+        The mandate is a systems problem I want to help this team solve. My public work shows how I
+        reason and deliver; it is not a competing operating obligation. This role offers a scale,
+        domain, and group of collaborators that independent work cannot reproduce.
       boundary_signals: [named mandate, team ownership, explicit agenda]
     - id: takeover
       prompt: Are you trying to take over how the team works?
       answer: >-
-        No. I work from the authority the sponsor grants, preserve the owners already in place, and
-        make decisions and interfaces explicit. The goal is a system the team can operate without me,
-        with a clear handoff and a written return path.
+        No. I work from the authority the sponsor grants, preserve the team's existing ownership,
+        and make decisions and interfaces explicit. The goal is a system the team can operate without
+        me, with a clear handoff and a written return path.
       boundary_signals: [sponsor-granted authority, incumbent ownership, independence after handoff]
     - id: flight_risk
       prompt: Why will you stay if you can build all of this independently?
       answer: >-
         Independent work proves a method; this mandate offers problems, scale, and collaborators that
-        do not exist in a solo environment. I am evaluating the stated role and outcome directly, and
-        I will be explicit if either stops matching.
+        do not exist in a solo environment. I am choosing the stated role and outcome directly, and I
+        address changes early rather than surprise the team.
       boundary_signals: [specific motivation, no false permanence, direct communication]
     - id: intelligence_fishing
       prompt: Are you here to study our operation for your own work?
       answer: >-
         My agenda is the stated role or engagement. I use only the access needed for that mandate,
-        keep confidential material inside its boundary, and document what the organization owns. If
-        a question is outside scope, I ask before pursuing it.
+        keep confidential material inside the agreed controls, and document what the organization
+        owns. If a question is outside scope, I ask before pursuing it.
       boundary_signals: [need-to-know access, confidentiality, permission before expansion]
     - id: overqualification
       prompt: Is this role too small for you?

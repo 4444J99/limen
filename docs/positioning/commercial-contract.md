@@ -37,7 +37,7 @@ The commercial promise is a bounded decision and operating system—not control 
 
 ### Ten seconds (L1)
 
-- Production-systems architect. I build the operating system around complex software delivery— decision rights, verification, cost boundaries, and handoff—so engineering teams can own what ships. Limen is the inspectable proof.
+- Production-systems architect. I build the operating system around complex software delivery—decision rights, verification, cost boundaries, and handoff—so engineering teams can own what ships. Limen is the inspectable proof.
 
 **Stop rule:** A reader may stop here and still identify the role, buyer, expensive problem, strongest proof, and next action.
 
@@ -63,10 +63,10 @@ The commercial promise is a bounded decision and operating system—not control 
 
 Communicate leverage as service to a named mandate, with bounded authority, collaboration, and handoff.
 
-- **Why do you want this role?** The mandate is a systems problem I want to own with this team. My public work is evidence of how I reason and deliver; it is not a competing operating obligation. I want to make the sponsor's bet work at a scale and in a domain that require collaboration.
-- **Are you trying to take over how the team works?** No. I work from the authority the sponsor grants, preserve the owners already in place, and make decisions and interfaces explicit. The goal is a system the team can operate without me, with a clear handoff and a written return path.
-- **Why will you stay if you can build all of this independently?** Independent work proves a method; this mandate offers problems, scale, and collaborators that do not exist in a solo environment. I am evaluating the stated role and outcome directly, and I will be explicit if either stops matching.
-- **Are you here to study our operation for your own work?** My agenda is the stated role or engagement. I use only the access needed for that mandate, keep confidential material inside its boundary, and document what the organization owns. If a question is outside scope, I ask before pursuing it.
+- **Why do you want this role?** The mandate is a systems problem I want to help this team solve. My public work shows how I reason and deliver; it is not a competing operating obligation. This role offers a scale, domain, and group of collaborators that independent work cannot reproduce.
+- **Are you trying to take over how the team works?** No. I work from the authority the sponsor grants, preserve the team's existing ownership, and make decisions and interfaces explicit. The goal is a system the team can operate without me, with a clear handoff and a written return path.
+- **Why will you stay if you can build all of this independently?** Independent work proves a method; this mandate offers problems, scale, and collaborators that do not exist in a solo environment. I am choosing the stated role and outcome directly, and I address changes early rather than surprise the team.
+- **Are you here to study our operation for your own work?** My agenda is the stated role or engagement. I use only the access needed for that mandate, keep confidential material inside the agreed controls, and document what the organization owns. If a question is outside scope, I ask before pursuing it.
 - **Is this role too small for you?** I care about the decision scope and the problem, not title inflation. If the mandate has a meaningful system to improve, clear ownership, and room to deliver with others, the work is not small. If it needs only narrow execution, we should say that plainly and decide fit.
 
 ## Offer ladder

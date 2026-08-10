@@ -23,4 +23,14 @@
 
 schema_version: 1
 
-judgments: {}
+judgments:
+  docs/positioning/commercial-contract.md:
+    - judged_at: "2026-08-10T19:31:15Z"
+      content_sha256: "78ea5f093c282e50f93c2dd973395f19f511e3a212b754e8153f9e6e75c5e5ee"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 4}
+      defects:
+        - "The diligence contract is intentionally dense and should not become the front-door page unchanged."
+        - "Provisional proof labels interrupt the reading flow until PSP-C02 supplies final anchors."
+      suggested_fix: "After PSP-C02 closes, derive a shorter L1/L2 public surface from this contract and retain the full document for diligence."
