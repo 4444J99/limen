@@ -6,6 +6,15 @@ Formal predecessor: `PSP-C06` / `PSP-P07` (open; no capture surface selected)
 
 Scope: `PSP-P08-W01` through `PSP-P08-W07` contract preparation only
 
+The current upstream C06 preflight receipts are portfolio draft
+[PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at
+`5cd79b4c0d7863842f40b3d46cdf99f1c6f99638` and Limen relay
+[PR #2317](https://github.com/organvm/limen/pull/2317) at
+`beaff2b77959b60dd1fd3546149a6efae4b73c6e`. Both are `PREPARED/PREFLIGHT`, not
+C06 closure: exactly three grounded visual directions await operator selection, no visual
+implementation or deployment is authorized, 11 legacy `organvm.github.io/portfolio` links remain
+dead, and the canonical `organvm-vii-kerygma/portfolio` paths resolve.
+
 This package prepares the reversible, privacy-sensitive interior of the inbound funnel without
 choosing, wiring, or publishing a public capture surface. It consumes two capture-neutral envelope
 shapes—tagged mail and form submission—so the later C06 decision can bind either path without
@@ -27,9 +36,8 @@ selected C06 capture surface (not yet selected)
 The tracked fixture set is wholly synthetic. Reserved `.invalid` addresses, synthetic owner
 partitions, placeholder surfaces, and synthetic proof tags prevent fixture data from becoming
 real-world lead evidence. The traversal receipt exposes synthetic-only opaque record IDs,
-classifications, routes,
-stages, counts, and the zero-send counter only; names, addresses, requests, draft bodies, and ledger
-rows never enter its public projection.
+classifications, routes, stages, counts, and the zero-send counter only; names, addresses, requests,
+draft bodies, and ledger rows never enter its public projection.
 
 ## Leaf preparation map
 
@@ -48,7 +56,9 @@ leaf dispatch; this conductor preflight does not impersonate those separately le
 
 ## Integration contract
 
-After C06/P07 closes with its predicate-backed receipt, a separately leased C07 leaf may update the
+After the operator selects one of the three grounded directions, C06 performs its separately
+authorized implementation, fixes or redirects the 11 legacy links, and P07 closes with its
+predicate-backed receipt, a separately leased C07 leaf may update the
 contract with the selected capture surface and implement one repository-owned adapter. That adapter
 must emit the exact common envelope represented here. Integration must keep the following invariant:
 
@@ -58,9 +68,11 @@ send remains a separate human-gated capability and is not granted by capture act
 ```
 
 The later repository owners remain those in `program.yaml`: Limen for tags and scoring,
-`organvm/portfolio` for the selected intake surface, `organvm/universal-mail--automation` for mail
-normalization and drafts, and `organvm-iii-ergon/collaboration-operations-platform` for the private
-opportunity ledger. This preflight deliberately creates no shared generated index and writes no
+`organvm/universal-mail--automation` for mail normalization and drafts, and
+`organvm-iii-ergon/collaboration-operations-platform` for the private opportunity ledger. W02's
+manifest target still says `organvm/portfolio`, while the verified C06 receipt names
+`organvm-vii-kerygma/portfolio` as canonical; the later W02 lease must reconcile that registry owner
+before mutation. This preflight deliberately creates no shared generated index and writes no
 cross-repository state.
 
 ## Verification

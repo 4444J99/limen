@@ -29,6 +29,8 @@ compression_level: medium
 |---|---|
 | C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
 | Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
+| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `5cd79b4c0d7863842f40b3d46cdf99f1c6f99638`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `beaff2b77959b60dd1fd3546149a6efae4b73c6e` |
+| C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
 | Exact local implementation head | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` before this relay-only follow-up |
 | Exact remote implementation head | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` on the draft branch before this relay-only follow-up |
 | Acceptance condition | preflight prepared; every W01-W07 and P08 completion predicate remains unmet and open |
@@ -74,7 +76,7 @@ All passing commands below were run bare on the implementation exact tree:
 | `python3 scripts/positioning-program.py --verify-remote` | pass; 127 observed, zero drift, missing, or orphan objects |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode validate --json` | pass; contract and synthetic fixtures valid |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode traverse --json` | pass; five private-shaped records, two owner partitions, 5/5 labeled category-and-route results, zero external sends |
-| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 13 tests |
+| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 14 tests |
 | `scripts/verify-scoped.sh` | pass; seven implicated cheap gates |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode live-gate --json` | expected fail-closed exit `2`: C06/P07 predicate receipt absent |
 
@@ -86,24 +88,29 @@ The last row is the intended dependency valve. It is not evidence that C07 is re
 |---|---|
 | Do not revive the Agy/non-Codex gate | PR #2300 and closed P00 encode the authoritative correction; the live runbook says provider diversity is not a PSP acceptance gate. |
 | Do not wire a public form or alias | C06/P07 is open and no selected capture surface exists. The preflight adapter boundary permits later binding without premature publication. |
+| Do not promote C06 preflight to closure | PRs #221/#2317 are prepared receipts only. Operator selection, visual implementation/deploy authority, legacy-link repair, and the P07 phase predicate remain unsatisfied. |
 | Keep fixtures synthetic and receipts aggregate-safe | Private lead evidence cannot enter public artifacts. `.invalid` fixtures exercise behavior without creating real-world proof. |
 | Keep leaf issues open | No broker lease, target-repository implementation, real provider integration, deliverability receipt, or phase proof exists. Synthetic traversal is preparation only. |
 
 ## Next actions
 
-1. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
+1. Preserve the upstream operator gate over exactly three grounded visual directions. No C06 visual
+   implementation or deployment proceeds before the operator selection receipt and separate effect
+   authority; retain the 11-dead-legacy-link finding until repaired and reverified.
+2. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
    the selected capture surface is explicit.
-2. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
+3. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
    seed it and obtain a fresh broker lease using its exact `gpt-5.6-terra/high` assignment.
-3. Bind the selected surface to one contract adapter, preserving the live gate and separate
+4. Bind the selected surface to one contract adapter, preserving the live gate and separate
    `HG-PUBLICATION-SEND` boundary; then dispatch downstream leaves only as the registry makes them
    ready.
-4. Replace synthetic storage and identifier behavior only inside their private repository owners,
+5. Replace synthetic storage and identifier behavior only inside their private repository owners,
    with private exact-head predicates and public aggregate receipts. Never commit real lead rows.
 
 ## Risks and prohibitions
 
-- Human gates recorded once: `HG-PUBLIC-IDENTITY` ([issue #267](https://github.com/organvm/limen/issues/267))
+- Human gates recorded once: the upstream C06 operator selection among exactly three grounded
+  directions; `HG-PUBLIC-IDENTITY` ([issue #267](https://github.com/organvm/limen/issues/267))
   owns public capture activation; `HG-PUBLICATION-SEND` ([issue #533](https://github.com/organvm/limen/issues/533))
   owns every outbound reply.
 - Sensitive/private boundary: real contact identity, messages, consent, scores, drafts, opportunity

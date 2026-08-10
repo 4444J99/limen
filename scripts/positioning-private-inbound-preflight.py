@@ -99,6 +99,27 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("preflight must not select or wire a C06 capture surface")
     if gate.get("live_capture_activation") != "forbidden_until_predicate_receipt":
         errors.append("live activation must fail closed on a predicate receipt")
+    upstream = gate.get("upstream_preflight", {})
+    if upstream.get("status") != "PREPARED":
+        errors.append("C06 upstream evidence must remain PREPARED, not complete")
+    for owner in ("portfolio_draft", "limen_relay"):
+        exact_head = upstream.get(owner, {}).get("exact_head")
+        if not isinstance(exact_head, str) or len(exact_head) != 40:
+            errors.append(f"C06 {owner} requires a full exact head")
+    visual = upstream.get("visual_selection", {})
+    if visual.get("grounded_direction_count") != 3:
+        errors.append("C06 preflight must preserve exactly three grounded directions")
+    if visual.get("status") != "awaiting_operator_selection":
+        errors.append("C06 visual selection must remain operator-gated")
+    if visual.get("implementation_authorized") is not False:
+        errors.append("C06 visual implementation must remain unauthorized")
+    if visual.get("deployment_authorized") is not False:
+        errors.append("C06 deployment must remain unauthorized")
+    link_health = upstream.get("link_health", {})
+    if link_health.get("dead_legacy_link_count") != 11:
+        errors.append("C06 preflight must preserve the observed 11-dead-link finding")
+    if link_health.get("canonical_paths_status") != "resolving":
+        errors.append("C06 preflight must preserve canonical-path resolution evidence")
 
     safety = contract.get("safety", {})
     if safety.get("mode") != "synthetic_only":

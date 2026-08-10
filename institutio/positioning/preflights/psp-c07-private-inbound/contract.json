@@ -38,7 +38,30 @@
     "required_phase": "PSP-P07",
     "current_state": "open",
     "selected_capture_surface": null,
-    "live_capture_activation": "forbidden_until_predicate_receipt"
+    "live_capture_activation": "forbidden_until_predicate_receipt",
+    "upstream_preflight": {
+      "status": "PREPARED",
+      "portfolio_draft": {
+        "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/221",
+        "exact_head": "5cd79b4c0d7863842f40b3d46cdf99f1c6f99638"
+      },
+      "limen_relay": {
+        "url": "https://github.com/organvm/limen/pull/2317",
+        "exact_head": "beaff2b77959b60dd1fd3546149a6efae4b73c6e"
+      },
+      "visual_selection": {
+        "grounded_direction_count": 3,
+        "status": "awaiting_operator_selection",
+        "implementation_authorized": false,
+        "deployment_authorized": false
+      },
+      "link_health": {
+        "dead_legacy_link_count": 11,
+        "dead_legacy_path_family": "organvm.github.io/portfolio",
+        "canonical_path_family": "organvm-vii-kerygma/portfolio",
+        "canonical_paths_status": "resolving"
+      }
+    }
   },
   "safety": {
     "mode": "synthetic_only",

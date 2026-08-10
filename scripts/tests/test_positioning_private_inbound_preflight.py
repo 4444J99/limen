@@ -29,6 +29,21 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         self.assertFalse(ready)
         self.assertIn("predicate receipt is absent", reason)
 
+    def test_c06_preflight_receipts_do_not_promote_the_formal_gate(self) -> None:
+        upstream = self.contract["formal_dependency_gate"]["upstream_preflight"]
+        self.assertEqual("PREPARED", upstream["status"])
+        self.assertEqual(
+            "5cd79b4c0d7863842f40b3d46cdf99f1c6f99638",
+            upstream["portfolio_draft"]["exact_head"],
+        )
+        self.assertEqual(3, upstream["visual_selection"]["grounded_direction_count"])
+        self.assertFalse(upstream["visual_selection"]["implementation_authorized"])
+        self.assertFalse(upstream["visual_selection"]["deployment_authorized"])
+        self.assertEqual(11, upstream["link_health"]["dead_legacy_link_count"])
+        self.assertEqual(
+            "open", self.contract["formal_dependency_gate"]["current_state"]
+        )
+
     def test_leaf_model_assignments_are_pinned_to_the_live_registry(self) -> None:
         self.assertEqual(
             {"model": "gpt-5.6-luna", "effort": "medium"},
