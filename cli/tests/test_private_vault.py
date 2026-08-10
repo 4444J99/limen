@@ -32,8 +32,8 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setattr(module, "MANIFEST", vault_dir / "manifest.jsonl")
     monkeypatch.setattr(module, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001"}))
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
-    module._real_historical_artifact_ids = module._historical_artifact_ids
-    monkeypatch.setattr(module, "_historical_artifact_ids", lambda: {"artifact-001"})
+    module._real_historical_artifacts = module._historical_artifacts
+    monkeypatch.setattr(module, "_historical_artifacts", lambda: {})
     module._real_validate_committed_pubkey = module._validate_committed_pubkey
     monkeypatch.setattr(module, "_validate_committed_pubkey", lambda: None)
     module._real_encrypt_file = module._encrypt_file
@@ -116,7 +116,19 @@ def test_verify_rejects_deletion_from_committed_custody(vault, monkeypatch: pyte
     source.write_text("secret", encoding="utf-8")
     _add(vault, source)
     monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
-    monkeypatch.setattr(vault, "_historical_artifact_ids", lambda: {"artifact-001", "artifact-002"})
+    monkeypatch.setattr(
+        vault,
+        "_historical_artifacts",
+        lambda: {
+            "artifact-002": (
+                "artifact-002.gpg",
+                "0" * 64,
+                1,
+                vault.FINGERPRINT,
+                "2026-08-09T00:00:00+00:00",
+            )
+        },
+    )
 
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
@@ -134,22 +146,43 @@ def test_historical_baseline_is_monotonic_across_commits(vault):
     run_git("init", "-b", "main")
     run_git("config", "user.email", "vault-test@example.invalid")
     run_git("config", "user.name", "Vault Test")
+
+    def history_row(artifact_id: str, digest: str) -> dict:
+        return {
+            "schema": vault.SCHEMA,
+            "artifact_id": artifact_id,
+            "ciphertext": f"{artifact_id}.gpg",
+            "ciphertext_sha256": digest,
+            "ciphertext_bytes": 1,
+            "recipient_fpr": vault.FINGERPRINT,
+            "vaulted_at": "2026-08-09T00:00:00+00:00",
+        }
+
     first_rows = [
-        {"schema": vault.SCHEMA, "artifact_id": "artifact-001"},
-        {"schema": vault.SCHEMA, "artifact_id": "artifact-002"},
+        history_row("artifact-001", "1" * 64),
+        history_row("artifact-002", "2" * 64),
         {"schema": vault.SCHEMA, "artifact_id": "descriptive-name"},
     ]
     vault.MANIFEST.write_text("".join(json.dumps(row) + "\n" for row in first_rows), encoding="utf-8")
     run_git("add", "institutio/vault/manifest.jsonl")
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "admit custody")
-    vault.MANIFEST.write_text(
-        json.dumps({"schema": vault.SCHEMA, "artifact_id": "artifact-001"}) + "\n",
-        encoding="utf-8",
-    )
+    vault.MANIFEST.write_text(json.dumps(history_row("artifact-001", "1" * 64)) + "\n", encoding="utf-8")
     run_git("add", "institutio/vault/manifest.jsonl")
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "attempt deletion")
 
-    assert vault._real_historical_artifact_ids() == {"artifact-001", "artifact-002"}
+    assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
+
+
+def test_verify_rejects_changed_historical_ciphertext_metadata(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
+    current = vault._custody_metadata(vault._read_manifest()[0])
+    historical = (current[0], "0" * 64, current[2], current[3], current[4])
+    monkeypatch.setattr(vault, "_historical_artifacts", lambda: {"artifact-001": historical})
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
 def test_verify_rejects_non_string_artifact_id(vault):
@@ -199,6 +232,23 @@ def test_import_rejects_symlinked_public_key(vault, monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(vault, "PUBKEY", symlink)
 
     with pytest.raises(vault.VaultError, match="non-symlink"):
+        vault._import_pubkey(str(tmp_path / "gnupg"))
+
+
+def test_import_rejects_secret_key_material(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    public_key = tmp_path / "committed-key.asc"
+    public_key.write_text("synthetic key material", encoding="utf-8")
+    monkeypatch.setattr(vault, "PUBKEY", public_key)
+
+    def expose_secret(args, *, env=None):
+        del env
+        if "--import" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(args, 0, stdout="sec:u:255:22:SECRET\n", stderr="")
+
+    monkeypatch.setattr(vault, "_run_command", expose_secret)
+
+    with pytest.raises(vault.VaultError, match="secret-key material"):
         vault._import_pubkey(str(tmp_path / "gnupg"))
 
 
@@ -260,6 +310,20 @@ def test_verify_rejects_wrong_recipient(vault, monkeypatch: pytest.MonkeyPatch, 
     _add(vault, source)
     monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
     monkeypatch.setattr(vault, "_ciphertext_recipient_keyids", lambda _ciphertext: {"0" * 16})
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_verify_rejects_symlinked_ciphertext(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    ciphertext = vault.VAULT_DIR / "artifact-001.gpg"
+    outside = tmp_path / "outside.gpg"
+    outside.write_bytes(ciphertext.read_bytes())
+    ciphertext.unlink()
+    ciphertext.symlink_to(outside)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
+
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 

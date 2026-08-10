@@ -149,8 +149,8 @@ def _contained_file(base: Path, name: str) -> Path:
     if not name or Path(name).name != name or Path(name).is_absolute():
         raise VaultError(f"unsafe vault filename: {name!r}")
     base_resolved = base.resolve()
-    candidate = (base / name).resolve()
-    if candidate.parent != base_resolved:
+    candidate = base / name
+    if candidate.parent.resolve() != base_resolved:
         raise VaultError(f"vault filename escapes custody root: {name!r}")
     return candidate
 
@@ -237,14 +237,34 @@ def _tracked_files() -> set[str]:
     return set(run.stdout.splitlines())
 
 
-def _historical_artifact_ids() -> set[str]:
-    """Return every neutral v2 artifact id ever admitted to committed custody."""
+def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
+    ciphertext = row.get("ciphertext")
+    ciphertext_sha256 = row.get("ciphertext_sha256")
+    ciphertext_bytes = row.get("ciphertext_bytes")
+    recipient_fpr = row.get("recipient_fpr")
+    vaulted_at = row.get("vaulted_at")
+    if (
+        not isinstance(ciphertext, str)
+        or not isinstance(ciphertext_sha256, str)
+        or not SHA256_RE.fullmatch(ciphertext_sha256)
+        or not isinstance(ciphertext_bytes, int)
+        or ciphertext_bytes < 0
+        or not isinstance(recipient_fpr, str)
+        or not isinstance(vaulted_at, str)
+        or not vaulted_at
+    ):
+        raise VaultError("manifest contains invalid immutable custody metadata")
+    return ciphertext, ciphertext_sha256, ciphertext_bytes, recipient_fpr, vaulted_at
+
+
+def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
+    """Return immutable metadata for every neutral v2 artifact admitted to custody."""
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
     history = _run_command(["git", "-C", str(ROOT), "log", "--format=%H", "--follow", "--", manifest_relative])
     if history.returncode != 0:
         raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
 
-    artifact_ids: set[str] = set()
+    artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for revision in history.stdout.splitlines():
         snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
         # A deletion commit is part of the path history but has no file at that revision.
@@ -263,8 +283,12 @@ def _historical_artifact_ids() -> set[str]:
             if not isinstance(artifact_id, str):
                 raise VaultError("committed manifest history contains a non-string artifact id")
             if ARTIFACT_ID_RE.fullmatch(artifact_id):
-                artifact_ids.add(artifact_id)
-    return artifact_ids
+                metadata = _custody_metadata(row)
+                previous = artifacts.get(artifact_id)
+                if previous is not None and previous != metadata:
+                    raise VaultError("committed custody history changes immutable artifact metadata")
+                artifacts[artifact_id] = metadata
+    return artifacts
 
 
 def _reject_tracked_plaintext(source: Path) -> None:
@@ -293,6 +317,14 @@ def _import_pubkey(gnupghome: str) -> None:
     )
     if run.returncode != 0:
         raise VaultError(f"public-key import failed: {_diagnostic(run)}")
+    secret_listing = _run_command(
+        ["gpg", "--batch", "--with-colons", "--list-secret-keys"],
+        env=_gpg_env(gnupghome),
+    )
+    if secret_listing.returncode != 0:
+        raise VaultError(f"secret-key inspection failed: {_diagnostic(secret_listing)}")
+    if any(line.startswith(("sec:", "ssb:")) for line in secret_listing.stdout.splitlines()):
+        raise VaultError("committed public-key file contains secret-key material")
 
 
 def _validate_committed_pubkey() -> None:
@@ -568,6 +600,7 @@ def cmd_verify(_args: argparse.Namespace) -> int:
             failures.append(f"private plaintext namespace contains git-tracked content: {prefix}")
     seen_ids: set[str] = set()
     seen_ciphers: set[str] = set()
+    current_artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for line_number, row in enumerate(rows, 1):
         failures.extend(_validate_public_row(row, line_number))
         artifact_id = str(row.get("artifact_id") or "")
@@ -578,6 +611,11 @@ def cmd_verify(_args: argparse.Namespace) -> int:
             failures.append(f"duplicate ciphertext: {name}")
         seen_ids.add(artifact_id)
         seen_ciphers.add(name)
+        if ARTIFACT_ID_RE.fullmatch(artifact_id):
+            try:
+                current_artifacts[artifact_id] = _custody_metadata(row)
+            except VaultError:
+                pass
         try:
             path = _cipher_path(row)
         except VaultError:
@@ -589,13 +627,19 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         if relative not in tracked:
             failures.append(f"ciphertext not git-tracked (custody gap): {relative}")
     try:
-        custody_baseline = BOOTSTRAP_ARTIFACT_IDS | _historical_artifact_ids()
+        historical_artifacts = _historical_artifacts()
+        custody_baseline = BOOTSTRAP_ARTIFACT_IDS | set(historical_artifacts)
     except VaultError as exc:
         failures.append(str(exc))
+        historical_artifacts = {}
         custody_baseline = BOOTSTRAP_ARTIFACT_IDS
     missing_required = sorted(custody_baseline - seen_ids)
     if missing_required:
         failures.append(f"required custody baseline is missing neutral ids: {', '.join(missing_required)}")
+    for artifact_id, expected_metadata in historical_artifacts.items():
+        current_metadata = current_artifacts.get(artifact_id)
+        if current_metadata is not None and current_metadata != expected_metadata:
+            failures.append(f"immutable custody metadata changed: {artifact_id}")
     for stray in VAULT_DIR.iterdir() if VAULT_DIR.exists() else []:
         if stray.is_dir():
             failures.append(f"unsupported vault directory: {stray.name}")
