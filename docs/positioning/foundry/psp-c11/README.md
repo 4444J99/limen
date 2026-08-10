@@ -36,7 +36,7 @@ Those PRs remain draft and are evidence inputs, not completed program leaves.
 
 Two consecutive authenticated owner-wide passes returned the same repository identity digest:
 
-- 10 controlled organizations plus the personal owner;
+- 10 controlled organizations;
 - 314 accessible repositories;
 - 62 product-ledger candidates, all resolving to exactly one currently owned repository;
 - 54 public candidates and 8 private candidates;
