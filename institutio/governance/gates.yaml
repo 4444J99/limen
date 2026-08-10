@@ -461,6 +461,11 @@ gates:
     paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+  github-estate-census-custody-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_github_estate_census.py scripts/tests/test_github_estate_census_custody.py -q"
+    paths: ["cli/src/limen/github_estate_census.py", "cli/tests/test_github_estate_census.py", "scripts/github-estate-census.py", "scripts/tests/test_github_estate_census_custody.py", "institutio/governance/gates.yaml"]
+    owner: positioning-program
+    note: "The exhaustive estate census keeps raw private repository evidence only in its gitignored custody receipt, atomically replaces permissive files or symlinks, and enforces owner-only mode 0600; the tracked ledger remains redacted."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

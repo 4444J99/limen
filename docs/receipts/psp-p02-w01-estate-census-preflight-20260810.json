@@ -1,0 +1,85 @@
+{
+  "schema": "limen.psp-p02-w01-estate-census-preflight.v1",
+  "generated_at": "2026-08-10T21:20:04Z",
+  "issue": "https://github.com/organvm/limen/issues/2173",
+  "dependency_issue": "https://github.com/organvm/limen/issues/2171",
+  "owner_login": "4444J99",
+  "owner_user_id": 24796448,
+  "organization_count": 10,
+  "organization_list_digest": "dc13a57ab768f96674759ecc86d1d3df4848a30bebecb5db738be0296d701a74",
+  "organization_roster": [
+    "a-organvm",
+    "meta-organvm",
+    "organvm",
+    "organvm-i-theoria",
+    "organvm-ii-poiesis",
+    "organvm-iii-ergon",
+    "organvm-iv-taxis",
+    "organvm-v-logos",
+    "organvm-vi-koinonia",
+    "organvm-vii-kerygma"
+  ],
+  "repository_counts": {
+    "personal": 13,
+    "orgs_total": 301,
+    "accessible_total": 314
+  },
+  "repository_visibility_counts": {
+    "public": 235,
+    "private": 79
+  },
+  "repository_owner_counts": {
+    "4444J99": 13,
+    "a-organvm": 0,
+    "meta-organvm": 10,
+    "organvm": 172,
+    "organvm-i-theoria": 12,
+    "organvm-ii-poiesis": 18,
+    "organvm-iii-ergon": 52,
+    "organvm-iv-taxis": 18,
+    "organvm-v-logos": 3,
+    "organvm-vi-koinonia": 11,
+    "organvm-vii-kerygma": 5
+  },
+  "pagination_proof": {
+    "page_size": 100,
+    "personal_repo_pages": 1,
+    "org_repo_pages": {
+      "a-organvm": 0,
+      "meta-organvm": 1,
+      "organvm": 2,
+      "organvm-i-theoria": 1,
+      "organvm-ii-poiesis": 1,
+      "organvm-iii-ergon": 1,
+      "organvm-iv-taxis": 1,
+      "organvm-v-logos": 1,
+      "organvm-vi-koinonia": 1,
+      "organvm-vii-kerygma": 1
+    }
+  },
+  "live_passes": {
+    "pass_1_stable_digest": "0a0db6f52b8d32cbf32af1daadd14fe0bff30487dd9cd4166066953b0b7ac2a9",
+    "pass_2_stable_digest": "0a0db6f52b8d32cbf32af1daadd14fe0bff30487dd9cd4166066953b0b7ac2a9",
+    "stable_digest_scope": "sorted repository identity and visibility pairs",
+    "new_owner_keys": 0,
+    "new_organization_keys": 0,
+    "new_repository_keys": 0
+  },
+  "source_timestamps": {
+    "user_lookup_utc": "2026-08-10T21:20:04Z",
+    "org_lookup_utc": "2026-08-10T21:20:04Z",
+    "repo_lookup_utc": "2026-08-10T21:20:04Z",
+    "stable_pass_1_utc": "2026-08-10T21:15:43Z",
+    "stable_pass_2_utc": "2026-08-10T21:20:04Z"
+  },
+  "private_facts_custody": {
+    "storage": "gitignored local custody receipt",
+    "file_mode": "0600",
+    "write_semantics": "atomic replacement",
+    "tracked_projection": "opaque private leaf keys and aggregate counts only"
+  },
+  "visibility_notes": [
+    "Public receipt only; private repository names are intentionally omitted.",
+    "The raw live facts were observed through GitHub API pagination and retained in the owner-only local custody receipt, not this public receipt."
+  ]
+}
