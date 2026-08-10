@@ -23,14 +23,15 @@ compression_level: medium
 
 | Item | Live state |
 |---|---|
-| Exact implementation head | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` — full-diff, exact-repository-token private-name guard and focused regressions included |
-| Exact remote branch checkpoint | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` on `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay refresh; fetch before resuming |
+| Exact verified implementation/evidence source | `2451d7a409168f70bb9ba6fc83674ddd74aede44` (tree `946d68d6950bb9262d3fe7ae915e3b3063f9e447`) — current classifier, policy, scoped-gate registration, and all 20 focused regressions |
+| Exact remote branch checkpoint | PR #2307 carries this relay as one receipt-only descendant of `2451d7a409168f70bb9ba6fc83674ddd74aede44`; fetch the PR head and require that immutable source commit as its parent before reusing these receipts |
 | Exact target repository heads | `organvm/limen` only; the focused live classifier ran against the W01 denominator on 2026-08-10 |
-| Working tree | Relay pending commit; otherwise clean |
-| Acceptance condition | Partial: the policy and live classifier satisfy coverage, but #2173 remains open and W02 has no conduct-backed receipt |
+| Working tree | Clean at the exact evidence source; this relay refresh is receipt-only and changes no executable or policy blob |
+| Acceptance condition | Partial: the policy and live classifier satisfy coverage; dependency and formal receipt state must be queried live, and this lane did not close #2174 |
 | Task-specific predicate | Not run as a completion claim; it must remain deferred until #2173 formally closes and a receipt is attached |
-| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed: 314 total, 235 public, 79 private, exactly one primary role each; the private-name guard scans the entire reviewed diff and matches only complete repository tokens, avoiding public-name prefix false positives |
-| Scoped verification | `scripts/verify-scoped.sh` passed all 15 implicated cheap-wave gates on exact implementation head `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` |
+| Focused tests | `python3 scripts/tests/estate-classification.test.py` passed all 20 cases on exact source `2451d7a409168f70bb9ba6fc83674ddd74aede44` |
+| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed on exact source `2451d7a409168f70bb9ba6fc83674ddd74aede44`: 314 total, 235 public, 79 private, exactly one primary role each; the guard scans the complete reviewed diff, treats GitHub identifiers case-insensitively, and retains added content beginning with `++` |
+| Scoped verification | Bare `bash scripts/verify-scoped.sh` passed all 22 implicated cheap-wave gates for the tree committed as exact source `2451d7a409168f70bb9ba6fc83674ddd74aede44`, including the newly registered `estate-classification-test` |
 | Receipt verifier | No W02 receipt and no issue comment posted |
 | Phase exit proof | Not applicable; P02 remains open |
 | Omega observation | Not applicable |
@@ -40,7 +41,7 @@ compression_level: medium
 
 - Added the public-safe taxonomy and ordered policy to `institutio/github/estate.yaml`.
 - Added `docs/positioning/estate-classification.md` with aggregate coverage, public/private rule, and finite uncertainty queue.
-- Added a live classifier plus unit tests. It does not persist private repository names and rejects newly added private names in the reviewed public diff.
+- Added a live classifier plus a registered 20-case scoped suite. It does not persist private repository names; it rejects case-insensitive private tokens in added content and paths, distinguishes real diff headers from added `++` lines, validates maturity cutoffs, and converts schema, timeout, and unexpected failures into sanitized output.
 
 ## Decisions and rationale
 
@@ -52,7 +53,7 @@ compression_level: medium
 
 ## Next actions
 
-1. Wait for https://github.com/organvm/limen/issues/2173 to close, then refresh this branch against its merged exact census rather than assuming the preflight denominator still matches.
+1. Query https://github.com/organvm/limen/issues/2173 and its receipt live; if it is closed, refresh this branch against its merged exact census rather than assuming the preflight denominator still matches.
 2. Continue in a fresh human-protected Codex task under the C00 routing correction; rerun the focused live predicate after the dependency refresh and reuse the unchanged scoped receipt unless the tree changes.
 3. Attach a structured W02 receipt whose underlying predicate is the focused classifier (never `--verify-work` itself), then run `python3 scripts/positioning-program.py --verify-work PSP-P02-W02` and close only if it passes.
 
