@@ -4,8 +4,10 @@
 - Formal state: `PREPARED/PREFLIGHT`
 - Prepared: 2026-08-10
 - Limen branch: `codex/psp-c04-proof-experience-preflight`
+- Limen draft checkpoint: https://github.com/organvm/limen/pull/2313
 - Portfolio owner: `organvm-vii-kerygma/portfolio` (repository id `1155412125`)
 - Portfolio branch: `codex/psp-p06-experience-preflight`
+- Portfolio draft checkpoint: https://github.com/organvm-vii-kerygma/portfolio/pull/220
 
 ## Dependency boundary
 
