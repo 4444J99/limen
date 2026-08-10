@@ -9,7 +9,7 @@ import hmac
 import secrets
 from datetime import datetime, timedelta
 from pathlib import PurePath
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -1701,7 +1701,10 @@ class ConductBroker:
         }
 
     @staticmethod
-    def _require_role(principal: ConductPrincipalV1, *roles: str) -> None:
+    def _require_role(
+        principal: ConductPrincipalV1,
+        *roles: Literal["observer", "conductor", "executor", "compatibility"],
+    ) -> None:
         if principal.roles.isdisjoint(roles):
             raise ConductConflict(f"authenticated principal lacks required {'/'.join(roles)} role")
 

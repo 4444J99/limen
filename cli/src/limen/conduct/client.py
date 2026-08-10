@@ -19,44 +19,52 @@ class BrokerUnavailable(ConductError):
     pass
 
 
-class BrokerQuotaExhausted(ConductError):
-    """The keeper's storage plan is spent — every relay WRITE is refused until it is raised or resets.
+class BrokerStorageLimitRefused(ConductError):
+    """The provider refused keeper storage under a limit-labelled response.
 
-    Not a bug and not a transient network fault, which is why it needs its own type: no retry, no
-    backoff, and no amount of correct client code makes the next write land. The resolution is a
-    spend/billing decision by the owner, so the condition's real home is a lever in
-    ``his-hand-levers.json`` (``L-CLOUDFLARE-DO-QUOTA``), not a traceback in a beat log.
+    This type records the provider response; it does not determine the account plan, measured
+    usage, or remedy. Immediate retries still cannot make the blocked operation land, so the
+    condition has a durable owner in ``his-hand-levers.json``
+    (``L-CLOUDFLARE-DO-QUOTA``) rather than disappearing into a traceback.
 
     Measured 2026-08-07: ``POST /api/conduct/sessions`` began answering
 
         500 {"detail": "Exceeded allowed rows written in Durable Objects free tier."}
 
-    ``_register_relay_session`` is on EVERY relay write path, so this one wall blocked the
+    ``_register_relay_session`` is on every relay write path, so this one wall blocked the
     canonical-heal rung, dispatch receipts, and board publication simultaneously — while twelve
     regressed ``needs-human`` atoms stayed regressed and the beat log showed a bare ``}``.
 
+    Rechecked 2026-08-09: Cloudflare reported ``standard`` for both the account default and the
+    deployed ``limen-runtime`` worker while returning the same Free-tier-labelled refusal. The
+    earlier inference that the operator had spent a Free-plan allowance was therefore invalid.
+
     **This classifies on the rejection PROSE, which the estate otherwise forbids** (see
     ``ConductError``: three keepers word the same condition differently, so callers are told to
-    classify on ``status``). The exemption is narrow and deliberate: a Cloudflare storage-quota
-    refusal surfaces as an undifferentiated 500 with no machine-readable field to read, so prose is
-    the ONLY available signal. The durable fix is for the keeper to answer a structured code — that
-    work is recorded on the lever, and this detection becomes the compatibility fallback for a
-    keeper that has not been redeployed. Until then, matching a generic 500 is strictly better than
-    the alternative, which is what actually happened: a 61-line traceback nobody could see.
+    classify on ``status``). The exemption is narrow and deliberate: this Cloudflare refusal
+    surfaces as an undifferentiated 500 with no machine-readable field to read, so prose is the only
+    available compatibility signal. The durable fix is for the keeper to answer a structured code;
+    matching the provider's exact limit language must never be promoted into a billing conclusion.
     """
 
 
-# Substrings that identify a storage-plan wall rather than a keeper defect. Kept narrow on purpose:
+# Compatibility alias for callers that imported the original, overly causal name. New tracebacks
+# and callers use the evidence-level name while old exception handlers keep matching the same type.
+BrokerQuotaExhausted = BrokerStorageLimitRefused
+
+
+# Substrings that identify a storage-limit-labelled refusal rather than an arbitrary keeper defect.
+# Kept narrow on purpose:
 # a broad match here would reclassify real 500s as "blocked on the owner" and hide genuine bugs.
-_QUOTA_MARKERS = (
+_STORAGE_LIMIT_MARKERS = (
     "exceeded allowed rows written",
     "durable objects free tier",
     "exceeded your storage limit",
 )
 
 
-def _is_quota_refusal(status: int | None, detail: str) -> bool:
-    """A storage-plan wall, as opposed to a keeper defect or a rate limit.
+def _is_storage_limit_refusal(status: int | None, detail: str) -> bool:
+    """A provider storage-limit refusal, as opposed to a keeper defect or generic rate limit.
 
     A quota marker is REQUIRED — status alone is never enough, because 500 is exactly what a real
     bug also returns. 429 is included because a plan ceiling can surface as a throttle, but only
@@ -65,7 +73,7 @@ def _is_quota_refusal(status: int | None, detail: str) -> bool:
     if status not in (429, 500, 503):
         return False
     lowered = detail.lower()
-    return any(marker in lowered for marker in _QUOTA_MARKERS)
+    return any(marker in lowered for marker in _STORAGE_LIMIT_MARKERS)
 
 
 class HttpConductClient:
@@ -101,10 +109,10 @@ class HttpConductClient:
             # differs per implementation. Carry the code so callers never parse the text.
             if exc.code == 409:
                 raise ConductConflict(message, status=exc.code) from exc
-            if _is_quota_refusal(exc.code, detail):
-                # Distinguished from a generic 500 so callers can report "blocked on the owner's
-                # spend lever" instead of retrying a write that cannot land until he acts.
-                raise BrokerQuotaExhausted(message, status=exc.code) from exc
+            if _is_storage_limit_refusal(exc.code, detail):
+                # Distinguished from a generic 500 so callers can home the refusal without
+                # retrying or inferring the account plan, measured usage, or required spend.
+                raise BrokerStorageLimitRefused(message, status=exc.code) from exc
             raise ConductError(message, status=exc.code) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
             raise BrokerUnavailable(f"conduct broker unavailable: {exc}") from exc

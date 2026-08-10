@@ -47,7 +47,7 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
+from limen.conduct.client import BrokerStorageLimitRefused  # noqa: E402
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import load_limen_file, queue_lock  # noqa: E402
 from limen.models import VALID_STATUSES, DispatchLogEntry, LimenFile, Task  # noqa: E402
@@ -296,13 +296,13 @@ def repair_canonical(*, check: bool, dry_run: bool) -> int:
             session_id="canonical-reconcile",
             before=canonical,
         )
-    except BrokerQuotaExhausted as exc:
-        # A spent storage plan is not a heal failure and not a bug — it is an owner decision the
-        # rung cannot make. Report it as one legible line naming its registry owner, and exit
+    except BrokerStorageLimitRefused as exc:
+        # The provider's limit-labelled refusal is not enough evidence to name a billing cause.
+        # Report the measured condition as one legible line naming its registry owner, and exit
         # EX_TEMPFAIL so the beat's rung ledger still records a NON-ZERO outcome: a tidy exit 0
         # here would restore exactly the "everything looks healthy" blindness that let this sit.
-        print(f"heal-board: BLOCKED — keeper storage quota exhausted, canonical reconcile deferred ({summary})")
-        print(f"heal-board: the write path is spent, not broken — owner: lever {QUOTA_LEVER} in his-hand-levers.json")
+        print(f"heal-board: BLOCKED — keeper storage refused by provider, canonical reconcile deferred ({summary})")
+        print(f"heal-board: billing cause unproven — owner: lever {QUOTA_LEVER} in his-hand-levers.json")
         print(f"heal-board: keeper said: {exc}"[:400])
         return EX_TEMPFAIL
     print(f"heal-board: reconciled {summary}")

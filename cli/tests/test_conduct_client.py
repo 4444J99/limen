@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from limen.conduct.broker import ConductConflict, ConductError
-from limen.conduct.client import BrokerQuotaExhausted, HttpConductClient
+from limen.conduct.client import BrokerQuotaExhausted, BrokerStorageLimitRefused, HttpConductClient
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -46,13 +46,13 @@ def test_http_client_sends_stable_user_agent(monkeypatch):
 
 
 # --------------------------------------------------------------------------------------------
-# A spent keeper storage plan is its own condition — not a bug, not a transient fault.
+# A provider storage-limit refusal is its own condition — not an arbitrary 500 or transient fault.
 #
 # Measured 2026-08-07: POST /api/conduct/sessions began answering
 #   500 {"detail": "Exceeded allowed rows written in Durable Objects free tier."}
 # ``_register_relay_session`` is on EVERY relay write path, so this single wall blocked the
-# canonical-heal rung, dispatch receipts, and board publication at once. No retry helps: the
-# resolution is a spend decision, homed as lever L-CLOUDFLARE-DO-QUOTA.
+# canonical-heal rung, dispatch receipts, and board publication at once. No immediate retry helps;
+# the refusal is homed as lever L-CLOUDFLARE-DO-QUOTA without inferring plan, usage, or spend.
 #
 # These pin BOTH directions, and the negative cases matter more than the positive one: the
 # detection reads keeper PROSE — a narrow, documented exemption from the estate's
@@ -71,16 +71,17 @@ def _client_raising(monkeypatch, code: int, detail: str) -> HttpConductClient:
     return HttpConductClient("https://limen-runtime.example", "fixture-token")
 
 
-def test_storage_quota_refusal_is_its_own_condition(monkeypatch):
+def test_storage_limit_refusal_is_its_own_condition(monkeypatch):
     client = _client_raising(monkeypatch, 500, QUOTA_DETAIL)
-    with pytest.raises(BrokerQuotaExhausted) as excinfo:
+    with pytest.raises(BrokerStorageLimitRefused) as excinfo:
         client.capabilities()
     assert excinfo.value.status == 500
+    assert type(excinfo.value).__name__ == "BrokerStorageLimitRefused"
     assert "Durable Objects free tier" in str(excinfo.value)
 
 
 def test_a_plain_500_stays_a_plain_error(monkeypatch):
-    """The load-bearing half: a real keeper defect must not be reported as an owner-gated spend."""
+    """The load-bearing half: a real keeper defect must not be reported as a storage refusal."""
     client = _client_raising(monkeypatch, 500, '{"detail": "TypeError: cannot read property of undefined"}')
     with pytest.raises(ConductError) as excinfo:
         client.capabilities()
@@ -109,9 +110,10 @@ def test_conflict_precedence_is_unchanged(monkeypatch):
     assert not isinstance(excinfo.value, BrokerQuotaExhausted)
 
 
-def test_quota_exhaustion_is_still_a_conduct_error():
-    """Every existing `except ConductError` catcher keeps working unchanged."""
-    assert issubclass(BrokerQuotaExhausted, ConductError)
+def test_storage_limit_refusal_preserves_the_legacy_exception_alias():
+    """Existing catchers keep working while tracebacks use the evidence-level class name."""
+    assert BrokerQuotaExhausted is BrokerStorageLimitRefused
+    assert issubclass(BrokerStorageLimitRefused, ConductError)
 
 
 def test_the_quota_condition_has_a_registry_owner():
@@ -121,3 +123,5 @@ def test_the_quota_condition_has_a_registry_owner():
     assert lever is not None, "heal-board.py cites L-CLOUDFLARE-DO-QUOTA — it must exist in the registry"
     for field in ("id", "label", "owner", "cost", "unlocks", "source_task"):
         assert str(lever.get(field, "")).strip(), f"lever missing required field {field}"
+    assert "plan is SPENT" not in lever["label"]
+    assert "does not prove" in lever["label"]

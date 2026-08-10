@@ -404,8 +404,8 @@ def efficacy_rung() -> list[dict]:
 
     ``EX_TEMPFAIL`` (75) is reported but NOT red, deliberately. It is the code a rung uses to say
     "blocked on a condition already filed with a human owner" (``heal-board --canonical`` raises it
-    for the keeper's spent storage plan, citing lever ``L-CLOUDFLARE-DO-QUOTA``). Making a correctly
-    homed, human-gated blocker permanently RED would hold this gate red until the operator acts,
+    for the keeper's provider storage refusal, citing lever ``L-CLOUDFLARE-DO-QUOTA``). Making a
+    correctly homed, human-gated blocker permanently RED would hold this gate red until the operator acts,
     which trains everyone to ignore it — the precise failure the loop's own comments warn about, and
     a violation of the charter's "never re-surface a filed gate". So it is visible and named, but it
     does not fail the audit; a rung failing for any OTHER reason does.
