@@ -102,7 +102,7 @@ model_assignments:
 execution_chunks:
   schema_version: limen.positioning_execution_chunks.v1
   authority: Human logical-chunk execution order requested 2026-08-09
-  relay_template: docs/positioning/program/EXECUTION-CHUNKS.md
+  relay_template: docs/positioning/program/RELAY-TEMPLATE.md
   chunks:
     - id: PSP-C00
       title: Land the program control plane
