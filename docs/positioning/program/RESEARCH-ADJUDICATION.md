@@ -13,7 +13,8 @@ The machine-readable adjudication is
 | Surface | Exact public head or identity | Adjudication use |
 |---|---|---|
 | GitHub profile | `f198b37e3161121e7c198e21bd18b87e29b6bc4f` | Rendered wording, manifest values, generator workflow |
-| W01/W03 stacked preflight | `48bb826d875dfb905a0c5a15c64e370ab73492a7` | Public-safe estate totals and per-system proof |
+| W01 census preflight | `2d591e630a3b3fbcdfeb7ac12500f374c607af30` | Public-safe estate totals |
+| W03 proof-set preflight | `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2` | Per-system public proof and constrained live probes |
 | LAVREA | `02e360c9828336ac95ce8223c65d127ffea27661` | Methodology and percentile-baseline audit |
 | Portfolio | GitHub repository ID `1155412125`; head `85bfaa84287e4a3b90b49187caa4313c4edda1aa` | Canonical-owner resolution independent of a mutable slug |
 

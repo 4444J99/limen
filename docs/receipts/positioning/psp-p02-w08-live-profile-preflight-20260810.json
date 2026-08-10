@@ -6,7 +6,7 @@
   "formal_completion": {
     "allowed": false,
     "reason": "The adjudication artifact is preflight evidence only. PSP-P02-W01 and PSP-P02-W05 remain open, so no completion receipt, issue closure, or merge is permitted.",
-    "stack_reconciled_at": "2026-08-10T19:54:38Z",
+    "stack_reconciled_at": "2026-08-10T20:20:59Z",
     "dependencies": [
       {
         "work_id": "PSP-P02-W01",
@@ -20,7 +20,7 @@
         "issue": "https://github.com/organvm/limen/issues/2177",
         "issue_state": "open",
         "draft_pull_request": "https://github.com/organvm/limen/pull/2310",
-        "draft_head": "b66fc01fb276f0733d4e122bc5db1c9e41c9aa1a"
+        "draft_head": "f5684212ba3c3dae3ac1b0c90212ea820cac28c9"
       }
     ],
     "live_reference": {
@@ -133,7 +133,7 @@
     },
     {
       "id": "w01_public_safe_census",
-      "source": "https://github.com/organvm/limen/blob/48bb826d875dfb905a0c5a15c64e370ab73492a7/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "source": "https://github.com/organvm/limen/blob/2d591e630a3b3fbcdfeb7ac12500f374c607af30/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "observed_at": "2026-08-10T14:13:06Z",
       "result": {
         "organization_count": 10,
@@ -233,9 +233,9 @@
   },
   "claims_ledger_integration": {
     "ledger_edited_in_this_lane": false,
-    "current_public_ledger_head": "5c0dd2eb1783beb38e45e43039cbf79887e50c14",
-    "current_public_ledger_blob": "b724d56564b957f6e5a04adc79c88b6017be9ece",
-    "current_public_ledger_url": "https://github.com/organvm/limen/blob/5c0dd2eb1783beb38e45e43039cbf79887e50c14/docs/positioning/claims-ledger.md",
+    "current_public_ledger_head": "f5684212ba3c3dae3ac1b0c90212ea820cac28c9",
+    "current_public_ledger_blob": "49a3dff3b0d5a2de34a5829e7c585664624ca4f0",
+    "current_public_ledger_url": "https://github.com/organvm/limen/blob/f5684212ba3c3dae3ac1b0c90212ea820cac28c9/docs/positioning/claims-ledger.md",
     "integration_artifact": "docs/positioning/program/research-adjudication.json",
     "consumer": "PSP-P02-W05"
   },

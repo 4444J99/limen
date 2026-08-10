@@ -54,22 +54,22 @@
     },
     "W01_CENSUS_RECEIPT": {
       "kind": "head_pinned_public_safe_receipt",
-      "head": "48bb826d875dfb905a0c5a15c64e370ab73492a7",
-      "url": "https://github.com/organvm/limen/blob/48bb826d875dfb905a0c5a15c64e370ab73492a7/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "head": "2d591e630a3b3fbcdfeb7ac12500f374c607af30",
+      "url": "https://github.com/organvm/limen/blob/2d591e630a3b3fbcdfeb7ac12500f374c607af30/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "public": true
     },
     "W03_PROOF_SET": {
       "kind": "head_pinned_public_safe_receipt",
-      "head": "48bb826d875dfb905a0c5a15c64e370ab73492a7",
+      "head": "0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2",
       "blob": "120529ab75d797c2e28c693d8bfc2d042428dd49",
-      "url": "https://github.com/organvm/limen/blob/48bb826d875dfb905a0c5a15c64e370ab73492a7/docs/positioning/flagship-proof-set.yaml",
+      "url": "https://github.com/organvm/limen/blob/0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2/docs/positioning/flagship-proof-set.yaml",
       "public": true
     },
     "CLAIMS_LEDGER": {
       "kind": "head_pinned_public_source",
-      "head": "5c0dd2eb1783beb38e45e43039cbf79887e50c14",
-      "blob": "b724d56564b957f6e5a04adc79c88b6017be9ece",
-      "url": "https://github.com/organvm/limen/blob/5c0dd2eb1783beb38e45e43039cbf79887e50c14/docs/positioning/claims-ledger.md",
+      "head": "f5684212ba3c3dae3ac1b0c90212ea820cac28c9",
+      "blob": "49a3dff3b0d5a2de34a5829e7c585664624ca4f0",
+      "url": "https://github.com/organvm/limen/blob/f5684212ba3c3dae3ac1b0c90212ea820cac28c9/docs/positioning/claims-ledger.md",
       "public": true
     },
     "LAVREA_METHODOLOGY": {
