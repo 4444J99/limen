@@ -169543,3 +169543,39 @@ tasks:
     conduct_lease_id: 'lease-826-52b8d5517c9095fb'
     conduct_generation: 826
   updated: '2026-08-10T00:54:43.875Z'
+- id: 'GH-organvm-hospes-32'
+  title: '[P4-1] Network-Level Dashboard: portfolio view for network ops'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:4'
+  - 'priority:P2'
+  - 'area:network'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/32'
+  context: 'GitHub issue organvm/hospes#32. ## Phase 4: Enterprise / Network Features (Week 6+) ### Problem Network operators can''t see all shows at once. ### Solution Aggregated network dashboard with drill-down. ### Acceptance Criteria - [ ] New `hospes/network_dashboard.py` — aggregates across tenants - [ ] Dashboard "Network" view (role: network_operator only) - [ ] Shows: all shows, pipeline health (candidates/approved/booked), booking'
+  predicate: 'test "$(gh issue view 32 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/32'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#32'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:54:48.904Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-9ef1a2bd04318515fdfa9463f3366fb1:827:compatibility'
+    conduct_run_id: 'run-9ef1a2bd04318515fdfa9463f3366fb1'
+    conduct_lease_id: 'lease-827-9ef1a2bd04318515'
+    conduct_generation: 827
+  updated: '2026-08-10T00:54:48.904Z'
