@@ -1,0 +1,645 @@
+{
+  "schema": "limen.positioning_research_adjudication.v1",
+  "work_id": "PSP-P02-W08",
+  "generated_at": "2026-08-10T19:21:11Z",
+  "status": "preflight_ratified_dependency_blocked",
+  "receipt": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+  "coverage": {
+    "denominator": 13,
+    "adjudicated": 13,
+    "basis": "All public-safe profile and LAVREA criticisms enumerated in the prior adjudication record and the current public claims ledger are represented. Private dossier prose is neither copied nor treated as evidence.",
+    "rule": "A criticism can change a claim only through current public primary evidence. Measurement, inference, implication, and prominence are decided independently.",
+    "excluded": "Incidental profile counts that were not research-rebuked are outside this denominator."
+  },
+  "disposition_vocabularies": {
+    "measurement": ["verified", "partially_verified", "contradicted", "unverified", "not_applicable"],
+    "inference": ["supported", "bounded", "contradicted", "unsupported", "not_applicable"],
+    "implication": ["supported", "bounded", "contradicted", "not_established", "not_applicable"],
+    "prominence": ["retain_l1", "retain_l2", "supporting_only", "narrow", "correct_immediately", "withhold"]
+  },
+  "sources": {
+    "PROFILE_README": {
+      "kind": "head_pinned_public_source",
+      "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+      "blob": "b006a06c2a7e9f84166b0fd7fad638a5c36c356f",
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/README.md",
+      "public": true
+    },
+    "PROFILE_MANIFEST": {
+      "kind": "head_pinned_public_source",
+      "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+      "blob": "668c09daab5f63882e9fd6b848ab9d0017a65ae5",
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/assets/stats-manifest.json",
+      "public": true
+    },
+    "PROFILE_WORKFLOW": {
+      "kind": "head_pinned_public_source",
+      "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/.github/workflows/profile.yml",
+      "public": true
+    },
+    "PROFILE_API_RECEIPT": {
+      "kind": "dated_public_api_receipt",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "url": "https://api.github.com/users/4444J99",
+      "receipt_path": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+      "public": true
+    },
+    "PROFILE_RUNS": {
+      "kind": "dated_public_api_receipt",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "url": "https://github.com/4444J99/4444J99/actions/workflows/profile.yml",
+      "receipt_path": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+      "public": true
+    },
+    "W01_CENSUS_RECEIPT": {
+      "kind": "head_pinned_public_safe_receipt",
+      "head": "48bb826d875dfb905a0c5a15c64e370ab73492a7",
+      "url": "https://github.com/organvm/limen/blob/48bb826d875dfb905a0c5a15c64e370ab73492a7/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "public": true
+    },
+    "W03_PROOF_SET": {
+      "kind": "head_pinned_public_safe_receipt",
+      "head": "48bb826d875dfb905a0c5a15c64e370ab73492a7",
+      "blob": "120529ab75d797c2e28c693d8bfc2d042428dd49",
+      "url": "https://github.com/organvm/limen/blob/48bb826d875dfb905a0c5a15c64e370ab73492a7/docs/positioning/flagship-proof-set.yaml",
+      "public": true
+    },
+    "CLAIMS_LEDGER": {
+      "kind": "head_pinned_public_source",
+      "head": "5c0dd2eb1783beb38e45e43039cbf79887e50c14",
+      "blob": "b724d56564b957f6e5a04adc79c88b6017be9ece",
+      "url": "https://github.com/organvm/limen/blob/5c0dd2eb1783beb38e45e43039cbf79887e50c14/docs/positioning/claims-ledger.md",
+      "public": true
+    },
+    "LAVREA_METHODOLOGY": {
+      "kind": "head_pinned_public_source",
+      "head": "02e360c9828336ac95ce8223c65d127ffea27661",
+      "blob": "b671568236f386041a416d28964b50820249ac2a",
+      "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
+      "public": true
+    },
+    "LAVREA_BASELINES": {
+      "kind": "head_pinned_public_source",
+      "head": "02e360c9828336ac95ce8223c65d127ffea27661",
+      "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
+      "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
+      "public": true
+    },
+    "GITHUB_CONTRIBUTIONS": {
+      "kind": "primary_documentation",
+      "url": "https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference",
+      "public": true
+    },
+    "GITHUB_GRAPHQL": {
+      "kind": "primary_documentation",
+      "url": "https://docs.github.com/en/graphql/reference/users#contributioncalendar",
+      "public": true
+    },
+    "GITHUB_REPOSITORIES": {
+      "kind": "primary_documentation",
+      "url": "https://docs.github.com/en/rest/repos/repos",
+      "public": true
+    },
+    "GITHUB_TRANSFER": {
+      "kind": "primary_documentation",
+      "url": "https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository",
+      "public": true
+    },
+    "GITHUB_OCTOVERSE_2023": {
+      "kind": "primary_population_report",
+      "url": "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/",
+      "public": true
+    },
+    "PORTFOLIO_IDENTITY": {
+      "kind": "stable_public_repository_identity",
+      "repository_id": 1155412125,
+      "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+      "url": "https://api.github.com/repositories/1155412125",
+      "receipt_path": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+      "public": true
+    }
+  },
+  "claims": [
+    {
+      "id": "profile-production-systems-headline",
+      "research_rebuke": "The profile lacks a legible production-systems proposition.",
+      "exact_public_wording": "I build production systems that solve expensive problems.",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "The wording is present in both the rendered heading asset alt text and the first profile paragraph at the exact profile head.",
+        "citations": ["PROFILE_README"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "The headline states a positioning thesis. Its truth depends on the selected proof objects rather than the existence of the sentence alone.",
+        "citations": ["PROFILE_README", "W03_PROOF_SET"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "The headline does not establish that every repository is production-ready, adopted, or commercially validated.",
+        "citations": ["W03_PROOF_SET", "CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "retain_l1",
+        "rationale": "Keep the proposition as the lead identity while W03/W04 evidence packets supply the proof beneath it.",
+        "citations": ["PROFILE_README", "W03_PROOF_SET"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "provisional_verified_wording",
+        "public_wording": "I build production systems that solve expensive problems.",
+        "required_receipts": ["W03 flagship packets", "W05 reproducibility rows"]
+      }
+    },
+    {
+      "id": "profile-portfolio-link",
+      "research_rebuke": "The profile's portfolio link is dead.",
+      "exact_public_wording": "https://organvm.github.io/portfolio/",
+      "measurement": {
+        "disposition": "contradicted",
+        "rationale": "The current profile metadata still carries this URL and a live HTTP check returned 404.",
+        "citations": ["PROFILE_API_RECEIPT"]
+      },
+      "inference": {
+        "disposition": "supported",
+        "rationale": "The narrow dead-link criticism is correct for the current profile field.",
+        "citations": ["PROFILE_API_RECEIPT"]
+      },
+      "implication": {
+        "disposition": "contradicted",
+        "rationale": "The 404 does not mean the portfolio disappeared. Stable repository ID 1155412125 resolves to the transferred public repository, and its new Pages URL returned 200. GitHub documents that Pages URLs are not redirected on transfer.",
+        "citations": ["PORTFOLIO_IDENTITY", "GITHUB_TRANSFER"]
+      },
+      "prominence": {
+        "disposition": "correct_immediately",
+        "rationale": "Route future approved profile metadata and program work to the canonical owner; do not remove the portfolio proof surface.",
+        "citations": ["PORTFOLIO_IDENTITY", "PROFILE_API_RECEIPT"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "broken_link_with_live_successor",
+        "public_wording": "Portfolio: https://organvm-vii-kerygma.github.io/portfolio/",
+        "required_receipts": ["profile metadata mutation receipt", "HTTP 200 after approved mutation"]
+      }
+    },
+    {
+      "id": "profile-has-no-proof",
+      "research_rebuke": "The profile has no inspectable proof and its numbers are merely self-reported.",
+      "exact_public_wording": "Every number on this page is regenerated from the live GitHub API and re-derivable from stats-manifest.json.",
+      "measurement": {
+        "disposition": "partially_verified",
+        "rationale": "The exact-head manifest, live API reconciliation, scheduled workflow, and public W01 receipt are inspectable proof. Some manifest query descriptions are templates rather than one-command receipts, and the workflow does not pin or record the engine commit.",
+        "citations": ["PROFILE_MANIFEST", "PROFILE_WORKFLOW", "W01_CENSUS_RECEIPT", "PROFILE_API_RECEIPT"]
+      },
+      "inference": {
+        "disposition": "contradicted",
+        "rationale": "The blanket no-proof conclusion is false, but full independent reproducibility still requires W05 to bind query, token treatment, observation time, and generator head.",
+        "citations": ["PROFILE_MANIFEST", "W01_CENSUS_RECEIPT", "CLAIMS_LEDGER"]
+      },
+      "implication": {
+        "disposition": "bounded",
+        "rationale": "API-attested counts prove observed GitHub output; they do not prove quality, adoption, impact, or reliability.",
+        "citations": ["GITHUB_CONTRIBUTIONS", "LAVREA_METHODOLOGY"]
+      },
+      "prominence": {
+        "disposition": "narrow",
+        "rationale": "Keep the source-manifest link, but do not say every value is independently re-derivable until W05 closes the provenance gaps.",
+        "citations": ["PROFILE_MANIFEST", "CLAIMS_LEDGER"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "partially_reproducible",
+        "public_wording": "GitHub counts are generated from the API at the stated observation time; see the source manifest for basis and caveats.",
+        "required_receipts": ["exact executable queries", "token/private-contribution treatment", "generator head"]
+      }
+    },
+    {
+      "id": "profile-public-repository-counts",
+      "research_rebuke": "The 227-repository estate volume is an unsupported self-report.",
+      "exact_public_wording": "227 public repositories (198 original)",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "Fresh public GraphQL counts sum to 227 organization repositories and 198 public non-forks. W01 independently reconciles 8 personal public plus 227 organization public to 235 public repositories.",
+        "citations": ["PROFILE_MANIFEST", "PROFILE_API_RECEIPT", "W01_CENSUS_RECEIPT", "GITHUB_REPOSITORIES"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "The values establish public repository scale on the profile basis, not product count or maintained-system count.",
+        "citations": ["W01_CENSUS_RECEIPT", "CLAIMS_LEDGER"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Repository count alone establishes neither engineering quality nor customer adoption.",
+        "citations": ["LAVREA_METHODOLOGY", "CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "supporting_only",
+        "rationale": "Retain as dated supporting scale evidence, not the lead claim.",
+        "citations": ["PROFILE_README", "CLAIMS_LEDGER"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "verified_dated_profile_basis",
+        "public_wording": "At the stated generation time: 227 public organization repositories, including 198 non-forks.",
+        "required_receipts": ["W01 accepted census", "fresh profile manifest"]
+      }
+    },
+    {
+      "id": "profile-contributions-last-year",
+      "research_rebuke": "The annual contribution total is ungrounded or static theater.",
+      "exact_public_wording": "33,130 contributions in the last year",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "The exact manifest records 33,130 at 2026-08-10T08:05:30Z. A fresh query later returned 33,168 and its day sum matched, confirming both the measure and its moving-window nature.",
+        "citations": ["PROFILE_MANIFEST", "PROFILE_API_RECEIPT", "GITHUB_GRAPHQL"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "This is a GitHub contribution-calendar observation under a token/viewer context, not an independently ranked throughput percentile.",
+        "citations": ["GITHUB_CONTRIBUTIONS", "GITHUB_GRAPHQL", "LAVREA_METHODOLOGY"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "The count does not establish code quality, human-only authorship, impact, or adoption.",
+        "citations": ["GITHUB_CONTRIBUTIONS", "LAVREA_METHODOLOGY"]
+      },
+      "prominence": {
+        "disposition": "supporting_only",
+        "rationale": "Publish only with observation time, rolling date range, and private-contribution/token treatment.",
+        "citations": ["PROFILE_MANIFEST", "CLAIMS_LEDGER"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "verified_when_dated_and_context_labeled",
+        "public_wording": "33,130 GitHub contribution-calendar events for the trailing year at 2026-08-10T08:05:30Z; token context disclosed in the source receipt.",
+        "required_receipts": ["date range", "viewer/token context", "fresh GraphQL total and daily sum"]
+      }
+    },
+    {
+      "id": "profile-federation-coverage",
+      "research_rebuke": "The profile covers only an early or incomplete organization list.",
+      "exact_public_wording": "The library — one system, eight shelves",
+      "measurement": {
+        "disposition": "partially_verified",
+        "rationale": "The README links all nine organizations with at least one public repository. W01 verifies ten organization memberships; the remaining organization has zero public repositories and is not a public shelf in the README.",
+        "citations": ["PROFILE_README", "PROFILE_API_RECEIPT", "W01_CENSUS_RECEIPT"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "The rendered library is complete for non-empty public organizations, but 'full federation' must not imply that every membership is rendered or that private holdings are disclosed.",
+        "citations": ["W01_CENSUS_RECEIPT", "PROFILE_README"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Organization membership and repository presence do not establish organizational independence, adoption, or operating maturity.",
+        "citations": ["CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "retain_l2",
+        "rationale": "Keep the public library map and label its denominator as organizations with public repositories.",
+        "citations": ["PROFILE_README", "W01_CENSUS_RECEIPT"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "verified_public_nonempty_org_coverage",
+        "public_wording": "Nine organizations currently contain public repositories; the public library links all nine.",
+        "required_receipts": ["W01 organization roster", "fresh public-repository counts"]
+      }
+    },
+    {
+      "id": "profile-daily-regeneration",
+      "research_rebuke": "The profile is a one-time hand-authored boast rather than a maintained derivation.",
+      "exact_public_wording": "Generated 2026-08-10T08:05:30Z.",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "The exact workflow schedules daily generation, and eight consecutive scheduled runs in the audited window completed successfully and produced daily commits.",
+        "citations": ["PROFILE_WORKFLOW", "PROFILE_RUNS", "PROFILE_README"]
+      },
+      "inference": {
+        "disposition": "supported",
+        "rationale": "The profile is an actively maintained derivation system over the observed eight-day window.",
+        "citations": ["PROFILE_RUNS", "PROFILE_WORKFLOW"]
+      },
+      "implication": {
+        "disposition": "bounded",
+        "rationale": "The window does not establish perpetual uptime, zero intervention, or a reliability SLO.",
+        "citations": ["PROFILE_RUNS"]
+      },
+      "prominence": {
+        "disposition": "retain_l2",
+        "rationale": "Retain as methodology evidence with an observation window, not as a forever claim.",
+        "citations": ["PROFILE_RUNS", "PROFILE_README"]
+      },
+      "w05_integration": {
+        "ledger_action": "create",
+        "publishable_status": "verified_observation_window",
+        "public_wording": "Daily regeneration succeeded on eight consecutive scheduled runs observed 2026-08-03 through 2026-08-10.",
+        "required_receipts": ["workflow run window", "resulting exact heads"]
+      }
+    },
+    {
+      "id": "profile-universal-production-claim",
+      "research_rebuke": "The profile calls every featured repository a production system without enough live proof.",
+      "exact_public_wording": "Each is a working production system — source, tests, and live deploy.",
+      "measurement": {
+        "disposition": "partially_verified",
+        "rationale": "W03 found current exact-head CI for both featured systems. Limen has a live public operating receipt; the mail system's advertised public proof endpoint returned 404, so the universal live-deploy wording is not established.",
+        "citations": ["PROFILE_README", "W03_PROOF_SET"]
+      },
+      "inference": {
+        "disposition": "unsupported",
+        "rationale": "A green repository workflow does not by itself prove that every featured system is live and usable today.",
+        "citations": ["W03_PROOF_SET", "CLAIMS_LEDGER"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Production wording does not establish customer adoption, external reliability, or commercial outcomes.",
+        "citations": ["CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "narrow",
+        "rationale": "Replace the universal sentence with per-system evidence status until each featured system has a current public endpoint or equivalent production receipt.",
+        "citations": ["W03_PROOF_SET"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "mixed_featured_system_evidence",
+        "public_wording": "Each featured system carries its own source, test, and operating-status receipt.",
+        "required_receipts": ["per-system current CI", "public endpoint or bounded operating receipt"]
+      }
+    },
+    {
+      "id": "profile-limen-operating-proof",
+      "research_rebuke": "The self-healing fleet claim has no live operating proof.",
+      "exact_public_wording": "Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "W03 selected Limen as the strongest proof object using a current exact-head workflow and a live public operating-status endpoint.",
+        "citations": ["PROFILE_README", "W03_PROOF_SET"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "The receipts establish an operating owner-environment system and named mechanisms, not failure-free autonomy.",
+        "citations": ["W03_PROOF_SET", "CLAIMS_LEDGER"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Owner-environment operation does not establish external customer deployment or zero maintenance.",
+        "citations": ["CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "retain_l2",
+        "rationale": "Retain the bounded live-mechanism claim and link the current operating receipt.",
+        "citations": ["W03_PROOF_SET"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "verified_owner_environment_operation",
+        "public_wording": "Limen operates in the owner's environment with current public status and exact-head verification receipts.",
+        "required_receipts": ["current public status", "exact-head workflow"]
+      }
+    },
+    {
+      "id": "profile-zero-manual-upkeep",
+      "research_rebuke": "The autonomy wording overclaims indefinite reliability.",
+      "exact_public_wording": "Zero manual upkeep — runs forever once seeded",
+      "measurement": {
+        "disposition": "unverified",
+        "rationale": "No intervention ledger, uptime window, failure budget, or perpetual-operation test supports zero manual work or 'forever.'",
+        "citations": ["PROFILE_README", "PROFILE_RUNS", "CLAIMS_LEDGER"]
+      },
+      "inference": {
+        "disposition": "unsupported",
+        "rationale": "Observed automation and self-healing mechanisms cannot justify an unbounded future guarantee.",
+        "citations": ["PROFILE_RUNS", "W03_PROOF_SET"]
+      },
+      "implication": {
+        "disposition": "contradicted",
+        "rationale": "The wording implies no operator intervention or terminal failures, while the system explicitly monitors and escalates failures.",
+        "citations": ["PROFILE_README", "W03_PROOF_SET"]
+      },
+      "prominence": {
+        "disposition": "withhold",
+        "rationale": "Remove this wording from future generated copy; preserve verified mechanism and observation-window measurements.",
+        "citations": ["CLAIMS_LEDGER", "PROFILE_RUNS"]
+      },
+      "w05_integration": {
+        "ledger_action": "create",
+        "publishable_status": "withheld",
+        "public_wording": "Automates monitoring, stale-work cleanup, state reconciliation, and failure escalation.",
+        "required_receipts": ["intervention ledger", "bounded reliability window"]
+      }
+    },
+    {
+      "id": "lavrea-top-01-throughput",
+      "research_rebuke": "The top-0.1% engineering-throughput ranking lacks a reproducible population baseline.",
+      "exact_public_wording": "top 0.1% engineering throughput",
+      "measurement": {
+        "disposition": "partially_verified",
+        "rationale": "The contribution, repository, pull-request, language, and organization inputs are measurable, but LAVREA's historical snapshot is stale and token-conditioned. Current public-safe aggregates live in the W01/profile receipts.",
+        "citations": ["PROFILE_MANIFEST", "W01_CENSUS_RECEIPT", "LAVREA_METHODOLOGY"]
+      },
+      "inference": {
+        "disposition": "unsupported",
+        "rationale": "GitHub's official account total does not establish LAVREA's threshold-to-percentile mapping. The cited leaderboards and unspecified analyses are not a primary sampled population baseline.",
+        "citations": ["LAVREA_BASELINES", "GITHUB_OCTOVERSE_2023"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Even a validated output percentile would not establish engineering quality, reliability, adoption, or impact.",
+        "citations": ["LAVREA_METHODOLOGY"]
+      },
+      "prominence": {
+        "disposition": "withhold",
+        "rationale": "Do not restore the percentile ranking to the profile. Preserve the underlying dated measurements as supporting proof.",
+        "citations": ["CLAIMS_LEDGER", "LAVREA_BASELINES"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "withheld_as_ranking",
+        "public_wording": "Use raw dated GitHub output measurements; no percentile ranking is currently publishable.",
+        "required_receipts": ["primary comparison dataset", "defined population", "threshold reproduction"]
+      }
+    },
+    {
+      "id": "lavrea-top-1-python-full-stack",
+      "research_rebuke": "The top-1% Python full-stack composite overstates what the conjunction proves.",
+      "exact_public_wording": "Top 1% Python full-stack engineer",
+      "measurement": {
+        "disposition": "partially_verified",
+        "rationale": "Python plurality and rule-based stack coverage can be regenerated, but repository-language assignment is a coarse primary-language mapping and the underlying snapshot needs a current public-safe refresh.",
+        "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES", "W01_CENSUS_RECEIPT"]
+      },
+      "inference": {
+        "disposition": "unsupported",
+        "rationale": "The conjunction inequality is mathematically valid only after at least one constituent top-1% premise is established. The baseline audit establishes none of those percentile premises from a primary population dataset.",
+        "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES", "GITHUB_OCTOVERSE_2023"]
+      },
+      "implication": {
+        "disposition": "not_established",
+        "rationale": "Language plurality and repository-layer breadth do not establish engineering seniority, quality, or end-to-end effectiveness.",
+        "citations": ["LAVREA_METHODOLOGY"]
+      },
+      "prominence": {
+        "disposition": "withhold",
+        "rationale": "Withhold the composite ranking while retaining bounded Python plurality and inspected stack-breadth facts at L2.",
+        "citations": ["CLAIMS_LEDGER", "LAVREA_METHODOLOGY"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "withheld_as_ranking",
+        "public_wording": "Python is the plurality primary language in the measured corpus; stack coverage is a declared rule-based classification.",
+        "required_receipts": ["current language census", "mapping version", "primary percentile baselines"]
+      }
+    },
+    {
+      "id": "profile-one-creator-authorship",
+      "research_rebuke": "One-creator language can mislead readers into assuming every line was manually authored without machine assistance.",
+      "exact_public_wording": "One creator, one library.",
+      "measurement": {
+        "disposition": "verified",
+        "rationale": "The estate has one directing owner, and the public program records a governed multi-agent production system.",
+        "citations": ["PROFILE_README", "CLAIMS_LEDGER"]
+      },
+      "inference": {
+        "disposition": "bounded",
+        "rationale": "Creator can accurately mean architect and accountable director; it cannot mean every line was typed manually.",
+        "citations": ["CLAIMS_LEDGER"]
+      },
+      "implication": {
+        "disposition": "contradicted",
+        "rationale": "Any implication of no machine assistance conflicts with the system's documented multi-agent production model.",
+        "citations": ["CLAIMS_LEDGER"]
+      },
+      "prominence": {
+        "disposition": "narrow",
+        "rationale": "Retain singular accountability only with the approved machine-assistance disclosure nearby.",
+        "citations": ["CLAIMS_LEDGER", "PROFILE_README"]
+      },
+      "w05_integration": {
+        "ledger_action": "update",
+        "publishable_status": "publishable_with_disclosure",
+        "public_wording": "Architected and directed by one person through a governed, multi-agent production system.",
+        "required_receipts": ["authorship disclosure policy link"]
+      }
+    }
+  ],
+  "lavrea_axis_audit": [
+    {
+      "axis": "contributions_year",
+      "measurement_disposition": "retain_dated_measurement",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "GitHub defines contribution-calendar counts; Octoverse account totals do not establish the 5,000 or 20,000 percentile thresholds.",
+      "citations": ["GITHUB_CONTRIBUTIONS", "GITHUB_GRAPHQL", "GITHUB_OCTOVERSE_2023", "LAVREA_BASELINES"]
+    },
+    {
+      "axis": "pull_requests_year",
+      "measurement_disposition": "retain_dated_measurement",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "The public sources inspected do not supply a sampled active-developer distribution supporting the 500 or 2,000 thresholds.",
+      "citations": ["LAVREA_BASELINES", "GITHUB_OCTOVERSE_2023"]
+    },
+    {
+      "axis": "repos_owned",
+      "measurement_disposition": "refresh_from_public_safe_census",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "GitHub's repository APIs support counts, not the claimed 50/200 percentile placement; W01 is the safe current count authority.",
+      "citations": ["GITHUB_REPOSITORIES", "W01_CENSUS_RECEIPT", "LAVREA_BASELINES"]
+    },
+    {
+      "axis": "language_breadth",
+      "measurement_disposition": "retain_rule_labeled_measurement",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "Primary-language counts are reproducible under a declared rule, but no cited primary distribution establishes the 6/10 thresholds.",
+      "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES"]
+    },
+    {
+      "axis": "orgs_operated",
+      "measurement_disposition": "narrow_to_membership_and_owned_repository_facts",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "W01 establishes ten memberships and repository ownership counts; 'operated' and the 3/8 percentile thresholds require separate definitions and population evidence.",
+      "citations": ["W01_CENSUS_RECEIPT", "LAVREA_BASELINES"]
+    },
+    {
+      "axis": "full_stack_coverage",
+      "measurement_disposition": "retain_rule_labeled_measurement",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "The language-to-layer mapping is a local working definition, not a primary population ranking.",
+      "citations": ["LAVREA_METHODOLOGY"]
+    },
+    {
+      "axis": "composite_python_full_stack",
+      "measurement_disposition": "retain_constituent_measurements",
+      "inference_disposition": "withhold_percentile",
+      "primary_source_result": "The conjunction cannot inherit an unproven percentile floor; constituent percentile premises must be validated first.",
+      "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES"]
+    },
+    {
+      "axis": "tenure",
+      "measurement_disposition": "retain_dated_measurement",
+      "inference_disposition": "no_percentile_claim",
+      "primary_source_result": "Account creation time is a direct public API fact and LAVREA does not assign it a percentile.",
+      "citations": ["PROFILE_API_RECEIPT", "LAVREA_METHODOLOGY"]
+    }
+  ],
+  "w05_import_contract": {
+    "target": "docs/positioning/claims-ledger.md",
+    "edited_here": false,
+    "consumer_work_id": "PSP-P02-W05",
+    "source_claim_ids": [
+      "profile-production-systems-headline",
+      "profile-portfolio-link",
+      "profile-has-no-proof",
+      "profile-public-repository-counts",
+      "profile-contributions-last-year",
+      "profile-federation-coverage",
+      "profile-daily-regeneration",
+      "profile-universal-production-claim",
+      "profile-limen-operating-proof",
+      "profile-zero-manual-upkeep",
+      "lavrea-top-01-throughput",
+      "lavrea-top-1-python-full-stack",
+      "profile-one-creator-authorship"
+    ],
+    "import_rule": "W05 must preserve each layer and citation, regenerate numeric rows, and mark unsupported percentile and perpetual-operation claims withheld. It must not collapse a verified measurement into a rejected inference.",
+    "completion_gate": "Do not issue a PSP-P02-W08 completion receipt until PSP-P02-W01 and PSP-P02-W05 have accepted receipts and this artifact is reconciled to their exact heads."
+  },
+  "repository_drift_relay": {
+    "stable_repository_id": 1155412125,
+    "canonical_slug": "organvm-vii-kerygma/portfolio",
+    "registry_updated": true,
+    "generated_index_updated": true,
+    "live_issue_projection_updated": false,
+    "affected_issue_body_count": 18,
+    "affected_work_ids": [
+      "PSP-P06-W01",
+      "PSP-P06-W02",
+      "PSP-P06-W03",
+      "PSP-P06-W04",
+      "PSP-P06-W05",
+      "PSP-P06-W06",
+      "PSP-P06-W07",
+      "PSP-P07-W03",
+      "PSP-P07-W04",
+      "PSP-P07-W08",
+      "PSP-P08-W02",
+      "PSP-P09-W02",
+      "PSP-P09-W03",
+      "PSP-P09-W04",
+      "PSP-P09-W05",
+      "PSP-P09-W06",
+      "PSP-P10-W04",
+      "PSP-P12-W04"
+    ],
+    "next_authorized_projection_command": "python3 scripts/positioning-program.py --sync --apply",
+    "note": "The command is recorded for the authorized projector and was not run in this preflight lane."
+  },
+  "reviewer_verdict": {
+    "measurement": "retain every verified, dated, public-safe measurement",
+    "inference": "withhold LAVREA percentile claims pending primary population baselines",
+    "implication": "do not infer quality, adoption, impact, reliability, or human-only authorship from GitHub output",
+    "prominence": "keep the production-systems proposition and bounded evidence; correct the dead link and remove perpetual-operation wording",
+    "formal_completion": "blocked on PSP-P02-W01 and PSP-P02-W05"
+  }
+}

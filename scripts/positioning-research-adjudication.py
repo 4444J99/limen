@@ -1,0 +1,469 @@
+#!/usr/bin/env python3
+"""Validate the PSP-P02-W08 public-safe research-adjudication preflight."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ARTIFACT_PATH = ROOT / "docs/positioning/program/research-adjudication.json"
+RECEIPT_PATH = ROOT / "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json"
+PROGRAM_PATH = ROOT / "institutio/positioning/program.yaml"
+ISSUE_MAP_PATH = ROOT / "institutio/positioning/github-map.json"
+ISSUE_INDEX_PATH = ROOT / "docs/positioning/program/ISSUE-INDEX.md"
+RESEARCH_DOC_PATH = ROOT / "docs/positioning/program/RESEARCH-ADJUDICATION.md"
+
+ARTIFACT_SCHEMA = "limen.positioning_research_adjudication.v1"
+RECEIPT_SCHEMA = "limen.psp-p02-w08-live-profile-preflight.v1"
+IDENTITY_SCHEMA = "limen.positioning_repository_identities.v1"
+WORK_ID = "PSP-P02-W08"
+PORTFOLIO_REPOSITORY_ID = 1155412125
+PORTFOLIO_CANONICAL_SLUG = "organvm-vii-kerygma/portfolio"
+PORTFOLIO_RETIRED_SLUG = "organvm/portfolio"
+HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
+LAYERS = ("measurement", "inference", "implication", "prominence")
+LAVREA_AXES = {
+    "contributions_year",
+    "pull_requests_year",
+    "repos_owned",
+    "language_breadth",
+    "orgs_operated",
+    "full_stack_coverage",
+    "composite_python_full_stack",
+    "tenure",
+}
+
+
+class AdjudicationError(RuntimeError):
+    """Raised when an adjudication input or live identity cannot be inspected."""
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AdjudicationError(f"cannot load {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise AdjudicationError(f"{path} must contain a mapping")
+    return value
+
+
+def _load_yaml(path: Path) -> dict[str, Any]:
+    try:
+        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise AdjudicationError(f"cannot load {path}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise AdjudicationError(f"{path} must contain a mapping")
+    return value
+
+
+def _text(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _work_rows(program: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for phase in program.get("phases") or []:
+        if isinstance(phase, dict):
+            rows.extend(row for row in phase.get("work") or [] if isinstance(row, dict))
+    return rows
+
+
+def validate_bundle(
+    artifact: dict[str, Any],
+    receipt: dict[str, Any],
+    program: dict[str, Any],
+    issue_map: dict[str, Any],
+    issue_index: str,
+    research_doc: str,
+) -> list[str]:
+    """Return all static public-safety, evidence, and integration failures."""
+
+    errors: list[str] = []
+    if artifact.get("schema") != ARTIFACT_SCHEMA:
+        errors.append(f"artifact.schema must be {ARTIFACT_SCHEMA}")
+    if receipt.get("schema") != RECEIPT_SCHEMA:
+        errors.append(f"receipt.schema must be {RECEIPT_SCHEMA}")
+    if artifact.get("work_id") != WORK_ID or receipt.get("work_id") != WORK_ID:
+        errors.append(f"artifact and receipt must both belong to {WORK_ID}")
+    if artifact.get("status") != "preflight_ratified_dependency_blocked":
+        errors.append("artifact status must remain dependency-blocked preflight")
+    if receipt.get("verdict") != "preflight_adjudicated_dependency_blocked":
+        errors.append("receipt verdict must remain dependency-blocked preflight")
+    if artifact.get("receipt") != str(RECEIPT_PATH.relative_to(ROOT)):
+        errors.append("artifact must name the tracked W08 live-profile receipt")
+
+    formal = receipt.get("formal_completion") or {}
+    if formal.get("allowed") is not False:
+        errors.append("formal completion must be forbidden")
+    dependencies = formal.get("dependencies") or []
+    dependency_states = {
+        row.get("work_id"): row.get("issue_state") for row in dependencies if isinstance(row, dict)
+    }
+    if dependency_states != {"PSP-P02-W01": "open", "PSP-P02-W05": "open"}:
+        errors.append("formal completion must be gated on open W01 and W05 dependencies")
+    if (formal.get("live_reference") or {}).get("issue_state") != "open":
+        errors.append("the profile-engine live reference must remain recorded as open")
+
+    privacy = receipt.get("privacy_review") or {}
+    if privacy.get("public_only") is not True:
+        errors.append("receipt must be public-only")
+    if privacy.get("private_repository_names") != 0 or privacy.get("private_only_sources") != 0:
+        errors.append("receipt must declare zero private repository names and private-only sources")
+
+    coverage = artifact.get("coverage") or {}
+    claims = artifact.get("claims")
+    if not isinstance(claims, list):
+        errors.append("claims must be a list")
+        claims = []
+    if coverage.get("denominator") != len(claims) or coverage.get("adjudicated") != len(claims):
+        errors.append("claim coverage denominator and adjudicated count must match the claim rows")
+    if not _text(coverage.get("basis")) or not _text(coverage.get("rule")):
+        errors.append("claim coverage needs a basis and adjudication rule")
+
+    vocabularies = artifact.get("disposition_vocabularies") or {}
+    for layer in LAYERS:
+        vocabulary = vocabularies.get(layer)
+        if not isinstance(vocabulary, list) or not vocabulary or len(vocabulary) != len(set(vocabulary)):
+            errors.append(f"{layer} disposition vocabulary must be a nonempty unique list")
+
+    sources = artifact.get("sources")
+    if not isinstance(sources, dict) or not sources:
+        errors.append("sources must be a nonempty mapping")
+        sources = {}
+    for source_id, source in sources.items():
+        prefix = f"source {source_id}"
+        if not isinstance(source, dict):
+            errors.append(f"{prefix} must be a mapping")
+            continue
+        if source.get("public") is not True:
+            errors.append(f"{prefix} must be public")
+        url = source.get("url")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            errors.append(f"{prefix} must use an HTTPS public URL")
+        if str(source.get("kind", "")).startswith("head_pinned"):
+            head = source.get("head")
+            if not isinstance(head, str) or not HEAD_RE.fullmatch(head):
+                errors.append(f"{prefix} needs a 40-character exact head")
+            elif head not in str(url):
+                errors.append(f"{prefix} URL must contain its exact head")
+        if "blob" in source and (
+            not isinstance(source.get("blob"), str) or not HEAD_RE.fullmatch(str(source.get("blob")))
+        ):
+            errors.append(f"{prefix} blob must be a 40-character object ID")
+
+    claim_ids: list[str] = []
+    for index, claim in enumerate(claims):
+        prefix = f"claim[{index}]"
+        if not isinstance(claim, dict):
+            errors.append(f"{prefix} must be a mapping")
+            continue
+        claim_id = claim.get("id")
+        if not _text(claim_id):
+            errors.append(f"{prefix}.id must be nonempty text")
+            claim_id = prefix
+        claim_ids.append(str(claim_id))
+        prefix = str(claim_id)
+        if not _text(claim.get("research_rebuke")) or not _text(claim.get("exact_public_wording")):
+            errors.append(f"{prefix} needs the rebuke and exact public wording")
+        for layer in LAYERS:
+            value = claim.get(layer)
+            if not isinstance(value, dict) or set(value) != {"disposition", "rationale", "citations"}:
+                errors.append(f"{prefix}.{layer} must contain exactly disposition, rationale, and citations")
+                continue
+            if value.get("disposition") not in set(vocabularies.get(layer) or []):
+                errors.append(f"{prefix}.{layer} uses an unknown disposition")
+            if not _text(value.get("rationale")):
+                errors.append(f"{prefix}.{layer} needs a rationale")
+            citations = value.get("citations")
+            if not isinstance(citations, list) or not citations:
+                errors.append(f"{prefix}.{layer} needs at least one citation")
+            else:
+                unknown = sorted(str(citation) for citation in citations if citation not in sources)
+                if unknown:
+                    errors.append(f"{prefix}.{layer} has unknown citations: {', '.join(unknown)}")
+        integration = claim.get("w05_integration")
+        required_keys = {"ledger_action", "publishable_status", "public_wording", "required_receipts"}
+        if not isinstance(integration, dict) or set(integration) != required_keys:
+            errors.append(f"{prefix}.w05_integration must contain the complete import contract")
+        else:
+            if not _text(integration.get("public_wording")):
+                errors.append(f"{prefix}.w05_integration must preserve bounded public wording")
+            if not isinstance(integration.get("required_receipts"), list) or not integration.get("required_receipts"):
+                errors.append(f"{prefix}.w05_integration needs required receipts")
+
+        measurement = claim.get("measurement") or {}
+        prominence = claim.get("prominence") or {}
+        if measurement.get("disposition") in {"verified", "partially_verified"} and prominence.get(
+            "disposition"
+        ) == "withhold":
+            wording = str((integration or {}).get("public_wording") or "").lower()
+            if not any(token in wording for token in ("measurement", "github", "python", "language", "output")):
+                errors.append(f"{prefix} withholds prominence without preserving its verified measurement")
+
+    duplicates = sorted({claim_id for claim_id in claim_ids if claim_ids.count(claim_id) > 1})
+    if duplicates:
+        errors.append(f"duplicate claim ids: {', '.join(duplicates)}")
+
+    axes = artifact.get("lavrea_axis_audit")
+    if not isinstance(axes, list):
+        errors.append("lavrea_axis_audit must be a list")
+        axes = []
+    axis_names = {row.get("axis") for row in axes if isinstance(row, dict)}
+    if axis_names != LAVREA_AXES or len(axes) != len(LAVREA_AXES):
+        errors.append("LAVREA audit must cover each of the eight axes exactly once")
+    for row in axes:
+        if not isinstance(row, dict):
+            continue
+        axis = row.get("axis")
+        if not _text(row.get("measurement_disposition")) or not _text(row.get("inference_disposition")):
+            errors.append(f"LAVREA axis {axis} needs distinct measurement and inference dispositions")
+        if not _text(row.get("primary_source_result")):
+            errors.append(f"LAVREA axis {axis} needs a primary-source result")
+        citations = row.get("citations")
+        if not isinstance(citations, list) or not citations or any(citation not in sources for citation in citations):
+            errors.append(f"LAVREA axis {axis} needs valid citations")
+
+    w05 = artifact.get("w05_import_contract") or {}
+    if w05.get("target") != "docs/positioning/claims-ledger.md" or w05.get("edited_here") is not False:
+        errors.append("W05 contract must target, but not edit, the claims ledger")
+    if w05.get("consumer_work_id") != "PSP-P02-W05":
+        errors.append("W05 contract must name PSP-P02-W05 as consumer")
+    if w05.get("source_claim_ids") != claim_ids:
+        errors.append("W05 contract claim IDs must match adjudicated claim order")
+    if "must not collapse" not in str(w05.get("import_rule") or ""):
+        errors.append("W05 contract must forbid collapsing measurements into inferences")
+    if "PSP-P02-W01" not in str(w05.get("completion_gate") or "") or "PSP-P02-W05" not in str(
+        w05.get("completion_gate") or ""
+    ):
+        errors.append("W08 completion gate must name W01 and W05")
+
+    identities = program.get("repository_identities") or {}
+    identity = (identities.get("repositories") or {}).get("portfolio") or {}
+    if identities.get("schema_version") != IDENTITY_SCHEMA:
+        errors.append(f"repository identity schema must be {IDENTITY_SCHEMA}")
+    expected_identity = {
+        "github_repository_id": PORTFOLIO_REPOSITORY_ID,
+        "canonical_slug": PORTFOLIO_CANONICAL_SLUG,
+        "visibility": "public",
+        "default_branch": "main",
+        "archived": False,
+        "source": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
+    }
+    for key, expected in expected_identity.items():
+        if identity.get(key) != expected:
+            errors.append(f"portfolio repository identity {key} must be {expected!r}")
+    if identity.get("previous_slugs") != [PORTFOLIO_RETIRED_SLUG]:
+        errors.append("portfolio repository identity must retain exactly the retired slug as history")
+    if "immutable GitHub repository ID" not in str(identity.get("resolution_rule") or ""):
+        errors.append("portfolio identity must require immutable-ID resolution")
+
+    work_rows = _work_rows(program)
+    retired_work = [row.get("id") for row in work_rows if row.get("target_repo") == PORTFOLIO_RETIRED_SLUG]
+    if retired_work:
+        errors.append(f"work packets still use the retired portfolio slug: {', '.join(map(str, retired_work))}")
+    canonical_work_ids = [
+        str(row.get("id")) for row in work_rows if row.get("target_repo") == PORTFOLIO_CANONICAL_SLUG
+    ]
+
+    relay = artifact.get("repository_drift_relay") or {}
+    if relay.get("stable_repository_id") != PORTFOLIO_REPOSITORY_ID:
+        errors.append("repository-drift relay must carry the stable portfolio repository ID")
+    if relay.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
+        errors.append("repository-drift relay must carry the canonical portfolio slug")
+    if relay.get("live_issue_projection_updated") is not False:
+        errors.append("preflight must not claim live issue projection was updated")
+    if relay.get("affected_work_ids") != canonical_work_ids:
+        errors.append("repository-drift relay work IDs must match canonical manifest targets in order")
+    if relay.get("affected_issue_body_count") != len(canonical_work_ids):
+        errors.append("repository-drift relay count must match canonical manifest targets")
+
+    receipt_identity = receipt.get("portfolio_repository_identity") or {}
+    if receipt_identity.get("github_repository_id") != PORTFOLIO_REPOSITORY_ID:
+        errors.append("live receipt must carry the stable portfolio repository ID")
+    if receipt_identity.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
+        errors.append("live receipt must carry the canonical portfolio slug")
+    if receipt_identity.get("projection_refresh_performed") is not False:
+        errors.append("live receipt must record that issue projection was not performed")
+    if receipt_identity.get("confirmed_private_target_changed") is not False:
+        errors.append("the confirmed private collaboration target must remain unchanged")
+
+    issues = issue_map.get("issues") or {}
+    expected_issue_rows = []
+    for work_id in canonical_work_ids:
+        mapped = issues.get(work_id) or {}
+        number = mapped.get("number")
+        if not isinstance(number, int):
+            errors.append(f"{work_id} is missing its generated issue number")
+            continue
+        expected_issue_rows.append({"work_id": work_id, "issue": number})
+        expected_index_fragment = f"| `{work_id}` "
+        if expected_index_fragment not in issue_index or PORTFOLIO_CANONICAL_SLUG not in next(
+            (line for line in issue_index.splitlines() if expected_index_fragment in line), ""
+        ):
+            errors.append(f"generated issue index does not project the canonical target for {work_id}")
+    if receipt_identity.get("live_issue_bodies_requiring_refresh") != expected_issue_rows:
+        errors.append("live issue-body refresh list must match the generated issue map")
+    if PORTFOLIO_RETIRED_SLUG in issue_index:
+        errors.append("generated issue index still contains the retired portfolio slug")
+
+    public_profile = receipt.get("public_profile") or {}
+    manifest = public_profile.get("stats_manifest") or {}
+    rendered = manifest.get("rendered_values") or {}
+    if not HEAD_RE.fullmatch(str(public_profile.get("head") or "")):
+        errors.append("public-profile receipt needs an exact 40-character head")
+    if rendered.get("personal_public_repositories") != 8:
+        errors.append("profile manifest personal public repository count must be 8")
+    if rendered.get("ecosystem_public_repositories") != 227:
+        errors.append("profile manifest organization public repository count must be 227")
+    if rendered.get("ecosystem_original_repositories") != 198:
+        errors.append("profile manifest original repository count must be 198")
+
+    api_receipts = {
+        row.get("id"): row for row in receipt.get("api_query_receipts") or [] if isinstance(row, dict)
+    }
+    org_public = api_receipts.get("public_organization_repository_counts") or {}
+    org_original = api_receipts.get("public_original_organization_repository_counts") or {}
+    contributions = (api_receipts.get("contribution_calendar_fresh_observation") or {}).get("result") or {}
+    w01_result = (api_receipts.get("w01_public_safe_census") or {}).get("result") or {}
+    if sum((org_public.get("counts") or {}).values()) != 227 or org_public.get("total") != 227:
+        errors.append("fresh public organization repository counts must sum to 227")
+    if sum((org_original.get("counts") or {}).values()) != 198 or org_original.get("total") != 198:
+        errors.append("fresh public original repository counts must sum to 198")
+    if contributions.get("total_contributions") != contributions.get("sum_of_daily_counts"):
+        errors.append("fresh contribution total must equal its daily-count sum")
+    if w01_result.get("public_repository_count") != 8 + 227:
+        errors.append("W01 public count must reconcile 8 personal plus 227 organization repositories")
+
+    http = {row.get("id"): row for row in receipt.get("http_receipts") or [] if isinstance(row, dict)}
+    if (http.get("current_profile_blog_field") or {}).get("status") != 404:
+        errors.append("receipt must preserve the observed 404 for the retired Pages URL")
+    if (http.get("canonical_transferred_portfolio_pages") or {}).get("status") != 200:
+        errors.append("receipt must preserve the observed 200 for the canonical Pages URL")
+
+    daily = receipt.get("daily_generation_receipt") or {}
+    runs = daily.get("runs") or []
+    if daily.get("scheduled_runs_observed") != 8 or daily.get("successful_runs") != 8 or len(runs) != 8:
+        errors.append("daily generation receipt must contain eight observed successful runs")
+    if any(not isinstance(row, dict) or row.get("conclusion") != "success" for row in runs):
+        errors.append("every daily generation run must be a success")
+
+    ledger = receipt.get("claims_ledger_integration") or {}
+    if ledger.get("ledger_edited_in_this_lane") is not False or ledger.get("consumer") != "PSP-P02-W05":
+        errors.append("claims-ledger mutation must remain deferred to W05")
+    if ledger.get("integration_artifact") != str(ARTIFACT_PATH.relative_to(ROOT)):
+        errors.append("receipt must point W05 to the tracked integration artifact")
+
+    required_doc_fragments = (
+        str(PORTFOLIO_REPOSITORY_ID),
+        PORTFOLIO_CANONICAL_SLUG,
+        "13 research-rebuked claims",
+        "all eight LAVREA axes",
+        "PSP-P02-W01",
+        "PSP-P02-W05",
+        "#2205–#2211",
+        "#2261",
+    )
+    for fragment in required_doc_fragments:
+        if fragment not in research_doc:
+            errors.append(f"research adjudication summary is missing {fragment!r}")
+    return errors
+
+
+def _gh_json(args: list[str]) -> Any:
+    result = subprocess.run(
+        ["gh", *args],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=60,
+    )
+    if result.returncode != 0:
+        raise AdjudicationError((result.stderr or result.stdout or "GitHub query failed").strip())
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise AdjudicationError("GitHub query returned invalid JSON") from exc
+
+
+def validate_live_identity(
+    program: dict[str, Any],
+    fetch: Callable[[list[str]], Any] = _gh_json,
+) -> list[str]:
+    """Resolve the portfolio by immutable repository ID and compare canonical live metadata."""
+
+    errors: list[str] = []
+    identity = ((program.get("repository_identities") or {}).get("repositories") or {}).get("portfolio") or {}
+    repository_id = identity.get("github_repository_id")
+    if repository_id != PORTFOLIO_REPOSITORY_ID:
+        return ["cannot verify live identity without the expected stable repository ID"]
+    try:
+        live = fetch(["api", f"repositories/{repository_id}"])
+    except AdjudicationError as exc:
+        return [f"cannot resolve stable repository identity: {exc}"]
+    expectations = {
+        "id": repository_id,
+        "full_name": identity.get("canonical_slug"),
+        "visibility": identity.get("visibility"),
+        "default_branch": identity.get("default_branch"),
+        "archived": identity.get("archived"),
+    }
+    for key, expected in expectations.items():
+        if live.get(key) != expected:
+            errors.append(f"stable repository ID resolves {key}={live.get(key)!r}, expected {expected!r}")
+    if live.get("private") is not False:
+        errors.append("stable portfolio repository must remain public")
+    if (live.get("permissions") or {}).get("admin") is not True:
+        errors.append("authenticated live identity receipt no longer has admin access")
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="validate static adjudication and relay artifacts")
+    parser.add_argument("--verify-live", action="store_true", help="also resolve the portfolio by immutable GitHub ID")
+    args = parser.parse_args()
+    if not args.check and not args.verify_live:
+        parser.error("one of --check or --verify-live is required")
+
+    try:
+        artifact = _load_json(ARTIFACT_PATH)
+        receipt = _load_json(RECEIPT_PATH)
+        program = _load_yaml(PROGRAM_PATH)
+        issue_map = _load_json(ISSUE_MAP_PATH)
+        issue_index = ISSUE_INDEX_PATH.read_text(encoding="utf-8")
+        research_doc = RESEARCH_DOC_PATH.read_text(encoding="utf-8")
+    except (AdjudicationError, OSError) as exc:
+        print(f"research-adjudication: FAIL: {exc}", file=sys.stderr)
+        return 1
+
+    errors = validate_bundle(artifact, receipt, program, issue_map, issue_index, research_doc)
+    if args.verify_live and not errors:
+        errors.extend(validate_live_identity(program))
+    if errors:
+        for error in errors:
+            print(f"research-adjudication: FAIL: {error}", file=sys.stderr)
+        return 1
+
+    mode = "live" if args.verify_live else "static"
+    print(
+        "research-adjudication: PASS: "
+        f"{len(artifact['claims'])} claims, {len(artifact['lavrea_axis_audit'])} LAVREA axes, "
+        f"{artifact['repository_drift_relay']['affected_issue_body_count']} issue projections ({mode})"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

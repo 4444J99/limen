@@ -35,6 +35,20 @@ program:
     - PSP-P13-W08
     - PSP-P14-W09
 
+repository_identities:
+  schema_version: limen.positioning_repository_identities.v1
+  observed_at: '2026-08-10T19:21:11Z'
+  repositories:
+    portfolio:
+      github_repository_id: 1155412125
+      canonical_slug: organvm-vii-kerygma/portfolio
+      visibility: public
+      default_branch: main
+      archived: false
+      previous_slugs: [organvm/portfolio]
+      source: https://api.github.com/repositories/1155412125
+      resolution_rule: Resolve the immutable GitHub repository ID before dispatch; never infer the owner from a historical slug.
+
 execution_contract:
   provider_selection: dynamic_live_capability_discovery
   reasoning_classes:
@@ -1030,7 +1044,7 @@ phases:
       - id: PSP-P06-W01
         title: Establish the design context and taste brief
         outcome: Visual decisions derive from the positioning, audience, content density, and existing estate design language.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [docs/design, design]
         capabilities: [product_design, visual_direction]
         reasoning: deep
@@ -1046,7 +1060,7 @@ phases:
       - id: PSP-P06-W02
         title: Model the content and navigation architecture
         outcome: Every content object has an owner, disclosure level, audience, route, and evidence link.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [docs, content]
         capabilities: [information_architecture, content_modeling]
         reasoning: deep
@@ -1062,7 +1076,7 @@ phases:
       - id: PSP-P06-W03
         title: Design L1, L2, and L3 progressive-disclosure flows
         outcome: Symbols, summaries, and compact proof lead to deeper detail through deliberate interaction rather than visual overload.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [design, docs/design]
         capabilities: [interaction_design, prototyping]
         reasoning: frontier_review
@@ -1078,7 +1092,7 @@ phases:
       - id: PSP-P06-W04
         title: Define reusable components and evidence-bound content interfaces
         outcome: Proof cards, claim badges, disclosure panels, case studies, and CTAs render from typed content rather than hand-copied prose.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/components, src/content, docs]
         capabilities: [design_systems, frontend_architecture]
         reasoning: deep
@@ -1094,7 +1108,7 @@ phases:
       - id: PSP-P06-W05
         title: Adopt the approved estate design tokens without flattening surface character
         outcome: The portfolio leads a coherent design language while editorial and operational surfaces retain appropriate registers.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/styles, web/tokens]
         capabilities: [visual_design, css, design_systems]
         reasoning: deep
@@ -1110,7 +1124,7 @@ phases:
       - id: PSP-P06-W06
         title: Verify accessibility, responsiveness, performance, and reduced motion
         outcome: The experience works across devices and access modes without sacrificing hierarchy.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src, tests]
         capabilities: [accessibility, frontend_testing, performance]
         reasoning: routine
@@ -1126,7 +1140,7 @@ phases:
       - id: PSP-P06-W07
         title: Run visual and comprehension QA with target-like users
         outcome: The built experience is judged as clear, credible, intentional, and easy to navigate.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [docs/receipts, tests]
         capabilities: [user_research, visual_qa]
         reasoning: frontier_review
@@ -1182,7 +1196,7 @@ phases:
       - id: PSP-P07-W03
         title: Implement and deploy the canonical portfolio site
         outcome: The approved progressive-disclosure experience becomes the durable apex front door.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src, public, tests, deploy]
         capabilities: [frontend, deployment, browser_testing]
         reasoning: deep
@@ -1198,7 +1212,7 @@ phases:
       - id: PSP-P07-W04
         title: Rebuild the resume and interview evidence packet
         outcome: Recruiter material tells the same story with role-specific evidence and no unsupported scope claims.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [resume, public, docs]
         capabilities: [career_writing, document_generation, qa]
         reasoning: deep
@@ -1262,7 +1276,7 @@ phases:
       - id: PSP-P07-W08
         title: Install privacy-respecting funnel analytics and door tags
         outcome: Report reads, proof interactions, client/recruiter clicks, and qualified contact sources are measurable without invasive tracking.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/analytics, docs/analytics, tests]
         capabilities: [analytics, privacy, frontend]
         reasoning: deep
@@ -1318,7 +1332,7 @@ phases:
       - id: PSP-P08-W02
         title: Design minimal client and recruiter intake flows
         outcome: A qualified visitor can provide just enough context for routing without a burdensome form.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/intake, docs]
         capabilities: [form_design, privacy, frontend]
         reasoning: deep
@@ -1438,7 +1452,7 @@ phases:
       - id: PSP-P09-W02
         title: Stage and owner-publish the flagship Limen engineering report
         outcome: The strongest proof object is live at a durable URL with clear client and recruiter routes.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content, public, deploy]
         capabilities: [publishing, frontend, technical_editing]
         reasoning: frontier_review
@@ -1454,7 +1468,7 @@ phases:
       - id: PSP-P09-W03
         title: Derive the agentic-delivery failure-modes essay
         outcome: Buyers recognize the expensive problem through a source-backed taxonomy and practical diagnostic frame.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content]
         capabilities: [technical_writing, reliability]
         reasoning: deep
@@ -1470,7 +1484,7 @@ phases:
       - id: PSP-P09-W04
         title: Derive the cost-per-task and control-economics essay
         outcome: Prospects understand why governed delivery economics matter more than raw token or commit volume.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content]
         capabilities: [data_storytelling, technical_writing]
         reasoning: deep
@@ -1486,7 +1500,7 @@ phases:
       - id: PSP-P09-W05
         title: Derive the delivery-gates walkthrough
         outcome: Technical buyers see how authority, leases, predicates, receipts, and rollback compose in practice.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content, assets]
         capabilities: [technical_writing, visualization]
         reasoning: deep
@@ -1502,7 +1516,7 @@ phases:
       - id: PSP-P09-W06
         title: Publish a candid incident and correction case study
         outcome: Reliability credibility includes failure detection, bounded repair, and learning rather than perfection claims.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content, docs/receipts]
         capabilities: [incident_analysis, technical_writing]
         reasoning: deep
@@ -1606,7 +1620,7 @@ phases:
       - id: PSP-P10-W04
         title: Build the Agentic Delivery Audit sales page and intake path
         outcome: A qualified buyer can understand the audit, assess fit, and start the correct conversation without a pricing spectacle.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/pages, src/content, src/intake]
         capabilities: [sales_copy, frontend, conversion_design]
         reasoning: deep
@@ -1878,7 +1892,7 @@ phases:
       - id: PSP-P12-W04
         title: Produce the first consented public case study
         outcome: Commercial proof shows problem, decisions, intervention, outcome, limitations, and authorship without client leakage.
-        target_repo: organvm/portfolio
+        target_repo: organvm-vii-kerygma/portfolio
         target_paths: [src/content/case-studies, public]
         capabilities: [case_study, editorial, privacy]
         reasoning: frontier_review

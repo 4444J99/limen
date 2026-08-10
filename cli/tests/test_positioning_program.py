@@ -44,6 +44,18 @@ def graph_and_map():
     return graph, mapping
 
 
+def live_portfolio_repository() -> dict[str, object]:
+    return {
+        "id": 1155412125,
+        "full_name": "organvm-vii-kerygma/portfolio",
+        "visibility": "public",
+        "private": False,
+        "default_branch": "main",
+        "archived": False,
+        "html_url": "https://github.com/organvm-vii-kerygma/portfolio",
+    }
+
+
 def test_real_manifest_is_complete_and_acyclic() -> None:
     graph, mapping = graph_and_map()
 
@@ -115,6 +127,69 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "Assigned effort: `max`" in work
     assert "**Execution chunk:** `PSP-C02`" in work
     assert "`PSP-C00` — Land the program control plane" in root
+
+
+def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    expected_work_ids = {
+        "PSP-P06-W01",
+        "PSP-P06-W02",
+        "PSP-P06-W03",
+        "PSP-P06-W04",
+        "PSP-P06-W05",
+        "PSP-P06-W06",
+        "PSP-P06-W07",
+        "PSP-P07-W03",
+        "PSP-P07-W04",
+        "PSP-P07-W08",
+        "PSP-P08-W02",
+        "PSP-P09-W02",
+        "PSP-P09-W03",
+        "PSP-P09-W04",
+        "PSP-P09-W05",
+        "PSP-P09-W06",
+        "PSP-P10-W04",
+        "PSP-P12-W04",
+    }
+    actual_work_ids = {
+        work_id
+        for work_id, packet in graph["work_by_id"].items()
+        if packet["target_repo"] == "organvm-vii-kerygma/portfolio"
+    }
+
+    assert actual_work_ids == expected_work_ids
+    identity = graph["repository_identity_by_slug"]["organvm-vii-kerygma/portfolio"]
+    assert identity["github_repository_id"] == 1155412125
+    assert "organvm/portfolio" in graph["retired_repository_slugs"]
+    body = MODULE.body_for("PSP-P06-W01", graph, mapping)
+    assert "`organvm-vii-kerygma/portfolio`" in body
+    assert "stable GitHub repository ID `1155412125`" in body
+    seed = MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    assert seed["execution_requirements"]["target_repository_identity"]["github_repository_id"] == 1155412125
+
+    calls: list[list[str]] = []
+
+    def resolve(args, **_kwargs):
+        calls.append(args)
+        return live_portfolio_repository()
+
+    monkeypatch.setattr(MODULE, "_gh", resolve)
+    result = MODULE.verify_repository_identities(graph)
+
+    assert result["status"] == "ok"
+    assert calls == [["api", "repositories/1155412125"]]
+    assert result["repositories"][0]["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: moved)
+    with pytest.raises(MODULE.ProgramError, match="full_name drift"):
+        MODULE.verify_repository_identities(graph)
+
+    stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    stale["phases"][6]["work"][0]["target_repo"] = "organvm/portfolio"
+    with pytest.raises(MODULE.ProgramError, match="retired repository slug"):
+        MODULE.index_program(stale)
 
 
 def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
@@ -952,6 +1027,7 @@ def test_remote_parity_includes_milestone_assignment(monkeypatch) -> None:
         for object_id in graph["ordered_ids"]
     }
     monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: live_portfolio_repository())
 
     assert MODULE.remote_parity(graph, mapping)["ok"] is True
 

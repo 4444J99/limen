@@ -1,80 +1,103 @@
-# Research adjudication — live profile correction
+# PSP-P02-W08 research adjudication preflight
 
-The research dossier and synthesis memo are inputs, not authorities. Their criticisms must be
-tested against current primary evidence before they narrow a public claim or redesign a live
-surface. This record captures the first correction prompted by direct review of the current GitHub
-profile on 2026-08-09.
+This is a public-safe preflight record, not a completion receipt. PSP-P02-W08 remains formally
+blocked on the accepted outputs of PSP-P02-W01 and PSP-P02-W05. No issue closure, merge, profile
+mutation, live issue projection, or claims-ledger edit is authorized by this record.
 
-## What live state establishes
+The machine-readable adjudication is
+[`research-adjudication.json`](research-adjudication.json). Its dated live evidence is
+[`psp-p02-w08-live-profile-preflight-20260810.json`](../../receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json).
 
-The profile repository `4444J99/4444J99` was regenerated at exact commit
-`aca01aeac520ab3ca6c2c8f38c41109b6f276818` on 2026-08-09T07:18:01Z. Its current README and
-`assets/stats-manifest.json` establish:
+## Exact public heads and observations
 
-- the public profile already uses the headline “I build production systems that solve expensive
-  problems”;
-- the portfolio link is `https://organvm.github.io/portfolio/`, not the stale dead host described
-  by earlier material;
-- the profile reports 227 public organization repositories, 198 original/non-fork repositories,
-  and 32,892 contributions in the previous year at its generation time;
-- the manifest publishes the exact GitHub API query or derivation basis for every rendered number;
-- the contribution calendar continued changing after generation: a fresh direct GraphQL query in
-  this audit returned 32,947, illustrating why observation time must travel with the claim;
-- the profile lists the full public federation: seven shelf organizations, `meta-organvm`, the
-  `organvm` engine room, and the current zero-public-repo `a-organvm` membership in the live org
-  query;
-- a daily sequence of generated profile commits exists, so the surface is maintained by an active
-  derivation system rather than a one-time hand-authored boast.
-
-These facts make blanket conclusions such as “the profile has no proof,” “the portfolio link is
-dead,” “repository volume is merely self-reported,” or “the estate covers only the initially
-enumerated organizations” false against current state.
-
-## What remains a separate question
-
-LAVREA's current public methodology measures exact GitHub output and then applies conservative
-percentile-floor thresholds. Its methodology explicitly limits the claim to an **output profile**—
-scale, breadth, and operational complexity—and says it does not establish code quality,
-correctness, reliability, adoption, or impact.
-
-The measurements and the percentile inference must not be collapsed:
-
-| Layer | Current disposition | Required proof |
+| Surface | Exact public head or identity | Adjudication use |
 |---|---|---|
-| Repository, language, contribution, PR, and organization counts | Verified measurement when regenerated from the live API | Exact query, observation time, token/private-contribution treatment, and owner-affiliation rule |
-| “Top 1%” or “top 0.1%” output-profile floor | Method-backed but contested inference | Audit every cited population baseline, comparison class, threshold, and conjunction claim against primary or reproducible data |
-| Engineering quality, impact, adoption, or executive effectiveness | Not implied by output volume | Separate tests, production data, external validation, commercial outcomes, and judgment evidence |
-| Placement in the first ten seconds of the profile | Positioning decision, not a truth verdict | Target-reader comprehension, trust, and conversion evidence |
+| GitHub profile | `f198b37e3161121e7c198e21bd18b87e29b6bc4f` | Rendered wording, manifest values, generator workflow |
+| W01/W03 stacked preflight | `48bb826d875dfb905a0c5a15c64e370ab73492a7` | Public-safe estate totals and per-system proof |
+| LAVREA | `02e360c9828336ac95ce8223c65d127ffea27661` | Methodology and percentile-baseline audit |
+| Portfolio | GitHub repository ID `1155412125`; head `85bfaa84287e4a3b90b49187caa4313c4edda1aa` | Canonical-owner resolution independent of a mutable slug |
 
-Therefore, a research model cannot rebuke the percentile claim solely because GitHub does not
-publish an official percentile table; nor can LAVREA treat a chosen conservative threshold as a
-peer-reviewed population result. The program must audit the methodology, keep the negative-space
-disclosure, and decide prominence from audience evidence.
+All values below are observations made on 2026-08-10. Moving values carry their own timestamp in
+the receipt.
 
-## Corrections to the implementation program
+## Adjudicated corrections
 
-1. Current live surfaces are baselined before any redesign or copy reduction.
-2. Research criticisms enter a contested-claim ledger with citation and observation date.
-3. Measurement validity, derived inference, quality/impact implication, and messaging prominence
-   receive separate verdicts.
-4. The current profile is evolved, not presumed broken or replaced wholesale.
-5. API-attested scale remains available as supporting proof even if it is not selected as the L1
-   headline.
-6. Strong existing mechanisms—daily regeneration, self-hosted visuals, source queries, two tagged
-   doors, and the organization library—are preserved unless a tested replacement is better.
-7. Overclaims still fail the same test. For example, “zero manual upkeep—runs forever once seeded”
-   requires operational evidence independent of contribution volume and should remain contested
-   until that evidence exists.
+1. **The portfolio link is broken, but the portfolio is not gone.** The profile metadata URL
+   returned 404. Stable repository ID `1155412125` resolves to the transferred public repository,
+   and its canonical Pages URL returned 200. The registry now resolves the immutable ID to the
+   canonical owner instead of assuming the former slug. GitHub documents that Pages URLs are not
+   redirected when a repository transfers.
+2. **The repository counts are measurements, not unsupported self-report.** The generated manifest
+   records 227 public organization repositories and 198 public non-forks. Fresh public API queries
+   reproduced both values, and W01 independently reconciles 8 personal plus 227 organization
+   repositories to 235 public repositories. These counts do not imply product count, quality,
+   adoption, or impact.
+3. **The contribution total is valid only as a dated moving-window observation.** The exact
+   manifest records 33,130 at `2026-08-10T08:05:30Z`; a later live query returned 33,168 and its
+   daily-count sum matched. Any public use must state the range, observation time, and viewer/token
+   treatment.
+4. **The profile is actively regenerated, not a one-time boast.** Eight consecutive scheduled
+   runs succeeded from 2026-08-03 through 2026-08-10. That window does not establish an uptime SLO,
+   perpetual availability, or zero manual intervention. The workflow also checks out a floating
+   generator dependency and does not record that generator head in the manifest.
+5. **The blanket production claim is too broad.** W03 found exact-head CI for both featured systems
+   and a live public operating receipt for Limen, but another featured system's advertised public
+   proof endpoint returned 404. Replace universal live-deploy wording with per-system evidence
+   status.
+6. **The bounded Limen operating claim survives.** Current public status and exact-head verification
+   support named mechanisms operating in the owner's environment. They do not support the phrase
+   “Zero manual upkeep — runs forever once seeded,” which remains withheld.
+7. **LAVREA's raw measurements survive the baseline criticism.** Contribution, repository,
+   pull-request, language, organization, stack-rule, and tenure inputs can be retained when dated
+   and definition-labeled. The inspected primary population material does not establish LAVREA's
+   percentile thresholds, so “top 0.1% engineering throughput” and “Top 1% Python full-stack
+   engineer” remain withheld. Rejecting those inferences must not erase verified inputs.
+8. **Singular accountability needs authorship disclosure.** “One creator” may describe the
+   accountable architect and director, but must not imply that every line was manually written
+   without machine assistance.
 
-## Standing adjudication rule
+## Four independent dispositions
 
-For every disputed statement, record five separate fields:
+Every contested claim has four independently cited fields in the integration artifact:
 
-1. exact public wording;
-2. measured premises and primary sources;
-3. inference method and comparison class;
-4. what the statement explicitly does **not** establish;
-5. public prominence decision and the audience evidence behind it.
+| Layer | Question | Required treatment |
+|---|---|---|
+| Measurement | What was directly observed, counted, or reproduced? | Preserve verified, dated, public-safe facts even when later layers fail. |
+| Inference | What conclusion follows from those premises and comparison rules? | Bound or withhold conclusions whose population, threshold, or causal rule is missing. |
+| Implication | What might a reader wrongly take the claim to prove? | Explicitly reject unsupported quality, adoption, impact, reliability, or authorship implications. |
+| Prominence | Where should the claim appear publicly? | Decide separately from truth; a valid measurement may remain supporting-only. |
 
-Only then may the claim be verified, narrowed, withheld, or promoted. Research prose alone cannot
-move a live claim between those states.
+The artifact covers 13 research-rebuked claims and audits all eight LAVREA axes. Private dossier
+prose and private-only inventories are not copied or used as public evidence.
+
+## W05 integration contract
+
+PSP-P02-W05 consumes `research-adjudication.json`, preserves every claim's four layers and
+citations, regenerates moving numeric rows, and imports only publishable wording into
+`docs/positioning/claims-ledger.md`. It must not collapse a verified measurement into a rejected
+inference. The ledger is deliberately unchanged in this lane.
+
+Formal W08 completion remains forbidden until W01 and W05 have accepted receipts and this artifact
+is reconciled to their exact heads.
+
+## Registry-drift relay
+
+The authoritative program manifest and its generated issue index now resolve the portfolio through
+GitHub repository ID `1155412125` to `organvm-vii-kerygma/portfolio`. A focused live-identity check
+fails if the ID resolves to a different slug, visibility, default branch, or archive state, or if
+program work reintroduces the retired slug.
+
+The following 18 live issue bodies still contain the retired projection and require an authorized
+projector refresh; this preflight did not mutate them:
+
+| Work IDs | Live issues |
+|---|---|
+| `PSP-P06-W01` through `PSP-P06-W07` | #2205–#2211 |
+| `PSP-P07-W03`, `PSP-P07-W04`, `PSP-P07-W08` | #2215, #2216, #2220 |
+| `PSP-P08-W02` | #2224 |
+| `PSP-P09-W02` through `PSP-P09-W06` | #2232–#2236 |
+| `PSP-P10-W04` | #2243 |
+| `PSP-P12-W04` | #2261 |
+
+The confirmed private collaboration target is unchanged. The next authorized projection action is
+recorded in the machine-readable artifact; it was not executed here.
