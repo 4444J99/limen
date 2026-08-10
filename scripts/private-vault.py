@@ -282,6 +282,11 @@ def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
 
 def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     """Return immutable metadata for every neutral v2 artifact admitted to custody."""
+    shallow = _run_command(["git", "-C", str(ROOT), "rev-parse", "--is-shallow-repository"])
+    if shallow.returncode != 0:
+        raise VaultError("cannot prove complete committed custody history")
+    if shallow.stdout.strip() != "false":
+        raise VaultError("committed custody history requires a non-shallow repository")
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
     history = _run_command(["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative])
     if history.returncode != 0:
@@ -314,14 +319,14 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
         snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
         if snapshot.returncode != 0:
             raise VaultError("cannot read a committed manifest history snapshot")
-        require_public_safe = not safe_root_is_reachable
+        require_public_safe = True
         if safe_root_is_reachable:
-            after_safe_root = _run_command(
-                ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, revision]
+            before_safe_root = _run_command(
+                ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", revision, PUBLIC_SAFE_HISTORY_ROOT]
             )
-            if after_safe_root.returncode not in {0, 1}:
+            if before_safe_root.returncode not in {0, 1}:
                 raise VaultError("cannot classify a committed manifest history revision")
-            require_public_safe = after_safe_root.returncode == 0
+            require_public_safe = revision == PUBLIC_SAFE_HISTORY_ROOT or before_safe_root.returncode == 1
         for line_number, raw in enumerate(snapshot.stdout.splitlines(), 1):
             if not raw.strip():
                 continue

@@ -73,6 +73,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
 PRIVATE_CUSTODY_ROOTS = (".limen-private", ".agent-runtime", ".limen-workstream")
+PUBLIC_CUSTODY_HISTORY_ROOT = "eeaaa85b7e7270e1b9e9140b78f7ff2360e2524f"
 
 
 class HostAdmissionFailure(RuntimeError):
@@ -226,17 +227,31 @@ def _is_public_custody_path(path: str) -> bool:
     return path == "docs/keys/anthony-padavano-gpg.asc" or path.startswith("institutio/vault/")
 
 
+def public_custody_history_start(base: str | None) -> str:
+    """Use the neutralization boundary when reachable, otherwise the PR base."""
+    merge_base = resolve_merge_base(base)
+    safe_root = resolve_commit(PUBLIC_CUSTODY_HISTORY_ROOT)
+    if safe_root:
+        try:
+            git("merge-base", "--is-ancestor", safe_root, "HEAD")
+        except subprocess.CalledProcessError:
+            pass
+        else:
+            return safe_root
+    return merge_base
+
+
 def transient_custody_reversion(base: str | None) -> bool:
-    """Detect restored HEAD custody blobs that had unvalidated PR versions."""
+    """Detect deleted, reverted, or superseded unvalidated custody versions."""
     merge_base = resolve_merge_base(base)
     if not merge_base:
         return False
-    tracked = set(git_paths("ls-files", "-z"))
     endpoint = set(git_paths("diff", "--name-only", "--no-renames", "-z", merge_base, "HEAD"))
-    return any(
-        status != "D" and path in tracked and path not in endpoint and _is_public_custody_path(path)
-        for status, path in committed_path_changes(merge_base)
-    )
+    versions: dict[str, int] = {}
+    for status, path in committed_path_changes(public_custody_history_start(base)):
+        if status != "D" and _is_public_custody_path(path):
+            versions[path] = versions.get(path, 0) + 1
+    return any(path not in endpoint or count > 1 for path, count in versions.items())
 
 
 def changed_set(base: str | None) -> list[str]:
@@ -752,7 +767,7 @@ def cmd_changed(
         return 1
     if transient_custody_reversion(base):
         print(
-            "custody-history: a tracked custody file changed transiently and was restored in HEAD; "
+            "custody-history: a public custody path has an unvalidated intermediate version; "
             "refusing to certify an unvalidated intermediate version.",
             file=sys.stderr,
         )

@@ -331,6 +331,8 @@ def test_historical_manifest_fails_when_present_snapshot_is_unreadable(vault, mo
 
     def missing_snapshot(args, *, env=None):
         del env
+        if "--is-shallow-repository" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="false\n", stderr="")
         if "rev-list" in args:
             return subprocess.CompletedProcess(args, 0, stdout="a" * 40 + "\n", stderr="")
         if "cat-file" in args:
@@ -344,6 +346,30 @@ def test_historical_manifest_fails_when_present_snapshot_is_unreadable(vault, mo
     monkeypatch.setattr(vault, "_run_command", missing_snapshot)
 
     with pytest.raises(vault.VaultError, match="cannot read a committed manifest history snapshot"):
+        vault._real_historical_artifacts()
+
+
+def test_historical_manifest_rejects_shallow_repository(vault, monkeypatch: pytest.MonkeyPatch):
+    def shallow_repository(args, *, env=None):
+        del env
+        assert "--is-shallow-repository" in args
+        return subprocess.CompletedProcess(args, 0, stdout="true\n", stderr="")
+
+    monkeypatch.setattr(vault, "_run_command", shallow_repository)
+
+    with pytest.raises(vault.VaultError, match="non-shallow repository"):
+        vault._real_historical_artifacts()
+
+
+def test_historical_manifest_rejects_unprovable_repository_depth(vault, monkeypatch: pytest.MonkeyPatch):
+    def unavailable_depth(args, *, env=None):
+        del env
+        assert "--is-shallow-repository" in args
+        return subprocess.CompletedProcess(args, 128, stdout="", stderr="unavailable")
+
+    monkeypatch.setattr(vault, "_run_command", unavailable_depth)
+
+    with pytest.raises(vault.VaultError, match="cannot prove complete"):
         vault._real_historical_artifacts()
 
 
@@ -409,6 +435,8 @@ def test_historical_manifest_rejects_non_v2_post_boundary_rows(
 
     def non_v2_snapshot(args, *, env=None):
         del env
+        if "--is-shallow-repository" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="false\n", stderr="")
         if "rev-list" in args:
             return subprocess.CompletedProcess(args, 0, stdout="a" * 40 + "\n", stderr="")
         if "cat-file" in args:
@@ -420,6 +448,46 @@ def test_historical_manifest_rejects_non_v2_post_boundary_rows(
         raise AssertionError(args)
 
     monkeypatch.setattr(vault, "_run_command", non_v2_snapshot)
+
+    with pytest.raises(vault.VaultError, match="non-public-safe"):
+        vault._real_historical_artifacts()
+
+
+def test_historical_manifest_validates_side_branches_incomparable_with_boundary(vault, monkeypatch: pytest.MonkeyPatch):
+    manifest_relative = "institutio/vault/manifest.jsonl"
+    safe_root = "a" * 40
+    side_revision = "b" * 40
+    monkeypatch.setattr(vault, "PUBLIC_SAFE_HISTORY_ROOT", safe_root)
+    row = {
+        "schema": vault.SCHEMA,
+        "artifact_id": "artifact-001",
+        "ciphertext": "artifact-001.gpg",
+        "ciphertext_sha256": "1" * 64,
+        "ciphertext_bytes": 1,
+        "recipient_fpr": vault.FINGERPRINT,
+        "vaulted_at": "2026-08-09T00:00:00+00:00",
+        "private_field": "synthetic",
+    }
+
+    def side_branch_snapshot(args, *, env=None):
+        del env
+        if "--is-shallow-repository" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="false\n", stderr="")
+        if "rev-list" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=side_revision + "\n", stderr="")
+        if "cat-file" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        if "merge-base" in args and args[-2:] == [safe_root, "HEAD"]:
+            return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+        if "merge-base" in args and args[-2:] == [side_revision, safe_root]:
+            return subprocess.CompletedProcess(args, 1, stdout="", stderr="")
+        if "ls-tree" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=manifest_relative + "\0", stderr="")
+        if "show" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=json.dumps(row) + "\n", stderr="")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(vault, "_run_command", side_branch_snapshot)
 
     with pytest.raises(vault.VaultError, match="non-public-safe"):
         vault._real_historical_artifacts()

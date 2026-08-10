@@ -44,7 +44,7 @@ flunk() { printf 'FAIL %s\n  %s\n' "$1" "$2"; fails=$((fails + 1)); }
 make_sandbox() {
   local dir
   dir="$(mktemp -d "${TMPDIR:-/tmp}/verify-ci-hardening.XXXXXX")"
-  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/institutio/vault" "$dir/src" "$dir/web/app" "$dir/webish"
+  mkdir -p "$dir/scripts" "$dir/institutio/governance" "$dir/institutio/vault" "$dir/docs/keys" "$dir/src" "$dir/web/app" "$dir/webish"
   cp "$ROOT/scripts/verify.py" "$dir/scripts/verify.py"
   cat >"$dir/institutio/governance/gates.yaml" <<'YAML'
 schema_version: 0.1
@@ -72,11 +72,11 @@ gates:
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
   deleted-custody:
     command: "touch ran-deleted-custody"
-    paths: ["institutio/vault/**", ".limen-private", ".limen-private/**", ".agent-runtime", ".agent-runtime/**", ".limen-workstream", ".limen-workstream/**"]
+    paths: ["institutio/vault/**", "docs/keys/anthony-padavano-gpg.asc", ".limen-private", ".limen-private/**", ".agent-runtime", ".agent-runtime/**", ".limen-workstream", ".limen-workstream/**"]
     owner: custody
     note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
-  touch "$dir/src/.keep" "$dir/institutio/vault/artifact.gpg" "$dir/web/app/.keep" "$dir/webish/.keep"
+  touch "$dir/src/.keep" "$dir/institutio/vault/artifact.gpg" "$dir/docs/keys/anthony-padavano-gpg.asc" "$dir/web/app/.keep" "$dir/webish/.keep"
   git -C "$dir" init -q -b main
   git -C "$dir" -c user.email=t@t -c user.name=t add -A
   git -C "$dir" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm base
@@ -191,6 +191,18 @@ do
   fi
 done
 
+# ── 4bc: one final public custody version is eligible for vault validation ─────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'ciphertext\n' >"$sb/institutio/vault/artifact-new.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact-new.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add final custody version"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  || flunk final-custody-version "single final custody version exited non-zero: $out"
+[[ -f "$sb/ran-deleted-custody" ]] \
+  && pass final-custody-version \
+  || flunk final-custody-version "single final custody version did not select its gate: $out"
+
 # ── 4c: add-then-delete private content is rejected without naming it ─────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
@@ -207,7 +219,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
          && pass transient-private-history \
          || flunk transient-private-history "missing neutral refusal or leaked path: $out"; }
 
-# ── 4d: historical-only custody names select the gate without log leakage ─────
+# ── 4d: historical-only custody names fail without log leakage ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 printf 'ciphertext\n' >"$sb/institutio/vault/sensitive-probe.gpg"
@@ -216,12 +228,11 @@ git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm
 git -C "$sb" rm -q institutio/vault/sensitive-probe.gpg
 git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient custody path"
 out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
-  || flunk historical-custody-redaction "historical custody run exited non-zero: $out"
-[[ -f "$sb/ran-deleted-custody" ]] \
-  && grep -q "Historical-only paths (1): \[redacted" <<<"$out" \
-  && ! grep -q "sensitive-probe" <<<"$out" \
-  && pass historical-custody-redaction \
-  || flunk historical-custody-redaction "gate missing or historical path leaked: $out"
+  && flunk historical-custody-redaction "exit 0 despite deleted transient custody" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "sensitive-probe" <<<"$out" \
+         && pass historical-custody-redaction \
+         || flunk historical-custody-redaction "missing neutral refusal or leaked path: $out"; }
 
 # ── 4e: reverted versions of tracked custody files fail without path leakage ──
 sb="$(make_sandbox)"
@@ -238,6 +249,53 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
          && ! grep -q "artifact.gpg" <<<"$out" \
          && pass transient-custody-reversion \
          || flunk transient-custody-reversion "missing neutral refusal or leaked path: $out"; }
+
+# ── 4e1: superseded custody versions fail even when the final path changed ─────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'first version\n' >"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "first custody version"
+printf 'final version\n' >"$sb/institutio/vault/artifact.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "supersede custody version"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk superseded-custody-version "exit 0 despite an unvalidated superseded custody version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "artifact.gpg" <<<"$out" \
+         && pass superseded-custody-version \
+         || flunk superseded-custody-version "missing neutral refusal or leaked path: $out"; }
+
+# ── 4e2: reverted public-key versions receive the same neutral refusal ─────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient key bytes\n' >>"$sb/docs/keys/anthony-padavano-gpg.asc"
+git -C "$sb" -c user.email=t@t -c user.name=t add docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "mutate public key"
+git -C "$sb" restore --source "$base_sha" -- docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t add docs/keys/anthony-padavano-gpg.asc
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "restore public key"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk transient-public-key "exit 0 despite an unvalidated intermediate public-key version" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "anthony-padavano" <<<"$out" \
+         && pass transient-public-key \
+         || flunk transient-public-key "missing neutral refusal or leaked path: $out"; }
+
+# ── 4ea: add-then-delete public custody files fail without path leakage ────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+printf 'transient bytes\n' >"$sb/institutio/vault/résumé-cipher.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/résumé-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add transient custody blob"
+git -C "$sb" rm -q institutio/vault/résumé-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete transient custody blob"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk deleted-transient-custody "exit 0 despite a deleted transient custody blob" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "résumé-cipher" <<<"$out" \
+         && pass deleted-transient-custody \
+         || flunk deleted-transient-custody "missing neutral refusal or leaked path: $out"; }
 
 # ── 4f: synthetic merge inventory excludes paths changed only on the base ──────
 sb="$(make_sandbox)"
