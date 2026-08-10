@@ -24,4 +24,3 @@ def test_operational_board_requires_explicit_private_custody(monkeypatch, tmp_pa
     board, selected = load_operational_board(public)
     assert selected == private.resolve()
     assert board.tasks[0].id == "PRIVATE-1"
-

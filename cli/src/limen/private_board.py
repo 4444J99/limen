@@ -33,8 +33,5 @@ def load_operational_board(public_path: Path) -> tuple[LimenFile, Path]:
     if private is None:
         return load_limen_file(public_path), Path(public_path)
     if not private.is_file():
-        raise FileNotFoundError(
-            f"private board custody is configured but unavailable: {private}"
-        )
+        raise FileNotFoundError(f"private board custody is configured but unavailable: {private}")
     return load_limen_file(private), private
-
