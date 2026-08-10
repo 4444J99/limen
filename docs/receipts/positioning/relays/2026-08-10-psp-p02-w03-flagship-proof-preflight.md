@@ -2,9 +2,9 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
-from: Codex desktop direct preflight session
-to: next healthy Codex session with a fresh conduct lease
-scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/c73e/limen
+from: Codex desktop human-protected preflight task
+to: next healthy human-protected Codex task
+scope: organvm/limen@codex/psp-p02-w03-flagship-proof-preflight
 phase: PROVE
 compression_level: medium
 ---
@@ -20,31 +20,35 @@ compression_level: medium
 - Branch: `codex/psp-p02-w03-flagship-proof-preflight`
 - Stacked base: `codex/psp-p02-w02-estate-classification-preflight`
 - Draft pull request: https://github.com/organvm/limen/pull/2308
-- Conduct root/run/lease receipt: none. This was a human-authorized reversible preflight, not a claimed W03 completion.
+- Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this remains a reversible preflight, not a claimed W03 completion.
 
 ## Exact implementation checkpoint
 
 | Item | Value |
 | --- | --- |
-| W02 base head | `3c5858e933dc9fa0961220c1aa87d15b96c25b74` |
+| W02 base branch head | `ee26b101879ca65e05cfabd3e0cc5253b82c2e74` |
 | Verified W03 implementation commit | `10104e541ef9ec227c3a92d18595f2490a89f6fd` |
-| Remote branch checkpoint before this relay-only commit | `10104e541ef9ec227c3a92d18595f2490a89f6fd` |
+| Integrated implementation checkpoint | `a897a8cc96a816a7da7f6283a8581e42d27613c3` — W03 plus the full-diff, exact-token W02 privacy guard |
+| Published remote branch checkpoint before this relay refresh | `48bb826d875dfb905a0c5a15c64e370ab73492a7`; fetch the PR head before resuming |
 | Selected preflight set | Limen; UCC Public-Records Intelligence Platform; AI Chat Exporter |
 | Named alternates | Universal Mail; Styx; a-i--skills; MONETA |
 | Public candidate denominator | 20 |
 | Private names in the public matrix | 0 |
 | External effects | Draft PR and branch push only; no merge, publication, visibility, account, or issue-state change |
 
-This relay is the only diff after the verified implementation commit. Resolve the live PR head before
-formal work rather than treating the relay commit as a new implementation batch.
+This relay is the only authored diff after the integrated implementation checkpoint. Resolve the live
+PR head before formal work rather than treating the relay commit as a new implementation batch.
 
 ## Verified preflight state
 
 - `python3 scripts/tests/flagship-proof-set.test.py` — 7 tests passed.
+- `python3 scripts/tests/estate-classification.test.py` — 5 tests passed, including full-diff and
+  longer-public-slug prefix regressions.
 - `python3 scripts/flagship-proof-set.py --verify-live --json` — passed; all 20 named repository
   candidates are public, and each selected exact-head workflow plus public endpoint is live.
 - `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w02-estate-classification-preflight`
-  — passed: 314 repositories, 235 public, 79 private, 15 front-door proof, no newly added private name.
+  — passed: 314 repositories, 235 public, 79 private, 15 front-door proof, no newly added private
+  repository token.
 - `scripts/verify-scoped.sh` — passed all 21 implicated cheap-wave gates. No heavy gate was selected,
   so the sanctioned verifier did not require a machine-wide heavy lease.
 - `python3 scripts/positioning-program.py --verify-work PSP-P02-W03` — intentionally not run; no

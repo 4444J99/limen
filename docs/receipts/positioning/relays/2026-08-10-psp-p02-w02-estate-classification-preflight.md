@@ -2,9 +2,9 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
-from: Codex desktop direct preflight session
-to: next healthy Codex session with a fresh conduct lease
-scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/c455/limen
+from: Codex desktop human-protected preflight task
+to: next healthy human-protected Codex task
+scope: organvm/limen@codex/psp-p02-w02-estate-classification-preflight
 phase: PROVE
 compression_level: medium
 ---
@@ -16,20 +16,21 @@ compression_level: medium
 - Program work ID: `PSP-P02-W02`
 - GitHub issue: https://github.com/organvm/limen/issues/2174
 - Target repository: `organvm/limen`
-- Branch/worktree: `codex/psp-p02-w02-estate-classification-preflight` in the scoped Codex worktree
-- Conduct root/run/lease receipt: none. The broker was not configured in this desktop session; this is a human-authorized reversible preflight, not a claimed work completion.
+- Branch: `codex/psp-p02-w02-estate-classification-preflight`
+- Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this remains a reversible preflight, not a claimed work completion.
 
 ## Verified current state
 
 | Item | Live state |
 |---|---|
-| Exact local head | `0a9ef16ed10c19241490ced94bc161ae4c67e07a` — preflight implementation commit before this relay |
-| Exact remote branch checkpoint | `ae2754a150ee68b293432c7dc3bc58b39acf6d42` was pushed to `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay checkpoint update; fetch before resuming |
+| Exact implementation head | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` — full-diff, exact-repository-token private-name guard and focused regressions included |
+| Exact remote branch checkpoint | `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` on `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay refresh; fetch before resuming |
 | Exact target repository heads | `organvm/limen` only; the focused live classifier ran against the W01 denominator on 2026-08-10 |
 | Working tree | Relay pending commit; otherwise clean |
 | Acceptance condition | Partial: the policy and live classifier satisfy coverage, but #2173 remains open and W02 has no conduct-backed receipt |
 | Task-specific predicate | Not run as a completion claim; it must remain deferred until #2173 formally closes and a receipt is attached |
-| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed: 314 total, 235 public, 79 private, exactly one primary role each |
+| Focused underlying predicate | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight` passed: 314 total, 235 public, 79 private, exactly one primary role each; the private-name guard scans the entire reviewed diff and matches only complete repository tokens, avoiding public-name prefix false positives |
+| Scoped verification | `scripts/verify-scoped.sh` passed all 15 implicated cheap-wave gates on exact implementation head `63e5dd8996df452b1eb14c2aeadcdb0d8e211121` |
 | Receipt verifier | No W02 receipt and no issue comment posted |
 | Phase exit proof | Not applicable; P02 remains open |
 | Omega observation | Not applicable |
@@ -52,7 +53,7 @@ compression_level: medium
 ## Next actions
 
 1. Wait for https://github.com/organvm/limen/issues/2173 to close, then refresh this branch against its merged exact census rather than assuming the preflight denominator still matches.
-2. Obtain a fresh conduct-broker lease for `PSP-P02-W02`; rerun the focused live predicate and `python3 scripts/verify-scoped.sh` only after machine-wide heavy admission permits it.
+2. Continue in a fresh human-protected Codex task under the C00 routing correction; rerun the focused live predicate after the dependency refresh and reuse the unchanged scoped receipt unless the tree changes.
 3. Attach a structured W02 receipt whose underlying predicate is the focused classifier (never `--verify-work` itself), then run `python3 scripts/positioning-program.py --verify-work PSP-P02-W02` and close only if it passes.
 
 ## Risks and prohibitions
@@ -72,7 +73,7 @@ compression_level: medium
 The fresh-agent injection phrase is:
 
 ```text
-Continue from relay at /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/c455/limen/docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md. mid-task — see Next Actions for current step.
+Continue from `docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md` on draft PR #2307. Dependency-gated: confirm #2173 is closed before formal W02 refresh or receipt work.
 ```
 
 The receiver must verify live state and obtain its own authority. This file transfers context, not

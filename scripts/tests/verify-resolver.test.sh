@@ -191,6 +191,7 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+flagship-evidence-test
 claim-policy-test
 check-gates
 check-note-links' institutio/governance/gates.yaml

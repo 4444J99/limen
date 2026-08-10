@@ -466,6 +466,11 @@ gates:
     paths: ["docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
     owner: positioning-program
     note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
+  flagship-evidence-test:
+    command: "python3 scripts/tests/flagship-evidence.test.py"
+    paths: ["docs/positioning/evidence", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
+    owner: positioning-program
+    note: "PSP-P02-W04/W05 evidence packets remain public-safe, match the selected W03 triad, keep W03/W04/W05 formally dependency-blocked, and make each material numeric statement exact and reproducible. Live source checks are an explicit focused preflight because they require GitHub and HTTP access."
   claim-policy-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q"
     paths: ["scripts/claim-policy.py", "scripts/claim-surface-quarantine.py", "scripts/claim-quarantine-drill.py", "scripts/tests/test_claim_policy.py", "scripts/tests/fixtures/positioning-claim-drill/**", "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md", "institutio/governance/gates.yaml"]
