@@ -53,9 +53,9 @@ def load_yaml(path: Path) -> dict[str, Any]:
     try:
         value = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError) as exc:
-        raise ClassificationError(f"cannot load {path}: {exc}") from exc
+        raise ClassificationError("cannot load required YAML policy") from exc
     if not isinstance(value, dict):
-        raise ClassificationError(f"{path} must be a mapping")
+        raise ClassificationError("required YAML policy must be a mapping")
     return value
 
 
@@ -197,7 +197,7 @@ def verify_census_identity(
 
 def private_repository_tokens(rows: list[dict[str, Any]]) -> tuple[set[str], set[str]]:
     public_slugs = {
-        str(row.get("name") or str(row.get("full_name") or "").rsplit("/", 1)[-1]).strip()
+        str(row.get("name") or str(row.get("full_name") or "").rsplit("/", 1)[-1]).strip().casefold()
         for row in rows
         if not bool(row.get("private"))
     }
@@ -210,7 +210,7 @@ def private_repository_tokens(rows: list[dict[str, Any]]) -> tuple[set[str], set
         slug = str(row.get("name") or full_name.rsplit("/", 1)[-1]).strip()
         if full_name:
             full_names.add(full_name)
-        if slug and slug not in public_slugs:
+        if slug and slug.casefold() not in public_slugs:
             bare_slugs.add(slug)
     return full_names, bare_slugs
 
@@ -231,6 +231,23 @@ def parse_timestamp(value: object) -> dt.datetime | None:
         return None
 
 
+def maturity_cutoffs(policy: dict[str, Any]) -> tuple[int, int]:
+    maturity = policy.get("maturity")
+    if not isinstance(maturity, dict):
+        raise ClassificationError("maturity policy must be a mapping")
+    active = maturity.get("active_within_days")
+    maintained = maturity.get("maintained_within_days")
+    if isinstance(active, bool) or not isinstance(active, int) or active < 0:
+        raise ClassificationError("maturity.active_within_days must be a non-negative integer")
+    if isinstance(maintained, bool) or not isinstance(maintained, int) or maintained < 0:
+        raise ClassificationError("maturity.maintained_within_days must be a non-negative integer")
+    if maintained < active:
+        raise ClassificationError(
+            "maturity.maintained_within_days must not precede maturity.active_within_days"
+        )
+    return active, maintained
+
+
 def maturity_for(row: dict[str, Any], policy: dict[str, Any], now: dt.datetime) -> str:
     if bool(row.get("archived")):
         return "archived"
@@ -238,10 +255,10 @@ def maturity_for(row: dict[str, Any], policy: dict[str, Any], now: dt.datetime) 
     if pushed is None:
         return "unvalidated"
     age = now - pushed.astimezone(dt.UTC)
-    maturity = policy["maturity"]
-    if age <= dt.timedelta(days=int(maturity["active_within_days"])):
+    active_within_days, maintained_within_days = maturity_cutoffs(policy)
+    if age <= dt.timedelta(days=active_within_days):
         return "active"
-    if age <= dt.timedelta(days=int(maturity["maintained_within_days"])):
+    if age <= dt.timedelta(days=maintained_within_days):
         return "maintained"
     return "dormant"
 
@@ -388,7 +405,21 @@ def verify_policy(estate: dict[str, Any]) -> list[str]:
                 f"primary_order rule {index + 1}: {error}"
                 for error in selector_errors(rule["when"])
             )
-    if set((policy.get("maturity") or {}).get("values") or []) != MATURITY:
+    maturity = policy.get("maturity")
+    if isinstance(maturity, dict):
+        try:
+            maturity_cutoffs(policy)
+        except ClassificationError as exc:
+            errors.append(str(exc))
+        maturity_values = maturity.get("values")
+    else:
+        errors.append("maturity policy must be a mapping")
+        maturity_values = None
+    if (
+        not isinstance(maturity_values, list)
+        or any(not isinstance(value, str) for value in maturity_values)
+        or set(maturity_values) != MATURITY
+    ):
         errors.append("maturity.values must contain the allowed maturity values exactly")
     if set(policy.get("visibility_dispositions") or []) != DISPOSITIONS:
         errors.append("visibility_dispositions must contain the allowed dispositions exactly")
@@ -402,23 +433,37 @@ def private_leaks_added(
     private_names: set[str],
     private_slugs: set[str] | None = None,
 ) -> list[str]:
-    content_result = subprocess.run(
-        ["git", "diff", "--unified=0", f"{base}...HEAD"],
-        cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
-    )
+    try:
+        content_result = subprocess.run(
+            ["git", "diff", "--unified=0", f"{base}...HEAD"],
+            cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ClassificationError("timed out inspecting reviewed diff") from exc
     if content_result.returncode != 0:
-        raise ClassificationError(f"cannot inspect reviewed diff against {base}")
-    path_result = subprocess.run(
-        ["git", "diff", "--name-only", "-z", "--diff-filter=A", "--no-renames", f"{base}...HEAD"],
-        cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
-    )
+        raise ClassificationError("cannot inspect reviewed diff")
+    try:
+        path_result = subprocess.run(
+            ["git", "diff", "--name-only", "-z", "--diff-filter=A", "--no-renames", f"{base}...HEAD"],
+            cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ClassificationError("timed out inspecting added paths") from exc
     if path_result.returncode != 0:
-        raise ClassificationError(f"cannot inspect added paths against {base}")
-    added_content = [
-        line[1:]
-        for line in content_result.stdout.splitlines()
-        if line.startswith("+") and not line.startswith("+++")
-    ]
+        raise ClassificationError("cannot inspect added paths")
+    added_content: list[str] = []
+    in_hunk = False
+    for line in content_result.stdout.splitlines():
+        if line.startswith("diff --git "):
+            in_hunk = False
+            continue
+        if line.startswith("@@"):
+            in_hunk = True
+            continue
+        if not in_hunk and (line.startswith("--- ") or line.startswith("+++ ")):
+            continue
+        if line.startswith("+"):
+            added_content.append(line[1:])
     added_paths = [path for path in path_result.stdout.split("\0") if path]
     repository_character = r"A-Za-z0-9_.-"
     leaked_full_names = {
@@ -429,10 +474,14 @@ def private_leaks_added(
                 re.search(
                     rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])",
                     line,
+                    flags=re.IGNORECASE,
                 )
                 for line in added_content
             )
-            or any(re.search(rf"(?:^|/){re.escape(name)}(?:$|/|\.)", path) for path in added_paths)
+            or any(
+                re.search(rf"(?:^|/){re.escape(name)}(?:$|/|\.)", path, flags=re.IGNORECASE)
+                for path in added_paths
+            )
         )
     }
     leaked_bare_slugs = {
@@ -440,10 +489,17 @@ def private_leaks_added(
         for slug in (private_slugs or set())
         if (
             any(
-                re.fullmatch(rf"\s*(?:[-*]\s+)?[\x60'\"]?{re.escape(slug)}[\x60'\"]?\s*", line)
+                re.fullmatch(
+                    rf"\s*(?:[-*]\s+)?[\x60'\"]?{re.escape(slug)}[\x60'\"]?\s*",
+                    line,
+                    flags=re.IGNORECASE,
+                )
                 for line in added_content
             )
-            or any(re.search(rf"(?:^|/){re.escape(slug)}(?:$|/|\.)", path) for path in added_paths)
+            or any(
+                re.search(rf"(?:^|/){re.escape(slug)}(?:$|/|\.)", path, flags=re.IGNORECASE)
+                for path in added_paths
+            )
         )
     }
     return sorted(leaked_full_names | leaked_bare_slugs)
@@ -507,6 +563,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except ClassificationError as exc:
         print(f"estate-classification: FAIL: {exc}", file=sys.stderr)
+        return 1
+    except Exception:
+        print("estate-classification: FAIL: unexpected classifier failure", file=sys.stderr)
         return 1
 
 

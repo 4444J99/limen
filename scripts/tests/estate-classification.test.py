@@ -13,6 +13,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("estate_classification", ROOT / "scripts/estate-classification.py")
@@ -80,6 +82,29 @@ class EstateClassificationTests(unittest.TestCase):
             "dormant",
         )
 
+    def test_maturity_cutoffs_reject_missing_or_non_numeric_schema(self) -> None:
+        invalid_policies = [
+            {},
+            {"maturity": []},
+            {"maturity": {"active_within_days": "90", "maintained_within_days": 365}},
+            {"maturity": {"active_within_days": 90, "maintained_within_days": False}},
+            {"maturity": {"active_within_days": 365, "maintained_within_days": 90}},
+        ]
+        for policy in invalid_policies:
+            with self.subTest(policy=policy):
+                with self.assertRaises(MODULE.ClassificationError):
+                    MODULE.maturity_cutoffs(policy)
+
+        estate = copy.deepcopy(MODULE.load_yaml(ROOT / "institutio/github/estate.yaml"))
+        estate["positioning_estate_classification"]["maturity"] = {
+            "values": sorted(MODULE.MATURITY),
+            "active_within_days": "private-value-must-not-be-printed",
+            "maintained_within_days": 365,
+        }
+        errors = MODULE.verify_policy(estate)
+        self.assertTrue(any("active_within_days" in error for error in errors))
+        self.assertNotIn("private-value-must-not-be-printed", " ".join(errors))
+
     def test_policy_is_complete(self) -> None:
         estate = MODULE.load_yaml(ROOT / "institutio/github/estate.yaml")
         self.assertEqual(MODULE.verify_policy(estate), [])
@@ -135,7 +160,7 @@ class EstateClassificationTests(unittest.TestCase):
         rows = [
             {"full_name": "example-private/sensitive-only", "name": "sensitive-only", "private": True},
             {"full_name": "example-private/shared", "name": "shared", "private": True},
-            {"full_name": "example-public/shared", "name": "shared", "private": False},
+            {"full_name": "example-public/SHARED", "name": "SHARED", "private": False},
         ]
         full_names, bare_slugs = MODULE.private_repository_tokens(rows)
         self.assertEqual(full_names, {"example-private/sensitive-only", "example-private/shared"})
@@ -143,7 +168,7 @@ class EstateClassificationTests(unittest.TestCase):
 
         content = SimpleNamespace(
             returncode=0,
-            stdout="+sensitive-only\n+shared\n+descriptive sensitive-only wording\n",
+            stdout="+SENSITIVE-ONLY\n+shared\n+descriptive sensitive-only wording\n",
             stderr="",
         )
         added_paths = SimpleNamespace(returncode=0, stdout="", stderr="")
@@ -152,6 +177,43 @@ class EstateClassificationTests(unittest.TestCase):
                 MODULE.private_leaks_added("base-ref", full_names, bare_slugs),
                 ["sensitive-only"],
             )
+
+    def test_private_name_guard_is_case_insensitive_for_content_and_paths(self) -> None:
+        private_name = "private-owner/private-repository"
+        content_leak = SimpleNamespace(
+            returncode=0,
+            stdout="+PRIVATE-OWNER/PRIVATE-REPOSITORY\n",
+            stderr="",
+        )
+        safe_paths = SimpleNamespace(returncode=0, stdout="", stderr="")
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=[content_leak, safe_paths]):
+            self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [private_name])
+
+        safe_content = SimpleNamespace(returncode=0, stdout="+public-safe\n", stderr="")
+        path_leak = SimpleNamespace(
+            returncode=0,
+            stdout="docs/PRIVATE-OWNER/PRIVATE-REPOSITORY.md\0",
+            stderr="",
+        )
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=[safe_content, path_leak]):
+            self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [private_name])
+
+    def test_private_name_guard_keeps_added_lines_beginning_with_two_pluses(self) -> None:
+        private_name = "private-owner/private-repository"
+        completed = SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "diff --git a/docs/example.md b/docs/example.md\n"
+                "--- a/docs/example.md\n"
+                "+++ b/docs/example.md\n"
+                "@@ -0,0 +1 @@\n"
+                "+++ PRIVATE-OWNER/PRIVATE-REPOSITORY\n"
+            ),
+            stderr="",
+        )
+        added_paths = SimpleNamespace(returncode=0, stdout="", stderr="")
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=[completed, added_paths]):
+            self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [private_name])
 
     def test_private_internal_disposition_forces_private_only_relevance(self) -> None:
         policy = {"public_relevance": {"products": "product_diligence"}}
@@ -206,6 +268,31 @@ class EstateClassificationTests(unittest.TestCase):
         )
         with mock.patch.object(MODULE.subprocess, "run", side_effect=[content, added_paths]):
             self.assertEqual(MODULE.private_leaks_added("base-ref", {private_name}), [private_name])
+
+    def test_private_name_guard_sanitizes_both_diff_timeouts(self) -> None:
+        private_value = "private-owner/private-repository"
+        first_timeout = MODULE.subprocess.TimeoutExpired(
+            cmd=["git", "diff", private_value],
+            timeout=60,
+            output=private_value,
+        )
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=first_timeout):
+            with self.assertRaises(MODULE.ClassificationError) as raised:
+                MODULE.private_leaks_added("base-ref", {private_value})
+        self.assertEqual(str(raised.exception), "timed out inspecting reviewed diff")
+        self.assertNotIn(private_value, str(raised.exception))
+
+        completed = SimpleNamespace(returncode=0, stdout="+public-safe\n", stderr="")
+        second_timeout = MODULE.subprocess.TimeoutExpired(
+            cmd=["git", "diff", "--name-only", private_value],
+            timeout=60,
+            output=private_value,
+        )
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=[completed, second_timeout]):
+            with self.assertRaises(MODULE.ClassificationError) as raised:
+                MODULE.private_leaks_added("base-ref", {private_value})
+        self.assertEqual(str(raised.exception), "timed out inspecting added paths")
+        self.assertNotIn(private_value, str(raised.exception))
 
     def test_private_classification_failure_does_not_expose_repository_identity(self) -> None:
         private_name = "private-owner/private-repository"
@@ -262,6 +349,36 @@ class EstateClassificationTests(unittest.TestCase):
             verify_policy.assert_called_once_with(estate)
             identity_guard.assert_called_once_with(rows, owner, organization_roster, {})
             private_guard.assert_called_once_with("origin/main", set(), set())
+
+    def test_main_sanitizes_unexpected_failures(self) -> None:
+        private_value = "private-owner/private-repository"
+        stderr = io.StringIO()
+        with (
+            mock.patch.object(MODULE, "load_effective_estate", side_effect=RuntimeError(private_value)),
+            mock.patch("sys.stderr", stderr),
+        ):
+            self.assertEqual(MODULE.main([]), 1)
+        self.assertEqual(
+            stderr.getvalue(),
+            "estate-classification: FAIL: unexpected classifier failure\n",
+        )
+        self.assertNotIn(private_value, stderr.getvalue())
+
+    def test_classifier_suite_is_registered_as_a_scoped_gate(self) -> None:
+        registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
+        gate = registry["gates"]["estate-classification-test"]
+        self.assertEqual(gate["command"], "python3 scripts/tests/estate-classification.test.py")
+        self.assertEqual(
+            set(gate["paths"]),
+            {
+                "scripts/estate-classification.py",
+                "scripts/tests/estate-classification.test.py",
+                "institutio/github/estate.yaml",
+                "institutio/github/access.yaml",
+                "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+                "scripts/gitvs.py",
+            },
+        )
 
 
 if __name__ == "__main__":
