@@ -4,11 +4,42 @@
   "_contact_note": "Set `contact` to the inbound address you want on the public surface (a dedicated alias is wiser than a personal inbox — it gets indexed). When set, every CTA becomes a mailto: pre-tagged with the repo + door, so clicks land already-classified in your inbox triage. Empty = plain CTA text, nothing published. This is the one switch that turns the capture funnel live; it's your call which address.",
   "contact": "contact@4444j99.dev",
   "headline": "I build production systems that solve expensive problems.",
-  "subhead": "Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:",
+  "subhead": "Selected systems range from live infrastructure to deployed tools and working prototypes. Every card states its current maturity and evidence basis. Two doors:",
+  "authorship": "Architected and directed by one person through a governed, multi-agent production system.",
+  "_flagships_note": "The Level-1 set selected in docs/positioning/portfolio-information-architecture.md. Repository entries reuse their judgment-layer seeds; inline entries are separately verified public surfaces and do not change value-repos.json funding priorities.",
+  "flagships": [
+   "organvm/limen",
+   "organvm/public-record-data-scrapper",
+   "organvm/a-i-chat--exporter",
+   {
+    "repo": "organvm-iv-taxis/a-i--skills",
+    "display_name": "a-i--skills",
+    "what_it_is": "A public library of reusable agent skills and operating patterns.",
+    "product_state": "Deployed public library; external adoption is modest and directly observable.",
+    "proof_signals": [
+     {"claim": "15 stars and 7 forks, with external accounts verified on 2026-08-09", "status": "verified"}
+    ],
+    "expensive_problem": "Agent teams repeatedly rebuild operating instructions instead of reusing reviewed, inspectable skills.",
+    "cta_client": "Inspect the skills library",
+    "details_url": "https://github.com/organvm-iv-taxis/a-i--skills"
+   },
+   {
+    "url": "https://mint.4444j99.dev",
+    "display_name": "MONETA",
+    "what_it_is": "A self-hosted Bitcoin licence mint.",
+    "product_state": "Live; revenue and external adoption are unverified.",
+    "proof_signals": [
+     {"claim": "public mint endpoint returned HTTP 200 on 2026-08-09", "status": "verified"}
+    ],
+    "expensive_problem": "Software sellers need a sovereign licensing path that does not depend on a hosted marketplace.",
+    "cta_client": "Inspect the live mint",
+    "details_url": "https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims"
+   }
+  ],
   "_bio_note": "The GitHub sidebar bio. STABLE IDENTITY ONLY — never a count that changes daily (repos / code files / tests / CI workflows). Volatile numbers live in the README, which regenerates; the bio does not, so any count baked here rots. always-working.py checks the live bio against this value and flags drift. <=160 chars (GitHub's limit).",
   "bio": "Builder of production systems — data, infra, AI, deploy, end-to-end. Python · TypeScript · React · FastAPI · Docker.",
-  "_blog_note": "The GitHub sidebar website link. Must resolve 200 — the old 4444j99.github.io/portfolio was a dead 404; the live portfolio is under organvm.github.io. profile-bio-sync.py owns + applies this and always-working.py flags drift, so a dead link can't silently sit on the profile.",
-  "blog": "https://organvm.github.io/portfolio/",
+  "_blog_note": "The GitHub sidebar website link. Must resolve 200 — the old 4444j99.github.io/portfolio was a dead 404; the live portfolio is under organvm-vii-kerygma.github.io. profile-bio-sync.py owns + applies this and always-working.py flags drift, so a dead link can't silently sit on the profile.",
+  "blog": "https://organvm-vii-kerygma.github.io/portfolio/",
   "door_client": {
    "label": "Have a problem one of these solves? — Deploy it for your shop",
    "blurb": "Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine."
@@ -21,7 +52,7 @@
   "_showcase_note": "The monument layer. Entries are DERIVED at render time from organs/consulting/constellation/registry.yaml (public_face_state >= readme AND a repo to link) — never hand-listed here. First-name slugs only; a project joins the front door the moment its face lands. Empty heading/blurb = defaults; remove the block to suppress the section.",
   "showcase": {
    "heading": "Built with partners",
-   "blurb": "Systems the same engine produced with collaborators — each a working venture where the partner drives the domain and the engine builds the machine."
+   "blurb": "Collaborative systems and ventures produced through the same engine. Maturity varies; each project page is the source of truth."
   },
   "_shelves_note": "The estate map (custody v4.0.0 — the storefront names its shelves). Copy PARITY OWNER: each org's live GitHub description (gh api orgs/<org> .description) — update both together. Rendered as a table right after the stats block; the populating note owns the migration window honestly.",
   "shelves": {
@@ -31,7 +62,7 @@
    "rows": [
     {"org": "organvm-i-theoria", "label": "I · THEORIA", "blurb": "Epistemological frameworks and recursive systems"},
     {"org": "organvm-ii-poiesis", "label": "II · POIESIS", "blurb": "Generative art and interactive systems"},
-    {"org": "organvm-iii-ergon", "label": "III · ERGON", "blurb": "Revenue-generating autonomous systems — the product ledger"},
+    {"org": "organvm-iii-ergon", "label": "III · ERGON", "blurb": "Autonomous product systems — the product ledger"},
     {"org": "organvm-iv-taxis", "label": "IV · TAXIS", "blurb": "Orchestration: governance, registry, automation"},
     {"org": "organvm-v-logos", "label": "V · LOGOS", "blurb": "Public process: essays, methodology, thought leadership"},
     {"org": "organvm-vi-koinonia", "label": "VI · KOINONIA", "blurb": "Community infrastructure and facilitation"},
@@ -43,20 +74,20 @@
  },
  "repos": {
   "organvm/public-record-data-scrapper": {
-   "display_name": "50-State UCC Public-Records Intelligence Platform",
-   "what_it_is": "A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+   "display_name": "UCC Public-Records Intelligence Platform",
+   "what_it_is": "A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+   "frontdoor_summary": "A working prototype with four state collectors implemented on a fifty-state architecture; deployment and adoption are unvalidated.",
+   "product_state": "Working prototype; four collectors implemented; deployment and adoption unvalidated.",
    "proof_signals": [
-    "3,399 passing tests",
-    "Terraform AWS (multi-AZ RDS, Redis, S3)",
-    "60+ collection agents",
-    "all 50 states",
-    "live deploy"
+    {"claim": "3,399 tests reported by the repository", "status": "repository-asserted"},
+    {"claim": "Terraform AWS architecture (multi-AZ RDS, Redis, S3)", "status": "repository-asserted"},
+    {"claim": "4 state collectors implemented on a 50-state architecture", "status": "verified"}
    ],
    "buyer": "MCA funders, ISOs, and brokers who buy financing leads constantly.",
    "expensive_problem": "Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.",
    "cost_of_not_having_it": "A single funded deal is worth a five-figure commission. Good data here pays for itself on the first conversion — and bad data burns your closers' hours on the dead numbers everyone else already called.",
-   "public_face": "the full platform — source, the 3,399 tests, the Terraform, all 60+ collection agents, the scoring method. Read every line.",
-   "private_operation": "the live, fed instance — fresh 50-state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
+   "public_face": "the platform source, repository-reported test suite, Terraform architecture, four implemented state collectors, and scoring method. Read every line and inspect the evidence labels.",
+   "private_operation": "the live, fed instance — fresh state pulls, premium-keyed enrichment, scoring tuned to your underwriting, current this morning. You can read every line and still can't clone the running engine; that's the part you put to work.",
    "ladder": [
     {
      "level": 1,
@@ -94,7 +125,7 @@
    "cta_client": "Deploy this for your shop",
    "cta_recruiter": "Work with the team that built this",
    "recruiter_bridge_level": 4,
-   "seo_description": "50-state UCC public-records intelligence — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
+   "seo_description": "UCC public-records intelligence on a 50-state architecture — fresh, enriched, scored MCA / financing leads via dashboard, REST API, and CLI.",
    "search_topics": [
     "merchant-cash-advance",
     "mca-leads",
@@ -110,13 +141,14 @@
   },
   "4444J99/peer-audited--behavioral-blockchain": {
    "display_name": "Styx Peer-Audited Behavioral Market",
-   "what_it_is": "A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.",
+   "what_it_is": "A working prototype for commitments with financial stakes: a Stripe escrow model, double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.",
+   "product_state": "Working prototype; public pitch reachable; deployment and adoption unvalidated.",
    "proof_signals": [
-    "1,107 tests across workspaces",
-    "public pitch surface returns 200 OK",
-    "NestJS + Next.js + React Native + Tauri monorepo",
-    "Stripe escrow and double-entry ledger",
-    "CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates"
+    {"claim": "1,107 tests reported across workspaces", "status": "repository-asserted"},
+    {"claim": "public pitch surface returned 200 during the evidence sweep", "status": "verified"},
+    {"claim": "NestJS + Next.js + React Native + Tauri monorepo", "status": "repository-asserted"},
+    {"claim": "Stripe escrow model and double-entry ledger", "status": "repository-asserted"},
+    {"claim": "CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates", "status": "repository-asserted"}
    ],
    "buyer": "Wellness operators, benefits teams, accountability programs, and regulated product teams that need commitments enforced without becoming the custodian of sensitive individual behavior data.",
    "expensive_problem": "Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.",
@@ -178,13 +210,14 @@
   },
   "organvm/universal-mail--automation": {
    "display_name": "Autonomous Inbox-Triage & Draft System",
-   "what_it_is": "A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
+   "what_it_is": "A working system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).",
+   "product_state": "Working prototype; internal operation evidenced; external adoption unvalidated.",
    "proof_signals": [
-    "400+ tests",
-    "Cloudflare Worker deploy (wrangler)",
-    "Gmail + Apple Mail, keyless",
-    "draft-only by design — composes replies, never sends",
-    "obligations ledger — every owed reply tracked"
+    {"claim": "400+ tests reported by the repository", "status": "repository-asserted"},
+    {"claim": "Cloudflare Worker deployment path (wrangler)", "status": "repository-asserted"},
+    {"claim": "Gmail + Apple Mail adapters", "status": "repository-asserted"},
+    {"claim": "draft-only design — composes replies, never sends", "status": "verified"},
+    {"claim": "obligations ledger tracks owed replies", "status": "repository-asserted"}
    ],
    "buyer": "Founders, operators, and the people who run their comms — anyone drowning in multi-account email who will not (and should not) hand an AI the send button.",
    "expensive_problem": "Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.",
@@ -243,13 +276,15 @@
   "organvm/a-i-chat--exporter": {
    "display_name": "AI Chat Exporter",
    "what_it_is": "A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.",
+   "frontdoor_summary": "A deployed public exporter with an active repository and MIT licence; functionality metrics remain repository-asserted on the linked Level-2 page.",
+   "product_state": "Deployed distribution surfaces; external adoption unvalidated.",
    "proof_signals": [
-    "170 tests across 16 suites",
-    "~5,900 lines of TypeScript",
-    "distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages",
-    "5 export formats",
-    "9-language UI",
-    "MIT-licensed · 549 commits, actively maintained"
+    {"claim": "170 tests across 16 suites reported by the repository", "status": "repository-asserted"},
+    {"claim": "about 5,900 lines of TypeScript", "status": "repository-asserted"},
+    {"claim": "distribution paths for GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages", "status": "repository-asserted"},
+    {"claim": "5 export formats", "status": "repository-asserted"},
+    {"claim": "9-language UI", "status": "repository-asserted"},
+    {"claim": "MIT license and active repository history", "status": "verified"}
    ],
    "buyer": "Researchers, writers, developers, and knowledge workers who live in ChatGPT and need their conversations out — into Obsidian or Notion, a RAG pipeline, version control, or a compliance archive.",
    "expensive_problem": "ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.",
@@ -523,16 +558,16 @@
     "infrastructure-as-code"
    ]
   },
-  "organvm/portfolio": {
-   "display_name": "Portfolio & Case Studies — 16 Production Systems",
-   "what_it_is": "A public portfolio site showcasing 16 completed production systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
+  "organvm-vii-kerygma/portfolio": {
+   "display_name": "Portfolio & Case Studies — 16 Systems",
+   "what_it_is": "A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
+   "product_state": "Deployed and live; case-study outcome claims require project-level evidence.",
    "proof_signals": [
-    "609 files · Astro + TypeScript · p5.js interactive visualizations",
-    "69 test files across the portfolio + content",
-    "16 case studies with architecture, decisions, and outcomes",
-    "Live demos & interactive diagrams",
-    "Netlify deployment + CI/CD",
-    "SEO-optimized content sites"
+    {"claim": "609 files · Astro + TypeScript · p5.js interactive visualizations", "status": "repository-asserted"},
+    {"claim": "69 test files across the portfolio and content", "status": "repository-asserted"},
+    {"claim": "16 case studies with architecture and decision narratives", "status": "repository-asserted"},
+    {"claim": "public portfolio endpoint returned 200 during the evidence sweep", "status": "verified"},
+    {"claim": "Netlify deployment and CI/CD configuration", "status": "repository-asserted"}
    ],
    "buyer": "Prospects who want to see the builder's decision-making process, architects and design teams evaluating a platform partner, companies studying real production systems.",
    "expensive_problem": "A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.",
@@ -593,19 +628,21 @@
   },
   "organvm/limen": {
    "display_name": "Self-Healing Agent Fleet Infrastructure",
-   "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.",
+   "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that automates recurring fleet maintenance on a heartbeat: monitoring liveness, reaping stale work, syncing state, and escalating failures. Built-in organs include proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, and health monitoring.",
+   "frontdoor_summary": "A live orchestration and governance system operating in its owner's environment since May 2026, with explicit failure states and human gates.",
+   "product_state": "Live in the owner's environment; external adoption unvalidated; human gates remain explicit.",
    "proof_signals": [
-    "9-rung organ ladder (each self-* owns its own domain)",
-    "Heartbeat-driven autonomic loop (scripts/metabolize.sh)",
-    "Self-healing on regression (heal/ branch pattern)",
-    "Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall",
-    "Zero manual upkeep — runs forever once seeded"
+    {"claim": "9-rung organ ladder (each self-* owns its own domain)", "status": "repository-asserted"},
+    {"claim": "heartbeat-driven autonomic loop (scripts/metabolize.sh)", "status": "verified"},
+    {"claim": "self-healing branch pattern for known regressions", "status": "repository-asserted"},
+    {"claim": "proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present", "status": "verified"},
+    {"claim": "failure states and human gates are explicit", "status": "verified"}
    ],
    "buyer": "Teams running 5+ agents who want infrastructure that fixes itself instead of paging on-call.",
-   "expensive_problem": "Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.",
-   "cost_of_not_having_it": "One missed credential rotation = entire lane down for hours. One stale clone = 100GB leak. One diverged state = silent corruption. Manual fixes cost 10–20h/month + the incidents themselves (lost work, unhappy users).",
+   "expensive_problem": "Every agent fleet needs health checks, credential refresh, stale-work cleanup, state reconciliation, and failure escalation. When those controls are manual or absent, routine drift can become lost work or cascading failure.",
+   "cost_of_not_having_it": "Missed credential rotation can take a lane down; stale clones consume storage; diverged state can silently corrupt coordination. Manual recovery also consumes the same operator attention the fleet was meant to free.",
    "public_face": "the full organ ladder — each self-* source, the beat loop, the escalation protocol, the federation dance. Read how proprioception sees itself; how VIGILIA heals divergence; how the credential organ stays valid.",
-   "private_operation": "your fleet breathing on its own — credentials auto-refresh, stale work auto-reaped, divergence auto-healed, health always visible. No ops work; everything Just Works until it doesn't, and then it fixes itself.",
+   "private_operation": "your fleet monitored and governed against explicit policies — known failure modes automated, health visible, and the remaining human gates surfaced instead of hidden.",
    "ladder": [
     {
      "level": 1,
@@ -619,7 +656,7 @@
      "level": 2,
      "name": "Self-healing deployed in my fleet",
      "kind": "Autonomous ops",
-     "what_they_get": "The full organ ladder running on your heartbeat; automatic remediation of known failure modes; zero manual ops work.",
+     "what_they_get": "The full organ ladder running on your heartbeat; automatic remediation of known failure modes; explicit escalation for everything else.",
      "internal_anchor": "$5k–$15k wiring + $2k/mo ops backup",
      "cadence": "Deploy once + retainer"
     },
@@ -635,7 +672,7 @@
      "level": 4,
      "name": "Own the fleet as your core platform",
      "kind": "Strategic platform build",
-     "what_they_get": "We build your entire agent fleet infrastructure on the self-* ladder — you own a platform that scales forever with zero ops burden.",
+     "what_they_get": "We build your agent-fleet infrastructure on the self-* ladder — you own the platform, its operating policies, and the escalation path.",
      "internal_anchor": "$50k–$150k platform + $5k–$20k / mo",
      "cadence": "Build + ongoing partnership"
     }
@@ -643,14 +680,14 @@
    "cta_client": "Adopt self-healing fleet ops",
    "cta_recruiter": "Work with the team that built autonomic infrastructure",
    "recruiter_bridge_level": 4,
-   "seo_description": "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
+   "seo_description": "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat.",
    "search_topics": [
     "agent-orchestration",
     "autonomous-systems",
     "fleet-management",
     "self-healing",
     "infrastructure-automation",
-    "zero-ops",
+    "autonomic-ops",
     "heartbeat-driven",
     "organ-architecture",
     "agent-reliability"
