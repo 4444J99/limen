@@ -3,6 +3,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
 import click
@@ -194,6 +195,13 @@ def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> No
 main.add_command(host_admission_group)
 
 
+def _yaml_json_default(value: object) -> str:
+    """Encode YAML scalar types that JSON does not natively represent."""
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    raise TypeError(f"unsupported YAML value for JSON transport: {type(value).__name__}")
+
+
 @click.group("board")
 def board_group():
     """Hydrate or bootstrap the authenticated private board custody."""
@@ -222,6 +230,9 @@ def board_initialize(source: Path) -> None:
     board = yaml.safe_load(source_path.read_text(encoding="utf-8"))
     if not isinstance(board, dict) or not isinstance(board.get("tasks"), list):
         raise click.ClickException("source must be a YAML board object with a tasks list")
+    # PyYAML resolves ISO dates to native objects.  The remote protocol is JSON, so normalize
+    # those values at this boundary while preserving the source's canonical ISO representation.
+    board = json.loads(json.dumps(board, default=_yaml_json_default))
     result = client_from_env().initialize_private_board(board)
     click.echo(json.dumps({key: value for key, value in result.items() if key != "board"}, indent=2, sort_keys=True))
 
