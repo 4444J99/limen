@@ -8,8 +8,10 @@ private work.
 The denominator is the stable two-pass W01 census receipt:
 10 controlled organizations and 314 accessible repositories (235 public, 79
 private). The receipt records identical repository keys across both passes;
-this classification is a reversible preflight over that denominator, not a
-completion receipt for W02.
+the verifier recomputes that repository identity/visibility digest and also
+matches the authenticated owner and organization roster. This classification
+is a reversible preflight over that denominator, not a completion receipt for
+W02.
 
 ## Four dimensions
 
@@ -18,7 +20,7 @@ Every live census record receives these dimensions during verification.
 | Dimension | Values | Evidence |
 | --- | --- | --- |
 | Primary role | infrastructure, proof, experiments, products, archives, private operations, partner work | Estate governance class, product ledger, archive fact, and access grant posture |
-| Maturity | active, maintained, dormant, archived, unvalidated | GitHub `archived` and `pushed_at` facts; 90- and 365-day policy boundaries |
+| Maturity | active, maintained, dormant, archived, unvalidated | GitHub `archived` and `pushed_at` facts; exact elapsed-time comparisons at the inclusive 90- and 365-day policy boundaries |
 | Visibility disposition | public evidence, public partner, private internal, private partner | GitHub `private` fact plus the access-grant registry |
 | Public relevance | technical diligence, front-door proof, public reference, product diligence, historical reference, private only, partner scoped | Primary role plus visibility disposition |
 
@@ -62,7 +64,8 @@ aggregate report. It does not add private repository names, descriptions,
 topics, or timestamps. Verification may inspect those facts directly through
 the authenticated GitHub API, keeps them in process, and checks the reviewed
 diff against the live private-name set. Any newly added private repository name
-in these public outputs is a hard failure.
+in public content, a newly added path, or a rename destination is a hard
+failure. Failure messages remain aggregate and never echo the private identity.
 
 Sensitive rationale remains in the existing arca-sealed
 `institutio/github/estate.private.yaml` overlay, which can deepen a repository
@@ -95,9 +98,11 @@ python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w0
 ```
 
 It fails unless the policy taxonomy is complete, every live census record has
-exactly one primary class and all four dimensions, the W01 denominator and
-visibility counts still match, and the public diff contains no newly added
-private repository name. The unit companion is:
+exactly one primary class and all four dimensions, every selector key and value
+is recognized, the live owner/organization roster and repository
+identity/visibility digest still match W01, the denominator counts still
+match, and the public diff contains no newly added private repository name in
+content or path metadata. The unit companion is:
 
 ```bash
 python3 scripts/tests/estate-classification.test.py
