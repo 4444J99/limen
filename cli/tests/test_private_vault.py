@@ -30,8 +30,10 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     monkeypatch.setattr(module, "ROOT", root)
     monkeypatch.setattr(module, "VAULT_DIR", vault_dir)
     monkeypatch.setattr(module, "MANIFEST", vault_dir / "manifest.jsonl")
-    monkeypatch.setattr(module, "REQUIRED_ARTIFACT_IDS", frozenset({"artifact-001"}))
+    monkeypatch.setattr(module, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001"}))
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
+    module._real_historical_artifact_ids = module._historical_artifact_ids
+    monkeypatch.setattr(module, "_historical_artifact_ids", lambda: {"artifact-001"})
     module._real_encrypt_file = module._encrypt_file
     module._real_decrypt_file = module._decrypt_file
     module._real_ciphertext_recipient_keyids = module._ciphertext_recipient_keyids
@@ -104,6 +106,75 @@ def test_verify_accepts_coherent_public_safe_custody(vault, monkeypatch: pytest.
 
 
 def test_verify_rejects_missing_required_manifest(vault):
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_verify_rejects_deletion_from_committed_custody(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("secret", encoding="utf-8")
+    _add(vault, source)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
+    monkeypatch.setattr(vault, "_historical_artifact_ids", lambda: {"artifact-001", "artifact-002"})
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_historical_baseline_is_monotonic_across_commits(vault):
+    subprocess.run(["git", "-C", str(vault.ROOT), "init"], check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "config", "user.email", "vault-test@example.invalid"],
+        check=True,
+    )
+    subprocess.run(["git", "-C", str(vault.ROOT), "config", "user.name", "Vault Test"], check=True)
+    first_rows = [
+        {"schema": vault.SCHEMA, "artifact_id": "artifact-001"},
+        {"schema": vault.SCHEMA, "artifact_id": "artifact-002"},
+    ]
+    vault.MANIFEST.write_text("".join(json.dumps(row) + "\n" for row in first_rows), encoding="utf-8")
+    subprocess.run(["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"], check=True)
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "commit", "-m", "admit custody"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    vault.MANIFEST.write_text(
+        json.dumps({"schema": vault.SCHEMA, "artifact_id": "artifact-001"}) + "\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"], check=True)
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "commit", "-m", "attempt deletion"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert vault._real_historical_artifact_ids() == {"artifact-001", "artifact-002"}
+
+
+def test_verify_rejects_non_string_artifact_id(vault):
+    row = {
+        "schema": vault.SCHEMA,
+        "artifact_id": 123,
+        "ciphertext": "123.gpg",
+        "ciphertext_sha256": "0" * 64,
+        "ciphertext_bytes": 1,
+        "recipient_fpr": vault.FINGERPRINT,
+        "vaulted_at": "2026-08-09T00:00:00+00:00",
+    }
+
+    errors = vault._validate_public_row(row, 1)
+
+    assert any("artifact id must be a string" in error for error in errors)
+
+
+def test_verify_rejects_symlinked_manifest(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    target = tmp_path / "manifest-target.jsonl"
+    target.write_text("{}\n", encoding="utf-8")
+    vault.MANIFEST.symlink_to(target)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: {"institutio/vault/manifest.jsonl"})
+
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 

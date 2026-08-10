@@ -55,7 +55,7 @@ PUBLIC_FIELDS = {
     "recipient_fpr",
     "vaulted_at",
 }
-REQUIRED_ARTIFACT_IDS = frozenset(
+BOOTSTRAP_ARTIFACT_IDS = frozenset(
     {
         "artifact-001",
         "artifact-002",
@@ -156,7 +156,10 @@ def _contained_file(base: Path, name: str) -> Path:
 
 
 def _cipher_path(row: dict) -> Path:
-    artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
+    artifact_id_value = row.get("artifact_id")
+    if not isinstance(artifact_id_value, str):
+        raise VaultError("artifact id must be a string")
+    artifact_id = _safe_artifact_id(artifact_id_value)
     expected = f"{artifact_id}.gpg"
     name = str(row.get("ciphertext") or "")
     if name != expected:
@@ -165,8 +168,12 @@ def _cipher_path(row: dict) -> Path:
 
 
 def _read_manifest() -> list[dict]:
+    if MANIFEST.is_symlink():
+        raise VaultError("manifest must be a regular non-symlink file")
     if not MANIFEST.exists():
         return []
+    if not MANIFEST.is_file():
+        raise VaultError("manifest must be a regular non-symlink file")
     rows: list[dict] = []
     for line_number, raw in enumerate(MANIFEST.read_text(encoding="utf-8").splitlines(), 1):
         if not raw.strip():
@@ -228,6 +235,35 @@ def _tracked_files() -> set[str]:
     if run.returncode != 0:
         raise VaultError(f"cannot inspect git custody: {_diagnostic(run)}")
     return set(run.stdout.splitlines())
+
+
+def _historical_artifact_ids() -> set[str]:
+    """Return every neutral v2 artifact id ever admitted to committed custody."""
+    manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
+    history = _run_command(["git", "-C", str(ROOT), "log", "--format=%H", "--follow", "--", manifest_relative])
+    if history.returncode != 0:
+        raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
+
+    artifact_ids: set[str] = set()
+    for revision in history.stdout.splitlines():
+        snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
+        # A deletion commit is part of the path history but has no file at that revision.
+        if snapshot.returncode != 0:
+            continue
+        for line_number, raw in enumerate(snapshot.stdout.splitlines(), 1):
+            if not raw.strip():
+                continue
+            try:
+                row = json.loads(raw)
+            except json.JSONDecodeError as exc:
+                raise VaultError(f"committed manifest history contains invalid JSON at line {line_number}") from exc
+            if not isinstance(row, dict) or row.get("schema") != SCHEMA:
+                continue
+            artifact_id = row.get("artifact_id")
+            if not isinstance(artifact_id, str):
+                raise VaultError("committed manifest history contains a non-string artifact id")
+            artifact_ids.add(_safe_artifact_id(artifact_id))
+    return artifact_ids
 
 
 def _reject_tracked_plaintext(source: Path) -> None:
@@ -455,12 +491,15 @@ def cmd_add(args: argparse.Namespace) -> int:
 
 
 def cmd_verify(_args: argparse.Namespace) -> int:
-    rows = _read_manifest()
     tracked = _tracked_files()
     failures: list[str] = []
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
-    if not MANIFEST.is_file():
+    manifest_is_safe = MANIFEST.is_file() and not MANIFEST.is_symlink()
+    if not manifest_is_safe:
         failures.append(f"required manifest is missing: {manifest_relative}")
+        rows: list[dict] = []
+    else:
+        rows = _read_manifest()
     if manifest_relative not in tracked:
         failures.append(f"manifest not git-tracked (custody gap): {manifest_relative}")
     for prefix in PRIVATE_TRACKING_PREFIXES:
@@ -488,7 +527,12 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         relative = path.relative_to(ROOT).as_posix()
         if relative not in tracked:
             failures.append(f"ciphertext not git-tracked (custody gap): {relative}")
-    missing_required = sorted(REQUIRED_ARTIFACT_IDS - seen_ids)
+    try:
+        custody_baseline = BOOTSTRAP_ARTIFACT_IDS | _historical_artifact_ids()
+    except VaultError as exc:
+        failures.append(str(exc))
+        custody_baseline = BOOTSTRAP_ARTIFACT_IDS
+    missing_required = sorted(custody_baseline - seen_ids)
     if missing_required:
         failures.append(f"required custody baseline is missing neutral ids: {', '.join(missing_required)}")
     for stray in VAULT_DIR.iterdir() if VAULT_DIR.exists() else []:
