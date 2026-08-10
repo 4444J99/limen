@@ -2,9 +2,9 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
-from: Codex desktop human-authorized preflight session
-to: next healthy Codex session with a fresh human-authorized task
-scope: PSP-P02-W06 and PSP-P02-W07 preflight
+from: Codex desktop human-protected preflight task
+to: next healthy human-protected Codex task
+scope: organvm/limen@codex/psp-p02-w06-w07-preflight
 phase: PROVE
 compression_level: medium
 ---
@@ -16,18 +16,28 @@ compression_level: medium
 - W06 issue: #2178 — formal dependency: #2177 (W05).
 - W07 issue: #2179 — formal dependency: #2178 (W06).
 - Branch: `codex/psp-p02-w06-w07-preflight`.
+- Draft pull request: https://github.com/organvm/limen/pull/2311, stacked on PR #2310.
+- Current W04/W05 parent head: `3a752d530633c8a2ec4b7942e325b4838e56c233`.
+- Initial W06/W07 implementation: `2a0550862091a976b756034d4ddfa3965fd206ec`.
+- Exact verified implementation head: `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`.
+- Published remote checkpoint: `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`
+  before this relay refresh; fetch PR #2311 before resuming.
+- Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction.
 - This is preflight-only implementation. It carries no W06/W07 completion receipt,
   issue closure, merge authority, publication, or release effect.
 
 ## Implemented preflight seam
 
 - `scripts/claim-policy.py` consumes the W05-owned, public-safe claim-ledger
-  export contract. It rejects unsupported, stale, private/restricted, forbidden,
-  withdrawn, and source-changed claims without fetching data or exposing claim
-  wording in its verdict.
+  export contract. It rejects unsupported, stale, future-dated, private/restricted,
+  forbidden, withdrawn, invalid-window, and source-changed claims without fetching
+  data or exposing claim wording in its verdict. Public source anchors must be
+  credential-free HTTPS URLs.
 - `scripts/claim-surface-quarantine.py` consumes a complete generated-public-
-  surface manifest and emits quarantined staging copies only. Source artifacts
-  remain unchanged; no deploy or publishing pathway is called.
+  surface manifest, proves that every rejected claim is covered, validates every
+  bounded marker before writing, rejects traversal/symlink/duplicate surfaces, and
+  emits quarantined staging copies only. Source artifacts remain unchanged; no
+  deploy or publishing pathway is called.
 - `scripts/claim-quarantine-drill.py` runs a hermetic false-claim drill across
   every fixture-declared public surface. The fixture contains synthetic text only.
 - `docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md` specifies incident
@@ -38,11 +48,16 @@ compression_level: medium
 ## Verified preflight state
 
 - `bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q`
-  — 5 passed.
+  — 9 passed.
 - `python3 scripts/claim-quarantine-drill.py --fixture-dir scripts/tests/fixtures/positioning-claim-drill --json`
   — passed; two synthetic generated public surfaces quarantined, publication effect `none`.
 - `python3 scripts/check-gates.py` — passed with the existing recorded
   `cli/**` deploy-trigger disposition.
+- `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w04-w05-public-evidence-preflight`
+  — passed over the full W06/W07 diff: 314 repositories, 235 public, 79 private,
+  with no private repository token added.
+- `scripts/verify-scoped.sh` — all 23 implicated cheap-wave gates passed on exact
+  implementation head `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`.
 
 ## Dependency boundary and formal sequence
 
