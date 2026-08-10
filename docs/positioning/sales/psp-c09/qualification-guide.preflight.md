@@ -4,7 +4,7 @@ Status: **PREPARED/PREFLIGHT**. This is the public-safe W01 staging artifact, no
 commercial outcome, leaf receipt, or authorization to contact anyone.
 
 The rubric consumes the canonical identity/offer/qualification contract in Limen PR #2312 at exact
-head `b5bc01585a10615e85e1ef5b31a2356c24fb9bc9`. Delivery feasibility is constrained by private PR
+head `e440f5b96b7baa67ebc45868e327b5ce62579142`. Delivery feasibility is constrained by private PR
 #135 at `4ae8e81665e35e6a5d403a3e13935021ce6544ec`; proof-led content and attribution design are
 constrained by Limen PR #2316 at `36bf386c22e64785db8e7843899bf9aabf85bf89`.
 Those source contracts remain authoritative and are not duplicated here.

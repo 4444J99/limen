@@ -7,7 +7,7 @@
   "syntheticOnly": true,
   "externalEffects": [],
   "sourceLock": {
-    "commercialContract": "organvm/limen#2312@b5bc01585a10615e85e1ef5b31a2356c24fb9bc9",
+    "commercialContract": "organvm/limen#2312@e440f5b96b7baa67ebc45868e327b5ce62579142",
     "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@4ae8e81665e35e6a5d403a3e13935021ce6544ec",
     "proofLedContent": "organvm/limen#2316@36bf386c22e64785db8e7843899bf9aabf85bf89"
   },
