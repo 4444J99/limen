@@ -39,7 +39,6 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import quote
 
 import yaml
 
@@ -1046,10 +1045,11 @@ def _ensure_milestone(graph: dict[str, Any], *, apply: bool) -> dict[str, Any] |
     return {"number": int(row["number"]), "title": title, "url": row.get("html_url")}
 
 
-def fetch_program_issues(graph: dict[str, Any], *, label_may_be_missing: bool = False) -> dict[str, dict[str, Any]]:
+def fetch_program_issues(graph: dict[str, Any]) -> dict[str, dict[str, Any]]:
     repository = graph["program"]["repository"]
-    label = graph["program"]["issue_projection"]["program_label"]
-    rows = _pages(repository, f"issues?state=all&labels={quote(label, safe='')}") if not label_may_be_missing else []
+    # The marker, not a mutable label, is the projection identity. Scan every issue in a stable
+    # creation order so label drift cannot hide duplicates or orphans from verification or sync.
+    rows = _pages(repository, "issues?state=all&sort=created&direction=asc")
     by_id: dict[str, dict[str, Any]] = {}
     duplicates: dict[str, list[int]] = {}
     for row in rows:
@@ -1738,9 +1738,15 @@ def sync(
     return {"mode": "apply", "created": create_ids, "updated": graph["ordered_ids"], "milestone": milestone}
 
 
-def remote_parity(graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+def remote_parity(
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    *,
+    remote: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     validate_map(mapping, graph, complete=True)
-    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    if remote is None:
+        remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     expected_ids = set(graph["ordered_ids"])
     actual_ids = set(remote)
     missing = sorted(expected_ids - actual_ids)
@@ -2131,13 +2137,12 @@ def omega_pass_record(result: dict[str, Any], number: int) -> dict[str, Any]:
 def omega(
     graph: dict[str, Any], mapping: dict[str, Any], *, require_two_pass: bool, allow_open_terminal: bool = False
 ) -> dict[str, Any]:
-    parity = remote_parity(graph, mapping)
     remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    parity = remote_parity(graph, mapping, remote=remote)
     terminal_work_ids, terminal_phase_ids = phase_terminal_scope(graph)
     proof_window = allow_open_terminal or require_two_pass
     excluded_terminal = {"PSP-ROOT", *terminal_phase_ids, *terminal_work_ids} if proof_window else set()
     remote_state_digest = _remote_state_digest(graph, mapping, remote, excluded_terminal)
-    parity_digest = _canonical_digest(parity)
     phase_bindings = {
         phase["id"]: _phase_binding_values(phase["id"], graph, mapping, remote)
         for phase in graph["phases"]
