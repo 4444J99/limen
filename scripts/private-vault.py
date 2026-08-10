@@ -23,6 +23,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import stat
 import subprocess
@@ -32,7 +33,7 @@ import time
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator
+from typing import BinaryIO, Iterator
 
 ROOT = Path(__file__).resolve().parent.parent
 PUBKEY = ROOT / "docs" / "keys" / "anthony-padavano-gpg.asc"
@@ -97,6 +98,49 @@ def _run_command(args: list[str], *, env: dict[str, str] | None = None) -> subpr
         raise VaultError(f"required executable is unavailable: {args[0]}") from exc
     except subprocess.TimeoutExpired as exc:
         raise VaultError(f"{args[0]} exceeded the {COMMAND_TIMEOUT_SECONDS}s command deadline") from exc
+
+
+def _git_common_directory() -> Path | None:
+    marker = ROOT / ".git"
+    if marker.is_dir():
+        git_directory = marker
+    elif marker.is_file() and not marker.is_symlink():
+        try:
+            header = marker.read_text(encoding="utf-8").strip()
+        except (OSError, UnicodeDecodeError) as exc:
+            raise VaultError("cannot establish authentic Git history") from exc
+        if not header.startswith("gitdir: "):
+            raise VaultError("cannot establish authentic Git history")
+        git_directory = Path(header.removeprefix("gitdir: "))
+        if not git_directory.is_absolute():
+            git_directory = marker.parent / git_directory
+        git_directory = git_directory.resolve()
+    else:
+        return None
+    common_marker = git_directory / "commondir"
+    if not common_marker.exists():
+        return git_directory
+    try:
+        common_value = common_marker.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise VaultError("cannot establish authentic Git history") from exc
+    if not common_value:
+        raise VaultError("cannot establish authentic Git history")
+    common_directory = Path(common_value)
+    if not common_directory.is_absolute():
+        common_directory = git_directory / common_directory
+    return common_directory.resolve()
+
+
+def _reject_legacy_grafts() -> None:
+    common_directory = _git_common_directory()
+    if common_directory is not None and os.path.lexists(common_directory / "info" / "grafts"):
+        raise VaultError("refusing rewritten Git custody history")
+
+
+def _git_command(*args: str) -> subprocess.CompletedProcess[str]:
+    _reject_legacy_grafts()
+    return _run_command(["git", "--no-replace-objects", "-C", str(ROOT), *args])
 
 
 @contextmanager
@@ -255,7 +299,7 @@ def _write_manifest(rows: list[dict]) -> None:
 
 
 def _tracked_files() -> set[str]:
-    run = _run_command(["git", "-C", str(ROOT), "ls-files", "-z"])
+    run = _git_command("ls-files", "-z")
     if run.returncode != 0:
         raise VaultError(f"cannot inspect git custody: {_diagnostic(run)}")
     return {path for path in run.stdout.split("\0") if path}
@@ -282,32 +326,26 @@ def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
 
 def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     """Return immutable metadata for every neutral v2 artifact admitted to custody."""
-    shallow = _run_command(["git", "-C", str(ROOT), "rev-parse", "--is-shallow-repository"])
+    shallow = _git_command("rev-parse", "--is-shallow-repository")
     if shallow.returncode != 0:
         raise VaultError("cannot prove complete committed custody history")
     if shallow.stdout.strip() != "false":
         raise VaultError("committed custody history requires a non-shallow repository")
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
-    history = _run_command(["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative])
+    history = _git_command("rev-list", "--full-history", "HEAD", "--", manifest_relative)
     if history.returncode != 0:
         raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
-    safe_root_object = _run_command(
-        ["git", "-C", str(ROOT), "cat-file", "-e", f"{PUBLIC_SAFE_HISTORY_ROOT}^{{commit}}"]
-    )
+    safe_root_object = _git_command("cat-file", "-e", f"{PUBLIC_SAFE_HISTORY_ROOT}^{{commit}}")
     safe_root_is_reachable = False
     if safe_root_object.returncode == 0:
-        safe_root = _run_command(
-            ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, "HEAD"]
-        )
+        safe_root = _git_command("merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, "HEAD")
         if safe_root.returncode not in {0, 1}:
             raise VaultError("cannot inspect the public-safe manifest history boundary")
         safe_root_is_reachable = safe_root.returncode == 0
 
     artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for revision in history.stdout.splitlines():
-        presence = _run_command(
-            ["git", "-C", str(ROOT), "ls-tree", "--name-only", "-z", revision, "--", manifest_relative]
-        )
+        presence = _git_command("ls-tree", "--name-only", "-z", revision, "--", manifest_relative)
         if presence.returncode != 0:
             raise VaultError("cannot inspect a committed manifest history tree")
         historical_paths = [path for path in presence.stdout.split("\0") if path]
@@ -316,14 +354,12 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
             continue
         if historical_paths != [manifest_relative]:
             raise VaultError("committed manifest history tree returned an unexpected path")
-        snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
+        snapshot = _git_command("show", f"{revision}:{manifest_relative}")
         if snapshot.returncode != 0:
             raise VaultError("cannot read a committed manifest history snapshot")
         require_public_safe = True
         if safe_root_is_reachable:
-            before_safe_root = _run_command(
-                ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", revision, PUBLIC_SAFE_HISTORY_ROOT]
-            )
+            before_safe_root = _git_command("merge-base", "--is-ancestor", revision, PUBLIC_SAFE_HISTORY_ROOT)
             if before_safe_root.returncode not in {0, 1}:
                 raise VaultError("cannot classify a committed manifest history revision")
             require_public_safe = revision == PUBLIC_SAFE_HISTORY_ROOT or before_safe_root.returncode == 1
@@ -372,15 +408,32 @@ def _require_committed_custody(rows: list[dict]) -> None:
             raise VaultError(f"restore target differs from committed custody history: {artifact_id}")
 
 
-def _reject_tracked_plaintext(source: Path) -> None:
+def _reject_tracked_plaintext(source: Path) -> tuple[int, int]:
+    source_info = source.stat()
+    source_identity = source_info.st_dev, source_info.st_ino
+    tracked = _tracked_files()
+    for tracked_path in tracked:
+        try:
+            tracked_info = (ROOT / tracked_path).stat(follow_symlinks=False)
+        except (FileNotFoundError, NotADirectoryError, OSError):
+            continue
+        if stat.S_ISREG(tracked_info.st_mode) and (tracked_info.st_dev, tracked_info.st_ino) == source_identity:
+            raise VaultError("refusing to vault plaintext whose file object is already git-tracked")
     try:
         relative = source.relative_to(ROOT.resolve()).as_posix()
     except ValueError:
-        return
-    if relative in _tracked_files():
+        return source_identity
+    if relative in tracked:
         raise VaultError("refusing to vault plaintext that is already git-tracked")
     if not any(relative.startswith(prefix) for prefix in PRIVATE_TRACKING_PREFIXES):
         raise VaultError("repository-local plaintext must remain under a gitignored private namespace")
+    return source_identity
+
+
+def _require_untracked_source_identity(source: Path, expected_identity: tuple[int, int]) -> None:
+    current_identity = _reject_tracked_plaintext(source)
+    if current_identity != expected_identity:
+        raise VaultError("private source changed during custody admission")
 
 
 def _gpg_env(gnupghome: str) -> dict:
@@ -506,6 +559,58 @@ def _decrypt_file(source: Path, destination: Path) -> None:
         raise VaultError(f"decryption failed (private key required): {_diagnostic(run)}")
 
 
+def _run_gpg_from_fd(
+    args: list[str], source_fd: int, destination_fd: int | None = None
+) -> subprocess.CompletedProcess[str]:
+    os.lseek(source_fd, 0, os.SEEK_SET)
+    if destination_fd is not None:
+        os.ftruncate(destination_fd, 0)
+        os.lseek(destination_fd, 0, os.SEEK_SET)
+    with os.fdopen(os.dup(source_fd), "rb") as source_handle:
+        destination_handle = os.fdopen(os.dup(destination_fd), "wb") if destination_fd is not None else None
+        try:
+            return subprocess.run(
+                args,
+                stdin=source_handle,
+                stdout=destination_handle if destination_handle is not None else subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                errors="surrogateescape",
+                timeout=COMMAND_TIMEOUT_SECONDS,
+            )
+        except FileNotFoundError as exc:
+            raise VaultError("required executable is unavailable: gpg") from exc
+        except subprocess.TimeoutExpired as exc:
+            raise VaultError(f"gpg exceeded the {COMMAND_TIMEOUT_SECONDS}s command deadline") from exc
+        finally:
+            if destination_handle is not None:
+                destination_handle.close()
+
+
+def _decrypt_descriptors(source_fd: int, destination_fd: int) -> None:
+    run = _run_gpg_from_fd(["gpg", "--batch", "--yes", "--decrypt"], source_fd, destination_fd)
+    if run.returncode != 0:
+        raise VaultError(f"decryption failed (private key required): {_diagnostic(run)}")
+    os.fsync(destination_fd)
+
+
+def _ciphertext_recipient_keyids_fd(ciphertext_fd: int) -> set[str]:
+    run = _run_gpg_from_fd(
+        ["gpg", "--batch", "--list-only", "--status-fd", "1", "--decrypt"],
+        ciphertext_fd,
+    )
+    if run.returncode != 0:
+        raise VaultError(f"cannot inspect ciphertext recipient: {_diagnostic(run)}")
+    recipients = {
+        fields[2].upper()
+        for line in run.stdout.splitlines()
+        if line.startswith("[GNUPG:] ENC_TO ") and len(fields := line.split()) >= 3
+    }
+    if not recipients:
+        raise VaultError("ciphertext has no inspectable OpenPGP recipient")
+    return recipients
+
+
 def _ciphertext_recipient_keyids(ciphertext: Path) -> set[str]:
     run = _run_command(["gpg", "--batch", "--list-only", "--status-fd", "1", "--decrypt", str(ciphertext)])
     if run.returncode != 0:
@@ -520,9 +625,7 @@ def _ciphertext_recipient_keyids(ciphertext: Path) -> set[str]:
     return recipients
 
 
-def _openpgp_packet_tags(ciphertext: Path) -> list[int]:
-    """Parse complete OpenPGP packet framing without decrypting packet bodies."""
-    size = ciphertext.stat().st_size
+def _openpgp_packet_tags_handle(handle: BinaryIO, size: int) -> list[int]:
     tags: list[int] = []
 
     def read_octet(handle) -> int:
@@ -550,33 +653,44 @@ def _openpgp_packet_tags(ciphertext: Path) -> list[int]:
             return int.from_bytes(raw, "big"), False
         return 1 << (first & 0x1F), True
 
-    with ciphertext.open("rb") as handle:
-        while handle.tell() < size:
-            header = read_octet(handle)
-            if not header & 0x80:
-                raise VaultError("ciphertext contains bytes outside OpenPGP packet framing")
-            if header & 0x40:
-                tags.append(header & 0x3F)
+    while handle.tell() < size:
+        header = read_octet(handle)
+        if not header & 0x80:
+            raise VaultError("ciphertext contains bytes outside OpenPGP packet framing")
+        if header & 0x40:
+            tags.append(header & 0x3F)
+            length, partial = read_new_length(handle)
+            skip_body(handle, length)
+            while partial:
                 length, partial = read_new_length(handle)
                 skip_body(handle, length)
-                while partial:
-                    length, partial = read_new_length(handle)
-                    skip_body(handle, length)
-                continue
+            continue
 
-            tags.append((header >> 2) & 0x0F)
-            length_type = header & 0x03
-            if length_type == 3:
-                raise VaultError("ciphertext uses indeterminate OpenPGP packet framing")
-            length_octets = (1, 2, 4)[length_type]
-            raw_length = handle.read(length_octets)
-            if len(raw_length) != length_octets:
-                raise VaultError("ciphertext has truncated OpenPGP packet length")
-            skip_body(handle, int.from_bytes(raw_length, "big"))
+        tags.append((header >> 2) & 0x0F)
+        length_type = header & 0x03
+        if length_type == 3:
+            raise VaultError("ciphertext uses indeterminate OpenPGP packet framing")
+        length_octets = (1, 2, 4)[length_type]
+        raw_length = handle.read(length_octets)
+        if len(raw_length) != length_octets:
+            raise VaultError("ciphertext has truncated OpenPGP packet length")
+        skip_body(handle, int.from_bytes(raw_length, "big"))
 
     if tags not in ([1, 18], [1, 20]):
         raise VaultError("ciphertext has an unexpected OpenPGP packet sequence")
     return tags
+
+
+def _openpgp_packet_tags(ciphertext: Path) -> list[int]:
+    """Parse complete OpenPGP packet framing without decrypting packet bodies."""
+    with ciphertext.open("rb") as handle:
+        return _openpgp_packet_tags_handle(handle, ciphertext.stat().st_size)
+
+
+def _openpgp_packet_tags_fd(ciphertext_fd: int) -> list[int]:
+    os.lseek(ciphertext_fd, 0, os.SEEK_SET)
+    with os.fdopen(os.dup(ciphertext_fd), "rb") as handle:
+        return _openpgp_packet_tags_handle(handle, os.fstat(ciphertext_fd).st_size)
 
 
 def _ciphertext_failures(row: dict, path: Path) -> list[str]:
@@ -600,16 +714,72 @@ def _ciphertext_failures(row: dict, path: Path) -> list[str]:
     return failures
 
 
-def _snapshot_source(source: Path, destination: Path) -> tuple[str, int]:
+def _sha256_fd(file_descriptor: int) -> str:
+    os.lseek(file_descriptor, 0, os.SEEK_SET)
+    digest = hashlib.sha256()
+    with os.fdopen(os.dup(file_descriptor), "rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _ciphertext_failures_fd(row: dict, file_descriptor: int) -> list[str]:
+    name = str(row.get("ciphertext") or "")
+    failures: list[str] = []
+    info = os.fstat(file_descriptor)
+    if not stat.S_ISREG(info.st_mode):
+        return [f"missing or unsafe ciphertext: {name}"]
+    if _sha256_fd(file_descriptor) != row.get("ciphertext_sha256"):
+        failures.append(f"ciphertext sha mismatch: {name}")
+    if info.st_size != row.get("ciphertext_bytes"):
+        failures.append(f"ciphertext byte count mismatch: {name}")
+    if not failures:
+        try:
+            _openpgp_packet_tags_fd(file_descriptor)
+            recipients = _ciphertext_recipient_keyids_fd(file_descriptor)
+        except VaultError as exc:
+            failures.append(f"ciphertext recipient inspection failed: {name}: {exc}")
+        else:
+            if recipients != {ENCRYPTION_SUBKEY_ID}:
+                failures.append(f"ciphertext recipient mismatch: {name}")
+    return failures
+
+
+def _copy_file_and_hash(source: BinaryIO, destination: BinaryIO) -> tuple[str, int]:
     digest = hashlib.sha256()
     count = 0
-    with source.open("rb") as input_handle, destination.open("wb") as output:
-        for chunk in iter(lambda: input_handle.read(1 << 20), b""):
-            output.write(chunk)
-            digest.update(chunk)
-            count += len(chunk)
-    os.chmod(destination, 0o600)
+    for chunk in iter(lambda: source.read(1 << 20), b""):
+        destination.write(chunk)
+        digest.update(chunk)
+        count += len(chunk)
     return digest.hexdigest(), count
+
+
+def _snapshot_source(source: Path, destination: Path, expected_identity: tuple[int, int]) -> tuple[str, int]:
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        source_fd = os.open(source, flags)
+    except OSError as exc:
+        raise VaultError("cannot open a stable private source snapshot") from exc
+    try:
+        before = os.fstat(source_fd)
+        if not stat.S_ISREG(before.st_mode):
+            raise VaultError("private snapshot source is not a regular file")
+        if (before.st_dev, before.st_ino) != expected_identity:
+            raise VaultError("private source changed before snapshot creation")
+        with os.fdopen(source_fd, "rb", closefd=False) as input_handle, destination.open("wb") as output:
+            result = _copy_file_and_hash(input_handle, output)
+            output.flush()
+            os.fsync(output.fileno())
+        after = os.fstat(source_fd)
+    finally:
+        os.close(source_fd)
+    before_identity = (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+    after_identity = (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+    if before_identity != after_identity or result[1] != before.st_size:
+        raise VaultError("private source changed while creating its snapshot")
+    os.chmod(destination, 0o600)
+    return result
 
 
 def _write_envelope(
@@ -669,6 +839,47 @@ def _extract_envelope(envelope: Path, artifact_id: str, destination: Path) -> st
     return original_name
 
 
+def _extract_envelope_descriptors(envelope_fd: int, artifact_id: str, destination_fd: int) -> str:
+    digest = hashlib.sha256()
+    count = 0
+    os.lseek(envelope_fd, 0, os.SEEK_SET)
+    os.ftruncate(destination_fd, 0)
+    os.lseek(destination_fd, 0, os.SEEK_SET)
+    with (
+        os.fdopen(os.dup(envelope_fd), "rb") as source,
+        os.fdopen(os.dup(destination_fd), "wb") as output,
+    ):
+        if source.readline(len(MAGIC) + 1) != MAGIC:
+            raise VaultError(f"decrypted envelope for {artifact_id} has invalid magic")
+        raw_header = source.readline(MAX_HEADER_BYTES + 1)
+        if not raw_header.endswith(b"\n") or len(raw_header) > MAX_HEADER_BYTES:
+            raise VaultError(f"decrypted envelope for {artifact_id} has invalid header")
+        try:
+            header = json.loads(raw_header)
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise VaultError(f"decrypted envelope for {artifact_id} has invalid metadata") from exc
+        if header.get("artifact_id") != artifact_id:
+            raise VaultError(f"decrypted envelope identity mismatch for {artifact_id}")
+        original_name = str(header.get("original_name") or "")
+        if not original_name or Path(original_name).name != original_name:
+            raise VaultError(f"decrypted envelope for {artifact_id} has unsafe output name")
+        expected_sha = str(header.get("plaintext_sha256") or "")
+        expected_bytes = header.get("plaintext_bytes")
+        if not SHA256_RE.fullmatch(expected_sha):
+            raise VaultError(f"decrypted envelope for {artifact_id} has invalid plaintext hash")
+        if not isinstance(expected_bytes, int) or expected_bytes < 0:
+            raise VaultError(f"decrypted envelope for {artifact_id} has invalid plaintext size")
+        for chunk in iter(lambda: source.read(1 << 20), b""):
+            output.write(chunk)
+            digest.update(chunk)
+            count += len(chunk)
+        output.flush()
+        os.fsync(output.fileno())
+    if digest.hexdigest() != expected_sha or count != expected_bytes:
+        raise VaultError(f"restored plaintext integrity mismatch for {artifact_id}")
+    return original_name
+
+
 def cmd_add(args: argparse.Namespace) -> int:
     if not getattr(args, "apply", False):
         raise VaultError("add is mutating; rerun with --apply")
@@ -678,7 +889,7 @@ def cmd_add(args: argparse.Namespace) -> int:
     source = Path(args.file).expanduser().resolve()
     if not source.is_file():
         raise VaultError("source is not a file")
-    _reject_tracked_plaintext(source)
+    source_identity = _reject_tracked_plaintext(source)
     with _vault_lock():
         rows = _read_manifest()
         for line_number, row in enumerate(rows, 1):
@@ -708,7 +919,8 @@ def cmd_add(args: argparse.Namespace) -> int:
                 os.chmod(temporary_root, 0o700)
                 snapshot = temporary_root / "snapshot"
                 envelope = temporary_root / "envelope"
-                plaintext_sha256, plaintext_bytes = _snapshot_source(source, snapshot)
+                plaintext_sha256, plaintext_bytes = _snapshot_source(source, snapshot, source_identity)
+                _require_untracked_source_identity(source, source_identity)
                 _write_envelope(
                     snapshot,
                     artifact_id,
@@ -718,6 +930,7 @@ def cmd_add(args: argparse.Namespace) -> int:
                     envelope,
                 )
                 _encrypt_file(envelope, temporary_cipher)
+            _require_untracked_source_identity(source, source_identity)
             os.chmod(temporary_cipher, 0o644)
             os.replace(temporary_cipher, cipher_path)
         finally:
@@ -764,6 +977,7 @@ def cmd_verify(_args: argparse.Namespace) -> int:
             failures.append(f"private plaintext namespace contains git-tracked content: {prefix}")
     seen_ids: set[str] = set()
     seen_ciphers: set[str] = set()
+    digest_owners: dict[str, str] = {}
     current_artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for line_number, row in enumerate(rows, 1):
         failures.extend(_validate_public_row(row, line_number))
@@ -773,6 +987,13 @@ def cmd_verify(_args: argparse.Namespace) -> int:
             failures.append(f"duplicate artifact id: {artifact_id}")
         if name in seen_ciphers:
             failures.append(f"duplicate ciphertext: {name}")
+        digest = row.get("ciphertext_sha256")
+        if isinstance(digest, str) and SHA256_RE.fullmatch(digest):
+            previous_owner = digest_owners.get(digest)
+            if previous_owner is not None and previous_owner != artifact_id:
+                failures.append("duplicate ciphertext digest across distinct artifact ids")
+            else:
+                digest_owners[digest] = artifact_id
         seen_ids.add(artifact_id)
         seen_ciphers.add(name)
         if ARTIFACT_ID_RE.fullmatch(artifact_id):
@@ -835,10 +1056,23 @@ def _temporary_file(directory: Path, artifact_id: str, suffix: str) -> Path:
     return path
 
 
-def _restore_name(destination_root: Path, artifact_id: str, original_name: str) -> str:
+def _temporary_file_at(directory_fd: int, artifact_id: str, suffix: str) -> tuple[str, int]:
+    flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    for _attempt in range(128):
+        name = f".{artifact_id}.{secrets.token_hex(8)}{suffix}"
+        try:
+            file_descriptor = os.open(name, flags, 0o600, dir_fd=directory_fd)
+        except FileExistsError:
+            continue
+        os.fchmod(file_descriptor, 0o600)
+        return name, file_descriptor
+    raise VaultError("cannot allocate a private restore temporary")
+
+
+def _restore_name(destination_fd: int, artifact_id: str, original_name: str) -> str:
     proposed = f"{artifact_id}--{original_name}"
     try:
-        name_max = os.pathconf(destination_root, "PC_NAME_MAX")
+        name_max = os.fpathconf(destination_fd, "PC_NAME_MAX")
     except (OSError, ValueError):
         name_max = 255
     if len(os.fsencode(proposed)) <= name_max:
@@ -846,7 +1080,7 @@ def _restore_name(destination_root: Path, artifact_id: str, original_name: str) 
     return f"{artifact_id}--restored"
 
 
-def _snapshot_ciphertext(source: Path, destination: Path) -> None:
+def _snapshot_ciphertext(source: Path, destination_fd: int) -> None:
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
         source_fd = os.open(source, flags)
@@ -856,40 +1090,67 @@ def _snapshot_ciphertext(source: Path, destination: Path) -> None:
         source_info = os.fstat(source_fd)
         if not stat.S_ISREG(source_info.st_mode):
             raise VaultError("ciphertext snapshot source is not a regular file")
-        output_flags = os.O_WRONLY | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
-        output_fd = os.open(destination, output_flags)
-        try:
-            with (
-                os.fdopen(source_fd, "rb", closefd=False) as input_handle,
-                os.fdopen(output_fd, "wb", closefd=False) as output_handle,
-            ):
-                shutil.copyfileobj(input_handle, output_handle, length=1 << 20)
-                output_handle.flush()
-                os.fsync(output_handle.fileno())
-        finally:
-            os.close(output_fd)
+        os.ftruncate(destination_fd, 0)
+        os.lseek(destination_fd, 0, os.SEEK_SET)
+        with (
+            os.fdopen(source_fd, "rb", closefd=False) as input_handle,
+            os.fdopen(destination_fd, "wb", closefd=False) as output_handle,
+        ):
+            shutil.copyfileobj(input_handle, output_handle, length=1 << 20)
+            output_handle.flush()
+            os.fsync(output_handle.fileno())
     finally:
         os.close(source_fd)
-    os.chmod(destination, 0o600)
+    os.fchmod(destination_fd, 0o600)
 
 
-def _link_no_replace(source: Path, destination: Path) -> tuple[int, int]:
-    source_info = source.stat()
+def _link_no_replace_at(directory_fd: int, source: str, destination: str) -> tuple[int, int]:
+    source_info = os.stat(source, dir_fd=directory_fd, follow_symlinks=False)
     identity = source_info.st_dev, source_info.st_ino
     try:
-        os.link(source, destination, follow_symlinks=False)
+        os.link(
+            source,
+            destination,
+            src_dir_fd=directory_fd,
+            dst_dir_fd=directory_fd,
+            follow_symlinks=False,
+        )
     except FileExistsError as exc:
-        raise VaultError(f"restore target already exists: {destination.name}") from exc
+        raise VaultError(f"restore target already exists: {destination}") from exc
     return identity
 
 
-def _rollback_link(destination: Path, identity: tuple[int, int]) -> None:
+def _rollback_link_at(directory_fd: int, destination: str, identity: tuple[int, int]) -> None:
     try:
-        current = destination.lstat()
+        current = os.stat(destination, dir_fd=directory_fd, follow_symlinks=False)
     except FileNotFoundError:
         return
     if (current.st_dev, current.st_ino) == identity:
-        destination.unlink()
+        os.unlink(destination, dir_fd=directory_fd)
+
+
+def _destination_identity(directory_fd: int) -> tuple[int, int]:
+    info = os.fstat(directory_fd)
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077:
+        raise VaultError("restore destination must be an owner-only directory")
+    return info.st_dev, info.st_ino
+
+
+def _require_destination_identity(destination_root: Path, identity: tuple[int, int]) -> None:
+    try:
+        current = destination_root.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise VaultError("restore destination changed during operation") from exc
+    if not stat.S_ISDIR(current.st_mode) or (current.st_dev, current.st_ino) != identity:
+        raise VaultError("restore destination changed during operation")
+
+
+def _entry_exists_at(directory_fd: int, name: str) -> bool:
+    try:
+        os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return True
 
 
 def cmd_restore(args: argparse.Namespace) -> int:
@@ -912,9 +1173,9 @@ def cmd_restore(args: argparse.Namespace) -> int:
             raise VaultError("; ".join(failures))
     if not getattr(args, "apply", False):
         raise VaultError("restore is mutating; rerun with --apply")
-    destination_root = Path(args.dest).expanduser().resolve()
+    destination_root = Path(os.path.abspath(os.fspath(Path(args.dest).expanduser())))
     try:
-        repository_destination = destination_root.relative_to(ROOT.resolve()).as_posix()
+        repository_destination = destination_root.relative_to(Path(os.path.abspath(ROOT))).as_posix()
     except ValueError:
         repository_destination = ""
     if repository_destination and not any(
@@ -928,54 +1189,120 @@ def cmd_restore(args: argparse.Namespace) -> int:
         created_destination = False
     else:
         created_destination = True
-    if created_destination:
-        os.chmod(destination_root, 0o700)
-    elif not destination_root.is_dir() or stat.S_IMODE(destination_root.stat().st_mode) & 0o077:
+    try:
+        initial_destination = destination_root.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise VaultError("cannot establish the restore destination") from exc
+    if not stat.S_ISDIR(initial_destination.st_mode):
         raise VaultError("restore destination must be an owner-only directory")
-    prepared: list[tuple[str, Path, Path, Path, Path]] = []
-    final_paths: set[Path] = set()
-    published: list[tuple[Path, tuple[int, int]]] = []
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        destination_fd = os.open(destination_root, directory_flags)
+    except OSError as exc:
+        raise VaultError("cannot pin the restore destination directory") from exc
+    try:
+        if created_destination:
+            os.fchmod(destination_fd, 0o700)
+        destination_identity = _destination_identity(destination_fd)
+    except Exception:
+        os.close(destination_fd)
+        raise
+    if destination_identity != (initial_destination.st_dev, initial_destination.st_ino):
+        os.close(destination_fd)
+        raise VaultError("restore destination changed during operation")
+    prepared: list[tuple[str, str, int, str, int, str, int, str]] = []
+    temporaries: list[tuple[str, int]] = []
+    final_names: set[str] = set()
+    published: list[tuple[str, tuple[int, int]]] = []
     succeeded = False
     try:
+        _require_destination_identity(destination_root, destination_identity)
         for row in targets:
             artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
             cipher_path = _cipher_path(row)
-            cipher_snapshot = _temporary_file(destination_root, artifact_id, ".ciphertext.gpg")
-            envelope = _temporary_file(destination_root, artifact_id, ".envelope")
-            plaintext = _temporary_file(destination_root, artifact_id, ".plaintext")
-            prepared.append((artifact_id, cipher_snapshot, envelope, plaintext, Path()))
-            _snapshot_ciphertext(cipher_path, cipher_snapshot)
-            failures = _ciphertext_failures(row, cipher_snapshot)
+            _require_destination_identity(destination_root, destination_identity)
+            cipher_name, cipher_fd = _temporary_file_at(destination_fd, artifact_id, ".ciphertext.gpg")
+            temporaries.append((cipher_name, cipher_fd))
+            _require_destination_identity(destination_root, destination_identity)
+            envelope_name, envelope_fd = _temporary_file_at(destination_fd, artifact_id, ".envelope")
+            temporaries.append((envelope_name, envelope_fd))
+            _require_destination_identity(destination_root, destination_identity)
+            plaintext_name, plaintext_fd = _temporary_file_at(destination_fd, artifact_id, ".plaintext")
+            temporaries.append((plaintext_name, plaintext_fd))
+            _snapshot_ciphertext(cipher_path, cipher_fd)
+            failures = _ciphertext_failures_fd(row, cipher_fd)
             if failures:
                 raise VaultError("; ".join(failures))
-            _decrypt_file(cipher_snapshot, envelope)
-            original_name = _extract_envelope(envelope, artifact_id, plaintext)
-            final_name = _restore_name(destination_root, artifact_id, original_name)
-            final_path = _contained_file(destination_root, final_name)
-            if os.path.lexists(final_path) or final_path in final_paths:
+            _decrypt_descriptors(cipher_fd, envelope_fd)
+            original_name = _extract_envelope_descriptors(envelope_fd, artifact_id, plaintext_fd)
+            final_name = _restore_name(destination_fd, artifact_id, original_name)
+            if _entry_exists_at(destination_fd, final_name) or final_name in final_names:
                 raise VaultError(f"restore target already exists: {final_name}")
-            final_paths.add(final_path)
-            prepared[-1] = (artifact_id, cipher_snapshot, envelope, plaintext, final_path)
+            final_names.add(final_name)
+            prepared.append(
+                (
+                    artifact_id,
+                    cipher_name,
+                    cipher_fd,
+                    envelope_name,
+                    envelope_fd,
+                    plaintext_name,
+                    plaintext_fd,
+                    final_name,
+                )
+            )
 
-        for _artifact_id, _cipher_snapshot, _envelope, plaintext, final_path in prepared:
-            published.append((final_path, _link_no_replace(plaintext, final_path)))
-        for artifact_id, _cipher_snapshot, _envelope, plaintext, _final_path in prepared:
-            plaintext.unlink()
-            print(f"OK: restored {artifact_id} (pinned ciphertext and plaintext verified)")
+        _require_destination_identity(destination_root, destination_identity)
+        for (
+            _artifact_id,
+            _cipher_name,
+            _cipher_fd,
+            _envelope_name,
+            _envelope_fd,
+            plaintext,
+            _plaintext_fd,
+            final,
+        ) in prepared:
+            published.append((final, _link_no_replace_at(destination_fd, plaintext, final)))
+        _require_destination_identity(destination_root, destination_identity)
+        for temporary_name, _file_descriptor in temporaries:
+            os.unlink(temporary_name, dir_fd=destination_fd)
         succeeded = True
+        for (
+            artifact_id,
+            _cipher_name,
+            _cipher_fd,
+            _envelope_name,
+            _envelope_fd,
+            _plaintext,
+            _plaintext_fd,
+            _final,
+        ) in prepared:
+            print(f"OK: restored {artifact_id} (pinned ciphertext and plaintext verified)")
     finally:
         if not succeeded:
-            for final_path, identity in reversed(published):
-                _rollback_link(final_path, identity)
-        for _artifact_id, cipher_snapshot, envelope, plaintext, _final_path in prepared:
-            cipher_snapshot.unlink(missing_ok=True)
-            envelope.unlink(missing_ok=True)
-            plaintext.unlink(missing_ok=True)
+            for final_name, identity in reversed(published):
+                _rollback_link_at(destination_fd, final_name, identity)
+        for temporary_name, file_descriptor in reversed(temporaries):
+            try:
+                os.unlink(temporary_name, dir_fd=destination_fd)
+            except FileNotFoundError:
+                pass
+            finally:
+                os.close(file_descriptor)
         if created_destination and not succeeded:
             try:
-                destination_root.rmdir()
+                _require_destination_identity(destination_root, destination_identity)
             except OSError:
                 pass
+            except VaultError:
+                pass
+            else:
+                try:
+                    destination_root.rmdir()
+                except OSError:
+                    pass
+        os.close(destination_fd)
     return 0
 
 

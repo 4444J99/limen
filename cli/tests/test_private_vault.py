@@ -8,6 +8,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
@@ -53,12 +54,30 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     module._real_openpgp_packet_tags = module._openpgp_packet_tags
     monkeypatch.setattr(module, "_encrypt_file", lambda source, destination: shutil.copyfile(source, destination))
     monkeypatch.setattr(module, "_decrypt_file", lambda source, destination: shutil.copyfile(source, destination))
+
+    def copy_descriptor(source_fd: int, destination_fd: int) -> None:
+        module.os.lseek(source_fd, 0, module.os.SEEK_SET)
+        module.os.ftruncate(destination_fd, 0)
+        module.os.lseek(destination_fd, 0, module.os.SEEK_SET)
+        with (
+            module.os.fdopen(module.os.dup(source_fd), "rb") as source_handle,
+            module.os.fdopen(module.os.dup(destination_fd), "wb") as destination_handle,
+        ):
+            shutil.copyfileobj(source_handle, destination_handle)
+
+    monkeypatch.setattr(module, "_decrypt_descriptors", copy_descriptor)
     monkeypatch.setattr(
         module,
         "_ciphertext_recipient_keyids",
         lambda _ciphertext: {module.ENCRYPTION_SUBKEY_ID},
     )
+    monkeypatch.setattr(
+        module,
+        "_ciphertext_recipient_keyids_fd",
+        lambda _ciphertext_fd: {module.ENCRYPTION_SUBKEY_ID},
+    )
     monkeypatch.setattr(module, "_openpgp_packet_tags", lambda _ciphertext: [1, 20])
+    monkeypatch.setattr(module, "_openpgp_packet_tags_fd", lambda _ciphertext_fd: [1, 20])
     return module
 
 
@@ -71,6 +90,19 @@ def _tracked_paths(vault, artifact_id: str = "artifact-001") -> set[str]:
         "institutio/vault/manifest.jsonl",
         f"institutio/vault/{artifact_id}.gpg",
     }
+
+
+def _read_descriptor(vault, file_descriptor: int) -> bytes:
+    vault.os.lseek(file_descriptor, 0, vault.os.SEEK_SET)
+    with vault.os.fdopen(vault.os.dup(file_descriptor), "rb") as handle:
+        return handle.read()
+
+
+def _write_descriptor(vault, file_descriptor: int, payload: bytes) -> None:
+    vault.os.ftruncate(file_descriptor, 0)
+    vault.os.lseek(file_descriptor, 0, vault.os.SEEK_SET)
+    with vault.os.fdopen(vault.os.dup(file_descriptor), "wb") as handle:
+        handle.write(payload)
 
 
 def test_add_writes_public_safe_manifest_and_rejects_duplicate_id(vault, tmp_path: Path):
@@ -150,11 +182,120 @@ def test_add_rejects_traversal_and_non_neutral_ids(vault, tmp_path: Path, artifa
     assert list(vault.VAULT_DIR.iterdir()) == []
 
 
+@pytest.mark.parametrize("private_root", [".limen-private", ".agent-runtime", ".limen-workstream", None])
+def test_add_rejects_hardlink_to_tracked_plaintext_alias(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, private_root: str | None
+):
+    tracked_alias = vault.ROOT / "tracked-alias"
+    tracked_alias.write_text("synthetic", encoding="utf-8")
+    if private_root is None:
+        source = tmp_path / "outside-private"
+    else:
+        source = vault.ROOT / private_root / "private"
+        source.parent.mkdir(parents=True)
+    vault.os.link(tracked_alias, source)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: {"tracked-alias"})
+
+    with pytest.raises(vault.VaultError, match="file object is already git-tracked"):
+        _add(vault, source)
+
+    assert not vault.MANIFEST.exists()
+
+
+def test_add_rejects_tracked_hardlink_swapped_in_before_snapshot(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    source = tmp_path / "private"
+    source.write_text("initial", encoding="utf-8")
+    tracked_alias = vault.ROOT / "tracked-alias"
+    tracked_alias.write_text("tracked", encoding="utf-8")
+    monkeypatch.setattr(vault, "_tracked_files", lambda: {"tracked-alias"})
+    real_snapshot = vault._snapshot_source
+
+    def swap_then_snapshot(source_path: Path, destination: Path, expected_identity: tuple[int, int]):
+        source_path.unlink()
+        vault.os.link(tracked_alias, source_path)
+        return real_snapshot(source_path, destination, expected_identity)
+
+    monkeypatch.setattr(vault, "_snapshot_source", swap_then_snapshot)
+
+    with pytest.raises(vault.VaultError, match="changed before snapshot"):
+        _add(vault, source)
+
+    assert not vault.MANIFEST.exists()
+
+
+def test_add_rechecks_tracked_aliases_after_snapshot(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private"
+    source.write_text("private", encoding="utf-8")
+    tracked_alias = vault.ROOT / "tracked-alias"
+    tracked_alias.write_text("initial tracked object", encoding="utf-8")
+    monkeypatch.setattr(vault, "_tracked_files", lambda: {"tracked-alias"})
+    real_snapshot = vault._snapshot_source
+
+    def relink_tracked_path_then_snapshot(source_path: Path, destination: Path, expected_identity: tuple[int, int]):
+        tracked_alias.unlink()
+        vault.os.link(source_path, tracked_alias)
+        return real_snapshot(source_path, destination, expected_identity)
+
+    monkeypatch.setattr(vault, "_snapshot_source", relink_tracked_path_then_snapshot)
+
+    with pytest.raises(vault.VaultError, match="file object is already git-tracked"):
+        _add(vault, source)
+
+    assert not vault.MANIFEST.exists()
+    assert not (vault.VAULT_DIR / "artifact-001.gpg").exists()
+
+
 def test_verify_accepts_coherent_public_safe_custody(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     source = tmp_path / "private.md"
     source.write_text("secret", encoding="utf-8")
     _add(vault, source)
     monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
+    assert vault.cmd_verify(SimpleNamespace()) == 0
+
+
+def test_verify_rejects_copied_ciphertext_under_distinct_ids(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    monkeypatch.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001", "artifact-002"}))
+    _add(vault, source)
+    first_row = vault._read_manifest()[0]
+    second_cipher = vault.VAULT_DIR / "artifact-002.gpg"
+    shutil.copyfile(vault.VAULT_DIR / "artifact-001.gpg", second_cipher)
+    second_row = dict(first_row, artifact_id="artifact-002", ciphertext="artifact-002.gpg")
+    vault._write_manifest([first_row, second_row])
+    monkeypatch.setattr(
+        vault,
+        "_tracked_files",
+        lambda: _tracked_paths(vault) | {"institutio/vault/artifact-002.gpg"},
+    )
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+    assert "duplicate ciphertext digest across distinct artifact ids" in capsys.readouterr().out
+
+
+def test_verify_allows_independently_encrypted_equal_plaintext(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    first = tmp_path / "first.md"
+    second = tmp_path / "second.md"
+    first.write_text("equal plaintext", encoding="utf-8")
+    second.write_text("equal plaintext", encoding="utf-8")
+    monkeypatch.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001", "artifact-002"}))
+
+    def distinct_encryption(envelope: Path, destination: Path) -> None:
+        destination.write_bytes(destination.name.encode("utf-8") + envelope.read_bytes())
+
+    monkeypatch.setattr(vault, "_encrypt_file", distinct_encryption)
+    _add(vault, first, "artifact-001")
+    _add(vault, second, "artifact-002")
+    monkeypatch.setattr(
+        vault,
+        "_tracked_files",
+        lambda: _tracked_paths(vault) | {"institutio/vault/artifact-002.gpg"},
+    )
+
     assert vault.cmd_verify(SimpleNamespace()) == 0
 
 
@@ -270,6 +411,56 @@ def test_historical_baseline_survives_fixed_path_replacement(vault):
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "restore fixed manifest path")
 
     assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
+
+
+def test_historical_manifest_ignores_git_replace_objects(vault, monkeypatch: pytest.MonkeyPatch):
+    def run_git(*args: str, input_text: str | None = None) -> str:
+        return subprocess.run(
+            ["git", "-C", str(vault.ROOT), *args],
+            input=input_text,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        ).stdout.strip()
+
+    run_git("init", "-b", "main")
+    run_git("config", "user.email", "vault-test@example.invalid")
+    run_git("config", "user.name", "Vault Test")
+    row = {
+        "schema": vault.SCHEMA,
+        "artifact_id": "artifact-001",
+        "ciphertext": "artifact-001.gpg",
+        "ciphertext_sha256": "1" * 64,
+        "ciphertext_bytes": 1,
+        "recipient_fpr": vault.FINGERPRINT,
+        "vaulted_at": "2026-08-09T00:00:00+00:00",
+    }
+    vault.MANIFEST.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    run_git("add", "institutio/vault/manifest.jsonl")
+    run_git("-c", "commit.gpgsign=false", "commit", "-m", "admit custody")
+    admitted = run_git("rev-parse", "HEAD")
+    empty_tree = run_git("mktree", input_text="")
+    replacement = run_git("-c", "commit.gpgsign=false", "commit-tree", empty_tree, input_text="synthetic\n")
+    run_git("replace", admitted, replacement)
+    monkeypatch.setattr(vault, "PUBLIC_SAFE_HISTORY_ROOT", admitted)
+
+    assert set(vault._real_historical_artifacts()) == {"artifact-001"}
+
+
+def test_historical_manifest_rejects_legacy_grafts(vault):
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    grafts = vault.ROOT / ".git" / "info" / "grafts"
+    grafts.write_text("synthetic\n", encoding="utf-8")
+
+    with pytest.raises(vault.VaultError, match="rewritten Git custody history"):
+        vault._real_historical_artifacts()
 
 
 def test_historical_manifest_rejects_duplicate_json_fields(vault):
@@ -789,12 +980,10 @@ def test_failed_restore_removes_all_plaintext_temporaries(vault, monkeypatch: py
     _add(vault, source)
     destination = tmp_path / "restore"
 
-    def corrupt_decrypt(ciphertext: Path, envelope: Path) -> None:
-        shutil.copyfile(ciphertext, envelope)
-        with envelope.open("ab") as handle:
-            handle.write(b"tamper")
+    def corrupt_decrypt(ciphertext_fd: int, envelope_fd: int) -> None:
+        _write_descriptor(vault, envelope_fd, _read_descriptor(vault, ciphertext_fd) + b"tamper")
 
-    monkeypatch.setattr(vault, "_decrypt_file", corrupt_decrypt)
+    monkeypatch.setattr(vault, "_decrypt_descriptors", corrupt_decrypt)
     with pytest.raises(vault.VaultError, match="integrity mismatch"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
     assert not destination.exists()
@@ -806,10 +995,10 @@ def test_failed_restore_cleans_up_after_decrypt_failure(vault, monkeypatch: pyte
     _add(vault, source)
     destination = tmp_path / "restore"
 
-    def reject_decrypt(_ciphertext: Path, _envelope: Path) -> None:
+    def reject_decrypt(_ciphertext_fd: int, _envelope_fd: int) -> None:
         raise vault.VaultError("decryption failed: no secret key")
 
-    monkeypatch.setattr(vault, "_decrypt_file", reject_decrypt)
+    monkeypatch.setattr(vault, "_decrypt_descriptors", reject_decrypt)
     with pytest.raises(vault.VaultError, match="no secret key"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
     assert not destination.exists()
@@ -835,9 +1024,9 @@ def test_restore_rejects_ciphertext_replaced_before_snapshot(vault, monkeypatch:
     destination = tmp_path / "restore"
     real_snapshot = vault._snapshot_ciphertext
 
-    def replace_before_snapshot(source_path: Path, snapshot: Path) -> None:
+    def replace_before_snapshot(source_path: Path, snapshot_fd: int) -> None:
         source_path.write_bytes(b"replacement")
-        real_snapshot(source_path, snapshot)
+        real_snapshot(source_path, snapshot_fd)
 
     monkeypatch.setattr(vault, "_snapshot_ciphertext", replace_before_snapshot)
 
@@ -856,13 +1045,12 @@ def test_restore_decrypts_the_validated_ciphertext_snapshot(vault, monkeypatch: 
     expected_ciphertext = ciphertext.read_bytes()
     destination = tmp_path / "restore"
 
-    def replace_original_then_decrypt(snapshot: Path, envelope: Path) -> None:
-        assert snapshot != ciphertext
-        assert snapshot.read_bytes() == expected_ciphertext
+    def replace_original_then_decrypt(snapshot_fd: int, envelope_fd: int) -> None:
+        assert _read_descriptor(vault, snapshot_fd) == expected_ciphertext
         ciphertext.write_bytes(b"replacement")
-        shutil.copyfile(snapshot, envelope)
+        _write_descriptor(vault, envelope_fd, _read_descriptor(vault, snapshot_fd))
 
-    monkeypatch.setattr(vault, "_decrypt_file", replace_original_then_decrypt)
+    monkeypatch.setattr(vault, "_decrypt_descriptors", replace_original_then_decrypt)
 
     assert (
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
@@ -963,6 +1151,66 @@ def test_restore_refuses_dangling_target(vault, tmp_path: Path):
     assert final_path.is_symlink()
 
 
+def test_restore_rejects_destination_swap_before_temp_creation(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("trusted", encoding="utf-8")
+    _add(vault, source)
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    original_destination = tmp_path / "restore-original"
+    redirect = tmp_path / "redirect"
+    redirect.mkdir(mode=0o700)
+    real_temporary_file_at = vault._temporary_file_at
+    swapped = False
+
+    def swap_then_create(directory_fd: int, artifact_id: str, suffix: str):
+        nonlocal swapped
+        if not swapped:
+            swapped = True
+            destination.rename(original_destination)
+            destination.symlink_to(redirect, target_is_directory=True)
+        return real_temporary_file_at(directory_fd, artifact_id, suffix)
+
+    monkeypatch.setattr(vault, "_temporary_file_at", swap_then_create)
+
+    with pytest.raises(vault.VaultError, match="destination changed"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert destination.is_symlink()
+    assert list(redirect.iterdir()) == []
+    assert list(original_destination.iterdir()) == []
+
+
+def test_restore_rejects_destination_swap_during_publication(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("trusted", encoding="utf-8")
+    _add(vault, source)
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    original_destination = tmp_path / "restore-original"
+    redirect = tmp_path / "redirect"
+    redirect.mkdir(mode=0o700)
+    real_link = vault._link_no_replace_at
+    swapped = False
+
+    def swap_then_link(directory_fd: int, source_name: str, destination_name: str):
+        nonlocal swapped
+        if not swapped:
+            swapped = True
+            destination.rename(original_destination)
+            destination.symlink_to(redirect, target_is_directory=True)
+        return real_link(directory_fd, source_name, destination_name)
+
+    monkeypatch.setattr(vault, "_link_no_replace_at", swap_then_link)
+
+    with pytest.raises(vault.VaultError, match="destination changed"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert destination.is_symlink()
+    assert list(redirect.iterdir()) == []
+    assert list(original_destination.iterdir()) == []
+
+
 def test_restore_atomic_publish_does_not_replace_concurrent_target(
     vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ):
@@ -974,9 +1222,31 @@ def test_restore_atomic_publish_does_not_replace_concurrent_target(
     final_path = destination / "artifact-001--private.md"
     real_link = vault.os.link
 
-    def concurrent_link(source_path, destination_path, *, follow_symlinks=True):
-        Path(destination_path).write_text("concurrent", encoding="utf-8")
-        return real_link(source_path, destination_path, follow_symlinks=follow_symlinks)
+    def concurrent_link(
+        source_path,
+        destination_path,
+        *,
+        src_dir_fd=None,
+        dst_dir_fd=None,
+        follow_symlinks=True,
+    ):
+        concurrent_fd = vault.os.open(
+            destination_path,
+            vault.os.O_WRONLY | vault.os.O_CREAT | vault.os.O_EXCL,
+            0o600,
+            dir_fd=dst_dir_fd,
+        )
+        try:
+            vault.os.write(concurrent_fd, b"concurrent")
+        finally:
+            vault.os.close(concurrent_fd)
+        return real_link(
+            source_path,
+            destination_path,
+            src_dir_fd=src_dir_fd,
+            dst_dir_fd=dst_dir_fd,
+            follow_symlinks=follow_symlinks,
+        )
 
     monkeypatch.setattr(vault.os, "link", concurrent_link)
 
@@ -1004,12 +1274,34 @@ def test_restore_all_rolls_back_earlier_links_on_late_concurrent_target(
     real_link = vault.os.link
     links = 0
 
-    def race_second_link(source_path, destination_path, *, follow_symlinks=True):
+    def race_second_link(
+        source_path,
+        destination_path,
+        *,
+        src_dir_fd=None,
+        dst_dir_fd=None,
+        follow_symlinks=True,
+    ):
         nonlocal links
         links += 1
         if links == 2:
-            Path(destination_path).write_text("concurrent", encoding="utf-8")
-        return real_link(source_path, destination_path, follow_symlinks=follow_symlinks)
+            concurrent_fd = vault.os.open(
+                destination_path,
+                vault.os.O_WRONLY | vault.os.O_CREAT | vault.os.O_EXCL,
+                0o600,
+                dir_fd=dst_dir_fd,
+            )
+            try:
+                vault.os.write(concurrent_fd, b"concurrent")
+            finally:
+                vault.os.close(concurrent_fd)
+        return real_link(
+            source_path,
+            destination_path,
+            src_dir_fd=src_dir_fd,
+            dst_dir_fd=dst_dir_fd,
+            follow_symlinks=follow_symlinks,
+        )
 
     monkeypatch.setattr(vault.os, "link", race_second_link)
 
@@ -1081,6 +1373,50 @@ def test_add_encrypts_one_immutable_snapshot(vault, monkeypatch: pytest.MonkeyPa
     destination = tmp_path / "restore"
     vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
     assert (destination / "artifact-001--private.md").read_text(encoding="utf-8") == "initial"
+
+
+def test_add_rejects_source_mutation_during_snapshot(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    original = b"a" * (2 << 20)
+    replacement = b"b" * len(original)
+    source.write_bytes(original)
+    begin_write = threading.Event()
+    write_finished = threading.Event()
+
+    def writer() -> None:
+        assert begin_write.wait(5)
+        with source.open("r+b") as handle:
+            handle.write(replacement)
+            handle.flush()
+            vault.os.fsync(handle.fileno())
+        write_finished.set()
+
+    writer_thread = threading.Thread(target=writer)
+    writer_thread.start()
+
+    def hybrid_copy(input_handle, output_handle):
+        digest = vault.hashlib.sha256()
+        first = input_handle.read(1)
+        output_handle.write(first)
+        digest.update(first)
+        begin_write.set()
+        assert write_finished.wait(5)
+        count = len(first)
+        for chunk in iter(lambda: input_handle.read(1 << 20), b""):
+            output_handle.write(chunk)
+            digest.update(chunk)
+            count += len(chunk)
+        return digest.hexdigest(), count
+
+    monkeypatch.setattr(vault, "_copy_file_and_hash", hybrid_copy)
+    try:
+        with pytest.raises(vault.VaultError, match="source changed while creating its snapshot"):
+            _add(vault, source)
+    finally:
+        writer_thread.join(timeout=5)
+
+    assert not writer_thread.is_alive()
+    assert not vault.MANIFEST.exists()
 
 
 def test_add_stages_plaintext_on_source_filesystem(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

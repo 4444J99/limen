@@ -74,6 +74,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
 PRIVATE_CUSTODY_ROOTS = (".limen-private", ".agent-runtime", ".limen-workstream")
 PUBLIC_CUSTODY_HISTORY_ROOT = "eeaaa85b7e7270e1b9e9140b78f7ff2360e2524f"
+_GRAFT_PATH: Path | None = None
 
 
 class HostAdmissionFailure(RuntimeError):
@@ -133,9 +134,27 @@ def load_registry() -> dict:
     return yaml.safe_load(REGISTRY.read_text())
 
 
+def _reject_legacy_grafts() -> None:
+    global _GRAFT_PATH
+    if _GRAFT_PATH is None:
+        probe = subprocess.run(
+            ["git", "--no-replace-objects", "rev-parse", "--git-path", "info/grafts"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            errors="surrogateescape",
+            check=True,
+        )
+        candidate = Path(probe.stdout.strip())
+        _GRAFT_PATH = candidate if candidate.is_absolute() else ROOT / candidate
+    if os.path.lexists(_GRAFT_PATH):
+        raise RuntimeError("refusing to verify rewritten Git history")
+
+
 def git(*args: str) -> str:
+    _reject_legacy_grafts()
     return subprocess.run(
-        ["git", *args],
+        ["git", "--no-replace-objects", *args],
         cwd=ROOT,
         capture_output=True,
         text=True,

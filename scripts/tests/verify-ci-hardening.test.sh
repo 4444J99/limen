@@ -355,6 +355,35 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
          && pass merge-resolution-custody \
          || flunk merge-resolution-custody "missing neutral refusal or leaked path: $out"; }
 
+# ── 4i: replacement refs cannot rewrite the committed path inventory ──────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/replace-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/replace-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "add replace probe"
+private_commit="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" rm -q .limen-private/replace-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete replace probe"
+git -C "$sb" replace "$private_commit" "$base_sha"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk replace-objects-disabled "exit 0 after replacement history hid private content" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "replace-probe" <<<"$out" \
+         && pass replace-objects-disabled \
+         || flunk replace-objects-disabled "replacement object influenced inventory or leaked a path: $out"; }
+
+# ── 4j: legacy grafts are an explicit fail-closed history state ────────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+commit_touch "$sb" src/graft-probe.txt
+printf '%s\n' "$(git -C "$sb" rev-parse HEAD)" >"$sb/.git/info/grafts"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk legacy-grafts-rejected "exit 0 with a legacy graft installed" \
+  || { grep -q "refusing to verify rewritten Git history" <<<"$out" \
+         && pass legacy-grafts-rejected \
+         || flunk legacy-grafts-rejected "missing neutral graft refusal: $out"; }
+
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
