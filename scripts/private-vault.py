@@ -68,6 +68,7 @@ COMMAND_TIMEOUT_SECONDS = 120
 LOCK_TIMEOUT_SECONDS = 30
 DIAGNOSTIC_LIMIT = 4096
 RECOVERY_CANARY = b"LIMEN-PRIVATE-VAULT-RECOVERY-CANARY-V1\n"
+PUBLIC_SAFE_HISTORY_ROOT = "eeaaa85b7e7270e1b9e9140b78f7ff2360e2524f"
 
 
 class VaultError(RuntimeError):
@@ -215,7 +216,7 @@ def _validate_public_row(row: dict, line_number: int) -> list[str]:
     extra = sorted(set(row) - PUBLIC_FIELDS)
     missing = sorted(PUBLIC_FIELDS - set(row))
     if extra:
-        errors.append(f"manifest line {line_number} exposes unsupported fields: {', '.join(extra)}")
+        errors.append(f"manifest line {line_number} exposes unsupported fields")
     if missing:
         errors.append(f"manifest line {line_number} misses fields: {', '.join(missing)}")
     if row.get("schema") != SCHEMA:
@@ -284,6 +285,17 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     history = _run_command(["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative])
     if history.returncode != 0:
         raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
+    safe_root_object = _run_command(
+        ["git", "-C", str(ROOT), "cat-file", "-e", f"{PUBLIC_SAFE_HISTORY_ROOT}^{{commit}}"]
+    )
+    safe_root_is_reachable = False
+    if safe_root_object.returncode == 0:
+        safe_root = _run_command(
+            ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, "HEAD"]
+        )
+        if safe_root.returncode not in {0, 1}:
+            raise VaultError("cannot inspect the public-safe manifest history boundary")
+        safe_root_is_reachable = safe_root.returncode == 0
 
     artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for revision in history.stdout.splitlines():
@@ -314,6 +326,16 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
                 ) from exc
             if not isinstance(row, dict) or row.get("schema") != SCHEMA:
                 continue
+            require_public_safe = not safe_root_is_reachable
+            if safe_root_is_reachable:
+                after_safe_root = _run_command(
+                    ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, revision]
+                )
+                if after_safe_root.returncode not in {0, 1}:
+                    raise VaultError("cannot classify a committed manifest history revision")
+                require_public_safe = after_safe_root.returncode == 0
+            if require_public_safe and _validate_public_row(row, line_number):
+                raise VaultError("committed manifest history contains a non-public-safe v2 row")
             artifact_id = row.get("artifact_id")
             if not isinstance(artifact_id, str):
                 raise VaultError("committed manifest history contains a non-string artifact id")
@@ -488,6 +510,65 @@ def _ciphertext_recipient_keyids(ciphertext: Path) -> set[str]:
     return recipients
 
 
+def _openpgp_packet_tags(ciphertext: Path) -> list[int]:
+    """Parse complete OpenPGP packet framing without decrypting packet bodies."""
+    size = ciphertext.stat().st_size
+    tags: list[int] = []
+
+    def read_octet(handle) -> int:
+        raw = handle.read(1)
+        if len(raw) != 1:
+            raise VaultError("ciphertext has truncated OpenPGP framing")
+        return raw[0]
+
+    def skip_body(handle, length: int) -> None:
+        if length < 0 or handle.tell() + length > size:
+            raise VaultError("ciphertext has invalid OpenPGP packet length")
+        handle.seek(length, os.SEEK_CUR)
+
+    def read_new_length(handle) -> tuple[int, bool]:
+        first = read_octet(handle)
+        if first < 192:
+            return first, False
+        if first < 224:
+            second = read_octet(handle)
+            return ((first - 192) << 8) + second + 192, False
+        if first == 255:
+            raw = handle.read(4)
+            if len(raw) != 4:
+                raise VaultError("ciphertext has truncated OpenPGP packet length")
+            return int.from_bytes(raw, "big"), False
+        return 1 << (first & 0x1F), True
+
+    with ciphertext.open("rb") as handle:
+        while handle.tell() < size:
+            header = read_octet(handle)
+            if not header & 0x80:
+                raise VaultError("ciphertext contains bytes outside OpenPGP packet framing")
+            if header & 0x40:
+                tags.append(header & 0x3F)
+                length, partial = read_new_length(handle)
+                skip_body(handle, length)
+                while partial:
+                    length, partial = read_new_length(handle)
+                    skip_body(handle, length)
+                continue
+
+            tags.append((header >> 2) & 0x0F)
+            length_type = header & 0x03
+            if length_type == 3:
+                raise VaultError("ciphertext uses indeterminate OpenPGP packet framing")
+            length_octets = (1, 2, 4)[length_type]
+            raw_length = handle.read(length_octets)
+            if len(raw_length) != length_octets:
+                raise VaultError("ciphertext has truncated OpenPGP packet length")
+            skip_body(handle, int.from_bytes(raw_length, "big"))
+
+    if tags not in ([1, 18], [1, 20]):
+        raise VaultError("ciphertext has an unexpected OpenPGP packet sequence")
+    return tags
+
+
 def _ciphertext_failures(row: dict, path: Path) -> list[str]:
     name = str(row.get("ciphertext") or "")
     failures: list[str] = []
@@ -499,6 +580,7 @@ def _ciphertext_failures(row: dict, path: Path) -> list[str]:
         failures.append(f"ciphertext byte count mismatch: {name}")
     if not failures:
         try:
+            _openpgp_packet_tags(path)
             recipients = _ciphertext_recipient_keyids(path)
         except VaultError as exc:
             failures.append(f"ciphertext recipient inspection failed: {name}: {exc}")
@@ -779,22 +861,30 @@ def cmd_restore(args: argparse.Namespace) -> int:
         os.chmod(destination_root, 0o700)
     elif not destination_root.is_dir() or stat.S_IMODE(destination_root.stat().st_mode) & 0o077:
         raise VaultError("restore destination must be an owner-only directory")
-    for row in targets:
-        artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
-        cipher_path = _cipher_path(row)
-        envelope = _temporary_file(destination_root, artifact_id, ".envelope")
-        plaintext = _temporary_file(destination_root, artifact_id, ".plaintext")
-        try:
+    prepared: list[tuple[str, Path, Path, Path]] = []
+    final_paths: set[Path] = set()
+    try:
+        for row in targets:
+            artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
+            cipher_path = _cipher_path(row)
+            envelope = _temporary_file(destination_root, artifact_id, ".envelope")
+            plaintext = _temporary_file(destination_root, artifact_id, ".plaintext")
+            prepared.append((artifact_id, envelope, plaintext, Path()))
             _decrypt_file(cipher_path, envelope)
             original_name = _extract_envelope(envelope, artifact_id, plaintext)
             final_name = _restore_name(destination_root, artifact_id, original_name)
             final_path = _contained_file(destination_root, final_name)
-            if final_path.exists():
+            if os.path.lexists(final_path) or final_path in final_paths:
                 raise VaultError(f"restore target already exists: {final_name}")
+            final_paths.add(final_path)
+            prepared[-1] = (artifact_id, envelope, plaintext, final_path)
+
+        for artifact_id, _envelope, plaintext, final_path in prepared:
             os.replace(plaintext, final_path)
             os.chmod(final_path, 0o600)
             print(f"OK: restored {artifact_id} (pinned ciphertext and plaintext verified)")
-        finally:
+    finally:
+        for _artifact_id, envelope, plaintext, _final_path in prepared:
             envelope.unlink(missing_ok=True)
             plaintext.unlink(missing_ok=True)
     return 0

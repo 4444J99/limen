@@ -50,6 +50,7 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     module._real_encrypt_file = module._encrypt_file
     module._real_decrypt_file = module._decrypt_file
     module._real_ciphertext_recipient_keyids = module._ciphertext_recipient_keyids
+    module._real_openpgp_packet_tags = module._openpgp_packet_tags
     monkeypatch.setattr(module, "_encrypt_file", lambda source, destination: shutil.copyfile(source, destination))
     monkeypatch.setattr(module, "_decrypt_file", lambda source, destination: shutil.copyfile(source, destination))
     monkeypatch.setattr(
@@ -57,6 +58,7 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
         "_ciphertext_recipient_keyids",
         lambda _ciphertext: {module.ENCRYPTION_SUBKEY_ID},
     )
+    monkeypatch.setattr(module, "_openpgp_packet_tags", lambda _ciphertext: [1, 20])
     return module
 
 
@@ -173,7 +175,7 @@ def test_verify_rejects_deletion_from_committed_custody(vault, monkeypatch: pyte
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
-def test_historical_baseline_is_monotonic_across_commits(vault):
+def test_historical_baseline_is_monotonic_across_commits(vault, monkeypatch: pytest.MonkeyPatch):
     def run_git(*args: str) -> None:
         subprocess.run(
             ["git", "-C", str(vault.ROOT), *args],
@@ -209,6 +211,14 @@ def test_historical_baseline_is_monotonic_across_commits(vault):
     vault.MANIFEST.write_text(json.dumps(history_row("artifact-001", "1" * 64)) + "\n", encoding="utf-8")
     run_git("add", "institutio/vault/manifest.jsonl")
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "attempt deletion")
+    safe_root = subprocess.run(
+        ["git", "-C", str(vault.ROOT), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    ).stdout.strip()
+    monkeypatch.setattr(vault, "PUBLIC_SAFE_HISTORY_ROOT", safe_root)
 
     assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
 
@@ -314,6 +324,8 @@ def test_historical_manifest_fails_when_present_snapshot_is_unreadable(vault, mo
         del env
         if "rev-list" in args:
             return subprocess.CompletedProcess(args, 0, stdout="a" * 40 + "\n", stderr="")
+        if "cat-file" in args:
+            return subprocess.CompletedProcess(args, 1, stdout="", stderr="")
         if "ls-tree" in args:
             return subprocess.CompletedProcess(args, 0, stdout=manifest_relative + "\0", stderr="")
         if "show" in args:
@@ -323,6 +335,57 @@ def test_historical_manifest_fails_when_present_snapshot_is_unreadable(vault, mo
     monkeypatch.setattr(vault, "_run_command", missing_snapshot)
 
     with pytest.raises(vault.VaultError, match="cannot read a committed manifest history snapshot"):
+        vault._real_historical_artifacts()
+
+
+def test_historical_manifest_rejects_non_public_safe_rows(vault):
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    row = {
+        "schema": vault.SCHEMA,
+        "artifact_id": "artifact-001",
+        "ciphertext": "artifact-001.gpg",
+        "ciphertext_sha256": "1" * 64,
+        "ciphertext_bytes": 1,
+        "recipient_fpr": vault.FINGERPRINT,
+        "vaulted_at": "2026-08-09T00:00:00+00:00",
+        "unsupported": "synthetic",
+    }
+    vault.MANIFEST.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(vault.ROOT),
+            "-c",
+            "user.email=vault-test@example.invalid",
+            "-c",
+            "user.name=Vault Test",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            "commit unsupported public field",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    with pytest.raises(vault.VaultError, match="non-public-safe"):
         vault._real_historical_artifacts()
 
 
@@ -539,6 +602,19 @@ def test_verify_rejects_wrong_recipient(vault, monkeypatch: pytest.MonkeyPatch, 
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
+def test_openpgp_framing_rejects_appended_bytes(vault, tmp_path: Path):
+    ciphertext = tmp_path / "synthetic.gpg"
+    ciphertext.write_bytes(bytes([0xC1, 0x01]) + b"x" + bytes([0xD4, 0x02]) + b"yz")
+
+    assert vault._real_openpgp_packet_tags(ciphertext) == [1, 20]
+
+    with ciphertext.open("ab") as handle:
+        handle.write(b"synthetic trailing bytes")
+
+    with pytest.raises(vault.VaultError, match="outside OpenPGP packet framing"):
+        vault._real_openpgp_packet_tags(ciphertext)
+
+
 def test_verify_rejects_symlinked_ciphertext(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     source = tmp_path / "private.md"
     source.write_text("secret", encoding="utf-8")
@@ -684,6 +760,40 @@ def test_restore_preserves_existing_directory_permissions(vault, tmp_path: Path)
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
 
     assert stat.S_IMODE(destination.stat().st_mode) == 0o750
+
+
+def test_restore_refuses_dangling_target(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    final_path = destination / "artifact-001--private.md"
+    final_path.symlink_to(destination / "missing")
+
+    with pytest.raises(vault.VaultError, match="already exists"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert final_path.is_symlink()
+
+
+def test_restore_all_preflights_every_target_before_publish(vault, tmp_path: Path):
+    first = tmp_path / "first.md"
+    first.write_text("first", encoding="utf-8")
+    second = tmp_path / "second.md"
+    second.write_text("second", encoding="utf-8")
+    _add(vault, first, "artifact-001")
+    _add(vault, second, "artifact-002")
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    existing = destination / "artifact-002--second.md"
+    existing.write_text("existing", encoding="utf-8")
+
+    with pytest.raises(vault.VaultError, match="already exists"):
+        vault.cmd_restore(SimpleNamespace(all=True, artifact_id=None, dest=str(destination), apply=True))
+
+    assert not (destination / "artifact-001--first.md").exists()
+    assert existing.read_text(encoding="utf-8") == "existing"
 
 
 def test_restore_bounds_output_name(vault, tmp_path: Path):
