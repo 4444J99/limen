@@ -436,6 +436,11 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="exit 1 unless every cursor is exhaustive")
+    parser.add_argument(
+        "--check-repositories",
+        action="store_true",
+        help="exit 1 unless the paginated repository denominator is exhaustive",
+    )
     parser.add_argument("--json", action="store_true", help="print the redacted report summary")
     parser.add_argument("--write", action="store_true", help="write owner, source, and tracked receipts")
     parser.add_argument("--workers", type=int, default=8, help="bounded concurrent repository packets (1-32)")
@@ -465,7 +470,17 @@ def main() -> int:
             f"known_leaves={tracked['summary']['known_leaf_count']} "
             f"exhaustive={str(report['exhaustive']).lower()} failures={tracked['summary']['failure_count']}"
         )
-    return 1 if args.check and not report["exhaustive"] else 0
+    repository_cursor = report["cursor"]["repository"]
+    repository_census_complete = (
+        repository_cursor["exhaustive"]
+        and repository_cursor["expected_total"] is not None
+        and repository_cursor["known_count"] == repository_cursor["expected_total"]
+    )
+    if args.check and not report["exhaustive"]:
+        return 1
+    if args.check_repositories and not repository_census_complete:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

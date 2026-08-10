@@ -53,6 +53,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan
+from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
 from limen.models import DispatchLogEntry, Task  # noqa: E402
@@ -73,6 +74,11 @@ LOCKD = ROOT / "logs" / ".queue.lock.d"
 LOG = ROOT / "logs" / "self-heal.log"
 HEAL_CONVERGENCE = ROOT / "logs" / "heal-convergence.json"
 CHRONIC_MAX_AGE_SECONDS = 2 * 60 * 60
+# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable home
+# instead of reciting the atom at the operator. Matches scripts/heal-board.py.
+QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+# sysexits(3): the request is valid, the service is temporarily unable to honour it.
+EX_TEMPFAIL = 75
 
 # the heal kinds this organ emits, keyed by the classifier verdict it reacts to.
 KINDS = {
@@ -627,7 +633,24 @@ def main():
             lf.tasks.append(build_task(verdict, repo, num, url, stamp))
             emitted.append(tid)
         if emitted or retired:
-            apply_limen_file_sync(tasks_path, lf, agent="self-heal", session_id="emit")
+            try:
+                apply_limen_file_sync(tasks_path, lf, agent="self-heal", session_id="emit")
+            except BrokerQuotaExhausted as exc:
+                # A spent storage plan is not a heal failure and not a bug — it is an owner decision the
+                # rung cannot make. Report it as one legible line naming its registry owner, and exit
+                # EX_TEMPFAIL so the beat's rung ledger still records a NON-ZERO outcome: a tidy exit 0
+                # here would restore exactly the "everything looks healthy" blindness that let this sit.
+                # Mirrors scripts/heal-board.py.
+                print(
+                    f"self-heal: BLOCKED — keeper storage quota exhausted, heal emission deferred "
+                    f"({len(emitted)} emitted, {len(retired)} retired)"
+                )
+                print(
+                    "self-heal: the write path is spent, not broken — "
+                    f"owner: lever {QUOTA_LEVER} in his-hand-levers.json"
+                )
+                print(f"self-heal: keeper said: {exc}"[:400])
+                return EX_TEMPFAIL
     finally:
         try:
             LOCKD.rmdir()
