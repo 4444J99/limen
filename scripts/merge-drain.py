@@ -44,6 +44,13 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
 POLICY = ROOT / "scripts" / "merge-policy.sh"
+# Hysteresis for the CI-RED onset notification: the drain beat assesses only a rotating
+# --scan slice of the open-PR universe, so a single zero-CI-RED beat can be window rotation
+# rather than recovery. An immediate clear re-arms the notification and the next red slice
+# re-fires for one continuous episode (measured 2026-08-09: six CI-RED notifications in ~24h
+# over a persistently red fleet). The clear only completes after the window stays clean for
+# this many seconds (default 2h); a returning onset cancels the pending clear without re-firing.
+CI_RED_CLEAR_COOLDOWN = int(os.environ.get("LIMEN_MERGE_CI_RED_COOLDOWN", "7200"))
 LIFECYCLE_LABELS = frozenset(
     {
         "lifecycle:delivery",
@@ -97,10 +104,7 @@ def _is_trivial(repo, num):
 
 
 def lifecycle_disposition(labels) -> str | None:
-    names = {
-        str(label.get("name") if isinstance(label, dict) else label).strip().lower()
-        for label in (labels or [])
-    }
+    names = {str(label.get("name") if isinstance(label, dict) else label).strip().lower() for label in (labels or [])}
     matches = names & LIFECYCLE_LABELS
     return next(iter(matches)) if len(matches) == 1 else None
 
@@ -116,10 +120,7 @@ def assess(rn):
                 "-R",
                 repo,
                 "--json",
-                (
-                    "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,"
-                    "baseRefName,headRefOid,labels"
-                ),
+                ("mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid,labels"),
             ],
             timeout=40,
         )
@@ -327,7 +328,7 @@ def main():
             title="LIMEN merge drain",
         )
     else:
-        _notify.clear_condition(ROOT, "merge-drain-ci-red")
+        _notify.clear_condition(ROOT, "merge-drain-ci-red", cooldown=CI_RED_CLEAR_COOLDOWN)
     try:
         with open(LOG, "a") as f:
             effects = merged + [f"QUEUED:{item}" for item in queued]

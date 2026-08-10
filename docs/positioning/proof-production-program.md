@@ -38,7 +38,7 @@ head. Limen uses a dated successful default-branch snapshot because requiring a 
 matrix commit to equal moving `main` would make every corrective commit invalidate its own proof;
 freshness and intended-workflow identity remain fail-closed.
 
-### Selected preflight set
+### Selected formal set
 
 | Flagship | Distinct story role | Score | Live reproducible anchors | Claim boundary |
 | --- | --- | ---: | --- | --- |
@@ -64,10 +64,13 @@ supporting satellites, circular proof carriers, stale surfaces, specification-on
 weak buyer relevance. Exclusion removes a project from the front-door set; it does not delete its
 evidence or diminish its availability for diligence.
 
-This verdict is a dependency-blocked preflight, not formal PSP completion. #2174 must close first;
-then W03 refreshes against its merged exact classification, obtains the normal receipt, and runs
-`python3 scripts/positioning-program.py --verify-work PSP-P02-W03`. Until then #2175 remains open
-and no live profile generator is changed from this document alone.
+W02 is accepted at main head `35134b95650a26185a58eb3b3a82632e5b80b5b2`; its
+[marked receipt](https://github.com/organvm/limen/issues/2174#issuecomment-5247059070)
+passed the W02 completion predicate. This formally admits the W03 integration,
+but does not itself complete W03: after sanctioned merge, W03 still requires a
+marked receipt and a passing
+`python3 scripts/positioning-program.py --verify-work PSP-P02-W03` before #2175
+may close. No live profile generator is changed from this document alone.
 
 ## P1 — Limen engineering report (flagship proof object)
 

@@ -1,17 +1,19 @@
 schema_version: limen.positioning_flagship_proof_set.v1
 work_id: PSP-P02-W03
-generated_at: "2026-08-10T22:30:17Z"
-verdict: preflight_ratified_dependency_blocked
-formal_completion_blocker: "PSP-P02-W02 / issue #2174 remains open; refresh this matrix after its exact classification merges."
+generated_at: "2026-08-10T23:13:26Z"
+verdict: formal_ratified_receipt_pending
+formal_completion_blocker: "W02 is accepted; W03 still requires sanctioned merge, a marked receipt, and a passing PSP-P02-W03 receipt predicate before issue closure."
 
 dependency_snapshot:
   w01_receipt: docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json
-  w02_branch: codex/psp-p02-w02-estate-classification-preflight
-  w02_head: 3c5858e933dc9fa0961220c1aa87d15b96c25b74
+  w02_branch: main
+  w02_head: 35134b95650a26185a58eb3b3a82632e5b80b5b2
   w02_issue: https://github.com/organvm/limen/issues/2174
-  w02_issue_state: open
+  w02_issue_state: closed
+  w02_receipt: https://github.com/organvm/limen/issues/2174#issuecomment-5247059070
+  w02_receipt_sha256: bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f
   w02_pull_request: https://github.com/organvm/limen/pull/2307
-  w02_pull_request_state: draft
+  w02_pull_request_state: merged
   w03_issue: https://github.com/organvm/limen/issues/2175
   w03_issue_state: open
 
@@ -140,11 +142,11 @@ reviewer_verdict:
   selected_ids: [limen, public_records, ai_chat_exporter]
   alternate_ids: [universal_mail, styx, ai_skills, moneta]
   verdict_text: >-
-    Ratify a three-object preflight proof set. Limen proves governed agent delivery; the UCC
+    Ratify a three-object formal proof set. Limen proves governed agent delivery; the UCC
     public-records platform proves a buyer-facing data pipeline; AI Chat Exporter proves a
     privacy-first user-facing tool. Keep the four named alternates visible with promotion
-    conditions. Do not project this verdict into live profile generators until W02 integrates and
-    W03 receives its formal receipt.
+    conditions. W02 is accepted; W03 still requires its sanctioned merge and marked receipt before
+    downstream generators may consume this verdict as a completed work packet.
 
 candidates:
   - id: limen
