@@ -76,3 +76,27 @@ def test_absolute_path_and_custom_field(tmp_path):
     p.write_text(json.dumps({"ts": datetime.now(timezone.utc).isoformat()}))
     proc = run(tmp_path, "--file", str(p), "--field", "ts", "--max-age-seconds", MAX_AGE)
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def _touch(tmp_path: Path, name: str, age_seconds: float) -> Path:
+    p = tmp_path / "logs" / name
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("plain log, no timestamp body field\n")
+    old = datetime.now(timezone.utc).timestamp() - age_seconds
+    os.utime(p, (old, old))
+    return p
+
+
+def test_mtime_fresh_is_ok(tmp_path):
+    _touch(tmp_path, "self-heal.log", 3600)
+    proc = run(tmp_path, "--file", "logs/self-heal.log", "--field", "mtime", "--max-age-seconds", "21600")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "ok" in proc.stdout
+
+
+def test_mtime_old_is_stale(tmp_path):
+    _touch(tmp_path, "self-heal.log", 90000)
+    proc = run(tmp_path, "--file", "logs/self-heal.log", "--field", "mtime", "--max-age-seconds", "21600")
+    assert proc.returncode == 1
+    assert "STALE" in proc.stdout
+    assert "mtime" in proc.stdout
