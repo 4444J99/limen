@@ -461,6 +461,11 @@ gates:
     paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+  flagship-proof-set-test:
+    command: "python3 scripts/tests/flagship-proof-set.test.py"
+    paths: ["docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
+    owner: positioning-program
+    note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

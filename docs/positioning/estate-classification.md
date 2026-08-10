@@ -55,6 +55,36 @@ Maturity is 238 active, 5 maintained, and 71 archived; no live record lacked
 a usable `pushed_at` fact. These values are evidence snapshots, not public
 performance claims.
 
+## W03 flagship candidate projection
+
+The W03 preflight turns the W02 classes into a bounded public candidate set; it
+does not create another estate inventory. The screen scores all 15 repositories
+currently classed as `front_door_proof`, adds Limen because the PSP manifest
+names it as the primary proof object, adds the three other repositories still
+named as public profile or portfolio entry points, and adds the live MONETA
+endpoint. That produces 20 public candidates.
+
+The scored matrix and reviewer verdict live in
+[`flagship-proof-set.yaml`](flagship-proof-set.yaml). It provisionally ratifies
+three non-overlapping flagships:
+
+| Story role | Flagship | Public evidence boundary |
+| --- | --- | --- |
+| Governed agent delivery | Limen | Public source, current exact-head CI, and public operating-status endpoint |
+| Public-record decision pipeline | UCC Public-Records Intelligence Platform | Public source, current exact-head gate, and public deployment |
+| Privacy-first data portability | AI Chat Exporter | Public source, current exact-head CI, and public install surface |
+
+Universal Mail, Styx, a-i--skills, and MONETA remain named alternates with
+specific promotion conditions. Every other screened candidate retains an
+explicit exclusion reason. Selection is not a repository-count, stars,
+activity-volume, or aesthetic ranking; hard evidence gates override the numeric
+score.
+
+This is a dependency-blocked preflight. It does not change a live profile
+generator, close #2175, or assert the PSP work predicate. After #2174 closes,
+W03 must refresh the matrix against the merged exact classification before its
+formal receipt is posted.
+
 ## Public/private rule
 
 The public registry stores the policy, the W01 aggregate receipt, and this
@@ -69,6 +99,12 @@ Sensitive rationale remains in the existing arca-sealed
 judgment but cannot alter public class policy. A private repository becomes
 public only through the existing visibility sweep and its release gate; this
 classification never authorizes a visibility change.
+
+W03 applies the same split: its public matrix names zero private repositories.
+Private candidates are neither silently discarded nor copied into this repo;
+they remain available for sanctioned diligence and any later encrypted W04
+addendum. No selected public flagship may require that private addendum to make
+its public claim intelligible or reproducible.
 
 ## Finite uncertainty queue
 
