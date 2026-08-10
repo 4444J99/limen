@@ -169723,3 +169723,39 @@ tasks:
     conduct_lease_id: 'lease-831-a21ae65dfd43d5f2'
     conduct_generation: 831
   updated: '2026-08-10T00:55:11.128Z'
+- id: 'GH-organvm-hospes-27'
+  title: '[P2-5] Team Notifications & Assignments: Producer draft due, Host brief review, Editor clips needed'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:2'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/27'
+  context: 'GitHub issue organvm/hospes#27. ## Phase 2: Productization — Sell to Other Podcasters (Week 2-4) ### Problem No team coordination. Tasks fall through cracks. ### Solution Notifications table + bell icon + "My Queue" per role. ### Acceptance Criteria - [ ] `hospes/store.py` — notifications table: `id`, `recipient_role`, `type`, `title`, `body`, `entity_ref`, `read`, `created_at` - [ ] `hospes/service.py` — emit notifications on s'
+  predicate: 'test "$(gh issue view 27 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/27'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#27'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:16.663Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-7d076032c579b05ac5341b1cbb6c299a:832:compatibility'
+    conduct_run_id: 'run-7d076032c579b05ac5341b1cbb6c299a'
+    conduct_lease_id: 'lease-832-7d076032c579b05a'
+    conduct_generation: 832
+  updated: '2026-08-10T00:55:16.663Z'
