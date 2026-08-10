@@ -15,7 +15,7 @@ import re
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlsplit
 
 import yaml
@@ -210,6 +210,51 @@ def workflow_binding_errors(packet: dict[str, Any], source: dict[str, Any]) -> l
     return []
 
 
+def dependency_issue_api_url(value: object) -> str:
+    """Return the API URL for one repository-owned dependency issue."""
+
+    url = validate_public_fetch_url(value)
+    match = re.fullmatch(r"https://github\.com/organvm/limen/issues/([0-9]+)", url)
+    if match is None:
+        raise EvidenceError("dependency issue must be an organvm/limen issue URL")
+    return f"https://api.github.com/repos/organvm/limen/issues/{match.group(1)}"
+
+
+def verify_dependency_states(
+    index: dict[str, Any], fetcher: Callable[[str], tuple[int, bytes]]
+) -> list[str]:
+    """Compare declared dependency states with their live GitHub issue owners."""
+
+    gate = index.get("dependency_gate")
+    if not isinstance(gate, dict):
+        return ["dependency_gate must be a mapping"]
+    errors: list[str] = []
+    for work in ("w03", "w04", "w05"):
+        try:
+            api_url = dependency_issue_api_url(gate.get(f"{work}_issue"))
+        except EvidenceError as exc:
+            errors.append(f"{work}: {exc}")
+            continue
+        status, payload = fetcher(api_url)
+        if status != 200:
+            errors.append(f"{work}: dependency issue API returned HTTP {status}")
+            continue
+        try:
+            issue = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            errors.append(f"{work}: dependency issue API returned invalid JSON: {exc}")
+            continue
+        if not isinstance(issue, dict):
+            errors.append(f"{work}: dependency issue API response must be a mapping")
+            continue
+        if issue.get("state") != gate.get(f"{work}_state"):
+            errors.append(
+                f"{work}: declared dependency state {gate.get(f'{work}_state')!r} "
+                f"does not match live issue state {issue.get('state')!r}"
+            )
+    return errors
+
+
 def validate_workflow_run_response(
     packet: dict[str, Any], source: dict[str, Any], run: object
 ) -> list[str]:
@@ -338,8 +383,20 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
     gate = index.get("dependency_gate")
     if not isinstance(gate, dict):
         errors.append("dependency_gate must be a mapping")
-    elif gate.get("w03_state") != "open" or gate.get("w04_state") != "open" or gate.get("w05_state") != "open":
-        errors.append("preflight must keep W03, W04, and W05 formally open")
+    else:
+        for work in ("w03", "w04", "w05"):
+            try:
+                dependency_issue_api_url(gate.get(f"{work}_issue"))
+            except EvidenceError as exc:
+                errors.append(f"{work}: {exc}")
+            if gate.get(f"{work}_state") not in {"open", "closed"}:
+                errors.append(f"{work}: dependency state must be open or closed")
+        if gate.get("w04_state") == "closed" and gate.get("w03_state") != "closed":
+            errors.append("W04 may close only after W03")
+        if gate.get("w05_state") == "closed" and (
+            gate.get("w03_state") != "closed" or gate.get("w04_state") != "closed"
+        ):
+            errors.append("W05 may close only after W03 and W04")
 
     privacy = index.get("privacy")
     if not isinstance(privacy, dict):
@@ -403,6 +460,7 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
         if not isinstance(packet.get("authorship"), str) or not packet["authorship"].strip():
             errors.append(f"{label}: authorship treatment is required")
         sources = packet.get("sources")
+        public_endpoint_url: object = None
         if (
             not isinstance(sources, list)
             or len(sources) != 2
@@ -411,6 +469,9 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
         ):
             errors.append(f"{label}: exactly one workflow and public endpoint source are required")
         else:
+            public_endpoint_url = next(
+                source.get("url") for source in sources if source.get("kind") == "public_endpoint"
+            )
             for source in sources:
                 if not isinstance(source, dict):
                     errors.append(f"{label}: every source must be a mapping")
@@ -466,6 +527,8 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
             if observation_path is not None:
                 if not isinstance(observation_path, str) or not observation_path.strip():
                     errors.append(f"{label}: observation_path must be a nonempty string")
+                if metric.get("source_url") != public_endpoint_url:
+                    errors.append(f"{label}: JSON observation source must equal the packet public endpoint")
                 if count_observation is not None:
                     errors.append(f"{label}: metric may not mix JSON and term-count observations")
             else:
@@ -519,6 +582,8 @@ def verify_live(index: dict[str, Any]) -> list[str]:
         if url not in fetch_cache:
             fetch_cache[url] = fetch(url)
         return fetch_cache[url]
+
+    errors.extend(verify_dependency_states(index, cached_fetch))
 
     packets = index.get("packets")
     if not isinstance(packets, list):

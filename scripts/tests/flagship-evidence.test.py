@@ -55,15 +55,39 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["packets"][0]["path"] = "../README.md"
         self.assert_error_contains(index, "packet path must exist")
 
-    def test_rejects_a_formal_completion_rewrite(self) -> None:
+    def test_rejects_invalid_dependency_state(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["dependency_gate"]["w04_state"] = "complete"
+        self.assert_error_contains(index, "dependency state must be open or closed")
+
+    def test_rejects_out_of_order_dependency_closure(self) -> None:
         index = copy.deepcopy(self.index)
         index["dependency_gate"]["w04_state"] = "closed"
-        self.assert_error_contains(index, "formally open")
+        self.assert_error_contains(index, "W04 may close only after W03")
+
+    def test_live_dependency_state_must_match_issue_owner(self) -> None:
+        responses = {
+            "2175": "closed",
+            "2176": "open",
+            "2177": "open",
+        }
+
+        def fetcher(url: str) -> tuple[int, bytes]:
+            issue_number = url.rsplit("/", 1)[-1]
+            return 200, json.dumps({"state": responses[issue_number]}).encode("utf-8")
+
+        errors = MODULE.verify_dependency_states(self.index, fetcher)
+        self.assertTrue(any("w03" in error and "live issue state" in error for error in errors), errors)
 
     def test_rejects_nonexact_metric_comparison(self) -> None:
         index = copy.deepcopy(self.index)
         index["packets"][0]["metrics"][0]["comparison"] = "approximate"
         self.assert_error_contains(index, "exact, dated comparison")
+
+    def test_json_observation_must_read_the_declared_packet_endpoint(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["metrics"][0]["source_url"] = "https://api.github.com/repos/organvm/limen"
+        self.assert_error_contains(index, "JSON observation source must equal the packet public endpoint")
 
     def test_rejects_nonnumeric_observed_metric(self) -> None:
         index = copy.deepcopy(self.index)
