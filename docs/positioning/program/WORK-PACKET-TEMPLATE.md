@@ -54,15 +54,18 @@ nonempty `resolved_repositories` list of concrete `owner/repository` names, and 
 `observed_heads` keys equal that resolved set exactly. Unrelated, additional, or omitted repository
 heads cannot stand in for packet targets.
 
-For a phase, child closure and leaf receipts are necessary but not sufficient. Execute the
-manifest-owned phase `exit_gate`, then generate its read-only skeleton with
+For a phase, child closure and leaf receipts are necessary but not sufficient. `exit_gate` is the
+prose end state, not an executable command. Run the exact manifest-owned `exit_predicate`, rendered
+as `python3 scripts/positioning-program.py --phase-proof <PHASE-ID>`, then generate the read-only
+skeleton with
 `python3 scripts/positioning-program.py --phase-receipt-template <PHASE-ID>`. Post the completed
 `limen.positioning_phase_receipt.v1` JSON receipt after
 `<!-- positioning-phase-receipt:<PHASE-ID> -->`. It contains `phase_id`, `"status": "pass"`, the
 current `exit_gate_sha256`, exactly the program repository head in `observed_heads`,
 `child_receipts_sha256`, phase-local `remote_state_sha256`, `parity_sha256`, the manifest-derived
-non-circular `predicate.command`, zero `predicate.exit_code`, `predicate.output_sha256`, RFC3339
-`predicate.observed_at`, and nonempty HTTPS `evidence_urls`. Validate it with
+non-circular `exit_predicate` in `predicate.command`, zero `predicate.exit_code`,
+`predicate.output_sha256`, RFC3339 `predicate.observed_at`, and nonempty HTTPS `evidence_urls`.
+Validate it with
 `python3 scripts/positioning-program.py --verify-phase <PHASE-ID>` before closing the phase; the
 underlying predicate may not call this receipt verifier. Closure-integrity and ready-work checks
 reject a closed phase without a valid current phase receipt.
@@ -84,8 +87,8 @@ phase, and root may remain open during proof generation, then close in dependenc
 ## Return evidence
 
 The exact proof that travels back to the phase and root: target-bound head or resolved head set,
-underlying checks, phase exit-gate evidence, links, metrics, decisions, objections, incidents, or
-external validation.
+underlying checks, phase exit-predicate evidence, links, metrics, decisions, objections, incidents,
+or external validation.
 
 ## Rollback
 
