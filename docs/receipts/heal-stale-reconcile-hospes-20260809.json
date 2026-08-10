@@ -1,14 +1,20 @@
 {
   "schema": "limen.heal_reconciliation.v1",
-  "generated": "2026-08-10T01:26:59Z",
+  "generated": "2026-08-10T01:54:05Z",
   "conductor_lane": "codex",
   "requested_executor_lane": "agy",
   "scope": "organvm/hospes",
   "task": {
     "task_id": "HEAL-cifix-organvm-hospes-8",
     "canonical_projection_status": "open",
+    "repo": "organvm/hospes",
+    "target_agent": "agy",
+    "budget_cost": 1,
+    "owner_surface": "organvm/hospes",
+    "receipt_target": "https://github.com/organvm/hospes/pull/8",
     "pr": "organvm/hospes#8",
-    "predicate": {
+    "predicate": "test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED",
+    "predicate_evidence": {
       "command": "test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED",
       "observed_pr_state": "MERGED",
       "exit_status": 0,
@@ -30,7 +36,22 @@
   "admission": {
     "broker_capabilities": "available after the documented mode-0600 environment-cache bootstrap",
     "session_registration": "accepted",
-    "task_reservation": "denied before run/lease allocation",
+    "task_reservation": "not submitted: local work-loan preflight denied before run/lease allocation",
+    "broker_reservation_response": null,
+    "underwriting_check": {
+      "implementation": "limen.work_loan.task_work_loan_readiness",
+      "projection": "tasks.yaml",
+      "task_id": "HEAL-cifix-organvm-hospes-8",
+      "executed_at": "2026-08-10T01:53:36Z",
+      "exit_status": 0,
+      "ready": false,
+      "canonical_fields": {
+        "budget_cost": 1,
+        "repo": "organvm/hospes",
+        "predicate": "test \"$(gh pr view 8 --repo organvm/hospes --json state --jq .state)\" = MERGED",
+        "receipt_target": "https://github.com/organvm/hospes/pull/8"
+      }
+    },
     "missing_work_loan_fields": [
       "source_origin",
       "horizon",
