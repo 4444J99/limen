@@ -24,9 +24,7 @@ A live orchestration and governance system operating in its owner's environment 
 
 **Evidence:** verified: heartbeat-driven autonomic loop (scripts/metabolize.sh) · verified: proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present · verified: failure states and human gates are explicit.
 
-**Solves:** Every agent fleet needs health checks, credential refresh, stale-work cleanup, state reconciliation, and failure escalation. When those controls are manual or absent, routine drift can become lost work or cascading failure.
-
-→ **Adopt self-healing fleet ops** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/limen.md)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/limen.md)
 
 ### [UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
 
@@ -36,9 +34,7 @@ A working prototype with four state collectors implemented on a fifty-state arch
 
 **Evidence:** verified: 4 state collectors implemented on a 50-state architecture.
 
-**Solves:** Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.
-
-→ **Deploy this for your shop** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md)
 
 ### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
 
@@ -48,33 +44,23 @@ A deployed public exporter with an active repository and MIT licence; functional
 
 **Evidence:** verified: MIT license and active repository history.
 
-**Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
-
-→ **Build this into my product** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/a-i-chat--exporter.md)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/a-i-chat--exporter.md)
 
 ### [a-i--skills](https://github.com/organvm-iv-taxis/a-i--skills)
-
-A public library of reusable agent skills and operating patterns.
 
 **Current state:** Deployed public library; external adoption is modest and directly observable.
 
 **Evidence:** verified: 15 stars and 7 forks, with external accounts verified on 2026-08-09.
 
-**Solves:** Agent teams repeatedly rebuild operating instructions instead of reusing reviewed, inspectable skills.
-
-→ **Inspect the skills library** · see [the evidence and ways to work together](https://github.com/organvm-iv-taxis/a-i--skills)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm-iv-taxis/a-i--skills)
 
 ### [MONETA](https://mint.4444j99.dev)
-
-A self-hosted Bitcoin licence mint.
 
 **Current state:** Live; revenue and external adoption are unverified.
 
 **Evidence:** verified: public mint endpoint returned HTTP 200 on 2026-08-09.
 
-**Solves:** Software sellers need a sovereign licensing path that does not depend on a hosted marketplace.
-
-→ **Inspect the live mint** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims)
 
 ---
 
