@@ -169867,3 +169867,39 @@ tasks:
     conduct_lease_id: 'lease-835-b6e295f5bda9e881'
     conduct_generation: 835
   updated: '2026-08-10T00:55:32.465Z'
+- id: 'GH-organvm-hospes-23'
+  title: '[P2-1] Multi-Show / Multi-Tenant Dashboard: show switcher in header'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:2'
+  - 'priority:P1'
+  - 'area:product'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/23'
+  context: 'GitHub issue organvm/hospes#23. ## Phase 2: Productization — Sell to Other Podcasters (Week 2-4) ### Problem Single tenant only. Can''t run Flagship + Field + client shows in one dashboard. ### Solution Add show switcher in header. One login, multiple DNA instances, isolated data per show. ### Acceptance Criteria - [ ] Header dropdown: "Flagship Show" | "Field Show" | "Client: Podcast X" - [ ] Switching show → reloads pipeline, p'
+  predicate: 'test "$(gh issue view 23 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/23'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#23'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:55:37.571Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-9bf2c0a29119eb7caa2797cb4ad3608f:836:compatibility'
+    conduct_run_id: 'run-9bf2c0a29119eb7caa2797cb4ad3608f'
+    conduct_lease_id: 'lease-836-9bf2c0a29119eb7c'
+    conduct_generation: 836
+  updated: '2026-08-10T00:55:37.571Z'
