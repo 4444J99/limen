@@ -29,16 +29,26 @@ class EstateClassificationTests(unittest.TestCase):
             stdout='[[{"login": "example-a"}], [{"login": "example-b"}]]',
             stderr="",
         )
-        with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+        native_user = mock.Mock(return_value=completed)
+        gitvs = SimpleNamespace(_gh_user=native_user)
+        with mock.patch.object(MODULE, "load_gitvs", return_value=gitvs):
             self.assertEqual(
                 MODULE.paginated_objects("/user/orgs?per_page=100", kind="organization"),
                 [{"login": "example-a"}, {"login": "example-b"}],
             )
 
-        self.assertEqual(
-            run.call_args.args[0],
-            ["gh", "api", "--paginate", "--slurp", "/user/orgs?per_page=100"],
+        native_user.assert_called_once_with(
+            ["api", "--paginate", "--slurp", "/user/orgs?per_page=100"],
+            timeout=180,
         )
+
+    def test_effective_estate_uses_the_overlay_aware_loader(self) -> None:
+        effective = {"repo_overrides": {"opaque-key": {"class": "operation_private"}}}
+        load_estate = mock.Mock(return_value=effective)
+        gitvs = SimpleNamespace(load_estate=load_estate)
+        with mock.patch.object(MODULE, "load_gitvs", return_value=gitvs):
+            self.assertIs(MODULE.load_effective_estate(), effective)
+        load_estate.assert_called_once_with()
 
     def test_partner_precedes_private_and_product(self) -> None:
         row = {"private": True, "archived": False}
@@ -121,6 +131,33 @@ class EstateClassificationTests(unittest.TestCase):
                 receipt,
             )
 
+    def test_private_bare_slug_is_guarded_unless_a_public_slug_collides(self) -> None:
+        rows = [
+            {"full_name": "example-private/sensitive-only", "name": "sensitive-only", "private": True},
+            {"full_name": "example-private/shared", "name": "shared", "private": True},
+            {"full_name": "example-public/shared", "name": "shared", "private": False},
+        ]
+        full_names, bare_slugs = MODULE.private_repository_tokens(rows)
+        self.assertEqual(full_names, {"example-private/sensitive-only", "example-private/shared"})
+        self.assertEqual(bare_slugs, {"sensitive-only"})
+
+        content = SimpleNamespace(
+            returncode=0,
+            stdout="+sensitive-only\n+shared\n+descriptive sensitive-only wording\n",
+            stderr="",
+        )
+        added_paths = SimpleNamespace(returncode=0, stdout="", stderr="")
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=[content, added_paths]):
+            self.assertEqual(
+                MODULE.private_leaks_added("base-ref", full_names, bare_slugs),
+                ["sensitive-only"],
+            )
+
+    def test_private_internal_disposition_forces_private_only_relevance(self) -> None:
+        policy = {"public_relevance": {"products": "product_diligence"}}
+        self.assertEqual(MODULE.public_relevance_for("products", "private_internal", policy), "private_only")
+        self.assertEqual(MODULE.public_relevance_for("products", "public_evidence", policy), "product_diligence")
+
     def test_private_name_guard_scans_the_entire_reviewed_diff(self) -> None:
         private_name = "private-owner/private-repository"
         completed = SimpleNamespace(
@@ -202,13 +239,9 @@ class EstateClassificationTests(unittest.TestCase):
             "visibility": {"private": 0, "public": 1},
             "uncertainty_queue": {},
         }
-        load_yaml = mock.patch.object(
-            MODULE,
-            "load_yaml",
-            side_effect=lambda path: estate if path == MODULE.ESTATE else {},
-        )
         with (
-            load_yaml,
+            mock.patch.object(MODULE, "load_effective_estate", return_value=estate),
+            mock.patch.object(MODULE, "load_yaml", return_value={}),
             mock.patch.object(MODULE, "load_json", return_value={}) as load_json,
             mock.patch.object(MODULE, "collect_live_estate", return_value=(rows, owner, organization_roster)),
             mock.patch.object(MODULE, "classify", return_value=classifications),
@@ -228,7 +261,7 @@ class EstateClassificationTests(unittest.TestCase):
             load_json.assert_called_once_with(MODULE.CENSUS_RECEIPT)
             verify_policy.assert_called_once_with(estate)
             identity_guard.assert_called_once_with(rows, owner, organization_roster, {})
-            private_guard.assert_called_once_with("origin/main", set())
+            private_guard.assert_called_once_with("origin/main", set(), set())
 
 
 if __name__ == "__main__":

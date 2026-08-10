@@ -22,7 +22,7 @@ Every live census record receives these dimensions during verification.
 | Primary role | infrastructure, proof, experiments, products, archives, private operations, partner work | Estate governance class, product ledger, archive fact, and access grant posture |
 | Maturity | active, maintained, dormant, archived, unvalidated | GitHub `archived` and `pushed_at` facts; exact elapsed-time comparisons at the inclusive 90- and 365-day policy boundaries |
 | Visibility disposition | public evidence, public partner, private internal, private partner | GitHub `private` fact plus the access-grant registry |
-| Public relevance | technical diligence, front-door proof, public reference, product diligence, historical reference, private only, partner scoped | Primary role plus visibility disposition |
+| Public relevance | technical diligence, front-door proof, public reference, product diligence, historical reference, private only, partner scoped | Primary role plus visibility disposition; private-internal records are always private only and partner records are always partner scoped |
 
 The ordered role policy lives in
 [`institutio/github/estate.yaml`](../../institutio/github/estate.yaml). It is
@@ -62,10 +62,13 @@ performance claims.
 The public registry stores the policy, the W01 aggregate receipt, and this
 aggregate report. It does not add private repository names, descriptions,
 topics, or timestamps. Verification may inspect those facts directly through
-the authenticated GitHub API, keeps them in process, and checks the reviewed
-diff against the live private-name set. Any newly added private repository name
-in public content, a newly added path, or a rename destination is a hard
-failure. Failure messages remain aggregate and never echo the private identity.
+the native owner's authenticated GitHub API credential, loads the sanctioned
+private override overlay when it is hydrated, keeps private facts in process,
+and checks the reviewed diff against both full private identities and
+unambiguous standalone bare private slugs that do not collide with any public
+slug. Any newly added private repository name in public content, a newly added
+path, or a rename destination is a hard failure. Failure messages remain
+aggregate and never echo the private identity.
 
 Sensitive rationale remains in the existing arca-sealed
 `institutio/github/estate.private.yaml` overlay, which can deepen a repository
@@ -101,8 +104,9 @@ It fails unless the policy taxonomy is complete, every live census record has
 exactly one primary class and all four dimensions, every selector key and value
 is recognized, the live owner/organization roster and repository
 identity/visibility digest still match W01, the denominator counts still
-match, and the public diff contains no newly added private repository name in
-content or path metadata. The unit companion is:
+match, the effective public-plus-private-override estate is used for governance
+classification, and the public diff contains no newly added private repository
+name in content or path metadata. The unit companion is:
 
 ```bash
 python3 scripts/tests/estate-classification.test.py

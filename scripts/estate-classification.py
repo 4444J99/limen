@@ -80,10 +80,20 @@ def load_gitvs() -> Any:
     return module
 
 
+def load_effective_estate() -> dict[str, Any]:
+    try:
+        value = load_gitvs().load_estate()
+    except Exception as exc:
+        raise ClassificationError("cannot load effective GitHub estate policy") from exc
+    if not isinstance(value, dict) or not value:
+        raise ClassificationError("effective GitHub estate policy must be a non-empty mapping")
+    return value
+
+
 def command_json(args: list[str], *, timeout: int = 60) -> Any:
-    result = subprocess.run(args, cwd=ROOT, text=True, capture_output=True, check=False, timeout=timeout)
+    result = load_gitvs()._gh_user(args, timeout=timeout)
     if result.returncode != 0:
-        raise ClassificationError((result.stderr or result.stdout or "GitHub query failed").strip())
+        raise ClassificationError("native-owner GitHub query failed")
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
@@ -91,7 +101,7 @@ def command_json(args: list[str], *, timeout: int = 60) -> Any:
 
 
 def paginated_objects(endpoint: str, *, kind: str) -> list[dict[str, Any]]:
-    pages = command_json(["gh", "api", "--paginate", "--slurp", endpoint], timeout=180)
+    pages = command_json(["api", "--paginate", "--slurp", endpoint], timeout=180)
     if not isinstance(pages, list):
         raise ClassificationError(f"GitHub {kind} pages were not a list")
     rows: list[dict[str, Any]] = []
@@ -109,7 +119,7 @@ def paginated_repositories(endpoint: str) -> list[dict[str, Any]]:
 
 
 def collect_live_estate() -> tuple[list[dict[str, Any]], dict[str, Any], list[str]]:
-    owner = command_json(["gh", "api", "/user"])
+    owner = command_json(["api", "/user"])
     if not isinstance(owner, dict):
         raise ClassificationError("GitHub owner query was not an object")
     owner_login = str(owner.get("login") or "").strip()
@@ -183,6 +193,26 @@ def verify_census_identity(
         or sorted(expected_organizations) != sorted(organization_roster)
     ):
         raise ClassificationError("live organization roster does not match W01")
+
+
+def private_repository_tokens(rows: list[dict[str, Any]]) -> tuple[set[str], set[str]]:
+    public_slugs = {
+        str(row.get("name") or str(row.get("full_name") or "").rsplit("/", 1)[-1]).strip()
+        for row in rows
+        if not bool(row.get("private"))
+    }
+    full_names: set[str] = set()
+    bare_slugs: set[str] = set()
+    for row in rows:
+        if not bool(row.get("private")):
+            continue
+        full_name = str(row.get("full_name") or "").strip()
+        slug = str(row.get("name") or full_name.rsplit("/", 1)[-1]).strip()
+        if full_name:
+            full_names.add(full_name)
+        if slug and slug not in public_slugs:
+            bare_slugs.add(slug)
+    return full_names, bare_slugs
 
 
 def audience_for(repo: str, private: bool, access: dict[str, Any]) -> str:
@@ -263,6 +293,14 @@ def selector_matches(
     return True
 
 
+def public_relevance_for(primary: str, disposition: str, policy: dict[str, Any]) -> str:
+    if disposition == "private_internal":
+        return "private_only"
+    if disposition in {"public_partner", "private_partner"}:
+        return "partner_scoped"
+    return str((policy.get("public_relevance") or {}).get(primary) or "")
+
+
 def classify(rows: list[dict[str, Any]], estate: dict[str, Any], access: dict[str, Any], now: dt.datetime) -> list[dict[str, str]]:
     policy = estate.get("positioning_estate_classification") or {}
     product_names = {str(name) for name in ((estate.get("product_ledger") or {}).get("repos") or [])}
@@ -308,7 +346,7 @@ def classify(rows: list[dict[str, Any]], estate: dict[str, Any], access: dict[st
         else:
             disposition = "public_partner" if audience == "collab" else "public_evidence"
         maturity = maturity_for(row, policy, now)
-        relevance = str((policy.get("public_relevance") or {}).get(primary) or "")
+        relevance = public_relevance_for(primary, disposition, policy)
         if disposition not in DISPOSITIONS or maturity not in MATURITY or not relevance:
             raise ClassificationError("repository record has incomplete classification dimensions")
         uncertainty: list[str] = []
@@ -359,7 +397,11 @@ def verify_policy(estate: dict[str, Any]) -> list[str]:
     return errors
 
 
-def private_leaks_added(base: str, private_names: set[str]) -> list[str]:
+def private_leaks_added(
+    base: str,
+    private_names: set[str],
+    private_slugs: set[str] | None = None,
+) -> list[str]:
     content_result = subprocess.run(
         ["git", "diff", "--unified=0", f"{base}...HEAD"],
         cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
@@ -379,7 +421,7 @@ def private_leaks_added(base: str, private_names: set[str]) -> list[str]:
     ]
     added_paths = [path for path in path_result.stdout.split("\0") if path]
     repository_character = r"A-Za-z0-9_.-"
-    return sorted(
+    leaked_full_names = {
         name
         for name in private_names
         if (
@@ -392,7 +434,19 @@ def private_leaks_added(base: str, private_names: set[str]) -> list[str]:
             )
             or any(re.search(rf"(?:^|/){re.escape(name)}(?:$|/|\.)", path) for path in added_paths)
         )
-    )
+    }
+    leaked_bare_slugs = {
+        slug
+        for slug in (private_slugs or set())
+        if (
+            any(
+                re.fullmatch(rf"\s*(?:[-*]\s+)?[\x60'\"]?{re.escape(slug)}[\x60'\"]?\s*", line)
+                for line in added_content
+            )
+            or any(re.search(rf"(?:^|/){re.escape(slug)}(?:$|/|\.)", path) for path in added_paths)
+        )
+    }
+    return sorted(leaked_full_names | leaked_bare_slugs)
 
 
 def summary(rows: list[dict[str, Any]], classifications: list[dict[str, str]]) -> dict[str, Any]:
@@ -420,7 +474,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        estate = load_yaml(ESTATE)
+        estate = load_effective_estate()
         access = load_yaml(ACCESS)
         census_receipt: dict[str, Any] | None = None
         if args.verify:
@@ -441,10 +495,8 @@ def main(argv: list[str] | None = None) -> int:
                 )
             if counts["visibility"] != {"private": expected.get("private"), "public": expected.get("public")}:
                 raise ClassificationError("census visibility counts do not match the W01 receipt")
-            leaks = private_leaks_added(
-                args.base,
-                {str(row["full_name"]) for row in rows if bool(row.get("private"))},
-            )
+            private_names, private_slugs = private_repository_tokens(rows)
+            leaks = private_leaks_added(args.base, private_names, private_slugs)
             if leaks:
                 raise ClassificationError(f"new private repository name(s) in public diff: {len(leaks)}")
         if args.json:
