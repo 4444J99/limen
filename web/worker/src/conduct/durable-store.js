@@ -17,8 +17,8 @@ async function sha256(bytes) {
   return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
 }
 
-function chunkKey(generation, index) {
-  return `${CHUNK_PREFIX}${generation}.${String(index).padStart(4, "0")}`;
+function chunkKey(contract, generation, index) {
+  return `${contract.chunk_prefix}${generation}.${String(index).padStart(4, "0")}`;
 }
 
 async function livenessKey(leaseId) {
@@ -34,20 +34,20 @@ function bytesFromStoredChunk(value) {
   throw new Error("stored conduct state chunk has an unsupported value type");
 }
 
-function validateManifest(value) {
+function validateManifest(value, contract) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("stored conduct state chunk manifest is invalid");
   }
-  if (value.schema_version !== "limen.conduct_state_chunks.v1"
+  if (value.schema_version !== contract.schema_version
       || value.encoding !== "json-utf8"
       || !/^[0-9a-f]{64}$/.test(String(value.generation || ""))
       || !Number.isInteger(value.chunk_count)
       || value.chunk_count < 1
       || !Number.isInteger(value.byte_length)
       || value.byte_length < 1
-      || value.byte_length > MAX_STATE_BYTES
-      || value.chunk_bytes !== CHUNK_BYTES
-      || value.chunk_count !== Math.ceil(value.byte_length / CHUNK_BYTES)) {
+      || value.byte_length > contract.max_state_bytes
+      || value.chunk_bytes !== contract.chunk_bytes
+      || value.chunk_count !== Math.ceil(value.byte_length / contract.chunk_bytes)) {
     throw new Error("stored conduct state chunk manifest is invalid");
   }
   return value;
@@ -92,10 +92,10 @@ function validateLiveness(value) {
   return value;
 }
 
-async function readChunks(storage, manifest) {
+async function readChunks(storage, manifest, contract) {
   const keys = Array.from(
     { length: manifest.chunk_count },
-    (_, index) => chunkKey(manifest.generation, index),
+    (_, index) => chunkKey(contract, manifest.generation, index),
   );
   const chunks = [];
   let received = 0;
@@ -108,7 +108,7 @@ async function readChunks(storage, manifest) {
         throw new Error(`stored conduct state is missing chunk ${key}`);
       }
       const chunk = bytesFromStoredChunk(value);
-      if (chunk.byteLength < 1 || chunk.byteLength > CHUNK_BYTES) {
+      if (chunk.byteLength < 1 || chunk.byteLength > contract.chunk_bytes) {
         throw new Error(`stored conduct state chunk ${key} has an invalid size`);
       }
       chunks.push(chunk);
@@ -137,15 +137,15 @@ async function deleteKeys(storage, keys) {
   }
 }
 
-async function cleanupUnselected(storage, generation) {
-  const listed = await storage.list({ prefix: CHUNK_PREFIX });
+async function cleanupUnselected(storage, generation, contract) {
+  const listed = await storage.list({ prefix: contract.chunk_prefix });
   if (!(listed instanceof Map)) return;
-  const selectedPrefix = `${CHUNK_PREFIX}${generation}.`;
+  const selectedPrefix = `${contract.chunk_prefix}${generation}.`;
   await deleteKeys(
     storage,
     [...listed.keys()].filter((key) => !key.startsWith(selectedPrefix)),
   );
-  await storage.delete(LEGACY_STATE_KEY);
+  await storage.delete(contract.legacy_key);
 }
 
 async function cleanupLiveness(storage) {
@@ -234,18 +234,27 @@ function applyLiveness(state, overlay) {
  * best-effort cleanup, making a failed cleanup safe.
  */
 export class ChunkedDurableStateStore {
-  constructor(storage, emptyState) {
+  constructor(storage, emptyState, options = {}) {
     this.storage = storage;
     this.emptyState = emptyState;
+    this.contract = Object.freeze({
+      schema_version: options.schema_version || "limen.conduct_state_chunks.v1",
+      manifest_key: options.manifest_key || MANIFEST_KEY,
+      legacy_key: options.legacy_key || LEGACY_STATE_KEY,
+      chunk_prefix: options.chunk_prefix || CHUNK_PREFIX,
+      chunk_bytes: options.chunk_bytes || CHUNK_BYTES,
+      max_state_bytes: options.max_state_bytes || MAX_STATE_BYTES,
+    });
+    this.livenessEnabled = options.liveness_enabled !== false;
     this.loadedGeneration = null;
     this.loadedOverlays = new Map();
   }
 
   async loadBase() {
-    const rawManifest = await this.storage.get(MANIFEST_KEY);
+    const rawManifest = await this.storage.get(this.contract.manifest_key);
     if (rawManifest !== undefined && rawManifest !== null) {
-      const manifest = validateManifest(rawManifest);
-      const bytes = await readChunks(this.storage, manifest);
+      const manifest = validateManifest(rawManifest, this.contract);
+      const bytes = await readChunks(this.storage, manifest, this.contract);
       try {
         return {
           state: JSON.parse(decoder.decode(bytes)),
@@ -255,7 +264,7 @@ export class ChunkedDurableStateStore {
         throw new Error(`stored conduct state JSON is invalid: ${error.message}`);
       }
     }
-    const stored = await this.storage.get(LEGACY_STATE_KEY);
+    const stored = await this.storage.get(this.contract.legacy_key);
     const state = stored || this.emptyState();
     return {
       state,
@@ -265,7 +274,9 @@ export class ChunkedDurableStateStore {
 
   async load() {
     const base = await this.loadBase();
-    const listed = await this.storage.list({ prefix: LIVENESS_PREFIX });
+    const listed = this.livenessEnabled
+      ? await this.storage.list({ prefix: LIVENESS_PREFIX })
+      : new Map();
     const selected = [];
     if (listed instanceof Map) {
       for (const [key, raw] of listed) {
@@ -290,7 +301,7 @@ export class ChunkedDurableStateStore {
   }
 
   async saveHeartbeat(state, leaseId) {
-    if (!this.loadedGeneration) {
+    if (!this.livenessEnabled || !this.loadedGeneration) {
       throw new Error("conduct liveness save requires a loaded base checkpoint");
     }
     const lease = state.leases?.[leaseId];
@@ -345,22 +356,22 @@ export class ChunkedDurableStateStore {
 
   async save(state) {
     const bytes = encoder.encode(JSON.stringify(state));
-    if (bytes.byteLength < 1 || bytes.byteLength > MAX_STATE_BYTES) {
+    if (bytes.byteLength < 1 || bytes.byteLength > this.contract.max_state_bytes) {
       throw new Error(
-        `conduct state exceeds bounded chunk store (${bytes.byteLength} > ${MAX_STATE_BYTES} bytes)`,
+        `durable state exceeds bounded chunk store (${bytes.byteLength} > ${this.contract.max_state_bytes} bytes)`,
       );
     }
     const generation = await sha256(bytes);
-    const priorRaw = await this.storage.get(MANIFEST_KEY);
-    const prior = priorRaw == null ? null : validateManifest(priorRaw);
-    const chunkCount = Math.ceil(bytes.byteLength / CHUNK_BYTES);
+    const priorRaw = await this.storage.get(this.contract.manifest_key);
+    const prior = priorRaw == null ? null : validateManifest(priorRaw, this.contract);
+    const chunkCount = Math.ceil(bytes.byteLength / this.contract.chunk_bytes);
     if (prior
         && prior.generation === generation
         && prior.byte_length === bytes.byteLength
         && prior.chunk_count === chunkCount) {
       try {
-        await cleanupUnselected(this.storage, generation);
-        await cleanupLiveness(this.storage);
+        await cleanupUnselected(this.storage, generation, this.contract);
+        if (this.livenessEnabled) await cleanupLiveness(this.storage);
       } catch {
         // The selected generation is already durable. Orphan cleanup remains
         // best-effort and is retried by the next save.
@@ -371,25 +382,25 @@ export class ChunkedDurableStateStore {
     }
 
     for (let index = 0; index < chunkCount; index += 1) {
-      const start = index * CHUNK_BYTES;
-      const chunk = bytes.slice(start, Math.min(start + CHUNK_BYTES, bytes.byteLength));
-      await this.storage.put(chunkKey(generation, index), chunk);
+      const start = index * this.contract.chunk_bytes;
+      const chunk = bytes.slice(start, Math.min(start + this.contract.chunk_bytes, bytes.byteLength));
+      await this.storage.put(chunkKey(this.contract, generation, index), chunk);
     }
     const manifest = {
-      schema_version: "limen.conduct_state_chunks.v1",
+      schema_version: this.contract.schema_version,
       encoding: "json-utf8",
       generation,
       byte_length: bytes.byteLength,
-      chunk_bytes: CHUNK_BYTES,
+      chunk_bytes: this.contract.chunk_bytes,
       chunk_count: chunkCount,
     };
-    await this.storage.put(MANIFEST_KEY, manifest);
+    await this.storage.put(this.contract.manifest_key, manifest);
     this.loadedGeneration = generation;
     this.loadedOverlays = new Map();
 
     try {
-      await cleanupUnselected(this.storage, generation);
-      await cleanupLiveness(this.storage);
+      await cleanupUnselected(this.storage, generation, this.contract);
+      if (this.livenessEnabled) await cleanupLiveness(this.storage);
     } catch {
       // Receipt custody is already committed through the manifest. Cleanup is
       // deliberately best-effort and stale overlays cannot match this generation.
