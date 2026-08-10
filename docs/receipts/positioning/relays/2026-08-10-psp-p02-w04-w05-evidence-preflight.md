@@ -2,9 +2,9 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
-from: Codex desktop direct preflight session
-to: next healthy Codex session with fresh human-protected authority
-scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/ae93/limen
+from: Codex desktop human-protected preflight task
+to: next healthy human-protected Codex task
+scope: organvm/limen@codex/psp-p02-w04-w05-public-evidence-preflight
 phase: PROVE
 compression_level: medium
 ---
@@ -19,15 +19,18 @@ compression_level: medium
 - Target repository: `organvm/limen`
 - Branch: `codex/psp-p02-w04-w05-public-evidence-preflight`
 - Stacked base: `codex/psp-p02-w03-flagship-proof-preflight`
-- W04/W05 implementation commit: `23400cee7ffbf95e66f3837f0ef3f02f47bd17fb`
-- Conduct root/run/lease receipt: none. This is a human-authorized reversible preflight; it is not
-  a claimed formal completion.
+- Initial W04/W05 implementation commit: `23400cee7ffbf95e66f3837f0ef3f02f47bd17fb`
+- Current W03 parent head: `528c94d31a426f3a9cac29a72cd38bc942d45171`
+- Exact verified implementation head: `47a43e7e8065a2cba3a1319855fa257280c9b160`
+- Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this
+  remains a reversible preflight, not a claimed formal completion.
 
 ## Verified current state
 
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
+| Exact remote branch checkpoint | `47a43e7e8065a2cba3a1319855fa257280c9b160` before this relay refresh; fetch PR #2310 before resuming |
 | Private repository names in public artifacts | 0 |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
@@ -35,6 +38,9 @@ compression_level: medium
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
 | W03 / W04 / W05 issue state at preflight | open / open / open |
 | Task-specific predicates | `python3 scripts/flagship-evidence.py --verify-live --json` passed; formal `--verify-work` commands intentionally not run |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 9 tests, including repository substitution, duplicate-source, path-traversal, and nonnumeric-metric failures |
+| Parent privacy guard | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w03-flagship-proof-preflight` passed over the full W04/W05 diff: 314 repositories, 235 public, 79 private, with no private repository token added |
+| Scoped verification | `scripts/verify-scoped.sh` passed all 22 implicated cheap-wave gates on exact head `47a43e7e8065a2cba3a1319855fa257280c9b160` |
 | External effects | branch/PR staging only; no merge, publication, issue-state, or account change |
 
 ## Completed work
@@ -47,6 +53,10 @@ compression_level: medium
   terms rather than accepting HTTP success alone.
 - Restored the canonical claims ledger on this stack and added a W04/W05 section that places all
   cohort numeric claims under the same authority and withholds the unsupported classes.
+- Reconciled the ledger to the stable W01 denominator of 314 repositories (235 public, 79 private),
+  retained earlier counts as superseded history, and withheld stale composite status counts.
+- Bound every packet repository to the exact W03-selected public repository, required one public
+  workflow plus one public endpoint, and rejected traversal, non-HTTPS, or nonnumeric evidence rows.
 
 ## Decisions and rationale
 
@@ -83,10 +93,13 @@ compression_level: medium
 - Flagship selection: `docs/positioning/flagship-proof-set.yaml`
 - Packet index: `docs/positioning/evidence/flagship-evidence.yaml`
 - Claims authority: `docs/positioning/claims-ledger.md`
-- Pull request: create a draft stacked PR against the W03 branch; do not merge it while dependencies remain open.
+- Pull request: https://github.com/organvm/limen/pull/2310 (draft, stacked on W03); do not merge it while dependencies remain open.
 
 The fresh-agent injection phrase is:
 
 ```text
 Continue from docs/receipts/positioning/relays/2026-08-10-psp-p02-w04-w05-evidence-preflight.md. mid-task — see Next Actions for current step.
 ```
+
+The receiver must verify live state and obtain its own authority. This file transfers context, not
+identity, approval, issue state, or permission.
