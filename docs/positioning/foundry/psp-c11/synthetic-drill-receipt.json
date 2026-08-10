@@ -1,0 +1,110 @@
+{
+  "access_drills": [
+    {
+      "decision": "allow",
+      "drill_id": "public-source",
+      "expected": "allow",
+      "pass": true
+    },
+    {
+      "decision": "allow",
+      "drill_id": "synthetic-sandbox",
+      "expected": "allow",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-credential",
+      "expected": "deny",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-private-source",
+      "expected": "deny",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-license",
+      "expected": "deny",
+      "pass": true
+    }
+  ],
+  "external_effects": [],
+  "final_custody": "owner_unchanged",
+  "human_acceptance_simulated": false,
+  "lifecycle_replay": [
+    {
+      "artifact": "invented_product",
+      "external_effect": false,
+      "step": "inventory"
+    },
+    {
+      "artifact": "invented_evidence",
+      "external_effect": false,
+      "step": "score"
+    },
+    {
+      "artifact": "invented_operator",
+      "external_effect": false,
+      "step": "diligence"
+    },
+    {
+      "artifact": "invented_data_isolated_sandbox",
+      "external_effect": false,
+      "step": "synthetic_trial"
+    },
+    {
+      "artifact": "sandbox_destroyed_no_live_access",
+      "external_effect": false,
+      "step": "return_rehearsal"
+    },
+    {
+      "artifact": "synthetic_decision_receipt",
+      "external_effect": false,
+      "step": "governance_review"
+    }
+  ],
+  "observed_pilot": false,
+  "operator_cases": [
+    {
+      "case_id": "case-proceed",
+      "expected_route": "proceed",
+      "pass": true,
+      "route": "proceed",
+      "score": 90
+    },
+    {
+      "case_id": "case-diligence",
+      "expected_route": "diligence",
+      "pass": true,
+      "route": "diligence",
+      "score": 73
+    },
+    {
+      "case_id": "case-trial",
+      "expected_route": "trial",
+      "pass": true,
+      "route": "trial",
+      "score": 60
+    },
+    {
+      "case_id": "case-decline",
+      "expected_route": "decline",
+      "pass": true,
+      "route": "decline",
+      "score": 0
+    },
+    {
+      "case_id": "case-human-review",
+      "expected_route": "human_review",
+      "pass": true,
+      "route": "human_review",
+      "score": 96
+    }
+  ],
+  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v1",
+  "status": "pass",
+  "synthetic_only": true
+}
