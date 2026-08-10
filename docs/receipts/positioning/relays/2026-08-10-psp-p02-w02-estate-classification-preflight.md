@@ -24,7 +24,7 @@ compression_level: medium
 | Item | Live state |
 |---|---|
 | Exact local head | `0a9ef16ed10c19241490ced94bc161ae4c67e07a` — preflight implementation commit before this relay |
-| Exact remote branch head | Not yet pushed when this relay was created; the receiver must fetch and compare the branch tip |
+| Exact remote branch checkpoint | `ae2754a150ee68b293432c7dc3bc58b39acf6d42` was pushed to `origin/codex/psp-p02-w02-estate-classification-preflight` before this relay checkpoint update; fetch before resuming |
 | Exact target repository heads | `organvm/limen` only; the focused live classifier ran against the W01 denominator on 2026-08-10 |
 | Working tree | Relay pending commit; otherwise clean |
 | Acceptance condition | Partial: the policy and live classifier satisfy coverage, but #2173 remains open and W02 has no conduct-backed receipt |
@@ -67,7 +67,7 @@ compression_level: medium
 - Program manifest: `institutio/positioning/program.yaml`
 - GitHub map: `institutio/positioning/github-map.json`
 - W01 census receipt: `docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json`
-- Pull request / receipt: draft PR to be created from this branch; no W02 issue receipt exists yet
+- Pull request / receipt: https://github.com/organvm/limen/pull/2307 (draft, stacked on W01); no W02 issue receipt exists yet
 
 The fresh-agent injection phrase is:
 
