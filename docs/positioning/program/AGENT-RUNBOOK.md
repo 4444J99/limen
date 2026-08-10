@@ -55,11 +55,13 @@ The issue’s `Effect and authority` section is binding:
 
 Translate the leaf’s acceptance condition into the narrowest credible executable check, run that
 command bare, and capture its true exit status and output digest. The command may invoke a focused
-test, a tracked evidence validator, a live-state query, or a review-rubric checker; it may not call
-the program’s own `--verify-work` command. Add focused probes only when they clarify a failure.
-Reuse unchanged green receipts; do not rerun whole suites for reassurance. For public experience
-work, verify the rendered result in a browser and attach visual evidence. For claims, include
-source, observation date, method, machine-assistance treatment, and limits.
+test, a tracked evidence validator, a live-state query, or a review-rubric checker; it may not call,
+directly or indirectly, the program’s own `--verify-work` command. `--verify-work` validates the
+durable receipt after the underlying work has passed; it is never the evidence recorded as that
+receipt’s predicate. Add focused probes only when they clarify a failure. Reuse unchanged green
+receipts; do not rerun whole suites for reassurance. For public experience work, verify the rendered
+result in a browser and attach visual evidence. For claims, include source, observation date,
+method, machine-assistance treatment, and limits.
 
 Generate the receipt skeleton, replace every placeholder, and post it as one JSON code block after
 the exact marker shown below. The latest marked comment is authoritative, so a corrected receipt
@@ -86,6 +88,78 @@ It fails closed unless the receipt is bound to the current acceptance text and r
 non-circular predicate evidence, authority, exact heads, durable URLs, and rollback state. A leaf is
 done only when its deliverables exist in their durable owners and this command passes on live state.
 A branch, draft, generated artifact, or persuasive explanation is not completion.
+
+For a single-repository packet, the exact-head mapping must contain exactly the packet’s declared
+target repository. For a `multi-repository:<selector>` packet, the receipt must record a nonempty
+`resolved_repositories` list of concrete `owner/repository` names, and the `observed_heads` keys must
+equal that set exactly. Record the head of every resolved target tree on which the predicate passed;
+an unrelated, additional, or omitted repository head does not satisfy the packet.
+
+Phase closure has an additional proof boundary. Closing all children does not execute the phase’s
+manifest-owned executable `exit_gate`. Run that gate as its own non-circular predicate, capture its
+true result and durable evidence. After every child has its current valid work receipt, generate the
+read-only phase receipt skeleton:
+
+```bash
+python3 scripts/positioning-program.py --phase-receipt-template <PHASE-ID>
+```
+
+Post the completed `limen.positioning_phase_receipt.v1` JSON receipt after the marker
+`<!-- positioning-phase-receipt:<PHASE-ID> -->`. The skeleton binds `phase_id`,
+`"status": "pass"`, the current `exit_gate_sha256`, exactly the program repository and its exact
+head in `observed_heads`, `child_receipts_sha256`, phase-local `remote_state_sha256`,
+`parity_sha256`, the manifest-derived underlying `predicate.command`, `predicate.exit_code: 0`,
+`predicate.output_sha256`, `predicate.observed_at`, and nonempty HTTPS `evidence_urls`. Replace only
+the skeleton’s evidence placeholders with facts from the completed phase proof. Then validate it
+with:
+
+```bash
+python3 scripts/positioning-program.py --verify-phase <PHASE-ID>
+```
+
+The underlying phase predicate may not call `--verify-phase` itself. Close the phase only after
+both child-receipt integrity and the current phase exit-gate receipt pass; closure-integrity and
+ready-work checks reject a closed phase whose phase receipt is missing or invalid. Never use child
+closure, phase prose, or a leaf’s `--verify-work` result as a substitute for the aggregate phase
+gate.
+
+The phase bindings are deliberately local and stable. `child_receipts_sha256` covers the current
+child receipts; `remote_state_sha256` covers the phase’s stable identity plus its children’s states;
+and `parity_sha256` covers the phase-local mapped-versus-observed projection. The phase issue’s own
+open/closed state is excluded from its stable projection, so the same valid receipt survives the
+phase’s open-to-closed transition. Unrelated future phases are outside these digests and do not
+invalidate the receipt. Direct `--verify-phase` and ordinary closure checks still recompute and
+compare all current phase-local bindings, so child, receipt, identity, mapping, or parity drift fails
+closed.
+
+## 4.1 Prove terminal Omega
+
+Each Omega observation is one atomic view of remote state: fetch the program issues and completion
+evidence once, then run parity, closure integrity, and state-digest construction over that same
+snapshot. Do not combine parity from an earlier fetch with closure or digest data from a later one.
+The attested digest covers the completion facts claimed by Omega, including leaf receipts and phase
+exit-gate evidence, rather than issue open/closed state alone.
+
+Produce the two saveable pass records in separate invocations:
+
+```bash
+python3 scripts/positioning-program.py --omega --omega-pass 1
+python3 scripts/positioning-program.py --omega --omega-pass 2
+```
+
+Each emitted record uses schema `limen.positioning_omega_pass.v1` and records
+`"status": "pass"`, its integer `pass` number, `state_digest`, and RFC3339 `observed_at`. Save each
+record to its corresponding Omega pass file, then consume both with:
+
+```bash
+python3 scripts/positioning-program.py --omega --require-two-pass
+```
+
+The files must use their respective pass numbers and different `observed_at` values while attesting
+the same passing `state_digest`; copying one pass file into both paths is invalid. Only the
+manifest-derived terminal Omega leaf, its phase, and `PSP-ROOT` may remain open while terminal proof
+is generated. Close them afterward in dependency order. This proof-before-closure exception grants
+no additional mutation, merge, publication, or account authority.
 
 ## 5. Return evidence upstream
 
