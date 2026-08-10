@@ -18,6 +18,8 @@ Mutation is explicit:
   python3 scripts/positioning-program.py --ready --json
   python3 scripts/positioning-program.py --seed PSP-P01-W01
   python3 scripts/positioning-program.py --receipt-template PSP-P01-W01
+  python3 scripts/positioning-program.py --phase-proof PSP-P00
+  python3 scripts/positioning-program.py --phase-receipt-template PSP-P00
   python3 scripts/positioning-program.py --verify-work PSP-P01-W01
 
 This tool never closes/reopens issues, merges pull requests, submits to the conduct broker, edits
@@ -29,6 +31,7 @@ claims, deadline, spend, and retry bounds before submission.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import re
@@ -50,6 +53,8 @@ PROGRAM_SCHEMA = "limen.positioning_program.v1"
 MAP_SCHEMA = "limen.positioning_github_map.v1"
 SEED_SCHEMA = "limen.positioning_packet_seed.v1"
 RECEIPT_SCHEMA = "limen.positioning_work_receipt.v1"
+PHASE_RECEIPT_SCHEMA = "limen.positioning_phase_receipt.v1"
+OMEGA_PASS_SCHEMA = "limen.positioning_omega_pass.v1"
 MODEL_ASSIGNMENT_SCHEMA = "limen.positioning_model_assignments.v1"
 EXECUTION_CHUNKS_SCHEMA = "limen.positioning_execution_chunks.v1"
 MARKER_RE = re.compile(r"<!--\s*positioning-program:(PSP-(?:ROOT|P\d{2}(?:-W\d{2})?))\s*-->")
@@ -58,10 +63,16 @@ RECEIPT_BLOCK_RE = re.compile(
     r"<!--\s*positioning-receipt:(PSP-P\d{2}-W\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
     re.DOTALL,
 )
+PHASE_RECEIPT_MARKER_RE = re.compile(r"<!--\s*positioning-phase-receipt:(PSP-P\d{2})\s*-->")
+PHASE_RECEIPT_BLOCK_RE = re.compile(
+    r"<!--\s*positioning-phase-receipt:(PSP-P\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
 DIGEST_RE = re.compile(r"[0-9a-f]{64}\Z")
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\Z")
 URL_RE = re.compile(r"https://[^\s]+\Z")
+REPOSITORY_RE = re.compile(r"[^/:\s]+/[^/:\s]+\Z")
 PHASE_RE = re.compile(r"PSP-P\d{2}\Z")
 WORK_RE = re.compile(r"PSP-P\d{2}-W\d{2}\Z")
 CHUNK_RE = re.compile(r"PSP-C\d{2}\Z")
@@ -211,9 +222,18 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             continue
         phase_by_id[phase_id] = phase
         ordered_ids.append(phase_id)
-        for key in ("title", "outcome", "exit_gate"):
+        for key in ("title", "outcome", "exit_gate", "exit_predicate"):
             if not _is_nonempty_text(phase.get(key)):
                 failures.append(f"{phase_id}.{key} must be non-empty text")
+        expected_exit_predicate = f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
+        exit_predicate = str(phase.get("exit_predicate") or "").strip()
+        if exit_predicate != expected_exit_predicate:
+            failures.append(f"{phase_id}.exit_predicate must be {expected_exit_predicate}")
+        if any(
+            token in exit_predicate
+            for token in ("--verify-phase", "--phase-receipt-template", "--verify-work", "--receipt-template")
+        ):
+            failures.append(f"{phase_id}.exit_predicate cannot verify or template a receipt")
         if not _is_text_list(phase.get("depends_on")):
             failures.append(f"{phase_id}.depends_on must be a text list")
         work = phase.get("work")
@@ -774,6 +794,10 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         children = [packet["id"] for packet in phase["work"]]
         labels = {packet["id"]: packet["title"] for packet in phase["work"]}
         dependencies = phase.get("depends_on") or []
+        try:
+            phase_command = phase_proof_command(object_id, graph)
+        except ProgramError:
+            phase_command = "UNAVAILABLE: no unambiguous executable proof contract in manifest"
         return "\n".join(
             [
                 f"# {object_id} — {phase['title']}",
@@ -797,8 +821,13 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
                 "",
                 phase["exit_gate"],
                 "",
-                "Close this phase only after every child has a durable predicate receipt. The canonical definitions live in "
-                "`institutio/positioning/program.yaml`.",
+                "## Executable exit-gate predicate",
+                "",
+                f"`{phase_command}`",
+                "",
+                "The gate requires a passing, content-pinned phase receipt; child closure alone is not sufficient, and "
+                "the phase issue may remain open while the gate establishes closure readiness. The canonical definition "
+                "lives in `institutio/positioning/program.yaml`.",
                 "",
                 marker(object_id),
             ]
@@ -1066,7 +1095,8 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
         raise ProgramError(f"unknown work id: {work_id}")
     validate_map(mapping, graph, complete=True)
     packet = graph["work_by_id"][work_id]
-    return {
+    observed_heads: dict[str, str]
+    receipt: dict[str, Any] = {
         "schema_version": RECEIPT_SCHEMA,
         "work_id": work_id,
         "acceptance_sha256": acceptance_digest(packet),
@@ -1077,7 +1107,6 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
             "lease_id": "REPLACE_WITH_LEASE_ID",
             "executor": "REPLACE_WITH_NATIVE_AGENT_IDENTITY",
         },
-        "observed_heads": {packet["target_repo"]: "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"},
         "changed_paths": [],
         "predicate": {
             "command": "REPLACE_WITH_NON_CIRCULAR_EXECUTABLE_PREDICATE",
@@ -1088,6 +1117,13 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
         "evidence_urls": [mapping["issues"][work_id]["url"]],
         "rollback": {"invoked": False, "state": "not needed"},
     }
+    if packet["target_repo"].startswith("multi-repository:"):
+        receipt["resolved_repositories"] = ["REPLACE_WITH_OWNER/REPOSITORY"]
+        observed_heads = {"REPLACE_WITH_OWNER/REPOSITORY": "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"}
+    else:
+        observed_heads = {packet["target_repo"]: "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"}
+    receipt["observed_heads"] = observed_heads
+    return receipt
 
 
 def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) -> dict[str, Any]:
@@ -1125,9 +1161,21 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
             failures.append("authority.kind must be broker or direct_human_session")
 
     observed_heads = receipt.get("observed_heads")
-    if not isinstance(observed_heads, dict) or not observed_heads:
-        failures.append("observed_heads must be a non-empty mapping")
-    else:
+    expected_repository = str(packet["target_repo"])
+    if expected_repository.startswith("multi-repository:"):
+        resolved = receipt.get("resolved_repositories")
+        if not _is_text_list(resolved, nonempty=True) or any(not REPOSITORY_RE.fullmatch(item) for item in resolved):
+            failures.append("resolved_repositories must be a non-empty list of concrete owner/repo targets")
+            resolved_set: set[str] = set()
+        else:
+            resolved_set = set(resolved)
+            if len(resolved_set) != len(resolved):
+                failures.append("resolved_repositories must not contain duplicates")
+        if not isinstance(observed_heads, dict) or set(observed_heads) != resolved_set:
+            failures.append("observed_heads must contain exactly every resolved repository")
+    elif not isinstance(observed_heads, dict) or set(observed_heads) != {expected_repository}:
+        failures.append(f"observed_heads must contain exactly the packet target repository {expected_repository!r}")
+    if isinstance(observed_heads, dict):
         for repository, head in observed_heads.items():
             if not _is_nonempty_text(repository) or not isinstance(head, str) or not HEAD_RE.fullmatch(head):
                 failures.append(f"observed_heads has invalid exact head for {repository!r}")
@@ -1174,6 +1222,340 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
     return receipt
 
 
+def phase_proof_command(phase_id: str, graph: dict[str, Any]) -> str:
+    phase = graph["phase_by_id"].get(phase_id)
+    if phase is None:
+        raise ProgramError(f"unknown phase id: {phase_id}")
+    command = str(phase.get("exit_predicate") or "").strip()
+    expected = f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
+    if command != expected:
+        raise ProgramError(f"{phase_id} has no valid manifest-owned phase proof predicate")
+    return command
+
+
+def phase_terminal_scope(graph: dict[str, Any]) -> tuple[set[str], set[str]]:
+    terminal_work = terminal_omega_work_ids(graph)
+    terminal_phases = {graph["work_phase"][work_id] for work_id in terminal_work}
+    return terminal_work, terminal_phases
+
+
+def _canonical_digest(value: object) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _stable_remote_row(object_id: str, row: dict[str, Any], *, include_state: bool = True) -> dict[str, Any]:
+    body = str(row.get("body") or "")
+    labels = sorted(
+        str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)
+    )
+    milestone = row.get("milestone")
+    projection = {
+        "id": object_id,
+        "number": row.get("number"),
+        "title": str(row.get("title") or ""),
+        "body_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        "markers": sorted(MARKER_RE.findall(body)),
+        "labels": labels,
+        "milestone": milestone.get("number") if isinstance(milestone, dict) else None,
+    }
+    if include_state:
+        projection["state"] = str(row.get("state") or "").lower()
+    return projection
+
+
+def _phase_remote_state_digest(
+    phase_id: str, graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+) -> str:
+    phase = graph["phase_by_id"][phase_id]
+    object_ids = [phase_id, *(packet["id"] for packet in phase["work"])]
+    projection = [
+        _stable_remote_row(phase_id, remote[phase_id], include_state=False),
+        *[_stable_remote_row(object_id, remote[object_id]) for object_id in object_ids[1:]],
+    ]
+    return _canonical_digest(projection)
+
+
+def _phase_parity_digest(
+    phase_id: str, graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+) -> str:
+    phase = graph["phase_by_id"][phase_id]
+    object_ids = [phase_id, *(packet["id"] for packet in phase["work"])]
+    expected = {
+        object_id: {
+            "number": mapping["issues"][object_id]["number"],
+            "url": mapping["issues"][object_id]["url"],
+            "title": title_for(object_id, graph),
+            "body_sha256": hashlib.sha256(body_for(object_id, graph, mapping).encode("utf-8")).hexdigest(),
+            "labels": sorted(labels_for(object_id, graph)),
+        }
+        for object_id in object_ids
+    }
+    observed = {
+        object_id: _stable_remote_row(object_id, remote[object_id], include_state=False) for object_id in object_ids
+    }
+    return _canonical_digest({"expected": expected, "observed": observed})
+
+
+def _phase_binding_values(
+    phase_id: str,
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    remote: dict[str, dict[str, Any]] | None = None,
+    child_receipts: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, str]:
+    if remote is None:
+        remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    return {
+        "child_receipt_digest": _canonical_digest(child_receipts)
+        if child_receipts is not None
+        else _phase_child_receipt_digest(phase_id, graph, mapping),
+        "remote_state_digest": _phase_remote_state_digest(phase_id, graph, mapping, remote),
+        "parity_digest": _phase_parity_digest(phase_id, graph, mapping, remote),
+    }
+
+
+def _phase_child_receipt_digest(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> str:
+    receipts = {
+        packet["id"]: fetch_work_receipt(packet["id"], graph, mapping)[0]
+        for packet in graph["phase_by_id"][phase_id]["work"]
+    }
+    return _canonical_digest(receipts)
+
+
+def validate_phase_receipt(
+    receipt: object,
+    phase_id: str,
+    graph: dict[str, Any],
+    *,
+    child_receipt_digest: str,
+    remote_state_digest: str,
+    parity_digest: str,
+) -> dict[str, Any]:
+    failures: list[str] = []
+    phase = graph["phase_by_id"].get(phase_id)
+    if phase is None:
+        raise ProgramError(f"unknown phase id: {phase_id}")
+    if not isinstance(receipt, dict):
+        raise ProgramError(f"{phase_id} phase receipt must be a JSON object")
+    if receipt.get("schema_version") != PHASE_RECEIPT_SCHEMA:
+        failures.append(f"schema_version must be {PHASE_RECEIPT_SCHEMA}")
+    if receipt.get("phase_id") != phase_id:
+        failures.append(f"phase_id must be {phase_id}")
+    if receipt.get("status") != "pass":
+        failures.append("status must be pass")
+    expected_gate_digest = hashlib.sha256(str(phase["exit_gate"]).encode("utf-8")).hexdigest()
+    if receipt.get("exit_gate_sha256") != expected_gate_digest:
+        failures.append("exit_gate_sha256 is stale or incorrect")
+    expected_command = phase_proof_command(phase_id, graph)
+    predicate = receipt.get("predicate")
+    if not isinstance(predicate, dict):
+        failures.append("predicate must be a mapping")
+    else:
+        command = predicate.get("command")
+        if not _is_nonempty_text(command):
+            failures.append("predicate.command must be non-empty")
+        elif command != expected_command:
+            failures.append(f"predicate.command must match manifest proof contract {expected_command!r}")
+        if predicate.get("exit_code") != 0:
+            failures.append("predicate.exit_code must be zero")
+        if not isinstance(predicate.get("output_sha256"), str) or not DIGEST_RE.fullmatch(predicate["output_sha256"]):
+            failures.append("predicate.output_sha256 must be a lowercase SHA-256 digest")
+        if not isinstance(predicate.get("observed_at"), str) or not RFC3339_RE.fullmatch(predicate["observed_at"]):
+            failures.append("predicate.observed_at must be RFC3339")
+    evidence_urls = receipt.get("evidence_urls")
+    if not _is_text_list(evidence_urls, nonempty=True):
+        failures.append("evidence_urls must be a non-empty text list")
+    elif any(not URL_RE.fullmatch(url) for url in evidence_urls):
+        failures.append("evidence URLs must use https")
+    observed_heads = receipt.get("observed_heads")
+    repository = str(graph["program"]["repository"])
+    if not isinstance(observed_heads, dict) or set(observed_heads) != {repository}:
+        failures.append(f"observed_heads must contain exactly the program repository {repository!r}")
+    elif not HEAD_RE.fullmatch(str(observed_heads[repository])):
+        failures.append("observed_heads must record an exact 40-character head")
+    for field, expected, label in (
+        ("child_receipts_sha256", child_receipt_digest, "child receipt digest"),
+        ("remote_state_sha256", remote_state_digest, "remote state digest"),
+        ("parity_sha256", parity_digest, "parity digest"),
+    ):
+        actual = receipt.get(field)
+        if not isinstance(actual, str) or not DIGEST_RE.fullmatch(actual):
+            failures.append(f"{field} must be a lowercase SHA-256 digest")
+        elif actual != expected:
+            failures.append(f"{label} is stale or incorrect")
+    if failures:
+        raise ProgramError(f"{phase_id} phase receipt validation failed:\n- " + "\n- ".join(failures))
+    return receipt
+
+
+def fetch_phase_receipt(
+    phase_id: str,
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    *,
+    child_receipt_digest: str | None = None,
+    remote_state_digest: str | None = None,
+    parity_digest: str | None = None,
+    remote: dict[str, dict[str, Any]] | None = None,
+) -> tuple[dict[str, Any], str]:
+    if phase_id not in graph["phase_by_id"]:
+        raise ProgramError(f"unknown phase id: {phase_id}")
+    validate_map(mapping, graph, complete=True)
+    repository = graph["program"]["repository"]
+    issue_number = int(mapping["issues"][phase_id]["number"])
+    comments = _pages(repository, f"issues/{issue_number}/comments")
+    marked = [row for row in comments if f"positioning-phase-receipt:{phase_id}" in str(row.get("body") or "")]
+    if not marked:
+        raise ProgramError(f"{phase_id} has no marked phase exit-gate receipt")
+    latest = max(marked, key=lambda row: int(row.get("id") or 0))
+    body = str(latest.get("body") or "")
+    matches = [match for match in PHASE_RECEIPT_BLOCK_RE.findall(body) if match[0] == phase_id]
+    if len(matches) != 1:
+        raise ProgramError(f"{phase_id} latest marked comment must contain exactly one JSON phase receipt block")
+    try:
+        receipt = json.loads(matches[0][1])
+    except json.JSONDecodeError as exc:
+        raise ProgramError(f"{phase_id} latest marked phase receipt is invalid JSON: {exc}") from exc
+    bindings = _phase_binding_values(phase_id, graph, mapping, remote)
+    if child_receipt_digest is None:
+        child_receipt_digest = bindings["child_receipt_digest"]
+    if remote_state_digest is None:
+        remote_state_digest = bindings["remote_state_digest"]
+    if parity_digest is None:
+        parity_digest = bindings["parity_digest"]
+    return (
+        validate_phase_receipt(
+            receipt,
+            phase_id,
+            graph,
+            child_receipt_digest=child_receipt_digest,
+            remote_state_digest=remote_state_digest,
+            parity_digest=parity_digest,
+        ),
+        str(latest.get("html_url") or ""),
+    )
+
+
+def verify_phase(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    receipt, comment_url = fetch_phase_receipt(phase_id, graph, mapping, remote=remote)
+    canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {
+        "status": "pass",
+        "phase_id": phase_id,
+        "issue": mapping["issues"][phase_id],
+        "receipt_url": comment_url,
+        "receipt_sha256": hashlib.sha256(canonical).hexdigest(),
+    }
+
+
+def _validate_phase_projection(
+    phase_id: str, graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+) -> None:
+    phase = graph["phase_by_id"][phase_id]
+    object_ids = [phase_id, *(packet["id"] for packet in phase["work"])]
+    failures: list[str] = []
+    for object_id in object_ids:
+        row = remote.get(object_id)
+        if not isinstance(row, dict):
+            failures.append(f"{phase_id} missing remote object {object_id}")
+            continue
+        map_row = mapping["issues"][object_id]
+        if int(row.get("number") or 0) != int(map_row["number"]):
+            failures.append(f"{object_id} issue number differs from map")
+        if str(row.get("title") or "") != title_for(object_id, graph):
+            failures.append(f"{object_id} title drift")
+        if str(row.get("body") or "") != body_for(object_id, graph, mapping):
+            failures.append(f"{object_id} body drift")
+        current_labels = {
+            str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)
+        }
+        expected_routing = {
+            label for label in labels_for(object_id, graph) if label.startswith(("model:", "effort:"))
+        }
+        current_routing = {
+            label
+            for label in current_labels
+            if label.startswith(("model:", "effort:"))
+        }
+        if current_routing != expected_routing:
+            failures.append(f"{object_id} routing label drift")
+        if not set(labels_for(object_id, graph)).issubset(current_labels):
+            failures.append(f"{object_id} required label drift")
+        milestone = row.get("milestone")
+        if not isinstance(milestone, dict) or int(milestone.get("number") or 0) != int(mapping["milestone"]["number"]):
+            failures.append(f"{object_id} milestone drift")
+    expected_children = {packet["id"] for packet in phase["work"]}
+    orphan_prefix = f"{phase_id}-W"
+    for remote_id, row in remote.items():
+        markers = MARKER_RE.findall(str(row.get("body") or "")) if isinstance(row, dict) else []
+        orphans = [marker_id for marker_id in markers if marker_id.startswith(orphan_prefix) and marker_id not in expected_children]
+        if orphans:
+            failures.append(f"{phase_id} has orphan phase-local markers {sorted(orphans)}")
+    if failures:
+        raise ProgramError(f"{phase_id} phase projection failed:\n- " + "\n- ".join(failures))
+
+
+def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+    if phase_id not in graph["phase_by_id"]:
+        raise ProgramError(f"unknown phase id: {phase_id}")
+    phase_proof_command(phase_id, graph)
+    validate_map(mapping, graph, complete=True)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    _validate_phase_projection(phase_id, graph, mapping, remote)
+    phase = graph["phase_by_id"][phase_id]
+    child_receipts: dict[str, dict[str, Any]] = {}
+    child_evidence: dict[str, str] = {}
+    failures: list[str] = []
+    for packet in phase["work"]:
+        work_id = packet["id"]
+        if str(remote[work_id].get("state") or "").lower() != "closed":
+            failures.append(f"{work_id} is not closed")
+            continue
+        try:
+            child_receipts[work_id], child_evidence[work_id] = fetch_work_receipt(work_id, graph, mapping)
+        except ProgramError as exc:
+            failures.append(str(exc))
+    if failures:
+        raise ProgramError(f"{phase_id} phase proof failed:\n- " + "\n- ".join(failures))
+    bindings = _phase_binding_values(phase_id, graph, mapping, remote, child_receipts)
+    return {
+        "status": "pass",
+        "phase_id": phase_id,
+        "exit_gate_sha256": hashlib.sha256(str(phase["exit_gate"]).encode("utf-8")).hexdigest(),
+        "child_receipts_sha256": _canonical_digest(child_receipts),
+        "child_receipt_evidence": child_evidence,
+        "remote_state_sha256": bindings["remote_state_digest"],
+        "parity_sha256": bindings["parity_digest"],
+    }
+
+
+def phase_receipt_template(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
+    if phase_id not in graph["phase_by_id"]:
+        raise ProgramError(f"unknown phase id: {phase_id}")
+    validate_map(mapping, graph, complete=True)
+    remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
+    bindings = _phase_binding_values(phase_id, graph, mapping, remote)
+    phase = graph["phase_by_id"][phase_id]
+    return {
+        "schema_version": PHASE_RECEIPT_SCHEMA,
+        "phase_id": phase_id,
+        "status": "pass",
+        "exit_gate_sha256": hashlib.sha256(str(phase["exit_gate"]).encode("utf-8")).hexdigest(),
+        "observed_heads": {graph["program"]["repository"]: "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"},
+        "child_receipts_sha256": bindings["child_receipt_digest"],
+        "remote_state_sha256": bindings["remote_state_digest"],
+        "parity_sha256": bindings["parity_digest"],
+        "predicate": {
+            "command": phase_proof_command(phase_id, graph),
+            "exit_code": 0,
+            "output_sha256": "REPLACE_WITH_64_CHARACTER_SHA256",
+            "observed_at": "REPLACE_WITH_RFC3339_TIMESTAMP",
+        },
+        "evidence_urls": [mapping["issues"][phase_id]["url"]],
+    }
+
+
 def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> tuple[dict[str, Any], str]:
     if work_id not in graph["work_by_id"]:
         raise ProgramError(f"unknown work id: {work_id}")
@@ -1209,22 +1591,41 @@ def verify_work(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
 
 
 def closure_integrity(
-    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+    graph: dict[str, Any],
+    mapping: dict[str, Any],
+    remote: dict[str, dict[str, Any]],
+    *,
+    excluded_work_ids: set[str] | None = None,
+    excluded_phase_ids: set[str] | None = None,
+    phase_bindings: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, str]:
+    excluded_work_ids = excluded_work_ids or set()
+    excluded_phase_ids = excluded_phase_ids or set()
     closed = {object_id for object_id, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
     failures: list[str] = []
     receipt_urls: dict[str, str] = {}
-    for work_id in sorted(closed & set(graph["work_by_id"])):
+    for work_id in sorted((closed & set(graph["work_by_id"])) - excluded_work_ids):
         try:
             _receipt, receipt_urls[work_id] = fetch_work_receipt(work_id, graph, mapping)
         except ProgramError as exc:
             failures.append(str(exc))
     for phase_id, phase in graph["phase_by_id"].items():
-        if phase_id not in closed:
+        if phase_id not in closed or phase_id in excluded_phase_ids:
             continue
         missing_children = [packet["id"] for packet in phase["work"] if packet["id"] not in closed]
         if missing_children:
             failures.append(f"{phase_id} is closed before child issues {missing_children}")
+            continue
+        try:
+            phase_kwargs = dict(
+                phase_bindings.get(phase_id)
+                if phase_bindings and phase_id in phase_bindings
+                else _phase_binding_values(phase_id, graph, mapping, remote)
+            )
+            phase_kwargs["remote"] = remote
+            _receipt, receipt_urls[phase_id] = fetch_phase_receipt(phase_id, graph, mapping, **phase_kwargs)
+        except ProgramError as exc:
+            failures.append(str(exc))
     if "PSP-ROOT" in closed:
         missing_phases = [phase["id"] for phase in graph["phases"] if phase["id"] not in closed]
         if missing_phases:
@@ -1244,6 +1645,7 @@ def _write_map(
         "issues": {
             object_id: {"number": int(remote[object_id]["number"]), "url": str(remote[object_id]["html_url"])}
             for object_id in graph["ordered_ids"]
+            if object_id in remote
         },
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1658,30 +2060,125 @@ def _state_digest(graph: dict[str, Any], mapping: dict[str, Any], remote: dict[s
             {
                 "id": object_id,
                 "number": mapping["issues"][object_id]["number"],
-                "state": remote[object_id].get("state"),
-                "body_sha256": hashlib.sha256(str(remote[object_id].get("body") or "").encode()).hexdigest(),
+                "remote": remote[object_id],
             }
             for object_id in graph["ordered_ids"]
+            if object_id in remote
         ],
     }
     return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
-def omega(graph: dict[str, Any], mapping: dict[str, Any], *, require_two_pass: bool) -> dict[str, Any]:
+def _remote_state_digest(
+    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]], excluded: set[str]
+) -> str:
+    projection = [
+        _stable_remote_row(object_id, remote[object_id])
+        for object_id in graph["ordered_ids"]
+        if object_id in remote and object_id not in excluded
+    ]
+    return _canonical_digest(projection)
+
+
+def validate_omega_pass(value: object, number: int, digest: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ProgramError(f"Omega pass {number} must be a JSON object")
+    failures: list[str] = []
+    if value.get("schema_version") != OMEGA_PASS_SCHEMA:
+        failures.append(f"schema_version must be {OMEGA_PASS_SCHEMA}")
+    if value.get("status") != "pass":
+        failures.append("status must be pass")
+    if value.get("pass") != number:
+        failures.append(f"pass must be {number}")
+    if value.get("state_digest") != digest:
+        failures.append("state_digest does not attest the current passing digest")
+    observed_at = value.get("observed_at")
+    if not isinstance(observed_at, str) or not RFC3339_RE.fullmatch(observed_at):
+        failures.append("observed_at must be RFC3339")
+    if failures:
+        raise ProgramError(f"Omega pass {number} validation failed:\n- " + "\n- ".join(failures))
+    return value
+
+
+def terminal_omega_work_ids(graph: dict[str, Any]) -> set[str]:
+    return {
+        work_id
+        for work_id, packet in graph["work_by_id"].items()
+        if "--omega" in str(packet.get("acceptance") or "") or "--omega" in str(packet.get("predicate") or "")
+    }
+
+
+def omega_pass_record(result: dict[str, Any], number: int) -> dict[str, Any]:
+    return {
+        **result,
+        "schema_version": OMEGA_PASS_SCHEMA,
+        "status": "pass",
+        "pass": number,
+        "observed_at": datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"),
+    }
+
+
+def omega(
+    graph: dict[str, Any], mapping: dict[str, Any], *, require_two_pass: bool, allow_open_terminal: bool = False
+) -> dict[str, Any]:
     parity = remote_parity(graph, mapping)
     remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
-    open_ids = [
-        object_id for object_id in graph["ordered_ids"] if str(remote[object_id].get("state") or "").lower() != "closed"
-    ]
-    digest = _state_digest(graph, mapping, remote)
+    terminal_work_ids, terminal_phase_ids = phase_terminal_scope(graph)
+    proof_window = allow_open_terminal or require_two_pass
+    excluded_terminal = {"PSP-ROOT", *terminal_phase_ids, *terminal_work_ids} if proof_window else set()
+    remote_state_digest = _remote_state_digest(graph, mapping, remote, excluded_terminal)
+    parity_digest = _canonical_digest(parity)
+    phase_bindings = {
+        phase["id"]: _phase_binding_values(phase["id"], graph, mapping, remote)
+        for phase in graph["phases"]
+        if not (proof_window and phase["id"] in terminal_phase_ids)
+    }
     failures = []
-    if open_ids:
-        failures.append(f"open program objects: {open_ids}")
     receipt_urls: dict[str, str] = {}
+    closure_kwargs = {}
+    if proof_window:
+        closure_kwargs = {
+            "excluded_work_ids": terminal_work_ids,
+            "excluded_phase_ids": terminal_phase_ids,
+        }
     try:
-        receipt_urls = closure_integrity(graph, mapping, remote)
+        receipt_urls = closure_integrity(
+            graph,
+            mapping,
+            remote,
+            phase_bindings=phase_bindings,
+            **closure_kwargs,
+        )
     except ProgramError as exc:
         failures.append(str(exc))
+    phase_receipts: dict[str, dict[str, Any]] = {}
+    for phase in graph["phases"]:
+        phase_id = phase["id"]
+        if proof_window and phase_id in terminal_phase_ids:
+            continue
+        try:
+            phase_receipts[phase_id], _url = fetch_phase_receipt(
+                phase_id,
+                graph,
+                mapping,
+                **phase_bindings[phase_id],
+                remote=remote,
+            )
+        except ProgramError as exc:
+            failures.append(str(exc))
+    digest_payload = {
+        "parity": parity,
+        "remote_state": remote_state_digest,
+        "work_receipts": {
+            work_id: hashlib.sha256(
+                json.dumps(fetch_work_receipt(work_id, graph, mapping)[0], sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            for work_id in sorted(graph["work_by_id"])
+            if work_id in receipt_urls and work_id not in terminal_work_ids
+        },
+        "phase_receipts": phase_receipts,
+    }
+    digest = hashlib.sha256(json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     passes: list[dict[str, Any]] = []
     if require_two_pass:
         for number in (1, 2):
@@ -1691,12 +2188,27 @@ def omega(graph: dict[str, Any], mapping: dict[str, Any], *, require_two_pass: b
             except (OSError, json.JSONDecodeError) as exc:
                 failures.append(f"missing or invalid {path}: {exc}")
                 continue
-            passes.append(value)
-            if value.get("status") != "pass" or value.get("state_digest") != digest:
-                failures.append(f"{path} does not attest the current passing digest")
-        if len(passes) == 2 and passes[0].get("state_digest") != passes[1].get("state_digest"):
-            failures.append("Omega pass digests differ")
+            try:
+                passes.append(validate_omega_pass(value, number, digest))
+            except ProgramError as exc:
+                failures.append(f"{path}: {exc}")
+        if len(passes) == 2:
+            if passes[0]["state_digest"] != passes[1]["state_digest"]:
+                failures.append("Omega pass digests differ")
+            if passes[0]["observed_at"] == passes[1]["observed_at"]:
+                failures.append("Omega passes must record distinct observations")
+    proof_complete = allow_open_terminal or (require_two_pass and len(passes) == 2)
+    allowed_open = {"PSP-ROOT", *terminal_phase_ids, *terminal_work_ids} if proof_complete else set()
+    open_ids = [
+        object_id
+        for object_id in graph["ordered_ids"]
+        if str(remote[object_id].get("state") or "").lower() != "closed"
+        and object_id not in allowed_open
+    ]
+    if open_ids:
+        failures.append(f"open program objects: {open_ids}")
     result = {
+        "status": "pass" if not failures else "fail",
         "ok": not failures,
         "state_digest": digest,
         "parity": parity,
@@ -1722,11 +2234,15 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--ready", action="store_true")
     mode.add_argument("--seed", metavar="WORK_ID")
     mode.add_argument("--receipt-template", metavar="WORK_ID")
+    mode.add_argument("--phase-receipt-template", metavar="PHASE_ID")
     mode.add_argument("--verify-work", metavar="WORK_ID")
+    mode.add_argument("--phase-proof", metavar="PHASE_ID")
+    mode.add_argument("--verify-phase", metavar="PHASE_ID")
     mode.add_argument("--omega", action="store_true")
     parser.add_argument("--apply", action="store_true", help="allow GitHub writes; valid only with --sync")
     parser.add_argument("--json", action="store_true", help="emit machine-readable ready-work output")
     parser.add_argument("--require-two-pass", action="store_true", help="require two current Omega receipt files")
+    parser.add_argument("--omega-pass", type=int, choices=(1, 2), metavar="{1,2}")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--github-map", type=Path, default=DEFAULT_MAP)
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
@@ -1735,6 +2251,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.apply and not args.sync:
             raise ProgramError("--apply is valid only with --sync")
+        if args.omega_pass is not None and not args.omega:
+            raise ProgramError("--omega-pass is valid only with --omega")
+        if args.omega_pass is not None and args.require_two_pass:
+            raise ProgramError("--omega-pass is incompatible with --require-two-pass")
         data = load_manifest(args.manifest)
         graph = index_program(data)
         mapping = load_map(args.github_map)
@@ -1781,10 +2301,23 @@ def main(argv: list[str] | None = None) -> int:
             result = packet_seed(args.seed, graph, mapping)
         elif args.receipt_template:
             result = receipt_template(args.receipt_template, graph, mapping)
+        elif args.phase_receipt_template:
+            result = phase_receipt_template(args.phase_receipt_template, graph, mapping)
         elif args.verify_work:
             result = verify_work(args.verify_work, graph, mapping)
+        elif args.phase_proof:
+            result = phase_proof(args.phase_proof, graph, mapping)
+        elif args.verify_phase:
+            result = verify_phase(args.verify_phase, graph, mapping)
         else:
-            result = omega(graph, mapping, require_two_pass=args.require_two_pass)
+            result = omega(
+                graph,
+                mapping,
+                require_two_pass=args.require_two_pass,
+                allow_open_terminal=args.omega_pass is not None,
+            )
+            if args.omega_pass is not None:
+                result = omega_pass_record(result, args.omega_pass)
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
         return 0
     except ProgramError as exc:

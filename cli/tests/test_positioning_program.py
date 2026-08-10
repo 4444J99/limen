@@ -53,6 +53,28 @@ def test_real_manifest_is_complete_and_acyclic() -> None:
     MODULE.validate_map(mapping, graph, complete=True)
 
 
+def test_every_phase_uses_its_exact_manifest_owned_proof_predicate() -> None:
+    graph, _mapping = graph_and_map()
+
+    assert len(graph["phase_by_id"]) == 15
+    for phase_id in graph["phase_by_id"]:
+        assert MODULE.phase_proof_command(phase_id, graph) == (
+            f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
+        )
+
+
+def test_phase_exit_predicate_rejects_missing_or_circular_contract() -> None:
+    missing = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    del missing["phases"][0]["exit_predicate"]
+    with pytest.raises(MODULE.ProgramError, match="exit_predicate"):
+        MODULE.index_program(missing)
+
+    circular = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    circular["phases"][0]["exit_predicate"] = "python3 scripts/positioning-program.py --verify-phase PSP-P00"
+    with pytest.raises(MODULE.ProgramError, match="exit_predicate"):
+        MODULE.index_program(circular)
+
+
 def test_static_model_or_provider_routing_key_fails_closed() -> None:
     data = MODULE.load_manifest(MANIFEST)
     data["phases"][0]["work"][0]["model"] = "future-model-name"
@@ -229,6 +251,449 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
     with pytest.raises(MODULE.ProgramError, match="cannot call the receipt verifier"):
         MODULE.validate_work_receipt(circular, work_id, graph)
 
+    extra_repository = copy.deepcopy(receipt)
+    extra_repository["observed_heads"]["other/repository"] = "c" * 40
+    with pytest.raises(MODULE.ProgramError, match="exactly the packet target repository"):
+        MODULE.validate_work_receipt(extra_repository, work_id, graph)
+
+
+def test_phase_exit_gate_is_explicit_executable_and_not_circular() -> None:
+    graph, _mapping = graph_and_map()
+    phase_id = "PSP-P00"
+    phase = graph["phase_by_id"][phase_id]
+    receipt = {
+        "schema_version": MODULE.PHASE_RECEIPT_SCHEMA,
+        "phase_id": phase_id,
+        "status": "pass",
+        "exit_gate_sha256": MODULE.hashlib.sha256(phase["exit_gate"].encode()).hexdigest(),
+        "observed_heads": {graph["program"]["repository"]: "a" * 40},
+        "child_receipts_sha256": "b" * 64,
+        "remote_state_sha256": "c" * 64,
+        "parity_sha256": "d" * 64,
+        "predicate": {
+            "command": "python3 scripts/positioning-program.py --phase-proof PSP-P00",
+            "exit_code": 0,
+            "output_sha256": "d" * 64,
+            "observed_at": "2026-08-09T12:00:00Z",
+        },
+        "evidence_urls": ["https://example.test/phase-receipt/PSP-P00"],
+    }
+
+    assert (
+        MODULE.validate_phase_receipt(
+            receipt,
+            phase_id,
+            graph,
+            child_receipt_digest="b" * 64,
+            remote_state_digest="c" * 64,
+            parity_digest="d" * 64,
+        )
+        == receipt
+    )
+    assert "--phase-proof PSP-P00" in MODULE.body_for(phase_id, graph, graph_and_map()[1])
+
+    circular = copy.deepcopy(receipt)
+    circular["predicate"]["command"] = f"python3 scripts/positioning-program.py --verify-phase {phase_id}"
+    with pytest.raises(MODULE.ProgramError, match="manifest proof contract"):
+        MODULE.validate_phase_receipt(
+            circular,
+            phase_id,
+            graph,
+            child_receipt_digest="b" * 64,
+            remote_state_digest="c" * 64,
+            parity_digest="d" * 64,
+        )
+
+    stale_state = copy.deepcopy(receipt)
+    stale_state["remote_state_sha256"] = "e" * 64
+    with pytest.raises(MODULE.ProgramError, match="remote state digest"):
+        MODULE.validate_phase_receipt(
+            stale_state,
+            phase_id,
+            graph,
+            child_receipt_digest="b" * 64,
+            remote_state_digest="c" * 64,
+            parity_digest="d" * 64,
+        )
+
+
+def test_phase_binding_digest_is_local_and_stable(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        object_id: {
+            "number": row["number"],
+            "state": "closed",
+            "body": MODULE.marker(object_id),
+            "labels": [],
+            "milestone": {"number": 1},
+            "updated_at": "2026-08-09T12:00:00Z",
+        }
+        for object_id, row in mapping["issues"].items()
+    }
+    original = MODULE._phase_remote_state_digest("PSP-P00", graph, mapping, remote)
+    original_parity = MODULE._phase_parity_digest("PSP-P00", graph, mapping, remote)
+    remote["PSP-P00"]["state"] = "open"
+    assert MODULE._phase_remote_state_digest("PSP-P00", graph, mapping, remote) == original
+    assert MODULE._phase_parity_digest("PSP-P00", graph, mapping, remote) == original_parity
+
+    remote["PSP-P00"]["state"] = "closed"
+    remote["PSP-P01"]["state"] = "open"
+    remote["PSP-P01"]["updated_at"] = "2026-08-10T12:00:00Z"
+    assert MODULE._phase_remote_state_digest("PSP-P00", graph, mapping, remote) == original
+    assert MODULE._phase_parity_digest("PSP-P00", graph, mapping, remote) == original_parity
+
+    remote["PSP-P00-W01"]["state"] = "open"
+    assert MODULE._phase_remote_state_digest("PSP-P00", graph, mapping, remote) != original
+    assert MODULE._phase_parity_digest("PSP-P00", graph, mapping, remote) == original_parity
+
+    receipts = {packet["id"]: {"receipt": packet["id"], "revision": 1} for packet in graph["phase_by_id"]["PSP-P00"]["work"]}
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: (receipts[work_id], f"https://example.test/{work_id}"),
+    )
+    first_receipts = MODULE._phase_child_receipt_digest("PSP-P00", graph, mapping)
+    receipts["PSP-P00-W01"]["revision"] = 2
+    assert MODULE._phase_child_receipt_digest("PSP-P00", graph, mapping) != first_receipts
+
+
+def _phase_remote_snapshot(graph, mapping, phase_id: str) -> dict[str, dict[str, object]]:
+    phase = graph["phase_by_id"][phase_id]
+    object_ids = [phase_id, *(packet["id"] for packet in phase["work"])]
+    return {
+        object_id: {
+            "number": mapping["issues"][object_id]["number"],
+            "html_url": mapping["issues"][object_id]["url"],
+            "state": "open" if object_id == phase_id else "closed",
+            "title": MODULE.title_for(object_id, graph),
+            "body": MODULE.body_for(object_id, graph, mapping),
+            "labels": [{"name": label} for label in MODULE.labels_for(object_id, graph)],
+            "milestone": {"number": mapping["milestone"]["number"]},
+        }
+        for object_id in object_ids
+    }
+
+
+def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(MODULE.ProgramError("must not fetch phase receipt")),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    result = MODULE.phase_proof("PSP-P00", graph, mapping)
+
+    assert result["status"] == "pass"
+    assert result["phase_id"] == "PSP-P00"
+    assert set(result["child_receipt_evidence"]) == {
+        packet["id"] for packet in graph["phase_by_id"]["PSP-P00"]["work"]
+    }
+
+    remote["PSP-P00-W01"]["state"] = "open"
+    with pytest.raises(MODULE.ProgramError, match="PSP-P00-W01 is not closed"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+    remote["PSP-P00-W01"]["state"] = "closed"
+    remote["PSP-P00"]["title"] = "drifted title"
+    with pytest.raises(MODULE.ProgramError, match="title drift"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+    remote["PSP-P00"]["title"] = MODULE.title_for("PSP-P00", graph)
+    remote["PSP-P00-W01"]["body"] = "drifted body"
+    with pytest.raises(MODULE.ProgramError, match="body drift"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+
+def test_phase_proof_rejects_stale_child_receipt(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: (_ for _ in ()).throw(
+            MODULE.ProgramError(f"{work_id} stale receipt")
+        )
+        if work_id == "PSP-P00-W01"
+        else ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="stale receipt"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+
+def test_phase_proof_rejects_stale_routing_labels_and_phase_local_orphans(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    remote["PSP-P00-W01"]["labels"].append({"name": "model:stale"})
+    with pytest.raises(MODULE.ProgramError, match="routing label drift"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+    remote["PSP-P00-W01"]["labels"] = [
+        {"name": label} for label in MODULE.labels_for("PSP-P00-W01", graph)
+    ]
+    remote["PSP-P00-W99"] = {
+        "number": 999,
+        "title": "orphan",
+        "body": MODULE.marker("PSP-P00-W99"),
+        "labels": [],
+        "milestone": {"number": mapping["milestone"]["number"]},
+        "state": "open",
+    }
+    with pytest.raises(MODULE.ProgramError, match="orphan phase-local markers"):
+        MODULE.phase_proof("PSP-P00", graph, mapping)
+
+
+def test_phase_proof_cli_mode_is_read_only(monkeypatch, capsys) -> None:
+    graph, mapping = graph_and_map()
+    manifest = MODULE.load_manifest(MANIFEST)
+    remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
+    monkeypatch.setattr(MODULE, "load_manifest", lambda _path: manifest)
+    monkeypatch.setattr(MODULE, "load_map", lambda _path: mapping)
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    assert MODULE.main(["--phase-proof", "PSP-P00"]) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "pass"
+    assert output["phase_id"] == "PSP-P00"
+
+
+def test_phase_receipt_template_is_read_only_cli_output(monkeypatch, capsys) -> None:
+    graph, mapping = graph_and_map()
+    manifest = MODULE.load_manifest(MANIFEST)
+    remote = {
+        object_id: {
+            "number": row["number"],
+            "html_url": row["url"],
+            "state": "closed",
+            "body": MODULE.marker(object_id),
+            "labels": [],
+            "milestone": {"number": 1},
+        }
+        for object_id, row in mapping["issues"].items()
+    }
+    monkeypatch.setattr(MODULE, "load_manifest", lambda _path: manifest)
+    monkeypatch.setattr(MODULE, "load_map", lambda _path: mapping)
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id, "revision": 1}, f"https://example.test/{work_id}"),
+    )
+
+    assert MODULE.main(["--phase-receipt-template", "PSP-P00"]) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["schema_version"] == MODULE.PHASE_RECEIPT_SCHEMA
+    assert output["phase_id"] == "PSP-P00"
+    assert output["status"] == "pass"
+    assert output["predicate"]["command"] == "python3 scripts/positioning-program.py --phase-proof PSP-P00"
+    assert output["observed_heads"][graph["program"]["repository"]].startswith("REPLACE_WITH_")
+    assert output["evidence_urls"] == [mapping["issues"]["PSP-P00"]["url"]]
+    output["observed_heads"][graph["program"]["repository"]] = "a" * 40
+    output["predicate"]["output_sha256"] = "b" * 64
+    output["predicate"]["observed_at"] = "2026-08-09T12:00:00Z"
+    bindings = MODULE._phase_binding_values("PSP-P00", graph, mapping, remote)
+    assert MODULE.validate_phase_receipt(
+        output,
+        "PSP-P00",
+        graph,
+        child_receipt_digest=bindings["child_receipt_digest"],
+        remote_state_digest=bindings["remote_state_digest"],
+        parity_digest=bindings["parity_digest"],
+    ) == output
+
+
+def test_omega_pass_schema_requires_pass_number_and_distinct_observation() -> None:
+    digest = "e" * 64
+    first = {
+        "schema_version": MODULE.OMEGA_PASS_SCHEMA,
+        "status": "pass",
+        "pass": 1,
+        "state_digest": digest,
+        "observed_at": "2026-08-09T12:00:00Z",
+    }
+    second = copy.deepcopy(first)
+    second["pass"] = 2
+    second["observed_at"] = "2026-08-09T12:01:00Z"
+
+    assert MODULE.validate_omega_pass(first, 1, digest) == first
+    assert MODULE.validate_omega_pass(second, 2, digest) == second
+
+    wrong_status = copy.deepcopy(first)
+    wrong_status["status"] = "succeeded"
+    with pytest.raises(MODULE.ProgramError, match="status must be pass"):
+        MODULE.validate_omega_pass(wrong_status, 1, digest)
+
+
+def test_omega_digest_covers_remote_completion_facts() -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "closed", "body": MODULE.marker(object_id), "labels": []} for object_id in graph["ordered_ids"]}
+    first = MODULE._state_digest(graph, mapping, remote)
+    remote["PSP-P00"]["labels"] = [{"name": "changed"}]
+    second = MODULE._state_digest(graph, mapping, remote)
+
+    assert first != second
+
+
+def test_terminal_omega_leaf_phase_and_root_can_remain_open_for_readiness(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        object_id: {"state": "closed", "body": MODULE.marker(object_id), "labels": []}
+        for object_id in graph["ordered_ids"]
+    }
+    remote["PSP-ROOT"]["state"] = "open"
+    remote["PSP-P14"]["state"] = "open"
+    remote["PSP-P14-W09"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "remote_parity", lambda _graph, _mapping: {"ok": True})
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "closure_integrity",
+        lambda _graph, _mapping, _remote, **_kwargs: {
+            work_id: f"https://example.test/receipts/{work_id}"
+            for work_id in graph["work_by_id"]
+            if work_id != "PSP-P14-W09"
+        },
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            (_ for _ in ()).throw(MODULE.ProgramError("missing terminal phase receipt"))
+            if phase_id == "PSP-P14"
+            else ({"phase_id": phase_id, "status": "pass"}, "https://example.test/phase")
+        ),
+    )
+
+    result = MODULE.omega(graph, mapping, require_two_pass=False, allow_open_terminal=True)
+
+    assert result["status"] == "pass"
+    assert {"PSP-ROOT", "PSP-P14", "PSP-P14-W09"}.isdisjoint(result["open"])
+    assert "PSP-P14-W09" in MODULE.terminal_omega_work_ids(graph)
+
+    remote["PSP-P13"]["state"] = "open"
+    with pytest.raises(MODULE.ProgramError, match="open program objects"):
+        MODULE.omega(graph, mapping, require_two_pass=False, allow_open_terminal=True)
+
+    remote["PSP-P13"]["state"] = "closed"
+    with pytest.raises(MODULE.ProgramError, match="open program objects"):
+        MODULE.omega(graph, mapping, require_two_pass=False)
+
+
+def test_closed_phase_requires_a_valid_exit_gate_receipt(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    phase_id = "PSP-P00"
+    remote[phase_id]["state"] = "closed"
+    for packet in graph["phase_by_id"][phase_id]["work"]:
+        remote[packet["id"]]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(MODULE.ProgramError("missing phase exit-gate receipt")),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="missing phase exit-gate receipt"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_normal_closure_requires_terminal_receipts_without_proof_exclusions(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    remote["PSP-P14"]["state"] = "closed"
+    for packet in graph["phase_by_id"]["PSP-P14"]["work"]:
+        remote[packet["id"]]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(MODULE.ProgramError("missing terminal phase receipt")),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="missing terminal phase receipt"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_multi_repository_receipt_requires_resolved_concrete_heads() -> None:
+    graph, _mapping = graph_and_map()
+    work_id = "PSP-P07-W05"
+    packet = graph["work_by_id"][work_id]
+    receipt = {
+        "schema_version": MODULE.RECEIPT_SCHEMA,
+        "work_id": work_id,
+        "acceptance_sha256": MODULE.acceptance_digest(packet),
+        "outcome": "succeeded",
+        "authority": {"kind": "broker", "run_id": "run-1", "lease_id": "lease-1", "executor": "codex"},
+        "resolved_repositories": ["organvm/alpha", "organvm/beta"],
+        "observed_heads": {"organvm/alpha": "a" * 40, "organvm/beta": "b" * 40},
+        "changed_paths": [],
+        "predicate": {
+            "command": "python3 scripts/check-positioning-gate.py",
+            "exit_code": 0,
+            "output_sha256": "c" * 64,
+            "observed_at": "2026-08-09T12:00:00Z",
+        },
+        "evidence_urls": ["https://example.test/receipt"],
+        "rollback": {"invoked": False, "state": "not needed"},
+    }
+
+    assert MODULE.validate_work_receipt(receipt, work_id, graph) == receipt
+
+    missing_resolution = copy.deepcopy(receipt)
+    del missing_resolution["resolved_repositories"]
+    with pytest.raises(MODULE.ProgramError, match="resolved_repositories"):
+        MODULE.validate_work_receipt(missing_resolution, work_id, graph)
+
+    mismatched_heads = copy.deepcopy(receipt)
+    mismatched_heads["observed_heads"]["organvm/extra"] = "d" * 40
+    with pytest.raises(MODULE.ProgramError, match="every resolved repository"):
+        MODULE.validate_work_receipt(mismatched_heads, work_id, graph)
+
+
+def test_omega_pass_cli_contract_and_record_schema(capsys) -> None:
+    assert MODULE.main(["--check", "--omega-pass", "1"]) == 2
+    assert "valid only with --omega" in capsys.readouterr().err
+
+    record = MODULE.omega_pass_record({"ok": True, "state_digest": "f" * 64}, 2)
+    assert record["schema_version"] == MODULE.OMEGA_PASS_SCHEMA
+    assert record["status"] == "pass"
+    assert record["pass"] == 2
+    assert MODULE.validate_omega_pass(record, 2, "f" * 64) == record
+
 
 def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> None:
     graph, mapping = graph_and_map()
@@ -285,6 +750,14 @@ def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None
         MODULE,
         "fetch_work_receipt",
         lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
     )
 
     ready = {row["id"] for row in MODULE.ready_work(graph, mapping)}
