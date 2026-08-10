@@ -480,7 +480,7 @@ gates:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q"
     paths: ["scripts/claim-policy.py", "scripts/claim-surface-quarantine.py", "scripts/claim-quarantine-drill.py", "scripts/tests/test_claim_policy.py", "scripts/tests/fixtures/positioning-claim-drill/**", "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md", "institutio/governance/gates.yaml"]
     owner: positioning-program
-    note: "PSP-P02-W06/W07 stay fail-closed and source-safe: a public claim export is rejected for unsupported, stale, future-dated, malformed-timestamp, non-public-source, forbidden, withdrawn, invalid-window, or source-changed rows; claim/report aliases, source-nested output, and per-surface marker/manifest drift fail before any write; neither command publishes or modifies the source tree."
+    note: "PSP-P02-W06/W07 stay fail-closed and source-safe: a public claim export is rejected for unsupported, stale, future-dated, malformed-timestamp, non-public-source, forbidden, withdrawn, invalid-window, or source-changed rows; the quarantine validates the complete accepted-plus-rejected policy universe and removes unknown surface claims with public-safe reasons; claim/report aliases, source-nested output, and per-surface marker/manifest drift fail before any write; neither command publishes or modifies the source tree."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

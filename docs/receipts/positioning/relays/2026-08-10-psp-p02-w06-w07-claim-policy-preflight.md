@@ -17,11 +17,18 @@ compression_level: medium
 - W07 issue: #2179 — formal dependency: #2178 (W06).
 - Branch: `codex/psp-p02-w06-w07-preflight`.
 - Draft pull request: https://github.com/organvm/limen/pull/2311, stacked on PR #2310.
-- Current W04/W05 parent head: `f5684212ba3c3dae3ac1b0c90212ea820cac28c9`.
+- Current W04/W05 PR head observed during this refresh:
+  `eabee3f034d9072b6699e3862b7d543c9ffa1d65`; this branch retains merge base
+  `3a6acddc6487976cad94bc37d35608f08c182f94` and remains dependency-gated.
 - Initial W06/W07 implementation: `2a0550862091a976b756034d4ddfa3965fd206ec`.
-- Hardened composed checkpoint: `c8f5e26876cbd840202730f728f08c41d818fd32`.
-- Published remote checkpoint: `c8f5e26876cbd840202730f728f08c41d818fd32`
-  before this relay refresh; fetch PR #2311 before resuming.
+- Prior hardening checkpoints: `35ec713609ecbe0d360237e62dc3747d5a476196`
+  and `bc506e819690f1cfad591091573965082409122b`.
+- Final verified implementation checkpoint:
+  `1b7762868dec28dc55289e670e3039a57de1513d`. It contains every policy,
+  quarantine, protocol, and regression change described below; the only
+  successor delta is this continuation-relay plus matching gate-registry note
+  refresh. Fetch PR #2311 before resuming and compare its head to that
+  implementation checkpoint.
 - Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction.
 - This is preflight-only implementation. It carries no W06/W07 completion receipt,
   issue closure, merge authority, publication, or release effect.
@@ -35,9 +42,11 @@ compression_level: medium
   credential-free HTTPS URLs.
 - `scripts/claim-surface-quarantine.py` consumes a complete generated-public-
   surface manifest, proves that every rejected claim is covered, validates every
-  bounded marker before writing, rejects traversal/symlink/duplicate surfaces, and
-  emits quarantined staging copies only. Source artifacts remain unchanged; no
-  deploy or publishing pathway is called.
+  bounded marker before writing, validates the accepted-plus-rejected policy
+  universe, quarantines manifest claims absent from that universe with the
+  public-safe reason `absent_from_policy_report`, rejects traversal/symlink/
+  duplicate surfaces, and emits quarantined staging copies only. Source
+  artifacts remain unchanged; no deploy or publishing pathway is called.
 - `scripts/claim-quarantine-drill.py` runs a hermetic false-claim drill across
   every fixture-declared public surface. The fixture contains synthetic text only.
 - `docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md` specifies incident
@@ -48,16 +57,21 @@ compression_level: medium
 ## Verified preflight state
 
 - `bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q`
-  — 9 passed.
+  — 18 passed at exact implementation checkpoint
+  `1b7762868dec28dc55289e670e3039a57de1513d`, including accepted/rejected
+  policy-universe validation and unknown/undeclared surface-claim regressions.
 - `python3 scripts/claim-quarantine-drill.py --fixture-dir scripts/tests/fixtures/positioning-claim-drill --json`
-  — passed; two synthetic generated public surfaces quarantined, publication effect `none`.
+  — passed at the same exact implementation checkpoint; two synthetic generated
+  public surfaces quarantined, publication effect `none`.
 - `python3 scripts/check-gates.py` — passed with the existing recorded
   `cli/**` deploy-trigger disposition.
 - `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w04-w05-public-evidence-preflight`
   — passed over the full W06/W07 diff: 314 repositories, 235 public, 79 private,
   with no private repository token added.
-- `scripts/verify-scoped.sh` — all 24 implicated cheap-wave gates passed on the composed
-  W01-W07 tree, including the refreshed W03/W04 live-probe hardening, before this relay refresh.
+- `scripts/verify-scoped.sh` — the prior 24-gate receipt is superseded. Re-run the
+  bare scoped predicate on the relay successor head and use the exact result
+  recorded in PR #2311 before integration; do not reuse the stale `c8f5e268`
+  receipt.
 
 ## Dependency boundary and formal sequence
 
