@@ -28,12 +28,18 @@ def vault(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     root = tmp_path / "repo"
     vault_dir = root / "institutio" / "vault"
     vault_dir.mkdir(parents=True)
+    public_key = root / "docs" / "keys" / "synthetic-public-key.asc"
+    public_key.parent.mkdir(parents=True)
+    public_key.write_text("synthetic public key\n", encoding="utf-8")
     monkeypatch.setattr(module, "ROOT", root)
     monkeypatch.setattr(module, "VAULT_DIR", vault_dir)
     monkeypatch.setattr(module, "MANIFEST", vault_dir / "manifest.jsonl")
+    monkeypatch.setattr(module, "PUBKEY", public_key)
     monkeypatch.setattr(module, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001"}))
     module._real_tracked_files = module._tracked_files
     monkeypatch.setattr(module, "_tracked_files", lambda: set())
+    module._real_index_entry_matches_worktree = module._index_entry_matches_worktree
+    monkeypatch.setattr(module, "_index_entry_matches_worktree", lambda _relative: True)
     module._real_historical_artifacts = module._historical_artifacts
 
     def synthetic_historical_artifacts():
@@ -87,6 +93,7 @@ def _add(vault, source: Path, artifact_id: str = "artifact-001") -> int:
 
 def _tracked_paths(vault, artifact_id: str = "artifact-001") -> set[str]:
     return {
+        "docs/keys/synthetic-public-key.asc",
         "institutio/vault/manifest.jsonl",
         f"institutio/vault/{artifact_id}.gpg",
     }
@@ -173,6 +180,26 @@ def test_add_rejects_unattested_id_before_any_write(vault, tmp_path: Path):
     assert list(vault.VAULT_DIR.iterdir()) == []
 
 
+@pytest.mark.parametrize("failure", [OSError("synthetic hash failure"), KeyboardInterrupt()])
+def test_add_rolls_back_published_ciphertext_when_metadata_construction_fails(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, failure: BaseException
+):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+
+    def fail_metadata(_path: Path) -> str:
+        raise failure
+
+    monkeypatch.setattr(vault, "_sha256", fail_metadata)
+
+    with pytest.raises(type(failure)):
+        _add(vault, source)
+
+    assert not (vault.VAULT_DIR / "artifact-001.gpg").exists()
+    assert not vault.MANIFEST.exists()
+    assert [path for path in vault.VAULT_DIR.iterdir() if path.name.startswith(".artifact-001.")] == []
+
+
 @pytest.mark.parametrize("artifact_id", ["../escape", "nested/path", "/absolute", "Uppercase", "descriptive-name"])
 def test_add_rejects_traversal_and_non_neutral_ids(vault, tmp_path: Path, artifact_id: str):
     source = tmp_path / "private.md"
@@ -253,6 +280,82 @@ def test_verify_accepts_coherent_public_safe_custody(vault, monkeypatch: pytest.
     _add(vault, source)
     monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault))
     assert vault.cmd_verify(SimpleNamespace()) == 0
+
+
+@pytest.mark.parametrize(
+    ("target", "relative", "expected"),
+    [
+        ("manifest", "institutio/vault/manifest.jsonl", "manifest Git index content differs"),
+        ("public_key", "docs/keys/synthetic-public-key.asc", "public-key Git index content differs"),
+        ("ciphertext", "institutio/vault/artifact-001.gpg", "ciphertext Git index content differs"),
+    ],
+)
+def test_verify_rejects_staged_custody_file_that_differs_from_validated_worktree(
+    vault,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    target: str,
+    relative: str,
+    expected: str,
+):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "add", "institutio/vault", "docs/keys/synthetic-public-key.asc"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(vault.ROOT),
+            "-c",
+            "user.email=vault-test@example.invalid",
+            "-c",
+            "user.name=Vault Test",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            "commit coherent custody",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    target_path = {
+        "manifest": vault.MANIFEST,
+        "public_key": vault.PUBKEY,
+        "ciphertext": vault.VAULT_DIR / "artifact-001.gpg",
+    }[target]
+    validated_content = target_path.read_bytes()
+    target_path.write_bytes(validated_content + b"synthetic staged content\n")
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "add", relative],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    target_path.write_bytes(validated_content)
+    monkeypatch.setattr(vault, "_tracked_files", vault._real_tracked_files)
+    monkeypatch.setattr(vault, "_index_entry_matches_worktree", vault._real_index_entry_matches_worktree)
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+    assert expected in capsys.readouterr().out
 
 
 def test_verify_rejects_copied_ciphertext_under_distinct_ids(

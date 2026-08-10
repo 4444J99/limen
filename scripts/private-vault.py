@@ -305,6 +305,21 @@ def _tracked_files() -> set[str]:
     return {path for path in run.stdout.split("\0") if path}
 
 
+def _index_entry_matches_worktree(relative: str) -> bool:
+    staged = _git_command("ls-files", "--stage", "-z", "--", relative)
+    if staged.returncode != 0:
+        return False
+    entries = [entry for entry in staged.stdout.split("\0") if entry]
+    if len(entries) != 1 or "\t" not in entries[0]:
+        return False
+    metadata, staged_path = entries[0].split("\t", 1)
+    fields = metadata.split()
+    if len(fields) != 3 or fields[0] != "100644" or fields[2] != "0" or staged_path != relative:
+        return False
+    worktree = _git_command("hash-object", f"--path={relative}", "--", relative)
+    return worktree.returncode == 0 and worktree.stdout.strip() == fields[1]
+
+
 def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
     ciphertext = row.get("ciphertext")
     ciphertext_sha256 = row.get("ciphertext_sha256")
@@ -906,6 +921,7 @@ def cmd_add(args: argparse.Namespace) -> int:
             raise VaultError(f"ciphertext already exists without a matching manifest row: {cipher_name}")
 
         temporary_cipher = _temporary_file(VAULT_DIR, artifact_id, ".ciphertext.gpg")
+        cipher_published = False
         try:
             try:
                 temporary_context = tempfile.TemporaryDirectory(
@@ -933,23 +949,23 @@ def cmd_add(args: argparse.Namespace) -> int:
             _require_untracked_source_identity(source, source_identity)
             os.chmod(temporary_cipher, 0o644)
             os.replace(temporary_cipher, cipher_path)
+            cipher_published = True
+            row = {
+                "schema": SCHEMA,
+                "artifact_id": artifact_id,
+                "ciphertext": cipher_name,
+                "ciphertext_sha256": _sha256(cipher_path),
+                "ciphertext_bytes": cipher_path.stat().st_size,
+                "recipient_fpr": FINGERPRINT,
+                "vaulted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            }
+            _write_manifest([*rows, row])
+        except BaseException:
+            if cipher_published:
+                cipher_path.unlink(missing_ok=True)
+            raise
         finally:
             temporary_cipher.unlink(missing_ok=True)
-
-        row = {
-            "schema": SCHEMA,
-            "artifact_id": artifact_id,
-            "ciphertext": cipher_name,
-            "ciphertext_sha256": _sha256(cipher_path),
-            "ciphertext_bytes": cipher_path.stat().st_size,
-            "recipient_fpr": FINGERPRINT,
-            "vaulted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        }
-        try:
-            _write_manifest([*rows, row])
-        except Exception:
-            cipher_path.unlink(missing_ok=True)
-            raise
     print(f"OK: vaulted {artifact_id} -> institutio/vault/{cipher_name}")
     print("    next: git add the ciphertext and public-safe manifest")
     return 0
@@ -967,6 +983,11 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         rows = _read_manifest()
     if manifest_relative not in tracked:
         failures.append(f"manifest not git-tracked (custody gap): {manifest_relative}")
+    elif not _index_entry_matches_worktree(manifest_relative):
+        failures.append("manifest Git index content differs from the validated worktree file")
+    pubkey_relative = PUBKEY.relative_to(ROOT).as_posix()
+    if pubkey_relative not in tracked or not _index_entry_matches_worktree(pubkey_relative):
+        failures.append("public-key Git index content differs from the validated worktree file")
     try:
         _validate_committed_pubkey()
     except VaultError as exc:
@@ -978,6 +999,7 @@ def cmd_verify(_args: argparse.Namespace) -> int:
     seen_ids: set[str] = set()
     seen_ciphers: set[str] = set()
     digest_owners: dict[str, str] = {}
+    expected_vault_files = {manifest_relative}
     current_artifacts: dict[str, tuple[str, str, int, str, str]] = {}
     for line_number, row in enumerate(rows, 1):
         failures.extend(_validate_public_row(row, line_number))
@@ -1009,8 +1031,11 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         if not path.is_file() or path.is_symlink():
             continue
         relative = path.relative_to(ROOT).as_posix()
+        expected_vault_files.add(relative)
         if relative not in tracked:
             failures.append(f"ciphertext not git-tracked (custody gap): {relative}")
+        elif not _index_entry_matches_worktree(relative):
+            failures.append(f"ciphertext Git index content differs from the validated worktree file: {name}")
     try:
         historical_artifacts = _historical_artifacts()
         custody_baseline = BOOTSTRAP_ARTIFACT_IDS | set(historical_artifacts)
@@ -1028,6 +1053,8 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         current_metadata = current_artifacts.get(artifact_id)
         if current_metadata is not None and current_metadata != expected_metadata:
             failures.append(f"immutable custody metadata changed: {artifact_id}")
+    if any(path.startswith("institutio/vault/") and path not in expected_vault_files for path in tracked):
+        failures.append("Git index contains unmanifested vault content")
     for stray in VAULT_DIR.iterdir() if VAULT_DIR.exists() else []:
         if stray.is_symlink():
             failures.append(f"unsupported vault symlink: {stray.name}")
