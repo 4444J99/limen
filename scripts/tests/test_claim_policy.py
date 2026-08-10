@@ -122,6 +122,8 @@ def test_policy_rejects_nonpublic_https_hosts_and_ports(tmp_path: Path):
         "local-domain": "https://source.local/evidence",
         "loopback-ipv4": "https://127.0.0.1/evidence",
         "loopback-ipv6": "https://[::1]/evidence",
+        "legacy-loopback": "https://127.1/evidence",
+        "legacy-hex-loopback": "https://0x7f.0.0.1/evidence",
         "private-ip": "https://10.0.0.1/evidence",
         "single-label-internal": "https://intranet/evidence",
         "internal-suffix": "https://source.internal/evidence",

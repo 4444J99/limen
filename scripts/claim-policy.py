@@ -96,10 +96,13 @@ def _public_https_url(value: object) -> bool:
         return False
     if "." not in host or host.endswith(NONPUBLIC_HOST_SUFFIXES):
         return False
+    labels = host.split(".")
+    if all(re.fullmatch(r"(?:0x[0-9a-f]+|[0-9]+)", label) for label in labels):
+        return False
     try:
         ipaddress.ip_address(host)
     except ValueError:
-        return all(DNS_LABEL.fullmatch(label) for label in host.split("."))
+        return all(DNS_LABEL.fullmatch(label) for label in labels)
     return False
 
 
