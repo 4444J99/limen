@@ -43,7 +43,7 @@ C04 (proof/experience) and C05 (service delivery) may run in parallel after C03.
 
 | Chunk | Scope | Conductor | Depends on | Leaves | Exit gate |
 |---|---|---|---|---:|---|
-| `PSP-C00` Land the program control plane | `PSP-P00` | `gpt-5.6-sol` / `max` | — | 7 | P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and broker integration are green. |
+| `PSP-C00` Land the program control plane | `PSP-P00` | `gpt-5.6-sol` / `max` | — | 7 | P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and registry-derived Codex task routing are green. |
 | `PSP-C01` Repair and freeze the foundation | `PSP-P01` | `gpt-5.6-terra` / `high` | `PSP-C00` | 5 | P01 is closed and PRs 2136 and 2141 have terminal durable owners with a frozen baseline receipt. |
 | `PSP-C02` Establish estate truth and evidence | `PSP-P02` | `gpt-5.6-sol` / `max` | `PSP-C01` | 8 | P02 is closed; every selected flagship and material claim has current, reproducible, privacy-reviewed evidence. |
 | `PSP-C03` Ratify identity and commercial offers | `PSP-P03`, `PSP-P04` | `gpt-5.6-sol` / `max` | `PSP-C02` | 14 | P03 and P04 are closed; target readers understand the offer and each commercial path has bounded scope and economics. |
@@ -83,8 +83,8 @@ Scope
 - Excluded leaves: none
 - Extra cross-phase leaves: none
 - Required predecessor chunks: none
-- Objective: Land the existing program PR, close the seven control-plane leaves with receipts, and prove remote parity.
-- Exit gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and broker integration are green.
+- Objective: Land the existing program PR, close the seven control-plane leaves with receipts, prove remote parity, and route ready strategy work into fresh Codex tasks.
+- Exit gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and registry-derived Codex task routing are green.
 
 Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
