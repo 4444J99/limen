@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 import collections
 import datetime as dt
+import hashlib
+import importlib.util
 import ipaddress
 import json
 import re
@@ -25,11 +27,48 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
+CENSUS = ROOT / "docs/github-estate-census.json"
+ESTATE = ROOT / "institutio/github/estate.yaml"
+ACCESS = ROOT / "institutio/github/access.yaml"
 SCHEMA = "limen.positioning_flagship_proof_set.v1"
 STATUSES = {"selected", "alternate", "excluded"}
+REPOSITORY_MATURITY = {"active", "maintained", "dormant", "archived", "unvalidated"}
+STALE_REPOSITORY_MATURITY = {"dormant", "archived", "unvalidated"}
 REPOSITORY_RE = re.compile(r"[^/\s]+/[^/\s]+\Z")
-WORKFLOW_API_PATH_RE = re.compile(r"repos/([^/\s]+/[^/\s]+)/actions/runs/[1-9][0-9]*\Z")
+WORKFLOW_API_PATH_RE = re.compile(
+    r"repos/([^/\s]+/[^/\s]+)/actions/runs/([1-9][0-9]*)\Z",
+    re.IGNORECASE,
+)
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
+WORKFLOW_PATH_RE = re.compile(r"\.github/workflows/[^/\s]+\.(?:yml|yaml)\Z")
+WORKFLOW_HEAD_BINDINGS = {"current_default_branch", "dated_default_branch_snapshot"}
+DATED_SNAPSHOT_REPOSITORIES = {"organvm/limen"}
+CLAIM_KEYS = {
+    "statement",
+    "assertion_class",
+    "subject_repository",
+    "includes",
+    "excludes",
+    "evidence_basis",
+    "non_circular_exclusions",
+}
+CLAIM_REQUIRED_EXCLUDES = {"adoption", "customer_outcomes", "market_leadership"}
+CLAIM_REQUIRED_EVIDENCE = {
+    "public_source_implementation",
+    "exact_head_workflow",
+    "candidate_bound_public_endpoint",
+}
+CLAIM_REQUIRED_NON_CIRCULAR = {
+    "selection_matrix",
+    "portfolio_carrier",
+    "private_only_material",
+}
+CLAIM_FORBIDDEN_ASSERTION_PATTERNS = (
+    re.compile(r"\bmarket[- ]leading\b", re.IGNORECASE),
+    re.compile(r"\bused by\b", re.IGNORECASE),
+    re.compile(r"\b(?:customer|user) adoption\b", re.IGNORECASE),
+    re.compile(r"\b(?:thousands|millions)\b", re.IGNORECASE),
+)
 LIVE_ENDPOINT_HOSTS = frozenset(
     {
         "limen-dashboard.pages.dev",
@@ -56,6 +95,51 @@ def load_matrix(path: Path = MATRIX) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ProofSetError(f"{path} must contain a mapping")
     return value
+
+
+def canonical_digest(value: object) -> str:
+    encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def load_public_census_contract(path: Path = CENSUS) -> tuple[set[str], int, str]:
+    """Return only the public identity projection from the redacted W01 census."""
+
+    try:
+        census = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ProofSetError("cannot load the tracked public census projection") from exc
+    leaves = census.get("leaves") if isinstance(census, dict) else None
+    if not isinstance(leaves, list):
+        raise ProofSetError("tracked public census projection has no leaf list")
+    repositories = {
+        str(leaf.get("repository"))
+        for leaf in leaves
+        if isinstance(leaf, dict)
+        and leaf.get("private") is False
+        and isinstance(leaf.get("repository"), str)
+        and REPOSITORY_RE.fullmatch(str(leaf.get("repository")))
+    }
+    summary = census.get("summary") or {}
+    private_count = summary.get("private_repository_count")
+    repository_count = summary.get("repository_count")
+    if not strict_int(private_count) or not strict_int(repository_count):
+        raise ProofSetError("tracked public census projection has invalid summary counts")
+    expected_public_count = repository_count - private_count
+    if len(repositories) != expected_public_count:
+        raise ProofSetError("tracked public census projection does not cover its public denominator")
+    return repositories, expected_public_count, canonical_digest(sorted(repositories))
+
+
+def load_classification_policy_contract(path: Path = ESTATE) -> tuple[dict[str, Any], str]:
+    try:
+        estate = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        raise ProofSetError("cannot load the tracked W02 classification policy") from exc
+    policy = estate.get("positioning_estate_classification") if isinstance(estate, dict) else None
+    if not isinstance(policy, dict):
+        raise ProofSetError("tracked W02 classification policy is missing")
+    return policy, canonical_digest(policy)
 
 
 def parse_time(value: object) -> dt.datetime | None:
@@ -126,9 +210,97 @@ def endpoint_matches_candidate(anchor: dict[str, Any], candidate: dict[str, Any]
 
 def repository_workflow_api_path(value: object, repository: object) -> str | None:
     match = WORKFLOW_API_PATH_RE.fullmatch(str(value or ""))
-    if match is None or match.group(1) != repository:
+    if (
+        match is None
+        or not isinstance(repository, str)
+        or match.group(1).casefold() != repository.casefold()
+    ):
         return None
     return str(value)
+
+
+def workflow_run_id(api_path: object, repository: object) -> str | None:
+    path = repository_workflow_api_path(api_path, repository)
+    if path is None:
+        return None
+    match = WORKFLOW_API_PATH_RE.fullmatch(path)
+    assert match is not None
+    return match.group(2)
+
+
+def validate_selected_claim(claim: object, repository: object, prefix: str) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(claim, dict) or set(claim) != CLAIM_KEYS:
+        return [f"{prefix}: selected candidate needs the complete structured flagship_claim contract"]
+    statement = claim.get("statement")
+    if not isinstance(statement, str) or not statement.strip() or len(statement) > 240:
+        errors.append(f"{prefix}: flagship_claim.statement must contain 1-240 characters")
+    elif any(pattern.search(statement) for pattern in CLAIM_FORBIDDEN_ASSERTION_PATTERNS):
+        errors.append(f"{prefix}: flagship_claim.statement exceeds the bounded public assertion class")
+    if claim.get("assertion_class") != "implemented_capability":
+        errors.append(f"{prefix}: flagship_claim.assertion_class must be implemented_capability")
+    if claim.get("subject_repository") != repository:
+        errors.append(f"{prefix}: flagship_claim subject must be the candidate repository")
+
+    list_contracts = {
+        "includes": None,
+        "excludes": CLAIM_REQUIRED_EXCLUDES,
+        "evidence_basis": CLAIM_REQUIRED_EVIDENCE,
+        "non_circular_exclusions": CLAIM_REQUIRED_NON_CIRCULAR,
+    }
+    for name, required in list_contracts.items():
+        values = claim.get(name)
+        valid_values = (
+            isinstance(values, list)
+            and 1 <= len(values) <= 8
+            and all(isinstance(value, str) and value.strip() and len(value) <= 80 for value in values)
+            and len({value.casefold() for value in values}) == len(values)
+        )
+        if not valid_values:
+            errors.append(f"{prefix}: flagship_claim.{name} must be a bounded unique string list")
+            continue
+        if required is not None and set(values) != required:
+            errors.append(f"{prefix}: flagship_claim.{name} must match the required public claim boundary")
+    return errors
+
+
+def validate_workflow_anchor(
+    anchor: dict[str, Any], candidate: dict[str, Any], anchor_prefix: str
+) -> list[str]:
+    errors: list[str] = []
+    repository = candidate.get("repository")
+    run_id = workflow_run_id(anchor.get("github_api_path"), repository)
+    if run_id is None:
+        errors.append(f"{anchor_prefix}: workflow API path must be bound to the candidate repository")
+        return errors
+    expected_url = f"https://github.com/{repository}/actions/runs/{run_id}"
+    if anchor.get("url") != expected_url:
+        errors.append(f"{anchor_prefix}: workflow display URL must match its repository-bound run")
+    identity = anchor.get("workflow_identity")
+    if not isinstance(identity, dict) or set(identity) != {"id", "path", "name"}:
+        errors.append(f"{anchor_prefix}: workflow identity must pin id, path, and name")
+    else:
+        if not strict_int(identity.get("id")) or identity.get("id", 0) <= 0:
+            errors.append(f"{anchor_prefix}: workflow identity id must be a positive integer")
+        if not isinstance(identity.get("path"), str) or not WORKFLOW_PATH_RE.fullmatch(identity["path"]):
+            errors.append(f"{anchor_prefix}: workflow identity path must name a workflow file")
+        if not isinstance(identity.get("name"), str) or not identity["name"].strip():
+            errors.append(f"{anchor_prefix}: workflow identity name must be nonempty")
+    if not isinstance(anchor.get("observed_head"), str) or not HEAD_RE.fullmatch(anchor["observed_head"]):
+        errors.append(f"{anchor_prefix}: workflow anchor needs a valid observed head")
+    default_branch = anchor.get("observed_default_branch")
+    if not isinstance(default_branch, str) or not default_branch.strip():
+        errors.append(f"{anchor_prefix}: workflow anchor needs the observed default branch")
+    head_binding = anchor.get("head_binding")
+    if head_binding not in WORKFLOW_HEAD_BINDINGS:
+        errors.append(f"{anchor_prefix}: workflow anchor needs a supported head binding")
+    elif (
+        head_binding == "dated_default_branch_snapshot"
+        and isinstance(repository, str)
+        and repository.casefold() not in DATED_SNAPSHOT_REPOSITORIES
+    ):
+        errors.append(f"{anchor_prefix}: dated snapshot binding is not allowed for this repository")
+    return errors
 
 
 def weighted_total(scores: dict[str, Any], dimensions: dict[str, Any]) -> int | None:
@@ -150,6 +322,120 @@ def strict_int(value: Any) -> bool:
     """Return true for YAML integers while rejecting booleans."""
 
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def validate_source_projection(
+    matrix: dict[str, Any], candidates: list[dict[str, Any]]
+) -> tuple[list[str], set[str]]:
+    """Bind the candidate denominator to the tracked W01/W02 public sources."""
+
+    errors: list[str] = []
+    try:
+        public_repositories, public_count, public_digest = load_public_census_contract()
+        _, policy_digest = load_classification_policy_contract()
+    except ProofSetError as exc:
+        return [str(exc)], set()
+
+    screen = matrix.get("candidate_screen") or {}
+    projection = screen.get("source_projection") if isinstance(screen, dict) else None
+    if not isinstance(projection, dict):
+        return ["candidate_screen.source_projection must bind the W01/W02 public denominator"], public_repositories
+    if projection.get("w01_public_repository_count") != public_count:
+        errors.append("source projection W01 public repository count does not match the tracked census")
+    if projection.get("w01_public_repository_identity_sha256") != public_digest:
+        errors.append("source projection W01 public identity digest does not match the tracked census")
+    if projection.get("w02_classification_policy_sha256") != policy_digest:
+        errors.append("source projection W02 policy digest does not match the tracked classification policy")
+    if parse_time(projection.get("observed_at")) is None:
+        errors.append("candidate source projection needs a valid observation timestamp")
+
+    w02_repositories = projection.get("w02_front_door_proof_repositories")
+    if not isinstance(w02_repositories, list) or not w02_repositories:
+        errors.append("source projection needs the authoritative W02 front-door repository list")
+        w02_repositories = []
+    elif not all(isinstance(value, str) and REPOSITORY_RE.fullmatch(value) for value in w02_repositories):
+        errors.append("source projection W02 repository identities are invalid")
+        w02_repositories = []
+    w02_keys = [repository.casefold() for repository in w02_repositories]
+    if len(set(w02_keys)) != len(w02_keys):
+        errors.append("source projection contains case-insensitive duplicate W02 repositories")
+    public_canonical = {repository.casefold(): repository for repository in public_repositories}
+    noncanonical_w02_count = sum(
+        public_canonical.get(repository.casefold()) != repository for repository in w02_repositories
+    )
+    if noncanonical_w02_count:
+        errors.append(
+            "source projection contains "
+            f"{noncanonical_w02_count} W02 repository identities absent from the canonical public census"
+        )
+
+    additions = projection.get("explicit_additions")
+    if not isinstance(additions, list):
+        errors.append("source projection explicit_additions must be a list")
+        additions = []
+    addition_ids: list[str] = []
+    addition_source_sets: collections.Counter[str] = collections.Counter()
+    for addition in additions:
+        if not isinstance(addition, dict) or set(addition) != {"candidate_id", "source_set"}:
+            errors.append("every source projection addition must bind one candidate id to one source set")
+            continue
+        candidate_id = addition.get("candidate_id")
+        source_set = addition.get("source_set")
+        if not isinstance(candidate_id, str) or not candidate_id or not isinstance(source_set, str) or not source_set:
+            errors.append("every source projection addition needs nonempty candidate and source-set identities")
+            continue
+        addition_ids.append(candidate_id)
+        addition_source_sets[source_set] += 1
+    if len(set(addition_ids)) != len(addition_ids):
+        errors.append("source projection contains duplicate explicit candidate additions")
+
+    candidate_by_id = {
+        str(candidate.get("id")): candidate for candidate in candidates if isinstance(candidate, dict)
+    }
+    actual_w02_repositories = sorted(
+        str(candidate.get("repository"))
+        for candidate in candidates
+        if isinstance(candidate, dict)
+        and "w02_front_door_proof" in (candidate.get("source_sets") or [])
+        and isinstance(candidate.get("repository"), str)
+    )
+    if sorted(w02_repositories) != actual_w02_repositories:
+        errors.append("matrix W02 rows do not match the authoritative source projection")
+    for addition in additions:
+        if not isinstance(addition, dict):
+            continue
+        candidate = candidate_by_id.get(str(addition.get("candidate_id")))
+        if candidate is None or addition.get("source_set") not in (candidate.get("source_sets") or []):
+            errors.append("an explicit candidate addition is not bound to its declared source set")
+
+    projected_ids = {
+        str(candidate.get("id"))
+        for candidate in candidates
+        if isinstance(candidate, dict)
+        and isinstance(candidate.get("repository"), str)
+        and candidate["repository"].casefold() in set(w02_keys)
+    } | set(addition_ids)
+    actual_ids = {
+        str(candidate.get("id")) for candidate in candidates if isinstance(candidate, dict)
+    }
+    if projected_ids != actual_ids or len(projected_ids) != len(candidates):
+        errors.append("candidate matrix does not equal the authoritative source projection")
+
+    count_fields = {
+        "manifest_primary_proof": "manifest_primary_proof_additions",
+        "current_public_entry_point": "current_public_entry_point_additions",
+        "current_front_door_endpoint": "current_front_door_endpoint_additions",
+        "claims_ledger": "claims_ledger_additions",
+        "legacy_entry_point": "legacy_entry_point_additions",
+    }
+    if screen.get("w02_front_door_proof_repositories") != len(w02_repositories):
+        errors.append("candidate screen W02 count does not match its source projection")
+    for source_set, field in count_fields.items():
+        if screen.get(field) != addition_source_sets[source_set]:
+            errors.append(f"candidate screen {field} does not match its source projection")
+    if screen.get("candidate_count") != len(w02_repositories) + len(addition_ids):
+        errors.append("candidate screen count does not match the authoritative source projection")
+    return errors, public_repositories
 
 
 def validate_matrix(
@@ -177,6 +463,9 @@ def validate_matrix(
     if not isinstance(candidates, list) or not candidates:
         errors.append("candidates must be a nonempty list")
         return errors
+    source_errors, public_repositories = validate_source_projection(matrix, candidates)
+    errors.extend(source_errors)
+    public_canonical = {repository.casefold(): repository for repository in public_repositories}
 
     screen = matrix.get("candidate_screen") or {}
     if screen.get("candidate_count") != len(candidates):
@@ -236,6 +525,18 @@ def validate_matrix(
             errors.append(f"{prefix}: repository candidates need a valid owner/repository slug")
         elif isinstance(repository, str) and repository:
             repositories.append(repository)
+            if public_canonical.get(repository.casefold()) != repository:
+                errors.append(f"{prefix}: repository identity is not present in the tracked public census")
+            if public_url != f"https://github.com/{repository}":
+                errors.append(f"{prefix}: public_url must be the canonical public GitHub repository URL")
+        source_sets = candidate.get("source_sets")
+        if not isinstance(source_sets, list) or not source_sets or not all(
+            isinstance(source_set, str) and source_set for source_set in source_sets
+        ):
+            errors.append(f"{prefix}: source_sets must be a nonempty string list")
+        repository_maturity = candidate.get("repository_maturity")
+        if candidate.get("kind") == "repository" and repository_maturity not in REPOSITORY_MATURITY:
+            errors.append(f"{prefix}: repository_maturity must use the W02 maturity taxonomy")
 
         scores = candidate.get("scores")
         if not isinstance(scores, dict) or set(scores) != set(dimensions):
@@ -268,9 +569,7 @@ def validate_matrix(
                 endpoint_urls.append(endpoint_url)
 
         if status == "selected":
-            claim = candidate.get("flagship_claim")
-            if not isinstance(claim, str) or not claim.strip():
-                errors.append(f"{prefix}: selected candidate needs a nonempty flagship_claim")
+            errors.extend(validate_selected_claim(candidate.get("flagship_claim"), repository, prefix))
             role = candidate.get("story_role")
             if not isinstance(role, str) or not role:
                 errors.append(f"{prefix}: selected candidate needs a story_role")
@@ -280,6 +579,8 @@ def validate_matrix(
                 errors.append(f"{prefix}: selected candidate is marked excluded/ineligible")
             if candidate.get("stale") is not False:
                 errors.append(f"{prefix}: selected candidate is stale")
+            if repository_maturity in STALE_REPOSITORY_MATURITY:
+                errors.append(f"{prefix}: selected repository maturity is stale or unvalidated")
             if dependencies:
                 errors.append(f"{prefix}: selected candidate has a private-only dependency")
             if candidate.get("hard_gate_failures"):
@@ -292,14 +593,19 @@ def validate_matrix(
                         errors.append(f"{prefix}: {dimension} is below the selected minimum")
 
             live_anchors = [anchor for anchor in anchors if isinstance(anchor, dict) and anchor.get("live") is True]
-            if not live_anchors:
-                errors.append(f"{prefix}: selected candidate is missing a live evidence anchor")
+            live_kinds = collections.Counter(anchor.get("kind") for anchor in live_anchors)
+            if live_kinds != {"workflow_run": 1, "public_endpoint": 1}:
+                errors.append(
+                    f"{prefix}: selected candidate needs exactly one live workflow_run and one live public_endpoint"
+                )
             for anchor_index, anchor in enumerate(live_anchors):
                 anchor_prefix = f"{prefix}.evidence_anchors[{anchor_index}]"
                 if anchor.get("status") != "pass":
                     errors.append(f"{anchor_prefix}: live anchor must be passing")
                 if anchor.get("kind") == "public_endpoint" and not endpoint_matches_candidate(anchor, candidate):
                     errors.append(f"{anchor_prefix}: endpoint identity is not bound to this candidate")
+                if anchor.get("kind") == "workflow_run":
+                    errors.extend(validate_workflow_anchor(anchor, candidate, anchor_prefix))
                 url = anchor.get("url")
                 if not public_https_url(url):
                     errors.append(
@@ -324,11 +630,13 @@ def validate_matrix(
     duplicate_ids = sorted(name for name, count in collections.Counter(ids).items() if count > 1)
     if duplicate_ids:
         errors.append(f"duplicate candidate ids: {', '.join(duplicate_ids)}")
-    duplicate_repositories = sorted(
-        name for name, count in collections.Counter(repositories).items() if count > 1
+    duplicate_repository_count = sum(
+        count - 1 for count in collections.Counter(name.casefold() for name in repositories).values() if count > 1
     )
-    if duplicate_repositories:
-        errors.append(f"duplicate candidate repositories: {', '.join(duplicate_repositories)}")
+    if duplicate_repository_count:
+        errors.append(
+            f"duplicate candidate repositories: {duplicate_repository_count} case-insensitive duplicate identities"
+        )
     duplicate_endpoint_identities = sorted(
         name for name, count in collections.Counter(endpoint_identities).items() if count > 1
     )
@@ -396,22 +704,84 @@ def http_status(url: str) -> int:
         raise ProofSetError(f"HTTP probe returned an invalid status for {url}") from exc
 
 
+def load_estate_classification_module() -> Any:
+    path = ROOT / "scripts/estate-classification.py"
+    spec = importlib.util.spec_from_file_location("flagship_estate_classification", path)
+    if spec is None or spec.loader is None:
+        raise ProofSetError("cannot load the W02 classification verifier")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def live_w02_snapshot() -> dict[str, Any]:
+    """Derive W02 relevance and maturity from the current authoritative estate."""
+
+    try:
+        classification = load_estate_classification_module()
+        estate = classification.load_yaml(ESTATE)
+        access = classification.load_yaml(ACCESS)
+        rows = classification.collect_live_repositories()
+        classified = classification.classify(rows, estate, access, dt.datetime.now(dt.UTC))
+    except Exception as exc:  # The public caller must not echo private live identities.
+        raise ProofSetError("authoritative W02 live projection is unavailable") from exc
+    if len(rows) != len(classified):
+        raise ProofSetError("authoritative W02 live projection has inconsistent coverage")
+    public_pairs = [
+        (row, result)
+        for row, result in zip(rows, classified, strict=True)
+        if row.get("private") is False
+    ]
+    return {
+        "front_door_repositories": sorted(
+            str(row.get("full_name"))
+            for row, result in public_pairs
+            if result.get("public_relevance") == "front_door_proof"
+        ),
+        "metadata": {
+            str(row.get("full_name")).casefold(): row for row, _ in public_pairs
+        },
+        "maturity": {
+            str(row.get("full_name")).casefold(): result.get("maturity")
+            for row, result in public_pairs
+        },
+    }
+
+
 def validate_live(matrix: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     candidates = matrix.get("candidates") or []
-    current_heads: dict[str, str] = {}
+    try:
+        w02 = live_w02_snapshot()
+    except ProofSetError as exc:
+        return [str(exc)]
+
+    projection = ((matrix.get("candidate_screen") or {}).get("source_projection") or {})
+    expected_w02 = projection.get("w02_front_door_proof_repositories")
+    observed_w02 = w02.get("front_door_repositories") or []
+    if isinstance(expected_w02, list) and sorted(expected_w02) != sorted(observed_w02):
+        errors.append(
+            "authoritative W02 live denominator differs from the pinned public projection "
+            f"(expected {len(expected_w02)}, observed {len(observed_w02)})"
+        )
+
+    metadata_by_repository = w02.get("metadata") or {}
+    maturity_by_repository = w02.get("maturity") or {}
+    default_branches: dict[str, str] = {}
     for candidate in candidates:
         if not isinstance(candidate, dict) or candidate.get("kind") != "repository":
             continue
         candidate_id = str(candidate.get("id") or "unknown")
         repository = str(candidate.get("repository") or "")
-        try:
-            metadata = command_json(["gh", "api", f"repos/{repository}"])
-        except ProofSetError as exc:
-            errors.append(f"{candidate_id}: cannot inspect public repository: {exc}")
+        repository_key = repository.casefold()
+        metadata = metadata_by_repository.get(repository_key)
+        if not isinstance(metadata, dict):
+            errors.append(f"{candidate_id}: repository is absent from the current public estate projection")
             continue
-        if bool(metadata.get("private")):
-            errors.append(f"{candidate_id}: public matrix names a private repository")
+        observed_maturity = maturity_by_repository.get(repository_key)
+        if candidate.get("repository_maturity") != observed_maturity:
+            errors.append(f"{candidate_id}: repository maturity differs from current W02 metadata")
         if candidate.get("status") == "selected" and bool(metadata.get("archived")):
             errors.append(f"{candidate_id}: selected repository is archived")
         if candidate.get("status") == "selected":
@@ -419,21 +789,15 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
             if not isinstance(default_branch, str) or not default_branch:
                 errors.append(f"{candidate_id}: repository has no readable default branch")
                 continue
-            try:
-                commit = command_json(["gh", "api", f"repos/{repository}/commits/{default_branch}"])
-            except ProofSetError as exc:
-                errors.append(f"{candidate_id}: cannot inspect current default-branch head: {exc}")
-                continue
-            current_head = commit.get("sha") if isinstance(commit, dict) else None
-            if not isinstance(current_head, str) or not HEAD_RE.fullmatch(current_head):
-                errors.append(f"{candidate_id}: current default-branch head is invalid")
-                continue
-            current_heads[repository] = current_head
+            default_branches[repository_key] = default_branch
 
+    current_heads: dict[str, str] = {}
     for candidate in candidates:
         if not isinstance(candidate, dict) or candidate.get("status") != "selected":
             continue
         candidate_id = str(candidate.get("id") or "unknown")
+        repository = str(candidate.get("repository") or "")
+        repository_key = repository.casefold()
         for anchor in candidate.get("evidence_anchors") or []:
             if not isinstance(anchor, dict) or anchor.get("live") is not True:
                 continue
@@ -447,15 +811,46 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                     continue
                 try:
                     run = command_json(["gh", "api", api_path])
-                except ProofSetError as exc:
-                    errors.append(f"{candidate_id}: workflow anchor unavailable: {exc}")
+                except ProofSetError:
+                    errors.append(f"{candidate_id}: workflow anchor is unavailable")
                     continue
                 if run.get("status") != "completed" or run.get("conclusion") != "success":
                     errors.append(f"{candidate_id}: workflow anchor is not a completed success")
                 if run.get("head_sha") != anchor.get("observed_head"):
                     errors.append(f"{candidate_id}: workflow anchor head does not match the matrix")
-                if run.get("head_sha") != current_heads.get(str(candidate.get("repository") or "")):
-                    errors.append(f"{candidate_id}: workflow anchor is not on the current default-branch head")
+                run_id = workflow_run_id(api_path, repository)
+                expected_url = f"https://github.com/{repository}/actions/runs/{run_id}"
+                if anchor.get("url") != expected_url or run.get("html_url") != expected_url:
+                    errors.append(f"{candidate_id}: workflow display URL does not match the pinned run")
+                identity = anchor.get("workflow_identity") or {}
+                if (
+                    run.get("workflow_id") != identity.get("id")
+                    or run.get("path") != identity.get("path")
+                    or run.get("name") != identity.get("name")
+                ):
+                    errors.append(f"{candidate_id}: workflow identity differs from the pinned workflow")
+                default_branch = default_branches.get(repository_key)
+                if (
+                    run.get("head_branch") != default_branch
+                    or anchor.get("observed_default_branch") != default_branch
+                ):
+                    errors.append(f"{candidate_id}: workflow run is not bound to the repository default branch")
+                if anchor.get("head_binding") == "current_default_branch":
+                    if repository_key not in current_heads and default_branch:
+                        try:
+                            commit = command_json(
+                                ["gh", "api", f"repos/{repository}/commits/{default_branch}"]
+                            )
+                        except ProofSetError:
+                            errors.append(f"{candidate_id}: current default-branch head is unavailable")
+                            continue
+                        current_head = commit.get("sha") if isinstance(commit, dict) else None
+                        if not isinstance(current_head, str) or not HEAD_RE.fullmatch(current_head):
+                            errors.append(f"{candidate_id}: current default-branch head is invalid")
+                            continue
+                        current_heads[repository_key] = current_head
+                    if run.get("head_sha") != current_heads.get(repository_key):
+                        errors.append(f"{candidate_id}: workflow anchor is not on the current default-branch head")
             elif kind == "public_endpoint":
                 if not endpoint_matches_candidate(anchor, candidate):
                     errors.append(f"{candidate_id}: endpoint identity is not bound to this candidate")
@@ -463,8 +858,8 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 expected = anchor.get("expected_http_status")
                 try:
                     observed = http_status(str(anchor.get("url") or ""))
-                except ProofSetError as exc:
-                    errors.append(f"{candidate_id}: endpoint anchor unavailable: {exc}")
+                except ProofSetError:
+                    errors.append(f"{candidate_id}: endpoint anchor is unavailable")
                     continue
                 if observed != expected:
                     errors.append(f"{candidate_id}: endpoint returned {observed}, expected {expected}")

@@ -15,12 +15,28 @@ candidate derived from the W02 `front_door_proof` class and current public profi
 points. It names no private repository; private material remains in sanctioned custody and may
 appear only in a later encrypted diligence addendum.
 
+The denominator is an executable source projection, not a self-reported row count: 15 repositories
+derive from the current W02 policy and metadata, and seven explicit public additions produce 22
+rows. Reconciliation against W02 made four source-safe corrections: the public profile carrier and
+Padavano entered the W02 set; the peer-audited Styx implementation remains a claims-ledger
+addition rather than W02 proof; and the archived root landing remains a legacy-entry-point
+addition rather than W02 proof. The registered static gate binds those rows to the redacted W01
+public-identity projection and W02 policy digest. It reports only counts when an identity is not in
+the public projection, so a malformed matrix cannot turn validation output into a private-name
+oracle.
+
 The rubric weights technical depth and reproducible evidence most heavily, then distinct claim
 role and system leverage, then current maturity, public visibility, and buyer relevance. Repository
 count, stars, recent activity, and aesthetic preference cannot independently qualify a flagship.
 The hard gates override the numeric score: a selection must have one unique story role, a current
-public evidence anchor, no private-only dependency, a bounded claim, and no stale or archived proof
-surface.
+workflow anchor and one candidate-bound public endpoint, no private-only dependency, a structured
+bounded/non-circular claim, and no stale or archived proof surface. Repository maturity comes from
+the W02 taxonomy and current GitHub metadata; a stale proof endpoint is recorded separately from an
+otherwise active repository. Workflow receipts pin the workflow id, file, name, display URL,
+default branch, and observed head. External flagships must remain on the current default-branch
+head. Limen uses a dated successful default-branch snapshot because requiring a same-repository
+matrix commit to equal moving `main` would make every corrective commit invalidate its own proof;
+freshness and intended-workflow identity remain fail-closed.
 
 ### Selected preflight set
 
