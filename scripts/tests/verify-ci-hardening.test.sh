@@ -72,7 +72,7 @@ gates:
     note: "fixture gate mirrored in another workflow — must defer under --skip-ci-covered, never run"
   deleted-custody:
     command: "touch ran-deleted-custody"
-    paths: ["institutio/vault/**", ".limen-private/**", ".agent-runtime/**", ".limen-workstream/**"]
+    paths: ["institutio/vault/**", ".limen-private", ".limen-private/**", ".agent-runtime", ".agent-runtime/**", ".limen-workstream", ".limen-workstream/**"]
     owner: custody
     note: "deleted custody paths must remain eligible for scoped gate selection"
 YAML
@@ -161,9 +161,12 @@ fi
 
 # ── 4b: every private namespace selects the custody gate ─────────────────────
 for private_path in \
+  ".limen-private" \
   ".limen-private/probe" \
   ".limen-private/résumé.md" \
+  ".agent-runtime" \
   ".agent-runtime/probe" \
+  ".limen-workstream" \
   ".limen-workstream/probe"
 do
   sb="$(make_sandbox)"

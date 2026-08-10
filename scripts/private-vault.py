@@ -64,6 +64,7 @@ BOOTSTRAP_ARTIFACT_IDS = frozenset(
     }
 )
 PRIVATE_TRACKING_PREFIXES = (".limen-private/", ".agent-runtime/", ".limen-workstream/")
+PRIVATE_TRACKING_ROOTS = tuple(prefix.rstrip("/") for prefix in PRIVATE_TRACKING_PREFIXES)
 COMMAND_TIMEOUT_SECONDS = 120
 LOCK_TIMEOUT_SECONDS = 30
 DIAGNOSTIC_LIMIT = 4096
@@ -313,6 +314,14 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
         snapshot = _run_command(["git", "-C", str(ROOT), "show", f"{revision}:{manifest_relative}"])
         if snapshot.returncode != 0:
             raise VaultError("cannot read a committed manifest history snapshot")
+        require_public_safe = not safe_root_is_reachable
+        if safe_root_is_reachable:
+            after_safe_root = _run_command(
+                ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, revision]
+            )
+            if after_safe_root.returncode not in {0, 1}:
+                raise VaultError("cannot classify a committed manifest history revision")
+            require_public_safe = after_safe_root.returncode == 0
         for line_number, raw in enumerate(snapshot.stdout.splitlines(), 1):
             if not raw.strip():
                 continue
@@ -324,18 +333,14 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
                 raise VaultError(
                     f"committed manifest history contains a duplicate field at line {line_number}"
                 ) from exc
-            if not isinstance(row, dict) or row.get("schema") != SCHEMA:
+            if not isinstance(row, dict):
+                if require_public_safe:
+                    raise VaultError("committed manifest history contains a non-public-safe row")
                 continue
-            require_public_safe = not safe_root_is_reachable
-            if safe_root_is_reachable:
-                after_safe_root = _run_command(
-                    ["git", "-C", str(ROOT), "merge-base", "--is-ancestor", PUBLIC_SAFE_HISTORY_ROOT, revision]
-                )
-                if after_safe_root.returncode not in {0, 1}:
-                    raise VaultError("cannot classify a committed manifest history revision")
-                require_public_safe = after_safe_root.returncode == 0
             if require_public_safe and _validate_public_row(row, line_number):
-                raise VaultError("committed manifest history contains a non-public-safe v2 row")
+                raise VaultError("committed manifest history contains a non-public-safe row")
+            if row.get("schema") != SCHEMA:
+                continue
             artifact_id = row.get("artifact_id")
             if not isinstance(artifact_id, str):
                 raise VaultError("committed manifest history contains a non-string artifact id")
@@ -747,7 +752,8 @@ def cmd_verify(_args: argparse.Namespace) -> int:
     except VaultError as exc:
         failures.append(f"committed public-key validation failed: {exc}")
     for prefix in PRIVATE_TRACKING_PREFIXES:
-        if any(path.startswith(prefix) for path in tracked):
+        root = prefix.rstrip("/")
+        if any(path == root or path.startswith(prefix) for path in tracked):
             failures.append(f"private plaintext namespace contains git-tracked content: {prefix}")
     seen_ids: set[str] = set()
     seen_ciphers: set[str] = set()
@@ -787,6 +793,9 @@ def cmd_verify(_args: argparse.Namespace) -> int:
     missing_required = sorted(custody_baseline - seen_ids)
     if missing_required:
         failures.append(f"required custody baseline is missing neutral ids: {', '.join(missing_required)}")
+    unattested_ids = sorted(seen_ids - BOOTSTRAP_ARTIFACT_IDS)
+    if unattested_ids:
+        failures.append("non-bootstrap ciphertext lacks a public recovery admission proof")
     for artifact_id, expected_metadata in historical_artifacts.items():
         current_metadata = current_artifacts.get(artifact_id)
         if current_metadata is not None and current_metadata != expected_metadata:
@@ -851,6 +860,15 @@ def cmd_restore(args: argparse.Namespace) -> int:
     if not getattr(args, "apply", False):
         raise VaultError("restore is mutating; rerun with --apply")
     destination_root = Path(args.dest).expanduser().resolve()
+    try:
+        repository_destination = destination_root.relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        repository_destination = ""
+    if repository_destination and not any(
+        repository_destination == root or repository_destination.startswith(prefix)
+        for root, prefix in zip(PRIVATE_TRACKING_ROOTS, PRIVATE_TRACKING_PREFIXES, strict=True)
+    ):
+        raise VaultError("repository-local restore destination must use a private namespace")
     try:
         destination_root.mkdir(parents=True, mode=0o700)
     except FileExistsError:

@@ -389,6 +389,33 @@ def test_historical_manifest_rejects_non_public_safe_rows(vault):
         vault._real_historical_artifacts()
 
 
+@pytest.mark.parametrize("schema", [None, "unsupported-schema"])
+def test_historical_manifest_rejects_non_v2_post_boundary_rows(
+    vault, monkeypatch: pytest.MonkeyPatch, schema: str | None
+):
+    manifest_relative = "institutio/vault/manifest.jsonl"
+    row = {"artifact_id": "artifact-001"}
+    if schema is not None:
+        row["schema"] = schema
+
+    def non_v2_snapshot(args, *, env=None):
+        del env
+        if "rev-list" in args:
+            return subprocess.CompletedProcess(args, 0, stdout="a" * 40 + "\n", stderr="")
+        if "cat-file" in args:
+            return subprocess.CompletedProcess(args, 1, stdout="", stderr="")
+        if "ls-tree" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=manifest_relative + "\0", stderr="")
+        if "show" in args:
+            return subprocess.CompletedProcess(args, 0, stdout=json.dumps(row) + "\n", stderr="")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(vault, "_run_command", non_v2_snapshot)
+
+    with pytest.raises(vault.VaultError, match="non-public-safe"):
+        vault._real_historical_artifacts()
+
+
 def test_tracked_files_preserve_non_ascii_private_paths(vault):
     subprocess.run(
         ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
@@ -582,6 +609,29 @@ def test_verify_rejects_tracked_private_namespace(vault, monkeypatch: pytest.Mon
     assert vault.cmd_verify(SimpleNamespace()) == 1
 
 
+@pytest.mark.parametrize("private_root", [".limen-private", ".agent-runtime", ".limen-workstream"])
+def test_verify_rejects_tracked_private_namespace_root(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, private_root: str
+):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault) | {private_root})
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
+def test_verify_rejects_non_bootstrap_artifact_without_recovery_proof(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source, "artifact-002")
+    monkeypatch.setattr(vault, "_tracked_files", lambda: _tracked_paths(vault, "artifact-002"))
+
+    assert vault.cmd_verify(SimpleNamespace()) == 1
+
+
 def test_verify_rejects_nested_vault_content(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     source = tmp_path / "private.md"
     source.write_text("secret", encoding="utf-8")
@@ -727,6 +777,18 @@ def test_restore_requires_apply_before_plaintext_write(vault, tmp_path: Path):
 
     with pytest.raises(vault.VaultError, match="--apply"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=False))
+    assert not destination.exists()
+
+
+def test_restore_rejects_unprotected_repository_destination(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    destination = vault.ROOT / "restored"
+
+    with pytest.raises(vault.VaultError, match="private namespace"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
     assert not destination.exists()
 
 
