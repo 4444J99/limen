@@ -22,8 +22,26 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "docs/positioning/evidence/flagship-evidence.yaml"
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
+CLAIMS_LEDGER = ROOT / "docs/positioning/claims-ledger.md"
 SCHEMA = "limen.positioning_flagship_evidence.v1"
 EXPECTED_IDS = {"limen", "public_records", "ai_chat_exporter"}
+EXPECTED_W08_SOURCE_HEAD = "96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa"
+EXPECTED_W08_CLAIM_IDS = {
+    "lavrea-top-01-throughput",
+    "lavrea-top-1-python-full-stack",
+    "profile-contributions-last-year",
+    "profile-daily-regeneration",
+    "profile-federation-coverage",
+    "profile-has-no-proof",
+    "profile-limen-operating-proof",
+    "profile-one-creator-authorship",
+    "profile-portfolio-link",
+    "profile-production-systems-headline",
+    "profile-public-repository-counts",
+    "profile-universal-production-claim",
+    "profile-zero-manual-upkeep",
+}
+W08_LAYER_KEYS = {"measurement", "inference", "implication", "prominence"}
 ALLOWED_PUBLIC_HOSTS = frozenset(
     {
         "api.github.com",
@@ -116,6 +134,50 @@ def selected_repositories(matrix: dict[str, Any]) -> dict[str, str]:
     return selected
 
 
+def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
+    errors: list[str] = []
+    imported = index.get("w08_research_import")
+    if not isinstance(imported, dict):
+        return ["w08_research_import must be a mapping"]
+    if imported.get("source_head") != EXPECTED_W08_SOURCE_HEAD:
+        errors.append("W08 import must bind the reviewed immutable source head")
+    if imported.get("claim_count") != len(EXPECTED_W08_CLAIM_IDS):
+        errors.append("W08 import claim_count must equal the 13-claim denominator")
+    claims = imported.get("claims")
+    if not isinstance(claims, list):
+        return errors + ["W08 import claims must be a list"]
+    identifiers = [claim.get("id") for claim in claims if isinstance(claim, dict)]
+    if len(identifiers) != len(set(identifiers)) or set(identifiers) != EXPECTED_W08_CLAIM_IDS:
+        errors.append("W08 import must classify each ratified claim exactly once")
+    for claim in claims:
+        if not isinstance(claim, dict):
+            errors.append("every W08 import claim must be a mapping")
+            continue
+        identifier = str(claim.get("id") or "claim")
+        layers = claim.get("layers")
+        if not isinstance(layers, dict) or set(layers) != W08_LAYER_KEYS:
+            errors.append(f"{identifier}: W08 import must preserve all four adjudication layers")
+            continue
+        if any(not isinstance(value, str) or not value for value in layers.values()):
+            errors.append(f"{identifier}: every adjudication layer needs a disposition")
+        if not isinstance(claim.get("publishable_status"), str) or not claim["publishable_status"]:
+            errors.append(f"{identifier}: publishable_status is required")
+        if not isinstance(claim.get("public_wording"), str) or not claim["public_wording"].strip():
+            errors.append(f"{identifier}: bounded public wording is required")
+        if not isinstance(claim.get("required_receipts"), list) or not claim["required_receipts"]:
+            errors.append(f"{identifier}: required receipts must remain explicit")
+        expected_row = (
+            f"| `{identifier}` | `{layers['measurement']}` | `{layers['inference']}` | "
+            f"`{layers['implication']}` | `{layers['prominence']}` | "
+            f"`{claim.get('publishable_status')}` |"
+        )
+        if expected_row not in ledger_text:
+            errors.append(f"{identifier}: claims ledger projection is missing or drifted")
+    if EXPECTED_W08_SOURCE_HEAD not in ledger_text:
+        errors.append("claims ledger must cite the immutable W08 source head")
+    return errors
+
+
 def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     if index.get("schema_version") != SCHEMA:
@@ -142,6 +204,13 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
         addendum = privacy.get("encrypted_addendum")
         if not isinstance(addendum, dict) or addendum.get("status") != "not_created":
             errors.append("encrypted addendum must remain not_created without a sanctioned custody receipt")
+
+    try:
+        ledger_text = (root / "docs/positioning/claims-ledger.md").read_text(encoding="utf-8")
+    except OSError as exc:
+        errors.append(f"cannot load claims ledger: {exc}")
+    else:
+        errors.extend(validate_w08_import(index, ledger_text))
 
     packets = index.get("packets")
     if not isinstance(packets, list) or len(packets) != 3:

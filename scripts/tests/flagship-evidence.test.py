@@ -69,6 +69,22 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["packets"][0]["metrics"][0]["observed_value"] = "many"
         self.assert_error_contains(index, "observed metric values must be numeric")
 
+    def test_rejects_incomplete_w08_claim_import(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["w08_research_import"]["claims"].pop()
+        self.assert_error_contains(index, "classify each ratified claim exactly once")
+
+    def test_rejects_collapsed_w08_adjudication_layers(self) -> None:
+        index = copy.deepcopy(self.index)
+        del index["w08_research_import"]["claims"][0]["layers"]["implication"]
+        self.assert_error_contains(index, "preserve all four adjudication layers")
+
+    def test_rejects_claims_ledger_projection_drift(self) -> None:
+        ledger = MODULE.CLAIMS_LEDGER.read_text(encoding="utf-8")
+        drifted = ledger.replace("`profile-zero-manual-upkeep`", "`missing-claim`", 1)
+        errors = MODULE.validate_w08_import(self.index, drifted)
+        self.assertTrue(any("profile-zero-manual-upkeep" in error for error in errors), errors)
+
     def test_rejects_credentialed_or_private_network_sources(self) -> None:
         index = copy.deepcopy(self.index)
         index["packets"][0]["sources"][1]["url"] = "https://token@127.0.0.1/private"

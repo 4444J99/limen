@@ -128,6 +128,32 @@ a dated packet refresh when a live source changes.
 | AI Chat Exporter: five public export formats | `verified` | Public product surface and successful workflow; verifier requires Markdown, HTML, JSON, PNG, and text | "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text." | L2 |
 | Selected-flagship usage, installs, customers, adoption, revenue, rankings, or private implementation | `unverified` / deliberately withheld | No current public primary source in the W04/W05 packet set | Do not publish. | nowhere |
 
+## 9. Research-criticism import
+
+W05 imports the 13-claim W08 adjudication from immutable source head
+`96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa` ([PR #2314](https://github.com/organvm/limen/pull/2314)).
+The complete per-layer citation sets remain normative in
+`docs/positioning/program/research-adjudication.json` at that head. The machine-checked W05
+projection in `docs/positioning/evidence/flagship-evidence.yaml` preserves every public wording
+and required receipt. A verified measurement must never be promoted into an unsupported inference
+or implication.
+
+| Claim ID | Measurement | Inference | Implication | Prominence | Publishable status |
+|---|---|---|---|---|---|
+| `profile-production-systems-headline` | `verified` | `bounded` | `not_established` | `retain_l1` | `provisional_verified_wording` |
+| `profile-portfolio-link` | `contradicted` | `supported` | `contradicted` | `correct_immediately` | `broken_link_with_live_successor` |
+| `profile-has-no-proof` | `partially_verified` | `contradicted` | `bounded` | `narrow` | `partially_reproducible` |
+| `profile-public-repository-counts` | `verified` | `bounded` | `not_established` | `supporting_only` | `verified_dated_profile_basis` |
+| `profile-contributions-last-year` | `verified` | `bounded` | `not_established` | `supporting_only` | `verified_when_dated_and_context_labeled` |
+| `profile-federation-coverage` | `partially_verified` | `bounded` | `not_established` | `retain_l2` | `verified_public_nonempty_org_coverage` |
+| `profile-daily-regeneration` | `verified` | `supported` | `bounded` | `retain_l2` | `verified_observation_window` |
+| `profile-universal-production-claim` | `partially_verified` | `unsupported` | `not_established` | `narrow` | `mixed_featured_system_evidence` |
+| `profile-limen-operating-proof` | `verified` | `bounded` | `not_established` | `retain_l2` | `verified_owner_environment_operation` |
+| `profile-zero-manual-upkeep` | `unverified` | `unsupported` | `contradicted` | `withhold` | `withheld` |
+| `lavrea-top-01-throughput` | `partially_verified` | `unsupported` | `not_established` | `withhold` | `withheld_as_ranking` |
+| `lavrea-top-1-python-full-stack` | `partially_verified` | `unsupported` | `not_established` | `withhold` | `withheld_as_ranking` |
+| `profile-one-creator-authorship` | `verified` | `bounded` | `contradicted` | `narrow` | `publishable_with_disclosure` |
+
 ## Never-publish list
 
 - "Top 1% Python committer" (or any unreproducible percentile).
