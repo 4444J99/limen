@@ -39,7 +39,7 @@ One validated source graph projects a complete, non-duplicative, cross-agent iss
 | `PSP-P00-W04` Publish cross-agent work-packet and relay contracts | [#2162](https://github.com/organvm/limen/issues/2162) | `PSP-C00` | `gpt-5.6-sol` | `xhigh` | `organvm/limen` | `deep` | `write` | [#2159](https://github.com/organvm/limen/issues/2159) |
 | `PSP-P00-W05` Expose ready-work and model-assigned packet seeds | [#2163](https://github.com/organvm/limen/issues/2163) | `PSP-C00` | `gpt-5.6-sol` | `xhigh` | `organvm/limen` | `deep` | `write` | [#2160](https://github.com/organvm/limen/issues/2160) |
 | `PSP-P00-W06` Prove issue-map parity and zero orphan program work | [#2164](https://github.com/organvm/limen/issues/2164) | `PSP-C00` | `gpt-5.4-mini` | `low` | `organvm/limen` | `routine` | `read` | [#2161](https://github.com/organvm/limen/issues/2161), [#2163](https://github.com/organvm/limen/issues/2163) |
-| `PSP-P00-W07` Connect ready leaves to the authenticated conduct broker | [#2165](https://github.com/organvm/limen/issues/2165) | `PSP-C00` | `gpt-5.6-sol` | `max` | `organvm/limen` | `deep` | `write` | [#2163](https://github.com/organvm/limen/issues/2163), [#2164](https://github.com/organvm/limen/issues/2164) |
+| `PSP-P00-W07` Route ready expert-positioning work into fresh Codex tasks | [#2165](https://github.com/organvm/limen/issues/2165) | `PSP-C00` | `gpt-5.6-sol` | `max` | `organvm/limen` | `deep` | `write` | [#2163](https://github.com/organvm/limen/issues/2163), [#2164](https://github.com/organvm/limen/issues/2164) |
 
 ## PSP-P01 — Foundation repair and upstream integration
 

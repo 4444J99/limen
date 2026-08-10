@@ -839,6 +839,12 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
     dependencies = packet.get("depends_on") or []
     externals = packet.get("external_dependencies") or []
     gates = packet.get("human_gates") or []
+    authority_line = (
+        "- This corrected leaf runs in a fresh human-protected Codex task; "
+        "direct human session authority is valid, and no non-Codex canary is required."
+        if object_id == "PSP-P00-W07"
+        else "- GitHub issue is not a lease; a registered native lane must obtain current broker authority before mutation."
+    )
     lines = [
         f"# {object_id} — {packet['title']}",
         "",
@@ -873,7 +879,7 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         f"- Catalog observed: `{assignment['catalog_validated_at']}`",
         f"- If unavailable: {assignment['unavailable_action']}",
         f"- Required capabilities: {', '.join(f'`{item}`' for item in packet['capabilities'])}",
-        "- GitHub issue is not a lease; a registered native lane must obtain current broker authority before mutation.",
+        authority_line,
     ]
     if gates:
         lines += [
