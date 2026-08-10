@@ -143,6 +143,9 @@ export class ConductKeeperDurableObject {
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
         capabilitySecret: String(env.LIMEN_CONDUCT_CAPABILITY_SECRET || ""),
+        steadyHeartbeatPersistence: String(
+          env.LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY ?? "1",
+        ) !== "0",
       },
     );
   }

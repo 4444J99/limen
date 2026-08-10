@@ -1090,19 +1090,19 @@
     },
     {
       "id": "L-CLOUDFLARE-DO-QUOTA",
-      "label": "DISCHARGED 2026-08-10 without spend: the free-tier daily quota reset restored the conduct keeper write path. Authenticated capabilities, human-protected registration, root and child reservations, claims, heartbeats, and accepted run receipts all completed against schema-valid broker responses during PSP-C00.",
-      "owner": "yours",
-      "cost": "no spend; the free-tier daily quota reset restored service",
-      "unlocks": "every relay WRITE path at once — `_register_relay_session` is on all of them. Concretely: the canonical-heal rung lands its twelve regressed needs-human atoms, dispatch receipts commit, board publication resumes, and the throughput governor can leave `dispatched: 0` / bootstrap cap 25 and climb toward the requested 100/day.",
+      "label": "Retired as a human lever on 2026-08-10: a transient reset briefly restored the conduct keeper, but recurrence proved the active defect is Limen's unbounded heartbeat persistence and full-state write amplification, owned by fleet issue #2054.",
+      "owner": "fleet via issue #2054",
+      "cost": "none for the operator",
+      "unlocks": "none by human action; issue #2054 owns the internal broker repair, after which PSP-P00-W07 reruns the required native Agy canary",
       "source_task": "/verify finding 2026-08-07 (limen PR #2050 lineage): driving the #2014 canonical-heal rung with the beat's own environment produced a 61-line traceback ending in ConductError 500 'Exceeded allowed rows written in Durable Objects free tier', raised from cli/src/limen/tabularius.py:1198 _register_relay_session -> POST /api/conduct/sessions. Invisible until then because the rung was piped through `2>&1 | tail -1`, which reduced it to a bare `}` (fixed by the beat_run rung runner + check-beat-diagnostics gate). Last successful keeper write 2026-08-07T12:55:47-04:00, immediately after #2016's merge — unblocking the write path is what consumed the day's remaining allowance.",
-      "gate": "discharged by live no-cost recovery evidence; any future paid plan remains a separate recurring-spend human gate and is not implied by this discharge",
-      "status": "discharged",
+      "gate": "none; no Cloudflare email, support case, billing or plan change, credential mint, or other operator action is required",
+      "status": "retired",
       "steps": [
-        "Completed: re-ran the authenticated canonical capabilities command after the free-tier daily reset and received the schema-valid conduct capability document.",
-        "Completed: proved the recovered write path with human-protected session registration, root and child reservations, claims, heartbeats, and accepted receipts.",
-        "Retain the existing structured quota-wall classification so a future exhaustion remains visible and heals automatically after recovery; open a separate human lever only if a paid plan is actually proposed."
+        "Correction recorded: the Agy-specific principal credential is present and passed the broker authorization boundary; credentials are not the W07 blocker.",
+        "Fleet repairs the bounded-persistence defect under issue #2054 and lands it through the sanctioned merge rail.",
+        "After the fix lands, PSP-P00-W07 reruns capabilities, registration, no-op/read claim, and schema-valid receipt with native Agy identity."
       ],
-      "note": "Recovery evidence: authenticated `/opt/homebrew/bin/limen conduct capabilities` returned `limen.conduct_capabilities.v1` at 2026-08-10T00:38:12Z; subsequent PSP-C00 broker mutations and accepted receipts proved the write path. No Cloudflare plan, DNS, account, or billing setting changed. Follow-on the fleet OWNS (not yours): the keeper should answer a future quota wall with a structured, machine-readable code instead of an undifferentiated 500. cli/src/limen/conduct/client.py currently classifies this condition on the rejection prose as a compatibility fallback.",
+      "note": "Historical evidence is retained: authenticated `/opt/homebrew/bin/limen conduct capabilities` returned `limen.conduct_capabilities.v1` at 2026-08-10T00:38:12Z and later mutations briefly succeeded. That was transient recovery, not completion. On recurrence, a request using the Agy principal again passed authorization before the keeper returned the storage error. Repository diagnosis shows every heartbeat appends an in-state event and causes the entire growing chunked state generation to be written while the previous generation is deleted. The external error string is a symptom; issue #2054 owns the internal repair.",
       "issue": 2054
     },
     {

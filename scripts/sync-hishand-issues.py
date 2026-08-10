@@ -3,7 +3,7 @@
 
 The charter's invariant is that a his-hand lever NEVER hangs in a file only Claude
 reads — it must be OWNED and ASSIGNED in the durable graph. `his-hand-levers.json`
-makes a lever owned; this organ makes it *assigned*: every lever gets exactly one
+makes a lever owned; this organ makes it *assigned*: every active lever gets exactly one
 open, individually-closeable `needs-human` GitHub issue, and the lever is stamped
 with that issue number so the registry and the graph can never silently diverge.
 
@@ -35,6 +35,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = Path(__import__("os").environ.get("LIMEN_HIS_HAND_LEVERS", ROOT / "his-hand-levers.json"))
 LABEL = "needs-human"
+TERMINAL_STATUSES = frozenset({"discharged", "retired"})
 MARKER_RE = re.compile(r"<!--\s*lever:(L-[A-Z0-9-]+)\s*-->")
 
 # The aggregate his-hand Wall — one pinned, machine-maintained index of EVERY lever, mirroring the
@@ -92,6 +93,17 @@ def body_for(lever: dict) -> str:
         f"<!-- lever:{lid} -->",
     ]
     return "\n".join(out)
+
+
+def active_levers(levers: list[dict]) -> list[dict]:
+    """Return only levers that can still require an operator action.
+
+    Retired/discharged rows remain permanent history in the registry, but must never be
+    recreated, relabelled, or projected back onto the human wall. In particular, an issue
+    number may later be reused as the home of an internal fleet bug; terminal history must
+    not overwrite that issue with a stale ``needs-human`` body.
+    """
+    return [lever for lever in levers if lever.get("status") not in TERMINAL_STATUSES]
 
 
 def existing_issues() -> dict[str, dict]:
@@ -260,7 +272,7 @@ def main() -> int:
         raise SystemExit("registry has no levers")
 
     if args.wall:
-        return sync_wall(levers, args.apply)
+        return sync_wall(active_levers(levers), args.apply)
 
     by_marker = existing_issues()
     by_number = {v["number"]: v for v in by_marker.values()}
@@ -269,6 +281,11 @@ def main() -> int:
 
     for lev in levers:
         lid = lev["id"]
+        if lev.get("status") in TERMINAL_STATUSES:
+            stamped = lev.get("issue")
+            if isinstance(stamped, int):
+                already.append((lid, stamped, lev["status"].upper()))
+            continue
         stamped = lev.get("issue")
         # Primary key: the registry's stamped issue number (durable, offline,
         # immune to search-index lag). Marker-scan is recovery for unstamped levers.
