@@ -1,6 +1,8 @@
 const LEGACY_STATE_KEY = "conduct_state";
 const MANIFEST_KEY = "conduct_state.v2.manifest";
 const CHUNK_PREFIX = "conduct_state.v2.chunk.";
+const LIVENESS_PREFIX = "conduct_liveness.v1.";
+const LIVENESS_SCHEMA = "limen.conduct_liveness.v1";
 const CHUNK_BYTES = 96 * 1024;
 const MAX_STATE_BYTES = 16 * 1024 * 1024;
 const MAX_MULTI_KEY_READ = 128;
@@ -17,6 +19,10 @@ async function sha256(bytes) {
 
 function chunkKey(generation, index) {
   return `${CHUNK_PREFIX}${generation}.${String(index).padStart(4, "0")}`;
+}
+
+async function livenessKey(leaseId) {
+  return `${LIVENESS_PREFIX}${await sha256(encoder.encode(leaseId))}`;
 }
 
 function bytesFromStoredChunk(value) {
@@ -43,6 +49,45 @@ function validateManifest(value) {
       || value.chunk_bytes !== CHUNK_BYTES
       || value.chunk_count !== Math.ceil(value.byte_length / CHUNK_BYTES)) {
     throw new Error("stored conduct state chunk manifest is invalid");
+  }
+  return value;
+}
+
+function validTimestamp(value) {
+  return typeof value === "string" && value.length <= 64 && !Number.isNaN(Date.parse(value));
+}
+
+function validateLiveness(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)
+      || value.schema_version !== LIVENESS_SCHEMA
+      || !/^[0-9a-f]{64}$/.test(String(value.base_generation || ""))
+      || typeof value.lease_id !== "string" || !value.lease_id || value.lease_id.length > 256
+      || !Number.isSafeInteger(value.lease_generation) || value.lease_generation < 1
+      || typeof value.run_id !== "string" || !value.run_id || value.run_id.length > 256
+      || typeof value.session_id !== "string" || !value.session_id || value.session_id.length > 256
+      || !value.lease || typeof value.lease !== "object" || Array.isArray(value.lease)
+      || value.lease.state !== "active"
+      || !validTimestamp(value.lease.heartbeat_at)
+      || !validTimestamp(value.lease.hard_deadline)
+      || !value.run || typeof value.run !== "object" || Array.isArray(value.run)
+      || value.run.status !== "running"
+      || !validTimestamp(value.run.updated_at)
+      || !value.session || typeof value.session !== "object" || Array.isArray(value.session)
+      || !validTimestamp(value.session.heartbeat_at)
+      || !value.audit || typeof value.audit !== "object" || Array.isArray(value.audit)
+      || value.audit.kind !== "lease.heartbeat"
+      || !Number.isSafeInteger(value.audit.count) || value.audit.count < 1
+      || !validTimestamp(value.audit.first_timestamp)
+      || !validTimestamp(value.audit.last_timestamp)
+      || !/^[0-9a-f]{64}$/.test(String(value.audit.chain_sha256 || ""))) {
+    throw new Error("stored conduct liveness overlay is invalid");
+  }
+  if (value.lease.heartbeat_at !== value.run.updated_at
+      || value.lease.heartbeat_at !== value.session.heartbeat_at
+      || value.lease.heartbeat_at !== value.audit.last_timestamp
+      || Date.parse(value.audit.first_timestamp) > Date.parse(value.audit.last_timestamp)
+      || Date.parse(value.lease.hard_deadline) < Date.parse(value.lease.heartbeat_at)) {
+    throw new Error("stored conduct liveness overlay is inconsistent");
   }
   return value;
 }
@@ -103,33 +148,199 @@ async function cleanupUnselected(storage, generation) {
   await storage.delete(LEGACY_STATE_KEY);
 }
 
+async function cleanupLiveness(storage) {
+  const listed = await storage.list({ prefix: LIVENESS_PREFIX });
+  if (listed instanceof Map) await deleteKeys(storage, [...listed.keys()]);
+}
+
+function eventMultiplicity(event) {
+  return Number.isSafeInteger(event?.count) && event.count > 0 ? event.count : 1;
+}
+
+function mergeHeartbeatAudit(state, overlay) {
+  state.events = Array.isArray(state.events) ? state.events : [];
+  let count = overlay.audit.count;
+  let first = overlay.audit.first_timestamp;
+  let last = overlay.audit.last_timestamp;
+  let highestSequence = Number.isSafeInteger(state.next_event_sequence)
+    && state.next_event_sequence >= 0 ? state.next_event_sequence : 0;
+  const retained = [];
+  for (let index = 0; index < state.events.length; index += 1) {
+    const event = state.events[index];
+    const sequence = Number.isSafeInteger(event?.sequence) && event.sequence > 0
+      ? event.sequence
+      : index + 1;
+    highestSequence = Math.max(highestSequence, sequence);
+    if (event?.kind === "lease.heartbeat" && event.lease_id === overlay.lease_id) {
+      count += eventMultiplicity(event);
+      const eventFirst = String(event.first_timestamp || event.timestamp || first);
+      const eventLast = String(event.last_timestamp || event.timestamp || last);
+      if (eventFirst < first) first = eventFirst;
+      if (eventLast > last) last = eventLast;
+      continue;
+    }
+    retained.push(event);
+  }
+  const sequence = highestSequence + 1;
+  retained.push({
+    sequence,
+    timestamp: overlay.audit.last_timestamp,
+    kind: "lease.heartbeat",
+    lease_id: overlay.lease_id,
+    run_id: overlay.run_id,
+    count,
+    first_timestamp: first,
+    last_timestamp: last,
+    audit_chain_sha256: overlay.audit.chain_sha256,
+  });
+  state.events = retained;
+  state.next_event_sequence = Math.max(
+    Number.isSafeInteger(state.next_event_sequence) ? state.next_event_sequence : 0,
+    sequence,
+  );
+}
+
+function applyLiveness(state, overlay) {
+  const lease = state.leases?.[overlay.lease_id];
+  const run = state.runs?.[overlay.run_id];
+  const session = state.sessions?.[overlay.session_id];
+  if (!lease || lease.generation !== overlay.lease_generation
+      || lease.run_id !== overlay.run_id
+      || lease.state !== "active"
+      || !run || run.run_id !== overlay.run_id
+      || run.status !== "running"
+      || run.executor_session_id !== overlay.session_id
+      || !session || session.session_id !== overlay.session_id
+      || Date.parse(overlay.lease.hard_deadline) > Date.parse(run.packet.deadline)) {
+    throw new Error("stored conduct liveness overlay does not match its base checkpoint");
+  }
+  lease.heartbeat_at = overlay.lease.heartbeat_at;
+  lease.hard_deadline = overlay.lease.hard_deadline;
+  lease.state = overlay.lease.state;
+  run.status = overlay.run.status;
+  run.updated_at = overlay.run.updated_at;
+  session.heartbeat_at = overlay.session.heartbeat_at;
+  mergeHeartbeatAudit(state, overlay);
+}
+
 /**
- * Content-addressed, manifest-switched persistence for the serialized conduct kernel.
+ * Manifest-switched cold snapshots plus a one-row steady-heartbeat overlay.
  *
- * Durable Object values have a finite per-value ceiling. The former single
- * `conduct_state` value crossed that ceiling while every receipt was still valid.
- * Chunks stay below both legacy-KV and SQLite-backed limits. The manifest is
- * advanced only after every new chunk is durable, so interrupted writes leave the
- * prior generation readable and completed receipts are never discarded.
+ * Cold lifecycle mutations retain the existing chunked crash-safety contract. A
+ * steady heartbeat changes only lease/run/session liveness and its coalesced audit
+ * summary, so it is written atomically to one fixed per-lease row. Loading overlays
+ * matching the selected cold generation reconstructs the authoritative state. The
+ * next cold save folds them into a new generation; stale overlays are ignored before
+ * best-effort cleanup, making a failed cleanup safe.
  */
 export class ChunkedDurableStateStore {
   constructor(storage, emptyState) {
     this.storage = storage;
     this.emptyState = emptyState;
+    this.loadedGeneration = null;
+    this.loadedOverlays = new Map();
   }
 
-  async load() {
+  async loadBase() {
     const rawManifest = await this.storage.get(MANIFEST_KEY);
     if (rawManifest !== undefined && rawManifest !== null) {
       const manifest = validateManifest(rawManifest);
       const bytes = await readChunks(this.storage, manifest);
       try {
-        return JSON.parse(decoder.decode(bytes));
+        return {
+          state: JSON.parse(decoder.decode(bytes)),
+          generation: manifest.generation,
+        };
       } catch (error) {
         throw new Error(`stored conduct state JSON is invalid: ${error.message}`);
       }
     }
-    return (await this.storage.get(LEGACY_STATE_KEY)) || this.emptyState();
+    const stored = await this.storage.get(LEGACY_STATE_KEY);
+    const state = stored || this.emptyState();
+    return {
+      state,
+      generation: await sha256(encoder.encode(JSON.stringify(state))),
+    };
+  }
+
+  async load() {
+    const base = await this.loadBase();
+    const listed = await this.storage.list({ prefix: LIVENESS_PREFIX });
+    const selected = [];
+    if (listed instanceof Map) {
+      for (const [key, raw] of listed) {
+        const overlay = validateLiveness(raw);
+        if (key !== await livenessKey(overlay.lease_id)) {
+          throw new Error("stored conduct liveness overlay key is invalid");
+        }
+        if (overlay.base_generation === base.generation) selected.push(overlay);
+      }
+    }
+    selected.sort((left, right) =>
+      left.audit.last_timestamp.localeCompare(right.audit.last_timestamp)
+      || left.lease_id.localeCompare(right.lease_id));
+    for (const overlay of selected) applyLiveness(base.state, overlay);
+    this.loadedGeneration = base.generation;
+    this.loadedOverlays = new Map(selected.map((overlay) => [overlay.lease_id, overlay]));
+    return base.state;
+  }
+
+  hasLivenessOverlays() {
+    return this.loadedOverlays.size > 0;
+  }
+
+  async saveHeartbeat(state, leaseId) {
+    if (!this.loadedGeneration) {
+      throw new Error("conduct liveness save requires a loaded base checkpoint");
+    }
+    const lease = state.leases?.[leaseId];
+    const run = lease ? state.runs?.[lease.run_id] : null;
+    const session = run ? state.sessions?.[run.executor_session_id] : null;
+    if (!lease || lease.state !== "active" || !run || run.status !== "running" || !session) {
+      throw new Error("conduct liveness save requires one active lease/run/session");
+    }
+    const prior = this.loadedOverlays.get(leaseId);
+    const firstTimestamp = prior?.audit.first_timestamp || lease.heartbeat_at;
+    const priorChain = prior?.audit.chain_sha256 || "0".repeat(64);
+    const chainInput = [
+      priorChain,
+      leaseId,
+      String(lease.generation),
+      lease.heartbeat_at,
+      lease.hard_deadline,
+      run.run_id,
+      session.session_id,
+    ].join("\0");
+    const overlay = {
+      schema_version: LIVENESS_SCHEMA,
+      base_generation: this.loadedGeneration,
+      lease_id: leaseId,
+      lease_generation: lease.generation,
+      run_id: run.run_id,
+      session_id: session.session_id,
+      lease: {
+        state: "active",
+        heartbeat_at: lease.heartbeat_at,
+        hard_deadline: lease.hard_deadline,
+      },
+      run: {
+        status: "running",
+        updated_at: run.updated_at,
+      },
+      session: {
+        heartbeat_at: session.heartbeat_at,
+      },
+      audit: {
+        kind: "lease.heartbeat",
+        count: (prior?.audit.count || 0) + 1,
+        first_timestamp: firstTimestamp,
+        last_timestamp: lease.heartbeat_at,
+        chain_sha256: await sha256(encoder.encode(chainInput)),
+      },
+    };
+    await this.storage.put(await livenessKey(leaseId), overlay);
+    this.loadedOverlays.set(leaseId, overlay);
+    return overlay;
   }
 
   async save(state) {
@@ -149,10 +360,13 @@ export class ChunkedDurableStateStore {
         && prior.chunk_count === chunkCount) {
       try {
         await cleanupUnselected(this.storage, generation);
+        await cleanupLiveness(this.storage);
       } catch {
         // The selected generation is already durable. Orphan cleanup remains
         // best-effort and is retried by the next save.
       }
+      this.loadedGeneration = generation;
+      this.loadedOverlays = new Map();
       return;
     }
 
@@ -170,24 +384,28 @@ export class ChunkedDurableStateStore {
       chunk_count: chunkCount,
     };
     await this.storage.put(MANIFEST_KEY, manifest);
+    this.loadedGeneration = generation;
+    this.loadedOverlays = new Map();
 
-    // Cleanup follows the atomic manifest switch. A cleanup interruption can
-    // leave only unreachable bytes; it cannot make the selected generation
-    // unreadable. The next save retries removal of every unselected generation.
     try {
       await cleanupUnselected(this.storage, generation);
+      await cleanupLiveness(this.storage);
     } catch {
       // Receipt custody is already committed through the manifest. Cleanup is
-      // deliberately best-effort and never rewrites the selected generation.
+      // deliberately best-effort and stale overlays cannot match this generation.
     }
   }
 }
 
 export const durableStateStoreContract = Object.freeze({
-  schema_version: "limen.conduct_state_store_contract.v1",
+  schema_version: "limen.conduct_state_store_contract.v2",
   manifest_key: MANIFEST_KEY,
   legacy_key: LEGACY_STATE_KEY,
   chunk_prefix: CHUNK_PREFIX,
   chunk_bytes: CHUNK_BYTES,
   max_state_bytes: MAX_STATE_BYTES,
+  liveness_schema: LIVENESS_SCHEMA,
+  liveness_prefix: LIVENESS_PREFIX,
+  steady_heartbeat_max_rows_written: 1,
+  steady_heartbeat_rows_deleted: 0,
 });
