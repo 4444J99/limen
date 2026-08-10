@@ -8,7 +8,7 @@
       "publication_status": "publishable",
       "visibility": "public",
       "source": {
-        "url": "https://example.invalid/synthetic-source",
+        "url": "https://example.com/synthetic-source",
         "observed_at": "2026-08-01T00:00:00Z",
         "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "current_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

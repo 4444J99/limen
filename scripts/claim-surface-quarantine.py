@@ -17,6 +17,13 @@ from typing import Any
 
 MANIFEST_SCHEMA = "limen.positioning.public-surface-manifest.v1"
 REPORT_SCHEMA = "limen.positioning.claim-policy-report.v1"
+MARKER_PREFIX = re.compile(r"<!--\s*positioning-claim:")
+MARKER_COMMENT = re.compile(r"<!--\s*positioning-claim:.*?-->", re.DOTALL)
+BOUNDED_MARKER = re.compile(
+    r"<!-- positioning-claim: (?P<claim_id>[a-z0-9][a-z0-9._-]*):(?P<edge>start|end) -->"
+)
+
+
 class QuarantineError(ValueError):
     pass
 
@@ -54,6 +61,32 @@ def _rejected_ids(report: dict[str, Any]) -> set[str]:
     return ids
 
 
+def _bounded_claim_ids(rendered: str, path: Path) -> set[str]:
+    """Return exactly-once bounded claim IDs or reject marker ambiguity."""
+    open_claim: str | None = None
+    bounded: set[str] = set()
+    markers = MARKER_COMMENT.findall(rendered)
+    if len(markers) != len(MARKER_PREFIX.findall(rendered)):
+        raise QuarantineError(f"surface {path} contains an unterminated positioning-claim marker")
+    for marker in markers:
+        match = BOUNDED_MARKER.fullmatch(marker)
+        if match is None:
+            raise QuarantineError(f"surface {path} contains a malformed positioning-claim marker")
+        claim_id = match.group("claim_id")
+        if match.group("edge") == "start":
+            if open_claim is not None or claim_id in bounded:
+                raise QuarantineError(f"surface {path} has nested or duplicate marker for {claim_id}")
+            open_claim = claim_id
+        else:
+            if open_claim != claim_id:
+                raise QuarantineError(f"surface {path} has an unmatched end marker for {claim_id}")
+            bounded.add(claim_id)
+            open_claim = None
+    if open_claim is not None:
+        raise QuarantineError(f"surface {path} has an unmatched start marker for {open_claim}")
+    return bounded
+
+
 def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], report: dict[str, Any]) -> dict[str, Any]:
     if manifest.get("schema_version") != MANIFEST_SCHEMA:
         raise QuarantineError(f"surface manifest must use {MANIFEST_SCHEMA}")
@@ -61,12 +94,15 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
     if not isinstance(surfaces, list) or not surfaces:
         raise QuarantineError("surface manifest must declare at least one public surface")
     rejected_ids = _rejected_ids(report)
-    if output_root.exists():
-        raise QuarantineError("output root already exists; quarantine requires a fresh staging directory")
     if not source_root.is_dir() or source_root.is_symlink():
         raise QuarantineError("source root must be a real staging directory")
 
     root_resolved = source_root.resolve()
+    output_resolved = output_root.resolve(strict=False)
+    if output_resolved == root_resolved or output_resolved.is_relative_to(root_resolved):
+        raise QuarantineError("output root must remain outside the source root")
+    if output_root.exists():
+        raise QuarantineError("output root already exists; quarantine requires a fresh staging directory")
     declared_claim_ids: set[str] = set()
     seen_surface_ids: set[str] = set()
     seen_paths: set[Path] = set()
@@ -100,6 +136,14 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
         if not source.is_file() or source.is_symlink() or not source.resolve().is_relative_to(root_resolved):
             raise QuarantineError(f"declared public surface is missing: {path}")
         rendered = source.read_text(encoding="utf-8")
+        bounded_claim_ids = _bounded_claim_ids(rendered, path)
+        declared_for_surface = set(claim_ids)
+        if bounded_claim_ids != declared_for_surface:
+            raise QuarantineError(
+                f"surface {path} marker/manifest mismatch: "
+                f"undeclared={sorted(bounded_claim_ids - declared_for_surface)}, "
+                f"missing={sorted(declared_for_surface - bounded_claim_ids)}"
+            )
         linked = rejected_ids.intersection(claim_ids)
         for claim_id in sorted(linked):
             pattern = re.compile(

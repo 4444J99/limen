@@ -26,7 +26,7 @@ def _claim() -> dict:
         "publication_status": "publishable",
         "visibility": "public",
         "source": {
-            "url": "https://example.invalid/source",
+            "url": "https://example.com/source",
             "observed_at": "2026-08-01T00:00:00Z",
             "sha256": "a" * 64,
         },
@@ -34,21 +34,41 @@ def _claim() -> dict:
     }
 
 
-def _export(claim: dict) -> dict:
+def _export(claims: list[dict]) -> dict:
     return {
         "schema_version": "limen.positioning.claim-ledger-export.v1",
         "forbidden_language": ["guaranteed outcome"],
-        "claims": [claim],
+        "claims": claims,
     }
 
 
-def _policy(tmp_path: Path, claim: dict) -> tuple[subprocess.CompletedProcess[str], dict]:
+def _policy(tmp_path: Path, *claims: dict) -> tuple[subprocess.CompletedProcess[str], dict]:
     tmp_path.mkdir(parents=True, exist_ok=True)
-    claims = tmp_path / "claims.json"
+    claims_path = tmp_path / "claims.json"
     report = tmp_path / "report.json"
-    claims.write_text(json.dumps(_export(claim)), encoding="utf-8")
-    result = _run(sys.executable, str(POLICY), "--claims", str(claims), "--as-of", "2026-08-10T00:00:00Z", "--report", str(report))
-    return result, json.loads(report.read_text(encoding="utf-8"))
+    claims_path.write_text(json.dumps(_export(list(claims))), encoding="utf-8")
+    result = _run(
+        sys.executable,
+        str(POLICY),
+        "--claims",
+        str(claims_path),
+        "--as-of",
+        "2026-08-10T00:00:00Z",
+        "--report",
+        str(report),
+    )
+    assert report.is_file(), (
+        "claim-policy.py did not write its report; "
+        f"returncode={result.returncode}; stdout={result.stdout!r}; stderr={result.stderr!r}"
+    )
+    try:
+        report_document = json.loads(report.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise AssertionError(
+            "claim-policy.py wrote an unreadable report; "
+            f"returncode={result.returncode}; stdout={result.stdout!r}; stderr={result.stderr!r}"
+        ) from exc
+    return result, report_document
 
 
 def test_policy_accepts_current_public_sourced_claim(tmp_path: Path):
@@ -94,6 +114,115 @@ def test_policy_rejects_nonpublic_future_and_invalid_source_windows(tmp_path: Pa
         assert result.returncode == 1, result.stderr
         reported = report["rejected_claims"][0]["reasons"]
         assert reason in reported
+
+
+def test_policy_rejects_nonpublic_https_hosts_and_ports(tmp_path: Path):
+    urls = {
+        "localhost": "https://localhost/evidence",
+        "local-domain": "https://source.local/evidence",
+        "loopback-ipv4": "https://127.0.0.1/evidence",
+        "loopback-ipv6": "https://[::1]/evidence",
+        "private-ip": "https://10.0.0.1/evidence",
+        "single-label-internal": "https://intranet/evidence",
+        "internal-suffix": "https://source.internal/evidence",
+        "nonstandard-port": "https://example.com:8443/evidence",
+    }
+    for suffix, url in urls.items():
+        claim = _claim()
+        claim["source"]["url"] = url
+        result, report = _policy(tmp_path / suffix, claim)
+        assert result.returncode == 1, result.stderr
+        assert report["rejected_claims"] == [
+            {"claim_id": "claim.public.safe", "reasons": ["private_or_restricted"]}
+        ]
+
+
+def test_policy_quarantines_malformed_claim_timestamps_without_aborting_report(tmp_path: Path):
+    cases = {
+        "source-observed-at": {"source": {**_claim()["source"], "observed_at": "not-a-timestamp"}},
+        "valid-until": {"valid_until": "2026-08-30"},
+    }
+    for suffix, update in cases.items():
+        malformed = _claim()
+        malformed["id"] = f"claim.public.malformed-{suffix}"
+        malformed.update(update)
+        valid = _claim()
+        result, report = _policy(tmp_path / suffix, malformed, valid)
+        assert result.returncode == 1, result.stderr
+        assert report["accepted_claim_ids"] == ["claim.public.safe"]
+        assert report["rejected_claims"] == [
+            {
+                "claim_id": f"claim.public.malformed-{suffix}",
+                "reasons": ["invalid_timestamp"],
+            }
+        ]
+        serialized = json.dumps(report)
+        assert "not-a-timestamp" not in serialized
+        assert "2026-08-30" not in serialized
+
+
+def test_policy_requires_forbidden_language_field_but_allows_empty_list(tmp_path: Path):
+    claims_path = tmp_path / "claims.json"
+    document = _export([_claim()])
+    document["forbidden_language"] = []
+    claims_path.write_text(json.dumps(document), encoding="utf-8")
+    allowed_report = tmp_path / "allowed-report.json"
+    allowed = _run(
+        sys.executable,
+        str(POLICY),
+        "--claims",
+        str(claims_path),
+        "--as-of",
+        "2026-08-10T00:00:00Z",
+        "--report",
+        str(allowed_report),
+    )
+    assert allowed.returncode == 0, allowed.stderr
+    assert allowed_report.is_file()
+
+    del document["forbidden_language"]
+    claims_path.write_text(json.dumps(document), encoding="utf-8")
+    omitted_report = tmp_path / "omitted-report.json"
+    result = _run(
+        sys.executable,
+        str(POLICY),
+        "--claims",
+        str(claims_path),
+        "--as-of",
+        "2026-08-10T00:00:00Z",
+        "--report",
+        str(omitted_report),
+    )
+    assert result.returncode == 2
+    assert "forbidden_language is required" in result.stderr
+    assert not omitted_report.exists()
+
+
+def test_policy_rejects_claims_report_file_aliases_without_mutating_source(tmp_path: Path):
+    for alias_kind in ("identical", "hardlink"):
+        case_dir = tmp_path / alias_kind
+        case_dir.mkdir()
+        claims_path = case_dir / "claims.json"
+        claims_path.write_text(json.dumps(_export([_claim()])), encoding="utf-8")
+        original = claims_path.read_bytes()
+        if alias_kind == "identical":
+            report_path = claims_path
+        else:
+            report_path = case_dir / "report.json"
+            report_path.hardlink_to(claims_path)
+        result = _run(
+            sys.executable,
+            str(POLICY),
+            "--claims",
+            str(claims_path),
+            "--as-of",
+            "2026-08-10T00:00:00Z",
+            "--report",
+            str(report_path),
+        )
+        assert result.returncode == 2
+        assert "must refer to distinct files" in result.stderr
+        assert claims_path.read_bytes() == original
 
 
 def test_quarantine_copies_and_removes_each_declared_public_surface(tmp_path: Path):
@@ -142,6 +271,43 @@ def test_quarantine_rejects_incomplete_manifest_before_writing(tmp_path: Path):
     assert not output.exists()
 
 
+def test_quarantine_rejects_marker_omitted_from_one_surface_manifest_entry(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    manifest = json.loads((FIXTURE / "public-surfaces.json").read_text(encoding="utf-8"))
+    manifest["surfaces"][1]["claim_ids"] = ["claim.some-other-id"]
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    report = tmp_path / "policy-report.json"
+    policy = _run(
+        sys.executable,
+        str(POLICY),
+        "--claims",
+        str(FIXTURE / "claims.json"),
+        "--as-of",
+        "2026-08-10T00:00:00Z",
+        "--report",
+        str(report),
+    )
+    assert policy.returncode == 1, policy.stderr
+    output = tmp_path / "quarantined"
+    quarantine = _run(
+        sys.executable,
+        str(QUARANTINE),
+        "--source-root",
+        str(source),
+        "--output-root",
+        str(output),
+        "--manifest",
+        str(manifest_path),
+        "--policy-report",
+        str(report),
+    )
+    assert quarantine.returncode == 2
+    assert "marker/manifest mismatch" in quarantine.stderr
+    assert not output.exists()
+
+
 def test_quarantine_validates_all_markers_before_writing(tmp_path: Path):
     source = tmp_path / "generated"
     shutil.copytree(FIXTURE / "generated", source)
@@ -179,6 +345,49 @@ def test_quarantine_rejects_source_symlink(tmp_path: Path):
     )
     assert quarantine.returncode == 2
     assert not output.exists()
+
+
+def test_quarantine_rejects_output_descendant_without_mutating_source(tmp_path: Path):
+    source = tmp_path / "generated"
+    shutil.copytree(FIXTURE / "generated", source)
+    original = {
+        path.relative_to(source): path.read_bytes()
+        for path in source.rglob("*")
+        if path.is_file()
+    }
+    report = tmp_path / "policy-report.json"
+    policy = _run(
+        sys.executable,
+        str(POLICY),
+        "--claims",
+        str(FIXTURE / "claims.json"),
+        "--as-of",
+        "2026-08-10T00:00:00Z",
+        "--report",
+        str(report),
+    )
+    assert policy.returncode == 1, policy.stderr
+    output = source / "quarantined"
+    quarantine = _run(
+        sys.executable,
+        str(QUARANTINE),
+        "--source-root",
+        str(source),
+        "--output-root",
+        str(output),
+        "--manifest",
+        str(FIXTURE / "public-surfaces.json"),
+        "--policy-report",
+        str(report),
+    )
+    assert quarantine.returncode == 2
+    assert "outside the source root" in quarantine.stderr
+    assert not output.exists()
+    assert {
+        path.relative_to(source): path.read_bytes()
+        for path in source.rglob("*")
+        if path.is_file()
+    } == original
 
 
 def test_synthetic_false_claim_drill_proves_full_surface_quarantine():
