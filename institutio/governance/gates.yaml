@@ -375,6 +375,11 @@ gates:
     scoped: false
     owner: heal
     note: "Chronic heal stalls trip; receipts carry outcomes (fixture rung)."
+  heal-retirement:
+    command: "python3 scripts/check-heal-retirement.py --quiet && bash scripts/tests/check-heal-retirement.test.sh"
+    paths: ["scripts/self-heal.py", "scripts/check-heal-retirement.py", "scripts/tests/check-heal-retirement.test.sh", "cli/tests/test_self_heal.py"]
+    owner: heal
+    note: "HEAL task retirement predicate: no active HEAL task names a closed or merged PR."
   ask-gate-test:
     command: "bash scripts/tests/ask-gate.test.sh"
     paths: ["scripts/ask-gate.py", "scripts/tests/ask-gate.test.sh"]
@@ -456,6 +461,16 @@ gates:
     paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md", "apps/danse/AGENTS.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
+  operator-gates:
+    command: "python3 scripts/check-operator-gates.py --check"
+    paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]
+    owner: docs
+    note: "Exit 0 ⟺ no surface claims an operator gate without a real human act behind it. Born 2026-08-09 from the `operator-paused` nag: GITVS-UNCAPPED-PR-DEBT-0715 carried that label from keeper commit c34b016d (a machine projection write), its own predicate already exited 0, and logs/handoff.json re-surfaced it every morning for three weeks. The audit behind it found 0 of 109 needs_human tasks were human-set, and that git cannot answer provenance here — the keeper commits under the operator's identity, so only the subject prefix discriminates. Holds: (A) `operator-paused` is not a board label — the one governed pause surface is scripts/pause.py → logs/AUTONOMY_PAUSED, which is also its only writer; (B) projection bookkeeping is not a human atom; (C) an escalation naming a session absent from .agent-runtime is a ghost; (D) every his-hand-levers.json entry needs an enum status, else 'what does he owe?' has no machine answer; (E) a present marker must be attributable. Baseline is shrink-only: institutio/governance/operator-gate-baseline.txt."
+  operator-gates-test:
+    command: "python3 scripts/tests/operator-gates.test.py"
+    paths: ["scripts/check-operator-gates.py", "scripts/tests/operator-gates.test.py"]
+    owner: docs
+    note: "Hermetic. Covers A–E, the shrink-only baseline ratchet, and the regression that an unreachable .agent-runtime store surfaces as UNEVALUATED rather than a silent pass (the first cut resolved the store against the git worktree, fail-opened, and reported 7 ghost escalations as live sessions)."
   session-phase:
     command: "python3 scripts/check-session-phase.py"
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
@@ -586,6 +601,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "PLAN-DECISIONS drift: a decision recorded only in prose binds nothing. Every numbered decision under a '## Decision' heading must name where it binds — a registry path, a predicate script, a lever id, a precedent id — or write `owed:` and declare the vacuum out loud. Founded on the measured defect (PREC-2026-07-30-plan-decisions-dont-bind): the operator restated two decisions that were already committed to main in his own words, because docs/plans/ is a Tier-2 prose surface nothing reads. Pre-existing decisions sit in a shrink-only baseline; a baselined row that becomes homed, or vanishes, is itself a red check so the baseline cannot rot into a hiding place."
+  check-lifecycle:
+    command: "python3 scripts/check-lifecycle.py --check && bash scripts/run-pytest-hermetic.sh cli/tests/test_check_lifecycle.py -q"
+    paths: ["institutio/governance/lifecycle.yaml", "institutio/github/estate.yaml", "scripts/check-lifecycle.py", "scripts/merge-drain.py", "scripts/pr-lifecycle-manifest.py", "scripts/pr-lifecycle-estate-manifest.py", "scripts/gitvs.py", "cli/tests/test_check_lifecycle.py", "his-hand-levers.json", "institutio/governance/ideal-forms.yaml", "docs/IDEAL-FORMS-LEDGER.md", "docs/github-pr-debt-ledger.json"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "PR-LIFECYCLE registry drift: the disposition vocabulary, its capabilities, cohorts, and consumer conversion debt are declared once in lifecycle.yaml. Checks exact parity with estate.yaml while the legacy ratchet remains open, holds all four hardcoded consumers to shrink-only literal baselines, forbids an armed consumer from branching on a disposition id, requires every cohort to have a default disposition or resolving human lever, and closes the self-reference to IF-PR-LIFECYCLE. Live label/color and materialization checks stay in --measure because GitHub availability is environment evidence, never a reason for an offline gate to false-green or false-red."
   check-corpora:
     command: "python3 scripts/check-corpora.py"
     paths: ["institutio/governance/corpora.yaml", "institutio/governance/corpus-root-literals-baseline.txt", "scripts/check-corpora.py", "scripts/corpus_resolve.py", "scripts/constellation-dossier.py", "organs/consulting/constellation/check.py"]

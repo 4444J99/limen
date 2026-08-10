@@ -13,6 +13,7 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -119,7 +120,7 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
 
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_HEAL_SCAN", "bad")
-    monkeypatch.setenv("LIMEN_HEAL_SCAN_MAX", "bad")
+    monkeypatch.setenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", "bad")
     monkeypatch.setenv("LIMEN_HEAL_LIMIT", "bad")
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
@@ -428,3 +429,88 @@ def test_emits_cifix_when_trunk_repair_done(tmp_path, monkeypatch):
         "must still emit PR-level CI fix when prior trunk-level HEAL is done"
     )
     assert "HEAL-mainred-organvm-exporter" in ids
+
+
+def test_retires_open_heal_tasks_for_closed_prs(tmp_path, monkeypatch):
+    """An open HEAL task whose PR is no longer open is retired to status=done."""
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    board = {
+        "version": "1.0",
+        "portal": {"name": "t"},
+        "tasks": [
+            {
+                "id": "HEAL-cifix-organvm-exporter-999",
+                "title": "fix failing CI on organvm/exporter#999",
+                "repo": "organvm/exporter",
+                "status": "open",
+                "target_agent": "any",
+                "priority": "high",
+                "labels": ["cifix", "self-heal"],
+                "urls": [],
+                "context": "stale heal task for merged PR",
+                "depends_on": [],
+                "created": "2026-07-01",
+                "dispatch_log": [],
+            }
+        ],
+    }
+    p.write_text(yaml.safe_dump(board, sort_keys=False))
+    rc = _run(m, monkeypatch, p)
+    assert rc == 0
+    doc = yaml.safe_load(p.read_text())
+    task999 = next(t for t in doc["tasks"] if t["id"] == "HEAL-cifix-organvm-exporter-999")
+    assert task999["status"] == "done", "open HEAL task for non-open PR #999 must be retired to done"
+
+
+# --- RETIREMENT SAFETY -------------------------------------------------------------------------
+# The reconcile pass retires any active HEAL task whose PR is absent from the enumeration, so a
+# truncated enumeration is a false closure proof. These assert the boundary directly; before this
+# the guard was inline in main() and only reachable by running the organ against the live fleet —
+# which is how a default cap of 500 against 818+ live open PRs kept the valve dead for a full day.
+
+
+def test_retirement_refused_when_enumeration_hits_the_cap(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    ok, why = m.retirement_authorized([], 500, 500)
+    assert ok is False and "truncated" in why
+
+
+def test_retirement_refused_for_explicit_pr_runs(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    ok, why = m.retirement_authorized([("organvm/limen", 1, "u")], 1, 1000)
+    assert ok is False and "--pr" in why
+
+
+def test_retirement_allowed_below_the_cap(tmp_path, monkeypatch):
+    """The live-fleet case the shipped default got wrong: 818 open PRs is a COMPLETE answer under a
+    1000 cap and a truncated one under 500. Same estate, opposite verdicts."""
+    m = _load(tmp_path, monkeypatch)
+    assert m.retirement_authorized([], 818, 1000) == (True, "")
+    assert m.retirement_authorized([], 818, 500)[0] is False
+
+
+def test_scan_max_default_clears_the_search_ceiling(tmp_path, monkeypatch):
+    """A default at or above the ceiling would be clamped to a value it then equals — re-arming the
+    truncation guard permanently. It must sit exactly AT the ceiling, never past it."""
+    m = _load(tmp_path, monkeypatch)
+    monkeypatch.delenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", raising=False)
+    assert m.env_int("LIMEN_HEAL_RECONCILE_SCAN_MAX", 1000) == 1000
+
+
+def test_the_cost_knob_spelling_is_not_offered(tmp_path, monkeypatch):
+    """`--scan-max` must NOT be accepted here, and that is the whole point of the rename.
+
+    Four sibling organs (merge-drain, pr-lifecycle-autotype, owner-route-drain) cap the identical
+    enumeration under that name, and for them it genuinely is only cost — none reads absence from
+    the list. Here a second consumer retires tasks that are absent, so the same number is a closure
+    proof. A reader who transfers the sibling meaning picks a small value and silently kills
+    retirement, which is exactly what shipped at 500. An alias would preserve the spelling that
+    carries the wrong model, so the failure has to be loud: argparse rejects it.
+    """
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    with pytest.raises(SystemExit) as excinfo:
+        _run(m, monkeypatch, p, "--dry-run", "--scan-max", "500")
+    assert excinfo.value.code == 2  # argparse "unrecognized arguments", not a silent default

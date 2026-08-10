@@ -259,3 +259,37 @@ def test_stale_verdict_threshold_env_override(monkeypatch):
     content = ["studium/gita.md"]
     assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(6)) == "STALE-BASE"
     assert m.stale_base_verdict("organvm/exporter", content, "main", "h", _gh_behind(4)) is None
+
+
+def _limit_of(argv):
+    return argv[argv.index("--limit") + 1]
+
+
+def test_enumerate_clamps_request_to_search_ceiling(capsys):
+    """A --limit above GitHub's 1000-result search ceiling comes back EMPTY rather than erroring,
+    which every caller reads as 'the estate has no open PRs'. Clamp instead, and say so."""
+    m = _load()
+    seen = []
+
+    def capture(argv):
+        seen.append(argv)
+        return _R(json.dumps(_PRS))
+
+    got = m.enumerate_open_prs(["organvm"], capture, max_total=1500)
+    assert _limit_of(seen[0]) == str(m.SEARCH_RESULT_CEILING)
+    assert len(got) == 3  # still returns the rows, rather than the silent []
+    assert "clamped to 1000" in capsys.readouterr().err
+
+
+def test_enumerate_leaves_requests_at_or_below_the_ceiling_alone(capsys):
+    m = _load()
+    seen = []
+
+    def capture(argv):
+        seen.append(argv)
+        return _R("[]")
+
+    m.enumerate_open_prs(["organvm"], capture, max_total=1000)
+    m.enumerate_open_prs(["organvm"], capture, max_total=500)
+    assert [_limit_of(a) for a in seen] == ["1000", "500"]
+    assert capsys.readouterr().err == ""  # no warning when nothing was clamped
