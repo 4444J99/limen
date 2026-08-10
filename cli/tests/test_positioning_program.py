@@ -596,7 +596,7 @@ def test_terminal_omega_leaf_phase_and_root_can_remain_open_for_readiness(monkey
     remote["PSP-ROOT"]["state"] = "open"
     remote["PSP-P14"]["state"] = "open"
     remote["PSP-P14-W09"]["state"] = "open"
-    monkeypatch.setattr(MODULE, "remote_parity", lambda _graph, _mapping: {"ok": True})
+    monkeypatch.setattr(MODULE, "remote_parity", lambda _graph, _mapping, **_kwargs: {"ok": True})
     monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
     monkeypatch.setattr(
         MODULE,
@@ -841,6 +841,88 @@ def test_mapped_issue_recovers_after_label_or_marker_drift(monkeypatch) -> None:
     recovered = MODULE.recover_mapped_issues(graph, mapping, remote)
 
     assert recovered[missing_id] == recovered_row
+
+
+def test_marker_discovery_ignores_program_label_and_exposes_duplicates_and_orphans(monkeypatch) -> None:
+    graph, _mapping = graph_and_map()
+    duplicate_id = "PSP-P00-W01"
+    orphan_id = "PSP-P00-W99"
+    rows = [
+        {"number": 9001, "body": MODULE.marker(duplicate_id), "labels": []},
+        {"number": 9002, "body": MODULE.marker(duplicate_id), "labels": [{"name": "unrelated"}]},
+    ]
+    calls = []
+
+    def fake_pages(repository, endpoint):
+        calls.append((repository, endpoint))
+        return rows
+
+    monkeypatch.setattr(MODULE, "_pages", fake_pages)
+
+    with pytest.raises(MODULE.ProgramError, match="duplicate program issue markers"):
+        MODULE.fetch_program_issues(graph)
+
+    rows[:] = [{"number": 9003, "body": MODULE.marker(orphan_id), "labels": []}]
+    discovered = MODULE.fetch_program_issues(graph)
+
+    assert discovered[orphan_id]["number"] == 9003
+    assert calls == [
+        ("organvm/limen", "issues?state=all&sort=created&direction=asc"),
+        ("organvm/limen", "issues?state=all&sort=created&direction=asc"),
+    ]
+
+
+def test_omega_reuses_one_exact_remote_snapshot(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        object_id: {"state": "closed", "body": MODULE.marker(object_id), "labels": []}
+        for object_id in graph["ordered_ids"]
+    }
+    fetches = []
+    observations = []
+
+    def fetch_once(_graph):
+        fetches.append(remote)
+        return remote
+
+    def parity(_graph, _mapping, *, remote=None):
+        observations.append(remote)
+        return {"ok": True}
+
+    def phase_binding(_phase_id, _graph, _mapping, snapshot):
+        observations.append(snapshot)
+        return {
+            "child_receipt_digest": "a" * 64,
+            "remote_state_digest": "b" * 64,
+            "parity_digest": "c" * 64,
+        }
+
+    def closure(_graph, _mapping, snapshot, **_kwargs):
+        observations.append(snapshot)
+        return {}
+
+    def phase_receipt(_phase_id, _graph, _mapping, **kwargs):
+        observations.append(kwargs["remote"])
+        return ({"status": "pass"}, "https://example.test/phase")
+
+    monkeypatch.setattr(MODULE, "fetch_program_issues", fetch_once)
+    monkeypatch.setattr(MODULE, "recover_mapped_issues", lambda _graph, _mapping, snapshot: snapshot)
+    monkeypatch.setattr(MODULE, "remote_parity", parity)
+    monkeypatch.setattr(
+        MODULE,
+        "_remote_state_digest",
+        lambda _graph, _mapping, snapshot, _excluded: observations.append(snapshot) or "d" * 64,
+    )
+    monkeypatch.setattr(MODULE, "_phase_binding_values", phase_binding)
+    monkeypatch.setattr(MODULE, "closure_integrity", closure)
+    monkeypatch.setattr(MODULE, "fetch_phase_receipt", phase_receipt)
+
+    result = MODULE.omega(graph, mapping, require_two_pass=False)
+
+    assert result["status"] == "pass"
+    assert fetches == [remote]
+    assert observations
+    assert all(snapshot is remote for snapshot in observations)
 
 
 def test_remote_parity_includes_milestone_assignment(monkeypatch) -> None:
