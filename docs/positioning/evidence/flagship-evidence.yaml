@@ -1,0 +1,117 @@
+schema_version: limen.positioning_flagship_evidence.v1
+work_ids: [PSP-P02-W04, PSP-P02-W05]
+generated_at: "2026-08-10T18:02:00Z"
+verdict: preflight_complete_dependency_blocked
+
+dependency_gate:
+  w03_issue: https://github.com/organvm/limen/issues/2175
+  w03_state: open
+  w04_issue: https://github.com/organvm/limen/issues/2176
+  w04_state: open
+  w05_issue: https://github.com/organvm/limen/issues/2177
+  w05_state: open
+  formal_completion_blocker: >-
+    W04 requires a closed, receipt-verified W03; W05 requires a closed, receipt-verified W04.
+    This preflight creates no completion receipt and does not change issue state.
+
+privacy:
+  public_packets_only: true
+  private_repository_names_in_artifact: 0
+  private_evidence_required_for_selected_claims: false
+  encrypted_addendum:
+    status: not_created
+    reason: >-
+      No selected claim requires private evidence. If later diligence needs it, use the existing
+      sanctioned custody interface; do not add private names, paths, hashes, or invented contents here.
+
+withheld_claim_classes:
+  - usage, install, customer, and adoption counts
+  - revenue, payment, and commercial outcomes
+  - percentile, ranking, and throughput-superiority claims
+  - private implementation, source-custody, or repository claims
+
+packets:
+  - id: limen
+    path: docs/positioning/evidence/limen.md
+    public_repository: organvm/limen
+    status: verified_public_snapshot
+    authorship: Architected and directed through a governed multi-agent system; machine assistance is disclosed, not concealed.
+    limitations:
+      - The public dashboard is an operational snapshot, not customer-adoption evidence.
+      - Counts may change after the observation timestamp and must be refreshed before reuse.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm/limen/actions/runs/31404705695
+        api_url: https://api.github.com/repos/organvm/limen/actions/runs/31404705695
+        observed_head: d169c7d8ad9fc8f75d7e9200658758b2715eae97
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://limen-dashboard.pages.dev/public-status.json
+        expected_http_status: 200
+    metrics:
+      - id: public_tasks_total
+        public_safe_claim: "The public dashboard reported 3,111 total tasks on 2026-08-10."
+        status: verified
+        source_url: https://limen-dashboard.pages.dev/public-status.json
+        observation_path: summary.total
+        observed_value: 3111
+        comparison: exact
+      - id: public_tasks_completed
+        public_safe_claim: "The public dashboard reported 1,357 completed tasks on 2026-08-10."
+        status: verified
+        source_url: https://limen-dashboard.pages.dev/public-status.json
+        observation_path: summary.completed
+        observed_value: 1357
+        comparison: exact
+
+  - id: public_records
+    path: docs/positioning/evidence/public-records.md
+    public_repository: organvm-iii-ergon/public-record-data-scrapper
+    status: verified_public_snapshot
+    authorship: Public implementation and deployment are the evidence boundary; no private sources are needed for this packet.
+    limitations:
+      - Four implemented collectors do not establish fifty-state deployment or adoption.
+      - The landing page is an implementation anchor, not a claim about data completeness or commercial use.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        api_url: https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        observed_head: 139fa7b40d875ecfe3a8c693dedfab46671739fd
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://organvm-iii-ergon.github.io/public-record-data-scrapper/
+        expected_http_status: 200
+    metrics:
+      - id: implemented_collectors
+        public_safe_claim: "Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture."
+        status: repository_asserted_with_public_anchor
+        source_url: https://github.com/organvm-iii-ergon/public-record-data-scrapper
+        observed_value: 4
+        comparison: exact
+        corroborating_terms: [CA, TX, FL, NY]
+
+  - id: ai_chat_exporter
+    path: docs/positioning/evidence/ai-chat-exporter.md
+    public_repository: organvm-iii-ergon/a-i-chat--exporter
+    status: verified_public_snapshot
+    authorship: The public packet confines the claim to inspectable client-side behavior and avoids any user-volume inference.
+    limitations:
+      - Five formats do not prove daily use, installations, revenue, or user retention.
+      - The packet makes no claim about the commercial availability or uptake of optional workflows.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        api_url: https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        observed_head: e3a0b8d9a47183163cd92d18f479fc580eaf314d
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
+        expected_http_status: 200
+    metrics:
+      - id: export_formats
+        public_safe_claim: "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text."
+        status: verified
+        source_url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
+        observed_value: 5
+        comparison: exact
+        corroborating_terms: [Markdown, HTML, JSON, PNG, text]
