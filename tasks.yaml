@@ -170083,3 +170083,39 @@ tasks:
     conduct_lease_id: 'lease-841-49332d35ed721ce5'
     conduct_generation: 841
   updated: '2026-08-10T00:56:03.950Z'
+- id: 'GH-organvm-hospes-17'
+  title: '[P0-4] Pilot Packet Export: hospes export-pilot-packet <id> → guest-facing HTML/PDF'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:0'
+  - 'priority:P0'
+  - 'area:demo'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/17'
+  context: 'GitHub issue organvm/hospes#17. ## Phase 0: Demo Polish — Before Ari Arrives ### Problem No way to show Ari a beautiful guest-facing packet. The `out/` artifacts are raw markdown. ### Solution Add `hospes export-pilot-packet <pilot-id> --format html|pdf` that renders a beautiful guest packet. ### Acceptance Criteria - [ ] `hospes export-pilot-packet pilot-a --format html` → `out/pilot-a-guest-packet.html` - [ ] Packet includes:'
+  predicate: 'test "$(gh issue view 17 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/17'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#17'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:09.570Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-703fc1b640795b0eb57449dfd1e3bb4a:842:compatibility'
+    conduct_run_id: 'run-703fc1b640795b0eb57449dfd1e3bb4a'
+    conduct_lease_id: 'lease-842-703fc1b640795b0e'
+    conduct_generation: 842
+  updated: '2026-08-10T00:56:09.570Z'
