@@ -20,8 +20,8 @@ compression_level: medium
 - Branch: `codex/psp-p02-w04-w05-public-evidence-preflight`
 - Stacked base: `codex/psp-p02-w03-flagship-proof-preflight`
 - Initial W04/W05 implementation commit: `23400cee7ffbf95e66f3837f0ef3f02f47bd17fb`
-- Current W03 parent head: `528c94d31a426f3a9cac29a72cd38bc942d45171`
-- Exact verified implementation head: `47a43e7e8065a2cba3a1319855fa257280c9b160`
+- Current W03 parent head: `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2`
+- Hardened implementation checkpoint: `488e55b9c25c8208cdf2e08ab1e6dced8524e3be`
 - Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this
   remains a reversible preflight, not a claimed formal completion.
 
@@ -30,7 +30,7 @@ compression_level: medium
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
-| Exact remote branch checkpoint | `47a43e7e8065a2cba3a1319855fa257280c9b160` before this relay refresh; fetch PR #2310 before resuming |
+| Exact remote branch checkpoint | `488e55b9c25c8208cdf2e08ab1e6dced8524e3be` before this relay refresh; fetch PR #2310 before resuming |
 | Private repository names in public artifacts | 0 |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
@@ -38,9 +38,9 @@ compression_level: medium
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
 | W03 / W04 / W05 issue state at preflight | open / open / open |
 | Task-specific predicates | `python3 scripts/flagship-evidence.py --verify-live --json` passed; formal `--verify-work` commands intentionally not run |
-| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 9 tests, including repository substitution, duplicate-source, path-traversal, and nonnumeric-metric failures |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 11 tests, including repository substitution, duplicate-source, path-traversal, nonnumeric-metric, credentialed/local-network source, and unselected-host failures |
 | Parent privacy guard | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w03-flagship-proof-preflight` passed over the full W04/W05 diff: 314 repositories, 235 public, 79 private, with no private repository token added |
-| Scoped verification | `scripts/verify-scoped.sh` passed all 22 implicated cheap-wave gates on exact head `47a43e7e8065a2cba3a1319855fa257280c9b160` |
+| Scoped verification | `scripts/verify-scoped.sh` passed all 23 implicated cheap-wave gates on the composed hardened tree before this relay refresh |
 | External effects | branch/PR staging only; no merge, publication, issue-state, or account change |
 
 ## Completed work
@@ -57,6 +57,8 @@ compression_level: medium
   retained earlier counts as superseded history, and withheld stale composite status counts.
 - Bound every packet repository to the exact W03-selected public repository, required one public
   workflow plus one public endpoint, and rejected traversal, non-HTTPS, or nonnumeric evidence rows.
+- Restricted live fetches and every redirect hop to the selected public hosts, rejected embedded
+  credentials and nonstandard ports, and bounded all response bodies before parsing.
 
 ## Decisions and rationale
 

@@ -17,10 +17,10 @@ compression_level: medium
 - W07 issue: #2179 — formal dependency: #2178 (W06).
 - Branch: `codex/psp-p02-w06-w07-preflight`.
 - Draft pull request: https://github.com/organvm/limen/pull/2311, stacked on PR #2310.
-- Current W04/W05 parent head: `3a752d530633c8a2ec4b7942e325b4838e56c233`.
+- Current W04/W05 parent head: `f5684212ba3c3dae3ac1b0c90212ea820cac28c9`.
 - Initial W06/W07 implementation: `2a0550862091a976b756034d4ddfa3965fd206ec`.
-- Exact verified implementation head: `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`.
-- Published remote checkpoint: `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`
+- Hardened composed checkpoint: `c8f5e26876cbd840202730f728f08c41d818fd32`.
+- Published remote checkpoint: `c8f5e26876cbd840202730f728f08c41d818fd32`
   before this relay refresh; fetch PR #2311 before resuming.
 - Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction.
 - This is preflight-only implementation. It carries no W06/W07 completion receipt,
@@ -56,8 +56,8 @@ compression_level: medium
 - `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w04-w05-public-evidence-preflight`
   — passed over the full W06/W07 diff: 314 repositories, 235 public, 79 private,
   with no private repository token added.
-- `scripts/verify-scoped.sh` — all 23 implicated cheap-wave gates passed on exact
-  implementation head `ef4ae2ed12af5b5a27a5d26beeb33ee502188b28`.
+- `scripts/verify-scoped.sh` — all 24 implicated cheap-wave gates passed on the composed
+  W01-W07 tree, including the refreshed W03/W04 live-probe hardening, before this relay refresh.
 
 ## Dependency boundary and formal sequence
 
