@@ -289,6 +289,38 @@ def test_releases_queue_lock_after_live_pass(tmp_path, monkeypatch):
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "live pass must release the lock"
 
 
+# ── KEEPER QUOTA WALL (the L-CLOUDFLARE-DO-QUOTA gate) ───────────────────────────────────────────
+# A spent keeper storage plan is an owner decision, not a heal failure. The rung must report it as
+# one legible BLOCKED line naming the registry owner and exit EX_TEMPFAIL (75) — a tidy exit 0 would
+# restore exactly the "everything looks healthy" blindness that let the quota sit invisible.
+# Mirrors scripts/heal-board.py's handler for the identical condition.
+
+
+def test_broker_quota_wall_exits_tempfail_and_names_lever(tmp_path, monkeypatch, capsys):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+
+    from limen.conduct.client import BrokerQuotaExhausted
+
+    def boom(tasks_path, lf, *, agent, session_id):
+        raise BrokerQuotaExhausted(
+            'conduct broker rejected request (500): {"detail": "Exceeded allowed rows written '
+            'in Durable Objects free tier." }',
+            status=500,
+        )
+
+    monkeypatch.setattr(m, "apply_limen_file_sync", boom)
+    rc = _run(m, monkeypatch, p)
+    out = capsys.readouterr().out
+    assert rc == 75, "quota wall must exit EX_TEMPFAIL, not 0 — silence would hide the spent plan"
+    assert "BLOCKED" in out and "L-CLOUDFLARE-DO-QUOTA" in out, (
+        "the rung must name its durable lever owner in the beat log"
+    )
+    assert "keeper said:" in out
+    assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "quota exit must still release the lock"
+
+
 # ── STALE-BASE GATE (the #111 guard) ────────────────────────────────────────────────────────────
 # A mergeable+green PR that touches the daemon body from a STALE base must NOT be treated as READY —
 # it would silently revert work (#111). self-heal reroutes it to a rebase-onto-current task.
