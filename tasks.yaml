@@ -169471,3 +169471,39 @@ tasks:
     conduct_lease_id: 'lease-824-607deb1e54d9433a'
     conduct_generation: 824
   updated: '2026-08-10T00:54:31.802Z'
+- id: 'GH-organvm-hospes-34'
+  title: '[P4-3] AI Research Assistant (Bounded): click ''Research'' → verified claims, counterarguments, receipts'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:4'
+  - 'priority:P2'
+  - 'area:network'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/34'
+  context: 'GitHub issue organvm/hospes#34. ## Phase 4: Enterprise / Network Features (Week 6+) ### Problem Research is manual. Producers spend hours Googling guests. ### Solution Bounded research agent — operator clicks "Research" → background job → brief with citations. ### Acceptance Criteria - [ ] New `hospes/research_agent.py` — uses adapter for web search (Brave/SerpAPI) - [ ] Dashboard approval card: "Research" button (producer/edito'
+  predicate: 'test "$(gh issue view 34 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/34'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#34'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:54:38.666Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-655cc97727fc3daaeef847f866ab81c5:825:compatibility'
+    conduct_run_id: 'run-655cc97727fc3daaeef847f866ab81c5'
+    conduct_lease_id: 'lease-825-655cc97727fc3daa'
+    conduct_generation: 825
+  updated: '2026-08-10T00:54:38.666Z'
