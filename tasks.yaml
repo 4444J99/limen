@@ -170191,3 +170191,39 @@ tasks:
     conduct_lease_id: 'lease-844-06e523fa58ca7ce6'
     conduct_generation: 844
   updated: '2026-08-10T00:56:20.536Z'
+- id: 'GH-organvm-hospes-14'
+  title: '[P0-1] Instant Demo Script: hospes demo --open → populated dashboard + QR code'
+  repo: 'organvm/hospes'
+  type: 'code'
+  target_agent: 'any'
+  priority: 'medium'
+  budget_cost: 1
+  status: 'open'
+  labels:
+  - 'phase:0'
+  - 'priority:P0'
+  - 'area:demo'
+  urls:
+  - 'https://github.com/organvm/hospes/issues/14'
+  context: 'GitHub issue organvm/hospes#14. ## Phase 0: Demo Polish — Before Ari Arrives ### Problem Current demo requires multiple manual steps: run `hospes demo`, manually start operator server, import partnership template, open browser. Ari will see empty dashboard. ### Solution Add `--open` flag to `hospes demo` that: 1. Runs the demo pipeline (3 pilots → LA/NYC/Austin) 2. Auto-imports partnership template to SQLite DB 3. Starts operato'
+  predicate: 'test "$(gh issue view 14 --repo organvm/hospes --json state --jq .state)" = CLOSED'
+  receipt_target: 'https://github.com/organvm/hospes/issues/14'
+  origin: 'obligation'
+  horizon: 'present'
+  value_case: 'Close the source-owned GitHub obligation organvm/hospes#14'
+  external_deadline: false
+  depends_on: []
+  created: '2026-08-09'
+  dispatch_log:
+  - timestamp: '2026-08-10T00:56:26.277Z'
+    agent: 'codex'
+    session_id: 'mine-backlog-mine-backlog'
+    logical_agent: 'mine-backlog'
+    logical_session_id: 'mine-backlog'
+    status: 'open'
+    output: 'Created by codex through the conduct keeper'
+    conduct_event_id: 'conduct:run-1bc871b3c353f8dcf25ad6b8f60d10e6:845:compatibility'
+    conduct_run_id: 'run-1bc871b3c353f8dcf25ad6b8f60d10e6'
+    conduct_lease_id: 'lease-845-1bc871b3c353f8dc'
+    conduct_generation: 845
+  updated: '2026-08-10T00:56:26.277Z'
