@@ -6,7 +6,9 @@ import sys
 from pathlib import Path
 
 import click
+import yaml
 
+from limen.conduct.client import client_from_env
 from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
@@ -20,6 +22,7 @@ from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
+from limen.private_board import private_board_path
 from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
@@ -42,6 +45,12 @@ def resolve_root() -> Path:
     if tasks_env:
         # Same derivation _root_for_dispatch() applies: a projection names its own root.
         candidates.append(Path(tasks_env).expanduser().parent)
+    private_env = os.environ.get("LIMEN_PRIVATE_TASKS")
+    if private_env:
+        private_path = Path(private_env).expanduser()
+        if private_path.is_file():
+            return private_path.parent.resolve()
+        candidates.append(private_path.parent)
     candidates.append(Path(__file__).resolve().parents[3])
     candidates.append(Path.home() / "Workspace" / "limen")
     for candidate in candidates:
@@ -55,6 +64,9 @@ def resolve_root() -> Path:
 
 
 def resolve_tasks_path(root: Path) -> Path:
+    private_env = os.environ.get("LIMEN_PRIVATE_TASKS")
+    if private_env:
+        return private_board_path(root / "tasks.yaml") or (root / "tasks.yaml")
     env_path = os.environ.get("LIMEN_TASKS")
     if env_path:
         return Path(env_path).expanduser().resolve()
@@ -180,6 +192,41 @@ def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> No
 
 
 main.add_command(host_admission_group)
+
+
+@click.group("board")
+def board_group():
+    """Hydrate or bootstrap the authenticated private board custody."""
+
+
+@board_group.command("hydrate")
+@click.option("--output", required=True, type=click.Path(path_type=Path), help="Private off-disk YAML custody path")
+def board_hydrate(output: Path) -> None:
+    """Fetch the full board from the keeper without touching public tasks.yaml."""
+    target = output.expanduser().resolve()
+    if target.name == "tasks.yaml":
+        raise click.ClickException("private hydration must use a distinct custody filename, not public tasks.yaml")
+    board = client_from_env().private_board()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    from limen.io import atomic_write_text
+
+    atomic_write_text(target, yaml.safe_dump(board, sort_keys=False))
+    click.echo(f"hydrated private board custody: {target}")
+
+
+@board_group.command("initialize")
+@click.argument("source", type=click.Path(exists=True, dir_okay=False, path_type=Path))
+def board_initialize(source: Path) -> None:
+    """Seed the keeper once from an existing private board source."""
+    source_path = source.expanduser().resolve()
+    board = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    if not isinstance(board, dict) or not isinstance(board.get("tasks"), list):
+        raise click.ClickException("source must be a YAML board object with a tasks list")
+    result = client_from_env().initialize_private_board(board)
+    click.echo(json.dumps({key: value for key, value in result.items() if key != "board"}, indent=2, sort_keys=True))
+
+
+main.add_command(board_group)
 
 
 @main.command("opencode-smoke")

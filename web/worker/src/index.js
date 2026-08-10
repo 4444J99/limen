@@ -3,6 +3,7 @@ import {
   ConductKeeperDurableObject,
   forwardCompatibilityPacket,
   forwardConductRequest,
+  forwardPrivateBoardRequest,
 } from "./conduct/durable-object.js";
 import { internalConductPrincipal } from "./conduct/auth.js";
 import { readInlineProjection } from "./conduct/projection.js";
@@ -353,6 +354,22 @@ function summary(data) {
 }
 
 function publicSummary(data) {
+  const projection = data.portal?.public_projection;
+  if (projection && typeof projection === "object") {
+    return {
+      portal: {
+        name: "Universal Task Intake",
+        description: "Aggregate operational health; authenticated board details are private.",
+      },
+      total: Number(projection.total || 0),
+      completed: Number(projection.completed || 0),
+      completion_rate: Number(projection.completion_rate || 0),
+      active: Number(projection.active || 0),
+      by_status: projection.by_status || {},
+      generated_at: projection.generated_at || null,
+      throughput: null,
+    };
+  }
   const raw = summary(data);
   const done = (raw.by_status.done || 0) + (raw.by_status.archived || 0);
   return {
@@ -500,6 +517,8 @@ function qaStatus(data, agent = "jules") {
 
 function surfaceManifest(data, env, persona = "owner") {
   const raw = summary(data);
+  const publicRaw = publicSummary(data);
+  const visibleTotal = persona === "public" ? publicRaw.total : raw.total;
   const staleCount = releaseStaleCandidates(data, 24).length;
   const manifest = {
     status: "ok",
@@ -522,7 +541,7 @@ function surfaceManifest(data, env, persona = "owner") {
     contracts: {
       internal: { path: "/api/status", total: raw.total, stale_count: staleCount },
       client: { path: "/api/client-status", total: raw.total, stale_count: staleCount, max_active_tasks: 25, includes_dispatch_logs: false },
-      public: { path: "/api/public-status", total: raw.total, includes_tasks: false, includes_dispatch_logs: false },
+      public: { path: "/api/public-status", total: visibleTotal, includes_tasks: false, includes_dispatch_logs: false },
       qa: { path: "/api/qa-status", total: raw.total, stale_count: staleCount, verify_endpoint: "/api/tasks/{task_id}/verify", assignment_endpoint: "/api/tasks/{task_id}/assign", archive_endpoint: "/api/tasks/{task_id}/archive", includes_dispatch_logs: false, includes_task_context: false, includes_task_urls: false },
       readiness: { path: "/api/readiness", includes_dispatch_logs: false },
     },
@@ -590,6 +609,19 @@ function storageStatus(env) {
       mutation_owner: "worker_inline",
     };
   }
+  if (env.CONDUCT_KEEPER) {
+    return {
+      mode: "private-durable-object",
+      access: "private_read_write_public_aggregate",
+      configured: true,
+      writable: true,
+      mutation_owner: "conduct_keeper",
+      public_projection: "github-aggregate-only",
+      repo: env.LIMEN_GITHUB_REPO,
+      branch: env.LIMEN_GITHUB_BRANCH || "main",
+      path: env.LIMEN_GITHUB_PATH || "tasks.yaml",
+    };
+  }
   return {
     mode: "github",
     access: "read_only",
@@ -637,11 +669,38 @@ function decodeBase64(value) {
   return new TextDecoder().decode(bytes);
 }
 
-async function loadBoard(env) {
+async function loadPrivateBoardFromKeeper(env) {
+  if (!env.CONDUCT_KEEPER) throw new Error("private canonical board keeper is not configured");
+  let compatibilityBearer;
+  try {
+    compatibilityBearer = internalConductPrincipal(env).bearer;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : "conduct compatibility principal is not configured");
+  }
+  const id = env.CONDUCT_KEEPER.idFromName(
+    String(env.LIMEN_CONDUCT_KEEPER_NAME || "tabularius-conduct-v1"),
+  );
+  const response = await env.CONDUCT_KEEPER.get(id).fetch(new Request(
+    "https://limen.internal/api/board/private",
+    { headers: { authorization: `Bearer ${compatibilityBearer}` } },
+  ));
+  const body = await response.json();
+  if (!response.ok) {
+    const error = new Error(typeof body?.detail === "string" ? body.detail : "private board read failed");
+    error.status = response.status;
+    throw error;
+  }
+  return { data: body, sha: null, mode: "private-canonical" };
+}
+
+async function loadBoard(env, { privateCanonical = false } = {}) {
   const inline = inlineBoardSource(env);
   if (inline) {
     return { data: readInlineProjection(env), sha: null };
   }
+  // Compatibility/read-only fallback: once the aggregate projection is live,
+  // this contains no task material. Mutations still fail closed at the keeper.
+  if (privateCanonical && env.CONDUCT_KEEPER) return loadPrivateBoardFromKeeper(env);
   const branch = env.LIMEN_GITHUB_BRANCH || "main";
   const baseUrl = `${githubUrl(env)}?ref=${encodeURIComponent(branch)}`;
 
@@ -676,7 +735,7 @@ function inlineBoardSource(env) {
 }
 
 function requireMutableBoard(env) {
-  if (!inlineBoardSource(env)) throw new BoardMutationDeferred(storageStatus(env));
+  if (!inlineBoardSource(env) && !env.CONDUCT_KEEPER) throw new BoardMutationDeferred(storageStatus(env));
 }
 
 function findTask(data, taskId) {
@@ -823,8 +882,8 @@ async function submitTaskMutation(env, intent, task = null) {
   };
 }
 
-async function withBoard(env, fn) {
-  const doc = await loadBoard(env);
+async function withBoard(env, fn, { privateCanonical = false } = {}) {
+  const doc = await loadBoard(env, { privateCanonical });
   return fn(doc.data, doc.sha);
 }
 
@@ -834,18 +893,21 @@ async function route(request, env) {
   const path = url.pathname;
 
   if (path.startsWith("/api/conduct/")) return forwardConductRequest(request, env);
+  if (path === "/api/board/private" || path === "/api/board/initialize") {
+    return forwardPrivateBoardRequest(request, env);
+  }
   if (path === "/health") return json({ status: "ok", time: nowIso(), storage: storageStatus(env) }, 200, env);
   if (path === "/api/public-status" && request.method === "GET") return withBoard(env, (data) => json({ status: "ok", surface: "public", summary: publicSummary(data) }, 200, env));
   if (path === "/api/surface-manifest" && request.method === "GET") {
     const persona = resolvePersona(request, env, true);
     if (!persona) return error("missing or invalid Authorization header", 401, env);
-    return withBoard(env, (data) => json(surfaceManifest(data, env, persona), 200, env));
+    return withBoard(env, (data) => json(surfaceManifest(data, env, persona), 200, env), { privateCanonical: persona !== "public" });
   }
 
   if (path === "/api/client-status" && request.method === "GET") {
     const auth = requirePersona(request, env, ["owner", "client"]);
     if (auth.response) return auth.response;
-    return withBoard(env, (data) => json({ status: "ok", surface: "client", summary: clientSummary(data), storage: storageStatus(env) }, 200, env));
+    return withBoard(env, (data) => json({ status: "ok", surface: "client", summary: clientSummary(data), storage: storageStatus(env) }, 200, env), { privateCanonical: true });
   }
 
   for (const ownerPath of ["/api/status", "/api/qa-status", "/api/readiness", "/api/tasks"]) {
@@ -856,18 +918,18 @@ async function route(request, env) {
     }
   }
 
-  if (path === "/api/status" && request.method === "GET") return withBoard(env, (data) => json({ status: "ok", surface: "internal", portal: data.portal || {}, summary: summary(data), storage: storageStatus(env) }, 200, env));
+  if (path === "/api/status" && request.method === "GET") return withBoard(env, (data) => json({ status: "ok", surface: "internal", portal: data.portal || {}, summary: summary(data), storage: storageStatus(env) }, 200, env), { privateCanonical: true });
   if (path === "/api/qa-status" && request.method === "GET") {
     const agent = validateEnum(url.searchParams.get("agent") || "jules", VALID_AGENTS, "agent", env);
     if (agent.response) return agent.response;
-    return withBoard(env, (data) => json(qaStatus(data, agent.value), 200, env));
+    return withBoard(env, (data) => json(qaStatus(data, agent.value), 200, env), { privateCanonical: true });
   }
   if (path === "/api/readiness" && request.method === "GET") {
     const agent = validateEnum(url.searchParams.get("agent") || "jules", VALID_AGENTS, "agent", env);
     if (agent.response) return agent.response;
-    return withBoard(env, (data) => json(readiness(data, env, agent.value), 200, env));
+    return withBoard(env, (data) => json(readiness(data, env, agent.value), 200, env), { privateCanonical: true });
   }
-  if (path === "/api/tasks" && request.method === "GET") return withBoard(env, (data) => json({ tasks: data.tasks || [], count: (data.tasks || []).length }, 200, env));
+  if (path === "/api/tasks" && request.method === "GET") return withBoard(env, (data) => json({ tasks: data.tasks || [], count: (data.tasks || []).length }, 200, env), { privateCanonical: true });
 
   if (path === "/api/release-stale" && request.method === "POST") {
     const auth = requirePersona(request, env, ["owner"]);
@@ -876,7 +938,7 @@ async function route(request, env) {
     if (!Number.isFinite(hoursRaw) || hoursRaw < 0 || hoursRaw > 8760) return error("hours must be a number between 0 and 8760", 422, env);
     const hours = hoursRaw;
     const dryRun = (url.searchParams.get("dry_run") || "true") !== "false";
-    const doc = await loadBoard(env);
+    const doc = await loadBoard(env, { privateCanonical: true });
     const candidates = releaseStaleCandidates(doc.data, hours);
     const brokerReceipts = [];
     const released = [];
@@ -922,7 +984,7 @@ async function route(request, env) {
     if (limit.response) return limit.response;
     if (body.live !== undefined && typeof body.live !== "boolean") return error("live must be a boolean", 422, env);
     if (body.live === true) requireMutableBoard(env);
-    const doc = await loadBoard(env);
+    const doc = await loadBoard(env, { privateCanonical: true });
     const candidates = [];
     const intakeBlocked = [];
     for (const task of dispatchCandidates(doc.data, agent.value, taskId.value)) {
@@ -950,7 +1012,7 @@ async function route(request, env) {
     const taskId = validateTaskId(decodeURIComponent(taskMatch[1]), env);
     if (taskId.response) return taskId.response;
     const action = taskMatch[2];
-    if (!action && request.method === "GET") return withBoard(env, (data) => json(findTask(data, taskId.value), 200, env));
+    if (!action && request.method === "GET") return withBoard(env, (data) => json(findTask(data, taskId.value), 200, env), { privateCanonical: true });
     if (request.method !== "POST") return error("method not allowed", 405, env);
     let rawBody;
     try { rawBody = await request.json(); } catch { return error("invalid JSON body", 422, env); }
@@ -958,7 +1020,7 @@ async function route(request, env) {
       "status", "note", "session_id", "target_agent", "priority", "budget_cost", "predicate", "receipt_target",
       "predicate_exit_code", "receipt_verified", "verification_context_digest",
     ]);
-    const doc = await loadBoard(env);
+    const doc = await loadBoard(env, { privateCanonical: true });
     const task = findTask(doc.data, taskId.value);
     if (action === "verify") {
       const status = validateEnum(body.status || "done", VERIFY_STATUSES, "status", env);

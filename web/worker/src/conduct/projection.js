@@ -1,4 +1,10 @@
 import YAML from "yaml";
+import {
+  loadPrivateBoard,
+  publicBoardProjection,
+  savePrivateBoard,
+  validatePrivateBoard,
+} from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
 
 const GITHUB_API = "https://api.github.com";
@@ -1010,7 +1016,70 @@ async function githubPut(env, fetchImpl, yamlText, document, event) {
   };
 }
 
-export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fetch, maxAttempts = 4 } = {}) {
+function privateBoardEvent() {
+  return {
+    kind: "board.public_projection",
+    task_id: "aggregate",
+  };
+}
+
+/** Publish only the aggregate projection; the input board never enters the GitHub payload. */
+export async function publishPublicBoard(env, board, { fetchImpl = fetch, maxAttempts = 4 } = {}) {
+  if (!env.LIMEN_GITHUB_REPO || !env.LIMEN_GITHUB_TOKEN) {
+    throw new ConductProjectionError(
+      "private board publication requires LIMEN_GITHUB_REPO and LIMEN_GITHUB_TOKEN",
+      503,
+    );
+  }
+  const yamlText = YAML.stringify(publicBoardProjection(board), PROJECTION_YAML_OPTIONS);
+  let lastConflict = "";
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    await reconcileProjectionBranch(env, fetchImpl);
+    const document = await githubGet(env, fetchImpl, "aggregate");
+    const written = await githubPut(env, fetchImpl, yamlText, document, privateBoardEvent());
+    if (written.ok) return { status: "committed", mode: "public-aggregate", sha: written.sha };
+    if (written.status === 409
+        || (written.status === 422
+          && /fast[- ]forward|sha|does not match|conflict|reference update failed/i.test(written.text))) {
+      lastConflict = written.text.slice(0, 300);
+      continue;
+    }
+    throw new ConductProjectionError(
+      `public board projection write failed (${written.status}): ${written.text.slice(0, 300)}`,
+      written.status >= 500 ? 503 : 409,
+    );
+  }
+  throw new ConductProjectionError(
+    `public board projection CAS did not converge after ${maxAttempts} attempts: ${lastConflict}`,
+    409,
+  );
+}
+
+export async function initializePrivateBoard(
+  env,
+  storage,
+  board,
+  { fetchImpl = fetch } = {},
+) {
+  if (await loadPrivateBoard(storage)) {
+    throw new ConductProjectionError("private board is already initialized", 409);
+  }
+  const validated = validatePrivateBoard(board);
+  const publication = await publishPublicBoard(env, validated, { fetchImpl });
+  await savePrivateBoard(storage, validated);
+  return {
+    status: "initialized",
+    mode: "private-canonical",
+    task_count: validated.tasks.length,
+    publication,
+  };
+}
+
+export async function commitTaskCompatibilityEvent(
+  env,
+  event,
+  { fetchImpl = fetch, maxAttempts = 4, storage = null } = {},
+) {
   if (!event) return { status: "not_applicable" };
   const inline = inlineBoardSource(env);
   if (inline) {
@@ -1021,6 +1090,32 @@ export async function commitTaskCompatibilityEvent(env, event, { fetchImpl = fet
     return {
       status: applied.duplicate ? "duplicate" : "committed",
       mode: "inline",
+      task: applied.task,
+      event_id: event.event_id,
+    };
+  }
+  if (storage) {
+    const current = await loadPrivateBoard(storage);
+    if (!current) {
+      throw new ConductProjectionError(
+        "private canonical board is not initialized; run the authenticated board bootstrap",
+        503,
+      );
+    }
+    const applied = applyTaskCompatibilityEvent(current, event);
+    if (applied.duplicate) {
+      return {
+        status: "duplicate",
+        mode: "private-canonical",
+        task: applied.task,
+        event_id: event.event_id,
+      };
+    }
+    await publishPublicBoard(env, applied.board, { fetchImpl, maxAttempts });
+    await savePrivateBoard(storage, applied.board);
+    return {
+      status: "committed",
+      mode: "private-canonical",
       task: applied.task,
       event_id: event.event_id,
     };

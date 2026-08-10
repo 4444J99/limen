@@ -119,6 +119,16 @@ class HttpConductClient:
     def capabilities(self) -> dict[str, Any]:
         return self._request("GET", "/api/conduct/capabilities")
 
+    def private_board(self) -> dict[str, Any]:
+        """Read the authenticated full board from private keeper custody."""
+
+        return self._request("GET", "/api/board/private")
+
+    def initialize_private_board(self, board: dict[str, Any]) -> dict[str, Any]:
+        """Seed private custody once; the keeper publishes only its aggregate projection."""
+
+        return self._request("POST", "/api/board/initialize", {"board": board})
+
     def register(self, session: ConductorSessionV1) -> dict[str, Any]:
         return self._request("POST", "/api/conduct/sessions", session.model_dump(mode="json"))
 
