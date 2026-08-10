@@ -74,7 +74,11 @@ WORKTREE_RECLAIM_CANDIDATES_DOC = ROOT / "docs" / "worktree-reclaim-candidates.m
 WORKTREE_RECLAIM_CANDIDATES_JSON = ROOT / "docs" / "worktree-reclaim-candidates.json"
 STORAGE_OPERATING_MANUAL = ARCHIVE4T_ROOT / "_OPERATIONS" / "STORAGE-OPERATING-MANUAL-2026-06-15.md"
 LOCAL_DISK_EXPULSION_POLICY = ARCHIVE4T_ROOT / "_OPERATIONS" / "LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md"
-PROFILE_POSITIONING_RE = re.compile(
+APPROVED_PROFILE_POSITIONING_RE = re.compile(
+    r"I build production systems|architected and directed by one person|governed multi-agent",
+    re.I,
+)
+FORBIDDEN_PROFILE_RANKING_RE = re.compile(
     r"top[- ]tier|top\s+\d+(?:\.\d+)?%\s+engineering|top[- ]1%|top engineer|top engineers|world",
     re.I,
 )
@@ -354,10 +358,12 @@ def github_profile_surface() -> dict[str, Any]:
         "readme_present": bool(readme_text),
         "readme_sha": (readme_payload or {}).get("sha"),
         "readme_total_repos": readme_marker(readme_text, "total_repos"),
-        "old_portfolio_link_count": readme_text.count("4444j99.github.io/portfolio")
-        + readme_text.count("organvm.github.io/portfolio"),
+        "old_portfolio_link_count": (
+            readme_text.count("4444j99.github.io/portfolio") + readme_text.count("organvm.github.io/portfolio")
+        ),
         "live_portfolio_link_count": readme_text.count("organvm-vii-kerygma.github.io/portfolio"),
-        "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(readme_text)),
+        "approved_positioning_present": bool(APPROVED_PROFILE_POSITIONING_RE.search(readme_text)),
+        "forbidden_ranking_claim_present": bool(FORBIDDEN_PROFILE_RANKING_RE.search(readme_text)),
         "account_bio": bio,
         "account_blog": blog,
         "account_public_repos": (user or {}).get("public_repos"),
@@ -543,10 +549,12 @@ def profile_receipt() -> dict[str, Any]:
         "ssot_total_repos": ssot_repos,
         "ssot_public_repos_all": public_repos_all,
         "ssot_total_words_numeric": ssot_words,
-        "old_portfolio_link_count": text.count("4444j99.github.io/portfolio")
-        + text.count("organvm.github.io/portfolio"),
+        "old_portfolio_link_count": (
+            text.count("4444j99.github.io/portfolio") + text.count("organvm.github.io/portfolio")
+        ),
         "live_portfolio_link_count": text.count("organvm-vii-kerygma.github.io/portfolio"),
-        "top_engineer_claim_present": bool(PROFILE_POSITIONING_RE.search(text)),
+        "approved_positioning_present": bool(APPROVED_PROFILE_POSITIONING_RE.search(text)),
+        "forbidden_ranking_claim_present": bool(FORBIDDEN_PROFILE_RANKING_RE.search(text)),
         "frontdoor_present": (ROOT / "docs" / "positioning" / "_frontdoor.md").exists(),
     }
     visible = github_profile_surface()
@@ -554,20 +562,24 @@ def profile_receipt() -> dict[str, Any]:
     stale_count = str(current["readme_total_repos"] or "") != str(ssot_repos or "")
     stale_words = bool(ssot_words) and "988K+" not in text
     old_links = int(current["old_portfolio_link_count"] or 0) > 0
-    missing_claim = not current["top_engineer_claim_present"]
+    missing_claim = not current["approved_positioning_present"]
+    forbidden_claim = current["forbidden_ranking_claim_present"]
     visible_checked = bool(visible.get("checked"))
     visible_missing = visible_checked and not visible.get("verified")
     visible_stale_count = visible_checked and str(visible.get("readme_total_repos") or "") != str(ssot_repos or "")
     visible_old_links = visible_checked and int(visible.get("old_portfolio_link_count") or 0) > 0
-    visible_missing_claim = visible_checked and not visible.get("top_engineer_claim_present")
+    visible_missing_claim = visible_checked and not visible.get("approved_positioning_present")
+    visible_forbidden_claim = visible_checked and bool(visible.get("forbidden_ranking_claim_present"))
     account_profile_stale = visible_checked and bool(visible.get("account_profile_stale"))
     if not readme.exists():
         status = STATUS_BLOCKED
         verdict = "profile repo README missing"
-    elif stale_count or stale_words or old_links or missing_claim:
+    elif stale_count or stale_words or old_links or missing_claim or forbidden_claim:
         status = STATUS_ASSIGNED
         verdict = "existing profile/frontdoor work is present but not projected"
-    elif visible_missing or visible_stale_count or visible_old_links or visible_missing_claim:
+    elif (
+        visible_missing or visible_stale_count or visible_old_links or visible_missing_claim or visible_forbidden_claim
+    ):
         status = STATUS_ASSIGNED
         verdict = "visible GitHub profile README is missing or stale"
     elif account_profile_stale:
@@ -597,7 +609,7 @@ def profile_receipt() -> dict[str, Any]:
             "task": "Project the existing positioning/frontdoor and current metrics onto the profile README; fix stale counts and dead links.",
             "predicate": "python3 scripts/test_sync_readme.py && python3 scripts/sync-readme.py --check",
             "receipt_target": f"git:{VISIBLE_PROFILE_REPO}:README.md",
-            "stop_condition": "profile README has current metrics, live links, and evidence-backed top-engineer positioning",
+            "stop_condition": "profile README has current metrics, live links, approved positioning, and no forbidden ranking claims",
         },
     }
 

@@ -4,6 +4,8 @@
 
 Selected systems range from live infrastructure to deployed tools and working prototypes. Every card states its current maturity and evidence basis. Two doors:
 
+Architected and directed by one person through a governed, multi-agent production system.
+
 **[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
 > Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
 
@@ -14,77 +16,65 @@ Selected systems range from live infrastructure to deployed tools and working pr
 
 ## The systems
 
-### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
-
-A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.
-
-**Current state:** Deployed distribution surfaces; external adoption unvalidated.
-
-**Evidence:** repository-asserted: 170 tests across 16 suites reported by the repository · repository-asserted: about 5,900 lines of TypeScript · repository-asserted: distribution paths for GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages · repository-asserted: 5 export formats · repository-asserted: 9-language UI · verified: MIT license and active repository history.
-
-**Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
-
-→ **Build this into my product** · see [the ways to work together](docs/positioning/a-i-chat--exporter.md)
-
-### [UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
-
-A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.
-
-**Current state:** Working prototype; four collectors implemented; deployment and adoption unvalidated.
-
-**Evidence:** repository-asserted: 3,399 tests reported by the repository · repository-asserted: Terraform AWS architecture (multi-AZ RDS, Redis, S3) · verified: 4 state collectors implemented on a 50-state architecture.
-
-**Solves:** Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.
-
-→ **Deploy this for your shop** · see [the ways to work together](docs/positioning/public-record-data-scrapper.md)
-
-### [Styx Peer-Audited Behavioral Market](https://github.com/4444J99/peer-audited--behavioral-blockchain)
-
-A working prototype for commitments with financial stakes: a Stripe escrow model, double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.
-
-**Current state:** Working prototype; public pitch reachable; deployment and adoption unvalidated.
-
-**Evidence:** repository-asserted: 1,107 tests reported across workspaces · verified: public pitch surface returned 200 during the evidence sweep · repository-asserted: NestJS + Next.js + React Native + Tauri monorepo · repository-asserted: Stripe escrow model and double-entry ledger · repository-asserted: CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates.
-
-**Solves:** Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.
-
-→ **Deploy this for a commitment program** · see [the ways to work together](docs/positioning/peer-audited--behavioral-blockchain.md)
-
-### [Autonomous Inbox-Triage & Draft System](https://github.com/organvm/universal-mail--automation)
-
-A working system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
-
-**Current state:** Working prototype; internal operation evidenced; external adoption unvalidated.
-
-**Evidence:** repository-asserted: 400+ tests reported by the repository · repository-asserted: Cloudflare Worker deployment path (wrangler) · repository-asserted: Gmail + Apple Mail adapters · verified: draft-only design — composes replies, never sends · repository-asserted: obligations ledger tracks owed replies.
-
-**Solves:** Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.
-
-→ **Run this on my inbox** · see [the ways to work together](docs/positioning/universal-mail--automation.md)
-
 ### [Self-Healing Agent Fleet Infrastructure](https://github.com/organvm/limen)
 
-A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that automates recurring fleet maintenance on a heartbeat: monitoring liveness, reaping stale work, syncing state, and escalating failures. Built-in organs include proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, and health monitoring.
+A live orchestration and governance system operating in its owner's environment since May 2026, with explicit failure states and human gates.
 
 **Current state:** Live in the owner's environment; external adoption unvalidated; human gates remain explicit.
 
-**Evidence:** repository-asserted: 9-rung organ ladder (each self-* owns its own domain) · verified: heartbeat-driven autonomic loop (scripts/metabolize.sh) · repository-asserted: self-healing branch pattern for known regressions · verified: proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present · verified: failure states and human gates are explicit.
+**Evidence:** verified: heartbeat-driven autonomic loop (scripts/metabolize.sh) · verified: proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present · verified: failure states and human gates are explicit.
 
 **Solves:** Every agent fleet needs health checks, credential refresh, stale-work cleanup, state reconciliation, and failure escalation. When those controls are manual or absent, routine drift can become lost work or cascading failure.
 
-→ **Adopt self-healing fleet ops** · see [the ways to work together](docs/positioning/limen.md)
+→ **Adopt self-healing fleet ops** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/limen.md)
 
-### [Portfolio & Case Studies — 16 Systems](https://github.com/organvm/portfolio)
+### [UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
 
-A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.
+A working prototype with four state collectors implemented on a fifty-state architecture; deployment and adoption are unvalidated.
 
-**Current state:** Deployed and live; case-study outcome claims require project-level evidence.
+**Current state:** Working prototype; four collectors implemented; deployment and adoption unvalidated.
 
-**Evidence:** repository-asserted: 609 files · Astro + TypeScript · p5.js interactive visualizations · repository-asserted: 69 test files across the portfolio and content · repository-asserted: 16 case studies with architecture and decision narratives · verified: public portfolio endpoint returned 200 during the evidence sweep · repository-asserted: Netlify deployment and CI/CD configuration.
+**Evidence:** verified: 4 state collectors implemented on a 50-state architecture.
 
-**Solves:** A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.
+**Solves:** Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.
 
-→ **Explore the case studies** · see [the ways to work together](docs/positioning/portfolio.md)
+→ **Deploy this for your shop** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md)
+
+### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
+
+A deployed public exporter with an active repository and MIT licence; functionality metrics remain repository-asserted on the linked Level-2 page.
+
+**Current state:** Deployed distribution surfaces; external adoption unvalidated.
+
+**Evidence:** verified: MIT license and active repository history.
+
+**Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
+
+→ **Build this into my product** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/a-i-chat--exporter.md)
+
+### [a-i--skills](https://github.com/organvm-iv-taxis/a-i--skills)
+
+A public library of reusable agent skills and operating patterns.
+
+**Current state:** Deployed public library; external adoption is modest and directly observable.
+
+**Evidence:** verified: 15 stars and 7 forks, with external accounts verified on 2026-08-09.
+
+**Solves:** Agent teams repeatedly rebuild operating instructions instead of reusing reviewed, inspectable skills.
+
+→ **Inspect the skills library** · see [the evidence and ways to work together](https://github.com/organvm-iv-taxis/a-i--skills)
+
+### [MONETA](https://mint.4444j99.dev)
+
+A self-hosted Bitcoin licence mint.
+
+**Current state:** Live; revenue and external adoption are unverified.
+
+**Evidence:** verified: public mint endpoint returned HTTP 200 on 2026-08-09.
+
+**Solves:** Software sellers need a sovereign licensing path that does not depend on a hosted marketplace.
+
+→ **Inspect the live mint** · see [the evidence and ways to work together](https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims)
 
 ---
 

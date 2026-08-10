@@ -61,7 +61,7 @@ are verifiably operating.
 |---|---|---|---|
 | `organvm/limen` | Agent-directed under owner architecture (3,678 owner commits + bot lanes) | **Live with demonstrated use** (internal): public dashboard receipts — 3,111 tasks / 1,357 done since 2026-05-31 | dashboard + worker `/health`, observed 2026-08-09 |
 | `organvm-iv-taxis/a-i--skills` | Original/agent-directed | Deployed; **highest external signal** (15★/7F, external stargazers verified) | live repo |
-| `organvm-iii-ergon/public-record-data-scrapper` | Agent-directed | Working prototype→deployed; 4 implemented state collectors (CA/TX/FL/NY), 50-state architecture; 3,399 asserted tests; 7★/6 external forks incl. one company | repo + fork graph |
+| `organvm-iii-ergon/public-record-data-scrapper` | Agent-directed | Working prototype; deployment unvalidated; 4 implemented state collectors (CA/TX/FL/NY), 50-state architecture; 3,399 asserted tests; 7★/6 external forks incl. one company | repo + fork graph |
 | `organvm-iii-ergon/a-i-chat--exporter` | Agent-directed | Deployed (install page 200); ~170 tests / 5 formats / 9 locales repo-asserted; usage claim unverified | ledger §2 |
 | `organvm-iii-ergon/agentic-titan` | Agent-directed | Working prototype; 5★/2F | repo |
 | `moneta` (in `organvm/limen`) | Agent-directed | **Live** (`mint.4444j99.dev` 200); revenue capability, no verified sales | live HTTP |

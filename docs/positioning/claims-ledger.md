@@ -50,7 +50,7 @@ preserve the disagreement explicitly.
 | 1 personal account + 10 organizations | `verified` | Census + live org listing | as-is | L1 |
 | "~280 repositories" (voice memo) | `superseded` | Census supersedes | never use | nowhere |
 | 307/308 repository counts (older records) | `superseded` | Census supersedes | never use | nowhere |
-| Profile shows "227 public repositories (198 original)" | `conflicted` (vs census 235; vs live 236) | Generated README, different counting basis (canonical non-fork vs raw) | Regenerate from census basis; always state basis + date | fix, then L1 |
+| Profile repository counts | `derived` on a distinct live-profile basis | `scripts/profile-visuals.py` writes `public-repos.json` from the live GitHub API; `scripts/sync-readme.py` renders its dated manifest. This is not the exhaustive census basis. | Label as live profile/API counts with the generation date; never present them as the estate census or use them to revise the dated census row above | L1 when dated and basis-labeled |
 | Org README shows "215 repositories" | `superseded` (stale generation 2026-07-30) | Org profile README vs census | regenerate from census | fix, then L1 |
 | Repository count ≠ product count | `verified` (classification) | `docs/positioning/estate-classification.md` | "A 313-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
 

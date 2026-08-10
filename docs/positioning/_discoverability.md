@@ -77,7 +77,7 @@ gh api -X PUT repos/organvm/limen/topics \
 gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat."
 ```
 
-## Portfolio & Case Studies — 16 Systems — `organvm/portfolio`
+## Portfolio & Case Studies — 16 Systems — `organvm-vii-kerygma/portfolio`
 
 - **Recommended topics:** portfolio, case-studies, system-design, architecture, production, astro, interactive-design, web-development, systems-thinking, engineering-decisions, technical-writing
 - ⚠ **Invalid topics (fix in seed):** p5.js
@@ -85,9 +85,9 @@ gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic
 
 ```sh
 # apply topics (his hand — outward-facing public change):
-gh api -X PUT repos/organvm/portfolio/topics \
+gh api -X PUT repos/organvm-vii-kerygma/portfolio/topics \
   -H 'Accept: application/vnd.github+json' \
   -f 'names[]=portfolio' -f 'names[]=case-studies' -f 'names[]=system-design' -f 'names[]=architecture' -f 'names[]=production' -f 'names[]=astro' -f 'names[]=interactive-design' -f 'names[]=web-development' -f 'names[]=systems-thinking' -f 'names[]=engineering-decisions' -f 'names[]=technical-writing'
 # apply description:
-gh repo edit organvm/portfolio --description "Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale."
+gh repo edit organvm-vii-kerygma/portfolio --description "Production portfolio: 16 systems, real architecture decisions, interactive visualizations, case studies on building software at scale."
 ```

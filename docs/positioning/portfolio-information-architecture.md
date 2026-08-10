@@ -45,6 +45,10 @@ demonstration, external validation. Not personal affection, not raw size.
 | **a-i--skills** | Agent-skills library | Highest external star signal in estate (15★/7F, verified external accounts) |
 | **MONETA** | Self-hosted Bitcoin licence mint | Live at mint.4444j99.dev; sovereign-commerce demonstration |
 
+The Level-1 generator consumes this exact set from `positioning-seeds.json` →
+`frontdoor.flagships`; adding a value-repository seed does not silently promote it to the front
+door, and inline verified surfaces do not alter `value-repos.json` funding priorities.
+
 Each case study: problem → architecture → decisions/tradeoffs → verification story →
 status/authorship disclosure (per policy) → what it proves about the method. universal-mail and
 Styx sit in the second rank until their asserted test counts are reproduced (proof program P4).

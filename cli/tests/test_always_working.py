@@ -515,7 +515,7 @@ def test_heartbeat_produces_lifecycle_pressure_off_dispatch_hot_path():
     )
 
 
-def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_path):
+def test_profile_receipt_requires_approved_positioning_and_rejects_rankings(monkeypatch, tmp_path):
     mod = _load("always_working_profile_receipt_uut", ALWAYS_WORKING)
     root = tmp_path / "limen"
     profile = tmp_path / "organvm" / "4444J99"
@@ -524,59 +524,11 @@ def test_profile_receipt_accepts_computed_laurel_positioning(monkeypatch, tmp_pa
     (profile / "data").mkdir(parents=True)
     (profile / "README.md").write_text(
         "# Anthony James Padavano\n\n"
-        "**Top-tier Creative Technologist / Systems Architect**\n\n"
+        "**I build production systems that solve expensive problems.**\n\n"
         "**Proof surface:** <!-- v:total_repos -->171<!-- /v --> canonical public non-fork repos, "
         "<!-- v:public_repos -->203<!-- /v --> public accessible repos, "
         "<!-- v:owned_ecosystem_repos -->301<!-- /v --> owned accessible repos, and "
         "<!-- v:contributed_repos -->321<!-- /v --> contributed repositories.\n\n"
-        "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
-        "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
-        "[Portfolio](https://organvm-vii-kerygma.github.io/portfolio/)\n\n"
-        "Computed laurels -- top 0.1% engineering throughput.\n",
-        encoding="utf-8",
-    )
-    (profile / "data" / "ecosystem.yml").write_text("total_repos: 171\n", encoding="utf-8")
-    corpvs.mkdir(parents=True)
-    (corpvs / "system-metrics.json").write_text(
-        json.dumps({"computed": {"total_repos": 171, "public_repos_all": 203, "total_words_numeric": 988148}}),
-        encoding="utf-8",
-    )
-    (root / "docs" / "positioning").mkdir(parents=True)
-    (root / "docs" / "positioning" / "_frontdoor.md").write_text("# Front door\n", encoding="utf-8")
-
-    monkeypatch.setattr(mod, "ROOT", root)
-    monkeypatch.setattr(mod, "PROFILE_REPO", profile)
-    monkeypatch.setattr(mod, "CORPVS_ROOT", corpvs)
-    monkeypatch.setattr(
-        mod,
-        "github_profile_surface",
-        lambda: {
-            "checked": True,
-            "verified": True,
-            "readme_total_repos": "171",
-            "old_portfolio_link_count": 0,
-            "top_engineer_claim_present": True,
-            "account_profile_stale": False,
-        },
-    )
-
-    receipt = mod.profile_receipt()
-
-    assert receipt["status"] == mod.STATUS_DONE
-    assert receipt["evidence"]["top_engineer_claim_present"] is True
-    assert receipt["evidence"]["visible_profile"]["verified"] is True
-
-
-def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
-    mod = _load("always_working_profile_sidebar_uut", ALWAYS_WORKING)
-    root = tmp_path / "limen"
-    profile = tmp_path / "organvm" / "4444J99"
-    corpvs = tmp_path / "organvm-corpvs-testamentvm"
-
-    (profile / "data").mkdir(parents=True)
-    (profile / "README.md").write_text(
-        "# Anthony James Padavano\n\n"
-        "**Top-tier Creative Technologist / Systems Architect**\n\n"
         "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
         "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
         "[Portfolio](https://organvm-vii-kerygma.github.io/portfolio/)\n",
@@ -602,7 +554,78 @@ def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
             "verified": True,
             "readme_total_repos": "171",
             "old_portfolio_link_count": 0,
-            "top_engineer_claim_present": True,
+            "approved_positioning_present": True,
+            "forbidden_ranking_claim_present": False,
+            "account_profile_stale": False,
+        },
+    )
+
+    receipt = mod.profile_receipt()
+
+    assert receipt["status"] == mod.STATUS_DONE
+    assert receipt["evidence"]["approved_positioning_present"] is True
+    assert receipt["evidence"]["forbidden_ranking_claim_present"] is False
+    assert receipt["evidence"]["visible_profile"]["verified"] is True
+
+    with (profile / "README.md").open("a", encoding="utf-8") as handle:
+        handle.write("\nComputed laurels -- top 0.1% engineering throughput.\n")
+    monkeypatch.setattr(
+        mod,
+        "github_profile_surface",
+        lambda: {
+            "checked": True,
+            "verified": True,
+            "readme_total_repos": "171",
+            "old_portfolio_link_count": 0,
+            "approved_positioning_present": True,
+            "forbidden_ranking_claim_present": True,
+            "account_profile_stale": False,
+        },
+    )
+
+    forbidden = mod.profile_receipt()
+
+    assert forbidden["status"] == mod.STATUS_ASSIGNED
+    assert forbidden["evidence"]["forbidden_ranking_claim_present"] is True
+
+
+def test_profile_receipt_blocks_stale_github_sidebar(monkeypatch, tmp_path):
+    mod = _load("always_working_profile_sidebar_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    profile = tmp_path / "organvm" / "4444J99"
+    corpvs = tmp_path / "organvm-corpvs-testamentvm"
+
+    (profile / "data").mkdir(parents=True)
+    (profile / "README.md").write_text(
+        "# Anthony James Padavano\n\n"
+        "**I build production systems that solve expensive problems.**\n\n"
+        "**Now:** Shipping across <!-- v:total_repos -->171<!-- /v --> repos and "
+        "<!-- v:total_words_short -->988K+<!-- /v --> words.\n\n"
+        "[Portfolio](https://organvm-vii-kerygma.github.io/portfolio/)\n",
+        encoding="utf-8",
+    )
+    (profile / "data" / "ecosystem.yml").write_text("total_repos: 171\n", encoding="utf-8")
+    corpvs.mkdir(parents=True)
+    (corpvs / "system-metrics.json").write_text(
+        json.dumps({"computed": {"total_repos": 171, "public_repos_all": 203, "total_words_numeric": 988148}}),
+        encoding="utf-8",
+    )
+    (root / "docs" / "positioning").mkdir(parents=True)
+    (root / "docs" / "positioning" / "_frontdoor.md").write_text("# Front door\n", encoding="utf-8")
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "PROFILE_REPO", profile)
+    monkeypatch.setattr(mod, "CORPVS_ROOT", corpvs)
+    monkeypatch.setattr(
+        mod,
+        "github_profile_surface",
+        lambda: {
+            "checked": True,
+            "verified": True,
+            "readme_total_repos": "171",
+            "old_portfolio_link_count": 0,
+            "approved_positioning_present": True,
+            "forbidden_ranking_claim_present": False,
             "account_profile_stale": True,
             "account_bio": "Full-stack developer. 91 repos, 3,586 code files.",
         },

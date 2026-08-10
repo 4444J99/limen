@@ -5,6 +5,37 @@
   "contact": "contact@4444j99.dev",
   "headline": "I build production systems that solve expensive problems.",
   "subhead": "Selected systems range from live infrastructure to deployed tools and working prototypes. Every card states its current maturity and evidence basis. Two doors:",
+  "authorship": "Architected and directed by one person through a governed, multi-agent production system.",
+  "_flagships_note": "The Level-1 set selected in docs/positioning/portfolio-information-architecture.md. Repository entries reuse their judgment-layer seeds; inline entries are separately verified public surfaces and do not change value-repos.json funding priorities.",
+  "flagships": [
+   "organvm/limen",
+   "organvm/public-record-data-scrapper",
+   "organvm/a-i-chat--exporter",
+   {
+    "repo": "organvm-iv-taxis/a-i--skills",
+    "display_name": "a-i--skills",
+    "what_it_is": "A public library of reusable agent skills and operating patterns.",
+    "product_state": "Deployed public library; external adoption is modest and directly observable.",
+    "proof_signals": [
+     {"claim": "15 stars and 7 forks, with external accounts verified on 2026-08-09", "status": "verified"}
+    ],
+    "expensive_problem": "Agent teams repeatedly rebuild operating instructions instead of reusing reviewed, inspectable skills.",
+    "cta_client": "Inspect the skills library",
+    "details_url": "https://github.com/organvm-iv-taxis/a-i--skills"
+   },
+   {
+    "url": "https://mint.4444j99.dev",
+    "display_name": "MONETA",
+    "what_it_is": "A self-hosted Bitcoin licence mint.",
+    "product_state": "Live; revenue and external adoption are unverified.",
+    "proof_signals": [
+     {"claim": "public mint endpoint returned HTTP 200 on 2026-08-09", "status": "verified"}
+    ],
+    "expensive_problem": "Software sellers need a sovereign licensing path that does not depend on a hosted marketplace.",
+    "cta_client": "Inspect the live mint",
+    "details_url": "https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims"
+   }
+  ],
   "_bio_note": "The GitHub sidebar bio. STABLE IDENTITY ONLY — never a count that changes daily (repos / code files / tests / CI workflows). Volatile numbers live in the README, which regenerates; the bio does not, so any count baked here rots. always-working.py checks the live bio against this value and flags drift. <=160 chars (GitHub's limit).",
   "bio": "Builder of production systems — data, infra, AI, deploy, end-to-end. Python · TypeScript · React · FastAPI · Docker.",
   "_blog_note": "The GitHub sidebar website link. Must resolve 200 — the old 4444j99.github.io/portfolio was a dead 404; the live portfolio is under organvm-vii-kerygma.github.io. profile-bio-sync.py owns + applies this and always-working.py flags drift, so a dead link can't silently sit on the profile.",
@@ -45,6 +76,7 @@
   "organvm/public-record-data-scrapper": {
    "display_name": "UCC Public-Records Intelligence Platform",
    "what_it_is": "A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
+   "frontdoor_summary": "A working prototype with four state collectors implemented on a fifty-state architecture; deployment and adoption are unvalidated.",
    "product_state": "Working prototype; four collectors implemented; deployment and adoption unvalidated.",
    "proof_signals": [
     {"claim": "3,399 tests reported by the repository", "status": "repository-asserted"},
@@ -244,6 +276,7 @@
   "organvm/a-i-chat--exporter": {
    "display_name": "AI Chat Exporter",
    "what_it_is": "A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.",
+   "frontdoor_summary": "A deployed public exporter with an active repository and MIT licence; functionality metrics remain repository-asserted on the linked Level-2 page.",
    "product_state": "Deployed distribution surfaces; external adoption unvalidated.",
    "proof_signals": [
     {"claim": "170 tests across 16 suites reported by the repository", "status": "repository-asserted"},
@@ -525,7 +558,7 @@
     "infrastructure-as-code"
    ]
   },
-  "organvm/portfolio": {
+  "organvm-vii-kerygma/portfolio": {
    "display_name": "Portfolio & Case Studies — 16 Systems",
    "what_it_is": "A public portfolio site presenting 16 built systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.",
    "product_state": "Deployed and live; case-study outcome claims require project-level evidence.",
@@ -596,6 +629,7 @@
   "organvm/limen": {
    "display_name": "Self-Healing Agent Fleet Infrastructure",
    "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that automates recurring fleet maintenance on a heartbeat: monitoring liveness, reaping stale work, syncing state, and escalating failures. Built-in organs include proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, and health monitoring.",
+   "frontdoor_summary": "A live orchestration and governance system operating in its owner's environment since May 2026, with explicit failure states and human gates.",
    "product_state": "Live in the owner's environment; external adoption unvalidated; human gates remain explicit.",
    "proof_signals": [
     {"claim": "9-rung organ ladder (each self-* owns its own domain)", "status": "repository-asserted"},
