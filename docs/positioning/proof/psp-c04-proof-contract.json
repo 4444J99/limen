@@ -1,0 +1,151 @@
+{
+  "schema_version": "limen.psp_c04_proof_preflight.v1",
+  "chunk_id": "PSP-C04",
+  "phase_id": "PSP-P05",
+  "status": "PREPARED/PREFLIGHT",
+  "prepared_at": "2026-08-10",
+  "formalization_gate": {
+    "required_chunks": ["PSP-C02", "PSP-C03"],
+    "rule": "This contract may formalize only after both predecessor chunks close with predicate-backed receipts.",
+    "automatic_after_dependencies": [
+      "refresh every branch and source exact head",
+      "resolve every candidate claim against the merged claims ledger and evidence index",
+      "emit the surface-by-claim audit manifest",
+      "instantiate exact-head reproduction receipt requests",
+      "mark failed or expired sources withheld"
+    ],
+    "never_automatic": [
+      "publish or deploy",
+      "send an external-validation request",
+      "promote a withheld claim",
+      "select a visual direction",
+      "close PSP-P05, PSP-P06, or PSP-C04"
+    ]
+  },
+  "dependency_sources": [
+    {
+      "id": "p02_flagship_selection",
+      "branch": "codex/psp-p02-w03-flagship-proof-preflight",
+      "exact_head": "528c94d31a426f3a9cac29a72cd38bc942d45171",
+      "required_path": "docs/positioning/flagship-proof-set.yaml",
+      "integration": "exact_committed_head_only"
+    },
+    {
+      "id": "p02_public_evidence",
+      "branch": "codex/psp-p02-w04-w05-public-evidence-preflight",
+      "exact_head": "3a752d530633c8a2ec4b7942e325b4838e56c233",
+      "required_path": "docs/positioning/evidence/flagship-evidence.yaml",
+      "integration": "exact_committed_head_only"
+    },
+    {
+      "id": "p02_claim_policy",
+      "branch": "codex/psp-p02-w06-w07-preflight",
+      "exact_head": "2a0550862091a976b756034d4ddfa3965fd206ec",
+      "required_path": "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md",
+      "integration": "exact_committed_head_only"
+    },
+    {
+      "id": "c03_identity_offers",
+      "branch": "codex/psp-c03-identity-offers-preflight",
+      "exact_head": "b5bc01585a10615e85e1ef5b31a2356c24fb9bc9",
+      "registry_alignment_commit": "986ebb41778cf082e01ede0cb6d268cebf54a106",
+      "required_path": "institutio/positioning/commercial-contract.yaml",
+      "integration": "exact_committed_head_only",
+      "availability": "committed_preflight_dependency_blocked"
+    }
+  ],
+  "claim_policy": {
+    "resolver_order": [
+      "claim_id",
+      "canonical wording",
+      "dated source",
+      "observed exact head or immutable receipt",
+      "status and staleness",
+      "allowed disclosure level",
+      "limitations",
+      "withdrawal action"
+    ],
+    "publishable_statuses": ["verified", "derived_reviewed"],
+    "non_publishable_statuses": ["candidate", "repository_asserted", "stale", "conflicted", "unverified", "withheld", "private"],
+    "withheld_classes": [
+      "adoption, usage, install, or customer counts without primary receipts",
+      "revenue, payment, or commercial outcomes without primary receipts",
+      "rankings, percentiles, or top-percent claims without an independent reproducible basis",
+      "private implementation, repository, customer, or partner details",
+      "zero-maintenance, autonomous-forever, or reliability implications not measured by the cited source"
+    ]
+  },
+  "flagships": [
+    {
+      "id": "limen",
+      "name": "Limen",
+      "role": "governed_agent_delivery",
+      "candidate_claim": "Governed multi-agent delivery with public operating, failure, and verification receipts.",
+      "status": "candidate",
+      "max_disclosure": "L2",
+      "required_source_ids": ["limen_exact_head", "limen_public_status"],
+      "limitations": ["Internal operation is not customer adoption.", "Task counts are dated snapshots, not reliability or outcome rates."]
+    },
+    {
+      "id": "public_records",
+      "name": "UCC Public-Records Intelligence Platform",
+      "role": "public_records_decision_pipeline",
+      "candidate_claim": "Four implemented state collectors sit on a broader public-record architecture.",
+      "status": "candidate",
+      "max_disclosure": "L2",
+      "required_source_ids": ["public_records_exact_head", "public_records_public_surface"],
+      "limitations": ["Four collectors do not establish fifty-state deployment.", "A public surface does not establish adoption or data completeness."]
+    },
+    {
+      "id": "ai_chat_exporter",
+      "name": "AI Chat Exporter",
+      "role": "privacy_first_data_portability",
+      "candidate_claim": "Client-side conversation export is available across five named portable formats.",
+      "status": "candidate",
+      "max_disclosure": "L2",
+      "required_source_ids": ["ai_chat_exporter_exact_head", "ai_chat_exporter_public_surface"],
+      "limitations": ["Feature count does not establish installs, daily use, revenue, or retention.", "Privacy claims stay bounded to the inspectable client-side export path."]
+    }
+  ],
+  "sources": [
+    {"id": "limen_exact_head", "kind": "workflow_receipt", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 30},
+    {"id": "limen_public_status", "kind": "public_endpoint", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 7},
+    {"id": "public_records_exact_head", "kind": "workflow_receipt", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 30},
+    {"id": "public_records_public_surface", "kind": "public_endpoint", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 7},
+    {"id": "ai_chat_exporter_exact_head", "kind": "workflow_receipt", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 30},
+    {"id": "ai_chat_exporter_public_surface", "kind": "public_endpoint", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 7}
+  ],
+  "surface_audit_model": {
+    "surfaces": ["portfolio_front_door", "portfolio_flagship", "resume", "personal_profile", "organization_profile", "flagship_repository"],
+    "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action"],
+    "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
+  },
+  "cost_failure_reproduction": {
+    "status": "skeleton",
+    "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "human-time sampling method", "published price basis or explicit unknown"],
+    "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
+    "required_outputs": ["date window", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict"],
+    "forbidden_shortcuts": ["single average without distribution", "treating failed or blocked work as zero cost", "converting list price to actual spend", "publishing private spend without approval"],
+    "publication_rule": "Withhold the analysis when attribution, sampling, privacy, or denominator checks fail."
+  },
+  "exact_head_receipt_plan": {
+    "required_fields": ["repository", "default_branch", "exact_head", "predicate", "environment", "started_at", "finished_at", "exit_code", "result", "artifact_digest", "limitations"],
+    "outcomes": ["current_pass", "current_fail", "not_current", "blocked_external"],
+    "rule": "Every selected flagship receives one fresh exact-head receipt or an explicit not-current outcome; a README assertion or endpoint 200 is insufficient."
+  },
+  "synthetic_architecture_demo": {
+    "status": "contract_only_no_ui",
+    "dataset": "invented non-personal packet, lease, receipt, failure, and recovery records",
+    "required_story": ["bounded packet", "lease and authority", "execution", "predicate", "receipt", "failure or blocked branch", "harvest and correction"],
+    "prohibited_inputs": ["tasks.yaml data", "private task bodies", "credentials", "customer data", "private repository names", "live operational identifiers"],
+    "acceptance": ["synthetic-only scan passes", "no-secret scan passes", "keyboard and reduced-motion behavior specified", "responsive and link checks specified", "privacy review recorded"]
+  },
+  "external_validation": {
+    "status": "rubric_only_no_outreach",
+    "human_gate": "HG-PUBLICATION-SEND",
+    "acceptable_objects": ["independent reproduction", "dated technical review", "consented collaborator outcome", "accepted talk or publication with review provenance"],
+    "minimum_fields": ["validator identity class", "independence disclosure", "object URL or receipt", "date", "claim scope", "method", "limitations", "consent status", "withdrawal route"],
+    "score_dimensions": ["independence", "reproducibility", "specificity", "recency", "claim relevance", "consent and privacy"],
+    "send_rule": "No request, outreach, upload, or publication occurs from this preflight."
+  }
+}
