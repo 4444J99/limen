@@ -70,6 +70,24 @@ class FlagshipProofSetTests(unittest.TestCase):
         next(row for row in matrix["candidates"] if row["id"] == "public_records")["weighted_total"] = 100
         self.assert_error_contains(matrix, "does not equal")
 
+    def test_live_anchor_rejects_credentials_and_private_ip_hosts(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        candidate = next(row for row in matrix["candidates"] if row["id"] == "limen")
+        candidate["evidence_anchors"][1]["url"] = "https://token@127.0.0.1/private"
+        self.assert_error_contains(matrix, "credential-free public HTTPS hostname")
+
+    def test_live_endpoint_fetch_is_restricted_to_selected_public_hosts(self) -> None:
+        with self.assertRaises(MODULE.ProofSetError, msg="untrusted live endpoint must fail before curl"):
+            MODULE.validate_live_endpoint_url("https://example.test/not-an-approved-anchor")
+
+    def test_workflow_api_path_is_bound_to_the_candidate_repository(self) -> None:
+        self.assertIsNone(MODULE.repository_workflow_api_path("--method=DELETE", "organvm/limen"))
+        self.assertIsNone(
+            MODULE.repository_workflow_api_path(
+                "repos/example/other/actions/runs/1", "organvm/limen"
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
