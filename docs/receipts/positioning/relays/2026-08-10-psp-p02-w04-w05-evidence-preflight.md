@@ -20,8 +20,10 @@ compression_level: medium
 - Branch: `codex/psp-p02-w04-w05-public-evidence-preflight`
 - Stacked base: `codex/psp-p02-w03-flagship-proof-preflight`
 - Initial W04/W05 implementation commit: `23400cee7ffbf95e66f3837f0ef3f02f47bd17fb`
-- Current W03 parent head: `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2`
+- Current W03 parent head: `c16c9f48056aff76b892568550ce5cbadecca839`
 - Hardened implementation checkpoint: `488e55b9c25c8208cdf2e08ab1e6dced8524e3be`
+- Review-correction checkpoints: `8f93fc27abcb4cb6f32b42b2569091bb73a4a436` and
+  `82f4795ba32f8ac7c3fc9f3d3441e7b111891540`
 - Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this
   remains a reversible preflight, not a claimed formal completion.
 
@@ -30,7 +32,7 @@ compression_level: medium
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
-| Exact remote branch checkpoint | `488e55b9c25c8208cdf2e08ab1e6dced8524e3be` before this relay refresh; fetch PR #2310 before resuming |
+| Exact reviewed code checkpoint | `82f4795ba32f8ac7c3fc9f3d3441e7b111891540`; fetch PR #2310 for the post-relay exact head before resuming |
 | Private repository names in public artifacts | 0 |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
@@ -38,7 +40,7 @@ compression_level: medium
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
 | W03 / W04 / W05 issue state at preflight | open / open / open |
 | Task-specific predicates | `python3 scripts/flagship-evidence.py --verify-live --json` passed; formal `--verify-work` commands intentionally not run |
-| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 11 tests, including repository substitution, duplicate-source, path-traversal, nonnumeric-metric, credentialed/local-network source, and unselected-host failures |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 29 tests, including exact term counts, immutable W08 wording/receipt binding, packet/index parity, workflow repository binding, live issue-state parity, source ownership, malformed live-field handling, repository substitution, path traversal, and network-source failures |
 | Parent privacy guard | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w03-flagship-proof-preflight` passed over the full W04/W05 diff: 314 repositories, 235 public, 79 private, with no private repository token added |
 | Scoped verification | `scripts/verify-scoped.sh` passed all 23 implicated cheap-wave gates on the composed hardened tree before this relay refresh |
 | External effects | branch/PR staging only; no merge, publication, issue-state, or account change |
@@ -59,6 +61,16 @@ compression_level: medium
   workflow plus one public endpoint, and rejected traversal, non-HTTPS, or nonnumeric evidence rows.
 - Restricted live fetches and every redirect hop to the selected public hosts, rejected embedded
   credentials and nonstandard ports, and bounded all response bodies before parsing.
+- Covered every consumed input in the scoped gate, including recursive packet paths and the claims
+  ledger, and proved the resolver selects the evidence gate for a packet-only change.
+- Bound workflow API and human URLs to one run in the selected repository and require the live API
+  response to return the same repository and URLs.
+- Derived the collector and export-format denominators from complete, head-pinned Git trees rather
+  than accepting predeclared term presence as an exact count.
+- Bound the 13 imported W08 wording and receipt sets to the immutable source head, path, blob,
+  artifact SHA-256, and canonical projection SHA-256.
+- Made packet Markdown a validated projection of the index and made dependency declarations follow
+  their live issue owners through the W03 -> W04 -> W05 closure order.
 
 ## Decisions and rationale
 
@@ -95,7 +107,8 @@ compression_level: medium
 - Flagship selection: `docs/positioning/flagship-proof-set.yaml`
 - Packet index: `docs/positioning/evidence/flagship-evidence.yaml`
 - Claims authority: `docs/positioning/claims-ledger.md`
-- Pull request: https://github.com/organvm/limen/pull/2310 (draft, stacked on W03); do not merge it while dependencies remain open.
+- Pull request: https://github.com/organvm/limen/pull/2310 (ready, stacked on W03); all ten review
+  threads are resolved. Do not merge it while dependencies remain open.
 
 The fresh-agent injection phrase is:
 
