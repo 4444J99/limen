@@ -137,6 +137,28 @@ else
   flunk deleted-path-selects-gate "deleted custody path was filtered out: $out"
 fi
 
+# ── 4a: renaming every custody file still selects its scoped gate ────────────
+sb="$(make_sandbox)"
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+mkdir "$sb/elsewhere"
+git -C "$sb" mv institutio/vault/artifact.gpg elsewhere/artifact.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "rename custody away"
+out_file="$sb/verify.out"
+if python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base >"$out_file" 2>&1
+then
+  :
+else
+  out="$(<"$out_file")"
+  flunk renamed-path-selects-gate "renamed-path run exited non-zero: $out"
+fi
+if [[ -f "$sb/ran-deleted-custody" ]]
+then
+  pass renamed-path-selects-gate
+else
+  out="$(<"$out_file")"
+  flunk renamed-path-selects-gate "renamed custody source path was filtered out: $out"
+fi
+
 # ── 4b: every private namespace selects the custody gate ─────────────────────
 for private_path in \
   ".limen-private/probe" \

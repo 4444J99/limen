@@ -82,6 +82,35 @@ def test_add_writes_public_safe_manifest_and_rejects_duplicate_id(vault, tmp_pat
     assert "source_path" not in encoded
 
 
+def test_manifest_rejects_duplicate_json_fields(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    encoded = vault.MANIFEST.read_text(encoding="utf-8")
+    vault.MANIFEST.write_text(
+        encoded.replace(
+            '"artifact_id":"artifact-001"',
+            '"artifact_id":"artifact-999","artifact_id":"artifact-001"',
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(vault.VaultError, match="duplicate field"):
+        vault._read_manifest()
+
+
+def test_manifest_rejects_noncanonical_vaulted_at(vault, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("synthetic", encoding="utf-8")
+    _add(vault, source)
+    row = vault._read_manifest()[0]
+    row["vaulted_at"] = "not-a-canonical-timestamp"
+
+    assert any("invalid vaulted_at" in error for error in vault._validate_public_row(row, 1))
+    with pytest.raises(vault.VaultError, match="immutable custody metadata"):
+        vault._custody_metadata(row)
+
+
 def test_add_requires_apply_before_any_write(vault, tmp_path: Path):
     source = tmp_path / "private.md"
     source.write_text("secret", encoding="utf-8")
@@ -212,6 +241,60 @@ def test_historical_baseline_survives_fixed_path_replacement(vault):
     run_git("-c", "commit.gpgsign=false", "commit", "-m", "restore fixed manifest path")
 
     assert set(vault._real_historical_artifacts()) == {"artifact-001", "artifact-002"}
+
+
+def test_historical_manifest_rejects_duplicate_json_fields(vault):
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "init", "-b", "main"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    row = {
+        "schema": vault.SCHEMA,
+        "artifact_id": "artifact-001",
+        "ciphertext": "artifact-001.gpg",
+        "ciphertext_sha256": "1" * 64,
+        "ciphertext_bytes": 1,
+        "recipient_fpr": vault.FINGERPRINT,
+        "vaulted_at": "2026-08-09T00:00:00+00:00",
+    }
+    encoded = json.dumps(row, separators=(",", ":")).replace(
+        '"artifact_id":"artifact-001"',
+        '"artifact_id":"artifact-999","artifact_id":"artifact-001"',
+    )
+    vault.MANIFEST.write_text(encoded + "\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(vault.ROOT), "add", "institutio/vault/manifest.jsonl"],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(vault.ROOT),
+            "-c",
+            "user.email=vault-test@example.invalid",
+            "-c",
+            "user.name=Vault Test",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-m",
+            "commit duplicate manifest field",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+    with pytest.raises(vault.VaultError, match="duplicate field"):
+        vault._real_historical_artifacts()
 
 
 def test_tracked_files_preserve_non_ascii_private_paths(vault):

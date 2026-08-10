@@ -146,6 +146,25 @@ def _safe_artifact_id(value: str) -> str:
     return value
 
 
+def _reject_duplicate_fields(pairs: list[tuple[str, object]]) -> dict:
+    value: dict = {}
+    for key, item in pairs:
+        if key in value:
+            raise VaultError("manifest object contains a duplicate field")
+        value[key] = item
+    return value
+
+
+def _canonical_vaulted_at(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return parsed.tzinfo == timezone.utc and value == parsed.isoformat(timespec="seconds")
+
+
 def _contained_file(base: Path, name: str) -> Path:
     if not name or Path(name).name != name or Path(name).is_absolute():
         raise VaultError(f"unsafe vault filename: {name!r}")
@@ -180,9 +199,11 @@ def _read_manifest() -> list[dict]:
         if not raw.strip():
             continue
         try:
-            row = json.loads(raw)
+            row = json.loads(raw, object_pairs_hook=_reject_duplicate_fields)
         except json.JSONDecodeError as exc:
             raise VaultError(f"manifest line {line_number} is invalid JSON: {exc.msg}") from exc
+        except VaultError as exc:
+            raise VaultError(f"manifest line {line_number} contains a duplicate field") from exc
         if not isinstance(row, dict):
             raise VaultError(f"manifest line {line_number} is not an object")
         rows.append(row)
@@ -210,7 +231,7 @@ def _validate_public_row(row: dict, line_number: int) -> list[str]:
         errors.append(f"manifest line {line_number} has invalid ciphertext byte count")
     if row.get("recipient_fpr") != FINGERPRINT:
         errors.append(f"manifest line {line_number} has unexpected recipient fingerprint")
-    if not isinstance(row.get("vaulted_at"), str) or not row.get("vaulted_at"):
+    if not _canonical_vaulted_at(row.get("vaulted_at")):
         errors.append(f"manifest line {line_number} has invalid vaulted_at")
     return errors
 
@@ -251,8 +272,7 @@ def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
         or not isinstance(ciphertext_bytes, int)
         or ciphertext_bytes < 0
         or not isinstance(recipient_fpr, str)
-        or not isinstance(vaulted_at, str)
-        or not vaulted_at
+        or not _canonical_vaulted_at(vaulted_at)
     ):
         raise VaultError("manifest contains invalid immutable custody metadata")
     return ciphertext, ciphertext_sha256, ciphertext_bytes, recipient_fpr, vaulted_at
@@ -261,9 +281,7 @@ def _custody_metadata(row: dict) -> tuple[str, str, int, str, str]:
 def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
     """Return immutable metadata for every neutral v2 artifact admitted to custody."""
     manifest_relative = MANIFEST.relative_to(ROOT).as_posix()
-    history = _run_command(
-        ["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative]
-    )
+    history = _run_command(["git", "-C", str(ROOT), "rev-list", "--full-history", "HEAD", "--", manifest_relative])
     if history.returncode != 0:
         raise VaultError(f"cannot inspect manifest custody history: {_diagnostic(history)}")
 
@@ -277,9 +295,13 @@ def _historical_artifacts() -> dict[str, tuple[str, str, int, str, str]]:
             if not raw.strip():
                 continue
             try:
-                row = json.loads(raw)
+                row = json.loads(raw, object_pairs_hook=_reject_duplicate_fields)
             except json.JSONDecodeError as exc:
                 raise VaultError(f"committed manifest history contains invalid JSON at line {line_number}") from exc
+            except VaultError as exc:
+                raise VaultError(
+                    f"committed manifest history contains a duplicate field at line {line_number}"
+                ) from exc
             if not isinstance(row, dict) or row.get("schema") != SCHEMA:
                 continue
             artifact_id = row.get("artifact_id")

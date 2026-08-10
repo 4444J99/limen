@@ -187,9 +187,9 @@ def changed_set(base: str | None) -> list[str]:
     paths: set[str] = set()
     merge_base = resolve_merge_base(base)
     if merge_base:
-        paths.update(git_paths("diff", "--name-only", "-z", merge_base, "HEAD"))
-    paths.update(git_paths("diff", "--name-only", "-z"))
-    paths.update(git_paths("diff", "--name-only", "-z", "--cached"))
+        paths.update(git_paths("diff", "--name-only", "--no-renames", "-z", merge_base, "HEAD"))
+    paths.update(git_paths("diff", "--name-only", "--no-renames", "-z"))
+    paths.update(git_paths("diff", "--name-only", "--no-renames", "-z", "--cached"))
     paths.update(git_paths("ls-files", "--others", "--exclude-standard", "-z"))
     return sorted(p for p in paths if p)
 
