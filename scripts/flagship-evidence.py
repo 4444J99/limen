@@ -59,8 +59,16 @@ def fetch(url: str) -> tuple[int, bytes]:
         raise EvidenceError(f"public anchor unavailable: {url}: {exc.reason}") from exc
 
 
-def selected_ids(matrix: dict[str, Any]) -> set[str]:
-    return {str(row.get("id")) for row in matrix.get("candidates", []) if isinstance(row, dict) and row.get("status") == "selected"}
+def selected_repositories(matrix: dict[str, Any]) -> dict[str, str]:
+    selected: dict[str, str] = {}
+    for row in matrix.get("candidates", []):
+        if not isinstance(row, dict) or row.get("status") != "selected":
+            continue
+        identifier = row.get("id")
+        repository = row.get("repository")
+        if isinstance(identifier, str) and isinstance(repository, str):
+            selected[identifier] = repository
+    return selected
 
 
 def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
@@ -96,8 +104,10 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
     packet_ids = {row.get("id") for row in packets if isinstance(row, dict)}
     if packet_ids != EXPECTED_IDS:
         errors.append(f"packet ids must be {sorted(EXPECTED_IDS)}")
+    selected: dict[str, str] = {}
     try:
-        if selected_ids(load_yaml(root / "docs/positioning/flagship-proof-set.yaml")) != packet_ids:
+        selected = selected_repositories(load_yaml(root / "docs/positioning/flagship-proof-set.yaml"))
+        if set(selected) != packet_ids:
             errors.append("packets must match the W03 selected flagship set exactly")
     except EvidenceError as exc:
         errors.append(str(exc))
@@ -108,17 +118,37 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
             continue
         label = str(packet.get("id") or "packet")
         path = packet.get("path")
-        if not isinstance(path, str) or not (root / path).is_file():
+        packet_path = Path(path) if isinstance(path, str) else None
+        if (
+            packet_path is None
+            or packet_path.is_absolute()
+            or ".." in packet_path.parts
+            or not (root / packet_path).is_file()
+        ):
             errors.append(f"{label}: packet path must exist")
-        if not isinstance(packet.get("public_repository"), str) or "/" not in packet["public_repository"]:
-            errors.append(f"{label}: public_repository must name a public owner/repository")
+        if packet.get("public_repository") != selected.get(label):
+            errors.append(f"{label}: public_repository must match the W03-selected public repository")
         if not isinstance(packet.get("limitations"), list) or not packet["limitations"]:
             errors.append(f"{label}: limitations must be nonempty")
         if not isinstance(packet.get("authorship"), str) or not packet["authorship"].strip():
             errors.append(f"{label}: authorship treatment is required")
         sources = packet.get("sources")
-        if not isinstance(sources, list) or {source.get("kind") for source in sources if isinstance(source, dict)} != {"workflow_run", "public_endpoint"}:
+        if (
+            not isinstance(sources, list)
+            or len(sources) != 2
+            or [source.get("kind") for source in sources if isinstance(source, dict)].count("workflow_run") != 1
+            or [source.get("kind") for source in sources if isinstance(source, dict)].count("public_endpoint") != 1
+        ):
             errors.append(f"{label}: exactly one workflow and public endpoint source are required")
+        else:
+            for source in sources:
+                url = source.get("url")
+                if not isinstance(url, str) or not url.startswith("https://"):
+                    errors.append(f"{label}: source URLs must use public HTTPS anchors")
+                if source.get("kind") == "workflow_run":
+                    api_url = source.get("api_url")
+                    if not isinstance(api_url, str) or not api_url.startswith("https://api.github.com/repos/"):
+                        errors.append(f"{label}: workflow API URL must use the public GitHub endpoint")
         metrics = packet.get("metrics")
         if not isinstance(metrics, list) or not metrics:
             errors.append(f"{label}: at least one material metric is required")
@@ -134,6 +164,10 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 errors.append(f"{label}: metrics must use an exact, dated comparison")
             if metric.get("status") not in {"verified", "repository_asserted_with_public_anchor"}:
                 errors.append(f"{label}: invalid metric status")
+            if isinstance(metric.get("observed_value"), bool) or not isinstance(metric.get("observed_value"), (int, float)):
+                errors.append(f"{label}: observed metric values must be numeric")
+            if not isinstance(metric.get("source_url"), str) or not metric["source_url"].startswith("https://"):
+                errors.append(f"{label}: metric source must use a public HTTPS anchor")
     return errors
 
 

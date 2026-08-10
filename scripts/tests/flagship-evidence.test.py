@@ -39,6 +39,21 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["privacy"]["encrypted_addendum"]["status"] = "invented"
         self.assert_error_contains(index, "encrypted addendum")
 
+    def test_rejects_repository_substitution_for_selected_flagship(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["public_repository"] = "example/replacement"
+        self.assert_error_contains(index, "W03-selected public repository")
+
+    def test_rejects_duplicate_source_kinds(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["sources"][1] = copy.deepcopy(index["packets"][0]["sources"][0])
+        self.assert_error_contains(index, "exactly one workflow and public endpoint")
+
+    def test_rejects_packet_path_traversal(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["path"] = "../README.md"
+        self.assert_error_contains(index, "packet path must exist")
+
     def test_rejects_a_formal_completion_rewrite(self) -> None:
         index = copy.deepcopy(self.index)
         index["dependency_gate"]["w04_state"] = "closed"
@@ -48,6 +63,11 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index = copy.deepcopy(self.index)
         index["packets"][0]["metrics"][0]["comparison"] = "approximate"
         self.assert_error_contains(index, "exact, dated comparison")
+
+    def test_rejects_nonnumeric_observed_metric(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["metrics"][0]["observed_value"] = "many"
+        self.assert_error_contains(index, "observed metric values must be numeric")
 
 
 if __name__ == "__main__":

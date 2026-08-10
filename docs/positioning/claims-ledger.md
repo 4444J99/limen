@@ -5,7 +5,7 @@ positioning. Before any claim appears on a public surface (README, portfolio, bi
 essay, application), it must have a row here with a status that permits that surface.
 
 Maintained beside `positioning-seeds.json` (the judgment layer) and
-`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-09 against live
+`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-10 against live
 authenticated evidence.
 
 ## Evidence-authority ladder
@@ -45,21 +45,22 @@ preserve the disagreement explicitly.
 
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
-| 313 repositories total (235 public, 78 private) | `verified` (census 2026-08-08T19:14Z) | Exhaustive authenticated census, `docs/github-estate-census.json` | "As of August 2026, the GitHub estate contains 313 repositories — 235 public and 78 private — across a personal account and ten organizations." | L1 (dated) |
-| Live count 2026-08-09: 309 repos (235 public, 74 private) | `verified` (live API sweep) | Authenticated per-org `gh api` listing, deduped | Use the dated census number with its date; note drift in L3 only | L3 |
+| 314 repositories total (235 public, 79 private) | `verified` (two stable census passes 2026-08-10T14:13Z) | Exhaustive authenticated census, `docs/github-estate-census.json`, with the public-safe W01 receipt recording zero new owner, organization, or repository keys between passes | "As of August 10, 2026, the GitHub estate contains 314 repositories — 235 public and 79 private — across a personal account and ten organizations." | L1 (dated) |
+| 313 repositories total (235 public, 78 private) | `superseded` (census 2026-08-08T19:14Z) | Replaced by the stable 2026-08-10 census above | never use as current; retain only as dated history | nowhere |
+| Live count 2026-08-09: 309 repos (235 public, 74 private) | `superseded` (incomplete live sweep) | Replaced by the exhaustive stable census above | never use as the estate denominator | nowhere |
 | 1 personal account + 10 organizations | `verified` | Census + live org listing | as-is | L1 |
 | "~280 repositories" (voice memo) | `superseded` | Census supersedes | never use | nowhere |
 | 307/308 repository counts (older records) | `superseded` | Census supersedes | never use | nowhere |
 | Profile repository counts | `derived` on a distinct live-profile basis | `scripts/profile-visuals.py` writes `public-repos.json` from the live GitHub API; `scripts/sync-readme.py` renders its dated manifest. This is not the exhaustive census basis. | Label as live profile/API counts with the generation date; never present them as the estate census or use them to revise the dated census row above | L1 when dated and basis-labeled |
 | Org README shows "215 repositories" | `superseded` (stale generation 2026-07-30) | Org profile README vs census | regenerate from census | fix, then L1 |
-| Repository count ≠ product count | `verified` (classification) | `docs/positioning/estate-classification.md` | "A 313-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
+| Repository count ≠ product count | `verified` (classification) | `docs/positioning/estate-classification.md` | "A 314-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
 
 ## 2. Product claims
 
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
 | "~100 products" / "100 functioning products" / "shipped ~100 products" | `unverified` | No classification supports it; estate contains products, prototypes, specs, infra, forks, archives | never substitute "shipped products" for "repositories" | nowhere |
-| Limen operates live in owner's environment | `verified` | Public dashboard `limen-dashboard.pages.dev` (public-status.json: 3,111 tasks, 1,357 done, since 2026-05-31, observed 2026-08-09); worker `/health` 200 | "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026." "Production" = operational internally; not customer deployment | L1/L2 |
+| Limen operates live in owner's environment | `verified` | Public dashboard `limen-dashboard.pages.dev` (public-status.json: 3,111 tasks and 1,357 completed, observed 2026-08-10); current workflow and endpoint anchors are in `docs/positioning/evidence/flagship-evidence.yaml` | "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026." "Production" = operational internally; not customer deployment | L1/L2 |
 | Public-record system: 50-state coverage | `conflicted` → `repository-asserted` | Repo docs support 4 implemented state collectors (CA/TX/FL/NY) + a 50-state architecture/roadmap | "Four implemented state collectors on a fifty-state architecture" | L2 |
 | AI chat exporter: ~170 tests, 5 formats, 9 locales, working ChatGPT support | `repository-asserted` | Repo README; not reproduced in this pass | "repository-reported" phrasing until CI receipt exists | L2 with label |
 | AI chat exporter: "thousands of people install and use daily" | `unverified` | README assertion; no analytics inspected | remove or replace with verifiable install metric | nowhere until proven |
@@ -108,7 +109,7 @@ preserve the disagreement explicitly.
 
 | Metric | Status | Evidence |
 |---|---|---|
-| 3,111 tasks total, 1,357 done, 459 archived, 829 open, 356 failed_blocked, 109 needs_human (since 2026-05-31) | `verified` (observed 2026-08-09) | `limen-dashboard.pages.dev` public-status.json |
+| 3,111 tasks total, 1,357 done, 459 archived, 829 open, 356 failed_blocked, 109 needs_human (since 2026-05-31) | `superseded` as a composite snapshot | The current packet refreshes only total and completed. Withhold the other status counts until they are regenerated together from a dated public snapshot. |
 | Multi-agent lanes (agy, claude, codex, copilot, gemini, jules, opencode, oz, warp, github_actions) | `verified` | `AGENTS.md`, dispatch code, dashboard |
 | Cost/reliability/verification metrics | not yet published | Requires the Limen engineering report (proof program object P1) |
 
