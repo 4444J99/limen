@@ -1544,6 +1544,30 @@ sensors:
         severity: advisory
         escalation: "opportunity-status.json has stopped refreshing — the inbound-lead monitor (opportunity-review-delta) is frozen and the daily brief is reporting stale state; check `python3 scripts/opportunity-review-delta.py` and the heartbeat (2026-07-21 18h-blind incident, WS0)"
 
+  self-heal-stale:
+    section: "0o4"
+    title: "self-heal repair factory is alive — logs/self-heal.log is still being refreshed, not silently dead"
+    gate: LIMEN_SELF_HEAL_STALE
+    default: "1"
+    source: [metabolize]
+    owner: heal
+    # The 2026-08-09 sibling of host-pressure-stale: the beat ticked while the self-heal PR-repair
+    # factory silently stopped. The daily quota wall (BrokerQuotaExhausted → EX_TEMPFAIL) exits
+    # self-heal.py BEFORE the success-path summary write, so the HEAL beat ran, every reader of
+    # logs/self-heal.log reported all-clear, and refused PRs stopped becoming HEAL tasks for ~26h.
+    # This rung watches the WRITER, not the PRs: self-heal.py runs every C_HEAL=6 beats (~3h
+    # worst-case tempo), so 6h = ~2 windows is stale without false-positiving a slow beat. Reuses
+    # the generic scripts/state-freshness.py with --field mtime (self-heal.log carries no timestamp
+    # body field — the file's own mtime IS the writer's heartbeat). Read-only; advisory; onset-deduped.
+    # Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0)
+    # doesn't alarm on a log that is stale by design.
+    steps:
+      - command: 'python3 scripts/state-freshness.py --file logs/self-heal.log --field mtime --max-age-seconds 21600 --key self-heal-stale --label "self-heal repair factory"'
+        when_env: LIMEN_SELF_HEAL
+        when_default: "1"
+        severity: advisory
+        escalation: "logs/self-heal.log has stopped refreshing — the PR-repair factory is dead (the daily quota wall exits self-heal.py before its success-path write, 2026-08-09 ~26h-silent incident): check `python3 scripts/self-heal.py --scan 30` and the heartbeat (C_HEAL=6 beats)"
+
   closeout-reconcile:
     section: "0z"
     title: "closeout reconciliation — every claimed-done outcome carries a verified receipt"

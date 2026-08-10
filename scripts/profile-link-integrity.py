@@ -32,9 +32,9 @@ import urllib.request
 
 SURFACES = [
     "https://raw.githubusercontent.com/4444J99/4444J99/main/README.md",
-    "https://organvm.github.io/portfolio/",
-    "https://organvm.github.io/portfolio/directory/",
-    "https://organvm.github.io/portfolio/resume/",
+    "https://organvm-vii-kerygma.github.io/portfolio/",
+    "https://organvm-vii-kerygma.github.io/portfolio/directory/",
+    "https://organvm-vii-kerygma.github.io/portfolio/resume/",
 ]
 # Hosts that legitimately do not resolve for an anonymous crawler and must NOT
 # fail the gate: intentional HOLDs (vanity cutover) + bot-walled hosts.

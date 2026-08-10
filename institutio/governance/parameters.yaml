@@ -2439,6 +2439,12 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_SELF_HEAL_STALE:
+    default: "1"
+    env: LIMEN_SELF_HEAL_STALE
+    self_update: none
+    owner: heal
+    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/state-freshness.py --field mtime fails (advisory) when logs/self-heal.log hasn't been refreshed within ~6h (~2 windows of the C_HEAL=6-beat rung's worst-case tempo). Sibling of host-pressure-stale — watches the PR-repair FACTORY's writer so the 2026-08-09 ~26h-silent death (quota wall exits self-heal.py before its success-path write) can't recur unseen; a frozen writer fires one onset-deduped notification (scripts/_notify.py). Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0) doesn't alarm on a log stale by design. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   LIMEN_HEAL_RECONCILE_SCAN_MAX:
     default: 1000               # ceiling on self-heal.py's full-fleet enumeration (--reconcile-scan-max)
     env: LIMEN_HEAL_RECONCILE_SCAN_MAX
