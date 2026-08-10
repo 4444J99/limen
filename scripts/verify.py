@@ -206,7 +206,27 @@ def committed_path_changes(merge_base: str) -> list[tuple[str, str]]:
     ]
     if len(fields) % 2:
         raise RuntimeError("git returned a malformed committed path inventory")
-    return list(zip(fields[::2], fields[1::2], strict=True))
+    changes = list(zip(fields[::2], fields[1::2], strict=True))
+    for revision in git("rev-list", "--merges", f"{merge_base}..HEAD").splitlines():
+        merge_fields = [
+            field
+            for field in git(
+                "diff-tree",
+                "--cc",
+                "--no-commit-id",
+                "--name-status",
+                "--no-renames",
+                "-r",
+                "-z",
+                revision,
+            ).split("\0")
+            if field
+        ]
+        if len(merge_fields) % 2:
+            raise RuntimeError("git returned a malformed merge-resolution path inventory")
+        for status, path in zip(merge_fields[::2], merge_fields[1::2], strict=True):
+            changes.append(("D" if status and set(status) == {"D"} else "M", path))
+    return changes
 
 
 def private_history_leak(base: str | None) -> bool:

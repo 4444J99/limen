@@ -797,7 +797,7 @@ def test_failed_restore_removes_all_plaintext_temporaries(vault, monkeypatch: py
     monkeypatch.setattr(vault, "_decrypt_file", corrupt_decrypt)
     with pytest.raises(vault.VaultError, match="integrity mismatch"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
-    assert list(destination.iterdir()) == []
+    assert not destination.exists()
 
 
 def test_failed_restore_cleans_up_after_decrypt_failure(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -812,7 +812,7 @@ def test_failed_restore_cleans_up_after_decrypt_failure(vault, monkeypatch: pyte
     monkeypatch.setattr(vault, "_decrypt_file", reject_decrypt)
     with pytest.raises(vault.VaultError, match="no secret key"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
-    assert list(destination.iterdir()) == []
+    assert not destination.exists()
 
 
 def test_restore_rejects_unpinned_ciphertext_before_writing(vault, tmp_path: Path):
@@ -825,6 +825,51 @@ def test_restore_rejects_unpinned_ciphertext_before_writing(vault, tmp_path: Pat
     with pytest.raises(vault.VaultError, match="ciphertext"):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
     assert not destination.exists()
+
+
+def test_restore_rejects_ciphertext_replaced_before_snapshot(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("trusted", encoding="utf-8")
+    _add(vault, source)
+    ciphertext = vault.VAULT_DIR / "artifact-001.gpg"
+    destination = tmp_path / "restore"
+    real_snapshot = vault._snapshot_ciphertext
+
+    def replace_before_snapshot(source_path: Path, snapshot: Path) -> None:
+        source_path.write_bytes(b"replacement")
+        real_snapshot(source_path, snapshot)
+
+    monkeypatch.setattr(vault, "_snapshot_ciphertext", replace_before_snapshot)
+
+    with pytest.raises(vault.VaultError, match="ciphertext"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert ciphertext.read_bytes() == b"replacement"
+    assert not destination.exists()
+
+
+def test_restore_decrypts_the_validated_ciphertext_snapshot(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    source = tmp_path / "private.md"
+    source.write_text("trusted", encoding="utf-8")
+    _add(vault, source)
+    ciphertext = vault.VAULT_DIR / "artifact-001.gpg"
+    expected_ciphertext = ciphertext.read_bytes()
+    destination = tmp_path / "restore"
+
+    def replace_original_then_decrypt(snapshot: Path, envelope: Path) -> None:
+        assert snapshot != ciphertext
+        assert snapshot.read_bytes() == expected_ciphertext
+        ciphertext.write_bytes(b"replacement")
+        shutil.copyfile(snapshot, envelope)
+
+    monkeypatch.setattr(vault, "_decrypt_file", replace_original_then_decrypt)
+
+    assert (
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+        == 0
+    )
+    assert (destination / "artifact-001--private.md").read_text(encoding="utf-8") == "trusted"
+    assert ciphertext.read_bytes() == b"replacement"
 
 
 def test_restore_rejects_substitution_against_committed_custody(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
@@ -916,6 +961,64 @@ def test_restore_refuses_dangling_target(vault, tmp_path: Path):
         vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
 
     assert final_path.is_symlink()
+
+
+def test_restore_atomic_publish_does_not_replace_concurrent_target(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    source = tmp_path / "private.md"
+    source.write_text("trusted", encoding="utf-8")
+    _add(vault, source)
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    final_path = destination / "artifact-001--private.md"
+    real_link = vault.os.link
+
+    def concurrent_link(source_path, destination_path, *, follow_symlinks=True):
+        Path(destination_path).write_text("concurrent", encoding="utf-8")
+        return real_link(source_path, destination_path, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(vault.os, "link", concurrent_link)
+
+    with pytest.raises(vault.VaultError, match="already exists"):
+        vault.cmd_restore(SimpleNamespace(all=False, artifact_id="artifact-001", dest=str(destination), apply=True))
+
+    assert final_path.read_text(encoding="utf-8") == "concurrent"
+    assert [path for path in destination.iterdir() if path.name.startswith(".artifact-001.")] == []
+
+
+def test_restore_all_rolls_back_earlier_links_on_late_concurrent_target(
+    vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    first = tmp_path / "first.md"
+    first.write_text("first", encoding="utf-8")
+    second = tmp_path / "second.md"
+    second.write_text("second", encoding="utf-8")
+    monkeypatch.setattr(vault, "BOOTSTRAP_ARTIFACT_IDS", frozenset({"artifact-001", "artifact-002"}))
+    _add(vault, first, "artifact-001")
+    _add(vault, second, "artifact-002")
+    destination = tmp_path / "restore"
+    destination.mkdir(mode=0o700)
+    first_path = destination / "artifact-001--first.md"
+    second_path = destination / "artifact-002--second.md"
+    real_link = vault.os.link
+    links = 0
+
+    def race_second_link(source_path, destination_path, *, follow_symlinks=True):
+        nonlocal links
+        links += 1
+        if links == 2:
+            Path(destination_path).write_text("concurrent", encoding="utf-8")
+        return real_link(source_path, destination_path, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(vault.os, "link", race_second_link)
+
+    with pytest.raises(vault.VaultError, match="already exists"):
+        vault.cmd_restore(SimpleNamespace(all=True, artifact_id=None, dest=str(destination), apply=True))
+
+    assert not first_path.exists()
+    assert second_path.read_text(encoding="utf-8") == "concurrent"
+    assert [path for path in destination.iterdir() if path.name.startswith(".artifact-")] == []
 
 
 def test_restore_all_preflights_every_target_before_publish(vault, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):

@@ -846,6 +846,52 @@ def _restore_name(destination_root: Path, artifact_id: str, original_name: str) 
     return f"{artifact_id}--restored"
 
 
+def _snapshot_ciphertext(source: Path, destination: Path) -> None:
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        source_fd = os.open(source, flags)
+    except OSError as exc:
+        raise VaultError("cannot open a stable ciphertext snapshot") from exc
+    try:
+        source_info = os.fstat(source_fd)
+        if not stat.S_ISREG(source_info.st_mode):
+            raise VaultError("ciphertext snapshot source is not a regular file")
+        output_flags = os.O_WRONLY | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0)
+        output_fd = os.open(destination, output_flags)
+        try:
+            with (
+                os.fdopen(source_fd, "rb", closefd=False) as input_handle,
+                os.fdopen(output_fd, "wb", closefd=False) as output_handle,
+            ):
+                shutil.copyfileobj(input_handle, output_handle, length=1 << 20)
+                output_handle.flush()
+                os.fsync(output_handle.fileno())
+        finally:
+            os.close(output_fd)
+    finally:
+        os.close(source_fd)
+    os.chmod(destination, 0o600)
+
+
+def _link_no_replace(source: Path, destination: Path) -> tuple[int, int]:
+    source_info = source.stat()
+    identity = source_info.st_dev, source_info.st_ino
+    try:
+        os.link(source, destination, follow_symlinks=False)
+    except FileExistsError as exc:
+        raise VaultError(f"restore target already exists: {destination.name}") from exc
+    return identity
+
+
+def _rollback_link(destination: Path, identity: tuple[int, int]) -> None:
+    try:
+        current = destination.lstat()
+    except FileNotFoundError:
+        return
+    if (current.st_dev, current.st_ino) == identity:
+        destination.unlink()
+
+
 def cmd_restore(args: argparse.Namespace) -> int:
     rows = _read_manifest()
     for line_number, row in enumerate(rows, 1):
@@ -886,32 +932,50 @@ def cmd_restore(args: argparse.Namespace) -> int:
         os.chmod(destination_root, 0o700)
     elif not destination_root.is_dir() or stat.S_IMODE(destination_root.stat().st_mode) & 0o077:
         raise VaultError("restore destination must be an owner-only directory")
-    prepared: list[tuple[str, Path, Path, Path]] = []
+    prepared: list[tuple[str, Path, Path, Path, Path]] = []
     final_paths: set[Path] = set()
+    published: list[tuple[Path, tuple[int, int]]] = []
+    succeeded = False
     try:
         for row in targets:
             artifact_id = _safe_artifact_id(str(row.get("artifact_id") or ""))
             cipher_path = _cipher_path(row)
+            cipher_snapshot = _temporary_file(destination_root, artifact_id, ".ciphertext.gpg")
             envelope = _temporary_file(destination_root, artifact_id, ".envelope")
             plaintext = _temporary_file(destination_root, artifact_id, ".plaintext")
-            prepared.append((artifact_id, envelope, plaintext, Path()))
-            _decrypt_file(cipher_path, envelope)
+            prepared.append((artifact_id, cipher_snapshot, envelope, plaintext, Path()))
+            _snapshot_ciphertext(cipher_path, cipher_snapshot)
+            failures = _ciphertext_failures(row, cipher_snapshot)
+            if failures:
+                raise VaultError("; ".join(failures))
+            _decrypt_file(cipher_snapshot, envelope)
             original_name = _extract_envelope(envelope, artifact_id, plaintext)
             final_name = _restore_name(destination_root, artifact_id, original_name)
             final_path = _contained_file(destination_root, final_name)
             if os.path.lexists(final_path) or final_path in final_paths:
                 raise VaultError(f"restore target already exists: {final_name}")
             final_paths.add(final_path)
-            prepared[-1] = (artifact_id, envelope, plaintext, final_path)
+            prepared[-1] = (artifact_id, cipher_snapshot, envelope, plaintext, final_path)
 
-        for artifact_id, _envelope, plaintext, final_path in prepared:
-            os.replace(plaintext, final_path)
-            os.chmod(final_path, 0o600)
+        for _artifact_id, _cipher_snapshot, _envelope, plaintext, final_path in prepared:
+            published.append((final_path, _link_no_replace(plaintext, final_path)))
+        for artifact_id, _cipher_snapshot, _envelope, plaintext, _final_path in prepared:
+            plaintext.unlink()
             print(f"OK: restored {artifact_id} (pinned ciphertext and plaintext verified)")
+        succeeded = True
     finally:
-        for _artifact_id, envelope, plaintext, _final_path in prepared:
+        if not succeeded:
+            for final_path, identity in reversed(published):
+                _rollback_link(final_path, identity)
+        for _artifact_id, cipher_snapshot, envelope, plaintext, _final_path in prepared:
+            cipher_snapshot.unlink(missing_ok=True)
             envelope.unlink(missing_ok=True)
             plaintext.unlink(missing_ok=True)
+        if created_destination and not succeeded:
+            try:
+                destination_root.rmdir()
+            except OSError:
+                pass
     return 0
 
 

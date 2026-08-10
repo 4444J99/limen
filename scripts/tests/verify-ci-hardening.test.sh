@@ -312,6 +312,49 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
   && pass merge-base-path-exclusion \
   || flunk merge-base-path-exclusion "feature gate missing or base-only path leaked into scope: $out"
 
+# ── 4g: merge-resolution-only private content remains in the inventory ─────────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" switch -q feature
+git -C "$sb" -c user.email=t@t -c user.name=t merge -q --no-ff --no-commit main
+mkdir -p "$sb/.limen-private"
+printf 'private\n' >"$sb/.limen-private/merge-only-probe"
+git -C "$sb" -c user.email=t@t -c user.name=t add -f .limen-private/merge-only-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "merge with private resolution"
+git -C "$sb" rm -q .limen-private/merge-only-probe
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete merge-only private content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk merge-resolution-private "exit 0 despite merge-created private history" \
+  || { grep -q "refusing to expose or certify transient private content" <<<"$out" \
+         && ! grep -q "merge-only-probe" <<<"$out" \
+         && pass merge-resolution-private \
+         || flunk merge-resolution-private "missing neutral refusal or leaked path: $out"; }
+
+# ── 4h: merge-resolution-only public custody content is also rejected ──────────
+sb="$(make_sandbox)"
+git -C "$sb" switch -q -c feature
+commit_touch "$sb" src/feature.txt
+git -C "$sb" switch -q main
+commit_touch "$sb" webish/base-only.txt
+base_sha="$(git -C "$sb" rev-parse HEAD)"
+git -C "$sb" switch -q feature
+git -C "$sb" -c user.email=t@t -c user.name=t merge -q --no-ff --no-commit main
+printf 'ciphertext\n' >"$sb/institutio/vault/merge-only-cipher.gpg"
+git -C "$sb" -c user.email=t@t -c user.name=t add institutio/vault/merge-only-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "merge with custody resolution"
+git -C "$sb" rm -q institutio/vault/merge-only-cipher.gpg
+git -C "$sb" -c user.email=t@t -c user.name=t -c commit.gpgsign=false commit -qm "delete merge-only custody content"
+out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
+  && flunk merge-resolution-custody "exit 0 despite merge-created custody history" \
+  || { grep -q "refusing to certify an unvalidated intermediate version" <<<"$out" \
+         && ! grep -q "merge-only-cipher" <<<"$out" \
+         && pass merge-resolution-custody \
+         || flunk merge-resolution-custody "missing neutral refusal or leaked path: $out"; }
+
 # ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
