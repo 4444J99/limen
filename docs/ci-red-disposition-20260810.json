@@ -1,0 +1,52 @@
+{
+  "schema": "limen.ci_red_disposition.v1",
+  "description": "Durable disposition ledger for the 89 CI-RED PR cohort on organvm/limen as of 2026-08-10. Each PR is classified into one of three buckets per DRAIN-0810-DISPOSITION-CIRED: auto-fixable → routed to self-heal; human-gated → lever in his-hand-levers.json; rest → lifecycle disposition.",
+  "generated_at": "2026-08-10T19:55:00Z",
+  "owner_repo": "organvm/limen",
+  "surface": "gh api repos/organvm/limen/pulls + check-runs",
+  "class": "cohort-disposition",
+  "count": 89,
+  "cohort_source": "/tmp/cohort.json (REST enumeration; GraphQL exhausted)",
+  "mergeable_source": "/tmp/mergeable.json",
+  "labels_source": "/tmp/labels.json",
+  "disposition_rule": "for each PR: if auto-fixable (CAPFILL/HEAL-cifix/ORG- pattern + no human decision needed) → self-heal route; if human-gated (lever exists in his-hand-levers.json) → lever; else → lifecycle:blocked (default) or lifecycle:preservation (custody) or lifecycle:superseded (named successor).",
+  "disposition_status": "in_progress",
+  "disposition": {
+    "campaign": "organvm/limen#2297",
+    "dispositioned_at": null,
+    "buckets": {
+      "auto_fixable_self_heal": {
+        "count": 60,
+        "patterns": ["CAPFILL (39)", "HEAL-cifix (2)", "ORG- (14)", "recovery (9)", "other auto-fixable (6)"],
+        "rationale": "These are heal-loop auto-fix branches or known-pattern CI-RED that self-heal.py can address on next cycle. CAPFILL era June 29, ORG- healing, recovery lanes, HEAL-cifix explicit — all have mechanistic fixes."
+      },
+      "human_gated_lever": {
+        "count": 2,
+        "prs": [2298, 2302],
+        "levers": ["L-PR-DRAFT-COHORT-DISPOSITION", "L-PR-DRAFT-COHORT-DISPOSITION"],
+        "rationale": "In-flight DRAIN-0810 workstreams (T1, T5) — human decides merge timing via umbrella #2297."
+      },
+      "lifecycle_disposition": {
+        "count": 27,
+        "sub_buckets": {
+          "lifecycle_blocked": {
+            "count": 27,
+            "prs": [375, 401, 402, 404, 452, 484, 485, 490, 492, 516, 676, 695, 384, 385, 590, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 684, 853],
+            "rationale": "Stale-base legacy lanes (created Jun-Jul, updated 2026-07-24); mergeable unknown/dirty; no active owner; fail-closed pending lifecycle review."
+          },
+          "lifecycle_preservation": {
+            "count": 0,
+            "prs": [],
+            "rationale": "No CI-RED PRs with custody:preservation label detected in this cohort."
+          },
+          "lifecycle_superseded": {
+            "count": 0,
+            "prs": [],
+            "rationale": "No explicitly superseded PRs detected in this cohort."
+          }
+        }
+      }
+    }
+  },
+  "per_pr_ledger": "docs/ci-red-disposition-20260810.jsonl"
+}
