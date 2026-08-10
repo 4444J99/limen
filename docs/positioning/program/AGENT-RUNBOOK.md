@@ -95,10 +95,17 @@ target repository. For a `multi-repository:<selector>` packet, the receipt must 
 equal that set exactly. Record the head of every resolved target tree on which the predicate passed;
 an unrelated, additional, or omitted repository head does not satisfy the packet.
 
-Phase closure has an additional proof boundary. Closing all children does not execute the phase’s
-manifest-owned executable `exit_gate`. Run that gate as its own non-circular predicate, capture its
-true result and durable evidence. After every child has its current valid work receipt, generate the
-read-only phase receipt skeleton:
+Phase closure has an additional proof boundary. The phase’s `exit_gate` is the prose end state; it
+is not a command. Each phase has a separate, manifest-owned `exit_predicate` with the exact
+executable proof command:
+
+```bash
+python3 scripts/positioning-program.py --phase-proof <PHASE-ID>
+```
+
+Run the manifest command bare as the non-circular underlying predicate and capture its true result
+and durable evidence; never try to execute the prose `exit_gate`. After every child has its current
+valid work receipt, generate the read-only phase receipt skeleton:
 
 ```bash
 python3 scripts/positioning-program.py --phase-receipt-template <PHASE-ID>
@@ -108,20 +115,19 @@ Post the completed `limen.positioning_phase_receipt.v1` JSON receipt after the m
 `<!-- positioning-phase-receipt:<PHASE-ID> -->`. The skeleton binds `phase_id`,
 `"status": "pass"`, the current `exit_gate_sha256`, exactly the program repository and its exact
 head in `observed_heads`, `child_receipts_sha256`, phase-local `remote_state_sha256`,
-`parity_sha256`, the manifest-derived underlying `predicate.command`, `predicate.exit_code: 0`,
-`predicate.output_sha256`, `predicate.observed_at`, and nonempty HTTPS `evidence_urls`. Replace only
-the skeleton’s evidence placeholders with facts from the completed phase proof. Then validate it
-with:
+`parity_sha256`, the manifest-derived `exit_predicate` in `predicate.command`,
+`predicate.exit_code: 0`, `predicate.output_sha256`, `predicate.observed_at`, and nonempty HTTPS
+`evidence_urls`. Replace only the skeleton’s evidence placeholders with facts from the completed
+phase proof. Then validate it with:
 
 ```bash
 python3 scripts/positioning-program.py --verify-phase <PHASE-ID>
 ```
 
-The underlying phase predicate may not call `--verify-phase` itself. Close the phase only after
-both child-receipt integrity and the current phase exit-gate receipt pass; closure-integrity and
+The underlying phase `exit_predicate` may not call `--verify-phase` itself. Close the phase only
+after both child-receipt integrity and the current phase receipt pass; closure-integrity and
 ready-work checks reject a closed phase whose phase receipt is missing or invalid. Never use child
-closure, phase prose, or a leaf’s `--verify-work` result as a substitute for the aggregate phase
-gate.
+closure, phase prose, or a leaf’s `--verify-work` result as a substitute for aggregate phase proof.
 
 The phase bindings are deliberately local and stable. `child_receipts_sha256` covers the current
 child receipts; `remote_state_sha256` covers the phase’s stable identity plus its children’s states;
@@ -138,7 +144,7 @@ Each Omega observation is one atomic view of remote state: fetch the program iss
 evidence once, then run parity, closure integrity, and state-digest construction over that same
 snapshot. Do not combine parity from an earlier fetch with closure or digest data from a later one.
 The attested digest covers the completion facts claimed by Omega, including leaf receipts and phase
-exit-gate evidence, rather than issue open/closed state alone.
+exit-predicate receipts, rather than issue open/closed state alone.
 
 Produce the two saveable pass records in separate invocations:
 
