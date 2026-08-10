@@ -95,6 +95,17 @@ class CommercialContractTests(unittest.TestCase):
         self.assertTrue(any("private-source marker" in error for error in private_errors), private_errors)
         self.assertTrue(any("numeric pricing" in error for error in price_errors), price_errors)
 
+    def test_threat_language_leaf_cannot_regress_to_problem_map(self) -> None:
+        matrix = MODULE.P03_MATRIX_PATH.read_text()
+        changed = "\n".join(
+            line.replace("`interview_threat_contract`", "`expensive_problem_map`")
+            if "| PSP-P03-W06 |" in line
+            else line
+            for line in matrix.splitlines()
+        )
+        errors = MODULE.validate_p03_matrix(changed)
+        self.assertTrue(any("must map to interview_threat_contract" in error for error in errors), errors)
+
 
 if __name__ == "__main__":
     unittest.main()

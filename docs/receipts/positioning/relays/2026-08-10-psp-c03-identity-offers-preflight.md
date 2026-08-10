@@ -63,10 +63,98 @@ C05 integration input after C03 closure: materialize the proposal/SOW blueprints
 
 ## Formal C03 integration relay
 
-1. Wait for PSP-C02 and PSP-P02 to close through their sanctioned predicates and receipts.
-2. Refresh the stacked base and every `C02-PROOF-*` claim from current primary evidence; narrow or withdraw any failed claim.
-3. Replace provisional links with exact receipt anchors and regenerate `docs/positioning/commercial-contract.md`.
-4. Split or attach PSP-P03 and PSP-P04 formal receipts exactly as their live issues require; do not reuse this preflight matrix as completion evidence.
-5. Run the registry-defined leaf and chunk predicates only after dependencies are valid, integrate through the sanctioned rail, then release C04/C05 formal execution.
+### Bounded-readiness snapshot
+
+Observed from the live remote on 2026-08-10 at approximately 20:08 UTC:
+
+- C03 draft PR [#2312](https://github.com/organvm/limen/pull/2312) remains open and draft at exact head `b5bc01585a10615e85e1ef5b31a2356c24fb9bc9`. Its exact-head contract validator and 12-test regression suite passed, and its remote Python, worker, web, and `pr-gate` checks succeeded. That is preflight evidence only.
+- The stacked base branch has advanced to `68b65fa233dcb163d45e066537eb06d0c6569e3b`. Do not rebase or force-push C03 merely to chase it.
+- C02 hardening draft PR [#2314](https://github.com/organvm/limen/pull/2314) is anchored at `b65f2c8ad95a8a3007ad7d1541e1b11228981534`; its adoption does not close PSP-P02.
+- The smallest live dependency chain is [PR #2141](https://github.com/organvm/limen/pull/2141) → PSP-P01-W03 [#2169](https://github.com/organvm/limen/issues/2169) → PSP-P01-W05 [#2171](https://github.com/organvm/limen/issues/2171) → PSP-P01 [#2166](https://github.com/organvm/limen/issues/2166) → PSP-P02 [#2172](https://github.com/organvm/limen/issues/2172). Until that chain closes through its own receipts, every PSP-P03 and PSP-P04 leaf stays open.
+- The preflight matrix is not a positioning receipt, a phase receipt, or evidence for issue closure.
+
+### Immutable downstream anchors
+
+Preserve these prepared descendants while C03 is blocked:
+
+- C04 controller draft [#2313](https://github.com/organvm/limen/pull/2313): `codex/psp-c04-proof-experience-preflight@e9c2db2360acd5fd57a48d063e64990dc8f3a768`.
+- C04 public-portfolio target draft [organvm-vii-kerygma/portfolio#220](https://github.com/organvm-vii-kerygma/portfolio/pull/220): exact head `fa86b67a7283c15ab801302ffac655c30898b6a1`.
+- C05 relay draft [#2315](https://github.com/organvm/limen/pull/2315): `codex/psp-c05-delivery-os-preflight-relay@b62f83f192112f94e73735e06a765b3ad6d97d9b`.
+- C05 private delivery target [organvm-iii-ergon/collaboration-operations-platform#135](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/135): exact head `4ae8e81665e35e6a5d403a3e13935021ce6544ec`.
+
+Those heads are receipt anchors, not branches to rewrite. After formal C03 closure, each successor owner may merge the accepted C03/main head once through its own sanctioned rail. The PSP-P06 rows above reflect the current local registry alias `organvm/portfolio`; when the adopted C02 correction lands, refresh them once to the immutable repository identity `organvm-vii-kerygma/portfolio` and extend the validator to reject alias regression.
+
+### Activation predicate
+
+Begin formal C03 integration only when all four observations agree on the same accepted P02 state:
+
+1. PSP-P02 issue [#2172](https://github.com/organvm/limen/issues/2172) is closed.
+2. `python3 scripts/positioning-program.py --verify-phase PSP-P02` exits successfully at the exact head recorded by the final P02 phase receipt.
+3. `python3 scripts/positioning-program.py --verify-remote` passes at that same head.
+4. `python3 scripts/positioning-program.py --ready --json` includes `PSP-P03-W01` with its registry assignment `gpt-5.6-sol / max`.
+
+If any observation fails or disagrees, perform no C03 mutation and do not repeat already-green C03 verification. Re-query only after the dependency state changes.
+
+### One-time evidence refresh without history rewriting
+
+Once the activation predicate is true:
+
+1. Fetch once and resolve the exact `organvm/limen` head from the final PSP-P02 phase receipt.
+2. Confirm that the intended accepted base contains that receipt head with `git merge-base --is-ancestor <P02-RECEIPT-HEAD> origin/main`. If it does not, stop rather than guessing at a base.
+3. Merge `origin/main` into this isolated branch with a normal merge; do not rebase, force-push, or mutate C02 worktrees or branches. Retarget PR #2312 to `main` only after the ancestry check succeeds.
+4. Refresh the final claims ledger, flagship proof set, flagship evidence packets, research adjudication, correction protocol, current profile README, and authorship-policy head from primary evidence. Promote, narrow, or withdraw each claim independently; never blanket-promote `provisional_c02` claims.
+5. Apply the adopted portfolio repository correction, replace provisional evidence links with exact receipt URLs and heads, transition the contract from dependency-blocked to its ratified state, regenerate `docs/positioning/commercial-contract.md`, and update the validator/tests for the ratified state.
+6. Materialize the acceptance artifacts still absent from this draft: identity-surface reconciliation, role-to-proof/interview map, five-reader narrative protocol and anonymized verdict, private pricing-anchor digest, bounded proposal/SOW templates in their registered repository, and product-partnership boundary verdict. No synthetic result may stand in for the five-reader verdict.
+7. Run `python3 scripts/positioning-commercial-contract.py --check`, its focused test file, and `scripts/verify-scoped.sh` once for the changed exact tree. Commit and push one coherent refresh batch.
+
+### Merge and formal receipt rail
+
+An unmerged draft is not completion evidence. After the refreshed artifacts and acceptance-specific predicates are green, remove `lifecycle:blocked`, mark PR #2312 ready, and use the no-bypass integration rail:
+
+```text
+scripts/merge-policy.sh 2312 --expected-head <EXACT-C03-HEAD>
+scripts/await-pr.sh 2312 --merge
+```
+
+Never use admin merge, force-push, or a direct `main` write. If a leaf needs a new tracked artifact after that merge, land it through one bounded follow-on PR and cite that merge head; never close against draft-only content. PSP-P04-W06 also requires its templates to merge through the registered external repository's sanctioned rail before its receipt can succeed.
+
+Process only leaves emitted by `python3 scripts/positioning-program.py --ready --json`, in this dependency order:
+
+1. PSP-P03: W01 → W02 → W03 → W04 and W05 → W06 → W07; then phase PSP-P03 [#2181](https://github.com/organvm/limen/issues/2181).
+2. PSP-P04, only after PSP-P03 closes: W01 → W02 → W03 → W04 and W05 → W06 and W07; then phase PSP-P04 [#2189](https://github.com/organvm/limen/issues/2189).
+
+For each ready leaf, preserve its exact live model assignment and use this receipt sequence:
+
+```text
+python3 scripts/positioning-program.py --seed <WORK-ID>
+limen conduct submit --packet <WORK-PACKET>
+<run the live issue's acceptance-specific predicate; never use --verify-work here>
+limen conduct report <LEASE> --receipt <RUN-RECEIPT>
+python3 scripts/positioning-program.py --receipt-template <WORK-ID>
+<post the completed positioning receipt after <!-- positioning-receipt:<WORK-ID> --> on the live issue>
+python3 scripts/positioning-program.py --verify-work <WORK-ID>
+gh issue close <ISSUE> --repo organvm/limen
+```
+
+Each positioning receipt must use the current acceptance digest, record `outcome: succeeded`, cite the accepted exact head for every observed repository, list the actual changed paths, include a successful non-circular predicate with output hash and time, use durable HTTPS evidence URLs, and state rollback. Submit transitions through the conduct broker; never edit `tasks.yaml`.
+
+After every child issue in a phase is closed:
+
+```text
+python3 scripts/positioning-program.py --phase-proof <PHASE-ID>
+python3 scripts/positioning-program.py --phase-receipt-template <PHASE-ID>
+<post the completed phase receipt after <!-- positioning-phase-receipt:<PHASE-ID> --> on the phase issue>
+python3 scripts/positioning-program.py --verify-phase <PHASE-ID>
+gh issue close <PHASE-ISSUE> --repo organvm/limen
+```
+
+Run the phase proof before minting its receipt and verify the phase while its issue is still open. After both phases close, verify `python3 scripts/positioning-program.py --chunk PSP-C03`, `--verify-remote`, and `--ready --json`; release C04/C05 formal work only if the registry now emits their first leaves.
+
+### Open human and external gates
+
+- `HG-PRICE-ANCHORS` (owner [#267](https://github.com/organvm/limen/issues/267)) controls the private floor, target, and exception amounts. Public artifacts retain symbolic IDs only; no numeric price belongs in this branch, relay, PR, or receipt.
+- `HG-CONTRACT` controls sending, signature, liability, data, payment, and service commitments. Draft templates may be prepared, but they create no contractual effect.
+- `HG-OPERATOR-TERMS` controls equity, licence, revenue, custody, access, and product-transfer terms. The partnership path remains secondary, L3-only, and non-offer until approved.
+- PSP-P03-W07 requires five blinded, target-like readers to identify role, buyer, problem, proof, and next step without prompting. Do not solicit them under this preflight's no-outbound boundary or substitute an internal prose judgment.
 
 No outbound publishing, sending, spend, DNS, account mutation, unsupported claim, private-source disclosure, numeric public price, or contractual effect is authorized by this relay.

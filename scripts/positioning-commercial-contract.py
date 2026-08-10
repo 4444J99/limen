@@ -316,6 +316,20 @@ def _matrix_ids(text: str, prefix: str) -> set[str]:
     return set(re.findall(rf"\b{re.escape(prefix)}-W\d{{2}}\b", text))
 
 
+def validate_p03_matrix(text: str) -> list[str]:
+    """Validate P03 coverage and the threat-language leaf's canonical evidence owner."""
+    errors: list[str] = []
+    found = _matrix_ids(text, "PSP-P03")
+    if found != P03_WORK:
+        errors.append(f"P03 evidence matrix coverage mismatch: expected {sorted(P03_WORK)}, found {sorted(found)}")
+    rows = [line for line in text.splitlines() if "| PSP-P03-W06 |" in line]
+    if len(rows) != 1:
+        errors.append("PSP-P03-W06 must appear in exactly one evidence-matrix row")
+    elif "`interview_threat_contract`" not in rows[0]:
+        errors.append("PSP-P03-W06 must map to interview_threat_contract")
+    return errors
+
+
 def validate_artifact_text(label: str, text: str) -> list[str]:
     errors: list[str] = []
     for marker in PRIVATE_MARKERS:
@@ -344,9 +358,7 @@ def validate_repository(data: dict[str, Any]) -> list[str]:
         errors.extend(validate_artifact_text(str(path.relative_to(ROOT)), text))
 
     if P03_MATRIX_PATH in artifacts:
-        found = _matrix_ids(artifacts[P03_MATRIX_PATH], "PSP-P03")
-        if found != P03_WORK:
-            errors.append(f"P03 evidence matrix coverage mismatch: expected {sorted(P03_WORK)}, found {sorted(found)}")
+        errors.extend(validate_p03_matrix(artifacts[P03_MATRIX_PATH]))
     if P04_MATRIX_PATH in artifacts:
         found = _matrix_ids(artifacts[P04_MATRIX_PATH], "PSP-P04")
         if found != P04_WORK:
@@ -356,6 +368,14 @@ def validate_repository(data: dict[str, Any]) -> list[str]:
         for required in ("PSP-C04", "PSP-P05", "PSP-P06", "Sol / xhigh", "PSP-C05", "PSP-P11", "Sol / max", "blocked on PSP-C02"):
             if required not in relay:
                 errors.append(f"successor relay missing exact marker: {required}")
+        for downstream_head in (
+            "e9c2db2360acd5fd57a48d063e64990dc8f3a768",
+            "fa86b67a7283c15ab801302ffac655c30898b6a1",
+            "b62f83f192112f94e73735e06a765b3ad6d97d9b",
+            "4ae8e81665e35e6a5d403a3e13935021ce6544ec",
+        ):
+            if downstream_head not in relay:
+                errors.append(f"successor relay omits preserved downstream head: {downstream_head}")
     if PROGRAM_PATH.exists():
         program = yaml.safe_load(PROGRAM_PATH.read_text())
         registered_gates = set(program.get("human_gates", {}))
