@@ -16,7 +16,9 @@ dependency_gate:
 
 privacy:
   public_packets_only: true
-  private_repository_names_in_artifact: 0
+  repository_identity_guard:
+    source: docs/github-estate-census.json
+    mode: tracked_public_census_allowlist
   private_evidence_required_for_selected_claims: false
   encrypted_addendum:
     status: not_created
@@ -36,7 +38,7 @@ w08_research_import:
   source_path: docs/positioning/program/research-adjudication.json
   source_blob: f0db657dde5cc27bb2db67e495fa410f6483646f
   source_sha256: 26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6
-  projection_sha256: 918cc029a78b67b10eec73c4483cc2a2d56f983491a5efd66b166b37de190596
+  projection_sha256: 698e317695c1ebd63f82e7456a04f1c55087754de0ef358bbd77c4fc8d4d39fc
   claim_count: 13
   preservation_rule: >-
     Keep measurement, inference, implication, and prominence independent. Citation sets remain
@@ -114,6 +116,10 @@ packets:
     path: docs/positioning/evidence/limen.md
     public_repository: organvm/limen
     status: verified_public_snapshot
+    bounded_claim: >-
+      Limen is a governed multi-agent delivery system with public operating, failure, and
+      verification receipts. This packet establishes public operational evidence only; it does
+      not claim customer adoption, revenue, or zero-maintenance operation.
     authorship: Architected and directed through a governed multi-agent system; machine assistance is disclosed, not concealed.
     limitations:
       - The public dashboard is an operational snapshot, not customer-adoption evidence.
@@ -147,6 +153,10 @@ packets:
     path: docs/positioning/evidence/public-records.md
     public_repository: organvm-iii-ergon/public-record-data-scrapper
     status: verified_public_snapshot
+    bounded_claim: >-
+      The public-records platform demonstrates a multi-stage public-record decision pipeline. Four
+      implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. It does not
+      claim fifty-state deployment, complete coverage, buyer adoption, or commercial outcomes.
     authorship: Public implementation and deployment are the evidence boundary; no private sources are needed for this packet.
     limitations:
       - Four implemented collectors do not establish fifty-state deployment or adoption.
@@ -177,6 +187,11 @@ packets:
     path: docs/positioning/evidence/ai-chat-exporter.md
     public_repository: organvm-iii-ergon/a-i-chat--exporter
     status: verified_public_snapshot
+    bounded_claim: >-
+      AI Chat Exporter is a privacy-first, client-side conversation export tool. The public
+      product surface presents five export formats: Markdown, HTML, JSON, PNG, and text. This claim
+      does not imply installations, daily users, revenue, retention, or cloud-free behavior beyond
+      the documented client-side export path.
     authorship: The public packet confines the claim to inspectable client-side behavior and avoids any user-volume inference.
     limitations:
       - Five formats do not prove daily use, installations, revenue, or user retention.

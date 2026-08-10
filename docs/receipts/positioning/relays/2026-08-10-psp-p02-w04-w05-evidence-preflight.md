@@ -24,6 +24,10 @@ compression_level: medium
 - Hardened implementation checkpoint: `488e55b9c25c8208cdf2e08ab1e6dced8524e3be`
 - Review-correction checkpoints: `8f93fc27abcb4cb6f32b42b2569091bb73a4a436` and
   `82f4795ba32f8ac7c3fc9f3d3441e7b111891540`
+- Late-audit correction parent: `eabee3f034d9072b6699e3862b7d543c9ffa1d65`; the current PR
+  head supersedes it with the seven-finding correction batch.
+- Current live W03 dependency head at correction time:
+  `322e2d583b04cc0157c568b654305debb66c1904`.
 - Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this
   remains a reversible preflight, not a claimed formal completion.
 
@@ -32,17 +36,17 @@ compression_level: medium
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
-| Exact reviewed code checkpoint | `82f4795ba32f8ac7c3fc9f3d3441e7b111891540`; fetch PR #2310 for the post-relay exact head before resuming |
-| Private repository names in public artifacts | 0 |
+| Exact reviewed code checkpoint | Fetch PR #2310 for the current exact head; it supersedes late-audit parent `eabee3f034d9072b6699e3862b7d543c9ffa1d65` |
+| Private repository identity guard | Derived from the redacted W01 public-repository projection; aggregate result 0 unregistered controlled identities, with no private names loaded or emitted |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
-| Numeric claims made publishable | 3 bounded, dated statements |
+| Indexed metrics made publishable | 4 exact statements across the 3 bounded packets |
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
 | W03 / W04 / W05 issue state at preflight | open / open / open |
 | Task-specific predicates | `python3 scripts/flagship-evidence.py --verify-live --json` passed; formal `--verify-work` commands intentionally not run |
-| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 29 tests, including exact term counts, immutable W08 wording/receipt binding, packet/index parity, workflow repository binding, live issue-state parity, source ownership, malformed live-field handling, repository substitution, path traversal, and network-source failures |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 40 tests, including packet-level bounded-claim parity, derived public-identity custody, malformed collection handling, immutable full W08 adjudication binding, section-8 metric parity, predecessor receipt enforcement, and interrupted response-body handling |
 | Parent privacy guard | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w03-flagship-proof-preflight` passed over the full W04/W05 diff: 314 repositories, 235 public, 79 private, with no private repository token added |
-| Scoped verification | `scripts/verify-scoped.sh` passed all 23 implicated cheap-wave gates on the composed hardened tree before this relay refresh |
+| Scoped verification | One bare `scripts/verify-scoped.sh` batch passed all implicated gates on the final late-audit correction tree |
 | External effects | branch/PR staging only; no merge, publication, issue-state, or account change |
 
 ## Completed work
@@ -68,9 +72,19 @@ compression_level: medium
 - Derived the collector and export-format denominators from complete, head-pinned Git trees rather
   than accepting predeclared term presence as an exact count.
 - Bound the 13 imported W08 wording and receipt sets to the immutable source head, path, blob,
-  artifact SHA-256, and canonical projection SHA-256.
-- Made packet Markdown a validated projection of the index and made dependency declarations follow
-  their live issue owners through the W03 -> W04 -> W05 closure order.
+  artifact SHA-256, and canonical projection SHA-256; the projection now includes all four layer
+  dispositions and `publishable_status` as well as wording and receipts.
+- Made packet Markdown a validated projection of each indexed packet-level bounded claim, not only
+  its metric sentences.
+- Replaced the author-declared private-name count with a full-surface, count-only identity guard
+  against the redacted W01 public repository projection and registered that source as a gate input.
+- Made claims-ledger section 8 a parsed, exact projection of the packet metric denominator,
+  statuses, observed values, and public-safe wording.
+- Made dependency declarations follow their live issue owners through the W03 -> W04 -> W05
+  closure order and invoke the canonical latest-marked-receipt predicate for every closed
+  predecessor while leaving the current open/open/open preflight valid.
+- Converted timeout, reset, incomplete-read, and other response-body I/O failures—including HTTP
+  error-body reads—into public-safe machine-readable evidence errors.
 
 ## Decisions and rationale
 
@@ -107,8 +121,9 @@ compression_level: medium
 - Flagship selection: `docs/positioning/flagship-proof-set.yaml`
 - Packet index: `docs/positioning/evidence/flagship-evidence.yaml`
 - Claims authority: `docs/positioning/claims-ledger.md`
-- Pull request: https://github.com/organvm/limen/pull/2310 (ready, stacked on W03); all ten review
-  threads are resolved. Do not merge it while dependencies remain open.
+- Pull request: https://github.com/organvm/limen/pull/2310 (ready, stacked on W03); all review
+  threads through the late seven-finding audit are resolved. Do not merge it while dependencies
+  remain open.
 
 The fresh-agent injection phrase is:
 

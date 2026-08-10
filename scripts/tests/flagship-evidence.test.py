@@ -4,11 +4,14 @@
 from __future__ import annotations
 
 import copy
+import http.client
 import importlib.util
 import json
 import sys
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -65,6 +68,34 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["dependency_gate"]["w04_state"] = "closed"
         self.assert_error_contains(index, "W04 may close only after W03")
 
+    def test_open_dependencies_do_not_require_completion_receipts(self) -> None:
+        responses = {"2175": "open", "2176": "open", "2177": "open"}
+
+        def fetcher(url: str) -> tuple[int, bytes]:
+            issue_number = url.rsplit("/", 1)[-1]
+            return 200, json.dumps({"state": responses[issue_number]}).encode("utf-8")
+
+        def receipt_verifier(_work_id: str) -> None:
+            raise AssertionError("an open preflight must not invoke receipt verification")
+
+        self.assertEqual(MODULE.verify_dependency_states(self.index, fetcher, receipt_verifier), [])
+
+    def test_closed_predecessor_requires_latest_marked_receipt_predicate(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["dependency_gate"]["w03_state"] = "closed"
+        responses = {"2175": "closed", "2176": "open", "2177": "open"}
+
+        def fetcher(url: str) -> tuple[int, bytes]:
+            issue_number = url.rsplit("/", 1)[-1]
+            return 200, json.dumps({"state": responses[issue_number]}).encode("utf-8")
+
+        def receipt_verifier(work_id: str) -> None:
+            self.assertEqual(work_id, "PSP-P02-W03")
+            raise MODULE.EvidenceError("latest marked receipt predicate did not pass")
+
+        errors = MODULE.verify_dependency_states(index, fetcher, receipt_verifier)
+        self.assertTrue(any("latest marked receipt predicate did not pass" in error for error in errors), errors)
+
     def test_live_dependency_state_must_match_issue_owner(self) -> None:
         responses = {
             "2175": "closed",
@@ -102,12 +133,48 @@ class FlagshipEvidenceTests(unittest.TestCase):
     def test_rejects_w08_wording_drift_from_immutable_source(self) -> None:
         index = copy.deepcopy(self.index)
         index["w08_research_import"]["claims"][0]["public_wording"] = "Replacement wording"
-        self.assert_error_contains(index, "wording and receipt sets must match")
+        self.assert_error_contains(index, "adjudication dispositions, wording, and receipts must match")
 
     def test_rejects_w08_receipt_drift_from_immutable_source(self) -> None:
         index = copy.deepcopy(self.index)
         index["w08_research_import"]["claims"][0]["required_receipts"] = ["replacement"]
-        self.assert_error_contains(index, "wording and receipt sets must match")
+        self.assert_error_contains(index, "adjudication dispositions, wording, and receipts must match")
+
+    def test_rejects_w08_layer_drift_even_when_ledger_row_is_changed_too(self) -> None:
+        index = copy.deepcopy(self.index)
+        claim = index["w08_research_import"]["claims"][0]
+        old_row = (
+            f"| `{claim['id']}` | `{claim['layers']['measurement']}` | `{claim['layers']['inference']}` | "
+            f"`{claim['layers']['implication']}` | `{claim['layers']['prominence']}` | "
+            f"`{claim['publishable_status']}` |"
+        )
+        claim["layers"]["measurement"] = "contradicted"
+        new_row = (
+            f"| `{claim['id']}` | `{claim['layers']['measurement']}` | `{claim['layers']['inference']}` | "
+            f"`{claim['layers']['implication']}` | `{claim['layers']['prominence']}` | "
+            f"`{claim['publishable_status']}` |"
+        )
+        ledger = MODULE.CLAIMS_LEDGER.read_text(encoding="utf-8").replace(old_row, new_row)
+        errors = MODULE.validate_w08_import(index, ledger)
+        self.assertTrue(any("adjudication dispositions" in error for error in errors), errors)
+
+    def test_rejects_w08_publishable_status_drift_even_when_ledger_changes(self) -> None:
+        index = copy.deepcopy(self.index)
+        claim = index["w08_research_import"]["claims"][0]
+        old_row = (
+            f"| `{claim['id']}` | `{claim['layers']['measurement']}` | `{claim['layers']['inference']}` | "
+            f"`{claim['layers']['implication']}` | `{claim['layers']['prominence']}` | "
+            f"`{claim['publishable_status']}` |"
+        )
+        claim["publishable_status"] = "withheld"
+        new_row = (
+            f"| `{claim['id']}` | `{claim['layers']['measurement']}` | `{claim['layers']['inference']}` | "
+            f"`{claim['layers']['implication']}` | `{claim['layers']['prominence']}` | "
+            f"`{claim['publishable_status']}` |"
+        )
+        ledger = MODULE.CLAIMS_LEDGER.read_text(encoding="utf-8").replace(old_row, new_row)
+        errors = MODULE.validate_w08_import(index, ledger)
+        self.assertTrue(any("adjudication dispositions" in error for error in errors), errors)
 
     def test_rejects_w08_source_artifact_digest_drift(self) -> None:
         index = copy.deepcopy(self.index)
@@ -134,10 +201,36 @@ class FlagshipEvidenceTests(unittest.TestCase):
         with self.assertRaises(MODULE.EvidenceError):
             MODULE.fetch("https://example.test/untrusted")
 
+    def test_response_body_transport_failures_are_evidence_errors(self) -> None:
+        class BrokenBody:
+            def __init__(self, failure: BaseException) -> None:
+                self.failure = failure
+
+            def read(self, _size: int) -> bytes:
+                raise self.failure
+
+        for failure in (
+            TimeoutError("timed out"),
+            ConnectionResetError("reset"),
+            http.client.IncompleteRead(b"partial", 10),
+        ):
+            with self.subTest(failure=type(failure).__name__):
+                with self.assertRaises(MODULE.EvidenceError):
+                    MODULE.read_bounded_body(BrokenBody(failure))
+
+    def test_http_error_body_read_failure_is_an_evidence_error(self) -> None:
+        url = "https://api.github.com/repos/organvm/limen"
+        error = urllib.error.HTTPError(url, 503, "unavailable", {}, None)
+        error.read = mock.Mock(side_effect=http.client.IncompleteRead(b"partial", 10))
+        with mock.patch.object(MODULE.SAFE_OPENER, "open", side_effect=error):
+            with self.assertRaises(MODULE.EvidenceError):
+                MODULE.fetch(url)
+
     def test_gate_covers_every_consumed_evidence_input(self) -> None:
         registry = MODULE.load_yaml(ROOT / "institutio/governance/gates.yaml")
         paths = registry["gates"]["flagship-evidence-test"]["paths"]
         self.assertIn("docs/positioning/evidence/**", paths)
+        self.assertIn("docs/github-estate-census.json", paths)
         self.assertIn("docs/positioning/claims-ledger.md", paths)
         self.assertIn("docs/positioning/flagship-proof-set.yaml", paths)
 
@@ -181,6 +274,52 @@ class FlagshipEvidenceTests(unittest.TestCase):
         drifted = packet_text.replace(packet["metrics"][0]["public_safe_claim"], "Unsupported replacement.")
         errors = MODULE.validate_packet_markdown(packet, drifted)
         self.assertTrue(any("public_tasks_total claim" in error for error in errors), errors)
+
+    def test_packet_markdown_must_match_indexed_bounded_claim(self) -> None:
+        packet = self.index["packets"][0]
+        packet_text = (ROOT / packet["path"]).read_text(encoding="utf-8")
+        drifted = packet_text.replace(
+            "Limen is a governed multi-agent delivery system with public operating, failure, and verification",
+            "Limen has unsupported adoption and revenue",
+        )
+        errors = MODULE.validate_packet_markdown(packet, drifted)
+        self.assertTrue(any("bounded claim" in error for error in errors), errors)
+
+    def test_malformed_packet_collections_return_validation_errors(self) -> None:
+        for field, expected in (
+            ("limitations", "limitations must be nonempty"),
+            ("sources", "exactly one workflow and public endpoint source are required"),
+            ("metrics", "at least one material metric is required"),
+        ):
+            with self.subTest(field=field):
+                index = copy.deepcopy(self.index)
+                index["packets"][0][field] = None
+                errors = MODULE.verify_evidence(index)
+                self.assertTrue(any(expected in error for error in errors), errors)
+
+    def test_public_identity_guard_rejects_unregistered_controlled_slug_without_echoing_it(self) -> None:
+        index = copy.deepcopy(self.index)
+        synthetic_identity = "organvm/zz-review-fixture-not-a-repository"
+        index["packets"][0]["bounded_claim"] += f" Evidence: {synthetic_identity}."
+        errors = MODULE.public_artifact_identity_errors(index)
+        self.assertTrue(any("absent from the tracked public census" in error for error in errors), errors)
+        self.assertFalse(any(synthetic_identity in error for error in errors), errors)
+
+    def test_claims_ledger_metric_projection_rejects_value_or_wording_drift(self) -> None:
+        index = copy.deepcopy(self.index)
+        metric = index["packets"][0]["metrics"][0]
+        metric["observed_value"] = 9999
+        metric["public_safe_claim"] = "A refreshed but unledgered public task count."
+        ledger = MODULE.CLAIMS_LEDGER.read_text(encoding="utf-8")
+        errors = MODULE.validate_metric_ledger(index["packets"], ledger)
+        self.assertTrue(any("metric projection is missing or drifted" in error for error in errors), errors)
+
+    def test_claims_ledger_metric_projection_rejects_removed_packet_metric(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["metrics"].pop()
+        ledger = MODULE.CLAIMS_LEDGER.read_text(encoding="utf-8")
+        errors = MODULE.validate_metric_ledger(index["packets"], ledger)
+        self.assertTrue(any("metric denominator must match" in error for error in errors), errors)
 
     def test_workflow_urls_must_bind_the_selected_repository(self) -> None:
         index = copy.deepcopy(self.index)

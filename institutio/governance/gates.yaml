@@ -473,9 +473,9 @@ gates:
     note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
   flagship-evidence-test:
     command: "python3 scripts/tests/flagship-evidence.test.py"
-    paths: ["docs/positioning/evidence/**", "docs/positioning/claims-ledger.md", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
+    paths: ["docs/github-estate-census.json", "docs/positioning/evidence/**", "docs/positioning/claims-ledger.md", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
-    note: "PSP-P02-W04/W05 evidence packets remain public-safe, match the selected W03 triad, keep W03/W04/W05 dependency declarations equal to their issue owners and in closure order, and make each material numeric statement exact and reproducible. Live source checks are an explicit focused preflight because they require GitHub and HTTP access."
+    note: "PSP-P02-W04/W05 evidence packets remain bound to the selected W03 triad and redacted W01 public identity projection, keep packet-level bounded claims and claims-ledger section 8 synchronized with the machine index, preserve the full immutable W08 adjudication projection, and make each material metric exact and reproducible. Live source checks additionally require GitHub/HTTP access and prove issue-state parity plus the latest marked receipt predicate for each closed predecessor."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]

@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import re
+import subprocess
+import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -25,13 +28,14 @@ ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "docs/positioning/evidence/flagship-evidence.yaml"
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 CLAIMS_LEDGER = ROOT / "docs/positioning/claims-ledger.md"
+CENSUS = ROOT / "docs/github-estate-census.json"
 SCHEMA = "limen.positioning_flagship_evidence.v1"
 EXPECTED_IDS = {"limen", "public_records", "ai_chat_exporter"}
 EXPECTED_W08_SOURCE_HEAD = "96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa"
 EXPECTED_W08_SOURCE_PATH = "docs/positioning/program/research-adjudication.json"
 EXPECTED_W08_SOURCE_BLOB = "f0db657dde5cc27bb2db67e495fa410f6483646f"
 EXPECTED_W08_SOURCE_SHA256 = "26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6"
-EXPECTED_W08_PROJECTION_SHA256 = "918cc029a78b67b10eec73c4483cc2a2d56f983491a5efd66b166b37de190596"
+EXPECTED_W08_PROJECTION_SHA256 = "698e317695c1ebd63f82e7456a04f1c55087754de0ef358bbd77c4fc8d4d39fc"
 EXPECTED_W08_CLAIM_IDS = {
     "lavrea-top-01-throughput",
     "lavrea-top-1-python-full-stack",
@@ -58,6 +62,11 @@ ALLOWED_PUBLIC_HOSTS = frozenset(
 )
 MAX_RESPONSE_BYTES = 2_000_000
 FULL_SHA1_RE = re.compile(r"[0-9a-f]{40}")
+REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+REPOSITORY_TOKEN_RE = re.compile(
+    r"(?=(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-]))"
+)
+PREDECESSOR_RECEIPTS = {"w03": "PSP-P02-W03", "w04": "PSP-P02-W04"}
 
 
 class EvidenceError(RuntimeError):
@@ -102,6 +111,82 @@ def load_yaml(path: Path) -> dict[str, Any]:
     return value
 
 
+def load_public_census_repositories(path: Path = CENSUS) -> set[str]:
+    """Load only source-safe public identities from the redacted W01 census projection."""
+
+    try:
+        census = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise EvidenceError("cannot load the tracked W01 public census projection") from exc
+    leaves = census.get("leaves") if isinstance(census, dict) else None
+    if not isinstance(leaves, list):
+        raise EvidenceError("tracked W01 public census projection has no leaf list")
+    repositories = {
+        str(leaf.get("repository"))
+        for leaf in leaves
+        if isinstance(leaf, dict)
+        and leaf.get("private") is False
+        and isinstance(leaf.get("repository"), str)
+        and REPOSITORY_RE.fullmatch(str(leaf.get("repository")))
+    }
+    summary = census.get("summary") or {}
+    repository_count = summary.get("repository_count")
+    private_count = summary.get("private_repository_count")
+    if (
+        isinstance(repository_count, bool)
+        or not isinstance(repository_count, int)
+        or isinstance(private_count, bool)
+        or not isinstance(private_count, int)
+        or len(repositories) != repository_count - private_count
+    ):
+        raise EvidenceError("tracked W01 public census projection does not cover its public denominator")
+    return repositories
+
+
+def repository_identities_in_text(text: str, controlled_owners: set[str]) -> set[str]:
+    """Extract controlled owner/repository tokens without needing any private-name inventory."""
+
+    return {
+        match.group(1)
+        for match in REPOSITORY_TOKEN_RE.finditer(text)
+        if match.group(1).split("/", 1)[0].casefold() in controlled_owners
+    }
+
+
+def public_artifact_identity_errors(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
+    """Reject controlled repository identities absent from W01's redacted public allowlist."""
+
+    try:
+        public_repositories = load_public_census_repositories(root / "docs/github-estate-census.json")
+    except EvidenceError as exc:
+        return [str(exc)]
+    canonical = {repository.casefold(): repository for repository in public_repositories}
+    controlled_owners = {repository.split("/", 1)[0].casefold() for repository in public_repositories}
+    texts = [json.dumps(index, ensure_ascii=False, sort_keys=True)]
+    evidence_root = root / "docs/positioning/evidence"
+    try:
+        texts.extend(
+            path.read_text(encoding="utf-8")
+            for path in sorted(evidence_root.rglob("*"))
+            if path.is_file()
+        )
+        texts.append((root / "docs/positioning/claims-ledger.md").read_text(encoding="utf-8"))
+    except (OSError, UnicodeError) as exc:
+        return [f"cannot inspect public evidence identity surfaces: {exc}"]
+    unregistered = {
+        identity.casefold()
+        for text in texts
+        for identity in repository_identities_in_text(text, controlled_owners)
+        if canonical.get(identity.casefold()) != identity
+    }
+    if unregistered:
+        return [
+            "public evidence contains "
+            f"{len(unregistered)} controlled repository identity token(s) absent from the tracked public census"
+        ]
+    return []
+
+
 def nested_value(value: object, path: str) -> object:
     current = value
     for key in path.split("."):
@@ -111,19 +196,30 @@ def nested_value(value: object, path: str) -> object:
     return current
 
 
+def read_bounded_body(response: Any, *, error_body: bool = False) -> bytes:
+    """Read one bounded response body and normalize transport interruptions."""
+
+    label = "public anchor error body" if error_body else "public anchor body"
+    try:
+        payload = response.read(MAX_RESPONSE_BYTES + 1)
+    except (OSError, ValueError, http.client.HTTPException, urllib.error.URLError) as exc:
+        raise EvidenceError(f"{label} could not be read completely") from exc
+    if not isinstance(payload, bytes):
+        raise EvidenceError(f"{label} did not return bytes")
+    if len(payload) > MAX_RESPONSE_BYTES:
+        raise EvidenceError(f"{label} exceeds {MAX_RESPONSE_BYTES} bytes")
+    return payload
+
+
 def fetch(url: str) -> tuple[int, bytes]:
     url = validate_public_fetch_url(url)
     request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "limen-evidence-verifier"})
     try:
         with SAFE_OPENER.open(request, timeout=20) as response:
-            payload = response.read(MAX_RESPONSE_BYTES + 1)
-            if len(payload) > MAX_RESPONSE_BYTES:
-                raise EvidenceError(f"public anchor exceeds {MAX_RESPONSE_BYTES} bytes")
+            payload = read_bounded_body(response)
             return response.status, payload
     except urllib.error.HTTPError as exc:
-        payload = exc.read(MAX_RESPONSE_BYTES + 1)
-        if len(payload) > MAX_RESPONSE_BYTES:
-            raise EvidenceError(f"public anchor error body exceeds {MAX_RESPONSE_BYTES} bytes") from exc
+        payload = read_bounded_body(exc, error_body=True)
         return exc.code, payload
     except urllib.error.URLError as exc:
         raise EvidenceError(f"public anchor unavailable: {url}: {exc.reason}") from exc
@@ -152,15 +248,22 @@ def validate_packet_markdown(packet: dict[str, Any], packet_text: str) -> list[s
 
     label = str(packet.get("id") or "packet")
     normalized = normalized_packet_text(packet_text)
-    required: list[tuple[str, object]] = [("authorship", packet.get("authorship"))]
-    required.extend(("limitation", value) for value in packet.get("limitations", []))
-    for source in packet.get("sources", []):
+    required: list[tuple[str, object]] = [
+        ("bounded claim", packet.get("bounded_claim")),
+        ("authorship", packet.get("authorship")),
+    ]
+    limitations = packet.get("limitations")
+    if isinstance(limitations, list):
+        required.extend(("limitation", value) for value in limitations)
+    sources = packet.get("sources")
+    for source in sources if isinstance(sources, list) else []:
         if not isinstance(source, dict):
             continue
         required.append(("source URL", source.get("url")))
         if source.get("kind") == "workflow_run":
             required.append(("workflow head", source.get("observed_head")))
-    for metric in packet.get("metrics", []):
+    metrics = packet.get("metrics")
+    for metric in metrics if isinstance(metrics, list) else []:
         if isinstance(metric, dict):
             required.append((f"{metric.get('id', 'metric')} claim", metric.get("public_safe_claim")))
 
@@ -174,7 +277,7 @@ def validate_packet_markdown(packet: dict[str, Any], packet_text: str) -> list[s
 
 
 def w08_projection_sha256(claims: list[object]) -> str:
-    """Hash the exact wording/receipt subset imported from the immutable W08 artifact."""
+    """Hash every publication disposition imported from the immutable W08 artifact."""
 
     projection = []
     for claim in claims:
@@ -183,6 +286,8 @@ def w08_projection_sha256(claims: list[object]) -> str:
         projection.append(
             {
                 "id": claim.get("id"),
+                "layers": claim.get("layers"),
+                "publishable_status": claim.get("publishable_status"),
                 "public_wording": claim.get("public_wording"),
                 "required_receipts": claim.get("required_receipts"),
             }
@@ -220,10 +325,36 @@ def dependency_issue_api_url(value: object) -> str:
     return f"https://api.github.com/repos/organvm/limen/issues/{match.group(1)}"
 
 
+def verify_positioning_work_receipt(work_id: str) -> None:
+    """Run the canonical latest-marked-receipt predicate for a closed predecessor."""
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "scripts/positioning-program.py", "--verify-work", work_id],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise EvidenceError(f"{work_id} latest marked receipt predicate was unavailable") from exc
+    if result.returncode != 0:
+        raise EvidenceError(f"{work_id} latest marked receipt predicate did not pass")
+    try:
+        receipt = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise EvidenceError(f"{work_id} latest marked receipt predicate returned invalid JSON") from exc
+    if not isinstance(receipt, dict) or receipt.get("status") != "pass" or receipt.get("work_id") != work_id:
+        raise EvidenceError(f"{work_id} latest marked receipt predicate returned an invalid result")
+
+
 def verify_dependency_states(
-    index: dict[str, Any], fetcher: Callable[[str], tuple[int, bytes]]
+    index: dict[str, Any],
+    fetcher: Callable[[str], tuple[int, bytes]],
+    receipt_verifier: Callable[[str], None] = verify_positioning_work_receipt,
 ) -> list[str]:
-    """Compare declared dependency states with their live GitHub issue owners."""
+    """Compare live issue state and require canonical receipts for closed predecessors."""
 
     gate = index.get("dependency_gate")
     if not isinstance(gate, dict):
@@ -247,11 +378,20 @@ def verify_dependency_states(
         if not isinstance(issue, dict):
             errors.append(f"{work}: dependency issue API response must be a mapping")
             continue
-        if issue.get("state") != gate.get(f"{work}_state"):
+        observed_state = issue.get("state")
+        declared_state = gate.get(f"{work}_state")
+        if observed_state != declared_state:
             errors.append(
-                f"{work}: declared dependency state {gate.get(f'{work}_state')!r} "
-                f"does not match live issue state {issue.get('state')!r}"
+                f"{work}: declared dependency state {declared_state!r} "
+                f"does not match live issue state {observed_state!r}"
             )
+            continue
+        predecessor_id = PREDECESSOR_RECEIPTS.get(work)
+        if declared_state == "closed" and predecessor_id is not None:
+            try:
+                receipt_verifier(predecessor_id)
+            except EvidenceError as exc:
+                errors.append(f"{work}: {exc}")
     return errors
 
 
@@ -319,6 +459,65 @@ def exact_count_errors(label: str, metric: dict[str, Any], payload: bytes) -> li
     return []
 
 
+def validate_metric_ledger(packets: list[object], ledger_text: str) -> list[str]:
+    """Keep the managed section-8 metric rows equal to the packet index."""
+
+    section_match = re.search(
+        r"^## 8\. PSP-P02 selected-flagship packet claims\s*$\n(.*?)(?=^## 9\.)",
+        ledger_text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if section_match is None:
+        return ["claims ledger must contain the managed PSP-P02 section 8"]
+    expected: dict[str, tuple[object, object, object]] = {}
+    errors: list[str] = []
+    for packet in packets:
+        if not isinstance(packet, dict):
+            continue
+        packet_id = packet.get("id")
+        metrics = packet.get("metrics")
+        if not isinstance(packet_id, str) or not isinstance(metrics, list):
+            continue
+        for metric in metrics:
+            if not isinstance(metric, dict) or not isinstance(metric.get("id"), str):
+                continue
+            identifier = f"{packet_id}/{metric['id']}"
+            if identifier in expected:
+                errors.append(f"{identifier}: duplicate packet metric identifier")
+                continue
+            expected[identifier] = (
+                metric.get("status"),
+                metric.get("observed_value"),
+                metric.get("public_safe_claim"),
+            )
+
+    observed: dict[str, tuple[str, str, str]] = {}
+    for line in section_match.group(1).splitlines():
+        if not line.startswith("| `"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if not cells or not re.fullmatch(r"`[^`]+/[^`]+`", cells[0]):
+            continue
+        if len(cells) != 5:
+            errors.append("claims ledger section 8 contains a malformed managed metric row")
+            continue
+        identifier = cells[0][1:-1]
+        if identifier in observed:
+            errors.append(f"{identifier}: duplicate claims ledger metric row")
+            continue
+        status = cells[1][1:-1] if re.fullmatch(r"`[^`]+`", cells[1]) else cells[1]
+        value = cells[2][1:-1] if re.fullmatch(r"`[^`]+`", cells[2]) else cells[2]
+        observed[identifier] = (status, value, cells[3])
+
+    if set(observed) != set(expected):
+        errors.append("claims ledger section 8 metric denominator must match the packet index")
+    for identifier in sorted(set(observed) & set(expected)):
+        status, value, wording = expected[identifier]
+        if observed[identifier] != (str(status), str(value), str(wording)):
+            errors.append(f"{identifier}: claims ledger metric projection is missing or drifted")
+    return errors
+
+
 def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
     errors: list[str] = []
     imported = index.get("w08_research_import")
@@ -333,7 +532,7 @@ def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
     if imported.get("source_sha256") != EXPECTED_W08_SOURCE_SHA256:
         errors.append("W08 import must bind the immutable source artifact SHA-256")
     if imported.get("projection_sha256") != EXPECTED_W08_PROJECTION_SHA256:
-        errors.append("W08 import must declare the immutable wording/receipt projection SHA-256")
+        errors.append("W08 import must declare the immutable adjudication projection SHA-256")
     if imported.get("claim_count") != len(EXPECTED_W08_CLAIM_IDS):
         errors.append("W08 import claim_count must equal the 13-claim denominator")
     claims = imported.get("claims")
@@ -343,7 +542,7 @@ def validate_w08_import(index: dict[str, Any], ledger_text: str) -> list[str]:
     if len(identifiers) != len(set(identifiers)) or set(identifiers) != EXPECTED_W08_CLAIM_IDS:
         errors.append("W08 import must classify each ratified claim exactly once")
     if w08_projection_sha256(claims) != EXPECTED_W08_PROJECTION_SHA256:
-        errors.append("W08 wording and receipt sets must match the immutable source artifact")
+        errors.append("W08 adjudication dispositions, wording, and receipts must match the immutable source artifact")
     for claim in claims:
         if not isinstance(claim, dict):
             errors.append("every W08 import claim must be a mapping")
@@ -404,20 +603,27 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
     else:
         if privacy.get("public_packets_only") is not True:
             errors.append("packets must be public-only")
-        if privacy.get("private_repository_names_in_artifact") != 0:
-            errors.append("public evidence index must declare zero private repository names")
+        identity_guard = privacy.get("repository_identity_guard")
+        if not isinstance(identity_guard, dict) or identity_guard != {
+            "source": "docs/github-estate-census.json",
+            "mode": "tracked_public_census_allowlist",
+        }:
+            errors.append("privacy must bind repository identities to the tracked W01 public census")
         if privacy.get("private_evidence_required_for_selected_claims") is not False:
             errors.append("selected claims must not require private evidence")
         addendum = privacy.get("encrypted_addendum")
         if not isinstance(addendum, dict) or addendum.get("status") != "not_created":
             errors.append("encrypted addendum must remain not_created without a sanctioned custody receipt")
 
+    ledger_text: str | None = None
     try:
         ledger_text = (root / "docs/positioning/claims-ledger.md").read_text(encoding="utf-8")
     except OSError as exc:
         errors.append(f"cannot load claims ledger: {exc}")
     else:
         errors.extend(validate_w08_import(index, ledger_text))
+
+    errors.extend(public_artifact_identity_errors(index, root=root))
 
     packets = index.get("packets")
     if not isinstance(packets, list) or len(packets) != 3:
@@ -455,11 +661,14 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 errors.append(f"{label}: cannot load packet Markdown: {exc}")
         if packet.get("public_repository") != selected.get(label):
             errors.append(f"{label}: public_repository must match the W03-selected public repository")
+        if not isinstance(packet.get("bounded_claim"), str) or not packet["bounded_claim"].strip():
+            errors.append(f"{label}: bounded_claim must be nonempty")
         if not isinstance(packet.get("limitations"), list) or not packet["limitations"]:
             errors.append(f"{label}: limitations must be nonempty")
         if not isinstance(packet.get("authorship"), str) or not packet["authorship"].strip():
             errors.append(f"{label}: authorship treatment is required")
         sources = packet.get("sources")
+        safe_sources = sources if isinstance(sources, list) else []
         public_endpoint_url: object = None
         if (
             not isinstance(sources, list)
@@ -543,7 +752,11 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                     except EvidenceError as exc:
                         errors.append(f"{label}: count source {exc}")
                     workflow = next(
-                        (source for source in sources if isinstance(source, dict) and source.get("kind") == "workflow_run"),
+                        (
+                            source
+                            for source in safe_sources
+                            if isinstance(source, dict) and source.get("kind") == "workflow_run"
+                        ),
                         {},
                     )
                     expected_count_url = (
@@ -571,6 +784,8 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 errors.append(f"{label}: term-count metric needs nonempty corroborating_terms")
         if packet_text is not None:
             errors.extend(validate_packet_markdown(packet, packet_text))
+    if ledger_text is not None:
+        errors.extend(validate_metric_ledger(packets, ledger_text))
     return errors
 
 

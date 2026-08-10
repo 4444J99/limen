@@ -121,12 +121,20 @@ W04 or W05 and do not authorize a new public surface by themselves. The verifier
 `python3 scripts/flagship-evidence.py --verify-live --json`; its exact snapshot comparisons require
 a dated packet refresh when a live source changes.
 
-| Claim | Status | Evidence / method | Public-safe wording | Tier |
+The first four rows below are a managed projection of every indexed packet metric. The verifier
+requires the metric identifier, status, observed value, and public-safe wording to match exactly,
+so a packet refresh or removal cannot leave a stale section-8 claim behind.
+
+| Packet metric | Status | Observed value | Public-safe wording | Tier |
 |---|---|---|---|---|
-| Limen public task snapshot: 3,111 total and 1,357 completed (2026-08-10) | `verified` | `docs/positioning/evidence/flagship-evidence.yaml`; public status JSON fields `summary.total` and `summary.completed` checked exactly | "On 2026-08-10, the public dashboard reported 3,111 total tasks and 1,357 completed tasks." | L2 (dated) |
-| Public-record platform: four implemented state collectors | `repository-asserted` with public source and deployment anchor | Public repository/source, successful workflow, and live deployment; verifier requires CA, TX, FL, and NY terms | "Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture." Never shorten this to fifty-state deployment. | L2 |
-| AI Chat Exporter: five public export formats | `verified` | Public product surface and successful workflow; verifier requires Markdown, HTML, JSON, PNG, and text | "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text." | L2 |
-| Selected-flagship usage, installs, customers, adoption, revenue, rankings, or private implementation | `unverified` / deliberately withheld | No current public primary source in the W04/W05 packet set | Do not publish. | nowhere |
+| `limen/public_tasks_total` | `verified` | `3111` | The public dashboard reported 3,111 total tasks on 2026-08-10. | L2 (dated) |
+| `limen/public_tasks_completed` | `verified` | `1357` | The public dashboard reported 1,357 completed tasks on 2026-08-10. | L2 (dated) |
+| `public_records/implemented_collectors` | `repository_asserted_with_public_anchor` | `4` | Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. | L2 |
+| `ai_chat_exporter/export_formats` | `verified` | `5` | The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text. | L2 |
+
+Selected-flagship usage, installs, customers, adoption, revenue, rankings, and private
+implementation remain `unverified` and deliberately withheld. No current public primary source in
+the W04/W05 packet set supports them; do not publish them.
 
 ## 9. Research-criticism import
 
@@ -134,9 +142,9 @@ W05 imports the 13-claim W08 adjudication from immutable source head
 `96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa` ([PR #2314](https://github.com/organvm/limen/pull/2314)).
 The complete per-layer citation sets remain normative in
 `docs/positioning/program/research-adjudication.json` at that head. The machine-checked W05
-projection in `docs/positioning/evidence/flagship-evidence.yaml` preserves every public wording
-and required receipt. A verified measurement must never be promoted into an unsupported inference
-or implication.
+projection in `docs/positioning/evidence/flagship-evidence.yaml` preserves every layer disposition,
+publishable status, public wording, and required receipt. A verified measurement must never be
+promoted into an unsupported inference or implication.
 
 | Claim ID | Measurement | Inference | Implication | Prominence | Publishable status |
 |---|---|---|---|---|---|
