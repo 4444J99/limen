@@ -47,7 +47,7 @@ excluded_count: 15
 | --- | --- |
 | W02 accepted head | `35134b95650a26185a58eb3b3a82632e5b80b5b2` |
 | W02 marked receipt | https://github.com/organvm/limen/issues/2174#issuecomment-5247059070 · receipt SHA-256 `bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f` |
-| W03 integration source | `d00a6a3f65bce5ae20ee07930ffc2e8ca61554f7` · tree `27073207a92726aac3cd997758932aa1291aed1e` |
+| W03 integration source | `ac965f20b3cb20cfe115cdae48b6ab5b8253b4ae` · tree `5bd53f6dc110344c5d62d6c110955e954879d5f3` |
 | Final PR head | This relay is one receipt-only descendant of the integration source; fetch PR #2308 and require the source above as an ancestor before reusing its receipts. |
 | Candidate denominator | 22 public candidates: 15 authoritative W02 rows plus seven typed public additions |
 | Verdict | Three selected, four named alternates, 15 explicit exclusions; zero private repository names in the public matrix |
@@ -94,7 +94,7 @@ excluded_count: 15
 ## Next actions
 
 1. Fetch PR #2308 and require its exact head to descend from
-   `d00a6a3f65bce5ae20ee07930ffc2e8ca61554f7` with this relay as the only intended successor delta.
+   `ac965f20b3cb20cfe115cdae48b6ab5b8253b4ae` with this relay as the only intended successor delta.
 2. Confirm base `main`, all required exact-head checks green, and zero unresolved review threads.
 3. Merge only through `bash scripts/await-pr.sh 2308 --repo organvm/limen --merge`.
 4. On the actual merged main commit, run bare
