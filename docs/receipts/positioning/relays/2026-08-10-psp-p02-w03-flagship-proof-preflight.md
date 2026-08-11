@@ -22,6 +22,25 @@ compression_level: medium
 - Pull request: https://github.com/organvm/limen/pull/2308
 - Authority: direct human session `019fed0d-52c4-7a83-b493-88a80035b42c`, Codex, human-protected.
 
+<!-- positioning-formal-relay:start -->
+```yaml
+schema_version: limen.positioning_flagship_relay_binding.v1
+work_id: PSP-P02-W03
+state: formal_ratified_receipt_pending
+dependency_work_id: PSP-P02-W02
+dependency_head: 35134b95650a26185a58eb3b3a82632e5b80b5b2
+dependency_issue_state: closed
+dependency_marked_receipt: https://github.com/organvm/limen/issues/2174#issuecomment-5247059070
+dependency_receipt_sha256: bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f
+dependency_receipt_observed_head: 35134b95650a26185a58eb3b3a82632e5b80b5b2
+dependency_pull_request_state: merged
+candidate_count: 22
+selected_ids: [limen, public_records, ai_chat_exporter]
+alternate_ids: [universal_mail, styx, ai_skills, moneta]
+excluded_count: 15
+```
+<!-- positioning-formal-relay:end -->
+
 ## Current state
 
 | Item | Verified state |
@@ -43,16 +62,20 @@ compression_level: medium
   identity, candidate-bound endpoints, and no private-only dependency.
 - [x] Preserved four alternates with promotion conditions and 15 exclusions with explicit reasons.
 - [x] Merged accepted W02/main history without dropping the census, classifier, or flagship gates.
-- [x] Updated formal dependency bindings and source-safe documentation.
+- [x] Bound W02's merged PR commit, closed issue, latest canonical marked receipt, receipt-observed
+  head, and main-line ancestry in the executable live predicate.
+- [x] Added exact non-circular relay bindings and source-safe documentation for W02 and W03.
 
 ## Verification at the immutable integration source
 
 - `python3 scripts/tests/estate-classification.test.py` — 20/20 passed; the accepted W02 privacy
   and classification hardening is present.
-- `python3 scripts/tests/flagship-proof-set.test.py` — 27/27 passed.
+- `python3 scripts/tests/flagship-proof-set.test.py` — 32/32 passed, including formal-state,
+  receipt, observed-head, and relay-drift mutations.
 - `python3 scripts/flagship-proof-set.py --verify-live --json` — passed: 22 candidates, three
-  selected, four alternates, 15 exclusions; W01/W02 identity, maturity, workflow, and endpoint
-  bindings were current.
+  selected, four alternates, 15 exclusions; W02's issue, merged PR head, canonical latest receipt,
+  receipt-observed head, main ancestry, identity, maturity, workflow, and endpoint bindings were
+  current.
 - `bash scripts/verify-scoped.sh` — passed all 23 implicated gates on the committed integration
   source.
 - Review and remote CI must be read on the relay descendant pushed to PR #2308; earlier green
@@ -62,7 +85,8 @@ compression_level: medium
 
 | Decision | Rationale |
 | --- | --- |
-| W02 is the authoritative public source projection | The marked W02 receipt binds the live 314-repository classification; additions outside its 15 front-door rows are typed and finite. |
+| W02 is the authoritative public source projection | The executable formal contract binds the merged PR commit, closed issue, latest canonical marked receipt, receipt-observed head, and live 314-repository classification; additions outside its 15 front-door rows are typed and finite. |
+| Relay parity is non-circular | Machine-readable W02/W03 relay blocks derive from the matrix and intentionally omit their own commit identity; exact PR head remains a live fetch. |
 | Limen uses a dated successful default-branch snapshot | Requiring a same-repository evidence commit to equal moving `main` would invalidate itself; the recorded run remains immutable, dated, and refreshable. |
 | Public artifacts derive privacy safety | The registered classifier and W03 custody guard reject private identities without printing them; a self-asserted zero is not accepted as proof. |
 | Hard evidence gates override score | A selected row needs a distinct story role, bounded claim, public exact workflow, candidate-bound endpoint, current maturity, and no private-only dependency. |

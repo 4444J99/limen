@@ -75,11 +75,122 @@ class FlagshipProofSetTests(unittest.TestCase):
             "maturity": {repository.casefold(): candidate["repository_maturity"]},
         }
 
+    def formal_live_snapshot(self) -> dict:
+        dependency = self.matrix["dependency_snapshot"]
+        return {
+            "issue_state": dependency["w02_issue_state"],
+            "pull_request_state": dependency["w02_pull_request_state"],
+            "pull_request_merge_head": dependency["w02_head"],
+            "receipt_url": dependency["w02_receipt"],
+            "receipt_sha256": dependency["w02_receipt_sha256"],
+            "receipt_observed_head": dependency["w02_receipt_observed_head"],
+            "current_main_head": dependency["w02_head"],
+            "main_contains_pull_request_head": True,
+        }
+
     def test_canonical_matrix_is_valid(self) -> None:
         self.assertEqual(
             MODULE.validate_matrix(self.matrix, now=self.observed_at, enforce_freshness=True),
             [],
         )
+
+    def test_formal_schema_rejects_every_mutable_state_field(self) -> None:
+        mutations = (
+            (("verdict",), "preflight_ratified_dependency_blocked", "verdict must be"),
+            (("formal_completion_blocker",), "dependency complete", "formal_completion_blocker"),
+            (("dependency_snapshot", "w02_branch"), "topic", "w02_branch must be main"),
+            (("dependency_snapshot", "w02_head"), "f" * 39, "w02_head must be a lowercase exact Git head"),
+            (("dependency_snapshot", "w02_issue_state"), "open", "w02_issue_state must be closed"),
+            (("dependency_snapshot", "w02_pull_request_state"), "closed", "w02_pull_request_state must be merged"),
+            (
+                ("dependency_snapshot", "w02_receipt"),
+                "https://github.com/organvm/limen/issues/2175#issuecomment-1",
+                "w02_receipt must be the marked W02 issue comment URL",
+            ),
+            (
+                ("dependency_snapshot", "w02_receipt_sha256"),
+                "x" * 64,
+                "w02_receipt_sha256 must be a lowercase SHA-256 digest",
+            ),
+            (
+                ("dependency_snapshot", "w02_receipt_observed_head"),
+                "f" * 40,
+                "receipt observed head must equal the accepted W02 main head",
+            ),
+        )
+        for path, value, expected in mutations:
+            with self.subTest(path=path):
+                matrix = copy.deepcopy(self.matrix)
+                target = matrix
+                for key in path[:-1]:
+                    target = target[key]
+                target[path[-1]] = value
+                self.assert_error_contains(matrix, expected)
+
+    def test_live_formal_binding_accepts_the_canonical_w02_state(self) -> None:
+        self.assertEqual(
+            MODULE.validate_live_formal_dependency(self.matrix, self.formal_live_snapshot()),
+            [],
+        )
+
+    def test_live_formal_binding_rejects_remote_state_mutations(self) -> None:
+        mutations = (
+            ("issue_state", "open", "issue state differs"),
+            ("pull_request_state", "closed", "pull request state differs"),
+            ("pull_request_merge_head", "f" * 40, "merged pull request head differs"),
+            (
+                "receipt_url",
+                "https://github.com/organvm/limen/issues/2174#issuecomment-1",
+                "latest marked receipt URL differs",
+            ),
+            ("receipt_sha256", "f" * 64, "canonical receipt SHA-256 differs"),
+            ("receipt_observed_head", "f" * 40, "receipt observed head differs"),
+            ("main_contains_pull_request_head", False, "current main does not contain"),
+        )
+        for field, value, expected in mutations:
+            with self.subTest(field=field):
+                observed = self.formal_live_snapshot()
+                observed[field] = value
+                errors = MODULE.validate_live_formal_dependency(self.matrix, observed)
+                self.assertTrue(any(expected in error for error in errors), errors)
+
+    def test_relays_are_exact_non_circular_projections_of_the_matrix(self) -> None:
+        expected = MODULE.expected_relay_bindings(self.matrix)
+        documents = {
+            "w02": MODULE.W02_RELAY.read_text(encoding="utf-8"),
+            "w03": MODULE.W03_RELAY.read_text(encoding="utf-8"),
+        }
+        self.assertEqual(
+            MODULE.validate_relay_consistency(
+                self.matrix,
+                relay_bindings=copy.deepcopy(expected),
+                relay_documents=documents,
+            ),
+            [],
+        )
+        drifted = copy.deepcopy(expected)
+        drifted["w03"]["candidate_count"] += 1
+        errors = MODULE.validate_relay_consistency(
+            self.matrix,
+            relay_bindings=drifted,
+            relay_documents=documents,
+        )
+        self.assertTrue(any("candidate_count does not match" in error for error in errors), errors)
+
+        stale_documents = copy.deepcopy(documents)
+        stale_documents["w02"] += "\n#2307 is not yet merged\n"
+        errors = MODULE.validate_relay_consistency(
+            self.matrix,
+            relay_bindings=copy.deepcopy(expected),
+            relay_documents=stale_documents,
+        )
+        self.assertTrue(any("stale pre-integration instructions" in error for error in errors), errors)
+
+    def test_registered_gate_covers_both_formal_relays(self) -> None:
+        gates = MODULE.load_matrix(ROOT / "institutio/governance/gates.yaml")["gates"]
+        paths = set(gates["flagship-proof-set-test"]["paths"])
+        self.assertIn(str(MODULE.W02_RELAY.relative_to(ROOT)), paths)
+        self.assertIn(str(MODULE.W03_RELAY.relative_to(ROOT)), paths)
 
     def test_duplicate_selected_story_role_is_rejected(self) -> None:
         matrix = copy.deepcopy(self.matrix)

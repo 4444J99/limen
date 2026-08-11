@@ -30,7 +30,41 @@ MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 CENSUS = ROOT / "docs/github-estate-census.json"
 ESTATE = ROOT / "institutio/github/estate.yaml"
 ACCESS = ROOT / "institutio/github/access.yaml"
+W02_RELAY = (
+    ROOT
+    / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md"
+)
+W03_RELAY = (
+    ROOT
+    / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md"
+)
 SCHEMA = "limen.positioning_flagship_proof_set.v1"
+RELAY_SCHEMA = "limen.positioning_flagship_relay_binding.v1"
+WORK_ID = "PSP-P02-W03"
+W02_WORK_ID = "PSP-P02-W02"
+FORMAL_VERDICT = "formal_ratified_receipt_pending"
+FORMAL_COMPLETION_BLOCKER = (
+    "W02 is accepted; W03 still requires sanctioned merge, a marked receipt, and a passing "
+    "PSP-P02-W03 receipt predicate before issue closure."
+)
+W01_RECEIPT = "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json"
+W02_ISSUE_URL = "https://github.com/organvm/limen/issues/2174"
+W02_PULL_REQUEST_URL = "https://github.com/organvm/limen/pull/2307"
+W03_ISSUE_URL = "https://github.com/organvm/limen/issues/2175"
+W02_DEPENDENCY_KEYS = {
+    "w01_receipt",
+    "w02_branch",
+    "w02_head",
+    "w02_issue",
+    "w02_issue_state",
+    "w02_receipt",
+    "w02_receipt_sha256",
+    "w02_receipt_observed_head",
+    "w02_pull_request",
+    "w02_pull_request_state",
+    "w03_issue",
+    "w03_issue_state",
+}
 STATUSES = {"selected", "alternate", "excluded"}
 REPOSITORY_MATURITY = {"active", "maintained", "dormant", "archived", "unvalidated"}
 STALE_REPOSITORY_MATURITY = {"dormant", "archived", "unvalidated"}
@@ -40,6 +74,16 @@ WORKFLOW_API_PATH_RE = re.compile(
     re.IGNORECASE,
 )
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
+DIGEST_RE = re.compile(r"[0-9a-f]{64}\Z")
+RECEIPT_BLOCK_RE = re.compile(
+    r"<!--\s*positioning-receipt:(PSP-P\d{2}-W\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
+RELAY_BINDING_RE = re.compile(
+    r"<!--\s*positioning-formal-relay:start\s*-->\s*```yaml\s*(.*?)\s*```\s*"
+    r"<!--\s*positioning-formal-relay:end\s*-->",
+    re.DOTALL,
+)
 WORKFLOW_PATH_RE = re.compile(r"\.github/workflows/[^/\s]+\.(?:yml|yaml)\Z")
 WORKFLOW_HEAD_BINDINGS = {"current_default_branch", "dated_default_branch_snapshot"}
 DATED_SNAPSHOT_REPOSITORIES = {"organvm/limen"}
@@ -100,6 +144,30 @@ def load_matrix(path: Path = MATRIX) -> dict[str, Any]:
 def canonical_digest(value: object) -> str:
     encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def canonical_receipt_digest(value: object) -> str:
+    """Match the canonical digest emitted by positioning-program.py."""
+
+    encoded = json.dumps(value, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def load_relay_binding(path: Path) -> tuple[dict[str, Any], str]:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ProofSetError(f"cannot load formal relay {path.name}") from exc
+    matches = RELAY_BINDING_RE.findall(text)
+    if len(matches) != 1:
+        raise ProofSetError(f"formal relay {path.name} must contain exactly one binding block")
+    try:
+        binding = yaml.safe_load(matches[0])
+    except yaml.YAMLError as exc:
+        raise ProofSetError(f"formal relay {path.name} has an invalid binding block") from exc
+    if not isinstance(binding, dict):
+        raise ProofSetError(f"formal relay {path.name} binding must be a mapping")
+    return binding, text
 
 
 def load_public_census_contract(path: Path = CENSUS) -> tuple[set[str], int, str]:
@@ -324,6 +392,190 @@ def strict_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def receipt_comment_url(value: object) -> bool:
+    if not isinstance(value, str) or not public_https_url(value):
+        return False
+    parsed = urlsplit(value)
+    return (
+        parsed.hostname == "github.com"
+        and parsed.path == "/organvm/limen/issues/2174"
+        and not parsed.query
+        and re.fullmatch(r"issuecomment-[1-9][0-9]*", parsed.fragment or "") is not None
+    )
+
+
+def expected_relay_bindings(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    dependency = matrix.get("dependency_snapshot")
+    if not isinstance(dependency, dict):
+        dependency = {}
+    candidates = matrix.get("candidates")
+    if not isinstance(candidates, list):
+        candidates = []
+    selected = [
+        candidate.get("id")
+        for candidate in candidates
+        if isinstance(candidate, dict) and candidate.get("status") == "selected"
+    ]
+    alternates = [
+        candidate.get("id")
+        for candidate in candidates
+        if isinstance(candidate, dict) and candidate.get("status") == "alternate"
+    ]
+    excluded_count = sum(
+        isinstance(candidate, dict) and candidate.get("status") == "excluded"
+        for candidate in candidates
+    )
+    candidate_screen = matrix.get("candidate_screen")
+    if not isinstance(candidate_screen, dict):
+        candidate_screen = {}
+    return {
+        "w02": {
+            "schema_version": RELAY_SCHEMA,
+            "work_id": W02_WORK_ID,
+            "state": "closed",
+            "accepted_head": dependency.get("w02_head"),
+            "issue": dependency.get("w02_issue"),
+            "issue_state": dependency.get("w02_issue_state"),
+            "marked_receipt": dependency.get("w02_receipt"),
+            "receipt_sha256": dependency.get("w02_receipt_sha256"),
+            "receipt_observed_head": dependency.get("w02_receipt_observed_head"),
+            "pull_request": dependency.get("w02_pull_request"),
+            "pull_request_state": dependency.get("w02_pull_request_state"),
+            "next_work": WORK_ID,
+        },
+        "w03": {
+            "schema_version": RELAY_SCHEMA,
+            "work_id": WORK_ID,
+            "state": matrix.get("verdict"),
+            "dependency_work_id": W02_WORK_ID,
+            "dependency_head": dependency.get("w02_head"),
+            "dependency_issue_state": dependency.get("w02_issue_state"),
+            "dependency_marked_receipt": dependency.get("w02_receipt"),
+            "dependency_receipt_sha256": dependency.get("w02_receipt_sha256"),
+            "dependency_receipt_observed_head": dependency.get("w02_receipt_observed_head"),
+            "dependency_pull_request_state": dependency.get("w02_pull_request_state"),
+            "candidate_count": candidate_screen.get("candidate_count"),
+            "selected_ids": selected,
+            "alternate_ids": alternates,
+            "excluded_count": excluded_count,
+        },
+    }
+
+
+def validate_relay_consistency(
+    matrix: dict[str, Any],
+    *,
+    relay_bindings: dict[str, dict[str, Any]] | None = None,
+    relay_documents: dict[str, str] | None = None,
+) -> list[str]:
+    errors: list[str] = []
+    if relay_bindings is None or relay_documents is None:
+        try:
+            w02_binding, w02_document = load_relay_binding(W02_RELAY)
+            w03_binding, w03_document = load_relay_binding(W03_RELAY)
+        except ProofSetError as exc:
+            return [str(exc)]
+        relay_bindings = {"w02": w02_binding, "w03": w03_binding}
+        relay_documents = {"w02": w02_document, "w03": w03_document}
+
+    expected = expected_relay_bindings(matrix)
+    for relay_id in ("w02", "w03"):
+        observed = relay_bindings.get(relay_id)
+        wanted = expected[relay_id]
+        if not isinstance(observed, dict):
+            errors.append(f"{relay_id.upper()} formal relay binding must be a mapping")
+            continue
+        if set(observed) != set(wanted):
+            errors.append(f"{relay_id.upper()} formal relay binding has an incorrect exact schema")
+        for key, value in wanted.items():
+            if observed.get(key) != value:
+                errors.append(f"{relay_id.upper()} formal relay {key} does not match the matrix")
+
+    dependency = matrix.get("dependency_snapshot")
+    if not isinstance(dependency, dict):
+        dependency = {}
+    screen = matrix.get("candidate_screen")
+    if not isinstance(screen, dict):
+        screen = {}
+    required_snippets = {
+        "w02": (
+            "W02 is formally closed",
+            str(dependency.get("w02_head") or ""),
+            str(dependency.get("w02_receipt") or ""),
+            str(dependency.get("w02_receipt_sha256") or ""),
+            "PR #2307 is merged",
+            "issue #2174 is closed",
+        ),
+        "w03": (
+            str(dependency.get("w02_head") or ""),
+            str(dependency.get("w02_receipt") or ""),
+            str(dependency.get("w02_receipt_sha256") or ""),
+            f"{screen.get('candidate_count')} public candidates",
+        ),
+    }
+    for relay_id, snippets in required_snippets.items():
+        document = relay_documents.get(relay_id, "")
+        if any(not snippet or snippet not in document for snippet in snippets):
+            errors.append(f"{relay_id.upper()} formal relay prose does not match its binding")
+
+    stale_w02_phrases = (
+        "#2307 is not yet merged",
+        "#2174 has no marked receipt",
+        "No W02 receipt and no issue comment posted",
+        "Adopt PR #2307",
+        "no W02 issue receipt exists yet",
+    )
+    w02_document = relay_documents.get("w02", "")
+    if any(phrase in w02_document for phrase in stale_w02_phrases):
+        errors.append("W02 formal relay retains stale pre-integration instructions")
+    return errors
+
+
+def validate_formal_contract(matrix: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if matrix.get("work_id") != WORK_ID:
+        errors.append(f"work_id must be {WORK_ID}")
+    if parse_time(matrix.get("generated_at")) is None:
+        errors.append("generated_at must be a valid timestamp")
+    if matrix.get("verdict") != FORMAL_VERDICT:
+        errors.append(f"verdict must be {FORMAL_VERDICT}")
+    if matrix.get("formal_completion_blocker") != FORMAL_COMPLETION_BLOCKER:
+        errors.append("formal_completion_blocker does not match the W03 pending-receipt boundary")
+
+    dependency = matrix.get("dependency_snapshot")
+    if not isinstance(dependency, dict):
+        errors.append("dependency_snapshot must be the exact W02 formal dependency mapping")
+        return [*errors, *validate_relay_consistency(matrix)]
+    if set(dependency) != W02_DEPENDENCY_KEYS:
+        errors.append("dependency_snapshot has an incorrect exact schema")
+    exact_values = {
+        "w01_receipt": W01_RECEIPT,
+        "w02_branch": "main",
+        "w02_issue": W02_ISSUE_URL,
+        "w02_issue_state": "closed",
+        "w02_pull_request": W02_PULL_REQUEST_URL,
+        "w02_pull_request_state": "merged",
+        "w03_issue": W03_ISSUE_URL,
+        "w03_issue_state": "open",
+    }
+    for key, value in exact_values.items():
+        if dependency.get(key) != value:
+            errors.append(f"dependency_snapshot.{key} must be {value}")
+    for key in ("w02_head", "w02_receipt_observed_head"):
+        value = dependency.get(key)
+        if not isinstance(value, str) or HEAD_RE.fullmatch(value) is None:
+            errors.append(f"dependency_snapshot.{key} must be a lowercase exact Git head")
+    if dependency.get("w02_receipt_observed_head") != dependency.get("w02_head"):
+        errors.append("dependency receipt observed head must equal the accepted W02 main head")
+    if not receipt_comment_url(dependency.get("w02_receipt")):
+        errors.append("dependency_snapshot.w02_receipt must be the marked W02 issue comment URL")
+    receipt_sha256 = dependency.get("w02_receipt_sha256")
+    if not isinstance(receipt_sha256, str) or DIGEST_RE.fullmatch(receipt_sha256) is None:
+        errors.append("dependency_snapshot.w02_receipt_sha256 must be a lowercase SHA-256 digest")
+    errors.extend(validate_relay_consistency(matrix))
+    return errors
+
+
 def validate_source_projection(
     matrix: dict[str, Any], candidates: list[dict[str, Any]]
 ) -> tuple[list[str], set[str]]:
@@ -444,7 +696,7 @@ def validate_matrix(
     now: dt.datetime | None = None,
     enforce_freshness: bool = False,
 ) -> list[str]:
-    errors: list[str] = []
+    errors = validate_formal_contract(matrix)
     if matrix.get("schema_version") != SCHEMA:
         errors.append(f"schema_version must be {SCHEMA}")
 
@@ -675,6 +927,139 @@ def command_json(args: list[str]) -> Any:
         raise ProofSetError("live query returned invalid JSON") from exc
 
 
+def github_pages(path: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        separator = "&" if "?" in path else "?"
+        value = command_json(
+            ["gh", "api", f"{path}{separator}per_page=100&page={page}"]
+        )
+        if not isinstance(value, list):
+            raise ProofSetError("GitHub receipt query returned a non-list")
+        rows.extend(row for row in value if isinstance(row, dict))
+        if len(value) < 100:
+            return rows
+        page += 1
+
+
+def load_positioning_program_module() -> Any:
+    path = ROOT / "scripts/positioning-program.py"
+    spec = importlib.util.spec_from_file_location("flagship_positioning_program", path)
+    if spec is None or spec.loader is None:
+        raise ProofSetError("cannot load the positioning receipt verifier")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def live_w02_dependency_snapshot() -> dict[str, Any]:
+    """Resolve the accepted W02 issue, PR, and latest canonical marked receipt."""
+
+    try:
+        pull_request = command_json(["gh", "api", "repos/organvm/limen/pulls/2307"])
+        issue = command_json(["gh", "api", "repos/organvm/limen/issues/2174"])
+        comments = github_pages("repos/organvm/limen/issues/2174/comments")
+        current_main = command_json(["gh", "api", "repos/organvm/limen/commits/main"])
+    except ProofSetError as exc:
+        raise ProofSetError("accepted W02 formal state is unavailable") from exc
+    if not all(isinstance(value, dict) for value in (pull_request, issue, current_main)):
+        raise ProofSetError("accepted W02 formal state has an invalid GitHub response")
+
+    marker = f"<!-- positioning-receipt:{W02_WORK_ID} -->"
+    marked = [row for row in comments if marker in str(row.get("body") or "")]
+    if not marked:
+        raise ProofSetError("accepted W02 has no marked receipt")
+    latest = max(marked, key=lambda row: int(row.get("id") or 0))
+    body = str(latest.get("body") or "")
+    matches = [match for match in RECEIPT_BLOCK_RE.findall(body) if match[0] == W02_WORK_ID]
+    if len(matches) != 1:
+        raise ProofSetError("accepted W02 latest marked comment has no unique receipt block")
+    try:
+        receipt = json.loads(matches[0][1])
+        positioning = load_positioning_program_module()
+        graph = positioning.index_program(positioning.load_manifest())
+        receipt = positioning.validate_work_receipt(receipt, W02_WORK_ID, graph)
+    except Exception as exc:
+        raise ProofSetError("accepted W02 latest marked receipt is invalid") from exc
+
+    merge_head = pull_request.get("merge_commit_sha")
+    current_main_head = current_main.get("sha")
+    if not isinstance(merge_head, str) or HEAD_RE.fullmatch(merge_head) is None:
+        raise ProofSetError("accepted W02 pull request has no valid merge commit")
+    if not isinstance(current_main_head, str) or HEAD_RE.fullmatch(current_main_head) is None:
+        raise ProofSetError("current main has no valid exact head")
+    try:
+        comparison = command_json(
+            [
+                "gh",
+                "api",
+                f"repos/organvm/limen/compare/{merge_head}...{current_main_head}",
+            ]
+        )
+    except ProofSetError as exc:
+        raise ProofSetError("accepted W02 main-line ancestry is unavailable") from exc
+    if not isinstance(comparison, dict):
+        raise ProofSetError("accepted W02 main-line ancestry is invalid")
+
+    observed_heads = receipt.get("observed_heads")
+    receipt_head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
+    return {
+        "issue_state": str(issue.get("state") or "").lower(),
+        "pull_request_state": "merged"
+        if pull_request.get("merged_at") and pull_request.get("merged") is True
+        else str(pull_request.get("state") or "").lower(),
+        "pull_request_merge_head": merge_head,
+        "receipt_url": str(latest.get("html_url") or ""),
+        "receipt_sha256": canonical_receipt_digest(receipt),
+        "receipt_observed_head": receipt_head,
+        "current_main_head": current_main_head,
+        "main_contains_pull_request_head": comparison.get("status") in {"ahead", "identical"},
+    }
+
+
+def validate_live_formal_dependency(
+    matrix: dict[str, Any], observed: dict[str, Any] | None = None
+) -> list[str]:
+    dependency = matrix.get("dependency_snapshot")
+    if not isinstance(dependency, dict):
+        return ["live W02 binding requires the formal dependency snapshot"]
+    if observed is None:
+        try:
+            observed = live_w02_dependency_snapshot()
+        except ProofSetError as exc:
+            return [str(exc)]
+    errors: list[str] = []
+    comparisons = {
+        "issue_state": "w02_issue_state",
+        "pull_request_state": "w02_pull_request_state",
+        "pull_request_merge_head": "w02_head",
+        "receipt_url": "w02_receipt",
+        "receipt_sha256": "w02_receipt_sha256",
+        "receipt_observed_head": "w02_receipt_observed_head",
+    }
+    labels = {
+        "issue_state": "issue state",
+        "pull_request_state": "pull request state",
+        "pull_request_merge_head": "merged pull request head",
+        "receipt_url": "latest marked receipt URL",
+        "receipt_sha256": "canonical receipt SHA-256",
+        "receipt_observed_head": "receipt observed head",
+    }
+    for observed_key, dependency_key in comparisons.items():
+        if observed.get(observed_key) != dependency.get(dependency_key):
+            errors.append(f"accepted W02 {labels[observed_key]} differs from the formal snapshot")
+    if observed.get("receipt_observed_head") != observed.get("pull_request_merge_head"):
+        errors.append("accepted W02 receipt observed head differs from its merged pull request head")
+    current_main_head = observed.get("current_main_head")
+    if not isinstance(current_main_head, str) or HEAD_RE.fullmatch(current_main_head) is None:
+        errors.append("accepted W02 live binding has no valid current main head")
+    if observed.get("main_contains_pull_request_head") is not True:
+        errors.append("current main does not contain the accepted W02 merge commit")
+    return errors
+
+
 def http_status(url: str) -> int:
     url = validate_live_endpoint_url(url)
     result = subprocess.run(
@@ -752,6 +1137,8 @@ def live_w02_snapshot() -> dict[str, Any]:
 def validate_live(matrix: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     candidates = matrix.get("candidates") or []
+    if isinstance(matrix.get("dependency_snapshot"), dict):
+        errors.extend(validate_live_formal_dependency(matrix))
     try:
         w02 = live_w02_snapshot()
     except ProofSetError as exc:
