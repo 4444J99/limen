@@ -155,6 +155,7 @@ export async function validateWorkPacket(payload) {
     preferred_agent: null,
     required_capabilities: [],
     resource_claims: [],
+    storage_envelope_claims: [],
     spend: {
       schema_version: "limen.spend_envelope.v1",
       unit: "runs",
@@ -189,6 +190,22 @@ export async function validateWorkPacket(payload) {
   for (const capability of packet.required_capabilities) assertIdentifier(capability, "required_capability");
   for (const claim of packet.resource_claims) {
     if (typeof claim.key !== "string" || !RESOURCE_RE.test(claim.key)) fail("resource key contains unsupported characters or is too long");
+  }
+  const storageClaimIds = new Set();
+  for (const claim of packet.storage_envelope_claims) {
+    assertIdentifier(claim.claim_id, "storage_envelope_claim.claim_id");
+    if (storageClaimIds.has(claim.claim_id)) fail("storage envelope claims must have unique claim IDs");
+    storageClaimIds.add(claim.claim_id);
+    assertDate(claim.effective_from, "storage_envelope_claim.effective_from");
+    assertDate(claim.effective_until, "storage_envelope_claim.effective_until");
+    assertDate(claim.rollback_until, "storage_envelope_claim.rollback_until");
+    if (!(new Date(claim.effective_from) < new Date(claim.effective_until)
+      && new Date(claim.effective_until) <= new Date(claim.rollback_until))) {
+      fail("storage envelope claim lifetime must be ordered");
+    }
+  }
+  if (packet.effect === "write" && packet.required_capabilities.includes("local-worktree") && !packet.storage_envelope_claims.length) {
+    fail("local-worktree writes require storage_envelope_claims");
   }
   for (const field of ["actions", "repositories", "external_effects"]) {
     for (const atom of packet.authority[field]) {

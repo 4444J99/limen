@@ -385,6 +385,7 @@ class ConductBroker:
                     or stored.conductor != packet.conductor
                     or stored.authority != packet.authority
                     or stored.resource_claims != packet.resource_claims
+                    or stored.storage_envelope_claims != packet.storage_envelope_claims
                     or stored.predicate != packet.predicate
                     or stored.receipt_target != packet.receipt_target
                     or stored.work_loan != packet.work_loan

@@ -502,13 +502,32 @@ def _finite_float(value: object) -> float | None:
 def _required_free_gib() -> float | None:
     """Evaluate the live resource envelope; unknown telemetry fails closed."""
 
+    return _required_free_diagnostic()[0]
+
+
+def _required_free_diagnostic() -> tuple[float | None, str]:
+    """Return the dynamic floor and a stable cause when it cannot be evaluated."""
+
     try:
-        from limen.resource_envelope import current_required_free_gib
+        from limen.resource_envelope import (
+            ResourceGraphInvalid,
+            ResourceGraphMissing,
+            ResourceTelemetryUnavailable,
+            current_required_free_gib,
+        )
 
         required = _finite_float(current_required_free_gib())
+    except ResourceGraphMissing:
+        return None, "resource graph missing"
+    except ResourceGraphInvalid:
+        return None, "resource graph invalid or not bound to this run"
+    except ResourceTelemetryUnavailable:
+        return None, "resource telemetry unavailable"
     except Exception:
-        return None
-    return required if required is not None and required >= 0 else None
+        return None, "resource envelope evaluation failed"
+    if required is None or required < 0:
+        return None, "resource envelope returned a non-finite bound"
+    return required, ""
 
 
 def _disk_floor_gib() -> float | None:
@@ -697,6 +716,7 @@ def take_admission_snapshot(limen_root: Path | None = None) -> WorktreeAdmission
     """
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", "."))
     floor = _required_free_gib()
+    floor_error = "" if floor is not None else _required_free_diagnostic()[1]
     if not _gate_active():
         # Operator override (LIMEN_WORKTREE_DEBT_GATE=0, documented reason/receipt): admit everything.
         return {
@@ -718,9 +738,12 @@ def take_admission_snapshot(limen_root: Path | None = None) -> WorktreeAdmission
     # 1. RESOURCE custody on the root where the worktree is actually created.
     partition = effective_worktree_root()
     free = _worktree_disk_free_gib(partition)
-    if free is None or floor is None:
+    if free is None:
         resource_blocked = True
-        resource_reason = f"disk/resource-envelope unknown ({partition}) — failing closed for new local worktree"
+        resource_reason = f"disk telemetry unavailable ({partition}) — failing closed for new local worktree"
+    elif floor is None:
+        resource_blocked = True
+        resource_reason = f"{floor_error} — failing closed for new local worktree"
     else:
         resource_blocked = free < floor
         resource_reason = (

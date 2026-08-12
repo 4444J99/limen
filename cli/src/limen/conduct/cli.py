@@ -23,6 +23,7 @@ from limen.conduct.client import client_from_env
 from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
+from limen.resource_envelope import ResourceGraphError, materialize_run_task_graph
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -323,6 +324,30 @@ def split(parent_run: str, packet_file: Path) -> None:
 @click.argument("root_run")
 def graph(root_run: str) -> None:
     _emit(client_from_env().graph(root_run))
+
+
+@conduct_group.command("resource-graph")
+@click.argument("root_run")
+@click.option("--run-id", default=None, help="Selected run to bind; defaults to the root run.")
+@click.option("--output", type=click.Path(path_type=Path), required=True)
+def resource_graph(root_run: str, run_id: str | None, output: Path) -> None:
+    """Materialize broker-selected storage claims for local admission."""
+
+    selected = run_id or root_run
+    try:
+        receipt = materialize_run_task_graph(
+            client_from_env().graph(root_run),
+            run_id=selected,
+            destination=output,
+        )
+    except ResourceGraphError as exc:
+        raise click.ClickException(str(exc)) from exc
+    receipt["environment"] = {
+        "LIMEN_RESOURCE_TASK_GRAPH": receipt["path"],
+        "LIMEN_RESOURCE_TASK_GRAPH_RUN_ID": selected,
+        "LIMEN_RESOURCE_TASK_GRAPH_SHA256": receipt["digest"],
+    }
+    _emit(receipt)
 
 
 @conduct_group.command("heartbeat")

@@ -249,3 +249,15 @@ def test_current_admission_rejects_low_memory(monkeypatch) -> None:
         resource_envelope.current_required_free_gib(
             claims=(_claim("claimIdentifier01"),),
         )
+
+def test_current_admission_rejects_low_memory(monkeypatch) -> None:
+    monkeypatch.setattr(
+        resource_envelope,
+        "observe_resource_telemetry",
+        lambda: replace(_telemetry(), ram_available_bytes=GIB // 2),
+    )
+
+    with pytest.raises(RuntimeError, match="memory headroom"):
+        resource_envelope.current_required_free_gib(
+            claims=(_claim("claimIdentifier01"),),
+        )

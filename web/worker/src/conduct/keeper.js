@@ -572,6 +572,7 @@ export class ConductKernel {
         && identitiesEqual(stored.conductor, packet.conductor)
         && stableStringify(stored.authority) === stableStringify(packet.authority)
         && stableStringify(stored.resource_claims) === stableStringify(packet.resource_claims)
+        && stableStringify(stored.storage_envelope_claims || []) === stableStringify(packet.storage_envelope_claims || [])
         && stored.predicate === packet.predicate
         && stored.receipt_target === packet.receipt_target
         && stableStringify(stored.work_loan) === stableStringify(packet.work_loan)
