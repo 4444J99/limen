@@ -11,12 +11,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Callable, Optional, TypeVar, overload, Union, Any
+from typing import Any, Callable, Optional, TypeVar, Union, overload
 
+yaml: Any = None
 try:
-    import yaml
+    import yaml as yaml
 except ModuleNotFoundError:  # standalone/launchd Python may not carry PyYAML
-    yaml = None
+    pass
 
 _PANEL_REL = ("institutio", "governance", "parameters.yaml")
 
