@@ -24,7 +24,7 @@ Engagement: `organs/consulting/engagements/dustin.yaml` · Funnel instance: none
 The dossier exists; sharpen it into a build/no-build recommendation for the operator's demand review, naming the smallest first build if the answer is build.
 
 Repos:
-- none minted — evidence gate not yet passed
+- `4444J99/post-dsp-platform`
 
 Keywords: dsp, music platform, post-dsp, streaming alternative · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug dustin --project dsp-platform`
@@ -36,7 +36,7 @@ Keywords: dsp, music platform, post-dsp, streaming alternative · Corpus evidenc
 The dossier exists; sharpen it into a build/no-build recommendation for the operator's demand review, naming the smallest first build if the answer is build.
 
 Repos:
-- none minted — evidence gate not yet passed
+- `4444J99/the-consulate`
 
 Keywords: ai audit, ai consultation, ai consulting, consulate, ai remediation, ai governance · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug dustin --project ai-consultation`
@@ -64,7 +64,7 @@ Keywords: social presence, new ancients, ghastly occurrences, shorts campaign, m
 
 ## Fan-out
 
-At most **2** children, only via `limen conduct split <parent_run> --packet`, which reserves
+At most **3** children, only via `limen conduct split <parent_run> --packet`, which reserves
 each child against this session's lineage before launch. Never nest a git worktree inside this
 one — the reclaim organ sweeps roots, so a nested worktree leaks. Tier every child explicitly.
 
