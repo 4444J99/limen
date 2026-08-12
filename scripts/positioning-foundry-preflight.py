@@ -15,7 +15,6 @@ import hashlib
 import json
 import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +38,66 @@ EXPECTED_ASSIGNMENTS = {
     "PSP-P13-W07": {"model": "gpt-5.6-sol", "effort": "xhigh", "effect": "write"},
     "PSP-P13-W08": {"model": "gpt-5.6-sol", "effort": "max", "effect": "external"},
     "PSP-P13-W09": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
+}
+EXPECTED_CONDUCTOR = {"model": "gpt-5.6-sol", "effort": "max"}
+EXPECTED_P02_CLOSURE = {
+    "url": "https://github.com/organvm/limen/issues/2172",
+    "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+    "marked_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+    "canonical_receipt_sha256": "f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434",
+}
+EXPECTED_C02_SOURCES = {
+    "c02_estate_census": {
+        "url": "https://github.com/organvm/limen/pull/2305",
+        "merge_commit": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+    },
+    "c02_estate_classification": {
+        "url": "https://github.com/organvm/limen/pull/2307",
+        "merge_commit": "35134b95650a26185a58eb3b3a82632e5b80b5b2",
+    },
+}
+EXPECTED_C03_CHECKPOINT = {
+    "status": "accepted_through_w06",
+    "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+    "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
+    "integration_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+    "closed_leaves": [f"PSP-P03-W{index:02d}" for index in range(1, 7)],
+    "reader_gate": {
+        "work_id": "PSP-P03-W07",
+        "issue": "https://github.com/organvm/limen/issues/2188",
+        "state": "open",
+        "assignment": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"},
+    },
+}
+EXPECTED_PREPARED_CHUNKS = {
+    "PSP-C04": {"closed": False, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
+    "PSP-C05": {
+        "closed": False,
+        "limen_pr": 2315,
+        "limen_head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+        "private_pr": 135,
+        "private_head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b",
+    },
+    "PSP-C06": {
+        "closed": False,
+        "limen_pr": 2317,
+        "limen_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+        "portfolio_pr": 221,
+        "portfolio_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
+        "visual_direction_state": "three_unselected",
+    },
+    "PSP-C07": {"closed": False, "limen_pr": 2318, "limen_head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"},
+    "PSP-C08": {"closed": False, "limen_pr": 2316, "limen_head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"},
+    "PSP-C09": {
+        "closed": False,
+        "limen_pr": 2322,
+        "limen_head": "21f3132f129aa6e1eba515f03aa19619533cef4b",
+        "private_pr": 136,
+        "private_head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086",
+        "portfolio_pr": 222,
+        "portfolio_head": "a4c5165421344042efcc7a8b47660c1658b786d1",
+    },
+    "PSP-C10": {"closed": False, "limen_pr": 2321, "limen_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"},
 }
 
 REQUIRED_STRUCTURES = {
@@ -357,11 +416,17 @@ def build_snapshot(
     repository_owner_counts = collections.Counter(str(row["owner"]["login"]) for row in repositories)
     for organization in organizations:
         repository_owner_counts.setdefault(organization, 0)
+    source_rows = {
+        str(source.get("id")): source
+        for source in contract["live_sources"]
+        if isinstance(source, dict)
+    }
+    source_ids = contract["candidate_inventory"]["source_ids"]
     return {
         "schema_version": "limen.psp_c11_product_candidate_snapshot.v1",
         "status": "PREPARED/PREFLIGHT",
         "observed_at": observed_at.isoformat().replace("+00:00", "Z"),
-        "sources": [source["url"] for source in contract["live_sources"]],
+        "sources": [source_rows[source_id]["url"] for source_id in source_ids],
         "census": {
             "organization_count": len(organizations),
             "organization_roster": organizations,
@@ -469,15 +534,72 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("contract status must remain PREPARED/PREFLIGHT")
     if contract.get("chunk_id") != "PSP-C11" or contract.get("phase_id") != "PSP-P13":
         errors.append("contract must remain bound to PSP-C11 / PSP-P13")
+    if contract.get("schema_version") != "limen.psp_c11_foundry_preflight.v2":
+        errors.append("contract schema must remain at reconciled v2")
+    if contract.get("reconciled_at") != "2026-08-12":
+        errors.append("contract reconciliation date drift")
+    if contract.get("conductor") != EXPECTED_CONDUCTOR:
+        errors.append("C11 conductor assignment drift")
     if contract.get("leaf_assignments") != EXPECTED_ASSIGNMENTS:
         errors.append("leaf model, effort, or effect assignment drift")
     live_sources = {row.get("id"): row for row in contract.get("live_sources", []) if isinstance(row, dict)}
-    c00 = live_sources.get("c00_completion") or {}
-    if c00.get("state") != "merged" or c00.get("url") != "https://github.com/organvm/limen/pull/2300":
-        errors.append("C00 completion must remain bound to merged PR #2300")
-    if "Agy is not a dependency" not in str(c00.get("use") or ""):
-        errors.append("superseded Agy gate correction is missing")
+    if set(live_sources) != {"p02_closure", *EXPECTED_C02_SOURCES}:
+        errors.append("live source set must contain only P02 closure and the two accepted C02 inputs")
+    p02 = live_sources.get("p02_closure") or {}
+    if (
+        p02.get("state") != "closed"
+        or any(p02.get(key) != value for key, value in EXPECTED_P02_CLOSURE.items())
+    ):
+        errors.append("P02 closure must remain bound to its accepted main head and marked receipt")
+    for source_id, expected in EXPECTED_C02_SOURCES.items():
+        source = live_sources.get(source_id) or {}
+        if (
+            source.get("state") != "merged"
+            or source.get("url") != expected["url"]
+            or source.get("merge_commit") != expected["merge_commit"]
+        ):
+            errors.append(f"{source_id} must remain bound to its accepted merged commit")
+    dependency_value = contract.get("dependency_boundary")
+    if not isinstance(dependency_value, dict):
+        errors.append("dependency boundary must be an object")
+        dependency: dict[str, Any] = {}
+    else:
+        dependency = dependency_value
+    predecessor = dependency.get("formal_predecessor") or {}
+    if not isinstance(predecessor, dict) or predecessor.get("chunk_id") != "PSP-C10":
+        errors.append("C10 predecessor checkpoint is malformed")
+    elif predecessor.get("prepared") is not True or predecessor.get("closed") is not False:
+        errors.append("C10 must remain prepared but not closed")
+    elif (
+        predecessor.get("pull_request") != "https://github.com/organvm/limen/pull/2321"
+        or predecessor.get("exact_head") != EXPECTED_PREPARED_CHUNKS["PSP-C10"]["limen_head"]
+    ):
+        errors.append("C10 predecessor checkpoint head drift")
+    if dependency.get("ready_work_observation") != "no_psp_c11_leaf_ready":
+        errors.append("C11 ready-work observation drift")
+    if dependency.get("c03_checkpoint") != EXPECTED_C03_CHECKPOINT:
+        errors.append("C03 accepted checkpoint or reader gate drift")
+    phase_value = dependency.get("phase_dependencies")
+    phase_dependencies = phase_value if isinstance(phase_value, dict) else {}
+    if not isinstance(phase_value, dict):
+        errors.append("phase dependency checkpoints must be an object")
+    p02_phase = phase_dependencies.get("PSP-P02") or {}
+    if (
+        not isinstance(p02_phase, dict)
+        or p02_phase.get("closed") is not True
+        or p02_phase.get("issue") != EXPECTED_P02_CLOSURE["url"]
+        or p02_phase.get("accepted_main_head") != EXPECTED_P02_CLOSURE["accepted_main_head"]
+    ):
+        errors.append("P02 closure checkpoint is missing")
+    for phase_id in ("PSP-P04", "PSP-P11", "PSP-P12"):
+        phase = phase_dependencies.get(phase_id) or {}
+        if not isinstance(phase, dict) or phase.get("closed") is not False:
+            errors.append(f"{phase_id} must remain unsatisfied in C11 preflight")
+    if dependency.get("prepared_chunks") != EXPECTED_PREPARED_CHUNKS:
+        errors.append("C04-C10 prepared checkpoint heads drift")
     inventory = contract.get("candidate_inventory") or {}
+    if inventory.get("source_ids") != list(EXPECTED_C02_SOURCES):
+        errors.append("candidate inventory sources must be the two accepted C02 inputs only")
     estate = load_yaml(ESTATE)
     product_count = len(((estate.get("product_ledger") or {}).get("repos") or []))
     if inventory.get("expected_candidate_count") != product_count:
@@ -527,6 +649,18 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
     errors: list[str] = []
     if snapshot.get("status") != "PREPARED/PREFLIGHT":
         errors.append("snapshot status must remain PREPARED/PREFLIGHT")
+    source_rows = {
+        str(row.get("id")): row
+        for row in contract.get("live_sources", [])
+        if isinstance(row, dict)
+    }
+    expected_sources = [
+        source_rows[source_id].get("url")
+        for source_id in contract.get("candidate_inventory", {}).get("source_ids", [])
+        if source_id in source_rows
+    ]
+    if snapshot.get("sources") != expected_sources:
+        errors.append("snapshot sources must contain only the accepted inventory inputs")
     candidates = snapshot.get("candidates") or []
     expected = int(contract["candidate_inventory"]["expected_candidate_count"])
     if len(candidates) != expected or snapshot.get("candidate_denominator", {}).get("count") != expected:
@@ -580,10 +714,15 @@ def compare_live_snapshot(snapshot: dict[str, Any], live: dict[str, Any]) -> lis
     errors: list[str] = []
     for path in (
         ("census", "organization_count"),
+        ("census", "organization_roster"),
         ("census", "repository_count"),
+        ("census", "repository_owner_counts"),
+        ("census", "repository_identity_sha256"),
         ("candidate_denominator", "count"),
         ("candidate_denominator", "visibility"),
         ("candidate_denominator", "identity_sha256"),
+        ("score_distribution",),
+        ("candidates",),
     ):
         old: Any = snapshot
         new: Any = live

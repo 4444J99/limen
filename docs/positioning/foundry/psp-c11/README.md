@@ -4,6 +4,9 @@ Status: **PREPARED/PREFLIGHT**. This package is reversible, public-safe, and del
 close PSP-P13 or any W01-W09 leaf. It does not select or contact an operator, choose binding terms,
 grant access, move custody, sign anything, spend, or claim an observed pilot.
 
+Reconciled 2026-08-12 under the exact Sol/max conductor assignment. Reconciliation updates live
+dependencies and evidence; it does not convert preparation into formal closure.
+
 The machine-readable owners are:
 
 - [`foundry-preflight-contract.json`](foundry-preflight-contract.json) — rubrics, floors, structure
@@ -17,27 +20,33 @@ The machine-readable owners are:
 
 ## Dependency and authority boundary
 
-The formal graph still owns closure: PSP-C11 depends on PSP-C10, P13 depends on P02, P04, P11, and
-P12, and the live ready-work query returned no leaves. The authorized preflight therefore prepares
-the downstream machinery but posts no leaf receipt and changes no issue state.
+The formal graph still owns closure. [P02](https://github.com/organvm/limen/issues/2172) is closed;
+P04, P11, and P12 remain unsatisfied. PSP-C10 is prepared at draft PR
+[#2321](https://github.com/organvm/limen/pull/2321) head
+`ba8dab7821b420cdc46c9129f96e91c908e01e93`, but is not closed. C03 is accepted through W06 at
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; its genuine-reader W07 gate remains open in
+[#2188](https://github.com/organvm/limen/issues/2188). No C11/P13 leaf is ready. The authorized
+preflight therefore prepares downstream machinery but posts no leaf receipt and changes no issue
+state.
 
-Merged PR [#2300](https://github.com/organvm/limen/pull/2300) is the live C00/P00 completion
-receipt. It supersedes the old native-identity/Agy note; Agy is not a dependency of this lane. The
-candidate denominator reuses, without copying private facts, the two active C02 preflights:
+The candidate denominator reuses, without copying private facts, the two accepted C02 inputs:
 
-- [#2305](https://github.com/organvm/limen/pull/2305) — two-pass exhaustive ownership census and
+- merged [#2305](https://github.com/organvm/limen/pull/2305) at
+  `10cf8476d5e88309c71d5fac25167ec7b7af59c4` — two-pass exhaustive ownership census and
   private-facts custody;
-- [#2307](https://github.com/organvm/limen/pull/2307) — role, maturity, visibility, public relevance,
+- merged [#2307](https://github.com/organvm/limen/pull/2307) at
+  `35134b95650a26185a58eb3b3a82632e5b80b5b2` — role, maturity, visibility, public relevance,
   and uncertainty classification.
 
-Those PRs remain draft and are evidence inputs, not completed program leaves.
+Only those two inventory inputs appear in the candidate snapshot's source list. The P02 closure
+receipt is a dependency binding, not a candidate-data source.
 
 ## W01 — Complete candidate denominator
 
 Two consecutive authenticated owner-wide passes returned the same repository identity digest:
 
 - 10 controlled organizations;
-- 314 accessible repositories;
+- 317 accessible repositories;
 - 62 product-ledger candidates, all resolving to exactly one currently owned repository;
 - 54 public candidates and 8 private candidates;
 - zero new organization, repository, or candidate keys between passes.
@@ -181,10 +190,12 @@ their exact external act.
 ## Verification
 
 ```bash
-python3 scripts/positioning-foundry-preflight.py --json
-python3 scripts/positioning-foundry-preflight.py --drills --json
-python3 scripts/positioning-foundry-preflight.py --verify-live-snapshot --json
-python3 -m unittest discover -s scripts/tests -p 'test_positioning_foundry_preflight.py'
+python3 -B scripts/positioning-program.py --check
+python3 -B scripts/positioning-program.py --verify-model-assignments
+python3 -B scripts/positioning-foundry-preflight.py --json
+python3 -B scripts/positioning-foundry-preflight.py --drills --json
+python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json
+python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight
 ```
 
 Formal leaf predicates remain intentionally deferred. After predecessors close, a fresh correctly

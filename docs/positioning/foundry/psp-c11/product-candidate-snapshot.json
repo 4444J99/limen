@@ -3261,10 +3261,10 @@
       "organvm-vi-koinonia",
       "organvm-vii-kerygma"
     ],
-    "repository_count": 314,
-    "repository_identity_sha256": "6c32737d17248edd957c2787a1cb793b85bd8f43089ae38f1724c213f81161c9",
+    "repository_count": 317,
+    "repository_identity_sha256": "330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c",
     "repository_owner_counts": {
-      "4444J99": 13,
+      "4444J99": 16,
       "a-organvm": 0,
       "meta-organvm": 10,
       "organvm": 172,
@@ -3277,7 +3277,7 @@
       "organvm-vii-kerygma": 5
     }
   },
-  "observed_at": "2026-08-10T20:09:35.251536Z",
+  "observed_at": "2026-08-12T20:10:50.791541Z",
   "schema_version": "limen.psp_c11_product_candidate_snapshot.v1",
   "score_distribution": {
     "demand_tiers": {
@@ -3296,7 +3296,6 @@
     "transfer_eligible": 0
   },
   "sources": [
-    "https://github.com/organvm/limen/pull/2300",
     "https://github.com/organvm/limen/pull/2305",
     "https://github.com/organvm/limen/pull/2307"
   ],
@@ -3305,7 +3304,7 @@
     "new_candidate_keys": 0,
     "new_organization_keys": 0,
     "new_repository_keys": 0,
-    "pass_1_repository_identity_sha256": "6c32737d17248edd957c2787a1cb793b85bd8f43089ae38f1724c213f81161c9",
-    "pass_2_repository_identity_sha256": "6c32737d17248edd957c2787a1cb793b85bd8f43089ae38f1724c213f81161c9"
+    "pass_1_repository_identity_sha256": "330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c",
+    "pass_2_repository_identity_sha256": "330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c"
   }
 }

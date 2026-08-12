@@ -1,14 +1,60 @@
 {
-  "schema_version": "limen.psp_c11_foundry_preflight.v1",
+  "schema_version": "limen.psp_c11_foundry_preflight.v2",
   "chunk_id": "PSP-C11",
   "phase_id": "PSP-P13",
   "status": "PREPARED/PREFLIGHT",
   "prepared_at": "2026-08-10",
+  "reconciled_at": "2026-08-12",
+  "conductor": {"model": "gpt-5.6-sol", "effort": "max"},
   "objective": "Stage a public-safe, reversible governed-foundry handoff system without selecting an operator, agreeing terms, transferring access or assets, or claiming an observed pilot.",
   "dependency_boundary": {
-    "formal_predecessor": "PSP-C10",
-    "predecessor_state": "open_or_unverified",
-    "ready_work_observation": "empty",
+    "formal_predecessor": {
+      "chunk_id": "PSP-C10",
+      "prepared": true,
+      "closed": false,
+      "pull_request": "https://github.com/organvm/limen/pull/2321",
+      "exact_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"
+    },
+    "phase_dependencies": {
+      "PSP-P02": {
+        "closed": true,
+        "issue": "https://github.com/organvm/limen/issues/2172",
+        "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
+      },
+      "PSP-P04": {"closed": false},
+      "PSP-P11": {"closed": false},
+      "PSP-P12": {"closed": false}
+    },
+    "c03_checkpoint": {
+      "status": "accepted_through_w06",
+      "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
+      "integration_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+      "closed_leaves": [
+        "PSP-P03-W01",
+        "PSP-P03-W02",
+        "PSP-P03-W03",
+        "PSP-P03-W04",
+        "PSP-P03-W05",
+        "PSP-P03-W06"
+      ],
+      "reader_gate": {
+        "work_id": "PSP-P03-W07",
+        "issue": "https://github.com/organvm/limen/issues/2188",
+        "state": "open",
+        "assignment": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"}
+      }
+    },
+    "prepared_chunks": {
+      "PSP-C04": {"closed": false, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
+      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e", "private_pr": 135, "private_head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b"},
+      "PSP-C06": {"closed": false, "limen_pr": 2317, "limen_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668", "portfolio_pr": 221, "portfolio_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea", "visual_direction_state": "three_unselected"},
+      "PSP-C07": {"closed": false, "limen_pr": 2318, "limen_head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"},
+      "PSP-C08": {"closed": false, "limen_pr": 2316, "limen_head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"},
+      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_head": "21f3132f129aa6e1eba515f03aa19619533cef4b", "private_pr": 136, "private_head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086", "portfolio_pr": 222, "portfolio_head": "a4c5165421344042efcc7a8b47660c1658b786d1"},
+      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"}
+    },
+    "ready_work_observation": "no_psp_c11_leaf_ready",
     "rule": "Predecessor state blocks leaf and phase closure, not reversible preflight preparation in this explicitly authorized direct-session lane.",
     "automatic_after_dependencies": [
       "refresh the live owner-wide census and candidate identity digest",
@@ -29,24 +75,26 @@
   },
   "live_sources": [
     {
-      "id": "c00_completion",
-      "url": "https://github.com/organvm/limen/pull/2300",
-      "state": "merged",
-      "merge_commit": "fbab1543a863ba2a86546de1eb31bdb9f0f50388",
-      "use": "Supersedes the obsolete non-Codex/Agy gate; Agy is not a dependency of this lane."
+      "id": "p02_closure",
+      "url": "https://github.com/organvm/limen/issues/2172",
+      "state": "closed",
+      "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "marked_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+      "canonical_receipt_sha256": "f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434",
+      "use": "Formal P02 closure and accepted estate-evidence baseline."
     },
     {
       "id": "c02_estate_census",
       "url": "https://github.com/organvm/limen/pull/2305",
-      "state": "draft_preflight",
-      "exact_head": "2d591e630a3b3fbcdfeb7ac12500f374c607af30",
+      "state": "merged",
+      "merge_commit": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
       "use": "Two-pass owner-wide denominator, organization roster, visibility counts, and private-facts custody contract."
     },
     {
       "id": "c02_estate_classification",
       "url": "https://github.com/organvm/limen/pull/2307",
-      "state": "draft_preflight",
-      "exact_head": "4f138589b68bcbb3618ee68327bac1f8137d8bd4",
+      "state": "merged",
+      "merge_commit": "35134b95650a26185a58eb3b3a82632e5b80b5b2",
       "use": "Public-safe role, maturity, visibility, relevance, and uncertainty policy over the census denominator."
     }
   ],
@@ -63,6 +111,7 @@
   },
   "candidate_inventory": {
     "canonical_source": "institutio/github/estate.yaml#/product_ledger/repos",
+    "source_ids": ["c02_estate_census", "c02_estate_classification"],
     "expected_candidate_count": 62,
     "owner_scope": "authenticated owner plus every organization returned by the live GitHub owner census",
     "identity_rule": "Each owner-independent product-ledger key must resolve to exactly one currently owned repository.",

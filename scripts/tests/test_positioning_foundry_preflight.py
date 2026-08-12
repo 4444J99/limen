@@ -30,6 +30,25 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         changed["leaf_assignments"]["PSP-P13-W08"]["effort"] = "xhigh"
         self.assertIn("leaf model, effort, or effect assignment drift", MODULE.validate_contract(changed))
 
+    def test_upstream_c02_and_c03_bindings_are_fail_closed(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["live_sources"][1]["merge_commit"] = "0" * 40
+        changed["dependency_boundary"]["c03_checkpoint"]["reader_gate"]["assignment"]["effort"] = "medium"
+        errors = MODULE.validate_contract(changed)
+        self.assertIn(
+            "c02_estate_census must remain bound to its accepted merged commit",
+            errors,
+        )
+        self.assertIn("C03 accepted checkpoint or reader gate drift", errors)
+
+    def test_prepared_chunk_heads_are_exact_and_not_closure(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["dependency_boundary"]["prepared_chunks"]["PSP-C10"]["closed"] = True
+        changed["dependency_boundary"]["formal_predecessor"]["exact_head"] = "f" * 40
+        errors = MODULE.validate_contract(changed)
+        self.assertIn("C04-C10 prepared checkpoint heads drift", errors)
+        self.assertIn("C10 predecessor checkpoint head drift", errors)
+
     def test_observed_pilot_or_transfer_claim_is_rejected(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["bounded_pilot"]["observed_pilot"] = True
@@ -71,6 +90,23 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertTrue(all(row["repository"] is None for row in private_rows))
         self.assertTrue(all(row["candidate_id"].startswith("private-candidate-") for row in private_rows))
         self.assertTrue(all(row["demand"]["tier"] == "E0" for row in private_rows))
+
+    def test_snapshot_sources_are_inventory_only(self) -> None:
+        source_rows = {row["id"]: row for row in self.contract["live_sources"]}
+        source_ids = self.contract["candidate_inventory"]["source_ids"]
+        self.assertEqual(
+            [source_rows[source_id]["url"] for source_id in source_ids],
+            self.snapshot["sources"],
+        )
+        self.assertNotIn(source_rows["p02_closure"]["url"], self.snapshot["sources"])
+
+    def test_live_compare_binds_repository_digest_and_score_distribution(self) -> None:
+        live = copy.deepcopy(self.snapshot)
+        live["census"]["repository_identity_sha256"] = "0" * 64
+        live["score_distribution"]["demand_tiers"]["E0"] -= 1
+        errors = MODULE.compare_live_snapshot(self.snapshot, live)
+        self.assertIn("live snapshot drift at census.repository_identity_sha256", errors)
+        self.assertIn("live snapshot drift at score_distribution", errors)
 
     def test_every_candidate_has_demand_readiness_economics_and_stop_rules(self) -> None:
         self.assertEqual(62, len(self.snapshot["candidates"]))
