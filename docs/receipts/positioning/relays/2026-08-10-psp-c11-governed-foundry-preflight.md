@@ -1,9 +1,9 @@
 ---
 type: prompt-relay-envelope
-version: 1.0
-date: 2026-08-10
-from: Codex desktop direct-session preflight
-to: next correctly assigned Codex leaf or conductor session
+version: 2.0
+date: 2026-08-12
+from: Codex direct-session reversible preflight
+to: next authorized PSP-C11 conductor or correctly assigned leaf
 scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen
 phase: PROVE
 compression_level: medium
@@ -23,22 +23,24 @@ compression_level: medium
   repositories were not changed by this preflight
 - Branch: `codex/psp-c11-governed-foundry-preflight`
 - Draft PR: https://github.com/organvm/limen/pull/2319
-- Conduct state: explicit direct-session preflight authority; the conduct broker was not configured,
-  so no leaf lease, lifecycle transition, or completion receipt was claimed
+- Conduct state: explicit direct-session reversible preflight; no leaf lease, lifecycle transition,
+  completion receipt, or closure claimed
 
 ## Verified current state
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `a9168e3d914e5c76f51cee16395c91d0c8b83b6b` |
-| Exact remote implementation checkpoint | `origin/codex/psp-c11-governed-foundry-preflight` at `a9168e3d914e5c76f51cee16395c91d0c8b83b6b` before this relay-only commit |
+| Exact implementation head | `0cf4df41b1220c2476ba69f5143cb1c97f940be3` |
+| Exact remote implementation checkpoint | `origin/codex/psp-c11-governed-foundry-preflight` at `0cf4df41b1220c2476ba69f5143cb1c97f940be3` before this relay-only commit |
 | Pull request | Draft PR #2319, base `main`; no merge requested or performed |
 | Working tree | Clean at the implementation checkpoint; this relay is the only planned subsequent file |
 | Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
 | Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
 | Model assignment parity | `--verify-model-assignments`: all 127 objects valid; C11 Sol/max and all nine leaf pairs unchanged |
-| Live ready-work | No C11/P13 leaf was ready at relay creation; a later whole-program refresh exposed `PSP-P01-W03` outside this lane |
-| Candidate census | Two identical passes: 10 organizations, 314 repositories, 62 candidates, zero new organization/repository/candidate keys |
+| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `ba8dab7821b420cdc46c9129f96e91c908e01e93`, not closed |
+| C03 checkpoint | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
+| Live ready-work | No C11/P13 leaf is ready |
+| Candidate census | Two identical passes: 10 organizations, 317 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
 | Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 60 diligence-required, 2 archived; 0 transfer-eligible |
 | Synthetic drills | Five operator routes and five access decisions passed; invented records only; no simulated human acceptance or external effect; owner custody unchanged |
@@ -50,14 +52,17 @@ compression_level: medium
 ## Exact predicate receipts
 
 All commands below passed against implementation head
-`a9168e3d914e5c76f51cee16395c91d0c8b83b6b` unless noted otherwise.
+`0cf4df41b1220c2476ba69f5143cb1c97f940be3` unless noted otherwise.
 
 | Predicate | Result |
 | --- | --- |
-| `python3 scripts/positioning-foundry-preflight.py --json` | pass; contract, snapshot, exact assignments, gates, structure set, and drill bindings valid |
-| `python3 scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, return/governance replay, zero external effects |
-| `python3 scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-10T20:18:39Z; tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `6c32737d17248edd957c2787a1cb793b85bd8f43089ae38f1724c213f81161c9`; leak count 0 |
-| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_foundry_preflight.py'` | 12 passed |
+| `python3 -B scripts/positioning-program.py --check` | pass; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
+| `python3 -B scripts/positioning-program.py --verify-model-assignments` | pass; all 127 assignments valid |
+| `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v2 contract, snapshot, exact dependency heads, assignments, gates, structures, and drills valid |
+| `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, return/governance replay, zero external effects |
+| `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-12T20:14:01Z; full tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c`; leak count 0 |
+| `python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight` | 16 passed |
+| Ruff | pass |
 | `scripts/verify-scoped.sh` | passed all 7 implicated gates |
 | `git diff --cached --check` | pass before implementation commit |
 
@@ -66,8 +71,10 @@ this preflight package, not a leaf completion.
 
 ## Completed reversible work
 
-- Materialized a complete 62-row product-candidate snapshot over the live owner-wide denominator.
-- Reused C02 draft census/classification evidence at exact heads without copying private facts.
+- Refreshed the complete 62-row product-candidate snapshot over the 317-repository live owner-wide denominator.
+- Bound merged C02 census/classification inputs at accepted commits without copying private facts.
+- Fail-closed the v2 contract on the accepted C03 W01-W06 checkpoint, open W07 reader gate,
+  prepared C04-C10 exact heads, C10-not-closed truth, and P02/P04/P11/P12 phase state.
 - Added per-candidate demand evidence/zero-evidence state, next experiment, stop condition,
   conservative readiness/custody screen, economics hypothesis, and transfer blockers.
 - Added the operator profile/scorecard, diligence checklist, economics and transfer floors,
@@ -75,8 +82,8 @@ this preflight package, not a leaf completion.
   charter, telemetry/cadence, return workflow, and institutional review templates.
 - Added an executable validator, 12 focused tests, and synthetic operator/access/return/governance
   drills.
-- Bound the live correction: merged PR #2300 fully closes C00/P00 and supersedes the obsolete Agy
-  gate; Agy is not required for this lane.
+- Restricted snapshot sources to the two accepted C02 inventory inputs; the P02 closure receipt is
+  dependency evidence, not candidate data.
 
 ## Decisions and rationale
 
@@ -91,7 +98,7 @@ this preflight package, not a leaf completion.
 
 ## Next actions
 
-1. Refresh live registry, exact PR heads, and C11 readiness. Do not assume this dated relay is
+1. Refresh live registry, exact PR heads, and C11 readiness. Do not assume this relay remains
    current.
 2. Wait for the formal dependency graph to expose a leaf as ready; predecessor openness blocks
    closure but not continued reversible, non-duplicative preparation.
@@ -128,11 +135,12 @@ state from this handoff.
   `docs/positioning/foundry/psp-c11/product-candidate-snapshot.json`
 - Synthetic receipt:
   `docs/positioning/foundry/psp-c11/synthetic-drill-receipt.json`
-- C02 census preflight: https://github.com/organvm/limen/pull/2305 at
-  `2d591e630a3b3fbcdfeb7ac12500f374c607af30`
-- C02 classification preflight: https://github.com/organvm/limen/pull/2307 at
-  `4f138589b68bcbb3618ee68327bac1f8137d8bd4`
-- C00/P00 correction: https://github.com/organvm/limen/pull/2300
+- P02 closure: https://github.com/organvm/limen/issues/2172
+- C02 census accepted merge: https://github.com/organvm/limen/pull/2305 at
+  `10cf8476d5e88309c71d5fac25167ec7b7af59c4`
+- C02 classification accepted merge: https://github.com/organvm/limen/pull/2307 at
+  `35134b95650a26185a58eb3b3a82632e5b80b5b2`
+- C03 reader gate: https://github.com/organvm/limen/issues/2188
 - C11 draft PR: https://github.com/organvm/limen/pull/2319
 
 The fresh-agent injection phrase is:
