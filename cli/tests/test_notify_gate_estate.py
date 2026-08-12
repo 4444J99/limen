@@ -861,5 +861,11 @@ def test_netmode_binds_notifier_to_the_invoking_checkout():
     assert '_notify_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"' in shell
     assert '_notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"' in shell
     assert '"$_notify_script_dir/_notify.py"' in shell
-    assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" not in shell
+    live_helper = '"$HOME/Workspace/limen/scripts/_notify.py"'
+    runtime_helper = '"$HOME/.local/share/limen/current/source/scripts/_notify.py"'
+    assert live_helper in shell
+    assert runtime_helper in shell
+    assert shell.index('"$_notify_script_dir/_notify.py"') < shell.index(live_helper)
+    assert shell.index(live_helper) < shell.index(runtime_helper)
+    assert '_notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"' in shell
     assert '--root "$_notify_root"' in shell

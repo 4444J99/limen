@@ -326,19 +326,45 @@ def test_settled_daily_report_skips_admission_refresh(tmp_path, monkeypatch):
 
 def test_session_value_admission_reports_lane_switch_as_blocked(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
+    module.ADMISSION_REFRESH_RECEIPT = tmp_path / "logs" / "refresh.jsonl"
     calls = []
-    monkeypatch.setattr(
-        module.subprocess,
-        "run",
-        lambda args, **kwargs: (
-            calls.append((args, kwargs)) or SimpleNamespace(returncode=10, stdout="", stderr="lane switch")
-        ),
-    )
+
+    def fake_run(args, **kwargs):
+        calls.append((args, kwargs))
+        return SimpleNamespace(returncode=10, stdout=b"", stderr=b"lane switch")
+
+    monkeypatch.setattr(module, "_run_bounded_subprocess", fake_run)
 
     result = module._session_value_admission()
 
     assert result == {"status": "blocked", "reason": "lane switch"}
     assert calls[0][0][-4:] == ["--gate", "--hours", "1.5", "--no-record-gate"]
+    assert calls[0][1]["stdout_ceiling"] == module.SESSION_VALUE_OUTPUT_LIMIT_BYTES
+    assert calls[0][1]["stderr_ceiling"] == module.SESSION_VALUE_OUTPUT_LIMIT_BYTES
+    receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
+    assert [(row["event"], row["step"]) for row in receipts] == [
+        ("start", "session_value"),
+        ("finish", "session_value"),
+    ]
+    assert receipts[-1]["outcome"] == "blocked"
+
+
+def test_session_value_admission_stops_at_the_output_ceiling(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    module.ADMISSION_REFRESH_RECEIPT = tmp_path / "logs" / "refresh.jsonl"
+
+    def verbose_gate(_args, **_kwargs):
+        assert module._BoundedSubprocessError is not None
+        raise module._BoundedSubprocessError("output")
+
+    monkeypatch.setattr(module, "_run_bounded_subprocess", verbose_gate)
+
+    result = module._session_value_admission()
+
+    assert result["status"] == "unavailable"
+    assert result["reason"] == "session value gate unavailable: exceeded output limit"
+    receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
+    assert receipts[-1]["outcome"] == "output_limit"
 
 
 def test_refresh_admission_is_bounded_and_writes_start_finish_receipts(tmp_path, monkeypatch):
@@ -552,6 +578,39 @@ def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path,
         (
             SimpleNamespace(status="delivery_failed", reserved=True, prior_status=None),
             SimpleNamespace(status="duplicate", reserved=False, prior_status="delivery_failed"),
+        )
+    )
+    monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: next(macos_results))
+    ntfy_results = iter((False, True))
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: next(ntfy_results))
+
+    assert module.main([]) == 0
+    assert not module.STATE.exists()
+
+    assert module.main([]) == 0
+    assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
+
+
+def test_withheld_duplicate_retries_ntfy_until_delivery_succeeds(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_refresh_admission", lambda: True)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
+    monkeypatch.setattr(module, "_always_working_admission", lambda: {"status": "allowed"})
+    macos_results = iter(
+        (
+            SimpleNamespace(status="withheld", reserved=True, prior_status=None),
+            SimpleNamespace(status="duplicate", reserved=False, prior_status="withheld"),
         )
     )
     monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: next(macos_results))

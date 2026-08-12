@@ -247,6 +247,8 @@ def _provider_headroom() -> dict[str, Any]:
                             "provider_last_terminal_failure",
                             "provider_last_terminal_failure_class",
                             "provider_terminal_failure_classes",
+                            "provider_outcome_observed_last_terminal_failure_class",
+                            "provider_outcome_observed_terminal_failure_classes",
                             "provider_cooldown_expiry",
                             "provider_health_snapshot_hash",
                             "provider_outcome_all_blocked",
@@ -362,10 +364,12 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     for name, value in spent_by.items():
         reset_at = reset_by.get(name)
         if reset_at is None:
-            if track_date == current_date:
-                active_spent[str(name)] = value
-            else:
+            # Canonical dispatch resets configured per-agent cadence caps. An uncapped lane
+            # still belongs to the aggregate daily budget and has no independent window.
+            if name in caps:
                 expired_window = True
+                continue
+            active_spent[str(name)] = value
             continue
         if _reset_window_active(str(name), reset_at, now):
             active_spent[str(name)] = value
@@ -383,10 +387,9 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     for name in sorted(set(caps) | set(spent_by) | set(reset_by)):
         cap = _as_int(caps.get(name))
         agent_spent = _as_int(spent_by.get(name)) or 0
-        remaining = global_remaining
-        if cap is not None:
-            cap_remaining = max(0, cap - agent_spent)
-            remaining = cap_remaining if remaining is None else min(remaining, cap_remaining)
+        # Per-agent cadence caps are binding when present. The aggregate daily budget is only
+        # the fallback for lanes without a cap, matching dispatch._remaining_budget().
+        remaining = max(0, cap - agent_spent) if cap is not None else global_remaining
         agents[str(name)] = {
             "cap": cap,
             "spent": agent_spent,
@@ -780,9 +783,17 @@ def _dispatch_admission(
         if reason is None and _superseded_by_active_repair(task, typed_tasks):
             reason = "superseded_active_owner"
         cost = _as_int(task.get("budget_cost")) or 1
-        if reason is None and global_remaining is not None and cost > global_remaining:
-            reason = "budget_global"
         agent = _effective_task_agent(task)
+        agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
+        agent_cap = _as_int(agent_budget.get("cap")) if isinstance(agent_budget, dict) else None
+        if (
+            reason is None
+            and agent not in {"", "any"}
+            and agent_cap is None
+            and global_remaining is not None
+            and cost > global_remaining
+        ):
+            reason = "budget_global"
         if reason is None and agent in _PLAN_BUILDER_SENTINELS:
             reason = "admission_blocked"
         provider_reason = _provider_block_reason(agent, provider_headroom)
@@ -796,9 +807,8 @@ def _dispatch_admission(
             reason = "admission_blocked"
         if reason is None and agent not in {"", "any"}:
             reason = _worktree_dispatch_gate(task, agent, worktree_snapshot)
-        agent_budget = per_agent.get(agent) if isinstance(per_agent, dict) else None
         agent_remaining = _as_int(agent_budget.get("remaining")) if isinstance(agent_budget, dict) else None
-        if reason is None and agent_remaining is not None and cost > agent_remaining:
+        if reason is None and agent_cap is not None and agent_remaining is not None and cost > agent_remaining:
             reason = "budget_agent"
         governed = governed_remaining.get(agent)
         if reason is None and governed is not None and cost > governed:
@@ -829,13 +839,20 @@ def _dispatch_admission(
             any_blockers: Counter[str] = Counter()
             for candidate_agent in known_agents:
                 candidate_budget = per_agent.get(candidate_agent) if isinstance(per_agent, dict) else None
+                candidate_cap = _as_int(candidate_budget.get("cap")) if isinstance(candidate_budget, dict) else None
                 candidate_remaining = (
                     _as_int(candidate_budget.get("remaining")) if isinstance(candidate_budget, dict) else None
                 )
                 governed = governed_remaining.get(candidate_agent)
-                if (candidate_remaining is not None and cost > candidate_remaining) or (
-                    governed is not None and cost > governed
-                ):
+                if candidate_cap is None and global_remaining is not None and cost > global_remaining:
+                    any_blockers["budget_global"] += 1
+                    record_reason(candidate_agent, "budget_global")
+                    continue
+                if candidate_cap is not None and candidate_remaining is not None and cost > candidate_remaining:
+                    any_blockers["budget_agent"] += 1
+                    record_reason(candidate_agent, "budget_agent")
+                    continue
+                if governed is not None and cost > governed:
                     any_blockers["budget_agent"] += 1
                     record_reason(candidate_agent, "budget_agent")
                     continue
@@ -876,7 +893,13 @@ def _dispatch_admission(
                 # Preserve the strongest observed cause so conducting-report can distinguish
                 # auth/capacity blocks from a genuinely unavailable capability route.
                 selected_blocker = "admission_blocked"
-                for blocker in ("auth_blocked", "provider_health", "budget_agent", "admission_blocked"):
+                for blocker in (
+                    "auth_blocked",
+                    "provider_health",
+                    "budget_global",
+                    "budget_agent",
+                    "admission_blocked",
+                ):
                     if any_blockers.get(blocker):
                         reasons[blocker] += 1
                         selected_blocker = blocker

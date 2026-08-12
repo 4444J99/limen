@@ -43,13 +43,22 @@ _notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"
 if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
   for _notify_candidate in \
     "${LIMEN_ROOT:+$LIMEN_ROOT/scripts/_notify.py}" \
-    "$_notify_script_dir/_notify.py"
+    "$_notify_script_dir/_notify.py" \
+    "$HOME/Workspace/limen/scripts/_notify.py" \
+    "$HOME/.local/share/limen/current/source/scripts/_notify.py"
   do
     if [ -n "$_notify_candidate" ] && [ -f "$_notify_candidate" ]; then
       LIMEN_NOTIFY_HELPER="$_notify_candidate"
       break
     fi
   done
+fi
+if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -f "$LIMEN_NOTIFY_HELPER" ] \
+  && [ "$(basename "$(dirname "$LIMEN_NOTIFY_HELPER")")" = scripts ]; then
+  # An installed netmode copy has no checkout context of its own. Bind liveness to the
+  # checkout that actually owns the selected helper (invoking checkout first, live primary
+  # before the immutable runtime fallback).
+  _notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
 fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"

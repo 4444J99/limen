@@ -584,9 +584,10 @@ def _provider_outcome_projection() -> dict:
         return {}
     try:
         outcomes = _load_provider_outcomes(_provider_outcome_ledger_path())
+        policy = _provider_health_policy()
         snapshot = _project_provider_health(
             outcomes,
-            _provider_health_policy(),
+            policy,
             now=NOW,
         )
     except Exception:
@@ -613,6 +614,9 @@ def _provider_outcome_projection() -> dict:
     matching_outcome_count = 0
     live_blocked_provider_count = 0
     all_providers_blocked = False
+    live_providers: list[str] = []
+    matching_profile_outcomes = []
+    matching_profile_snapshot = None
     discover_models = _discover_opencode_models
     hash_catalog = _catalog_hash
     provider_for_model = _provider_for_model
@@ -658,16 +662,13 @@ def _provider_outcome_projection() -> dict:
                 ]
                 profile_snapshot = _project_provider_health(
                     profile_outcomes,
-                    _provider_health_policy(),
+                    policy,
                     now=NOW,
                 )
                 blocked_names = [
                     provider
                     for provider in live_providers
-                    if (
-                        (entry := profile_snapshot.providers.get(provider)) is not None
-                        and entry.blocked(NOW)
-                    )
+                    if ((entry := profile_snapshot.providers.get(provider)) is not None and entry.blocked(NOW))
                 ]
                 candidate = (len(blocked_names), len(profile_outcomes), profile_hash)
                 current = (live_blocked_provider_count, matching_outcome_count, matching_profile_hash or "")
@@ -675,6 +676,8 @@ def _provider_outcome_projection() -> dict:
                     live_blocked_provider_count = len(blocked_names)
                     matching_outcome_count = len(profile_outcomes)
                     matching_profile_hash = profile_hash
+                    matching_profile_outcomes = profile_outcomes
+                    matching_profile_snapshot = profile_snapshot
             all_providers_blocked = bool(live_providers) and live_blocked_provider_count == len(live_providers)
         except Exception:
             catalog_fingerprint = None
@@ -683,21 +686,53 @@ def _provider_outcome_projection() -> dict:
             matching_outcome_count = 0
             live_blocked_provider_count = 0
             all_providers_blocked = False
+            live_providers = []
+            matching_profile_outcomes = []
+            matching_profile_snapshot = None
     latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
+    if matching_profile_snapshot is not None:
+        for outcome in matching_profile_outcomes:
+            provider = str(getattr(outcome, "provider", "") or "")
+            terminal = str(getattr(outcome, "terminal_class", "") or "")
+            finished = getattr(outcome, "finished_at", None)
+            entry = matching_profile_snapshot.providers.get(provider)
+            if (
+                provider not in live_providers
+                or terminal not in _PROVIDER_TERMINALS
+                or not isinstance(finished, datetime.datetime)
+                or entry is None
+                or not entry.blocked(NOW)
+                or entry.last_terminal_failure is None
+                or finished.astimezone(datetime.timezone.utc)
+                != entry.last_terminal_failure.astimezone(datetime.timezone.utc)
+            ):
+                continue
+            previous = latest_provider_failure.get(provider)
+            if previous is None or finished > previous[0]:
+                latest_provider_failure[provider] = (finished, terminal)
+    observed_latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
     for outcome in outcomes:
         provider = str(getattr(outcome, "provider", "") or "")
         terminal = str(getattr(outcome, "terminal_class", "") or "")
         finished = getattr(outcome, "finished_at", None)
         if not provider or terminal not in _PROVIDER_TERMINALS or not isinstance(finished, datetime.datetime):
             continue
-        previous = latest_provider_failure.get(provider)
+        previous = observed_latest_provider_failure.get(provider)
         if previous is None or finished > previous[0]:
-            latest_provider_failure[provider] = (finished, terminal)
+            observed_latest_provider_failure[provider] = (finished, terminal)
     provider_failure_classes = {
         provider: terminal for provider, (_finished, terminal) in latest_provider_failure.items()
     }
     latest_terminal_class = (
         max(latest_provider_failure.values(), key=lambda row: row[0])[1] if latest_provider_failure else None
+    )
+    observed_provider_failure_classes = {
+        provider: terminal for provider, (_finished, terminal) in observed_latest_provider_failure.items()
+    }
+    observed_latest_terminal_class = (
+        max(observed_latest_provider_failure.values(), key=lambda row: row[0])[1]
+        if observed_latest_provider_failure
+        else None
     )
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
@@ -708,6 +743,11 @@ def _provider_outcome_projection() -> dict:
         # cooldown from a capacity/transport failure.
         "provider_last_terminal_failure_class": provider_failure_classes.get("opencode", latest_terminal_class),
         "provider_terminal_failure_classes": provider_failure_classes,
+        "provider_outcome_observed_last_terminal_failure_class": observed_provider_failure_classes.get(
+            "opencode",
+            observed_latest_terminal_class,
+        ),
+        "provider_outcome_observed_terminal_failure_classes": observed_provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
         # Dispatch benches OpenCode only when every provider in one live catalog/profile

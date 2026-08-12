@@ -27,7 +27,13 @@ def _load_module(monkeypatch, root: Path):
     return module
 
 
-def _provider_failures(module, provider: str, catalog: str, profile: str) -> list[dict[str, object]]:
+def _provider_failures(
+    module,
+    provider: str,
+    catalog: str,
+    profile: str,
+    terminal: str = "auth_failure",
+) -> list[dict[str, object]]:
     rows = []
     for retry in range(2):
         finished = module.NOW - timedelta(seconds=2 - retry)
@@ -38,7 +44,7 @@ def _provider_failures(module, provider: str, catalog: str, profile: str) -> lis
                 "runtime_model": f"{provider}/runtime",
                 "catalog_hash": catalog,
                 "execution_profile_hash": profile,
-                "terminal_class": "auth_failure",
+                "terminal_class": terminal,
                 "started_at": (finished - timedelta(seconds=1)).isoformat(),
                 "finished_at": finished.isoformat(),
                 "retry_count": retry,
@@ -156,6 +162,39 @@ def test_all_blocked_requires_one_matching_catalog_and_profile(tmp_path, monkeyp
     assert projection["provider_outcome_catalog_hash"] == live_catalog
     assert projection["provider_outcome_execution_profile_hash"] == profile
     assert projection["provider_outcome_matching_outcome_count"] == 4
+
+
+def test_terminal_classes_use_the_live_catalog_profile_health_group(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    module = _load_module(monkeypatch, root)
+    live_catalog = "2" * 64
+    profile = "3" * 64
+    rows = [
+        *_provider_failures(module, "provider-a", live_catalog, profile, "rate_limit"),
+        *_provider_failures(module, "provider-b", live_catalog, profile, "rate_limit"),
+        *_provider_failures(module, "retired-provider", "4" * 64, profile, "auth_failure"),
+    ]
+    (root / "logs" / "provider-outcomes.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    monkeypatch.setattr(
+        module,
+        "_discover_opencode_models",
+        lambda *_args, **_kwargs: [
+            types.SimpleNamespace(model_id="provider-a/runtime", active=True),
+            types.SimpleNamespace(model_id="provider-b/runtime", active=True),
+        ],
+    )
+    monkeypatch.setattr(module, "_catalog_hash", lambda _models: live_catalog)
+
+    projection = module._provider_outcome_projection()
+
+    assert projection["provider_outcome_all_blocked"] is True
+    assert projection["provider_last_terminal_failure_class"] == "rate_limit"
+    assert projection["provider_terminal_failure_classes"] == {
+        "provider-a": "rate_limit",
+        "provider-b": "rate_limit",
+    }
+    assert projection["provider_outcome_observed_terminal_failure_classes"]["retired-provider"] == "auth_failure"
 
 
 def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None, provider_outcomes=None):
@@ -319,7 +358,8 @@ def test_opencode_usage_preserves_provider_auth_terminal_class(tmp_path):
 
     vendors = _run(tmp_path, ["beat ok"], provider_outcomes=rows)
 
-    assert vendors["opencode"]["provider_last_terminal_failure_class"] == "auth_failure"
+    assert vendors["opencode"]["provider_last_terminal_failure_class"] is None
+    assert vendors["opencode"]["provider_outcome_observed_last_terminal_failure_class"] == "auth_failure"
 
 
 def test_opencode_usage_derives_terminal_class_from_actual_provider_id(tmp_path):
@@ -342,8 +382,9 @@ def test_opencode_usage_derives_terminal_class_from_actual_provider_id(tmp_path)
 
     vendors = _run(tmp_path, ["beat ok"], provider_outcomes=rows)
 
-    assert vendors["opencode"]["provider_last_terminal_failure_class"] == "auth_failure"
-    assert vendors["opencode"]["provider_terminal_failure_classes"] == {"openrouter": "auth_failure"}
+    assert vendors["opencode"]["provider_last_terminal_failure_class"] is None
+    assert vendors["opencode"]["provider_terminal_failure_classes"] == {}
+    assert vendors["opencode"]["provider_outcome_observed_terminal_failure_classes"] == {"openrouter": "auth_failure"}
 
 
 def test_malformed_cooldown_env_does_not_crash(tmp_path):

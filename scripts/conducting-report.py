@@ -33,6 +33,15 @@ try:
 except Exception:  # pragma: no cover - an older installed runtime must fail closed below
     _run_always_working_before_dispatch = None
 
+try:
+    from limen.bounded_subprocess import (
+        BoundedSubprocessError as _BoundedSubprocessError,
+        run_bounded_subprocess as _run_bounded_subprocess,
+    )
+except Exception:  # pragma: no cover - an older installed runtime must fail closed below
+    _BoundedSubprocessError = None
+    _run_bounded_subprocess = None
+
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
 USAGE = LOGS / "usage.json"
@@ -45,6 +54,7 @@ ROUTING_REASONS = frozenset({"routable", "admission_blocked", "capacity_blocked"
 TELEMETRY_MAX_AGE_SECONDS = 5400
 ADMISSION_REFRESH_TIMEOUT_SECONDS = 60.0
 SESSION_VALUE_TIMEOUT_SECONDS = 90.0
+SESSION_VALUE_OUTPUT_LIMIT_BYTES = 8192
 
 
 def _load(path, default):
@@ -134,20 +144,51 @@ def _session_value_admission() -> dict[str, object]:
         timeout = max(1.0, configured_timeout) if math.isfinite(configured_timeout) else SESSION_VALUE_TIMEOUT_SECONDS
     except ValueError:
         timeout = SESSION_VALUE_TIMEOUT_SECONDS
-    try:
-        result = subprocess.run(
-            [sys.executable, str(path), "--gate", "--hours", hours, "--no-record-gate"],
-            cwd=str(ROOT),
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
+    started = time.monotonic()
+    _admission_refresh_receipt(
+        "start",
+        step="session_value",
+        timeout_seconds=timeout,
+        output_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES * 2,
+        stdout_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
+        stderr_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
+    )
+    if _run_bounded_subprocess is None:
+        _admission_refresh_receipt(
+            "finish",
+            step="session_value",
+            elapsed_seconds=round(time.monotonic() - started, 3),
+            outcome="runner_unavailable",
         )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return {"status": "unavailable", "reason": f"session value gate unavailable: {exc}"}
-    detail = (result.stderr or result.stdout or "session value gate returned no detail").strip()
+        return {"status": "unavailable", "reason": "bounded session value runner unavailable"}
     try:
-        gate_payload = json.loads(result.stdout) if result.stdout else None
+        result = _run_bounded_subprocess(
+            [sys.executable, str(path), "--gate", "--hours", hours, "--no-record-gate"],
+            cwd=ROOT,
+            timeout_seconds=timeout,
+            stdout_ceiling=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
+            stderr_ceiling=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
+        )
+    except Exception as exc:
+        failure_kind = (
+            str(exc.kind)
+            if _BoundedSubprocessError is not None and isinstance(exc, _BoundedSubprocessError)
+            else "unavailable"
+        )
+        outcome = "output_limit" if failure_kind == "output" else failure_kind
+        _admission_refresh_receipt(
+            "finish",
+            step="session_value",
+            elapsed_seconds=round(time.monotonic() - started, 3),
+            outcome=outcome,
+        )
+        detail = "exceeded output limit" if failure_kind == "output" else failure_kind
+        return {"status": "unavailable", "reason": f"session value gate unavailable: {detail}"}
+    stdout = result.stdout.decode("utf-8", errors="replace")
+    stderr = result.stderr.decode("utf-8", errors="replace")
+    detail = (stderr or stdout or "session value gate returned no detail").strip()
+    try:
+        gate_payload = json.loads(stdout) if stdout else None
     except (TypeError, ValueError):
         gate_payload = None
     if isinstance(gate_payload, dict):
@@ -156,10 +197,24 @@ def _session_value_admission() -> dict[str, object]:
     else:
         detail = " ".join(detail.split())[:500]
     if result.returncode == 0:
-        return {"status": "allowed", "reason": detail or "session value gate allowed dispatch"}
-    if result.returncode == 10:
-        return {"status": "blocked", "reason": detail or "session value gate withheld dispatch"}
-    return {"status": "unavailable", "reason": detail or f"session value gate exited {result.returncode}"}
+        outcome = "allowed"
+        response = {"status": "allowed", "reason": detail or "session value gate allowed dispatch"}
+    elif result.returncode == 10:
+        outcome = "blocked"
+        response = {"status": "blocked", "reason": detail or "session value gate withheld dispatch"}
+    else:
+        outcome = "unavailable"
+        response = {"status": "unavailable", "reason": detail or f"session value gate exited {result.returncode}"}
+    _admission_refresh_receipt(
+        "finish",
+        step="session_value",
+        elapsed_seconds=round(time.monotonic() - started, 3),
+        outcome=outcome,
+        returncode=result.returncode,
+        output_bytes=len(result.stdout) + len(result.stderr),
+        output_truncated=False,
+    )
+    return response
 
 
 def _always_working_admission() -> dict[str, str]:
@@ -589,7 +644,7 @@ def main(argv: list[str] | None = None) -> int:
 
     macos = _notify_macos("Limen — conducting", headline, day, force=args.force)
     retry_ntfy = macos.reserved or (
-        macos.status == "duplicate" and getattr(macos, "prior_status", None) == "delivery_failed"
+        macos.status == "duplicate" and getattr(macos, "prior_status", None) in {"delivery_failed", "withheld"}
     )
     ntfy = _notify_ntfy("Limen — conducting", body) if retry_ntfy else False
     macos_settled = macos.status == "emitted" or (

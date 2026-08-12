@@ -129,8 +129,8 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
         "daily": 10,
         "unit": "runs",
         "track_date": "2026-07-12",
-        "spent": 3,
-        "remaining": 7,
+        "spent": 2,
+        "remaining": 8,
         "per_agent": {
             "codex": {
                 "cap": 5,
@@ -138,7 +138,7 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
                 "remaining": 3,
                 "reset_at": "2026-07-12T10:00:00+00:00",
             },
-            "gemini": {"cap": 10, "spent": 1, "remaining": 7, "reset_at": None},
+            "gemini": {"cap": 10, "spent": 0, "remaining": 10, "reset_at": None},
         },
     }
     assert payload["provider_headroom"]["generated"] == "2026-07-12T12:00:00+00:00"
@@ -275,7 +275,7 @@ def test_dispatch_admission_excludes_any_lane_over_per_agent_budget(monkeypatch)
     mod = _load()
     monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
     task = _task("ANY-EXPENSIVE", agent="any", budget_cost=2)
-    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 1}}}
+    budget = {"remaining": 3, "per_agent": {"jules": {"cap": 2, "remaining": 1}}}
     providers = {
         "generated": "now",
         "vendors": {"jules": {"remaining": 5, "health": "ok"}},
@@ -476,9 +476,9 @@ def test_board_budget_clears_expired_same_day_reset_window(monkeypatch):
 
     budget = mod._board_budget(board)
 
-    assert budget["spent"] == 1
+    assert budget["spent"] == 0
     assert budget["per_agent"]["codex"]["spent"] == 0
-    assert budget["per_agent"]["gemini"]["spent"] == 1
+    assert budget["per_agent"]["gemini"]["spent"] == 0
 
 
 def test_dispatch_admission_applies_chronic_gate(monkeypatch):
@@ -572,7 +572,7 @@ def test_dispatch_admission_preserves_any_budget_block(monkeypatch):
     monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
     monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
     task = _task("ANY-BUDGET", agent="any", budget_cost=2)
-    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 1}}}
+    budget = {"remaining": 3, "per_agent": {"jules": {"cap": 2, "remaining": 1}}}
     providers = {"generated": "now", "vendors": {"jules": {"remaining": 5, "health": "ok"}}}
 
     admission = mod._dispatch_admission([task], budget, providers)
@@ -873,10 +873,12 @@ def test_board_budget_applies_schema_defaults_and_recomputes_missing_spent(monke
     board = {
         "portal": {
             "budget": {
+                "per_agent": {"codex": 5},
                 "track": {
                     "date": "2026-08-12",
                     "per_agent": {"codex": 2},
-                }
+                    "per_agent_reset": {"codex": "2026-08-12T10:00:00+00:00"},
+                },
             }
         }
     }
@@ -887,6 +889,29 @@ def test_board_budget_applies_schema_defaults_and_recomputes_missing_spent(monke
     assert budget["unit"] == "runs"
     assert budget["spent"] == 2
     assert budget["remaining"] == 98
+
+
+def test_board_budget_clears_current_day_counter_without_lane_reset(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 8, 12, 12, tzinfo=dt.timezone.utc))
+    board = {
+        "portal": {
+            "budget": {
+                "per_agent": {"codex": 5},
+                "track": {
+                    "date": "2026-08-12",
+                    "spent": 2,
+                    "per_agent": {"codex": 2},
+                },
+            }
+        }
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 0
+    assert budget["remaining"] == 100
+    assert budget["per_agent"]["codex"]["spent"] == 0
 
 
 def test_board_budget_fails_closed_on_invalid_daily_value():
@@ -927,6 +952,26 @@ def test_admission_attributes_global_budget_block_to_candidate_lanes(monkeypatch
 
     assert admission["reason_counts"] == {"budget_global": 1}
     assert admission["reason_counts_by_agent"]["codex"]["budget_global"] == 1
+
+
+def test_explicit_capped_lane_ignores_aggregate_daily_remaining(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 10)
+
+    admission = mod._dispatch_admission(
+        [_task("CAPPED", agent="codex", budget_cost=8)],
+        {
+            "remaining": 3,
+            "per_agent": {"codex": {"cap": 10, "spent": 0, "remaining": 10}},
+        },
+        {"generated": "now", "vendors": {"codex": {"health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
 
 
 def test_any_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
