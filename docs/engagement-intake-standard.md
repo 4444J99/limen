@@ -35,7 +35,11 @@ This is that list.
 
 ---
 
-## The ten rules
+## The twelve rules
+
+Rules 1–10 are the original intake conditions. **Rules 11–12 were added 2026‑08‑12**, from failure
+modes the same engagement produced *after* the standard was first written — which is the intended
+lifecycle: each rule earns its place by having already cost something.
 
 ### 1. No work before a countersigned instrument
 A document you signed and they didn't **binds only you**. It is worse than no contract, because
@@ -111,6 +115,39 @@ worthless against a config written to pass. Run the guard. Re-run it whenever th
 changes.
 
 An engagement that cannot be described in that file is one that has not actually been agreed.
+
+### 11. Price new scope at assignment, never after delivery
+*Enforced by* `SCOPE-PRICED`.
+
+Scope growing is normal. Scope growing **into a category the instrument does not cover, at no
+rate, while the original scope is still unpaid** is the failure — and it is worse than it looks,
+because each new front makes disengaging from the first one costlier. Selling, buying domains,
+support, hosting, recruiting: none of these are "helping out" once they are directed work.
+
+**Bear no expense personally.** Buying anything on your own card converts an unpaid contractor
+into an unpaid *creditor* — the same failure, one rung down, and harder to undo.
+
+The moment to price work is the moment it is assigned. Afterwards you are negotiating over
+something already delivered, which is the weakest position available and the one the whole
+standard exists to avoid.
+
+### 12. Verbal assurances die at signature — get them into the document
+*Enforced by* `PROMISES-ON-PAPER`, and the reason rule 7 is not merely about forgetfulness.
+
+Rule 7 says promises belong in the instrument. This is the sharper case: a counterparty may
+sincerely tell you an agreement means something the document does not say. Standard
+entire-agreement / integration clauses exist precisely to exclude prior assurances — so a
+sincere "yes, of course that still stands", in any channel, **stops counting the moment you
+sign.**
+
+That has a practical consequence worth stating plainly: **a stated intent is an asset with an
+expiry date.** While it is fresh it is leverage to amend the document, because you are asking
+only for what they already said. Afterwards it is nothing.
+
+So when a document contradicts what you have been told: do not argue about what was meant, and
+do not treat the assurance as proof. **Ask for the sentence.** If the assurance was genuine, the
+sentence costs nothing — and a refusal to add it is the real answer, arriving while you can
+still act on it.
 
 ---
 

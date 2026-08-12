@@ -28,6 +28,10 @@ WHAT IT HOLDS (offline, text-only — a gate that needs network is a gate that g
   8. CAN-PAY           — counterparty ability to pay has been verified, not assumed.
   9. COUNSEL-PARITY    — advisory. If they have counsel and you do not, you are negotiating
                          against a professional. Warn, do not fail.
+ 10. SCOPE-PRICED      — every category of work you have been assigned is priced in an
+                         instrument. Scope creeping into an unpriced category while the
+                         original scope is unpaid opens a second front on the first one's
+                         terms, and makes walking away from either one costlier.
 
 WHAT IT DOES NOT DO. It does not read contracts, judge enforceability, or give legal advice.
 It reads a small hand-written YAML describing an engagement and holds it to conditions that
@@ -290,6 +294,24 @@ def evaluate(cfg: dict[str, Any], today: dt.date) -> list[Finding]:
         )
     else:
         out.append(Finding("COUNSEL-PARITY", PASS, "No counsel asymmetry recorded.", ""))
+
+    # 10. SCOPE-PRICED -----------------------------------------------------------------
+    # Scope creep is not the failure. Scope creep into a category the instrument does not
+    # cover, at no rate, while the original scope is still unpaid — that is the failure,
+    # and it compounds: each new front makes walking away from the first one costlier.
+    unpriced = cfg.get("unpriced_scope") or []
+    if unpriced:
+        joined = "; ".join(f'"{s}"' for s in unpriced)
+        out.append(
+            Finding(
+                "SCOPE-PRICED",
+                FAIL,
+                f"{len(unpriced)} work categor(ies) assigned with no rate in any instrument: {joined}.",
+                "Price it or decline it. New scope is the moment to price it — never after delivery.",
+            )
+        )
+    else:
+        out.append(Finding("SCOPE-PRICED", PASS, "All assigned scope is priced in an instrument.", ""))
 
     return out
 
