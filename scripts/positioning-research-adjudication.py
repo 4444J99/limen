@@ -1171,8 +1171,14 @@ def validate_bundle(
         if _rfc3339(row.get("observed_at")) is None:
             errors.append(f"HTTP receipt {receipt_id} needs an RFC3339 observation time")
         reproduction = row.get("reproduction")
-        if not _text(reproduction) or "curl " not in str(reproduction) or expected_url not in str(reproduction):
-            errors.append(f"HTTP receipt {receipt_id} must reproduce the exact endpoint URL")
+        if (
+            not _safe_public_metadata(reproduction)
+            or "curl " not in str(reproduction)
+            or expected_url not in str(reproduction)
+        ):
+            errors.append(
+                f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
+            )
 
     daily = _mapping(
         receipt.get("daily_generation_receipt"),

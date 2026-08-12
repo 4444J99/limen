@@ -818,7 +818,24 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
     errors = _errors(bundle)
     assert any("must bind the exact credential-free endpoint URL" in error for error in errors)
     assert any("needs an RFC3339 observation time" in error for error in errors)
-    assert any("must reproduce the exact endpoint URL" in error for error in errors)
+    assert any("must safely reproduce the exact endpoint URL without credentials" in error for error in errors)
+
+    for receipt_id, (expected_url, _status) in MODULE.EXPECTED_HTTP_RECEIPTS.items():
+        credentialed = _bundle()
+        credentialed["receipt"] = copy.deepcopy(credentialed["receipt"])
+        row = next(
+            row
+            for row in credentialed["receipt"]["http_receipts"]
+            if row["id"] == receipt_id
+        )
+        row["reproduction"] = (
+            f"curl {expected_url} -H 'Authorization: Bearer SECRET'"
+        )
+
+        assert (
+            f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
+            in _errors(credentialed)
+        )
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
@@ -860,6 +877,7 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "python3 scripts/positioning-research-adjudication.py --verify-live"
     )
     assert gate["timeout_seconds"] == 300
+    assert workflow["permissions"] == {"contents": "read", "issues": "read"}
     verification_steps = {
         step["name"]: step
         for step in workflow["jobs"]["pr-gate"]["steps"]
