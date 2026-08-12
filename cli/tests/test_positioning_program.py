@@ -196,12 +196,19 @@ def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) 
         MODULE.verify_repository_identities(graph)
 
     stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
-    stale["phases"][6]["work"][0]["target_repo"] = "organvm/portfolio"
+    psp_p06 = next(phase for phase in stale["phases"] if phase["id"] == "PSP-P06")
+    psp_p06["work"][0]["target_repo"] = "organvm/portfolio"
     with pytest.raises(MODULE.ProgramError, match="retired repository slug"):
         MODULE.index_program(stale)
 
 
 def test_repository_identity_sources_and_slug_history_are_collision_safe() -> None:
+    never_renamed = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = never_renamed["repository_identities"]["repositories"]["portfolio"]
+    portfolio["previous_slugs"] = []
+    graph = MODULE.index_program(never_renamed)
+    assert graph["retired_repository_slugs"] == {}
+
     mismatched_source = copy.deepcopy(MODULE.load_manifest(MANIFEST))
     portfolio = mismatched_source["repository_identities"]["repositories"]["portfolio"]
     portfolio["source"] = "https://api.github.com/repositories/999"

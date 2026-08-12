@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote, unquote, urlsplit
 
 import yaml
 
@@ -90,18 +90,129 @@ ACCEPTED_DEPENDENCIES = {
         "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
         "claims_ledger_path": "docs/positioning/claims-ledger.md",
         "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+        "flagship_evidence_path": "docs/positioning/evidence/flagship-evidence.yaml",
+        "flagship_evidence_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891",
     },
 }
 RECEIPT_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
 PROFILE_RENDERED_CONTRIBUTIONS = 33130
 PROFILE_FRESH_CONTRIBUTIONS = 33168
 PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
+EXPECTED_PROFILE_METADATA_RESULT = {
+    "login": "4444J99",
+    "id": 24796448,
+    "type": "User",
+    "public_repos": 8,
+    "followers": 41,
+    "following": 61,
+    "created_at": "2016-12-27T17:24:06Z",
+    "updated_at": "2026-08-09T16:58:24Z",
+    "blog": "https://organvm.github.io/portfolio/",
+}
+LIVE_REFERENCE_ISSUE_NUMBER = 1245
+LIVE_REFERENCE_URL = f"https://github.com/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
+LIVE_REFERENCE_API_URL = (
+    f"https://api.github.com/repos/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
+)
+EXPECTED_LIVE_REFERENCE = {
+    "issue": LIVE_REFERENCE_URL,
+    "issue_state": "open",
+    "role": "profile-engine follow-up owner; it does not replace the post-merge projection gate",
+}
 EXPECTED_HTTP_RECEIPTS = {
     "current_profile_blog_field": ("https://organvm.github.io/portfolio/", 404),
     "canonical_transferred_portfolio_pages": (
         "https://organvm-vii-kerygma.github.io/portfolio/",
         200,
     ),
+}
+EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
+    "PROFILE_README": {
+        "repository": "4444J99/4444J99",
+        "path": "README.md",
+        "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+        "blob": "b006a06c2a7e9f84166b0fd7fad638a5c36c356f",
+        "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/README.md",
+    },
+    "PROFILE_MANIFEST": {
+        "repository": "4444J99/4444J99",
+        "path": "assets/stats-manifest.json",
+        "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+        "blob": "668c09daab5f63882e9fd6b848ab9d0017a65ae5",
+        "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/assets/stats-manifest.json",
+    },
+    "PROFILE_WORKFLOW": {
+        "repository": "4444J99/4444J99",
+        "path": ".github/workflows/profile.yml",
+        "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+        "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/.github/workflows/profile.yml",
+    },
+    "PROFILE_API_RECEIPT": {"url": "https://api.github.com/users/4444J99"},
+    "PROFILE_RUNS": {
+        "repository": "4444J99/4444J99",
+        "path": ".github/workflows/profile.yml",
+        "url": "https://github.com/4444J99/4444J99/actions/workflows/profile.yml",
+    },
+    "W01_CENSUS_RECEIPT": {
+        "repository": "organvm/limen",
+        "path": "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+        "head": ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["accepted_head"],
+        "blob": ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["tracked_receipt_blob"],
+        "url": "https://github.com/organvm/limen/blob/10cf8476d5e88309c71d5fac25167ec7b7af59c4/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+    },
+    "W03_PROOF_SET": {
+        "repository": "organvm/limen",
+        "path": "docs/positioning/flagship-proof-set.yaml",
+        "head": "0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2",
+        "blob": "120529ab75d797c2e28c693d8bfc2d042428dd49",
+        "url": "https://github.com/organvm/limen/blob/0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2/docs/positioning/flagship-proof-set.yaml",
+    },
+    "CLAIMS_LEDGER": {
+        "repository": "organvm/limen",
+        "path": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_path"],
+        "head": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"],
+        "blob": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"],
+        "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/claims-ledger.md",
+    },
+    "W05_FLAGSHIP_EVIDENCE": {
+        "repository": "organvm/limen",
+        "path": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_path"],
+        "head": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"],
+        "blob": ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"],
+        "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/evidence/flagship-evidence.yaml",
+    },
+    "LAVREA_METHODOLOGY": {
+        "repository": "organvm/laurea",
+        "path": "METHODOLOGY.md",
+        "head": "02e360c9828336ac95ce8223c65d127ffea27661",
+        "blob": "b671568236f386041a416d28964b50820249ac2a",
+        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
+    },
+    "LAVREA_BASELINES": {
+        "repository": "organvm/laurea",
+        "path": "src/laurea/baselines.py",
+        "head": "02e360c9828336ac95ce8223c65d127ffea27661",
+        "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
+        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
+    },
+    "GITHUB_CONTRIBUTIONS": {
+        "url": "https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference"
+    },
+    "GITHUB_GRAPHQL": {
+        "url": "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
+    },
+    "GITHUB_REPOSITORIES": {"url": "https://docs.github.com/en/rest/repos/repos"},
+    "GITHUB_TRANSFER": {
+        "url": "https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository"
+    },
+    "GITHUB_OCTOVERSE_2023": {
+        "url": "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/"
+    },
+    "PORTFOLIO_IDENTITY": {
+        "repository": PORTFOLIO_CANONICAL_SLUG,
+        "repository_id": PORTFOLIO_REPOSITORY_ID,
+        "url": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
+    },
 }
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
@@ -119,6 +230,61 @@ LAVREA_AXES = {
     "full_stack_coverage",
     "composite_python_full_stack",
     "tenure",
+}
+EXPECTED_LAVREA_AXIS_CONTRACTS = {
+    "contributions_year": {
+        "measurement_disposition": "retain_dated_measurement",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "GitHub defines contribution-calendar counts; Octoverse account totals do not establish the 5,000 or 20,000 percentile thresholds.",
+        "citations": [
+            "GITHUB_CONTRIBUTIONS",
+            "GITHUB_GRAPHQL",
+            "GITHUB_OCTOVERSE_2023",
+            "LAVREA_BASELINES",
+        ],
+    },
+    "pull_requests_year": {
+        "measurement_disposition": "retain_dated_measurement",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "The public sources inspected do not supply a sampled active-developer distribution supporting the 500 or 2,000 thresholds.",
+        "citations": ["LAVREA_BASELINES", "GITHUB_OCTOVERSE_2023"],
+    },
+    "repos_owned": {
+        "measurement_disposition": "refresh_from_public_safe_census",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "GitHub's repository APIs support counts, not the claimed 50/200 percentile placement; W01 is the safe current count authority.",
+        "citations": ["GITHUB_REPOSITORIES", "W01_CENSUS_RECEIPT", "LAVREA_BASELINES"],
+    },
+    "language_breadth": {
+        "measurement_disposition": "retain_rule_labeled_measurement",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "Primary-language counts are reproducible under a declared rule, but no cited primary distribution establishes the 6/10 thresholds.",
+        "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES"],
+    },
+    "orgs_operated": {
+        "measurement_disposition": "narrow_to_membership_and_owned_repository_facts",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "W01 establishes ten memberships and repository ownership counts; 'operated' and the 3/8 percentile thresholds require separate definitions and population evidence.",
+        "citations": ["W01_CENSUS_RECEIPT", "LAVREA_BASELINES"],
+    },
+    "full_stack_coverage": {
+        "measurement_disposition": "retain_rule_labeled_measurement",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "The language-to-layer mapping is a local working definition, not a primary population ranking.",
+        "citations": ["LAVREA_METHODOLOGY"],
+    },
+    "composite_python_full_stack": {
+        "measurement_disposition": "retain_constituent_measurements",
+        "inference_disposition": "withhold_percentile",
+        "primary_source_result": "The conjunction cannot inherit an unproven percentile floor; constituent percentile premises must be validated first.",
+        "citations": ["LAVREA_METHODOLOGY", "LAVREA_BASELINES"],
+    },
+    "tenure": {
+        "measurement_disposition": "retain_dated_measurement",
+        "inference_disposition": "no_percentile_claim",
+        "primary_source_result": "Account creation time is a direct public API fact and LAVREA does not assign it a percentile.",
+        "citations": ["PROFILE_API_RECEIPT", "LAVREA_METHODOLOGY"],
+    },
 }
 
 
@@ -148,6 +314,20 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 def _text(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _string_token_list(value: object) -> bool:
+    """Return whether value is a nonempty list of nonempty string tokens."""
+
+    return isinstance(value, list) and bool(value) and all(_text(item) for item in value)
+
+
+def _exact_typed_mapping(value: object, expected: dict[str, object]) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == set(expected)
+        and all(type(value[key]) is type(expected[key]) and value[key] == expected[key] for key in expected)
+    )
 
 
 def _mapping(value: object, label: str, errors: list[str]) -> dict[str, Any]:
@@ -216,10 +396,13 @@ def _nonnegative_integer(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
-def _git_blob_oid(path: Path) -> str:
-    data = path.read_bytes()
+def _git_blob_oid_bytes(data: bytes) -> str:
     header = f"blob {len(data)}\0".encode()
     return hashlib.sha1(header + data).hexdigest()
+
+
+def _git_blob_oid(path: Path) -> str:
+    return _git_blob_oid_bytes(path.read_bytes())
 
 
 def _canonical_sha256(value: object) -> str:
@@ -303,6 +486,7 @@ def validate_bundle(
     issue_index: str,
     research_doc: str,
     flagship_evidence: dict[str, Any],
+    flagship_evidence_text: str,
     claims_ledger: str,
 ) -> list[str]:
     """Return all static public-safety, evidence, and integration failures."""
@@ -382,13 +566,26 @@ def validate_bundle(
             errors.append("claims-ledger blob differs from the accepted W05 binding")
     except OSError as exc:
         errors.append(f"cannot read accepted dependency artifact: {exc}")
+    if not isinstance(flagship_evidence_text, str):
+        errors.append("flagship evidence source bytes must be text")
+    else:
+        if _git_blob_oid_bytes(flagship_evidence_text.encode()) != ACCEPTED_DEPENDENCIES[
+            "PSP-P02-W05"
+        ]["flagship_evidence_blob"]:
+            errors.append("flagship-evidence blob differs from the accepted W05 binding")
+        try:
+            parsed_flagship_evidence = yaml.safe_load(flagship_evidence_text)
+        except yaml.YAMLError:
+            parsed_flagship_evidence = None
+        if parsed_flagship_evidence != flagship_evidence:
+            errors.append("flagship evidence mapping must match its tracked source bytes")
     live_reference = _mapping(
         formal.get("live_reference"),
         "receipt.formal_completion.live_reference",
         errors,
     )
-    if live_reference.get("issue_state") != "open":
-        errors.append("the profile-engine live reference must remain recorded as open")
+    if live_reference != EXPECTED_LIVE_REFERENCE:
+        errors.append("the profile-engine live reference must bind the exact open organvm/limen#1245 contract")
 
     privacy = _mapping(receipt.get("privacy_review"), "receipt.privacy_review", errors)
     if privacy.get("public_only") is not True:
@@ -413,16 +610,22 @@ def validate_bundle(
         "artifact.disposition_vocabularies",
         errors,
     )
+    disposition_tokens: dict[str, frozenset[str]] = {}
     for layer in LAYERS:
         vocabulary = vocabularies.get(layer)
         expected_vocabulary = list(DISPOSITION_VOCABULARIES[layer])
         if vocabulary != expected_vocabulary:
             errors.append(f"{layer} disposition vocabulary must match the canonical ordered vocabulary")
+        disposition_tokens[layer] = (
+            frozenset(vocabulary) if _string_token_list(vocabulary) else frozenset()
+        )
 
     sources = artifact.get("sources")
     if not isinstance(sources, dict) or not sources:
         errors.append("sources must be a nonempty mapping")
         sources = {}
+    if set(sources) != set(EXPECTED_PUBLIC_SOURCES):
+        errors.append("sources must contain the exact expected public source ID set")
     for source_id, source in sources.items():
         prefix = f"source {source_id}"
         if not isinstance(source_id, str) or not SOURCE_ID_RE.fullmatch(source_id):
@@ -445,6 +648,15 @@ def validate_bundle(
             not isinstance(source.get("blob"), str) or not HEAD_RE.fullmatch(str(source.get("blob")))
         ):
             errors.append(f"{prefix} blob must be a 40-character object ID")
+    for source_id, expected_source in EXPECTED_PUBLIC_SOURCES.items():
+        source = _mapping(
+            sources.get(source_id),
+            f"artifact.sources.{source_id}",
+            errors,
+        )
+        for key, expected in expected_source.items():
+            if source.get(key) != expected:
+                errors.append(f"source {source_id} must bind its exact public {key}")
 
     w01_source = _mapping(
         sources.get("W01_CENSUS_RECEIPT"),
@@ -466,6 +678,17 @@ def validate_bundle(
         or ledger_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]
     ):
         errors.append("claims-ledger source must bind the accepted W05 head and blob")
+    flagship_source = _mapping(
+        sources.get("W05_FLAGSHIP_EVIDENCE"),
+        "artifact.sources.W05_FLAGSHIP_EVIDENCE",
+        errors,
+    )
+    if (
+        flagship_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]
+        or flagship_source.get("blob")
+        != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]
+    ):
+        errors.append("flagship-evidence source must bind the accepted W05 head and blob")
 
     claim_ids: list[str] = []
     for index, claim in enumerate(claims):
@@ -486,15 +709,18 @@ def validate_bundle(
             if not isinstance(value, dict) or set(value) != {"disposition", "rationale", "citations"}:
                 errors.append(f"{prefix}.{layer} must contain exactly disposition, rationale, and citations")
                 continue
-            if value.get("disposition") not in set(vocabularies.get(layer) or []):
+            disposition = value.get("disposition")
+            if not _text(disposition) or disposition not in disposition_tokens[layer]:
                 errors.append(f"{prefix}.{layer} uses an unknown disposition")
             if not _text(value.get("rationale")):
                 errors.append(f"{prefix}.{layer} needs a rationale")
             citations = value.get("citations")
             if not isinstance(citations, list) or not citations:
                 errors.append(f"{prefix}.{layer} needs at least one citation")
+            elif not _string_token_list(citations):
+                errors.append(f"{prefix}.{layer} citations must be nonempty string source IDs")
             else:
-                unknown = sorted(str(citation) for citation in citations if citation not in sources)
+                unknown = sorted(citation for citation in citations if citation not in sources)
                 if unknown:
                     errors.append(f"{prefix}.{layer} has unknown citations: {', '.join(unknown)}")
         integration = claim.get("w05_integration")
@@ -509,9 +735,12 @@ def validate_bundle(
 
         measurement = _mapping(claim.get("measurement"), f"{prefix}.measurement", errors)
         prominence = _mapping(claim.get("prominence"), f"{prefix}.prominence", errors)
-        if measurement.get("disposition") in {"verified", "partially_verified"} and prominence.get(
-            "disposition"
-        ) == "withhold":
+        measurement_disposition = measurement.get("disposition")
+        if (
+            isinstance(measurement_disposition, str)
+            and measurement_disposition in {"verified", "partially_verified"}
+            and prominence.get("disposition") == "withhold"
+        ):
             wording = str(integration.get("public_wording") if isinstance(integration, dict) else "").lower()
             if not any(token in wording for token in ("measurement", "github", "python", "language", "output")):
                 errors.append(f"{prefix} withholds prominence without preserving its verified measurement")
@@ -564,20 +793,31 @@ def validate_bundle(
     if not isinstance(axes, list):
         errors.append("lavrea_axis_audit must be a list")
         axes = []
-    axis_names = {row.get("axis") for row in axes if isinstance(row, dict)}
+    axis_tokens = [
+        row.get("axis")
+        for row in axes
+        if isinstance(row, dict) and _text(row.get("axis"))
+    ]
+    axis_names = set(axis_tokens)
     if axis_names != LAVREA_AXES or len(axes) != len(LAVREA_AXES):
         errors.append("LAVREA audit must cover each of the eight axes exactly once")
-    for row in axes:
+    for index, row in enumerate(axes):
         if not isinstance(row, dict):
             continue
         axis = row.get("axis")
+        if not _text(axis):
+            errors.append(f"lavrea_axis_audit[{index}].axis must be a nonempty string token")
+            axis = f"row[{index}]"
         if not _text(row.get("measurement_disposition")) or not _text(row.get("inference_disposition")):
             errors.append(f"LAVREA axis {axis} needs distinct measurement and inference dispositions")
         if not _text(row.get("primary_source_result")):
             errors.append(f"LAVREA axis {axis} needs a primary-source result")
         citations = row.get("citations")
-        if not isinstance(citations, list) or not citations or any(citation not in sources for citation in citations):
+        if not _string_token_list(citations) or any(citation not in sources for citation in citations):
             errors.append(f"LAVREA axis {axis} needs valid citations")
+        expected_axis = EXPECTED_LAVREA_AXIS_CONTRACTS.get(axis) if isinstance(axis, str) else None
+        if expected_axis is not None and any(row.get(key) != value for key, value in expected_axis.items()):
+            errors.append(f"LAVREA axis {axis} must match its accepted exact conclusion contract")
 
     w05 = _mapping(artifact.get("w05_import_contract"), "artifact.w05_import_contract", errors)
     if w05.get("target") != "docs/positioning/claims-ledger.md" or w05.get("edited_here") is not False:
@@ -590,6 +830,10 @@ def validate_bundle(
         errors.append("W05 contract must bind the accepted claims-ledger blob")
     if w05.get("accepted_projection") != "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import":
         errors.append("W05 contract must name the accepted 13-claim projection")
+    if w05.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
+        "flagship_evidence_blob"
+    ]:
+        errors.append("W05 contract must bind the accepted flagship-evidence blob")
     if w05.get("source_claim_ids") != claim_ids:
         errors.append("W05 contract claim IDs must match adjudicated claim order")
     if "must not collapse" not in str(w05.get("import_rule") or ""):
@@ -757,6 +1001,33 @@ def validate_bundle(
     if len(api_rows) != len(EXPECTED_API_RECEIPT_IDS) or set(api_receipts) != EXPECTED_API_RECEIPT_IDS:
         errors.append("API query receipts must contain the exact unique expected ID set")
 
+    profile_metadata = _mapping(
+        api_receipts.get("profile_metadata"),
+        "API query receipt profile_metadata",
+        errors,
+    )
+    profile_metadata_result = profile_metadata.get("result")
+    if not _exact_typed_mapping(profile_metadata_result, EXPECTED_PROFILE_METADATA_RESULT):
+        errors.append("profile metadata result must match the exact typed public observation")
+        profile_metadata_result = {}
+    profile_claim = next(
+        (
+            claim
+            for claim in claims
+            if isinstance(claim, dict) and claim.get("id") == "profile-portfolio-link"
+        ),
+        {},
+    )
+    if (
+        profile_metadata_result.get("login") != "4444J99"
+        or profile_metadata_result.get("public_repos") != rendered.get("personal_public_repositories")
+        or profile_metadata_result.get("blog") != EXPECTED_HTTP_RECEIPTS["current_profile_blog_field"][0]
+        or profile_claim.get("exact_public_wording") != profile_metadata_result.get("blog")
+        or _rfc3339(profile_metadata_result.get("created_at")) is None
+        or _rfc3339(profile_metadata_result.get("updated_at")) is None
+    ):
+        errors.append("profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs")
+
     org_public = _mapping(
         api_receipts.get("public_organization_repository_counts"),
         "API query receipt public_organization_repository_counts",
@@ -851,7 +1122,19 @@ def validate_bundle(
         errors.append("W01 public count must reconcile 8 personal plus 227 organization repositories")
 
     http_rows = _list(receipt.get("http_receipts"), "receipt.http_receipts", errors)
-    http = {row.get("id"): row for row in http_rows if isinstance(row, dict)}
+    http: dict[str, dict[str, Any]] = {}
+    for index, row_value in enumerate(http_rows):
+        row = _mapping(row_value, f"receipt.http_receipts[{index}]", errors)
+        if not row:
+            continue
+        receipt_id = row.get("id")
+        if not _text(receipt_id):
+            errors.append(f"receipt.http_receipts[{index}] needs a nonempty string id")
+            continue
+        if receipt_id in http:
+            errors.append(f"HTTP receipt id {receipt_id} is duplicated")
+            continue
+        http[receipt_id] = row
     if len(http_rows) != len(http) or set(http) != set(EXPECTED_HTTP_RECEIPTS):
         errors.append("HTTP receipts must contain each expected endpoint exactly once")
     for receipt_id, (expected_url, expected_status) in EXPECTED_HTTP_RECEIPTS.items():
@@ -940,6 +1223,10 @@ def validate_bundle(
         errors.append("claims-ledger integration must record the exact 13-claim comparison")
     if ledger.get("integration_artifact") != str(ARTIFACT_PATH.relative_to(ROOT)):
         errors.append("receipt must point to the tracked formalization artifact")
+    if ledger.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
+        "flagship_evidence_blob"
+    ]:
+        errors.append("claims-ledger integration must bind the accepted flagship-evidence projection blob")
 
     required_doc_fragments = (
         str(PORTFOLIO_REPOSITORY_ID),
@@ -951,6 +1238,7 @@ def validate_bundle(
         ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"],
         ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["marked_receipt"],
         ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"],
+        ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"],
         "formal-ready",
         PROJECTION_STATUS,
         "#2205–#2211",
@@ -963,14 +1251,19 @@ def validate_bundle(
 
 
 def _gh_json(args: list[str]) -> Any:
-    result = subprocess.run(
-        ["gh", *args],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=60,
-    )
+    try:
+        result = subprocess.run(
+            ["gh", *args],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise AdjudicationError("GitHub query timed out after 60 seconds") from exc
+    except OSError as exc:
+        raise AdjudicationError(f"cannot start GitHub query: {exc}") from exc
     if result.returncode != 0:
         raise AdjudicationError((result.stderr or result.stdout or "GitHub query failed").strip())
     try:
@@ -1024,6 +1317,95 @@ def validate_live_identity(
     return errors
 
 
+def validate_live_sources(
+    artifact: dict[str, Any],
+    fetch: Callable[[list[str]], Any] = _gh_json,
+) -> list[str]:
+    """Verify repository-backed accepted sources remain public and path-addressable."""
+
+    sources = artifact.get("sources")
+    if not isinstance(sources, dict):
+        return ["cannot verify public sources without a source mapping"]
+    errors: list[str] = []
+    repositories = sorted(
+        {
+            str(expected["repository"])
+            for expected in EXPECTED_PUBLIC_SOURCES.values()
+            if "repository" in expected
+        }
+    )
+    for repository in repositories:
+        try:
+            live_repository = fetch(["api", f"repos/{repository}"])
+        except AdjudicationError as exc:
+            errors.append(f"cannot verify public source repository {repository}: {exc}")
+            continue
+        if not isinstance(live_repository, dict):
+            errors.append(f"public source repository {repository} response must be a mapping")
+            continue
+        if (
+            live_repository.get("full_name") != repository
+            or live_repository.get("private") is not False
+            or live_repository.get("visibility") != "public"
+        ):
+            errors.append(f"public source repository {repository} must resolve as that exact public repository")
+
+    for source_id, expected in EXPECTED_PUBLIC_SOURCES.items():
+        repository = expected.get("repository")
+        path = expected.get("path")
+        head = expected.get("head")
+        if not all(isinstance(value, str) for value in (repository, path, head)):
+            continue
+        endpoint = f"repos/{repository}/contents/{quote(path, safe='/')}?ref={head}"
+        try:
+            live_content = fetch(["api", endpoint])
+        except AdjudicationError as exc:
+            errors.append(f"cannot verify public source {source_id}: {exc}")
+            continue
+        if not isinstance(live_content, dict):
+            errors.append(f"public source {source_id} content response must be a mapping")
+            continue
+        if (
+            live_content.get("type") != "file"
+            or live_content.get("path") != path
+            or live_content.get("html_url") != expected.get("url")
+        ):
+            errors.append(f"public source {source_id} must resolve its exact accepted repository path")
+        expected_blob = expected.get("blob")
+        if expected_blob is not None and live_content.get("sha") != expected_blob:
+            errors.append(f"public source {source_id} live blob differs from its accepted binding")
+    return errors
+
+
+def validate_live_reference(
+    fetch: Callable[[list[str]], Any] = _gh_json,
+) -> list[str]:
+    """Verify the exact organvm/limen follow-up issue remains an open issue."""
+
+    try:
+        issue = fetch(["api", f"repos/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"])
+    except AdjudicationError as exc:
+        return [f"cannot resolve profile-engine live reference: {exc}"]
+    if not isinstance(issue, dict):
+        return ["profile-engine live reference response must be a mapping"]
+    errors: list[str] = []
+    expected = {
+        "number": LIVE_REFERENCE_ISSUE_NUMBER,
+        "html_url": LIVE_REFERENCE_URL,
+        "url": LIVE_REFERENCE_API_URL,
+        "repository_url": "https://api.github.com/repos/organvm/limen",
+        "state": "open",
+    }
+    for key, value in expected.items():
+        if issue.get(key) != value:
+            errors.append(f"profile-engine live reference {key} must remain {value!r}")
+    if issue.get("pull_request") is not None:
+        errors.append("profile-engine live reference must remain an issue, not a pull request")
+    if issue.get("transferred_to") is not None:
+        errors.append("profile-engine live reference must not be a transferred substitute")
+    return errors
+
+
 def validate_live_dependencies(
     fetch: Callable[[list[str]], Any] = _gh_json,
 ) -> list[str]:
@@ -1034,23 +1416,50 @@ def validate_live_dependencies(
         issue_number = expected["issue_number"]
         try:
             issue = fetch(["api", f"repos/organvm/limen/issues/{issue_number}"])
-            comments = fetch(
-                ["api", f"repos/organvm/limen/issues/{issue_number}/comments?per_page=100"]
+            comment_pages = fetch(
+                [
+                    "api",
+                    "--paginate",
+                    "--slurp",
+                    f"repos/organvm/limen/issues/{issue_number}/comments?per_page=100",
+                ]
             )
         except AdjudicationError as exc:
             errors.append(f"cannot resolve accepted {work_id} receipt: {exc}")
             continue
         if not isinstance(issue, dict) or issue.get("state") != "closed":
             errors.append(f"accepted dependency {work_id} issue must remain closed")
-        if not isinstance(comments, list):
-            errors.append(f"accepted dependency {work_id} comments must be a list")
+        if not isinstance(comment_pages, list):
+            errors.append(f"accepted dependency {work_id} comment pagination must be a list of pages")
             continue
+        comments: list[dict[str, Any]] = []
+        for page_index, page in enumerate(comment_pages):
+            if not isinstance(page, list):
+                errors.append(f"accepted dependency {work_id} comment page[{page_index}] must be a list")
+                continue
+            for row_index, row in enumerate(page):
+                if not isinstance(row, dict):
+                    errors.append(
+                        f"accepted dependency {work_id} comment page[{page_index}][{row_index}] must be a mapping"
+                    )
+                    continue
+                comment_id = row.get("id")
+                if (
+                    not isinstance(comment_id, int)
+                    or isinstance(comment_id, bool)
+                    or comment_id <= 0
+                ):
+                    errors.append(
+                        f"accepted dependency {work_id} comment page[{page_index}][{row_index}] needs a positive integer id"
+                    )
+                    continue
+                comments.append(row)
         marker = f"<!-- positioning-receipt:{work_id} -->"
-        marked = [row for row in comments if isinstance(row, dict) and marker in str(row.get("body") or "")]
+        marked = [row for row in comments if marker in str(row.get("body") or "")]
         if not marked:
             errors.append(f"accepted dependency {work_id} has no marked receipt")
             continue
-        latest = max(marked, key=lambda row: int(row.get("id") or 0))
+        latest = max(marked, key=lambda row: row["id"])
         if latest.get("html_url") != expected["marked_receipt"]:
             errors.append(f"accepted dependency {work_id} latest marked receipt URL differs")
         blocks = RECEIPT_BLOCK_RE.findall(str(latest.get("body") or ""))
@@ -1095,6 +1504,7 @@ def main() -> int:
         issue_map = _load_json(ISSUE_MAP_PATH)
         issue_index = ISSUE_INDEX_PATH.read_text(encoding="utf-8")
         research_doc = RESEARCH_DOC_PATH.read_text(encoding="utf-8")
+        flagship_evidence_text = FLAGSHIP_EVIDENCE_PATH.read_text(encoding="utf-8")
         flagship_evidence = _load_yaml(FLAGSHIP_EVIDENCE_PATH)
         claims_ledger = CLAIMS_LEDGER_PATH.read_text(encoding="utf-8")
     except (AdjudicationError, OSError) as exc:
@@ -1109,10 +1519,13 @@ def main() -> int:
         issue_index,
         research_doc,
         flagship_evidence,
+        flagship_evidence_text,
         claims_ledger,
     )
     if args.verify_live and not errors:
         errors.extend(validate_live_identity(program))
+        errors.extend(validate_live_sources(artifact))
+        errors.extend(validate_live_reference())
         errors.extend(validate_live_dependencies())
     if errors:
         for error in errors:

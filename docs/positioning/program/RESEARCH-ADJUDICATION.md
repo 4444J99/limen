@@ -14,7 +14,7 @@ The machine-readable adjudication is
 | Dependency | Accepted head | Latest marked receipt | Canonical receipt SHA-256 | Bound tracked object |
 |---|---|---|---|---|
 | PSP-P02-W01 | `10cf8476d5e88309c71d5fac25167ec7b7af59c4` | https://github.com/organvm/limen/issues/2173#issuecomment-5246643968 | `2928726feed64960d73b059889a39fceb318bf7bbc68c4b120d41527eaf10df6` | census receipt blob `f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd` |
-| PSP-P02-W05 | `d8b44e60e404b044436addf8108732cc28c06371` | https://github.com/organvm/limen/issues/2177#issuecomment-5265859179 | `9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164` | claims-ledger blob `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee` |
+| PSP-P02-W05 | `d8b44e60e404b044436addf8108732cc28c06371` | https://github.com/organvm/limen/issues/2177#issuecomment-5265859179 | `9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164` | claims-ledger blob `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee`; flagship-evidence blob `ce59d44794f44e0511436cbabbcd4fba1a938891` |
 
 The formal validator resolves the latest marked receipt for both closed issues, recomputes its
 canonical digest, and compares the receipt-observed `organvm/limen` head exactly. It also compares
@@ -27,7 +27,7 @@ prominence, publishable status, public wording, and required receipts.
 |---|---|---|
 | GitHub profile | `f198b37e3161121e7c198e21bd18b87e29b6bc4f` | Rendered wording, manifest values, generator workflow |
 | W01 accepted census | `10cf8476d5e88309c71d5fac25167ec7b7af59c4` | Public-safe estate totals and tracked receipt blob |
-| W05 accepted claims ledger | `d8b44e60e404b044436addf8108732cc28c06371` | Exact 13-claim imported publication contract |
+| W05 accepted claims ledger and flagship evidence | `d8b44e60e404b044436addf8108732cc28c06371` | Exact 13-claim imported publication contract bound to flagship-evidence blob `ce59d44794f44e0511436cbabbcd4fba1a938891` |
 | W03 proof-set preflight | `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2` | Per-system public proof and constrained live probes |
 | LAVREA | `02e360c9828336ac95ce8223c65d127ffea27661` | Methodology and percentile-baseline audit |
 | Portfolio | GitHub repository ID `1155412125`; head `85bfaa84287e4a3b90b49187caa4313c4edda1aa` | Canonical-owner resolution independent of a mutable slug |

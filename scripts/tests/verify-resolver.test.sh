@@ -57,6 +57,14 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
+expect research-adjudication-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+research-adjudication-test
+check-params
+check-note-links
+check-effectors' scripts/positioning-research-adjudication.py
+
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
 # listing `cli/src/limen/*.py` silently drops this case, and dispatch.py (a live `gh pr merge`

@@ -6,6 +6,9 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "positioning-research-adjudication.py"
@@ -94,6 +97,20 @@ def _accepted_receipt(work_id: str):
     }
 
 
+def _accepted_comment(work_id: str):
+    receipt = _accepted_receipt(work_id)
+    expected = MODULE.ACCEPTED_DEPENDENCIES[work_id]
+    assert MODULE._canonical_sha256(receipt) == expected["canonical_receipt_sha256"]
+    return {
+        "id": int(expected["marked_receipt"].rsplit("-", 1)[1]),
+        "html_url": expected["marked_receipt"],
+        "body": (
+            f"<!-- positioning-receipt:{work_id} -->\n"
+            f"```json\n{json.dumps(receipt, indent=2)}\n```"
+        ),
+    }
+
+
 def _bundle():
     return {
         "artifact": MODULE._load_json(MODULE.ARTIFACT_PATH),
@@ -103,6 +120,7 @@ def _bundle():
         "issue_index": MODULE.ISSUE_INDEX_PATH.read_text(encoding="utf-8"),
         "research_doc": MODULE.RESEARCH_DOC_PATH.read_text(encoding="utf-8"),
         "flagship_evidence": MODULE._load_yaml(MODULE.FLAGSHIP_EVIDENCE_PATH),
+        "flagship_evidence_text": MODULE.FLAGSHIP_EVIDENCE_PATH.read_text(encoding="utf-8"),
         "claims_ledger": MODULE.CLAIMS_LEDGER_PATH.read_text(encoding="utf-8"),
     }
 
@@ -116,6 +134,7 @@ def _errors(bundle):
         bundle["issue_index"],
         bundle["research_doc"],
         bundle["flagship_evidence"],
+        bundle["flagship_evidence_text"],
         bundle["claims_ledger"],
     )
 
@@ -189,6 +208,26 @@ def test_all_imported_claim_fields_must_exactly_match_accepted_w05_projection() 
     )
 
 
+def test_w05_import_cannot_replace_the_accepted_flagship_evidence_blob() -> None:
+    bundle = _bundle()
+    bundle["artifact"] = copy.deepcopy(bundle["artifact"])
+    bundle["flagship_evidence"] = copy.deepcopy(bundle["flagship_evidence"])
+    wording = "jointly mutated after accepted W05"
+    bundle["artifact"]["claims"][0]["w05_integration"]["public_wording"] = wording
+    bundle["flagship_evidence"]["w08_research_import"]["claims"][0]["public_wording"] = wording
+    bundle["flagship_evidence_text"] = yaml.safe_dump(
+        bundle["flagship_evidence"],
+        sort_keys=False,
+    )
+
+    errors = _errors(bundle)
+    assert "flagship-evidence blob differs from the accepted W05 binding" in errors
+    assert (
+        "all 13 artifact claims must exactly match the accepted W05 four-layer and publishable projection"
+        not in errors
+    )
+
+
 def test_claims_ledger_table_must_match_all_four_dispositions() -> None:
     bundle = _bundle()
     bundle["claims_ledger"] = bundle["claims_ledger"].replace(
@@ -224,6 +263,47 @@ def test_disposition_vocabulary_cannot_authorize_its_own_new_value() -> None:
     assert "measurement disposition vocabulary must match the canonical ordered vocabulary" in errors
 
 
+def test_tokenized_disposition_and_citation_sinks_fail_neutrally() -> None:
+    for malformed_vocabulary in ("verified", [{"unhashable": True}]):
+        bundle = _bundle()
+        bundle["artifact"] = copy.deepcopy(bundle["artifact"])
+        bundle["artifact"]["disposition_vocabularies"]["measurement"] = malformed_vocabulary
+        assert (
+            "measurement disposition vocabulary must match the canonical ordered vocabulary"
+            in _errors(bundle)
+        )
+
+    disposition = _bundle()
+    disposition["artifact"] = copy.deepcopy(disposition["artifact"])
+    disposition["artifact"]["claims"][0]["measurement"]["disposition"] = {"unhashable": True}
+    assert any("measurement uses an unknown disposition" in error for error in _errors(disposition))
+
+    citations = _bundle()
+    citations["artifact"] = copy.deepcopy(citations["artifact"])
+    citations["artifact"]["claims"][0]["measurement"]["citations"] = [["PROFILE_README"]]
+    assert any(
+        "measurement citations must be nonempty string source IDs" in error
+        for error in _errors(citations)
+    )
+
+
+def test_tokenized_lavrea_and_http_receipt_sinks_fail_neutrally() -> None:
+    axis = _bundle()
+    axis["artifact"] = copy.deepcopy(axis["artifact"])
+    axis["artifact"]["lavrea_axis_audit"][0]["axis"] = ["contributions_year"]
+    assert "lavrea_axis_audit[0].axis must be a nonempty string token" in _errors(axis)
+
+    citations = _bundle()
+    citations["artifact"] = copy.deepcopy(citations["artifact"])
+    citations["artifact"]["lavrea_axis_audit"][0]["citations"] = [{"source": "PROFILE_README"}]
+    assert any("needs valid citations" in error for error in _errors(citations))
+
+    http = _bundle()
+    http["receipt"] = copy.deepcopy(http["receipt"])
+    http["receipt"]["http_receipts"][0]["id"] = ["current_profile_blog_field"]
+    assert "receipt.http_receipts[0] needs a nonempty string id" in _errors(http)
+
+
 def test_public_sources_reject_embedded_credentials() -> None:
     bundle = _bundle()
     bundle["artifact"] = copy.deepcopy(bundle["artifact"])
@@ -247,6 +327,80 @@ def test_public_sources_reject_query_and_fragment_credentials() -> None:
 
     assert MODULE._credential_free_https_url(
         "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
+    )
+
+
+def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
+    unexpected_repository = _bundle()
+    unexpected_repository["artifact"] = copy.deepcopy(unexpected_repository["artifact"])
+    source = unexpected_repository["artifact"]["sources"]["PROFILE_README"]
+    source["repository"] = "unexpected-owner/private-profile"
+    source["url"] = (
+        "https://github.com/unexpected-owner/private-profile/blob/"
+        f"{source['head']}/README.md"
+    )
+    errors = _errors(unexpected_repository)
+    assert "source PROFILE_README must bind its exact public repository" in errors
+    assert "source PROFILE_README must bind its exact public url" in errors
+
+    wrong_path = _bundle()
+    wrong_path["artifact"] = copy.deepcopy(wrong_path["artifact"])
+    source = wrong_path["artifact"]["sources"]["PROFILE_README"]
+    source["path"] = "PRIVATE.md"
+    source["url"] = (
+        "https://github.com/4444J99/4444J99/blob/"
+        f"{source['head']}/PRIVATE.md"
+    )
+    errors = _errors(wrong_path)
+    assert "source PROFILE_README must bind its exact public path" in errors
+    assert "source PROFILE_README must bind its exact public url" in errors
+
+
+def test_live_public_sources_require_public_repositories_and_exact_paths() -> None:
+    artifact = _bundle()["artifact"]
+
+    def valid_fetch(args):
+        endpoint = args[-1]
+        for source_id, expected in MODULE.EXPECTED_PUBLIC_SOURCES.items():
+            repository = expected.get("repository")
+            path = expected.get("path")
+            head = expected.get("head")
+            if all(isinstance(value, str) for value in (repository, path, head)):
+                content_endpoint = (
+                    f"repos/{repository}/contents/{MODULE.quote(path, safe='/')}?ref={head}"
+                )
+                if endpoint == content_endpoint:
+                    return {
+                        "type": "file",
+                        "path": path,
+                        "html_url": expected["url"],
+                        "sha": expected.get("blob"),
+                    }
+        repository = endpoint.removeprefix("repos/")
+        return {"full_name": repository, "private": False, "visibility": "public"}
+
+    assert MODULE.validate_live_sources(artifact, valid_fetch) == []
+
+    def private_fetch(args):
+        endpoint = args[-1]
+        if endpoint == "repos/4444J99/4444J99":
+            return {"full_name": "4444J99/4444J99", "private": True, "visibility": "private"}
+        return valid_fetch(args)
+
+    assert (
+        "public source repository 4444J99/4444J99 must resolve as that exact public repository"
+        in MODULE.validate_live_sources(artifact, private_fetch)
+    )
+
+    def wrong_path_fetch(args):
+        value = valid_fetch(args)
+        if args[-1].endswith("/contents/README.md?ref=f198b37e3161121e7c198e21bd18b87e29b6bc4f"):
+            value = {**value, "path": "PRIVATE.md"}
+        return value
+
+    assert (
+        "public source PROFILE_README must resolve its exact accepted repository path"
+        in MODULE.validate_live_sources(artifact, wrong_path_fetch)
     )
 
 
@@ -301,36 +455,135 @@ def test_live_identity_rejects_non_mapping_transport_payloads_neutrally() -> Non
     ]
 
 
+def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None:
+    static = _bundle()
+    static["receipt"] = copy.deepcopy(static["receipt"])
+    static["receipt"]["formal_completion"]["live_reference"]["issue"] = (
+        "https://github.com/other/repo/issues/1245"
+    )
+    assert (
+        "the profile-engine live reference must bind the exact open organvm/limen#1245 contract"
+        in _errors(static)
+    )
+
+    expected = {
+        "number": MODULE.LIVE_REFERENCE_ISSUE_NUMBER,
+        "html_url": MODULE.LIVE_REFERENCE_URL,
+        "url": MODULE.LIVE_REFERENCE_API_URL,
+        "repository_url": "https://api.github.com/repos/organvm/limen",
+        "state": "open",
+    }
+    calls = []
+
+    def fetch(args):
+        calls.append(args)
+        return expected
+
+    assert MODULE.validate_live_reference(fetch) == []
+    assert calls == [["api", "repos/organvm/limen/issues/1245"]]
+    assert MODULE.validate_live_reference(lambda _args: []) == [
+        "profile-engine live reference response must be a mapping"
+    ]
+
+    closed = {**expected, "state": "closed"}
+    assert any("state must remain 'open'" in error for error in MODULE.validate_live_reference(lambda _args: closed))
+
+    wrong = {**expected, "number": 1246, "html_url": "https://github.com/other/repo/issues/1246"}
+    errors = MODULE.validate_live_reference(lambda _args: wrong)
+    assert any("number must remain 1245" in error for error in errors)
+    assert any("html_url must remain" in error for error in errors)
+
+    pull_request = {**expected, "pull_request": {"url": "https://api.github.com/example"}}
+    assert (
+        "profile-engine live reference must remain an issue, not a pull request"
+        in MODULE.validate_live_reference(lambda _args: pull_request)
+    )
+
+
+def test_gh_json_normalizes_timeout_and_spawn_errors(monkeypatch) -> None:
+    def time_out(*_args, **_kwargs):
+        raise MODULE.subprocess.TimeoutExpired(cmd=["gh", "api"], timeout=60)
+
+    monkeypatch.setattr(MODULE.subprocess, "run", time_out)
+    with pytest.raises(MODULE.AdjudicationError, match="GitHub query timed out after 60 seconds"):
+        MODULE._gh_json(["api", "rate_limit"])
+
+    def spawn_error(*_args, **_kwargs):
+        raise OSError("gh unavailable")
+
+    monkeypatch.setattr(MODULE.subprocess, "run", spawn_error)
+    with pytest.raises(MODULE.AdjudicationError, match="cannot start GitHub query: gh unavailable"):
+        MODULE._gh_json(["api", "rate_limit"])
+
+
 def test_live_formalization_binds_latest_marked_receipts_and_observed_heads() -> None:
     calls = []
 
     def fetch(args):
         calls.append(args)
-        issue_number = 2173 if "/2173" in args[1] else 2177
+        endpoint = args[-1]
+        issue_number = 2173 if "/2173" in endpoint else 2177
         work_id = "PSP-P02-W01" if issue_number == 2173 else "PSP-P02-W05"
-        if "comments" not in args[1]:
+        if "comments" not in endpoint:
             return {"state": "closed"}
-        receipt = _accepted_receipt(work_id)
-        expected = MODULE.ACCEPTED_DEPENDENCIES[work_id]
-        assert MODULE._canonical_sha256(receipt) == expected["canonical_receipt_sha256"]
-        return [
-            {
-                "id": int(expected["marked_receipt"].rsplit("-", 1)[1]),
-                "html_url": expected["marked_receipt"],
-                "body": (
-                    f"<!-- positioning-receipt:{work_id} -->\n"
-                    f"```json\n{json.dumps(receipt, indent=2)}\n```"
-                ),
-            }
-        ]
+        return [[_accepted_comment(work_id)]]
 
     assert MODULE.validate_live_dependencies(fetch) == []
     assert calls == [
         ["api", "repos/organvm/limen/issues/2173"],
-        ["api", "repos/organvm/limen/issues/2173/comments?per_page=100"],
+        [
+            "api",
+            "--paginate",
+            "--slurp",
+            "repos/organvm/limen/issues/2173/comments?per_page=100",
+        ],
         ["api", "repos/organvm/limen/issues/2177"],
-        ["api", "repos/organvm/limen/issues/2177/comments?per_page=100"],
+        [
+            "api",
+            "--paginate",
+            "--slurp",
+            "repos/organvm/limen/issues/2177/comments?per_page=100",
+        ],
     ]
+
+
+def test_live_receipt_selection_includes_later_paginated_comments() -> None:
+    def fetch(args):
+        endpoint = args[-1]
+        issue_number = 2173 if "/2173" in endpoint else 2177
+        work_id = "PSP-P02-W01" if issue_number == 2173 else "PSP-P02-W05"
+        if "comments" not in endpoint:
+            return {"state": "closed"}
+        accepted = _accepted_comment(work_id)
+        marker = f"<!-- positioning-receipt:{work_id} -->"
+        first_page = [
+            {"id": index + 1, "html_url": f"https://example.test/{index + 1}", "body": "ordinary"}
+            for index in range(99)
+        ]
+        first_page.append(
+            {
+                "id": accepted["id"] - 1,
+                "html_url": "https://example.test/superseded",
+                "body": f"{marker}\n```json\n{{}}\n```",
+            }
+        )
+        return [first_page, [accepted]]
+
+    assert MODULE.validate_live_dependencies(fetch) == []
+
+
+def test_live_receipt_pagination_payloads_fail_neutrally() -> None:
+    cases = (
+        ("not-pages", "comment pagination must be a list of pages"),
+        ([{"not": "a-page"}], "comment page[0] must be a list"),
+        ([["not-a-comment"]], "comment page[0][0] must be a mapping"),
+        ([[{"id": [], "body": "marked"}]], "comment page[0][0] needs a positive integer id"),
+    )
+    for payload, expected_error in cases:
+        def fetch(args, value=payload):
+            return value if "comments" in args[-1] else {"state": "closed"}
+
+        assert any(expected_error in error for error in MODULE.validate_live_dependencies(fetch))
 
 
 def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -> None:
@@ -355,6 +608,43 @@ def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -
     result["total_contributions"] = 42
     result["sum_of_daily_counts"] = 42
     assert "fresh contribution total must preserve the recorded 33168 observation" in _errors(arbitrary)
+
+
+def test_profile_metadata_result_is_exact_typed_and_reconciled() -> None:
+    missing = _bundle()
+    missing["receipt"] = copy.deepcopy(missing["receipt"])
+    profile = next(
+        row for row in missing["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata"
+    )
+    profile.pop("result")
+    assert "profile metadata result must match the exact typed public observation" in _errors(missing)
+
+    arbitrary = _bundle()
+    arbitrary["receipt"] = copy.deepcopy(arbitrary["receipt"])
+    profile = next(
+        row for row in arbitrary["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata"
+    )
+    profile["result"]["public_repos"] = True
+    errors = _errors(arbitrary)
+    assert "profile metadata result must match the exact typed public observation" in errors
+    assert (
+        "profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs"
+        in errors
+    )
+
+
+def test_lavrea_axis_conclusions_match_the_accepted_exact_contract() -> None:
+    bundle = _bundle()
+    bundle["artifact"] = copy.deepcopy(bundle["artifact"])
+    axis = bundle["artifact"]["lavrea_axis_audit"][0]
+    axis["measurement_disposition"] = "arbitrary_but_nonempty"
+    axis["inference_disposition"] = "arbitrary_but_nonempty"
+    axis["primary_source_result"] = "Arbitrary but nonempty text."
+
+    assert (
+        "LAVREA axis contributions_year must match its accepted exact conclusion contract"
+        in _errors(bundle)
+    )
 
 
 def test_public_profile_head_and_blobs_bind_cited_sources_and_latest_run() -> None:
@@ -479,3 +769,4 @@ def test_issue_map_change_selects_the_research_adjudication_gate() -> None:
     assert "docs/positioning/claims-ledger.md" in gate["paths"]
     assert "docs/positioning/evidence/flagship-evidence.yaml" in gate["paths"]
     assert "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json" in gate["paths"]
+    assert "scripts/positioning-research-adjudication.py --check" in gate["command"]

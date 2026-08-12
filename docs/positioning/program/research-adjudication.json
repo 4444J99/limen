@@ -27,7 +27,9 @@
         "marked_receipt": "https://github.com/organvm/limen/issues/2177#issuecomment-5265859179",
         "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
         "claims_ledger_path": "docs/positioning/claims-ledger.md",
-        "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee"
+        "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+        "flagship_evidence_path": "docs/positioning/evidence/flagship-evidence.yaml",
+        "flagship_evidence_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891"
       }
     ],
     "post_merge_projection_command": "python3 scripts/positioning-program.py --sync --apply",
@@ -51,6 +53,8 @@
       "kind": "head_pinned_public_source",
       "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
       "blob": "b006a06c2a7e9f84166b0fd7fad638a5c36c356f",
+      "repository": "4444J99/4444J99",
+      "path": "README.md",
       "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/README.md",
       "public": true
     },
@@ -58,12 +62,16 @@
       "kind": "head_pinned_public_source",
       "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
       "blob": "668c09daab5f63882e9fd6b848ab9d0017a65ae5",
+      "repository": "4444J99/4444J99",
+      "path": "assets/stats-manifest.json",
       "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/assets/stats-manifest.json",
       "public": true
     },
     "PROFILE_WORKFLOW": {
       "kind": "head_pinned_public_source",
       "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+      "repository": "4444J99/4444J99",
+      "path": ".github/workflows/profile.yml",
       "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/.github/workflows/profile.yml",
       "public": true
     },
@@ -78,6 +86,8 @@
       "kind": "dated_public_api_receipt",
       "observed_at": "2026-08-10T19:14:05Z",
       "url": "https://github.com/4444J99/4444J99/actions/workflows/profile.yml",
+      "repository": "4444J99/4444J99",
+      "path": ".github/workflows/profile.yml",
       "receipt_path": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
       "public": true
     },
@@ -85,6 +95,8 @@
       "kind": "head_pinned_public_safe_receipt",
       "head": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
       "blob": "f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd",
+      "repository": "organvm/limen",
+      "path": "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "url": "https://github.com/organvm/limen/blob/10cf8476d5e88309c71d5fac25167ec7b7af59c4/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "public": true
     },
@@ -92,6 +104,8 @@
       "kind": "head_pinned_public_safe_receipt",
       "head": "0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2",
       "blob": "120529ab75d797c2e28c693d8bfc2d042428dd49",
+      "repository": "organvm/limen",
+      "path": "docs/positioning/flagship-proof-set.yaml",
       "url": "https://github.com/organvm/limen/blob/0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2/docs/positioning/flagship-proof-set.yaml",
       "public": true
     },
@@ -99,13 +113,26 @@
       "kind": "head_pinned_public_source",
       "head": "d8b44e60e404b044436addf8108732cc28c06371",
       "blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+      "repository": "organvm/limen",
+      "path": "docs/positioning/claims-ledger.md",
       "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/claims-ledger.md",
+      "public": true
+    },
+    "W05_FLAGSHIP_EVIDENCE": {
+      "kind": "head_pinned_public_source",
+      "head": "d8b44e60e404b044436addf8108732cc28c06371",
+      "blob": "ce59d44794f44e0511436cbabbcd4fba1a938891",
+      "repository": "organvm/limen",
+      "path": "docs/positioning/evidence/flagship-evidence.yaml",
+      "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/evidence/flagship-evidence.yaml",
       "public": true
     },
     "LAVREA_METHODOLOGY": {
       "kind": "head_pinned_public_source",
       "head": "02e360c9828336ac95ce8223c65d127ffea27661",
       "blob": "b671568236f386041a416d28964b50820249ac2a",
+      "repository": "organvm/laurea",
+      "path": "METHODOLOGY.md",
       "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
       "public": true
     },
@@ -113,6 +140,8 @@
       "kind": "head_pinned_public_source",
       "head": "02e360c9828336ac95ce8223c65d127ffea27661",
       "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
+      "repository": "organvm/laurea",
+      "path": "src/laurea/baselines.py",
       "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
       "public": true
     },
@@ -144,6 +173,7 @@
     "PORTFOLIO_IDENTITY": {
       "kind": "stable_public_repository_identity",
       "repository_id": 1155412125,
+      "repository": "organvm-vii-kerygma/portfolio",
       "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
       "url": "https://api.github.com/repositories/1155412125",
       "receipt_path": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
@@ -620,6 +650,7 @@
     "accepted_consumer_head": "d8b44e60e404b044436addf8108732cc28c06371",
     "accepted_target_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
     "accepted_projection": "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import",
+    "accepted_projection_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891",
     "source_claim_ids": [
       "profile-production-systems-headline",
       "profile-portfolio-link",

@@ -252,8 +252,8 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             )
         if not _is_nonempty_text(value.get("resolution_rule")):
             failures.append(f"{label}.resolution_rule must be non-empty text")
-        if not _is_text_list(previous_slugs, nonempty=True):
-            failures.append(f"{label}.previous_slugs must be a non-empty text list")
+        if not _is_text_list(previous_slugs):
+            failures.append(f"{label}.previous_slugs must be a text list")
             previous_slugs = []
         if canonical_slug in previous_slugs:
             failures.append(f"{label}.previous_slugs cannot contain the canonical slug")
