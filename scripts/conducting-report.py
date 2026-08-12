@@ -399,7 +399,9 @@ def main(argv: list[str] | None = None) -> int:
     # Usage and admission are emitted by separate heartbeat rungs. Refresh the keeper
     # snapshot immediately before pairing them so a once-daily report cannot reuse a prior beat's
     # routing decision after budgets, auth, or worktree pressure changed.
-    _refresh_admission()
+    if not _refresh_admission():
+        print("conducting-report: keeper admission refresh failed; delivery withheld")
+        return 0
     headline, body, day, routing_reason = build_report()
     print(body)
     if args.print_only:

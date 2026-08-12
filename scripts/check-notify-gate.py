@@ -404,6 +404,13 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def __init__(self, bindings: dict[str, list[str]] | None = None) -> None:
         self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
         self.found = False
+        self.process_aliases = set(_PROCESS_CALLS)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        if node.module in {"subprocess", "os"}:
+            for alias in node.names:
+                if alias.name in _PROCESS_CALLS:
+                    self.process_aliases.add(alias.asname or alias.name)
 
     def _assign(self, target: ast.AST, values: list[str] | None) -> None:
         if isinstance(target, (ast.Tuple, ast.List)):
@@ -508,7 +515,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         call_name = node.func.id if isinstance(node.func, ast.Name) else (
             node.func.attr if isinstance(node.func, ast.Attribute) else ""
         )
-        if call_name in _PROCESS_CALLS:
+        if call_name in self.process_aliases:
             values: list[str] = []
             for argument in [*node.args, *(keyword.value for keyword in node.keywords)]:
                 values.extend(_static_argv(argument, self.bindings) or [])
