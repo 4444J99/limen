@@ -26,6 +26,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
@@ -42,6 +43,56 @@ QUEUE_UNKNOWN = "unknown"
 SEARCH_RESULT_CEILING = 1000
 
 
+@dataclass(frozen=True)
+class PREnumerationResult:
+    rows: tuple
+    success: bool
+    complete: bool
+    error: str | None = None
+
+
+def enumerate_open_prs_result(owners, gh_fn, max_total=500, want_url=True, author="@me"):
+    """Return rows plus explicit transport, parse, and completeness truth."""
+    fields = "number,repository,url" if want_url else "number,repository"
+    requested = int(max_total)
+    capped = min(requested, SEARCH_RESULT_CEILING)
+    if capped < requested:
+        print(
+            f"[_pr_scan] requested --limit {requested} exceeds GitHub's "
+            f"{SEARCH_RESULT_CEILING}-result search ceiling; clamped to {capped}. "
+            "The result is not complete.",
+            file=sys.stderr,
+        )
+    cmd = ["search", "prs", "--state", "open", "--limit", str(capped)]
+    if author:
+        cmd.extend(["--author", str(author)])
+    cmd.extend([*sum([["--owner", o] for o in owners], []), "--json", fields])
+    r = gh_fn(cmd)
+    if getattr(r, "returncode", 1) != 0:
+        detail = str(getattr(r, "stderr", "") or "GitHub enumeration failed").strip()
+        return PREnumerationResult((), False, False, detail[:400])
+    try:
+        payload = json.loads(r.stdout or "[]")
+    except (TypeError, json.JSONDecodeError) as exc:
+        return PREnumerationResult((), False, False, f"malformed GitHub output: {exc}")
+    if not isinstance(payload, list):
+        return PREnumerationResult((), False, False, "malformed GitHub output: expected a list")
+    out = []
+    for p in payload:
+        try:
+            repo = p["repository"]["nameWithOwner"]
+            num = p["number"]
+            if not isinstance(repo, str) or not isinstance(num, int):
+                raise TypeError
+        except (KeyError, TypeError):
+            return PREnumerationResult((), False, False, "malformed GitHub PR row")
+        out.append((repo, num, p.get("url", "")) if want_url else (repo, num))
+    out.sort(key=lambda t: (t[0], t[1]))
+    complete = requested <= SEARCH_RESULT_CEILING and len(out) < capped
+    error = None if complete else "enumeration reached its result ceiling"
+    return PREnumerationResult(tuple(out), True, complete, error)
+
+
 def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"):
     """One cheap `gh search prs` call → the FULL open-PR set across `owners`, stably sorted.
     Returns (repo, num, url) tuples when want_url else (repo, num). Empty list on any gh failure
@@ -52,38 +103,8 @@ def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"
     PROVABLY complete set (rather than a bounded sample) cannot get one from search at all once the
     estate passes the ceiling; ``scripts/check-heal-retirement.py`` paginates REST for that reason.
     """
-    fields = "number,repository,url" if want_url else "number,repository"
-    capped = min(int(max_total), SEARCH_RESULT_CEILING)
-    if capped < int(max_total):
-        print(
-            f"[_pr_scan] requested --limit {max_total} exceeds GitHub's {SEARCH_RESULT_CEILING}-result "
-            f"search ceiling, which returns an EMPTY list rather than an error; clamped to {capped}. "
-            "The result may be truncated — do not treat absence from it as proof of closure.",
-            file=sys.stderr,
-        )
-    cmd = ["search", "prs", "--state", "open", "--limit", str(capped)]
-    if author:
-        cmd.extend(["--author", str(author)])
-    cmd.extend([*sum([["--owner", o] for o in owners], []), "--json", fields])
-    r = gh_fn(cmd)
-    if getattr(r, "returncode", 1) != 0:
-        return []
-    try:
-        rows = json.loads(r.stdout or "[]")
-    except Exception:
-        return []
-    out = []
-    for p in rows:
-        try:
-            repo = p["repository"]["nameWithOwner"]
-            num = p["number"]
-        except (KeyError, TypeError):
-            continue
-        out.append((repo, num, p.get("url", "")) if want_url else (repo, num))
-    # STABLE order so the rotating cursor visits the same slot beat-to-beat regardless of gh's
-    # search-relevance ranking (which reshuffles between calls).
-    out.sort(key=lambda t: (t[0], t[1]))
-    return out
+    result = enumerate_open_prs_result(owners, gh_fn, max_total, want_url, author)
+    return list(result.rows) if result.success else []
 
 
 def _read_cursor(path):
