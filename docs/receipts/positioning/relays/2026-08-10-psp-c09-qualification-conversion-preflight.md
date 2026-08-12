@@ -34,7 +34,7 @@ compression_level: high
 | C07 private inbound | Limen draft [#2318](https://github.com/organvm/limen/pull/2318) at `c3b92707a0f6d0ea3076680d100d60d0217f8fe9` | PREPARED private-intake and threat-boundary contracts; no message, route, or external effect. |
 | C08 proof-led content | draft Limen PR [#2316](https://github.com/organvm/limen/pull/2316) at `ef6e4df64f97c11dba2c159752d5a13b50a96c10` | PREPARED claim-source, correction/withdrawal, and attribution contracts. No publication or send occurred. |
 | W01 public-safe package | Limen implementation checkpoint `3caf35a7c5e25701320ba1303cb7f1386e6e2318` on `codex/psp-c09-qualification-conversion-relay` | ICP, committee, triggers, pains, disqualifiers, evidence signals, deterministic scorecard, and ten synthetic accounts. |
-| W02/W03/W05/W06/W07 private package | draft PR [#136](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/136) at `4872b543f33bdc58f915b27b44df58d48ba41f35` | Executable qualification, consent/authority, no-sign graph, CRM-safe projection, draft valves, deterministic scenarios, recruiter constraints, objection ledger, and synthetic conversion runtime. |
+| W02/W03/W05/W06/W07 private package | draft PR [#136](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/136) at `7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9` | Executable qualification, consent/authority, no-sign graph, CRM-safe projection, draft valves, deterministic scenarios, recruiter constraints, objection ledger, and synthetic conversion runtime. |
 | W04 non-routable package | portfolio draft PR [#222](https://github.com/organvm-vii-kerygma/portfolio/pull/222) at `da79fb63b9756b5cce0d42ed2a7722668854a228` | Executable local CTA/funnel contract and synthetic tests. No page, route, component, style, or transport is present. |
 
 ## Preserved leaf assignments
@@ -57,7 +57,7 @@ leaf executors, reserve hidden fanout, or run any formal `--verify-work` predica
 | Package | Reproducible result on its exact preflight tree |
 | --- | --- |
 | W01 | `python3 scripts/positioning-qualification-preflight.py --check` → `status=ok`, 10 synthetic accounts, 8 exact assignments; focused pytest → 6 passed; Ruff → passed |
-| Private conversion | focused qualification/conversion Vitest → 14 passed; TypeScript → passed; complete Vitest → 29 passed; build and no-plaintext → passed; package-owned Prettier → passed |
+| Private conversion | focused qualification/conversion Vitest → 15 passed; TypeScript → passed; complete unchanged-tree Vitest before the terminal-route patch → 29 passed; build and no-plaintext → passed; package-owned Prettier → passed |
 | W04 | `npm run preflight:psp-p10-w04` → 11 passed; Astro typecheck → 298 files, 0 errors/warnings/hints; Biome exact paths → passed; no PSP-C09 route or rendered artifact emitted |
 
 All fixtures are synthetic, all draft transports have `externalEffects=[]`, and the no-send release
