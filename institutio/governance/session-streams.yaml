@@ -484,7 +484,7 @@ streams:
     runway: 1d
     owner_of_record: organs/consulting/constellation/registry.yaml
     max_children: 4
-    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): dustin's whole collaboration domain — lanes: dsp-platform (stage dossier), ai-consultation (stage dossier), social-presence (stage building)."
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): dustin's whole collaboration domain — lanes: dsp-platform (stage building), ai-consultation (stage building), social-presence (stage building)."
 
   scott:
     family: constellation
