@@ -50,6 +50,10 @@ CREDENTIAL_METADATA_RE = re.compile(
     r"(?:authorization\s*:|bearer\s+[A-Za-z0-9._~-]+|(?:access[-_]?token|token|api[-_]?key|password|passwd|secret)\s*[:=]\s*\S+)",
     re.IGNORECASE,
 )
+CREDENTIAL_FIELD_RE = re.compile(
+    r"(?:^|[-_])(?:access[-_]?token|api[-_]?key|authorization|bearer|client[-_]?(?:cert|certificate|key)|credential|jwt|oauth(?:2[-_]?bearer)?|password|passwd|private[-_]?key|proxy[-_]?(?:authorization|user)|secret|session|signature|token)(?:$|[-_])",
+    re.IGNORECASE,
+)
 EXPECTED_CLAIM_COUNT = 13
 EXPECTED_API_RECEIPT_SOURCES = {
     "profile_metadata": "https://api.github.com/users/4444J99",
@@ -532,6 +536,19 @@ def _safe_public_metadata(value: object) -> bool:
     return _text(value) and CREDENTIAL_METADATA_RE.search(str(value)) is None
 
 
+def _credential_free_public_tree(value: object) -> bool:
+    if isinstance(value, dict):
+        return all(
+            isinstance(key, str)
+            and CREDENTIAL_FIELD_RE.search(key) is None
+            and _credential_free_public_tree(child)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return all(_credential_free_public_tree(child) for child in value)
+    return not isinstance(value, str) or CREDENTIAL_METADATA_RE.search(value) is None
+
+
 def _credential_free_https_url(value: object) -> bool:
     if not isinstance(value, str) or value != value.strip():
         return False
@@ -680,6 +697,10 @@ def validate_bundle(
         errors.append(f"artifact.schema must be {ARTIFACT_SCHEMA}")
     if receipt.get("schema") != RECEIPT_SCHEMA:
         errors.append(f"receipt.schema must be {RECEIPT_SCHEMA}")
+    if not _credential_free_public_tree(artifact):
+        errors.append("artifact must be recursively credential-free")
+    if not _credential_free_public_tree(receipt):
+        errors.append("receipt must be recursively credential-free")
     if artifact.get("work_id") != WORK_ID or receipt.get("work_id") != WORK_ID:
         errors.append(f"artifact and receipt must both belong to {WORK_ID}")
     if artifact.get("status") != FORMAL_STATUS:

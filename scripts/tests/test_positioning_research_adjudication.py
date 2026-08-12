@@ -883,6 +883,43 @@ def test_privacy_review_matches_complete_typed_public_safe_contract() -> None:
         )
 
 
+def test_entire_public_artifact_and_receipt_reject_credential_fields_recursively() -> None:
+    baseline = _bundle()
+    assert MODULE._credential_free_public_tree(baseline["artifact"])
+    assert MODULE._credential_free_public_tree(baseline["receipt"])
+
+    cases = (
+        ("artifact", ()),
+        ("artifact", ("formalization",)),
+        ("artifact", ("claims", 0)),
+        ("artifact", ("lavrea_axis_audit", 0)),
+        ("artifact", ("repository_drift_relay",)),
+        ("receipt", ()),
+        ("receipt", ("formal_completion",)),
+        ("receipt", ("lavrea_baseline", "methodology")),
+        ("receipt", ("portfolio_repository_identity",)),
+        ("receipt", ("claims_ledger_integration",)),
+    )
+    for root_name, path in cases:
+        bundle = _bundle()
+        bundle[root_name] = copy.deepcopy(bundle[root_name])
+        target = bundle[root_name]
+        for key in path:
+            target = target[key]
+        target["authorization"] = "Bearer SECRET"
+
+        assert not MODULE._credential_free_public_tree(bundle[root_name])
+        assert (
+            f"{root_name} must be recursively credential-free"
+            in _errors(bundle)
+        )
+
+    credentialed_value = _bundle()
+    credentialed_value["artifact"] = copy.deepcopy(credentialed_value["artifact"])
+    credentialed_value["artifact"]["reviewer_verdict"]["note"] = "api_key=SECRET"  # allow-secret
+    assert "artifact must be recursively credential-free" in _errors(credentialed_value)
+
+
 def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
     malformed = _bundle()
     malformed["receipt"] = copy.deepcopy(malformed["receipt"])
