@@ -1,22 +1,26 @@
 schema_version: limen.positioning_flagship_evidence.v1
 work_ids: [PSP-P02-W04, PSP-P02-W05]
-generated_at: "2026-08-10T18:02:00Z"
-verdict: preflight_complete_dependency_blocked
+generated_at: "2026-08-12T10:54:47Z"
+verdict: w04_complete_w05_formal_ready
 
 dependency_gate:
   w03_issue: https://github.com/organvm/limen/issues/2175
-  w03_state: open
+  w03_state: closed
   w04_issue: https://github.com/organvm/limen/issues/2176
-  w04_state: open
+  w04_state: closed
   w05_issue: https://github.com/organvm/limen/issues/2177
   w05_state: open
   formal_completion_blocker: >-
-    W04 requires a closed, receipt-verified W03; W05 requires a closed, receipt-verified W04.
-    This preflight creates no completion receipt and does not change issue state.
+    W03 and W04 are accepted through their closed issues and latest marked receipts, so W05 is
+    formally admitted for sanctioned integration. W05 remains open until this state transition
+    merges and its merged-head predicate plus marked receipt pass. This artifact is not itself the
+    W05 completion receipt and does not close the issue.
 
 privacy:
   public_packets_only: true
-  private_repository_names_in_artifact: 0
+  repository_identity_guard:
+    source: docs/github-estate-census.json
+    mode: tracked_public_census_allowlist
   private_evidence_required_for_selected_claims: false
   encrypted_addendum:
     status: not_created
@@ -34,6 +38,9 @@ w08_research_import:
   source_pr: https://github.com/organvm/limen/pull/2314
   source_head: 96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa
   source_path: docs/positioning/program/research-adjudication.json
+  source_blob: f0db657dde5cc27bb2db67e495fa410f6483646f
+  source_sha256: 26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6
+  projection_sha256: 698e317695c1ebd63f82e7456a04f1c55087754de0ef358bbd77c4fc8d4d39fc
   claim_count: 13
   preservation_rule: >-
     Keep measurement, inference, implication, and prominence independent. Citation sets remain
@@ -111,6 +118,10 @@ packets:
     path: docs/positioning/evidence/limen.md
     public_repository: organvm/limen
     status: verified_public_snapshot
+    bounded_claim: >-
+      Limen is a governed multi-agent delivery system with public operating, failure, and
+      verification receipts. This packet establishes public operational evidence only; it does
+      not claim customer adoption, revenue, or zero-maintenance operation.
     authorship: Architected and directed through a governed multi-agent system; machine assistance is disclosed, not concealed.
     limitations:
       - The public dashboard is an operational snapshot, not customer-adoption evidence.
@@ -144,6 +155,10 @@ packets:
     path: docs/positioning/evidence/public-records.md
     public_repository: organvm-iii-ergon/public-record-data-scrapper
     status: verified_public_snapshot
+    bounded_claim: >-
+      The public-records platform demonstrates a multi-stage public-record decision pipeline. Four
+      implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. It does not
+      claim fifty-state deployment, complete coverage, buyer adoption, or commercial outcomes.
     authorship: Public implementation and deployment are the evidence boundary; no private sources are needed for this packet.
     limitations:
       - Four implemented collectors do not establish fifty-state deployment or adoption.
@@ -165,11 +180,20 @@ packets:
         observed_value: 4
         comparison: exact
         corroborating_terms: [CA, TX, FL, NY]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/git/trees/139fa7b40d875ecfe3a8c693dedfab46671739fd?recursive=1"
+          path_regex: '^scripts/scrapers/states/[a-z]+\.ts$'
 
   - id: ai_chat_exporter
     path: docs/positioning/evidence/ai-chat-exporter.md
     public_repository: organvm-iii-ergon/a-i-chat--exporter
     status: verified_public_snapshot
+    bounded_claim: >-
+      AI Chat Exporter is a privacy-first, client-side conversation export tool. The public
+      product surface presents five export formats: Markdown, HTML, JSON, PNG, and text. This claim
+      does not imply installations, daily users, revenue, retention, or cloud-free behavior beyond
+      the documented client-side export path.
     authorship: The public packet confines the claim to inspectable client-side behavior and avoids any user-volume inference.
     limitations:
       - Five formats do not prove daily use, installations, revenue, or user retention.
@@ -191,3 +215,7 @@ packets:
         observed_value: 5
         comparison: exact
         corroborating_terms: [Markdown, HTML, JSON, PNG, text]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/git/trees/e3a0b8d9a47183163cd92d18f479fc580eaf314d?recursive=1"
+          path_regex: '^src/exporter/[^/]+\.ts$'

@@ -1,6 +1,6 @@
 # Capacity Fill
 
-Generated: `2026-08-09T00:32:27+00:00`
+Generated: `2026-08-10T21:04:04+00:00`
 Status: `blocked`
 
 ## Capacity Census
@@ -12,7 +12,7 @@ Status: `blocked`
 | `opencode` | local-cli | `up` | 100 | 100 | /opt/homebrew/bin/opencode; live usage meter: remaining=100/100, consumed=0 |
 | `agy` | local-cli | `up` | 100 | 100 | /opt/homebrew/bin/agy; live usage meter: remaining=100/100, consumed=0 |
 | `gemini` | local-cli | `up` | 10 | 10 | /opt/homebrew/bin/gemini; live usage meter: remaining=10/10, consumed=0 |
-| `ollama` | local-cli | `down` | 600 | 600 | /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane |
+| `ollama` | local-cli | `down` | 600 | 600 | /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (24.6 GiB free, need >= 50 GiB) |
 | `jules` | cloud-cli | `up` | 100 | 100 | /opt/homebrew/bin/jules; live usage meter: remaining=100/100, consumed=0 |
 | `copilot` | github-issue | `up` | 600 | 600 | /opt/homebrew/bin/gh; copilot-swe-agent assignable on organvm/limen |
 | `warp` | paid-service | `down` | 600 | 600 | WARP_API_KEY not set (set env var + add as org/repo Actions secret) |
@@ -28,7 +28,7 @@ Status: `blocked`
 | `opencode` | dispatch-count proxy | proxy | usage health=ok; used=0/100 runs; remaining=100; headroom=100%; source=operator board cap until live vendor meter; usable only as a dispatch-count fallback until opencode-clock writes its DB meter | Restore opencode-clock so the SQLite usage DB emits clock.json. |
 | `agy` | usage-telemetry proxy | proxy + recent-rl | usage health=ok; used=0/100 runs; remaining=100; headroom=100%; source=operator board cap until live vendor meter; reachable; no recent heartbeat rate-limit marker; not proof of provider quota | Add a provider-backed Agy meter or recent rate-limit receipt. |
 | `gemini` | usage-telemetry proxy | proxy + recent-rl | usage health=ok; used=0/10 runs; remaining=10; headroom=100%; source=operator board cap until live vendor meter; reachable when auth is configured; no recent heartbeat rate-limit marker; daily cap remains board-derived | Add a Gemini quota/rate-limit receipt if available. |
-| `ollama` | local model presence | binary/model | down until a model is pulled | Pull the configured local model to light the floor lane. |
+| `ollama` | local model presence | binary/model | down until a model is pulled | Clear local disk pressure before pulling qwen2.5-coder:7b; current free space is 24.6 GiB. |
 | `jules` | usage-telemetry proxy | proxy + known cap | usage health=ok; used=0/100 runs; remaining=100; headroom=100%; source=known hard cap; remote async service; no recent heartbeat rate-limit marker; use for remote batch fill | Keep Jules remote-launch receipts and harvest status fresh. |
 | `copilot` | assignability probe | reachability | down until Copilot coding agent assignment is confirmed | Enable Copilot coding agent and set LIMEN_COPILOT_ENABLED=1. |
 | `warp` | credential presence | credential gate | down until WARP_API_KEY is installed | Install WARP_API_KEY locally and as the workflow secret. |
@@ -37,7 +37,7 @@ Status: `blocked`
 
 ## Blockers
 
-- `ollama`: /opt/homebrew/bin/ollama; no model pulled — run `ollama pull qwen2.5-coder:7b` to light the floor lane
+- `ollama`: /opt/homebrew/bin/ollama; no model pulled; local disk pressure blocks qwen2.5-coder:7b pull (24.6 GiB free, need >= 50 GiB)
 - `warp`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
 - `oz`: WARP_API_KEY not set (set env var + add as org/repo Actions secret)
 

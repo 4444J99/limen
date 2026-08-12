@@ -2,9 +2,9 @@
 
 ## Bounded claim
 
-AI Chat Exporter is a privacy-first, client-side conversation export tool. Its public product
-surface presents **five export formats: Markdown, HTML, JSON, PNG, and text**. This claim does not
-imply installations, daily users, revenue, retention, or cloud-free behavior beyond the documented
+AI Chat Exporter is a privacy-first, client-side conversation export tool. The public product
+surface presents five export formats: Markdown, HTML, JSON, PNG, and text. This claim does not imply
+installations, daily users, revenue, retention, or cloud-free behavior beyond the documented
 client-side export path.
 
 ## Inspectable evidence
@@ -22,8 +22,11 @@ with `python3 scripts/flagship-evidence.py --verify-live --json`.
 
 ## Authorship and limitations
 
-This packet limits its evidence to inspectable client-side behavior and public source. It does not
-convert a feature list into an adoption, revenue, or user-volume claim.
+The public packet confines the claim to inspectable client-side behavior and avoids any user-volume
+inference.
+
+- Five formats do not prove daily use, installations, revenue, or user retention.
+- The packet makes no claim about the commercial availability or uptake of optional workflows.
 
 ## Withdrawal route
 

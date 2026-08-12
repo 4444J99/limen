@@ -466,16 +466,21 @@ gates:
     paths: ["cli/src/limen/github_estate_census.py", "cli/tests/test_github_estate_census.py", "scripts/github-estate-census.py", "scripts/tests/test_github_estate_census_custody.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
     note: "The exhaustive estate census keeps raw private repository evidence only in its gitignored custody receipt, atomically replaces permissive files or symlinks, and enforces owner-only mode 0600; the tracked ledger remains redacted."
+  estate-classification-test:
+    command: "python3 scripts/tests/estate-classification.test.py"
+    paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]
+    owner: positioning-program
+    note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
   flagship-proof-set-test:
     command: "python3 scripts/tests/flagship-proof-set.test.py"
-    paths: ["docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
+    paths: ["docs/github-estate-census.json", "docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md", "institutio/github/estate.yaml", "institutio/governance/gates.yaml", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
     owner: positioning-program
-    note: "PSP-P02-W03 public flagship decisions stay score-reproducible and fail closed on duplicate story roles, missing live anchors, private-only dependencies, stale/ineligible selections, or weighted-score drift. Live visibility and anchor checks remain an explicit focused preflight because they require GitHub and HTTP access."
+    note: "PSP-P02-W03 public flagship decisions stay bound to the tracked W01 public identity projection, the accepted W02 classification and canonical marked receipt, and both machine-readable continuation relays. Static validation locks the exact formal dependency schema, case-insensitive public identities, structured non-circular claims, exact workflow plus endpoint anchors, current W02 maturity, score reproduction, and relay parity without a self-referential commit hash. Live verification independently checks W02's merged PR head, closed issue, latest receipt URL/digest/observed head, main-line ancestry, visibility, and selected anchors."
   flagship-evidence-test:
     command: "python3 scripts/tests/flagship-evidence.test.py"
-    paths: ["docs/positioning/evidence", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
+    paths: ["docs/github-estate-census.json", "docs/positioning/evidence/**", "docs/positioning/claims-ledger.md", "docs/positioning/flagship-proof-set.yaml", "scripts/flagship-evidence.py", "scripts/tests/flagship-evidence.test.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
-    note: "PSP-P02-W04/W05 evidence packets remain public-safe, match the selected W03 triad, keep W03/W04/W05 formally dependency-blocked, and make each material numeric statement exact and reproducible. Live source checks are an explicit focused preflight because they require GitHub and HTTP access."
+    note: "PSP-P02-W04/W05 evidence packets remain bound to the selected W03 triad and redacted W01 public identity projection, keep packet-level bounded claims and claims-ledger section 8 synchronized with the machine index, preserve the full immutable W08 adjudication projection, and make each material metric exact and reproducible. Live source checks additionally require GitHub/HTTP access and prove issue-state parity plus the latest marked receipt predicate for each closed predecessor."
   claim-policy-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_claim_policy.py -q"
     paths: ["scripts/claim-policy.py", "scripts/claim-surface-quarantine.py", "scripts/claim-quarantine-drill.py", "scripts/tests/test_claim_policy.py", "scripts/tests/fixtures/positioning-claim-drill/**", "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md", "institutio/governance/gates.yaml"]
