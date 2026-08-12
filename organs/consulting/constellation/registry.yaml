@@ -176,19 +176,22 @@ people:
       # The lane the review surfaced. His ask, in his words, in a voice memo — which is why it
       # appears in no text corpus. Not a greenfield build: the delivery asset already exists.
       - name: social-presence
-        # repo stays null ON PURPOSE. Delivery runs on the content yield engine, but that repo is
-        # SCOTT's lane (see his content-cannibalizer row). Naming it here would attach one repo to
-        # two partner lanes, and Rule #7 would then happily validate a grant that shows one
-        # partner the other's lane. This is an instance OF the engine, not shared custody of it —
-        # a dedicated instance repo gets registered here when it is cut.
-        repo: null
+        # The dedicated instance repo, cut 2026-08-12. Delivery runs ON the content yield engine,
+        # but that engine repo is SCOTT's lane (see his content-cannibalizer row) and naming it
+        # here would attach one repo to two partner lanes — Rule #7 would then happily validate a
+        # grant showing one partner the other's lane. This row names the INSTANCE instead, which
+        # is the resolution the null placeholder was holding open.
+        repo: 4444J99/new-ancients-social
         keywords: [social presence, new ancients, ghastly occurrences, shorts campaign, music promotion, release cycle]
         stage: building
         public_face_state: none
         dossier: null
         notes: >-
           independent-musician instance of the content yield engine; inbound PAID request
-          2026-08-06, unanswered. Hard scope constraint set by him: no generative filler.
+          2026-08-06, unanswered. Hard scope constraint set by him: no generative filler —
+          now enforced in code by the instance repo's caption guard, not by prose. First
+          working code landed 2026-08-12 (release-cycle planner, 38 tests); nothing in it
+          posts, and terms remain unagreed.
 
   - slug: david
     tier: T3

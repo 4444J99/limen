@@ -43,12 +43,12 @@ Keywords: ai audit, ai consultation, ai consulting, consulate, ai remediation, a
 
 ### social-presence — stage **building**, public face **none**
 
-> Register note: independent-musician instance of the content yield engine; inbound PAID request 2026-08-06, unanswered. Hard scope constraint set by him: no generative filler.
+> Register note: independent-musician instance of the content yield engine; inbound PAID request 2026-08-06, unanswered. Hard scope constraint set by him: no generative filler — now enforced in code by the instance repo's caption guard, not by prose. First working code landed 2026-08-12 (release-cycle planner, 38 tests); nothing in it posts, and terms remain unagreed.
 
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
-- none minted — evidence gate not yet passed
+- `4444J99/new-ancients-social`
 
 Keywords: social presence, new ancients, ghastly occurrences, shorts campaign, music promotion, release cycle · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug dustin --project social-presence`
@@ -64,7 +64,7 @@ Keywords: social presence, new ancients, ghastly occurrences, shorts campaign, m
 
 ## Fan-out
 
-At most **3** children, only via `limen conduct split <parent_run> --packet`, which reserves
+At most **4** children, only via `limen conduct split <parent_run> --packet`, which reserves
 each child against this session's lineage before launch. Never nest a git worktree inside this
 one — the reclaim organ sweeps roots, so a nested worktree leaks. Tier every child explicitly.
 
