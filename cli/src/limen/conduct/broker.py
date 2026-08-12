@@ -401,7 +401,11 @@ class ConductBroker:
                 principal_id=principal.principal_id if principal_enforced else None,
             )
             executor = self._select_executor(state, packet, now)
-            if packet.effect == "write" and "local-worktree" in executor.capabilities and not packet.storage_envelope_claims:
+            if (
+                packet.effect == "write"
+                and "local-worktree" in executor.capabilities
+                and not packet.storage_envelope_claims
+            ):
                 raise ConductConflict("selected local-worktree executor requires storage_envelope_claims")
             claims = self._effective_claims(packet)
             conflicts: list[dict[str, Any]] = []
@@ -1038,7 +1042,11 @@ class ConductBroker:
                 exclude_sessions=frozenset({run["executor_session_id"]}),
                 ignore_required_session=True,
             )
-            if packet.effect == "write" and "local-worktree" in executor.capabilities and not packet.storage_envelope_claims:
+            if (
+                packet.effect == "write"
+                and "local-worktree" in executor.capabilities
+                and not packet.storage_envelope_claims
+            ):
                 return None
         except ConductConflict:
             return None
