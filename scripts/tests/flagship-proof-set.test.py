@@ -48,6 +48,7 @@ class FlagshipProofSetTests(unittest.TestCase):
             "workflow_id": identity["id"],
             "path": identity["path"],
             "name": identity["name"],
+            "updated_at": workflow["observed_at"],
         }
 
     @staticmethod
@@ -369,7 +370,7 @@ class FlagshipProofSetTests(unittest.TestCase):
         candidate_repositories = {
             row.get("repository") for row in matrix["candidates"] if row.get("repository")
         }
-        public_repositories, _, _ = MODULE.load_public_census_contract()
+        public_repositories, _, _, _ = MODULE.load_public_census_contract()
         substitute = next(
             repository
             for repository in sorted(public_repositories)
@@ -454,6 +455,23 @@ class FlagshipProofSetTests(unittest.TestCase):
         self.assertTrue(any("evidence repository is not present" in error for error in errors), errors)
         self.assertFalse(any(private_like_identity in error for error in errors), errors)
 
+    def test_every_review_source_uses_public_safe_custody(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        matrix["review_sources"][0]["url"] = "https://token@internal.local/private"
+        self.assert_error_contains(matrix, "credential-free public HTTPS hostname")
+
+        matrix = copy.deepcopy(self.matrix)
+        private_like_identity = "example/internal-only"
+        matrix["review_sources"][0]["url"] = f"https://github.com/{private_like_identity}"
+        errors = MODULE.validate_matrix(matrix, now=self.observed_at, enforce_freshness=True)
+        self.assertTrue(any("evidence repository is not present" in error for error in errors), errors)
+        self.assertFalse(any(private_like_identity in error for error in errors), errors)
+
+    def test_private_census_count_is_bound_to_w01(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        matrix["privacy_split"]["private_repositories_in_w01_census"] += 1
+        self.assert_error_contains(matrix, "private repository count does not match")
+
     def test_live_workflow_must_match_current_default_branch_head(self) -> None:
         candidate = copy.deepcopy(self.candidate("public_records"))
         repository = candidate["repository"]
@@ -493,6 +511,25 @@ class FlagshipProofSetTests(unittest.TestCase):
             mock.patch.object(MODULE, "http_status", return_value=200),
         ):
             self.assertEqual(MODULE.validate_live({"candidates": [candidate]}), [])
+
+    def test_live_workflow_observation_matches_server_completion_time(self) -> None:
+        candidate = copy.deepcopy(self.candidate("limen"))
+        workflow = next(anchor for anchor in candidate["evidence_anchors"] if anchor["kind"] == "workflow_run")
+        server_observed_at = workflow["observed_at"]
+        workflow["observed_at"] = "2026-08-10T21:35:44Z"
+
+        def fake_command(args: list[str]) -> dict:
+            payload = self.workflow_payload(workflow)
+            payload["updated_at"] = server_observed_at
+            return payload
+
+        with (
+            mock.patch.object(MODULE, "live_w02_snapshot", return_value=self.live_snapshot(candidate)),
+            mock.patch.object(MODULE, "command_json", side_effect=fake_command),
+            mock.patch.object(MODULE, "http_status", return_value=200),
+        ):
+            errors = MODULE.validate_live({"candidates": [candidate]})
+        self.assertTrue(any("timestamp differs from the server run" in error for error in errors), errors)
 
     def test_live_workflow_identity_is_pinned(self) -> None:
         candidate = copy.deepcopy(self.candidate("public_records"))

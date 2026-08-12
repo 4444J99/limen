@@ -201,8 +201,8 @@ def load_relay_binding(path: Path) -> tuple[dict[str, Any], str]:
     return binding, text
 
 
-def load_public_census_contract(path: Path = CENSUS) -> tuple[set[str], int, str]:
-    """Return only the public identity projection from the redacted W01 census."""
+def load_public_census_contract(path: Path = CENSUS) -> tuple[set[str], int, int, str]:
+    """Return the public identities plus aggregate public/private W01 counts."""
 
     try:
         census = json.loads(path.read_text(encoding="utf-8"))
@@ -227,7 +227,7 @@ def load_public_census_contract(path: Path = CENSUS) -> tuple[set[str], int, str
     expected_public_count = repository_count - private_count
     if len(repositories) != expected_public_count:
         raise ProofSetError("tracked public census projection does not cover its public denominator")
-    return repositories, expected_public_count, canonical_digest(sorted(repositories))
+    return repositories, expected_public_count, private_count, canonical_digest(sorted(repositories))
 
 
 def load_classification_policy_contract(path: Path = ESTATE) -> tuple[dict[str, Any], str]:
@@ -674,7 +674,7 @@ def validate_source_projection(
 
     errors: list[str] = []
     try:
-        public_repositories, public_count, public_digest = load_public_census_contract()
+        public_repositories, public_count, private_count, public_digest = load_public_census_contract()
         _, policy_digest = load_classification_policy_contract()
     except ProofSetError as exc:
         return [str(exc)], set()
@@ -691,6 +691,10 @@ def validate_source_projection(
         errors.append("source projection W02 policy digest does not match the tracked classification policy")
     if parse_time(projection.get("observed_at")) is None:
         errors.append("candidate source projection needs a valid observation timestamp")
+
+    privacy = matrix.get("privacy_split")
+    if not isinstance(privacy, dict) or privacy.get("private_repositories_in_w01_census") != private_count:
+        errors.append("privacy split W01 private repository count does not match the tracked census")
 
     w02_repositories = projection.get("w02_front_door_proof_repositories")
     if not isinstance(w02_repositories, list) or not w02_repositories:
@@ -831,6 +835,16 @@ def validate_matrix(
     source_errors, public_repositories = validate_source_projection(matrix, candidates)
     errors.extend(source_errors)
     public_canonical = {repository.casefold(): repository for repository in public_repositories}
+
+    review_sources = matrix.get("review_sources")
+    if not isinstance(review_sources, list) or not review_sources:
+        errors.append("review_sources must be a nonempty list")
+        review_sources = []
+    for source_index, source in enumerate(review_sources):
+        prefix = f"review_sources[{source_index}]"
+        errors.extend(validate_public_anchor_custody(source, public_canonical, prefix))
+        if not isinstance(source, dict) or not isinstance(source.get("source"), str) or not source["source"].strip():
+            errors.append(f"{prefix}: source label must be a nonempty string")
 
     screen = matrix.get("candidate_screen") or {}
     if screen.get("candidate_count") != len(candidates):
@@ -1350,6 +1364,12 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 if not isinstance(run, dict):
                     errors.append(f"{candidate_id}: workflow anchor returned an invalid response")
                     continue
+                server_observed_at = parse_time(run.get("updated_at"))
+                declared_observed_at = parse_time(anchor.get("observed_at"))
+                if server_observed_at is None:
+                    errors.append(f"{candidate_id}: workflow run has no valid server completion timestamp")
+                elif declared_observed_at != server_observed_at:
+                    errors.append(f"{candidate_id}: workflow observation timestamp differs from the server run")
                 if run.get("status") != "completed" or run.get("conclusion") != "success":
                     errors.append(f"{candidate_id}: workflow anchor is not a completed success")
                 if run.get("head_sha") != anchor.get("observed_head"):
