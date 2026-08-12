@@ -9,7 +9,7 @@ import hmac
 import secrets
 from datetime import datetime, timedelta
 from pathlib import PurePath
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from limen.conduct.models import (
     AgentIdentityV1,

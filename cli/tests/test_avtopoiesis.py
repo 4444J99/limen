@@ -88,7 +88,7 @@ def test_scheduled_registry_door_and_script_survive_arbitrary_id_rename(tmp_path
     (scripts / "heartbeat-loop.sh").write_text(
         'if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then\n'
         '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only\n'
-        '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only\n',
+        '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only\n'
         "fi\n",
         encoding="utf-8",
     )
