@@ -24,12 +24,13 @@ compression_level: high
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `4ae8e81665e35e6a5d403a3e13935021ce6544ec` |
-| Exact remote branch head | `4ae8e81665e35e6a5d403a3e13935021ce6544ec` |
-| C03 dependency head consumed | PR #2312 at `b5bc01585a10615e85e1ef5b31a2356c24fb9bc9`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
+| Exact implementation head | `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` |
+| Exact remote branch head | `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` |
+| C03 dependency head consumed | PR #2312 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
+| Accepted C03 progress | PSP-P02 and PSP-P03-W01 through W06 closed; W06 receipt [#2187 comment 5271254820](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
 | Working tree | Clean at checkpoint |
-| Acceptance condition | PREPARED/PREFLIGHT only; formal P11 acceptance is unmet while PSP-C03 and registry admission remain open |
-| Underlying predicate | Lockfile sync restored clean installation; `/opt/homebrew/bin/bash scripts/verify-scoped.sh` passed at the exact implementation tree: lint, typecheck, 15 tests, build, scoped dispatch |
+| Acceptance condition | PREPARED/PREFLIGHT only; W07 is C03's sole unsatisfied leaf, and formal P11 acceptance remains unmet until C03 closes and registry admission opens |
+| Underlying predicate | Exact target tree passed focused Prettier check, ESLint with zero errors, TypeScript, 15 tests, and production build; no formal leaf predicate ran |
 | Receipt verifier | Formal `--verify-work` predicates intentionally not run |
 | Phase exit proof | `python3 scripts/positioning-program.py --phase-proof PSP-P11` intentionally not run |
 | External effects | None; no client data, send, terms, account action, publication, spend, DNS, or production effect |
@@ -40,6 +41,8 @@ compression_level: high
   synthetic receipts under the registered target paths.
 - [x] Bound Audit, Install, and Retainer authority/timing/acceptance to the exact C03 contract while
   retaining symbolic price anchors only.
+- [x] Bound the accepted W06 posture: additive leverage, sponsor-granted written scope,
+  collaboration, current-owner visibility, reversible work, least access, and clean handoff.
 - [x] Proved synthetic intake rejection, audit calibration, finite capacity, partition isolation,
   export-before-delete, rollback, two-pass closeout, and non-publishable consent withdrawal.
 - [x] Opened target draft PR [#135](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/135).
@@ -48,16 +51,18 @@ compression_level: high
 
 | Decision | Evidence and rationale |
 | --- | --- |
-| Keep status `prepared_preflight` | C03/P04 has not formally closed and the live registry has not admitted P11 execution. |
+| Keep status `prepared_preflight` | W07 has not supplied its genuine five-reader evidence, C03/P04 has not formally closed, and the live registry has not admitted P11 execution. |
 | Pin C03 PR #2312 exact head | Prevents a competing pricing, authority, timing, acceptance, or handoff contract. |
+| Keep W07 explicitly unsatisfied | W06 model review is authority-language evidence, not five independent target-reader responses. |
 | Keep private economics out | C03 permits only symbolic `PRICE-*` / `RANGE-*` anchors outside their sanctioned private owner. |
 | Model W08 as non-publishable | Synthetic consent never satisfies HG-CONTRACT or grants publication authority. |
 
 ## Next actions
 
-1. After PSP-C03 formally closes and live ready-work admits PSP-C05, refresh PR #135 to the admitted
-   exact C03 head, obtain broker authority for each leaf, and preserve the registered path/effect/model
-   boundaries.
+1. After PSP-P03-W07 closes with genuine external-reader evidence and PSP-C03 formally closes,
+   confirm the admitted head descends from `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; when live
+   ready-work admits PSP-C05, obtain fresh authority for each leaf and preserve the registered
+   path/effect/model boundaries.
 2. Run each leaf underlying predicate and durable receipt flow separately, then the P11 phase proof;
    do not treat this preflight PR, local tests, or synthetic receipts as formal completion evidence.
 
