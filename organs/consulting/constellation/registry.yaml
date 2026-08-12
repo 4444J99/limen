@@ -156,7 +156,7 @@ people:
       # Supply, not demand, is the constraint: 4.5 months produced no artifact from his side.
       # Held at dossier until their gating questions are answered — see open-asks DUS-003/004.
       - name: dsp-platform
-        repo: null
+        repo: 4444J99/post-dsp-platform
         keywords: [dsp, music platform, post-dsp, streaming alternative]
         stage: dossier
         public_face_state: none
@@ -165,7 +165,7 @@ people:
           gated on ten design questions sent 2026-03-28 and never answered; he is the correct
           respondent (working musician + practising UI/UX). Research corpus is Drive-only.
       - name: ai-consultation
-        repo: null
+        repo: 4444J99/the-consulate
         keywords: [ai audit, ai consultation, ai consulting, consulate, ai remediation, ai governance]
         stage: dossier
         public_face_state: none
