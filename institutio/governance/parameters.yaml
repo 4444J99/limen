@@ -511,6 +511,12 @@ parameters:
     self_update: none
     owner: integrity
     note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane expands user-relative paths and fails closed unless status --json proves the fixed bundle, stable path, signature, and signing requirement."
+  LIMEN_AGENT_RUNTIME_ROOT:
+    default: "$LIMEN_ROOT/.agent-runtime"
+    env: LIMEN_AGENT_RUNTIME_ROOT
+    self_update: none
+    owner: integrity
+    note: "Where the relocated per-vendor agent CLI runtimes live (claude/, codex/, gemini/). Exported by the operator's shell profile alongside CLAUDE_CONFIG_DIR, CODEX_HOME and GEMINI_CLI_HOME, which are VENDOR variables this panel does not own. Read by scripts/agent_config_paths.py to enumerate the non-active candidate roots a config could still be sitting in; the ACTIVE path always comes from the vendor variable, never from this. Accepted alongside the older $LIMEN_ROOT/.agent-runtime derivation so a host exporting only one spelling still resolves."
   LIMEN_TCC_DB:
     default: "~/Library/Application Support/com.apple.TCC/TCC.db"
     env: LIMEN_TCC_DB
