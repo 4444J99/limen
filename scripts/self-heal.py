@@ -59,7 +59,7 @@ from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E
 from limen.models import DispatchLogEntry, Task  # noqa: E402
 from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from _pr_scan import (  # noqa: E402
-    enumerate_open_prs,
+    enumerate_open_prs_result,
     merge_queue_capability,
     rotating_window,
     scaled_limit,
@@ -72,6 +72,7 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 LOG = ROOT / "logs" / "self-heal.log"
+LIVENESS_LOG = ROOT / "logs" / "self-heal-liveness.jsonl"
 HEAL_CONVERGENCE = ROOT / "logs" / "heal-convergence.json"
 CHRONIC_MAX_AGE_SECONDS = 2 * 60 * 60
 # The registry owner of a spent keeper storage plan. Named here so the rung cites a durable home
@@ -411,11 +412,27 @@ def retirement_authorized(explicit_prs, enumerated, reconcile_scan_max):
 
 
 def write_heartbeat(summary: str) -> None:
-    """Record every live pass, including a healthy empty fleet."""
+    """Refresh monitored source freshness after one confirmed complete scan."""
     try:
         LOG.parent.mkdir(parents=True, exist_ok=True)
         with open(LOG, "a", encoding="utf-8") as handle:
             handle.write(summary + "\n")
+    except OSError:
+        pass
+
+
+def write_liveness(event: str, detail: str = "") -> None:
+    """Record invocation, busy, and error activity without asserting source freshness."""
+    try:
+        LIVENESS_LOG.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "schema_version": "limen.self_heal_liveness.v1",
+            "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "event": event,
+            "detail": detail[:400],
+        }
+        with open(LIVENESS_LOG, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
     except OSError:
         pass
 
@@ -457,21 +474,44 @@ def main():
     )
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    if not a.dry_run:
+        write_liveness("invocation")
 
     # FULL-FLEET coverage: one cheap enumeration of EVERY open PR (not just the first 30), then
     # assess a rotating window of --scan PRs this beat. Over a full rotation every red/conflict PR
     # gets seen → a heal task → merge-drain lands it. The cursor is per-organ so HEAL and MERGE
     # rotate independently. ([[self-star-ladder-shipped-live]])
-    allprs = (
-        list(a.pr)
-        if a.pr
-        else enumerate_open_prs(OWNERS, gh, max_total=a.reconcile_scan_max, want_url=True, author=None)
-    )
-    if not allprs:
-        summary = "[self-heal] no open PRs (or gh unavailable)"
+    if a.pr:
+        allprs = list(a.pr)
+        scan_success = True
+        scan_complete = False
+        scan_error = "explicit PR selection is not a complete estate scan"
+    else:
+        scan_result = enumerate_open_prs_result(
+            OWNERS,
+            gh,
+            max_total=a.reconcile_scan_max,
+            want_url=True,
+            author=None,
+        )
+        allprs = list(scan_result.rows)
+        scan_success = scan_result.success
+        scan_complete = scan_result.complete
+        scan_error = scan_result.error or ""
+    if not scan_success:
+        summary = f"[self-heal] PR enumeration failed: {scan_error}"
         print(summary)
         if not a.dry_run:
+            write_liveness("error", summary)
+        return EX_TEMPFAIL
+    if not allprs:
+        summary = "[self-heal] confirmed complete empty open-PR scan"
+        print(summary)
+        if not a.dry_run and scan_complete:
             write_heartbeat(summary)
+            write_liveness("scan_success", summary)
+        elif not a.dry_run:
+            write_liveness("incomplete", scan_error)
         return 0
 
     # RETIREMENT SAFETY. The reconcile pass below retires any active HEAL task whose PR is ABSENT
@@ -589,7 +629,7 @@ def main():
     if not acquire_lock():
         summary = "[self-heal] queue lock held by daemon — skipping this pass (retry next tick)"
         print(summary)
-        write_heartbeat(summary)
+        write_liveness("busy", summary)
         return 0
     try:
         lf = load_limen_file(tasks_path)
@@ -665,8 +705,11 @@ def main():
                     f"owner: lever {QUOTA_LEVER} in his-hand-levers.json"
                 )
                 print(f"self-heal: keeper said: {exc}"[:400])
-                write_heartbeat("self-heal: BLOCKED — keeper storage quota exhausted")
+                write_liveness("error", "keeper storage quota exhausted")
                 return EX_TEMPFAIL
+    except Exception as exc:
+        write_liveness("error", f"keeper or projection failure: {exc}")
+        raise
     finally:
         try:
             LOCKD.rmdir()
@@ -684,7 +727,11 @@ def main():
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")
-    write_heartbeat(summary + (("  " + " ".join(emitted)) if emitted else ""))
+    if scan_complete:
+        write_heartbeat(summary + (("  " + " ".join(emitted)) if emitted else ""))
+        write_liveness("scan_success", summary)
+    else:
+        write_liveness("incomplete", scan_error)
     return 0
 
 
