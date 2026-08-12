@@ -568,17 +568,33 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             if default is not None:
                 self.visit(default)
         child = _PythonBypassVisitor(self.bindings, self.process_aliases)
-        arguments = [
-            *node.args.posonlyargs,
-            *node.args.args,
-            *node.args.kwonlyargs,
-        ]
-        if node.args.vararg is not None:
-            arguments.append(node.args.vararg)
-        if node.args.kwarg is not None:
-            arguments.append(node.args.kwarg)
-        for argument in arguments:
-            child.bindings.pop(argument.arg, None)
+
+        def bind_parameter(argument: ast.arg, default: ast.AST | None) -> None:
+            if default is None:
+                child.bindings.pop(argument.arg, None)
+                child.process_aliases.discard(argument.arg)
+                return
+            values = _static_argv(default, self.bindings)
+            if values is None:
+                child.bindings.pop(argument.arg, None)
+            else:
+                child.bindings[argument.arg] = values
+            if self._is_process_callable(default):
+                child.process_aliases.add(argument.arg)
+            else:
+                child.process_aliases.discard(argument.arg)
+
+        positional = [*node.args.posonlyargs, *node.args.args]
+        positional_defaults: list[ast.AST | None] = [None] * (len(positional) - len(node.args.defaults)) + list(
+            node.args.defaults
+        )
+        for argument, default in zip(positional, positional_defaults, strict=True):
+            bind_parameter(argument, default)
+        for argument, default in zip(node.args.kwonlyargs, node.args.kw_defaults, strict=True):
+            bind_parameter(argument, default)
+        for argument in (node.args.vararg, node.args.kwarg):
+            if argument is not None:
+                bind_parameter(argument, None)
         for statement in node.body:
             child.visit(statement)
         self.found = self.found or child.found
@@ -705,6 +721,12 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
         body = _PythonBypassVisitor(before, self.process_aliases)
+        if isinstance(node, (ast.For, ast.AsyncFor)):
+            # A loop target is a real assignment in the body's lexical scope. Bind
+            # every statically visible command fragment from a literal iterable so
+            # ordinary for/async-for forms cannot evade the effector scan.
+            body._assign(node.target, _static_argv(node.iter, before))
+            body._assign_process_alias(node.target, False)
         for statement in node.body:
             body.visit(statement)
         self.found = self.found or body.found

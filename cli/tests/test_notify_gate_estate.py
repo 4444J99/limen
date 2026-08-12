@@ -411,6 +411,40 @@ def test_comprehension_target_notification_bypass_is_rejected(tmp_path, check_ga
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        'for cmd in [["osascript", "-e", "display notification x"]]:\n    subprocess.run(cmd)\n',
+        'async def fire():\n    async for cmd in [["osascript", "-e", "display notification x"]]:\n'
+        "        subprocess.run(cmd)\n",
+    ],
+)
+def test_loop_target_notification_bypass_is_rejected(tmp_path, check_gate, source):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(f"import subprocess\n{source}", encoding="utf-8")
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+@pytest.mark.parametrize(
+    "signature",
+    [
+        'cmd=["osascript", "-e", "display notification x"]',
+        '*, cmd=["osascript", "-e", "display notification x"]',
+    ],
+)
+def test_default_parameter_notification_bypass_is_rejected(tmp_path, check_gate, signature):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        f"import subprocess\ndef fire({signature}):\n    subprocess.run(cmd)\nfire()\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_destructured_python_command_binding_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()

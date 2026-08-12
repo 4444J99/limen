@@ -561,6 +561,41 @@ def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch)
     assert not module.STATE.exists()
 
 
+def test_delivery_validates_the_same_usage_snapshot_used_to_render(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    (tmp_path / "logs").mkdir()
+    original_load = module._load
+    usage_reads = []
+    fresh = {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+    }
+
+    def racing_load(path, default):
+        if Path(path) == module.USAGE:
+            usage_reads.append(True)
+            return {} if len(usage_reads) == 1 else fresh
+        return original_load(path, default)
+
+    delivered = []
+    monkeypatch.setattr(module, "_load", racing_load)
+    monkeypatch.setattr(module, "_refresh_admission", lambda: True)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
+    monkeypatch.setattr(
+        module,
+        "_notify_macos",
+        lambda *_args, **_kwargs: (
+            delivered.append("macos") or SimpleNamespace(status="emitted", reserved=True, prior_status=None)
+        ),
+    )
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: delivered.append("ntfy") or True)
+
+    assert module.main([]) == 0
+    assert usage_reads == [True]
+    assert delivered == []
+    assert not module.STATE.exists()
+
+
 def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"

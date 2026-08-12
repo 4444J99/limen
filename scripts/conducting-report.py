@@ -549,9 +549,10 @@ def _verdict(v: dict) -> tuple[str, bool]:
 def build_report(
     *,
     session_value_gate: dict[str, object] | None = None,
+    usage_snapshot: dict | None = None,
 ) -> tuple[str, str, str, str]:
     """Returns (headline, full_text, local_day_key, canonical_routing_reason)."""
-    usage = _load(USAGE, {}) or {}
+    usage = usage_snapshot if usage_snapshot is not None else (_load(USAGE, {}) or {})
     vendors = usage.get("vendors", {})
     day = _local_day()
     lines, burned, idle = [], 0, 0
@@ -645,12 +646,17 @@ def main(argv: list[str] | None = None) -> int:
         print("conducting-report: keeper admission refresh failed; delivery withheld")
         return 0
     session_value_gate = _session_value_admission()
-    headline, body, day, routing_reason = build_report(session_value_gate=session_value_gate)
+    usage = _load(USAGE, {})
+    if not isinstance(usage, dict):
+        usage = {}
+    headline, body, day, routing_reason = build_report(
+        session_value_gate=session_value_gate,
+        usage_snapshot=usage,
+    )
     print(body)
     if args.print_only:
         return 0
 
-    usage = _load(USAGE, {})
     instant = datetime.now(timezone.utc)
     if not _fresh_timestamp(usage, instant):
         print("conducting-report: usage telemetry unavailable or stale; delivery withheld")
