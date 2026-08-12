@@ -1116,6 +1116,18 @@
       "status": "open",
       "issue": 1981,
       "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh."
+    },
+    {
+      "id": "L-MADDIE-CUSTODY-TRANSFER",
+      "label": "Transfer hosting custody of the maddie/spiral client lane out of your personal Cloudflare account, and add a deploy workflow to 4444J99/sovereign-systems--elevate-align so the client is not dependent on your laptop. Verified live 2026-08-12: stopdrinkingacid.com and eaucohub.com are SERVING from your Cloudflare (A 162.159.140.166, NS still at GoDaddy) and the spiral runs on your own sovereign-systems-spiral.ivixivi.workers.dev, while the client repo has ci.yml only and NO deploy workflow. The client already holds repo admin, which does NOT let them run any of it, so handover means a custody transfer, not repo access. Order matters: enumerate what you control, get the client a Cloudflare account, re-deploy into it and re-point the custom domains, ADD THE DEPLOY WORKFLOW, verify externally, and only THEN decommission your copies. Do not decommission before external verification: two live client sites would go dark visibly to their customers. When it closes, re-tier maddie in organs/consulting/constellation/registry.yaml and rerun derive-streams.py --write, which is the only thing that removes the domain from the session launcher.",
+      "owner": "yours",
+      "cost": "~1-2 h once, reversible until the final decommission step",
+      "status": "open",
+      "gate": "Cloudflare account custody (only you hold the account) + the client creating their own account",
+      "unlocks": "ends open-ended hosting of a third party's production estate on a personal account, removes you as the single point of failure for their live funnels, and makes the lane re-tierable so it leaves the session launcher",
+      "note": "Provenance: Surfaced by the 2026-08-12 lane review; had no owner because neither party ever raised it (a standing condition, not an ask). elevatealign.com itself is still PARKED at GoDaddy (client-side nameserver change never made) and its registry expiry is 2026-09-10T19:30Z - the only hard external clock on this lane. Commercial terms and correspondence are deliberately NOT here: this file publishes. They live in the ARCA-sealed private register (_people-private/people/maddie/ - open-asks.yaml MAD-020 + handover-packet-2026-08-12.md).",
+      "source_task": "maddie/spiral delta review 2026-08-12",
+      "issue": 2339
     }
   ]
 }
