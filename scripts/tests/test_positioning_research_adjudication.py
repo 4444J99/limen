@@ -861,6 +861,28 @@ def test_public_profile_and_nested_mappings_match_complete_typed_contract() -> N
         )
 
 
+def test_privacy_review_matches_complete_typed_public_safe_contract() -> None:
+    assert MODULE._exact_typed_mapping(
+        _bundle()["receipt"]["privacy_review"],
+        MODULE.EXPECTED_PRIVACY_REVIEW,
+    )
+
+    mutations = (
+        ("authorization", "Bearer SECRET"),
+        ("rule", "Only selected fields are inspected."),
+        ("private_repository_names", False),
+    )
+    for key, replacement in mutations:
+        bundle = _bundle()
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        bundle["receipt"]["privacy_review"][key] = replacement
+
+        assert (
+            "privacy review must match its complete exact typed public-safe contract"
+            in _errors(bundle)
+        )
+
+
 def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
     malformed = _bundle()
     malformed["receipt"] = copy.deepcopy(malformed["receipt"])

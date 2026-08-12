@@ -378,6 +378,15 @@ EXPECTED_PUBLIC_PROFILE = {
         "engine_checkout_ref_recorded_in_manifest": False,
     },
 }
+EXPECTED_PRIVACY_REVIEW = {
+    "public_only": True,
+    "private_repository_names": 0,
+    "private_only_sources": 0,
+    "rule": (
+        "Only public heads, public API aggregates, public issue states, public URLs, "
+        "and redacted W01 aggregate counts appear in this receipt."
+    ),
+}
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
     "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
@@ -763,6 +772,8 @@ def validate_bundle(
         errors.append("the profile-engine live reference must bind the exact open organvm/limen#1245 contract")
 
     privacy = _mapping(receipt.get("privacy_review"), "receipt.privacy_review", errors)
+    if not _exact_typed_mapping(privacy, EXPECTED_PRIVACY_REVIEW):
+        errors.append("privacy review must match its complete exact typed public-safe contract")
     if privacy.get("public_only") is not True:
         errors.append("receipt must be public-only")
     if privacy.get("private_repository_names") != 0 or privacy.get("private_only_sources") != 0:
