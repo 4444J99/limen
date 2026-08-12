@@ -61,6 +61,9 @@ CREDENTIAL_FIELD_COMPACT_RE = re.compile(
 CAMEL_CASE_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 EXPECTED_ARTIFACT_SHAPE_SHA256 = "dd72a7aaa85e4de558dc6465b822baec0e40d81518f6276a0fe90c283064c448"
 EXPECTED_RECEIPT_SHAPE_SHA256 = "56db1b1ae7a42f181fcb38ef327738e56bc0dc1cdd45962b122a0103158a1985"
+EXPECTED_CLAIM_CITATION_CONTRACT_SHA256 = (
+    "e01caa94bfb7c59b27ecf497ba039c728c3944c94369f4ed2bc35754f30b36f3"
+)
 EXPECTED_CLAIM_COUNT = 13
 EXPECTED_API_RECEIPT_SOURCES = {
     "profile_metadata": "https://api.github.com/users/4444J99",
@@ -398,6 +401,49 @@ EXPECTED_PRIVACY_REVIEW = {
         "and redacted W01 aggregate counts appear in this receipt."
     ),
 }
+EXPECTED_PORTFOLIO_REPOSITORY_IDENTITY_RECEIPT = {
+    "github_repository_id": PORTFOLIO_REPOSITORY_ID,
+    "node_id": "R_kgDORN4wnQ",
+    "canonical_slug": PORTFOLIO_CANONICAL_SLUG,
+    "visibility": "public",
+    "default_branch": "main",
+    "archived": False,
+    "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+    "head_url": (
+        "https://github.com/organvm-vii-kerygma/portfolio/commit/"
+        "85bfaa84287e4a3b90b49187caa4313c4edda1aa"
+    ),
+    "source": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
+    "observed_at": "2026-08-10T19:21:11Z",
+    "registry_disposition": "canonical_owner_corrected_by_stable_repository_id",
+    "confirmed_private_target_changed": False,
+    "projection_refresh_performed": False,
+    "projection_refresh_reason": (
+        "Projection remains reserved for post-merge sync and verify-remote parity; "
+        "this formalization lane does not mutate live issue bodies."
+    ),
+    "projection_status": PROJECTION_STATUS,
+    "live_issue_bodies_requiring_refresh": [
+        {"work_id": "PSP-P06-W01", "issue": 2205},
+        {"work_id": "PSP-P06-W02", "issue": 2206},
+        {"work_id": "PSP-P06-W03", "issue": 2207},
+        {"work_id": "PSP-P06-W04", "issue": 2208},
+        {"work_id": "PSP-P06-W05", "issue": 2209},
+        {"work_id": "PSP-P06-W06", "issue": 2210},
+        {"work_id": "PSP-P06-W07", "issue": 2211},
+        {"work_id": "PSP-P07-W03", "issue": 2215},
+        {"work_id": "PSP-P07-W04", "issue": 2216},
+        {"work_id": "PSP-P07-W08", "issue": 2220},
+        {"work_id": "PSP-P08-W02", "issue": 2224},
+        {"work_id": "PSP-P09-W02", "issue": 2232},
+        {"work_id": "PSP-P09-W03", "issue": 2233},
+        {"work_id": "PSP-P09-W04", "issue": 2234},
+        {"work_id": "PSP-P09-W05", "issue": 2235},
+        {"work_id": "PSP-P09-W06", "issue": 2236},
+        {"work_id": "PSP-P10-W04", "issue": 2243},
+        {"work_id": "PSP-P12-W04", "issue": 2261},
+    ],
+}
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
     "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
@@ -476,9 +522,29 @@ class AdjudicationError(RuntimeError):
     """Raised when an adjudication input or live identity cannot be inspected."""
 
 
+def _object_without_duplicate_json_members(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Build a JSON object only when every member name is unique."""
+
+    value: dict[str, object] = {}
+    duplicates: list[str] = []
+    for key, child in pairs:
+        if key in value and key not in duplicates:
+            duplicates.append(key)
+        value[key] = child
+    if duplicates:
+        names = ", ".join(repr(name) for name in duplicates)
+        raise AdjudicationError(f"duplicate JSON member names: {names}")
+    return value
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_object_without_duplicate_json_members,
+        )
     except (OSError, json.JSONDecodeError) as exc:
         raise AdjudicationError(f"cannot load {path}: {exc}") from exc
     if not isinstance(value, dict):
@@ -688,6 +754,25 @@ def _artifact_claim_projection(claims: list[object]) -> list[dict[str, Any]]:
                 "required_receipts": integration.get("required_receipts"),
             }
         )
+    return projection
+
+
+def _claim_citation_contract(claims: list[object]) -> dict[str, dict[str, object]]:
+    """Project every claim/layer citation list for its accepted exact-value binding."""
+
+    projection: dict[str, dict[str, object]] = {}
+    for index, claim in enumerate(claims):
+        if not isinstance(claim, dict):
+            projection[f"invalid-row-{index}"] = {layer: None for layer in LAYERS}
+            continue
+        claim_id = claim.get("id")
+        key = claim_id if isinstance(claim_id, str) else f"invalid-id-{index}"
+        projection[key] = {
+            layer: claim[layer].get("citations")
+            if isinstance(claim.get(layer), dict)
+            else None
+            for layer in LAYERS
+        }
     return projection
 
 
@@ -1005,6 +1090,14 @@ def validate_bundle(
     duplicates = sorted({claim_id for claim_id in claim_ids if claim_ids.count(claim_id) > 1})
     if duplicates:
         errors.append(f"duplicate claim ids: {', '.join(duplicates)}")
+    try:
+        citation_contract_sha256 = _canonical_sha256(_claim_citation_contract(claims))
+    except (TypeError, ValueError):
+        citation_contract_sha256 = ""
+    if citation_contract_sha256 != EXPECTED_CLAIM_CITATION_CONTRACT_SHA256:
+        errors.append(
+            "all 13 claims must match the accepted exact per-layer citation contract"
+        )
 
     artifact_projection = _artifact_claim_projection(claims)
     w05_import = _mapping(
@@ -1160,6 +1253,13 @@ def validate_bundle(
         "receipt.portfolio_repository_identity",
         errors,
     )
+    if not _exact_typed_mapping(
+        receipt_identity,
+        EXPECTED_PORTFOLIO_REPOSITORY_IDENTITY_RECEIPT,
+    ):
+        errors.append(
+            "portfolio repository identity receipt must match its complete accepted typed value contract"
+        )
     if receipt_identity.get("github_repository_id") != PORTFOLIO_REPOSITORY_ID:
         errors.append("live receipt must carry the stable portfolio repository ID")
     if receipt_identity.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:

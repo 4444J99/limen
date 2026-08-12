@@ -277,6 +277,21 @@ def test_tracked_adjudication_bundle_passes_static_contract() -> None:
     assert _errors(_bundle()) == []
 
 
+@pytest.mark.parametrize("filename", ("research-adjudication.json", "w08-receipt.json"))
+def test_public_json_loader_rejects_duplicate_members_at_any_depth(
+    tmp_path: Path,
+    filename: str,
+) -> None:
+    path = tmp_path / filename
+    path.write_text(
+        '{"outer":{"schema":"first","schema":"second"}}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(MODULE.AdjudicationError, match="duplicate JSON member names: 'schema'"):
+        MODULE._load_json(path)
+
+
 def test_formalization_is_ready_but_projection_remains_pending() -> None:
     bundle = _bundle()
 
@@ -419,6 +434,29 @@ def test_tokenized_disposition_and_citation_sinks_fail_neutrally() -> None:
         "measurement citations must be nonempty string source IDs" in error
         for error in _errors(citations)
     )
+
+
+def test_all_claim_layers_bind_their_exact_accepted_citations() -> None:
+    baseline = _bundle()
+    assert (
+        MODULE._canonical_sha256(
+            MODULE._claim_citation_contract(baseline["artifact"]["claims"])
+        )
+        == MODULE.EXPECTED_CLAIM_CITATION_CONTRACT_SHA256
+    )
+
+    for claim_index, claim in enumerate(baseline["artifact"]["claims"]):
+        for layer in MODULE.LAYERS:
+            mutated = _bundle()
+            mutated["artifact"] = copy.deepcopy(mutated["artifact"])
+            citations = mutated["artifact"]["claims"][claim_index][layer]["citations"]
+            replacement = "PROFILE_RUNS" if citations[0] != "PROFILE_RUNS" else "PROFILE_README"
+            citations[0] = replacement
+
+            assert (
+                "all 13 claims must match the accepted exact per-layer citation contract"
+                in _errors(mutated)
+            ), f"{claim['id']}.{layer} accepted an unrelated source"
 
 
 def test_tokenized_lavrea_and_http_receipt_sinks_fail_neutrally() -> None:
@@ -566,6 +604,35 @@ def test_claim_ids_reject_non_public_tokens() -> None:
     bundle["artifact"]["w05_import_contract"]["source_claim_ids"][0] = "PRIVATE/Claim"
 
     assert any("public-safe lowercase token format" in error for error in _errors(bundle))
+
+
+def test_complete_portfolio_identity_receipt_is_exact_value_bound() -> None:
+    baseline = _bundle()
+    identity = baseline["receipt"]["portfolio_repository_identity"]
+    assert MODULE._exact_typed_mapping(
+        identity,
+        MODULE.EXPECTED_PORTFOLIO_REPOSITORY_IDENTITY_RECEIPT,
+    )
+
+    for key, value in identity.items():
+        mutated = _bundle()
+        mutated["receipt"] = copy.deepcopy(mutated["receipt"])
+        if isinstance(value, bool):
+            replacement = not value
+        elif isinstance(value, int):
+            replacement = value + 1
+        elif isinstance(value, str):
+            replacement = f"{value}-drift"
+        elif isinstance(value, list):
+            replacement = list(reversed(value))
+        else:
+            pytest.fail(f"unhandled identity value type for {key}: {type(value).__name__}")
+        mutated["receipt"]["portfolio_repository_identity"][key] = replacement
+
+        assert (
+            "portfolio repository identity receipt must match its complete accepted typed value contract"
+            in _errors(mutated)
+        ), f"portfolio identity field {key} was not exact-bound"
 
 
 def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
