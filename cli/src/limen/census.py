@@ -140,6 +140,13 @@ class OpeningFloor:
 
     kind: str
     config_path: str = ""
+    # The agent_config_paths vendor key whose ACTIVE config this row lives in. When set, the reader
+    # resolves the real file through that module instead of expanding ``config_path`` — because
+    # CLAUDE_CONFIG_DIR / GEMINI_CLI_HOME / CODEX_HOME relocate these roots, and the abandoned copy
+    # keeps parsing. Measured 2026-08-12: this row's ``~/.codex/config.toml`` said effort ``ultra``
+    # (reported as an above-ceiling breach) while the file codex actually reads said ``max``.
+    # ``config_path`` stays as the human-readable label and the fallback for unmapped lanes.
+    config_vendor: str = ""
     pointer: str = ""
     ladder: tuple[str, ...] = ()
     ladder_ref: str = ""
@@ -515,6 +522,7 @@ OPENING_FLOORS: dict[str, OpeningFloor] = {
     "claude": OpeningFloor(
         kind="hook-armed",
         config_path="~/.claude/settings.json",
+        config_vendor="claude-settings",
         pointer="model",
         ladder_ref="limen.model_selection:_CLAUDE_TIER_ORDER",
         ceiling="sonnet",
@@ -531,8 +539,13 @@ OPENING_FLOORS: dict[str, OpeningFloor] = {
     "codex": OpeningFloor(
         kind="config-file",
         config_path="~/.codex/config.toml",
+        config_vendor="codex",
         pointer="model_reasoning_effort",
-        ladder=("minimal", "low", "medium", "high", "ultra"),
+        # ``max`` was observed in the live config on 2026-08-12 and matched no rung, which would
+        # have downgraded a real breach to an `unresolved` shrug the moment path resolution was
+        # fixed. Its exact rank against ``ultra`` is not established here — both sit above the
+        # ``high`` ceiling, so the above-ceiling verdict holds either way.
+        ladder=("minimal", "low", "medium", "high", "ultra", "max"),
         ceiling="high",
         note=(
             "Measured 2026-08-07: model gpt-5.6-sol at `ultra` effort — one rung above the "
@@ -544,6 +557,7 @@ OPENING_FLOORS: dict[str, OpeningFloor] = {
     "gemini": OpeningFloor(
         kind="config-file",
         config_path="~/.gemini/settings.json",
+        config_vendor="gemini",
         pointer="model",
         ladder=("flash", "pro"),
         ceiling="flash",
