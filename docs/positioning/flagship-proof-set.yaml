@@ -1,0 +1,647 @@
+schema_version: limen.positioning_flagship_proof_set.v1
+work_id: PSP-P02-W03
+generated_at: "2026-08-10T23:13:26Z"
+verdict: formal_ratified_receipt_pending
+formal_completion_blocker: "W02 is accepted; W03 still requires sanctioned merge, a marked receipt, and a passing PSP-P02-W03 receipt predicate before issue closure."
+
+dependency_snapshot:
+  w01_receipt: docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json
+  w02_branch: main
+  w02_head: 35134b95650a26185a58eb3b3a82632e5b80b5b2
+  w02_issue: https://github.com/organvm/limen/issues/2174
+  w02_issue_state: closed
+  w02_receipt: https://github.com/organvm/limen/issues/2174#issuecomment-5247059070
+  w02_receipt_sha256: bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f
+  w02_receipt_observed_head: 35134b95650a26185a58eb3b3a82632e5b80b5b2
+  w02_pull_request: https://github.com/organvm/limen/pull/2307
+  w02_pull_request_state: merged
+  w03_issue: https://github.com/organvm/limen/issues/2175
+  w03_issue_state: open
+
+review_sources:
+  - source: "PSP manifest and runbook"
+    url: https://github.com/organvm/limen/tree/main/docs/positioning/program
+  - source: "Merged claims ledger and proof-production owner"
+    commit: 199239abdcf4948e74869d0ee986faceaf357b4b
+    url: https://github.com/organvm/limen/commit/199239abdcf4948e74869d0ee986faceaf357b4b
+  - source: "Current personal profile README"
+    commit: f198b37e3161121e7c198e21bd18b87e29b6bc4f
+    blob: b006a06c2a7e9f84166b0fd7fad638a5c36c356f
+    url: https://github.com/4444J99/4444J99
+  - source: "Current organization profile README"
+    blob: d19c1ce6d8aa46513fd8231c1a8f6285914fbb7c
+    url: https://github.com/organvm/.github/blob/main/profile/README.md
+  - source: "Current portfolio README"
+    blob: 9c789d5e302d42f7d8df65ea40024be675df2ef9
+    url: https://github.com/organvm-vii-kerygma/portfolio
+
+candidate_screen:
+  rule: >-
+    Score every W02 front-door-proof repository, add Limen because the PSP manifest names it as
+    the primary proof object, add the three other repositories still named as public entry points,
+    and add MONETA because the current front-door seed names its live endpoint.
+  w02_front_door_proof_repositories: 15
+  manifest_primary_proof_additions: 1
+  current_public_entry_point_additions: 3
+  current_front_door_endpoint_additions: 1
+  claims_ledger_additions: 1
+  legacy_entry_point_additions: 1
+  candidate_count: 22
+  source_projection:
+    observed_at: "2026-08-10T22:30:17Z"
+    w01_public_repository_count: 235
+    w01_public_repository_identity_sha256: b41856b46ce6eed60959bf408f79478657117b3b98b91a9ebfa03c150f9ae50d
+    w02_classification_policy_sha256: 1487689716f9b7b35b9b6e444f029026a6ddab4c09ab13779a2c229eb5e3a909
+    w02_front_door_proof_repositories:
+      - 4444J99/4444J99
+      - 4444J99/hokage-chess
+      - 4444J99/micro-tato-play
+      - 4444J99/padavano
+      - 4444J99/styx-behavioral-art
+      - 4444J99/styx-behavioral-economics-theory
+      - 4444J99/your-fit-tailored
+      - organvm-ii-poiesis/narratological-algorithmic-lenses
+      - organvm-iii-ergon/a-i-chat--exporter
+      - organvm-iii-ergon/agentic-titan
+      - organvm-iii-ergon/public-record-data-scrapper
+      - organvm-iv-taxis/a-i--skills
+      - organvm-iv-taxis/call-function--ontological
+      - organvm-vii-kerygma/portfolio
+      - organvm/universal-mail--automation
+    explicit_additions:
+      - {candidate_id: limen, source_set: manifest_primary_proof, candidate_identity: "repository:organvm/limen"}
+      - {candidate_id: recursive_engine, source_set: current_public_entry_point, candidate_identity: "repository:organvm/recursive-engine--generative-entity"}
+      - {candidate_id: metasystem_master, source_set: current_public_entry_point, candidate_identity: "repository:organvm/metasystem-master"}
+      - {candidate_id: public_process, source_set: current_public_entry_point, candidate_identity: "repository:organvm-vi-koinonia/public-process"}
+      - {candidate_id: moneta, source_set: current_front_door_endpoint, candidate_identity: "endpoint:https://mint.4444j99.dev/"}
+      - {candidate_id: styx, source_set: claims_ledger, candidate_identity: "repository:4444J99/peer-audited--behavioral-blockchain"}
+      - {candidate_id: archived_landing, source_set: legacy_entry_point, candidate_identity: "repository:organvm/4444J99.github.io"}
+  optimization_prohibitions:
+    - repository count
+    - stars or forks alone
+    - recent activity alone
+    - aesthetic preference alone
+
+privacy_split:
+  public_candidates_scored: 22
+  private_repositories_in_w01_census: 79
+  private_repository_names_in_this_artifact: 0
+  public_rule: "Only public repositories and endpoints may appear in this matrix."
+  private_rule: >-
+    Private names and sensitive metadata remain in sanctioned custody. A later evidence packet may
+    carry an encrypted private addendum, but private evidence cannot be required to understand a
+    selected public flagship.
+
+rubric:
+  scale: "0-5 per dimension; weighted_total = sum(score * weight / 5)"
+  dimensions:
+    distinct_claim_role:
+      weight: 15
+      five: "Adds a non-overlapping, necessary story role to the selected set."
+      zero: "Duplicates a stronger candidate or carries no expert-positioning claim."
+    technical_depth:
+      weight: 20
+      five: "Substantial inspectable architecture, implementation, and verification surfaces."
+      zero: "Presentation, specification, or assertion without inspectable implementation depth."
+    system_leverage:
+      weight: 15
+      five: "Coordinates or unlocks multiple downstream workflows, products, or operators."
+      zero: "Isolated object with little transfer beyond its own surface."
+    reproducible_evidence:
+      weight: 20
+      five: "Current public exact-head checks plus a live reproducible endpoint or equivalent."
+      zero: "No reproducible public anchor."
+    current_maturity:
+      weight: 10
+      five: "Currently operating with bounded status and failure evidence."
+      zero: "Archived, stale, or only aspirational."
+    public_visibility:
+      weight: 10
+      five: "Public source and current public proof surface are both reachable."
+      zero: "Private-only or unavailable."
+    buyer_relevance:
+      weight: 10
+      five: "Maps directly to a costly, legible buyer problem without invented adoption."
+      zero: "No credible buyer or expert-review relevance."
+
+selection_policy:
+  minimum_selected: 3
+  maximum_selected: 5
+  minimum_weighted_total: 80
+  minimum_dimension_scores:
+    reproducible_evidence: 4
+    current_maturity: 3
+    public_visibility: 4
+  hard_gates:
+    - unique_story_role
+    - current_public_evidence_anchor
+    - no_private_only_dependency
+    - not_archived_or_stale
+    - bounded_non_circular_claim
+
+reviewer_verdict:
+  selected_ids: [limen, public_records, ai_chat_exporter]
+  alternate_ids: [universal_mail, styx, ai_skills, moneta]
+  verdict_text: >-
+    Ratify a three-object formal proof set. Limen proves governed agent delivery; the UCC
+    public-records platform proves a buyer-facing data pipeline; AI Chat Exporter proves a
+    privacy-first user-facing tool. Keep the four named alternates visible with promotion
+    conditions. W02 is accepted; W03 still requires its sanctioned merge and marked receipt before
+    downstream generators may consume this verdict as a completed work packet.
+
+candidates:
+  - id: limen
+    name: Limen
+    kind: repository
+    repository: organvm/limen
+    public_url: https://github.com/organvm/limen
+    source_sets: [manifest_primary_proof]
+    status: selected
+    eligible: true
+    stale: false
+    repository_maturity: active
+    story_role: governed_agent_delivery
+    flagship_claim:
+      statement: "Governed multi-agent delivery with public operating, failure, and verification receipts."
+      assertion_class: implemented_capability
+      subject_repository: organvm/limen
+      includes: [agent_delivery_governance, public_operating_receipts, public_failure_receipts, exact_head_verification]
+      excludes: [adoption, customer_outcomes, market_leadership]
+      evidence_basis: [public_source_implementation, exact_head_workflow, candidate_bound_public_endpoint]
+      non_circular_exclusions: [selection_matrix, portfolio_carrier, private_only_material]
+    scores: {distinct_claim_role: 5, technical_depth: 5, system_leverage: 5, reproducible_evidence: 5, current_maturity: 5, public_visibility: 5, buyer_relevance: 5}
+    weighted_total: 100
+    evidence_anchors:
+      - kind: workflow_run
+        live: true
+        status: pass
+        url: https://github.com/organvm/limen/actions/runs/31432531450
+        github_api_path: repos/organvm/limen/actions/runs/31432531450
+        workflow_identity: {id: 289200060, path: .github/workflows/ci.yml, name: CI}
+        observed_head: 16d841f962da5faec273b11c97a8a2ee7049c25b
+        observed_default_branch: main
+        head_binding: dated_default_branch_snapshot
+        observed_at: "2026-08-10T21:30:44Z"
+        max_age_days: 30
+        reproduction: "gh api repos/organvm/limen/actions/runs/31432531450 --jq '{status,conclusion,head_sha,head_branch,html_url,workflow_id,path,name,updated_at}'"
+      - kind: public_endpoint
+        deployment_identity: cloudflare-pages:limen-dashboard
+        live: true
+        status: pass
+        url: https://limen-dashboard.pages.dev/public-status.json
+        expected_http_status: 200
+        observed_at: "2026-08-10T16:57:12Z"
+        max_age_days: 7
+        reproduction: "curl --fail --location https://limen-dashboard.pages.dev/public-status.json"
+    private_only_dependencies: []
+    hard_gate_failures: []
+    verdict_reason: "The primary PSP proof object and the strongest system-level evidence anchor."
+
+  - id: public_records
+    name: UCC Public-Records Intelligence Platform
+    kind: repository
+    repository: organvm-iii-ergon/public-record-data-scrapper
+    public_url: https://github.com/organvm-iii-ergon/public-record-data-scrapper
+    source_sets: [w02_front_door_proof, current_front_door]
+    status: selected
+    eligible: true
+    stale: false
+    repository_maturity: active
+    story_role: public_records_decision_pipeline
+    flagship_claim:
+      statement: "A multi-stage public-record pipeline with four implemented collectors on a broader architecture."
+      assertion_class: implemented_capability
+      subject_repository: organvm-iii-ergon/public-record-data-scrapper
+      includes: [multi_stage_pipeline, four_implemented_collectors, public_deployment]
+      excludes: [adoption, customer_outcomes, market_leadership]
+      evidence_basis: [public_source_implementation, exact_head_workflow, candidate_bound_public_endpoint]
+      non_circular_exclusions: [selection_matrix, portfolio_carrier, private_only_material]
+    scores: {distinct_claim_role: 5, technical_depth: 5, system_leverage: 4, reproducible_evidence: 5, current_maturity: 4, public_visibility: 5, buyer_relevance: 5}
+    weighted_total: 95
+    evidence_anchors:
+      - kind: workflow_run
+        live: true
+        status: pass
+        url: https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        github_api_path: repos/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        workflow_identity: {id: 298301053, path: .github/workflows/ci-gate.yml, name: CI Gate}
+        observed_head: 139fa7b40d875ecfe3a8c693dedfab46671739fd
+        observed_default_branch: main
+        head_binding: current_default_branch
+        observed_at: "2026-08-09T11:17:19Z"
+        max_age_days: 30
+        reproduction: "gh api repos/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594 --jq '{status,conclusion,head_sha,head_branch,html_url,workflow_id,path,name,updated_at}'"
+      - kind: public_endpoint
+        deployment_identity: github-pages:organvm-iii-ergon/public-record-data-scrapper
+        live: true
+        status: pass
+        url: https://organvm-iii-ergon.github.io/public-record-data-scrapper/
+        expected_http_status: 200
+        observed_at: "2026-08-10T16:57:12Z"
+        max_age_days: 7
+        reproduction: "curl --fail --location https://organvm-iii-ergon.github.io/public-record-data-scrapper/"
+    private_only_dependencies: []
+    hard_gate_failures: []
+    verdict_reason: "Distinct buyer-facing data-engineering proof with a green current-head gate and public deployment."
+
+  - id: ai_chat_exporter
+    name: AI Chat Exporter
+    kind: repository
+    repository: organvm-iii-ergon/a-i-chat--exporter
+    public_url: https://github.com/organvm-iii-ergon/a-i-chat--exporter
+    source_sets: [w02_front_door_proof, current_front_door]
+    status: selected
+    eligible: true
+    stale: false
+    repository_maturity: active
+    story_role: privacy_first_data_portability
+    flagship_claim:
+      statement: "Client-side conversation export across portable formats without a server dependency."
+      assertion_class: implemented_capability
+      subject_repository: organvm-iii-ergon/a-i-chat--exporter
+      includes: [client_side_processing, portable_export_formats, no_server_dependency]
+      excludes: [adoption, customer_outcomes, market_leadership]
+      evidence_basis: [public_source_implementation, exact_head_workflow, candidate_bound_public_endpoint]
+      non_circular_exclusions: [selection_matrix, portfolio_carrier, private_only_material]
+    scores: {distinct_claim_role: 5, technical_depth: 4, system_leverage: 3, reproducible_evidence: 5, current_maturity: 4, public_visibility: 5, buyer_relevance: 4}
+    weighted_total: 86
+    evidence_anchors:
+      - kind: workflow_run
+        live: true
+        status: pass
+        url: https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        github_api_path: repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        workflow_identity: {id: 232954492, path: .github/workflows/ci.yml, name: CI}
+        observed_head: e3a0b8d9a47183163cd92d18f479fc580eaf314d
+        observed_default_branch: master
+        head_binding: current_default_branch
+        observed_at: "2026-07-23T10:27:21Z"
+        max_age_days: 30
+        reproduction: "gh api repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405 --jq '{status,conclusion,head_sha,head_branch,html_url,workflow_id,path,name,updated_at}'"
+      - kind: public_endpoint
+        deployment_identity: github-pages:organvm-iii-ergon/a-i-chat--exporter
+        live: true
+        status: pass
+        url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
+        expected_http_status: 200
+        observed_at: "2026-08-10T16:57:12Z"
+        max_age_days: 7
+        reproduction: "curl --fail --location https://organvm-iii-ergon.github.io/a-i-chat--exporter/"
+    private_only_dependencies: []
+    hard_gate_failures: []
+    verdict_reason: "Adds user-facing product and privacy-by-architecture proof without duplicating the platform stories."
+
+  - id: universal_mail
+    name: Universal Mail Automation
+    kind: repository
+    repository: organvm/universal-mail--automation
+    public_url: https://github.com/organvm/universal-mail--automation
+    source_sets: [w02_front_door_proof, current_profile]
+    status: alternate
+    eligible: false
+    stale: true
+    repository_maturity: active
+    story_role: human_gated_workflow_automation
+    flagship_claim: "Draft-only inbox triage and obligations tracking with an explicit no-send boundary."
+    scores: {distinct_claim_role: 5, technical_depth: 4, system_leverage: 4, reproducible_evidence: 5, current_maturity: 4, public_visibility: 3, buyer_relevance: 5}
+    weighted_total: 87
+    evidence_anchors:
+      - {kind: workflow_run, url: https://github.com/organvm/universal-mail--automation/actions/runs/31309935055, status: pass}
+      - {kind: public_endpoint, url: https://organvm.github.io/universal-mail--automation/, status: fail, observed_http_status: 404}
+    private_only_dependencies: []
+    hard_gate_failures: [stale_public_homepage]
+    verdict_reason: "Strong system and green exact-head CI, but its advertised public proof surface returned 404."
+    promotion_condition: "Restore the declared public endpoint or remove the stale homepage, then attach a fresh evidence packet."
+
+  - id: styx
+    name: Styx Peer-Audited Behavioral Market
+    kind: repository
+    repository: 4444J99/peer-audited--behavioral-blockchain
+    public_url: https://github.com/4444J99/peer-audited--behavioral-blockchain
+    source_sets: [claims_ledger]
+    status: alternate
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: audited_incentive_ledger
+    flagship_claim: "A peer-reviewed incentive and double-entry-ledger prototype with explicit privacy boundaries."
+    scores: {distinct_claim_role: 5, technical_depth: 5, system_leverage: 4, reproducible_evidence: 4, current_maturity: 2, public_visibility: 5, buyer_relevance: 4}
+    weighted_total: 85
+    evidence_anchors:
+      - {kind: workflow_run, url: https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/31309622476, status: pass}
+      - {kind: public_endpoint, url: https://4444j99.github.io/peer-audited--behavioral-blockchain/, status: pass, observed_http_status: 200}
+    private_only_dependencies: []
+    hard_gate_failures: [prototype_maturity, current_governance_checks_red]
+    verdict_reason: "Deep and distinct, but live-stack completion remains unverified and two current governance checks are red."
+    promotion_condition: "Attach a live-stack receipt and clear or adjudicate the current default-head governance failures."
+
+  - id: ai_skills
+    name: a-i--skills
+    kind: repository
+    repository: organvm-iv-taxis/a-i--skills
+    public_url: https://github.com/organvm-iv-taxis/a-i--skills
+    source_sets: [w02_front_door_proof, current_front_door]
+    status: alternate
+    eligible: false
+    stale: true
+    repository_maturity: active
+    story_role: portable_agent_capability_distribution
+    flagship_claim: "A validated, multi-runtime public skill registry and distribution system."
+    scores: {distinct_claim_role: 4, technical_depth: 4, system_leverage: 5, reproducible_evidence: 3, current_maturity: 4, public_visibility: 5, buyer_relevance: 4}
+    weighted_total: 81
+    evidence_anchors:
+      - {kind: workflow_run, url: https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/29684153172, status: pass}
+      - {kind: public_endpoint, url: https://organvm-iv-taxis.github.io/a-i--skills/, status: pass, observed_http_status: 200}
+    private_only_dependencies: []
+    hard_gate_failures: [contradictory_public_skill_counts, stale_fork_count]
+    verdict_reason: "High leverage, but the public page contradicts itself on skill count and the front-door fork count has drifted."
+    promotion_condition: "Regenerate one internally consistent count basis and re-run the public validation anchors."
+
+  - id: moneta
+    name: MONETA
+    kind: endpoint
+    public_url: https://mint.4444j99.dev/
+    source_sets: [current_front_door_endpoint]
+    status: alternate
+    eligible: false
+    stale: false
+    story_role: sovereign_software_commerce
+    flagship_claim: "A live self-hosted Bitcoin licence-mint surface."
+    scores: {distinct_claim_role: 5, technical_depth: 2, system_leverage: 4, reproducible_evidence: 2, current_maturity: 3, public_visibility: 4, buyer_relevance: 4}
+    weighted_total: 65
+    evidence_anchors:
+      - {kind: public_endpoint, url: https://mint.4444j99.dev/, status: pass, observed_http_status: 200}
+    private_only_dependencies: ["unresolved public implementation and source-custody evidence"]
+    hard_gate_failures: [no_public_technical_reproduction, private_dependency_not_ruled_out]
+    verdict_reason: "The endpoint is live, but HTTP 200 alone does not reproduce the technical or self-hosting claim."
+    promotion_condition: "Publish a public-safe technical evidence packet that proves implementation and custody without private source."
+
+  - id: personal_profile
+    name: Public Personal Profile
+    kind: repository
+    repository: 4444J99/4444J99
+    public_url: https://github.com/4444J99/4444J99
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: personal_profile_carrier
+    scores: {distinct_claim_role: 2, technical_depth: 2, system_leverage: 3, reproducible_evidence: 2, current_maturity: 4, public_visibility: 5, buyer_relevance: 3}
+    weighted_total: 55
+    evidence_anchors: [{kind: repository, url: https://github.com/4444J99/4444J99, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [circular_proof_object, presentation_not_implementation]
+    exclusion_reason: "The profile routes readers to proof; using that presentation carrier as proof would be circular."
+
+  - id: padavano
+    name: Padavano
+    kind: repository
+    repository: 4444J99/padavano
+    public_url: https://github.com/4444J99/padavano
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: consulting_presentation_layer
+    scores: {distinct_claim_role: 2, technical_depth: 2, system_leverage: 2, reproducible_evidence: 2, current_maturity: 4, public_visibility: 5, buyer_relevance: 4}
+    weighted_total: 54
+    evidence_anchors: [{kind: repository, url: https://github.com/4444J99/padavano, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [presentation_not_implementation, weaker_operating_evidence]
+    exclusion_reason: "A consulting presentation layer can route buyer attention, but it is not independent implementation proof."
+
+  - id: agentic_titan
+    name: Agentic Titan
+    kind: repository
+    repository: organvm-iii-ergon/agentic-titan
+    public_url: https://github.com/organvm-iii-ergon/agentic-titan
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: agent_routing
+    scores: {distinct_claim_role: 2, technical_depth: 3, system_leverage: 4, reproducible_evidence: 2, current_maturity: 3, public_visibility: 5, buyer_relevance: 4}
+    weighted_total: 62
+    evidence_anchors: [{kind: repository, url: https://github.com/organvm-iii-ergon/agentic-titan, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [duplicate_story_role, weaker_evidence_than_limen]
+    exclusion_reason: "Duplicates Limen's orchestration role with less operating and verification evidence."
+
+  - id: ontological_function_calling
+    name: Call Function — Ontological
+    kind: repository
+    repository: organvm-iv-taxis/call-function--ontological
+    public_url: https://github.com/organvm-iv-taxis/call-function--ontological
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: ontological_function_calling
+    scores: {distinct_claim_role: 3, technical_depth: 3, system_leverage: 2, reproducible_evidence: 2, current_maturity: 3, public_visibility: 4, buyer_relevance: 2}
+    weighted_total: 53
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm-iv-taxis.github.io/call-function--ontological/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [weak_buyer_relevance, no_current_operating_receipt]
+    exclusion_reason: "Useful theory/framework context, but not a stronger production-system proof than the selected set."
+
+  - id: narratological_lenses
+    name: Narratological Algorithmic Lenses
+    kind: repository
+    repository: organvm-ii-poiesis/narratological-algorithmic-lenses
+    public_url: https://github.com/organvm-ii-poiesis/narratological-algorithmic-lenses
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: true
+    repository_maturity: active
+    story_role: computational_narrative
+    scores: {distinct_claim_role: 4, technical_depth: 4, system_leverage: 3, reproducible_evidence: 2, current_maturity: 3, public_visibility: 2, buyer_relevance: 2}
+    weighted_total: 59
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm-ii-poiesis.github.io/narratological-algorithmic-lenses/, status: fail, observed_http_status: 404}]
+    private_only_dependencies: []
+    hard_gate_failures: [stale_public_homepage, weak_buyer_relevance]
+    exclusion_reason: "Distinct creative-computation work, but the declared public proof surface is stale and buyer relevance is indirect."
+
+  - id: hokage_chess
+    name: Hokage Chess
+    kind: repository
+    repository: 4444J99/hokage-chess
+    public_url: https://github.com/4444J99/hokage-chess
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: creator_growth_blueprint
+    scores: {distinct_claim_role: 4, technical_depth: 2, system_leverage: 2, reproducible_evidence: 2, current_maturity: 3, public_visibility: 4, buyer_relevance: 2}
+    weighted_total: 52
+    evidence_anchors: [{kind: public_endpoint, url: https://4444j99.github.io/hokage-chess/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [limited_technical_depth, indirect_buyer_relevance]
+    exclusion_reason: "A public content/growth blueprint, not core production-systems evidence."
+
+  - id: micro_tato_play
+    name: Micro Tato Play
+    kind: repository
+    repository: 4444J99/micro-tato-play
+    public_url: https://github.com/4444J99/micro-tato-play
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: browser_game
+    scores: {distinct_claim_role: 4, technical_depth: 2, system_leverage: 1, reproducible_evidence: 3, current_maturity: 2, public_visibility: 4, buyer_relevance: 1}
+    weighted_total: 49
+    evidence_anchors: [{kind: public_endpoint, url: https://4444j99.github.io/micro-tato-play/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [limited_system_leverage, weak_buyer_relevance]
+    exclusion_reason: "Playable and public, but too narrow to carry the expert-positioning story."
+
+  - id: styx_art
+    name: Styx Behavioral Art
+    kind: repository
+    repository: 4444J99/styx-behavioral-art
+    public_url: https://github.com/4444J99/styx-behavioral-art
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: styx_visual_context
+    scores: {distinct_claim_role: 2, technical_depth: 2, system_leverage: 2, reproducible_evidence: 2, current_maturity: 2, public_visibility: 3, buyer_relevance: 1}
+    weighted_total: 40
+    evidence_anchors: [{kind: repository, url: https://github.com/4444J99/styx-behavioral-art, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [supporting_satellite, duplicate_styx_story]
+    exclusion_reason: "Supporting visual context for Styx; it should not displace the core system."
+
+  - id: styx_theory
+    name: Styx Behavioral Economics Theory
+    kind: repository
+    repository: 4444J99/styx-behavioral-economics-theory
+    public_url: https://github.com/4444J99/styx-behavioral-economics-theory
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: styx_theory_context
+    scores: {distinct_claim_role: 2, technical_depth: 3, system_leverage: 2, reproducible_evidence: 2, current_maturity: 2, public_visibility: 3, buyer_relevance: 2}
+    weighted_total: 46
+    evidence_anchors: [{kind: repository, url: https://github.com/4444J99/styx-behavioral-economics-theory, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [supporting_satellite, duplicate_styx_story]
+    exclusion_reason: "Supporting theory for Styx; the core implementation is the only plausible flagship."
+
+  - id: your_fit_tailored
+    name: Your Fit Tailored
+    kind: repository
+    repository: 4444J99/your-fit-tailored
+    public_url: https://github.com/4444J99/your-fit-tailored
+    source_sets: [w02_front_door_proof]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: circular_apparel_specification
+    scores: {distinct_claim_role: 4, technical_depth: 2, system_leverage: 2, reproducible_evidence: 2, current_maturity: 1, public_visibility: 4, buyer_relevance: 3}
+    weighted_total: 50
+    evidence_anchors: [{kind: public_endpoint, url: https://4444j99.github.io/your-fit-tailored/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [specification_only_maturity]
+    exclusion_reason: "A specification-first pilot package, not an operating product."
+
+  - id: portfolio
+    name: Portfolio
+    kind: repository
+    repository: organvm-vii-kerygma/portfolio
+    public_url: https://github.com/organvm-vii-kerygma/portfolio
+    source_sets: [w02_front_door_proof, current_public_source]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: proof_presentation_layer
+    scores: {distinct_claim_role: 1, technical_depth: 4, system_leverage: 4, reproducible_evidence: 5, current_maturity: 4, public_visibility: 5, buyer_relevance: 3}
+    weighted_total: 75
+    evidence_anchors: [{kind: workflow_run, url: https://github.com/organvm-vii-kerygma/portfolio/actions/runs/31369005817, status: pass}]
+    private_only_dependencies: []
+    hard_gate_failures: [circular_proof_object]
+    exclusion_reason: "The portfolio carries evidence; using the carrier as the evidence would be circular."
+
+  - id: archived_landing
+    name: Legacy Root Landing Page
+    kind: repository
+    repository: organvm/4444J99.github.io
+    public_url: https://github.com/organvm/4444J99.github.io
+    source_sets: [legacy_entry_point]
+    status: excluded
+    eligible: false
+    stale: true
+    repository_maturity: archived
+    story_role: legacy_landing_page
+    scores: {distinct_claim_role: 1, technical_depth: 1, system_leverage: 1, reproducible_evidence: 2, current_maturity: 0, public_visibility: 4, buyer_relevance: 1}
+    weighted_total: 28
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm.github.io/4444J99.github.io/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [archived_repository, superseded_surface]
+    exclusion_reason: "Archived and superseded; a reachable legacy page is not current proof."
+
+  - id: recursive_engine
+    name: Recursive Engine — Generative Entity
+    kind: repository
+    repository: organvm/recursive-engine--generative-entity
+    public_url: https://github.com/organvm/recursive-engine--generative-entity
+    source_sets: [current_public_entry_point]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: symbolic_recursive_system
+    scores: {distinct_claim_role: 4, technical_depth: 4, system_leverage: 3, reproducible_evidence: 3, current_maturity: 3, public_visibility: 4, buyer_relevance: 2}
+    weighted_total: 67
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm.github.io/recursive-engine--generative-entity/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [indirect_buyer_relevance, weaker_operating_evidence]
+    exclusion_reason: "Strong theoretical context, but weaker as production and buyer proof than the selected systems."
+
+  - id: metasystem_master
+    name: Metasystem Master
+    kind: repository
+    repository: organvm/metasystem-master
+    public_url: https://github.com/organvm/metasystem-master
+    source_sets: [current_public_entry_point]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: realtime_creative_performance_system
+    scores: {distinct_claim_role: 5, technical_depth: 5, system_leverage: 3, reproducible_evidence: 3, current_maturity: 3, public_visibility: 4, buyer_relevance: 2}
+    weighted_total: 74
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm.github.io/metasystem-master/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [no_current_ci_receipt, indirect_buyer_relevance]
+    exclusion_reason: "A valuable creative-systems proof candidate, but it lacks a reviewed current CI/operation receipt."
+
+  - id: public_process
+    name: Public Process
+    kind: repository
+    repository: organvm-vi-koinonia/public-process
+    public_url: https://github.com/organvm-vi-koinonia/public-process
+    source_sets: [current_public_entry_point]
+    status: excluded
+    eligible: false
+    stale: false
+    repository_maturity: active
+    story_role: public_methodology
+    scores: {distinct_claim_role: 2, technical_depth: 3, system_leverage: 4, reproducible_evidence: 4, current_maturity: 4, public_visibility: 5, buyer_relevance: 3}
+    weighted_total: 70
+    evidence_anchors: [{kind: public_endpoint, url: https://organvm-vi-koinonia.github.io/public-process/, status: pass, observed_http_status: 200}]
+    private_only_dependencies: []
+    hard_gate_failures: [methodology_not_system_proof]
+    exclusion_reason: "A method and distribution surface; it should interpret proof, not stand in for a production system."
