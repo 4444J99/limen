@@ -1,6 +1,6 @@
 ---
 type: prompt-relay-envelope
-version: 2.0
+version: 3.0
 date: 2026-08-12
 from: Codex direct-session reversible preflight
 to: next authorized PSP-C11 conductor or correctly assigned leaf
@@ -30,20 +30,21 @@ compression_level: medium
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `0cf4df41b1220c2476ba69f5143cb1c97f940be3` |
-| Exact remote implementation checkpoint | `origin/codex/psp-c11-governed-foundry-preflight` at `0cf4df41b1220c2476ba69f5143cb1c97f940be3` before this relay-only commit |
+| Exact implementation head | `db88cb9c892e42bde0a9213248c09eb61bb2a299` |
+| Exact remote checkpoint | Final relay-containing head is pinned in draft PR #2319 because this tracked relay cannot self-name its containing commit |
 | Pull request | Draft PR #2319, base `main`; no merge requested or performed |
 | Working tree | Clean at the implementation checkpoint; this relay is the only planned subsequent file |
 | Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
 | Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
 | Model assignment parity | `--verify-model-assignments`: all 127 objects valid; C11 Sol/max and all nine leaf pairs unchanged |
-| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `ba8dab7821b420cdc46c9129f96e91c908e01e93`, not closed |
+| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `620ae2e87131cb871f73b8c0f230d20f9883d85c`, not closed |
 | C03 checkpoint | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
 | Live ready-work | No C11/P13 leaf is ready |
 | Candidate census | Two identical passes: 10 organizations, 317 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
 | Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 60 diligence-required, 2 archived; 0 transfer-eligible |
-| Synthetic drills | Five operator routes and five access decisions passed; invented records only; no simulated human acceptance or external effect; owner custody unchanged |
+| Generated comparison | 62 classifications and 62 non-binding decision records; 54 public comparisons, 8 private classifications withheld, 0 transfer-eligible |
+| Synthetic drills | Five operator routes, five access decisions, and five rollback cases passed; invented records only; no simulated human acceptance or external effect; owner custody unchanged |
 | Acceptance condition | Preflight met; every formal W01-W09 acceptance and P13 exit predicate remains open |
 | Task-specific predicate | Intentionally not run for any leaf because no leaf is ready, leased, or receipt-backed |
 | Phase exit proof | Not run; P13 cannot close without all children and an observed transfer or evidence-backed no-go decision |
@@ -52,7 +53,7 @@ compression_level: medium
 ## Exact predicate receipts
 
 All commands below passed against implementation head
-`0cf4df41b1220c2476ba69f5143cb1c97f940be3` unless noted otherwise.
+`db88cb9c892e42bde0a9213248c09eb61bb2a299` unless noted otherwise.
 
 | Predicate | Result |
 | --- | --- |
@@ -61,7 +62,10 @@ All commands below passed against implementation head
 | `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v2 contract, snapshot, exact dependency heads, assignments, gates, structures, and drills valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, return/governance replay, zero external effects |
 | `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-12T20:14:01Z; full tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c`; leak count 0 |
-| `python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight` | 16 passed |
+| `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld |
+| `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `d432e5c271504bcc13fd3cb9bbb94e5366549ec1063889ad8c319864aa41864e` |
+| `python3 -B scripts/positioning-foundry-handoff.py --drills --json` | pass; five rollback cases, zero external effects, owner custody unchanged |
+| Combined focused tests | 25 passed |
 | Ruff | pass |
 | `scripts/verify-scoped.sh` | passed all 7 implicated gates |
 | `git diff --cached --check` | pass before implementation commit |
@@ -80,8 +84,16 @@ this preflight package, not a leaf completion.
 - Added the operator profile/scorecard, diligence checklist, economics and transfer floors,
   park/kill rules, five structure/return options, staged access pipeline, blank bounded-pilot
   charter, telemetry/cadence, return workflow, and institutional review templates.
-- Added an executable validator, 12 focused tests, and synthetic operator/access/return/governance
-  drills.
+- Reapplied the accepted C02 taxonomy to every public candidate while withholding all private
+  classification detail.
+- Generated one deterministic, non-binding decision record per candidate with evidence,
+  readiness, economics, no-go codes, next action, gates, and owner custody unchanged.
+- Added exact authority and private-evidence contracts that deny contact, disclosure, credentials,
+  terms, spend, publication, deployment, and transfer during preflight.
+- Added five executable rollback cases covering evidence, security, custody, operator, and
+  downside-economics failures with zero external effects.
+- Retained the base validator and synthetic operator/access/return/governance drills; the combined
+  base plus handoff focused suite now contains 25 tests.
 - Restricted snapshot sources to the two accepted C02 inventory inputs; the P02 closure receipt is
   dependency evidence, not candidate data.
 
