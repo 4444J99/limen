@@ -1,0 +1,266 @@
+{
+  "schema": "limen.psp-p02-w08-live-profile-formalization.v1",
+  "work_id": "PSP-P02-W08",
+  "generated_at": "2026-08-10T19:21:11Z",
+  "formalized_at": "2026-08-12T11:49:45Z",
+  "verdict": "formal_ready_projection_pending",
+  "formal_completion": {
+    "allowed": false,
+    "readiness": "formal_ready",
+    "projection_status": "projection_pending",
+    "reason": "PSP-P02-W01 and PSP-P02-W05 are accepted and exact-head bound. W08 is formal-ready, but completion remains false until this branch merges and the 18 live issue projections pass post-merge sync and verify-remote parity.",
+    "stack_reconciled_at": "2026-08-12T11:49:45Z",
+    "dependencies": [
+      {
+        "work_id": "PSP-P02-W01",
+        "issue": "https://github.com/organvm/limen/issues/2173",
+        "issue_state": "closed",
+        "accepted_head": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2173#issuecomment-5246643968",
+        "canonical_receipt_sha256": "2928726feed64960d73b059889a39fceb318bf7bbc68c4b120d41527eaf10df6",
+        "tracked_receipt_path": "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+        "tracked_receipt_blob": "f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd"
+      },
+      {
+        "work_id": "PSP-P02-W05",
+        "issue": "https://github.com/organvm/limen/issues/2177",
+        "issue_state": "closed",
+        "accepted_head": "d8b44e60e404b044436addf8108732cc28c06371",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2177#issuecomment-5265859179",
+        "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
+        "claims_ledger_path": "docs/positioning/claims-ledger.md",
+        "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+        "flagship_evidence_path": "docs/positioning/evidence/flagship-evidence.yaml",
+        "flagship_evidence_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891"
+      }
+    ],
+    "live_reference": {
+      "issue": "https://github.com/organvm/limen/issues/1245",
+      "issue_state": "open",
+      "role": "profile-engine follow-up owner; it does not replace the post-merge projection gate"
+    },
+    "accepted_bindings_observed_at": "2026-08-12T11:49:45Z"
+  },
+  "public_profile": {
+    "repository_id": 1292733696,
+    "repository": "4444J99/4444J99",
+    "visibility": "public",
+    "default_branch": "main",
+    "head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+    "head_committed_at": "2026-08-10T08:06:01Z",
+    "head_url": "https://github.com/4444J99/4444J99/commit/f198b37e3161121e7c198e21bd18b87e29b6bc4f",
+    "readme": {
+      "blob": "b006a06c2a7e9f84166b0fd7fad638a5c36c356f",
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/README.md"
+    },
+    "stats_manifest": {
+      "blob": "668c09daab5f63882e9fd6b848ab9d0017a65ae5",
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/assets/stats-manifest.json",
+      "generated_at": "2026-08-10T08:05:30Z",
+      "rendered_values": {
+        "personal_public_repositories": 8,
+        "ecosystem_public_repositories": 227,
+        "ecosystem_original_repositories": 198,
+        "contributions_last_year": 33130,
+        "ecosystem_organizations_with_public_repositories": 9
+      }
+    },
+    "workflow": {
+      "url": "https://github.com/4444J99/4444J99/blob/f198b37e3161121e7c198e21bd18b87e29b6bc4f/.github/workflows/profile.yml",
+      "schedule": "17 6 * * *",
+      "engine_checkout_is_floating": true,
+      "engine_checkout_ref_recorded_in_manifest": false
+    }
+  },
+  "api_query_receipts": [
+    {
+      "id": "profile_metadata",
+      "source": "https://api.github.com/users/4444J99",
+      "reproduction": "gh api users/4444J99 --jq '{login,id,type,public_repos,followers,following,created_at,updated_at,blog,bio}'",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "result": {
+        "login": "4444J99",
+        "id": 24796448,
+        "type": "User",
+        "public_repos": 8,
+        "followers": 41,
+        "following": 61,
+        "created_at": "2016-12-27T17:24:06Z",
+        "updated_at": "2026-08-09T16:58:24Z",
+        "blog": "https://organvm.github.io/portfolio/"
+      }
+    },
+    {
+      "id": "public_organization_repository_counts",
+      "source": "https://docs.github.com/en/graphql/reference/orgs",
+      "query": "For every public organization membership returned by users/4444J99/orgs, read organization.repositories(privacy: PUBLIC).totalCount.",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "organization_count": 10,
+      "counts": {
+        "a-organvm": 0,
+        "meta-organvm": 1,
+        "organvm": 114,
+        "organvm-i-theoria": 11,
+        "organvm-ii-poiesis": 17,
+        "organvm-iii-ergon": 48,
+        "organvm-iv-taxis": 18,
+        "organvm-v-logos": 3,
+        "organvm-vi-koinonia": 10,
+        "organvm-vii-kerygma": 5
+      },
+      "total": 227
+    },
+    {
+      "id": "public_original_organization_repository_counts",
+      "source": "https://docs.github.com/en/graphql/reference/queries#search",
+      "query": "For every public organization membership, read search(type: REPOSITORY, query: 'org:<slug> fork:false is:public').repositoryCount.",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "organization_count": 10,
+      "counts": {
+        "a-organvm": 0,
+        "meta-organvm": 1,
+        "organvm": 90,
+        "organvm-i-theoria": 11,
+        "organvm-ii-poiesis": 17,
+        "organvm-iii-ergon": 48,
+        "organvm-iv-taxis": 18,
+        "organvm-v-logos": 3,
+        "organvm-vi-koinonia": 5,
+        "organvm-vii-kerygma": 5
+      },
+      "total": 198
+    },
+    {
+      "id": "contribution_calendar_fresh_observation",
+      "source": "https://docs.github.com/en/graphql/reference/users#contributioncalendar",
+      "reproduction": "gh api graphql -f query='query { user(login:\"4444J99\") { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount date } } } } } }'",
+      "observed_at": "2026-08-10T19:14:05Z",
+      "result": {
+        "starts_at": "2025-08-10",
+        "ends_at": "2026-08-10",
+        "total_contributions": 33168,
+        "sum_of_daily_counts": 33168
+      },
+      "interpretation": "The fresh value differs from the generated manifest because a trailing-year contribution calendar is a moving observation. Token and private-contribution visibility must travel with any published count."
+    },
+    {
+      "id": "w01_public_safe_census",
+      "source": "https://github.com/organvm/limen/blob/10cf8476d5e88309c71d5fac25167ec7b7af59c4/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "reproduction": "git show 10cf8476d5e88309c71d5fac25167ec7b7af59c4:docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "observed_at": "2026-08-10T14:13:06Z",
+      "result": {
+        "organization_count": 10,
+        "accessible_repository_count": 314,
+        "public_repository_count": 235,
+        "private_repository_count": 79,
+        "profile_basis_reconciliation": "8 personal public repositories + 227 public organization repositories = 235 public repositories"
+      },
+      "privacy": "Private repository names are omitted."
+    }
+  ],
+  "http_receipts": [
+    {
+      "id": "current_profile_blog_field",
+      "url": "https://organvm.github.io/portfolio/",
+      "status": 404,
+      "observed_at": "2026-08-10T19:14:05Z",
+      "reproduction": "curl --fail --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code} %{url_effective}\\n' https://organvm.github.io/portfolio/"
+    },
+    {
+      "id": "canonical_transferred_portfolio_pages",
+      "url": "https://organvm-vii-kerygma.github.io/portfolio/",
+      "status": 200,
+      "observed_at": "2026-08-10T19:14:05Z",
+      "reproduction": "curl --fail --silent --show-error --location --max-time 20 --output /dev/null --write-out '%{http_code} %{url_effective}\\n' https://organvm-vii-kerygma.github.io/portfolio/"
+    }
+  ],
+  "daily_generation_receipt": {
+    "window_start": "2026-08-03T10:06:46Z",
+    "window_end": "2026-08-10T08:06:06Z",
+    "scheduled_runs_observed": 8,
+    "successful_runs": 8,
+    "runs": [
+      {"run_id": 31368535222, "url": "https://github.com/4444J99/4444J99/actions/runs/31368535222", "created_at": "2026-08-10T08:05:20Z", "event": "schedule", "conclusion": "success", "resulting_head": "f198b37e3161121e7c198e21bd18b87e29b6bc4f"},
+      {"run_id": 31300809491, "url": "https://github.com/4444J99/4444J99/actions/runs/31300809491", "created_at": "2026-08-09T07:17:29Z", "event": "schedule", "conclusion": "success", "resulting_head": "aca01aeac520ab3ca6c2c8f38c41109b6f276818"},
+      {"run_id": 31245797888, "url": "https://github.com/4444J99/4444J99/actions/runs/31245797888", "created_at": "2026-08-08T07:16:32Z", "event": "schedule", "conclusion": "success", "resulting_head": "c02ce0cdeeb68e217a369e126d6d59df119213db"},
+      {"run_id": 31158741886, "url": "https://github.com/4444J99/4444J99/actions/runs/31158741886", "created_at": "2026-08-07T07:42:50Z", "event": "schedule", "conclusion": "success", "resulting_head": "9314f463b23635e7361f084133cabc0ed7ab2a91"},
+      {"run_id": 31087768149, "url": "https://github.com/4444J99/4444J99/actions/runs/31087768149", "created_at": "2026-08-06T09:07:37Z", "event": "schedule", "conclusion": "success", "resulting_head": "44d9e702e85cde48f7ca3307472cdaefedb692f3"},
+      {"run_id": 30991871145, "url": "https://github.com/4444J99/4444J99/actions/runs/30991871145", "created_at": "2026-08-05T09:06:48Z", "event": "schedule", "conclusion": "success", "resulting_head": "c33bc86e64ca73869481d0fdbd4586a85078aaad"},
+      {"run_id": 30895089335, "url": "https://github.com/4444J99/4444J99/actions/runs/30895089335", "created_at": "2026-08-04T09:09:39Z", "event": "schedule", "conclusion": "success", "resulting_head": "f410271bd64fcad6c56b07cd7a1238a55cb6be85"},
+      {"run_id": 30804228187, "url": "https://github.com/4444J99/4444J99/actions/runs/30804228187", "created_at": "2026-08-03T10:06:46Z", "event": "schedule", "conclusion": "success", "resulting_head": "9b70fd8520e5f752c62d23807f8be9fdba388c10"}
+    ],
+    "bounded_interpretation": "Eight consecutive successful scheduled runs establish active daily regeneration in this window. They do not establish zero maintenance, perpetual availability, or an SLO."
+  },
+  "lavrea_baseline": {
+    "repository": "organvm/laurea",
+    "visibility": "public",
+    "head": "02e360c9828336ac95ce8223c65d127ffea27661",
+    "methodology": {
+      "blob": "b671568236f386041a416d28964b50820249ac2a",
+      "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md"
+    },
+    "baselines": {
+      "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
+      "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py"
+    },
+    "primary_population_source": "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/",
+    "source_audit_verdict": "GitHub's official 100M-account observation establishes platform scale, not the 5,000/20,000 contribution, 50/200 repository, language, pull-request, or organization percentile thresholds. The cited third-party leaderboards and unspecified analyses do not make those thresholds primary-source percentile facts.",
+    "privacy_verdict": "The historical metrics snapshot is excluded as an evidence source because its token-conditioned repository inventory is not a public-safe basis. Use W01's aggregate receipt for public counts and keep all private names out of W05 integration."
+  },
+  "portfolio_repository_identity": {
+    "github_repository_id": 1155412125,
+    "node_id": "R_kgDORN4wnQ",
+    "canonical_slug": "organvm-vii-kerygma/portfolio",
+    "visibility": "public",
+    "default_branch": "main",
+    "archived": false,
+    "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+    "head_url": "https://github.com/organvm-vii-kerygma/portfolio/commit/85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+    "source": "https://api.github.com/repositories/1155412125",
+    "observed_at": "2026-08-10T19:21:11Z",
+    "registry_disposition": "canonical_owner_corrected_by_stable_repository_id",
+    "projection_refresh_performed": false,
+    "projection_status": "projection_pending",
+    "projection_refresh_reason": "Projection remains reserved for post-merge sync and verify-remote parity; this formalization lane does not mutate live issue bodies.",
+    "live_issue_bodies_requiring_refresh": [
+      {"work_id": "PSP-P06-W01", "issue": 2205},
+      {"work_id": "PSP-P06-W02", "issue": 2206},
+      {"work_id": "PSP-P06-W03", "issue": 2207},
+      {"work_id": "PSP-P06-W04", "issue": 2208},
+      {"work_id": "PSP-P06-W05", "issue": 2209},
+      {"work_id": "PSP-P06-W06", "issue": 2210},
+      {"work_id": "PSP-P06-W07", "issue": 2211},
+      {"work_id": "PSP-P07-W03", "issue": 2215},
+      {"work_id": "PSP-P07-W04", "issue": 2216},
+      {"work_id": "PSP-P07-W08", "issue": 2220},
+      {"work_id": "PSP-P08-W02", "issue": 2224},
+      {"work_id": "PSP-P09-W02", "issue": 2232},
+      {"work_id": "PSP-P09-W03", "issue": 2233},
+      {"work_id": "PSP-P09-W04", "issue": 2234},
+      {"work_id": "PSP-P09-W05", "issue": 2235},
+      {"work_id": "PSP-P09-W06", "issue": 2236},
+      {"work_id": "PSP-P10-W04", "issue": 2243},
+      {"work_id": "PSP-P12-W04", "issue": 2261}
+    ],
+    "confirmed_private_target_changed": false
+  },
+  "claims_ledger_integration": {
+    "ledger_edited_in_this_lane": false,
+    "accepted_by": "PSP-P02-W05",
+    "accepted_head": "d8b44e60e404b044436addf8108732cc28c06371",
+    "accepted_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+    "accepted_url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/claims-ledger.md",
+    "marked_receipt": "https://github.com/organvm/limen/issues/2177#issuecomment-5265859179",
+    "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
+    "claim_projection": "exact_match_13_claims_four_layers_and_publishable_fields",
+    "integration_artifact": "docs/positioning/program/research-adjudication.json",
+    "accepted_projection": "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import",
+    "accepted_projection_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891"
+  },
+  "privacy_review": {
+    "public_only": true,
+    "private_repository_names": 0,
+    "private_only_sources": 0,
+    "rule": "Only public heads, public API aggregates, public issue states, public URLs, and redacted W01 aggregate counts appear in this receipt."
+  }
+}
