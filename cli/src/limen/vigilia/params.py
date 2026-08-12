@@ -9,15 +9,16 @@ in-code default (the organ degrades, it never crashes the beat).
 
 from __future__ import annotations
 
+import importlib
 import os
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 
-yaml: Any = None
+yaml: Any
 try:
-    import yaml as yaml
+    yaml = importlib.import_module("yaml")
 except ModuleNotFoundError:  # standalone/launchd Python may not carry PyYAML
-    pass
+    yaml = None
 
 _PANEL_REL = ("institutio", "governance", "parameters.yaml")
 
