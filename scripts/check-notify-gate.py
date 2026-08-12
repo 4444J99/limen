@@ -67,6 +67,7 @@ import argparse
 import ast
 import json
 import re
+import shlex
 import subprocess
 import sys
 import time
@@ -573,7 +574,13 @@ def _shell_bypasses(path: Path) -> bool:
         # Shell accepts arbitrary non-NUL bytes. We cannot prove the source is harmless, so
         # represent undecodable content as a finding and let the estate predicate fail closed.
         return True
-    executable = "\n".join(line.split("#", 1)[0] for line in text.splitlines())
+    try:
+        lexer = shlex.shlex(text, posix=True)
+        lexer.whitespace_split = True
+        lexer.commenters = "#"
+        executable = " ".join(lexer)
+    except ValueError:
+        return True
     return bool(re.search(r"\bosascript\b", executable, re.IGNORECASE)) and bool(
         re.search(r"\bdisplay\s+notification\b", executable, re.IGNORECASE)
     )

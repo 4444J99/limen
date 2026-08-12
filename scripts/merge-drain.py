@@ -372,7 +372,9 @@ def main():
     allprs = list(enumeration.rows)
     enumeration_complete = bool(enumeration.success and enumeration.complete)
     if not allprs:
-        print("[merge-drain] no open PRs (or gh unavailable)")
+        if enumeration_complete and not a.dry_run:
+            reconcile_ci_red_subjects([], [], enumeration_complete=True)
+        print("[merge-drain] no open PRs" if enumeration.success else "[merge-drain] PR enumeration unavailable")
         return
     prs = rotating_window(allprs, a.scan, str(ROOT / "logs" / ".pr-scan-cursor.merge"), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
@@ -409,9 +411,8 @@ def main():
         identity = str(subject["identity"])
         head = str(subject["head"])
         checks = ", ".join(str(name) for name in subject["checks"]) or "required check names unavailable"
-        _notify.notify_once(
+        _notify.notify(
             ROOT,
-            f"merge-drain-ci-red:{identity}@{head}",
             f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
             title="LIMEN merge drain",
         )
