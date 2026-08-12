@@ -9,6 +9,7 @@ LIMEN_NTFY_TOPIC is set, an ntfy.sh push to your phone. Idempotent: fires at mos
 logs/.conducting-report-state.json); --force re-emits now. Fail-open: a missing/torn feed prints what it
 can and never crashes the beat. Read-only on the fleet's data; writes only its own state file.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,9 +31,7 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
 STATE = LOGS / ".conducting-report-state.json"
 HANDOFF = LOGS / "handoff.json"
 CONTINUITY = LOGS / "dispatch-continuity.json"
-ROUTING_REASONS = frozenset(
-    {"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"}
-)
+ROUTING_REASONS = frozenset({"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"})
 TELEMETRY_MAX_AGE_SECONDS = 5400
 
 
@@ -142,11 +141,7 @@ def _routing_reason(
     raw_down_lanes = admission.get("down_lanes")
     if not isinstance(raw_down_lanes, (list, tuple, set)):
         raw_down_lanes = provider_headroom.get("down_lanes", [])
-    down_lanes = {
-        str(lane).strip().lower().replace("-", "_")
-        for lane in raw_down_lanes
-        if str(lane).strip()
-    }
+    down_lanes = {str(lane).strip().lower().replace("-", "_") for lane in raw_down_lanes if str(lane).strip()}
     if admissible > 0 or admission.get("dispatchable_next"):
         if target_providers is None:
             lane_counts = admission.get("admissible_agent_counts")
@@ -190,16 +185,13 @@ def _routing_reason(
         down_detail = f"; live down lanes={','.join(sorted(down_lanes))}" if down_lanes else ""
         return (
             "admission_blocked",
-            f"admissible={admissible} globally but none target idle providers"
-            f"{down_detail}; {continuity}",
+            f"admissible={admissible} globally but none target idle providers{down_detail}; {continuity}",
         )
 
     reasons = admission.get("reason_counts")
     reasons = reasons if isinstance(reasons, dict) else {}
     target_names = {
-        str(name).strip().lower().replace("-", "_")
-        for name in (target_providers or set())
-        if str(name).strip()
+        str(name).strip().lower().replace("-", "_") for name in (target_providers or set()) if str(name).strip()
     }
     if target_providers is not None:
         # Handoff admission preserves the effective provider for each gated row.  Use only
@@ -224,42 +216,67 @@ def _routing_reason(
     vendors = provider_headroom.get("vendors", {}) if isinstance(provider_headroom, dict) else {}
     blocked_counts = admission.get("provider_health_reason_counts")
     blocked_counts = blocked_counts if isinstance(blocked_counts, dict) else {}
-    blocked_providers = {
-        str(name)
-        for name, count in blocked_counts.items()
-        if _safe_count(count)
-    }
+    blocked_providers = {str(name) for name, count in blocked_counts.items() if _safe_count(count)}
     if target_providers is not None:
         blocked_providers = {
-            name
-            for name in blocked_providers
-            if name.strip().lower().replace("-", "_") in target_names
+            name for name in blocked_providers if name.strip().lower().replace("-", "_") in target_names
         }
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
         for name, row in vendors.items()
         if str(name) in blocked_providers and isinstance(row, dict)
     }
-    if explicit_auth_block or provider_health_block and provider_states & {
-        "auth_needed",
-        "auth_blocked",
-        "unauthenticated",
-    }:
+    if (
+        explicit_auth_block
+        or provider_health_block
+        and provider_states
+        & {
+            "auth_needed",
+            "auth_blocked",
+            "unauthenticated",
+        }
+    ):
         reason = "auth_blocked"
     else:
         capacity_keys = {"budget_global", "budget_agent", "provider_health", "capacity"}
         reason = "capacity_blocked" if reason_keys and reason_keys <= capacity_keys else "admission_blocked"
     detail = f"open={open_considered}; gates=" + (
-        ",".join(f"{key}={active_reasons[key]}" for key in sorted(active_reasons))
-        if active_reasons
-        else "board_empty"
+        ",".join(f"{key}={active_reasons[key]}" for key in sorted(active_reasons)) if active_reasons else "board_empty"
     )
     return reason, f"{detail}; {continuity}"
+
 
 def _local_day(now: datetime | None = None) -> str:
     """Daily dedupe follows the host's local calendar, not a UTC usage timestamp."""
     instant = now or datetime.now().astimezone()
     return instant.date().isoformat()
+
+
+def _named_blocked_task(task_id: str, now: datetime | None = None) -> str | None:
+    """Return admission truth for a named task without promoting it to 'next'."""
+    handoff = _load(HANDOFF, None)
+    instant = now or datetime.now(timezone.utc)
+    if not isinstance(handoff, dict) or not _fresh_timestamp(handoff, instant):
+        return None
+    admission = handoff.get("dispatch_admission")
+    rows = admission.get("gated_tasks") if isinstance(admission, dict) else None
+    if not isinstance(rows, list):
+        return None
+    row = next(
+        (item for item in rows if isinstance(item, dict) and item.get("id") == task_id),
+        None,
+    )
+    if row is None:
+        return None
+    reason = str(row.get("reason") or "admission_blocked")
+    agent = str(row.get("agent") or "any")
+    if reason == "auth_blocked":
+        status = "auth_blocked"
+    elif reason in {"provider_health", "budget_agent", "budget_global", "capacity"}:
+        status = "capacity_blocked"
+    else:
+        status = "admission_blocked"
+    return f"{task_id}: {status} ({agent}; gate={reason})"
 
 
 def _value_verdict() -> str | None:
@@ -275,10 +292,14 @@ def _discovery_count() -> int:
     """Open value-discovery tasks (cheap YAML scan; fail-open to 0)."""
     try:
         import yaml
+
         data = yaml.safe_load(TASKS.read_text()) or {}
         tasks = data.get("tasks", []) if isinstance(data, dict) else (data or [])
-        return sum(1 for t in tasks if isinstance(t, dict)
-                   and t.get("status") == "open" and str(t.get("id", "")).startswith("DISCOVER-"))
+        return sum(
+            1
+            for t in tasks
+            if isinstance(t, dict) and t.get("status") == "open" and str(t.get("id", "")).startswith("DISCOVER-")
+        )
     except Exception:
         return 0
 
@@ -319,9 +340,7 @@ def build_report() -> tuple[str, str, str, str]:
             idle += 1
             idle_providers.add(str(name))
         lines.append(f"  {name:9} {verdict}")
-    routing_reason, routing_detail = _routing_reason(
-        target_providers=idle_providers if idle_providers else None
-    )
+    routing_reason, routing_detail = _routing_reason(target_providers=idle_providers if idle_providers else None)
     disc = _discovery_count()
     tracked = burned + idle
     # Actionable admission truth outranks the burn-rate summary: an idle lane with admitted
@@ -341,6 +360,9 @@ def build_report() -> tuple[str, str, str, str]:
     body = f"Conducting report {day}\n{headline}\n  routing: {routing_reason} — {routing_detail}\n"
     if value:
         body += f"  value: {value}\n"
+    corpus_state = _named_blocked_task("CONST-CORPUS-REFRESH")
+    if corpus_state:
+        body += f"  task: {corpus_state}\n"
     body += "\n".join(lines)
     return headline, body, day, routing_reason
 

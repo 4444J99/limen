@@ -76,6 +76,7 @@ def _handoff(
     blocked_providers: dict[str, int] | None = None,
     admissible_agents: dict[str, int] | None = None,
     admissible_any_agents: dict[str, int] | None = None,
+    gated_tasks: list[dict[str, str]] | None = None,
 ):
     logs.mkdir(exist_ok=True)
     payload = {
@@ -100,6 +101,7 @@ def _handoff(
                 admissible_agents if admissible_agents is not None else ({"codex": admissible} if admissible else {})
             ),
             "admissible_any_agent_counts": (admissible_any_agents if admissible_any_agents is not None else {}),
+            "gated_tasks": gated_tasks or [],
             "dispatchable_next": {"id": "TASK-1", "target_agent": "codex"} if admissible else None,
         },
         "provider_headroom": {
@@ -110,6 +112,46 @@ def _handoff(
         },
     }
     (logs / "handoff.json").write_text(json.dumps(payload), encoding="utf-8")
+
+
+def test_corpus_refresh_is_reported_capacity_blocked_not_next_or_unroutable(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(
+        logs,
+        reasons={"provider_health": 1},
+        provider_states={"claude": "exhausted"},
+        blocked_providers={"claude": 1},
+        gated_tasks=[
+            {
+                "id": "CONST-CORPUS-REFRESH",
+                "agent": "claude",
+                "reason": "provider_health",
+            }
+        ],
+    )
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "vendors": {
+                    "claude": {
+                        "headroom_pct": 100,
+                        "reserve_pct": 15,
+                        "consumed": 0,
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "tasks.yaml").write_text("tasks: []\n", encoding="utf-8")
+
+    headline, body, _day, reason = module.build_report()
+
+    assert reason == "capacity_blocked"
+    assert "CONST-CORPUS-REFRESH: capacity_blocked (claude; gate=provider_health)" in body
+    assert "next" not in body.lower()
+    assert "unroutable" not in headline.lower() + body.lower()
 
 
 def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monkeypatch):
@@ -402,6 +444,7 @@ def test_autonomy_pause_marker_blocks_routing_even_with_admitted_work(tmp_path, 
     assert reason == "admission_blocked"
     assert detail == "autonomy pause marker is present"
 
+
 def test_keeper_load_failure_cannot_render_as_empty_board(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
@@ -415,4 +458,3 @@ def test_keeper_load_failure_cannot_render_as_empty_board(tmp_path, monkeypatch)
 
     assert reason == "keeper_unavailable"
     assert "board unavailable" in detail
-

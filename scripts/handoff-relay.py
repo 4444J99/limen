@@ -66,10 +66,12 @@ _HOLD_LABEL_REASONS = {
 
 # These are control-plane failure sentinels, not provider identities. Treating them as
 # unknown-but-healthy providers would turn a failed route derivation into dispatchable work.
-_PLAN_BUILDER_SENTINELS = frozenset({
-    "__plan_builder_invalid__",
-    "__plan_builder_unavailable__",
-})
+_PLAN_BUILDER_SENTINELS = frozenset(
+    {
+        "__plan_builder_invalid__",
+        "__plan_builder_unavailable__",
+    }
+)
 
 HANDOFF = ROOT / "logs" / "handoff.json"
 TASKS = Path(os.environ.get("LIMEN_TASKS") or ROOT / "tasks.yaml")
@@ -262,9 +264,7 @@ def _provider_headroom() -> dict[str, Any]:
                     # reachability result so the any-task roster cannot route into a missing binary,
                     # workflow, or unauthenticated hosted lane.
                     try:
-                        projected["reachable"] = bool(
-                            agent_status(canonical_agent(str(name))).get("reachable")
-                        )
+                        projected["reachable"] = bool(agent_status(canonical_agent(str(name))).get("reachable"))
                     except Exception:
                         projected["reachable"] = False
                     vendors[str(name)] = projected
@@ -487,9 +487,7 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         return None  # unknown is not the same as measured-down
 
     down_lanes = provider_headroom.get("down_lanes")
-    if isinstance(down_lanes, (list, tuple, set)) and agent in {
-        canonical_agent(str(lane)) for lane in down_lanes
-    }:
+    if isinstance(down_lanes, (list, tuple, set)) and agent in {canonical_agent(str(lane)) for lane in down_lanes}:
         return "provider_health"
 
     # Dispatch deliberately exempts Agy's board-derived dispatch-count proxy from hard-down
@@ -499,8 +497,7 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         return None
 
     ordinary_states = {
-        str(value.get(key) or "").strip().lower().replace("-", "_")
-        for key in ("health", "state", "status")
+        str(value.get(key) or "").strip().lower().replace("-", "_") for key in ("health", "state", "status")
     }
     auth_markers = {
         "auth",
@@ -549,8 +546,7 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         terminal_classes = value.get("provider_terminal_failure_classes")
         if isinstance(terminal_classes, dict):
             outcome_states.update(
-                str(terminal).strip().lower().replace("-", "_")
-                for terminal in terminal_classes.values()
+                str(terminal).strip().lower().replace("-", "_") for terminal in terminal_classes.values()
             )
         if any(
             marker in state or "auth" in state or "credential" in state
@@ -564,7 +560,6 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
 
 def _provider_available(agent: str, provider_headroom: dict[str, Any]) -> bool:
     return _provider_block_reason(agent, provider_headroom) is None
-
 
 
 def _eligible_any_agent(task: dict[str, Any], agent: str) -> bool:
@@ -589,9 +584,7 @@ def _worktree_dispatch_gate(
     agent: str,
     snapshot: dict[str, Any],
 ) -> str | None:
-    if canonical_agent(agent) not in {
-        canonical_agent(str(candidate)) for candidate in LOCAL_CHECKOUT_AGENTS
-    }:
+    if canonical_agent(agent) not in {canonical_agent(str(candidate)) for candidate in LOCAL_CHECKOUT_AGENTS}:
         return None
     try:
         task_model = Task.model_validate(task)
@@ -643,6 +636,7 @@ def _dispatch_admission(
     reasons: Counter[str] = Counter()
     reason_counts_by_agent: dict[str, Counter[str]] = {}
     provider_health_reasons: Counter[str] = Counter()
+    gated_tasks: list[dict[str, str]] = []
 
     def record_reason(agent_name: str, reason_name: str) -> None:
         key = canonical_agent(str(agent_name)) if str(agent_name).strip() else "any"
@@ -681,8 +675,7 @@ def _dispatch_admission(
             governed_agents.update(
                 candidate_agent
                 for task in tasks
-                if task.get("status") == "open"
-                and (candidate_agent := _effective_task_agent(task)) not in {"", "any"}
+                if task.get("status") == "open" and (candidate_agent := _effective_task_agent(task)) not in {"", "any"}
             )
             for candidate_agent in sorted(governed_agents):
                 try:
@@ -703,10 +696,7 @@ def _dispatch_admission(
         candidate_agent = _effective_task_agent(task)
         if candidate_agent not in {"", "any"}:
             reachability_agents.add(candidate_agent)
-    lane_reachability = {
-        agent: _lane_reachable(agent, provider_headroom)
-        for agent in sorted(reachability_agents)
-    }
+    lane_reachability = {agent: _lane_reachable(agent, provider_headroom) for agent in sorted(reachability_agents)}
     for task in tasks:
         if task.get("status") != "open":
             continue
@@ -767,6 +757,13 @@ def _dispatch_admission(
             reason = "execution_requirements"
         if reason is not None:
             reasons[reason] += 1
+            gated_tasks.append(
+                {
+                    "id": str(task.get("id") or ""),
+                    "agent": agent or "any",
+                    "reason": reason,
+                }
+            )
             if reason == "budget_global" and agent == "any":
                 for candidate_agent in known_agents:
                     record_reason(candidate_agent, reason)
@@ -781,14 +778,11 @@ def _dispatch_admission(
             for candidate_agent in known_agents:
                 candidate_budget = per_agent.get(candidate_agent) if isinstance(per_agent, dict) else None
                 candidate_remaining = (
-                    _as_int(candidate_budget.get("remaining"))
-                    if isinstance(candidate_budget, dict)
-                    else None
+                    _as_int(candidate_budget.get("remaining")) if isinstance(candidate_budget, dict) else None
                 )
                 governed = governed_remaining.get(candidate_agent)
-                if (
-                    (candidate_remaining is not None and cost > candidate_remaining)
-                    or (governed is not None and cost > governed)
+                if (candidate_remaining is not None and cost > candidate_remaining) or (
+                    governed is not None and cost > governed
                 ):
                     any_blockers["budget_agent"] += 1
                     record_reason(candidate_agent, "budget_agent")
@@ -824,12 +818,21 @@ def _dispatch_admission(
             if eligible_any_agents == 0:
                 # Preserve the strongest observed cause so conducting-report can distinguish
                 # auth/capacity blocks from a genuinely unavailable capability route.
+                selected_blocker = "admission_blocked"
                 for blocker in ("auth_blocked", "provider_health", "budget_agent", "admission_blocked"):
                     if any_blockers.get(blocker):
                         reasons[blocker] += 1
+                        selected_blocker = blocker
                         break
                 else:
                     reasons["admission_blocked"] += 1
+                gated_tasks.append(
+                    {
+                        "id": str(task.get("id") or ""),
+                        "agent": "any",
+                        "reason": selected_blocker,
+                    }
+                )
                 continue
         candidates.append(task)
         admissible_agents[agent or "any"] += 1
@@ -850,13 +853,13 @@ def _dispatch_admission(
         "gated": open_count - len(candidates),
         "reason_counts": dict(sorted(reasons.items())),
         "reason_counts_by_agent": {
-            agent: dict(sorted(counts.items()))
-            for agent, counts in sorted(reason_counts_by_agent.items())
+            agent: dict(sorted(counts.items())) for agent, counts in sorted(reason_counts_by_agent.items())
         },
         "provider_health_reason_counts": dict(sorted(provider_health_reasons.items())),
         "down_lanes": sorted(down_lanes),
         "admissible_agent_counts": dict(sorted(admissible_agents.items())),
         "admissible_any_agent_counts": dict(sorted(admissible_any_agents.items())),
+        "gated_tasks": sorted(gated_tasks, key=lambda row: (row["id"], row["agent"])),
         "dispatchable_next": _task_summary(top) if top else None,
     }
 

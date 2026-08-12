@@ -44,13 +44,7 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
 POLICY = ROOT / "scripts" / "merge-policy.sh"
-# Hysteresis for the CI-RED onset notification: the drain beat assesses only a rotating
-# --scan slice of the open-PR universe, so a single zero-CI-RED beat can be window rotation
-# rather than recovery. An immediate clear re-arms the notification and the next red slice
-# re-fires for one continuous episode (measured 2026-08-09: six CI-RED notifications in ~24h
-# over a persistently red fleet). The clear only completes after the window stays clean for
-# this many seconds (default 2h); a returning onset cancels the pending clear without re-firing.
-CI_RED_CLEAR_COOLDOWN = int(os.environ.get("LIMEN_MERGE_CI_RED_COOLDOWN", "7200"))
+CI_RED_LEDGER = ROOT / "logs" / "merge-drain-ci-red-ledger.json"
 LIFECYCLE_LABELS = frozenset(
     {
         "lifecycle:delivery",
@@ -109,6 +103,93 @@ def lifecycle_disposition(labels) -> str | None:
     return next(iter(matches)) if len(matches) == 1 else None
 
 
+def _failing_required_checks(repo: str, num: int) -> tuple[str, ...]:
+    result = gh(
+        [
+            "pr",
+            "checks",
+            str(num),
+            "-R",
+            repo,
+            "--required",
+            "--json",
+            "name,bucket,state",
+        ],
+        timeout=40,
+    )
+    if result.returncode != 0:
+        return ()
+    try:
+        rows = json.loads(result.stdout)
+    except (TypeError, ValueError):
+        return ()
+    return tuple(
+        sorted(
+            str(row.get("name"))
+            for row in rows
+            if isinstance(row, dict)
+            and str(row.get("bucket") or row.get("state") or "").lower()
+            in {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
+            and row.get("name")
+        )
+    )
+
+
+def _load_ci_red_ledger() -> dict[str, dict[str, object]]:
+    try:
+        value = json.loads(CI_RED_LEDGER.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError):
+        return {}
+    subjects = value.get("subjects") if isinstance(value, dict) else None
+    return subjects if isinstance(subjects, dict) else {}
+
+
+def _save_ci_red_ledger(subjects: dict[str, dict[str, object]]) -> None:
+    CI_RED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+    temporary = CI_RED_LEDGER.with_suffix(".tmp")
+    temporary.write_text(
+        json.dumps({"schema_version": "limen.ci_red_subjects.v1", "subjects": subjects}, indent=2, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
+    os.chmod(temporary, 0o600)
+    os.replace(temporary, CI_RED_LEDGER)
+
+
+def reconcile_ci_red_subjects(
+    rows: list[tuple],
+    enumerated: list[tuple[str, int]],
+    *,
+    enumeration_complete: bool,
+    persist: bool = True,
+) -> list[dict[str, object]]:
+    """Track exact red heads; rotating-window omission is never recovery evidence."""
+    subjects = _load_ci_red_ledger()
+    newly_red: list[dict[str, object]] = []
+    green_statuses = {"READY", "BLOCKED", "STALE-CORE", "STALE-BASE", "TRIVIAL"}
+    for row in rows:
+        repo, num, status = str(row[0]), int(row[1]), str(row[2])
+        identity = f"{repo}#{num}"
+        if status == "CI-RED":
+            head = str(row[3]) if len(row) > 3 else ""
+            checks = list(row[4]) if len(row) > 4 else []
+            previous = subjects.get(identity)
+            current = {"head": head, "checks": checks}
+            if not isinstance(previous, dict) or previous.get("head") != head:
+                newly_red.append({"identity": identity, **current})
+            subjects[identity] = current
+        elif status in green_statuses:
+            subjects.pop(identity, None)
+    if enumeration_complete:
+        open_identities = {f"{repo}#{num}" for repo, num in enumerated}
+        for identity in list(subjects):
+            if identity not in open_identities:
+                subjects.pop(identity, None)
+    if persist:
+        _save_ci_red_ledger(subjects)
+    return newly_red
+
+
 def assess(rn):
     repo, num = rn
     try:
@@ -138,7 +219,8 @@ def assess(rn):
             return (repo, num, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            return (repo, num, "CI-RED")
+            head = str(d.get("headRefOid") or "")
+            return (repo, num, "CI-RED", head, _failing_required_checks(repo, num))
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":
@@ -288,7 +370,13 @@ def main():
     # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
     # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
     # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
-    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    enumeration = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    if hasattr(enumeration, "rows"):
+        allprs = list(enumeration.rows)
+        enumeration_complete = bool(getattr(enumeration, "success", False) and getattr(enumeration, "complete", False))
+    else:
+        allprs = list(enumeration)
+        enumeration_complete = False
     if not allprs:
         print("[merge-drain] no open PRs (or gh unavailable)")
         return
@@ -317,18 +405,22 @@ def main():
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
     print(summary)
-    # LOUD trunk state (IF-HOST-PRESSURE form-4 sibling): a green-blocked PR skipped as CI-RED was a
-    # silent log line only — announce the condition once per onset, clear when the window shows none,
-    # so a fleet-wide CI jam (e.g. the 2026-07-17 billing outage) is felt without reading beat logs.
-    if b["CI-RED"]:
+    newly_red = reconcile_ci_red_subjects(
+        rows,
+        allprs,
+        enumeration_complete=enumeration_complete,
+        persist=not a.dry_run,
+    )
+    for subject in newly_red if not a.dry_run else []:
+        identity = str(subject["identity"])
+        head = str(subject["head"])
+        checks = ", ".join(str(name) for name in subject["checks"]) or "required check names unavailable"
         _notify.notify_once(
             ROOT,
-            "merge-drain-ci-red",
-            f"{b['CI-RED']} open PR(s) skipped green-blocked (CI-RED) this drain beat",
+            f"merge-drain-ci-red:{identity}@{head}",
+            f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
             title="LIMEN merge drain",
         )
-    else:
-        _notify.clear_condition(ROOT, "merge-drain-ci-red", cooldown=CI_RED_CLEAR_COOLDOWN)
     try:
         with open(LOG, "a") as f:
             effects = merged + [f"QUEUED:{item}" for item in queued]

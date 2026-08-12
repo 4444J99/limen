@@ -222,6 +222,28 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
+def test_dispatch_admission_projects_named_provider_blocked_tasks(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    tasks = [_task("CONST-CORPUS-REFRESH", agent="claude")]
+    budget = {"remaining": 3, "per_agent": {"claude": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"claude": {"remaining": 0, "health": "exhausted"}},
+    }
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["dispatchable_next"] is None
+    assert admission["gated_tasks"] == [
+        {
+            "id": "CONST-CORPUS-REFRESH",
+            "agent": "claude",
+            "reason": "provider_health",
+        }
+    ]
+
+
 def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task(monkeypatch, tmp_path):
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([]))
@@ -856,6 +878,7 @@ def test_admission_honors_open_pr_receipts_and_active_repair_owners(monkeypatch,
     repair_admission = mod._dispatch_admission([stale, owner], budget, providers)
     assert repair_admission["reason_counts"]["superseded_active_owner"] == 1
 
+
 def test_targeted_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([]))
@@ -899,4 +922,3 @@ def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):
     assert admission["keeper_available"] is False
     assert admission["reason_counts"] == {"keeper_unavailable": 1}
     assert admission["dispatchable_next"] is None
-

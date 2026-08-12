@@ -663,7 +663,6 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = survey(live)
     ungated = [r for r in rows if not r["gated"]]
-    ungated_roots = {r["root"] for r in ungated}
 
     if args.update:
         # A scheduled executor is never recorded. The baseline means "known, draining"; writing

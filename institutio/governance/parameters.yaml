@@ -2839,12 +2839,6 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
-  LIMEN_MERGE_CI_RED_COOLDOWN:
-    default: "14400"
-    env: LIMEN_MERGE_CI_RED_COOLDOWN
-    self_update: none
-    owner: arms-agents
-    note: "Hysteresis cooldown in seconds before a CI-RED PR can be re-notified after clearing (notify-hysteresis): a rotating window must not re-page on the same cycle; 4h default matches the drain beat periodicity."
   LIMEN_LANE_THROUGHPUT:
     default: "1"
     env: LIMEN_LANE_THROUGHPUT
