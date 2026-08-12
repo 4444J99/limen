@@ -1,0 +1,53 @@
+# Victoroff — the engagement this guard was written from.
+#
+# This file is the guard's REGRESSION TEST. It must exit non-zero. A change that makes
+# `engagement-guard.py --config engagements/victoroff.yaml` pass has broken the guard, not
+# fixed the engagement.
+#
+# Deliberately free of personal detail: no message content, no personal history, no third
+# parties. The confidential record lives in a separate private repository. What is kept here
+# is only the shape of the failure, because the shape is what generalises.
+
+engagement: victoroff
+counterparty: "client (pre-revenue LLC, successor entity undesignated)"
+max_unpaid_days: 14
+
+work:
+  started: 2026-07-21 # eight days before any instrument existed
+  description: "full-stack build; 98.1% of lines added, 183 of 220 commits"
+
+instrument:
+  name: "V-CON-004 (Engagement & Conditional Incentive Package)"
+  signed_by_me: 2026-07-29
+  signed_by_them: null # ← never countersigned; DocuSign envelope still "Pending"
+  blank_fields_at_signature: true # ← compensation set AFTER signature
+  compensation:
+    fixed_amount: 11844.44
+    fixed_due: null # ← no payment date anywhere
+    contingent: "3% of qualifying collected revenue; conditional up to 3% equity after 12 months"
+
+payments_received: 0
+
+asset:
+  name: "victoroff-os (private repository)"
+  custody: me # ← retained, and that is the only reason this is recoverable
+  transfer_requested: 2026-08-09 # ← requested while unpaid and uncountersigned
+
+counterparty_can_pay:
+  verified: false
+  evidence: "no closed customer, no signed agreement, no revenue; seeking $3m seed capital"
+
+counsel:
+  me: false
+  them: true
+
+promises_not_in_instrument:
+  - "more than 3%" # made in chat 2026-07-29; withdrawn in chat 2026-08-03
+  - "you won't need a job after today"
+  - "its ur direct deposit on the line"
+
+notes: |
+  A second instrument (Work-for-Hire, 2026-08-12) was signed by the counterparty but not by me.
+  As drafted its entire-agreement clause supersedes the above — removing the fixed amount and
+  the equity path in exchange for a percentage of licensing revenue from an entity with no
+  recorded revenue. Neither instrument is binding on both parties.
