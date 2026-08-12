@@ -133,6 +133,8 @@ jobs:
 
       - name: Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)
         if: env.LIMEN_PRGATE_SCOPED == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python -m ruff check cli/src cli/tests web/api mcp ianva
           python -m ruff format --check cli/src cli/tests web/api mcp ianva
@@ -152,4 +154,6 @@ jobs:
           python scripts/check-root-manifest.py
           python scripts/check-root-manifest.py --surface docs
           python scripts/check-docs-exports.py
+          bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_research_adjudication.py -q
+          python3 scripts/positioning-research-adjudication.py --verify-live
           python -m pytest web/api/tests cli/tests -q -n auto

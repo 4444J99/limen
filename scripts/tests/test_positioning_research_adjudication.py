@@ -821,21 +821,29 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
     assert any("must safely reproduce the exact endpoint URL without credentials" in error for error in errors)
 
     for receipt_id, (expected_url, _status) in MODULE.EXPECTED_HTTP_RECEIPTS.items():
-        credentialed = _bundle()
-        credentialed["receipt"] = copy.deepcopy(credentialed["receipt"])
-        row = next(
-            row
-            for row in credentialed["receipt"]["http_receipts"]
-            if row["id"] == receipt_id
+        credentialed_commands = (
+            f"curl {expected_url} -H 'Authorization: Bearer SECRET'",
+            f"curl --user alice:hunter2 {expected_url}",
+            f"curl -ualice:hunter2 {expected_url}",
+            f"curl --oauth2-bearer SECRET {expected_url}",
+            f"curl --proxy-user alice:hunter2 {expected_url}",
+            f"curl --proxy-header 'Proxy-Authorization: Basic SECRET' {expected_url}",
+            f"curl --cert client.pem --key client.key {expected_url}",
         )
-        row["reproduction"] = (
-            f"curl {expected_url} -H 'Authorization: Bearer SECRET'"
-        )
+        for reproduction in credentialed_commands:
+            credentialed = _bundle()
+            credentialed["receipt"] = copy.deepcopy(credentialed["receipt"])
+            row = next(
+                row
+                for row in credentialed["receipt"]["http_receipts"]
+                if row["id"] == receipt_id
+            )
+            row["reproduction"] = reproduction
 
-        assert (
-            f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
-            in _errors(credentialed)
-        )
+            assert (
+                f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
+                in _errors(credentialed)
+            )
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
@@ -889,4 +897,17 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "Verify manual run (scoped)",
     ):
         assert verification_steps[step_name]["env"]["GH_TOKEN"] == "${{ github.token }}"
+    fallback = verification_steps[
+        "Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)"
+    ]
+    assert fallback["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert (
+        "python3 scripts/positioning-research-adjudication.py --verify-live"
+        in fallback["run"].splitlines()
+    )
+    assert (
+        "bash scripts/run-pytest-hermetic.sh "
+        "scripts/tests/test_positioning_research_adjudication.py -q"
+        in fallback["run"].splitlines()
+    )
     assert "GH_TOKEN" not in workflow["jobs"]["pr-gate"]["env"]

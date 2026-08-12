@@ -135,6 +135,14 @@ EXPECTED_HTTP_RECEIPTS = {
         200,
     ),
 }
+EXPECTED_HTTP_REPRODUCTIONS = {
+    receipt_id: (
+        "curl --fail --silent --show-error --location --max-time 20 "
+        "--output /dev/null --write-out '%{http_code} %{url_effective}\\n' "
+        f"{url}"
+    )
+    for receipt_id, (url, _status) in EXPECTED_HTTP_RECEIPTS.items()
+}
 EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
     "PROFILE_README": {
         "repository": "4444J99/4444J99",
@@ -1173,8 +1181,7 @@ def validate_bundle(
         reproduction = row.get("reproduction")
         if (
             not _safe_public_metadata(reproduction)
-            or "curl " not in str(reproduction)
-            or expected_url not in str(reproduction)
+            or reproduction != EXPECTED_HTTP_REPRODUCTIONS[receipt_id]
         ):
             errors.append(
                 f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
