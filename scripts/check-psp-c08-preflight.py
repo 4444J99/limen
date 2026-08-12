@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 
@@ -84,9 +85,20 @@ def main() -> None:
         fail("measurement contract must name the publication-send gate")
 
     relay = (CONTENT / "RELAY.md").read_text(encoding="utf-8")
+    if not re.search(r"Reconciliation base head \| `[0-9a-f]{40}`", relay):
+        fail("relay must carry one full reconciliation base head")
     for marker in (
-        "fb77c679b84064162675f6851e816e46e5ee07be",
         "https://github.com/organvm/limen/pull/2316",
+        "c7c932205faa405e291f8030235a73cedeaa219e",
+        "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+        "23712398c6586e005c303eff632604985cd0a25c",
+        "9bcc4606b68da83dc0878b060989d35c3b649d7f",
+        "a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+        "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b",
+        "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
+        "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+        "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45",
+        "#2188/W07",
         "HG-PUBLIC-IDENTITY",
         "HG-PUBLICATION-SEND",
         "no publishing, distribution, capture activation",
