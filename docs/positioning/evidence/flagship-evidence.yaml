@@ -1,0 +1,221 @@
+schema_version: limen.positioning_flagship_evidence.v1
+work_ids: [PSP-P02-W04, PSP-P02-W05]
+generated_at: "2026-08-12T10:43:49Z"
+verdict: w04_formal_ready_w05_dependency_blocked
+
+dependency_gate:
+  w03_issue: https://github.com/organvm/limen/issues/2175
+  w03_state: closed
+  w04_issue: https://github.com/organvm/limen/issues/2176
+  w04_state: open
+  w05_issue: https://github.com/organvm/limen/issues/2177
+  w05_state: open
+  formal_completion_blocker: >-
+    W03 is accepted through its closed issue and latest marked receipt, so W04 is formally admitted
+    for sanctioned integration. W04 remains open until its merged-head predicate and marked receipt
+    pass; W05 remains blocked on a closed, receipt-verified W04. This artifact is not itself a
+    completion receipt and does not close either issue.
+
+privacy:
+  public_packets_only: true
+  repository_identity_guard:
+    source: docs/github-estate-census.json
+    mode: tracked_public_census_allowlist
+  private_evidence_required_for_selected_claims: false
+  encrypted_addendum:
+    status: not_created
+    reason: >-
+      No selected claim requires private evidence. If later diligence needs it, use the existing
+      sanctioned custody interface; do not add private names, paths, hashes, or invented contents here.
+
+withheld_claim_classes:
+  - usage, install, customer, and adoption counts
+  - revenue, payment, and commercial outcomes
+  - percentile, ranking, and throughput-superiority claims
+  - private implementation, source-custody, or repository claims
+
+w08_research_import:
+  source_pr: https://github.com/organvm/limen/pull/2314
+  source_head: 96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa
+  source_path: docs/positioning/program/research-adjudication.json
+  source_blob: f0db657dde5cc27bb2db67e495fa410f6483646f
+  source_sha256: 26a2342bf043c25906ebd985fa619249e3210f6f5409832f19e05cf770f8fca6
+  projection_sha256: 698e317695c1ebd63f82e7456a04f1c55087754de0ef358bbd77c4fc8d4d39fc
+  claim_count: 13
+  preservation_rule: >-
+    Keep measurement, inference, implication, and prominence independent. Citation sets remain
+    normative in the immutable source artifact; this W05 projection imports the resulting
+    publication contract without treating private dossier prose as evidence.
+  claims:
+    - id: profile-production-systems-headline
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: retain_l1}
+      publishable_status: provisional_verified_wording
+      public_wording: I build production systems that solve expensive problems.
+      required_receipts: [W03 flagship packets, W05 reproducibility rows]
+    - id: profile-portfolio-link
+      layers: {measurement: contradicted, inference: supported, implication: contradicted, prominence: correct_immediately}
+      publishable_status: broken_link_with_live_successor
+      public_wording: "Portfolio: https://organvm-vii-kerygma.github.io/portfolio/"
+      required_receipts: [profile metadata mutation receipt, HTTP 200 after approved mutation]
+    - id: profile-has-no-proof
+      layers: {measurement: partially_verified, inference: contradicted, implication: bounded, prominence: narrow}
+      publishable_status: partially_reproducible
+      public_wording: GitHub counts are generated from the API at the stated observation time; see the source manifest for basis and caveats.
+      required_receipts: [exact executable queries, token/private-contribution treatment, generator head]
+    - id: profile-public-repository-counts
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: supporting_only}
+      publishable_status: verified_dated_profile_basis
+      public_wording: "At the stated generation time: 227 public organization repositories, including 198 non-forks."
+      required_receipts: [W01 accepted census, fresh profile manifest]
+    - id: profile-contributions-last-year
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: supporting_only}
+      publishable_status: verified_when_dated_and_context_labeled
+      public_wording: "33,130 GitHub contribution-calendar events for the trailing year at 2026-08-10T08:05:30Z; token context disclosed in the source receipt."
+      required_receipts: [date range, viewer/token context, fresh GraphQL total and daily sum]
+    - id: profile-federation-coverage
+      layers: {measurement: partially_verified, inference: bounded, implication: not_established, prominence: retain_l2}
+      publishable_status: verified_public_nonempty_org_coverage
+      public_wording: Nine organizations currently contain public repositories; the public library links all nine.
+      required_receipts: [W01 organization roster, fresh public-repository counts]
+    - id: profile-daily-regeneration
+      layers: {measurement: verified, inference: supported, implication: bounded, prominence: retain_l2}
+      publishable_status: verified_observation_window
+      public_wording: Daily regeneration succeeded on eight consecutive scheduled runs observed 2026-08-03 through 2026-08-10.
+      required_receipts: [workflow run window, resulting exact heads]
+    - id: profile-universal-production-claim
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: narrow}
+      publishable_status: mixed_featured_system_evidence
+      public_wording: Each featured system carries its own source, test, and operating-status receipt.
+      required_receipts: [per-system current CI, public endpoint or bounded operating receipt]
+    - id: profile-limen-operating-proof
+      layers: {measurement: verified, inference: bounded, implication: not_established, prominence: retain_l2}
+      publishable_status: verified_owner_environment_operation
+      public_wording: Limen operates in the owner's environment with current public status and exact-head verification receipts.
+      required_receipts: [current public status, exact-head workflow]
+    - id: profile-zero-manual-upkeep
+      layers: {measurement: unverified, inference: unsupported, implication: contradicted, prominence: withhold}
+      publishable_status: withheld
+      public_wording: Automates monitoring, stale-work cleanup, state reconciliation, and failure escalation.
+      required_receipts: [intervention ledger, bounded reliability window]
+    - id: lavrea-top-01-throughput
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: withhold}
+      publishable_status: withheld_as_ranking
+      public_wording: Use raw dated GitHub output measurements; no percentile ranking is currently publishable.
+      required_receipts: [primary comparison dataset, defined population, threshold reproduction]
+    - id: lavrea-top-1-python-full-stack
+      layers: {measurement: partially_verified, inference: unsupported, implication: not_established, prominence: withhold}
+      publishable_status: withheld_as_ranking
+      public_wording: Python is the plurality primary language in the measured corpus; stack coverage is a declared rule-based classification.
+      required_receipts: [current language census, mapping version, primary percentile baselines]
+    - id: profile-one-creator-authorship
+      layers: {measurement: verified, inference: bounded, implication: contradicted, prominence: narrow}
+      publishable_status: publishable_with_disclosure
+      public_wording: Architected and directed by one person through a governed, multi-agent production system.
+      required_receipts: [authorship disclosure policy link]
+
+packets:
+  - id: limen
+    path: docs/positioning/evidence/limen.md
+    public_repository: organvm/limen
+    status: verified_public_snapshot
+    bounded_claim: >-
+      Limen is a governed multi-agent delivery system with public operating, failure, and
+      verification receipts. This packet establishes public operational evidence only; it does
+      not claim customer adoption, revenue, or zero-maintenance operation.
+    authorship: Architected and directed through a governed multi-agent system; machine assistance is disclosed, not concealed.
+    limitations:
+      - The public dashboard is an operational snapshot, not customer-adoption evidence.
+      - Counts may change after the observation timestamp and must be refreshed before reuse.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm/limen/actions/runs/31404705695
+        api_url: https://api.github.com/repos/organvm/limen/actions/runs/31404705695
+        observed_head: d169c7d8ad9fc8f75d7e9200658758b2715eae97
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://limen-dashboard.pages.dev/public-status.json
+        expected_http_status: 200
+    metrics:
+      - id: public_tasks_total
+        public_safe_claim: "The public dashboard reported 3,111 total tasks on 2026-08-10."
+        status: verified
+        source_url: https://limen-dashboard.pages.dev/public-status.json
+        observation_path: summary.total
+        observed_value: 3111
+        comparison: exact
+      - id: public_tasks_completed
+        public_safe_claim: "The public dashboard reported 1,357 completed tasks on 2026-08-10."
+        status: verified
+        source_url: https://limen-dashboard.pages.dev/public-status.json
+        observation_path: summary.completed
+        observed_value: 1357
+        comparison: exact
+
+  - id: public_records
+    path: docs/positioning/evidence/public-records.md
+    public_repository: organvm-iii-ergon/public-record-data-scrapper
+    status: verified_public_snapshot
+    bounded_claim: >-
+      The public-records platform demonstrates a multi-stage public-record decision pipeline. Four
+      implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. It does not
+      claim fifty-state deployment, complete coverage, buyer adoption, or commercial outcomes.
+    authorship: Public implementation and deployment are the evidence boundary; no private sources are needed for this packet.
+    limitations:
+      - Four implemented collectors do not establish fifty-state deployment or adoption.
+      - The landing page is an implementation anchor, not a claim about data completeness or commercial use.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        api_url: https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/actions/runs/31310353594
+        observed_head: 139fa7b40d875ecfe3a8c693dedfab46671739fd
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://organvm-iii-ergon.github.io/public-record-data-scrapper/
+        expected_http_status: 200
+    metrics:
+      - id: implemented_collectors
+        public_safe_claim: "Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture."
+        status: repository_asserted_with_public_anchor
+        source_url: https://github.com/organvm-iii-ergon/public-record-data-scrapper
+        observed_value: 4
+        comparison: exact
+        corroborating_terms: [CA, TX, FL, NY]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/git/trees/139fa7b40d875ecfe3a8c693dedfab46671739fd?recursive=1"
+          path_regex: '^scripts/scrapers/states/[a-z]+\.ts$'
+
+  - id: ai_chat_exporter
+    path: docs/positioning/evidence/ai-chat-exporter.md
+    public_repository: organvm-iii-ergon/a-i-chat--exporter
+    status: verified_public_snapshot
+    bounded_claim: >-
+      AI Chat Exporter is a privacy-first, client-side conversation export tool. The public
+      product surface presents five export formats: Markdown, HTML, JSON, PNG, and text. This claim
+      does not imply installations, daily users, revenue, retention, or cloud-free behavior beyond
+      the documented client-side export path.
+    authorship: The public packet confines the claim to inspectable client-side behavior and avoids any user-volume inference.
+    limitations:
+      - Five formats do not prove daily use, installations, revenue, or user retention.
+      - The packet makes no claim about the commercial availability or uptake of optional workflows.
+    sources:
+      - kind: workflow_run
+        url: https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        api_url: https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/actions/runs/29999319405
+        observed_head: e3a0b8d9a47183163cd92d18f479fc580eaf314d
+        expected_conclusion: success
+      - kind: public_endpoint
+        url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
+        expected_http_status: 200
+    metrics:
+      - id: export_formats
+        public_safe_claim: "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text."
+        status: verified
+        source_url: https://organvm-iii-ergon.github.io/a-i-chat--exporter/
+        observed_value: 5
+        comparison: exact
+        corroborating_terms: [Markdown, HTML, JSON, PNG, text]
+        count_observation:
+          kind: github_tree_path_regex
+          api_url: "https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/git/trees/e3a0b8d9a47183163cd92d18f479fc580eaf314d?recursive=1"
+          path_regex: '^src/exporter/[^/]+\.ts$'
