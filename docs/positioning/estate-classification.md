@@ -57,6 +57,31 @@ Maturity is 238 active, 5 maintained, and 71 archived; no live record lacked
 a usable `pushed_at` fact. These values are evidence snapshots, not public
 performance claims.
 
+## W03 flagship candidate projection
+
+The accepted W02 classification feeds a bounded W03 public candidate set; it
+does not create another estate inventory. The live projection contains all 15
+repositories currently classed as `front_door_proof` plus seven typed public
+additions required by the manifest, public profile/portfolio routing, or a
+live product endpoint. That produces 22 public candidates, each reconciled to
+the current W02 identity and maturity projection.
+
+The scored matrix and reviewer verdict live in
+[`flagship-proof-set.yaml`](flagship-proof-set.yaml). They ratify three
+non-overlapping flagships:
+
+| Story role | Flagship | Public evidence boundary |
+| --- | --- | --- |
+| Governed agent delivery | Limen | Public source, dated exact-head CI, and public operating-status endpoint |
+| Public-record decision pipeline | UCC Public-Records Intelligence Platform | Public source, current exact-head gate, and public deployment |
+| Privacy-first data portability | AI Chat Exporter | Public source, current exact-head CI, and public install surface |
+
+Universal Mail, Styx, a-i--skills, and MONETA remain named alternates with
+specific promotion conditions. The other 15 candidates retain explicit
+exclusion reasons. Selection is not a repository-count, stars,
+activity-volume, or aesthetic ranking; hard evidence gates override the
+numeric score. No selected flagship relies on private-only evidence.
+
 ## Public/private rule
 
 The public registry stores the policy, the W01 aggregate receipt, and this
@@ -94,10 +119,11 @@ backlog, not permission to guess, publish, or weaken the private default.
 
 ## Validation
 
-Run the focused live predicate from the W02 branch:
+Run the focused live predicate with the non-HEAD base of the exact reviewed
+diff:
 
 ```bash
-python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w01-estate-census-preflight
+python3 scripts/estate-classification.py --verify --json --base <review-base>
 ```
 
 It fails unless the policy taxonomy is complete, every live census record has
@@ -112,6 +138,9 @@ name in content or path metadata. The unit companion is:
 python3 scripts/tests/estate-classification.test.py
 ```
 
-Formal W02 completion remains dependency-gated on #2173 and requires its
-normal conduct-backed receipt plus
-`python3 scripts/positioning-program.py --verify-work PSP-P02-W02`.
+W02 is formally accepted at main head
+`35134b95650a26185a58eb3b3a82632e5b80b5b2` with its
+[marked receipt](https://github.com/organvm/limen/issues/2174#issuecomment-5247059070).
+That receipt passed
+`python3 scripts/positioning-program.py --verify-work PSP-P02-W02`, admitting
+W03 integration while leaving W03's own marked receipt and closure pending.

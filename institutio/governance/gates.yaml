@@ -471,6 +471,11 @@ gates:
     paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]
     owner: positioning-program
     note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
+  flagship-proof-set-test:
+    command: "python3 scripts/tests/flagship-proof-set.test.py"
+    paths: ["docs/github-estate-census.json", "docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md", "institutio/github/estate.yaml", "institutio/governance/gates.yaml", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
+    owner: positioning-program
+    note: "PSP-P02-W03 public flagship decisions stay bound to the tracked W01 public identity projection, the accepted W02 classification and canonical marked receipt, and both machine-readable continuation relays. Static validation locks the exact formal dependency schema, case-insensitive public identities, structured non-circular claims, exact workflow plus endpoint anchors, current W02 maturity, score reproduction, and relay parity without a self-referential commit hash. Live verification independently checks W02's merged PR head, closed issue, latest receipt URL/digest/observed head, main-line ancestry, visibility, and selected anchors."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]
