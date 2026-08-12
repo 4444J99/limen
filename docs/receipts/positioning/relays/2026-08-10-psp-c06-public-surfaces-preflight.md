@@ -8,9 +8,17 @@ not close PSP-P07, any P07 leaf, or a formal dependency.
 - PSP-C00/P00 is closed through merged [PR #2300](https://github.com/organvm/limen/pull/2300).
   The former non-Codex/Agy identity condition is superseded; it is not a C06 blocker.
 - C04 preflight: [PR #2313](https://github.com/organvm/limen/pull/2313), exact head
-  `e9c2db2360acd5fd57a48d063e64990dc8f3a768`.
+  `23712398c6586e005c303eff632604985cd0a25c`.
 - P06 preflight: [portfolio PR #220](https://github.com/organvm-vii-kerygma/portfolio/pull/220),
-  exact head `fa86b67a7283c15ab801302ffac655c30898b6a1`.
+  exact head `9bcc4606b68da83dc0878b060989d35c3b649d7f`.
+- C03 [PR #2312](https://github.com/organvm/limen/pull/2312) is currently staged at
+  `c7c932205faa405e291f8030235a73cedeaa219e`. Its W01-W06 acceptance tree is
+  `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; W06 is bound to the
+  [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820) with
+  SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
+  W07/#2188 is the sole unresolved C03 dependency and requires five genuine independent
+  target-like reader records. The tracked protocol/template at the current C03 head is intake
+  machinery, not reader evidence.
 - Canonical portfolio: `organvm-vii-kerygma/portfolio` (repository id `1155412125`), current
   public baseline `https://organvm-vii-kerygma.github.io/portfolio/` at main
   `85bfaa84287e4a3b90b49187caa4313c4edda1aa`.
@@ -19,7 +27,7 @@ not close PSP-P07, any P07 leaf, or a formal dependency.
 
 Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221), branch
 `codex/psp-c06-public-surfaces-preflight`, exact head
-`7283219f98053aabfede5c41467c7cc1010165c3`, stages only:
+`6cb7f291ef758d26d136620398c6e9c09f74d0ea`, stages only:
 
 - one W01–W09 source and release/rollback inventory;
 - a disabled-by-default, allowlist-only analytics schema that differentiates client and
@@ -49,6 +57,10 @@ npm exec --package=@biomejs/biome@2.5.4 -- biome check src/data/psp-p07-public-s
 
 All three passed before the checkpoint was committed. They validate the containment and schema,
 not public-surface completion.
+
+The refreshed contract distinguishes the accepted W01-W06 head from the current C03 preflight
+head, pins the W06 receipt, and fails any inference that the W07 intake package satisfies the
+five-reader gate. C05 remains a separate child of C03 and is not introduced as a C06 dependency.
 
 ## Live finding and boundary
 
