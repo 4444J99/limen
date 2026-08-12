@@ -134,6 +134,18 @@ VENDORS: dict[str, VendorConfig] = {
         env_relative="settings.json",
         runtime_relative="claude/settings.json",
     ),
+    # Also not an MCP surface: the native updater's result marker, a sibling of settings.json under
+    # the same root. `heal-claude-update-marker.sh` read `$HOME/.claude/` for it and therefore spent
+    # 19 days clearing a file abandoned on 2026-07-24 while the LIVE marker — matching its benign
+    # signature exactly — went untouched and `claude doctor` kept reporting `install_failed`.
+    "claude-update-marker": VendorConfig(
+        key="claude-update-marker",
+        fmt="json",
+        home_relative=".claude/.last-update-result.json",
+        root_env="CLAUDE_CONFIG_DIR",
+        env_relative=".last-update-result.json",
+        runtime_relative="claude/.last-update-result.json",
+    ),
 }
 
 # The vendors `mcp-server-boot.py` probes, in its historical order.
