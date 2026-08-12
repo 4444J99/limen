@@ -507,12 +507,12 @@ def main():
     if not allprs:
         summary = "[self-heal] confirmed complete empty open-PR scan"
         print(summary)
-        if not a.dry_run and scan_complete:
-            write_heartbeat(summary)
-            write_liveness("scan_success", summary)
-        elif not a.dry_run:
+        if not a.dry_run and not scan_complete:
             write_liveness("incomplete", scan_error)
-        return 0
+        # A successful empty scan is still a complete reconciliation input:
+        # active HEAL rows now all refer to non-open PRs.  Flow through the
+        # keeper transaction below and refresh success freshness only after
+        # those retirements have been accepted.
 
     # RETIREMENT SAFETY. The reconcile pass below retires any active HEAL task whose PR is ABSENT
     # from `allprs`, so every way of getting a SHORT list is a way of retiring live work. The
@@ -724,6 +724,8 @@ def main():
         f"| emitted={len(emitted)} retired={len(retired)}"
         f"{'' if retire_ok else ' (retire SKIPPED: ' + retire_why + ')'} (limit={limit})"
     )
+    if not allprs:
+        summary = "[self-heal] confirmed complete empty open-PR scan; " + summary.removeprefix("[self-heal] ")
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")
