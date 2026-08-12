@@ -445,6 +445,45 @@ def test_default_parameter_notification_bypass_is_rejected(tmp_path, check_gate,
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_static_mapping_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        'commands = {"notify": ["osascript", "-e", "display notification x"]}\n'
+        'subprocess.run(commands["notify"])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_static_mapping_safe_key_does_not_inherit_notification_command(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        'commands = {"notify": ["osascript", "-e", "display notification x"], "safe": ["echo", "ok"]}\n'
+        'subprocess.run(commands["safe"])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == []
+
+
+def test_static_mapping_dynamic_key_is_conservatively_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        'commands = {"notify": ["osascript", "-e", "display notification x"], "safe": ["echo", "ok"]}\n'
+        'key = input("command: ")\nsubprocess.run(commands[key])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_destructured_python_command_binding_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()

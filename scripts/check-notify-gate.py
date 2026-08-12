@@ -462,6 +462,17 @@ def _static_argv(
     if isinstance(node, ast.Name):
         value = bindings.get(node.id)
         return list(value) if value is not None else None
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
+        key = _static_string(node.slice)
+        binding = f"{node.value.id}[{key!r}]" if key is not None else f"{node.value.id}[*]"
+        value = bindings.get(binding)
+        return list(value) if value is not None else None
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Dict):
+        key = _static_string(node.slice)
+        if key is not None:
+            for mapping_key, mapping_value in zip(node.value.keys, node.value.values, strict=True):
+                if mapping_key is not None and _static_string(mapping_key) == key:
+                    return _static_argv(mapping_value, bindings)
     if (value := _static_string(node)) is not None:
         return [value]
     if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
@@ -497,12 +508,32 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             for element in target.elts:
                 self._assign(element, None)
             return
-        if not isinstance(target, ast.Name):
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None:
             return
+        for binding in [key for key in self.bindings if key.startswith(f"{name}[")]:
+            self.bindings.pop(binding, None)
         if values is None:
-            self.bindings.pop(target.id, None)
+            self.bindings.pop(name, None)
         else:
-            self.bindings[target.id] = list(values)
+            self.bindings[name] = list(values)
+
+    def _bind_mapping(self, target: ast.AST, value: ast.AST | None) -> None:
+        """Bind exact static mapping keys plus one conservative dynamic-key union."""
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None or not isinstance(value, ast.Dict):
+            return
+        aggregate: list[str] = []
+        for mapping_key, mapping_value in zip(value.keys, value.values, strict=True):
+            resolved = _static_argv(mapping_value, self.bindings)
+            if resolved is None:
+                continue
+            aggregate.extend(resolved)
+            key = _static_string(mapping_key) if mapping_key is not None else None
+            if key is not None:
+                self.bindings[f"{name}[{key!r}]"] = list(resolved)
+        if aggregate:
+            self.bindings[f"{name}[*]"] = aggregate
 
     def _is_process_callable(self, node: ast.AST) -> bool:
         if isinstance(node, ast.Name):
@@ -514,12 +545,13 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             for element in target.elts:
                 self._assign_process_alias(element, False)
             return
-        if not isinstance(target, ast.Name):
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None:
             return
         if is_alias:
-            self.process_aliases.add(target.id)
-        elif target.id not in _PROCESS_CALLS:
-            self.process_aliases.discard(target.id)
+            self.process_aliases.add(name)
+        elif name not in _PROCESS_CALLS:
+            self.process_aliases.discard(name)
 
     def _bind_assignment(self, target: ast.AST, value: ast.AST | None) -> None:
         """Bind literal destructuring element-by-element instead of erasing it."""
@@ -532,6 +564,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
                 self._assign_process_alias(target, False)
             return
         self._assign(target, _static_argv(value, self.bindings) if value is not None else None)
+        self._bind_mapping(target, value)
         self._assign_process_alias(target, self._is_process_callable(value) if value is not None else False)
 
     def visit_Module(self, node: ast.Module) -> None:
@@ -570,19 +603,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         child = _PythonBypassVisitor(self.bindings, self.process_aliases)
 
         def bind_parameter(argument: ast.arg, default: ast.AST | None) -> None:
-            if default is None:
-                child.bindings.pop(argument.arg, None)
-                child.process_aliases.discard(argument.arg)
-                return
-            values = _static_argv(default, self.bindings)
-            if values is None:
-                child.bindings.pop(argument.arg, None)
-            else:
-                child.bindings[argument.arg] = values
-            if self._is_process_callable(default):
-                child.process_aliases.add(argument.arg)
-            else:
-                child.process_aliases.discard(argument.arg)
+            child._bind_assignment(argument, default)
 
         positional = [*node.args.posonlyargs, *node.args.args]
         positional_defaults: list[ast.AST | None] = [None] * (len(positional) - len(node.args.defaults)) + list(
