@@ -58,11 +58,11 @@ URLs, full work dependencies, and exact model/effort assignments. A registry dri
 | Chunk | Owner PR | Owner branch | Observed head | Closure value |
 |---|---:|---|---|---|
 | C04 | [#2313](https://github.com/organvm/limen/pull/2313) | `codex/psp-c04-proof-experience-preflight` | `5bf686f6ceba200c6157bd87eb6e5298750a4ffb` | false |
-| C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `codex/psp-c05-delivery-os-preflight-relay` | `a72a05d917bf14d53221c7d02ec52d3786b4f88e` | false |
+| C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `codex/psp-c05-delivery-os-preflight-relay` | `fdd41da45bdf5909e7b782a03dbaedf85e105c25` | false |
 | C06 | [#2317](https://github.com/organvm/limen/pull/2317) | `codex/psp-c06-public-surfaces-relay` | `4eb50463b7f4136b47a103c9792c1ded5caf7873` | false |
 | C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `codex/psp-c07-private-inbound-preflight` | `c3b92707a0f6d0ea3076680d100d60d0217f8fe9` | false |
 | C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `ef6e4df64f97c11dba2c159752d5a13b50a96c10` | false |
-| C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `21f3132f129aa6e1eba515f03aa19619533cef4b` | false |
+| C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `b045bee57c0f8cad2533c075af301d1cd4088e1e` | false |
 | C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `620ae2e87131cb871f73b8c0f230d20f9883d85c` | false |
 | C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` | false |
 | C12 | [#2320](https://github.com/organvm/limen/pull/2320) | `codex/psp-c12-control-plane-preflight` | runtime exact-head binding | false |
