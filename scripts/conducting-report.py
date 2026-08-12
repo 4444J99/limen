@@ -664,12 +664,15 @@ def main(argv: list[str] | None = None) -> int:
     usage_generated = str(usage.get("generated") or usage.get("generated_at"))
 
     macos = _notify_macos("Limen — conducting", headline, day, force=args.force)
-    retry_ntfy = macos.reserved or (
+    notifications_disabled = macos.status == "withheld" and getattr(macos, "reason", None) == "notifications disabled"
+    retry_ntfy = (macos.reserved and not notifications_disabled) or (
         macos.status == "duplicate" and getattr(macos, "prior_status", None) in {"delivery_failed", "withheld"}
     )
     ntfy = _notify_ntfy("Limen — conducting", body) if retry_ntfy else False
-    macos_settled = macos.status == "emitted" or (
-        macos.status == "duplicate" and getattr(macos, "prior_status", None) == "emitted"
+    macos_settled = (
+        notifications_disabled
+        or macos.status == "emitted"
+        or (macos.status == "duplicate" and getattr(macos, "prior_status", None) == "emitted")
     )
     if not macos_settled and not ntfy:
         print(f"conducting-report: delivery not recorded ({macos.status})")

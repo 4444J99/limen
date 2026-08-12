@@ -133,6 +133,24 @@ def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tm
     assert "ci-red ledger persistence failed" in capsys.readouterr().err
 
 
+def test_corrupt_ledger_withholds_onset_and_preserves_source(tmp_path: Path, capsys) -> None:
+    module = _load(tmp_path)
+    module.CI_RED_LEDGER.write_text('{"schema_version":', encoding="utf-8")
+    reserved = []
+
+    result = module.reconcile_ci_red_subjects(
+        [("organvm/repo", 7, "CI-RED", "a" * 40, ("pr-gate",))],
+        [("organvm/repo", 7)],
+        enumeration_complete=True,
+        reserve_notification=lambda subject: reserved.append(subject) or True,
+    )
+
+    assert result == []
+    assert reserved == []
+    assert module.CI_RED_LEDGER.read_text(encoding="utf-8") == '{"schema_version":'
+    assert "ci-red ledger unavailable" in capsys.readouterr().err
+
+
 def test_unreserved_notification_keeps_ci_red_onset_retryable(tmp_path: Path) -> None:
     module = _load(tmp_path)
     red = [("organvm/repo", 7, "CI-RED", "a" * 40, ("pr-gate",))]

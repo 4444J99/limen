@@ -136,13 +136,32 @@ def _failing_required_checks(repo: str, num: int) -> tuple[str, ...] | None:
     )
 
 
-def _load_ci_red_ledger() -> dict[str, dict[str, object]]:
+def _load_ci_red_ledger() -> dict[str, dict[str, object]] | None:
     try:
         value = json.loads(CI_RED_LEDGER.read_text(encoding="utf-8"))
-    except (OSError, TypeError, ValueError):
+    except FileNotFoundError:
         return {}
+    except (OSError, TypeError, ValueError) as exc:
+        print(f"[merge-drain] ci-red ledger unavailable: {exc}", file=sys.stderr)
+        return None
     subjects = value.get("subjects") if isinstance(value, dict) else None
-    return subjects if isinstance(subjects, dict) else {}
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != "limen.ci_red_subjects.v1"
+        or not isinstance(subjects, dict)
+    ):
+        print("[merge-drain] ci-red ledger unavailable: invalid schema", file=sys.stderr)
+        return None
+    if any(
+        not isinstance(identity, str)
+        or not isinstance(subject, dict)
+        or not isinstance(subject.get("head"), str)
+        or not isinstance(subject.get("checks"), list)
+        for identity, subject in subjects.items()
+    ):
+        print("[merge-drain] ci-red ledger unavailable: invalid subject", file=sys.stderr)
+        return None
+    return subjects
 
 
 def _save_ci_red_ledger(subjects: dict[str, dict[str, object]]) -> bool:
@@ -180,6 +199,10 @@ def reconcile_ci_red_subjects(
 ) -> list[dict[str, object]]:
     """Track exact red heads; rotating-window omission is never recovery evidence."""
     subjects = _load_ci_red_ledger()
+    if subjects is None:
+        # A damaged source ledger is not a first-run absence. Withhold both onset
+        # reservations and clears until custody is restored, preserving prior truth.
+        return []
     newly_red: list[dict[str, object]] = []
     green_statuses = {"READY", "BLOCKED", "STALE-CORE", "STALE-BASE", "TRIVIAL"}
     for row in rows:

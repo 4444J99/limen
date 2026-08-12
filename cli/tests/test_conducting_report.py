@@ -663,6 +663,51 @@ def test_withheld_duplicate_retries_ntfy_until_delivery_succeeds(tmp_path, monke
     assert json.loads(module.STATE.read_text())["last_day"] == day
 
 
+def test_disabled_notification_reservation_settles_daily_bookkeeping(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    refreshes = []
+    value_probes = []
+    monkeypatch.setattr(module, "_refresh_admission", lambda: refreshes.append(True) or True)
+    monkeypatch.setattr(
+        module,
+        "_session_value_admission",
+        lambda: value_probes.append(True) or {"status": "allowed"},
+    )
+    monkeypatch.setattr(
+        module,
+        "_notify_macos",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            status="withheld",
+            reserved=True,
+            prior_status=None,
+            reason="notifications disabled",
+        ),
+    )
+    monkeypatch.setattr(
+        module,
+        "_notify_ntfy",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("disabled notifications must not retry ntfy")),
+    )
+
+    assert module.main([]) == 0
+    assert module.main([]) == 0
+
+    assert refreshes == [True]
+    assert value_probes == [True]
+    assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
+
+
 def test_emitted_duplicate_rebuilds_state_after_transient_state_write_failure(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
