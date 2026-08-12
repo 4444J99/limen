@@ -1,4 +1,4 @@
-schema_version: limen.positioning_c10_readiness.v2
+schema_version: limen.positioning_c10_readiness.v3
 mode: preflight_only
 scope:
   chunk_id: PSP-C10
@@ -84,12 +84,36 @@ recruitment:
     - id: consent_capacity
       rule: Evidence, interview, retention, deletion, and any public-proof rights can be decided explicitly.
   hard_exclusions:
-    - no decision authority
-    - request for production write access or plaintext credentials
-    - unlimited support, build, or enterprise-wide scope
-    - no lawful evidence-use or deletion path
-    - outcome cannot be observed inside the bounded window
-    - conflict, safety, or privacy condition that cannot be contained
+    - id: no_decision_authority
+      rule: No real-world role can approve bounded scope, terms, and acceptance.
+    - id: production_write_or_plaintext_credentials
+      rule: The candidate requests production write access or plaintext credentials.
+    - id: unbounded_scope
+      rule: The request implies unlimited support, build work, or enterprise-wide scope.
+    - id: no_evidence_governance
+      rule: There is no lawful evidence-use, retention, withdrawal, or deletion path.
+    - id: unobservable_outcome
+      rule: The declared outcome cannot be observed inside the bounded window.
+    - id: uncontained_risk
+      rule: A conflict, safety, privacy, or custody condition cannot be contained.
+  package_contract:
+    required_fields:
+      - recruitment_record_id
+      - mode
+      - candidate_id
+      - qualification_receipt_id
+      - criteria
+      - exclusion_results
+      - cohort_disposition
+      - cohort_slot
+      - invitation_artifact_sha256
+      - invitation_status
+      - send_receipt_id
+      - terms_status
+      - usable_for_real_effect
+    cohort_dispositions: [selected, waitlisted, declined, excluded]
+    synthetic_invitation_status: not_sent
+    synthetic_terms_status: not_agreed
   invitation_contract:
     cohort_slots: 3
     personalization_requires_private_context: true
@@ -132,6 +156,87 @@ receipt_contracts:
       - usable_for_real_effect
     consent_types: [evidence_intake, outcome_interview, public_case_study, validation_object]
     synthetic_decision: fixture_only
+  payment:
+    required_fields:
+      - receipt_id
+      - mode
+      - candidate_id
+      - engagement_id
+      - payment_status
+      - amount_disclosure
+      - currency_disclosure
+      - received_at
+      - source_locator
+      - content_sha256
+      - usable_for_real_effect
+    real_statuses: [received, refunded, failed]
+    synthetic_status: fixture_only
+    public_fixture_amount_disclosure: not_recorded
+  acceptance:
+    required_fields:
+      - receipt_id
+      - mode
+      - candidate_id
+      - engagement_id
+      - deliverable_sha256
+      - decision
+      - simulated_condition
+      - decided_at
+      - actor_role
+      - limitations
+      - source_locator
+      - authority_receipt_ids
+      - usable_for_real_effect
+    real_decisions: [accepted, rejected, revision_requested]
+    synthetic_decision: fixture_only
+  delivery:
+    required_fields:
+      - receipt_id
+      - mode
+      - engagement_id
+      - stage_id
+      - work_id
+      - deliverable_sha256
+      - custody_status
+      - delivery_status
+      - rollback_locator
+      - source_locator
+      - authority_receipt_ids
+      - usable_for_real_effect
+    synthetic_status: fixture_only
+  case_study:
+    required_fields:
+      - receipt_id
+      - mode
+      - source_outcome_ids
+      - exact_copy_sha256
+      - client_copy_decision
+      - owner_publication_decision
+      - consent_receipt_id
+      - identity_authority_receipt_id
+      - contract_authority_receipt_id
+      - publication_status
+      - withdrawal_path
+      - rollback_locator
+      - usable_for_real_effect
+    synthetic_publication_status: not_published
+  claim_promotion:
+    required_fields:
+      - receipt_id
+      - mode
+      - proposal_id
+      - disposition
+      - source_outcome_ids
+      - external_outcome_evidence_ids
+      - consent_receipt_ids
+      - owner_authority_receipt_ids
+      - target_claim_keys
+      - prior_claim_set_sha256
+      - proposed_claim_set_sha256
+      - promotion_status
+      - rollback_locator
+      - usable_for_real_effect
+    synthetic_promotion_status: blocked_synthetic
 
 bounded_pilot:
   active_engagement_limit: 1
@@ -280,13 +385,56 @@ claim_refresh:
   public_promotion_requires_consent: true
   rollback: Restore the prior claim set and quarantine disputed outcome interpretation.
 
+strategy_decision_records:
+  required_fields:
+    - decision_record_id
+    - mode
+    - scenario_id
+    - decision
+    - decision_basis
+    - before_strategy
+    - after_strategy
+    - changed_assumptions
+    - source_outcome_ids
+    - external_outcome_evidence_ids
+    - decided_at
+    - apply
+    - publishable
+    - usable_for_real_effect
+  synthetic_apply: false
+  synthetic_publishable: false
+  synthetic_real_effect: false
+
+testimonial_reference_policy:
+  synthetic_or_agent_authored_objects_forbidden: true
+  attribution_requires_real_human_source: true
+  preflight_collection_status: not_attempted
+  real_object_required_fields:
+    - author
+    - date
+    - context
+    - exact_permitted_wording
+    - consent_receipt_id
+    - withdrawal_path
+    - source_locator
+
 experiment_90_day:
   duration_days: 90
   checkpoints_days: [0, 14, 30, 45, 60, 75, 90]
   denominator_unit: unique qualified door-mail
   denominator_threshold: 5
   success_or_revision_rule: one paid audit with payment evidence OR five documented qualified no outcomes with reasons and a recorded revision
-  required_outcome_fields: [candidate_id, qualification_receipt, outcome_type, reason, payment_receipt_present, evidence_ids, occurred_at]
+  required_outcome_fields:
+    - candidate_id
+    - qualification_receipt
+    - outcome_type
+    - reason
+    - terms_authority_receipt_id
+    - payment_receipt_id
+    - acceptance_receipt_id
+    - delivery_receipt_ids
+    - evidence_ids
+    - occurred_at
   extension:
     maximum_count: 1
     maximum_days: 14

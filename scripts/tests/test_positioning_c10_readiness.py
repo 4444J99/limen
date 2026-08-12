@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.machinery
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -63,6 +64,8 @@ def test_contract_preserves_exact_registry_scope_assignments_and_gates() -> None
         "PSP-P12-W06": ["PSP-P12-W02", "PSP-P12-W04", "PSP-P12-W05", "PSP-P02-W08"],
         "PSP-P10-W08": ["PSP-P09-W08", "PSP-P10-W07", "PSP-P12-W02"],
     }
+    assert len(state["leaf_contract_audit"]) == 7
+    assert all(row["acceptance"] and row["predicate"] and row["target_paths"] for row in state["leaf_contract_audit"])
     for key in (
         "synthetic_counts_as_conversion",
         "synthetic_counts_as_revenue",
@@ -91,6 +94,19 @@ def test_synthetic_run_exercises_all_decisions_without_creating_proof() -> None:
     assert receipt["commercial_proof"]["real_bounded_pilots"] == 0
     assert receipt["commercial_proof"]["real_revenue_receipts"] == 0
     assert receipt["commercial_proof"]["real_testimonials_or_references"] == 0
+    assert receipt["commercial_proof"]["real_public_case_studies"] == 0
+    assert receipt["registry_audit"]["all_owned_leaves_audited"] is True
+
+
+def test_recruitment_packages_remain_unsent_unagreed_and_non_effectful() -> None:
+    _contract, fixture, state = _validated_inputs()
+    fixture_state = MODULE.validate_fixture(fixture, state)
+
+    assert len(fixture_state["recruitment_by_id"]) == 5
+    assert all(row["invitation_status"] == "not_sent" for row in fixture["recruitment_records"])
+    assert all(row["send_receipt_id"] is None for row in fixture["recruitment_records"])
+    assert all(row["terms_status"] == "not_agreed" for row in fixture["recruitment_records"])
+    assert all(row["usable_for_real_effect"] is False for row in fixture["recruitment_records"])
 
 
 def test_preflight_rejects_real_mode_or_effect_authority() -> None:
@@ -131,18 +147,56 @@ def test_paid_audit_requires_payment_and_bounded_pilot_cannot_prove_demand() -> 
     )
 
     paid = copy.deepcopy(next(row for row in fixture["outcomes"] if row["outcome_type"] == "paid_audit"))
-    paid["payment_receipt_present"] = False
+    paid["payment_receipt_id"] = None
     assert (
         MODULE.hypothetical_decision([paid], state["qualified_threshold"], revision_recorded=False)
         == "insufficient_evidence"
     )
 
     bad_fixture = copy.deepcopy(fixture)
-    next(row for row in bad_fixture["outcomes"] if row["outcome_type"] == "paid_audit")["payment_receipt_present"] = (
-        False
-    )
+    next(row for row in bad_fixture["outcomes"] if row["outcome_type"] == "paid_audit")["payment_receipt_id"] = None
     with pytest.raises(MODULE.ReadinessError, match="paid audit lacks payment evidence"):
         MODULE.validate_fixture(bad_fixture, state)
+
+
+def test_typed_commercial_receipts_and_publication_gates_fail_closed() -> None:
+    _contract, fixture, state = _validated_inputs()
+
+    drifted = copy.deepcopy(fixture)
+    drifted["payment_receipts"][0]["payment_status"] = "received"
+    with pytest.raises(MODULE.ReadinessError, match="may not claim payment"):
+        MODULE.validate_fixture(drifted, state)
+
+    drifted = copy.deepcopy(fixture)
+    drifted["acceptance_receipts"][0]["decision"] = "accepted"
+    with pytest.raises(MODULE.ReadinessError, match="may not claim client acceptance"):
+        MODULE.validate_fixture(drifted, state)
+
+    drifted = copy.deepcopy(fixture)
+    drifted["delivery_receipts"][0]["delivery_status"] = "delivered"
+    with pytest.raises(MODULE.ReadinessError, match="may not claim real delivery"):
+        MODULE.validate_fixture(drifted, state)
+
+    drifted = copy.deepcopy(fixture)
+    drifted["case_study_receipts"][0]["publication_status"] = "published"
+    with pytest.raises(MODULE.ReadinessError, match="may not record publication"):
+        MODULE.validate_fixture(drifted, state)
+
+    drifted = copy.deepcopy(fixture)
+    drifted["claim_promotion_receipts"][0]["promotion_status"] = "applied"
+    with pytest.raises(MODULE.ReadinessError, match="may not promote claims"):
+        MODULE.validate_fixture(drifted, state)
+
+
+def test_strategy_decisions_record_before_and_after_without_application() -> None:
+    _contract, fixture, state = _validated_inputs()
+    fixture_state = MODULE.validate_fixture(fixture, state)
+
+    assert set(fixture_state["decision_by_scenario"]) == {row["scenario_id"] for row in fixture["scenarios"]}
+    assert all(row["before_strategy"] and row["after_strategy"] for row in fixture["strategy_decision_records"])
+    assert all(row["external_outcome_evidence_ids"] == [] for row in fixture["strategy_decision_records"])
+    assert all(row["apply"] is False for row in fixture["strategy_decision_records"])
+    assert all(row["publishable"] is False for row in fixture["strategy_decision_records"])
 
 
 def test_five_no_outcomes_require_a_recorded_revision() -> None:
@@ -197,3 +251,13 @@ def test_committed_receipt_is_the_deterministic_synthetic_run() -> None:
     assert result["status"] == "ok"
     assert result["commercial_proof"] is False
     assert result["external_effects"] == []
+
+
+def test_receipt_writer_generates_the_deterministic_synthetic_run(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "generated-receipt.json"
+
+    result = MODULE.write_receipt(receipt_path)
+
+    assert result["status"] == "written"
+    assert json.loads(receipt_path.read_text(encoding="utf-8")) == MODULE.build_receipt()
+    assert MODULE.verify_receipt(receipt_path)["status"] == "ok"

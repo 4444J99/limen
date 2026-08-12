@@ -1,5 +1,5 @@
 {
-  "schema_version": "limen.positioning_c10_synthetic_fixture.v2",
+  "schema_version": "limen.positioning_c10_synthetic_fixture.v3",
   "mode": "synthetic",
   "dry_run_id": "PSP-C10-SYNTHETIC-2026-08-10",
   "fixture_time_anchor": "2026-08-10T20:00:00Z",
@@ -66,6 +66,153 @@
     }
   ],
   "cohort_selected": ["SYN-DM-001", "SYN-DM-002", "SYN-DM-003"],
+  "recruitment_records": [
+    {
+      "recruitment_record_id": "SYN-RECRUIT-001",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-001",
+      "qualification_receipt_id": "SYN-QUAL-001",
+      "criteria": {
+        "problem_fit": true,
+        "decision_authority": true,
+        "evidence_access": true,
+        "bounded_scope": true,
+        "outcome_observable": true,
+        "consent_capacity": true
+      },
+      "exclusion_results": {
+        "no_decision_authority": false,
+        "production_write_or_plaintext_credentials": false,
+        "unbounded_scope": false,
+        "no_evidence_governance": false,
+        "unobservable_outcome": false,
+        "uncontained_risk": false
+      },
+      "cohort_disposition": "selected",
+      "cohort_slot": 1,
+      "invitation_artifact_sha256": "0101010101010101010101010101010101010101010101010101010101010101",
+      "invitation_status": "not_sent",
+      "send_receipt_id": null,
+      "terms_status": "not_agreed",
+      "usable_for_real_effect": false
+    },
+    {
+      "recruitment_record_id": "SYN-RECRUIT-002",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-002",
+      "qualification_receipt_id": "SYN-QUAL-002",
+      "criteria": {
+        "problem_fit": true,
+        "decision_authority": true,
+        "evidence_access": true,
+        "bounded_scope": true,
+        "outcome_observable": true,
+        "consent_capacity": true
+      },
+      "exclusion_results": {
+        "no_decision_authority": false,
+        "production_write_or_plaintext_credentials": false,
+        "unbounded_scope": false,
+        "no_evidence_governance": false,
+        "unobservable_outcome": false,
+        "uncontained_risk": false
+      },
+      "cohort_disposition": "selected",
+      "cohort_slot": 2,
+      "invitation_artifact_sha256": "0202020202020202020202020202020202020202020202020202020202020202",
+      "invitation_status": "not_sent",
+      "send_receipt_id": null,
+      "terms_status": "not_agreed",
+      "usable_for_real_effect": false
+    },
+    {
+      "recruitment_record_id": "SYN-RECRUIT-003",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-003",
+      "qualification_receipt_id": "SYN-QUAL-003",
+      "criteria": {
+        "problem_fit": true,
+        "decision_authority": true,
+        "evidence_access": true,
+        "bounded_scope": true,
+        "outcome_observable": true,
+        "consent_capacity": true
+      },
+      "exclusion_results": {
+        "no_decision_authority": false,
+        "production_write_or_plaintext_credentials": false,
+        "unbounded_scope": false,
+        "no_evidence_governance": false,
+        "unobservable_outcome": false,
+        "uncontained_risk": false
+      },
+      "cohort_disposition": "selected",
+      "cohort_slot": 3,
+      "invitation_artifact_sha256": "0303030303030303030303030303030303030303030303030303030303030303",
+      "invitation_status": "not_sent",
+      "send_receipt_id": null,
+      "terms_status": "not_agreed",
+      "usable_for_real_effect": false
+    },
+    {
+      "recruitment_record_id": "SYN-RECRUIT-004",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-004",
+      "qualification_receipt_id": "SYN-QUAL-004",
+      "criteria": {
+        "problem_fit": true,
+        "decision_authority": true,
+        "evidence_access": true,
+        "bounded_scope": true,
+        "outcome_observable": true,
+        "consent_capacity": true
+      },
+      "exclusion_results": {
+        "no_decision_authority": false,
+        "production_write_or_plaintext_credentials": false,
+        "unbounded_scope": false,
+        "no_evidence_governance": false,
+        "unobservable_outcome": false,
+        "uncontained_risk": false
+      },
+      "cohort_disposition": "waitlisted",
+      "cohort_slot": null,
+      "invitation_artifact_sha256": "0404040404040404040404040404040404040404040404040404040404040404",
+      "invitation_status": "not_sent",
+      "send_receipt_id": null,
+      "terms_status": "not_agreed",
+      "usable_for_real_effect": false
+    },
+    {
+      "recruitment_record_id": "SYN-RECRUIT-005",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-005",
+      "qualification_receipt_id": "SYN-QUAL-005",
+      "criteria": {
+        "problem_fit": true,
+        "decision_authority": true,
+        "evidence_access": true,
+        "bounded_scope": true,
+        "outcome_observable": true,
+        "consent_capacity": true
+      },
+      "exclusion_results": {
+        "no_decision_authority": false,
+        "production_write_or_plaintext_credentials": false,
+        "unbounded_scope": false,
+        "no_evidence_governance": false,
+        "unobservable_outcome": false,
+        "uncontained_risk": false
+      },
+      "cohort_disposition": "waitlisted",
+      "cohort_slot": null,
+      "invitation_artifact_sha256": "0505050505050505050505050505050505050505050505050505050505050505",
+      "invitation_status": "not_sent",
+      "send_receipt_id": null,
+      "terms_status": "not_agreed",
+      "usable_for_real_effect": false
+    }
+  ],
   "authority_receipts": [
     {
       "receipt_id": "SYN-AUTH-SEND",
@@ -172,6 +319,125 @@
       "usable_for_real_effect": false
     }
   ],
+  "payment_receipts": [
+    {
+      "receipt_id": "SYN-PAY-KEEP",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-001",
+      "engagement_id": "SYN-ENG-KEEP",
+      "payment_status": "fixture_only",
+      "amount_disclosure": "not_recorded",
+      "currency_disclosure": "not_recorded",
+      "received_at": "2026-08-10T20:00:00Z",
+      "source_locator": "fixture://payment/keep",
+      "content_sha256": "1313131313131313131313131313131313131313131313131313131313131313",
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-PAY-NARROW",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-002",
+      "engagement_id": "SYN-ENG-NARROW",
+      "payment_status": "fixture_only",
+      "amount_disclosure": "not_recorded",
+      "currency_disclosure": "not_recorded",
+      "received_at": "2026-08-10T20:00:00Z",
+      "source_locator": "fixture://payment/narrow",
+      "content_sha256": "1414141414141414141414141414141414141414141414141414141414141414",
+      "usable_for_real_effect": false
+    }
+  ],
+  "acceptance_receipts": [
+    {
+      "receipt_id": "SYN-ACCEPT-KEEP",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-001",
+      "engagement_id": "SYN-ENG-KEEP",
+      "deliverable_sha256": "1515151515151515151515151515151515151515151515151515151515151515",
+      "decision": "fixture_only",
+      "simulated_condition": "accepted",
+      "decided_at": "2026-08-10T20:00:00Z",
+      "actor_role": "fixture-counterparty",
+      "limitations": "synthetic branch only; not client acceptance",
+      "source_locator": "fixture://acceptance/keep",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-ACCEPT-NARROW",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-002",
+      "engagement_id": "SYN-ENG-NARROW",
+      "deliverable_sha256": "1616161616161616161616161616161616161616161616161616161616161616",
+      "decision": "fixture_only",
+      "simulated_condition": "accepted",
+      "decided_at": "2026-08-10T20:00:00Z",
+      "actor_role": "fixture-counterparty",
+      "limitations": "synthetic branch only; not client acceptance",
+      "source_locator": "fixture://acceptance/narrow",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-ACCEPT-BOUNDED",
+      "mode": "synthetic",
+      "candidate_id": "SYN-DM-003",
+      "engagement_id": "SYN-ENG-BOUNDED",
+      "deliverable_sha256": "1717171717171717171717171717171717171717171717171717171717171717",
+      "decision": "fixture_only",
+      "simulated_condition": "accepted",
+      "decided_at": "2026-08-10T20:00:00Z",
+      "actor_role": "fixture-counterparty",
+      "limitations": "synthetic bounded-pilot branch; not paid demand or client acceptance",
+      "source_locator": "fixture://acceptance/bounded",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    }
+  ],
+  "delivery_receipts": [
+    {
+      "receipt_id": "SYN-DELIVERY-KEEP",
+      "mode": "synthetic",
+      "engagement_id": "SYN-ENG-KEEP",
+      "stage_id": "audit_and_verdict",
+      "work_id": "PSP-P12-W02",
+      "deliverable_sha256": "1515151515151515151515151515151515151515151515151515151515151515",
+      "custody_status": "fixture_only",
+      "delivery_status": "fixture_only",
+      "rollback_locator": "fixture://rollback/delivery/keep",
+      "source_locator": "fixture://delivery/keep",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-DELIVERY-NARROW",
+      "mode": "synthetic",
+      "engagement_id": "SYN-ENG-NARROW",
+      "stage_id": "audit_and_verdict",
+      "work_id": "PSP-P12-W02",
+      "deliverable_sha256": "1616161616161616161616161616161616161616161616161616161616161616",
+      "custody_status": "fixture_only",
+      "delivery_status": "fixture_only",
+      "rollback_locator": "fixture://rollback/delivery/narrow",
+      "source_locator": "fixture://delivery/narrow",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-DELIVERY-BOUNDED",
+      "mode": "synthetic",
+      "engagement_id": "SYN-ENG-BOUNDED",
+      "stage_id": "acceptance_and_closeout",
+      "work_id": "PSP-P12-W02",
+      "deliverable_sha256": "1717171717171717171717171717171717171717171717171717171717171717",
+      "custody_status": "fixture_only",
+      "delivery_status": "fixture_only",
+      "rollback_locator": "fixture://rollback/delivery/bounded",
+      "source_locator": "fixture://delivery/bounded",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "usable_for_real_effect": false
+    }
+  ],
   "scenarios": [
     {
       "scenario_id": "SYN-SCENARIO-KEEP",
@@ -220,9 +486,10 @@
       "qualified": true,
       "outcome_type": "paid_audit",
       "reason": "fixture exercises a paid audit with accepted and met outcome",
-      "terms_receipt_present": true,
-      "payment_receipt_present": true,
-      "client_acceptance": true,
+      "terms_authority_receipt_id": "SYN-AUTH-CONTRACT",
+      "payment_receipt_id": "SYN-PAY-KEEP",
+      "acceptance_receipt_id": "SYN-ACCEPT-KEEP",
+      "delivery_receipt_ids": ["SYN-DELIVERY-KEEP"],
       "declared_outcome_met": true,
       "evidence_ids": ["SYN-EV-KEEP-001", "SYN-EV-KEEP-PAYMENT"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -236,9 +503,10 @@
       "qualified": true,
       "outcome_type": "paid_audit",
       "reason": "fixture exercises a paid audit with accepted but unmet outcome",
-      "terms_receipt_present": true,
-      "payment_receipt_present": true,
-      "client_acceptance": true,
+      "terms_authority_receipt_id": "SYN-AUTH-CONTRACT",
+      "payment_receipt_id": "SYN-PAY-NARROW",
+      "acceptance_receipt_id": "SYN-ACCEPT-NARROW",
+      "delivery_receipt_ids": ["SYN-DELIVERY-NARROW"],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NARROW-001", "SYN-EV-NARROW-PAYMENT"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -252,9 +520,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture reason one",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-001"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -268,9 +537,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture reason two",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-002"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -284,9 +554,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture reason three",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-003"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -300,9 +571,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture reason four",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-004"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -316,9 +588,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture reason five",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-005"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -332,9 +605,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason one",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-001"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -348,9 +622,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason two",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-002"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -364,9 +639,10 @@
       "qualified": true,
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason three",
-      "terms_receipt_present": false,
-      "payment_receipt_present": false,
-      "client_acceptance": false,
+      "terms_authority_receipt_id": null,
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": null,
+      "delivery_receipt_ids": [],
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-003"],
       "occurred_at": "2026-08-10T20:00:00Z"
@@ -380,12 +656,101 @@
       "qualified": true,
       "outcome_type": "explicitly_bounded_pilot",
       "reason": "fixture proves a bounded pilot can support delivery evidence without proving paid demand",
-      "terms_receipt_present": true,
-      "payment_receipt_present": false,
-      "client_acceptance": true,
+      "terms_authority_receipt_id": "SYN-AUTH-CONTRACT",
+      "payment_receipt_id": null,
+      "acceptance_receipt_id": "SYN-ACCEPT-BOUNDED",
+      "delivery_receipt_ids": ["SYN-DELIVERY-BOUNDED"],
       "declared_outcome_met": true,
       "evidence_ids": ["SYN-EV-BOUNDED-001"],
       "occurred_at": "2026-08-10T20:00:00Z"
+    }
+  ],
+  "strategy_decision_records": [
+    {
+      "decision_record_id": "SYN-DECISION-KEEP",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-KEEP",
+      "decision": "keep",
+      "decision_basis": "fixture exercises the paid-and-met branch without establishing payment or demand",
+      "before_strategy": "test one bounded audit wedge",
+      "after_strategy": "fixture-only keep branch; real strategy unchanged",
+      "changed_assumptions": ["synthetic paid-and-met condition exercised"],
+      "source_outcome_ids": ["SYN-OUT-KEEP-001"],
+      "external_outcome_evidence_ids": [],
+      "decided_at": "2026-08-10T20:00:00Z",
+      "apply": false,
+      "publishable": false,
+      "usable_for_real_effect": false
+    },
+    {
+      "decision_record_id": "SYN-DECISION-NARROW",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-NARROW",
+      "decision": "narrow",
+      "decision_basis": "fixture exercises the paid-but-unmet branch without establishing payment or demand",
+      "before_strategy": "test one bounded audit wedge",
+      "after_strategy": "fixture-only narrowed branch; real strategy unchanged",
+      "changed_assumptions": ["synthetic paid-but-unmet condition exercised"],
+      "source_outcome_ids": ["SYN-OUT-NARROW-001"],
+      "external_outcome_evidence_ids": [],
+      "decided_at": "2026-08-10T20:00:00Z",
+      "apply": false,
+      "publishable": false,
+      "usable_for_real_effect": false
+    },
+    {
+      "decision_record_id": "SYN-DECISION-PIVOT",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-PIVOT",
+      "decision": "pivot",
+      "decision_basis": "fixture exercises five qualified no-outcomes plus a recorded revision",
+      "before_strategy": "test one bounded audit wedge",
+      "after_strategy": "fixture-only pivot branch; real strategy unchanged",
+      "changed_assumptions": ["synthetic five-no-outcome threshold and revision exercised"],
+      "source_outcome_ids": [
+        "SYN-OUT-NO-001",
+        "SYN-OUT-NO-002",
+        "SYN-OUT-NO-003",
+        "SYN-OUT-NO-004",
+        "SYN-OUT-NO-005"
+      ],
+      "external_outcome_evidence_ids": [],
+      "decided_at": "2026-08-10T20:00:00Z",
+      "apply": false,
+      "publishable": false,
+      "usable_for_real_effect": false
+    },
+    {
+      "decision_record_id": "SYN-DECISION-INSUFFICIENT",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-INSUFFICIENT",
+      "decision": "insufficient_evidence",
+      "decision_basis": "fixture remains below the five-no-outcome threshold",
+      "before_strategy": "test one bounded audit wedge",
+      "after_strategy": "no real decision; gather the missing external evidence",
+      "changed_assumptions": [],
+      "source_outcome_ids": ["SYN-OUT-INC-001", "SYN-OUT-INC-002", "SYN-OUT-INC-003"],
+      "external_outcome_evidence_ids": [],
+      "decided_at": "2026-08-10T20:00:00Z",
+      "apply": false,
+      "publishable": false,
+      "usable_for_real_effect": false
+    },
+    {
+      "decision_record_id": "SYN-DECISION-BOUNDED",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-BOUNDED-PILOT",
+      "decision": "insufficient_evidence",
+      "decision_basis": "an explicitly bounded pilot is operational evidence, not paid commercial proof",
+      "before_strategy": "test one bounded audit wedge",
+      "after_strategy": "no real decision; require the paid-audit or five-no-outcome predicate",
+      "changed_assumptions": [],
+      "source_outcome_ids": ["SYN-OUT-BOUNDED-001"],
+      "external_outcome_evidence_ids": [],
+      "decided_at": "2026-08-10T20:00:00Z",
+      "apply": false,
+      "publishable": false,
+      "usable_for_real_effect": false
     }
   ],
   "evidence": [
@@ -611,6 +976,23 @@
       "limitations": "not a real declined invitation or buyer outcome"
     }
   ],
+  "case_study_receipts": [
+    {
+      "receipt_id": "SYN-CASE-KEEP",
+      "mode": "synthetic",
+      "source_outcome_ids": ["SYN-OUT-KEEP-001"],
+      "exact_copy_sha256": "1818181818181818181818181818181818181818181818181818181818181818",
+      "client_copy_decision": "fixture_only",
+      "owner_publication_decision": "fixture_only",
+      "consent_receipt_id": "SYN-CONSENT-PUBLIC",
+      "identity_authority_receipt_id": "SYN-AUTH-PUBLIC-IDENTITY",
+      "contract_authority_receipt_id": "SYN-AUTH-CONTRACT",
+      "publication_status": "not_published",
+      "withdrawal_path": "discard fixture",
+      "rollback_locator": "fixture://rollback/case-study/keep",
+      "usable_for_real_effect": false
+    }
+  ],
   "claim_refresh_proposals": [
     {
       "proposal_id": "SYN-CLAIM-STRENGTHEN",
@@ -650,6 +1032,62 @@
       "prominence": "nowhere",
       "apply": false,
       "publishable": false
+    }
+  ],
+  "claim_promotion_receipts": [
+    {
+      "receipt_id": "SYN-PROMOTE-STRENGTHEN",
+      "mode": "synthetic",
+      "proposal_id": "SYN-CLAIM-STRENGTHEN",
+      "disposition": "strengthen",
+      "source_outcome_ids": ["SYN-OUT-KEEP-001"],
+      "external_outcome_evidence_ids": [],
+      "consent_receipt_ids": ["SYN-CONSENT-PUBLIC"],
+      "owner_authority_receipt_ids": ["SYN-AUTH-PUBLIC-IDENTITY", "SYN-AUTH-CONTRACT"],
+      "target_claim_keys": ["audit-wedge-outcome"],
+      "prior_claim_set_sha256": "1919191919191919191919191919191919191919191919191919191919191919",
+      "proposed_claim_set_sha256": "2020202020202020202020202020202020202020202020202020202020202020",
+      "promotion_status": "blocked_synthetic",
+      "rollback_locator": "fixture://rollback/claim/strengthen",
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-PROMOTE-NARROW",
+      "mode": "synthetic",
+      "proposal_id": "SYN-CLAIM-NARROW",
+      "disposition": "narrow",
+      "source_outcome_ids": ["SYN-OUT-NARROW-001"],
+      "external_outcome_evidence_ids": [],
+      "consent_receipt_ids": ["SYN-CONSENT-PUBLIC"],
+      "owner_authority_receipt_ids": ["SYN-AUTH-PUBLIC-IDENTITY", "SYN-AUTH-CONTRACT"],
+      "target_claim_keys": ["audit-wedge-outcome"],
+      "prior_claim_set_sha256": "1919191919191919191919191919191919191919191919191919191919191919",
+      "proposed_claim_set_sha256": "2121212121212121212121212121212121212121212121212121212121212121",
+      "promotion_status": "blocked_synthetic",
+      "rollback_locator": "fixture://rollback/claim/narrow",
+      "usable_for_real_effect": false
+    },
+    {
+      "receipt_id": "SYN-PROMOTE-INVALIDATE",
+      "mode": "synthetic",
+      "proposal_id": "SYN-CLAIM-INVALIDATE",
+      "disposition": "invalidate",
+      "source_outcome_ids": [
+        "SYN-OUT-NO-001",
+        "SYN-OUT-NO-002",
+        "SYN-OUT-NO-003",
+        "SYN-OUT-NO-004",
+        "SYN-OUT-NO-005"
+      ],
+      "external_outcome_evidence_ids": [],
+      "consent_receipt_ids": ["SYN-CONSENT-PUBLIC"],
+      "owner_authority_receipt_ids": ["SYN-AUTH-PUBLIC-IDENTITY", "SYN-AUTH-CONTRACT"],
+      "target_claim_keys": ["audit-wedge-outcome"],
+      "prior_claim_set_sha256": "1919191919191919191919191919191919191919191919191919191919191919",
+      "proposed_claim_set_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "promotion_status": "blocked_synthetic",
+      "rollback_locator": "fixture://rollback/claim/invalidate",
+      "usable_for_real_effect": false
     }
   ]
 }

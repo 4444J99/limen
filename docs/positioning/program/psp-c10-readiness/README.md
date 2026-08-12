@@ -47,7 +47,9 @@ The `PSP-C10` conductor assignment remains `gpt-5.6-sol` at `max` effort.
 A qualified door-mail must satisfy all six tracked criteria: problem fit, decision authority,
 least-privilege evidence access, bounded scope, an observable outcome, and capacity to decide
 consent and retention. The design-partner cohort is capped at three; the 90-day denominator remains
-five unique qualified door-mails. Qualification does not authorize outreach.
+five unique qualified door-mails. Each fixture recruitment packet binds the criteria and exclusion
+results, qualification receipt, cohort slot, invitation digest, and explicit `not_sent` /
+`not_agreed` states. Qualification does not authorize outreach.
 
 The pilot is capped at one active engagement and one team, with a 21-day default delivery window.
 Every scope change requires a new receipt. The lifecycle stops separately at invitation, terms,
@@ -55,17 +57,24 @@ delivery, acceptance, conditional install, public case study, independent valida
 refresh, and demand adjudication. A dry run exercises the record shape at each stop while leaving
 the real effect blocked.
 
-## Consent and authority
+## Receipt and authority boundaries
 
-The protocol defines two distinct receipt families:
+The protocol separates each evidence and authority boundary:
 
 - Authority receipts bind one exact artifact and scope to `HG-PUBLICATION-SEND`, `HG-CONTRACT`, or
   `HG-PUBLIC-IDENTITY`, with a decision, expiry, evidence locator, and revocation route.
 - Consent receipts bind evidence intake, outcome interview, public case study, or validation-object
   use to permitted and prohibited uses, retention, and withdrawal.
+- Payment, acceptance, and delivery receipts bind one candidate or engagement to source locators,
+  digests, custody, limitations, and the relevant authority references.
+- Case-study receipts require exact-copy, client, owner, consent, identity, contract, publication,
+  withdrawal, and rollback fields.
+- Claim-promotion receipts bind each proposed disposition to external-outcome, consent, authority,
+  target-claim, prior/proposed digest, and rollback fields.
 
-Fixture receipts use `decision: fixture_only` and `usable_for_real_effect: false`. They prove the
-fields and stops exist; they grant nothing.
+Fixture receipts use `fixture_only`, `not_published`, or `blocked_synthetic` states and
+`usable_for_real_effect: false`. They prove the fields and stops exist; they grant nothing and do
+not attest that payment, delivery, acceptance, approval, publication, or promotion occurred.
 
 ## Evidence and adjudication
 
@@ -88,8 +97,13 @@ In this kit those verdicts are always labelled hypothetical. The real 90-day dec
 source-linked outcomes and may use at most one 14-day extension with a named missing-evidence
 condition, fixed end date, and unchanged thresholds.
 
+Each synthetic scenario also has a before/after strategy decision record with its basis, changed
+assumptions, source outcomes, and an empty external-evidence list. These records are forced to
+`apply: false`, `publishable: false`, and `usable_for_real_effect: false`.
+
 Claim refresh remains proposal-only. Synthetic strengthen, narrow, and invalidate branches are
-forced to `apply: false`, `publishable: false`, and `prominence: nowhere`.
+forced to `apply: false`, `publishable: false`, and `prominence: nowhere`; every proposal has one
+matching `blocked_synthetic` promotion receipt.
 
 ## Commands
 
@@ -98,8 +112,12 @@ Run each command bare and use its own exit status:
 ```bash
 python3 scripts/positioning-c10-readiness.py --check
 python3 scripts/positioning-c10-readiness.py --dry-run
+python3 scripts/positioning-c10-readiness.py --write-receipt
 python3 scripts/positioning-c10-readiness.py --verify-receipt docs/receipts/positioning/preflights/2026-08-10-psp-c10-readiness-synthetic.json
 ```
+
+`--write-receipt` deterministically regenerates the tracked synthetic receipt from the canonical
+C10 registry projection, contract, and fixture. It performs no network or external action.
 
 Formal leaf execution still begins from live registry readiness, the exact leaf assignment, and
 current authority. This kit is an integration input, not a lease, approval, receipt for real work,

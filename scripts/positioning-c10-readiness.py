@@ -26,11 +26,19 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONTRACT = ROOT / "docs" / "positioning" / "program" / "psp-c10-readiness" / "protocol.yaml"
 DEFAULT_FIXTURE = ROOT / "docs" / "positioning" / "program" / "psp-c10-readiness" / "synthetic-fixture.json"
+DEFAULT_RECEIPT = (
+    ROOT
+    / "docs"
+    / "receipts"
+    / "positioning"
+    / "preflights"
+    / "2026-08-10-psp-c10-readiness-synthetic.json"
+)
 PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
 PROGRAM_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
-CONTRACT_SCHEMA = "limen.positioning_c10_readiness.v2"
-FIXTURE_SCHEMA = "limen.positioning_c10_synthetic_fixture.v2"
-RECEIPT_SCHEMA = "limen.positioning_c10_synthetic_receipt.v2"
+CONTRACT_SCHEMA = "limen.positioning_c10_readiness.v3"
+FIXTURE_SCHEMA = "limen.positioning_c10_synthetic_fixture.v3"
+RECEIPT_SCHEMA = "limen.positioning_c10_synthetic_receipt.v3"
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -127,21 +135,29 @@ def _registry_projection(
 ) -> dict[str, Any]:
     chunk = graph["chunk_by_id"][chunk_id]
     return {
+        "success_90_day": dict(graph["program"]["success_90_day"]),
         "chunk": {
             "id": chunk_id,
             "depends_on": list(chunk["depends_on"]),
             "phase_ids": list(chunk["phase_ids"]),
             "exclude_work_ids": list(chunk["exclude_work_ids"]),
             "extra_work_ids": list(chunk["extra_work_ids"]),
+            "objective": str(chunk["objective"]),
+            "exit_gate": str(chunk["exit_gate"]),
             "assignment": _assignment_pair(program.chunk_assignment_for(chunk_id, graph)),
         },
         "work": [
             {
                 "id": work_id,
+                "title": str(graph["work_by_id"][work_id]["title"]),
                 "depends_on": list(graph["work_by_id"][work_id]["depends_on"]),
                 "human_gates": list(graph["work_by_id"][work_id]["human_gates"]),
                 "target_repo": str(graph["work_by_id"][work_id]["target_repo"]),
+                "target_paths": list(graph["work_by_id"][work_id]["target_paths"]),
+                "capabilities": list(graph["work_by_id"][work_id]["capabilities"]),
                 "effect": str(graph["work_by_id"][work_id]["effect"]),
+                "acceptance": str(graph["work_by_id"][work_id]["acceptance"]),
+                "predicate": str(graph["work_by_id"][work_id]["predicate"]),
                 "assignment": _assignment_pair(program.model_assignment_for(work_id, graph)),
             }
             for work_id in work_ids
@@ -230,15 +246,64 @@ def validate_contract(
     criteria = _list(recruitment.get("required_criteria"), "recruitment.required_criteria")
     criterion_ids = [str(_mapping(row, "recruitment criterion").get("id") or "") for row in criteria]
     _expect(len(criterion_ids) == len(set(criterion_ids)) >= 1, "recruitment criteria IDs must be unique")
-    _expect(bool(recruitment.get("hard_exclusions")), "recruitment hard exclusions must be present")
+    exclusions = _list(recruitment.get("hard_exclusions"), "recruitment.hard_exclusions")
+    exclusion_ids = [str(_mapping(row, "recruitment exclusion").get("id") or "") for row in exclusions]
+    _expect(len(exclusion_ids) == len(set(exclusion_ids)) >= 1, "recruitment exclusion IDs must be unique")
+    recruitment_package = _mapping(recruitment.get("package_contract"), "recruitment.package_contract")
+    recruitment_fields = [
+        str(item) for item in _list(recruitment_package.get("required_fields"), "recruitment package fields")
+    ]
+    _expect(len(recruitment_fields) == len(set(recruitment_fields)), "recruitment package fields must be unique")
+    _expect(
+        recruitment_package.get("synthetic_invitation_status") == "not_sent",
+        "synthetic recruitment invitation status must remain not_sent",
+    )
+    _expect(
+        recruitment_package.get("synthetic_terms_status") == "not_agreed",
+        "synthetic recruitment terms status must remain not_agreed",
+    )
 
     receipts = _mapping(contract.get("receipt_contracts"), "receipt_contracts")
     authority_contract = _mapping(receipts.get("authority"), "receipt_contracts.authority")
     consent_contract = _mapping(receipts.get("consent"), "receipt_contracts.consent")
+    payment_contract = _mapping(receipts.get("payment"), "receipt_contracts.payment")
+    acceptance_contract = _mapping(receipts.get("acceptance"), "receipt_contracts.acceptance")
+    delivery_contract = _mapping(receipts.get("delivery"), "receipt_contracts.delivery")
+    case_study_contract = _mapping(receipts.get("case_study"), "receipt_contracts.case_study")
+    claim_promotion_contract = _mapping(receipts.get("claim_promotion"), "receipt_contracts.claim_promotion")
     expected_gate_ids = sorted({gate for gates in gate_matrix.values() for gate in gates})
     _expect(sorted(authority_contract.get("gate_ids") or []) == expected_gate_ids, "authority gate catalog drifted")
     _expect(authority_contract.get("synthetic_decision") == "fixture_only", "synthetic authority must be fixture_only")
     _expect(consent_contract.get("synthetic_decision") == "fixture_only", "synthetic consent must be fixture_only")
+    _expect(payment_contract.get("synthetic_status") == "fixture_only", "synthetic payment must be fixture_only")
+    _expect(
+        payment_contract.get("public_fixture_amount_disclosure") == "not_recorded",
+        "synthetic payment fixtures may not record an amount",
+    )
+    _expect(
+        acceptance_contract.get("synthetic_decision") == "fixture_only",
+        "synthetic acceptance must be fixture_only",
+    )
+    _expect(delivery_contract.get("synthetic_status") == "fixture_only", "synthetic delivery must be fixture_only")
+    _expect(
+        case_study_contract.get("synthetic_publication_status") == "not_published",
+        "synthetic case studies must remain unpublished",
+    )
+    _expect(
+        claim_promotion_contract.get("synthetic_promotion_status") == "blocked_synthetic",
+        "synthetic claim promotion must remain blocked",
+    )
+    receipt_family_fields: dict[str, list[str]] = {}
+    for name, family in (
+        ("payment", payment_contract),
+        ("acceptance", acceptance_contract),
+        ("delivery", delivery_contract),
+        ("case_study", case_study_contract),
+        ("claim_promotion", claim_promotion_contract),
+    ):
+        fields = [str(item) for item in _list(family.get("required_fields"), f"{name} required fields")]
+        _expect(len(fields) == len(set(fields)), f"{name} required fields must be unique")
+        receipt_family_fields[name] = fields
 
     pilot = _mapping(contract.get("bounded_pilot"), "bounded_pilot")
     _expect(pilot.get("active_engagement_limit") == 1, "bounded pilot must allow at most one active engagement")
@@ -290,9 +355,48 @@ def validate_contract(
     _expect(claims.get("synthetic_apply") is False, "synthetic claim changes must never apply")
     _expect(claims.get("synthetic_publishable") is False, "synthetic claim changes must never publish")
 
+    decisions = _mapping(contract.get("strategy_decision_records"), "strategy_decision_records")
+    decision_fields = [
+        str(item) for item in _list(decisions.get("required_fields"), "strategy decision required fields")
+    ]
+    _expect(len(decision_fields) == len(set(decision_fields)), "strategy decision fields must be unique")
+    for key in ("synthetic_apply", "synthetic_publishable", "synthetic_real_effect"):
+        _expect(decisions.get(key) is False, f"strategy_decision_records.{key} must remain false")
+
+    testimonial_policy = _mapping(contract.get("testimonial_reference_policy"), "testimonial_reference_policy")
+    _expect(
+        testimonial_policy.get("synthetic_or_agent_authored_objects_forbidden") is True,
+        "synthetic or agent-authored testimonial objects must remain forbidden",
+    )
+    _expect(
+        testimonial_policy.get("attribution_requires_real_human_source") is True,
+        "testimonial attribution must require a real human source",
+    )
+    _expect(
+        testimonial_policy.get("preflight_collection_status") == "not_attempted",
+        "preflight testimonial collection status must remain not_attempted",
+    )
+
     experiment = _mapping(contract.get("experiment_90_day"), "experiment_90_day")
     _expect(experiment.get("duration_days") == 90, "experiment duration must remain 90 days")
     _expect(experiment.get("denominator_threshold") == threshold, "experiment denominator threshold drifted")
+    required_outcome_fields = _list(experiment.get("required_outcome_fields"), "experiment outcome fields")
+    _expect(
+        set(required_outcome_fields)
+        == {
+            "candidate_id",
+            "qualification_receipt",
+            "outcome_type",
+            "reason",
+            "terms_authority_receipt_id",
+            "payment_receipt_id",
+            "acceptance_receipt_id",
+            "delivery_receipt_ids",
+            "evidence_ids",
+            "occurred_at",
+        },
+        "90-day experiment outcome fields drifted",
+    )
     extension = _mapping(experiment.get("extension"), "experiment_90_day.extension")
     _expect(extension.get("maximum_count") == 1, "90-day experiment extension must be single-use")
     _expect(extension.get("may_not_reduce_thresholds") is True, "extension may not weaken evidence thresholds")
@@ -302,11 +406,19 @@ def validate_contract(
     )
 
     registry_projection = _registry_projection(program, graph, chunk_id, expected_leaves)
+    for leaf in registry_projection["work"]:
+        work_id = leaf["id"]
+        _expect(bool(leaf["title"]), f"{work_id} title is empty")
+        _expect(bool(leaf["target_paths"]), f"{work_id} target paths are empty")
+        _expect(bool(leaf["capabilities"]), f"{work_id} capabilities are empty")
+        _expect(bool(leaf["acceptance"]), f"{work_id} acceptance is empty")
+        _expect(bool(leaf["predicate"]), f"{work_id} predicate is empty")
 
     return {
         "chunk_id": chunk_id,
         "leaf_ids": expected_leaves,
         "criterion_ids": criterion_ids,
+        "exclusion_ids": exclusion_ids,
         "gate_ids": expected_gate_ids,
         "conductor_assignment": _assignment_pair(conductor),
         "leaf_assignments": leaf_assignments,
@@ -314,10 +426,15 @@ def validate_contract(
         "authority_required_fields": list(authority_contract["required_fields"]),
         "consent_required_fields": list(consent_contract["required_fields"]),
         "consent_types": list(consent_contract["consent_types"]),
+        "recruitment_required_fields": recruitment_fields,
+        "recruitment_cohort_dispositions": list(recruitment_package["cohort_dispositions"]),
+        "receipt_family_fields": receipt_family_fields,
         "evidence_required_fields": evidence_fields,
         "evidence_classes": list(evidence["evidence_classes"]),
         "stage_ids": stage_ids,
         "leaf_dependencies": {work_id: list(dependency_matrix[work_id]) for work_id in expected_leaves},
+        "leaf_contract_audit": list(registry_projection["work"]),
+        "strategy_decision_required_fields": decision_fields,
         "registry_projection_sha256": _sha256_json(registry_projection),
     }
 
@@ -409,7 +526,132 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
     _expect(len(cohort) == len(set(cohort)), "synthetic cohort IDs must be unique")
     _expect(set(cohort) <= set(candidate_by_id), "synthetic cohort references an unknown candidate")
 
+    recruitment_rows = _list(fixture.get("recruitment_records"), "recruitment_records")
+    recruitment_by_id: dict[str, dict[str, Any]] = {}
+    recruitment_by_candidate: dict[str, dict[str, Any]] = {}
+    for raw in recruitment_rows:
+        row = _mapping(raw, "recruitment record")
+        missing = set(contract_state["recruitment_required_fields"]) - set(row)
+        _expect(not missing, f"recruitment record is missing fields: {sorted(missing)}")
+        record_id = str(row["recruitment_record_id"])
+        candidate_id = str(row["candidate_id"])
+        _expect(record_id.startswith("SYN-RECRUIT-"), "synthetic recruitment IDs must use SYN-RECRUIT-")
+        _expect(record_id not in recruitment_by_id, f"duplicate recruitment record {record_id}")
+        _expect(candidate_id in candidate_by_id, f"{record_id} references unknown candidate {candidate_id}")
+        _expect(candidate_id not in recruitment_by_candidate, f"duplicate recruitment candidate {candidate_id}")
+        _expect(row.get("mode") == "synthetic", f"{record_id} must remain synthetic")
+        _expect(
+            str(row.get("qualification_receipt_id") or "").startswith("SYN-QUAL-"),
+            f"{record_id} lacks a synthetic qualification receipt",
+        )
+        criteria = _mapping(row.get("criteria"), f"{record_id}.criteria")
+        _expect(criteria == candidate_by_id[candidate_id]["criteria"], f"{record_id} criteria drifted from candidate")
+        exclusions = _mapping(row.get("exclusion_results"), f"{record_id}.exclusion_results")
+        _expect(set(exclusions) == set(contract_state["exclusion_ids"]), f"{record_id} exclusions drifted")
+        _expect(all(value is False for value in exclusions.values()), f"{record_id} exercises an exclusion")
+        _expect(
+            row.get("cohort_disposition") in contract_state["recruitment_cohort_dispositions"],
+            f"{record_id} has an unknown cohort disposition",
+        )
+        _expect(
+            SHA256_RE.fullmatch(str(row.get("invitation_artifact_sha256") or "")) is not None,
+            f"{record_id} invitation digest is invalid",
+        )
+        _expect(row.get("invitation_status") == "not_sent", f"{record_id} may not record an invitation send")
+        _expect(row.get("send_receipt_id") is None, f"{record_id} may not carry a synthetic send receipt")
+        _expect(row.get("terms_status") == "not_agreed", f"{record_id} may not record agreed terms")
+        _expect(row.get("usable_for_real_effect") is False, f"{record_id} cannot authorize a real effect")
+        recruitment_by_id[record_id] = row
+        recruitment_by_candidate[candidate_id] = row
+    _expect(
+        set(recruitment_by_candidate) == set(candidate_by_id),
+        "fixture must provide exactly one recruitment record per candidate",
+    )
+    selected_recruitment = [
+        row for row in recruitment_by_id.values() if row["cohort_disposition"] == "selected"
+    ]
+    _expect(
+        {str(row["candidate_id"]) for row in selected_recruitment} == set(cohort),
+        "selected recruitment records drifted from cohort_selected",
+    )
+    _expect(
+        sorted(row["cohort_slot"] for row in selected_recruitment) == list(range(1, len(cohort) + 1)),
+        "selected recruitment cohort slots must be consecutive",
+    )
+    for row in recruitment_by_id.values():
+        if row["cohort_disposition"] != "selected":
+            _expect(row.get("cohort_slot") is None, f"{row['recruitment_record_id']} non-selected slot must be null")
+
     authority_by_id, consent_by_id = _validate_fixture_receipts(fixture, contract_state)
+
+    payment_rows = _list(fixture.get("payment_receipts"), "payment_receipts")
+    payment_by_id: dict[str, dict[str, Any]] = {}
+    for raw in payment_rows:
+        row = _mapping(raw, "payment receipt")
+        missing = set(contract_state["receipt_family_fields"]["payment"]) - set(row)
+        _expect(not missing, f"payment receipt is missing fields: {sorted(missing)}")
+        receipt_id = str(row["receipt_id"])
+        _expect(receipt_id.startswith("SYN-PAY-"), "synthetic payment IDs must use SYN-PAY-")
+        _expect(receipt_id not in payment_by_id, f"duplicate payment receipt {receipt_id}")
+        _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
+        _expect(row.get("candidate_id") in candidate_by_id, f"{receipt_id} references an unknown candidate")
+        _expect(row.get("payment_status") == "fixture_only", f"{receipt_id} may not claim payment")
+        _expect(row.get("amount_disclosure") == "not_recorded", f"{receipt_id} may not record a fixture amount")
+        _expect(row.get("currency_disclosure") == "not_recorded", f"{receipt_id} may not record fixture currency")
+        _expect(str(row.get("source_locator") or "").startswith("fixture://"), f"{receipt_id} source must be fixture")
+        _expect(SHA256_RE.fullmatch(str(row.get("content_sha256") or "")) is not None, f"{receipt_id} digest invalid")
+        _expect(row.get("usable_for_real_effect") is False, f"{receipt_id} cannot evidence real payment")
+        payment_by_id[receipt_id] = row
+
+    acceptance_rows = _list(fixture.get("acceptance_receipts"), "acceptance_receipts")
+    acceptance_by_id: dict[str, dict[str, Any]] = {}
+    for raw in acceptance_rows:
+        row = _mapping(raw, "acceptance receipt")
+        missing = set(contract_state["receipt_family_fields"]["acceptance"]) - set(row)
+        _expect(not missing, f"acceptance receipt is missing fields: {sorted(missing)}")
+        receipt_id = str(row["receipt_id"])
+        _expect(receipt_id.startswith("SYN-ACCEPT-"), "synthetic acceptance IDs must use SYN-ACCEPT-")
+        _expect(receipt_id not in acceptance_by_id, f"duplicate acceptance receipt {receipt_id}")
+        _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
+        _expect(row.get("candidate_id") in candidate_by_id, f"{receipt_id} references an unknown candidate")
+        _expect(row.get("decision") == "fixture_only", f"{receipt_id} may not claim client acceptance")
+        _expect(
+            row.get("simulated_condition") in {"accepted", "rejected", "revision_requested"},
+            f"{receipt_id} has an invalid simulated condition",
+        )
+        _expect(str(row.get("source_locator") or "").startswith("fixture://"), f"{receipt_id} source must be fixture")
+        _expect(
+            SHA256_RE.fullmatch(str(row.get("deliverable_sha256") or "")) is not None,
+            f"{receipt_id} deliverable digest invalid",
+        )
+        for authority_id in _list(row.get("authority_receipt_ids"), f"{receipt_id}.authority_receipt_ids"):
+            _expect(authority_id in authority_by_id, f"{receipt_id} references unknown authority {authority_id}")
+        _expect(row.get("usable_for_real_effect") is False, f"{receipt_id} cannot evidence real acceptance")
+        acceptance_by_id[receipt_id] = row
+
+    delivery_rows = _list(fixture.get("delivery_receipts"), "delivery_receipts")
+    delivery_by_id: dict[str, dict[str, Any]] = {}
+    for raw in delivery_rows:
+        row = _mapping(raw, "delivery receipt")
+        missing = set(contract_state["receipt_family_fields"]["delivery"]) - set(row)
+        _expect(not missing, f"delivery receipt is missing fields: {sorted(missing)}")
+        receipt_id = str(row["receipt_id"])
+        _expect(receipt_id.startswith("SYN-DELIVERY-"), "synthetic delivery IDs must use SYN-DELIVERY-")
+        _expect(receipt_id not in delivery_by_id, f"duplicate delivery receipt {receipt_id}")
+        _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
+        _expect(row.get("stage_id") in contract_state["stage_ids"], f"{receipt_id} names an unknown stage")
+        _expect(row.get("work_id") in contract_state["leaf_ids"], f"{receipt_id} escapes PSP-C10 scope")
+        _expect(row.get("custody_status") == "fixture_only", f"{receipt_id} may not claim real custody")
+        _expect(row.get("delivery_status") == "fixture_only", f"{receipt_id} may not claim real delivery")
+        _expect(str(row.get("source_locator") or "").startswith("fixture://"), f"{receipt_id} source must be fixture")
+        _expect(
+            SHA256_RE.fullmatch(str(row.get("deliverable_sha256") or "")) is not None,
+            f"{receipt_id} deliverable digest invalid",
+        )
+        for authority_id in _list(row.get("authority_receipt_ids"), f"{receipt_id}.authority_receipt_ids"):
+            _expect(authority_id in authority_by_id, f"{receipt_id} references unknown authority {authority_id}")
+        _expect(row.get("usable_for_real_effect") is False, f"{receipt_id} cannot evidence real delivery")
+        delivery_by_id[receipt_id] = row
 
     scenarios = _list(fixture.get("scenarios"), "scenarios")
     scenario_by_id: dict[str, dict[str, Any]] = {}
@@ -473,24 +715,62 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
             f"{outcome_id} has invalid type",
         )
         _expect(bool(str(row.get("reason") or "").strip()), f"{outcome_id} must record a reason")
-        _expect(isinstance(row.get("payment_receipt_present"), bool), f"{outcome_id} must state payment receipt status")
+        _expect(isinstance(row.get("declared_outcome_met"), bool), f"{outcome_id} must state outcome status")
         evidence_ids = _list(row.get("evidence_ids"), f"{outcome_id}.evidence_ids")
         for evidence_id in evidence_ids:
             _expect(evidence_id in evidence_by_id, f"{outcome_id} references unknown evidence {evidence_id}")
         evidence_classes = {str(evidence_by_id[evidence_id]["evidence_class"]) for evidence_id in evidence_ids}
+        delivery_ids = _list(row.get("delivery_receipt_ids"), f"{outcome_id}.delivery_receipt_ids")
+        for delivery_id in delivery_ids:
+            _expect(delivery_id in delivery_by_id, f"{outcome_id} references unknown delivery {delivery_id}")
         if row.get("outcome_type") == "paid_audit":
-            _expect(row.get("terms_receipt_present") is True, f"{outcome_id} paid audit lacks terms evidence")
-            _expect(row.get("payment_receipt_present") is True, f"{outcome_id} paid audit lacks payment evidence")
-            _expect(row.get("client_acceptance") is True, f"{outcome_id} paid audit lacks client acceptance")
+            terms_id = str(row.get("terms_authority_receipt_id") or "")
+            payment_id = str(row.get("payment_receipt_id") or "")
+            acceptance_id = str(row.get("acceptance_receipt_id") or "")
+            _expect(terms_id in authority_by_id, f"{outcome_id} paid audit lacks terms evidence")
+            _expect(
+                authority_by_id[terms_id]["gate_id"] == "HG-CONTRACT",
+                f"{outcome_id} terms evidence is not contract authority",
+            )
+            _expect(payment_id in payment_by_id, f"{outcome_id} paid audit lacks payment evidence")
+            _expect(acceptance_id in acceptance_by_id, f"{outcome_id} paid audit lacks client acceptance")
+            _expect(bool(delivery_ids), f"{outcome_id} paid audit lacks a delivery receipt")
+            _expect(
+                payment_by_id[payment_id]["candidate_id"] == row["candidate_id"],
+                f"{outcome_id} payment candidate binding is inconsistent",
+            )
+            _expect(
+                acceptance_by_id[acceptance_id]["candidate_id"] == row["candidate_id"],
+                f"{outcome_id} acceptance candidate binding is inconsistent",
+            )
+            engagement_ids = {
+                str(payment_by_id[payment_id]["engagement_id"]),
+                str(acceptance_by_id[acceptance_id]["engagement_id"]),
+                *(str(delivery_by_id[delivery_id]["engagement_id"]) for delivery_id in delivery_ids),
+            }
+            _expect(len(engagement_ids) == 1, f"{outcome_id} commercial receipt engagement binding drifted")
             _expect(
                 {"payment", "client_acceptance"} <= evidence_classes,
                 f"{outcome_id} paid audit evidence classes are incomplete",
             )
         elif row.get("outcome_type") == "explicitly_bounded_pilot":
-            _expect(row.get("payment_receipt_present") is False, f"{outcome_id} bounded pilot may not imply payment")
+            terms_id = str(row.get("terms_authority_receipt_id") or "")
+            acceptance_id = str(row.get("acceptance_receipt_id") or "")
+            _expect(terms_id in authority_by_id, f"{outcome_id} bounded pilot lacks fixture terms authority")
+            _expect(row.get("payment_receipt_id") is None, f"{outcome_id} bounded pilot may not imply payment")
+            _expect(acceptance_id in acceptance_by_id, f"{outcome_id} bounded pilot lacks an acceptance branch")
+            _expect(bool(delivery_ids), f"{outcome_id} bounded pilot lacks a delivery branch")
+            engagement_ids = {
+                str(acceptance_by_id[acceptance_id]["engagement_id"]),
+                *(str(delivery_by_id[delivery_id]["engagement_id"]) for delivery_id in delivery_ids),
+            }
+            _expect(len(engagement_ids) == 1, f"{outcome_id} bounded-pilot engagement binding drifted")
             _expect("bounded_pilot" in evidence_classes, f"{outcome_id} lacks bounded-pilot evidence")
         else:
-            _expect(row.get("payment_receipt_present") is False, f"{outcome_id} no-outcome may not imply payment")
+            _expect(row.get("terms_authority_receipt_id") is None, f"{outcome_id} no-outcome may not imply terms")
+            _expect(row.get("payment_receipt_id") is None, f"{outcome_id} no-outcome may not imply payment")
+            _expect(row.get("acceptance_receipt_id") is None, f"{outcome_id} no-outcome may not imply acceptance")
+            _expect(delivery_ids == [], f"{outcome_id} no-outcome may not imply delivery")
             _expect("no_outcome" in evidence_classes, f"{outcome_id} lacks no-outcome evidence")
         outcome_by_id[outcome_id] = row
 
@@ -504,13 +784,85 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
                 f"{outcome_id} scenario binding is inconsistent",
             )
 
+    decision_rows = _list(fixture.get("strategy_decision_records"), "strategy_decision_records")
+    decision_by_scenario: dict[str, dict[str, Any]] = {}
+    decision_ids: set[str] = set()
+    for raw in decision_rows:
+        row = _mapping(raw, "strategy decision record")
+        missing = set(contract_state["strategy_decision_required_fields"]) - set(row)
+        _expect(not missing, f"strategy decision record is missing fields: {sorted(missing)}")
+        decision_id = str(row["decision_record_id"])
+        scenario_id = str(row["scenario_id"])
+        _expect(decision_id.startswith("SYN-DECISION-"), "synthetic decision IDs must use SYN-DECISION-")
+        _expect(decision_id not in decision_ids, f"duplicate strategy decision {decision_id}")
+        _expect(scenario_id in scenario_by_id, f"{decision_id} references an unknown scenario")
+        _expect(scenario_id not in decision_by_scenario, f"duplicate decision for {scenario_id}")
+        _expect(row.get("mode") == "synthetic", f"{decision_id} must remain synthetic")
+        _expect(
+            row.get("decision") == scenario_by_id[scenario_id]["expected_hypothetical_decision"],
+            f"{decision_id} decision drifted from its scenario",
+        )
+        _expect(bool(str(row.get("decision_basis") or "").strip()), f"{decision_id} lacks a decision basis")
+        _expect(bool(str(row.get("before_strategy") or "").strip()), f"{decision_id} lacks before strategy")
+        _expect(bool(str(row.get("after_strategy") or "").strip()), f"{decision_id} lacks after strategy")
+        _list(row.get("changed_assumptions"), f"{decision_id}.changed_assumptions")
+        source_outcome_ids = _list(row.get("source_outcome_ids"), f"{decision_id}.source_outcome_ids")
+        _expect(
+            source_outcome_ids == scenario_by_id[scenario_id]["outcome_ids"],
+            f"{decision_id} source outcomes drifted from its scenario",
+        )
+        _expect(
+            row.get("external_outcome_evidence_ids") == [],
+            f"{decision_id} may not claim external outcome evidence",
+        )
+        _expect(row.get("apply") is False, f"{decision_id} may not apply a real strategy decision")
+        _expect(row.get("publishable") is False, f"{decision_id} may not be publishable")
+        _expect(row.get("usable_for_real_effect") is False, f"{decision_id} cannot authorize a real effect")
+        decision_ids.add(decision_id)
+        decision_by_scenario[scenario_id] = row
+    _expect(set(decision_by_scenario) == set(scenario_by_id), "fixture must record one decision per scenario")
+
+    case_study_rows = _list(fixture.get("case_study_receipts"), "case_study_receipts")
+    case_study_by_id: dict[str, dict[str, Any]] = {}
+    for raw in case_study_rows:
+        row = _mapping(raw, "case-study receipt")
+        missing = set(contract_state["receipt_family_fields"]["case_study"]) - set(row)
+        _expect(not missing, f"case-study receipt is missing fields: {sorted(missing)}")
+        receipt_id = str(row["receipt_id"])
+        _expect(receipt_id.startswith("SYN-CASE-"), "synthetic case-study IDs must use SYN-CASE-")
+        _expect(receipt_id not in case_study_by_id, f"duplicate case-study receipt {receipt_id}")
+        _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
+        for outcome_id in _list(row.get("source_outcome_ids"), f"{receipt_id}.source_outcome_ids"):
+            _expect(outcome_id in outcome_by_id, f"{receipt_id} references unknown outcome {outcome_id}")
+        _expect(
+            SHA256_RE.fullmatch(str(row.get("exact_copy_sha256") or "")) is not None,
+            f"{receipt_id} copy digest invalid",
+        )
+        _expect(row.get("client_copy_decision") == "fixture_only", f"{receipt_id} may not claim client approval")
+        _expect(
+            row.get("owner_publication_decision") == "fixture_only",
+            f"{receipt_id} may not claim owner publication approval",
+        )
+        _expect(row.get("consent_receipt_id") in consent_by_id, f"{receipt_id} references unknown consent")
+        _expect(
+            row.get("identity_authority_receipt_id") in authority_by_id,
+            f"{receipt_id} references unknown identity authority",
+        )
+        _expect(
+            row.get("contract_authority_receipt_id") in authority_by_id,
+            f"{receipt_id} references unknown contract authority",
+        )
+        _expect(row.get("publication_status") == "not_published", f"{receipt_id} may not record publication")
+        _expect(row.get("usable_for_real_effect") is False, f"{receipt_id} cannot evidence a real case study")
+        case_study_by_id[receipt_id] = row
+
     proposals = _list(fixture.get("claim_refresh_proposals"), "claim_refresh_proposals")
-    proposal_ids: set[str] = set()
+    proposal_by_id: dict[str, dict[str, Any]] = {}
     for raw in proposals:
         row = _mapping(raw, "claim refresh proposal")
         proposal_id = str(row.get("proposal_id") or "")
         _expect(proposal_id.startswith("SYN-CLAIM-"), "synthetic claim proposal IDs must use SYN-CLAIM-")
-        _expect(proposal_id not in proposal_ids, f"duplicate claim proposal {proposal_id}")
+        _expect(proposal_id not in proposal_by_id, f"duplicate claim proposal {proposal_id}")
         _expect(row.get("mode") == "synthetic", f"{proposal_id} must remain synthetic")
         _expect(
             row.get("disposition") in {"strengthen", "narrow", "invalidate"}, f"{proposal_id} has invalid disposition"
@@ -520,17 +872,62 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
         _expect(row.get("prominence") == "nowhere", f"{proposal_id} must remain nowhere")
         for outcome_id in _list(row.get("source_outcome_ids"), f"{proposal_id}.source_outcome_ids"):
             _expect(outcome_id in outcome_by_id, f"{proposal_id} references unknown outcome {outcome_id}")
-        proposal_ids.add(proposal_id)
+        proposal_by_id[proposal_id] = row
+
+    promotion_rows = _list(fixture.get("claim_promotion_receipts"), "claim_promotion_receipts")
+    promotion_by_id: dict[str, dict[str, Any]] = {}
+    promoted_proposals: set[str] = set()
+    for raw in promotion_rows:
+        row = _mapping(raw, "claim-promotion receipt")
+        missing = set(contract_state["receipt_family_fields"]["claim_promotion"]) - set(row)
+        _expect(not missing, f"claim-promotion receipt is missing fields: {sorted(missing)}")
+        receipt_id = str(row["receipt_id"])
+        proposal_id = str(row["proposal_id"])
+        _expect(receipt_id.startswith("SYN-PROMOTE-"), "synthetic promotion IDs must use SYN-PROMOTE-")
+        _expect(receipt_id not in promotion_by_id, f"duplicate claim-promotion receipt {receipt_id}")
+        _expect(proposal_id in proposal_by_id, f"{receipt_id} references unknown proposal {proposal_id}")
+        _expect(proposal_id not in promoted_proposals, f"duplicate promotion gate for {proposal_id}")
+        _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
+        _expect(row.get("disposition") == proposal_by_id[proposal_id]["disposition"], f"{receipt_id} disposition drifted")
+        _expect(
+            row.get("source_outcome_ids") == proposal_by_id[proposal_id]["source_outcome_ids"],
+            f"{receipt_id} source outcomes drifted",
+        )
+        _expect(row.get("external_outcome_evidence_ids") == [], f"{receipt_id} may not claim external outcomes")
+        for consent_id in _list(row.get("consent_receipt_ids"), f"{receipt_id}.consent_receipt_ids"):
+            _expect(consent_id in consent_by_id, f"{receipt_id} references unknown consent {consent_id}")
+        for authority_id in _list(
+            row.get("owner_authority_receipt_ids"), f"{receipt_id}.owner_authority_receipt_ids"
+        ):
+            _expect(authority_id in authority_by_id, f"{receipt_id} references unknown authority {authority_id}")
+        _expect(bool(_list(row.get("target_claim_keys"), f"{receipt_id}.target_claim_keys")), f"{receipt_id} lacks targets")
+        for digest_field in ("prior_claim_set_sha256", "proposed_claim_set_sha256"):
+            _expect(
+                SHA256_RE.fullmatch(str(row.get(digest_field) or "")) is not None,
+                f"{receipt_id} {digest_field} invalid",
+            )
+        _expect(row.get("promotion_status") == "blocked_synthetic", f"{receipt_id} may not promote claims")
+        _expect(row.get("usable_for_real_effect") is False, f"{receipt_id} cannot mutate real claims")
+        promotion_by_id[receipt_id] = row
+        promoted_proposals.add(proposal_id)
+    _expect(promoted_proposals == set(proposal_by_id), "every claim proposal requires one blocked promotion gate")
 
     return {
         "candidate_by_id": candidate_by_id,
         "cohort": cohort,
+        "recruitment_by_id": recruitment_by_id,
         "authority_by_id": authority_by_id,
         "consent_by_id": consent_by_id,
+        "payment_by_id": payment_by_id,
+        "acceptance_by_id": acceptance_by_id,
+        "delivery_by_id": delivery_by_id,
         "scenario_by_id": scenario_by_id,
         "outcome_by_id": outcome_by_id,
         "evidence_by_id": evidence_by_id,
+        "decision_by_scenario": decision_by_scenario,
+        "case_study_by_id": case_study_by_id,
         "claim_proposal_count": len(proposals),
+        "promotion_by_id": promotion_by_id,
     }
 
 
@@ -544,9 +941,10 @@ def hypothetical_decision(
         row
         for row in outcomes
         if row["outcome_type"] == "paid_audit"
-        and row["terms_receipt_present"] is True
-        and row["payment_receipt_present"] is True
-        and row["client_acceptance"] is True
+        and bool(row["terms_authority_receipt_id"])
+        and bool(row["payment_receipt_id"])
+        and bool(row["acceptance_receipt_id"])
+        and bool(row["delivery_receipt_ids"])
     ]
     if accepted:
         return "keep" if any(row["declared_outcome_met"] is True for row in accepted) else "narrow"
@@ -582,6 +980,7 @@ def build_receipt(
         )
         scenario_results[scenario_id] = {
             "hypothetical_decision": decision,
+            "decision_record_id": fixture_state["decision_by_scenario"][scenario_id]["decision_record_id"],
             "outcome_count": len(rows),
             "real_world_decision": "not_adjudicated",
             "status": "synthetic_branch_exercised",
@@ -607,8 +1006,10 @@ def build_receipt(
         "REAL-PAID-AUDIT",
         "REAL-BOUNDED-PILOT",
         "REAL-DELIVERY-ACCEPTANCE",
+        "REAL-CASE-STUDY-PUBLICATION",
         "REAL-TESTIMONIAL-OR-REFERENCE",
         "REAL-EXTERNAL-OUTCOME",
+        "REAL-CLAIM-PROMOTION",
     ]
     return {
         "schema_version": RECEIPT_SCHEMA,
@@ -635,19 +1036,32 @@ def build_receipt(
             "leaves": contract_state["leaf_assignments"],
             "verified_against_registry": True,
         },
+        "registry_audit": {
+            "owned_leaf_count": len(contract_state["leaf_contract_audit"]),
+            "all_owned_leaves_audited": True,
+            "leaf_contracts": contract_state["leaf_contract_audit"],
+        },
         "operational_readiness": {
             "status": "synthetic_dry_run_pass",
             "recruitment_criteria_validated": len(contract_state["criterion_ids"]),
             "qualified_fixture_candidates": len(fixture_state["candidate_by_id"]),
             "bounded_fixture_cohort": len(fixture_state["cohort"]),
+            "unsent_recruitment_records_validated": len(fixture_state["recruitment_by_id"]),
             "authority_receipt_types_validated": len(fixture_state["authority_by_id"]),
             "consent_receipt_types_validated": len(fixture_state["consent_by_id"]),
+            "fixture_only_payment_receipts_validated": len(fixture_state["payment_by_id"]),
+            "fixture_only_acceptance_receipts_validated": len(fixture_state["acceptance_by_id"]),
+            "fixture_only_delivery_receipts_validated": len(fixture_state["delivery_by_id"]),
+            "unpublished_case_study_receipts_validated": len(fixture_state["case_study_by_id"]),
             "pilot_stages_validated": len(stage_results),
             "evidence_records_validated": len(fixture_state["evidence_by_id"]),
             "adjudication_branches_validated": sorted(
                 result["hypothetical_decision"] for result in scenario_results.values()
             ),
+            "before_after_strategy_decisions_validated": len(fixture_state["decision_by_scenario"]),
             "claim_refresh_proposals_validated": fixture_state["claim_proposal_count"],
+            "blocked_claim_promotion_receipts_validated": len(fixture_state["promotion_by_id"]),
+            "testimonial_or_reference_collection": "not_attempted",
             "experiment_duration_days": contract["experiment_90_day"]["duration_days"],
         },
         "commercial_proof": {
@@ -660,6 +1074,7 @@ def build_receipt(
             "real_bounded_pilots": 0,
             "real_revenue_receipts": 0,
             "real_delivery_acceptances": 0,
+            "real_public_case_studies": 0,
             "real_testimonials_or_references": 0,
             "real_external_outcomes": 0,
             "public_claims_refreshed": 0,
@@ -679,15 +1094,16 @@ def build_receipt(
         "scenario_results": scenario_results,
         "claim_refresh": {
             "proposals_only": True,
+            "promotion_gates": "blocked_synthetic",
             "applied": 0,
             "publishable": 0,
             "claims_ledger_changed": False,
         },
         "external_effects": [],
         "truth_statement": (
-            "Synthetic readiness passed. No outreach, agreement, payment, delivery acceptance, "
-            "testimonial, external outcome, public claim refresh, leaf completion, phase completion, "
-            "or chunk completion is established."
+            "Synthetic readiness passed. No outreach, agreement, payment, conversion, revenue, delivery "
+            "acceptance, client reference, public case study, testimonial, external outcome, public claim "
+            "refresh, leaf completion, phase completion, or chunk completion is established."
         ),
     }
 
@@ -706,6 +1122,24 @@ def check_summary(
         "fixture_sha256": receipt["bindings"]["fixture_sha256"],
         "program_registry_projection_sha256": receipt["bindings"]["program_registry_projection_sha256"],
         "model_routing": receipt["model_routing"],
+        "commercial_proof": False,
+        "external_effects": [],
+    }
+
+
+def write_receipt(
+    receipt_path: Path = DEFAULT_RECEIPT,
+    contract_path: Path = DEFAULT_CONTRACT,
+    fixture_path: Path = DEFAULT_FIXTURE,
+) -> dict[str, Any]:
+    receipt = build_receipt(contract_path, fixture_path)
+    content = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.write_text(content, encoding="utf-8")
+    return {
+        "status": "written",
+        "receipt": _relative(receipt_path),
+        "receipt_sha256": _sha256_path(receipt_path),
         "commercial_proof": False,
         "external_effects": [],
     }
@@ -733,6 +1167,14 @@ def _parser() -> argparse.ArgumentParser:
     actions = parser.add_mutually_exclusive_group(required=True)
     actions.add_argument("--check", action="store_true", help="validate the contract and synthetic fixture")
     actions.add_argument("--dry-run", action="store_true", help="emit the deterministic synthetic readiness receipt")
+    actions.add_argument(
+        "--write-receipt",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_RECEIPT,
+        metavar="PATH",
+        help="write the deterministic synthetic receipt (default: tracked preflight receipt)",
+    )
     actions.add_argument("--verify-receipt", type=Path, metavar="PATH", help="verify a committed synthetic receipt")
     parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
     parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
@@ -746,6 +1188,8 @@ def main(argv: list[str] | None = None) -> int:
             result = check_summary(args.contract, args.fixture)
         elif args.dry_run:
             result = build_receipt(args.contract, args.fixture)
+        elif args.write_receipt is not None:
+            result = write_receipt(args.write_receipt, args.contract, args.fixture)
         else:
             result = verify_receipt(args.verify_receipt, args.contract, args.fixture)
     except (OSError, ReadinessError) as exc:
