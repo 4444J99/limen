@@ -1,9 +1,64 @@
 {
-  "schema_version": "limen.psp_c04_proof_preflight.v1",
+  "schema_version": "limen.psp_c04_proof_preflight.v2",
   "chunk_id": "PSP-C04",
   "phase_id": "PSP-P05",
   "status": "PREPARED/PREFLIGHT",
   "prepared_at": "2026-08-10",
+  "program_binding": {
+    "source_path": "institutio/positioning/program.yaml",
+    "phase_outcome": "High-value claims are demonstrated through compact, reproducible proof objects rather than volume theater.",
+    "phase_exit_gate": "The six declared proof classes exist, are public-safe, and link back to current evidence rows.",
+    "leaf_audit": [
+      {
+        "work_id": "PSP-P05-W01",
+        "outcome": "Limen demonstrates governed multi-agent delivery through architecture, decisions, failure modes, metrics, and limits.",
+        "acceptance": "Every report claim resolves to a dated evidence row and an independent reviewer returns publishable or explicit findings.",
+        "target_paths": ["docs/positioning/proof", "docs/receipts"],
+        "executable_artifacts": ["scripts/positioning-proof-preflight.py --mode dependency-sources --json", "scripts/positioning-proof-preflight.py --mode resolve --json"],
+        "residual_gates": ["current evidence refresh", "report source and independent review receipt"]
+      },
+      {
+        "work_id": "PSP-P05-W02",
+        "outcome": "Existing profile, portfolio, resume, organization, and repository copy cannot contradict the report or ledger.",
+        "acceptance": "The public-surface audit reports zero unsupported, contradictory, private, or stale material claims.",
+        "target_paths": ["docs/positioning", "scripts", "link-surfaces.json"],
+        "executable_artifacts": ["scripts/positioning-proof-preflight.py --mode surface-audit --input <manifest> --json"],
+        "residual_gates": ["complete current-surface manifest", "zero-drift audit receipt", "corrected source copy if drift exists"]
+      },
+      {
+        "work_id": "PSP-P05-W03",
+        "outcome": "The commercial claim is grounded in delivery economics and control behavior, not only software output.",
+        "acceptance": "Analysis regenerates from documented inputs and distinguishes model cost, human time, retries, and failed work.",
+        "target_paths": ["docs/positioning/proof", "docs/receipts"],
+        "executable_artifacts": ["scripts/positioning-cost-failure-reproduction.py", "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json"],
+        "residual_gates": ["approved public-safe sampled inputs", "attribution and missingness review", "independent reviewer notes"]
+      },
+      {
+        "work_id": "PSP-P05-W04",
+        "outcome": "Visitors and reviewers can see recent proof that selected systems still work.",
+        "acceptance": "Every selected flagship has a fresh exact-head predicate receipt or an explicit not-current status.",
+        "target_paths": ["docs/receipts/positioning"],
+        "executable_artifacts": ["scripts/positioning-flagship-receipt.py"],
+        "residual_gates": ["fresh default-branch heads", "flagship-local predicates", "three generated receipts"]
+      },
+      {
+        "work_id": "PSP-P05-W05",
+        "outcome": "The governed system can be understood visually and interactively without exposing private operations or secrets.",
+        "acceptance": "Demo passes synthetic-only, no-secret, accessibility, responsive, and link-health checks.",
+        "target_paths": ["web", "docs/positioning/proof", "assets"],
+        "executable_artifacts": ["scripts/positioning-proof-preflight.py --mode demo --input scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json --json"],
+        "residual_gates": ["later visual direction selection", "public-safe implementation", "browser, accessibility, privacy, responsive, and link receipts"]
+      },
+      {
+        "work_id": "PSP-P05-W06",
+        "outcome": "Third-party observations, reviews, reproductions, or outcomes provide evidence beyond self-authored claims.",
+        "acceptance": "At least two independent validation objects exist or the outreach outcomes and objections are durably recorded.",
+        "target_paths": ["docs/positioning/proof", "docs/receipts"],
+        "executable_artifacts": ["scripts/positioning-proof-preflight.py --mode external-validation --input <received-objects> --json"],
+        "residual_gates": ["HG-PUBLICATION-SEND", "two consented independent objects or durable outreach outcome ledger"]
+      }
+    ]
+  },
   "formalization_gate": {
     "required_chunks": ["PSP-C03"],
     "rule": "PSP-P02 is formally closed. This contract may formalize only after PSP-C03 closes with predicate-backed receipts; PSP-P03-W07 is its sole unsatisfied leaf.",
@@ -151,7 +206,10 @@
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
   },
   "cost_failure_reproduction": {
-    "status": "skeleton",
+    "status": "executable_synthetic_fixture_only",
+    "runner": "python3 scripts/positioning-cost-failure-reproduction.py --input <public-safe-sample.json>",
+    "fixture": "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json",
+    "input_schema": "limen.positioning_cost_failure_sample.v1",
     "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "human-time sampling method", "published price basis or explicit unknown"],
     "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
     "required_outputs": ["date window", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict"],
@@ -159,13 +217,18 @@
     "publication_rule": "Withhold the analysis when attribution, sampling, privacy, or denominator checks fail."
   },
   "exact_head_receipt_plan": {
+    "runner": "python3 scripts/positioning-flagship-receipt.py --request <request.json>",
+    "request_schema": "limen.positioning_flagship_receipt_request.v1",
     "required_fields": ["repository", "default_branch", "exact_head", "predicate", "environment", "started_at", "finished_at", "exit_code", "result", "artifact_digest", "limitations"],
     "outcomes": ["current_pass", "current_fail", "not_current", "blocked_external"],
     "rule": "Every selected flagship receives one fresh exact-head receipt or an explicit not-current outcome; a README assertion or endpoint 200 is insufficient."
   },
   "synthetic_architecture_demo": {
     "status": "contract_only_no_ui",
+    "fixture": "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json",
+    "validator_mode": "python3 scripts/positioning-proof-preflight.py --mode demo --input scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json --json",
     "dataset": "invented non-personal packet, lease, receipt, failure, and recovery records",
+    "required_record_types": ["packet", "lease", "execution", "predicate", "receipt", "failure", "recovery", "harvest"],
     "required_story": ["bounded packet", "lease and authority", "execution", "predicate", "receipt", "failure or blocked branch", "harvest and correction"],
     "prohibited_inputs": ["tasks.yaml data", "private task bodies", "credentials", "customer data", "private repository names", "live operational identifiers"],
     "acceptance": ["synthetic-only scan passes", "no-secret scan passes", "keyboard and reduced-motion behavior specified", "responsive and link checks specified", "privacy review recorded"]
