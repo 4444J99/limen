@@ -33,6 +33,12 @@ Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221), 
 - a disabled-by-default, allowlist-only analytics schema that differentiates client and
   recruiter/executive doors while rejecting personal, free-text, content, private-identifier, and
   cross-site fields;
+- a machine-checked claim/disclosure contract that renders only verified or reviewed-derived
+  claims, withholds private or unverified material, and exposes only the client and
+  recruiter/executive public doors;
+- canonical URL/domain truth, declared WCAG 2.2 AA and performance acceptance budgets, and a
+  synthetic rollback dry-run contract that cannot contact deployment, DNS, routing, or analytics
+  services;
 - selection-gated visual and analytics implementation; and
 - a public-safe link-health finding and a source-owned repair path.
 
@@ -61,6 +67,10 @@ not public-surface completion.
 The refreshed contract distinguishes the accepted W01-W06 head from the current C03 preflight
 head, pins the W06 receipt, and fails any inference that the W07 intake package satisfies the
 five-reader gate. C05 remains a separate child of C03 and is not introduced as a C06 dependency.
+It also makes post-selection prerequisites explicit: an operator selection receipt, C03 W07's
+five-reader receipt, P05 W02 claim reconciliation, P06 W07 visual/comprehension QA, and
+HG-PUBLIC-IDENTITY are required before any implementation effect. Selection alone cannot close a
+P07 leaf or phase.
 
 ## Live finding and boundary
 
