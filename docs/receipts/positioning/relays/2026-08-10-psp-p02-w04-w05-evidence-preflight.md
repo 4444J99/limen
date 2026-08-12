@@ -1,15 +1,15 @@
 ---
 type: prompt-relay-envelope
 version: 1.0
-date: 2026-08-10
-from: Codex desktop human-protected preflight task
+date: 2026-08-12
+from: Codex desktop human-protected integration task
 to: next healthy human-protected Codex task
 scope: organvm/limen@codex/psp-p02-w04-w05-public-evidence-preflight
 phase: PROVE
 compression_level: medium
 ---
 
-# Relay — PSP-P02-W04/W05: public flagship evidence and metric preflight
+# Relay — PSP-P02-W04 accepted and W05 formally admitted
 
 ## Routing
 
@@ -18,30 +18,43 @@ compression_level: medium
 - Formal predecessor: https://github.com/organvm/limen/issues/2175
 - Target repository: `organvm/limen`
 - Branch: `codex/psp-p02-w04-w05-public-evidence-preflight`
-- Stacked base: `codex/psp-p02-w03-flagship-proof-preflight`
+- Pull-request base: `main`
 - Initial W04/W05 implementation commit: `23400cee7ffbf95e66f3837f0ef3f02f47bd17fb`
-- Current W03 parent head: `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2`
 - Hardened implementation checkpoint: `488e55b9c25c8208cdf2e08ab1e6dced8524e3be`
-- Authority receipt: human-authorized fresh Codex task under the merged C00 routing correction; this
-  remains a reversible preflight, not a claimed formal completion.
+- Review-correction checkpoints: `8f93fc27abcb4cb6f32b42b2569091bb73a4a436` and
+  `82f4795ba32f8ac7c3fc9f3d3441e7b111891540`
+- Late-audit correction parent: `eabee3f034d9072b6699e3862b7d543c9ffa1d65`; the current PR
+  head supersedes it with the seven-finding correction batch.
+- Accepted W03 pull-request head: `95cadbdfdbe83c22ed7158eab0df15675ae9ba7b`.
+- Accepted W03 main head: `345a1ada43cc9979376690ed71361476f1ab9864`.
+- W03 marked receipt: https://github.com/organvm/limen/issues/2175#issuecomment-5265611241,
+  canonical receipt SHA-256 `f4d5a01afdeed0f258f3efc62a46eef4dc0c1bba537449ca2243f59cb5b762ee`.
+- One-time main-integration merge checkpoint: `26f465409455fd27c51858fdef293823ae4142e3`.
+- Accepted W04 main head: `a594c66980c8c40ce3f55b3a666a70ecf0ebd96b`.
+- W04 marked receipt: https://github.com/organvm/limen/issues/2176#issuecomment-5265745105,
+  canonical receipt SHA-256 `b2c9a4925505dc718e1f41be66fdf8e072fe03bbf677a2326f40bbfbf3fc36f5`.
+- W05 formal-ready implementation source: `39fcb28627a0a01f054f1e3be02c4fcc2c3e6563`;
+  the successor delta is this relay only.
+- Authority receipt: human-authorized Codex continuation. This state admits W05 to the sanctioned
+  merge rail; it is not itself the W05 completion receipt.
 
 ## Verified current state
 
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
-| Exact remote branch checkpoint | `488e55b9c25c8208cdf2e08ab1e6dced8524e3be` before this relay refresh; fetch PR #2310 before resuming |
-| Private repository names in public artifacts | 0 |
+| Exact W05 formal-ready source | `39fcb28627a0a01f054f1e3be02c4fcc2c3e6563`; fetch PR #2328 for its relay-only descendant |
+| Private repository identity guard | Derived from the redacted W01 public-repository projection; aggregate result 0 unregistered controlled identities, with no private names loaded or emitted |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
-| Numeric claims made publishable | 3 bounded, dated statements |
+| Indexed metrics made publishable | 4 exact statements across the 3 bounded packets |
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
-| W03 / W04 / W05 issue state at preflight | open / open / open |
-| Task-specific predicates | `python3 scripts/flagship-evidence.py --verify-live --json` passed; formal `--verify-work` commands intentionally not run |
-| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 11 tests, including repository substitution, duplicate-source, path-traversal, nonnumeric-metric, credentialed/local-network source, and unselected-host failures |
-| Parent privacy guard | `python3 scripts/estate-classification.py --verify --json --base codex/psp-p02-w03-flagship-proof-preflight` passed over the full W04/W05 diff: 314 repositories, 235 public, 79 private, with no private repository token added |
-| Scoped verification | `scripts/verify-scoped.sh` passed all 23 implicated cheap-wave gates on the composed hardened tree before this relay refresh |
-| External effects | branch/PR staging only; no merge, publication, issue-state, or account change |
+| W03 / W04 / W05 issue state | closed / closed / open |
+| Accepted predecessor predicates | `--verify-work PSP-P02-W03` and `--verify-work PSP-P02-W04` passed against their latest marked receipts |
+| Task-specific predicate | `python3 scripts/flagship-evidence.py --verify-live --json` passed against closed/closed/open live parity and both accepted predecessor receipts |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 40 tests, including fully state-relative open-dependency fixtures and predecessor receipt enforcement |
+| Scoped verification | One bare `scripts/verify-scoped.sh` batch passed all 7 implicated gates on the relay-complete tree |
+| External effects | W04 receipt/closure and draft W05 transition PR #2328; no W05 receipt, W05 closure, publication, or account change |
 
 ## Completed work
 
@@ -59,6 +72,27 @@ compression_level: medium
   workflow plus one public endpoint, and rejected traversal, non-HTTPS, or nonnumeric evidence rows.
 - Restricted live fetches and every redirect hop to the selected public hosts, rejected embedded
   credentials and nonstandard ports, and bounded all response bodies before parsing.
+- Covered every consumed input in the scoped gate, including recursive packet paths and the claims
+  ledger, and proved the resolver selects the evidence gate for a packet-only change.
+- Bound workflow API and human URLs to one run in the selected repository and require the live API
+  response to return the same repository and URLs.
+- Derived the collector and export-format denominators from complete, head-pinned Git trees rather
+  than accepting predeclared term presence as an exact count.
+- Bound the 13 imported W08 wording and receipt sets to the immutable source head, path, blob,
+  artifact SHA-256, and canonical projection SHA-256; the projection now includes all four layer
+  dispositions and `publishable_status` as well as wording and receipts.
+- Made packet Markdown a validated projection of each indexed packet-level bounded claim, not only
+  its metric sentences.
+- Replaced the author-declared private-name count with a full-surface, count-only identity guard
+  against the redacted W01 public repository projection and registered that source as a gate input.
+- Made claims-ledger section 8 a parsed, exact projection of the packet metric denominator,
+  statuses, observed values, and public-safe wording.
+- Made dependency declarations follow their live issue owners through the W03 -> W04 -> W05
+  closure order and invoke the canonical latest-marked-receipt predicate for every closed
+  predecessor. The current formal state is closed/closed/open: W03 and W04 are accepted, and W05 is
+  admitted while its own receipt remains pending.
+- Converted timeout, reset, incomplete-read, and other response-body I/O failures—including HTTP
+  error-body reads—into public-safe machine-readable evidence errors.
 
 ## Decisions and rationale
 
@@ -71,18 +105,18 @@ compression_level: medium
 
 ## Next actions
 
-1. Confirm W03 has closed with a valid receipt and refresh the W03 matrix against its merged exact
-   classification before taking any W04 formal-completion action.
-2. Re-run `python3 scripts/flagship-evidence.py --verify-live --json` and the scoped verifier on
-   the exact refreshed W04 head. If a live metric changes, update the dated packet and ledger row
-   before a new receipt is proposed.
-3. Only after the W04 receipt verifier passes and its issue closes, repeat the current-source check
-   for W05, generate its receipt, and run its formal verifier. Do not close either issue from this
-   preflight branch alone.
+1. Require exact-head checks and review clearance, then merge PR #2328 only through
+   `scripts/await-pr.sh --merge`.
+2. On the actual merged main head, rerun the unchanged live evidence predicate, attach the marked
+   PSP-P02-W05 receipt, run `python3 scripts/positioning-program.py --verify-work PSP-P02-W05`, and
+   close #2177 only on pass.
+3. Hand the accepted W05 main head and W04/W05 marked receipt URLs to the conductor. Do not mutate
+   the separately owned W06/W07 or W08 branches from this lane.
 
 ## Risks and prohibitions
 
-- Human gates still unpulled: formal receipt/issue closure is blocked by W03, then W04.
+- W03 and W04 are satisfied. W05 closure remains gated on PR #2328's sanctioned merge plus its
+  marked receipt and executable predicate.
 - Sensitive/private boundary: no private names, paths, hashes, customer data, or invented
   encrypted-addendum contents may enter these packets, PRs, or issue receipts.
 - Files and sibling work that must not be touched: `tasks.yaml`, the W03/W02 branches, live profile
@@ -95,7 +129,9 @@ compression_level: medium
 - Flagship selection: `docs/positioning/flagship-proof-set.yaml`
 - Packet index: `docs/positioning/evidence/flagship-evidence.yaml`
 - Claims authority: `docs/positioning/claims-ledger.md`
-- Pull request: https://github.com/organvm/limen/pull/2310 (draft, stacked on W03); do not merge it while dependencies remain open.
+- W04 integration: https://github.com/organvm/limen/pull/2310 (merged).
+- W05 state transition: https://github.com/organvm/limen/pull/2328 (draft until relay-complete
+  exact-head verification and review clearance).
 
 The fresh-agent injection phrase is:
 

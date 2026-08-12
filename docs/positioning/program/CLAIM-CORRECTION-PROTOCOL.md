@@ -30,9 +30,13 @@ packets. When it is ready, it exports the following minimal contract for W06:
 ```
 
 `scripts/claim-policy.py` rejects private/restricted, withdrawn, unsourced,
-stale, future-dated, source-changed, inverted-validity, or prohibited-language claims. Public
-sources must use credential-free HTTPS URLs. Its report contains only
-claim IDs and reason codes, never statements, source URLs, or private data.
+stale, future-dated, malformed-timestamp, source-changed, inverted-validity, or
+prohibited-language claims. Public sources must use credential-free HTTPS URLs.
+Their hosts must be public DNS names on the default HTTPS port; localhost,
+internal/special-use names, and IP literals fail closed. Claims and report paths
+must be distinct files. `forbidden_language` must be present, although an empty
+list is valid. The report contains only claim IDs and reason codes, never
+statements, source URLs, or private data.
 
 The generator-side surface manifest is likewise a small contract:
 
@@ -46,7 +50,16 @@ The generator-side surface manifest is likewise a small contract:
 Each rendered claim must be bounded by
 `<!-- positioning-claim: claim.id:start -->` and
 `<!-- positioning-claim: claim.id:end -->`. The generator writes to a fresh
-staging directory, runs W06, and promotes no files when the policy report has a
+staging directory outside the source root. Every surface's bounded marker IDs
+must equal that surface's manifest `claim_ids` before any output is written.
+The policy report's `accepted_claim_ids` plus `rejected_claims[].claim_id` form
+the complete adjudicated claim universe. A manifest claim outside that universe
+is quarantined with the public-safe reason `absent_from_policy_report`; it never
+passes through unchanged. A bounded marker omitted from its own surface manifest
+is a malformed generation contract and stops the batch before any write. The
+quarantine report contains public-safe IDs and reason codes only and always
+records `publication_effect: none`.
+The generator runs W06 and promotes no files when the policy report has a
 rejected claim. This is the exact seam; neither this protocol nor W06 modifies
 the W05 ledger or its evidence files.
 
@@ -56,19 +69,23 @@ the W05 ledger or its evidence files.
 | --- | --- | --- | --- |
 | `unsupported` | missing statement or source contract | quarantine | an evidence-backed export row passes W06 |
 | `stale` | `valid_until` predates the evaluation time | quarantine | refreshed evidence and a later validity bound pass W06 |
-| `private_or_restricted` | non-public visibility or a source URL that is not credential-free HTTPS | quarantine | a public-safe replacement is independently reviewed |
+| `private_or_restricted` | non-public visibility or a source URL without a public DNS HTTPS host on the default port | quarantine | a public-safe replacement is independently reviewed |
 | `forbidden_language` | configured prohibited wording | quarantine | corrected bounded wording passes W06 |
 | `source_changed` | recorded and current source digests differ | quarantine | source is re-adjudicated and its digest is refreshed |
+| `invalid_timestamp` | a claim-local `source.observed_at` or `valid_until` is missing or malformed | quarantine | both timestamps satisfy the RFC3339 UTC contract |
 | `future_source` | source observation is later than the fixed evaluation time | quarantine | a real, non-future observation passes W06 |
 | `invalid_validity_window` | validity ends before the source observation | quarantine | a chronologically valid evidence window passes W06 |
 | `withdrawn_or_unapproved` | status is not `publishable` | quarantine | a new approved source row passes W06 |
+| `absent_from_policy_report` | a surface manifest names a claim absent from both accepted and rejected policy verdicts | quarantine | the claim enters the W05 export, passes W06, and the surface is regenerated |
 
 1. Create a correction record before regeneration. Do not repair public copy by hand.
 2. Run `claim-policy.py` at a fixed RFC3339 `--as-of` time. A nonzero result is a
    quarantine decision, not a release decision.
 3. Run `claim-surface-quarantine.py` against a fresh generated staging tree and
    the complete public-surface manifest. It produces quarantined copies only;
-   it does not alter the source tree or publish.
+   it does not alter the source tree or publish. Claims absent from the complete
+   policy verdict are quarantined with `absent_from_policy_report`, never copied
+   through by omission.
 4. Correct the ledger through its W05 owner, regenerate all declared public
    surfaces into a new staging tree, and require a clean policy report plus
    surface-manifest coverage before review.

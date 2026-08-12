@@ -2,8 +2,8 @@
 
 ## Bounded claim
 
-The public-records platform demonstrates a multi-stage public-record decision pipeline with **four
-implemented state collectors (CA, TX, FL, and NY)** on a broader architecture. It does not claim
+The public-records platform demonstrates a multi-stage public-record decision pipeline. Four
+implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. It does not claim
 fifty-state deployment, complete coverage, buyer adoption, or commercial outcomes.
 
 ## Inspectable evidence
@@ -21,8 +21,11 @@ and required collector terms with `python3 scripts/flagship-evidence.py --verify
 
 ## Authorship and limitations
 
-This public packet relies only on public implementation and deployment evidence. It makes no
-inference from private systems, customer records, data freshness, or commercial adoption.
+Public implementation and deployment are the evidence boundary; no private sources are needed for
+this packet.
+
+- Four implemented collectors do not establish fifty-state deployment or adoption.
+- The landing page is an implementation anchor, not a claim about data completeness or commercial use.
 
 ## Withdrawal route
 

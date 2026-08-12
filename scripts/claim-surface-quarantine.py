@@ -17,6 +17,15 @@ from typing import Any
 
 MANIFEST_SCHEMA = "limen.positioning.public-surface-manifest.v1"
 REPORT_SCHEMA = "limen.positioning.claim-policy-report.v1"
+MARKER_PREFIX = re.compile(r"<!--\s*positioning-claim:")
+MARKER_COMMENT = re.compile(r"<!--\s*positioning-claim:.*?-->", re.DOTALL)
+BOUNDED_MARKER = re.compile(
+    r"<!-- positioning-claim: (?P<claim_id>[a-z0-9][a-z0-9._-]*):(?P<edge>start|end) -->"
+)
+PUBLIC_SAFE_ID = re.compile(r"[a-z0-9][a-z0-9._-]*")
+UNKNOWN_CLAIM_REASON = "absent_from_policy_report"
+
+
 class QuarantineError(ValueError):
     pass
 
@@ -40,18 +49,67 @@ def _relative_path(value: object, label: str) -> Path:
     return path
 
 
-def _rejected_ids(report: dict[str, Any]) -> set[str]:
+def _policy_claim_verdicts(report: dict[str, Any]) -> tuple[set[str], dict[str, list[str]]]:
+    """Validate the complete public-safe policy universe and rejection reasons."""
     if report.get("schema_version") != REPORT_SCHEMA:
         raise QuarantineError(f"policy report must use {REPORT_SCHEMA}")
+    accepted = report.get("accepted_claim_ids")
+    if (
+        not isinstance(accepted, list)
+        or not all(isinstance(claim_id, str) and PUBLIC_SAFE_ID.fullmatch(claim_id) for claim_id in accepted)
+        or len(set(accepted)) != len(accepted)
+    ):
+        raise QuarantineError("policy report accepted_claim_ids must be unique public-safe ids")
     rejected = report.get("rejected_claims")
-    if not isinstance(rejected, list) or not rejected:
-        raise QuarantineError("policy report must contain at least one rejected claim")
-    ids: set[str] = set()
+    if not isinstance(rejected, list):
+        raise QuarantineError("policy report rejected_claims must be a list")
+    rejected_reasons: dict[str, list[str]] = {}
     for row in rejected:
-        if not isinstance(row, dict) or not isinstance(row.get("claim_id"), str):
-            raise QuarantineError("policy report rejected_claims must expose public-safe ids")
-        ids.add(row["claim_id"])
-    return ids
+        if not isinstance(row, dict) or set(row) != {"claim_id", "reasons"}:
+            raise QuarantineError("policy report rejected_claims must expose ids and reasons")
+        claim_id = row.get("claim_id")
+        reasons = row.get("reasons")
+        if (
+            not isinstance(claim_id, str)
+            or not PUBLIC_SAFE_ID.fullmatch(claim_id)
+            or claim_id in rejected_reasons
+            or not isinstance(reasons, list)
+            or not reasons
+            or not all(isinstance(reason, str) and PUBLIC_SAFE_ID.fullmatch(reason) for reason in reasons)
+            or len(set(reasons)) != len(reasons)
+        ):
+            raise QuarantineError("policy report rejected claims must use unique public-safe ids and reasons")
+        rejected_reasons[claim_id] = sorted(reasons)
+    accepted_ids = set(accepted)
+    if accepted_ids.intersection(rejected_reasons):
+        raise QuarantineError("policy report accepted and rejected claim ids must be disjoint")
+    return accepted_ids, rejected_reasons
+
+
+def _bounded_claim_ids(rendered: str, path: Path) -> set[str]:
+    """Return exactly-once bounded claim IDs or reject marker ambiguity."""
+    open_claim: str | None = None
+    bounded: set[str] = set()
+    markers = MARKER_COMMENT.findall(rendered)
+    if len(markers) != len(MARKER_PREFIX.findall(rendered)):
+        raise QuarantineError(f"surface {path} contains an unterminated positioning-claim marker")
+    for marker in markers:
+        match = BOUNDED_MARKER.fullmatch(marker)
+        if match is None:
+            raise QuarantineError(f"surface {path} contains a malformed positioning-claim marker")
+        claim_id = match.group("claim_id")
+        if match.group("edge") == "start":
+            if open_claim is not None or claim_id in bounded:
+                raise QuarantineError(f"surface {path} has nested or duplicate marker for {claim_id}")
+            open_claim = claim_id
+        else:
+            if open_claim != claim_id:
+                raise QuarantineError(f"surface {path} has an unmatched end marker for {claim_id}")
+            bounded.add(claim_id)
+            open_claim = None
+    if open_claim is not None:
+        raise QuarantineError(f"surface {path} has an unmatched start marker for {open_claim}")
+    return bounded
 
 
 def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], report: dict[str, Any]) -> dict[str, Any]:
@@ -60,17 +118,22 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
     surfaces = manifest.get("surfaces")
     if not isinstance(surfaces, list) or not surfaces:
         raise QuarantineError("surface manifest must declare at least one public surface")
-    rejected_ids = _rejected_ids(report)
-    if output_root.exists():
-        raise QuarantineError("output root already exists; quarantine requires a fresh staging directory")
+    accepted_ids, rejected_reasons = _policy_claim_verdicts(report)
+    policy_claim_ids = accepted_ids | set(rejected_reasons)
     if not source_root.is_dir() or source_root.is_symlink():
         raise QuarantineError("source root must be a real staging directory")
 
     root_resolved = source_root.resolve()
+    output_resolved = output_root.resolve(strict=False)
+    if output_resolved == root_resolved or output_resolved.is_relative_to(root_resolved):
+        raise QuarantineError("output root must remain outside the source root")
+    if output_root.exists():
+        raise QuarantineError("output root already exists; quarantine requires a fresh staging directory")
     declared_claim_ids: set[str] = set()
     seen_surface_ids: set[str] = set()
     seen_paths: set[Path] = set()
     staged: list[tuple[Path, str]] = []
+    quarantine_reasons = dict(rejected_reasons)
     affected_surfaces = 0
     quarantined_occurrences = 0
     for index, surface in enumerate(surfaces):
@@ -100,7 +163,18 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
         if not source.is_file() or source.is_symlink() or not source.resolve().is_relative_to(root_resolved):
             raise QuarantineError(f"declared public surface is missing: {path}")
         rendered = source.read_text(encoding="utf-8")
-        linked = rejected_ids.intersection(claim_ids)
+        bounded_claim_ids = _bounded_claim_ids(rendered, path)
+        declared_for_surface = set(claim_ids)
+        if bounded_claim_ids != declared_for_surface:
+            raise QuarantineError(
+                f"surface {path} marker/manifest mismatch: "
+                f"undeclared={sorted(bounded_claim_ids - declared_for_surface)}, "
+                f"missing={sorted(declared_for_surface - bounded_claim_ids)}"
+            )
+        unknown_claim_ids = declared_for_surface - policy_claim_ids
+        for claim_id in unknown_claim_ids:
+            quarantine_reasons[claim_id] = [UNKNOWN_CLAIM_REASON]
+        linked = (set(rejected_reasons) | unknown_claim_ids).intersection(claim_ids)
         for claim_id in sorted(linked):
             pattern = re.compile(
                 rf"<!-- positioning-claim: {re.escape(claim_id)}:start -->(.*?)<!-- positioning-claim: {re.escape(claim_id)}:end -->",
@@ -116,7 +190,7 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
             affected_surfaces += 1
         staged.append((path, rendered))
 
-    undeclared = rejected_ids - declared_claim_ids
+    undeclared = set(rejected_reasons) - declared_claim_ids
     if undeclared:
         raise QuarantineError(f"rejected claim is absent from the complete surface manifest: {sorted(undeclared)}")
 
@@ -129,7 +203,11 @@ def quarantine(source_root: Path, output_root: Path, manifest: dict[str, Any], r
         "input_surface_count": len(staged),
         "affected_surface_count": affected_surfaces,
         "quarantined_occurrence_count": quarantined_occurrences,
-        "quarantined_claim_ids": sorted(rejected_ids),
+        "quarantined_claim_ids": sorted(quarantine_reasons),
+        "quarantined_claims": [
+            {"claim_id": claim_id, "reasons": quarantine_reasons[claim_id]}
+            for claim_id in sorted(quarantine_reasons)
+        ],
         "publication_effect": "none",
     }
 

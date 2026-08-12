@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import ipaddress
 import json
 import re
 import sys
@@ -21,6 +22,21 @@ from typing import Any
 SCHEMA_VERSION = "limen.positioning.claim-ledger-export.v1"
 PUBLISHABLE = "publishable"
 RFC3339_Z = "%Y-%m-%dT%H:%M:%SZ"
+DNS_LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
+NONPUBLIC_HOST_SUFFIXES = (
+    ".corp",
+    ".example",
+    ".home",
+    ".internal",
+    ".invalid",
+    ".intranet",
+    ".lan",
+    ".local",
+    ".localdomain",
+    ".localhost",
+    ".onion",
+    ".test",
+)
 
 
 class ContractError(ValueError):
@@ -46,6 +62,50 @@ def _parse_time(value: object, field: str) -> dt.datetime:
         raise ContractError(f"{field} must use YYYY-MM-DDTHH:MM:SSZ") from exc
 
 
+def _parse_claim_time(value: object, reasons: list[str]) -> dt.datetime | None:
+    """Parse a claim-local timestamp or quarantine only that claim."""
+    try:
+        return _parse_time(value, "claim timestamp")
+    except ContractError:
+        reasons.append("invalid_timestamp")
+        return None
+
+
+def _public_https_url(value: object) -> bool:
+    """Accept only credential-free HTTPS URLs with a public DNS hostname."""
+    if not isinstance(value, str) or value != value.strip():
+        return False
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return False
+    hostname = parsed.hostname
+    if (
+        parsed.scheme != "https"
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+        or parsed.netloc.endswith(":")
+    ):
+        return False
+    try:
+        host = hostname.rstrip(".").lower().encode("idna").decode("ascii")
+    except UnicodeError:
+        return False
+    if "." not in host or host.endswith(NONPUBLIC_HOST_SUFFIXES):
+        return False
+    labels = host.split(".")
+    if all(re.fullmatch(r"(?:0x[0-9a-f]+|[0-9]+)", label) for label in labels):
+        return False
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        return all(DNS_LABEL.fullmatch(label) for label in labels)
+    return False
+
+
 def _claim_id(claim: dict[str, Any], index: int) -> str:
     value = claim.get("id")
     if not isinstance(value, str) or not re.fullmatch(r"[a-z0-9][a-z0-9._-]*", value):
@@ -66,7 +126,9 @@ def evaluate_export(document: dict[str, Any], as_of: dt.datetime) -> dict[str, A
     claims = document.get("claims")
     if not isinstance(claims, list) or not claims:
         raise ContractError("claims must be a non-empty list")
-    forbidden = document.get("forbidden_language", [])
+    if "forbidden_language" not in document:
+        raise ContractError("forbidden_language is required")
+    forbidden = document["forbidden_language"]
     if not isinstance(forbidden, list) or not all(isinstance(item, str) and item for item in forbidden):
         raise ContractError("forbidden_language must be a list of non-empty strings")
 
@@ -94,27 +156,21 @@ def evaluate_export(document: dict[str, Any], as_of: dt.datetime) -> dict[str, A
         if not isinstance(source, dict) or not isinstance(source.get("url"), str) or not source["url"]:
             reasons.append("unsourced")
         else:
-            parsed_url = urllib.parse.urlsplit(source["url"])
-            if (
-                parsed_url.scheme != "https"
-                or not parsed_url.netloc
-                or parsed_url.username is not None
-                or parsed_url.password is not None
-            ):
+            if not _public_https_url(source["url"]):
                 reasons.append("private_or_restricted")
-            observed_at = _parse_time(source.get("observed_at"), f"claim {claim_id} source.observed_at")
+            observed_at = _parse_claim_time(source.get("observed_at"), reasons)
             recorded = source.get("sha256")
             current = source.get("current_sha256")
             if not isinstance(recorded, str) or not re.fullmatch(r"[a-f0-9]{64}", recorded):
                 reasons.append("unsourced")
             if current is not None and current != recorded:
                 reasons.append("source_changed")
-        valid_until = _parse_time(claim.get("valid_until"), f"claim {claim_id} valid_until")
+        valid_until = _parse_claim_time(claim.get("valid_until"), reasons)
         if observed_at is not None and observed_at > as_of:
             reasons.append("future_source")
-        if observed_at is not None and valid_until < observed_at:
+        if observed_at is not None and valid_until is not None and valid_until < observed_at:
             reasons.append("invalid_validity_window")
-        if valid_until < as_of:
+        if valid_until is not None and valid_until < as_of:
             reasons.append("stale")
         if any(term.casefold() in statement.casefold() for term in forbidden):
             reasons.append("forbidden_language")
@@ -139,6 +195,18 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _paths_alias(left: Path, right: Path) -> bool:
+    """Detect lexical, symlink, and hardlink aliases without exposing paths."""
+    try:
+        if left.resolve(strict=False) == right.resolve(strict=False):
+            return True
+        return left.samefile(right)
+    except FileNotFoundError:
+        return False
+    except OSError as exc:
+        raise ContractError("cannot validate claims and report path separation") from exc
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--claims", required=True, type=Path, help="W05 claim-ledger export JSON")
@@ -147,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="print the public-safe verdict report")
     args = parser.parse_args(argv)
     try:
+        if args.report is not None and _paths_alias(args.claims, args.report):
+            raise ContractError("--claims and --report must refer to distinct files")
         report = evaluate_export(_read_json(args.claims), _parse_time(args.as_of, "--as-of"))
     except ContractError as exc:
         print(f"claim-policy: FAIL: {exc}", file=sys.stderr)
