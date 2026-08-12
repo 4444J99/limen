@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import importlib.machinery
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -22,6 +23,77 @@ def _load_module():
 MODULE = _load_module()
 
 
+def _accepted_receipt(work_id: str):
+    if work_id == "PSP-P02-W01":
+        return {
+            "schema_version": "limen.positioning_work_receipt.v1",
+            "work_id": work_id,
+            "acceptance_sha256": "9a77e91e51ab8f76149dacd5011f4fd725523b6d74c1db622df2929730d42ec5",
+            "outcome": "succeeded",
+            "authority": {
+                "kind": "direct_human_session",
+                "session_id": "019fed0d-52c4-7a83-b493-88a80035b42c",
+                "executor": "Codex",
+                "human_protected": True,
+            },
+            "changed_paths": [
+                "docs/github-estate-census.json",
+                "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+                "institutio/governance/gates.yaml",
+                "scripts/github-estate-census.py",
+                "scripts/tests/test_github_estate_census_custody.py",
+                "scripts/tests/verify-resolver.test.sh",
+            ],
+            "predicate": {
+                "command": "python3 scripts/github-estate-census.py --check-repositories --json",
+                "exit_code": 0,
+                "output_sha256": "af2c9d21d9eb26f952e3cf4afbab98a9ec595fecc7bca751e6067561ddeb71d4",
+                "observed_at": "2026-08-10T22:13:19Z",
+            },
+            "evidence_urls": [
+                "https://github.com/organvm/limen/issues/2173",
+                "https://github.com/organvm/limen/pull/2305",
+            ],
+            "rollback": {"invoked": False, "state": "not needed"},
+            "observed_heads": {
+                "organvm/limen": "10cf8476d5e88309c71d5fac25167ec7b7af59c4"
+            },
+        }
+    return {
+        "schema_version": "limen.positioning_work_receipt.v1",
+        "work_id": work_id,
+        "acceptance_sha256": "02709f01d310679d8e631d9a7b3a8c71c8759af99097fed9ed6467dd2b9c7a5a",
+        "outcome": "succeeded",
+        "authority": {
+            "kind": "direct_human_session",
+            "session_id": "019fed0d-52c4-7a83-b493-88a80035b42c",
+            "executor": "Codex",
+            "human_protected": True,
+        },
+        "changed_paths": [
+            "docs/positioning/claims-ledger.md",
+            "docs/positioning/evidence/README.md",
+            "docs/positioning/evidence/flagship-evidence.yaml",
+            "docs/receipts/positioning/relays/2026-08-10-psp-p02-w04-w05-evidence-preflight.md",
+            "scripts/tests/flagship-evidence.test.py",
+        ],
+        "predicate": {
+            "command": "python3 scripts/flagship-evidence.py --verify-live --json",
+            "exit_code": 0,
+            "output_sha256": "9054a16a40cad92475d959529bd515e967092bfc29d312d3cad3d2c7058c909c",
+            "observed_at": "2026-08-12T11:05:25Z",
+        },
+        "evidence_urls": [
+            "https://github.com/organvm/limen/issues/2177",
+            "https://github.com/organvm/limen/pull/2328",
+        ],
+        "rollback": {"invoked": False, "state": "not needed"},
+        "observed_heads": {
+            "organvm/limen": "d8b44e60e404b044436addf8108732cc28c06371"
+        },
+    }
+
+
 def _bundle():
     return {
         "artifact": MODULE._load_json(MODULE.ARTIFACT_PATH),
@@ -30,6 +102,8 @@ def _bundle():
         "issue_map": MODULE._load_json(MODULE.ISSUE_MAP_PATH),
         "issue_index": MODULE.ISSUE_INDEX_PATH.read_text(encoding="utf-8"),
         "research_doc": MODULE.RESEARCH_DOC_PATH.read_text(encoding="utf-8"),
+        "flagship_evidence": MODULE._load_yaml(MODULE.FLAGSHIP_EVIDENCE_PATH),
+        "claims_ledger": MODULE.CLAIMS_LEDGER_PATH.read_text(encoding="utf-8"),
     }
 
 
@@ -41,11 +115,48 @@ def _errors(bundle):
         bundle["issue_map"],
         bundle["issue_index"],
         bundle["research_doc"],
+        bundle["flagship_evidence"],
+        bundle["claims_ledger"],
     )
 
 
 def test_tracked_adjudication_bundle_passes_static_contract() -> None:
     assert _errors(_bundle()) == []
+
+
+def test_formalization_is_ready_but_projection_remains_pending() -> None:
+    bundle = _bundle()
+
+    assert bundle["artifact"]["status"] == MODULE.FORMAL_STATUS
+    assert bundle["artifact"]["formalization"]["projection_status"] == MODULE.PROJECTION_STATUS
+    assert bundle["receipt"]["formal_completion"]["allowed"] is False
+    assert bundle["receipt"]["formal_completion"]["projection_status"] == MODULE.PROJECTION_STATUS
+
+
+def test_all_imported_claim_fields_must_exactly_match_accepted_w05_projection() -> None:
+    bundle = _bundle()
+    bundle["flagship_evidence"] = copy.deepcopy(bundle["flagship_evidence"])
+    imported = bundle["flagship_evidence"]["w08_research_import"]["claims"][0]
+    imported["public_wording"] = "broadened after acceptance"
+
+    assert (
+        "all 13 artifact claims must exactly match the accepted W05 four-layer and publishable projection"
+        in _errors(bundle)
+    )
+
+
+def test_claims_ledger_table_must_match_all_four_dispositions() -> None:
+    bundle = _bundle()
+    bundle["claims_ledger"] = bundle["claims_ledger"].replace(
+        "| `profile-production-systems-headline` | `verified` |",
+        "| `profile-production-systems-headline` | `contradicted` |",
+        1,
+    )
+
+    assert (
+        "accepted claims-ledger table must exactly match all 13 formalized claim dispositions"
+        in _errors(bundle)
+    )
 
 
 def test_claim_denominator_is_fixed_and_not_self_declared() -> None:
@@ -124,6 +235,38 @@ def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
     assert calls == [["api", f"repositories/{MODULE.PORTFOLIO_REPOSITORY_ID}"]]
 
 
+def test_live_formalization_binds_latest_marked_receipts_and_observed_heads() -> None:
+    calls = []
+
+    def fetch(args):
+        calls.append(args)
+        issue_number = 2173 if "/2173" in args[1] else 2177
+        work_id = "PSP-P02-W01" if issue_number == 2173 else "PSP-P02-W05"
+        if "comments" not in args[1]:
+            return {"state": "closed"}
+        receipt = _accepted_receipt(work_id)
+        expected = MODULE.ACCEPTED_DEPENDENCIES[work_id]
+        assert MODULE._canonical_sha256(receipt) == expected["canonical_receipt_sha256"]
+        return [
+            {
+                "id": int(expected["marked_receipt"].rsplit("-", 1)[1]),
+                "html_url": expected["marked_receipt"],
+                "body": (
+                    f"<!-- positioning-receipt:{work_id} -->\n"
+                    f"```json\n{json.dumps(receipt, indent=2)}\n```"
+                ),
+            }
+        ]
+
+    assert MODULE.validate_live_dependencies(fetch) == []
+    assert calls == [
+        ["api", "repos/organvm/limen/issues/2173"],
+        ["api", "repos/organvm/limen/issues/2173/comments?per_page=100"],
+        ["api", "repos/organvm/limen/issues/2177"],
+        ["api", "repos/organvm/limen/issues/2177/comments?per_page=100"],
+    ]
+
+
 def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -> None:
     missing = _bundle()
     missing["receipt"] = copy.deepcopy(missing["receipt"])
@@ -187,3 +330,6 @@ def test_issue_map_change_selects_the_research_adjudication_gate() -> None:
     gate = gates["gates"]["research-adjudication-test"]
 
     assert "institutio/positioning/github-map.json" in gate["paths"]
+    assert "docs/positioning/claims-ledger.md" in gate["paths"]
+    assert "docs/positioning/evidence/flagship-evidence.yaml" in gate["paths"]
+    assert "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json" in gate["paths"]

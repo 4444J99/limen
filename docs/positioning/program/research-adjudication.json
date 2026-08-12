@@ -2,8 +2,37 @@
   "schema": "limen.positioning_research_adjudication.v1",
   "work_id": "PSP-P02-W08",
   "generated_at": "2026-08-10T19:21:11Z",
-  "status": "preflight_ratified_dependency_blocked",
+  "status": "formal_ready_projection_pending",
   "receipt": "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+  "formalization": {
+    "readiness": "formal_ready",
+    "formalized_at": "2026-08-12T11:49:45Z",
+    "projection_status": "projection_pending",
+    "accepted_dependencies": [
+      {
+        "work_id": "PSP-P02-W01",
+        "issue": "https://github.com/organvm/limen/issues/2173",
+        "issue_state": "closed",
+        "accepted_head": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2173#issuecomment-5246643968",
+        "canonical_receipt_sha256": "2928726feed64960d73b059889a39fceb318bf7bbc68c4b120d41527eaf10df6",
+        "tracked_receipt_path": "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+        "tracked_receipt_blob": "f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd"
+      },
+      {
+        "work_id": "PSP-P02-W05",
+        "issue": "https://github.com/organvm/limen/issues/2177",
+        "issue_state": "closed",
+        "accepted_head": "d8b44e60e404b044436addf8108732cc28c06371",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2177#issuecomment-5265859179",
+        "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
+        "claims_ledger_path": "docs/positioning/claims-ledger.md",
+        "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee"
+      }
+    ],
+    "post_merge_projection_command": "python3 scripts/positioning-program.py --sync --apply",
+    "post_merge_verify_command": "python3 scripts/positioning-program.py --verify-remote"
+  },
   "coverage": {
     "denominator": 13,
     "adjudicated": 13,
@@ -54,8 +83,9 @@
     },
     "W01_CENSUS_RECEIPT": {
       "kind": "head_pinned_public_safe_receipt",
-      "head": "2d591e630a3b3fbcdfeb7ac12500f374c607af30",
-      "url": "https://github.com/organvm/limen/blob/2d591e630a3b3fbcdfeb7ac12500f374c607af30/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "head": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+      "blob": "f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd",
+      "url": "https://github.com/organvm/limen/blob/10cf8476d5e88309c71d5fac25167ec7b7af59c4/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "public": true
     },
     "W03_PROOF_SET": {
@@ -67,9 +97,9 @@
     },
     "CLAIMS_LEDGER": {
       "kind": "head_pinned_public_source",
-      "head": "f5684212ba3c3dae3ac1b0c90212ea820cac28c9",
-      "blob": "49a3dff3b0d5a2de34a5829e7c585664624ca4f0",
-      "url": "https://github.com/organvm/limen/blob/f5684212ba3c3dae3ac1b0c90212ea820cac28c9/docs/positioning/claims-ledger.md",
+      "head": "d8b44e60e404b044436addf8108732cc28c06371",
+      "blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+      "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/claims-ledger.md",
       "public": true
     },
     "LAVREA_METHODOLOGY": {
@@ -587,6 +617,9 @@
     "target": "docs/positioning/claims-ledger.md",
     "edited_here": false,
     "consumer_work_id": "PSP-P02-W05",
+    "accepted_consumer_head": "d8b44e60e404b044436addf8108732cc28c06371",
+    "accepted_target_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+    "accepted_projection": "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import",
     "source_claim_ids": [
       "profile-production-systems-headline",
       "profile-portfolio-link",
@@ -603,7 +636,7 @@
       "profile-one-creator-authorship"
     ],
     "import_rule": "W05 must preserve each layer and citation, regenerate numeric rows, and mark unsupported percentile and perpetual-operation claims withheld. It must not collapse a verified measurement into a rejected inference.",
-    "completion_gate": "Do not issue a PSP-P02-W08 completion receipt until PSP-P02-W01 and PSP-P02-W05 have accepted receipts and this artifact is reconciled to their exact heads."
+    "completion_gate": "PSP-P02-W01 and PSP-P02-W05 are accepted and exact-head reconciled. W08 is formal-ready, but completion remains gated on merge plus projection sync and verify-remote parity."
   },
   "repository_drift_relay": {
     "stable_repository_id": 1155412125,
@@ -611,6 +644,7 @@
     "registry_updated": true,
     "generated_index_updated": true,
     "live_issue_projection_updated": false,
+    "projection_status": "projection_pending",
     "affected_issue_body_count": 18,
     "affected_work_ids": [
       "PSP-P06-W01",
@@ -633,13 +667,13 @@
       "PSP-P12-W04"
     ],
     "next_authorized_projection_command": "python3 scripts/positioning-program.py --sync --apply",
-    "note": "The command is recorded for the authorized projector and was not run in this preflight lane."
+    "note": "The command remains reserved for the authorized post-merge projector and was not run in this formalization lane."
   },
   "reviewer_verdict": {
     "measurement": "retain every verified, dated, public-safe measurement",
     "inference": "withhold LAVREA percentile claims pending primary population baselines",
     "implication": "do not infer quality, adoption, impact, reliability, or human-only authorship from GitHub output",
     "prominence": "keep the production-systems proposition and bounded evidence; correct the dead link and remove perpetual-operation wording",
-    "formal_completion": "blocked on PSP-P02-W01 and PSP-P02-W05"
+    "formal_completion": "formal-ready; projection_pending until post-merge sync and verify-remote parity"
   }
 }

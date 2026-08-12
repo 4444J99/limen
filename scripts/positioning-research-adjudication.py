@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Validate the PSP-P02-W08 public-safe research-adjudication preflight."""
+"""Validate the PSP-P02-W08 public-safe research-adjudication formalization."""
 
 from __future__ import annotations
 
 import argparse
 from datetime import date, datetime, timedelta, timezone
+import hashlib
 import json
 import re
 import subprocess
@@ -23,9 +24,12 @@ PROGRAM_PATH = ROOT / "institutio/positioning/program.yaml"
 ISSUE_MAP_PATH = ROOT / "institutio/positioning/github-map.json"
 ISSUE_INDEX_PATH = ROOT / "docs/positioning/program/ISSUE-INDEX.md"
 RESEARCH_DOC_PATH = ROOT / "docs/positioning/program/RESEARCH-ADJUDICATION.md"
+FLAGSHIP_EVIDENCE_PATH = ROOT / "docs/positioning/evidence/flagship-evidence.yaml"
+CLAIMS_LEDGER_PATH = ROOT / "docs/positioning/claims-ledger.md"
+W01_TRACKED_RECEIPT_PATH = ROOT / "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json"
 
 ARTIFACT_SCHEMA = "limen.positioning_research_adjudication.v1"
-RECEIPT_SCHEMA = "limen.psp-p02-w08-live-profile-preflight.v1"
+RECEIPT_SCHEMA = "limen.psp-p02-w08-live-profile-formalization.v1"
 IDENTITY_SCHEMA = "limen.positioning_repository_identities.v1"
 WORK_ID = "PSP-P02-W08"
 PORTFOLIO_REPOSITORY_ID = 1155412125
@@ -41,6 +45,31 @@ CREDENTIAL_FRAGMENT_RE = re.compile(
     re.IGNORECASE,
 )
 EXPECTED_CLAIM_COUNT = 13
+FORMAL_STATUS = "formal_ready_projection_pending"
+PROJECTION_STATUS = "projection_pending"
+ACCEPTED_DEPENDENCIES = {
+    "PSP-P02-W01": {
+        "issue_number": 2173,
+        "issue": "https://github.com/organvm/limen/issues/2173",
+        "issue_state": "closed",
+        "accepted_head": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2173#issuecomment-5246643968",
+        "canonical_receipt_sha256": "2928726feed64960d73b059889a39fceb318bf7bbc68c4b120d41527eaf10df6",
+        "tracked_receipt_path": "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+        "tracked_receipt_blob": "f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd",
+    },
+    "PSP-P02-W05": {
+        "issue_number": 2177,
+        "issue": "https://github.com/organvm/limen/issues/2177",
+        "issue_state": "closed",
+        "accepted_head": "d8b44e60e404b044436addf8108732cc28c06371",
+        "marked_receipt": "https://github.com/organvm/limen/issues/2177#issuecomment-5265859179",
+        "canonical_receipt_sha256": "9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164",
+        "claims_ledger_path": "docs/positioning/claims-ledger.md",
+        "claims_ledger_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+    },
+}
+RECEIPT_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
 PROFILE_RENDERED_CONTRIBUTIONS = 33130
 PROFILE_FRESH_CONTRIBUTIONS = 33168
 PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
@@ -146,6 +175,77 @@ def _nonnegative_integer(value: object) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and value >= 0
 
 
+def _git_blob_oid(path: Path) -> str:
+    data = path.read_bytes()
+    header = f"blob {len(data)}\0".encode()
+    return hashlib.sha1(header + data).hexdigest()
+
+
+def _canonical_sha256(value: object) -> str:
+    canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _accepted_dependency_contract(work_id: str) -> dict[str, Any]:
+    return {
+        "work_id": work_id,
+        **{
+            key: value
+            for key, value in ACCEPTED_DEPENDENCIES[work_id].items()
+            if key != "issue_number"
+        },
+    }
+
+
+def _artifact_claim_projection(claims: list[object]) -> list[dict[str, Any]]:
+    projection: list[dict[str, Any]] = []
+    for claim in claims:
+        if not isinstance(claim, dict):
+            continue
+        integration = claim.get("w05_integration")
+        if not isinstance(integration, dict):
+            integration = {}
+        projection.append(
+            {
+                "id": claim.get("id"),
+                "layers": {
+                    layer: (claim.get(layer) or {}).get("disposition")
+                    if isinstance(claim.get(layer), dict)
+                    else None
+                    for layer in LAYERS
+                },
+                "publishable_status": integration.get("publishable_status"),
+                "public_wording": integration.get("public_wording"),
+                "required_receipts": integration.get("required_receipts"),
+            }
+        )
+    return projection
+
+
+def _ledger_claim_projection(ledger: str) -> list[dict[str, str]]:
+    section = ledger.partition("## 9. Research-criticism import")[2].partition("## Never-publish list")[0]
+    row_re = re.compile(
+        r"^\| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \|$"
+    )
+    rows: list[dict[str, str]] = []
+    for line in section.splitlines():
+        match = row_re.fullmatch(line)
+        if match is None:
+            continue
+        claim_id, measurement, inference, implication, prominence, publishable_status = match.groups()
+        rows.append(
+            {
+                "id": claim_id,
+                "measurement": measurement,
+                "inference": inference,
+                "implication": implication,
+                "prominence": prominence,
+                "publishable_status": publishable_status,
+            }
+        )
+    return rows
+
+
 def _work_rows(program: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for phase in program.get("phases") or []:
@@ -161,6 +261,8 @@ def validate_bundle(
     issue_map: dict[str, Any],
     issue_index: str,
     research_doc: str,
+    flagship_evidence: dict[str, Any],
+    claims_ledger: str,
 ) -> list[str]:
     """Return all static public-safety, evidence, and integration failures."""
 
@@ -171,32 +273,62 @@ def validate_bundle(
         errors.append(f"receipt.schema must be {RECEIPT_SCHEMA}")
     if artifact.get("work_id") != WORK_ID or receipt.get("work_id") != WORK_ID:
         errors.append(f"artifact and receipt must both belong to {WORK_ID}")
-    if artifact.get("status") != "preflight_ratified_dependency_blocked":
-        errors.append("artifact status must remain dependency-blocked preflight")
-    if receipt.get("verdict") != "preflight_adjudicated_dependency_blocked":
-        errors.append("receipt verdict must remain dependency-blocked preflight")
+    if artifact.get("status") != FORMAL_STATUS:
+        errors.append(f"artifact status must be {FORMAL_STATUS}")
+    if receipt.get("verdict") != FORMAL_STATUS:
+        errors.append(f"receipt verdict must be {FORMAL_STATUS}")
     if artifact.get("receipt") != str(RECEIPT_PATH.relative_to(ROOT)):
         errors.append("artifact must name the tracked W08 live-profile receipt")
 
+    expected_dependencies = [
+        _accepted_dependency_contract("PSP-P02-W01"),
+        _accepted_dependency_contract("PSP-P02-W05"),
+    ]
+    formalization = artifact.get("formalization") or {}
+    if formalization.get("readiness") != "formal_ready":
+        errors.append("artifact formalization must be formal-ready")
+    if formalization.get("projection_status") != PROJECTION_STATUS:
+        errors.append("artifact must remain projection_pending")
+    if formalization.get("accepted_dependencies") != expected_dependencies:
+        errors.append("artifact must bind the exact accepted W01 and W05 receipts")
+    if formalization.get("post_merge_projection_command") != "python3 scripts/positioning-program.py --sync --apply":
+        errors.append("artifact must retain the authorized post-merge projection command")
+    if formalization.get("post_merge_verify_command") != "python3 scripts/positioning-program.py --verify-remote":
+        errors.append("artifact must retain the post-merge remote-parity predicate")
+
     formal = receipt.get("formal_completion") or {}
     if formal.get("allowed") is not False:
-        errors.append("formal completion must be forbidden")
+        errors.append("formal completion must remain false until post-merge projection parity")
+    if formal.get("readiness") != "formal_ready":
+        errors.append("receipt must record formal readiness")
+    if formal.get("projection_status") != PROJECTION_STATUS:
+        errors.append("receipt must remain projection_pending")
     dependencies = formal.get("dependencies") or []
-    dependency_states = {
-        row.get("work_id"): row.get("issue_state") for row in dependencies if isinstance(row, dict)
-    }
-    if dependency_states != {"PSP-P02-W01": "open", "PSP-P02-W05": "open"}:
-        errors.append("formal completion must be gated on open W01 and W05 dependencies")
+    if dependencies != expected_dependencies:
+        errors.append("receipt must bind the exact accepted W01 and W05 receipts")
     for dependency in dependencies:
         if not isinstance(dependency, dict):
             continue
         work_id = dependency.get("work_id")
         if not _credential_free_https_url(dependency.get("issue")):
             errors.append(f"dependency {work_id} needs a public issue URL")
-        if not _credential_free_https_url(dependency.get("draft_pull_request")):
-            errors.append(f"dependency {work_id} needs its current draft pull request URL")
-        if not HEAD_RE.fullmatch(str(dependency.get("draft_head") or "")):
-            errors.append(f"dependency {work_id} needs its current 40-character draft head")
+        if not _credential_free_https_url(dependency.get("marked_receipt")):
+            errors.append(f"dependency {work_id} needs its accepted marked receipt URL")
+        if not HEAD_RE.fullmatch(str(dependency.get("accepted_head") or "")):
+            errors.append(f"dependency {work_id} needs its accepted 40-character head")
+        if not re.fullmatch(r"[0-9a-f]{64}", str(dependency.get("canonical_receipt_sha256") or "")):
+            errors.append(f"dependency {work_id} needs its canonical receipt SHA-256")
+    try:
+        if _git_blob_oid(W01_TRACKED_RECEIPT_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W01"][
+            "tracked_receipt_blob"
+        ]:
+            errors.append("tracked W01 receipt blob differs from the accepted binding")
+        if _git_blob_oid(CLAIMS_LEDGER_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
+            "claims_ledger_blob"
+        ]:
+            errors.append("claims-ledger blob differs from the accepted W05 binding")
+    except OSError as exc:
+        errors.append(f"cannot read accepted dependency artifact: {exc}")
     if (formal.get("live_reference") or {}).get("issue_state") != "open":
         errors.append("the profile-engine live reference must remain recorded as open")
 
@@ -252,6 +384,19 @@ def validate_bundle(
         ):
             errors.append(f"{prefix} blob must be a 40-character object ID")
 
+    w01_source = sources.get("W01_CENSUS_RECEIPT") or {}
+    if (
+        w01_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["accepted_head"]
+        or w01_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["tracked_receipt_blob"]
+    ):
+        errors.append("W01 source must bind the accepted head and tracked receipt blob")
+    ledger_source = sources.get("CLAIMS_LEDGER") or {}
+    if (
+        ledger_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]
+        or ledger_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]
+    ):
+        errors.append("claims-ledger source must bind the accepted W05 head and blob")
+
     claim_ids: list[str] = []
     for index, claim in enumerate(claims):
         prefix = f"claim[{index}]"
@@ -305,6 +450,37 @@ def validate_bundle(
     if duplicates:
         errors.append(f"duplicate claim ids: {', '.join(duplicates)}")
 
+    artifact_projection = _artifact_claim_projection(claims)
+    w05_import = flagship_evidence.get("w08_research_import") or {}
+    imported_claims = w05_import.get("claims")
+    expected_import_keys = {
+        "id",
+        "layers",
+        "publishable_status",
+        "public_wording",
+        "required_receipts",
+    }
+    if not isinstance(imported_claims, list) or len(imported_claims) != EXPECTED_CLAIM_COUNT:
+        errors.append("accepted W05 import must contain exactly 13 claims")
+        imported_claims = []
+    elif any(not isinstance(row, dict) or set(row) != expected_import_keys for row in imported_claims):
+        errors.append("every accepted W05 import row must contain the exact publishable contract")
+    if imported_claims != artifact_projection:
+        errors.append(
+            "all 13 artifact claims must exactly match the accepted W05 four-layer and publishable projection"
+        )
+
+    expected_ledger_projection = [
+        {
+            "id": row["id"],
+            **row["layers"],
+            "publishable_status": row["publishable_status"],
+        }
+        for row in artifact_projection
+    ]
+    if _ledger_claim_projection(claims_ledger) != expected_ledger_projection:
+        errors.append("accepted claims-ledger table must exactly match all 13 formalized claim dispositions")
+
     axes = artifact.get("lavrea_axis_audit")
     if not isinstance(axes, list):
         errors.append("lavrea_axis_audit must be a list")
@@ -329,6 +505,12 @@ def validate_bundle(
         errors.append("W05 contract must target, but not edit, the claims ledger")
     if w05.get("consumer_work_id") != "PSP-P02-W05":
         errors.append("W05 contract must name PSP-P02-W05 as consumer")
+    if w05.get("accepted_consumer_head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]:
+        errors.append("W05 contract must bind the accepted consumer head")
+    if w05.get("accepted_target_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]:
+        errors.append("W05 contract must bind the accepted claims-ledger blob")
+    if w05.get("accepted_projection") != "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import":
+        errors.append("W05 contract must name the accepted 13-claim projection")
     if w05.get("source_claim_ids") != claim_ids:
         errors.append("W05 contract claim IDs must match adjudicated claim order")
     if "must not collapse" not in str(w05.get("import_rule") or ""):
@@ -372,7 +554,9 @@ def validate_bundle(
     if relay.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
         errors.append("repository-drift relay must carry the canonical portfolio slug")
     if relay.get("live_issue_projection_updated") is not False:
-        errors.append("preflight must not claim live issue projection was updated")
+        errors.append("formalization must not claim live issue projection was updated")
+    if relay.get("projection_status") != PROJECTION_STATUS:
+        errors.append("repository-drift relay must remain projection_pending")
     if relay.get("affected_work_ids") != canonical_work_ids:
         errors.append("repository-drift relay work IDs must match canonical manifest targets in order")
     if relay.get("affected_issue_body_count") != len(canonical_work_ids):
@@ -385,6 +569,8 @@ def validate_bundle(
         errors.append("live receipt must carry the canonical portfolio slug")
     if receipt_identity.get("projection_refresh_performed") is not False:
         errors.append("live receipt must record that issue projection was not performed")
+    if receipt_identity.get("projection_status") != PROJECTION_STATUS:
+        errors.append("live receipt must retain projection_pending")
     if receipt_identity.get("confirmed_private_target_changed") is not False:
         errors.append("the confirmed private collaboration target must remain unchanged")
 
@@ -537,18 +723,31 @@ def validate_bundle(
             errors.append("daily generation window must bind the first and last observed UTC days")
 
     ledger = receipt.get("claims_ledger_integration") or {}
-    if ledger.get("ledger_edited_in_this_lane") is not False or ledger.get("consumer") != "PSP-P02-W05":
-        errors.append("claims-ledger mutation must remain deferred to W05")
+    if ledger.get("ledger_edited_in_this_lane") is not False or ledger.get("accepted_by") != "PSP-P02-W05":
+        errors.append("formalization must consume, but not mutate, the accepted W05 claims ledger")
+    if ledger.get("accepted_head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]:
+        errors.append("claims-ledger integration must bind the accepted W05 head")
+    if ledger.get("accepted_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]:
+        errors.append("claims-ledger integration must bind the accepted W05 blob")
+    if ledger.get("marked_receipt") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["marked_receipt"]:
+        errors.append("claims-ledger integration must bind the accepted W05 marked receipt")
+    if ledger.get("claim_projection") != "exact_match_13_claims_four_layers_and_publishable_fields":
+        errors.append("claims-ledger integration must record the exact 13-claim comparison")
     if ledger.get("integration_artifact") != str(ARTIFACT_PATH.relative_to(ROOT)):
-        errors.append("receipt must point W05 to the tracked integration artifact")
+        errors.append("receipt must point to the tracked formalization artifact")
 
     required_doc_fragments = (
         str(PORTFOLIO_REPOSITORY_ID),
         PORTFOLIO_CANONICAL_SLUG,
         "13 research-rebuked claims",
         "all eight LAVREA axes",
-        "PSP-P02-W01",
-        "PSP-P02-W05",
+        ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["accepted_head"],
+        ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["marked_receipt"],
+        ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"],
+        ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["marked_receipt"],
+        ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"],
+        "formal-ready",
+        PROJECTION_STATUS,
         "#2205–#2211",
         "#2261",
     )
@@ -607,6 +806,58 @@ def validate_live_identity(
     return errors
 
 
+def validate_live_dependencies(
+    fetch: Callable[[list[str]], Any] = _gh_json,
+) -> list[str]:
+    """Bind the latest marked W01/W05 receipts to their accepted exact heads."""
+
+    errors: list[str] = []
+    for work_id, expected in ACCEPTED_DEPENDENCIES.items():
+        issue_number = expected["issue_number"]
+        try:
+            issue = fetch(["api", f"repos/organvm/limen/issues/{issue_number}"])
+            comments = fetch(
+                ["api", f"repos/organvm/limen/issues/{issue_number}/comments?per_page=100"]
+            )
+        except AdjudicationError as exc:
+            errors.append(f"cannot resolve accepted {work_id} receipt: {exc}")
+            continue
+        if not isinstance(issue, dict) or issue.get("state") != "closed":
+            errors.append(f"accepted dependency {work_id} issue must remain closed")
+        if not isinstance(comments, list):
+            errors.append(f"accepted dependency {work_id} comments must be a list")
+            continue
+        marker = f"<!-- positioning-receipt:{work_id} -->"
+        marked = [row for row in comments if isinstance(row, dict) and marker in str(row.get("body") or "")]
+        if not marked:
+            errors.append(f"accepted dependency {work_id} has no marked receipt")
+            continue
+        latest = max(marked, key=lambda row: int(row.get("id") or 0))
+        if latest.get("html_url") != expected["marked_receipt"]:
+            errors.append(f"accepted dependency {work_id} latest marked receipt URL differs")
+        blocks = RECEIPT_BLOCK_RE.findall(str(latest.get("body") or ""))
+        parsed: list[dict[str, Any]] = []
+        for block in blocks:
+            try:
+                value = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict) and value.get("work_id") == work_id:
+                parsed.append(value)
+        if len(parsed) != 1:
+            errors.append(f"accepted dependency {work_id} latest marked comment needs one receipt block")
+            continue
+        receipt = parsed[0]
+        if _canonical_sha256(receipt) != expected["canonical_receipt_sha256"]:
+            errors.append(f"accepted dependency {work_id} canonical receipt SHA-256 differs")
+        if receipt.get("outcome") != "succeeded":
+            errors.append(f"accepted dependency {work_id} receipt outcome must remain succeeded")
+        observed_head = (receipt.get("observed_heads") or {}).get("organvm/limen")
+        if observed_head != expected["accepted_head"]:
+            errors.append(f"accepted dependency {work_id} observed head differs")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="validate static adjudication and relay artifacts")
@@ -622,13 +873,25 @@ def main() -> int:
         issue_map = _load_json(ISSUE_MAP_PATH)
         issue_index = ISSUE_INDEX_PATH.read_text(encoding="utf-8")
         research_doc = RESEARCH_DOC_PATH.read_text(encoding="utf-8")
+        flagship_evidence = _load_yaml(FLAGSHIP_EVIDENCE_PATH)
+        claims_ledger = CLAIMS_LEDGER_PATH.read_text(encoding="utf-8")
     except (AdjudicationError, OSError) as exc:
         print(f"research-adjudication: FAIL: {exc}", file=sys.stderr)
         return 1
 
-    errors = validate_bundle(artifact, receipt, program, issue_map, issue_index, research_doc)
+    errors = validate_bundle(
+        artifact,
+        receipt,
+        program,
+        issue_map,
+        issue_index,
+        research_doc,
+        flagship_evidence,
+        claims_ledger,
+    )
     if args.verify_live and not errors:
         errors.extend(validate_live_identity(program))
+        errors.extend(validate_live_dependencies())
     if errors:
         for error in errors:
             print(f"research-adjudication: FAIL: {error}", file=sys.stderr)

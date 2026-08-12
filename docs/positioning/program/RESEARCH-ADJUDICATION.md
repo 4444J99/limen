@@ -1,25 +1,39 @@
-# PSP-P02-W08 research adjudication preflight
+# PSP-P02-W08 research adjudication formalization
 
-This is a public-safe preflight record, not a completion receipt. PSP-P02-W08 remains formally
-blocked on the accepted outputs of PSP-P02-W01 and PSP-P02-W05. No issue closure, merge, profile
-mutation, live issue projection, or claims-ledger edit is authorized by this record.
+This public-safe record is formal-ready, not a completion receipt. PSP-P02-W01 and PSP-P02-W05 are
+accepted and bound below. W08 remains `projection_pending` until this branch merges and the
+authorized projector sync plus `--verify-remote` parity pass. This record authorizes no issue
+closure, profile mutation, live issue projection, or claims-ledger edit.
 
 The machine-readable adjudication is
 [`research-adjudication.json`](research-adjudication.json). Its dated live evidence is
 [`psp-p02-w08-live-profile-preflight-20260810.json`](../../receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json).
+
+## Accepted dependency bindings
+
+| Dependency | Accepted head | Latest marked receipt | Canonical receipt SHA-256 | Bound tracked object |
+|---|---|---|---|---|
+| PSP-P02-W01 | `10cf8476d5e88309c71d5fac25167ec7b7af59c4` | https://github.com/organvm/limen/issues/2173#issuecomment-5246643968 | `2928726feed64960d73b059889a39fceb318bf7bbc68c4b120d41527eaf10df6` | census receipt blob `f8d27123269dfe49aecb2a5a4d2fbd5c83c2f0fd` |
+| PSP-P02-W05 | `d8b44e60e404b044436addf8108732cc28c06371` | https://github.com/organvm/limen/issues/2177#issuecomment-5265859179 | `9179271ac02d5df5ddf1502ceabf84a8caa2b7394fd8fba70a3f75f05bfe8164` | claims-ledger blob `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee` |
+
+The formal validator resolves the latest marked receipt for both closed issues, recomputes its
+canonical digest, and compares the receipt-observed `organvm/limen` head exactly. It also compares
+all 13 W08 claims with W05's accepted import across measurement, inference, implication,
+prominence, publishable status, public wording, and required receipts.
 
 ## Exact public heads and observations
 
 | Surface | Exact public head or identity | Adjudication use |
 |---|---|---|
 | GitHub profile | `f198b37e3161121e7c198e21bd18b87e29b6bc4f` | Rendered wording, manifest values, generator workflow |
-| W01 census preflight | `2d591e630a3b3fbcdfeb7ac12500f374c607af30` | Public-safe estate totals |
+| W01 accepted census | `10cf8476d5e88309c71d5fac25167ec7b7af59c4` | Public-safe estate totals and tracked receipt blob |
+| W05 accepted claims ledger | `d8b44e60e404b044436addf8108732cc28c06371` | Exact 13-claim imported publication contract |
 | W03 proof-set preflight | `0de48d3f5dc15b9bae61cbf49eeba9a9eed59ba2` | Per-system public proof and constrained live probes |
 | LAVREA | `02e360c9828336ac95ce8223c65d127ffea27661` | Methodology and percentile-baseline audit |
 | Portfolio | GitHub repository ID `1155412125`; head `85bfaa84287e4a3b90b49187caa4313c4edda1aa` | Canonical-owner resolution independent of a mutable slug |
 
-All values below are observations made on 2026-08-10. Moving values carry their own timestamp in
-the receipt.
+Profile and repository observations below were made on 2026-08-10. The accepted dependency
+bindings were reconciled on 2026-08-12. Moving values carry their own timestamp in the receipt.
 
 ## Adjudicated corrections
 
@@ -74,13 +88,16 @@ prose and private-only inventories are not copied or used as public evidence.
 
 ## W05 integration contract
 
-PSP-P02-W05 consumes `research-adjudication.json`, preserves every claim's four layers and
-citations, regenerates moving numeric rows, and imports only publishable wording into
-`docs/positioning/claims-ledger.md`. It must not collapse a verified measurement into a rejected
-inference. The ledger is deliberately unchanged in this lane.
+Accepted PSP-P02-W05 consumed `research-adjudication.json`, preserved every claim's four layers,
+and imported the publishable contract into `docs/positioning/claims-ledger.md`. The accepted ledger
+blob is `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee`; this lane reads and validates it without editing it.
+The formal validator requires an exact ordered match for all 13 claims across the four dispositions,
+publishable status, public wording, and required receipts. It must not collapse a verified
+measurement into a rejected inference.
 
-Formal W08 completion remains forbidden until W01 and W05 have accepted receipts and this artifact
-is reconciled to their exact heads.
+W08 is formal-ready. Completion remains false while `projection_pending`; the source task owns the
+sanctioned merge, post-merge projector sync, remote-parity verification, marked W08 receipt, and
+issue closure.
 
 ## Registry-drift relay
 
@@ -90,7 +107,7 @@ fails if the ID resolves to a different slug, visibility, default branch, or arc
 program work reintroduces the retired slug.
 
 The following 18 live issue bodies still contain the retired projection and require an authorized
-projector refresh; this preflight did not mutate them:
+post-merge projector refresh; this formalization did not mutate them:
 
 | Work IDs | Live issues |
 |---|---|
@@ -101,8 +118,9 @@ projector refresh; this preflight did not mutate them:
 | `PSP-P10-W04` | #2243 |
 | `PSP-P12-W04` | #2261 |
 
-The confirmed private collaboration target is unchanged. The next authorized projection action is
-recorded in the machine-readable artifact; it was not executed here. A packet seed remains a
+The confirmed private collaboration target is unchanged. The next authorized projection action and
+its `--verify-remote` parity predicate are recorded in the machine-readable artifact; neither was
+executed here. A packet seed remains a
 non-lease, but seeds for identity-managed repositories now fail closed unless a live lookup of the
 immutable repository ID still resolves the canonical owner, visibility, default branch, and archive
 state immediately before seed emission.
