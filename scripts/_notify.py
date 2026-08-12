@@ -170,9 +170,18 @@ def notify_once(
 
     The dedup record is written even when notifications are disabled, so arming
     LIMEN_NOTIFY later does not replay every already-active condition.
+
+    Hysteresis: if the key exists with a pending ``clean_since`` (a ``clear_condition``
+    with a cooldown observed the condition clean but the cooldown has not elapsed), the
+    onset has RETURNED before the clear could complete — cancel the pending clear (it is
+    still one continuous episode) and stay quiet. It is not a re-onset, so it must not
+    re-fire.
     """
     state = _load(root)
     if key in state:
+        if "clean_since" in state[key]:
+            del state[key]["clean_since"]
+            _save(root, state)
         return False
     state[key] = {"first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "message": message[:300]}
     _save(root, state)
@@ -181,11 +190,33 @@ def notify_once(
     return True
 
 
-def clear_condition(root: Path | str, key: str) -> bool:
-    """Forget an ended condition so its next onset notifies again."""
+def clear_condition(root: Path | str, key: str, cooldown: int = 0) -> bool:
+    """Forget an ended condition so its next onset notifies again.
+
+    ``cooldown`` adds hysteresis for conditions sampled through a ROTATING window (e.g.
+    merge-drain's CI-RED count, which assesses only a slice of the PR universe per beat):
+    a single clean observation could be window rotation, not recovery, and an immediate
+    clear re-arms the notification — so the next beat's red slice re-fires, paging the
+    operator for one continuous episode (measured 2026-08-09: six CI-RED notifications in
+    ~24h over a persistently red fleet). With ``cooldown > 0`` the clear does not complete
+    until the condition has stayed clean for that many seconds: the first clean beat stamps
+    ``clean_since`` and returns False; the clear lands only on a later clean beat once the
+    window has elapsed. A returning onset (``notify_once`` on a ``clean_since`` record)
+    cancels the pending clear, so the episode stays one notification.
+    """
     state = _load(root)
     if key not in state:
         return False
+    if cooldown > 0:
+        record = state[key]
+        clean_since = record.get("clean_since")
+        now = time.time()
+        if clean_since is None:
+            record["clean_since"] = now
+            _save(root, state)
+            return False
+        if now - clean_since < cooldown:
+            return False
     del state[key]
     _save(root, state)
     return True

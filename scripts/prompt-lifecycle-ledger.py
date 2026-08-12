@@ -36,6 +36,7 @@ from limen.runtime_config import RUNTIME_URL_ENV_ORDER, runtime_api_url  # noqa:
 # dev/worktree run cannot silently dirty the live checkout (LIMEN_ROOT keeps owning the board).
 REPO = Path(__file__).resolve().parents[1]
 HOME = Path.home()
+RUNTIME_ROOT = ROOT / ".agent-runtime"
 DOC_PATH = REPO / "docs" / "prompt-lifecycle-ledger.md"
 PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
@@ -74,12 +75,19 @@ TRANSIENT_GH_ERROR_BITS = (
 
 LOCAL_SOURCES = [
     ("codex-sessions", HOME / ".codex" / "sessions", ("*",)),
+    ("codex-sessions", RUNTIME_ROOT / "codex" / "sessions", ("*",)),
     ("codex-history", HOME / ".codex", ("history.jsonl",)),
+    ("codex-history", RUNTIME_ROOT / "codex", ("history.jsonl",)),
     ("codex-attachments", HOME / ".codex" / "attachments", ("*",)),
+    ("codex-attachments", RUNTIME_ROOT / "codex" / "attachments", ("*",)),
     ("claude-projects", HOME / ".claude" / "projects", ("*",)),
+    ("claude-projects", RUNTIME_ROOT / "claude" / "projects", ("*",)),
     ("claude-tasks", HOME / ".claude" / "tasks", ("*",)),
+    ("claude-tasks", RUNTIME_ROOT / "claude" / "tasks", ("*",)),
     ("claude-plans", HOME / ".claude" / "plans", ("*",)),
+    ("claude-plans", RUNTIME_ROOT / "claude" / "plans", ("*",)),
     ("claude-file-history", HOME / ".claude" / "file-history", ("*",)),
+    ("claude-file-history", RUNTIME_ROOT / "claude" / "file-history", ("*",)),
     ("gemini-tmp-agy", HOME / ".gemini" / "tmp", ("capfill-agy-*/chats/*.jsonl", "*agy*/chats/*.jsonl")),
     ("agy-cli-history", AGY_CLI_ROOT, ("history.jsonl",)),
 ]

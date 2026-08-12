@@ -919,6 +919,18 @@ def _lifecycle_repair_authorized(
             and ref_match
             and (not task_repo or ref_match.group(1) == task_repo)
         )
+    if marker == "pr-closed-reconcile":
+        ref = str(log.get("pr_observed_ref") or "")
+        observed = str(log.get("pr_observed_state") or "")
+        ref_match = re.fullmatch(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9][0-9]*)", ref)
+        task_repo = str(patch.get("repo", task.get("repo")) or "")
+        return bool(
+            prior_status in {"open", "dispatched", "failed", "failed_blocked", "needs_human"}
+            and next_status == "done"
+            and observed in {"closed", "merged", "not_found"}
+            and ref_match
+            and (not task_repo or ref_match.group(1) == task_repo)
+        )
     if marker == "routine-recovered":
         name = str(log.get("routine_name") or "")
         return bool(

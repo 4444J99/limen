@@ -1463,6 +1463,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Remote-keeper HMAC secret for loss-recoverable executor lease capabilities bound to lease ID, generation, and executor principal. It is never returned; only the derived executor capability is delivered by the authenticated claim route."
+  LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY:
+    default: "1"
+    env: LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY
+    self_update: "deployment rollback valve only"
+    owner: dispatch
+    note: "Remote-keeper liveness write path. Enabled writes one generation-bound per-lease overlay for an ordinary active heartbeat. Set to 0 before rollback; the next authenticated request materializes selected overlays into the cold manifest and removes them before an older binary is restored."
   LIMEN_CONDUCT_STATE:
     default: ""
     env: LIMEN_CONDUCT_STATE
@@ -2433,6 +2439,24 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_SELF_HEAL_STALE:
+    default: "1"
+    env: LIMEN_SELF_HEAL_STALE
+    self_update: none
+    owner: heal
+    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/state-freshness.py --field mtime fails (advisory) when logs/self-heal.log hasn't been refreshed within ~6h (~2 windows of the C_HEAL=6-beat rung's worst-case tempo). Sibling of host-pressure-stale — watches the PR-repair FACTORY's writer so the 2026-08-09 ~26h-silent death (quota wall exits self-heal.py before its success-path write) can't recur unseen; a frozen writer fires one onset-deduped notification (scripts/_notify.py). Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0) doesn't alarm on a log stale by design. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  LIMEN_HEAL_RECONCILE_SCAN_MAX:
+    default: 1000               # ceiling on self-heal.py's full-fleet enumeration (--reconcile-scan-max)
+    env: LIMEN_HEAL_RECONCILE_SCAN_MAX
+    self_update: none
+    owner: heal
+    note: "Cap on the single `gh search prs` enumeration self-heal.py draws its rotating window from. Named RECONCILE, not SCAN, because the reconcile pass is what constrains it — four sibling organs (merge-drain, pr-lifecycle-autotype, owner-route-drain) cap the same enumeration under the plain name `--scan-max`/LIMEN_MERGE_SCAN_MAX and those really are cost knobs, since none of them reads absence from the list. Transferring that meaning here is the specific mistake this rename exists to prevent. It has a SECOND consumer with the opposite requirement, and that is what makes the number load-bearing rather than a cost knob: the reconcile pass retires any active HEAL task whose PR is absent from this list, so a cap below the live open-PR count turns a prefix into a false closure proof. self-heal.py refuses to retire from a truncated set, which is safe but silent — measured 2026-08-09, the shipped default of 500 against 818-822 live open PRs meant the beat printed `retirement SKIPPED ... would-retire=0` every beat while the same run at 900 reported `would-retire=257`; the retirement valve was wired, scheduled, and had never fired. 1000 is GitHub's search-result ceiling, not a preference — `gh search --limit N` above it returns an EMPTY list rather than an error (_pr_scan.SEARCH_RESULT_CEILING clamps it), so raising this further disables the organ instead of widening it. Once the estate exceeds 1000 open PRs, search cannot answer completely at all and retirement must move to a paginated REST enumeration like scripts/check-heal-retirement.py's."
+  LIMEN_HEAL_RETIREMENT_MAX_PAGES:
+    default: 20                 # runaway guard on REST pagination in check-heal-retirement.py
+    env: LIMEN_HEAL_RETIREMENT_MAX_PAGES
+    self_update: none
+    owner: heal
+    note: "Runaway bound on the paginated REST open-PR enumeration behind scripts/check-heal-retirement.py — NOT a coverage cap. REST pagination proves its own completeness by ending on a short page, so this only stops a pathological loop; hitting it reports TRUNCATED (exit 2, flags nothing) because a prefix must never pass as the whole set. That distinction is load-bearing: absence from the enumerated set is what marks a HEAL task retirable, so an incomplete list makes open PRs read as closed. The predicate uses REST rather than `gh search` for exactly this reason, plus pool isolation — measured 2026-08-09 with two lanes sweeping PRs, `graphql` sat at 0/5000 (gh search runs on it, returning an EMPTY list) while `core` held 4887/5000, and the search-based gate on main reported '51 active HEAL tasks name closed/merged PRs' when the true count was 15."
   LIMEN_HEAL_DISPATCH:
     default: 1                  # default-ON: apply verify-dispatch.py's findings each HEAL beat
     env: LIMEN_HEAL_DISPATCH
@@ -2628,6 +2652,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Space-separated globs of REGENERABLE daemon receipt files. sync-release.sh re-converges a diverged live checkout when its unique local commits touch ONLY these (loss-free — the beat rewrites them), instead of failing open forever and pinning the daemon to stale code. Genuinely-unique history still fails open to hand-reconcile."
+  LIMEN_SYNC_RELEASE_SCRIPT:
+    default: null              # unset in every runtime path; the tests resolve scripts/sync-release.sh
+    env: LIMEN_SYNC_RELEASE_SCRIPT
+    self_update: none
+    owner: limen-daemon
+    note: "TEST-ONLY: which sync-release.sh the drive tests execute (scripts/tests/sync-release.test.sh and cli/tests/test_session_contention.py's end-to-end section). Unset everywhere at runtime — the daemon always runs $LIMEN_ROOT/scripts/sync-release.sh — and it exists solely so the A/B that PROVES a regression test can be one command: extract the parent commit's script, point this at it, and require a FAIL. Declared here rather than renamed outside the LIMEN_* namespace because a knob that steers which code a gate exercises is exactly what the panel is for; a name chosen to dodge the ratchet would make it invisible on the one surface that enumerates such knobs. Used 2026-08-09 to prove the held-branch detach fallback: the baseline reproduced the live beat's own refusal line verbatim."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING
@@ -2809,6 +2839,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
+  LIMEN_MERGE_CI_RED_COOLDOWN:
+    default: "14400"
+    env: LIMEN_MERGE_CI_RED_COOLDOWN
+    self_update: none
+    owner: arms-agents
+    note: "Hysteresis cooldown in seconds before a CI-RED PR can be re-notified after clearing (notify-hysteresis): a rotating window must not re-page on the same cycle; 4h default matches the drain beat periodicity."
   LIMEN_LANE_THROUGHPUT:
     default: "1"
     env: LIMEN_LANE_THROUGHPUT
@@ -3061,6 +3097,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "The Limen task ID injected into the opencode lane run environment so the agent knows which task it is executing. Set by dispatch.py at dispatch time."
+  LIMEN_PRIVATE_TASKS:
+    default: ""
+    env: LIMEN_PRIVATE_TASKS
+    self_update: none
+    owner: vigilia
+    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty reads the configured public projection; never point this at public tasks.yaml."
   LIMEN_ISOLATION_PROMPT_GUARD:
     default: "1"
     env: LIMEN_ISOLATION_PROMPT_GUARD
@@ -4417,6 +4459,18 @@ parameters:
     self_update: none
     owner: enactment
     note: "How many CONSECUTIVE failing beats make scripts/enactment-audit.py's efficacy rung go RED for a rung. The third audit axis: wiring proves a flag is set, liveness proves the daemon is not older than its wiring, and NEITHER can see a rung that is wired, live, and fails every beat. Measured 2026-08-07: heal-board.py --canonical failed on EVERY beat with 'Exceeded allowed rows written in Durable Objects free tier' while the audit printed '3 rung(s) green/skip' and twelve regressed needs-human atoms stayed regressed — the gap was not a flag missing from a list (that flag was declared AND on), it was a missing axis. 3 filters a single bad beat (a timeout, a transient network fault) as noise while catching anything persistent within ~6 minutes at the 120s floor. Streaks are TRAILING, so a recovered rung is healthy. Exit 75 (EX_TEMPFAIL) is reported but never RED: it means 'blocked on a condition already filed with a human owner', and a permanently-red gate is an ignored gate."
+  LIMEN_VALVE_EFFECT_LOG:
+    default: "$LIMEN_ROOT/logs/valve-effects.jsonl"   # the per-run destructive-valve effect ledger
+    env: LIMEN_VALVE_EFFECT_LOG
+    self_update: none
+    owner: enactment
+    note: "Where scripts/_valve_effects.record appends one `{ts,valve,authorized,candidates,effects,dry_run,detail}` row per destructive-valve run, and where enactment-audit.py's POTENCY rung reads them from. Resolved against the root the DAEMON runs from, never the invoking worktree — #2053 fixed that same asymmetry for the liveness rung, and splitting the writer and reader across two logs/ directories would read as 'no data' rather than as a misconfiguration. The `candidates` field is the load-bearing one: it is the denominator that separates a valve with nothing to do from a valve that cannot act, which is the distinction the shipped-and-dead retirement pass had no way to express (see LIMEN_VALVE_IDLE_STREAK_RED). Overridable so tests and replays can drive the rung against a fixture ledger. Append-only and bounded at _valve_effects.MAX_ROWS."
+  LIMEN_VALVE_IDLE_STREAK_RED:
+    default: "3"               # consecutive no-effect runs before a destructive valve is called INERT
+    env: LIMEN_VALVE_IDLE_STREAK_RED
+    self_update: none
+    owner: enactment
+    note: "How many CONSECUTIVE no-effect runs make scripts/enactment-audit.py's POTENCY rung go RED for a destructive valve. The FOURTH audit axis, and it exists because the third is blind to a specific shape: wiring proves a flag is set, liveness proves the daemon post-dates its wiring, efficacy proves the rung is not exiting non-zero — and a valve that succeeds at doing NOTHING passes all three. Measured 2026-08-09 (#2150): self-heal.py's retirement pass was wired, live, and exited 0 on every beat for a day while retiring nothing, because its enumeration was capped below the live open-PR count and the truncation guard correctly, silently refused to retire from a prefix; the same run at a sufficient cap found 257 retirable tasks. armed-valve-audit.py could not see it either — that organ classifies ARMING, and this valve was ARMED. The rung reads logs/valve-effects.jsonl, where _valve_effects.record requires every valve to report the CANDIDATES it evaluated alongside the effects it produced, computed independently of whether it was authorized to act. That denominator is the whole mechanism: an alarm on 'effects == 0' alone would fire forever on a healthy valve with a drained backlog, get muted, and take the real signal with it — '0 of 0' is idle, '0 of 257' is dead. Dry runs are recorded but never counted (a dry run does not act by design). Streaks are TRAILING, so a valve that fires again is healthy. 3 matches LIMEN_RUNG_FAIL_STREAK_RED: one quiet run is noise, three is a pattern."
   LIMEN_BEAT_RUNG_LOG_MAX:
     default: "20000"           # trim threshold in records (~5 beats' worth of headroom over KEEP)
     env: LIMEN_BEAT_RUNG_LOG_MAX

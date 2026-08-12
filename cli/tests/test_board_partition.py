@@ -82,6 +82,30 @@ def test_the_operators_own_work_is_not_a_finding(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stdout
 
 
+def test_the_private_canonical_board_publishes_an_empty_aggregate_task_list(tmp_path: Path) -> None:
+    """The public projection carries counts only; no task row is scanned or disclosed."""
+    board = tmp_path / "tasks.yaml"
+    board.write_text(
+        yaml.safe_dump(
+            {
+                "portal": {
+                    "name": "Universal Task Intake",
+                    "public_projection": {
+                        "schema_version": "limen.public_board_projection.v1",
+                        "total": 411,
+                        "by_status": {"open": 4, "done": 407},
+                    },
+                },
+                "tasks": [],
+            },
+            sort_keys=False,
+        )
+    )
+    result = _run(board, "--check")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "no new partner-lane content" in result.stdout
+
+
 def test_the_stale_owner_is_reported_as_its_own_finding_class(tmp_path: Path) -> None:
     """The root cause gets its own name, because it is what hid the other two.
 

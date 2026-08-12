@@ -49,6 +49,14 @@ check-docs-manifest
 check-docs-exports
 check-note-links' docs/some-note.md
 
+# Evidence packet files are nested below the registry path; the recursive glob keeps the
+# W04/W05 validator selected even when a packet-only diff does not touch its script or manifest.
+expect flagship-evidence-packet 'syntax-changed
+diff-hygiene
+flagship-evidence-test
+check-docs-exports
+check-note-links' docs/positioning/evidence/new-packet.md
+
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
 # listing `cli/src/limen/*.py` silently drops this case, and dispatch.py (a live `gh pr merge`
@@ -56,6 +64,7 @@ check-note-links' docs/some-note.md
 # NOT pull in an AST scan.
 expect cli-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params
@@ -68,6 +77,7 @@ pytest-api' cli/src/limen/io.py
 
 expect api-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 check-params
 check-note-links
@@ -77,6 +87,7 @@ pytest-api' web/api/main.py
 
 expect mcp-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 agent-docs
 check-note-links
@@ -104,6 +115,7 @@ check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
 diff-hygiene
+operator-gates
 task-board
 tasks-parse
 check-root-manifest
@@ -187,6 +199,10 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+github-estate-census-custody-test
+flagship-proof-set-test
+flagship-evidence-test
+claim-policy-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
@@ -211,6 +227,7 @@ check-note-links' scripts/tests/verify-parallel.test.sh
 
 expect mixed-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params

@@ -10,465 +10,545 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Decided — closed PR, work preserved (83) — reapable, awaiting acceptance
+## Live-work branches (539) — decide each
 
-A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
-GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
-recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:
-the intention was already decided against. They are reap candidates gated on
-`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.
-
-- `agent/codex-sessions-adapter-0713` — 4f56aa95 fix(prompt): adapt Codex session records exactly
-- `agent/opencode-db-prompt-adapter-20260713` — e267e576 fix(prompt-corpus): adapt OpenCode task prompts
-- `chore/ruff-format-cli-tests` — bbd9874a heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
-- `codex/claude-permission-preflight-0713` — 2597ad48 fix(claude): preflight unattended permission conflicts
-- `codex/claude-projects-adapter-20260713` — b0c3676a fix(prompt-corpus): narrow alias target type for mypy
-- `codex/codex-attachments-gap-0713` — c33b9a4f fix(prompt): admit exact Codex attachment parents
-- `codex/progress-universe-0713` — 45a7aa40 docs(cli): document progress ledger command
-- `codex/resource-safe-closeout` — d682600e limen: format lifecycle pressure tests
-- `deepen/tao-te-ching-ch6-10` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
-- `discover-carrier-wave-zeitgeist-thesis-value` — fe4f7633 limen: discover corpus-mythicum, promote to ranked tier
-- `discover-limen-value-2026-06-22` — 7ad100f0 capture: autonomic off-disk sync 2026-06-23T13:19:40Z
-- `docs/diurnal-20260801100329` — e57536b7 docs(diurnal): 2026-08-01 INDEX
-- `docs/diurnal-20260801161410` — ed840b9d docs(diurnal): 2026-08-01 INDEX
-- `docs/diurnal-20260802010616` — 65aa6296 docs(diurnal): 2026-08-01 INDEX
-- `docs/diurnal-20260802100422` — 72f04e7f docs(diurnal): 2026-08-02 INDEX
-- `docs/diurnal-first-live-day` — 3c8d8480 docs(diurnal): day one — the organ's first emission against the live body
-- `docs/pr-debt-observation-20260806033359` — 7739086a docs(gitvs): record open-PR debt observation (1293 open)
-- `docs/reap-acceptance-0709-final-20260709115323` — 00cd21ce docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
-- `docs/reap-acceptance-0709-final2-20260709115636` — cdef6573 docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
-- `feat/bhagavad-gita-arcs-5-8` — 13a810c3 feat(studium): author metamorphoses books 2 and 3 arcs
-- `feat/danse-screendance-leaf-20260802` — 911410ba test(danse): avoid secret-like fixture flow
-- `feat/hospes-podcast-os-audit` — 4523e8db feat(hospes): register organvm/hospes as value repo, positioning seed awaiting_publish
-- `feat/studium-deepen-bhagavad-gita` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
-- `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae6 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
-- `feat/studium-film-beowulf` — 799a27f9 limen: studium-film-tanakh done — existing companion verified on origin/main (PR #116)
-- `feat/studium-film-divine-comedy` — ab82b47b feat: Divine Comedy film companion
-- `feat/studium-film-quran` — 6c70956e limen: studium-film-metamorphoses done — 10 films validated across 9 forces
-- `feat/studium-film-tanakh` — d8c703e9 feat: studium-film-tanakh (covenant/law/exile companion)
-- `feat/vltima-organ-engine` — fe3e5eb4 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
-- `feat/walls-auto-regen` — 990a39da feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
-- `feature/tale-of-genji-chapters-2-5` — 50a31de4 studium: author Tale of Genji chapters 2-5
-- `fix/application-funnel-dormant` — 96477292 fix(funnel): the outbound job funnel was dormant on a path miss
-- `fix/fork-safety-predicate` — 09b6eb0c style(fork-safety): ruff format the predicate + its test
-- `fix/needs-human-truth` — ed62e484 feat(board): beat-wire the needs_human reclassify pass (0g6) — visibility + FLIP valve
-- `fix/next-audit-bump` — ba9227b7 chore(web/app): bump next to 16.2.11 — clears fresh npm-audit advisories breaking trunk CI
-- `fix/pr-debt-trend-names-the-real-producer` — ff3e42bc fix(gitvs): the trend predicate named the wrong producer in its own escalation
-- `fix/pr-debt-trend-owner-assertion` — c1c1f840 fix(tests): derive the producer's owner, don't re-pin it — main is red on a stale literal
-- `fix/pubpolicy-doc-secret-false-positive` — 63901080 fix(publish): documentation-about-secrets is not a secret — kill the sweep false-positive class
-- `fix/relay-identity-freeze-kills-dispatch-receipts` — 3286f8df fix(tabularius): a fixed relay session id is frozen by the first client that claims it
-- `fix/routines-freshness-budget-and-defect-clock` — f8665b09 fix(organ-health): ROUTINES read down for 5.5 of every 6 hours of correct operation
-- `fix/settles-trailer-test-not-universal` — fdc22a72 fix(tests): the Claude-Session trailer-parser gap is per-commit, not universal
-- `heal/ci-ruff-semicolons` — 04b05097 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
-- `heal/dialogs-effector-family` — a85d992c feat(gatekeeper): complete the agent-curable dialog-effector family (hook-drift + cask)
-- `heal/dialogs-effector-family-v2` — 6b2ec913 feat(gatekeeper): complete the agent-curable dialog-effector family (hook-drift + cask)
-- `heal/dispatch-admission` — 0681e396 limen: gate dispatch admission
-- `heal/marker-and-tcc-registry-2026-06-24` — e6248bdd heal: swallow Claude Code's benign install_failed update marker (false ⚠ on /doctor)
-- `heal/micro-tato-audience` — fb937899 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
-- `heal/micro-tato-audience-v2` — 8926ceb1 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
-- `heal/revert-opencode-lane-truth-932` — 6dcaf0a5 Revert "heal(opencode): land surviving lane pieces — auth lever + census/doc truth (#932)"
-- `heal/trunk-green-censor-armed-valves` — a709336d heal(vigilia): green the trunk — classify + home the two dark censor armed-valves
-- `limen/gen-organvm-limen-security-0624-a9e5` — 0d705fe1 security: harden input validation across API and CLI models
-- `limen/heal-cifix-organvm-limen-384-947d7bcc` — e37847dd Map the VLTIMA 5-primitive kernel to the social organ
-- `limen/heal-cifix-organvm-limen-401-a2ea349b` — ca076bfe Raise test coverage in organvm/limen
-- `limen/heal-cifix-organvm-limen-402-140f5ba7` — 945b05d1 Raise test coverage in organvm/limen
-- `limen/heal-cifix-organvm-limen-402-f000515e` — 945b05d1 Raise test coverage in organvm/limen
-- `limen/heal-cifix-organvm-limen-405-cba906fe` — 21b10df2 OpenCode daily capacity-fill packet 04
-- `limen/heal-cifix-organvm-limen-406-fce333e5` — 41bd5a66 OpenCode daily capacity-fill packet 06
-- `limen/heal-cifix-organvm-limen-409-93c549df` — 86690a1f OpenCode daily capacity-fill packet 08
-- `limen/heal-cifix-organvm-limen-413-491f6092` — 91ab4a76 Gemini daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-414-4e02d6f1` — 03883783 fix(ci): redact live root paths in absorption cadence
-- `limen/heal-cifix-organvm-limen-417-980ffa89` — af398882 Agy daily capacity-fill packet 04
-- `limen/heal-cifix-organvm-limen-418-5676e703` — 1153c76c Jules daily capacity-fill packet 05
-- `limen/heal-cifix-organvm-limen-418-81791685` — 1153c76c Jules daily capacity-fill packet 05
-- `limen/heal-cifix-organvm-limen-419-7987cca2` — 199ec2ac Jules daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-419-e59a4529` — 199ec2ac Jules daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-452-32c5a00b` — 793e4afe Make organvm/limen CI green
-- `limen/heal-cifix-organvm-limen-455-09792942` — 56f9a013 Jules daily capacity-fill packet 04
-- `limen/heal-cifix-organvm-limen-456-f80ad47a` — 917357bd Jules daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-457-fa165ce1` — 15dc8618 Claude daily capacity-fill packet 11
-- `limen/heal-cifix-organvm-limen-484-6c85e505` — 3c8cf259 Router fans across ALL paid services, not just the 6 vendors
-- `limen/studium-deepen-tale-of-genji-0ce7` — c01d0987 feat(studium): Tale of Genji chapters 2–5 — early loves arc (force-matched + essays)
-- `promote-domus-genoma` — 6bbd51f7 limen: promote organvm/domus-genoma to ranked value tier
-- `refactor/armed-valve-derive` — e342c68f refactor(armed-valve): read sensor gates from the SENSORS registry, not just the shell
-- `registry-update` — c2490e09 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
-- `ship/f3-f6-f7` — 04094145 feat(arms-agents): "a guard that cannot see must WARN" becomes an executable, ratcheted invariant
-- `studium-beowulf-fitts-2-4` — cd8625b8 studium: author Beowulf fitts 2-4 music arcs and essays
-- `studium-deepen-metamorphoses` — d0cb8cd7 limen: track studium-deepen-metamorphoses done (opencode +1)
-- `studium-deepen-shahnameh-2-8` — bf6de36a feat(studium): Shahnameh cycles 2-8 arcs and essays
-- `tabularius/board-projection-20260721-177302a5` — b16284fe tabularius: publish current board projection
-- `task-conference-of-birds-batch-1` — e1facc15 feat(studium): author Conference of the Birds arcs 2-4
-- `work/photos-universe-20260629-182431` — d45b030d photos: extend duplicate proof batch
-- `work/victoroff-external-custody-20260722` — 456a03a4 govern Victoroff external custody
-- `worktree-feat-host-pressure-loop` — 1864ea38 feat: close the host-pressure loop — swap axis, host-relief effector, loud escalation (IF-HOST-PRESSURE form 4)
-
-## Closed-but-advanced (12) — has commits the closed PR never saw
-
-These heads had a CLOSED-unmerged PR but the local tip DIFFERS from that PR's head, so
-the extra commits exist **nowhere but this machine**. Never auto-deleted.
-Push them as a fresh PR, or delete by hand if the extra commits are throwaway.
-
-- `agent/handoff-runtime-readiness-0713` — 2b434e2e fix(dispatch): close runtime readiness claim seams
-- `feat/charles-rose-toners-post` — 876e6033 Add Charles rose toners closeout relay capsule
-- `feat/conversion-funnel` — 0eba9cca feat(conversion): measure the public face — traffic collector + funnel leak-diagnosis
-- `feat/session-contention-receipt` — 24a0c747 fix(contention): the guard could go blind quietly, and the gate graded text
-- `feat/session-streams-registry` — 2e5e0494 heal(streams): record s1-homing-spine settled by #1608, and correct its edges
-- `feat/studium-film-canterbury-tales` — b79d0fae studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
-- `fix/heartbeat-refresh-web-wedge` — 0a512024 fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
-- `limen/capfill-claude-20260629-13-2b0f` — 69e10c5a fix: add CapacityFill TypedDicts and correct mypy type annotations
-- `limen/gh-organvm-limen-352-b4c3` — 18129a47 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
-- `worktree-fluttering-twirling-abelson` — c2c54884 Redact circle-personal business intel from public consulting organ
-- `worktree-jolly-knitting-lovelace` — 1e239934 feat(hooks): arm the session-orientation organ in committed project settings
-- `worktree-parsed-finding-fern` — 6f171f83 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
-
-## Merged-but-advanced (14) — has commits ADDED after the PR merged
-
-These heads had a MERGED PR but the local branch has newer commits not on `main`.
-Push them as a follow-up PR, or delete if the extra commits are throwaway.
-
-- `chore/mail-keyed-path` — 132602a5 fix(mail): make the required Gmail credential fail LOUD + wire the Gmail IMAP archiver into the beat
-- `chore/pii-containment-limen-scrub` — 59a109c8 chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
-- `codex/epoch-closeout-20260714` — ddcb5006 refactor(session): compose bounded continuation modules
-- `feat/vigilia-nohardcode-gate` — b94e1242 feat(vigilia): wire organ-health VIGILIA rung + heartbeat stamp (build #4)
-- `fix/ianva-secret-redaction` — c67b9889 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
-- `heal/conductor-restart-2026-06-16` — d012d759 limen: close the torn-write race + make the fleet visible (money view)
-- `work/agent-state-metabolism-20260724` — 292e38c5 fix(governance): account for agent-state default ref
-- `work/collaboration-operations-platform-genesis-20260802` — 67f3400a plan: bind collaboration platform alpha-to-omega launch
-- `work/concurrency-closeout-reap-20260719` — ae107552 docs: admit concurrency closeout runway
-- `work/laptop-wide-recovery-closeout-20260727-s18` — 4d5be58f fix(omega): redact strict canary skip output
-- `work/truth-session-breadcrumb-20260721` — 26a808ad fix: close SessionEnd review gaps
-- `worktree-feat-decorum-keeper` — 50145954 feat(decorum): complete the mentor loop — self-closing issues, recurrence ratchet, offline gate
-- `worktree-fix-macos-fork-oslog-crash` — 414ded13 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
-- `worktree-ianva-doorway` — f4c0c076 fix(ianva): never echo bearer to stdout; untrack generated/ golden files
-
-## Live-work branches (328) — decide each
-
-- `_pr198` — 4cd0dbaa fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
-- `archive/danse-predecessor-experiments-20260802` — a232f2d7 archive(danse): preserve predecessor experiments
-- `capture/main-2026-07-02T01-03-35Z` — 71b48852 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-02T18-41-47Z` — eaca4510 capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-03T18-23-54Z` — b53f0abc capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-04T18-44-48Z` — bdc71ecb capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-06T17-09-22Z` — e85f0909 capture: off-disk sync 2026-07-06T17:09:22Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-08T21-07-28Z` — 672c21c1 capture: off-disk sync 2026-07-08T21:07:28Z (main behind origin → side ref, HEAD untouched)
-- `capture/main-2026-07-16T04-48-58Z` — a0bdb559 capture: off-disk sync 2026-07-16T04:48:58Z (main behind origin → side ref, HEAD untouched)
-- `codex/agent-checkout-guard-20260709` — 95b47a63 limen: guard worktree session launches
-- `codex/student-email-doctrine-cleanup-20260709` — 00e05587 Merge remote-tracking branch 'origin/main' into codex/student-email-doctrine-cleanup-20260709
-- `codex/vltima-organ-impl-20260706` — 45bef795 Merge remote-tracking branch 'origin/main' into codex/vltima-organ-impl-20260706
-- `corpus-verify` — d45b030d photos: extend duplicate proof batch
-- `discover-organvm-browser-state` — 7fb6478b docs: preserve gens discovery thesis
-- `discovery-organvm-palimpsest` — 73808950 feat: discover organvm/palimpsest and add to value-repos
-- `docs/covenant-agent-docs` — dc7ecd51 docs(covenant): keeper law on every agent surface — AGENTS/GEMINI clauses + parity assertions + IF entry
-- `docs/enc1101-eot-catchalls-20260804` — d86a575d capture(sync-release): preserve parked dirt before unpark [skip ci]
-- `docs/quicken-residue` — 1890688b docs: QUICKEN residue — irreducible human atoms (daemon capture)
-- `docs/uig-planfill` — 8bf193b6 docs(plan): R2 harvest folded — six lane suggestions, six dispositions, zero parked
-- `feat-58-referral-program` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `feat-59-waitlist-landing` — 42e1dea4 feat: Closed beta waitlist landing page - pre-launch acquisition funnel
-- `feat-60-fury-taxonomy` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `feat-62-tiered-verification` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `feat-63-ugc-moderation` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `feat/censor-monthly-tier` — a89dd048 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
-- `feat/clavis-credential-provisioning` — 028faaa9 feat(clavis): credential-provisioning organ — own the service account + its one vault as code
-- `feat/depends-on-sequencer` — b83a5d0b feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
-- `feat/enactment-audit-efficacy-rung` — f2eb45cc feat(enactment): a third audit axis — a rung can be wired, live, and fail on every single beat
-- `feat/guard-fail-toward-warning` — c0e4164f feat(arms-agents): "a guard that cannot see must WARN" becomes an executable, ratcheted invariant
-- `feat/outbound-valve-registry` — c281b297 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
-- `feat/receipt-classifier` — 45672027 feat: receipt-classifier.py — flag receipt-only diffs behind shipped-X claims (concern 9)
-- `feat/session-cadence-ceiling` — 37296f14 feat(arms-agents): guard the cadence CEILING, not the literal string "fable"
-- `feat/session-opening-floor` — a9a1baf7 feat(arms-agents): the session-opening floor becomes a per-lane census — all providers, not just Claude
-- `feat/studium-deepen-metamorphoses-batch-1` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
-- `feat/studium-deepen-quran` — 2bf80117 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
-- `feature/ORG-education-organ-face-0630` — 9d174794 feat(education): author polished macro and micro face for education organ
-- `fix-branch` — 70689bf3 fix: resolve ruff format failure and remove mypy_cache artifacts
-- `fix-bug-28` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `fix-pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
-- `fix/616-format` — e020757c style: ruff format test_corpus_command_center.py (CI format-check gate)
-- `fix/autonomy-timegate-throughput-correction-v2` — 41ab3e91 fix: disable generated cleanup in reclaim tranche
-- `fix/dispatch-admission-ci-768` — 96f6c10b Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
-- `fix/guard-unresolved-model` — 625ce323 fix(arms-agents): an unresolvable session model becomes a third state that speaks
-- `fix/pr-1325-migration-wedge` — 128dca24 fix: heal interrupted legacy→scoped migration write in _load()
-- `fix/self-load-above-the-governor-is-declared` — 3288f9b5 fix(beat): the self-load rung acting during an autonomy pause is now a DECISION, not an accident
-- `flywheel-merge-heal` — f7341bf9 merge origin/main — pick up ianva census heal (#1946) and merge-ready removal-ban heal (#1962)
-- `g-merge-fix` — 9b886a23 Merge remote-tracking branch 'origin/main' into g-merge-fix
-- `heal-pr-621` — af456827 Build the first working vertical slice of the health organ
-- `heal/608-declare-param` — a63e6db7 chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
-- `heal/aw-tabvlarivs-846-rebase` — dfeb06ed Finish single-writer status/result mutation conversion
-- `heal/health-office-staged-0625` — ff43850e health office — the executive health office (autopoietic; PII strictly off-repo)
-- `limen-pr-1803-refresh` — 4a342a50 fix: make App Management closure executable
-- `limen/aw-credential-wall-token-hygiene-e729c093` — 5552f173 docs(credentials): add token tombstone audit receipt
-- `limen/csf-caeb31d8-plan-10-b131e64c-38bd` — 705fcee4 limen: record current-session private boundary packet
-- `limen/gen-organvm-limen-docs-0624-0129` — e454a603 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0624-32e1` — 0aea514a limen: GEN-organvm-limen-docs-0624 — accurate Usage docs from real CLI
-- `limen/gen-organvm-limen-docs-0624-525d` — 5683c27b Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0624-6fc0` — 4c7453ac docs(usage): derive accurate CLI usage from actual entrypoints
-- `limen/gen-organvm-limen-docs-0625-4261` — d98ada7c Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-86a3` — 2ba9c114 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-9c44` — 83e805e6 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-docs-0625-db1d` — 44b39586 Real usage docs for organvm/limen
-- `limen/gen-organvm-limen-security-0625-57ce` — 02f256ed Security hardening pass on organvm/limen
-- `limen/gen-organvm-limen-security-0625-b412` — bd88bf7e docs(security): audit results for organvm/limen hardening pass
-- `limen/gen-organvm-limen-security-0626-b91f` — 569a4ebf limen: mark security task blocked on PR gate
-- `limen/gen-organvm-limen-simplify-0624-901a` — 0d9c4141 Reduce complexity in organvm/limen — refactor dispatch.py
-- `limen/gen-organvm-limen-test-coverage-0625-0153` — cb166bd2 Raise test coverage in organvm/limen
-- `limen/gen-organvm-limen-test-coverage-0625-1c32` — dc89769a test(nomenclator): add 37-case unit suite for INDEX·NOMINVM enforcer
-- `limen/gen-organvm-limen-typing-0622-9eb5` — c60bc170 refactor(types): tighten the most-imported limen modules — kill capacity.py's any hotspot
-- `limen/gen-organvm-limen-typing-0627-ccac` — d280f1d1 fix: tighten types in limen's most-imported modules
-- `limen/gh-organvm-limen-262-0a16` — 3ebc05c2 docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
-- `limen/heal-cifix-organvm-limen-376-7a338dd4` — c331f297 Aeneid film companion (empire/fate/sacrifice)
-- `limen/heal-cifix-organvm-limen-386-e4090713` — 9cc1e7d2 limen: ruff-format two pre-existing unformatted test files
-- `limen/heal-cifix-organvm-limen-388-3f07b6de` — aa9b5c1f Make the consulting organ's macro + micro face excellent
-- `limen/heal-cifix-organvm-limen-388-52a7d7fb` — aa9b5c1f Make the consulting organ's macro + micro face excellent
-- `limen/heal-cifix-organvm-limen-403-06ee30f8` — 7436bda2 Tighten types in organvm/limen
-- `limen/heal-cifix-organvm-limen-404-5c945b9f` — 4a09aa67 Tighten types in organvm/limen
-- `limen/heal-cifix-organvm-limen-407-d89f6362` — 9ba34eb0 Claude daily capacity-fill packet 01
-- `limen/heal-cifix-organvm-limen-408-2e00f83a` — a5bb3adc Agy daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-408-49717d79` — a5bb3adc Agy daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-408-c4b34a11` — a5bb3adc Agy daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-408-dfcef9e9` — a5bb3adc Agy daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-408-e80c4e93` — a5bb3adc Agy daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-410-a19bea30` — 15b3ab83 Agy daily capacity-fill packet 11
-- `limen/heal-cifix-organvm-limen-411-4910c5ab` — 52fe67ba Claude daily capacity-fill packet 06
-- `limen/heal-cifix-organvm-limen-411-d93c565b` — 52fe67ba Claude daily capacity-fill packet 06
-- `limen/heal-cifix-organvm-limen-412-2d0dda2c` — 179b2e4f fix: ruff format in cli.py workstream command options
-- `limen/heal-cifix-organvm-limen-412-2e191c19` — 6ceb44ed Gemini daily capacity-fill packet 04
-- `limen/heal-cifix-organvm-limen-415-7db396da` — 20cd1a3f OpenCode daily capacity-fill packet 01
-- `limen/heal-cifix-organvm-limen-416-2dce14dc` — 04f14e28 Agy daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-416-5de40a1c` — b5c28a30 heal-cifix-416: fix mypy type errors in _task_agent/_task_status/_task_cost_int
-- `limen/heal-cifix-organvm-limen-419-3fb355e2` — 199ec2ac Jules daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-419-68eb0e65` — 199ec2ac Jules daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-419-7595de98` — 199ec2ac Jules daily capacity-fill packet 02
-- `limen/heal-cifix-organvm-limen-420-6d674400` — 8da3918e ruff format: fix formatting in capacity.py and cli.py
-- `limen/heal-cifix-organvm-limen-422-6b0c8ca2` — c58a0320 fix(ci): isolate producer env in backlog tests
-- `limen/heal-cifix-organvm-limen-425-0597e483` — 2f47ab18 fix failing CI on organvm/limen#425
-- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc744034 fix failing CI on organvm/limen#427
-- `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a8 fix(ci): repair PR 428 gate failures
-- `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d fix(ci): clear PR gate regressions
-- `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e fix(ci): declare new limen parameters
-- `limen/heal-cifix-organvm-limen-431-6ee61f31` — 7d6834ef fix(ci): format VLTIMA prior excavation test
-- `limen/heal-cifix-organvm-limen-432-06bf02c7` — 47c47550 fix(ci): repair PR 432 checks
-- `limen/heal-cifix-organvm-limen-439-b17fd83a` — b13ba0f0 fix(ci): repair PR 439 gates
-- `limen/heal-cifix-organvm-limen-442-1b11af92` — 2beac417 fix(ci): format async dispatch test
-- `limen/heal-cifix-organvm-limen-443-4e67ed4e` — ad12cd64 fix(ci): repair PR 443 gate failures
-- `limen/heal-cifix-organvm-limen-447-11a30c5e` — 520b2001 fix: restore capacity.py to main's version with select_lanes
-- `limen/heal-cifix-organvm-limen-447-c5187efb` — d7caf8ff Gemini daily capacity-fill packet 10
-- `limen/heal-cifix-organvm-limen-447-cef5ffb6` — d7caf8ff Gemini daily capacity-fill packet 10
-- `limen/heal-cifix-organvm-limen-448-cfa0209f` — 25725515 OpenCode daily capacity-fill packet 17
-- `limen/heal-cifix-organvm-limen-449-00ef6ed5` — 48984004 capture: autonomic off-disk sync 2026-07-04T17:56:04Z
-- `limen/heal-cifix-organvm-limen-450-db7e9c49` — a4790df5 Agy daily capacity-fill packet 07
-- `limen/heal-cifix-organvm-limen-451-7e697fef` — 6c1f3c48 ruff format: wrap long @click.option decorator lines in cli.py
-- `limen/heal-cifix-organvm-limen-452-1091876d` — 793e4afe Make organvm/limen CI green
-- `limen/heal-cifix-organvm-limen-453-f04fb243` — d0d94768 Gemini daily capacity-fill packet 05
-- `limen/heal-cifix-organvm-limen-456-2d8d8026` — 917357bd Jules daily capacity-fill packet 13
-- `limen/heal-cifix-organvm-limen-485-9cab1d71` — 4fd78795 Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors
-- `limen/heal-cifix-organvm-limen-485-db7de160` — 4fd78795 Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors
-- `limen/heal-cifix-organvm-limen-490-8e65bdf4` — f70008a7 Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
-- `limen/heal-cifix-organvm-limen-516-55653ae8` — 59d881d4 Raise test coverage in organvm/limen
-- `limen/heal-cifix-organvm-limen-620-091fdee6` — 4a4f2d10 Build the first working vertical slice of the legal organ
-- `limen/heal-cifix-organvm-limen-624-83943155` — 6014b920 Deepen the financial organ toward a usable institution
-- `limen/heal-cifix-organvm-limen-624-9ad64703` — 6014b920 Deepen the financial organ toward a usable institution
-- `limen/heal-cifix-organvm-limen-630-6bb2c8d1` — 51bfc3fa Make the financial organ's macro + micro face excellent
-- `limen/heal-cifix-organvm-limen-630-8039270a` — 51bfc3fa Make the financial organ's macro + micro face excellent
-- `limen/heal-cifix-organvm-limen-670-dc60ce3a` — ec06dc59 ruff format: collapse multi-line condition in model_selection.py
-- `limen/heal-cifix-organvm-limen-678-98d08306` — 308ec256 fix: ruff format test_dispatch.py and declare 4 missing LIMEN_* params
-- `limen/heal-cifix-organvm-limen-684-14d57417` — 97aff27a Deepen the contributions organ toward a usable institution
-- `limen/heal-cifix-organvm-limen-684-ccd3d442` — 97aff27a Deepen the contributions organ toward a usable institution
-- `limen/heal-cifix-organvm-limen-846-0b86dfb8` — 9346893c Finish single-writer status/result mutation conversion
-- `limen/heal-rebase-organvm-limen-375-ccfaf493` — 8ff5af35 Beowulf film companion (wyrd/heroic doom)
-- `limen/heal-rebase-organvm-limen-394-80d251b9` — 05596a46 Deepen the financial organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-394-f450e381` — 05596a46 Deepen the financial organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-436-421a1644` — d32010d4 fix: ignore missing yaml type stubs in io.py
-- `limen/heal-rebase-organvm-limen-436-fc15ab5e` — d32010d4 fix: ignore missing yaml type stubs in io.py
-- `limen/heal-rebase-organvm-limen-486-fa88bb48` — 7f17d103 feat(cli): wire watch subcommand with --compact/--once modes
-- `limen/heal-rebase-organvm-limen-492-41c51751` — af3b7d83 limen: record PR #492 URL in dispatch_log
-- `limen/heal-rebase-organvm-limen-492-761f7b2b` — af3b7d83 limen: record PR #492 URL in dispatch_log
-- `limen/heal-rebase-organvm-limen-492-e04703e5` — af3b7d83 limen: record PR #492 URL in dispatch_log
-- `limen/heal-rebase-organvm-limen-516-068d470e` — 59d881d4 Raise test coverage in organvm/limen
-- `limen/heal-rebase-organvm-limen-516-616e9aa4` — a0a46938 Raise test coverage in organvm/limen
-- `limen/heal-rebase-organvm-limen-516-a8f9be47` — a0a46938 Raise test coverage in organvm/limen
-- `limen/heal-rebase-organvm-limen-590-fc296d22` — ed186e9e Deepen the financial organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-617-244af5eb` — 0c796729 Build the first working vertical slice of the social organ
-- `limen/heal-rebase-organvm-limen-617-693e6691` — 0c796729 Build the first working vertical slice of the social organ
-- `limen/heal-rebase-organvm-limen-619-398b77a0` — fa95be1d Build the first working vertical slice of the health organ
-- `limen/heal-rebase-organvm-limen-619-df3154e9` — fa95be1d Build the first working vertical slice of the health organ
-- `limen/heal-rebase-organvm-limen-621-700b2d32` — af456827 Build the first working vertical slice of the health organ
-- `limen/heal-rebase-organvm-limen-621-853de731` — af456827 Build the first working vertical slice of the health organ
-- `limen/heal-rebase-organvm-limen-621-92b25510` — af456827 Build the first working vertical slice of the health organ
-- `limen/heal-rebase-organvm-limen-622-7221d754` — 15a1111a Wire the governance organ to advance autonomously
-- `limen/heal-rebase-organvm-limen-623-1321446e` — d3bf919b Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')
-- `limen/heal-rebase-organvm-limen-624-e55981f3` — 6014b920 Deepen the financial organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-625-b88f04db` — d6a00057 Make the financial organ's macro + micro face excellent
-- `limen/heal-rebase-organvm-limen-627-0c1c0cfc` — 4f728f36 Build the first working vertical slice of the social organ
-- `limen/heal-rebase-organvm-limen-629-bcec6316` — 111d812b Charter the health organ as an institution rivaling a concierge medical / recovery team
-- `limen/heal-rebase-organvm-limen-630-790853f9` — f124ddd2 Make the financial organ's macro + micro face excellent
-- `limen/heal-rebase-organvm-limen-630-d878401c` — f124ddd2 Make the financial organ's macro + micro face excellent
-- `limen/heal-rebase-organvm-limen-680-c1c9768f` — b8b2ea40 fix failing CI on organvm/limen#432
-- `limen/heal-rebase-organvm-limen-680-e0f6856e` — b8b2ea40 fix failing CI on organvm/limen#432
-- `limen/heal-rebase-organvm-limen-680-f8711abe` — b8b2ea40 fix failing CI on organvm/limen#432
-- `limen/heal-rebase-organvm-limen-682-04a48a4c` — 3dc7ad6a limen: harvest async receipt results
-- `limen/heal-rebase-organvm-limen-683-40b8fdbf` — 08e60a1f DISCOVER: latent value of organvm/cind-and-sol-foundation
-- `limen/heal-rebase-organvm-limen-683-45538f03` — 08e60a1f DISCOVER: latent value of organvm/cind-and-sol-foundation
-- `limen/heal-rebase-organvm-limen-684-0483d311` — 97aff27a Deepen the contributions organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-684-aa986f4c` — 97aff27a Deepen the contributions organ toward a usable institution
-- `limen/heal-rebase-organvm-limen-696-99224303` — 42d75f7e fix failing CI on organvm/limen#375
-- `limen/heal-rebase-organvm-limen-696-c9240ec8` — 42d75f7e fix failing CI on organvm/limen#375
-- `limen/heal-rebase-organvm-limen-703-3cf56c8a` — 742f6330 handoff-relay.py: cross-session/cross-vendor warm-resume packet
-- `limen/heal-rebase-organvm-limen-814-004a5918` — 95b47a63 limen: guard worktree session launches
-- `limen/heal-rebase-organvm-limen-814-18b2fdb4` — 95b47a63 limen: guard worktree session launches
-- `limen/heal-rebase-stale-organvm-limen-434-180b7ce7` — b1a12a51 style: format cli.py
-- `limen/heal-rebase-stale-organvm-limen-434-8020d59d` — b1a12a51 style: format cli.py
-- `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d6404 Build the first working vertical slice of the legal organ
-- `limen/jules-aw-mail-historical-backlog-083a` — 539cb717 Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-1f7d` — 2525ea4e Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-3a0b` — 78e1083a Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-43fd` — a6c30366 Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-4c02` — 778790b6 Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-51e4` — a59d5fa8 Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-9f1d` — fd91625a Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-c97e` — a9797d4a Continue historical mail backlog in resumable batches
-- `limen/jules-aw-mail-historical-backlog-e50f` — 4cbf2f03 Continue historical mail backlog in resumable batches
-- `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c Deepen the contributions organ toward a usable institution
-- `limen/org-artist-organ-face-0704-2152` — 0bf299b0 artist: polish macro and micro faces (ORG-artist-organ-face-0704)
-- `limen/org-artist-organ-face-0704-54ed` — f0ca6297 chore(artist): mark ORG-artist-organ-face-0704 as done
-- `limen/org-governance-organ-deepen-0628-0e39` — f23a6f66 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
-- `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f6 feat: operationalize cvrsvs-honorvm rule as executable validator
-- `limen/org-governance-organ-deepen-0703-9f8e` — 6d486017 governance: enforce publication-policy convergence
-- `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf04 limen: close governance organ self-feed task
-- `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7b Add health organ kernel
-- `limen/org-health-organ-kernel-0704-59fd` — c3d9167b health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
-- `limen/org-health-organ-kernel-0704-decb` — 74a158a6 docs: advance health organ kernel
-- `limen/org-health-organ-kernel-0704-e61b` — b08caed6 health: complete organ kernel scaffold sync
-- `limen/org-hr-organ-kernel-0704-3658` — 939962e9 ORG-hr-organ-kernel-0704: Author KERNEL.md for the HR organ
-- `limen/org-hr-organ-kernel-0704-ab6c` — 40c48407 feat(hr): map 5-primitive kernel to HR domain and establish institutional prosthesis charter
-- `limen/org-hr-organ-kernel-0705-08aa` — 1fb4e244 chore(hr): mark ORG-hr-organ-kernel-0705 as redundant (already completed in 0704)
-- `limen/org-hr-organ-kernel-0705-7fba` — 46850173 docs(hr): clarify organ as institutional prosthesis + generic platform
-- `limen/org-legal-organ-charter-0703-0899` — b8eb571e limen: complete legal organ charter
-- `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8d docs: harden legal organ charter
-- `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d7 legal: add first counsel-review matter slice
-- `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3e limen: map legal organ kernel
-- `limen/org-legal-organ-kernel-0701-e535` — 3dcb37cd organs: refine legal kernel flagship
-- `limen/org-legal-organ-kernel-0704-a80b` — 1800caa0 chore(legal): bump legal organ maturity to 25% (KERNEL.md authored)
-- `limen/org-legal-organ-kernel-0704-c763` — ac60fff8 legal: author KERNEL.md mapping domain-neutral kernel to legal domain
-- `limen/org-social-organ-charter-0704-b0e5` — 4d9efdc2 feat(social): explicitly state Koinonia name and unscoped constraint in CHARTER.md
-- `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ada organs/social: ship first slice
-- `limen/org-social-organ-firstslice-0703-6fb5` — 4e699332 feat(social): add first koinonia slice
-- `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3fa social: ship koinonia first slice
-- `limen/promote-fetch-familiar-friends-value-tier` — 9d64fc58 limen: promote organvm/fetch-familiar-friends to the value tier
-- `limen/studium-deepen-aeneid-e6cf` — fcee5d4d feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
-- `limen/studium-deepen-analects-78fa` — d5d8c190 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
-- `limen/studium-deepen-beowulf-4918` — 99fb7715 feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays
-- `limen/studium-deepen-canterbury-tales-c640` — 76bb9f6d feat(studium): add Canterbury Tales tales 2-5 (Knight, Miller, Reeve, Cook)
-- `limen/studium-deepen-conference-of-birds-2584` — 377bd8b1 feat(studium): Conference of the Birds sections 2–6 — assembly phase arcs
-- `limen/studium-deepen-gilgamesh-57a4` — 61206056 Gilgamesh — tablets 2..12 (11 arcs)
-- `limen/studium-deepen-gilgamesh-dfa8` — d41f0020 Gilgamesh — tablets 2..12 (11 arcs)
-- `limen/studium-deepen-heike-d8fc` — 0da64c72 Tale of the Heike — books 2..12 (11 arcs)
-- `limen/studium-deepen-mahabharata-bc93` — 0c5fe0fa Mahabharata — parvas 2..18 (17 arcs)
-- `limen/studium-deepen-quran-5b8b` — 302ca7ff Qur'an — suras 5–10 (6 arcs)
-- `limen/studium-deepen-quran-a6fe` — 0d6f113a feat(studium): author Qur'an suras 2-5 in force-matched arcs format
-- `limen/studium-deepen-ramayana-10fe` — 638a4f1c Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-ramayana-267f` — 58cfa603 Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-ramayana-93fe` — 30055546 Ramayana — kandas 2..7 (6 arcs; Ayodhya→Aranya→Kishkindha→Sundara→Yuddha→Uttara = exile→forest→alliance→quest→war→return)
-- `limen/studium-deepen-ramayana-ae60` — 4e0290f5 Ramayana — kandas 2..7 (6 arcs)
-- `limen/studium-deepen-tanakh-2fbf` — 75201c63 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-3953` — f7bf5c4c Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-60ca` — a17fde2f Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-deepen-tanakh-ba2e` — 60330fe3 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
-- `limen/studium-film-bhagavad-gita-3c09` — a869452f Bhagavad Gita film companion (right action/renunciation)
-- `limen/studium-film-conference-of-birds-0330` — 63aee558 Conference of the Birds film companion (the seven valleys/fanā)
-- `limen/studium-film-heike-01af` — 11f603a3 Tale of the Heike film companion (mono no aware)
-- `limen/studium-film-mahabharata-017c` — b2e94d13 Mahabharata film companion (dharma/war)
-- `limen/studium-film-mahabharata-2deb` — acca9ebd Mahabharata film companion (dharma/war)
-- `limen/studium-film-metamorphoses-9408` — 4872c64d Metamorphoses film companion (metamorphosis)
-- `limen/studium-film-odyssey-04ee` — 39ed67b9 Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-odyssey-4227` — 65ded77f Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-odyssey-7534` — 3f8bd49d Odyssey film companion (return/exile/recognition)
-- `limen/studium-film-shahnameh-2b83` — 654c505b Shahnameh film companion (kingship/the farr)
-- `limen/studium-film-tale-of-genji-57f4` — a776ac59 Tale of Genji film companion (desire/impermanence)
-- `limen/studium-film-tale-of-genji-6900` — f035767c Tale of Genji film companion (desire/impermanence)
-- `limen/vigilia-face-2fae` — 3032cfc9 The face — one pane that renders the C-suite from the seat (CCO)
-- `limen/vigilia-face-706a` — 2a8dc028 chore(tasks): record VIGILIA-FACE as needs_human (push blocked on dead creds)
-- `limen/vigilia-face-dd81` — 93754f97 The face — one pane that renders the C-suite from the seat (CCO)
-- `limen/vigilia-vitals-7fb7` — efa6864a feat(vitals): add CFO's don't-crash executive for memory pressure reaction
-- `live-snapshot-pre-main-2026-06-21` — f8e17798 snapshot: live working state before moving to released main
-- `pr-1354` — c99d0d13 fix(pip-audit): match PEP 508 name only, clearing CodeQL py/bad-tag-filter FP
-- `pr-422` — 52d4cbd2 Claude daily capacity-fill packet 07
-- `pr-423` — 58ebc307 fix: add missing CapacityFillRow and CapacityFillSnapshot TypedDict definitions
-- `pr-426` — 4817ba40 OpenCode daily capacity-fill packet 15
-- `pr-428` — 1245df4f Jules daily capacity-fill packet 09
-- `pr-429` — 8c49afd4 Agy daily capacity-fill packet 22
-- `pr-432` — f6baee2b OpenCode daily capacity-fill packet 01
-- `pr-434` — 7308fc64 Jules daily capacity-fill packet 14
-- `pr-435` — 1ca07a85 fix: format test_vltima files per ruff --format
-- `pr-438` — f045aee6 Agy daily capacity-fill packet 01
-- `pr-440` — 6775009f fix: resolve mypy errors in task typing
-- `pr-445` — 99c28280 Agy daily capacity-fill packet 04
-- `pr-446` — 01f5c59c Claude daily capacity-fill packet 03
-- `pr-669-governance-deepen` — 3dc75166 ci: declare async archive parameters
-- `pr-680` — b8b2ea40 fix failing CI on organvm/limen#432
-- `pr-682` — 9410ebc8 docs: add organvm/sovereign--ground--4444j99 to value-repos
-- `pr-703-temp` — f3c7605f handoff-relay.py: cross-session/cross-vendor warm-resume packet
-- `pr-744` — 037f6063 capture: autonomic off-disk sync 2026-07-19T21:55:15Z
-- `pr-757` — 136fad36 docs(financial): correct spend audit — vendor subs are capacity pools, not overlap (operator feedback)
-- `pr-767` — e489b285 test: isolate test_load_upstreams from host config environment
-- `pr-fix-1171-local` — c9332a43 fix(review-gate): require protection-owned CI
-- `pr-fix-1324-local` — 577f799c docs: bind activation receipt to preservation custody
-- `pr-fix-1329-local` — 05e64aa2 fix: underwrite runtime probe verification
-- `preserve/board-writer-audit-gate-wip-20260730` — 33098059 preserve: pr-fix-1195 WIP at worktree-estate drain
-- `preserve/codex-runaway-prevention-20260717-wip-20260730` — 7bf7f85e preserve: codex-runaway-prevention untracked jules-landing modules
-- `preserve/prima-materia-universe-s17-wip-20260730` — f3e98aac preserve: prima-materia-universe-s17 WIP at worktree-estate drain
-- `preserve/reclaim-plan-digest-20260724-20260730` — 5a4a6b8b preserve: reclaim-plan-digest-20260724 WIP at worktree-estate drain
-- `preserve/session-scope-boundary-wip-20260730` — c4bace4c fix(hooks): scope task sessions to worktree
-- `preserve/typed-campaign-contracts-wip-20260730` — e1aea141 preserve: repair-pr1594-campaign-contracts WIP at worktree-estate drain
-- `preserve/vic-limen-rail-repair-wip-20260730` — 5e89a10b preserve: vic-limen-rail-repair WIP at worktree-estate drain
-- `rebase-630` — 51bfc3fa Make the financial organ's macro + micro face excellent
-- `rebase-814` — 94246f98 limen: guard worktree session launches
-- `recovery/codex-runaway-prevention-20260718-120912` — d7449e0b chore: retire inherited continuation capsule
-- `research-149-stickk-analysis` — 9e1966e8 docs: add market-gap analysis for stickK vs Styx
-- `studium-deepen-aeneid-4-6` — 791f3b45 studium-deepen-aeneid: Aeneid books 4-6
-- `studium-film-canterbury-tales` — d7fcab07 feat(studium): add Canterbury Tales film companion
-- `subagent-Bug-159-Rate-Limit-Resolver-self-884b5bd1` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Bug-28-DB-Resolver-self-c327883b` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Bug-32-Payment-Resolver-self-1d9ba79a` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Bug-34-Bounty-Resolver-self-a660c4d8` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-149-Researcher-self-9170d04f` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-58-Implementer-self-32ef6d32` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-59-Implementer-self-2879632c` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-60-Implementer-self-184b5d6b` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-61-Implementer-self-fa1615a7` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-62-Implementer-self-8a5cfdf5` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `subagent-Issue-63-Implementer-self-da385229` — b4c56d9d chore: fix validation errors in tasks.yaml
-- `tmp-rebase-394` — 05596a46 Deepen the financial organ toward a usable institution
-- `work/action-admission-bootstrap-20260723` — 65dc0d9c Test torn lease refresh recovery
-- `work/charles-cotton-preview-successor-20260803` — 5c082683 fix: harden cotton closeout invariants
-- `work/correspondence` — 843240ce docs: publish admitted correspondence runway
-- `work/financial` — 462c7d96 docs: publish admitted financial runway
-- `work/fitness` — 89b755f4 docs: publish admitted fitness runway
-- `work/governance-organ-recovery-next` — 261ad252 fix(governance): expire Scratch authority receipts
-- `work/hokage-chess` — d0b13ec0 docs: publish admitted hokage-chess runway
-- `work/laptop-wide-recovery-closeout-20260724-s3` — 578bf5d1 docs: preserve post-merge lifecycle fixed point
-- `work/laptop-wide-recovery-closeout-20260724-s4` — 50c1cf10 fix(host): sanction guarded agent-state campaigns
-- `work/laptop-wide-recovery-closeout-20260724-s5` — a20abfe8 docs: record protected conduct reservation gate
-- `work/laptop-wide-recovery-closeout-20260724-s6` — d26ffd02 docs(closeout): preserve S6 recovery evidence
-- `work/laptop-wide-recovery-closeout-20260725-s10` — d3532451 docs: admit S10 Omega runway
-- `work/laptop-wide-recovery-closeout-20260725-s7` — 3b608bb6 chore: publish S7 Omega continuation capsule
-- `work/laptop-wide-recovery-closeout-20260725-s8` — 70afd75c add S8 Omega continuation capsule
-- `work/laptop-wide-recovery-closeout-20260725-s9` — 33e6b7f9 docs: admit S9 Omega runway
-- `work/laptop-wide-recovery-closeout-20260726-s12` — 2cd6300e chore: add S12 Omega continuation capsule
-- `work/laptop-wide-recovery-closeout-20260726-s13` — 5e3165c7 chore: add S13 Omega continuation capsule
-- `work/laptop-wide-recovery-closeout-20260727-s17` — 29c7060d chore: preserve S17 institutional-Omega capsule
-- `work/lead-representation` — 2ae87712 chore(leads): publish lead-representation continuation receipt (capsule custody)
-- `work/lead-substrate` — 46bb367d chore(leads): publish lead-substrate continuation receipt (capsule custody)
-- `work/micro-tato` — 86e75528 docs: publish admitted micro-tato runway
-- `work/next-autonomous-epoch-20260714` — 9335337b docs(session): record restart capsule fixed point
-- `work/omega-substrate-convergence-next` — 66bb7c27 docs: seal final Omega producer closeout
-- `work/prima-materia-alpha-omega-universe-20260728-s15` — 5e09984c docs: relay Prima Materia S15 evidence
-- `work/prima-materia-alpha-omega-universe-20260728-s16` — a6fe53a7 docs: recalibrate Prima Materia campaign
-- `work/prima-materia-alpha-omega-universe-20260728-s17` — 36909af3 chore: admit Prima Materia S17 custody capsule
-- `work/representation` — 99088426 docs: publish admitted representation runway
-- `work/runaway-prevention-recovery-20260718-120912` — 0aa219ad Merge remote-tracking branch 'origin/main' into work/runaway-prevention-recovery-20260718-120912
-- `work/tcc-reap-closeout-20260801` — 57d5e7bf docs(closeout): preserve TCC reap fixed point
-- `work/tcc-stable-agent-host-cutover-20260730` — b6767943 docs: publish admitted tcc-stable-agent-host-cutover-20260730 runway
-- `work/three-pinned-conversations-20260721` — edc937ee chore: record requested Codex archive
-- `work/workstream-agent-launcher-20260629` — a66424e0 chore: execute dynamic-substrate fanout executor packet
-- `worktree-feat+opencode-tier-ladder` — bf7f2091 feat(dispatch): opencode multi-model tier ladder (free floor / Zen subscription rung)
-- `worktree-wf_0bb9c0d7-dc1-12` — c677f71a fix(covenant): scope Check O keeper-line assertion to Agent-Specific Notes section
+- `_pr198` — 4cd0dbaa9 fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
+- `agent/codex-sessions-adapter-0713` — 4f56aa95a fix(prompt): adapt Codex session records exactly
+- `agent/handoff-runtime-readiness-0713` — 2b434e2ec fix(dispatch): close runtime readiness claim seams
+- `agent/opencode-db-prompt-adapter-20260713` — e267e576a fix(prompt-corpus): adapt OpenCode task prompts
+- `agent/verify-dispatch-root-isolation-20260714` — 9934e3e62 format root isolation regression
+- `archive/danse-predecessor-experiments-20260802` — a232f2d71 archive(danse): preserve predecessor experiments
+- `capture/main-2026-07-02T01-03-35Z` — 71b488528 capture: off-disk sync 2026-07-02T01:03:35Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-02T18-41-47Z` — eaca4510c capture: off-disk sync 2026-07-02T18:41:47Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-03T18-23-54Z` — b53f0abc9 capture: off-disk sync 2026-07-03T18:23:54Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-04T18-44-48Z` — bdc71ecbb capture: off-disk sync 2026-07-04T18:44:48Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-06T17-09-22Z` — e85f09095 capture: off-disk sync 2026-07-06T17:09:22Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-08T21-07-28Z` — 672c21c1c capture: off-disk sync 2026-07-08T21:07:28Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-07-16T04-48-58Z` — a0bdb5593 capture: off-disk sync 2026-07-16T04:48:58Z (main behind origin → side ref, HEAD untouched)
+- `capture/main-2026-08-09-offdisk-priority` — a6aea4a76 capture: autonomic off-disk sync 2026-08-09T03:08:50Z
+- `chore/danse-his-hand-closeout-20260803` — 8c11047e8 chore: home danse artistic approval lever
+- `chore/mail-keyed-path` — 132602a5d fix(mail): make the required Gmail credential fail LOUD + wire the Gmail IMAP archiver into the beat
+- `chore/pii-containment-limen-scrub` — 59a109c8e chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
+- `chore/ruff-format-cli-tests` — bbd9874a3 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
+- `codex/agent-checkout-guard-20260709` — 95b47a639 limen: guard worktree session launches
+- `codex/claude-permission-preflight-0713` — 2597ad485 fix(claude): preflight unattended permission conflicts
+- `codex/claude-projects-adapter-20260713` — b0c3676ac fix(prompt-corpus): narrow alias target type for mypy
+- `codex/codex-attachments-gap-0713` — c33b9a4f4 fix(prompt): admit exact Codex attachment parents
+- `codex/discovery-disposition-ledger-20260712` — 6f2c93979 Merge remote-tracking branch 'origin/main' into codex/discovery-disposition-ledger-20260712
+- `codex/epoch-closeout-20260714` — ddcb50060 refactor(session): compose bounded continuation modules
+- `codex/financial-codex-finish-0704` — 65f20fcb2 limen: add financial obligation action plan
+- `codex/limen-main-trench-20260628` — c5fb867f3 limen: preserve overnight autonomous receipts
+- `codex/network-substrate-healing-20260628` — 5ba52e5d0 capture: autonomic off-disk sync 2026-06-29T10:39:58Z
+- `codex/private-board-bootstrap-cli-20260810` — 7f5512829 fix: enforce worker body limits on actual bytes
+- `codex/private-board-projection-20260810-format` — 6591389b8 style: format private board helpers
+- `codex/progress-universe-0713` — 45a7aa40a docs(cli): document progress ledger command
+- `codex/resource-safe-closeout` — d682600e2 limen: format lifecycle pressure tests
+- `codex/runtime-probe-retry-0713` — 6f0307fc6 Merge remote-tracking branch 'origin/main' into codex/runtime-probe-retry-0713
+- `codex/safe-storage-reclaim-20260709` — 49bd86b75 reclaim: preserve and reap safe storage roots
+- `codex/session-scope-boundary-closeout` — c4bace4cb fix(hooks): scope task sessions to worktree
+- `codex/student-email-doctrine-cleanup-20260709` — 00e05587c Merge remote-tracking branch 'origin/main' into codex/student-email-doctrine-cleanup-20260709
+- `codex/tabularius-writer-cutover` — 3dc1a73c7 test: drain tabularius tickets in producer tests
+- `codex/vltima-organ-impl-20260706` — 45bef795c Merge remote-tracking branch 'origin/main' into codex/vltima-organ-impl-20260706
+- `corpus-verify` — d45b030d1 photos: extend duplicate proof batch
+- `deepen/tao-te-ching-ch6-10` — 6bbd51f7b limen: promote organvm/domus-genoma to ranked value tier
+- `discover-carrier-wave-zeitgeist-thesis-value` — fe4f76333 limen: discover corpus-mythicum, promote to ranked tier
+- `discover-cind-and-sol-foundation` — 08e60a1f8 DISCOVER: latent value of organvm/cind-and-sol-foundation
+- `discover-limen-value-2026-06-22` — 7ad100f0c capture: autonomic off-disk sync 2026-06-23T13:19:40Z
+- `discover-organvm-browser-state` — 7fb6478b9 docs: preserve gens discovery thesis
+- `discovery-organvm-palimpsest` — 738089502 feat: discover organvm/palimpsest and add to value-repos
+- `docs/board-partition-verify-20260808014448` — b254c2793 docs(verify): the stale count was 15, and a PR rollup reports failures that pass
+- `docs/charles-cotton-summer` — 0b4e24c63 docs(charles): deliver trilogy as Word documents
+- `docs/charles-downs-style-archive` — 738e46848 test: avoid dynamic URL regular expressions
+- `docs/covenant-agent-docs` — dc7ecd517 docs(covenant): keeper law on every agent surface — AGENTS/GEMINI clauses + parity assertions + IF entry
+- `docs/diurnal-20260801100329` — e57536b7b docs(diurnal): 2026-08-01 INDEX
+- `docs/diurnal-20260801161410` — ed840b9d8 docs(diurnal): 2026-08-01 INDEX
+- `docs/diurnal-20260802010616` — 65aa62967 docs(diurnal): 2026-08-01 INDEX
+- `docs/diurnal-20260802100422` — 72f04e7f9 docs(diurnal): 2026-08-02 INDEX
+- `docs/diurnal-20260806014825` — 2ab04fb82 docs(diurnal): 2026-08-05 INDEX
+- `docs/diurnal-20260807012631` — 13797b235 docs(diurnal): 2026-08-06 INDEX
+- `docs/diurnal-first-live-day` — 3c8d8480d docs(diurnal): day one — the organ's first emission against the live body
+- `docs/enc1101-eot-catchalls-20260804` — d86a575dd capture(sync-release): preserve parked dirt before unpark [skip ci]
+- `docs/gitvs-pr-debt-zero-20260809` — 4bdf960a8 capture: autonomic off-disk sync 2026-08-09T16:54:54Z
+- `docs/pr-debt-observation-20260806033359` — 7739086a4 docs(gitvs): record open-PR debt observation (1293 open)
+- `docs/pr-debt-observation-20260807005128` — f62f053bd docs(gitvs): record open-PR debt observation (1297 open)
+- `docs/quicken-residue` — 1890688bb docs: QUICKEN residue — irreducible human atoms (daemon capture)
+- `docs/reap-acceptance-0709-final-20260709115323` — 00cd21cee docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
+- `docs/reap-acceptance-0709-final2-20260709115636` — cdef65734 docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
+- `docs/session-contention-incident-20260809034540` — 28f68b44c docs(contention): record session-contention incident (18 total)
+- `docs/settings-estate-leftovers-20260806213824` — 1bc09bddc docs(plan): Settings-estate leftovers: heal the keystone PR, expand the predicates, evolve the sensors
+- `docs/uig-planfill` — 8bf193b63 docs(plan): R2 harvest folded — six lane suggestions, six dispositions, zero parked
+- `feat-58-referral-program` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `feat-59-waitlist-landing` — 42e1dea48 feat: Closed beta waitlist landing page - pre-launch acquisition funnel
+- `feat-60-fury-taxonomy` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `feat-62-tiered-verification` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `feat-63-ugc-moderation` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `feat/bhagavad-gita-arcs-5-8` — 13a810c35 feat(studium): author metamorphoses books 2 and 3 arcs
+- `feat/board-writer-audit-gate` — 1851d9c2d fix(covenant): anchor baseline path to script location, fail-open on absent baseline
+- `feat/censor-monthly-tier` — a89dd0483 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
+- `feat/charles-cotton-preview` — b19f02f8f fix: harden cotton closeout invariants
+- `feat/charles-rose-toners-post` — 876e6033b Add Charles rose toners closeout relay capsule
+- `feat/clavis-credential-provisioning` — 028faaa95 feat(clavis): credential-provisioning organ — own the service account + its one vault as code
+- `feat/cli-watch-subcommand` — 7f17d103e feat(cli): wire watch subcommand with --compact/--once modes
+- `feat/conversion-funnel` — 0eba9cca2 feat(conversion): measure the public face — traffic collector + funnel leak-diagnosis
+- `feat/covenant-attribution-sensor` — ac0489077 feat(covenant): attribution sensor — every memory write must carry a keeper receipt
+- `feat/covenant-registry-and-checker` — 360b4edfe fix(covenant): ruff format test_check_covenant.py
+- `feat/danse-screendance-leaf-20260802` — 911410ba4 test(danse): avoid secret-like fixture flow
+- `feat/depends-on-sequencer` — b83a5d0bb feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
+- `feat/enactment-audit-efficacy-rung` — f2eb45cc6 feat(enactment): a third audit axis — a rung can be wired, live, and fail on every single beat
+- `feat/github-universe-mission` — e48e93602 chore(ledger): stop tracking the 2MB generated github-universe sweep ledger
+- `feat/guard-fail-toward-warning` — c0e4164f9 feat(arms-agents): "a guard that cannot see must WARN" becomes an executable, ratcheted invariant
+- `feat/hospes-podcast-os-audit` — 4523e8db4 feat(hospes): register organvm/hospes as value repo, positioning seed awaiting_publish
+- `feat/ingest-styx-issues` — 29326f020 capture(sync-release): preserve parked dirt before unpark [skip ci]
+- `feat/mail-story-mining-20260706` — d76726f37 feat: complete mail story mining outputs
+- `feat/memoria-ticket-lane` — 0abce446c fix(memoria): ruff format memoria.py and test_memoria.py
+- `feat/observatory-complete` — ca4a3df41 feat(observatory): R5 — CHARTER complete (zero residual) + doctor proves the 5-stage spine
+- `feat/outbound-valve-registry` — c281b2979 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
+- `feat/receipt-classifier` — 45672027f feat: receipt-classifier.py — flag receipt-only diffs behind shipped-X claims (concern 9)
+- `feat/session-cadence-ceiling` — 37296f149 feat(arms-agents): guard the cadence CEILING, not the literal string "fable"
+- `feat/session-contention-receipt` — 24a0c7472 fix(contention): the guard could go blind quietly, and the gate graded text
+- `feat/session-opening-floor` — a9a1baf7c feat(arms-agents): the session-opening floor becomes a per-lane census — all providers, not just Claude
+- `feat/session-streams-registry` — 2e5e04946 heal(streams): record s1-homing-spine settled by #1608, and correct its edges
+- `feat/studium-deepen-bhagavad-gita` — b79d0fae1 studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
+- `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae61 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
+- `feat/studium-deepen-metamorphoses-batch-1` — 2bf801175 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
+- `feat/studium-deepen-quran` — 2bf801175 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
+- `feat/studium-film-beowulf` — 799a27f9d limen: studium-film-tanakh done — existing companion verified on origin/main (PR #116)
+- `feat/studium-film-canterbury-tales` — b79d0fae1 studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
+- `feat/studium-film-divine-comedy` — ab82b47bb feat: Divine Comedy film companion
+- `feat/studium-film-quran` — 6c70956e1 limen: studium-film-metamorphoses done — 10 films validated across 9 forces
+- `feat/studium-film-tanakh` — d8c703e99 feat: studium-film-tanakh (covenant/law/exile companion)
+- `feat/universal-kernel-recordkeeper-20260705` — 1fe7be061 Merge branch 'main' into feat/universal-kernel-recordkeeper-20260705
+- `feat/valve-potency-rung` — 41625588c feat(enactment): a POTENCY rung — prove a destructive valve actually FIRES
+- `feat/vigilia-nohardcode-gate` — b94e1242d feat(vigilia): wire organ-health VIGILIA rung + heartbeat stamp (build #4)
+- `feat/vltima-organ-engine` — fe3e5eb40 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
+- `feat/walls-auto-regen` — 990a39da1 feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
+- `feature/ORG-artist-organ-face-0628` — a99db3a6c fix: add missing pydantic dep to auto-scale CI workflow
+- `feature/ORG-education-organ-face-0630` — 9d174794c feat(education): author polished macro and micro face for education organ
+- `feature/tale-of-genji-chapters-2-5` — 50a31de42 studium: author Tale of Genji chapters 2-5
+- `fix-1565-tighten-types` — 0f34299d1 Tighten types in organvm/limen
+- `fix-branch` — 70689bf3d fix: resolve ruff format failure and remove mypy_cache artifacts
+- `fix-bug-28` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `fix-pr-680` — b8b2ea405 fix failing CI on organvm/limen#432
+- `fix-types-1565-clean` — 62cb5d01a Fix models.py arg types
+- `fix/616-format` — e020757ce style: ruff format test_corpus_command_center.py (CI format-check gate)
+- `fix/application-funnel-dormant` — 964772922 fix(funnel): the outbound job funnel was dormant on a path miss
+- `fix/autonomy-timegate-throughput-correction-v2` — 41ab3e915 fix: disable generated cleanup in reclaim tranche
+- `fix/closeout-reconcile-effector` — 1aade249b feat(censor): reconcile-closeouts effector — home HARD findings via insight-route
+- `fix/cloudflare-do-plan-mismatch-20260809` — 845152da1 fix(conduct): report storage refusal without billing inference
+- `fix/dispatch-admission-ci-768` — 96f6c10b6 Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
+- `fix/fork-safety-predicate` — 09b6eb0cf style(fork-safety): ruff format the predicate + its test
+- `fix/guard-unresolved-model` — 625ce323e fix(arms-agents): an unresolvable session model becomes a third state that speaks
+- `fix/heartbeat-refresh-web-wedge` — 0a512024e fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
+- `fix/ianva-secret-redaction` — c67b98892 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
+- `fix/limen-typing-0703` — 7b4435181 docs(gitvs): record open-PR debt observation (1307 open, untyped 0)
+- `fix/needs-human-truth` — ed62e484e feat(board): beat-wire the needs_human reclassify pass (0g6) — visibility + FLIP valve
+- `fix/next-audit-bump` — ba9227b7b chore(web/app): bump next to 16.2.11 — clears fresh npm-audit advisories breaking trunk CI
+- `fix/pr-1325-migration-wedge` — 128dca242 fix: heal interrupted legacy→scoped migration write in _load()
+- `fix/pr-debt-trend-names-the-real-producer` — ff3e42bc2 fix(gitvs): the trend predicate named the wrong producer in its own escalation
+- `fix/pr-debt-trend-owner-assertion` — c1c1f840f fix(tests): derive the producer's owner, don't re-pin it — main is red on a stale literal
+- `fix/pubpolicy-doc-secret-false-positive` — 63901080a fix(publish): documentation-about-secrets is not a secret — kill the sweep false-positive class
+- `fix/relay-identity-freeze-kills-dispatch-receipts` — 3286f8df4 fix(tabularius): a fixed relay session id is frozen by the first client that claims it
+- `fix/routines-freshness-budget-and-defect-clock` — f8665b095 fix(organ-health): ROUTINES read down for 5.5 of every 6 hours of correct operation
+- `fix/self-load-above-the-governor-is-declared` — 3288f9b53 fix(beat): the self-load rung acting during an autonomy pause is now a DECISION, not an accident
+- `fix/settles-trailer-test-not-universal` — fdc22a722 fix(tests): the Claude-Session trailer-parser gap is per-commit, not universal
+- `flywheel-merge-heal` — f7341bf93 merge origin/main — pick up ianva census heal (#1946) and merge-ready removal-ban heal (#1962)
+- `g-merge-fix` — 9b886a237 Merge remote-tracking branch 'origin/main' into g-merge-fix
+- `heal-pr-621` — af456827e Build the first working vertical slice of the health organ
+- `heal/608-declare-param` — a63e6db7e chore(governance): declare LIMEN_WORKSPACE_UNIT_TIMEOUT_SEC for preserve_workspace()
+- `heal/aw-tabvlarivs-846-rebase` — dfeb06eda Finish single-writer status/result mutation conversion
+- `heal/ci-ruff-semicolons` — 04b050979 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
+- `heal/conductor-restart-2026-06-16` — d012d7596 limen: close the torn-write race + make the fleet visible (money view)
+- `heal/dialogs-effector-family` — a85d992c8 feat(gatekeeper): complete the agent-curable dialog-effector family (hook-drift + cask)
+- `heal/dialogs-effector-family-v2` — 6b2ec913c feat(gatekeeper): complete the agent-curable dialog-effector family (hook-drift + cask)
+- `heal/dispatch-admission` — 0681e396a limen: gate dispatch admission
+- `heal/health-office-staged-0625` — ff43850ed health office — the executive health office (autopoietic; PII strictly off-repo)
+- `heal/marker-and-tcc-registry-2026-06-24` — e6248bddf heal: swallow Claude Code's benign install_failed update marker (false ⚠ on /doctor)
+- `heal/micro-tato-audience` — fb9378999 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
+- `heal/micro-tato-audience-v2` — 8926ceb17 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
+- `heal/revert-opencode-lane-truth-932` — 6dcaf0a52 Revert "heal(opencode): land surviving lane pieces — auth lever + census/doc truth (#932)"
+- `heal/revive-self-heal-beat` — dc0498d19 heal(gate): make capacity-fill-ledger f-strings Python 3.11-safe
+- `heal/trunk-green-censor-armed-valves` — a709336d0 heal(vigilia): green the trunk — classify + home the two dark censor armed-valves
+- `heal/vvltvs-measure-published-face` — 076a37cea heal(vvltvs): measure the PUBLISHED face (origin blob), not a stale local clone
+- `issue-774` — 2cab6d7f1 chore: supersede issue 774 with 785 in board tracker
+- `issue-785` — 1c04a6aa1 chore: distill blocked handoff issues from #785
+- `limen-pr-1803-refresh` — 4a342a504 fix: make App Management closure executable
+- `limen/aw-credential-wall-token-hygiene-2c076ba3` — 17c418a83 docs: add credential token tombstone audit
+- `limen/aw-credential-wall-token-hygiene-e729c093` — 5552f1739 docs(credentials): add token tombstone audit receipt
+- `limen/aw-estate-custody-1bf70c8a` — 46f5fdf30 Fix estate custody PR gates
+- `limen/aw-mail-active-flagged-dad69fe3` — 617c5005c mail: classify active flagged receipt
+- `limen/aw-public-face-contribution-balance-3112b780` — 3ffa19691 Declare contribution balance public root
+- `limen/aw-repo-boil-up-eb66c5ab` — b3a3c1ba2 limen: refresh repo surface ledger
+- `limen/aw-tabvlarivs-status-writers-c37d2df5` — e071bf5c4 limen: owner-record tabularius status writers
+- `limen/capfill-agy-20260629-01-aef0` — 3b9fbe7c8 fix mypy type errors in _task_agent/_task_status/_task_cost_int
+- `limen/capfill-agy-20260629-03-796b` — 6775009fe fix: resolve mypy errors in task typing
+- `limen/capfill-agy-20260629-11-a3b7` — 15b3ab839 Agy daily capacity-fill packet 11
+- `limen/capfill-agy-20260629-12-5661` — d32010d4b fix: ignore missing yaml type stubs in io.py
+- `limen/capfill-agy-20260629-13-cf80` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/capfill-agy-20260629-25-eb64` — f37dbb8b6 Agy daily capacity-fill packet 25
+- `limen/capfill-claude-20260629-01-278a` — 370911082 ruff format: wrap long decorator lines in cli.py
+- `limen/capfill-claude-20260629-13-2b0f` — 69e10c5a9 fix: add CapacityFill TypedDicts and correct mypy type annotations
+- `limen/capfill-opencode-20260629-01-0afd` — 24f367f9d OpenCode daily capacity-fill packet 01
+- `limen/capfill-opencode-20260629-01-79bc` — 8169d561e style: run ruff format to fix CI
+- `limen/csf-caeb31d8-plan-10-b131e64c-38bd` — 705fcee40 limen: record current-session private boundary packet
+- `limen/gen-organvm-limen-docs-0624-0129` — e454a6034 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0624-32e1` — 0aea514ab limen: GEN-organvm-limen-docs-0624 — accurate Usage docs from real CLI
+- `limen/gen-organvm-limen-docs-0624-525d` — 5683c27be Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0624-6fc0` — 4c7453ac3 docs(usage): derive accurate CLI usage from actual entrypoints
+- `limen/gen-organvm-limen-docs-0625-4261` — d98ada7ca Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-86a3` — 2ba9c1147 Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-9c44` — 83e805e6f Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0625-db1d` — 44b39586e Real usage docs for organvm/limen
+- `limen/gen-organvm-limen-docs-0628-31d6` — 2470b06f1 docs: fix dispatch --budget flag description in CLI reference table
+- `limen/gen-organvm-limen-security-0624-a9e5` — 0d705fe1e security: harden input validation across API and CLI models
+- `limen/gen-organvm-limen-security-0625-57ce` — 02f256ed2 Security hardening pass on organvm/limen
+- `limen/gen-organvm-limen-security-0625-b412` — bd88bf7e3 docs(security): audit results for organvm/limen hardening pass
+- `limen/gen-organvm-limen-security-0626-b91f` — 569a4ebfa limen: mark security task blocked on PR gate
+- `limen/gen-organvm-limen-simplify-0624-901a` — 0d9c4141a Reduce complexity in organvm/limen — refactor dispatch.py
+- `limen/gen-organvm-limen-test-coverage-0625-0153` — cb166bd2f Raise test coverage in organvm/limen
+- `limen/gen-organvm-limen-test-coverage-0625-1c32` — dc89769ad test(nomenclator): add 37-case unit suite for INDEX·NOMINVM enforcer
+- `limen/gen-organvm-limen-typing-0622-9eb5` — c60bc170a refactor(types): tighten the most-imported limen modules — kill capacity.py's any hotspot
+- `limen/gen-organvm-limen-typing-0627-ccac` — d280f1d15 fix: tighten types in limen's most-imported modules
+- `limen/gen-organvm-limen-typing-0629-7bfb` — 98415581c Tighten types in organvm/limen
+- `limen/gh-organvm-limen-262-0a16` — 3ebc05c28 docs(levers): L-IANVA-LOCAL — launchd plist staged, ONE command to bootstrap (#262)
+- `limen/gh-organvm-limen-352-b4c3` — 18129a474 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
+- `limen/heal-cifix-organvm-limen-376-7a338dd4` — c331f297b Aeneid film companion (empire/fate/sacrifice)
+- `limen/heal-cifix-organvm-limen-384-947d7bcc` — e37847dd7 Map the VLTIMA 5-primitive kernel to the social organ
+- `limen/heal-cifix-organvm-limen-386-e4090713` — 9cc1e7d2e limen: ruff-format two pre-existing unformatted test files
+- `limen/heal-cifix-organvm-limen-388-3f07b6de` — aa9b5c1fe Make the consulting organ's macro + micro face excellent
+- `limen/heal-cifix-organvm-limen-388-52a7d7fb` — aa9b5c1fe Make the consulting organ's macro + micro face excellent
+- `limen/heal-cifix-organvm-limen-401-a2ea349b` — ca076bfe0 Raise test coverage in organvm/limen
+- `limen/heal-cifix-organvm-limen-402-140f5ba7` — 945b05d15 Raise test coverage in organvm/limen
+- `limen/heal-cifix-organvm-limen-402-f000515e` — 945b05d15 Raise test coverage in organvm/limen
+- `limen/heal-cifix-organvm-limen-403-06ee30f8` — 7436bda27 Tighten types in organvm/limen
+- `limen/heal-cifix-organvm-limen-404-5c945b9f` — 4a09aa67d Tighten types in organvm/limen
+- `limen/heal-cifix-organvm-limen-405-cba906fe` — 21b10df2f OpenCode daily capacity-fill packet 04
+- `limen/heal-cifix-organvm-limen-406-fce333e5` — 41bd5a66b OpenCode daily capacity-fill packet 06
+- `limen/heal-cifix-organvm-limen-407-d89f6362` — 9ba34eb0a Claude daily capacity-fill packet 01
+- `limen/heal-cifix-organvm-limen-408-2e00f83a` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-408-49717d79` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-408-c4b34a11` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-408-dfcef9e9` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-408-e80c4e93` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-409-93c549df` — 86690a1fa OpenCode daily capacity-fill packet 08
+- `limen/heal-cifix-organvm-limen-410-a19bea30` — 15b3ab839 Agy daily capacity-fill packet 11
+- `limen/heal-cifix-organvm-limen-411-4910c5ab` — 52fe67bac Claude daily capacity-fill packet 06
+- `limen/heal-cifix-organvm-limen-411-d93c565b` — 52fe67bac Claude daily capacity-fill packet 06
+- `limen/heal-cifix-organvm-limen-412-2d0dda2c` — 179b2e4f4 fix: ruff format in cli.py workstream command options
+- `limen/heal-cifix-organvm-limen-412-2e191c19` — 6ceb44ede Gemini daily capacity-fill packet 04
+- `limen/heal-cifix-organvm-limen-413-491f6092` — 91ab4a768 Gemini daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-414-361fb12b` — 038837834 fix(ci): redact live root paths in absorption cadence
+- `limen/heal-cifix-organvm-limen-414-4e02d6f1` — 038837834 fix(ci): redact live root paths in absorption cadence
+- `limen/heal-cifix-organvm-limen-415-7db396da` — 20cd1a3f3 OpenCode daily capacity-fill packet 01
+- `limen/heal-cifix-organvm-limen-416-2dce14dc` — 04f14e28b Agy daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-416-5de40a1c` — b5c28a304 heal-cifix-416: fix mypy type errors in _task_agent/_task_status/_task_cost_int
+- `limen/heal-cifix-organvm-limen-417-980ffa89` — af398882b Agy daily capacity-fill packet 04
+- `limen/heal-cifix-organvm-limen-418-5676e703` — 1153c76c9 Jules daily capacity-fill packet 05
+- `limen/heal-cifix-organvm-limen-418-81791685` — 1153c76c9 Jules daily capacity-fill packet 05
+- `limen/heal-cifix-organvm-limen-419-3fb355e2` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-68eb0e65` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-7595de98` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-7987cca2` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-419-e59a4529` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-420-6d674400` — 8da3918e3 ruff format: fix formatting in capacity.py and cli.py
+- `limen/heal-cifix-organvm-limen-422-6b0c8ca2` — c58a0320e fix(ci): isolate producer env in backlog tests
+- `limen/heal-cifix-organvm-limen-425-0597e483` — 2f47ab181 fix failing CI on organvm/limen#425
+- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc7440340 fix failing CI on organvm/limen#427
+- `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a86 fix(ci): repair PR 428 gate failures
+- `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d6 fix(ci): clear PR gate regressions
+- `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e4 fix(ci): declare new limen parameters
+- `limen/heal-cifix-organvm-limen-431-6ee61f31` — 7d6834efc fix(ci): format VLTIMA prior excavation test
+- `limen/heal-cifix-organvm-limen-432-06bf02c7` — 47c47550a fix(ci): repair PR 432 checks
+- `limen/heal-cifix-organvm-limen-432-19e5f605` — b8b2ea405 fix failing CI on organvm/limen#432
+- `limen/heal-cifix-organvm-limen-434-529e2e6d` — 6bc6d1282 fix failing CI on organvm/limen#434
+- `limen/heal-cifix-organvm-limen-439-b17fd83a` — b13ba0f08 fix(ci): repair PR 439 gates
+- `limen/heal-cifix-organvm-limen-442-1b11af92` — 2beac4173 fix(ci): format async dispatch test
+- `limen/heal-cifix-organvm-limen-443-4e67ed4e` — ad12cd642 fix(ci): repair PR 443 gate failures
+- `limen/heal-cifix-organvm-limen-447-11a30c5e` — 520b2001d fix: restore capacity.py to main's version with select_lanes
+- `limen/heal-cifix-organvm-limen-447-c5187efb` — d7caf8ff6 Gemini daily capacity-fill packet 10
+- `limen/heal-cifix-organvm-limen-447-cef5ffb6` — d7caf8ff6 Gemini daily capacity-fill packet 10
+- `limen/heal-cifix-organvm-limen-448-cfa0209f` — 257255152 OpenCode daily capacity-fill packet 17
+- `limen/heal-cifix-organvm-limen-449-00ef6ed5` — 48984004e capture: autonomic off-disk sync 2026-07-04T17:56:04Z
+- `limen/heal-cifix-organvm-limen-450-db7e9c49` — a4790df51 Agy daily capacity-fill packet 07
+- `limen/heal-cifix-organvm-limen-451-7e697fef` — 6c1f3c48d ruff format: wrap long @click.option decorator lines in cli.py
+- `limen/heal-cifix-organvm-limen-452-1091876d` — 793e4afea Make organvm/limen CI green
+- `limen/heal-cifix-organvm-limen-452-32c5a00b` — 793e4afea Make organvm/limen CI green
+- `limen/heal-cifix-organvm-limen-453-f04fb243` — d0d947687 Gemini daily capacity-fill packet 05
+- `limen/heal-cifix-organvm-limen-455-09792942` — 56f9a013a Jules daily capacity-fill packet 04
+- `limen/heal-cifix-organvm-limen-456-2d8d8026` — 917357bd4 Jules daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-456-f80ad47a` — 917357bd4 Jules daily capacity-fill packet 13
+- `limen/heal-cifix-organvm-limen-457-fa165ce1` — 15dc86189 Claude daily capacity-fill packet 11
+- `limen/heal-cifix-organvm-limen-484-6c85e505` — 3c8cf2590 Router fans across ALL paid services, not just the 6 vendors
+- `limen/heal-cifix-organvm-limen-485-9cab1d71` — 4fd78795c Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors
+- `limen/heal-cifix-organvm-limen-485-db7de160` — 4fd78795c Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors
+- `limen/heal-cifix-organvm-limen-490-8e65bdf4` — f70008a7e Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
+- `limen/heal-cifix-organvm-limen-516-55653ae8` — 59d881d46 Raise test coverage in organvm/limen
+- `limen/heal-cifix-organvm-limen-620-091fdee6` — 4a4f2d10e Build the first working vertical slice of the legal organ
+- `limen/heal-cifix-organvm-limen-624-83943155` — 6014b9201 Deepen the financial organ toward a usable institution
+- `limen/heal-cifix-organvm-limen-624-9ad64703` — 6014b9201 Deepen the financial organ toward a usable institution
+- `limen/heal-cifix-organvm-limen-630-6bb2c8d1` — 51bfc3fa4 Make the financial organ's macro + micro face excellent
+- `limen/heal-cifix-organvm-limen-630-8039270a` — 51bfc3fa4 Make the financial organ's macro + micro face excellent
+- `limen/heal-cifix-organvm-limen-670-dc60ce3a` — ec06dc595 ruff format: collapse multi-line condition in model_selection.py
+- `limen/heal-cifix-organvm-limen-678-98d08306` — 308ec256e fix: ruff format test_dispatch.py and declare 4 missing LIMEN_* params
+- `limen/heal-cifix-organvm-limen-684-14d57417` — 97aff27a7 Deepen the contributions organ toward a usable institution
+- `limen/heal-cifix-organvm-limen-684-ccd3d442` — 97aff27a7 Deepen the contributions organ toward a usable institution
+- `limen/heal-cifix-organvm-limen-846-0b86dfb8` — 9346893c9 Finish single-writer status/result mutation conversion
+- `limen/heal-rebase-organvm-limen-375-ccfaf493` — 8ff5af356 Beowulf film companion (wyrd/heroic doom)
+- `limen/heal-rebase-organvm-limen-394-80d251b9` — 05596a461 Deepen the financial organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-394-f450e381` — 05596a461 Deepen the financial organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-436-421a1644` — d32010d4b fix: ignore missing yaml type stubs in io.py
+- `limen/heal-rebase-organvm-limen-436-fc15ab5e` — d32010d4b fix: ignore missing yaml type stubs in io.py
+- `limen/heal-rebase-organvm-limen-486-fa88bb48` — 7f17d103e feat(cli): wire watch subcommand with --compact/--once modes
+- `limen/heal-rebase-organvm-limen-492-41c51751` — af3b7d831 limen: record PR #492 URL in dispatch_log
+- `limen/heal-rebase-organvm-limen-492-761f7b2b` — af3b7d831 limen: record PR #492 URL in dispatch_log
+- `limen/heal-rebase-organvm-limen-492-e04703e5` — af3b7d831 limen: record PR #492 URL in dispatch_log
+- `limen/heal-rebase-organvm-limen-516-068d470e` — 59d881d46 Raise test coverage in organvm/limen
+- `limen/heal-rebase-organvm-limen-516-616e9aa4` — a0a46938a Raise test coverage in organvm/limen
+- `limen/heal-rebase-organvm-limen-516-a8f9be47` — a0a46938a Raise test coverage in organvm/limen
+- `limen/heal-rebase-organvm-limen-590-fc296d22` — ed186e9e0 Deepen the financial organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-617-244af5eb` — 0c7967297 Build the first working vertical slice of the social organ
+- `limen/heal-rebase-organvm-limen-617-693e6691` — 0c7967297 Build the first working vertical slice of the social organ
+- `limen/heal-rebase-organvm-limen-619-398b77a0` — fa95be1d5 Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-619-df3154e9` — fa95be1d5 Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-621-700b2d32` — af456827e Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-621-853de731` — af456827e Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-621-92b25510` — af456827e Build the first working vertical slice of the health organ
+- `limen/heal-rebase-organvm-limen-622-7221d754` — 15a1111a0 Wire the governance organ to advance autonomously
+- `limen/heal-rebase-organvm-limen-623-1321446e` — d3bf919b0 Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')
+- `limen/heal-rebase-organvm-limen-624-e55981f3` — 6014b9201 Deepen the financial organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-625-b88f04db` — d6a00057f Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-organvm-limen-627-0c1c0cfc` — 4f728f367 Build the first working vertical slice of the social organ
+- `limen/heal-rebase-organvm-limen-629-bcec6316` — 111d812bb Charter the health organ as an institution rivaling a concierge medical / recovery team
+- `limen/heal-rebase-organvm-limen-630-790853f9` — f124ddd22 Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-organvm-limen-630-d878401c` — f124ddd22 Make the financial organ's macro + micro face excellent
+- `limen/heal-rebase-organvm-limen-680-c1c9768f` — b8b2ea405 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-680-e0f6856e` — b8b2ea405 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-680-f8711abe` — b8b2ea405 fix failing CI on organvm/limen#432
+- `limen/heal-rebase-organvm-limen-682-04a48a4c` — 3dc7ad6a9 limen: harvest async receipt results
+- `limen/heal-rebase-organvm-limen-683-40b8fdbf` — 08e60a1f8 DISCOVER: latent value of organvm/cind-and-sol-foundation
+- `limen/heal-rebase-organvm-limen-683-45538f03` — 08e60a1f8 DISCOVER: latent value of organvm/cind-and-sol-foundation
+- `limen/heal-rebase-organvm-limen-684-0483d311` — 97aff27a7 Deepen the contributions organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-684-aa986f4c` — 97aff27a7 Deepen the contributions organ toward a usable institution
+- `limen/heal-rebase-organvm-limen-696-99224303` — 42d75f7e1 fix failing CI on organvm/limen#375
+- `limen/heal-rebase-organvm-limen-696-c9240ec8` — 42d75f7e1 fix failing CI on organvm/limen#375
+- `limen/heal-rebase-organvm-limen-703-3cf56c8a` — 742f6330f handoff-relay.py: cross-session/cross-vendor warm-resume packet
+- `limen/heal-rebase-organvm-limen-814-004a5918` — 95b47a639 limen: guard worktree session launches
+- `limen/heal-rebase-organvm-limen-814-18b2fdb4` — 95b47a639 limen: guard worktree session launches
+- `limen/heal-rebase-stale-organvm-limen-434-180b7ce7` — b1a12a512 style: format cli.py
+- `limen/heal-rebase-stale-organvm-limen-434-8020d59d` — b1a12a512 style: format cli.py
+- `limen/heal-rebase-stale-organvm-limen-620-913107b3` — b79d64042 Build the first working vertical slice of the legal organ
+- `limen/jules-aw-mail-historical-backlog-083a` — 539cb7171 Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-1f7d` — 2525ea4e6 Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-3a0b` — 78e1083ac Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-43fd` — a6c303664 Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-4c02` — 778790b6f Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-51e4` — a59d5fa85 Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-9f1d` — fd91625a6 Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-c97e` — a9797d4ae Continue historical mail backlog in resumable batches
+- `limen/jules-aw-mail-historical-backlog-e50f` — 4cbf2f03e Continue historical mail backlog in resumable batches
+- `limen/jules-capfill-claude-20260629-14-5970` — 48984004e capture: autonomic off-disk sync 2026-07-04T17:56:04Z
+- `limen/jules-capfill-jules-20260629-08-e434` — e745ddcf8 fix: ruff format on test files
+- `limen/jules-capfill-jules-20260629-09-f6cc` — d7bb7ecd3 fix: ruff format cli/src/limen/cli.py (wrap long @click.option decorators)
+- `limen/jules-capfill-jules-20260629-14-26c8` — b1a12a512 style: format cli.py
+- `limen/jules-capfill-opencode-20260629-11-980d` — 8bbcfb231 OpenCode daily capacity-fill packet 11
+- `limen/jules-gen-organvm-limen-ci-green-0630-9622` — 793e4afea Make organvm/limen CI green
+- `limen/jules-gen-organvm-limen-typing-0627-3681` — f7f12b18c ruff format: fix formatting in cli.py and vigilia/params.py
+- `limen/jules-heal-cifix-organvm-limen-375-f260` — 42d75f7e1 fix failing CI on organvm/limen#375
+- `limen/jules-org-consulting-organ-face-0628-f5ee` — 33b8a1416 Merge remote-tracking branch 'origin/main' into limen/jules-org-consulting-organ-face-0628-f5ee
+- `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c4 Deepen the contributions organ toward a usable institution
+- `limen/jules-org-legal-organ-firstslice-0703-40b8` — 39a07d4d8 fix: ruff format 4 test files to fix CI pr-gate format check
+- `limen/jules-retro-0708-handoff-relay-41fd` — 742f6330f handoff-relay.py: cross-session/cross-vendor warm-resume packet
+- `limen/jules-retro-0708-pii-premerge-gate-4e92` — d5649a557 pr-gate PII containment scan for person-adjacent organ paths
+- `limen/jules-studium-film-beowulf-3e40` — 8573c3f88 Beowulf film companion (wyrd/heroic doom)
+- `limen/org-artist-organ-face-0704-2152` — 0bf299b0b artist: polish macro and micro faces (ORG-artist-organ-face-0704)
+- `limen/org-artist-organ-face-0704-54ed` — f0ca62974 chore(artist): mark ORG-artist-organ-face-0704 as done
+- `limen/org-governance-organ-deepen-0628-0e39` — f23a6f668 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
+- `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f63 feat: operationalize cvrsvs-honorvm rule as executable validator
+- `limen/org-governance-organ-deepen-0703-9f8e` — 6d4860175 governance: enforce publication-policy convergence
+- `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf048 limen: close governance organ self-feed task
+- `limen/org-health-organ-kernel-0630-e4e0` — 2564cd7be Add health organ kernel
+- `limen/org-health-organ-kernel-0704-59fd` — c3d9167b8 health: sync KERNEL.md to completed scaffold (authority contract + posture sequence + build plan)
+- `limen/org-health-organ-kernel-0704-decb` — 74a158a6e docs: advance health organ kernel
+- `limen/org-health-organ-kernel-0704-e61b` — b08caed65 health: complete organ kernel scaffold sync
+- `limen/org-hr-organ-kernel-0704-3658` — 939962e92 ORG-hr-organ-kernel-0704: Author KERNEL.md for the HR organ
+- `limen/org-hr-organ-kernel-0704-ab6c` — 40c484073 feat(hr): map 5-primitive kernel to HR domain and establish institutional prosthesis charter
+- `limen/org-hr-organ-kernel-0705-08aa` — 1fb4e2444 chore(hr): mark ORG-hr-organ-kernel-0705 as redundant (already completed in 0704)
+- `limen/org-hr-organ-kernel-0705-7fba` — 46850173d docs(hr): clarify organ as institutional prosthesis + generic platform
+- `limen/org-legal-organ-charter-0703-0899` — b8eb571e0 limen: complete legal organ charter
+- `limen/org-legal-organ-charter-0704-0b2a` — 5dbc0e8d1 docs: harden legal organ charter
+- `limen/org-legal-organ-firstslice-0703-c244` — 05cad7d7f legal: add first counsel-review matter slice
+- `limen/org-legal-organ-kernel-0630-a5e5` — 6c301f3e2 limen: map legal organ kernel
+- `limen/org-legal-organ-kernel-0701-e535` — 3dcb37cde organs: refine legal kernel flagship
+- `limen/org-legal-organ-kernel-0704-a80b` — 1800caa0b chore(legal): bump legal organ maturity to 25% (KERNEL.md authored)
+- `limen/org-legal-organ-kernel-0704-c763` — ac60fff8b legal: author KERNEL.md mapping domain-neutral kernel to legal domain
+- `limen/org-social-organ-charter-0704-b0e5` — 4d9efdc2a feat(social): explicitly state Koinonia name and unscoped constraint in CHARTER.md
+- `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ada5 organs/social: ship first slice
+- `limen/org-social-organ-firstslice-0703-6fb5` — 4e6993328 feat(social): add first koinonia slice
+- `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3fab social: ship koinonia first slice
+- `limen/promote-fetch-familiar-friends-value-tier` — 9d64fc583 limen: promote organvm/fetch-familiar-friends to the value tier
+- `limen/recover-force-copilot-lane-0870` — f70008a7e Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
+- `limen/studium-deepen-aeneid-e6cf` — fcee5d4d1 feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
+- `limen/studium-deepen-analects-78fa` — d5d8c1902 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
+- `limen/studium-deepen-beowulf-4918` — 99fb7715a feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays
+- `limen/studium-deepen-canterbury-tales-c640` — 76bb9f6df feat(studium): add Canterbury Tales tales 2-5 (Knight, Miller, Reeve, Cook)
+- `limen/studium-deepen-conference-of-birds-2584` — 377bd8b1e feat(studium): Conference of the Birds sections 2–6 — assembly phase arcs
+- `limen/studium-deepen-gilgamesh-57a4` — 61206056b Gilgamesh — tablets 2..12 (11 arcs)
+- `limen/studium-deepen-gilgamesh-dfa8` — d41f00209 Gilgamesh — tablets 2..12 (11 arcs)
+- `limen/studium-deepen-heike-d8fc` — 0da64c72e Tale of the Heike — books 2..12 (11 arcs)
+- `limen/studium-deepen-mahabharata-bc93` — 0c5fe0fab Mahabharata — parvas 2..18 (17 arcs)
+- `limen/studium-deepen-quran-5b8b` — 302ca7ff7 Qur'an — suras 5–10 (6 arcs)
+- `limen/studium-deepen-quran-a6fe` — 0d6f113a5 feat(studium): author Qur'an suras 2-5 in force-matched arcs format
+- `limen/studium-deepen-ramayana-10fe` — 638a4f1c2 Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-ramayana-267f` — 58cfa6036 Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-ramayana-93fe` — 300555464 Ramayana — kandas 2..7 (6 arcs; Ayodhya→Aranya→Kishkindha→Sundara→Yuddha→Uttara = exile→forest→alliance→quest→war→return)
+- `limen/studium-deepen-ramayana-ae60` — 4e0290f52 Ramayana — kandas 2..7 (6 arcs)
+- `limen/studium-deepen-tale-of-genji-0ce7` — c01d09874 feat(studium): Tale of Genji chapters 2–5 — early loves arc (force-matched + essays)
+- `limen/studium-deepen-tanakh-2fbf` — 75201c631 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-3953` — f7bf5c4c4 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-60ca` — a17fde2fd Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-deepen-tanakh-ba2e` — 60330fe39 Tanakh — books 2..39 (38 arcs; Torah · Nevi'im · Ketuvim)
+- `limen/studium-film-bhagavad-gita-3c09` — a869452fe Bhagavad Gita film companion (right action/renunciation)
+- `limen/studium-film-conference-of-birds-0330` — 63aee5581 Conference of the Birds film companion (the seven valleys/fanā)
+- `limen/studium-film-heike-01af` — 11f603a39 Tale of the Heike film companion (mono no aware)
+- `limen/studium-film-mahabharata-017c` — b2e94d132 Mahabharata film companion (dharma/war)
+- `limen/studium-film-mahabharata-2deb` — acca9ebd0 Mahabharata film companion (dharma/war)
+- `limen/studium-film-metamorphoses-9408` — 4872c64de Metamorphoses film companion (metamorphosis)
+- `limen/studium-film-odyssey-04ee` — 39ed67b9a Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-odyssey-4227` — 65ded77f4 Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-odyssey-7534` — 3f8bd49d8 Odyssey film companion (return/exile/recognition)
+- `limen/studium-film-shahnameh-2b83` — 654c505b0 Shahnameh film companion (kingship/the farr)
+- `limen/studium-film-tale-of-genji-57f4` — a776ac595 Tale of Genji film companion (desire/impermanence)
+- `limen/studium-film-tale-of-genji-6900` — f035767c7 Tale of Genji film companion (desire/impermanence)
+- `limen/vigilia-face-2fae` — 3032cfc95 The face — one pane that renders the C-suite from the seat (CCO)
+- `limen/vigilia-face-706a` — 2a8dc0287 chore(tasks): record VIGILIA-FACE as needs_human (push blocked on dead creds)
+- `limen/vigilia-face-dd81` — 93754f97c The face — one pane that renders the C-suite from the seat (CCO)
+- `limen/vigilia-vitals-7fb7` — efa6864a6 feat(vitals): add CFO's don't-crash executive for memory pressure reaction
+- `live-snapshot-pre-main-2026-06-21` — f8e177984 snapshot: live working state before moving to released main
+- `pr-1354` — c99d0d135 fix(pip-audit): match PEP 508 name only, clearing CodeQL py/bad-tag-filter FP
+- `pr-422` — 52d4cbd2f Claude daily capacity-fill packet 07
+- `pr-423` — 58ebc3077 fix: add missing CapacityFillRow and CapacityFillSnapshot TypedDict definitions
+- `pr-426` — 4817ba408 OpenCode daily capacity-fill packet 15
+- `pr-428` — 1245df4f7 Jules daily capacity-fill packet 09
+- `pr-429` — 8c49afd4e Agy daily capacity-fill packet 22
+- `pr-432` — f6baee2b4 OpenCode daily capacity-fill packet 01
+- `pr-434` — 7308fc643 Jules daily capacity-fill packet 14
+- `pr-435` — 1ca07a852 fix: format test_vltima files per ruff --format
+- `pr-438` — f045aee68 Agy daily capacity-fill packet 01
+- `pr-440` — 6775009fe fix: resolve mypy errors in task typing
+- `pr-445` — 99c282808 Agy daily capacity-fill packet 04
+- `pr-446` — 01f5c59cb Claude daily capacity-fill packet 03
+- `pr-669-governance-deepen` — 3dc75166a ci: declare async archive parameters
+- `pr-680` — b8b2ea405 fix failing CI on organvm/limen#432
+- `pr-682` — 9410ebc8e docs: add organvm/sovereign--ground--4444j99 to value-repos
+- `pr-703-temp` — f3c7605f6 handoff-relay.py: cross-session/cross-vendor warm-resume packet
+- `pr-744` — 037f6063b capture: autonomic off-disk sync 2026-07-19T21:55:15Z
+- `pr-757` — 136fad360 docs(financial): correct spend audit — vendor subs are capacity pools, not overlap (operator feedback)
+- `pr-767` — e489b285a test: isolate test_load_upstreams from host config environment
+- `pr-fix-1171-local` — c9332a431 fix(review-gate): require protection-owned CI
+- `pr-fix-1324-local` — 577f799cd docs: bind activation receipt to preservation custody
+- `pr-fix-1329-local` — 05e64aa22 fix: underwrite runtime probe verification
+- `preserve/board-writer-audit-gate-wip-20260730` — 330980596 preserve: pr-fix-1195 WIP at worktree-estate drain
+- `preserve/codex-runaway-prevention-20260717-wip-20260730` — 7bf7f85ee preserve: codex-runaway-prevention untracked jules-landing modules
+- `preserve/prima-materia-universe-s17-wip-20260730` — f3e98aace preserve: prima-materia-universe-s17 WIP at worktree-estate drain
+- `preserve/reclaim-plan-digest-20260724-20260730` — 5a4a6b8b8 preserve: reclaim-plan-digest-20260724 WIP at worktree-estate drain
+- `preserve/session-scope-boundary-wip-20260730` — c4bace4cb fix(hooks): scope task sessions to worktree
+- `preserve/typed-campaign-contracts-wip-20260730` — e1aea141f preserve: repair-pr1594-campaign-contracts WIP at worktree-estate drain
+- `preserve/vic-limen-rail-repair-wip-20260730` — 5e89a10b6 preserve: vic-limen-rail-repair WIP at worktree-estate drain
+- `promote-domus-genoma` — 6bbd51f7b limen: promote organvm/domus-genoma to ranked value tier
+- `rebase-630` — 51bfc3fa4 Make the financial organ's macro + micro face excellent
+- `rebase-814` — 94246f98a limen: guard worktree session launches
+- `recovery/codex-runaway-prevention-20260718-120912` — d7449e0b0 chore: retire inherited continuation capsule
+- `refactor/armed-valve-derive` — e342c68f6 refactor(armed-valve): read sensor gates from the SENSORS registry, not just the shell
+- `registry-update` — c2490e098 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
+- `research-149-stickk-analysis` — 9e1966e8f docs: add market-gap analysis for stickK vs Styx
+- `session/post-moneta-durability` — 01c7773cd docs: PR summary — ready for human review and merge
+- `ship/f3-f6-f7` — 04094145c feat(arms-agents): "a guard that cannot see must WARN" becomes an executable, ratcheted invariant
+- `studium-beowulf-fitts-2-4` — cd8625b86 studium: author Beowulf fitts 2-4 music arcs and essays
+- `studium-deepen-aeneid-4-6` — 791f3b455 studium-deepen-aeneid: Aeneid books 4-6
+- `studium-deepen-metamorphoses` — d0cb8cd71 limen: track studium-deepen-metamorphoses done (opencode +1)
+- `studium-deepen-shahnameh-2-8` — bf6de36ab feat(studium): Shahnameh cycles 2-8 arcs and essays
+- `studium-film-canterbury-tales` — d7fcab077 feat(studium): add Canterbury Tales film companion
+- `subagent-Bug-159-Rate-Limit-Resolver-self-884b5bd1` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Bug-28-DB-Resolver-self-c327883b` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Bug-32-Payment-Resolver-self-1d9ba79a` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Bug-34-Bounty-Resolver-self-a660c4d8` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-149-Researcher-self-9170d04f` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-58-Implementer-self-32ef6d32` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-59-Implementer-self-2879632c` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-60-Implementer-self-184b5d6b` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-61-Implementer-self-fa1615a7` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-62-Implementer-self-8a5cfdf5` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Issue-63-Implementer-self-da385229` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `tabularius/board-projection-20260721-177302a5` — b16284fef tabularius: publish current board projection
+- `task-conference-of-birds-batch-1` — e1facc15c feat(studium): author Conference of the Birds arcs 2-4
+- `tmp-rebase-394` — 05596a461 Deepen the financial organ toward a usable institution
+- `work/action-admission-bootstrap-20260723` — 65dc0d9ca Test torn lease refresh recovery
+- `work/agent-state-metabolism-20260724` — 292e38c5b fix(governance): account for agent-state default ref
+- `work/authorization-boundary-repair-20260716` — fcefa3aba fix: preserve assessed atoms during noise migration
+- `work/bbnc-phase0-authority-20260721` — f332bd665 feat(consulting): gate BBNC Phase 0 authority
+- `work/career-portal-20260728` — 4c0b782eb fix(representation): close career portal review ownership
+- `work/charles-cotton-preview-successor-20260803` — 5c082683b fix: harden cotton closeout invariants
+- `work/charles-universe-registry` — a989cdc2d Register the complete Charles universe
+- `work/claude-reacceptance-20260716` — b32a52377 limen: add fail-closed reacceptance controls
+- `work/claude-reacceptance-ledger-v2-20260716` — 560a4fdf5 recovery: register bounded remedy receipts
+- `work/claude-recovery-authority-workflow-20260717` — 7a2666e83 recovery: bind fable authority to owner custody
+- `work/claude-recovery-containment-20260716` — ae56ffc75 fix: lock containment before draining auto-merge
+- `work/claude-recovery-peer-gate-20260717` — c9332a431 fix(review-gate): require protection-owned CI
+- `work/claude-recovery-preview-truth-20260716` — fb2143f8b fix: make drain preview state truthful
+- `work/claude-recovery-provider-trajectory-20260717` — 997ae136e recovery: preserve exact provider attempt custody
+- `work/claude-recovery-zero-write-custody-20260717` — 5dc912ab5 recovery: close zero-write custody races
+- `work/collaboration-operations-platform-genesis-20260802` — 67f3400af plan: bind collaboration platform alpha-to-omega launch
+- `work/concurrency-closeout-reap-20260719` — ae107552b docs: admit concurrency closeout runway
+- `work/correspondence` — 843240cee docs: publish admitted correspondence runway
+- `work/eliminate-million-change-monoliths-20260723` — 3f115531d docs: record admitted monolith-elimination runway
+- `work/financial` — 462c7d963 docs: publish admitted financial runway
+- `work/fitness` — 89b755f4d docs: publish admitted fitness runway
+- `work/governance-organ-recovery-20260716` — 261ad2523 fix(governance): expire Scratch authority receipts
+- `work/governance-organ-recovery-next` — 261ad2523 fix(governance): expire Scratch authority receipts
+- `work/hokage-chess` — d0b13ec0a docs: publish admitted hokage-chess runway
+- `work/hospes-heal-reconcile-20260810-s1` — 05ea9a955 docs: publish admitted hospes-heal-reconcile-20260810-s1 runway
+- `work/host-pressure-reacceptance-20260716` — 536bf494d fix(host-pressure): keep peer observation bounded
+- `work/laptop-wide-recovery-closeout-20260724-s3` — 578bf5d1c docs: preserve post-merge lifecycle fixed point
+- `work/laptop-wide-recovery-closeout-20260724-s4` — 50c1cf10e fix(host): sanction guarded agent-state campaigns
+- `work/laptop-wide-recovery-closeout-20260724-s5` — a20abfe8b docs: record protected conduct reservation gate
+- `work/laptop-wide-recovery-closeout-20260724-s6` — d26ffd029 docs(closeout): preserve S6 recovery evidence
+- `work/laptop-wide-recovery-closeout-20260725-s10` — d35324511 docs: admit S10 Omega runway
+- `work/laptop-wide-recovery-closeout-20260725-s5` — 44b1437b1 docs: add laptop recovery successor capsule
+- `work/laptop-wide-recovery-closeout-20260725-s7` — 3b608bb60 chore: publish S7 Omega continuation capsule
+- `work/laptop-wide-recovery-closeout-20260725-s8` — 70afd75c6 add S8 Omega continuation capsule
+- `work/laptop-wide-recovery-closeout-20260725-s9` — 33e6b7f9e docs: admit S9 Omega runway
+- `work/laptop-wide-recovery-closeout-20260726-s12` — 2cd6300e5 chore: add S12 Omega continuation capsule
+- `work/laptop-wide-recovery-closeout-20260726-s13` — 5e3165c7d chore: add S13 Omega continuation capsule
+- `work/laptop-wide-recovery-closeout-20260727-s17` — 29c7060d4 chore: preserve S17 institutional-Omega capsule
+- `work/laptop-wide-recovery-closeout-20260727-s18` — 4d5be58ff fix(omega): redact strict canary skip output
+- `work/lead-representation` — 2ae87712e chore(leads): publish lead-representation continuation receipt (capsule custody)
+- `work/lead-substrate` — 46bb367dc chore(leads): publish lead-substrate continuation receipt (capsule custody)
+- `work/micro-tato` — 86e75528b docs: publish admitted micro-tato runway
+- `work/next-autonomous-epoch-20260714` — 9335337ba docs(session): record restart capsule fixed point
+- `work/omega-substrate-convergence-next` — 66bb7c272 docs: seal final Omega producer closeout
+- `work/photos-universe-20260629-182431` — d45b030d1 photos: extend duplicate proof batch
+- `work/prima-materia-alpha-omega-20260728` — f002f973d fix: make Prima Materia admission fail closed
+- `work/prima-materia-alpha-omega-universe-20260728-s15` — 5e09984cc docs: relay Prima Materia S15 evidence
+- `work/prima-materia-alpha-omega-universe-20260728-s16` — a6fe53a79 docs: recalibrate Prima Materia campaign
+- `work/prima-materia-alpha-omega-universe-20260728-s17` — 36909af39 chore: admit Prima Materia S17 custody capsule
+- `work/representation` — 99088426f docs: publish admitted representation runway
+- `work/runaway-prevention-recovery-20260718-120912` — 0aa219ad0 Merge remote-tracking branch 'origin/main' into work/runaway-prevention-recovery-20260718-120912
+- `work/seven-agent-whole-estate-review-20260719` — d3bc064eb feat(storage): archive-verify dirty worktree receipts
+- `work/tcc-reap-closeout-20260801` — 57d5e7bfd docs(closeout): preserve TCC reap fixed point
+- `work/tcc-stable-agent-host-cutover-20260730` — b6767943b docs: publish admitted tcc-stable-agent-host-cutover-20260730 runway
+- `work/three-pinned-conversations-20260721` — edc937ee7 chore: record requested Codex archive
+- `work/truth-first-system-advance-20260720` — 577f799cd docs: bind activation receipt to preservation custody
+- `work/truth-session-breadcrumb-20260721` — 26a808ad3 fix: close SessionEnd review gaps
+- `work/victoroff-external-custody-20260722` — 456a03a4f govern Victoroff external custody
+- `work/warp-agent-routing-20260629` — 6fb678e85 limen: audit warp notification provenance
+- `work/workstream-agent-launcher-20260629` — a66424e0e chore: execute dynamic-substrate fanout executor packet
+- `worktree-feat+opencode-tier-ladder` — bf7f2091f feat(dispatch): opencode multi-model tier ladder (free floor / Zen subscription rung)
+- `worktree-feat-decorum-keeper` — 50145954f feat(decorum): complete the mentor loop — self-closing issues, recurrence ratchet, offline gate
+- `worktree-feat-host-pressure-loop` — 1864ea386 feat: close the host-pressure loop — swap axis, host-relief effector, loud escalation (IF-HOST-PRESSURE form 4)
+- `worktree-fix+pause-marker-fence-not-wall` — de487e7ba feat(autonomy): class: fence|wall as declared data — regex demotes to legacy fallback
+- `worktree-fix-macos-fork-oslog-crash` — 414ded132 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
+- `worktree-fluttering-twirling-abelson` — c2c548846 Redact circle-personal business intel from public consulting organ
+- `worktree-ianva-doorway` — f4c0c076f fix(ianva): never echo bearer to stdout; untrack generated/ golden files
+- `worktree-jolly-knitting-lovelace` — 1e239934c feat(hooks): arm the session-orientation organ in committed project settings
+- `worktree-parsed-finding-fern` — 6f171f830 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
+- `worktree-wf_0bb9c0d7-dc1-12` — c677f71a0 fix(covenant): scope Check O keeper-line assertion to Agent-Specific Notes section
 

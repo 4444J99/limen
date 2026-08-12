@@ -35,6 +35,7 @@ export function emptyConductState() {
     receipt_index: {},
     resource_generations: {},
     next_generation: 0,
+    next_event_sequence: 0,
     events: [],
   };
 }
@@ -157,6 +158,60 @@ function constantTimeTextEqual(left, right) {
   return mismatch === 0;
 }
 
+function eventMultiplicity(event) {
+  return Number.isSafeInteger(event?.count) && event.count > 0 ? event.count : 1;
+}
+
+function eventSequence(event, fallback) {
+  return Number.isSafeInteger(event?.sequence) && event.sequence > 0
+    ? event.sequence
+    : fallback;
+}
+
+function normalizeEventHistory(state) {
+  const input = Array.isArray(state.events) ? state.events : [];
+  const lifecycle = [];
+  const heartbeats = new Map();
+  let cursor = Number.isSafeInteger(state.next_event_sequence) && state.next_event_sequence >= 0
+    ? state.next_event_sequence
+    : 0;
+  for (let index = 0; index < input.length; index += 1) {
+    const raw = input[index];
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const event = clone(raw);
+    event.sequence = eventSequence(event, index + 1);
+    cursor = Math.max(cursor, event.sequence);
+    if (event.kind !== "lease.heartbeat" || typeof event.lease_id !== "string") {
+      lifecycle.push(event);
+      continue;
+    }
+    const prior = heartbeats.get(event.lease_id);
+    const first = String(event.first_timestamp || event.timestamp || "");
+    const last = String(event.last_timestamp || event.timestamp || first);
+    if (!prior) {
+      heartbeats.set(event.lease_id, {
+        ...event,
+        count: eventMultiplicity(event),
+        first_timestamp: first,
+        last_timestamp: last,
+      });
+      continue;
+    }
+    prior.count += eventMultiplicity(event);
+    if (!prior.first_timestamp || (first && first < prior.first_timestamp)) prior.first_timestamp = first;
+    if (!prior.last_timestamp || last > prior.last_timestamp) prior.last_timestamp = last;
+    if (event.sequence >= prior.sequence) {
+      prior.sequence = event.sequence;
+      prior.timestamp = event.timestamp;
+      prior.run_id = event.run_id;
+    }
+  }
+  const ordered = [...lifecycle, ...heartbeats.values()]
+    .sort((left, right) => left.sequence - right.sequence);
+  state.events = ordered;
+  state.next_event_sequence = cursor;
+}
+
 function validateLoadedState(input) {
   const state = clone(input || emptyConductState());
   if (state.schema_version !== "limen.conduct_state.v1") {
@@ -174,7 +229,7 @@ function validateLoadedState(input) {
   ]) {
     state[field] ||= {};
   }
-  state.events ||= [];
+  normalizeEventHistory(state);
   state.next_generation ||= 0;
   for (const lease of Object.values(state.leases)) validateLease(lease);
   return state;
@@ -235,12 +290,33 @@ export class ConductKernel {
     }
   }
 
+  nextEventSequence() {
+    this.state.next_event_sequence += 1;
+    return this.state.next_event_sequence;
+  }
+
   recordEvent(kind, payload = {}) {
     this.state.events.push({
-      sequence: this.state.events.length + 1,
+      sequence: this.nextEventSequence(),
       timestamp: this.timestamp,
       kind,
       ...payload,
+    });
+    this.mutated = true;
+  }
+
+  recordHeartbeatEvent(payload) {
+    const priorIndex = this.state.events.findIndex((event) =>
+      event.kind === "lease.heartbeat" && event.lease_id === payload.lease_id);
+    const prior = priorIndex < 0 ? null : this.state.events.splice(priorIndex, 1)[0];
+    this.state.events.push({
+      sequence: this.nextEventSequence(),
+      timestamp: this.timestamp,
+      kind: "lease.heartbeat",
+      ...payload,
+      count: prior ? eventMultiplicity(prior) + 1 : 1,
+      first_timestamp: prior?.first_timestamp || prior?.timestamp || this.timestamp,
+      last_timestamp: this.timestamp,
     });
     this.mutated = true;
   }
@@ -880,7 +956,7 @@ export class ConductKernel {
     observedHeads = {},
     attempt = null,
   ) {
-    await this.expireLeases();
+    await this.expireLeases(leaseId);
     const lease = await this.authorizedLease(
       leaseId,
       capabilityToken,
@@ -951,7 +1027,7 @@ export class ConductKernel {
     run.updated_at = this.timestamp;
     const session = this.state.sessions[run.executor_session_id];
     if (session) session.heartbeat_at = this.timestamp;
-    this.recordEvent("lease.heartbeat", { lease_id: leaseId, run_id: lease.run_id });
+    this.recordHeartbeatEvent({ lease_id: leaseId, run_id: lease.run_id });
     if (wasReserved) {
       this.taskEvent(run, lease, {
         kind: "task.in_progress",
@@ -1620,9 +1696,10 @@ export class ConductKernel {
     return load;
   }
 
-  async expireLeases() {
+  async expireLeases(onlyLeaseId = null) {
     const rootsToAdvance = new Set();
     for (const lease of Object.values(this.state.leases)) {
+      if (onlyLeaseId !== null && lease.lease_id !== onlyLeaseId) continue;
       if (!ACTIVE_LEASE_STATES.has(lease.state) || asDate(lease.hard_deadline) > this.now) continue;
       lease.state = "expired";
       lease.heartbeat_at = this.timestamp;
@@ -1741,11 +1818,13 @@ export class SerializedConductService {
       adoptionAfterMs,
       leaseTtlMs,
       capabilitySecret = "development-only-capability-secret",
+      steadyHeartbeatPersistence = true,
     } = {},
   ) {
     this.store = store;
     this.projectTaskEvent = projectTaskEvent;
     this.clock = clock;
+    this.steadyHeartbeatPersistence = steadyHeartbeatPersistence;
     this.options = {
       sessionTtlMs,
       adoptionAfterMs,
@@ -1758,6 +1837,14 @@ export class SerializedConductService {
   call(operation, payload = {}) {
     const execute = async () => {
       let state = await this.store.load();
+      if (!this.steadyHeartbeatPersistence
+          && typeof this.store.hasLivenessOverlays === "function"
+          && this.store.hasLivenessOverlays()) {
+        // Rollback drain: disabling the fast path and making any authenticated
+        // request folds all selected overlays into the cold manifest before an
+        // older binary can be restored.
+        await this.store.save(state);
+      }
       const options = Object.fromEntries(Object.entries(this.options).filter(([, value]) => value !== undefined));
       const now = this.clock();
       if ([
@@ -1772,13 +1859,24 @@ export class SerializedConductService {
         "request_stop",
       ].includes(operation)) {
         const preflight = new ConductKernel(state, { ...options, now });
-        await preflight.expireLeases();
+        await preflight.expireLeases(operation === "heartbeat" ? payload.lease_id : null);
         if (preflight.mutated) {
           for (const event of preflight.projectionEvents) await this.projectTaskEvent(event);
           await this.store.save(preflight.state);
           state = preflight.state;
         }
       }
+      const heartbeatLease = operation === "heartbeat" ? state.leases[payload.lease_id] : null;
+      const heartbeatRun = heartbeatLease ? state.runs[heartbeatLease.run_id] : null;
+      const steadyHeartbeat = Boolean(
+        operation === "heartbeat"
+        && !payload.attempt
+        && heartbeatLease?.state === "active"
+        && heartbeatRun?.status === "running"
+        && state.sessions?.[heartbeatRun.executor_session_id]
+        && this.steadyHeartbeatPersistence
+        && typeof this.store.saveHeartbeat === "function"
+      );
       const kernel = new ConductKernel(state, { ...options, now });
       const result = await kernel.execute(operation, payload);
       const projectionReceipts = [];
@@ -1793,7 +1891,15 @@ export class SerializedConductService {
         const stored = kernel.state.runs[result.run_id]?.projection_receipts || [];
         if (stored.length) result.projection_receipts = clone(stored);
       }
-      if (kernel.mutated) await this.store.save(kernel.state);
+      if (kernel.mutated) {
+        if (steadyHeartbeat
+            && result?.status === "active"
+            && kernel.projectionEvents.length === 0) {
+          await this.store.saveHeartbeat(kernel.state, payload.lease_id);
+        } else {
+          await this.store.save(kernel.state);
+        }
+      }
       return result;
     };
     const current = this.tail.then(execute, execute);

@@ -92,6 +92,7 @@ class DispatchLogEntry(BaseModel):
             "human-gate-reconcile",
             "fleet-debt-park",
             "pr-observed-terminal",
+            "pr-closed-reconcile",
             "routine-recovered",
             "provider-terminal",
             "stale-successor-hold",
@@ -101,7 +102,7 @@ class DispatchLogEntry(BaseModel):
     ) = None
     fleet_debt_source: Literal["dispatch-verify", "prior-chronic-log", "repeated-noop"] | None = None
     fleet_debt_count: int | None = Field(default=None, ge=1)
-    pr_observed_state: Literal["open", "merged"] | None = None
+    pr_observed_state: Literal["open", "merged", "closed"] | None = None
     pr_observed_ref: str | None = None
     routine_name: str | None = None
     routine_observed_state: Literal["down", "recovered"] | None = None
