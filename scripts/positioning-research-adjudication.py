@@ -1301,7 +1301,14 @@ def validate_live_identity(
     program: dict[str, Any],
     fetch: Callable[[list[str]], Any] = _gh_json,
 ) -> list[str]:
-    """Resolve the portfolio by immutable repository ID and compare canonical live metadata."""
+    """Resolve the portfolio by immutable ID and compare token-neutral live metadata.
+
+    Repository permissions are credential-relative.  A repo-scoped Actions
+    token can read this public cross-repository identity but cannot represent
+    the human owner's authority there, so permissions are deliberately not an
+    identity predicate.  The pre-seed guard enforces the same immutable ID,
+    canonical slug, visibility, default branch, and archive-state contract.
+    """
 
     errors: list[str] = []
     repository_identities = program.get("repository_identities")
@@ -1334,11 +1341,6 @@ def validate_live_identity(
             errors.append(f"stable repository ID resolves {key}={live.get(key)!r}, expected {expected!r}")
     if live.get("private") is not False:
         errors.append("stable portfolio repository must remain public")
-    permissions = live.get("permissions")
-    if not isinstance(permissions, dict):
-        errors.append("stable repository identity permissions must be a mapping")
-    elif permissions.get("admin") is not True:
-        errors.append("authenticated live identity receipt no longer has admin access")
     return errors
 
 

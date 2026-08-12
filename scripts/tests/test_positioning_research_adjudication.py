@@ -439,7 +439,6 @@ def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
             "private": False,
             "default_branch": "main",
             "archived": False,
-            "permissions": {"admin": True},
         }
 
     assert MODULE.validate_live_identity(bundle["program"], fetch) == []
@@ -454,18 +453,37 @@ def test_live_identity_rejects_non_mapping_transport_payloads_neutrally() -> Non
             "stable repository identity response must be a mapping"
         ]
 
-    malformed_permissions = {
+    actions_token_payload = {
         "id": MODULE.PORTFOLIO_REPOSITORY_ID,
         "full_name": MODULE.PORTFOLIO_CANONICAL_SLUG,
         "visibility": "public",
         "private": False,
         "default_branch": "main",
         "archived": False,
-        "permissions": [],
     }
-    assert MODULE.validate_live_identity(program, lambda _args: malformed_permissions) == [
-        "stable repository identity permissions must be a mapping"
-    ]
+    assert MODULE.validate_live_identity(program, lambda _args: actions_token_payload) == []
+
+
+def test_live_identity_keeps_public_immutable_metadata_fail_closed_for_actions_tokens() -> None:
+    program = _bundle()["program"]
+    moved_private = {
+        "id": MODULE.PORTFOLIO_REPOSITORY_ID,
+        "full_name": "future-owner/portfolio",
+        "visibility": "private",
+        "private": True,
+        "default_branch": "trunk",
+        "archived": True,
+        "permissions": {"admin": False},
+    }
+
+    errors = MODULE.validate_live_identity(program, lambda _args: moved_private)
+
+    assert any("full_name='future-owner/portfolio'" in error for error in errors)
+    assert any("visibility='private'" in error for error in errors)
+    assert any("default_branch='trunk'" in error for error in errors)
+    assert any("archived=True" in error for error in errors)
+    assert "stable portfolio repository must remain public" in errors
+    assert not any("admin" in error or "permissions" in error for error in errors)
 
 
 def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None:
