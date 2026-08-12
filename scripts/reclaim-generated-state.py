@@ -154,7 +154,14 @@ def is_ignored(root: Path, path: Path, *, timeout: int) -> bool:
         rel = path.relative_to(root)
     except ValueError:
         return False
-    proc = git(["check-ignore", "--quiet", "--", rel.as_posix()], root, timeout=timeout)
+    # A machine-level excludes file can be convenient for development, but it
+    # is not a repository's cleanup contract.  Reclaim only paths ignored by
+    # the repository itself (.gitignore or .git/info/exclude).
+    proc = git(
+        ["-c", "core.excludesFile=/dev/null", "check-ignore", "--quiet", "--", rel.as_posix()],
+        root,
+        timeout=timeout,
+    )
     return proc.returncode == 0
 
 

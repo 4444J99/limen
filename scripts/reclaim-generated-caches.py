@@ -56,7 +56,15 @@ def directory_size(path: Path) -> int:
 
 def cache_is_ignored(path: Path, root: Path) -> bool:
     relative = path.relative_to(root)
-    return run(["git", "check-ignore", "-q", "--", str(relative)], cwd=root).returncode == 0
+    # Global Git excludes are developer-local convenience settings, not a
+    # repository-owned authorization to delete a cache directory.
+    return (
+        run(
+            ["git", "-c", "core.excludesFile=/dev/null", "check-ignore", "-q", "--", str(relative)],
+            cwd=root,
+        ).returncode
+        == 0
+    )
 
 
 def scan(workspace: Path, *, minimum_bytes: int = 1024 * 1024) -> list[dict[str, object]]:
