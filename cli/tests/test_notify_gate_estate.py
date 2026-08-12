@@ -484,6 +484,28 @@ def test_conditionally_imported_process_alias_is_tracked_after_branch(tmp_path, 
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_process_attribute_assignment_alias_is_tracked(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\nexecute = subprocess.run\nexecute(['osascript', '-e', 'display notification \\\"x\\\"'])\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_os_popen_notification_bypass_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        'import os\nos.popen("osascript -e \'display notification \\"x\\"\'")\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_git_degradation_fallback_scans_beyond_scripts(tmp_path, check_gate):
     tools = tmp_path / "tools"
     tools.mkdir()
@@ -493,6 +515,14 @@ def test_git_degradation_fallback_scans_beyond_scripts(tmp_path, check_gate):
     )
 
     assert check_gate.direct_notification_effectors(tmp_path) == ["tools/sender.py"]
+
+
+def test_git_degradation_fallback_fails_closed_at_candidate_limit(tmp_path, check_gate, monkeypatch):
+    (tmp_path / "one.py").write_text("# one\n", encoding="utf-8")
+    (tmp_path / "two.py").write_text("# two\n", encoding="utf-8")
+    monkeypatch.setattr(check_gate, "SOURCE_FALLBACK_MAX_PATHS", 1)
+
+    assert check_gate.direct_notification_effectors(tmp_path) == [check_gate.SOURCE_SCAN_FAILURE]
 
 
 def test_clean_exact_head_reuses_source_path_scan(tmp_path, check_gate, monkeypatch):

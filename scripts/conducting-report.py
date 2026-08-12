@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import subprocess
 import sys
@@ -64,7 +65,12 @@ def _refresh_admission() -> bool:
     """Refresh keeper-owned admission through one bounded relay process."""
     path = Path(__file__).with_name("handoff-relay.py")
     try:
-        timeout = max(1.0, float(os.environ.get("LIMEN_CONDUCTING_REFRESH_TIMEOUT", ADMISSION_REFRESH_TIMEOUT_SECONDS)))
+        configured_timeout = float(
+            os.environ.get("LIMEN_CONDUCTING_REFRESH_TIMEOUT", ADMISSION_REFRESH_TIMEOUT_SECONDS)
+        )
+        timeout = (
+            max(1.0, configured_timeout) if math.isfinite(configured_timeout) else ADMISSION_REFRESH_TIMEOUT_SECONDS
+        )
     except ValueError:
         timeout = ADMISSION_REFRESH_TIMEOUT_SECONDS
     started = time.monotonic()
@@ -72,7 +78,8 @@ def _refresh_admission() -> bool:
     try:
         result = subprocess.run(
             [sys.executable, str(path)],
-            capture_output=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             check=False,
             timeout=timeout,
         )

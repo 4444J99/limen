@@ -10,6 +10,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "_notify.py"
 
@@ -141,6 +143,17 @@ def test_lock_contention_has_a_finite_withheld_outcome(tmp_path, monkeypatch):
     assert time.monotonic() - started < 0.5
 
 
+def test_lock_stream_closes_when_acquisition_setup_fails(tmp_path, monkeypatch):
+    module = _load()
+    lock = module._EventLock(tmp_path, 0.1)
+    monkeypatch.setattr(module.os, "chmod", lambda *_args: (_ for _ in ()).throw(OSError("read-only")))
+
+    with pytest.raises(OSError, match="read-only"):
+        lock.__enter__()
+
+    assert lock.stream is None
+
+
 def test_event_ledger_retention_is_bounded_by_age_and_record_count(monkeypatch):
     module = _load()
     monkeypatch.setattr(module, "EVENT_RETENTION_DAYS", 2)
@@ -157,6 +170,18 @@ def test_event_ledger_retention_is_bounded_by_age_and_record_count(monkeypatch):
     module._prune_event_state(state, "2026-08-12")
 
     assert set(state["events"]) == {"two", "three"}
+
+
+def test_event_reservation_prunes_against_today_not_replayed_day(tmp_path, monkeypatch):
+    module = _load()
+    monkeypatch.setattr(module, "_root_may_speak", lambda _root: True)
+    monkeypatch.setattr(module, "_deliver", lambda *_args: True)
+    observed = []
+    monkeypatch.setattr(module, "_prune_event_state", lambda _state, today: observed.append(today))
+
+    _event(module, tmp_path, local_day="2001-01-01")
+
+    assert observed == [module.datetime.now().astimezone().date().isoformat()]
 
 
 def test_synthetic_and_linked_worktree_roots_never_reserve_or_deliver(tmp_path, monkeypatch):

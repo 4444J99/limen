@@ -328,7 +328,17 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     try:
         normalized = LimenFile.model_validate({"portal": {"budget": raw_budget}})
     except (TypeError, ValueError):
-        normalized = LimenFile()
+        # An explicitly malformed keeper projection is not equivalent to an omitted field
+        # with a schema default. The dispatcher rejects malformed board state, so advertise
+        # zero capacity instead of inventing the model's default daily budget.
+        return {
+            "daily": None,
+            "unit": raw_budget.get("unit"),
+            "track_date": raw_track.get("date"),
+            "spent": None,
+            "remaining": 0,
+            "per_agent": {},
+        }
     budget = normalized.portal.budget.model_dump(mode="python")
     track = budget.get("track") if isinstance(budget.get("track"), dict) else {}
     caps = budget.get("per_agent") if isinstance(budget.get("per_agent"), dict) else {}
@@ -511,10 +521,6 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
     if not isinstance(value, dict):
         return None  # unknown is not the same as measured-down
 
-    down_lanes = provider_headroom.get("down_lanes")
-    if isinstance(down_lanes, (list, tuple, set)) and agent in {canonical_agent(str(lane)) for lane in down_lanes}:
-        return "provider_health"
-
     # Dispatch deliberately exempts Agy's board-derived dispatch-count proxy from hard-down
     # treatment; only a real rate-limit signal benches that lane. Keep this report aligned with
     # that exemption so a healthy Agy task is not mislabeled provider_health/capacity_blocked.
@@ -542,23 +548,8 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
         for marker in auth_markers
     ):
         return "auth_blocked"
-    if ordinary_states & {
-        "down",
-        "disabled",
-        "exhausted",
-        "low",
-        "rate_limited",
-        "unavailable",
-        "blocked",
-    }:
-        return "provider_health"
 
-    remaining = value.get("remaining")
-    if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
-        return "provider_health"
-
-    # Provider telemetry aggregates model/provider entries. Match dispatch's
-    # all-provider gate: a cooldown on one model is not a whole-lane outage.
+    outcome_states: set[str] = set()
     if value.get("provider_outcome_all_blocked") is True:
         outcome_states = {
             str(value.get(key) or "").strip().lower().replace("-", "_")
@@ -579,6 +570,28 @@ def _provider_block_reason(agent: str, provider_headroom: dict[str, Any]) -> str
             for marker in auth_markers
         ):
             return "auth_blocked"
+
+    down_lanes = provider_headroom.get("down_lanes")
+    if isinstance(down_lanes, (list, tuple, set)) and agent in {canonical_agent(str(lane)) for lane in down_lanes}:
+        return "provider_health"
+    if ordinary_states & {
+        "down",
+        "disabled",
+        "exhausted",
+        "low",
+        "rate_limited",
+        "unavailable",
+        "blocked",
+    }:
+        return "provider_health"
+
+    remaining = value.get("remaining")
+    if isinstance(remaining, (int, float)) and not isinstance(remaining, bool) and remaining <= 0:
+        return "provider_health"
+
+    # Provider telemetry aggregates model/provider entries. Match dispatch's
+    # all-provider gate: a cooldown on one model is not a whole-lane outage.
+    if value.get("provider_outcome_all_blocked") is True:
         return "provider_health"
     return None
 
@@ -763,6 +776,9 @@ def _dispatch_admission(
         agent = _effective_task_agent(task)
         if reason is None and agent in _PLAN_BUILDER_SENTINELS:
             reason = "admission_blocked"
+        provider_reason = _provider_block_reason(agent, provider_headroom)
+        if reason is None and provider_reason == "auth_blocked":
+            reason = "auth_blocked"
         if reason is None and agent in down_lanes:
             reason = "provider_health"
         if reason is None and agent not in {"", "any"} and not lane_reachability.get(agent, False):
@@ -779,7 +795,7 @@ def _dispatch_admission(
         if reason is None and governed is not None and cost > governed:
             reason = "budget_agent"
         if reason is None:
-            reason = _provider_block_reason(agent, provider_headroom)
+            reason = provider_reason
         if reason is None and not task_execution_ready(task):
             reason = "execution_requirements"
         if reason is not None:
@@ -814,6 +830,12 @@ def _dispatch_admission(
                     any_blockers["budget_agent"] += 1
                     record_reason(candidate_agent, "budget_agent")
                     continue
+                provider_reason = _provider_block_reason(candidate_agent, provider_headroom)
+                if provider_reason == "auth_blocked":
+                    any_blockers["auth_blocked"] += 1
+                    record_reason(candidate_agent, "auth_blocked")
+                    provider_health_reasons[candidate_agent] += 1
+                    continue
                 if candidate_agent in down_lanes:
                     any_blockers["provider_health"] += 1
                     record_reason(candidate_agent, "provider_health")
@@ -833,7 +855,6 @@ def _dispatch_admission(
                     any_blockers[worktree_reason] += 1
                     record_reason(candidate_agent, worktree_reason)
                     continue
-                provider_reason = _provider_block_reason(candidate_agent, provider_headroom)
                 if provider_reason is not None:
                     any_blockers[provider_reason] += 1
                     record_reason(candidate_agent, provider_reason)
@@ -974,6 +995,10 @@ def check() -> int:
         if field not in data:
             print(f"handoff-relay --check: FAIL — missing '{field}'")
             return 1
+    admission = data.get("dispatch_admission")
+    if not isinstance(admission, dict) or admission.get("keeper_available") is not True:
+        print("handoff-relay --check: FAIL — canonical keeper unavailable")
+        return 1
     provider = data.get("provider_headroom")
     try:
         provider_generated = dt.datetime.fromisoformat(str(provider["generated"]))

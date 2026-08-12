@@ -295,6 +295,8 @@ def test_refresh_admission_is_bounded_and_writes_start_finish_receipts(tmp_path,
     assert module._refresh_admission() is True
     assert calls[0][0] == [module.sys.executable, str(SCRIPT.with_name("handoff-relay.py"))]
     assert calls[0][1]["timeout"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
+    assert calls[0][1]["stdout"] is module.subprocess.DEVNULL
+    assert calls[0][1]["stderr"] is module.subprocess.DEVNULL
     receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
     assert [receipt["event"] for receipt in receipts] == ["start", "finish"]
     assert receipts[-1]["outcome"] == "ok"
@@ -313,6 +315,21 @@ def test_refresh_admission_timeout_is_a_finite_failed_receipt(tmp_path, monkeypa
     assert module._refresh_admission() is False
     receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
     assert receipts[-1]["outcome"] == "timeout"
+
+
+def test_refresh_admission_rejects_non_finite_timeout(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    module.ADMISSION_REFRESH_RECEIPT = tmp_path / "logs" / "refresh.jsonl"
+    monkeypatch.setenv("LIMEN_CONDUCTING_REFRESH_TIMEOUT", "nan")
+    calls = []
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda _args, **kwargs: calls.append(kwargs) or SimpleNamespace(returncode=0),
+    )
+
+    assert module._refresh_admission() is True
+    assert calls[0]["timeout"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
 
 
 def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):

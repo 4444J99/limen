@@ -124,18 +124,21 @@ class _EventLock:
     def __enter__(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.stream = self.path.open("a+")
-        os.chmod(self.path, 0o600)
-        deadline = time.monotonic() + self.timeout
-        while True:
-            try:
-                fcntl.flock(self.stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                return self
-            except BlockingIOError:
-                if time.monotonic() >= deadline:
-                    self.stream.close()
-                    self.stream = None
-                    raise TimeoutError(f"notification event lock timed out after {self.timeout:.3f}s")
-                time.sleep(min(0.02, max(0.001, deadline - time.monotonic())))
+        try:
+            os.chmod(self.path, 0o600)
+            deadline = time.monotonic() + self.timeout
+            while True:
+                try:
+                    fcntl.flock(self.stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    return self
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError(f"notification event lock timed out after {self.timeout:.3f}s") from None
+                    time.sleep(min(0.02, max(0.001, deadline - time.monotonic())))
+        except BaseException:
+            self.stream.close()
+            self.stream = None
+            raise
 
     def __exit__(self, _exc_type, _exc, _traceback) -> None:
         if self.stream is None:
@@ -398,11 +401,13 @@ def notify_event(
             reason="root is not the live organism",
         )
 
-    now = datetime.now().astimezone().isoformat(timespec="seconds")
+    local_now = datetime.now().astimezone()
+    now = local_now.isoformat(timespec="seconds")
+    today = local_now.date().isoformat()
     try:
         with _EventLock(root, lock_timeout):
             state = _load_event_state(root)
-            _prune_event_state(state, day)
+            _prune_event_state(state, today)
             events = state["events"]
             previous = events.get(event_key)
             if isinstance(previous, dict) and not force:

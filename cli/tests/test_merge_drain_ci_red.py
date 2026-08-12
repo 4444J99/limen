@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "merge-drain.py"
@@ -88,3 +89,38 @@ def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tm
 
     assert module._save_ci_red_ledger({"organvm/repo#7": {"head": "a" * 40}}) is False
     assert "ci-red ledger persistence failed" in capsys.readouterr().err
+
+
+def test_unreserved_notification_keeps_ci_red_onset_retryable(tmp_path: Path) -> None:
+    module = _load(tmp_path)
+    red = [("organvm/repo", 7, "CI-RED", "a" * 40, ("pr-gate",))]
+
+    withheld = module.reconcile_ci_red_subjects(
+        red,
+        [("organvm/repo", 7)],
+        enumeration_complete=False,
+        reserve_notification=lambda _subject: False,
+    )
+    retried = module.reconcile_ci_red_subjects(
+        red,
+        [("organvm/repo", 7)],
+        enumeration_complete=False,
+        reserve_notification=lambda _subject: True,
+    )
+
+    assert withheld == []
+    assert [row["head"] for row in retried] == ["a" * 40]
+    assert _subjects(module)["organvm/repo#7"]["head"] == "a" * 40
+
+
+def test_ci_red_notification_uses_repo_pr_and_exact_head_key(monkeypatch, tmp_path: Path) -> None:
+    module = _load(tmp_path)
+    calls = []
+    monkeypatch.setattr(
+        module._notify,
+        "notify_event",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or SimpleNamespace(status="emitted", reserved=True),
+    )
+
+    assert module._reserve_ci_red_notification({"identity": "organvm/repo#7", "head": "a" * 40, "checks": ["pr-gate"]})
+    assert calls[0][1]["stable_id"] == f"organvm/repo#7@{'a' * 40}"

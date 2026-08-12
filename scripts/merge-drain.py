@@ -27,6 +27,7 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
@@ -173,6 +174,7 @@ def reconcile_ci_red_subjects(
     *,
     enumeration_complete: bool,
     persist: bool = True,
+    reserve_notification: Callable[[dict[str, object]], bool] | None = None,
 ) -> list[dict[str, object]]:
     """Track exact red heads; rotating-window omission is never recovery evidence."""
     subjects = _load_ci_red_ledger()
@@ -187,7 +189,12 @@ def reconcile_ci_red_subjects(
             previous = subjects.get(identity)
             current = {"head": head, "checks": checks}
             if not isinstance(previous, dict) or previous.get("head") != head:
-                newly_red.append({"identity": identity, **current})
+                subject = {"identity": identity, **current}
+                if reserve_notification is not None and not reserve_notification(subject):
+                    # Do not consume the source onset until the event ledger owns it.
+                    # Keeping the previous head (or absence) makes the next beat retry.
+                    continue
+                newly_red.append(subject)
             subjects[identity] = current
         elif status in green_statuses:
             subjects.pop(identity, None)
@@ -199,6 +206,24 @@ def reconcile_ci_red_subjects(
     if persist:
         _save_ci_red_ledger(subjects)
     return newly_red
+
+
+def _reserve_ci_red_notification(subject: dict[str, object]) -> bool:
+    identity = str(subject["identity"])
+    head = str(subject["head"])
+    checks_value = subject.get("checks")
+    checks_list = list(checks_value) if isinstance(checks_value, (list, tuple)) else []
+    checks = ", ".join(str(name) for name in checks_list) or "required check names unavailable"
+    result = _notify.notify_event(
+        ROOT,
+        source="merge-drain",
+        event="ci-red",
+        stable_id=f"{identity}@{head}",
+        payload={"checks": checks_list, "head": head, "identity": identity},
+        message=f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
+        title="LIMEN merge drain",
+    )
+    return result.reserved or result.status == "duplicate"
 
 
 def assess(rn):
@@ -414,25 +439,13 @@ def main():
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
     print(summary)
-    newly_red = reconcile_ci_red_subjects(
+    reconcile_ci_red_subjects(
         rows,
         allprs,
         enumeration_complete=enumeration_complete,
         persist=not a.dry_run,
+        reserve_notification=_reserve_ci_red_notification if not a.dry_run else None,
     )
-    for subject in newly_red if not a.dry_run else []:
-        identity = str(subject["identity"])
-        head = str(subject["head"])
-        checks = ", ".join(str(name) for name in subject["checks"]) or "required check names unavailable"
-        _notify.notify_event(
-            ROOT,
-            source="merge-drain",
-            event="ci-red",
-            stable_id=f"{identity}@{head}",
-            payload={"checks": list(subject["checks"]), "head": head, "identity": identity},
-            message=f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
-            title="LIMEN merge drain",
-        )
     try:
         with open(LOG, "a") as f:
             effects = merged + [f"QUEUED:{item}" for item in queued]

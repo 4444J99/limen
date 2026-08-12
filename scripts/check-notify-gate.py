@@ -173,9 +173,7 @@ def _has_delivery_call(node: ast.Call) -> bool:
     if isinstance(node.func, ast.Attribute) and node.func.attr in NETWORK_DELIVERY_FUNCS:
         return True
     literals = [
-        child.value
-        for child in ast.walk(node)
-        if isinstance(child, ast.Constant) and isinstance(child.value, str)
+        child.value for child in ast.walk(node) if isinstance(child, ast.Constant) and isinstance(child.value, str)
     ]
     return any("osascript" in value.lower() for value in literals)
 
@@ -255,10 +253,7 @@ def _walk_delivery_paths(
                     after_guard or _condition_guarantees_gate(statement.test),
                 )
                 inspect_block(statement.orelse, after_guard)
-                if (
-                    _condition_returns_when_gate_false(statement.test)
-                    and _body_exits(statement.body)
-                ):
+                if _condition_returns_when_gate_false(statement.test) and _body_exits(statement.body):
                     after_guard = True
                 continue
             inspect_expr(statement, after_guard)
@@ -285,9 +280,7 @@ def gate_state(notifier: Path) -> tuple[bool, str]:
         return False, f"unparseable ({exc})"
 
     functions = {
-        node.name: node
-        for node in ast.walk(tree)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        node.name: node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
     }
     if GATE_FUNC not in functions:
         return False, f"no {GATE_FUNC}() — public notification routes are ungated"
@@ -316,7 +309,7 @@ _DISPLAY_RE = re.compile(
     r"\bosascript\b[\s\S]{0,8192}?\bdisplay\s+notification\b",
     re.IGNORECASE,
 )
-_PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output", "system"})
+_PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output", "system", "popen"})
 # Match both argv elements (such as ["osascript", ...]) and shell command strings
 # (such as os.system("osascript -e ...")), without treating prose as an executable token.
 _OSASCRIPT_COMMAND_RE = re.compile(
@@ -325,6 +318,8 @@ _OSASCRIPT_COMMAND_RE = re.compile(
 )
 _SOURCE_PATH_CACHE: dict[str, tuple[str, ...]] = {}
 SOURCE_SCAN_FAILURE = "<notification-source-scan-unavailable>"
+SOURCE_FALLBACK_MAX_PATHS = 10_000
+SOURCE_FALLBACK_TIMEOUT_SECONDS = 30.0
 
 
 def _clean_exact_head(root: Path) -> str | None:
@@ -376,7 +371,9 @@ def _fallback_source_paths(root: Path) -> list[Path]:
     except (OSError, subprocess.SubprocessError):
         tracked = None
     if tracked is not None and tracked.returncode == 0:
-        candidates = [root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw]
+        candidates = [
+            root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw
+        ]
         selected: list[Path] = []
         for candidate in candidates:
             try:
@@ -388,8 +385,16 @@ def _fallback_source_paths(root: Path) -> list[Path]:
 
     # Synthetic roots in focused tests are intentionally not git repositories. Scan the
     # whole supplied root; a scripts-only fallback would hide a direct effector elsewhere.
+    # The fallback still has a finite budget: an incomplete scan is unsafe evidence and
+    # therefore becomes SOURCE_SCAN_FAILURE instead of silently clearing the tree.
+    deadline = time.monotonic() + SOURCE_FALLBACK_TIMEOUT_SECONDS
+    candidates: list[Path] = []
     try:
-        return list(root.rglob("*"))
+        for candidate in root.rglob("*"):
+            if len(candidates) >= SOURCE_FALLBACK_MAX_PATHS or time.monotonic() >= deadline:
+                raise RuntimeError("notification source scan exceeded fallback budget")
+            candidates.append(candidate)
+        return candidates
     except OSError as exc:
         raise RuntimeError(f"notification source scan unavailable: {exc}") from exc
 
@@ -430,9 +435,7 @@ def _source_paths(root: Path) -> list[Path]:
     selected = [
         candidate
         for candidate in candidates
-        if candidate.is_file()
-        and candidate.suffix in DIRECT_SUFFIXES
-        and candidate != root / NOTIFIER_REL
+        if candidate.is_file() and candidate.suffix in DIRECT_SUFFIXES and candidate != root / NOTIFIER_REL
     ]
     if cache_key is not None:
         try:
@@ -507,6 +510,23 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         else:
             self.bindings[target.id] = list(values)
 
+    def _is_process_callable(self, node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in self.process_aliases
+        return isinstance(node, ast.Attribute) and node.attr in _PROCESS_CALLS
+
+    def _assign_process_alias(self, target: ast.AST, is_alias: bool) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                self._assign_process_alias(element, False)
+            return
+        if not isinstance(target, ast.Name):
+            return
+        if is_alias:
+            self.process_aliases.add(target.id)
+        elif target.id not in _PROCESS_CALLS:
+            self.process_aliases.discard(target.id)
+
     def _visit_function(
         self,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -553,8 +573,10 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
         values = _static_argv(node.value, self.bindings)
+        process_alias = self._is_process_callable(node.value)
         for target in node.targets:
             self._assign(target, values)
+            self._assign_process_alias(target, process_alias)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value is not None:
@@ -563,14 +585,20 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             node.target,
             _static_argv(node.value, self.bindings) if node.value is not None else None,
         )
+        self._assign_process_alias(
+            node.target,
+            self._is_process_callable(node.value) if node.value is not None else False,
+        )
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         self.visit(node.value)
         self._assign(node.target, None)
+        self._assign_process_alias(node.target, False)
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
         self._assign(node.target, _static_argv(node.value, self.bindings))
+        self._assign_process_alias(node.target, self._is_process_callable(node.value))
 
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
@@ -586,11 +614,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         possible = [body.bindings, alternate.bindings if node.orelse else before]
         merged: dict[str, list[str]] = {}
         for name in set().union(*(state.keys() for state in possible)):
-            values = {
-                value
-                for state in possible
-                for value in state.get(name, [])
-            }
+            values = {value for state in possible for value in state.get(name, [])}
             if values:
                 merged[name] = sorted(values)
         self.bindings = merged
@@ -620,8 +644,10 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     visit_While = _visit_loop
 
     def visit_Call(self, node: ast.Call) -> None:
-        call_name = node.func.id if isinstance(node.func, ast.Name) else (
-            node.func.attr if isinstance(node.func, ast.Attribute) else ""
+        call_name = (
+            node.func.id
+            if isinstance(node.func, ast.Name)
+            else (node.func.attr if isinstance(node.func, ast.Attribute) else "")
         )
         if call_name in self.process_aliases:
             values: list[str] = []
@@ -645,6 +671,7 @@ def _python_bypasses(path: Path) -> bool:
     visitor = _PythonBypassVisitor()
     visitor.visit(tree)
     return visitor.found
+
 
 def _shell_bypasses(path: Path) -> bool:
     try:
@@ -793,11 +820,7 @@ def main(argv: list[str] | None = None) -> int:
         # A scheduled executor is never recorded. The baseline means "known, draining"; writing
         # the launchd-run copy into it would convert a live hazard into an accepted one with a
         # single flag — precisely the shape of guard this lineage keeps learning not to build.
-        recordable = {
-            r["root"]
-            for r in ungated
-            if r["executor"] != "scheduled" and not r["direct_effectors"]
-        }
+        recordable = {r["root"] for r in ungated if r["executor"] != "scheduled" and not r["direct_effectors"]}
         write_baseline(recordable)
         print(f"check-notify-gate: baseline updated — {len(recordable)} dormant ungated copy(ies) recorded")
         return 0
@@ -809,9 +832,7 @@ def main(argv: list[str] | None = None) -> int:
     # gate came off somewhere.
     scheduled_ungated = [r for r in ungated if r["executor"] == "scheduled"]
     regressions = [
-        r
-        for r in ungated
-        if r["executor"] != "scheduled" and (r["direct_effectors"] or r["root"] not in baseline)
+        r for r in ungated if r["executor"] != "scheduled" and (r["direct_effectors"] or r["root"] not in baseline)
     ]
 
     if args.json:

@@ -10,6 +10,7 @@ from the old bare-repo format, and re-runs must be a fixed point (no events).
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "notify-events.py"
 
@@ -31,7 +32,11 @@ def _setup(tmp_path, monkeypatch, products, state=None):
     monkeypatch.setattr(mod, "VIEW", view)
     monkeypatch.setattr(mod, "STATE", state_path)
     emitted = []
-    monkeypatch.setattr(mod, "_emit", lambda title, msg: emitted.append((title, msg)))
+    monkeypatch.setattr(
+        mod,
+        "_emit",
+        lambda title, msg: emitted.append((title, msg)) or SimpleNamespace(status="emitted", reserved=True),
+    )
     return mod, emitted, state_path
 
 
@@ -78,3 +83,29 @@ def test_first_run_with_no_state_is_quiet(tmp_path, monkeypatch):
     mod, emitted, _ = _setup(tmp_path, monkeypatch, PRODUCTS, state=None)
     assert mod.main() == 0
     assert emitted == []
+
+
+def test_unreserved_event_does_not_advance_source_state(tmp_path, monkeypatch):
+    state = {"stages": {f"organvm/limen::{p['product']}": "building" for p in PRODUCTS}}
+    mod, _, state_path = _setup(tmp_path, monkeypatch, PRODUCTS, state=state)
+    monkeypatch.setattr(
+        mod,
+        "_emit",
+        lambda *_args: SimpleNamespace(status="withheld", reserved=False),
+    )
+
+    assert mod.main() == 0
+    assert json.loads(state_path.read_text(encoding="utf-8")) == state
+
+
+def test_duplicate_event_allows_source_state_to_advance(tmp_path, monkeypatch):
+    state = {"stages": {f"organvm/limen::{p['product']}": "building" for p in PRODUCTS}}
+    mod, _, state_path = _setup(tmp_path, monkeypatch, PRODUCTS, state=state)
+    monkeypatch.setattr(
+        mod,
+        "_emit",
+        lambda *_args: SimpleNamespace(status="duplicate", reserved=False),
+    )
+
+    assert mod.main() == 0
+    assert json.loads(state_path.read_text(encoding="utf-8"))["stages"]["organvm/limen::MONETA"] == "deploy-ready"

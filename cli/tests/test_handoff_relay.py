@@ -377,6 +377,29 @@ def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
     assert admission["provider_health_reason_counts"] == {"opencode": 1}
 
 
+def test_auth_cooldown_precedes_generic_down_lane_classification():
+    mod = _load()
+    task = _task("OPENCODE-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "down_lanes": ["opencode"],
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_all_blocked": True,
+                "provider_last_terminal_failure_class": "auth_failure",
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
 def test_dispatch_admission_projects_provider_map_auth_cooldown():
     mod = _load()
     task = _task("HOSTED-LOGIN", agent="opencode")
@@ -607,6 +630,18 @@ def test_check_requires_fresh_truthful_schema(monkeypatch, tmp_path, capsys):
     mod.HANDOFF.write_text(json.dumps(payload), encoding="utf-8")
     assert mod.check() == 1
     assert "missing 'board_budget'" in capsys.readouterr().out
+
+
+def test_check_rejects_keeper_unavailable_handoff(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([_task("READY")]))
+    assert mod.write() == 0
+    payload = json.loads(mod.HANDOFF.read_text(encoding="utf-8"))
+    payload["dispatch_admission"]["keeper_available"] = False
+    mod.HANDOFF.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert mod.check() == 1
+    assert "canonical keeper unavailable" in capsys.readouterr().out
 
 
 def test_check_rejects_missing_or_stale_provider_truth(monkeypatch, tmp_path, capsys):
@@ -852,6 +887,30 @@ def test_board_budget_applies_schema_defaults_and_recomputes_missing_spent(monke
     assert budget["unit"] == "runs"
     assert budget["spent"] == 2
     assert budget["remaining"] == 98
+
+
+def test_board_budget_fails_closed_on_invalid_daily_value():
+    mod = _load()
+    budget = mod._board_budget(
+        {
+            "portal": {
+                "budget": {
+                    "daily": "not-an-integer",
+                    "unit": "runs",
+                    "track": {"date": "2026-07-12", "spent": 1},
+                }
+            }
+        }
+    )
+
+    assert budget == {
+        "daily": None,
+        "unit": "runs",
+        "track_date": "2026-07-12",
+        "spent": None,
+        "remaining": 0,
+        "per_agent": {},
+    }
 
 
 def test_admission_attributes_global_budget_block_to_candidate_lanes(monkeypatch, tmp_path):
