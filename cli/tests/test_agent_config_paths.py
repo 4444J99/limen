@@ -132,3 +132,36 @@ def test_mcp_vendor_keys_exclude_the_settings_document():
     assert "claude-settings" in ACP.VENDORS
     assert "claude-settings" not in ACP.MCP_VENDOR_KEYS
     assert set(ACP.MCP_VENDOR_KEYS) <= set(ACP.VENDORS)
+
+
+def test_update_marker_follows_the_config_dir():
+    """The native updater's result marker is a sibling of settings.json under the same root.
+
+    Measured 2026-08-12: ``heal-claude-update-marker.sh`` hardcoded ``$HOME/.claude/`` and so spent
+    19 days clearing a file abandoned on 2026-07-24, while the live marker — carrying exactly the
+    benign signature that healer exists to clear — went untouched and ``claude doctor`` kept
+    reporting ``Last update attempt: failed (install_failed)``.
+    """
+    assert ACP.active_config_path("claude-update-marker", RELOCATED) == Path(
+        f"{RUNTIME}/claude/.last-update-result.json"
+    )
+    assert ACP.active_config_path("claude-update-marker", BARE) == Path(f"{HOME}/.claude/.last-update-result.json")
+    assert "claude-update-marker" not in ACP.MCP_VENDOR_KEYS
+
+
+def test_update_marker_healer_derives_its_path():
+    """Guard against re-hardcoding the marker path in the healer.
+
+    A unit test on the resolver alone would stay green while the shell went back to composing
+    ``$HOME/.claude/`` by hand — which is the form the defect actually took. Assert the shell
+    consumes the resolver and carries no literal marker path of its own.
+    """
+    shell = (ROOT / "scripts/heal-claude-update-marker.sh").read_text(encoding="utf-8")
+
+    assert "agent_config_paths.py" in shell
+    for hardcoded in (
+        '"$HOME/.claude/.last-update-result.json"',
+        '"${HOME}/.claude/.last-update-result.json"',
+        '"${HOME:-/Users/4jp}/.claude/.last-update-result.json"',
+    ):
+        assert hardcoded not in shell, f"{hardcoded} is hardcoded; derive it instead"
