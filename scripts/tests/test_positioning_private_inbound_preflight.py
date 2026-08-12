@@ -24,17 +24,24 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         self.assertEqual([], MODULE.validate_contract(self.contract))
         self.assertEqual([], MODULE.validate_fixtures(self.fixtures, self.contract))
 
-    def test_live_capture_fails_closed_without_c06_receipt_and_selection(self) -> None:
+    def test_live_capture_fails_closed_on_w07_reader_evidence_first(self) -> None:
         ready, reason = MODULE.live_gate(self.contract)
         self.assertFalse(ready)
-        self.assertIn("predicate receipt is absent", reason)
+        self.assertEqual(
+            "PSP-P03-W07 five-reader predicate receipt is absent; PSP-P04 remains dependency-gated",
+            reason,
+        )
 
     def test_c06_preflight_receipts_do_not_promote_the_formal_gate(self) -> None:
         upstream = self.contract["formal_dependency_gate"]["upstream_preflight"]
         self.assertEqual("PREPARED", upstream["status"])
         self.assertEqual(
-            "7283219f98053aabfede5c41467c7cc1010165c3",
+            "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
             upstream["portfolio_draft"]["exact_head"],
+        )
+        self.assertEqual(
+            "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+            upstream["limen_relay"]["exact_head"],
         )
         self.assertEqual(3, upstream["visual_selection"]["grounded_direction_count"])
         self.assertEqual(
@@ -46,8 +53,54 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         self.assertFalse(upstream["visual_selection"]["deployment_authorized"])
         self.assertEqual(11, upstream["link_health"]["dead_legacy_link_count"])
         self.assertEqual(
-            "open", self.contract["formal_dependency_gate"]["current_state"]
+            "open_prepared_only",
+            self.contract["formal_dependency_gate"]["phase_states"]["PSP-P07"],
         )
+
+    def test_commercial_upstream_receipts_and_reader_gate_are_exact(self) -> None:
+        commercial = self.contract["formal_dependency_gate"]["commercial_upstream"]
+        p03 = commercial["PSP-P03"]
+        self.assertEqual("closed", commercial["PSP-P02"]["state"])
+        self.assertEqual(
+            "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+            p03["accepted_w01_w06_head"],
+        )
+        self.assertEqual(
+            "c7c932205faa405e291f8030235a73cedeaa219e",
+            p03["current_preflight_head"],
+        )
+        self.assertEqual([f"PSP-P03-W0{index}" for index in range(1, 7)], p03["closed_work_ids"])
+        self.assertEqual(
+            "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820",
+            p03["w06_receipt"]["url"],
+        )
+        self.assertEqual(
+            "260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617",
+            p03["w06_receipt"]["sha256"],
+        )
+        self.assertEqual(5, p03["w07"]["required_reader_count"])
+        self.assertFalse(p03["w07"]["synthetic_or_model_evidence_allowed"])
+
+    def test_live_gate_order_is_w07_then_p04_then_p07_then_surface_then_leaf(self) -> None:
+        changed = deepcopy(self.contract)
+        changed["formal_dependency_gate"]["commercial_upstream"]["PSP-P03"]["w07"][
+            "state"
+        ] = "closed_with_predicate_receipt"
+        self.assertEqual("PSP-P04 predicate receipt is absent", MODULE.live_gate(changed)[1])
+        changed["formal_dependency_gate"]["phase_states"]["PSP-P04"] = (
+            "closed_with_predicate_receipt"
+        )
+        self.assertEqual("PSP-P07 predicate receipt is absent", MODULE.live_gate(changed)[1])
+        changed["formal_dependency_gate"]["phase_states"]["PSP-P07"] = (
+            "closed_with_predicate_receipt"
+        )
+        self.assertEqual(
+            "no approved C06 capture surface is selected", MODULE.live_gate(changed)[1]
+        )
+        changed["formal_dependency_gate"]["selected_capture_surface"] = "approved-surface"
+        self.assertEqual("separate P08 leaf authority is absent", MODULE.live_gate(changed)[1])
+        changed["formal_dependency_gate"]["separate_leaf_authority"] = "leased"
+        self.assertTrue(MODULE.live_gate(changed)[0])
 
     def test_leaf_model_assignments_are_pinned_to_the_live_registry(self) -> None:
         self.assertEqual(
@@ -59,6 +112,10 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         self.assertIn(
             "PSP-P08-W07 must remain assigned to gpt-5.6-sol/xhigh",
             MODULE.validate_contract(changed),
+        )
+        self.assertEqual(
+            ["PSP-P04-W04", "PSP-P08-W01"],
+            self.contract["formal_dependency_gate"]["leaf_dependencies"]["PSP-P08-W02"],
         )
 
     def test_tagged_mail_and_form_adapters_preserve_provenance(self) -> None:

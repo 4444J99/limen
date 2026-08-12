@@ -35,19 +35,75 @@
   },
   "formal_dependency_gate": {
     "required_chunk": "PSP-C06",
-    "required_phase": "PSP-P07",
-    "current_state": "open",
+    "required_phases": [
+      "PSP-P04",
+      "PSP-P07"
+    ],
+    "phase_states": {
+      "PSP-P03": "open_W07_five_reader_gate",
+      "PSP-P04": "open_blocked_on_PSP-P03",
+      "PSP-P07": "open_prepared_only"
+    },
+    "leaf_dependencies": {
+      "PSP-P08-W01": ["PSP-P07-W09"],
+      "PSP-P08-W02": ["PSP-P04-W04", "PSP-P08-W01"],
+      "PSP-P08-W03": ["PSP-P08-W02"],
+      "PSP-P08-W04": ["PSP-P08-W03", "PSP-P04-W04"],
+      "PSP-P08-W05": ["PSP-P08-W04", "PSP-P04-W04"],
+      "PSP-P08-W06": ["PSP-P08-W03", "PSP-P08-W04"],
+      "PSP-P08-W07": [
+        "PSP-P08-W01",
+        "PSP-P08-W02",
+        "PSP-P08-W03",
+        "PSP-P08-W04",
+        "PSP-P08-W05",
+        "PSP-P08-W06"
+      ]
+    },
+    "commercial_upstream": {
+      "PSP-P02": {
+        "state": "closed"
+      },
+      "PSP-P03": {
+        "state": "open",
+        "accepted_w01_w06_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+        "current_preflight_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+        "closed_work_ids": [
+          "PSP-P03-W01",
+          "PSP-P03-W02",
+          "PSP-P03-W03",
+          "PSP-P03-W04",
+          "PSP-P03-W05",
+          "PSP-P03-W06"
+        ],
+        "w06_receipt": {
+          "url": "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820",
+          "sha256": "260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617"
+        },
+        "w07": {
+          "state": "open",
+          "issue": "https://github.com/organvm/limen/issues/2188",
+          "required_reader_count": 5,
+          "evidence_requirements": ["genuine", "independent", "target_like"],
+          "synthetic_or_model_evidence_allowed": false
+        }
+      },
+      "PSP-P04": {
+        "state": "open_blocked_on_PSP-P03"
+      }
+    },
     "selected_capture_surface": null,
+    "separate_leaf_authority": null,
     "live_capture_activation": "forbidden_until_predicate_receipt",
     "upstream_preflight": {
       "status": "PREPARED",
       "portfolio_draft": {
         "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/221",
-        "exact_head": "7283219f98053aabfede5c41467c7cc1010165c3"
+        "exact_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea"
       },
       "limen_relay": {
         "url": "https://github.com/organvm/limen/pull/2317",
-        "exact_head": "f5c5a03749a3ec44cf7eab278735b07f841bf60a"
+        "exact_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668"
       },
       "visual_selection": {
         "grounded_direction_count": 3,

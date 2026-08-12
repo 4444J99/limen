@@ -2,20 +2,29 @@
 
 Status: `PREPARED/PREFLIGHT`
 
-Formal predecessor: `PSP-C06` / `PSP-P07` (open; no capture surface selected)
+Chunk predecessor: `PSP-C06`. Formal P08 phase dependencies: `PSP-P04` and `PSP-P07`; both remain
+open, and no capture surface is selected.
 
 Scope: `PSP-P08-W01` through `PSP-P08-W07` contract preparation only
 
 The current upstream C06 preflight receipts are portfolio draft
 [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at
-`7283219f98053aabfede5c41467c7cc1010165c3` and Limen relay
+`6cb7f291ef758d26d136620398c6e9c09f74d0ea` and Limen relay
 [PR #2317](https://github.com/organvm/limen/pull/2317) at
-`f5c5a03749a3ec44cf7eab278735b07f841bf60a`. The portfolio head durably tracks the
+`b3c8dcb8ee461fad7be971efc0fc60ca27726668`. The portfolio head durably tracks the
 manifest and exactly three source-grounded mockup PNGs; all three remain explicitly
 unselected. Both receipts are `PREPARED/PREFLIGHT`, not C06 closure: operator selection
 is still required, no visual implementation or deployment is authorized, 11 legacy
 `organvm.github.io/portfolio` links remain dead, and the canonical
 `organvm-vii-kerygma/portfolio` paths resolve.
+
+P02 is closed. C03 W01-W06 are accepted at
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; the current C03 preflight head
+`c7c932205faa405e291f8030235a73cedeaa219e` only adds the fail-closed W07 intake package. W06 is
+bound to [its marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820)
+and SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
+W07/#2188 remains open for five genuine independent target-like reader records; synthetic and model
+responses cannot satisfy it. P04 therefore remains dependency-gated on P03.
 
 This package prepares the reversible, privacy-sensitive interior of the inbound funnel without
 choosing, wiring, or publishing a public capture surface. It consumes two capture-neutral envelope
@@ -53,7 +62,7 @@ draft bodies, and ledger rows never enter its public projection.
 | `PSP-P08-W06` · `gpt-5.6-sol/xhigh` | owner-partitioned in-memory ledger contract and aggregate projection | no real ledger owner or private record is committed here |
 | `PSP-P08-W07` · `gpt-5.6-sol/xhigh` | client/recruiter plus operator/spam/ambiguous synthetic traversal | synthetic proof is not a leaf or phase receipt |
 
-These are the exact live-registry assignments observed on 2026-08-10. They are recorded for later
+These are the exact live-registry assignments reconciled on 2026-08-12. They are recorded for later
 leaf dispatch; this conductor preflight does not impersonate those separately leased executions.
 
 ## Integration contract
@@ -71,10 +80,9 @@ send remains a separate human-gated capability and is not granted by capture act
 
 The later repository owners remain those in `program.yaml`: Limen for tags and scoring,
 `organvm/universal-mail--automation` for mail normalization and drafts, and
-`organvm-iii-ergon/collaboration-operations-platform` for the private opportunity ledger. W02's
-manifest target still says `organvm/portfolio`, while the verified C06 receipt names
-`organvm-vii-kerygma/portfolio` as canonical; the later W02 lease must reconcile that registry owner
-before mutation. This preflight deliberately creates no shared generated index and writes no
+`organvm-iii-ergon/collaboration-operations-platform` for the private opportunity ledger. The live
+registry now correctly names `organvm-vii-kerygma/portfolio` for W02. This preflight deliberately
+creates no shared generated index and writes no
 cross-repository state.
 
 ## Verification
@@ -85,7 +93,8 @@ python3 scripts/positioning-private-inbound-preflight.py --mode traverse --json
 python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'
 ```
 
-`--mode live-gate` is expected to exit `2` while C06/P07 is open and no capture surface is selected.
+`--mode live-gate` is expected to exit `2` first on W07's five-reader receipt, then on P04, P07,
+the selected capture surface, and separate leaf authority in that order.
 That result is the intended fail-closed preflight behavior, not a verification failure.
 
 No PSP leaf or phase may close from this package. Its purpose is to make the later dependency-bound

@@ -16,7 +16,7 @@ records. Drafting may prepare a response, but it does not acquire send authority
 
 | Threat | Failure mode | Preflight control | Integration proof required later |
 |---|---|---|---|
-| Premature surface activation | A form or address becomes public before C06 is approved | selected surface is `null`; live gate requires C06/P07 predicate receipt | live URL and rollback receipt under W01/W02 authority |
+| Premature surface activation | A form or address becomes public before the commercial and public-surface prerequisites close | selected surface is `null`; live gate requires genuine W07 evidence, P04/P07 predicate receipts, a selected C06 surface, and separate leaf authority | live URL and rollback receipt under W01/W02 authority |
 | Sensitive overcollection | Intake accepts credentials, identity, financial, medical, or unrelated fields | strict minimal schema and recursive denylist | rendered form inspection plus negative validation tests |
 | Provenance spoofing or loss | A lead is routed without trustworthy surface/proof/audience context | both adapters require all three nonempty tags | adapter tests against the selected capture implementation |
 | Cross-owner leakage | One client or operating owner can read another owner’s record | ledger keyspace starts with `owner_partition`; aggregate projection drops rows | storage-level partition and authorization tests in the private owner repository |
@@ -32,7 +32,9 @@ records. Drafting may prepare a response, but it does not acquire send authority
 
 ## Fail-closed decisions
 
-- No C06/P07 predicate receipt: no live capture integration.
+- No genuine five-reader W07 receipt: no P03/P04 progression and no live capture integration.
+- Synthetic, model, author, or implementation-agent responses never satisfy the W07 gate.
+- No P04 or P07 predicate receipt: no live capture integration.
 - No selected capture surface: no form or mail adapter wiring.
 - Missing consent, source tags, owner partition, or minimal required fields: reject capture.
 - Any denied sensitive field: reject capture without echoing its value.

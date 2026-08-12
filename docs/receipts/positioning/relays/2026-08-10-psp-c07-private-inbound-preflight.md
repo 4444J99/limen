@@ -2,6 +2,7 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
+last_reconciled: 2026-08-12
 from: codex desktop direct-session preflight
 to: next healthy Codex session assigned from the live PSP registry
 scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/8f85/limen
@@ -28,8 +29,12 @@ compression_level: medium
 | Item | Live state |
 |---|---|
 | C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
+| P02 | closed with its accepted phase receipt |
+| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; current preflight `c7c932205faa405e291f8030235a73cedeaa219e` adds only the fail-closed W07 intake package |
+| W06 receipt | [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
+| W07 / P04 | W07 #2188 remains open for five genuine independent target-like readers; synthetic/model responses are forbidden; P04 is open and blocked on P03 |
 | Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
-| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `7283219f98053aabfede5c41467c7cc1010165c3`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `f5c5a03749a3ec44cf7eab278735b07f841bf60a` |
+| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `6cb7f291ef758d26d136620398c6e9c09f74d0ea`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `b3c8dcb8ee461fad7be971efc0fc60ca27726668` |
 | C06 durable visual artifacts | the portfolio head tracks the manifest and exactly three source-grounded PNG mockups; all remain explicitly unselected |
 | C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
 | Initial private-inbound implementation commit | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` |
@@ -96,17 +101,19 @@ The last row is the intended dependency valve. It is not evidence that C07 is re
 
 ## Next actions
 
-1. Preserve the upstream operator gate over exactly three grounded visual directions. No C06 visual
+1. Collect and validate five genuine W07 reader responses; then close P03 and P04 only through their
+   predicate-backed receipt rails. Synthetic/model responses cannot substitute.
+2. Preserve the upstream operator gate over exactly three grounded visual directions. No C06 visual
    implementation or deployment proceeds before the operator selection receipt and separate effect
    authority; retain the 11-dead-legacy-link finding until repaired and reverified.
-2. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
+3. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
    the selected capture surface is explicit.
-3. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
+4. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
    seed it and obtain a fresh broker lease using its exact `gpt-5.6-terra/high` assignment.
-4. Bind the selected surface to one contract adapter, preserving the live gate and separate
+5. Bind the selected surface to one contract adapter, preserving the live gate and separate
    `HG-PUBLICATION-SEND` boundary; then dispatch downstream leaves only as the registry makes them
    ready.
-5. Replace synthetic storage and identifier behavior only inside their private repository owners,
+6. Replace synthetic storage and identifier behavior only inside their private repository owners,
    with private exact-head predicates and public aggregate receipts. Never commit real lead rows.
 
 ## Risks and prohibitions

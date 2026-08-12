@@ -91,21 +91,79 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
             errors.append(f"{work_id} must remain assigned to {model}/{effort}")
 
     gate = contract.get("formal_dependency_gate", {})
-    if gate.get("required_chunk") != "PSP-C06" or gate.get("required_phase") != "PSP-P07":
-        errors.append("live activation must require PSP-C06/PSP-P07")
-    if gate.get("current_state") != "open":
-        errors.append("preflight must preserve the currently open C06 dependency")
+    if gate.get("required_chunk") != "PSP-C06" or gate.get("required_phases") != [
+        "PSP-P04",
+        "PSP-P07",
+    ]:
+        errors.append("live activation must require PSP-C06 plus PSP-P04 and PSP-P07")
+    expected_phase_states = {
+        "PSP-P03": "open_W07_five_reader_gate",
+        "PSP-P04": "open_blocked_on_PSP-P03",
+        "PSP-P07": "open_prepared_only",
+    }
+    if gate.get("phase_states") != expected_phase_states:
+        errors.append("preflight must preserve the current P03/P04/P07 phase frontier")
+    expected_leaf_dependencies = {
+        "PSP-P08-W01": ["PSP-P07-W09"],
+        "PSP-P08-W02": ["PSP-P04-W04", "PSP-P08-W01"],
+        "PSP-P08-W03": ["PSP-P08-W02"],
+        "PSP-P08-W04": ["PSP-P08-W03", "PSP-P04-W04"],
+        "PSP-P08-W05": ["PSP-P08-W04", "PSP-P04-W04"],
+        "PSP-P08-W06": ["PSP-P08-W03", "PSP-P08-W04"],
+        "PSP-P08-W07": [
+            "PSP-P08-W01",
+            "PSP-P08-W02",
+            "PSP-P08-W03",
+            "PSP-P08-W04",
+            "PSP-P08-W05",
+            "PSP-P08-W06",
+        ],
+    }
+    if gate.get("leaf_dependencies") != expected_leaf_dependencies:
+        errors.append("P08 leaf dependencies must exactly match the live program registry")
+    commercial = gate.get("commercial_upstream", {})
+    p03 = commercial.get("PSP-P03", {})
+    if commercial.get("PSP-P02", {}).get("state") != "closed":
+        errors.append("P02 must remain recorded as closed")
+    if p03.get("state") != "open":
+        errors.append("P03 must remain open while W07 lacks reader evidence")
+    if p03.get("accepted_w01_w06_head") != "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec":
+        errors.append("P03 accepted W01-W06 head must remain pinned")
+    if p03.get("current_preflight_head") != "c7c932205faa405e291f8030235a73cedeaa219e":
+        errors.append("P03 current preflight head must include the W07 intake package")
+    if p03.get("closed_work_ids") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
+        errors.append("P03 must name exactly W01-W06 as closed")
+    w06 = p03.get("w06_receipt", {})
+    if w06.get("url") != "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820":
+        errors.append("W06 marked receipt URL must remain pinned")
+    if w06.get("sha256") != "260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617":
+        errors.append("W06 marked receipt digest must remain pinned")
+    w07 = p03.get("w07", {})
+    if (
+        w07.get("state") != "open"
+        or w07.get("required_reader_count") != 5
+        or w07.get("evidence_requirements") != ["genuine", "independent", "target_like"]
+        or w07.get("synthetic_or_model_evidence_allowed") is not False
+    ):
+        errors.append("W07 must remain open for five genuine independent target-like readers")
+    if commercial.get("PSP-P04", {}).get("state") != "open_blocked_on_PSP-P03":
+        errors.append("P04 must remain open and blocked on P03")
     if gate.get("selected_capture_surface") is not None:
         errors.append("preflight must not select or wire a C06 capture surface")
+    if gate.get("separate_leaf_authority") is not None:
+        errors.append("preflight must not claim separate P08 leaf authority")
     if gate.get("live_capture_activation") != "forbidden_until_predicate_receipt":
         errors.append("live activation must fail closed on a predicate receipt")
     upstream = gate.get("upstream_preflight", {})
     if upstream.get("status") != "PREPARED":
         errors.append("C06 upstream evidence must remain PREPARED, not complete")
-    for owner in ("portfolio_draft", "limen_relay"):
-        exact_head = upstream.get(owner, {}).get("exact_head")
-        if not isinstance(exact_head, str) or len(exact_head) != 40:
-            errors.append(f"C06 {owner} requires a full exact head")
+    expected_c06_heads = {
+        "portfolio_draft": "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
+        "limen_relay": "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+    }
+    for owner, expected_head in expected_c06_heads.items():
+        if upstream.get(owner, {}).get("exact_head") != expected_head:
+            errors.append(f"C06 {owner} exact head must remain pinned")
     visual = upstream.get("visual_selection", {})
     if visual.get("grounded_direction_count") != 3:
         errors.append("C06 preflight must preserve exactly three grounded directions")
@@ -511,7 +569,7 @@ def run_synthetic_journeys(
         "schema_version": "limen.psp_c07_preflight_receipt.v1",
         "status": "pass",
         "mode": "synthetic_preflight",
-        "dependency_gate": "blocked_on_PSP-C06_PSP-P07",
+        "dependency_gate": "blocked_on_PSP-P03-W07_PSP-P04_PSP-P07",
         "journeys": journeys,
         "aggregate": ledger.aggregate(),
         "evaluation": evaluate_routes(journeys, fixtures),
@@ -523,10 +581,16 @@ def run_synthetic_journeys(
 
 def live_gate(contract: dict[str, Any]) -> tuple[bool, str]:
     gate = contract["formal_dependency_gate"]
-    if gate["current_state"] != "closed_with_predicate_receipt":
-        return False, "PSP-C06/PSP-P07 predicate receipt is absent"
+    if gate["commercial_upstream"]["PSP-P03"]["w07"]["state"] != "closed_with_predicate_receipt":
+        return False, "PSP-P03-W07 five-reader predicate receipt is absent; PSP-P04 remains dependency-gated"
+    if gate["phase_states"]["PSP-P04"] != "closed_with_predicate_receipt":
+        return False, "PSP-P04 predicate receipt is absent"
+    if gate["phase_states"]["PSP-P07"] != "closed_with_predicate_receipt":
+        return False, "PSP-P07 predicate receipt is absent"
     if not gate["selected_capture_surface"]:
         return False, "no approved C06 capture surface is selected"
+    if gate["separate_leaf_authority"] != "leased":
+        return False, "separate P08 leaf authority is absent"
     return True, "live adapter may be implemented under a separately leased leaf"
 
 
