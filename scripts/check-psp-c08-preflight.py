@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "docs" / "positioning" / "content"
+sys.path.insert(0, str(ROOT / "scripts"))
+from psp_c08_content import ContentError, validate as validate_content  # noqa: E402
 REGISTER = CONTENT / "claim-source-register.json"
 MEASUREMENT = CONTENT / "measurement-contract.json"
 MANIFEST = CONTENT / "staging-manifest.json"
@@ -24,6 +27,12 @@ REQUIRED_FILES = (
     "staging-manifest.json",
     "correction-withdrawal-contract.md",
     "assets/delivery-gates-flow.svg",
+    "content-control.json",
+    "narrative-fixtures.json",
+    "review-gates.json",
+    "campaign-analytics-schema.json",
+    "freshness-withdrawal-policy.json",
+    "dry-run-publication-package.json",
 )
 REQUIRED_WORK_IDS = tuple(f"PSP-P09-W0{number}" for number in range(1, 9))
 
@@ -106,7 +115,12 @@ def main() -> None:
         if marker not in relay:
             fail(f"relay lacks required public-safe receipt marker: {marker}")
 
-    print("PSP-C08 private content preflight passed: staged sources, gates, and synthetic measurement contract are intact")
+    try:
+        validate_content(ROOT)
+    except ContentError as error:
+        fail(f"private content controls invalid: {error}")
+
+    print("PSP-C08 private content preflight passed: staged sources, gates, synthetic measurement, and no-effect publication controls are intact")
 
 
 if __name__ == "__main__":

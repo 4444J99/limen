@@ -55,6 +55,7 @@ leaves at `gpt-5.6-terra/high`.
 - [x] Added a claim-source register with admitted wording and explicit withheld categories.
 - [x] Staged the 90-day calendar, flagship report draft, derivative deck, synthetic visual, measurement contract, and correction/withdrawal contract under the chunk-owned content path.
 - [x] Bound the package to a no-effect check that preserves synthetic/observed separation and both human gates.
+- [x] Added deterministic evidence-to-draft controls for all W01–W08, with source-ID/citation equality, four bounded channel transformations, synthetic architecture and correction fixtures, redaction checks, review gates, freshness classification, analytics schemas, and a held dry-run publication package.
 - [x] Opened draft PR #2316 with the package validation evidence.
 
 ## Decisions and rationale
@@ -68,8 +69,9 @@ leaves at `gpt-5.6-terra/high`.
 ## Next actions
 
 1. Re-verify the exact PR head and run `python3 scripts/check-psp-c08-preflight.py` before review or integration.
-2. For any leaf execution, obtain current broker authority and use the relevant `--verify-work` predicate only after the leaf's actual acceptance condition has evidence.
-3. Do not advance W02 without `HG-PUBLIC-IDENTITY`; do not advance W08 without `HG-PUBLICATION-SEND` and real per-channel receipts.
+2. Run `python3 scripts/psp_c08_content.py --check` for source/citation, redaction, freshness, review-gate, analytics, and dry-run validation; `--dry-run` may render the held package but must never be treated as a publication command.
+3. For any leaf execution, obtain current broker authority and use the relevant `--verify-work` predicate only after the leaf's actual acceptance condition has evidence.
+4. Do not advance W02 without `HG-PUBLIC-IDENTITY`; do not advance W08 without `HG-PUBLICATION-SEND` and real per-channel receipts.
 
 ## Risks and prohibitions
 
