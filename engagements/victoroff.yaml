@@ -45,9 +45,29 @@ promises_not_in_instrument:
   - "more than 3%" # made in chat 2026-07-29; withdrawn in chat 2026-08-03
   - "you won't need a job after today"
   - "its ur direct deposit on the line"
+  - "this agreement is in addition to the last one" # ← stated in chat 2026-08-12;
+    # the instrument's own entire-agreement clause says the opposite. THE canonical case
+    # for this check: a statement of intent that is worth something until signature and
+    # nothing after it, because an integration clause exists to exclude exactly that.
+
+unpriced_scope:
+  - "business development — directed to quote a named price sheet (2026-08-12)"
+  - "domain acquisition, to be borne personally (2026-08-12)"
 
 notes: |
   A second instrument (Work-for-Hire, 2026-08-12) was signed by the counterparty but not by me.
   As drafted its entire-agreement clause supersedes the above — removing the fixed amount and
   the equity path in exchange for a percentage of licensing revenue from an entity with no
   recorded revenue. Neither instrument is binding on both parties.
+
+  2026-08-12 afternoon. Asked in writing whether the new instrument was in addition to the
+  first, the counterparty answered yes; the document says the opposite, and on execution the
+  document governs. On the same afternoon two further categories of work were assigned at no
+  rate under either instrument, while the first remained unpaid — which is the shape
+  SCOPE-PRICED exists to catch.
+
+  Worth recording because it is the arithmetic that makes a percentage-only clause legible:
+  the counterparty's own price sheet puts a licence at $25,000, and the superseding
+  instrument pays 5% of it — $1,250. Roughly ten full licences would be needed to equal the
+  fixed amount the same instrument deletes. A contingent percentage is not a smaller version
+  of a fixed fee; it is a different instrument with a different expected value.
