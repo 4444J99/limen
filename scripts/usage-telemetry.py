@@ -51,6 +51,20 @@ except Exception:  # pragma: no cover - installed fleet may briefly precede this
     _provider_outcome_ledger_path = None
 
 try:
+    from limen.provider_health import provider_for_model as _provider_for_model
+except Exception:  # pragma: no cover - optional API may trail the compatible health core
+    _provider_for_model = None
+
+try:
+    from limen.provider_selection import (
+        catalog_hash as _catalog_hash,
+        discover_opencode_models as _discover_opencode_models,
+    )
+except Exception:  # pragma: no cover - installed fleet may briefly precede live discovery
+    _catalog_hash = None
+    _discover_opencode_models = None
+
+try:
     from limen.provider_health import PROVIDER_TERMINALS as _PROVIDER_TERMINALS
 except Exception:  # pragma: no cover - optional export may trail the compatible core APIs
     _PROVIDER_TERMINALS = frozenset({"auth_failure", "rate_limit"})
@@ -589,7 +603,86 @@ def _provider_outcome_projection() -> dict:
     )
     cooldown_expiry = max((entry.cooldown_until for entry in entries if entry.cooldown_until), default=None)
     blocked = [entry for entry in entries if entry.blocked(NOW)]
-    all_providers_blocked = bool(provider_entries) and len(blocked_provider_entries) == len(provider_entries)
+    # A ledger contains only providers that have produced an outcome. That is not a live
+    # denominator: if the current catalog has providers A and B, failures from A alone cannot
+    # bench B. Compare one matching catalog/profile receipt group against every active provider
+    # in the current catalog. Missing discovery or mismatched evidence fails open.
+    catalog_fingerprint = None
+    catalog_provider_count = 0
+    matching_profile_hash = None
+    matching_outcome_count = 0
+    live_blocked_provider_count = 0
+    all_providers_blocked = False
+    discover_models = _discover_opencode_models
+    hash_catalog = _catalog_hash
+    provider_for_model = _provider_for_model
+    if (
+        blocked_provider_entries
+        and discover_models is not None
+        and hash_catalog is not None
+        and provider_for_model is not None
+    ):
+        try:
+            timeout = max(
+                1,
+                int(_number_or_default(os.environ.get("LIMEN_OPENCODE_CATALOG_TIMEOUT", "30"), 30)),
+            )
+            models = discover_models(
+                os.environ.get("LIMEN_OPENCODE_BIN", "opencode"),
+                timeout=timeout,
+            )
+            catalog_fingerprint = hash_catalog(models)
+            live_providers = sorted(
+                {
+                    provider_for_model(str(model.model_id))
+                    for model in models
+                    if bool(getattr(model, "active", True)) and str(getattr(model, "model_id", ""))
+                }
+            )
+            catalog_provider_count = len(live_providers)
+            current_outcomes = [
+                outcome for outcome in outcomes if getattr(outcome, "catalog_hash", None) == catalog_fingerprint
+            ]
+            profile_hashes = sorted(
+                {
+                    str(getattr(outcome, "execution_profile_hash", ""))
+                    for outcome in current_outcomes
+                    if str(getattr(outcome, "execution_profile_hash", ""))
+                }
+            )
+            for profile_hash in profile_hashes:
+                profile_outcomes = [
+                    outcome
+                    for outcome in current_outcomes
+                    if getattr(outcome, "execution_profile_hash", None) == profile_hash
+                ]
+                profile_snapshot = _project_provider_health(
+                    profile_outcomes,
+                    _provider_health_policy(),
+                    now=NOW,
+                )
+                blocked_names = [
+                    provider
+                    for provider in live_providers
+                    if (
+                        (entry := profile_snapshot.providers.get(provider)) is not None
+                        and entry.blocked(NOW)
+                    )
+                ]
+                candidate = (len(blocked_names), len(profile_outcomes), profile_hash)
+                current = (live_blocked_provider_count, matching_outcome_count, matching_profile_hash or "")
+                if candidate > current:
+                    live_blocked_provider_count = len(blocked_names)
+                    matching_outcome_count = len(profile_outcomes)
+                    matching_profile_hash = profile_hash
+            all_providers_blocked = bool(live_providers) and live_blocked_provider_count == len(live_providers)
+        except Exception:
+            catalog_fingerprint = None
+            catalog_provider_count = 0
+            matching_profile_hash = None
+            matching_outcome_count = 0
+            live_blocked_provider_count = 0
+            all_providers_blocked = False
     latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
     for outcome in outcomes:
         provider = str(getattr(outcome, "provider", "") or "")
@@ -617,11 +710,16 @@ def _provider_outcome_projection() -> dict:
         "provider_terminal_failure_classes": provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
-        # Dispatch benches OpenCode only when every observed provider is blocked;
-        # model-level cooldowns remain available for live model selection.
+        # Dispatch benches OpenCode only when every provider in one live catalog/profile
+        # evidence group is blocked; model-level cooldowns remain available to selection.
         "provider_outcome_all_blocked": all_providers_blocked,
-        "provider_outcome_provider_count": len(provider_entries),
-        "provider_outcome_blocked_provider_count": len(blocked_provider_entries),
+        "provider_outcome_provider_count": catalog_provider_count,
+        "provider_outcome_blocked_provider_count": live_blocked_provider_count,
+        "provider_outcome_observed_provider_count": len(provider_entries),
+        "provider_outcome_observed_blocked_provider_count": len(blocked_provider_entries),
+        "provider_outcome_catalog_hash": catalog_fingerprint,
+        "provider_outcome_execution_profile_hash": matching_profile_hash,
+        "provider_outcome_matching_outcome_count": matching_outcome_count,
         "provider_outcome_model_count": len(model_entries),
         "provider_outcome_blocked_model_count": len(blocked_model_entries),
     }

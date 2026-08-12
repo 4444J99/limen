@@ -18,6 +18,36 @@ from pathlib import Path
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "usage-telemetry.py"
 
 
+def _load_module(monkeypatch, root: Path):
+    monkeypatch.setenv("LIMEN_ROOT", str(root))
+    spec = importlib.util.spec_from_file_location("usage_telemetry_provider_denominator", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def _provider_failures(module, provider: str, catalog: str, profile: str) -> list[dict[str, object]]:
+    rows = []
+    for retry in range(2):
+        finished = module.NOW - timedelta(seconds=2 - retry)
+        rows.append(
+            {
+                "schema": "limen.provider_outcome.v1",
+                "provider": provider,
+                "runtime_model": f"{provider}/runtime",
+                "catalog_hash": catalog,
+                "execution_profile_hash": profile,
+                "terminal_class": "auth_failure",
+                "started_at": (finished - timedelta(seconds=1)).isoformat(),
+                "finished_at": finished.isoformat(),
+                "retry_count": retry,
+                "receipt_reference": f"task:{provider}-fixture",
+            }
+        )
+    return rows
+
+
 def test_optional_terminal_constant_does_not_disable_compatible_provider_apis(monkeypatch):
     provider_health = types.ModuleType("limen.provider_health")
     sentinels = {
@@ -40,6 +70,92 @@ def test_optional_terminal_constant_does_not_disable_compatible_provider_apis(mo
     assert module._provider_health_policy is sentinels["provider_health_policy"]
     assert module._provider_outcome_ledger_path is sentinels["provider_outcome_ledger_path"]
     assert module._PROVIDER_TERMINALS == frozenset({"auth_failure", "rate_limit"})
+
+
+def test_all_blocked_uses_every_provider_in_the_live_catalog(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    module = _load_module(monkeypatch, root)
+    catalog = "a" * 64
+    profile = "b" * 64
+    (root / "logs" / "provider-outcomes.jsonl").write_text(
+        "".join(json.dumps(row) + "\n" for row in _provider_failures(module, "provider-a", catalog, profile))
+    )
+    monkeypatch.setattr(
+        module,
+        "_discover_opencode_models",
+        lambda *_args, **_kwargs: [
+            types.SimpleNamespace(model_id="provider-a/runtime", active=True),
+            types.SimpleNamespace(model_id="provider-b/runtime", active=True),
+        ],
+    )
+    monkeypatch.setattr(module, "_catalog_hash", lambda _models: catalog)
+
+    projection = module._provider_outcome_projection()
+
+    assert projection["provider_outcome_all_blocked"] is False
+    assert projection["provider_outcome_provider_count"] == 2
+    assert projection["provider_outcome_blocked_provider_count"] == 1
+    assert projection["provider_outcome_execution_profile_hash"] == profile
+
+
+def test_all_blocked_does_not_mix_execution_profiles(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    module = _load_module(monkeypatch, root)
+    catalog = "c" * 64
+    rows = [
+        *_provider_failures(module, "provider-a", catalog, "d" * 64),
+        *_provider_failures(module, "provider-b", catalog, "e" * 64),
+    ]
+    (root / "logs" / "provider-outcomes.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    monkeypatch.setattr(
+        module,
+        "_discover_opencode_models",
+        lambda *_args, **_kwargs: [
+            types.SimpleNamespace(model_id="provider-a/runtime", active=True),
+            types.SimpleNamespace(model_id="provider-b/runtime", active=True),
+        ],
+    )
+    monkeypatch.setattr(module, "_catalog_hash", lambda _models: catalog)
+
+    projection = module._provider_outcome_projection()
+
+    assert projection["provider_outcome_all_blocked"] is False
+    assert projection["provider_outcome_provider_count"] == 2
+    assert projection["provider_outcome_blocked_provider_count"] == 1
+
+
+def test_all_blocked_requires_one_matching_catalog_and_profile(tmp_path, monkeypatch):
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    module = _load_module(monkeypatch, root)
+    live_catalog = "f" * 64
+    profile = "1" * 64
+    rows = [
+        *_provider_failures(module, "provider-a", live_catalog, profile),
+        *_provider_failures(module, "provider-b", live_catalog, profile),
+        *_provider_failures(module, "provider-c", "0" * 64, profile),
+    ]
+    (root / "logs" / "provider-outcomes.jsonl").write_text("".join(json.dumps(row) + "\n" for row in rows))
+    monkeypatch.setattr(
+        module,
+        "_discover_opencode_models",
+        lambda *_args, **_kwargs: [
+            types.SimpleNamespace(model_id="provider-a/runtime", active=True),
+            types.SimpleNamespace(model_id="provider-b/runtime", active=True),
+        ],
+    )
+    monkeypatch.setattr(module, "_catalog_hash", lambda _models: live_catalog)
+
+    projection = module._provider_outcome_projection()
+
+    assert projection["provider_outcome_all_blocked"] is True
+    assert projection["provider_outcome_provider_count"] == 2
+    assert projection["provider_outcome_blocked_provider_count"] == 2
+    assert projection["provider_outcome_catalog_hash"] == live_catalog
+    assert projection["provider_outcome_execution_profile_hash"] == profile
+    assert projection["provider_outcome_matching_outcome_count"] == 4
 
 
 def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None, provider_outcomes=None):

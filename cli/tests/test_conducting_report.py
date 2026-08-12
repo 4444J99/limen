@@ -186,6 +186,23 @@ def test_session_value_gate_overrides_an_admissible_handoff(tmp_path, monkeypatc
     assert "higher-value lane" in detail
 
 
+def test_routable_report_reuses_the_canonical_always_working_gate(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    monkeypatch.setattr(
+        module,
+        "_always_working_admission",
+        lambda: {"status": "blocked", "reason": "owner ticket writer failed"},
+    )
+
+    reason, detail = module._routing_reason()
+
+    assert reason == "admission_blocked"
+    assert "always-working gate withheld dispatch" in detail
+    assert "owner ticket writer failed" in detail
+
+
 def test_routable_idle_work_overrides_burn_headline(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
@@ -546,6 +563,44 @@ def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path,
 
     assert module.main([]) == 0
     assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
+
+
+def test_emitted_duplicate_rebuilds_state_after_transient_state_write_failure(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_refresh_admission", lambda: True)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
+    monkeypatch.setattr(module, "_always_working_admission", lambda: {"status": "allowed"})
+    macos_results = iter(
+        (
+            SimpleNamespace(status="emitted", reserved=True, prior_status=None),
+            SimpleNamespace(status="duplicate", reserved=False, prior_status="emitted"),
+        )
+    )
+    monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: next(macos_results))
+    ntfy_calls = []
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: ntfy_calls.append(True) or False)
+
+    # A directory cannot be written as the state file, reproducing the transient persistence
+    # failure after the event ledger has already recorded an emitted notification.
+    module.STATE = logs
+    assert module.main([]) == 0
+
+    module.STATE = logs / ".recovered-conducting-state.json"
+    assert module.main([]) == 0
+
+    assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
+    assert ntfy_calls == [True]
 
 
 def test_live_down_lanes_cannot_be_reported_as_routable(tmp_path, monkeypatch):

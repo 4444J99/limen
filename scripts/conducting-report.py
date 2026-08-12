@@ -7,7 +7,8 @@ window toward the reserve drops) or did it IDLE at a full tank (and why)? It als
 got value-discovery work. Delivery is CASCADED (never-"NO"): a local macOS notification AND, if
 LIMEN_NTFY_TOPIC is set, an ntfy.sh push to your phone. Idempotent: fires at most once per day (tracks
 logs/.conducting-report-state.json); --force re-emits now. Fail-open: a missing/torn feed prints what it
-can and never crashes the beat. Read-only on the fleet's data; writes only its own state file.
+can and never crashes the beat. Before claiming a route, it runs dispatch's canonical always-working
+owner reconciliation; otherwise it writes only its own state and delivery receipts.
 """
 
 from __future__ import annotations
@@ -23,8 +24,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 
 from _notify import NotificationResult, notify_event, notify_ntfy
+
+try:
+    from limen.dispatch import run_always_working_before_dispatch as _run_always_working_before_dispatch
+except Exception:  # pragma: no cover - an older installed runtime must fail closed below
+    _run_always_working_before_dispatch = None
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -155,6 +162,25 @@ def _session_value_admission() -> dict[str, object]:
     return {"status": "unavailable", "reason": detail or f"session value gate exited {result.returncode}"}
 
 
+def _always_working_admission() -> dict[str, str]:
+    """Run the dispatcher's canonical final pre-reservation gate."""
+    if _run_always_working_before_dispatch is None:
+        return {
+            "status": "unavailable",
+            "reason": "canonical always-working gate is unavailable",
+        }
+    try:
+        allowed = _run_always_working_before_dispatch(TASKS)
+    except Exception as exc:
+        return {
+            "status": "unavailable",
+            "reason": f"canonical always-working gate raised {type(exc).__name__}",
+        }
+    if allowed:
+        return {"status": "allowed", "reason": "canonical always-working gate allowed dispatch"}
+    return {"status": "blocked", "reason": "canonical always-working gate withheld dispatch"}
+
+
 def _notify_macos(title, msg, day, *, force=False) -> NotificationResult:
     return notify_event(
         ROOT,
@@ -224,6 +250,7 @@ def _routing_reason(
     now: datetime | None = None,
     target_providers: set[str] | None = None,
     session_value_gate: dict[str, object] | None = None,
+    always_working_gate: dict[str, object] | None = None,
 ) -> tuple[str, str]:
     """Classify routing from keeper-owned admission, never from vendor consumption."""
     handoff = _load(HANDOFF, None)
@@ -266,6 +293,13 @@ def _routing_reason(
     down_lanes = {_normalize_provider(lane) for lane in raw_down_lanes if str(lane).strip()}
     target_names = {_normalize_provider(name) for name in (target_providers or set()) if str(name).strip()}
     if admissible > 0 or admission.get("dispatchable_next"):
+        gate = always_working_gate if always_working_gate is not None else _always_working_admission()
+        gate_status = str(gate.get("status") or "unavailable")
+        gate_reason = str(gate.get("reason") or "always-working gate returned no detail")
+        if gate_status == "blocked":
+            return "admission_blocked", f"always-working gate withheld dispatch: {gate_reason}"
+        if gate_status != "allowed":
+            return "keeper_unavailable", f"always-working gate unavailable: {gate_reason}"
         if target_providers is None:
             lane_counts = admission.get("admissible_agent_counts")
             any_lane_counts = admission.get("admissible_any_agent_counts")
@@ -508,7 +542,14 @@ def census() -> dict:
         "value_verdict_present": _value_verdict() is not None,
         "open_value_discovery": _discovery_count(),
         "state_present": STATE.exists(),
-        "routing_reason": _routing_reason()[0],
+        # The public census is counts-only and must not run the writer-backed pre-dispatch gate.
+        # Without that proof it also must not claim that a route is live.
+        "routing_reason": _routing_reason(
+            always_working_gate={
+                "status": "unavailable",
+                "reason": "not evaluated by counts-only census",
+            }
+        )[0],
     }
 
 
@@ -551,7 +592,10 @@ def main(argv: list[str] | None = None) -> int:
         macos.status == "duplicate" and getattr(macos, "prior_status", None) == "delivery_failed"
     )
     ntfy = _notify_ntfy("Limen — conducting", body) if retry_ntfy else False
-    if macos.status != "emitted" and not ntfy:
+    macos_settled = macos.status == "emitted" or (
+        macos.status == "duplicate" and getattr(macos, "prior_status", None) == "emitted"
+    )
+    if not macos_settled and not ntfy:
         print(f"conducting-report: delivery not recorded ({macos.status})")
         return 0
     try:

@@ -252,6 +252,11 @@ def _provider_headroom() -> dict[str, Any]:
                             "provider_outcome_all_blocked",
                             "provider_outcome_provider_count",
                             "provider_outcome_blocked_provider_count",
+                            "provider_outcome_observed_provider_count",
+                            "provider_outcome_observed_blocked_provider_count",
+                            "provider_outcome_catalog_hash",
+                            "provider_outcome_execution_profile_hash",
+                            "provider_outcome_matching_outcome_count",
                             "provider_outcome_model_count",
                             "provider_outcome_blocked_model_count",
                         )
