@@ -38,6 +38,10 @@ on:
     types: [checks_requested]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: read
+
 concurrency:
   group: pr-gate-${{ github.ref }}
   cancel-in-progress: true
@@ -67,6 +71,9 @@ jobs:
       - name: Verify implicated PR gates (scoped, CI mirrors deferred)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'pull_request'
         env:
+          # Live evidence gates use repository-readable APIs. Scope the
+          # built-in token to verification rather than the whole job.
+          GH_TOKEN: ${{ github.token }}
           LIMEN_VERIFY_NO_LOCK: "1"
           LIMEN_VERIFY_REQUIRE_BASE: "1"
           LIMEN_VERIFY_NO_DEPLOY_ESCALATION: "1"
@@ -103,6 +110,7 @@ jobs:
       - name: Verify merge-group integration gates (scoped, fail-closed)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'merge_group'
         env:
+          GH_TOKEN: ${{ github.token }}
           LIMEN_VERIFY_NO_LOCK: "1"
           MERGE_GROUP_BASE_SHA: ${{ github.event.merge_group.base_sha }}
         run: |
@@ -116,6 +124,7 @@ jobs:
       - name: Verify manual run (scoped)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'workflow_dispatch'
         env:
+          GH_TOKEN: ${{ github.token }}
           LIMEN_VERIFY_NO_LOCK: "1"
         run: |
           python scripts/verify.py --changed \
@@ -124,6 +133,8 @@ jobs:
 
       - name: Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)
         if: env.LIMEN_PRGATE_SCOPED == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python -m ruff check cli/src cli/tests web/api mcp ianva
           python -m ruff format --check cli/src cli/tests web/api mcp ianva
@@ -143,4 +154,6 @@ jobs:
           python scripts/check-root-manifest.py
           python scripts/check-root-manifest.py --surface docs
           python scripts/check-docs-exports.py
+          bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_research_adjudication.py -q
+          python3 scripts/positioning-research-adjudication.py --verify-live
           python -m pytest web/api/tests cli/tests -q -n auto

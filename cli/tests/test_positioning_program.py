@@ -44,6 +44,18 @@ def graph_and_map():
     return graph, mapping
 
 
+def live_portfolio_repository() -> dict[str, object]:
+    return {
+        "id": 1155412125,
+        "full_name": "organvm-vii-kerygma/portfolio",
+        "visibility": "public",
+        "private": False,
+        "default_branch": "main",
+        "archived": False,
+        "html_url": "https://github.com/organvm-vii-kerygma/portfolio",
+    }
+
+
 def test_real_manifest_is_complete_and_acyclic() -> None:
     graph, mapping = graph_and_map()
 
@@ -115,6 +127,145 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "Assigned effort: `max`" in work
     assert "**Execution chunk:** `PSP-C02`" in work
     assert "`PSP-C00` — Land the program control plane" in root
+
+
+def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    expected_work_ids = {
+        "PSP-P06-W01",
+        "PSP-P06-W02",
+        "PSP-P06-W03",
+        "PSP-P06-W04",
+        "PSP-P06-W05",
+        "PSP-P06-W06",
+        "PSP-P06-W07",
+        "PSP-P07-W03",
+        "PSP-P07-W04",
+        "PSP-P07-W08",
+        "PSP-P08-W02",
+        "PSP-P09-W02",
+        "PSP-P09-W03",
+        "PSP-P09-W04",
+        "PSP-P09-W05",
+        "PSP-P09-W06",
+        "PSP-P10-W04",
+        "PSP-P12-W04",
+    }
+    actual_work_ids = {
+        work_id
+        for work_id, packet in graph["work_by_id"].items()
+        if packet["target_repo"] == "organvm-vii-kerygma/portfolio"
+    }
+
+    assert actual_work_ids == expected_work_ids
+    identity = graph["repository_identity_by_slug"]["organvm-vii-kerygma/portfolio"]
+    assert identity["github_repository_id"] == 1155412125
+    assert "organvm/portfolio" in graph["retired_repository_slugs"]
+    body = MODULE.body_for("PSP-P06-W01", graph, mapping)
+    assert "`organvm-vii-kerygma/portfolio`" in body
+    assert "stable GitHub repository ID `1155412125`" in body
+    calls: list[list[str]] = []
+
+    def resolve(args, **_kwargs):
+        calls.append(args)
+        return live_portfolio_repository()
+
+    monkeypatch.setattr(MODULE, "_gh", resolve)
+    seed = MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    seed_identity = seed["execution_requirements"]["target_repository_identity"]
+    assert seed["not_a_lease"] is True
+    assert seed_identity["github_repository_id"] == 1155412125
+    assert seed_identity["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+    assert seed_identity["resolution"] == "verified_live_by_immutable_repository_id_before_seed"
+    assert MODULE.RFC3339_RE.fullmatch(seed_identity["resolved_at"])
+    assert calls == [["api", "repositories/1155412125"]]
+
+    calls.clear()
+    result = MODULE.verify_repository_identities(graph)
+
+    assert result["status"] == "ok"
+    assert calls == [["api", "repositories/1155412125"]]
+    assert result["repositories"][0]["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: moved)
+    with pytest.raises(MODULE.ProgramError, match="seed repository identity validation failed"):
+        MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    with pytest.raises(MODULE.ProgramError, match="full_name drift"):
+        MODULE.verify_repository_identities(graph)
+
+    stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    psp_p06 = next(phase for phase in stale["phases"] if phase["id"] == "PSP-P06")
+    psp_p06["work"][0]["target_repo"] = "organvm/portfolio"
+    with pytest.raises(MODULE.ProgramError, match="retired repository slug"):
+        MODULE.index_program(stale)
+
+
+def test_repository_identity_sources_and_slug_history_are_collision_safe() -> None:
+    never_renamed = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = never_renamed["repository_identities"]["repositories"]["portfolio"]
+    portfolio["previous_slugs"] = []
+    graph = MODULE.index_program(never_renamed)
+    assert graph["retired_repository_slugs"] == {}
+
+    mismatched_source = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = mismatched_source["repository_identities"]["repositories"]["portfolio"]
+    portfolio["source"] = "https://api.github.com/repositories/999"
+    with pytest.raises(MODULE.ProgramError, match="must exactly bind github_repository_id"):
+        MODULE.index_program(mismatched_source)
+
+    retired_collides_with_canonical = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = retired_collides_with_canonical["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "example/second",
+        "previous_slugs": ["organvm-vii-kerygma/portfolio"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="contains canonical repository slug"):
+        MODULE.index_program(retired_collides_with_canonical)
+
+    canonical_collides_with_retired = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = canonical_collides_with_retired["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "organvm/portfolio",
+        "previous_slugs": ["example/retired-second"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="already declared as a retired repository slug"):
+        MODULE.index_program(canonical_collides_with_retired)
+
+
+def test_sync_apply_rejects_identity_drift_before_any_write(monkeypatch, tmp_path) -> None:
+    graph, mapping = graph_and_map()
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+
+    for live_payload in (moved, [moved]):
+        writes = []
+        monkeypatch.setattr(MODULE, "_gh", lambda *_args, value=live_payload, **_kwargs: value)
+        monkeypatch.setattr(MODULE, "_pages", lambda *_args, **_kwargs: [])
+        monkeypatch.setattr(
+            MODULE,
+            "_api",
+            lambda *args, **kwargs: writes.append((args, kwargs)),
+        )
+
+        with pytest.raises(MODULE.ProgramError, match="repository identity validation failed"):
+            MODULE.sync(
+                graph,
+                mapping,
+                apply=True,
+                map_path=tmp_path / "github-map.json",
+                index_path=tmp_path / "ISSUE-INDEX.md",
+                chunks_path=tmp_path / "EXECUTION-CHUNKS.md",
+            )
+
+        assert writes == []
 
 
 def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
@@ -229,6 +380,20 @@ def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> No
     assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
     assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
     assert seed["receipt_target"] == "github:organvm/limen:issue:11"
+
+
+def test_w08_packet_seed_owns_summary_machine_artifact_and_dated_receipt() -> None:
+    graph, mapping = graph_and_map()
+
+    seed = MODULE.packet_seed("PSP-P02-W08", graph, mapping)
+
+    assert seed["execution_requirements"]["path_prefixes"] == [
+        "docs/positioning/program/RESEARCH-ADJUDICATION.md",
+        "docs/positioning/program/research-adjudication.json",
+        "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+        "docs/positioning/claims-ledger.md",
+        "scripts",
+    ]
 
 
 def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate() -> None:
@@ -952,6 +1117,7 @@ def test_remote_parity_includes_milestone_assignment(monkeypatch) -> None:
         for object_id in graph["ordered_ids"]
     }
     monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: live_portfolio_repository())
 
     assert MODULE.remote_parity(graph, mapping)["ok"] is True
 
