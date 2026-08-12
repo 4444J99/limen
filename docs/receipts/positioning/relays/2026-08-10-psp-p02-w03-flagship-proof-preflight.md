@@ -47,7 +47,7 @@ excluded_count: 15
 | --- | --- |
 | W02 accepted head | `35134b95650a26185a58eb3b3a82632e5b80b5b2` |
 | W02 marked receipt | https://github.com/organvm/limen/issues/2174#issuecomment-5247059070 · receipt SHA-256 `bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f` |
-| W03 integration source | `ac965f20b3cb20cfe115cdae48b6ab5b8253b4ae` · tree `5bd53f6dc110344c5d62d6c110955e954879d5f3` |
+| W03 integration source | `d202b90ec24558f16e2b89fc134e9a1513b03f93` · tree `e459c58ffd1828a18cdbd306523e64a3b72ad0b7` |
 | Final PR head | This relay is one receipt-only descendant of the integration source; fetch PR #2308 and require the source above as an ancestor before reusing its receipts. |
 | Candidate denominator | 22 public candidates: 15 authoritative W02 rows plus seven typed public additions |
 | Verdict | Three selected, four named alternates, 15 explicit exclusions; zero private repository names in the public matrix |
@@ -65,13 +65,17 @@ excluded_count: 15
 - [x] Bound W02's merged PR commit, closed issue, latest canonical marked receipt, receipt-observed
   head, and main-line ancestry in the executable live predicate.
 - [x] Added exact non-circular relay bindings and source-safe documentation for W02 and W03.
+- [x] Closed the final review batch: every evidence anchor now passes the public-custody guard;
+  typed additions are pinned to public identities; workflow, endpoint, timestamp, role, score,
+  threshold, gate-registration, response-shape, and live W03-state contracts fail closed.
 
 ## Verification at the immutable integration source
 
 - `python3 scripts/tests/estate-classification.test.py` — 20/20 passed; the accepted W02 privacy
   and classification hardening is present.
-- `python3 scripts/tests/flagship-proof-set.test.py` — 32/32 passed, including formal-state,
-  receipt, observed-head, and relay-drift mutations.
+- `python3 scripts/tests/flagship-proof-set.test.py` — 40/40 passed, including formal-state,
+  receipt, observed-head, relay-drift, public-custody, response-shape, identity, and threshold
+  mutations.
 - `python3 scripts/flagship-proof-set.py --verify-live --json` — passed: 22 candidates, three
   selected, four alternates, 15 exclusions; W02's issue, merged PR head, canonical latest receipt,
   receipt-observed head, main ancestry, identity, maturity, workflow, and endpoint bindings were
@@ -94,7 +98,7 @@ excluded_count: 15
 ## Next actions
 
 1. Fetch PR #2308 and require its exact head to descend from
-   `ac965f20b3cb20cfe115cdae48b6ab5b8253b4ae` with this relay as the only intended successor delta.
+   `d202b90ec24558f16e2b89fc134e9a1513b03f93` with this relay as the only intended successor delta.
 2. Confirm base `main`, all required exact-head checks green, and zero unresolved review threads.
 3. Merge only through `bash scripts/await-pr.sh 2308 --repo organvm/limen --merge`.
 4. On the actual merged main commit, run bare
