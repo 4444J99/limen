@@ -492,10 +492,27 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         self,
         bindings: dict[str, list[str]] | None = None,
         process_aliases: set[str] | None = None,
+        local_functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
+        active_helpers: set[str] | None = None,
     ) -> None:
         self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
         self.found = False
         self.process_aliases = set(process_aliases or _PROCESS_CALLS)
+        self.local_functions = dict(local_functions or {})
+        self.active_helpers = set(active_helpers or ())
+
+    def _child(
+        self,
+        bindings: dict[str, list[str]] | None = None,
+        *,
+        active_helpers: set[str] | None = None,
+    ) -> "_PythonBypassVisitor":
+        return _PythonBypassVisitor(
+            self.bindings if bindings is None else bindings,
+            self.process_aliases,
+            self.local_functions,
+            self.active_helpers if active_helpers is None else active_helpers,
+        )
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if node.module in {"subprocess", "os"}:
@@ -575,6 +592,13 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         functions/classes with that conservative union so definition order cannot hide an
         effector command.
         """
+        self.local_functions.update(
+            {
+                statement.name: statement
+                for statement in node.body
+                if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef))
+            }
+        )
         deferred: list[ast.stmt] = []
         observed = {name: set(values) for name, values in self.bindings.items()}
         observed_aliases = set(self.process_aliases)
@@ -600,7 +624,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         for default in [*node.args.defaults, *node.args.kw_defaults]:
             if default is not None:
                 self.visit(default)
-        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
+        child = self._child(active_helpers=self.active_helpers | {node.name})
 
         def bind_parameter(argument: ast.arg, default: ast.AST | None) -> None:
             child._bind_assignment(argument, default)
@@ -632,7 +656,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             self.visit(decorator)
         for base in node.bases:
             self.visit(base)
-        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
+        child = self._child()
         for statement in node.body:
             child.visit(statement)
         self.found = self.found or child.found
@@ -659,7 +683,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
 
     def _visit_comprehension(self, node: ast.AST, values: list[ast.AST]) -> None:
         """Scan comprehension bodies with their target bindings in lexical scope."""
-        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
+        child = self._child()
         generators = getattr(node, "generators", [])
         for generator in generators:
             child.visit(generator.iter)
@@ -686,10 +710,10 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = _PythonBypassVisitor(before, self.process_aliases)
+        body = self._child(before)
         for statement in node.body:
             body.visit(statement)
-        alternate = _PythonBypassVisitor(before, self.process_aliases)
+        alternate = self._child(before)
         for statement in node.orelse:
             alternate.visit(statement)
         self.found = self.found or body.found or alternate.found
@@ -705,14 +729,14 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def visit_Try(self, node: ast.Try) -> None:
         """Merge every path that can continue after try/except/else."""
         before = {name: list(values) for name, values in self.bindings.items()}
-        success = _PythonBypassVisitor(before, self.process_aliases)
+        success = self._child(before)
         for statement in node.body:
             success.visit(statement)
         for statement in node.orelse:
             success.visit(statement)
         paths = [success]
         for handler in node.handlers:
-            branch = _PythonBypassVisitor(before, self.process_aliases)
+            branch = self._child(before)
             if handler.type is not None:
                 branch.visit(handler.type)
             if handler.name:
@@ -741,7 +765,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         else:
             self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = _PythonBypassVisitor(before, self.process_aliases)
+        body = self._child(before)
         if isinstance(node, (ast.For, ast.AsyncFor)):
             # A loop target is a real assignment in the body's lexical scope. Bind
             # every statically visible command fragment from a literal iterable so
@@ -765,6 +789,42 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     visit_AsyncFor = _visit_loop
     visit_While = _visit_loop
 
+    def _visit_local_helper_call(
+        self,
+        name: str,
+        function: ast.FunctionDef | ast.AsyncFunctionDef,
+        call: ast.Call,
+    ) -> None:
+        """Scan a local helper with the statically visible arguments from this call site."""
+        child = self._child(active_helpers=self.active_helpers | {name})
+        positional = [*function.args.posonlyargs, *function.args.args]
+        defaults: list[ast.AST | None] = [None] * (len(positional) - len(function.args.defaults)) + list(
+            function.args.defaults
+        )
+        keywords = {keyword.arg: keyword.value for keyword in call.keywords if keyword.arg is not None}
+        for index, (argument, default) in enumerate(zip(positional, defaults, strict=True)):
+            supplied = call.args[index] if index < len(call.args) else keywords.get(argument.arg, default)
+            child._bind_assignment(argument, supplied)
+        for argument, default in zip(function.args.kwonlyargs, function.args.kw_defaults, strict=True):
+            child._bind_assignment(argument, keywords.get(argument.arg, default))
+        if function.args.vararg is not None:
+            extras = call.args[len(positional) :]
+            child._assign(
+                function.args.vararg,
+                [value for extra in extras for value in (_static_argv(extra, self.bindings) or [])] or None,
+            )
+        if function.args.kwarg is not None:
+            extra_values = [
+                value
+                for keyword in call.keywords
+                if keyword.arg is None or keyword.arg not in {argument.arg for argument in positional}
+                for value in (_static_argv(keyword.value, self.bindings) or [])
+            ]
+            child._assign(function.args.kwarg, extra_values or None)
+        for statement in function.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+
     def visit_Call(self, node: ast.Call) -> None:
         call_name = (
             node.func.id
@@ -778,6 +838,13 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
             if has_osascript and "display notification" in " ".join(values).lower():
                 self.found = True
+        helper_name = node.func.id if isinstance(node.func, ast.Name) else None
+        if (
+            helper_name is not None
+            and helper_name not in self.active_helpers
+            and (function := self.local_functions.get(helper_name)) is not None
+        ):
+            self._visit_local_helper_call(helper_name, function, node)
         self.generic_visit(node)
 
 

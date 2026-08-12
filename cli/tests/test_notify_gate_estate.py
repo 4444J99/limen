@@ -484,6 +484,38 @@ def test_static_mapping_dynamic_key_is_conservatively_rejected(tmp_path, check_g
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+@pytest.mark.parametrize(
+    "call",
+    [
+        'fire(["osascript", "-e", "display notification x"])',
+        'fire(cmd=["osascript", "-e", "display notification x"])',
+    ],
+)
+def test_local_helper_notification_argument_is_rejected(tmp_path, check_gate, call):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        f"import subprocess\ndef fire(cmd):\n    subprocess.run(cmd)\n{call}\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_local_helper_safe_argument_does_not_inherit_unrelated_notification_literal(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        'unused = ["osascript", "-e", "display notification x"]\n'
+        "def fire(cmd):\n    subprocess.run(cmd)\n"
+        'fire(["echo", "ok"])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == []
+
+
 def test_destructured_python_command_binding_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
