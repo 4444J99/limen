@@ -328,7 +328,7 @@
       "label": "Arm the three AGENT-CURABLE dialog effectors so the recurring macOS dialog estate self-heals on the beat, unattended, without a per-incident approval. The effectors already ship (heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh) and run every hygiene cadence as the registry-derived `dialogs-silenced` sensor (sensors.yaml 0g8b) — but DRY-RUN until armed. Arming flips them from detect-and-report to cure.",
       "owner": "yours",
       "cost": "one paste into ~/.limen.env (~20s), then the agent-curable dialog estate self-heals forever",
-      "unlocks": "the beat auto-cures the three agent-curable dialog classes the moment they recur — a drifted PreToolUse trust hook (1b), a duplicate Homebrew claude-code cask (4), and a malformed ClaudeCode.app lsregister stub (4b, the 'damaged, move to Trash' loop) — with no dialog, no click, and no chat task",
+      "unlocks": "the beat auto-cures a drifted PreToolUse trust hook (1b) and a duplicate Homebrew claude-code cask (4) the moment they recur, with no dialog, no click, and no chat task. For 4b it keeps the ClaudeCode.app LaunchServices registration at zero — which is worth having, but does NOT stop the 'damaged, move to Trash' alert: measurement on 2026-08-12 refuted registration as that alert's mechanism (see L-CLAUDE-GATEKEEPER-ALLOW).",
       "gate": "writing LIMEN_*=1 into the persistence env (~/.limen.env) is classifier-blocked for the agent (the self-arming boundary; see memory persistence-arming-env-is-classifier-gated) — the one-time paste is yours; every branch, sensor, verify, and merge around it is automated",
       "steps": [
         "Append three lines to ~/.limen.env:  LIMEN_HOOK_DRIFT_HEAL=1   and   LIMEN_CASK_DUPLICATE_HEAL=1   and   LIMEN_CLAUDE_LSREGISTER_HEAL=1",
@@ -343,18 +343,36 @@
       "id": "L-CLAUDE-DEEPLINK-REGISTRATION",
       "label": "Decide whether Claude Code should register its claude-cli:// protocol handler with macOS. The handler bundle (~/Applications/Claude Code URL Handler.app) wraps a bare-signed Mach-O in a hand-written Info.plist, so Gatekeeper can never assess it — and it sits in ~/Applications, a LaunchServices-SCANNED domain, so unregistration does not hold there. The vendor ships the only convergent off-switch.",
       "owner": "yours",
-      "cost": "one key in ~/.claude/settings.json (~15s), or an explicit decision to keep deep links and accept the finding",
+      "cost": "one key in the ACTIVE claude settings file (~15s; resolve it with scripts/agent_config_paths.py claude-settings), or an explicit decision to keep deep links and accept the finding",
       "unlocks": "IF-GATEKEEPER-INERT reaches at-ideal across every scanned domain, not just the Claude store — the last registered-but-unassessable vendor bundle on the host goes away",
       "gate": "Writing ~/.claude/settings.json is classifier-blocked for the agent (the self-modification boundary, same as L-AGENT-BASH-PROMPT). This is ALSO a genuine feature trade, not merely a permission: disabling registration turns off claude-cli:// deep links, so it is a product decision the registry must not make for you.",
       "steps": [
         "Decide: do you use claude-cli:// deep links (IDE/desktop 'open in Claude Code' handoffs)? If unsure, leave this lever open — the finding is advisory and costs nothing but a non-green --strict.",
-        "If NOT: add to ~/.claude/settings.json  ->  \"disableDeepLinkRegistration\": \"disable\"",
+        "If NOT: add \"disableDeepLinkRegistration\": \"disable\" to the settings file the CLI ACTUALLY reads — derive it, do not assume ~/.claude/settings.json: python3 scripts/agent_config_paths.py claude-settings  (this host relocates CLAUDE_CONFIG_DIR into .agent-runtime/claude, so the ~/.claude copy is abandoned and editing it does nothing)",
         "Remove the now-unmanaged bundle if you wish: rm -rf ~/Applications/'Claude Code URL Handler.app'  (safe — nothing else links it, and the vendor will not recreate it once the setting is set)",
         "Verify: python3 scripts/claude-identity-bundle.py --strict exits 0, and its instances[] shows ls_registered=false for the handler."
       ],
       "source_task": "IF-GATEKEEPER-INERT · the second instance of the vendor-bundle class, surfaced by the keeper's class enumeration (scripts/claude-identity-bundle.py)",
       "note": "Measured by the keeper, never applied by it — the deliberate split between what this organ can observe and what it has authority to change, same shape as concurrent_version_race_risk. The setting key is the vendor's own: 'Prevent claude-cli:// protocol handler registration with the OS'. Do NOT 'fix' this bundle by re-linking or re-signing it: its symlink already tracks the launcher correctly, and signing it would rewrite the live CLI's Developer ID signature in place. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.",
       "issue": 1851
+    },
+    {
+      "id": "L-CLAUDE-GATEKEEPER-ALLOW",
+      "status": "open",
+      "label": "Decide whether to add a Gatekeeper allow-rule for the vendor-materialized ClaudeCode.app, the only local action that could stop the recurring \"ClaudeCode.app is damaged and can't be opened\" alert. The bundle is unsealed BY CONSTRUCTION (a bare-signed Mach-O in a hand-written .app), so every macOS assessment of it fails; the alert fires whenever Claude Code execs or opens it, which is every auto-update.",
+      "owner": "yours",
+      "cost": "one sudo command (~15s) IF it is still supported on this OS build — otherwise the residual is upstream-only and this lever closes as won't-fix",
+      "unlocks": "class 4b stops surfacing to the operator at all, instead of being cured after the fact by an effector that cannot prevent it",
+      "gate": "`spctl --add` mutates the SYSTEM SECURITY POLICY database and requires sudo — outside any agent's authority, and the classifier blocks it before execution. It is also a genuine security trade: it whitelists one malformed bundle path from Gatekeeper assessment.",
+      "steps": [
+        "Decide whether whitelisting this one path from Gatekeeper assessment is acceptable. It is Anthropic's own signed CLI wrapped in Anthropic's own hand-built bundle — but the bundle genuinely cannot be verified, which is exactly the property Gatekeeper exists to flag.",
+        "If yes: sudo spctl --add --label 'ClaudeCodeInert' ~/.local/share/claude/ClaudeCode.app",
+        "Verify by REPRODUCING, not by asserting: open a new remote-control session (the surface that raises it) and confirm no alert; then /usr/bin/log show --last 15m --predicate 'eventMessage CONTAINS[c] \"ClaudeCode\"' --style compact shows no new AppleSystemPolicy denial.",
+        "If `spctl --add` errors as unsupported on this OS build, record that on the issue and close this lever — the residual is then upstream-only."
+      ],
+      "source_task": "class 4b root-cause correction 2026-08-12 · the dialog recurred ~30 min after a session declared it cured; the unified log showed the real producers",
+      "note": "SIXTH cure attempt in this lineage. The first five and the 2026-08-12 attempt all targeted LaunchServices REGISTRATION; measurement refuted that as the mechanism — registrations occurred 3 times in 4 days while the alert tracked the 3 CLI auto-updates of 2026-08-12 alone. Two real producers: an AppleSystemPolicy denial on execve of the bundled path, and a full bundle assessment on LSOpenApplication (the 'Verifying ClaudeCode.app…' sheet). Unregistration is cleanup after the fact and prevents neither. NOT reachable: re-signing (rewrites the live CLI's Developer ID signature in place — the bundle executable is a HARDLINK), deletion (vendor recreates every start, and destroys the stable TCC identity 0g8d keeps), and quarantine-stripping (measured: no com.apple.quarantine on any node of the bundle). The genuine fix is upstream — the vendor should seal the bundle or stop exec'ing an unsealed one. Corrected root + both producers + the reproduction probe: docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.",
+      "issue": 2336
     },
     {
       "id": "L-TCC-RECORDER",
