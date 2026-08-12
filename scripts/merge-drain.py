@@ -32,7 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
 from _pr_scan import (  # noqa: E402
-    enumerate_open_prs,
+    enumerate_open_prs_result,
     merge_queue_capability,
     rotating_window,
     stale_base_verdict,
@@ -117,8 +117,6 @@ def _failing_required_checks(repo: str, num: int) -> tuple[str, ...]:
         ],
         timeout=40,
     )
-    if result.returncode != 0:
-        return ()
     try:
         rows = json.loads(result.stdout)
     except (TypeError, ValueError):
@@ -370,13 +368,9 @@ def main():
     # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
     # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
     # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
-    enumeration = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=False)
-    if hasattr(enumeration, "rows"):
-        allprs = list(enumeration.rows)
-        enumeration_complete = bool(getattr(enumeration, "success", False) and getattr(enumeration, "complete", False))
-    else:
-        allprs = list(enumeration)
-        enumeration_complete = False
+    enumeration = enumerate_open_prs_result(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    allprs = list(enumeration.rows)
+    enumeration_complete = bool(enumeration.success and enumeration.complete)
     if not allprs:
         print("[merge-drain] no open PRs (or gh unavailable)")
         return

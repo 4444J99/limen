@@ -511,6 +511,30 @@ class _PythonBypassVisitor(ast.NodeVisitor):
                 merged[name] = sorted(values)
         self.bindings = merged
 
+    def _visit_loop(self, node: ast.For | ast.AsyncFor | ast.While) -> None:
+        if isinstance(node, (ast.For, ast.AsyncFor)):
+            self.visit(node.iter)
+        else:
+            self.visit(node.test)
+        before = {name: list(values) for name, values in self.bindings.items()}
+        body = _PythonBypassVisitor(before)
+        body.process_aliases = set(self.process_aliases)
+        for statement in node.body:
+            body.visit(statement)
+        self.found = self.found or body.found
+        merged: dict[str, list[str]] = {}
+        for name in set(before) | set(body.bindings):
+            values = set(before.get(name, [])) | set(body.bindings.get(name, []))
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+        for statement in node.orelse:
+            self.visit(statement)
+
+    visit_For = _visit_loop
+    visit_AsyncFor = _visit_loop
+    visit_While = _visit_loop
+
     def visit_Call(self, node: ast.Call) -> None:
         call_name = node.func.id if isinstance(node.func, ast.Name) else (
             node.func.attr if isinstance(node.func, ast.Attribute) else ""

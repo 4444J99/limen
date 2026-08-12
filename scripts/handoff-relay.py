@@ -39,6 +39,7 @@ from limen.dispatch import (
     _weak_proxy_exhaustion,
     _has_pr_open_transition,
     _remaining_budget,
+    _reset_budget_if_needed,
     _routine_generated_buildout_allowed,
     _superseded_by_rebase_task,
     _superseded_by_trunk_repair,
@@ -670,6 +671,7 @@ def _dispatch_admission(
         except Exception:
             limen_file = None
         if limen_file is not None:
+            _reset_budget_if_needed(limen_file, dt.datetime.now(dt.timezone.utc))
             daily_budget = int(limen_file.portal.budget.daily)
             governed_agents = set(known_agents)
             governed_agents.update(
