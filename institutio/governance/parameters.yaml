@@ -5531,6 +5531,12 @@ parameters:
     self_update: none
     owner: tabularius
     note: "How many NEW inbound messages since a person's last review make a delta dice-up worth running (relationship-review-delta.py). Default 20 — a meaningful wave, not a single text. Raise to reduce noise, lower to trigger sooner."
+  LIMEN_RELATIONSHIP_PIPELINE_ROOT:
+    default: ""
+    env: LIMEN_RELATIONSHIP_PIPELINE_ROOT
+    self_update: none
+    owner: tabularius
+    note: "Override for the relationship-pipeline checkout that relationship-review-delta.py reads people.json from. Empty (default) = resolve at run time across known locations (~/Workspace/4444J99/relationship-pipeline, then the ~/Workspace/.limen-worktrees/m1_repos mirror). Exists because the root was HARDCODED to the first path, the repo moved, and the sensor then fail-opened on every beat for weeks — a 27-day review gap went undetected because 'no pipeline' and 'no review owed' printed identically. The canonical handle source is now _people-private/people/roster.json; people.json is a legacy fallback and its absence is reported explicitly rather than silently."
 
   LIMEN_OPPORTUNITY_PIPELINE:
     default: "1"
