@@ -826,7 +826,9 @@ def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
 def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() -> None:
     gates = MODULE._load_yaml(ROOT / "institutio" / "governance" / "gates.yaml")
     gate = gates["gates"]["research-adjudication-test"]
+    workflow = MODULE._load_yaml(ROOT / ".github" / "workflows" / "pr-gate.yml")
 
+    assert ".github/workflows/pr-gate.yml" in gate["paths"]
     assert "institutio/positioning/github-map.json" in gate["paths"]
     assert "docs/positioning/claims-ledger.md" in gate["paths"]
     assert "docs/positioning/evidence/flagship-evidence.yaml" in gate["paths"]
@@ -840,3 +842,15 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "python3 scripts/positioning-research-adjudication.py --verify-live"
     )
     assert gate["timeout_seconds"] == 300
+    verification_steps = {
+        step["name"]: step
+        for step in workflow["jobs"]["pr-gate"]["steps"]
+        if isinstance(step, dict) and "name" in step
+    }
+    for step_name in (
+        "Verify implicated PR gates (scoped, CI mirrors deferred)",
+        "Verify merge-group integration gates (scoped, fail-closed)",
+        "Verify manual run (scoped)",
+    ):
+        assert verification_steps[step_name]["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert "GH_TOKEN" not in workflow["jobs"]["pr-gate"]["env"]
