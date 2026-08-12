@@ -13,9 +13,26 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = ROOT / "docs" / "positioning" / "sales" / "psp-c09" / "icp-and-buying-signals.preflight.json"
 
 EXPECTED_SOURCE_LOCK = {
-    "commercialContract": "organvm/limen#2312@e440f5b96b7baa67ebc45868e327b5ce62579142",
-    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@4ae8e81665e35e6a5d403a3e13935021ce6544ec",
-    "proofLedContent": "organvm/limen#2316@36bf386c22e64785db8e7843899bf9aabf85bf89",
+    "commercialContract": "organvm/limen#2312@c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b",
+    "proofLedContent": "organvm/limen#2316@a7937bb1e122574edc5d9e9cb74e18538d2b86c5",
+    "proofExperience": "organvm/limen#2313@23712398c6586e005c303eff632604985cd0a25c",
+    "portfolioExperience": "organvm-vii-kerygma/portfolio#220@9bcc4606b68da83dc0878b060989d35c3b649d7f",
+    "deliveryOsRelay": "organvm/limen#2315@a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+}
+
+EXPECTED_UPSTREAM_STATE = {
+    "p02Closed": True,
+    "c03AcceptedThrough": "PSP-P03-W06",
+    "c03ReaderGate": "PSP-P03-W07",
+    "c03ReaderIssue": 2188,
+    "c03ReaderEvidenceSatisfied": False,
+    "c03FormalState": "open",
+    "c04State": "prepared_preflight",
+    "c05State": "prepared_preflight",
+    "c06State": "prepared_preflight",
+    "c07State": "prepared_preflight",
+    "c08State": "prepared_preflight",
 }
 
 EXPECTED_ASSIGNMENTS = {
@@ -86,6 +103,8 @@ def validate(data: dict[str, Any]) -> list[str]:
         failures.append("preflight must remain synthetic and effect-free")
     if data.get("sourceLock") != EXPECTED_SOURCE_LOCK:
         failures.append("source lock drifted from exact upstream heads")
+    if data.get("upstreamState") != EXPECTED_UPSTREAM_STATE:
+        failures.append("upstream state must preserve the accepted/open/prepared boundary")
     if data.get("assignments") != EXPECTED_ASSIGNMENTS:
         failures.append("model/effort assignments drifted from the live registry")
 

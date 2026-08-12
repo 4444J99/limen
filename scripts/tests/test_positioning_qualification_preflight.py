@@ -25,6 +25,7 @@ def test_live_source_heads_assignments_and_ten_synthetic_accounts_are_valid() ->
     assert len(data["syntheticAccounts"]) == 10
     assert data["assignments"] == MODULE.EXPECTED_ASSIGNMENTS
     assert data["sourceLock"] == MODULE.EXPECTED_SOURCE_LOCK
+    assert data["upstreamState"] == MODULE.EXPECTED_UPSTREAM_STATE
 
 
 def test_each_synthetic_account_scores_and_routes_deterministically() -> None:
@@ -79,3 +80,18 @@ def test_formal_or_effectful_state_fails_closed() -> None:
     failures = MODULE.validate(data)
     assert "formal work must remain open" in failures
     assert "preflight must remain synthetic and effect-free" in failures
+
+
+def test_reader_or_prepared_dependency_promotion_fails_closed() -> None:
+    data = load_manifest()
+    data["upstreamState"]["c03ReaderEvidenceSatisfied"] = True
+    data["upstreamState"]["c08State"] = "closed"
+    failures = MODULE.validate(data)
+    assert "upstream state must preserve the accepted/open/prepared boundary" in failures
+
+
+def test_source_lock_requires_current_public_and_private_receipts() -> None:
+    data = load_manifest()
+    data["sourceLock"]["deliveryOsRelay"] = "organvm/limen#2315@stale"
+    failures = MODULE.validate(data)
+    assert "source lock drifted from exact upstream heads" in failures
