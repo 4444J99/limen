@@ -1,123 +1,120 @@
 ---
 type: prompt-relay-envelope
-version: 1.0
-date: 2026-08-10
-from: Codex direct-session PSP-C12 preflight
-to: next healthy PSP-C12 conductor
+version: 2.0
+date: 2026-08-12
+from: Codex direct-session reversible preflight
+to: next authorized PSP-C12 conductor
 scope: organvm/limen branch codex/psp-c12-control-plane-preflight
 phase: PROVE
-compression_level: medium
+compression_level: high
 ---
 
-# Relay — PSP-C12: reversible P14 control-plane preflight
+# Relay — PSP-C12 dependency and Omega control-plane preflight
 
-This is a public-safe relay. Local absolute paths, private ledgers, identities, and outcome content
-are intentionally omitted; the receiver resolves this tracked path inside a fresh worktree.
+## Routing and truth boundary
 
-## Routing
-
-- Program work IDs: `PSP-P14-W01` through `PSP-P14-W09` (preflight only; none closed here)
-- Parent issue: <https://github.com/organvm/limen/issues/2274>
-- Leaf issues: <https://github.com/organvm/limen/issues/2275> through
-  <https://github.com/organvm/limen/issues/2283>
-- Target repository: `organvm/limen`
+- Program scope: `PSP-C12`, `PSP-P14`, and `PSP-P14-W01` through `PSP-P14-W09`
+- Parent issue: [#2274](https://github.com/organvm/limen/issues/2274)
+- Leaf issues: [#2275](https://github.com/organvm/limen/issues/2275) through
+  [#2283](https://github.com/organvm/limen/issues/2283)
 - Branch: `codex/psp-c12-control-plane-preflight`
-- Draft PR: <https://github.com/organvm/limen/pull/2320>
-- Predicate-tested implementation commit: `1c6f1a17c74ddc22a457eab0bdd37fba5259502e`
-- Tested base observation: `b9c6872cbe352b64e37c69a7133f43f7d61018b5`
-- Conduct root/run/lease: none. The broker bootstrap was attempted once and was not configured in
-  this task environment, so no child agent or P14 leaf was claimed. This direct-session lane staged
-  only the explicitly authorized non-closing preflight.
+- Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
+- Exact predicate-tested implementation head: `8a9a7af246af27eba807552e2332c66bb691ec1a`
+- State: **PREPARED/PREFLIGHT**
+- Formal leaf receipts, phase proof, root proof, and closure: not run or claimed
+- External effects: draft branch and PR metadata only
 
-## Verified current state
+This lane has no authority to convert preparation into closure, invent external outcomes, solicit
+readers, choose a visual direction, send, publish, deploy, sign, spend, or mutate accounts.
 
-| Item | Live state |
+## Dependency truth and execution frontier
+
+The v2 control plane validates a full tracked dependency ledger against the canonical program
+registry. `preflight_state` and `closure_state` are independent, and every prepared row says
+`counts_as_closure: false`.
+
+- P02 is closed at accepted main `8faa5fb9899231ebf5f87e78bb171544c11b79d7`.
+- Nine predecessor chunks, C03 through C11, remain formal blockers.
+- C03 is accepted through W06 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`.
+- The exact first frontier is C03 W07 / [#2188](https://github.com/organvm/limen/issues/2188),
+  assigned `gpt-5.4-mini` / `low`.
+- W07 requires five genuine independent target-like readers. Model, author, coached, or fabricated
+  responses do not count; this preflight performed no outreach.
+- C04-C11 reversible drafts are bound at their current exact PR heads. C11 is now
+  [#2319](https://github.com/organvm/limen/pull/2319) head
+  `92325b04eb741f63a7013bf33d6900568fbef185`.
+- C06 still has exactly three Product Design directions; all remain **UNSELECTED**.
+- All 23 P14 terminal requirement nodes remain open.
+- Derived current blocker total: 9 predecessor chunks + 23 P14 requirements = **32**.
+
+The ledger validates phase ownership, chunk dependencies, chunk conductors, all nine P14 issue
+URLs, full work dependencies, and exact model/effort assignments. A registry drift fails closed.
+
+## What the v2 control plane proves
+
+- The event/KPI, review, claim-incident, release-recovery, sales-feedback, delivery-feedback, and
+  synthetic two-pass mechanisms are internally coherent and execute no predecessor commands.
+- Public evidence is recursively key-denylisted. Contact/client/operator names, private repository
+  names, price amounts, credentials, authorization, tokens, secrets, email, phone, and private
+  evidence bodies block terminal status wherever they occur.
+- Live Omega requires two strictly ordered canonical passes with one digest, clean 127-object
+  parity, no open IDs, no failures, positive verified-receipt counts, and two unique HTTPS pass
+  receipts.
+- The consuming program receipt must bind the same state digest, an exact observed repository head,
+  RFC3339 observation time at or after pass two, output SHA-256, and the canonical command.
+- Synthetic results remain explicitly unusable for Omega, demand, client/operator outcomes,
+  time-based review completion, or human acceptance.
+
+## Exact predicate receipts
+
+| Predicate | Result |
 |---|---|
-| Exact predicate-tested head | `1c6f1a17c74ddc22a457eab0bdd37fba5259502e` |
-| Exact remote branch head at relay authoring | `1c6f1a17c74ddc22a457eab0bdd37fba5259502e` |
-| Working tree | Clean at the implementation commit before adding this relay; the relay is the only successor change |
-| Acceptance condition | Preflight met; every P14 leaf and phase/root terminal condition remains open |
-| Task-specific predicate | `python3 scripts/positioning-p14-control-plane.py --preflight` exited `0`: contract valid, synthetic fixture pass, zero predecessor commands executed, terminal blocked on 23 named live outcomes |
-| Focused tests | `python3 -m pytest -q cli/tests/test_positioning_p14_control_plane.py` — 11 passed in 0.05s |
-| Terminal observation | `python3 scripts/positioning-p14-control-plane.py --terminal` exited expected `3`, `status=blocked`, `missing_count=23` |
-| Scoped repository gate | Cheap wave passed. Heavy wave was not admitted because of live swap pressure and returned the bounded exit `75`; required draft-PR CI remains authoritative for that wave |
-| Receipt verifier | No P14 leaf receipt was minted and no `--verify-work PSP-P14-*` command was run |
-| Phase exit proof | Not run; P14 children and live outcome gates are not complete |
-| Omega observation | Synthetic pair comparison only. No live Omega pass file was emitted or claimed |
-| External effects | Branch push and requested draft PR only; no send, publication, deployment, DNS, spend, signature, account, or issue-state mutation |
+| `python3 -B scripts/positioning-program.py --check` | PASS; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
+| `python3 -B scripts/positioning-program.py --verify-model-assignments` | PASS; all 127 assignments valid |
+| `python3 -B scripts/positioning-p14-control-plane.py --check` | PASS; v2 contract, 9 predecessor chunks, 23 terminal nodes, exact W07 frontier |
+| synthetic fixture | PASS; no predecessor command or external effect |
+| `python3 -B scripts/positioning-p14-control-plane.py --preflight` | PASS; terminal truth blocked on exactly 32 current atoms |
+| `python3 -B scripts/positioning-p14-control-plane.py --terminal` | expected exit 3; 9 predecessor blockers + 23 P14 requirements |
+| focused pytest | 17 passed |
+| Ruff lint and format | PASS |
+| scoped cheap wave | PASS; 13 implicated gates |
+| scoped serialized CLI suite | 5705 passed, 2 skipped; 2 unrelated process-timing tests failed in `test_campaign_relay_effector.py` |
 
-## Completed work
+The two heavy-suite failures did not touch P14 code or assertions: one fixture did not create its
+provider PID file before assertion, and one timeout fixture did not create its child PID file. The
+unchanged heavy suite was not replayed for reassurance. Draft-PR CI on the superseding exact head is
+the next independent integration receipt.
 
-- Added the P14-owned event and KPI dictionary with stable sources, denominators, owners, cadence,
-  privacy boundaries, decision uses, and guardrails.
-- Added machine-checked weekly, monthly, and quarterly review contracts that reject synthetic
-  fixtures as completed live cycles.
-- Added deterministic synthetic claim quarantine/correction, exact release recovery, sales and
-  delivery feedback, portfolio impact, and distinct-two-pass fixtures.
-- Added an offline terminal predicate that names all 23 missing live outcomes and their owners.
-- Reused the current P00-W07 receipt by digest and executed no predecessor command.
-- Recorded `HG-PRICE-ANCHORS` once in `his-hand-levers.json` as `L-PSP-PRICE-ANCHORS`, still open.
-- Corrected the retired quota lever so historical Agy evidence cannot reappear as a PSP gate;
-  merged PR #2300 and the passing P00 receipt remain authoritative.
-- Preserved every canonical leaf model/effort assignment; no program manifest assignment or
-  generated PSP index changed.
+## Activation and completion predicates
 
-## Decisions and rationale
+1. Re-read the registry and dependency ledger; do not infer readiness from this dated relay.
+2. Do not create a duplicate lane. Continue the existing chunk/PR and activate only the exact
+   frontier admitted by live state.
+3. C03 W07 remains the first frontier until five genuine-reader receipts satisfy its predicate and
+   the owning C03 lane closes it correctly.
+4. Populate `docs/receipts/positioning/p14/live-evidence.json` only from durable owner receipts.
+   Private bodies remain in private ledgers; the public envelope carries opaque IDs, aggregates,
+   exact commits, predicates, and HTTPS receipts.
+5. P14 terminal predicate: `python3 scripts/positioning-p14-control-plane.py --terminal` exits 0.
+6. Program terminal predicate: `python3 scripts/positioning-program.py --omega --require-two-pass`
+   exits 0 against two distinct unchanged live observations.
 
-| Decision | Evidence and rationale |
-|---|---|
-| Stage a chunk-level preflight without leaf claims | Live `--ready --json` contained no P14 leaf, while the direct request explicitly authorized reversible downstream preparation without closure |
-| Keep predecessor handling receipt-only | The exact P00-W07 receipt already passes; replay would add cost without new evidence |
-| Separate preflight success from terminal success | A green scaffold must not be convertible into an Omega, demand, client, operator, cadence, or human-acceptance claim |
-| Keep the PR draft | The formal DAG, live receipts, required time windows, real outcomes, and host-admitted heavy/CI verification are not complete |
+## Human gates and prohibitions
 
-## Next actions
+- `HG-PRICE-ANCHORS` remains unpulled; do not choose or claim a price decision.
+- Reader outreach, publication, and direct-message sends remain behind their exact authority.
+- Visual selection/build remains with Product Design; all three directions remain unselected.
+- No merge, issue closure, send, publication, deployment, DNS, spend, signature, account mutation,
+  private-evidence exposure, or task-board edit occurred.
 
-1. Review draft PR #2320 and consume its CI result at the exact branch head; do not merge from this
-   relay and do not rewrite the predicate-tested implementation commit merely because `main` moves.
-2. Re-run `python3 scripts/positioning-program.py --ready --json`. Execute a P14 leaf only when it
-   is live-ready, using its exact registry model/effort pair and a fresh broker lease. The obsolete
-   provider-diversity/Agy gate must not be restored.
-3. Populate `docs/receipts/positioning/p14/live-evidence.json` only from durable owner receipts.
-   Private outcome bodies remain in their private ledgers; the public envelope carries opaque IDs,
-   exact heads, counts, predicates, and HTTPS receipts only.
-4. Re-run `python3 scripts/positioning-p14-control-plane.py --terminal`. Only an exit `0` permits
-   the canonical live `python3 scripts/positioning-program.py --omega --require-two-pass` step.
-
-## Completion and switch predicates
-
-- One-line launch command: `python3 scripts/positioning-p14-control-plane.py --preflight`
-- Switch-to-leaf predicate: `python3 scripts/positioning-program.py --ready --json` includes a
-  `PSP-P14-W*` row and the conductor can obtain its exact broker lease.
-- P14 terminal predicate: `python3 scripts/positioning-p14-control-plane.py --terminal` exits `0`.
-- Program terminal predicate: `python3 scripts/positioning-program.py --omega --require-two-pass`
-  exits `0` against two distinct unchanged live observations.
-
-## Risks and prohibitions
-
-- Human gate still unpulled: `his-hand-levers.json -> L-PSP-PRICE-ANCHORS`; do not surface it before
-  the real W07 outcome threshold exists and do not infer a decision.
-- Sensitive/private boundary: no contact identity, client/operator identity, private evidence body,
-  price value, or private repository name belongs in the public evidence envelope.
-- Do not edit `tasks.yaml`, shared generated PSP indexes, or issue states from this relay.
-- Do not merge, force-push, write `main`, send, publish, deploy, change DNS, spend, sign, or mutate an
-  account.
-- Rollback route: revert the draft PR. The runner has no network/subprocess effect and created no
-  external state beyond the branch and draft PR.
-
-## References
+## Durable owners
 
 - Control contract: `institutio/positioning/p14/control-plane.json`
+- Dependency ledger: `institutio/positioning/p14/dependency-ledger.json`
 - Runner: `scripts/positioning-p14-control-plane.py`
 - Operator guide: `docs/positioning/p14/README.md`
 - Synthetic fixture: `cli/tests/fixtures/positioning-p14/synthetic-cycle.json`
-- Draft PR: <https://github.com/organvm/limen/pull/2320>
+- Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
 
-The fresh-agent injection phrase is:
-
-```text
-Continue from relay at <fresh-worktree>/docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md. mid-task — see Next Actions for current step.
-```
-
-The receiver must resolve the tracked path locally, verify live state, and obtain its own authority.
-This file transfers context, not identity, lease, approval, or permission.
+The receiver must verify live state and obtain its own authority. This relay transfers context, not
+identity, lease, approval, consent, acceptance, external evidence, or closure.
