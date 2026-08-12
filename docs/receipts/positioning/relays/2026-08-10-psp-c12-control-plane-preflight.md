@@ -36,7 +36,7 @@ registry. `preflight_state` and `closure_state` are independent, and every prepa
 - P02 is closed at accepted main `8faa5fb9899231ebf5f87e78bb171544c11b79d7`.
 - Nine predecessor chunks, C03 through C11, remain formal blockers.
 - C03 is accepted through W06 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`.
-- The exact first frontier is C03 W07 / [#2188](https://github.com/organvm/limen/issues/2188),
+- The exact first frontier is `PSP-P03-W07` / [#2188](https://github.com/organvm/limen/issues/2188),
   assigned `gpt-5.4-mini` / `low`.
 - W07 requires five genuine independent target-like readers. Model, author, coached, or fabricated
   responses do not count; this preflight performed no outreach.
@@ -90,7 +90,7 @@ the next independent integration receipt.
 1. Re-read the registry and dependency ledger; do not infer readiness from this dated relay.
 2. Do not create a duplicate lane. Continue the existing chunk/PR and activate only the exact
    frontier admitted by live state.
-3. C03 W07 remains the first frontier until five genuine-reader receipts satisfy its predicate and
+3. `PSP-P03-W07` remains the first frontier until five genuine-reader receipts satisfy its predicate and
    the owning C03 lane closes it correctly.
 4. Populate `docs/receipts/positioning/p14/live-evidence.json` only from durable owner receipts.
    Private bodies remain in private ledgers; the public envelope carries opaque IDs, aggregates,
