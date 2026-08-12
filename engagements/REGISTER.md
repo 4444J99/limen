@@ -12,7 +12,7 @@ scripts/engagement-guard.py --all      # status of every engagement below
 
 | Engagement | Counterparty | Started | Instrument | Guard | Notes |
 |---|---|---|---|---|---|
-| [`victoroff`](victoroff.yaml) | pre-revenue LLC | 2026‑07‑21 | not mutually executed | **BLOCKED** (6 FAIL) | Retroactive. This is the guard's regression test — it must never pass. |
+| [`victoroff`](victoroff.yaml) | pre-revenue LLC | 2026‑07‑21 | not mutually executed | **BLOCKED** (7 FAIL) | Retroactive. This is the guard's regression test — it must never pass. |
 | [`examples/healthy`](examples/healthy.yaml) | — | — | — | CLEAR | Template. Copy this to start a new engagement. |
 
 ---
@@ -44,6 +44,5 @@ message content, no personal detail, and no third-party names**. Counterparties 
 character ("pre-revenue LLC"), not identity where identity is not already public.
 
 Confidential engagement records belong in a private repository. `victoroff.yaml` is the worked
-example of the line: it records that promises were made only in conversation, and quotes the
-three fragments necessary to make the failure legible, but carries none of the surrounding
-record.
+example of the line: it records that promises were made only in conversation, and quotes the few
+fragments necessary to make the failure legible, but carries none of the surrounding record.
