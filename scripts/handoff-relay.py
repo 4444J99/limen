@@ -31,14 +31,13 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
-from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent  # noqa: E402
+from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent, lane_throughput_cap  # noqa: E402
 from limen.dispatch import (
     LOCAL_CHECKOUT_AGENTS,
     _down_lanes,
     _effective_target_agent,
     _weak_proxy_exhaustion,
     _has_pr_open_transition,
-    _remaining_budget,
     _reset_budget_if_needed,
     _routine_generated_buildout_allowed,
     _superseded_by_rebase_task,
@@ -51,7 +50,7 @@ from limen.dispatch import (
     task_passes_value_gate,
 )  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.models import Task  # noqa: E402
+from limen.models import LimenFile, Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
 from limen.work_loan import task_work_loan_readiness  # noqa: E402
@@ -322,8 +321,15 @@ def _reset_window_active(agent: str, reset_at: Any, now: dt.datetime) -> bool:
 def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
     """Authoritative budget from ``tasks.yaml`` rather than the overnight log proxy."""
     portal = board.get("portal") if isinstance(board, dict) else None
-    budget = portal.get("budget") if isinstance(portal, dict) else None
-    budget = budget if isinstance(budget, dict) else {}
+    raw_budget = portal.get("budget") if isinstance(portal, dict) else None
+    raw_budget = raw_budget if isinstance(raw_budget, dict) else {}
+    raw_track = raw_budget.get("track") if isinstance(raw_budget.get("track"), dict) else {}
+    track_spent_was_supplied = "spent" in raw_track and _as_int(raw_track.get("spent")) is not None
+    try:
+        normalized = LimenFile.model_validate({"portal": {"budget": raw_budget}})
+    except (TypeError, ValueError):
+        normalized = LimenFile()
+    budget = normalized.portal.budget.model_dump(mode="python")
     track = budget.get("track") if isinstance(budget.get("track"), dict) else {}
     caps = budget.get("per_agent") if isinstance(budget.get("per_agent"), dict) else {}
     spent_by = track.get("per_agent") if isinstance(track.get("per_agent"), dict) else {}
@@ -351,7 +357,7 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
         else:
             expired_window = True
     spent_by = active_spent
-    if track_date != current_date or expired_window:
+    if track_date != current_date or expired_window or not track_spent_was_supplied:
         track_spent = sum(_as_int(value) or 0 for value in spent_by.values())
     else:
         track_spent = _as_int(track.get("spent"))
@@ -380,6 +386,24 @@ def _board_budget(board: dict[str, Any]) -> dict[str, Any]:
         "remaining": global_remaining,
         "per_agent": agents,
     }
+
+
+def _remaining_budget_readonly(limen: LimenFile, agent: str, budget: int) -> int:
+    """Mirror dispatch admission without emitting throughput-governor receipts."""
+    agent = canonical_agent(agent)
+    track = limen.portal.budget.track
+    agent_limit = limen.portal.budget.per_agent.get(agent)
+    if agent_limit is not None:
+        remaining = max(0, agent_limit - track.per_agent.get(agent, 0))
+    else:
+        remaining = max(0, budget - track.spent)
+    if remaining <= 0:
+        return remaining
+    cap = lane_throughput_cap(limen, agent)
+    if cap["mode"] == "disabled":
+        return remaining
+    governed = max(0, int(cap["cap"]) - track.per_agent.get(agent, 0))
+    return min(remaining, governed)
 
 
 def _task_summary(task: dict[str, Any]) -> dict[str, Any]:
@@ -621,6 +645,7 @@ def _dispatch_admission(
             "down_lanes": [],
             "admissible_agent_counts": {},
             "admissible_any_agent_counts": {},
+            "gated_tasks": [],
             "dispatchable_next": None,
         }
     by_id = {str(task.get("id")): task for task in tasks if task.get("id")}
@@ -681,7 +706,7 @@ def _dispatch_admission(
             )
             for candidate_agent in sorted(governed_agents):
                 try:
-                    governed_remaining[candidate_agent] = _remaining_budget(
+                    governed_remaining[candidate_agent] = _remaining_budget_readonly(
                         limen_file,
                         candidate_agent,
                         daily_budget,
@@ -794,14 +819,14 @@ def _dispatch_admission(
                     record_reason(candidate_agent, "provider_health")
                     provider_health_reasons[candidate_agent] += 1
                     continue
-                if not _eligible_any_agent(task, candidate_agent):
-                    any_blockers["admission_blocked"] += 1
-                    record_reason(candidate_agent, "admission_blocked")
-                    continue
                 if not lane_reachability.get(candidate_agent, False):
                     any_blockers["provider_health"] += 1
                     record_reason(candidate_agent, "provider_health")
                     provider_health_reasons[candidate_agent] += 1
+                    continue
+                if not _eligible_any_agent(task, candidate_agent):
+                    any_blockers["admission_blocked"] += 1
+                    record_reason(candidate_agent, "admission_blocked")
                     continue
                 worktree_reason = _worktree_dispatch_gate(task, candidate_agent, worktree_snapshot)
                 if worktree_reason is not None:

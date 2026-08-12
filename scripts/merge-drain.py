@@ -142,16 +142,29 @@ def _load_ci_red_ledger() -> dict[str, dict[str, object]]:
     return subjects if isinstance(subjects, dict) else {}
 
 
-def _save_ci_red_ledger(subjects: dict[str, dict[str, object]]) -> None:
-    CI_RED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+def _save_ci_red_ledger(subjects: dict[str, dict[str, object]]) -> bool:
     temporary = CI_RED_LEDGER.with_suffix(".tmp")
-    temporary.write_text(
-        json.dumps({"schema_version": "limen.ci_red_subjects.v1", "subjects": subjects}, indent=2, sort_keys=True)
-        + "\n",
-        encoding="utf-8",
-    )
-    os.chmod(temporary, 0o600)
-    os.replace(temporary, CI_RED_LEDGER)
+    try:
+        CI_RED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        temporary.write_text(
+            json.dumps(
+                {"schema_version": "limen.ci_red_subjects.v1", "subjects": subjects},
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, CI_RED_LEDGER)
+        return True
+    except OSError as exc:
+        print(f"[merge-drain] ci-red ledger persistence failed: {exc}", file=sys.stderr)
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+        return False
 
 
 def reconcile_ci_red_subjects(
@@ -411,9 +424,13 @@ def main():
         identity = str(subject["identity"])
         head = str(subject["head"])
         checks = ", ".join(str(name) for name in subject["checks"]) or "required check names unavailable"
-        _notify.notify(
+        _notify.notify_event(
             ROOT,
-            f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
+            source="merge-drain",
+            event="ci-red",
+            stable_id=f"{identity}@{head}",
+            payload={"checks": list(subject["checks"]), "head": head, "identity": identity},
+            message=f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
             title="LIMEN merge drain",
         )
     try:

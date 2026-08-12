@@ -413,6 +413,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_CONDUCTING_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_CONDUCTING_REFRESH_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Finite subprocess deadline in seconds for conducting-report.py to refresh keeper-owned handoff admission before pairing it with current usage telemetry. Timeout withholds the daily delivery and records a bounded public-safe finish receipt."
   LIMEN_WATCH_RSS_MB:
     default: 512
     env: LIMEN_WATCH_RSS_MB

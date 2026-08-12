@@ -13,16 +13,17 @@ can and never crashes the beat. Read-only on the fleet's data; writes only its o
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import os
+import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _notify import notify, notify_ntfy
+from _notify import NotificationResult, notify_event, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -31,8 +32,10 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", str(ROOT / "tasks.yaml")))
 STATE = LOGS / ".conducting-report-state.json"
 HANDOFF = LOGS / "handoff.json"
 CONTINUITY = LOGS / "dispatch-continuity.json"
+ADMISSION_REFRESH_RECEIPT = LOGS / "conducting-admission-refresh.jsonl"
 ROUTING_REASONS = frozenset({"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"})
 TELEMETRY_MAX_AGE_SECONDS = 5400
+ADMISSION_REFRESH_TIMEOUT_SECONDS = 60.0
 
 
 def _load(path, default):
@@ -42,22 +45,73 @@ def _load(path, default):
         return default
 
 
-def _refresh_admission() -> bool:
-    """Refresh keeper-owned admission before pairing it with the current usage feed."""
+def _admission_refresh_receipt(event: str, **fields: object) -> None:
+    """Emit a bounded, public-safe start/finish receipt for the relay subprocess."""
     try:
-        path = Path(__file__).with_name("handoff-relay.py")
-        spec = importlib.util.spec_from_file_location("_limen_handoff_relay", path)
-        if spec is None or spec.loader is None:
-            return False
-        relay = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(relay)
-        return relay.write() == 0
-    except Exception:
+        ADMISSION_REFRESH_RECEIPT.parent.mkdir(parents=True, exist_ok=True)
+        row = {
+            "event": event,
+            "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            **fields,
+        }
+        with ADMISSION_REFRESH_RECEIPT.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(row, sort_keys=True) + "\n")
+    except OSError:
+        pass
+
+
+def _refresh_admission() -> bool:
+    """Refresh keeper-owned admission through one bounded relay process."""
+    path = Path(__file__).with_name("handoff-relay.py")
+    try:
+        timeout = max(1.0, float(os.environ.get("LIMEN_CONDUCTING_REFRESH_TIMEOUT", ADMISSION_REFRESH_TIMEOUT_SECONDS)))
+    except ValueError:
+        timeout = ADMISSION_REFRESH_TIMEOUT_SECONDS
+    started = time.monotonic()
+    _admission_refresh_receipt("start", timeout_seconds=timeout)
+    try:
+        result = subprocess.run(
+            [sys.executable, str(path)],
+            capture_output=True,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        _admission_refresh_receipt(
+            "finish",
+            elapsed_seconds=round(time.monotonic() - started, 3),
+            outcome="timeout",
+        )
         return False
+    except OSError:
+        _admission_refresh_receipt(
+            "finish",
+            elapsed_seconds=round(time.monotonic() - started, 3),
+            outcome="launch_failed",
+        )
+        return False
+    outcome = "ok" if result.returncode == 0 else "failed"
+    _admission_refresh_receipt(
+        "finish",
+        elapsed_seconds=round(time.monotonic() - started, 3),
+        outcome=outcome,
+        returncode=result.returncode,
+    )
+    return result.returncode == 0
 
 
-def _notify_macos(title, msg):
-    notify(ROOT, msg, title=title)
+def _notify_macos(title, msg, day, *, force=False) -> NotificationResult:
+    return notify_event(
+        ROOT,
+        source="conducting-report",
+        event="daily-report",
+        stable_id=day,
+        local_day=day,
+        payload={"headline": msg},
+        message=msg,
+        title=title,
+        force=force,
+    )
 
 
 def _notify_ntfy(title, msg):
@@ -89,6 +143,10 @@ def _safe_count(value: object) -> int:
         return max(0, int(value or 0))
     except (TypeError, ValueError):
         return 0
+
+
+def _normalize_provider(value: object) -> str:
+    return str(value or "").strip().lower().replace("-", "_")
 
 
 def _continuity_summary(instant: datetime) -> str:
@@ -141,7 +199,8 @@ def _routing_reason(
     raw_down_lanes = admission.get("down_lanes")
     if not isinstance(raw_down_lanes, (list, tuple, set)):
         raw_down_lanes = provider_headroom.get("down_lanes", [])
-    down_lanes = {str(lane).strip().lower().replace("-", "_") for lane in raw_down_lanes if str(lane).strip()}
+    down_lanes = {_normalize_provider(lane) for lane in raw_down_lanes if str(lane).strip()}
+    target_names = {_normalize_provider(name) for name in (target_providers or set()) if str(name).strip()}
     if admissible > 0 or admission.get("dispatchable_next"):
         if target_providers is None:
             lane_counts = admission.get("admissible_agent_counts")
@@ -165,20 +224,21 @@ def _routing_reason(
         if not isinstance(agent_counts, dict) or not isinstance(any_agent_counts, dict):
             return "keeper_unavailable", "canonical targeted admission unavailable"
         target_counts = {
-            str(agent): _safe_count(count)
+            _normalize_provider(agent): _safe_count(count)
             for agent, count in agent_counts.items()
-            if str(agent) != "any"
-            and str(agent) in target_providers
-            and str(agent).strip().lower().replace("-", "_") not in down_lanes
+            if _normalize_provider(agent) != "any"
+            and _normalize_provider(agent) in target_names
+            and _normalize_provider(agent) not in down_lanes
             and _safe_count(count)
         }
         for agent, count in any_agent_counts.items():
             if (
-                str(agent) in target_providers
-                and str(agent).strip().lower().replace("-", "_") not in down_lanes
+                _normalize_provider(agent) in target_names
+                and _normalize_provider(agent) not in down_lanes
                 and _safe_count(count)
             ):
-                target_counts[str(agent)] = target_counts.get(str(agent), 0) + _safe_count(count)
+                normalized = _normalize_provider(agent)
+                target_counts[normalized] = target_counts.get(normalized, 0) + _safe_count(count)
         if target_counts:
             idle_admissible = sum(target_counts.values())
             return "routable", f"admissible_for_idle={idle_admissible}; {continuity}"
@@ -190,9 +250,6 @@ def _routing_reason(
 
     reasons = admission.get("reason_counts")
     reasons = reasons if isinstance(reasons, dict) else {}
-    target_names = {
-        str(name).strip().lower().replace("-", "_") for name in (target_providers or set()) if str(name).strip()
-    }
     if target_providers is not None:
         # Handoff admission preserves the effective provider for each gated row.  Use only
         # those rows for an idle lane; a Jules-only failure must not become a Codex alert.
@@ -200,7 +257,7 @@ def _routing_reason(
         if isinstance(by_agent, dict):
             filtered: dict[str, int] = {}
             for agent, counts in by_agent.items():
-                normalized = str(agent).strip().lower().replace("-", "_")
+                normalized = _normalize_provider(agent)
                 if normalized not in target_names or not isinstance(counts, dict):
                     continue
                 for key, value in counts.items():
@@ -216,15 +273,14 @@ def _routing_reason(
     vendors = provider_headroom.get("vendors", {}) if isinstance(provider_headroom, dict) else {}
     blocked_counts = admission.get("provider_health_reason_counts")
     blocked_counts = blocked_counts if isinstance(blocked_counts, dict) else {}
-    blocked_providers = {str(name) for name, count in blocked_counts.items() if _safe_count(count)}
+    blocked_providers = {_normalize_provider(name) for name, count in blocked_counts.items() if _safe_count(count)}
     if target_providers is not None:
-        blocked_providers = {
-            name for name in blocked_providers if name.strip().lower().replace("-", "_") in target_names
-        }
+        blocked_providers = {name for name in blocked_providers if name in target_names}
+    normalized_vendors = {_normalize_provider(name): row for name, row in vendors.items()}
     provider_states = {
         str(row.get("health") or row.get("state") or row.get("status") or "").lower().replace("-", "_")
-        for name, row in vendors.items()
-        if str(name) in blocked_providers and isinstance(row, dict)
+        for name, row in normalized_vendors.items()
+        if name in blocked_providers and isinstance(row, dict)
     }
     if (
         explicit_auth_block
@@ -418,8 +474,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.force and state.get("last_day") == day:
         return 0  # already reported for this fresh local-day snapshot
 
-    _notify_macos("Limen — conducting", headline)
-    _notify_ntfy("Limen — conducting", body)
+    macos = _notify_macos("Limen — conducting", headline, day, force=args.force)
+    ntfy = _notify_ntfy("Limen — conducting", body) if macos.reserved else False
+    if macos.status != "emitted" and not ntfy:
+        print(f"conducting-report: delivery not recorded ({macos.status})")
+        return 0
     try:
         STATE.write_text(
             json.dumps(

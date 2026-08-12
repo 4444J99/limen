@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _notify import notify, notify_ntfy
+from _notify import notify_event, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -38,7 +38,14 @@ def _load(path, default):
 
 
 def _notify_macos(title, msg):
-    notify(ROOT, msg, title=title)
+    return notify_event(
+        ROOT,
+        source="money-view",
+        event=title,
+        message=msg,
+        title=title,
+        payload={"message": msg},
+    )
 
 
 def _notify_ntfy(title, msg):
@@ -46,9 +53,9 @@ def _notify_ntfy(title, msg):
 
 
 def _emit(title, msg):
-    _notify_macos(title, msg)
-    _notify_ntfy(title, msg)
-    print(f"[notify] {title}: {msg}")
+    result = _notify_macos(title, msg)
+    pushed = _notify_ntfy(title, msg) if result.reserved else False
+    print(f"[notify:{result.status}{'+ntfy' if pushed else ''}] {title}: {msg}")
 
 
 def main():

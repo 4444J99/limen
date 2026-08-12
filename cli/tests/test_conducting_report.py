@@ -2,6 +2,7 @@ import importlib.util
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "conducting-report.py"
@@ -280,6 +281,40 @@ def test_main_refreshes_admission_before_building_report(tmp_path, monkeypatch):
     assert refreshed == [True]
 
 
+def test_refresh_admission_is_bounded_and_writes_start_finish_receipts(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    module.ADMISSION_REFRESH_RECEIPT = tmp_path / "logs" / "refresh.jsonl"
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append((args, kwargs))
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    assert module._refresh_admission() is True
+    assert calls[0][0] == [module.sys.executable, str(SCRIPT.with_name("handoff-relay.py"))]
+    assert calls[0][1]["timeout"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
+    receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
+    assert [receipt["event"] for receipt in receipts] == ["start", "finish"]
+    assert receipts[-1]["outcome"] == "ok"
+
+
+def test_refresh_admission_timeout_is_a_finite_failed_receipt(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    module.ADMISSION_REFRESH_RECEIPT = tmp_path / "logs" / "refresh.jsonl"
+    monkeypatch.setenv("LIMEN_CONDUCTING_REFRESH_TIMEOUT", "1")
+
+    def timeout(*_args, **_kwargs):
+        raise module.subprocess.TimeoutExpired(["handoff-relay.py"], 1)
+
+    monkeypatch.setattr(module.subprocess, "run", timeout)
+
+    assert module._refresh_admission() is False
+    receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
+    assert receipts[-1]["outcome"] == "timeout"
+
+
 def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
@@ -300,6 +335,17 @@ def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
         "auth_blocked",
         "keeper_unavailable",
     }
+
+
+def test_target_provider_names_are_normalized_once_across_admission_views(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1, admissible_agents={"claude_code": 1})
+
+    reason, detail = module._routing_reason(target_providers={"Claude-Code"})
+
+    assert reason == "routable"
+    assert "admissible_for_idle=1" in detail
 
 
 def test_unrelated_vendor_auth_does_not_override_keeper_gate(tmp_path, monkeypatch):
@@ -400,12 +446,39 @@ def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch)
         encoding="utf-8",
     )
     delivered = []
+    monkeypatch.setattr(module, "_refresh_admission", lambda: True)
     monkeypatch.setattr(module, "_notify_macos", lambda *_args: delivered.append("macos"))
     monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: delivered.append("ntfy"))
 
     assert module.main([]) == 0
     assert delivered == []
     assert not module.STATE.exists()
+
+
+def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+    (logs / "usage.json").write_text(
+        json.dumps(
+            {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "vendors": {"codex": {"headroom_pct": 100, "consumed": 0}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_refresh_admission", lambda: True)
+    failed = SimpleNamespace(status="delivery_failed", reserved=True)
+    monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: failed)
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: False)
+
+    assert module.main([]) == 0
+    assert not module.STATE.exists()
+
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: True)
+    assert module.main([]) == 0
+    assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
 
 
 def test_live_down_lanes_cannot_be_reported_as_routable(tmp_path, monkeypatch):
@@ -429,6 +502,8 @@ def test_delivery_callers_use_shared_ntfy_helper():
 
     assert "urllib.request" not in conducting
     assert "urllib.request" not in events
+    assert "notify_event(" in conducting
+    assert "notify_event(" in events
     assert "notify_ntfy(ROOT" in conducting
     assert "notify_ntfy(ROOT" in events
 

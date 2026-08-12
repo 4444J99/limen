@@ -448,12 +448,73 @@ def test_declared_python_encoding_is_decoded(tmp_path, check_gate):
             "import subprocess\n"
             "# café\n"
             'subprocess.run(["osascript", "-e", '
-            "'display notification \\\"x\\\"'])\\n"
+            "'display notification \\\"x\\\"'])\n"
         ).encode("latin-1")
     )
 
     assert check_gate._python_bypasses(sender) is True
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_imported_process_alias_survives_function_class_and_if_scopes(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "from subprocess import run as execute\n"
+        "class Sender:\n"
+        "    def send(self, enabled):\n"
+        "        if enabled:\n"
+        "            execute(['osascript', '-e', 'display notification \\\"x\\\"'])\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_conditionally_imported_process_alias_is_tracked_after_branch(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "if enabled:\n"
+        "    from subprocess import run as execute\n"
+        "execute(['osascript', '-e', 'display notification \\\"x\\\"'])\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_git_degradation_fallback_scans_beyond_scripts(tmp_path, check_gate):
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    (tools / "sender.py").write_text(
+        'import subprocess\nsubprocess.run(["osascript", "-e", "display notification x"])\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["tools/sender.py"]
+
+
+def test_clean_exact_head_reuses_source_path_scan(tmp_path, check_gate, monkeypatch):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        'import subprocess\nsubprocess.run(["osascript", "-e", "display notification x"])\n',
+        encoding="utf-8",
+    )
+    calls = []
+    check_gate._SOURCE_PATH_CACHE.clear()
+    monkeypatch.setattr(check_gate, "_clean_exact_head", lambda _root: "a" * 40)
+
+    def fake_run(*_args, **_kwargs):
+        calls.append(True)
+        return SimpleNamespace(returncode=0, stdout="scripts/sender.py\n")
+
+    monkeypatch.setattr(check_gate.subprocess, "run", fake_run)
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+    assert len(calls) == 1
 
 
 def test_undecodable_notification_sources_fail_closed(tmp_path, check_gate):

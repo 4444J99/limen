@@ -80,7 +80,7 @@ import _root  # noqa: E402  — hard import: this predicate has no meaning witho
 
 NOTIFIER_REL = Path("scripts") / "_notify.py"
 GATE_FUNC = "_root_may_speak"
-PUBLIC_EFFECTORS = frozenset({"notify", "notify_once", "notify_ntfy"})
+PUBLIC_EFFECTORS = frozenset({"notify", "notify_event", "notify_once", "notify_ntfy"})
 DELIVERY_FUNC = "_deliver"
 NETWORK_DELIVERY_FUNCS = frozenset({"urlopen"})
 
@@ -323,10 +323,82 @@ _OSASCRIPT_COMMAND_RE = re.compile(
     r"(?<![\w./-])(?:[\w./-]+/)?osascript(?=[\s\"'`]|$)",
     re.IGNORECASE,
 )
+_SOURCE_PATH_CACHE: dict[str, tuple[str, ...]] = {}
+SOURCE_SCAN_FAILURE = "<notification-source-scan-unavailable>"
+
+
+def _clean_exact_head(root: Path) -> str | None:
+    """Return a reusable exact-head key only when tracked content is unchanged."""
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if head.returncode != 0 or not head.stdout.strip():
+            return None
+        status = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        if status.returncode != 0 or status.stdout.strip():
+            return None
+        return head.stdout.strip()
+    except (OSError, UnicodeError, subprocess.SubprocessError):
+        return None
+
+
+def _fallback_source_paths(root: Path) -> list[Path]:
+    """Recover from git-grep degradation without narrowing the tree to scripts/."""
+    try:
+        tracked = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "-z",
+                "--",
+                "*.py",
+                "*.sh",
+                "*.bash",
+                "*.zsh",
+            ],
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        tracked = None
+    if tracked is not None and tracked.returncode == 0:
+        candidates = [root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw]
+        selected: list[Path] = []
+        for candidate in candidates:
+            try:
+                if b"osascript" in candidate.read_bytes().lower():
+                    selected.append(candidate)
+            except OSError:
+                selected.append(candidate)
+        return selected
+
+    # Synthetic roots in focused tests are intentionally not git repositories. Scan the
+    # whole supplied root; a scripts-only fallback would hide a direct effector elsewhere.
+    try:
+        return list(root.rglob("*"))
+    except OSError as exc:
+        raise RuntimeError(f"notification source scan unavailable: {exc}") from exc
 
 
 def _source_paths(root: Path) -> list[Path]:
     """Return only tracked sources mentioning osascript; avoid estate-wide AST parsing."""
+    cache_key = _clean_exact_head(root)
+    if cache_key is not None and cache_key in _SOURCE_PATH_CACHE:
+        return [root / relative for relative in _SOURCE_PATH_CACHE[cache_key]]
     candidates: list[Path]
     try:
         found = subprocess.run(
@@ -352,16 +424,22 @@ def _source_paths(root: Path) -> list[Path]:
         if found.returncode in {0, 1}:
             candidates = [root / line for line in found.stdout.splitlines() if line.strip()]
         else:
-            candidates = list((root / "scripts").rglob("*"))
+            candidates = _fallback_source_paths(root)
     except (OSError, UnicodeError, subprocess.SubprocessError):
-        candidates = list((root / "scripts").rglob("*"))
-    return [
+        candidates = _fallback_source_paths(root)
+    selected = [
         candidate
         for candidate in candidates
         if candidate.is_file()
         and candidate.suffix in DIRECT_SUFFIXES
         and candidate != root / NOTIFIER_REL
     ]
+    if cache_key is not None:
+        try:
+            _SOURCE_PATH_CACHE[cache_key] = tuple(str(path.relative_to(root)) for path in selected)
+        except ValueError:
+            pass
+    return selected
 
 
 def _static_string(node: ast.AST) -> str | None:
@@ -402,10 +480,14 @@ def _static_argv(
 class _PythonBypassVisitor(ast.NodeVisitor):
     """Flow-sensitive scanner for process calls and the bindings visible at each call."""
 
-    def __init__(self, bindings: dict[str, list[str]] | None = None) -> None:
+    def __init__(
+        self,
+        bindings: dict[str, list[str]] | None = None,
+        process_aliases: set[str] | None = None,
+    ) -> None:
         self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
         self.found = False
-        self.process_aliases = set(_PROCESS_CALLS)
+        self.process_aliases = set(process_aliases or _PROCESS_CALLS)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if node.module in {"subprocess", "os"}:
@@ -434,7 +516,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         for default in [*node.args.defaults, *node.args.kw_defaults]:
             if default is not None:
                 self.visit(default)
-        child = _PythonBypassVisitor(self.bindings)
+        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
         arguments = [
             *node.args.posonlyargs,
             *node.args.args,
@@ -462,7 +544,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             self.visit(decorator)
         for base in node.bases:
             self.visit(base)
-        child = _PythonBypassVisitor(self.bindings)
+        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
         for statement in node.body:
             child.visit(statement)
         self.found = self.found or child.found
@@ -493,13 +575,14 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = _PythonBypassVisitor(before)
+        body = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.body:
             body.visit(statement)
-        alternate = _PythonBypassVisitor(before)
+        alternate = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.orelse:
             alternate.visit(statement)
         self.found = self.found or body.found or alternate.found
+        self.process_aliases.update(body.process_aliases, alternate.process_aliases)
         possible = [body.bindings, alternate.bindings if node.orelse else before]
         merged: dict[str, list[str]] = {}
         for name in set().union(*(state.keys() for state in possible)):
@@ -518,11 +601,11 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         else:
             self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = _PythonBypassVisitor(before)
-        body.process_aliases = set(self.process_aliases)
+        body = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.body:
             body.visit(statement)
         self.found = self.found or body.found
+        self.process_aliases.update(body.process_aliases)
         merged: dict[str, list[str]] = {}
         for name in set(before) | set(body.bindings):
             values = set(before.get(name, [])) | set(body.bindings.get(name, []))
@@ -589,7 +672,11 @@ def _shell_bypasses(path: Path) -> bool:
 def direct_notification_effectors(root: Path) -> list[str]:
     """Every notification that bypasses _notify.py, relative to the surveyed root."""
     found = []
-    for path in _source_paths(root):
+    try:
+        paths = _source_paths(root)
+    except RuntimeError:
+        return [SOURCE_SCAN_FAILURE]
+    for path in paths:
         bypasses = _python_bypasses(path) if path.suffix == ".py" else _shell_bypasses(path)
         if bypasses:
             try:

@@ -80,3 +80,11 @@ def test_failing_required_check_names_are_preserved(monkeypatch, tmp_path: Path)
 
     monkeypatch.setattr(module, "gh", lambda *_args, **_kwargs: Result())
     assert module._failing_required_checks("organvm/repo", 7) == ("pr-gate",)
+
+
+def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tmp_path: Path, capsys) -> None:
+    module = _load(tmp_path)
+    monkeypatch.setattr(module.os, "replace", lambda *_args: (_ for _ in ()).throw(OSError("read-only")))
+
+    assert module._save_ci_red_ledger({"organvm/repo#7": {"head": "a" * 40}}) is False
+    assert "ci-red ledger persistence failed" in capsys.readouterr().err

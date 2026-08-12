@@ -824,6 +824,28 @@ def test_board_budget_discards_expired_track_counters(monkeypatch):
     assert budget["per_agent"]["codex"]["remaining"] == 5
 
 
+def test_board_budget_applies_schema_defaults_and_recomputes_missing_spent(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 8, 12, 12, tzinfo=dt.timezone.utc))
+    board = {
+        "portal": {
+            "budget": {
+                "track": {
+                    "date": "2026-08-12",
+                    "per_agent": {"codex": 2},
+                }
+            }
+        }
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["daily"] == 100
+    assert budget["unit"] == "runs"
+    assert budget["spent"] == 2
+    assert budget["remaining"] == 98
+
+
 def test_admission_attributes_global_budget_block_to_candidate_lanes(monkeypatch, tmp_path):
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([]))
@@ -845,7 +867,7 @@ def test_any_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path
     _configure(mod, monkeypatch, tmp_path, _board([]))
     monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
     monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
-    monkeypatch.setattr(mod, "_remaining_budget", lambda *_args: 0)
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 0)
 
     admission = mod._dispatch_admission(
         [_task("ANY", agent="any", budget_cost=1)],
@@ -883,7 +905,7 @@ def test_targeted_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([]))
     monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
-    monkeypatch.setattr(mod, "_remaining_budget", lambda *_args: 0)
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 0)
     monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
 
     admission = mod._dispatch_admission(
@@ -921,4 +943,25 @@ def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):
     admission = payload["dispatch_admission"]
     assert admission["keeper_available"] is False
     assert admission["reason_counts"] == {"keeper_unavailable": 1}
+    assert admission["gated_tasks"] == []
     assert admission["dispatchable_next"] is None
+
+
+def test_any_lane_checks_reachability_before_capability(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: False)
+    monkeypatch.setattr(
+        mod,
+        "_eligible_any_agent",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("unreachable lane must stop before capability")),
+    )
+
+    admission = mod._dispatch_admission(
+        [_task("ANY-UNREACHABLE", agent="any")],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"provider_health": 1}
