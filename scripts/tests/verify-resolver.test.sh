@@ -200,6 +200,7 @@ verify-resolver-test
 verify-parallel-test
 agent-docs
 github-estate-census-custody-test
+flagship-proof-set-test
 flagship-evidence-test
 check-gates
 check-note-links' institutio/governance/gates.yaml

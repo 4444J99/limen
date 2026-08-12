@@ -115,6 +115,8 @@ sanctioned:
   - {path: prompt-priority-map.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/prompt-priority-map.py (+1 more)"}
   - {path: fleet-gate-branch-debt.json, kind: data, owner: fleet, why: "estate debt record for the 942 heal/fleet-gate-* branches — durable owner home per operator directive 2026-08-05 (no unique work reaped without due)"}
   - {path: fleet-gate-branch-debt.txt, kind: data, owner: fleet, why: "enumerated 942 heal/fleet-gate-* branch list backing the fleet-gate-branch-debt.json manifest"}
+  - {path: ci-red-disposition-20260810.json, kind: data, owner: fleet, why: "DRAIN-0810-DISPOSITION-CIRED cohort disposition ledger — 89 CI-RED PRs classified into auto-fixable, human-gated, lifecycle buckets"}
+  - {path: ci-red-disposition-20260810.jsonl, kind: data, owner: fleet, why: "per-PR ledger for ci-red-disposition-20260810.json — 89 entries with failing checks, mergeable state, labels, bucket, rationale"}
   - {path: fleet-gate-disposition-20260703.jsonl, kind: data, owner: fleet, why: "per-branch abandoned-superseded disposition receipts for the 942 heal/fleet-gate-* branches (campaign organvm/limen#1818); tips preserved under refs/archive/fleet-gate-20260703"}
   - {path: remote-branch-reap-acceptance.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+2 more)"}
   - {path: remote-branch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap-remote-branches.py (+1 more)"}
