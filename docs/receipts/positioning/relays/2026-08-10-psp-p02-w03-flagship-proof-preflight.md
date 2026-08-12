@@ -47,7 +47,7 @@ excluded_count: 15
 | --- | --- |
 | W02 accepted head | `35134b95650a26185a58eb3b3a82632e5b80b5b2` |
 | W02 marked receipt | https://github.com/organvm/limen/issues/2174#issuecomment-5247059070 · receipt SHA-256 `bb83f9bb074ac65d78b5f5cf8d91b475aa098105a9ccb28b84ccf96712d4a09f` |
-| W03 integration source | `d202b90ec24558f16e2b89fc134e9a1513b03f93` · tree `e459c58ffd1828a18cdbd306523e64a3b72ad0b7` |
+| W03 integration source | `bb2bcfed88df6577f690b113879eafdebb7a9299` · tree `6f23738e899201baf176d65ae77f2853aea9b5f7` |
 | Final PR head | This relay is one receipt-only descendant of the integration source; fetch PR #2308 and require the source above as an ancestor before reusing its receipts. |
 | Candidate denominator | 22 public candidates: 15 authoritative W02 rows plus seven typed public additions |
 | Verdict | Three selected, four named alternates, 15 explicit exclusions; zero private repository names in the public matrix |
@@ -68,12 +68,14 @@ excluded_count: 15
 - [x] Closed the final review batch: every evidence anchor now passes the public-custody guard;
   typed additions are pinned to public identities; workflow, endpoint, timestamp, role, score,
   threshold, gate-registration, response-shape, and live W03-state contracts fail closed.
+- [x] Bound every review-source URL to the same public-custody guard, derived the aggregate private
+  denominator from W01, and tied workflow freshness to GitHub's server completion timestamp.
 
 ## Verification at the immutable integration source
 
 - `python3 scripts/tests/estate-classification.test.py` — 20/20 passed; the accepted W02 privacy
   and classification hardening is present.
-- `python3 scripts/tests/flagship-proof-set.test.py` — 40/40 passed, including formal-state,
+- `python3 scripts/tests/flagship-proof-set.test.py` — 43/43 passed, including formal-state,
   receipt, observed-head, relay-drift, public-custody, response-shape, identity, and threshold
   mutations.
 - `python3 scripts/flagship-proof-set.py --verify-live --json` — passed: 22 candidates, three
@@ -98,7 +100,7 @@ excluded_count: 15
 ## Next actions
 
 1. Fetch PR #2308 and require its exact head to descend from
-   `d202b90ec24558f16e2b89fc134e9a1513b03f93` with this relay as the only intended successor delta.
+   `bb2bcfed88df6577f690b113879eafdebb7a9299` with this relay as the only intended successor delta.
 2. Confirm base `main`, all required exact-head checks green, and zero unresolved review threads.
 3. Merge only through `bash scripts/await-pr.sh 2308 --repo organvm/limen --merge`.
 4. On the actual merged main commit, run bare
