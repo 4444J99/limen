@@ -113,6 +113,7 @@
       "source": "https://docs.github.com/en/graphql/reference/queries#search",
       "query": "For every public organization membership, read search(type: REPOSITORY, query: 'org:<slug> fork:false is:public').repositoryCount.",
       "observed_at": "2026-08-10T19:14:05Z",
+      "organization_count": 10,
       "counts": {
         "a-organvm": 0,
         "meta-organvm": 1,
@@ -143,6 +144,7 @@
     {
       "id": "w01_public_safe_census",
       "source": "https://github.com/organvm/limen/blob/10cf8476d5e88309c71d5fac25167ec7b7af59c4/docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
+      "reproduction": "git show 10cf8476d5e88309c71d5fac25167ec7b7af59c4:docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json",
       "observed_at": "2026-08-10T14:13:06Z",
       "result": {
         "organization_count": 10,

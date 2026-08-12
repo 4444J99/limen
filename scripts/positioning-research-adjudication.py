@@ -44,7 +44,30 @@ CREDENTIAL_FRAGMENT_RE = re.compile(
     r"(?:^|[-_.])(?:access[-_]?token|api[-_]?key|authorization|bearer|credential|jwt|oauth|password|passwd|secret|session|signature)(?:$|[-_.])",
     re.IGNORECASE,
 )
+CREDENTIAL_METADATA_RE = re.compile(
+    r"(?:authorization\s*:|bearer\s+[A-Za-z0-9._~-]+|(?:access[-_]?token|token|api[-_]?key|password|passwd|secret)\s*[:=]\s*\S+)",
+    re.IGNORECASE,
+)
 EXPECTED_CLAIM_COUNT = 13
+EXPECTED_API_RECEIPT_IDS = {
+    "profile_metadata",
+    "public_organization_repository_counts",
+    "public_original_organization_repository_counts",
+    "contribution_calendar_fresh_observation",
+    "w01_public_safe_census",
+}
+EXPECTED_ORGANIZATION_KEYS = {
+    "a-organvm",
+    "meta-organvm",
+    "organvm",
+    "organvm-i-theoria",
+    "organvm-ii-poiesis",
+    "organvm-iii-ergon",
+    "organvm-iv-taxis",
+    "organvm-v-logos",
+    "organvm-vi-koinonia",
+    "organvm-vii-kerygma",
+}
 FORMAL_STATUS = "formal_ready_projection_pending"
 PROJECTION_STATUS = "projection_pending"
 ACCEPTED_DEPENDENCIES = {
@@ -125,6 +148,24 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 def _text(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _mapping(value: object, label: str, errors: list[str]) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        errors.append(f"{label} must be a mapping")
+        return {}
+    return value
+
+
+def _list(value: object, label: str, errors: list[str]) -> list[Any]:
+    if not isinstance(value, list):
+        errors.append(f"{label} must be a list")
+        return []
+    return value
+
+
+def _safe_public_metadata(value: object) -> bool:
+    return _text(value) and CREDENTIAL_METADATA_RE.search(str(value)) is None
 
 
 def _credential_free_https_url(value: object) -> bool:
@@ -284,30 +325,42 @@ def validate_bundle(
         _accepted_dependency_contract("PSP-P02-W01"),
         _accepted_dependency_contract("PSP-P02-W05"),
     ]
-    formalization = artifact.get("formalization") or {}
+    formalization = _mapping(artifact.get("formalization"), "artifact.formalization", errors)
     if formalization.get("readiness") != "formal_ready":
         errors.append("artifact formalization must be formal-ready")
     if formalization.get("projection_status") != PROJECTION_STATUS:
         errors.append("artifact must remain projection_pending")
-    if formalization.get("accepted_dependencies") != expected_dependencies:
+    formalization_dependencies = _list(
+        formalization.get("accepted_dependencies"),
+        "artifact.formalization.accepted_dependencies",
+        errors,
+    )
+    for index, dependency in enumerate(formalization_dependencies):
+        _mapping(dependency, f"artifact.formalization.accepted_dependencies[{index}]", errors)
+    if formalization_dependencies != expected_dependencies:
         errors.append("artifact must bind the exact accepted W01 and W05 receipts")
     if formalization.get("post_merge_projection_command") != "python3 scripts/positioning-program.py --sync --apply":
         errors.append("artifact must retain the authorized post-merge projection command")
     if formalization.get("post_merge_verify_command") != "python3 scripts/positioning-program.py --verify-remote":
         errors.append("artifact must retain the post-merge remote-parity predicate")
 
-    formal = receipt.get("formal_completion") or {}
+    formal = _mapping(receipt.get("formal_completion"), "receipt.formal_completion", errors)
     if formal.get("allowed") is not False:
         errors.append("formal completion must remain false until post-merge projection parity")
     if formal.get("readiness") != "formal_ready":
         errors.append("receipt must record formal readiness")
     if formal.get("projection_status") != PROJECTION_STATUS:
         errors.append("receipt must remain projection_pending")
-    dependencies = formal.get("dependencies") or []
+    dependencies = _list(formal.get("dependencies"), "receipt.formal_completion.dependencies", errors)
     if dependencies != expected_dependencies:
         errors.append("receipt must bind the exact accepted W01 and W05 receipts")
-    for dependency in dependencies:
-        if not isinstance(dependency, dict):
+    for index, dependency_value in enumerate(dependencies):
+        dependency = _mapping(
+            dependency_value,
+            f"receipt.formal_completion.dependencies[{index}]",
+            errors,
+        )
+        if not dependency:
             continue
         work_id = dependency.get("work_id")
         if not _credential_free_https_url(dependency.get("issue")):
@@ -329,16 +382,21 @@ def validate_bundle(
             errors.append("claims-ledger blob differs from the accepted W05 binding")
     except OSError as exc:
         errors.append(f"cannot read accepted dependency artifact: {exc}")
-    if (formal.get("live_reference") or {}).get("issue_state") != "open":
+    live_reference = _mapping(
+        formal.get("live_reference"),
+        "receipt.formal_completion.live_reference",
+        errors,
+    )
+    if live_reference.get("issue_state") != "open":
         errors.append("the profile-engine live reference must remain recorded as open")
 
-    privacy = receipt.get("privacy_review") or {}
+    privacy = _mapping(receipt.get("privacy_review"), "receipt.privacy_review", errors)
     if privacy.get("public_only") is not True:
         errors.append("receipt must be public-only")
     if privacy.get("private_repository_names") != 0 or privacy.get("private_only_sources") != 0:
         errors.append("receipt must declare zero private repository names and private-only sources")
 
-    coverage = artifact.get("coverage") or {}
+    coverage = _mapping(artifact.get("coverage"), "artifact.coverage", errors)
     claims = artifact.get("claims")
     if not isinstance(claims, list):
         errors.append("claims must be a list")
@@ -350,7 +408,11 @@ def validate_bundle(
     if not _text(coverage.get("basis")) or not _text(coverage.get("rule")):
         errors.append("claim coverage needs a basis and adjudication rule")
 
-    vocabularies = artifact.get("disposition_vocabularies") or {}
+    vocabularies = _mapping(
+        artifact.get("disposition_vocabularies"),
+        "artifact.disposition_vocabularies",
+        errors,
+    )
     for layer in LAYERS:
         vocabulary = vocabularies.get(layer)
         expected_vocabulary = list(DISPOSITION_VOCABULARIES[layer])
@@ -384,13 +446,21 @@ def validate_bundle(
         ):
             errors.append(f"{prefix} blob must be a 40-character object ID")
 
-    w01_source = sources.get("W01_CENSUS_RECEIPT") or {}
+    w01_source = _mapping(
+        sources.get("W01_CENSUS_RECEIPT"),
+        "artifact.sources.W01_CENSUS_RECEIPT",
+        errors,
+    )
     if (
         w01_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["accepted_head"]
         or w01_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["tracked_receipt_blob"]
     ):
         errors.append("W01 source must bind the accepted head and tracked receipt blob")
-    ledger_source = sources.get("CLAIMS_LEDGER") or {}
+    ledger_source = _mapping(
+        sources.get("CLAIMS_LEDGER"),
+        "artifact.sources.CLAIMS_LEDGER",
+        errors,
+    )
     if (
         ledger_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]
         or ledger_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]
@@ -437,12 +507,12 @@ def validate_bundle(
             if not isinstance(integration.get("required_receipts"), list) or not integration.get("required_receipts"):
                 errors.append(f"{prefix}.w05_integration needs required receipts")
 
-        measurement = claim.get("measurement") or {}
-        prominence = claim.get("prominence") or {}
+        measurement = _mapping(claim.get("measurement"), f"{prefix}.measurement", errors)
+        prominence = _mapping(claim.get("prominence"), f"{prefix}.prominence", errors)
         if measurement.get("disposition") in {"verified", "partially_verified"} and prominence.get(
             "disposition"
         ) == "withhold":
-            wording = str((integration or {}).get("public_wording") or "").lower()
+            wording = str(integration.get("public_wording") if isinstance(integration, dict) else "").lower()
             if not any(token in wording for token in ("measurement", "github", "python", "language", "output")):
                 errors.append(f"{prefix} withholds prominence without preserving its verified measurement")
 
@@ -451,7 +521,11 @@ def validate_bundle(
         errors.append(f"duplicate claim ids: {', '.join(duplicates)}")
 
     artifact_projection = _artifact_claim_projection(claims)
-    w05_import = flagship_evidence.get("w08_research_import") or {}
+    w05_import = _mapping(
+        flagship_evidence.get("w08_research_import"),
+        "flagship_evidence.w08_research_import",
+        errors,
+    )
     imported_claims = w05_import.get("claims")
     expected_import_keys = {
         "id",
@@ -460,9 +534,14 @@ def validate_bundle(
         "public_wording",
         "required_receipts",
     }
-    if not isinstance(imported_claims, list) or len(imported_claims) != EXPECTED_CLAIM_COUNT:
-        errors.append("accepted W05 import must contain exactly 13 claims")
+    if not isinstance(imported_claims, list):
+        errors.append("flagship_evidence.w08_research_import.claims must be a list")
         imported_claims = []
+    for index, imported_claim in enumerate(imported_claims):
+        if not isinstance(imported_claim, dict):
+            errors.append(f"flagship_evidence.w08_research_import.claims[{index}] must be a mapping")
+    if len(imported_claims) != EXPECTED_CLAIM_COUNT:
+        errors.append("accepted W05 import must contain exactly 13 claims")
     elif any(not isinstance(row, dict) or set(row) != expected_import_keys for row in imported_claims):
         errors.append("every accepted W05 import row must contain the exact publishable contract")
     if imported_claims != artifact_projection:
@@ -500,7 +579,7 @@ def validate_bundle(
         if not isinstance(citations, list) or not citations or any(citation not in sources for citation in citations):
             errors.append(f"LAVREA axis {axis} needs valid citations")
 
-    w05 = artifact.get("w05_import_contract") or {}
+    w05 = _mapping(artifact.get("w05_import_contract"), "artifact.w05_import_contract", errors)
     if w05.get("target") != "docs/positioning/claims-ledger.md" or w05.get("edited_here") is not False:
         errors.append("W05 contract must target, but not edit, the claims ledger")
     if w05.get("consumer_work_id") != "PSP-P02-W05":
@@ -520,8 +599,17 @@ def validate_bundle(
     ):
         errors.append("W08 completion gate must name W01 and W05")
 
-    identities = program.get("repository_identities") or {}
-    identity = (identities.get("repositories") or {}).get("portfolio") or {}
+    identities = _mapping(program.get("repository_identities"), "program.repository_identities", errors)
+    identity_rows = _mapping(
+        identities.get("repositories"),
+        "program.repository_identities.repositories",
+        errors,
+    )
+    identity = _mapping(
+        identity_rows.get("portfolio"),
+        "program.repository_identities.repositories.portfolio",
+        errors,
+    )
     if identities.get("schema_version") != IDENTITY_SCHEMA:
         errors.append(f"repository identity schema must be {IDENTITY_SCHEMA}")
     expected_identity = {
@@ -548,7 +636,11 @@ def validate_bundle(
         str(row.get("id")) for row in work_rows if row.get("target_repo") == PORTFOLIO_CANONICAL_SLUG
     ]
 
-    relay = artifact.get("repository_drift_relay") or {}
+    relay = _mapping(
+        artifact.get("repository_drift_relay"),
+        "artifact.repository_drift_relay",
+        errors,
+    )
     if relay.get("stable_repository_id") != PORTFOLIO_REPOSITORY_ID:
         errors.append("repository-drift relay must carry the stable portfolio repository ID")
     if relay.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
@@ -562,7 +654,11 @@ def validate_bundle(
     if relay.get("affected_issue_body_count") != len(canonical_work_ids):
         errors.append("repository-drift relay count must match canonical manifest targets")
 
-    receipt_identity = receipt.get("portfolio_repository_identity") or {}
+    receipt_identity = _mapping(
+        receipt.get("portfolio_repository_identity"),
+        "receipt.portfolio_repository_identity",
+        errors,
+    )
     if receipt_identity.get("github_repository_id") != PORTFOLIO_REPOSITORY_ID:
         errors.append("live receipt must carry the stable portfolio repository ID")
     if receipt_identity.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
@@ -574,10 +670,10 @@ def validate_bundle(
     if receipt_identity.get("confirmed_private_target_changed") is not False:
         errors.append("the confirmed private collaboration target must remain unchanged")
 
-    issues = issue_map.get("issues") or {}
+    issues = _mapping(issue_map.get("issues"), "issue_map.issues", errors)
     expected_issue_rows = []
     for work_id in canonical_work_ids:
-        mapped = issues.get(work_id) or {}
+        mapped = _mapping(issues.get(work_id), f"issue_map.issues.{work_id}", errors)
         number = mapped.get("number")
         if not isinstance(number, int):
             errors.append(f"{work_id} is missing its generated issue number")
@@ -593,11 +689,41 @@ def validate_bundle(
     if PORTFOLIO_RETIRED_SLUG in issue_index:
         errors.append("generated issue index still contains the retired portfolio slug")
 
-    public_profile = receipt.get("public_profile") or {}
-    manifest = public_profile.get("stats_manifest") or {}
-    rendered = manifest.get("rendered_values") or {}
-    if not HEAD_RE.fullmatch(str(public_profile.get("head") or "")):
+    public_profile = _mapping(receipt.get("public_profile"), "receipt.public_profile", errors)
+    profile_readme = _mapping(
+        public_profile.get("readme"),
+        "receipt.public_profile.readme",
+        errors,
+    )
+    manifest = _mapping(
+        public_profile.get("stats_manifest"),
+        "receipt.public_profile.stats_manifest",
+        errors,
+    )
+    rendered = _mapping(
+        manifest.get("rendered_values"),
+        "receipt.public_profile.stats_manifest.rendered_values",
+        errors,
+    )
+    profile_head = public_profile.get("head")
+    if not HEAD_RE.fullmatch(str(profile_head or "")):
         errors.append("public-profile receipt needs an exact 40-character head")
+    profile_readme_source = _mapping(
+        sources.get("PROFILE_README"),
+        "artifact.sources.PROFILE_README",
+        errors,
+    )
+    profile_manifest_source = _mapping(
+        sources.get("PROFILE_MANIFEST"),
+        "artifact.sources.PROFILE_MANIFEST",
+        errors,
+    )
+    if profile_head != profile_readme_source.get("head") or profile_head != profile_manifest_source.get("head"):
+        errors.append("public-profile head must exactly match the cited README and manifest heads")
+    if profile_readme.get("blob") != profile_readme_source.get("blob"):
+        errors.append("public-profile README blob must exactly match its cited source blob")
+    if manifest.get("blob") != profile_manifest_source.get("blob"):
+        errors.append("public-profile manifest blob must exactly match its cited source blob")
     if rendered.get("personal_public_repositories") != 8:
         errors.append("profile manifest personal public repository count must be 8")
     if rendered.get("ecosystem_public_repositories") != 227:
@@ -605,18 +731,78 @@ def validate_bundle(
     if rendered.get("ecosystem_original_repositories") != 198:
         errors.append("profile manifest original repository count must be 198")
 
-    api_receipts = {
-        row.get("id"): row for row in receipt.get("api_query_receipts") or [] if isinstance(row, dict)
-    }
-    org_public = api_receipts.get("public_organization_repository_counts") or {}
-    org_original = api_receipts.get("public_original_organization_repository_counts") or {}
-    contribution_receipt = api_receipts.get("contribution_calendar_fresh_observation") or {}
-    contributions = contribution_receipt.get("result") or {}
-    w01_result = (api_receipts.get("w01_public_safe_census") or {}).get("result") or {}
-    if sum((org_public.get("counts") or {}).values()) != 227 or org_public.get("total") != 227:
-        errors.append("fresh public organization repository counts must sum to 227")
-    if sum((org_original.get("counts") or {}).values()) != 198 or org_original.get("total") != 198:
-        errors.append("fresh public original repository counts must sum to 198")
+    api_rows = _list(receipt.get("api_query_receipts"), "receipt.api_query_receipts", errors)
+    api_receipts: dict[str, dict[str, Any]] = {}
+    for index, row_value in enumerate(api_rows):
+        row = _mapping(row_value, f"receipt.api_query_receipts[{index}]", errors)
+        if not row:
+            continue
+        receipt_id = row.get("id")
+        if not isinstance(receipt_id, str) or not receipt_id:
+            errors.append(f"receipt.api_query_receipts[{index}] needs a nonempty id")
+            continue
+        if receipt_id in api_receipts:
+            errors.append(f"API query receipt id {receipt_id} is duplicated")
+        else:
+            api_receipts[receipt_id] = row
+        if not _credential_free_https_url(row.get("source")):
+            errors.append(f"API query receipt {receipt_id} needs a credential-free HTTPS source")
+        if _rfc3339(row.get("observed_at")) is None:
+            errors.append(f"API query receipt {receipt_id} needs an RFC3339 observation time")
+        metadata = [row[key] for key in ("reproduction", "query") if key in row]
+        if not metadata or any(not _safe_public_metadata(value) for value in metadata):
+            errors.append(
+                f"API query receipt {receipt_id} needs safe nonempty reproduction or query metadata"
+            )
+    if len(api_rows) != len(EXPECTED_API_RECEIPT_IDS) or set(api_receipts) != EXPECTED_API_RECEIPT_IDS:
+        errors.append("API query receipts must contain the exact unique expected ID set")
+
+    org_public = _mapping(
+        api_receipts.get("public_organization_repository_counts"),
+        "API query receipt public_organization_repository_counts",
+        errors,
+    )
+    org_original = _mapping(
+        api_receipts.get("public_original_organization_repository_counts"),
+        "API query receipt public_original_organization_repository_counts",
+        errors,
+    )
+    for receipt_id, row, expected_total in (
+        ("public_organization_repository_counts", org_public, 227),
+        ("public_original_organization_repository_counts", org_original, 198),
+    ):
+        counts = _mapping(row.get("counts"), f"API query receipt {receipt_id}.counts", errors)
+        if set(counts) != EXPECTED_ORGANIZATION_KEYS:
+            errors.append(f"API query receipt {receipt_id} must contain the exact ten organization keys")
+        if any(not _nonnegative_integer(count) for count in counts.values()):
+            errors.append(f"API query receipt {receipt_id} counts must be non-negative integers")
+        elif sum(counts.values()) != expected_total:
+            errors.append(f"API query receipt {receipt_id} counts must sum to {expected_total}")
+        if row.get("organization_count") != len(EXPECTED_ORGANIZATION_KEYS):
+            errors.append(f"API query receipt {receipt_id} organization_count must be 10")
+        if row.get("total") != expected_total:
+            errors.append(f"API query receipt {receipt_id} total must be {expected_total}")
+
+    contribution_receipt = _mapping(
+        api_receipts.get("contribution_calendar_fresh_observation"),
+        "API query receipt contribution_calendar_fresh_observation",
+        errors,
+    )
+    contributions = _mapping(
+        contribution_receipt.get("result"),
+        "API query receipt contribution_calendar_fresh_observation.result",
+        errors,
+    )
+    w01_receipt = _mapping(
+        api_receipts.get("w01_public_safe_census"),
+        "API query receipt w01_public_safe_census",
+        errors,
+    )
+    w01_result = _mapping(
+        w01_receipt.get("result"),
+        "API query receipt w01_public_safe_census.result",
+        errors,
+    )
     rendered_contributions = rendered.get("contributions_last_year")
     total_contributions = contributions.get("total_contributions")
     sum_of_daily_counts = contributions.get("sum_of_daily_counts")
@@ -651,15 +837,20 @@ def validate_bundle(
         (claim for claim in claims if isinstance(claim, dict) and claim.get("id") == "profile-contributions-last-year"),
         {},
     )
+    contribution_integration = _mapping(
+        contribution_claim.get("w05_integration"),
+        "profile-contributions-last-year.w05_integration",
+        errors,
+    )
     if contribution_claim.get("exact_public_wording") != PROFILE_CONTRIBUTION_WORDING or (
         f"{PROFILE_RENDERED_CONTRIBUTIONS:,}"
-        not in str((contribution_claim.get("w05_integration") or {}).get("public_wording") or "")
+        not in str(contribution_integration.get("public_wording") or "")
     ):
         errors.append("contribution claim wording must remain bound to the rendered observation")
     if w01_result.get("public_repository_count") != 8 + 227:
         errors.append("W01 public count must reconcile 8 personal plus 227 organization repositories")
 
-    http_rows = receipt.get("http_receipts") or []
+    http_rows = _list(receipt.get("http_receipts"), "receipt.http_receipts", errors)
     http = {row.get("id"): row for row in http_rows if isinstance(row, dict)}
     if len(http_rows) != len(http) or set(http) != set(EXPECTED_HTTP_RECEIPTS):
         errors.append("HTTP receipts must contain each expected endpoint exactly once")
@@ -675,8 +866,12 @@ def validate_bundle(
         if not _text(reproduction) or "curl " not in str(reproduction) or expected_url not in str(reproduction):
             errors.append(f"HTTP receipt {receipt_id} must reproduce the exact endpoint URL")
 
-    daily = receipt.get("daily_generation_receipt") or {}
-    runs = daily.get("runs") or []
+    daily = _mapping(
+        receipt.get("daily_generation_receipt"),
+        "receipt.daily_generation_receipt",
+        errors,
+    )
+    runs = _list(daily.get("runs"), "receipt.daily_generation_receipt.runs", errors)
     if daily.get("scheduled_runs_observed") != 8 or daily.get("successful_runs") != 8 or len(runs) != 8:
         errors.append("daily generation receipt must contain eight observed successful runs")
     window_start = _rfc3339(daily.get("window_start"))
@@ -686,6 +881,7 @@ def validate_bundle(
     run_ids: set[int] = set()
     run_urls: set[str] = set()
     run_times: list[datetime] = []
+    run_observations: list[tuple[datetime, dict[str, Any]]] = []
     for row in runs:
         if not isinstance(row, dict):
             errors.append("every daily generation run must be a mapping")
@@ -708,6 +904,7 @@ def validate_bundle(
             errors.append(f"daily generation run {run_id} needs an RFC3339 creation time")
         else:
             run_times.append(created_at)
+            run_observations.append((created_at, row))
         run_ids.add(run_id)
         run_urls.add(str(row.get("url") or ""))
     if len(run_ids) != len(runs) or len(run_urls) != len(runs):
@@ -721,8 +918,16 @@ def validate_bundle(
             errors.append("daily generation receipt must contain one scheduled run on eight consecutive UTC days")
         elif window_start.date() != observed_days[0] or window_end.date() != observed_days[-1]:
             errors.append("daily generation window must bind the first and last observed UTC days")
+    if run_observations:
+        latest_run = max(run_observations, key=lambda item: item[0])[1]
+        if latest_run.get("resulting_head") != profile_head:
+            errors.append("public-profile head must exactly match the latest scheduled run resulting_head")
 
-    ledger = receipt.get("claims_ledger_integration") or {}
+    ledger = _mapping(
+        receipt.get("claims_ledger_integration"),
+        "receipt.claims_ledger_integration",
+        errors,
+    )
     if ledger.get("ledger_edited_in_this_lane") is not False or ledger.get("accepted_by") != "PSP-P02-W05":
         errors.append("formalization must consume, but not mutate, the accepted W05 claims ledger")
     if ledger.get("accepted_head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]:
@@ -781,7 +986,15 @@ def validate_live_identity(
     """Resolve the portfolio by immutable repository ID and compare canonical live metadata."""
 
     errors: list[str] = []
-    identity = ((program.get("repository_identities") or {}).get("repositories") or {}).get("portfolio") or {}
+    repository_identities = program.get("repository_identities")
+    if not isinstance(repository_identities, dict):
+        return ["cannot verify live identity without a repository-identities mapping"]
+    repositories = repository_identities.get("repositories")
+    if not isinstance(repositories, dict):
+        return ["cannot verify live identity without a repository-identities repository mapping"]
+    identity = repositories.get("portfolio")
+    if not isinstance(identity, dict):
+        return ["cannot verify live identity without a portfolio repository-identity mapping"]
     repository_id = identity.get("github_repository_id")
     if repository_id != PORTFOLIO_REPOSITORY_ID:
         return ["cannot verify live identity without the expected stable repository ID"]
@@ -789,6 +1002,8 @@ def validate_live_identity(
         live = fetch(["api", f"repositories/{repository_id}"])
     except AdjudicationError as exc:
         return [f"cannot resolve stable repository identity: {exc}"]
+    if not isinstance(live, dict):
+        return ["stable repository identity response must be a mapping"]
     expectations = {
         "id": repository_id,
         "full_name": identity.get("canonical_slug"),
@@ -801,7 +1016,10 @@ def validate_live_identity(
             errors.append(f"stable repository ID resolves {key}={live.get(key)!r}, expected {expected!r}")
     if live.get("private") is not False:
         errors.append("stable portfolio repository must remain public")
-    if (live.get("permissions") or {}).get("admin") is not True:
+    permissions = live.get("permissions")
+    if not isinstance(permissions, dict):
+        errors.append("stable repository identity permissions must be a mapping")
+    elif permissions.get("admin") is not True:
         errors.append("authenticated live identity receipt no longer has admin access")
     return errors
 
@@ -852,7 +1070,11 @@ def validate_live_dependencies(
             errors.append(f"accepted dependency {work_id} canonical receipt SHA-256 differs")
         if receipt.get("outcome") != "succeeded":
             errors.append(f"accepted dependency {work_id} receipt outcome must remain succeeded")
-        observed_head = (receipt.get("observed_heads") or {}).get("organvm/limen")
+        observed_heads = receipt.get("observed_heads")
+        if not isinstance(observed_heads, dict):
+            errors.append(f"accepted dependency {work_id} observed_heads must be a mapping")
+            continue
+        observed_head = observed_heads.get("organvm/limen")
         if observed_head != expected["accepted_head"]:
             errors.append(f"accepted dependency {work_id} observed head differs")
     return errors

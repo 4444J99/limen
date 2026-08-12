@@ -1861,6 +1861,10 @@ def sync(
     chunks_path: Path = DEFAULT_CHUNKS,
 ) -> dict[str, Any]:
     repository = graph["program"]["repository"]
+    if apply:
+        # No label, milestone, issue, or generated projection write may begin until every
+        # identity-managed target resolves live from its immutable repository ID.
+        verify_repository_identities(graph)
     missing_labels = _ensure_labels(graph, apply=apply)
     milestone = _ensure_milestone(graph, apply=apply)
     if not apply and (missing_labels or milestone is None):

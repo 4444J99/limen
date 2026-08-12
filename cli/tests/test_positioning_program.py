@@ -233,6 +233,34 @@ def test_repository_identity_sources_and_slug_history_are_collision_safe() -> No
         MODULE.index_program(canonical_collides_with_retired)
 
 
+def test_sync_apply_rejects_identity_drift_before_any_write(monkeypatch, tmp_path) -> None:
+    graph, mapping = graph_and_map()
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+
+    for live_payload in (moved, [moved]):
+        writes = []
+        monkeypatch.setattr(MODULE, "_gh", lambda *_args, value=live_payload, **_kwargs: value)
+        monkeypatch.setattr(MODULE, "_pages", lambda *_args, **_kwargs: [])
+        monkeypatch.setattr(
+            MODULE,
+            "_api",
+            lambda *args, **kwargs: writes.append((args, kwargs)),
+        )
+
+        with pytest.raises(MODULE.ProgramError, match="repository identity validation failed"):
+            MODULE.sync(
+                graph,
+                mapping,
+                apply=True,
+                map_path=tmp_path / "github-map.json",
+                index_path=tmp_path / "ISSUE-INDEX.md",
+                chunks_path=tmp_path / "EXECUTION-CHUNKS.md",
+            )
+
+        assert writes == []
+
+
 def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
     graph, mapping = graph_and_map()
     packet = graph["work_by_id"]["PSP-P00-W07"]
@@ -345,6 +373,20 @@ def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> No
     assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
     assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
     assert seed["receipt_target"] == "github:organvm/limen:issue:11"
+
+
+def test_w08_packet_seed_owns_summary_machine_artifact_and_dated_receipt() -> None:
+    graph, mapping = graph_and_map()
+
+    seed = MODULE.packet_seed("PSP-P02-W08", graph, mapping)
+
+    assert seed["execution_requirements"]["path_prefixes"] == [
+        "docs/positioning/program/RESEARCH-ADJUDICATION.md",
+        "docs/positioning/program/research-adjudication.json",
+        "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+        "docs/positioning/claims-ledger.md",
+        "scripts",
+    ]
 
 
 def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate() -> None:

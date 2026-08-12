@@ -677,7 +677,7 @@ phases:
         title: Adjudicate research criticisms against the live profile and primary sources
         outcome: Stale or mistaken research cannot suppress valid evidence, while contestable inferences remain honestly bounded.
         target_repo: organvm/limen
-        target_paths: [docs/positioning/program/RESEARCH-ADJUDICATION.md, docs/positioning/claims-ledger.md, scripts]
+        target_paths: [docs/positioning/program/RESEARCH-ADJUDICATION.md, docs/positioning/program/research-adjudication.json, docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json, docs/positioning/claims-ledger.md, scripts]
         capabilities: [github_read, research, statistical_reasoning, claim_adjudication]
         reasoning: frontier_review
         effect: write

@@ -133,6 +133,50 @@ def test_formalization_is_ready_but_projection_remains_pending() -> None:
     assert bundle["receipt"]["formal_completion"]["projection_status"] == MODULE.PROJECTION_STATUS
 
 
+def test_malformed_formalization_and_accepted_blocks_fail_as_validation_errors() -> None:
+    malformed = _bundle()
+    malformed["artifact"] = copy.deepcopy(malformed["artifact"])
+    malformed["artifact"]["formalization"] = "not-a-mapping"
+    assert "artifact.formalization must be a mapping" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["receipt"] = copy.deepcopy(malformed["receipt"])
+    malformed["receipt"]["formal_completion"] = ["not-a-mapping"]
+    assert "receipt.formal_completion must be a mapping" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["artifact"] = copy.deepcopy(malformed["artifact"])
+    malformed["artifact"]["formalization"]["accepted_dependencies"] = "not-a-list"
+    assert "artifact.formalization.accepted_dependencies must be a list" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["receipt"] = copy.deepcopy(malformed["receipt"])
+    malformed["receipt"]["formal_completion"]["dependencies"][0] = "not-a-mapping"
+    assert "receipt.formal_completion.dependencies[0] must be a mapping" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["flagship_evidence"] = copy.deepcopy(malformed["flagship_evidence"])
+    malformed["flagship_evidence"]["w08_research_import"] = "not-a-mapping"
+    assert "flagship_evidence.w08_research_import must be a mapping" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["flagship_evidence"] = copy.deepcopy(malformed["flagship_evidence"])
+    malformed["flagship_evidence"]["w08_research_import"]["claims"][0] = "not-a-mapping"
+    assert (
+        "flagship_evidence.w08_research_import.claims[0] must be a mapping" in _errors(malformed)
+    )
+
+    malformed = _bundle()
+    malformed["artifact"] = copy.deepcopy(malformed["artifact"])
+    malformed["artifact"]["w05_import_contract"] = "not-a-mapping"
+    assert "artifact.w05_import_contract must be a mapping" in _errors(malformed)
+
+    malformed = _bundle()
+    malformed["receipt"] = copy.deepcopy(malformed["receipt"])
+    malformed["receipt"]["claims_ledger_integration"] = "not-a-mapping"
+    assert "receipt.claims_ledger_integration must be a mapping" in _errors(malformed)
+
+
 def test_all_imported_claim_fields_must_exactly_match_accepted_w05_projection() -> None:
     bundle = _bundle()
     bundle["flagship_evidence"] = copy.deepcopy(bundle["flagship_evidence"])
@@ -235,6 +279,28 @@ def test_live_identity_resolves_only_the_immutable_repository_id() -> None:
     assert calls == [["api", f"repositories/{MODULE.PORTFOLIO_REPOSITORY_ID}"]]
 
 
+def test_live_identity_rejects_non_mapping_transport_payloads_neutrally() -> None:
+    program = _bundle()["program"]
+
+    for payload in ([], "not-an-object", 42):
+        assert MODULE.validate_live_identity(program, lambda _args, value=payload: value) == [
+            "stable repository identity response must be a mapping"
+        ]
+
+    malformed_permissions = {
+        "id": MODULE.PORTFOLIO_REPOSITORY_ID,
+        "full_name": MODULE.PORTFOLIO_CANONICAL_SLUG,
+        "visibility": "public",
+        "private": False,
+        "default_branch": "main",
+        "archived": False,
+        "permissions": [],
+    }
+    assert MODULE.validate_live_identity(program, lambda _args: malformed_permissions) == [
+        "stable repository identity permissions must be a mapping"
+    ]
+
+
 def test_live_formalization_binds_latest_marked_receipts_and_observed_heads() -> None:
     calls = []
 
@@ -289,6 +355,86 @@ def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -
     result["total_contributions"] = 42
     result["sum_of_daily_counts"] = 42
     assert "fresh contribution total must preserve the recorded 33168 observation" in _errors(arbitrary)
+
+
+def test_public_profile_head_and_blobs_bind_cited_sources_and_latest_run() -> None:
+    mismatched_head = _bundle()
+    mismatched_head["receipt"] = copy.deepcopy(mismatched_head["receipt"])
+    mismatched_head["receipt"]["public_profile"]["head"] = "a" * 40
+    assert (
+        "public-profile head must exactly match the cited README and manifest heads"
+        in _errors(mismatched_head)
+    )
+
+    mismatched_blobs = _bundle()
+    mismatched_blobs["receipt"] = copy.deepcopy(mismatched_blobs["receipt"])
+    mismatched_blobs["receipt"]["public_profile"]["readme"]["blob"] = "a" * 40
+    mismatched_blobs["receipt"]["public_profile"]["stats_manifest"]["blob"] = "b" * 40
+    blob_errors = _errors(mismatched_blobs)
+    assert "public-profile README blob must exactly match its cited source blob" in blob_errors
+    assert "public-profile manifest blob must exactly match its cited source blob" in blob_errors
+
+    mismatched_run = _bundle()
+    mismatched_run["receipt"] = copy.deepcopy(mismatched_run["receipt"])
+    mismatched_run["receipt"]["daily_generation_receipt"]["runs"][0]["resulting_head"] = "a" * 40
+    assert (
+        "public-profile head must exactly match the latest scheduled run resulting_head"
+        in _errors(mismatched_run)
+    )
+
+
+def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
+    malformed = _bundle()
+    malformed["receipt"] = copy.deepcopy(malformed["receipt"])
+    original = next(
+        row
+        for row in malformed["receipt"]["api_query_receipts"]
+        if row["id"] == "public_original_organization_repository_counts"
+    )
+    original["organization_count"] = 9
+    original["counts"].pop("a-organvm")
+    original["counts"]["organvm"] = True
+    errors = _errors(malformed)
+
+    assert (
+        "API query receipt public_original_organization_repository_counts must contain the exact ten organization keys"
+        in errors
+    )
+    assert (
+        "API query receipt public_original_organization_repository_counts counts must be non-negative integers"
+        in errors
+    )
+    assert (
+        "API query receipt public_original_organization_repository_counts organization_count must be 10"
+        in errors
+    )
+
+
+def test_api_receipts_require_exact_ids_public_metadata_and_no_credentials() -> None:
+    malformed_set = _bundle()
+    malformed_set["receipt"] = copy.deepcopy(malformed_set["receipt"])
+    duplicate = copy.deepcopy(malformed_set["receipt"]["api_query_receipts"][0])
+    extra = copy.deepcopy(duplicate)
+    extra["id"] = "unexpected_public_query"
+    malformed_set["receipt"]["api_query_receipts"].extend([duplicate, extra, "not-a-mapping"])
+    errors = _errors(malformed_set)
+    assert "API query receipt id profile_metadata is duplicated" in errors
+    assert "receipt.api_query_receipts[7] must be a mapping" in errors
+    assert "API query receipts must contain the exact unique expected ID set" in errors
+
+    credentialed = _bundle()
+    credentialed["receipt"] = copy.deepcopy(credentialed["receipt"])
+    profile = credentialed["receipt"]["api_query_receipts"][0]
+    profile["source"] = "https://api.github.com/users/4444J99?access_token=SECRET"
+    profile["reproduction"] = "gh api users/4444J99 -H 'Authorization: Bearer SECRET'"
+    profile["observed_at"] = "not-a-date"
+    errors = _errors(credentialed)
+    assert "API query receipt profile_metadata needs a credential-free HTTPS source" in errors
+    assert "API query receipt profile_metadata needs an RFC3339 observation time" in errors
+    assert (
+        "API query receipt profile_metadata needs safe nonempty reproduction or query metadata"
+        in errors
+    )
 
 
 def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
