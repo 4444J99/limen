@@ -118,6 +118,19 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "dry-run must not touch the queue lock"
 
 
+def test_empty_live_pass_refreshes_the_monitored_writer_heartbeat(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", lambda *_args, **_kwargs: _R("[]"))
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert heartbeat.is_file()
+    assert "no open PRs" in heartbeat.read_text(encoding="utf-8")
+
+
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_HEAL_SCAN", "bad")
     monkeypatch.setenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", "bad")

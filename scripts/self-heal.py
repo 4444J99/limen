@@ -410,6 +410,16 @@ def retirement_authorized(explicit_prs, enumerated, reconcile_scan_max):
     return True, ""
 
 
+def write_heartbeat(summary: str) -> None:
+    """Record every live pass, including a healthy empty fleet."""
+    try:
+        LOG.parent.mkdir(parents=True, exist_ok=True)
+        with open(LOG, "a", encoding="utf-8") as handle:
+            handle.write(summary + "\n")
+    except OSError:
+        pass
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
@@ -458,7 +468,10 @@ def main():
         else enumerate_open_prs(OWNERS, gh, max_total=a.reconcile_scan_max, want_url=True, author=None)
     )
     if not allprs:
-        print("[self-heal] no open PRs (or gh unavailable)")
+        summary = "[self-heal] no open PRs (or gh unavailable)"
+        print(summary)
+        if not a.dry_run:
+            write_heartbeat(summary)
         return 0
 
     # RETIREMENT SAFETY. The reconcile pass below retires any active HEAL task whose PR is ABSENT
@@ -668,11 +681,7 @@ def main():
     print(summary)
     for tid in emitted:
         print(f"    emit: {tid}")
-    try:
-        with open(LOG, "a") as f:
-            f.write(summary + (("  " + " ".join(emitted)) if emitted else "") + "\n")
-    except Exception:
-        pass
+    write_heartbeat(summary + (("  " + " ".join(emitted)) if emitted else ""))
     return 0
 
 
