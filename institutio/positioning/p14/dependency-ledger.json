@@ -1,0 +1,197 @@
+{
+  "schema_version": "limen.positioning_p14_dependency_ledger.v1",
+  "observed_at": "2026-08-12T20:15:00Z",
+  "authoritative_registry": "institutio/positioning/program.yaml",
+  "program_repository": "organvm/limen",
+  "counts_as_closure": false,
+  "closed_baseline": {
+    "chunk_id": "PSP-C02",
+    "phase_id": "PSP-P02",
+    "closure_state": "closed",
+    "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+    "issue": "https://github.com/organvm/limen/issues/2172",
+    "marked_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170"
+  },
+  "phase_ownership": {
+    "PSP-C03": ["PSP-P03", "PSP-P04"],
+    "PSP-C04": ["PSP-P05", "PSP-P06"],
+    "PSP-C05": ["PSP-P11"],
+    "PSP-C06": ["PSP-P07"],
+    "PSP-C07": ["PSP-P08"],
+    "PSP-C08": ["PSP-P09"],
+    "PSP-C09": ["PSP-P10"],
+    "PSP-C10": ["PSP-P12"],
+    "PSP-C11": ["PSP-P13"],
+    "PSP-C12": ["PSP-P14"]
+  },
+  "predecessor_chunks": [
+    {
+      "chunk_id": "PSP-C03",
+      "depends_on": ["PSP-C02"],
+      "phase_ids": ["PSP-P03", "PSP-P04"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "max"},
+      "closure_state": "partial",
+      "preflight_state": "accepted_through_w06_reader_gate_open",
+      "counts_as_closure": false,
+      "accepted_checkpoint": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "evidence": [
+        {"target": "limen", "pull_request": 2312, "head": "c7c932205faa405e291f8030235a73cedeaa219e"}
+      ],
+      "frontier_work": [
+        {
+          "work_id": "PSP-P03-W07",
+          "issue": "https://github.com/organvm/limen/issues/2188",
+          "state": "open",
+          "assignment": {"slug": "gpt-5.4-mini", "effort": "low"},
+          "acceptance_boundary": "Five genuine independent target-like readers; model, author, coached, or fabricated responses do not count."
+        }
+      ]
+    },
+    {
+      "chunk_id": "PSP-C04",
+      "depends_on": ["PSP-C03"],
+      "phase_ids": ["PSP-P05", "PSP-P06"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "xhigh"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2313, "head": "23712398c6586e005c303eff632604985cd0a25c"},
+        {"target": "portfolio", "pull_request": 220, "head": "9bcc4606b68da83dc0878b060989d35c3b649d7f"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C05",
+      "depends_on": ["PSP-C03"],
+      "phase_ids": ["PSP-P11"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "max"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2315, "head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e"},
+        {"target": "private_custody", "pull_request": 135, "head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C06",
+      "depends_on": ["PSP-C04"],
+      "phase_ids": ["PSP-P07"],
+      "conductor": {"slug": "gpt-5.6-terra", "effort": "high"},
+      "closure_state": "open",
+      "preflight_state": "prepared_three_visual_directions_unselected",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2317, "head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668"},
+        {"target": "portfolio", "pull_request": 221, "head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C07",
+      "depends_on": ["PSP-C06"],
+      "phase_ids": ["PSP-P08"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "xhigh"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2318, "head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C08",
+      "depends_on": ["PSP-C07"],
+      "phase_ids": ["PSP-P09"],
+      "conductor": {"slug": "gpt-5.6-terra", "effort": "high"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2316, "head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C09",
+      "depends_on": ["PSP-C05", "PSP-C08"],
+      "phase_ids": ["PSP-P10"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "xhigh"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2322, "head": "21f3132f129aa6e1eba515f03aa19619533cef4b"},
+        {"target": "private_custody", "pull_request": 136, "head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086"},
+        {"target": "portfolio", "pull_request": 222, "head": "a4c5165421344042efcc7a8b47660c1658b786d1"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C10",
+      "depends_on": ["PSP-C05", "PSP-C09"],
+      "phase_ids": ["PSP-P12"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "max"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2321, "head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"}
+      ],
+      "frontier_work": []
+    },
+    {
+      "chunk_id": "PSP-C11",
+      "depends_on": ["PSP-C10"],
+      "phase_ids": ["PSP-P13"],
+      "conductor": {"slug": "gpt-5.6-sol", "effort": "max"},
+      "closure_state": "open",
+      "preflight_state": "prepared_draft",
+      "counts_as_closure": false,
+      "evidence": [
+        {"target": "limen", "pull_request": 2319, "head": "92325b04eb741f63a7013bf33d6900568fbef185"}
+      ],
+      "frontier_work": []
+    }
+  ],
+  "p14_conductor": {"slug": "gpt-5.6-sol", "effort": "ultra"},
+  "p14_stages": [
+    {"work_id": "PSP-P14-W01", "issue": "https://github.com/organvm/limen/issues/2275", "depends_on": ["PSP-P07-W08", "PSP-P08-W06", "PSP-P11-W07", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W02", "issue": "https://github.com/organvm/limen/issues/2276", "depends_on": ["PSP-P14-W01", "PSP-P00-W07"], "assignment": {"slug": "gpt-5.6-luna", "effort": "medium"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W03", "issue": "https://github.com/organvm/limen/issues/2277", "depends_on": ["PSP-P02-W06", "PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W04", "issue": "https://github.com/organvm/limen/issues/2278", "depends_on": ["PSP-P10-W08", "PSP-P12-W06", "PSP-P14-W01"], "assignment": {"slug": "gpt-5.6-sol", "effort": "max"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W05", "issue": "https://github.com/organvm/limen/issues/2279", "depends_on": ["PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W06", "issue": "https://github.com/organvm/limen/issues/2280", "depends_on": ["PSP-P07-W09", "PSP-P08-W07"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W07", "issue": "https://github.com/organvm/limen/issues/2281", "depends_on": ["PSP-P10-W07", "PSP-P10-W08"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W08", "issue": "https://github.com/organvm/limen/issues/2282", "depends_on": ["PSP-P12-W06", "PSP-P13-W08", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W09", "issue": "https://github.com/organvm/limen/issues/2283", "depends_on": ["PSP-P14-W02", "PSP-P14-W03", "PSP-P14-W04", "PSP-P14-W05", "PSP-P14-W06", "PSP-P14-W07", "PSP-P14-W08"], "assignment": {"slug": "gpt-5.6-sol", "effort": "ultra"}, "closure_state": "open", "preflight_state": "synthetic_pair_only", "counts_as_closure": false}
+  ],
+  "terminal_nodes": [
+    {"code": "W01_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W01", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W02_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W02", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W03_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W03", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W04_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W04", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W05_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W05", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W06_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W06", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W07_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W07", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W08_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W08", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "W09_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},
+    {"code": "WEEKLY_LIVE_CYCLES_MISSING", "work_id": "PSP-P14-W02", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "MONTHLY_LIVE_CYCLES_MISSING", "work_id": "PSP-P14-W03", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "QUARTERLY_LIVE_REVIEW_MISSING", "work_id": "PSP-P14-W04", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "CLAIM_INCIDENT_DRILL_MISSING", "work_id": "PSP-P14-W05", "kind": "status_record", "closure_state": "open", "counts_as_closure": false},
+    {"code": "RELEASE_RECOVERY_DRILL_MISSING", "work_id": "PSP-P14-W06", "kind": "status_record", "closure_state": "open", "counts_as_closure": false},
+    {"code": "REAL_DEMAND_OUTCOMES_MISSING", "work_id": "PSP-P14-W07", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "DEMAND_DECISION_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "closure_state": "open", "counts_as_closure": false},
+    {"code": "COMMERCIAL_SUCCESS_OUTCOME_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "closure_state": "open", "counts_as_closure": false},
+    {"code": "PRICE_ANCHOR_HUMAN_GATE_MISSING", "work_id": "PSP-P14-W07", "kind": "human_gate", "closure_state": "open", "counts_as_closure": false},
+    {"code": "REAL_DELIVERY_OUTCOME_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "REAL_OPERATOR_OUTCOME_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "PORTFOLIO_IMPACT_RECEIPT_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "closure_state": "open", "counts_as_closure": false},
+    {"code": "TWO_LIVE_OMEGA_PASSES_MISSING", "work_id": "PSP-P14-W09", "kind": "omega_pair", "closure_state": "open", "counts_as_closure": false},
+    {"code": "PROGRAM_OMEGA_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "status_record", "closure_state": "open", "counts_as_closure": false}
+  ]
+}

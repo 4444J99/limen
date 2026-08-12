@@ -16,16 +16,20 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import runpy
 import sys
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "p14" / "control-plane.json"
+DEFAULT_LEDGER = ROOT / "institutio" / "positioning" / "p14" / "dependency-ledger.json"
 DEFAULT_FIXTURE = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "synthetic-cycle.json"
 DEFAULT_EVIDENCE = ROOT / "docs" / "receipts" / "positioning" / "p14" / "live-evidence.json"
+PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
 
-CONTROL_SCHEMA = "limen.positioning_p14_control_plane.v1"
+CONTROL_SCHEMA = "limen.positioning_p14_control_plane.v2"
+LEDGER_SCHEMA = "limen.positioning_p14_dependency_ledger.v1"
 FIXTURE_SCHEMA = "limen.positioning_p14_fixture.v1"
 EVIDENCE_SCHEMA = "limen.positioning_p14_evidence.v1"
 PAIR_SCHEMA = "limen.positioning_p14_omega_pair.v1"
@@ -35,6 +39,31 @@ WORK_RE = re.compile(r"PSP-P14-W\d{2}\Z")
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 DIGEST_RE = re.compile(r"[0-9a-f]{64}\Z")
 EVENT_RE = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+\Z")
+PREDECESSOR_CHUNK_IDS = tuple(f"PSP-C{number:02d}" for number in range(3, 12))
+EXPECTED_DENY_KEYS = {
+    "access_token",
+    "api_key",
+    "authorization",
+    "client_name",
+    "contact_name",
+    "credential",
+    "email",
+    "operator_name",
+    "phone",
+    "price_amount",
+    "private_evidence_body",
+    "private_repository_name",
+    "secret",
+}
+PROGRAM_RECEIPT_FIELDS = {
+    "command",
+    "exit_code",
+    "output_sha256",
+    "state_digest",
+    "observed_head",
+    "observed_at",
+    "evidence_url",
+}
 
 
 class P14Error(RuntimeError):
@@ -74,14 +103,18 @@ def _canonical_digest(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _is_rfc3339(value: object) -> bool:
+def _rfc3339_datetime(value: object) -> datetime | None:
     if not isinstance(value, str) or not value:
-        return False
+        return None
     try:
-        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
-        return False
-    return "T" in value
+        return None
+    return parsed if "T" in value and parsed.tzinfo is not None else None
+
+
+def _is_rfc3339(value: object) -> bool:
+    return _rfc3339_datetime(value) is not None
 
 
 def _is_url(value: object) -> bool:
@@ -96,6 +129,37 @@ def _meaningful(value: object) -> bool:
     if isinstance(value, (list, dict)):
         return bool(value)
     return True
+
+
+def _normalized_key(value: object) -> str:
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", str(value))
+    return re.sub(r"[^a-zA-Z0-9]+", "_", text).strip("_").lower()
+
+
+def _privacy_violations(value: object, deny_keys: set[str], path: tuple[str, ...] = ()) -> list[str]:
+    violations: list[str] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            normalized = _normalized_key(key)
+            child_path = (*path, str(key))
+            if normalized in deny_keys:
+                violations.append(".".join(child_path))
+            violations.extend(_privacy_violations(child, deny_keys, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            violations.extend(_privacy_violations(child, deny_keys, (*path, str(index))))
+    return violations
+
+
+def _program_graph_and_map() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    try:
+        module = runpy.run_path(str(PROGRAM_SCRIPT))
+        graph = module["index_program"](module["load_manifest"]())
+        mapping = module["load_map"]()
+        module["validate_map"](mapping, graph, complete=True)
+    except Exception as exc:
+        raise P14Error(f"cannot derive P14 dependency truth from the program registry: {exc}") from exc
+    return graph, mapping, module
 
 
 def _path_value(value: object, path: str) -> object:
@@ -159,6 +223,166 @@ def _topological_stages(stages: list[dict[str, Any]]) -> list[str]:
     return ordered
 
 
+def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[str, Any]:
+    ledger = _mapping(value, "dependency ledger")
+    if ledger.get("schema_version") != LEDGER_SCHEMA:
+        raise P14Error(f"dependency ledger schema_version must be {LEDGER_SCHEMA}")
+    if ledger.get("authoritative_registry") != "institutio/positioning/program.yaml":
+        raise P14Error("dependency ledger must bind the canonical program registry")
+    if ledger.get("program_repository") != "organvm/limen":
+        raise P14Error("dependency ledger repository drift")
+    if ledger.get("counts_as_closure") is not False:
+        raise P14Error("dependency ledger preparation must not count as closure")
+    if not _is_rfc3339(ledger.get("observed_at")):
+        raise P14Error("dependency ledger observed_at must be RFC3339")
+
+    graph, mapping, program = _program_graph_and_map()
+    baseline = _mapping(ledger.get("closed_baseline"), "dependency ledger closed_baseline")
+    if (
+        baseline.get("chunk_id") != "PSP-C02"
+        or baseline.get("phase_id") != "PSP-P02"
+        or baseline.get("closure_state") != "closed"
+        or not HEAD_RE.fullmatch(str(baseline.get("accepted_main_head") or ""))
+        or baseline.get("issue") != "https://github.com/organvm/limen/issues/2172"
+        or not _is_url(baseline.get("marked_receipt"))
+    ):
+        raise P14Error("dependency ledger closed P02 baseline is incomplete")
+
+    phase_ownership = _mapping(ledger.get("phase_ownership"), "dependency ledger phase_ownership")
+    expected_phase_ownership = {
+        chunk_id: list(graph["chunk_by_id"][chunk_id]["phase_ids"]) for chunk_id in (*PREDECESSOR_CHUNK_IDS, "PSP-C12")
+    }
+    if phase_ownership != expected_phase_ownership:
+        raise P14Error("dependency ledger phase ownership drift")
+
+    raw_chunks = _list(ledger.get("predecessor_chunks"), "dependency ledger predecessor_chunks")
+    if len(raw_chunks) != len(PREDECESSOR_CHUNK_IDS):
+        raise P14Error(f"dependency ledger must contain {len(PREDECESSOR_CHUNK_IDS)} predecessor chunks")
+    chunk_ids: list[str] = []
+    for index, raw in enumerate(raw_chunks):
+        row = _mapping(raw, f"predecessor_chunks[{index}]")
+        chunk_id = _text(row.get("chunk_id"), f"predecessor_chunks[{index}].chunk_id")
+        chunk_ids.append(chunk_id)
+        if chunk_id not in PREDECESSOR_CHUNK_IDS:
+            raise P14Error(f"unexpected predecessor chunk {chunk_id}")
+        registry = graph["chunk_by_id"][chunk_id]
+        if row.get("depends_on") != registry["depends_on"] or row.get("phase_ids") != registry["phase_ids"]:
+            raise P14Error(f"{chunk_id} dependency or phase ownership drift")
+        expected_conductor = {key: registry["conductor"][key] for key in ("slug", "effort")}
+        if row.get("conductor") != expected_conductor:
+            raise P14Error(f"{chunk_id} conductor assignment drift")
+        expected_closure = "partial" if chunk_id == "PSP-C03" else "open"
+        if row.get("closure_state") != expected_closure or row.get("counts_as_closure") is not False:
+            raise P14Error(f"{chunk_id} closure truth drift")
+        _text(row.get("preflight_state"), f"{chunk_id}.preflight_state")
+        evidence = _list(row.get("evidence"), f"{chunk_id}.evidence", nonempty=True)
+        targets: set[str] = set()
+        for evidence_index, raw_evidence in enumerate(evidence):
+            receipt = _mapping(raw_evidence, f"{chunk_id}.evidence[{evidence_index}]")
+            target = _text(receipt.get("target"), f"{chunk_id}.evidence[{evidence_index}].target")
+            if target in targets:
+                raise P14Error(f"{chunk_id} has duplicate evidence target {target}")
+            targets.add(target)
+            pull_request = receipt.get("pull_request")
+            if not isinstance(pull_request, int) or isinstance(pull_request, bool) or pull_request < 1:
+                raise P14Error(f"{chunk_id} evidence pull_request must be a positive integer")
+            if not HEAD_RE.fullmatch(str(receipt.get("head") or "")):
+                raise P14Error(f"{chunk_id} evidence head must be an exact commit")
+        frontier = _list(row.get("frontier_work"), f"{chunk_id}.frontier_work")
+        if chunk_id == "PSP-C03":
+            if len(frontier) != 1:
+                raise P14Error("C03 must expose exactly the current W07 reader frontier")
+            reader = _mapping(frontier[0], "C03 frontier work")
+            assignment = program["model_assignment_for"]("PSP-P03-W07", graph)
+            expected_assignment = {key: assignment[key] for key in ("slug", "effort")}
+            if (
+                reader.get("work_id") != "PSP-P03-W07"
+                or reader.get("issue") != mapping["issues"]["PSP-P03-W07"]["url"]
+                or reader.get("state") != "open"
+                or reader.get("assignment") != expected_assignment
+            ):
+                raise P14Error("C03 reader frontier drift")
+            _text(reader.get("acceptance_boundary"), "C03 reader frontier acceptance_boundary")
+            if not HEAD_RE.fullmatch(str(row.get("accepted_checkpoint") or "")):
+                raise P14Error("C03 accepted checkpoint must be an exact commit")
+        elif frontier:
+            raise P14Error(f"{chunk_id} must not invent a frontier ahead of C03")
+    if tuple(chunk_ids) != PREDECESSOR_CHUNK_IDS:
+        raise P14Error("predecessor chunks must remain in canonical C03-C11 order")
+
+    c12 = graph["chunk_by_id"]["PSP-C12"]
+    expected_p14_conductor = {key: c12["conductor"][key] for key in ("slug", "effort")}
+    if ledger.get("p14_conductor") != expected_p14_conductor:
+        raise P14Error("P14 conductor assignment drift")
+    p14_stages = _list(ledger.get("p14_stages"), "dependency ledger p14_stages")
+    if len(p14_stages) != len(WORK_IDS):
+        raise P14Error("dependency ledger must contain all nine P14 stages")
+    for index, work_id in enumerate(WORK_IDS):
+        row = _mapping(p14_stages[index], f"p14_stages[{index}]")
+        packet = graph["work_by_id"][work_id]
+        assignment = program["model_assignment_for"](work_id, graph)
+        if (
+            row.get("work_id") != work_id
+            or row.get("issue") != mapping["issues"][work_id]["url"]
+            or row.get("depends_on") != packet["depends_on"]
+            or row.get("assignment") != {key: assignment[key] for key in ("slug", "effort")}
+            or row.get("closure_state") != "open"
+            or row.get("counts_as_closure") is not False
+        ):
+            raise P14Error(f"{work_id} dependency, issue, assignment, or closure drift")
+        _text(row.get("preflight_state"), f"{work_id}.preflight_state")
+
+    terminal_nodes = _list(ledger.get("terminal_nodes"), "dependency ledger terminal_nodes")
+    requirements = contract["terminal_requirements"]
+    if len(terminal_nodes) != len(requirements):
+        raise P14Error("dependency ledger terminal-node count drift")
+    for index, requirement in enumerate(requirements):
+        row = _mapping(terminal_nodes[index], f"terminal_nodes[{index}]")
+        expected = {key: requirement[key] for key in ("code", "work_id", "kind")}
+        if (
+            any(row.get(key) != value for key, value in expected.items())
+            or row.get("closure_state") != "open"
+            or row.get("counts_as_closure") is not False
+        ):
+            raise P14Error(f"terminal node drift at {requirement['code']}")
+    return ledger
+
+
+def load_dependency_ledger(
+    path: Path = DEFAULT_LEDGER,
+    contract: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if contract is None:
+        contract = load_contract()
+    return validate_dependency_ledger(_load_json(path), contract)
+
+
+def dependency_report(ledger: dict[str, Any]) -> dict[str, Any]:
+    blockers = [
+        {
+            "chunk_id": row["chunk_id"],
+            "closure_state": row["closure_state"],
+            "preflight_state": row["preflight_state"],
+            "depends_on": row["depends_on"],
+        }
+        for row in ledger["predecessor_chunks"]
+        if row["closure_state"] != "closed"
+    ]
+    frontier: list[dict[str, Any]] = []
+    for row in ledger["predecessor_chunks"]:
+        if row["closure_state"] != "closed" and row["frontier_work"]:
+            frontier = deepcopy(row["frontier_work"])
+            break
+    return {
+        "status": "blocked" if blockers else "pass",
+        "predecessor_chunk_count": len(ledger["predecessor_chunks"]),
+        "predecessor_blocker_count": len(blockers),
+        "predecessor_blockers": blockers,
+        "execution_frontier": frontier,
+        "counts_as_closure": False,
+    }
+
+
 def validate_contract(value: object) -> dict[str, Any]:
     contract = _mapping(value, "control plane")
     if contract.get("schema_version") != CONTROL_SCHEMA:
@@ -168,6 +392,32 @@ def validate_contract(value: object) -> dict[str, Any]:
     predecessor = _mapping(contract.get("predecessor_policy"), "predecessor_policy")
     if predecessor.get("mode") != "receipt-only" or predecessor.get("execute_commands") is not False:
         raise P14Error("predecessor policy must consume receipts without executing predecessor commands")
+    dependency_contract = _mapping(contract.get("dependency_ledger"), "dependency_ledger")
+    if (
+        dependency_contract.get("path") != "institutio/positioning/p14/dependency-ledger.json"
+        or dependency_contract.get("schema_version") != LEDGER_SCHEMA
+        or dependency_contract.get("predecessor_chunk_count") != len(PREDECESSOR_CHUNK_IDS)
+        or dependency_contract.get("terminal_node_count") != 23
+        or dependency_contract.get("counts_as_closure") is not False
+    ):
+        raise P14Error("dependency-ledger contract drift")
+    public_contract = _mapping(contract.get("public_evidence_contract"), "public_evidence_contract")
+    deny_keys = _list(public_contract.get("deny_keys"), "public_evidence_contract.deny_keys", nonempty=True)
+    if len(deny_keys) != len(set(deny_keys)) or set(deny_keys) != EXPECTED_DENY_KEYS:
+        raise P14Error("public evidence deny-key contract drift")
+    _text(public_contract.get("identity_rule"), "public_evidence_contract.identity_rule")
+    _text(public_contract.get("violation_rule"), "public_evidence_contract.violation_rule")
+    program_receipt = _mapping(contract.get("program_receipt_contract"), "program_receipt_contract")
+    program_fields = _list(program_receipt.get("required_fields"), "program_receipt_contract.required_fields")
+    if (
+        program_receipt.get("command") != "python3 scripts/positioning-program.py --omega --require-two-pass"
+        or set(program_fields) != PROGRAM_RECEIPT_FIELDS
+        or len(program_fields) != len(PROGRAM_RECEIPT_FIELDS)
+        or program_receipt.get("scope") != "live"
+        or program_receipt.get("bind_state_digest_to_omega_pair") is not True
+        or program_receipt.get("require_observation_at_or_after_second_pass") is not True
+    ):
+        raise P14Error("program Omega receipt contract drift")
     stages = _list(contract.get("stages"), "stages", nonempty=True)
     order = _topological_stages(stages)
 
@@ -242,8 +492,16 @@ def validate_contract(value: object) -> dict[str, Any]:
         raise P14Error(f"omega.work_id must be {WORK_IDS[-1]}")
     if omega.get("pair_schema_version") != PAIR_SCHEMA or omega.get("pass_schema_version") != OMEGA_PASS_SCHEMA:
         raise P14Error("Omega schemas do not match the tracked two-pass contract")
-    if omega.get("require_distinct_observed_at") is not True or omega.get("require_equal_state_digest") is not True:
+    if (
+        omega.get("require_distinct_observed_at") is not True
+        or omega.get("require_strict_observation_order") is not True
+        or omega.get("require_equal_state_digest") is not True
+    ):
         raise P14Error("Omega must require distinct observations of one unchanged digest")
+    if omega.get("live_pass_required_fields") != ["ok", "parity", "open", "verified_receipts", "failures"]:
+        raise P14Error("Omega live-pass field contract drift")
+    if omega.get("live_pair_evidence_urls") != 2:
+        raise P14Error("Omega live pair must bind exactly two evidence URLs")
     expected_live = "python3 scripts/positioning-program.py --omega --require-two-pass"
     if omega.get("live_predicate") != expected_live:
         raise P14Error(f"omega.live_predicate must be {expected_live}")
@@ -286,6 +544,17 @@ def validate_contract(value: object) -> dict[str, Any]:
             _text(requirement.get("path"), f"{code}.path")
     if work_receipts != set(WORK_IDS):
         raise P14Error("terminal requirements must name one durable receipt for every P14 work id")
+    if len(requirements) != dependency_contract["terminal_node_count"]:
+        raise P14Error("terminal requirement count differs from the dependency-ledger contract")
+    program_requirement = next(
+        (item for item in requirements if item.get("code") == "PROGRAM_OMEGA_RECEIPT_MISSING"),
+        None,
+    )
+    if (
+        not isinstance(program_requirement, dict)
+        or set(program_requirement.get("required_fields") or []) != PROGRAM_RECEIPT_FIELDS
+    ):
+        raise P14Error("terminal program Omega receipt fields drift")
     return {**contract, "stage_order": order}
 
 
@@ -522,6 +791,7 @@ def verify_omega_pair(value: object, *, required_scope: str) -> dict[str, Any]:
     if len(passes) != 2:
         raise P14Error("Omega pair must contain exactly two passes")
     normalized: list[dict[str, Any]] = []
+    observed_times: list[datetime] = []
     for number, raw in enumerate(passes, start=1):
         record = _mapping(raw, f"Omega pass {number}")
         if record.get("schema_version") != OMEGA_PASS_SCHEMA:
@@ -530,17 +800,44 @@ def verify_omega_pair(value: object, *, required_scope: str) -> dict[str, Any]:
             raise P14Error(f"Omega pass {number} must be a passing pass-{number} record")
         if not DIGEST_RE.fullmatch(str(record.get("state_digest") or "")):
             raise P14Error(f"Omega pass {number} state_digest must be sha256")
-        if not _is_rfc3339(record.get("observed_at")):
+        observed_time = _rfc3339_datetime(record.get("observed_at"))
+        if observed_time is None:
             raise P14Error(f"Omega pass {number} observed_at must be RFC3339")
+        observed_times.append(observed_time)
+        if required_scope == "live":
+            missing_fields = [
+                field for field in ("ok", "parity", "open", "verified_receipts", "failures") if field not in record
+            ]
+            if missing_fields:
+                raise P14Error(f"Omega pass {number} is missing canonical live fields: {missing_fields}")
+            if record.get("ok") is not True or record.get("open") != [] or record.get("failures") != []:
+                raise P14Error(f"Omega pass {number} is not a clean canonical live pass")
+            verified_receipts = record.get("verified_receipts")
+            if not isinstance(verified_receipts, int) or isinstance(verified_receipts, bool) or verified_receipts < 1:
+                raise P14Error(f"Omega pass {number} verified_receipts must be positive")
+            parity = _mapping(record.get("parity"), f"Omega pass {number} parity")
+            expected = parity.get("expected")
+            observed = parity.get("observed")
+            if (
+                parity.get("ok") is not True
+                or not isinstance(expected, int)
+                or isinstance(expected, bool)
+                or expected < 1
+                or observed != expected
+                or parity.get("missing") != []
+                or parity.get("orphan") != []
+                or parity.get("drift") != []
+            ):
+                raise P14Error(f"Omega pass {number} parity is incomplete or drifted")
         normalized.append(record)
     if normalized[0]["state_digest"] != normalized[1]["state_digest"]:
         raise P14Error("Omega pass digests differ")
-    if normalized[0]["observed_at"] == normalized[1]["observed_at"]:
-        raise P14Error("Omega passes must be distinct observations")
+    if observed_times[1] <= observed_times[0]:
+        raise P14Error("Omega passes must be strictly ordered distinct observations")
     if required_scope == "live":
         evidence_urls = _list(pair.get("evidence_urls"), "live Omega evidence_urls", nonempty=True)
-        if not all(_is_url(item) for item in evidence_urls):
-            raise P14Error("live Omega evidence_urls must be HTTPS URLs")
+        if len(evidence_urls) != 2 or len(set(evidence_urls)) != 2 or not all(_is_url(item) for item in evidence_urls):
+            raise P14Error("live Omega must bind exactly two unique HTTPS evidence URLs")
     return {
         "status": "pass",
         "scope": required_scope,
@@ -727,6 +1024,12 @@ def _valid_record(value: object, requirement: dict[str, Any]) -> tuple[bool, str
             return False, "program Omega command or exit code does not match"
         if not DIGEST_RE.fullmatch(str(value.get("output_sha256") or "")):
             return False, "program Omega output_sha256 is invalid"
+        if not DIGEST_RE.fullmatch(str(value.get("state_digest") or "")):
+            return False, "program Omega state_digest is invalid"
+        if not HEAD_RE.fullmatch(str(value.get("observed_head") or "")):
+            return False, "program Omega observed_head is invalid"
+        if not _is_rfc3339(value.get("observed_at")):
+            return False, "program Omega observed_at is invalid"
     return True, "valid"
 
 
@@ -784,10 +1087,21 @@ def _valid_records(value: object, requirement: dict[str, Any]) -> tuple[bool, st
     return True, f"{valid}/{minimum} valid"
 
 
-def terminal_report(contract: dict[str, Any], value: object) -> dict[str, Any]:
+def terminal_report(
+    contract: dict[str, Any],
+    value: object,
+    ledger: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if ledger is None:
+        ledger = load_dependency_ledger(contract=contract)
+    dependency = dependency_report(ledger)
     evidence = value if isinstance(value, dict) else {}
     schema_ok = evidence.get("schema_version") == EVIDENCE_SCHEMA
     scope_ok = evidence.get("scope") == "live"
+    deny_keys = set(contract["public_evidence_contract"]["deny_keys"])
+    privacy_violations = _privacy_violations(evidence, deny_keys) if evidence else []
+    public_safe = not privacy_violations
+    evidence_valid = schema_ok and scope_ok and public_safe
     missing: list[dict[str, Any]] = []
     work_receipts = evidence.get("work_receipts") if isinstance(evidence.get("work_receipts"), dict) else {}
     human_gates = evidence.get("human_gates") if isinstance(evidence.get("human_gates"), dict) else {}
@@ -807,11 +1121,12 @@ def terminal_report(contract: dict[str, Any], value: object) -> dict[str, Any]:
                 return
         missing.append(row)
 
+    omega_result: dict[str, Any] | None = None
     for requirement in contract["terminal_requirements"]:
         kind = requirement["kind"]
         valid = False
         observed = "live evidence envelope is missing or invalid"
-        if schema_ok and scope_ok:
+        if evidence_valid:
             if kind == "work_receipt":
                 valid, observed = _valid_work_receipt(work_receipts.get(requirement["work_id"]))
             elif kind == "minimum_records":
@@ -828,12 +1143,13 @@ def terminal_report(contract: dict[str, Any], value: object) -> dict[str, Any]:
                 pair = _path_value(evidence, requirement["path"])
                 try:
                     result = verify_omega_pair(pair, required_scope="live")
+                    omega_result = result
                     valid, observed = True, f"unchanged digest {result['state_digest']}"
                 except P14Error as exc:
                     observed = str(exc)
         if not valid:
             record_missing(requirement, observed)
-    if schema_ok and scope_ok:
+    if evidence_valid:
         sales_rows = evidence.get("sales_outcomes") if isinstance(evidence.get("sales_outcomes"), list) else []
         sales_ids = {
             row["outcome_id"]
@@ -885,16 +1201,47 @@ def terminal_report(contract: dict[str, Any], value: object) -> dict[str, Any]:
                 requirements_by_code["PORTFOLIO_IMPACT_RECEIPT_MISSING"],
                 f"portfolio impact ids {sorted(impact_ids)} do not exactly cover live outcome ids {sorted(source_ids)}",
             )
+        program_requirement = requirements_by_code["PROGRAM_OMEGA_RECEIPT_MISSING"]
+        program_record = evidence.get("program_omega") if isinstance(evidence.get("program_omega"), dict) else {}
+        program_valid, program_observed = _valid_record(program_record, program_requirement)
+        if program_valid and omega_result is not None:
+            if program_record.get("state_digest") != omega_result["state_digest"]:
+                record_missing(
+                    program_requirement,
+                    "program Omega state_digest does not match the verified two-pass digest",
+                )
+            else:
+                program_time = _rfc3339_datetime(program_record.get("observed_at"))
+                second_pass_time = _rfc3339_datetime(omega_result["observed_at"][1])
+                if program_time is None or second_pass_time is None or program_time < second_pass_time:
+                    record_missing(
+                        program_requirement,
+                        "program Omega observation predates the second verified pass",
+                    )
+        elif not program_valid:
+            record_missing(program_requirement, program_observed)
+    predecessor_count = dependency["predecessor_blocker_count"]
+    p14_missing_count = len(missing)
+    privacy_blocker_count = 0 if public_safe else 1
+    total_missing = predecessor_count + p14_missing_count + privacy_blocker_count
     return {
         "schema_version": "limen.positioning_p14_terminal_report.v1",
-        "status": "pass" if not missing else "blocked",
-        "terminal": not missing,
+        "status": "pass" if total_missing == 0 else "blocked",
+        "terminal": total_missing == 0,
+        "p14_terminal": p14_missing_count == 0,
         "evidence_envelope": {
             "path_schema_valid": schema_ok,
             "scope_live": scope_ok,
+            "public_safe": public_safe,
+            "privacy_violations": privacy_violations,
         },
+        "predecessor_blockers": dependency["predecessor_blockers"],
+        "predecessor_blocker_count": predecessor_count,
+        "execution_frontier": dependency["execution_frontier"],
         "missing_external_outcomes": missing,
-        "missing_count": len(missing),
+        "p14_missing_count": p14_missing_count,
+        "privacy_blocker_count": privacy_blocker_count,
+        "missing_count": total_missing,
         "non_claims": [
             "No Omega claim without the passing live program receipt and two unchanged live passes.",
             "No real-demand, client-outcome, operator-outcome, or time-based-cycle claim from fixtures.",
@@ -904,9 +1251,16 @@ def terminal_report(contract: dict[str, Any], value: object) -> dict[str, Any]:
     }
 
 
-def preflight(contract: dict[str, Any], fixture: object, evidence: object) -> dict[str, Any]:
+def preflight(
+    contract: dict[str, Any],
+    fixture: object,
+    evidence: object,
+    ledger: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if ledger is None:
+        ledger = load_dependency_ledger(contract=contract)
     fixture_result = run_synthetic(contract, fixture)
-    terminal = terminal_report(contract, evidence)
+    terminal = terminal_report(contract, evidence, ledger)
     if terminal["terminal"]:
         raise P14Error("preflight unexpectedly received terminal live evidence; run the owning live predicates")
     return {
@@ -916,7 +1270,12 @@ def preflight(contract: dict[str, Any], fixture: object, evidence: object) -> di
         "synthetic_fixture": fixture_result["status"],
         "predecessor_commands_executed": fixture_result["executed_predecessor_commands"],
         "terminal_status": terminal["status"],
+        "predecessor_blockers": terminal["predecessor_blockers"],
+        "predecessor_blocker_count": terminal["predecessor_blocker_count"],
+        "execution_frontier": terminal["execution_frontier"],
         "missing_external_outcomes": terminal["missing_external_outcomes"],
+        "p14_missing_count": terminal["p14_missing_count"],
+        "blocking_total": terminal["missing_count"],
         "non_claims": fixture_result["not_evidence_for"],
     }
 
@@ -930,11 +1289,13 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--terminal", action="store_true")
     mode.add_argument("--preflight", action="store_true")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--ledger", type=Path, default=DEFAULT_LEDGER)
     parser.add_argument("--evidence", type=Path, default=DEFAULT_EVIDENCE)
     parser.add_argument("--scope", choices=("synthetic", "live"), default="live")
     args = parser.parse_args(argv)
     try:
         contract = load_contract(args.manifest)
+        ledger = load_dependency_ledger(args.ledger, contract)
         if args.check:
             result: object = {
                 "schema_version": CONTROL_SCHEMA,
@@ -943,6 +1304,9 @@ def main(argv: list[str] | None = None) -> int:
                 "metrics": len(contract["metrics"]),
                 "stages": contract["stage_order"],
                 "terminal_requirements": len(contract["terminal_requirements"]),
+                "predecessor_chunks": len(ledger["predecessor_chunks"]),
+                "dependency_blockers": dependency_report(ledger)["predecessor_blocker_count"],
+                "execution_frontier": dependency_report(ledger)["execution_frontier"],
                 "predecessor_policy": contract["predecessor_policy"],
             }
             exit_code = 0
@@ -953,13 +1317,14 @@ def main(argv: list[str] | None = None) -> int:
             result = verify_omega_pair(_load_json(args.verify_two_pass), required_scope=args.scope)
             exit_code = 0
         elif args.terminal:
-            result = terminal_report(contract, _load_json(args.evidence, missing={}))
+            result = terminal_report(contract, _load_json(args.evidence, missing={}), ledger)
             exit_code = 0 if result["terminal"] else 3
         else:
             result = preflight(
                 contract,
                 _load_json(DEFAULT_FIXTURE),
                 _load_json(args.evidence, missing={}),
+                ledger,
             )
             exit_code = 0
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))

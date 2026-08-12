@@ -2,6 +2,8 @@
 
 This directory documents the reversible control plane for `PSP-C12` / `PSP-P14`. The executable
 contract is [`institutio/positioning/p14/control-plane.json`](../../../institutio/positioning/p14/control-plane.json),
+the full dependency snapshot is
+[`institutio/positioning/p14/dependency-ledger.json`](../../../institutio/positioning/p14/dependency-ledger.json),
 and the read-only runner is [`scripts/positioning-p14-control-plane.py`](../../../scripts/positioning-p14-control-plane.py).
 
 This is a preflight, not a completion receipt. It defines the event/KPI dictionary, the weekly,
@@ -28,6 +30,19 @@ python3 scripts/positioning-p14-control-plane.py --preflight
 terminal result still fails truthfully on the absent external receipts. A green preflight therefore
 means “the scaffold is ready and honest,” never “P14 is done.”
 
+The v2 preflight distinguishes two independent facts for every upstream chunk: `preflight_state`
+records reversible preparation, while `closure_state` records formal lifecycle truth. Every
+prepared row also says `counts_as_closure: false`. The ledger is checked against the canonical
+registry for chunk dependencies, phase ownership, conductors, all nine P14 model/effort
+assignments, issue URLs, and all 23 terminal requirement nodes.
+
+At the 2026-08-12 reconciliation point, all nine C03-C11 predecessor chunks remain formal blockers
+and all 23 P14 terminal nodes remain open: 32 blockers, derived rather than hard-coded. The first
+execution frontier is `PSP-P03-W07` / issue
+[#2188](https://github.com/organvm/limen/issues/2188), assigned to `gpt-5.4-mini` / `low`. Its
+five-reader acceptance boundary requires genuine independent target-like readers; model, author,
+coached, or fabricated responses do not count.
+
 The live terminal predicate is separate:
 
 ```bash
@@ -38,6 +53,12 @@ Until a live evidence envelope exists at
 `docs/receipts/positioning/p14/live-evidence.json`, the command exits `3` and prints every missing
 outcome with its P14 work ID, durable owner, required evidence, and observed deficiency. It never
 turns absence into a skip or a synthetic pass.
+
+The public evidence envelope is key-denylisted recursively and permits only opaque identities. A
+contact, client, operator, private-repository, price, credential, token, secret, email, or phone
+field blocks terminal status wherever it appears. Private evidence bodies remain in their private
+owners; the public envelope holds only opaque IDs, aggregates, exact commits, predicates, and HTTPS
+receipts.
 
 ## Event and KPI contract
 
@@ -105,9 +126,12 @@ threshold exists. This preflight neither chooses a price nor asks for the decisi
 ## Two unchanged passes
 
 The pair envelope contains exactly two `limen.positioning_omega_pass.v1` records. They must be
-separate pass numbers with distinct RFC3339 observation times and the same SHA-256 state digest.
-The verifier rejects a copied timestamp, changed digest, wrong pass number, wrong schema, or
-synthetic pair presented as live.
+separate pass numbers with strictly increasing RFC3339 observation times and the same SHA-256 state
+digest. A live pass must also preserve the canonical clean result: `ok: true`, exact green parity,
+no open IDs, no failures, and a positive verified-receipt count. The live pair binds exactly two
+unique HTTPS pass receipts. The verifier rejects a copied/reversed timestamp, changed digest,
+wrong pass number, wrong schema, incomplete parity, duplicate receipt URL, or synthetic pair
+presented as live.
 
 The synthetic pair exercises comparison only. Terminal Omega still requires the canonical live
 command and its durable receipt:
@@ -115,6 +139,10 @@ command and its durable receipt:
 ```bash
 python3 scripts/positioning-program.py --omega --require-two-pass
 ```
+
+Its durable program receipt additionally records the exact observed repository head, the consumed
+state digest, RFC3339 observation time, and output SHA-256. The digest must equal the verified pair,
+and the program observation cannot predate pass two.
 
 ## Terminal evidence boundary
 

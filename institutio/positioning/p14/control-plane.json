@@ -1,11 +1,44 @@
 {
-  "schema_version": "limen.positioning_p14_control_plane.v1",
+  "schema_version": "limen.positioning_p14_control_plane.v2",
   "phase_id": "PSP-P14",
   "chunk_id": "PSP-C12",
   "predecessor_policy": {
     "mode": "receipt-only",
     "execute_commands": false,
     "description": "Consume current durable receipts; never replay a predecessor merely to accumulate reassurance."
+  },
+  "dependency_ledger": {
+    "path": "institutio/positioning/p14/dependency-ledger.json",
+    "schema_version": "limen.positioning_p14_dependency_ledger.v1",
+    "predecessor_chunk_count": 9,
+    "terminal_node_count": 23,
+    "counts_as_closure": false
+  },
+  "public_evidence_contract": {
+    "deny_keys": [
+      "access_token",
+      "api_key",
+      "authorization",
+      "client_name",
+      "contact_name",
+      "credential",
+      "email",
+      "operator_name",
+      "phone",
+      "price_amount",
+      "private_evidence_body",
+      "private_repository_name",
+      "secret"
+    ],
+    "identity_rule": "Public evidence uses opaque outcome, engagement, operator, and product IDs only.",
+    "violation_rule": "A denied key anywhere in the live evidence envelope blocks terminal status."
+  },
+  "program_receipt_contract": {
+    "command": "python3 scripts/positioning-program.py --omega --require-two-pass",
+    "required_fields": ["command", "exit_code", "output_sha256", "state_digest", "observed_head", "observed_at", "evidence_url"],
+    "scope": "live",
+    "bind_state_digest_to_omega_pair": true,
+    "require_observation_at_or_after_second_pass": true
   },
   "stages": [
     {"work_id": "PSP-P14-W01", "kind": "metric_dictionary", "depends_on": []},
@@ -117,7 +150,10 @@
     "pair_schema_version": "limen.positioning_p14_omega_pair.v1",
     "pass_schema_version": "limen.positioning_omega_pass.v1",
     "require_distinct_observed_at": true,
+    "require_strict_observation_order": true,
     "require_equal_state_digest": true,
+    "live_pass_required_fields": ["ok", "parity", "open", "verified_receipts", "failures"],
+    "live_pair_evidence_urls": 2,
     "live_predicate": "python3 scripts/positioning-program.py --omega --require-two-pass"
   },
   "terminal_requirements": [
@@ -143,6 +179,6 @@
     {"code": "REAL_OPERATOR_OUTCOME_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "path": "operator_outcomes", "minimum": 1, "required_scope": "live", "required_fields": ["outcome_id", "claim_impact", "classification_impact", "proof_impact", "evidence_url"], "owner": "private operator ledger plus issue #2282", "description": "At least one observed operator result or evidence-backed no-go mapped upstream."},
     {"code": "PORTFOLIO_IMPACT_RECEIPT_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "path": "portfolio_impacts", "minimum": 1, "required_scope": "live", "required_fields": ["outcome_id", "before_class", "after_class", "reason", "evidence_url"], "owner": "estate classification owner", "description": "Evidence-backed classification impact, including an explicit no-change result when appropriate."},
     {"code": "TWO_LIVE_OMEGA_PASSES_MISSING", "work_id": "PSP-P14-W09", "kind": "omega_pair", "path": "omega_pair", "owner": "issue #2283", "description": "Two distinct live observations with one unchanged complete-state digest."},
-    {"code": "PROGRAM_OMEGA_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "status_record", "path": "program_omega", "expected_status": "pass", "required_scope": "live", "required_fields": ["command", "exit_code", "output_sha256", "evidence_url"], "owner": "issue #2283", "description": "Passing live `positioning-program.py --omega --require-two-pass` receipt."}
+    {"code": "PROGRAM_OMEGA_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "status_record", "path": "program_omega", "expected_status": "pass", "required_scope": "live", "required_fields": ["command", "exit_code", "output_sha256", "state_digest", "observed_head", "observed_at", "evidence_url"], "owner": "issue #2283", "description": "Passing live `positioning-program.py --omega --require-two-pass` receipt bound to the two-pass digest and exact observed head."}
   ]
 }
