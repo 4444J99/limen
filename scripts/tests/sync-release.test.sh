@@ -221,6 +221,45 @@ grep -Fq "with UNIQUE local work — fail open" <<<"$partial_out" \
 grep -q "only-here" "$tmp/diverged-live/docs/only-local.md" \
   || { echo "FAIL: partially-unique divergence lost the unique local file"; echo "$partial_out"; exit 1; }
 
+# The organ consults ITS OWN helpers, and takes only the TARGET from $ROOT. Bootstrapping a wedged
+# tree means running a CURRENT organ against a STALE $ROOT; while helpers resolved from "$ROOT", the
+# current organ still asked the stale tree's probe and believed its answer — so a fix to the probe
+# could never reach the tree it existed to unwedge. A hostile probe planted in the TARGET must have
+# no influence: if it did, any stale tree could veto its own repair.
+# Clear the genuinely-unique commit the previous case deliberately left behind, or no valve fires
+# and this case would pass for the wrong reason (fail-open, not "the guard was ignored").
+git -C "$tmp/diverged-live" push -q origin main --force
+git -C "$tmp/diverged-peer" fetch -q origin main
+git -C "$tmp/diverged-peer" reset -q --hard origin/main
+mkdir -p "$tmp/diverged-live/scripts"
+cat > "$tmp/diverged-live/scripts/session-contention.py" <<'FAKE'
+import sys
+print("session-contention: TARGET-PLANTED probe OCCUPIED by pid 99999")
+sys.exit(1)
+FAKE
+# A receipts-only local commit: valve 2 makes it loss-free, so the reset is reached and the guard is
+# the only thing that could stop it — which is exactly what this asserts.
+printf 'task-local-again\n' > "$tmp/diverged-live/tasks.yaml"
+git -C "$tmp/diverged-live" add tasks.yaml
+git -C "$tmp/diverged-live" commit -q -m "local tasks projection again"
+printf 'release-three\n' > "$tmp/diverged-peer/release-three.md"
+git -C "$tmp/diverged-peer" fetch -q origin main
+git -C "$tmp/diverged-peer" reset -q --hard origin/main
+printf 'release-three\n' > "$tmp/diverged-peer/release-three.md"
+git -C "$tmp/diverged-peer" add release-three.md
+git -C "$tmp/diverged-peer" commit -q -m "release advance three"
+git -C "$tmp/diverged-peer" push -q origin main
+
+self_out="$(LIMEN_ROOT="$tmp/diverged-live" LIMEN_RELEASE_BRANCH=main \
+  LIMEN_SYNC_RECEIPT_GLOBS="$panel_receipt_globs" bash "$script" 2>&1)" \
+  || { echo "FAIL: self-helper sync exited nonzero"; echo "$self_out"; exit 1; }
+self_remote="$(git --git-dir="$tmp/diverged-origin.git" rev-parse refs/heads/main)"
+[ "$(git -C "$tmp/diverged-live" rev-parse HEAD)" = "$self_remote" ] \
+  || { echo "FAIL: a probe planted in the TARGET tree vetoed the organ's own repair"; echo "$self_out"; exit 1; }
+grep -Fq "TARGET-PLANTED" <<<"$self_out" \
+  && { echo "FAIL: the organ ran the target tree's helper instead of its own"; echo "$self_out"; exit 1; }
+rm -rf "$tmp/diverged-live/scripts"
+
 
 # --check: a real predicate, not the informational --census. Fresh clone at HEAD==origin/main
 # with default RECEIPT_GLOBS (no override) proves the shipped defaults, not just the test panel's.
@@ -358,4 +397,4 @@ held_check2_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$
 [ "$held_check2_rc" = 0 ] \
   || { echo "FAIL: --check should PASS after re-attach"; echo "$held_check2_out"; exit 1; }
 
-echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + content-identity reconcile + partially-unique fail-open + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach"
+echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + content-identity reconcile + partially-unique fail-open + organ-uses-own-helper + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach"

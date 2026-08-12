@@ -27,6 +27,27 @@ export HOME="${HOME:-/Users/4jp}"
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 
+# THE ORGAN'S OWN REPOSITORY ROOT — where THIS script lives, which is not necessarily the tree it
+# operates on. Normally they are the same directory and nothing below behaves differently.
+#
+# They diverge in exactly one situation, and it is the one that matters: BOOTSTRAPPING A WEDGED
+# TREE. This organ is the only thing that advances $ROOT, so when a fix to the organ itself is
+# needed to unwedge $ROOT, that fix cannot arrive by the usual route — the tree that needs the new
+# code is the tree the new code exists to update. The escape is to run a CURRENT copy of the organ
+# (from a worktree at origin/main) against the stale $ROOT. That already worked for the organ's own
+# logic, because bash reads this file from where it was invoked. It did NOT work for the organ's
+# HELPERS: they were resolved from "$ROOT", so a current organ still asked the STALE tree's probe
+# for its verdict and got the stale answer back — which is precisely the two-rail confusion the
+# repo's verify recipe warns about, appearing inside a single script.
+#
+# Measured 2026-08-12: a current organ, run against a live checkout 29 commits behind, correctly
+# proved the divergence loss-free and then declined anyway, because $ROOT's OLD occupancy classifier
+# reported a ChatGPT.app stdio server as an interactive session. The organ's fix and the probe's fix
+# were both already merged and green; neither could be reached. A tool must use ITS OWN libraries
+# and only take the TARGET from its argument.
+SELF_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd -P)" || SELF_ROOT="$ROOT"
+[ -n "$SELF_ROOT" ] || SELF_ROOT="$ROOT"
+
 # Regenerable daemon bookkeeping — receipt files the beat REWRITES every cycle. A commit touching ONLY
 # these is "unique" by patch-id yet carries NO genuine work: it is loss-free to re-converge past. This
 # is the exact commit that otherwise strands the live checkout — a receipt committed while in sync, then
@@ -286,7 +307,11 @@ if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
   # — so it shipped inert and every gate stayed green. A defensive `||` became an eraser.
   # `|| true` absorbs the intended non-zero; the sed then reads a variable, where no exit status
   # of the probe's can reach it. The TEXT is the verdict here, never the status.
-  _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
+  # SELF_ROOT for the helper, $ROOT for the TARGET (see SELF_ROOT above). LIMEN_ROOT is passed
+  # explicitly because session-contention.py resolves its own `limen` package from it — without
+  # that, the current script would still import the stale tree's classifier and get its verdict.
+  _probe_out="$(LIMEN_ROOT="$SELF_ROOT" python3 "$SELF_ROOT/scripts/session-contention.py" \
+    probe --root "$ROOT" 2>/dev/null || true)"
   OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
   # A BLIND PROBE MUST NOT BE A QUIET ONE. The capture above swallows the probe's stdout, so on a
   # host where the probe cannot run — package unimportable, lsof missing — the guard disarms and
