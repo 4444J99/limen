@@ -178,6 +178,26 @@ def test_python_test_helper_with_concatenated_effector_command_is_detected(tmp_p
     assert check_gate._python_bypasses(helper) is True
 
 
+def test_tracked_concatenated_executable_survives_source_prefilter(tmp_path, check_gate, monkeypatch):
+    sender = tmp_path / "scripts" / "sender.py"
+    sender.parent.mkdir()
+    sender.write_text(
+        "import subprocess\n"
+        'command = "osa" + "script"\n'
+        'message = "display " + "notification x"\n'
+        'subprocess.run([command, "-e", message])\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(check_gate, "_clean_exact_head", lambda _root: None)
+    monkeypatch.setattr(
+        check_gate.subprocess,
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=b"scripts/sender.py\0"),
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_shell_command_regex_accepts_path_and_arguments(check_gate):
     assert check_gate._OSASCRIPT_COMMAND_RE.search("/usr/bin/osascript -e display")
     assert check_gate._OSASCRIPT_COMMAND_RE.search("osascript -e display")
@@ -368,6 +388,34 @@ def test_list_bound_python_notification_bypass_is_rejected(tmp_path, check_gate)
     scripts.mkdir()
     (scripts / "sender.py").write_text(
         'import subprocess\ncmd = ["osascript", "-e", \'display notification "x"\']\nsubprocess.run(cmd)\n',
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        '[subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]]',
+        '{subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]}',
+        '(subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]])',
+        '{"delivery": subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]}',
+    ],
+)
+def test_comprehension_target_notification_bypass_is_rejected(tmp_path, check_gate, expression):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(f"import subprocess\n{expression}\n", encoding="utf-8")
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_destructured_python_command_binding_is_rejected(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        'import subprocess\ncmd, unused = (["osascript", "-e", "display notification x"], None)\nsubprocess.run(cmd)\n',
         encoding="utf-8",
     )
 
@@ -569,7 +617,7 @@ def test_clean_exact_head_reuses_source_path_scan(tmp_path, check_gate, monkeypa
 
     def fake_run(*_args, **_kwargs):
         calls.append(True)
-        return SimpleNamespace(returncode=0, stdout="scripts/sender.py\n")
+        return SimpleNamespace(returncode=0, stdout=b"scripts/sender.py\0")
 
     monkeypatch.setattr(check_gate.subprocess, "run", fake_run)
 

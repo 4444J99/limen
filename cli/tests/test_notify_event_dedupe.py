@@ -124,6 +124,7 @@ def test_delivery_failure_is_reserved_before_effector_and_replay_stays_suppresse
     assert failed.status == "delivery_failed"
     assert failed.reserved is True
     assert replay.status == "duplicate"
+    assert replay.prior_status == "delivery_failed"
     assert ledger["events"][failed.event_key]["status"] == "delivery_failed"
 
 

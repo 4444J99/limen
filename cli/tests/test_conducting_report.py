@@ -172,6 +172,20 @@ def test_admitted_work_can_never_be_reported_as_no_routable_work(tmp_path, monke
     assert "routing: routable" in body
 
 
+def test_session_value_gate_overrides_an_admissible_handoff(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    logs = tmp_path / "logs"
+    _handoff(logs, admissible=1)
+
+    reason, detail = module._routing_reason(
+        session_value_gate={"status": "blocked", "reason": "switch to a higher-value lane"}
+    )
+
+    assert reason == "admission_blocked"
+    assert "session value gate withheld dispatch" in detail
+    assert "higher-value lane" in detail
+
+
 def test_routable_idle_work_overrides_burn_headline(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
     logs = tmp_path / "logs"
@@ -276,9 +290,38 @@ def test_main_refreshes_admission_before_building_report(tmp_path, monkeypatch):
     )
     refreshed = []
     monkeypatch.setattr(module, "_refresh_admission", lambda: refreshed.append(True) or True)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
 
     assert module.main(["--print"]) == 0
     assert refreshed == [True]
+
+
+def test_settled_daily_report_skips_admission_refresh(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    module.STATE.parent.mkdir(parents=True)
+    module.STATE.write_text(json.dumps({"last_day": module._local_day()}), encoding="utf-8")
+    refreshed = []
+    monkeypatch.setattr(module, "_refresh_admission", lambda: refreshed.append(True) or True)
+
+    assert module.main([]) == 0
+    assert refreshed == []
+
+
+def test_session_value_admission_reports_lane_switch_as_blocked(tmp_path, monkeypatch):
+    module = _load(monkeypatch, tmp_path)
+    calls = []
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda args, **kwargs: (
+            calls.append((args, kwargs)) or SimpleNamespace(returncode=10, stdout="", stderr="lane switch")
+        ),
+    )
+
+    result = module._session_value_admission()
+
+    assert result == {"status": "blocked", "reason": "lane switch"}
+    assert calls[0][0][-4:] == ["--gate", "--hours", "1.5", "--no-record-gate"]
 
 
 def test_refresh_admission_is_bounded_and_writes_start_finish_receipts(tmp_path, monkeypatch):
@@ -464,6 +507,7 @@ def test_stale_usage_cannot_emit_or_advance_the_daily_key(tmp_path, monkeypatch)
     )
     delivered = []
     monkeypatch.setattr(module, "_refresh_admission", lambda: True)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
     monkeypatch.setattr(module, "_notify_macos", lambda *_args: delivered.append("macos"))
     monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: delivered.append("ntfy"))
 
@@ -486,14 +530,20 @@ def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path,
         encoding="utf-8",
     )
     monkeypatch.setattr(module, "_refresh_admission", lambda: True)
-    failed = SimpleNamespace(status="delivery_failed", reserved=True)
-    monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: failed)
-    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: False)
+    monkeypatch.setattr(module, "_session_value_admission", lambda: {"status": "allowed"})
+    macos_results = iter(
+        (
+            SimpleNamespace(status="delivery_failed", reserved=True, prior_status=None),
+            SimpleNamespace(status="duplicate", reserved=False, prior_status="delivery_failed"),
+        )
+    )
+    monkeypatch.setattr(module, "_notify_macos", lambda *_args, **_kwargs: next(macos_results))
+    ntfy_results = iter((False, True))
+    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: next(ntfy_results))
 
     assert module.main([]) == 0
     assert not module.STATE.exists()
 
-    monkeypatch.setattr(module, "_notify_ntfy", lambda *_args: True)
     assert module.main([]) == 0
     assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
 

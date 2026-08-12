@@ -35,7 +35,9 @@ def _setup(tmp_path, monkeypatch, products, state=None):
     monkeypatch.setattr(
         mod,
         "_emit",
-        lambda title, msg: emitted.append((title, msg)) or SimpleNamespace(status="emitted", reserved=True),
+        lambda title, msg, *, stable_id: (
+            emitted.append((title, msg, stable_id)) or SimpleNamespace(status="emitted", reserved=True)
+        ),
     )
     return mod, emitted, state_path
 
@@ -79,6 +81,23 @@ def test_genuine_transition_fires_exactly_once_then_quiet(tmp_path, monkeypatch)
     assert emitted == []
 
 
+def test_same_display_payload_from_distinct_products_has_distinct_event_identity(tmp_path, monkeypatch):
+    products = [
+        {"repo": "organvm/one", "product": "Launch", "stage": "live", "whose_hand": "fleet"},
+        {"repo": "organvm/two", "product": "Launch", "stage": "live", "whose_hand": "fleet"},
+    ]
+    state = {"stages": {f"{product['repo']}::Launch": "building" for product in products}}
+    mod, emitted, _ = _setup(tmp_path, monkeypatch, products, state=state)
+
+    assert mod.main() == 0
+    assert len(emitted) == 2
+    assert emitted[0][:2] == emitted[1][:2]
+    assert {event[2] for event in emitted} == {
+        "organvm/one::Launch@live",
+        "organvm/two::Launch@live",
+    }
+
+
 def test_first_run_with_no_state_is_quiet(tmp_path, monkeypatch):
     mod, emitted, _ = _setup(tmp_path, monkeypatch, PRODUCTS, state=None)
     assert mod.main() == 0
@@ -91,7 +110,7 @@ def test_unreserved_event_does_not_advance_source_state(tmp_path, monkeypatch):
     monkeypatch.setattr(
         mod,
         "_emit",
-        lambda *_args: SimpleNamespace(status="withheld", reserved=False),
+        lambda *_args, **_kwargs: SimpleNamespace(status="withheld", reserved=False),
     )
 
     assert mod.main() == 0
@@ -104,7 +123,7 @@ def test_duplicate_event_allows_source_state_to_advance(tmp_path, monkeypatch):
     monkeypatch.setattr(
         mod,
         "_emit",
-        lambda *_args: SimpleNamespace(status="duplicate", reserved=False),
+        lambda *_args, **_kwargs: SimpleNamespace(status="duplicate", reserved=False),
     )
 
     assert mod.main() == 0

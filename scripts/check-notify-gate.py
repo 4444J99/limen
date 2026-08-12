@@ -348,8 +348,26 @@ def _clean_exact_head(root: Path) -> str | None:
         return None
 
 
-def _fallback_source_paths(root: Path) -> list[Path]:
-    """Recover from git-grep degradation without narrowing the tree to scripts/."""
+def _source_mentions_notification_command(candidate: Path) -> bool:
+    """Cheaply retain literal and statically concatenated AppleScript senders.
+
+    Removing source punctuation joins adjacent string fragments, so both
+    ``"osascript"`` and ``"osa" + "script"`` reach the structural scanner.  This is
+    deliberately only a prefilter: the AST/shlex passes below still decide whether the
+    file actually executes a notification.
+    """
+    try:
+        lowered = candidate.read_bytes().lower()
+    except OSError:
+        return True
+    if b"osascript" in lowered:
+        return True
+    compact = re.sub(rb"[^a-z]+", b"", lowered)
+    return b"osascript" in compact and b"displaynotification" in compact
+
+
+def _tracked_source_paths(root: Path) -> list[Path] | None:
+    """Enumerate tracked executable sources, or return None when git is unavailable."""
     try:
         tracked = subprocess.run(
             [
@@ -369,19 +387,17 @@ def _fallback_source_paths(root: Path) -> list[Path]:
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
-        tracked = None
-    if tracked is not None and tracked.returncode == 0:
-        candidates = [
-            root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw
-        ]
-        selected: list[Path] = []
-        for candidate in candidates:
-            try:
-                if b"osascript" in candidate.read_bytes().lower():
-                    selected.append(candidate)
-            except OSError:
-                selected.append(candidate)
-        return selected
+        return None
+    if tracked.returncode != 0:
+        return None
+    return [root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw]
+
+
+def _fallback_source_paths(root: Path) -> list[Path]:
+    """Recover from git degradation without narrowing the tree to scripts/."""
+    tracked = _tracked_source_paths(root)
+    if tracked is not None:
+        return [candidate for candidate in tracked if _source_mentions_notification_command(candidate)]
 
     # Synthetic roots in focused tests are intentionally not git repositories. Scan the
     # whole supplied root; a scripts-only fallback would hide a direct effector elsewhere.
@@ -400,42 +416,20 @@ def _fallback_source_paths(root: Path) -> list[Path]:
 
 
 def _source_paths(root: Path) -> list[Path]:
-    """Return only tracked sources mentioning osascript; avoid estate-wide AST parsing."""
+    """Return tracked sources that can construct a notification command."""
     cache_key = _clean_exact_head(root)
     if cache_key is not None and cache_key in _SOURCE_PATH_CACHE:
         return [root / relative for relative in _SOURCE_PATH_CACHE[cache_key]]
-    candidates: list[Path]
-    try:
-        found = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(root),
-                "grep",
-                "-l",
-                "-e",
-                "osascript",
-                "--",
-                "*.py",
-                "*.sh",
-                "*.bash",
-                "*.zsh",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        if found.returncode in {0, 1}:
-            candidates = [root / line for line in found.stdout.splitlines() if line.strip()]
-        else:
-            candidates = _fallback_source_paths(root)
-    except (OSError, UnicodeError, subprocess.SubprocessError):
+    candidates = _tracked_source_paths(root)
+    if candidates is None:
         candidates = _fallback_source_paths(root)
     selected = [
         candidate
         for candidate in candidates
-        if candidate.is_file() and candidate.suffix in DIRECT_SUFFIXES and candidate != root / NOTIFIER_REL
+        if candidate.is_file()
+        and candidate.suffix in DIRECT_SUFFIXES
+        and candidate != root / NOTIFIER_REL
+        and _source_mentions_notification_command(candidate)
     ]
     if cache_key is not None:
         try:
@@ -527,6 +521,19 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         elif target.id not in _PROCESS_CALLS:
             self.process_aliases.discard(target.id)
 
+    def _bind_assignment(self, target: ast.AST, value: ast.AST | None) -> None:
+        """Bind literal destructuring element-by-element instead of erasing it."""
+        if isinstance(target, (ast.Tuple, ast.List)):
+            if isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
+                for target_element, value_element in zip(target.elts, value.elts, strict=True):
+                    self._bind_assignment(target_element, value_element)
+            else:
+                self._assign(target, None)
+                self._assign_process_alias(target, False)
+            return
+        self._assign(target, _static_argv(value, self.bindings) if value is not None else None)
+        self._assign_process_alias(target, self._is_process_callable(value) if value is not None else False)
+
     def visit_Module(self, node: ast.Module) -> None:
         """Collect module bindings before scanning function bodies.
 
@@ -596,23 +603,13 @@ class _PythonBypassVisitor(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
-        values = _static_argv(node.value, self.bindings)
-        process_alias = self._is_process_callable(node.value)
         for target in node.targets:
-            self._assign(target, values)
-            self._assign_process_alias(target, process_alias)
+            self._bind_assignment(target, node.value)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value is not None:
             self.visit(node.value)
-        self._assign(
-            node.target,
-            _static_argv(node.value, self.bindings) if node.value is not None else None,
-        )
-        self._assign_process_alias(
-            node.target,
-            self._is_process_callable(node.value) if node.value is not None else False,
-        )
+        self._bind_assignment(node.target, node.value)
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         self.visit(node.value)
@@ -621,8 +618,33 @@ class _PythonBypassVisitor(ast.NodeVisitor):
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
-        self._assign(node.target, _static_argv(node.value, self.bindings))
-        self._assign_process_alias(node.target, self._is_process_callable(node.value))
+        self._bind_assignment(node.target, node.value)
+
+    def _visit_comprehension(self, node: ast.AST, values: list[ast.AST]) -> None:
+        """Scan comprehension bodies with their target bindings in lexical scope."""
+        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
+        generators = getattr(node, "generators", [])
+        for generator in generators:
+            child.visit(generator.iter)
+            child._assign(generator.target, _static_argv(generator.iter, child.bindings))
+            child._assign_process_alias(generator.target, False)
+            for condition in generator.ifs:
+                child.visit(condition)
+        for value in values:
+            child.visit(value)
+        self.found = self.found or child.found
+
+    def visit_ListComp(self, node: ast.ListComp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_SetComp(self, node: ast.SetComp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_DictComp(self, node: ast.DictComp) -> None:
+        self._visit_comprehension(node, [node.key, node.value])
 
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
