@@ -1,5 +1,5 @@
 {
-  "schema_version": "limen.psp_c07_private_inbound_preflight.v1",
+  "schema_version": "limen.psp_c07_private_inbound_preflight.v2",
   "chunk_id": "PSP-C07",
   "phase_id": "PSP-P08",
   "status": "PREPARED/PREFLIGHT",
@@ -31,6 +31,43 @@
     "PSP-P08-W07": {
       "model": "gpt-5.6-sol",
       "effort": "xhigh"
+    }
+  },
+  "leaf_coverage": {
+    "PSP-P08-W01": {
+      "components": ["cta_intake_mapping", "tagged_mail_adapter"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W02": {
+      "components": ["minimum_data_schema", "privacy_validation", "mail_fallback"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W03": {
+      "components": ["normalization", "dedupe", "sealed_custody_boundary"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W04": {
+      "components": ["deterministic_scoring", "routing", "ambiguity_review"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W05": {
+      "components": ["response_templates", "no_send_authority_valve"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W06": {
+      "components": ["private_ledger", "dashboard_views", "retention_deletion"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
+    },
+    "PSP-P08-W07": {
+      "components": ["synthetic_traversal", "abuse_privacy_tests", "ordered_live_gate"],
+      "reversible_status": "implemented_in_preflight",
+      "formal_status": "open_dependency_gated"
     }
   },
   "formal_dependency_gate": {
@@ -136,7 +173,11 @@
       "score",
       "route_suggestion",
       "draft",
-      "private_ledger"
+      "private_ledger",
+      "sealed_custody",
+      "retention_decision",
+      "dashboard_projection",
+      "delete_synthetic"
     ],
     "forbidden_effects": [
       "send",
@@ -167,6 +208,47 @@
       "confidence",
       "draft_kind"
     ]
+  },
+  "cta_intake_mapping": {
+    "status": "contract_only_unwired",
+    "doors": {
+      "client_primary": {
+        "audience_tag": "client",
+        "allowed_capture_kinds": ["form_submission", "tagged_mail"],
+        "mail_fallback": true,
+        "surface_source": "selected_capture_surface_at_integration",
+        "proof_source": "cta_configuration_at_integration"
+      },
+      "recruiter_primary": {
+        "audience_tag": "hire",
+        "allowed_capture_kinds": ["tagged_mail", "form_submission"],
+        "mail_fallback": true,
+        "surface_source": "selected_capture_surface_at_integration",
+        "proof_source": "cta_configuration_at_integration"
+      }
+    },
+    "synthetic_test_audiences": ["operator", "spam", "unknown"],
+    "activation_authorized": false
+  },
+  "minimum_data_schema": {
+    "status": "contract_only",
+    "fields": {
+      "contact.name": {"type": "string", "required": true, "max_length": 120},
+      "contact.email": {"type": "string", "required": true, "max_length": 254},
+      "request.summary": {"type": "string", "required": true, "max_length": 160},
+      "request.details": {"type": "string", "required": true, "max_length": 2000},
+      "consent.process_contact": {"type": "boolean", "required": true, "const": true}
+    },
+    "prohibited_optional_fields": [
+      "phone",
+      "company_size",
+      "home_address",
+      "government_id",
+      "financial_data",
+      "health_data"
+    ],
+    "privacy_copy": "Collect only contact identity, a bounded request, provenance, and affirmative processing consent.",
+    "fallback": "tagged_mail"
   },
   "capture_contract": {
     "accepted_kinds": [
@@ -220,7 +302,10 @@
       "card_number",
       "medical_record"
     ],
-    "max_request_characters": 2000
+    "max_request_characters": 2000,
+    "source_tag_pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+    "reject_header_control_characters": true,
+    "max_synthetic_batch_events": 100
   },
   "integration_adapters": {
     "tagged_mail": {
@@ -232,6 +317,20 @@
       "selection_state": "contract_only",
       "tag_source": "source_tags",
       "future_owner": "selected PSP-C06 capture surface"
+    }
+  },
+  "custody": {
+    "status": "adapter_boundary_only",
+    "record_owner": "organvm/universal-mail--automation",
+    "ledger_owner": "organvm-iii-ergon/collaboration-operations-platform",
+    "encryption_required": true,
+    "plaintext_persistence_allowed": false,
+    "key_material_source": "external_secret_manager_only",
+    "key_material_in_contract_allowed": false,
+    "required_adapter_methods": ["seal", "open", "delete"],
+    "synthetic_harness": {
+      "persistence": "memory_only",
+      "production_encryption_claim": false
     }
   },
   "scoring": {
@@ -298,6 +397,7 @@
     "families": [
       "client_acknowledgment",
       "client_discovery",
+      "scheduling",
       "recruiter_acknowledgment",
       "operator_review",
       "decline",
@@ -309,7 +409,38 @@
       "acceptance",
       "signature",
       "send"
-    ]
+    ],
+    "allowed_placeholders": ["name", "summary", "route"],
+    "templates": {
+      "client_acknowledgment": {
+        "subject": "Draft acknowledgment: {summary}",
+        "body": "Hello {name}, this is a draft acknowledgment for operator review. The request is queued for {route}."
+      },
+      "client_discovery": {
+        "subject": "Draft discovery follow-up: {summary}",
+        "body": "Hello {name}, this draft asks for a bounded discovery conversation about {summary}; an operator must review every detail."
+      },
+      "scheduling": {
+        "subject": "Draft scheduling note: {summary}",
+        "body": "Hello {name}, this draft proposes that an operator choose a time and channel before any scheduling message is sent."
+      },
+      "recruiter_acknowledgment": {
+        "subject": "Draft recruiter acknowledgment: {summary}",
+        "body": "Hello {name}, this draft records the role inquiry and routes it to {route} for manual review."
+      },
+      "operator_review": {
+        "subject": "Draft operator review: {summary}",
+        "body": "Operator review draft for {name}: inspect provenance and route {route} before preparing any reply."
+      },
+      "decline": {
+        "subject": "Draft decline: {summary}",
+        "body": "Draft decline for operator review only; do not transmit without separate authority."
+      },
+      "manual_review": {
+        "subject": "Draft manual review: {summary}",
+        "body": "Low-confidence draft for {name}; an operator must classify the request before any response is prepared."
+      }
+    }
   },
   "ledger": {
     "persistence": "adapter_required_at_integration",
@@ -327,5 +458,42 @@
       "closed"
     ],
     "public_projection": "aggregate_counts_only"
+  },
+  "views": {
+    "private_operator": {
+      "partition_required": true,
+      "fields": ["record_id", "received_at", "category", "confidence", "route", "stage", "draft_kind"],
+      "contact_fields_in_projection": false
+    },
+    "aggregate_dashboard": {
+      "fields": ["private_record_count", "owner_partition_count", "routes", "categories", "stages", "draft_kinds"],
+      "row_export_allowed": false,
+      "synthetic_only": true
+    }
+  },
+  "retention": {
+    "status": "preflight_defaults_owner_ratification_required",
+    "clock_field": "received_at",
+    "category_days": {
+      "spam": 7,
+      "ambiguous": 30,
+      "operator": 30,
+      "client": 90,
+      "recruiter": 90
+    },
+    "immediate_delete_triggers": ["consent_withdrawal", "verified_deletion_request"],
+    "delete_scope": ["sealed_payload", "dedupe_index", "derived_draft"],
+    "deletion_receipt": "aggregate_only_no_identifier",
+    "expired_action": "delete"
+  },
+  "abuse_controls": {
+    "content_is_data_only": true,
+    "reject_control_characters_in_tags": true,
+    "reject_oversize_fields": true,
+    "reject_unknown_fields": true,
+    "low_confidence_action": "manual_review",
+    "spam_action": "discard_spam",
+    "rate_limit_owner": "integration_adapter",
+    "no_tool_execution_from_content": true
   }
 }

@@ -29,19 +29,22 @@ responses cannot satisfy it. P04 therefore remains dependency-gated on P03.
 This package prepares the reversible, privacy-sensitive interior of the inbound funnel without
 choosing, wiring, or publishing a public capture surface. It consumes two capture-neutral envelope
 shapes—tagged mail and form submission—so the later C06 decision can bind either path without
-rewriting normalization, scoring, routing, draft, or ledger semantics.
+rewriting CTA provenance, minimum-data validation, normalization, scoring, routing, draft, custody,
+ledger, view, or retention semantics.
 
 ## Prepared flow
 
 ```text
 selected C06 capture surface (not yet selected)
-  -> tagged_mail | form_submission adapter
+  -> contract-only client | recruiter CTA mapping
+  -> tagged_mail | form_submission adapter + bounded provenance tags
   -> minimal normalized lead record
   -> deterministic fit score + uncertainty margin
   -> client | recruiter | operator | spam | manual-review route
-  -> non-authoritative draft
-  -> owner-partitioned private opportunity ledger adapter
-  -> aggregate-only public receipt + labeled synthetic routing evaluation
+  -> declarative, non-authoritative response draft
+  -> externally sealed private-custody adapter boundary
+  -> owner-partitioned private opportunity ledger + retention/deletion contract
+  -> partition-scoped operator view + aggregate-only dashboard/receipt
 ```
 
 The tracked fixture set is wholly synthetic. Reserved `.invalid` addresses, synthetic owner
@@ -54,13 +57,13 @@ draft bodies, and ledger rows never enter its public projection.
 
 | Leaf | Prepared artifact | Formal boundary retained |
 |---|---|---|
-| `PSP-P08-W01` · `gpt-5.6-terra/high` | source/proof/audience tag contract and tagged-mail adapter | no alias, CTA, deliverability, or public address activation |
-| `PSP-P08-W02` · `gpt-5.6-sol/xhigh` | minimal contact/request/consent field contract and overcollection denylist | no public form or selected C06 surface |
-| `PSP-P08-W03` · `gpt-5.6-sol/xhigh` | idempotent normalizer, dedupe key, synthetic fixtures, private-storage adapter boundary | no provider mail or real lead payload |
+| `PSP-P08-W01` · `gpt-5.6-terra/high` | client/recruiter CTA-to-intake map, source/proof/audience tag contract, and tagged-mail fallback | contract only: no alias, CTA, deliverability, or public address activation |
+| `PSP-P08-W02` · `gpt-5.6-sol/xhigh` | exact minimum contact/request/consent schema, bounded fields, privacy copy, and overcollection denylist | no public form or selected C06 surface |
+| `PSP-P08-W03` · `gpt-5.6-sol/xhigh` | idempotent normalizer, dedupe index, synthetic fixtures, and seal/open/delete custody boundary | no cryptographic implementation, key material, provider mail, or real lead payload |
 | `PSP-P08-W04` · `gpt-5.6-terra/high` | declared signals, thresholds, margin rule, and manual-review fallback | scores remain suggestions, never authority |
-| `PSP-P08-W05` · `gpt-5.6-luna/medium` | draft-family selection and hard-closed send valve | no send capability; `HG-PUBLICATION-SEND` remains unpulled |
-| `PSP-P08-W06` · `gpt-5.6-sol/xhigh` | owner-partitioned in-memory ledger contract and aggregate projection | no real ledger owner or private record is committed here |
-| `PSP-P08-W07` · `gpt-5.6-sol/xhigh` | client/recruiter plus operator/spam/ambiguous synthetic traversal | synthetic proof is not a leaf or phase receipt |
+| `PSP-P08-W05` · `gpt-5.6-luna/medium` | seven declarative response-template families and authority-absent, hard-closed send valve | no transport or send capability; `HG-PUBLICATION-SEND` remains unpulled |
+| `PSP-P08-W06` · `gpt-5.6-sol/xhigh` | owner-partitioned ledger, non-contact operator view, aggregate dashboard, and category retention/deletion contracts | in-memory synthetic harness only; retention defaults require private-owner ratification |
+| `PSP-P08-W07` · `gpt-5.6-sol/xhigh` | five-route synthetic traversal, abuse/privacy negatives, zero-send assertion, and dependency-ordered live gate | synthetic proof is not a leaf or phase receipt |
 
 These are the exact live-registry assignments reconciled on 2026-08-12. They are recorded for later
 leaf dispatch; this conductor preflight does not impersonate those separately leased executions.
@@ -71,7 +74,10 @@ After the operator selects one of the three grounded directions, C06 performs it
 authorized implementation, fixes or redirects the 11 legacy links, and P07 closes with its
 predicate-backed receipt, a separately leased C07 leaf may update the
 contract with the selected capture surface and implement one repository-owned adapter. That adapter
-must emit the exact common envelope represented here. Integration must keep the following invariant:
+must emit the exact common envelope represented here. The private owners must supply authenticated
+partition access, real encryption via an external key manager, and delete semantics behind the
+seal/open/delete boundary; this public preflight deliberately supplies neither a cipher nor keys.
+Integration must keep the following invariant:
 
 ```text
 capture may be live only when dependency receipt + selected surface + leaf authority are all present;
@@ -97,5 +103,6 @@ python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbou
 the selected capture surface, and separate leaf authority in that order.
 That result is the intended fail-closed preflight behavior, not a verification failure.
 
-No PSP leaf or phase may close from this package. Its purpose is to make the later dependency-bound
-integration smaller, testable, and privacy-preserving.
+All seven leaves now have reversible implementation coverage in this package while every formal leaf
+status remains open and dependency-gated. No PSP leaf or phase may close from this package. Its
+purpose is to make the later dependency-bound integration smaller, testable, and privacy-preserving.

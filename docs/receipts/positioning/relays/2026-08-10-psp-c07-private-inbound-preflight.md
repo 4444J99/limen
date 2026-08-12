@@ -61,16 +61,26 @@ conductor preflight does not substitute for them.
 
 ## Completed reversible preparation
 
-- Added a capture-surface-neutral contract for tagged mail and form submissions.
-- Added strict minimal-field intake with recursive sensitive-field denial and exact allowlists.
-- Added idempotent normalization, private dedupe, scoring thresholds, confidence margins, and a
-  mandatory manual-review ambiguity route.
-- Added draft-family selection with no transport capability and a hard-closed send valve.
-- Added an owner-partitioned private-ledger adapter with aggregate-only public projection.
+- Added unwired client/recruiter CTA-to-intake mappings and a capture-surface-neutral contract for
+  tagged mail and form submissions.
+- Added an exact minimum-data schema, bounded provenance and content fields, recursive sensitive-field
+  denial, strict allowlists, privacy copy, and tagged-mail fallback.
+- Added idempotent normalization, private dedupe, deterministic scoring thresholds, confidence
+  margins, and a mandatory manual-review ambiguity route.
+- Added seven declarative response-template families with no transport capability, absent send
+  authority, and a hard-closed send valve.
+- Added a seal/open/delete private-custody adapter boundary that requires encryption and external key
+  management while deliberately implementing neither cryptography nor key material in this package.
+- Added an owner-partitioned private ledger, partition-scoped non-contact operator view, aggregate
+  dashboard, category retention defaults, immediate-delete triggers, and identifier-free deletion
+  receipts over the synthetic harness.
 - Added wholly synthetic client, recruiter, operator, spam, ambiguous, and duplicate fixtures.
-- Added labeled traversal evaluation and privacy, overcollection, cross-owner, injection, commitment,
-  redaction, dedupe, and zero-send tests.
+- Added labeled traversal evaluation and privacy, overcollection, source-tag injection, field-bound,
+  cross-owner, sealed-custody, retention, projection, content-injection, redaction, dedupe, ordered-gate,
+  and zero-send tests.
 - Added the public-safe threat model and integration boundary for the later selected C06 surface.
+- Recorded every W01-W07 reversible component as implemented in preflight while retaining every
+  formal leaf state as open and dependency-gated.
 
 ## Predicate receipts
 
@@ -83,9 +93,9 @@ All passing commands below were run bare on the implementation exact tree:
 | `python3 scripts/positioning-program.py --verify-remote` | pass; 127 observed, zero drift, missing, or orphan objects |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode validate --json` | pass; contract and synthetic fixtures valid |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode traverse --json` | pass; five private-shaped records, two owner partitions, 5/5 labeled category-and-route results, zero external sends |
-| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 14 tests |
+| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 26 tests |
 | `scripts/verify-scoped.sh` | pass; seven implicated cheap gates |
-| `python3 scripts/positioning-private-inbound-preflight.py --mode live-gate --json` | expected fail-closed exit `2`: C06/P07 predicate receipt absent |
+| `python3 scripts/positioning-private-inbound-preflight.py --mode live-gate --json` | expected fail-closed exit `2`: W07 five-reader predicate receipt absent; reported order is W07, P04, P07, selected C06 surface, separate P08 leaf authority |
 
 The last row is the intended dependency valve. It is not evidence that C07 is ready or complete.
 
@@ -113,8 +123,9 @@ The last row is the intended dependency valve. It is not evidence that C07 is re
 5. Bind the selected surface to one contract adapter, preserving the live gate and separate
    `HG-PUBLICATION-SEND` boundary; then dispatch downstream leaves only as the registry makes them
    ready.
-6. Replace synthetic storage and identifier behavior only inside their private repository owners,
-   with private exact-head predicates and public aggregate receipts. Never commit real lead rows.
+6. Implement authenticated access, real encryption/key rotation, storage, retention, deletion, and
+   live identifier behavior only inside their private repository owners, with private exact-head
+   predicates and public aggregate receipts. Never commit real lead rows or key material.
 
 ## Risks and prohibitions
 

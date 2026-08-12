@@ -15,21 +15,21 @@ import re
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CONTRACT = (
-    ROOT
-    / "institutio/positioning/preflights/psp-c07-private-inbound/contract.json"
-)
-DEFAULT_FIXTURES = (
-    ROOT
-    / "institutio/positioning/preflights/psp-c07-private-inbound/fixtures/synthetic-leads.json"
-)
-MAIL_TAG = re.compile(
-    r"^\[(?P<surface>[^\]·]+?)\s*·\s*(?P<audience>[^\]]+?)\]\s*—\s*inbound$"
+DEFAULT_CONTRACT = ROOT / "institutio/positioning/preflights/psp-c07-private-inbound/contract.json"
+DEFAULT_FIXTURES = ROOT / "institutio/positioning/preflights/psp-c07-private-inbound/fixtures/synthetic-leads.json"
+MAIL_TAG = re.compile(r"^\[(?P<surface>[^\]·]+?)\s*·\s*(?P<audience>[^\]]+?)\]\s*—\s*inbound$")
+LIVE_GATE_ORDER = (
+    "PSP-P03-W07",
+    "PSP-P04",
+    "PSP-P07",
+    "PSP-C06-selected-capture-surface",
+    "PSP-P08-separate-leaf-authority",
 )
 
 
@@ -58,13 +58,20 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         "phase_id",
         "status",
         "leaf_assignments",
+        "leaf_coverage",
         "formal_dependency_gate",
         "safety",
+        "cta_intake_mapping",
+        "minimum_data_schema",
         "capture_contract",
         "integration_adapters",
+        "custody",
         "scoring",
         "drafts",
         "ledger",
+        "views",
+        "retention",
+        "abuse_controls",
     }
     missing = sorted(required - contract.keys())
     if missing:
@@ -73,6 +80,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("contract must remain scoped to PSP-C07/PSP-P08")
     if contract.get("status") != "PREPARED/PREFLIGHT":
         errors.append("status must remain PREPARED/PREFLIGHT")
+    if contract.get("schema_version") != "limen.psp_c07_private_inbound_preflight.v2":
+        errors.append("contract schema must remain at private-inbound preflight v2")
     expected_assignments = {
         "PSP-P08-W01": ("gpt-5.6-terra", "high"),
         "PSP-P08-W02": ("gpt-5.6-sol", "xhigh"),
@@ -89,6 +98,17 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         observed = assignments.get(work_id, {})
         if observed.get("model") != model or observed.get("effort") != effort:
             errors.append(f"{work_id} must remain assigned to {model}/{effort}")
+    coverage = contract.get("leaf_coverage", {})
+    if set(coverage) != set(expected_assignments):
+        errors.append("leaf coverage must remain exactly PSP-P08-W01 through W07")
+    for work_id in expected_assignments:
+        observed = coverage.get(work_id, {})
+        if observed.get("reversible_status") != "implemented_in_preflight":
+            errors.append(f"{work_id} reversible coverage must remain implemented in preflight")
+        if observed.get("formal_status") != "open_dependency_gated":
+            errors.append(f"{work_id} formal status must remain open and dependency-gated")
+        if not observed.get("components"):
+            errors.append(f"{work_id} must name its reversible components")
 
     gate = contract.get("formal_dependency_gate", {})
     if gate.get("required_chunk") != "PSP-C06" or gate.get("required_phases") != [
@@ -169,9 +189,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("C06 preflight must preserve exactly three grounded directions")
     if visual.get("durable_artifacts_status") != "tracked_unselected":
         errors.append("C06 durable visual artifacts must remain tracked and unselected")
-    if visual.get("manifest_path") != (
-        "docs/positioning/visual-directions/psp-c06/manifest.json"
-    ):
+    if visual.get("manifest_path") != ("docs/positioning/visual-directions/psp-c06/manifest.json"):
         errors.append("C06 visual manifest must use its durable portfolio path")
     if len(visual.get("mockup_paths", [])) != 3:
         errors.append("C06 preflight must preserve exactly three durable mockup paths")
@@ -226,11 +244,120 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("capture contract requires strict per-kind field allowlists")
     if set(capture.get("minimal_consent_fields", [])) != {"process_contact"}:
         errors.append("capture contract must collect process_contact consent only")
+    try:
+        re.compile(str(capture.get("source_tag_pattern", "")))
+    except re.error:
+        errors.append("capture source tag pattern must compile")
+    if capture.get("reject_header_control_characters") is not True:
+        errors.append("capture contract must reject header control characters")
+    if int(capture.get("max_synthetic_batch_events", 0)) <= 0:
+        errors.append("capture contract must bound synthetic batch size")
+
+    cta_mapping = contract.get("cta_intake_mapping", {})
+    if cta_mapping.get("status") != "contract_only_unwired":
+        errors.append("CTA mapping must remain contract-only and unwired")
+    if cta_mapping.get("activation_authorized") is not False:
+        errors.append("CTA activation must remain unauthorized")
+    doors = cta_mapping.get("doors", {})
+    if set(doors) != {"client_primary", "recruiter_primary"}:
+        errors.append("CTA mapping must expose only client and recruiter primary doors")
+    expected_audiences = {"client_primary": "client", "recruiter_primary": "hire"}
+    for door, audience in expected_audiences.items():
+        observed = doors.get(door, {})
+        if observed.get("audience_tag") != audience:
+            errors.append(f"{door} must preserve its {audience} audience tag")
+        if set(observed.get("allowed_capture_kinds", [])) != {
+            "form_submission",
+            "tagged_mail",
+        }:
+            errors.append(f"{door} must support form and tagged-mail contracts")
+        if observed.get("mail_fallback") is not True:
+            errors.append(f"{door} must retain a tagged-mail fallback")
+
+    minimum = contract.get("minimum_data_schema", {})
+    expected_minimum_fields = {
+        "contact.name": ("string", 120),
+        "contact.email": ("string", 254),
+        "request.summary": ("string", 160),
+        "request.details": ("string", 2000),
+    }
+    fields = minimum.get("fields", {})
+    if set(fields) != {*expected_minimum_fields, "consent.process_contact"}:
+        errors.append("minimum-data schema must remain exact")
+    for path, (field_type, max_length) in expected_minimum_fields.items():
+        observed = fields.get(path, {})
+        if (
+            observed.get("type") != field_type
+            or observed.get("required") is not True
+            or observed.get("max_length") != max_length
+        ):
+            errors.append(f"minimum-data field {path} must remain required and bounded")
+    consent = fields.get("consent.process_contact", {})
+    if consent.get("type") != "boolean" or consent.get("const") is not True:
+        errors.append("minimum-data consent must require affirmative process_contact")
 
     adapters = contract.get("integration_adapters", {})
     for kind in ("tagged_mail", "form_submission"):
         if adapters.get(kind, {}).get("selection_state") != "contract_only":
             errors.append(f"{kind} adapter must remain contract_only")
+
+    custody = contract.get("custody", {})
+    if custody.get("status") != "adapter_boundary_only":
+        errors.append("private custody must remain an adapter-only boundary")
+    if custody.get("encryption_required") is not True:
+        errors.append("private custody must require encryption")
+    if custody.get("plaintext_persistence_allowed") is not False:
+        errors.append("private custody must forbid plaintext persistence")
+    if custody.get("key_material_in_contract_allowed") is not False:
+        errors.append("private custody contract must forbid embedded key material")
+    if set(custody.get("required_adapter_methods", [])) != {"seal", "open", "delete"}:
+        errors.append("private custody adapter must require seal/open/delete")
+    if custody.get("synthetic_harness", {}).get("production_encryption_claim") is not False:
+        errors.append("synthetic custody must not claim production encryption")
+
+    drafts = contract.get("drafts", {})
+    if drafts.get("status") != "draft_only":
+        errors.append("response templates must remain draft-only")
+    families = set(drafts.get("families", []))
+    if families != set(drafts.get("templates", {})):
+        errors.append("every draft family must have exactly one declarative template")
+    if set(drafts.get("allowed_placeholders", [])) != {"name", "summary", "route"}:
+        errors.append("draft templates must use only bounded approved placeholders")
+
+    views = contract.get("views", {})
+    private_view = views.get("private_operator", {})
+    aggregate_view = views.get("aggregate_dashboard", {})
+    if private_view.get("partition_required") is not True:
+        errors.append("private operator views must require an owner partition")
+    if private_view.get("contact_fields_in_projection") is not False:
+        errors.append("private operator projections must exclude contact fields")
+    if aggregate_view.get("row_export_allowed") is not False:
+        errors.append("aggregate dashboard must forbid row export")
+
+    retention = contract.get("retention", {})
+    if set(retention.get("category_days", {})) != {
+        "spam",
+        "ambiguous",
+        "operator",
+        "client",
+        "recruiter",
+    }:
+        errors.append("retention defaults must cover every route category")
+    if retention.get("deletion_receipt") != "aggregate_only_no_identifier":
+        errors.append("deletion receipts must remain aggregate-only")
+    if retention.get("expired_action") != "delete":
+        errors.append("expired private records must be deleted")
+
+    abuse = contract.get("abuse_controls", {})
+    for key in (
+        "content_is_data_only",
+        "reject_control_characters_in_tags",
+        "reject_oversize_fields",
+        "reject_unknown_fields",
+        "no_tool_execution_from_content",
+    ):
+        if abuse.get(key) is not True:
+            errors.append(f"abuse control {key} must remain enabled")
 
     ledger = contract.get("ledger", {})
     if ledger.get("partition_key") != "owner_partition":
@@ -249,6 +376,9 @@ def validate_fixtures(fixtures: dict[str, Any], contract: dict[str, Any]) -> lis
     events = fixtures.get("events")
     if not isinstance(events, list) or not events:
         return errors + ["fixtures must contain events"]
+    batch_limit = int(contract.get("capture_contract", {}).get("max_synthetic_batch_events", 0))
+    if batch_limit and len(events) > batch_limit:
+        errors.append(f"fixtures exceed the synthetic batch limit of {batch_limit}")
     expectations = fixtures.get("expectations")
     if not isinstance(expectations, dict) or not expectations:
         errors.append("fixtures must declare labeled expectations")
@@ -273,9 +403,7 @@ def validate_fixtures(fixtures: dict[str, Any], contract: dict[str, Any]) -> lis
     return errors
 
 
-def evaluate_routes(
-    journeys: list[dict[str, Any]], fixtures: dict[str, Any]
-) -> dict[str, Any]:
+def evaluate_routes(journeys: list[dict[str, Any]], fixtures: dict[str, Any]) -> dict[str, Any]:
     expectations = fixtures["expectations"]
     evaluated = [row for row in journeys if row["fixture_id"] in expectations]
     correct = 0
@@ -323,17 +451,79 @@ def _reject_unexpected_fields(event: dict[str, Any], contract: dict[str, Any]) -
     for name, allowed in nested:
         value = event.get(name, {})
         if isinstance(value, dict):
-            unexpected.extend(
-                f"{name}.{key}" for key in sorted(set(value) - set(allowed))
-            )
+            unexpected.extend(f"{name}.{key}" for key in sorted(set(value) - set(allowed)))
     if kind == "form_submission" and isinstance(event.get("source_tags"), dict):
         allowed_tags = set(capture["required_source_tags"])
-        unexpected.extend(
-            f"source_tags.{key}"
-            for key in sorted(set(event["source_tags"]) - allowed_tags)
-        )
+        unexpected.extend(f"source_tags.{key}" for key in sorted(set(event["source_tags"]) - allowed_tags))
     if unexpected:
         raise ValueError(f"unexpected capture fields: {', '.join(unexpected)}")
+
+
+def _validate_source_tag(value: Any, field_name: str, contract: dict[str, Any]) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"source tag {field_name} must be a nonempty string")
+    normalized = value.strip().lower()
+    if any(ord(character) < 32 or ord(character) == 127 for character in normalized):
+        raise ValueError(f"source tag {field_name} contains control characters")
+    pattern = str(contract["capture_contract"]["source_tag_pattern"])
+    if re.fullmatch(pattern, normalized) is None:
+        raise ValueError(f"source tag {field_name} violates the bounded tag pattern")
+    return normalized
+
+
+def _bounded_text(
+    value: Any,
+    path: str,
+    max_length: int,
+    *,
+    allow_content_newlines: bool = False,
+) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{path} must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{path} must be nonempty")
+    if len(normalized) > max_length:
+        raise ValueError(f"{path} exceeds its minimal-data limit")
+    for character in normalized:
+        if ord(character) < 32 or ord(character) == 127:
+            if allow_content_newlines and character in {"\n", "\t"}:
+                continue
+            raise ValueError(f"{path} contains control characters")
+    return normalized
+
+
+def resolve_cta_intake(
+    cta_id: str,
+    capture_kind: str,
+    *,
+    surface: str,
+    proof: str,
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Resolve an unwired CTA contract without creating or activating a public surface."""
+
+    mapping = contract["cta_intake_mapping"]
+    if mapping["activation_authorized"] is not False:
+        raise ValueError("CTA mapping must remain activation-disabled in preflight")
+    try:
+        door = mapping["doors"][cta_id]
+    except KeyError as exc:
+        raise ValueError(f"unknown CTA contract: {cta_id}") from exc
+    if capture_kind not in door["allowed_capture_kinds"]:
+        raise ValueError(f"CTA {cta_id} does not allow capture kind {capture_kind}")
+    return {
+        "cta_id": cta_id,
+        "capture_kind": capture_kind,
+        "selection_state": "contract_only",
+        "activation_authorized": False,
+        "mail_fallback": bool(door["mail_fallback"]),
+        "source_tags": {
+            "surface": _validate_source_tag(surface, "surface", contract),
+            "proof": _validate_source_tag(proof, "proof", contract),
+            "audience": _validate_source_tag(door["audience_tag"], "audience", contract),
+        },
+    }
 
 
 def adapt_capture(event: dict[str, Any], contract: dict[str, Any]) -> dict[str, Any]:
@@ -367,8 +557,10 @@ def adapt_capture(event: dict[str, Any], contract: dict[str, Any]) -> dict[str, 
         contract["capture_contract"]["required_source_tags"],
         "source tags",
     )
-    if not all(isinstance(value, str) and value.strip() for value in source_tags.values()):
-        raise ValueError("source tags must be nonempty strings")
+    source_tags = {
+        field_name: _validate_source_tag(source_tags[field_name], field_name, contract)
+        for field_name in contract["capture_contract"]["required_source_tags"]
+    }
     return {
         "fixture_id": event["fixture_id"],
         "kind": kind,
@@ -389,17 +581,35 @@ def normalize_capture(envelope: dict[str, Any], contract: dict[str, Any]) -> dic
     _require_keys(request, contract["capture_contract"]["minimal_request_fields"], "request")
     if envelope["consent"].get("process_contact") is not True:
         raise ValueError("processing consent is required")
-    email = str(contact["email"]).strip().lower()
+    fields = contract["minimum_data_schema"]["fields"]
+    name = _bounded_text(
+        contact["name"],
+        "contact.name",
+        int(fields["contact.name"]["max_length"]),
+    )
+    email = _bounded_text(
+        contact["email"],
+        "contact.email",
+        int(fields["contact.email"]["max_length"]),
+    ).lower()
     if not email.endswith(".invalid"):
         raise ValueError("preflight accepts reserved .invalid addresses only")
-    details = str(request["details"]).strip()
-    if len(details) > int(contract["capture_contract"]["max_request_characters"]):
-        raise ValueError("request details exceed the minimal capture limit")
+    summary = _bounded_text(
+        request["summary"],
+        "request.summary",
+        int(fields["request.summary"]["max_length"]),
+    )
+    details = _bounded_text(
+        request["details"],
+        "request.details",
+        int(fields["request.details"]["max_length"]),
+        allow_content_newlines=True,
+    )
     fingerprint = "|".join(
         (
             str(envelope["owner_partition"]),
             email,
-            str(request["summary"]).strip().lower(),
+            summary.lower(),
             str(envelope["source_tags"]["surface"]).strip().lower(),
         )
     )
@@ -411,11 +621,11 @@ def normalize_capture(envelope: dict[str, Any], contract: dict[str, Any]) -> dic
         "received_at": envelope["received_at"],
         "source": deepcopy(envelope["source_tags"]),
         "contact": {
-            "name": str(contact["name"]).strip(),
+            "name": name,
             "email": email,
         },
         "request": {
-            "summary": str(request["summary"]).strip(),
+            "summary": summary,
             "details": details,
         },
         "consent": {"process_contact": True},
@@ -443,9 +653,8 @@ def score_lead(record: dict[str, Any], contract: dict[str, Any]) -> dict[str, An
     category, top_score = ranked[0]
     next_score = ranked[1][1] if len(ranked) > 1 else 0
     margin = top_score - next_score
-    confident = (
-        top_score >= int(contract["scoring"]["minimum_auto_score"])
-        and margin >= int(contract["scoring"]["minimum_margin"])
+    confident = top_score >= int(contract["scoring"]["minimum_auto_score"]) and margin >= int(
+        contract["scoring"]["minimum_margin"]
     )
     return {
         "scores": scores,
@@ -462,7 +671,12 @@ def route_lead(scored: dict[str, Any], contract: dict[str, Any]) -> str:
     return str(contract["scoring"]["routes"][scored["category"]]["route"])
 
 
-def generate_draft(record: dict[str, Any], scored: dict[str, Any], route: str) -> dict[str, str]:
+def generate_draft(
+    record: dict[str, Any],
+    scored: dict[str, Any],
+    route: str,
+    contract: dict[str, Any],
+) -> dict[str, str]:
     category = scored["category"]
     family = {
         "client": "client_acknowledgment",
@@ -471,18 +685,69 @@ def generate_draft(record: dict[str, Any], scored: dict[str, Any], route: str) -
         "spam": "decline",
         "ambiguous": "manual_review",
     }[category]
-    name = record["contact"]["name"]
-    summary = record["request"]["summary"]
-    body = (
-        f"Draft for operator review only. Acknowledge {name}'s request about {summary}. "
-        f"Suggested route: {route}. Do not promise price, availability, acceptance, or signature."
-    )
-    return {"status": "draft", "kind": family, "body": body}
+    template = contract["drafts"]["templates"][family]
+    values = {
+        "name": str(record["contact"]["name"]),
+        "summary": str(record["request"]["summary"]),
+        "route": route,
+    }
+    return {
+        "status": "draft",
+        "kind": family,
+        "subject": str(template["subject"]).format(**values),
+        "body": str(template["body"]).format(**values),
+        "send_authority": "absent",
+    }
+
+
+@dataclass
+class PrivateCustodyBoundary:
+    """Adapter boundary for sealed persistence; it intentionally supplies no crypto."""
+
+    seal: Callable[[bytes], bytes]
+    open_sealed: Callable[[bytes], bytes]
+    sealed_records: dict[str, dict[str, bytes]] = field(default_factory=dict)
+
+    def persist(self, record: dict[str, Any], decision: dict[str, Any]) -> bool:
+        partition = str(record["owner_partition"])
+        record_id = str(record["record_id"])
+        plaintext = json.dumps(
+            {"record": record, "decision": decision},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        sealed = self.seal(plaintext)
+        if not isinstance(sealed, bytes) or sealed == plaintext:
+            raise ValueError("custody adapter must return non-plaintext sealed bytes")
+        bucket = self.sealed_records.setdefault(partition, {})
+        created = record_id not in bucket
+        bucket[record_id] = sealed
+        return created
+
+    def get(self, owner_partition: str, record_id: str) -> dict[str, Any]:
+        sealed = self.sealed_records[owner_partition][record_id]
+        plaintext = self.open_sealed(sealed)
+        if not isinstance(plaintext, bytes):
+            raise ValueError("custody adapter must open sealed values as bytes")
+        value = json.loads(plaintext.decode("utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("custody adapter opened a non-object payload")
+        return value
+
+    def delete(self, owner_partition: str, record_id: str) -> bool:
+        bucket = self.sealed_records.get(owner_partition)
+        if not bucket or record_id not in bucket:
+            return False
+        del bucket[record_id]
+        if not bucket:
+            del self.sealed_records[owner_partition]
+        return True
 
 
 @dataclass
 class PrivateLedger:
     records: dict[str, dict[str, dict[str, Any]]] = field(default_factory=dict)
+    dedupe_index: dict[str, set[str]] = field(default_factory=dict)
 
     def upsert(self, record: dict[str, Any], decision: dict[str, Any]) -> bool:
         partition = str(record["owner_partition"])
@@ -493,25 +758,115 @@ class PrivateLedger:
             "record": deepcopy(record),
             "decision": deepcopy(decision),
         }
+        self.dedupe_index.setdefault(partition, set()).add(str(record["dedupe_key"]))
         return created
 
     def get(self, owner_partition: str, record_id: str) -> dict[str, Any]:
         return deepcopy(self.records[owner_partition][record_id])
 
+    def delete(self, owner_partition: str, record_id: str) -> bool:
+        bucket = self.records.get(owner_partition)
+        if not bucket or record_id not in bucket:
+            return False
+        dedupe_key = str(bucket[record_id]["record"]["dedupe_key"])
+        del bucket[record_id]
+        partition_dedupe = self.dedupe_index.get(owner_partition, set())
+        partition_dedupe.discard(dedupe_key)
+        if not bucket:
+            del self.records[owner_partition]
+        if not partition_dedupe:
+            self.dedupe_index.pop(owner_partition, None)
+        return True
+
+    def private_view(self, owner_partition: str) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for record_id, row in sorted(self.records.get(owner_partition, {}).items()):
+            record = row["record"]
+            decision = row["decision"]
+            rows.append(
+                {
+                    "record_id": record_id,
+                    "received_at": record["received_at"],
+                    "category": decision["category"],
+                    "confidence": decision["confidence"],
+                    "route": decision["route"],
+                    "stage": decision["stage"],
+                    "draft_kind": decision["draft"]["kind"],
+                }
+            )
+        return rows
+
     def aggregate(self) -> dict[str, Any]:
         rows = [row for bucket in self.records.values() for row in bucket.values()]
         routes = Counter(row["decision"]["route"] for row in rows)
         categories = Counter(row["decision"]["category"] for row in rows)
+        stages = Counter(row["decision"]["stage"] for row in rows)
+        draft_kinds = Counter(row["decision"]["draft"]["kind"] for row in rows)
         return {
             "private_record_count": len(rows),
             "owner_partition_count": len(self.records),
             "routes": dict(sorted(routes.items())),
             "categories": dict(sorted(categories.items())),
+            "stages": dict(sorted(stages.items())),
+            "draft_kinds": dict(sorted(draft_kinds.items())),
         }
+
+
+def _parse_utc(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def retention_action(
+    record: dict[str, Any],
+    category: str,
+    *,
+    as_of: datetime,
+    contract: dict[str, Any],
+    trigger: str | None = None,
+) -> str:
+    retention = contract["retention"]
+    if trigger is not None:
+        if trigger not in retention["immediate_delete_triggers"]:
+            raise ValueError(f"unsupported retention trigger: {trigger}")
+        return "delete"
+    days = int(retention["category_days"][category])
+    current = as_of if as_of.tzinfo else as_of.replace(tzinfo=timezone.utc)
+    age_seconds = (current.astimezone(timezone.utc) - _parse_utc(record["received_at"])).total_seconds()
+    return "delete" if age_seconds >= days * 86400 else "retain"
+
+
+def apply_retention(
+    ledger: PrivateLedger,
+    custody: PrivateCustodyBoundary,
+    owner_partition: str,
+    record_id: str,
+    category: str,
+    *,
+    as_of: datetime,
+    contract: dict[str, Any],
+    trigger: str | None = None,
+) -> dict[str, Any]:
+    row = ledger.get(owner_partition, record_id)
+    action = retention_action(row["record"], category, as_of=as_of, contract=contract, trigger=trigger)
+    deleted_count = 0
+    sealed_deleted_count = 0
+    if action == "delete":
+        deleted_count = int(ledger.delete(owner_partition, record_id))
+        sealed_deleted_count = int(custody.delete(owner_partition, record_id))
+    return {
+        "action": action,
+        "deleted_count": deleted_count,
+        "sealed_deleted_count": sealed_deleted_count,
+        "receipt_scope": "aggregate_only_no_identifier",
+    }
 
 
 @dataclass
 class ClosedSendValve:
+    authority_state: str = "absent"
     external_send_count: int = 0
     blocked_send_attempt_count: int = 0
 
@@ -538,7 +893,7 @@ def run_synthetic_journeys(
         seen_dedupe.add(record["dedupe_key"])
         scored = score_lead(record, contract)
         route = route_lead(scored, contract)
-        draft = generate_draft(record, scored, route)
+        draft = generate_draft(record, scored, route, contract)
         decision = {
             "category": scored["category"],
             "confidence": scored["confidence"],
@@ -579,19 +934,54 @@ def run_synthetic_journeys(
     return receipt, ledger, valve
 
 
-def live_gate(contract: dict[str, Any]) -> tuple[bool, str]:
+def live_gate_status(contract: dict[str, Any]) -> dict[str, Any]:
     gate = contract["formal_dependency_gate"]
     if gate["commercial_upstream"]["PSP-P03"]["w07"]["state"] != "closed_with_predicate_receipt":
-        return False, "PSP-P03-W07 five-reader predicate receipt is absent; PSP-P04 remains dependency-gated"
+        return {
+            "ready": False,
+            "blocking_dependency": LIVE_GATE_ORDER[0],
+            "reason": "PSP-P03-W07 five-reader predicate receipt is absent; PSP-P04 remains dependency-gated",
+            "gate_order": list(LIVE_GATE_ORDER),
+        }
     if gate["phase_states"]["PSP-P04"] != "closed_with_predicate_receipt":
-        return False, "PSP-P04 predicate receipt is absent"
+        return {
+            "ready": False,
+            "blocking_dependency": LIVE_GATE_ORDER[1],
+            "reason": "PSP-P04 predicate receipt is absent",
+            "gate_order": list(LIVE_GATE_ORDER),
+        }
     if gate["phase_states"]["PSP-P07"] != "closed_with_predicate_receipt":
-        return False, "PSP-P07 predicate receipt is absent"
+        return {
+            "ready": False,
+            "blocking_dependency": LIVE_GATE_ORDER[2],
+            "reason": "PSP-P07 predicate receipt is absent",
+            "gate_order": list(LIVE_GATE_ORDER),
+        }
     if not gate["selected_capture_surface"]:
-        return False, "no approved C06 capture surface is selected"
+        return {
+            "ready": False,
+            "blocking_dependency": LIVE_GATE_ORDER[3],
+            "reason": "no approved C06 capture surface is selected",
+            "gate_order": list(LIVE_GATE_ORDER),
+        }
     if gate["separate_leaf_authority"] != "leased":
-        return False, "separate P08 leaf authority is absent"
-    return True, "live adapter may be implemented under a separately leased leaf"
+        return {
+            "ready": False,
+            "blocking_dependency": LIVE_GATE_ORDER[4],
+            "reason": "separate P08 leaf authority is absent",
+            "gate_order": list(LIVE_GATE_ORDER),
+        }
+    return {
+        "ready": True,
+        "blocking_dependency": None,
+        "reason": "live adapter may be implemented under a separately leased leaf",
+        "gate_order": list(LIVE_GATE_ORDER),
+    }
+
+
+def live_gate(contract: dict[str, Any]) -> tuple[bool, str]:
+    status = live_gate_status(contract)
+    return bool(status["ready"]), str(status["reason"])
 
 
 def _redaction_errors(receipt: dict[str, Any], fixtures: dict[str, Any]) -> list[str]:
@@ -644,11 +1034,14 @@ def main() -> int:
         else:
             result = receipt
     elif not errors and args.mode == "live-gate":
-        ready, reason = live_gate(contract)
+        gate_status = live_gate_status(contract)
+        ready = bool(gate_status["ready"])
         result = {
             "status": "pass" if ready else "blocked",
             "mode": args.mode,
-            "reason": reason,
+            "reason": gate_status["reason"],
+            "blocking_dependency": gate_status["blocking_dependency"],
+            "gate_order": gate_status["gate_order"],
         }
         exit_code = 0 if ready else 2
 
