@@ -24,13 +24,13 @@ compression_level: high
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` |
-| Exact remote branch head | `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` |
+| Exact implementation head | `2c4efce84082f344fd5e0d90cc110662a379435f` |
+| Exact remote branch head | `2c4efce84082f344fd5e0d90cc110662a379435f` |
 | C03 dependency head consumed | PR #2312 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
 | Accepted C03 progress | PSP-P02 and PSP-P03-W01 through W06 closed; W06 receipt [#2187 comment 5271254820](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
 | Working tree | Clean at checkpoint |
 | Acceptance condition | PREPARED/PREFLIGHT only; W07 is C03's sole unsatisfied leaf, and formal P11 acceptance remains unmet until C03 closes and registry admission opens |
-| Underlying predicate | Exact target tree passed focused Prettier check, ESLint with zero errors, TypeScript, 15 tests, and production build; no formal leaf predicate ran |
+| Underlying predicate | Aggregate W01-W08 validator PASS with eight work IDs, six executable contracts, zero external effects, and formal predicates explicitly false; exact target tree also passed focused Prettier, TypeScript, 19 tests, no-plaintext scan, ESLint with zero errors, and production build |
 | Receipt verifier | Formal `--verify-work` predicates intentionally not run |
 | Phase exit proof | `python3 scripts/positioning-program.py --phase-proof PSP-P11` intentionally not run |
 | External effects | None; no client data, send, terms, account action, publication, spend, DNS, or production effect |
@@ -45,6 +45,12 @@ compression_level: high
   collaboration, current-owner visibility, reversible work, least access, and clean handoff.
 - [x] Proved synthetic intake rejection, audit calibration, finite capacity, partition isolation,
   export-before-delete, rollback, two-pass closeout, and non-publishable consent withdrawal.
+- [x] Added one aggregate executable W01-W08 contract that validates sponsor/current-owner
+  authority, discovery and architecture procedures, evidence-to-recommendation traceability,
+  Governance Install and retainer handoffs, exact zero-effect boundaries, and recursive
+  credential/private-identity/numeric-pricing rejection.
+- [x] Added malformed-structure and fail-closed regressions; the aggregate validator exits green
+  only for the tracked synthetic bundle and cannot satisfy formal predicates.
 - [x] Opened target draft PR [#135](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/135).
 
 ## Decisions and rationale
@@ -74,7 +80,7 @@ compression_level: high
   implementation bodies may enter Limen.
 - Do not touch `tasks.yaml`, close P11 issues, merge either draft, publish proof, send terms, or grant
   access before the formal dependency and authority predicates pass.
-- Rollback: revert target commits through `4ae8e81665e35e6a5d403a3e13935021ce6544ec` or close target draft
+- Rollback: revert target commit `2c4efce84082f344fd5e0d90cc110662a379435f` or close target draft
   PR #135; all checked-in delivery fixtures are synthetic.
 
 ## References
