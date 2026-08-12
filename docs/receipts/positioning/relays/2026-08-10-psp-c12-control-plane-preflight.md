@@ -21,6 +21,7 @@ compression_level: high
 - Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
 - Prior predicate-tested implementation head: `8a9a7af246af27eba807552e2332c66bb691ec1a`
 - Live C12 head before this additive patch: `34d9abb3145e8794e7a4602d401af9a09a20a74f`
+- Additive v3 implementation commit: `3dc24535d819c7253bc19f5170115439925b8911`
 - State: **PREPARED/PREFLIGHT**
 - Formal leaf receipts, phase proof, root proof, and closure: not run or claimed
 - External effects: draft branch and PR metadata only
@@ -108,16 +109,20 @@ artifacts are owner receipts only; none closes a dependency, leaf, phase, or the
 |---|---|
 | `python3 -B scripts/positioning-program.py --check` | PASS; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
 | `python3 -B scripts/positioning-program.py --verify-model-assignments` | PASS; all 127 assignments valid |
-| `python3 -B scripts/positioning-p14-control-plane.py --check` | Pending for the additive v3 exact tree |
+| `python3 scripts/positioning-p14-control-plane.py --check` | PASS; v3 contract, 13 runners, synthetic operational fixture, formal W07 frontier, and nine C04-C12 reversible owners |
 | synthetic fixture | PASS; no predecessor command or external effect |
-| `python3 -B scripts/positioning-p14-control-plane.py --preflight` | PASS; terminal truth blocked on exactly 32 current atoms |
-| `python3 -B scripts/positioning-p14-control-plane.py --terminal` | expected exit 3; 9 predecessor blockers + 23 P14 requirements |
-| operational fixture | Pending for the additive v3 exact tree |
-| focused pytest | Pending for the additive v3 exact tree |
-| scoped exact-tree gate | Pending for the additive v3 exact tree |
+| `python3 scripts/positioning-p14-control-plane.py --preflight` | PASS; terminal truth blocked on exactly 32 current atoms |
+| `python3 scripts/positioning-p14-control-plane.py --terminal` | expected exit 3; 9 predecessor blockers + 23 P14 requirements |
+| operational fixture | PASS; W01-W09 runnable, synthetic, non-closing, no predecessor command |
+| focused pytest | PASS; 28 tests, including the W07-open/non-empty C04-C12 frontier regression |
+| scoped exact-tree batch | New P14 gate PASS; all other selected shards passed except `verify-resolver-test`, which correctly caught its stale registry-change expectation after the new gate was registered |
+| invalidated resolver shard | PASS after adding `positioning-p14-control-plane-test` to the expected registry selection; all selection fixtures pass |
+| diff hygiene and Ruff | PASS |
 
-The prior v2 receipts remain history, not verification for this changed tree. The exact v3 results
-and predicate-tested implementation commit are recorded here only after their one bounded batch.
+The scoped batch was not replayed after the single resolver expectation correction. Its unchanged
+green shard receipts were retained; only the invalidated resolver shard and the P14-focused receipt
+were rerun, as required by the bounded-composition contract. The relay-only receipt commit that
+follows this implementation commit changes no runner, schema, fixture, or frontier truth.
 
 ## Activation and completion predicates
 
