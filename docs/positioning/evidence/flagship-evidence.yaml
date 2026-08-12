@@ -1,20 +1,20 @@
 schema_version: limen.positioning_flagship_evidence.v1
 work_ids: [PSP-P02-W04, PSP-P02-W05]
-generated_at: "2026-08-12T10:43:49Z"
-verdict: w04_formal_ready_w05_dependency_blocked
+generated_at: "2026-08-12T10:54:47Z"
+verdict: w04_complete_w05_formal_ready
 
 dependency_gate:
   w03_issue: https://github.com/organvm/limen/issues/2175
   w03_state: closed
   w04_issue: https://github.com/organvm/limen/issues/2176
-  w04_state: open
+  w04_state: closed
   w05_issue: https://github.com/organvm/limen/issues/2177
   w05_state: open
   formal_completion_blocker: >-
-    W03 is accepted through its closed issue and latest marked receipt, so W04 is formally admitted
-    for sanctioned integration. W04 remains open until its merged-head predicate and marked receipt
-    pass; W05 remains blocked on a closed, receipt-verified W04. This artifact is not itself a
-    completion receipt and does not close either issue.
+    W03 and W04 are accepted through their closed issues and latest marked receipts, so W05 is
+    formally admitted for sanctioned integration. W05 remains open until this state transition
+    merges and its merged-head predicate plus marked receipt pass. This artifact is not itself the
+    W05 completion receipt and does not close the issue.
 
 privacy:
   public_packets_only: true
