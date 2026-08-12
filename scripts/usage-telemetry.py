@@ -606,8 +606,9 @@ def _provider_outcome_projection() -> dict:
     blocked = [entry for entry in entries if entry.blocked(NOW)]
     # A ledger contains only providers that have produced an outcome. That is not a live
     # denominator: if the current catalog has providers A and B, failures from A alone cannot
-    # bench B. Compare one matching catalog/profile receipt group against every active provider
-    # in the current catalog. Missing discovery or mismatched evidence fails open.
+    # bench B. Provider auth/rate-limit health is provider-scoped, so fold every outcome from
+    # the current catalog across execution profiles; a later-profile success must recover an
+    # older-profile failure. Missing discovery or mismatched evidence fails open.
     catalog_fingerprint = None
     catalog_provider_count = 0
     matching_profile_hash = None
@@ -644,40 +645,27 @@ def _provider_outcome_projection() -> dict:
                 }
             )
             catalog_provider_count = len(live_providers)
-            current_outcomes = [
+            matching_profile_outcomes = [
                 outcome for outcome in outcomes if getattr(outcome, "catalog_hash", None) == catalog_fingerprint
             ]
-            profile_hashes = sorted(
-                {
-                    str(getattr(outcome, "execution_profile_hash", ""))
-                    for outcome in current_outcomes
-                    if str(getattr(outcome, "execution_profile_hash", ""))
-                }
+            profile_hashes = {
+                str(getattr(outcome, "execution_profile_hash", ""))
+                for outcome in matching_profile_outcomes
+                if str(getattr(outcome, "execution_profile_hash", ""))
+            }
+            matching_profile_hash = next(iter(profile_hashes)) if len(profile_hashes) == 1 else None
+            matching_outcome_count = len(matching_profile_outcomes)
+            matching_profile_snapshot = _project_provider_health(
+                matching_profile_outcomes,
+                policy,
+                now=NOW,
             )
-            for profile_hash in profile_hashes:
-                profile_outcomes = [
-                    outcome
-                    for outcome in current_outcomes
-                    if getattr(outcome, "execution_profile_hash", None) == profile_hash
-                ]
-                profile_snapshot = _project_provider_health(
-                    profile_outcomes,
-                    policy,
-                    now=NOW,
-                )
-                blocked_names = [
-                    provider
-                    for provider in live_providers
-                    if ((entry := profile_snapshot.providers.get(provider)) is not None and entry.blocked(NOW))
-                ]
-                candidate = (len(blocked_names), len(profile_outcomes), profile_hash)
-                current = (live_blocked_provider_count, matching_outcome_count, matching_profile_hash or "")
-                if candidate > current:
-                    live_blocked_provider_count = len(blocked_names)
-                    matching_outcome_count = len(profile_outcomes)
-                    matching_profile_hash = profile_hash
-                    matching_profile_outcomes = profile_outcomes
-                    matching_profile_snapshot = profile_snapshot
+            blocked_names = [
+                provider
+                for provider in live_providers
+                if ((entry := matching_profile_snapshot.providers.get(provider)) is not None and entry.blocked(NOW))
+            ]
+            live_blocked_provider_count = len(blocked_names)
             all_providers_blocked = bool(live_providers) and live_blocked_provider_count == len(live_providers)
         except Exception:
             catalog_fingerprint = None
@@ -750,8 +738,8 @@ def _provider_outcome_projection() -> dict:
         "provider_outcome_observed_terminal_failure_classes": observed_provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
-        # Dispatch benches OpenCode only when every provider in one live catalog/profile
-        # evidence group is blocked; model-level cooldowns remain available to selection.
+        # Dispatch benches OpenCode only when every provider in the current live catalog
+        # is blocked after cross-profile recovery; model cooldowns remain selector-owned.
         "provider_outcome_all_blocked": all_providers_blocked,
         "provider_outcome_provider_count": catalog_provider_count,
         "provider_outcome_blocked_provider_count": live_blocked_provider_count,

@@ -42,12 +42,13 @@ def outcome(
     *,
     finished_at: datetime,
     retry_count: int = 0,
+    profile_hash: str = PROFILE_HASH,
 ) -> ProviderOutcome:
     return ProviderOutcome(
         provider=model_id.split("/", 1)[0],
         runtime_model=model_id,
         catalog_hash=HASH,
-        execution_profile_hash=PROFILE_HASH,
+        execution_profile_hash=profile_hash,
         terminal_class=terminal_class,
         started_at=finished_at - timedelta(seconds=5),
         finished_at=finished_at,
@@ -299,3 +300,50 @@ def test_down_lanes_consumes_provider_level_health_as_fourth_source(tmp_path, mo
     monkeypatch.setattr(dispatch, "catalog_hash", lambda _models: HASH)
 
     assert "opencode" in dispatch._down_lanes()
+
+
+def test_down_lanes_folds_provider_recovery_across_execution_profiles(tmp_path, monkeypatch) -> None:
+    from limen import dispatch
+
+    ledger = tmp_path / "provider-outcomes.jsonl"
+    current = datetime.now(timezone.utc)
+    failed_profile = "c" * 64
+    recovered_profile = "d" * 64
+    append_provider_outcome(
+        ledger,
+        outcome(
+            "provider-z/runtime-one",
+            "auth_failure",
+            finished_at=current - timedelta(seconds=10),
+            profile_hash=failed_profile,
+        ),
+    )
+    append_provider_outcome(
+        ledger,
+        outcome(
+            "provider-z/runtime-two",
+            "rate_limit",
+            finished_at=current - timedelta(seconds=5),
+            profile_hash=failed_profile,
+        ),
+    )
+    append_provider_outcome(
+        ledger,
+        outcome(
+            "provider-z/runtime-one",
+            "success",
+            finished_at=current,
+            profile_hash=recovered_profile,
+        ),
+    )
+    monkeypatch.setenv("LIMEN_PROVIDER_OUTCOME_LEDGER", str(ledger))
+    monkeypatch.setattr(dispatch, "_usage_dead_lanes", lambda: set())
+    monkeypatch.setattr(dispatch, "_oauth_unreachable_lanes", lambda: set())
+    monkeypatch.setattr(
+        dispatch,
+        "discover_opencode_models",
+        lambda *_args, **_kwargs: [model("provider-z/runtime-one")],
+    )
+    monkeypatch.setattr(dispatch, "catalog_hash", lambda _models: HASH)
+
+    assert "opencode" not in dispatch._down_lanes()

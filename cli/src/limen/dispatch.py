@@ -309,10 +309,11 @@ def _oauth_unreachable_lanes() -> set[str]:
 
 
 def _provider_health_dead_lanes() -> set[str]:
-    """Bench OpenCode only when every provider in one live catalog/profile group is blocked.
+    """Bench OpenCode only when every provider in the current live catalog is blocked.
 
-    Exact-model health is task-profile dependent and remains enforced by
-    ``_opencode_model`` after live capability filtering.
+    Auth/rate-limit health is provider-scoped, so recovery under a later execution
+    profile clears older failures for that provider. Exact-model health remains
+    task-profile dependent and is enforced by ``_opencode_model`` after filtering.
     """
 
     try:
@@ -335,19 +336,16 @@ def _provider_health_dead_lanes() -> set[str]:
         current_outcomes = [outcome for outcome in outcomes if outcome.catalog_hash == fingerprint]
         if not current_outcomes:
             return set()
-        profile_hashes = {outcome.execution_profile_hash for outcome in current_outcomes}
-        policy = provider_health_policy()
-        for profile_hash in profile_hashes:
-            profile_snapshot = project_provider_health(
-                [outcome for outcome in current_outcomes if outcome.execution_profile_hash == profile_hash],
-                policy,
-                now=now,
-            )
-            if all(
-                (entry := profile_snapshot.providers.get(provider)) is not None and entry.blocked(now)
-                for provider in live_providers
-            ):
-                return {"opencode"}
+        snapshot = project_provider_health(
+            current_outcomes,
+            provider_health_policy(),
+            now=now,
+        )
+        if all(
+            (entry := snapshot.providers.get(provider)) is not None and entry.blocked(now)
+            for provider in live_providers
+        ):
+            return {"opencode"}
     except (AttributeError, OSError, TypeError, ValueError):
         return set()
     return set()
@@ -361,7 +359,7 @@ def _down_lanes() -> set[str]:
       3. browser-OAuth lanes whose silent-auth endpoint is unreachable this beat (_oauth_unreachable_lanes)
          — so agy/antigravity can't spawn a Google sign-in tab while the Mac is asleep/offline.
       4. append-only provider outcome health (_provider_health_dead_lanes), which benches OpenCode
-         only when every provider in one live catalog/profile group is in auth/rate cooldown.
+         only when every provider in the current live catalog is in auth/rate cooldown.
     Rebalance + dispatch + route skip these so tasks aren't wasted on a lane that can't produce.
     Sources 2–4 self-heal; remove a line from source 1 when that lane is healthy again."""
     f = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))) / "logs" / "lanes-down.txt"
