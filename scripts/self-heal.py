@@ -587,7 +587,9 @@ def main():
     # id, and submit the desired delta to TABVLARIVS. Only the remote keeper mutates lifecycle
     # state; this process never writes the canonical board.
     if not acquire_lock():
-        print("[self-heal] queue lock held by daemon — skipping this pass (retry next tick)")
+        summary = "[self-heal] queue lock held by daemon — skipping this pass (retry next tick)"
+        print(summary)
+        write_heartbeat(summary)
         return 0
     try:
         lf = load_limen_file(tasks_path)
@@ -663,6 +665,7 @@ def main():
                     f"owner: lever {QUOTA_LEVER} in his-hand-levers.json"
                 )
                 print(f"self-heal: keeper said: {exc}"[:400])
+                write_heartbeat("self-heal: BLOCKED — keeper storage quota exhausted")
                 return EX_TEMPFAIL
     finally:
         try:

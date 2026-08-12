@@ -131,6 +131,17 @@ def test_empty_live_pass_refreshes_the_monitored_writer_heartbeat(tmp_path, monk
     assert "no open PRs" in heartbeat.read_text(encoding="utf-8")
 
 
+def test_locked_live_pass_refreshes_the_monitored_writer_heartbeat(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "acquire_lock", lambda: False)
+
+    assert _run(m, monkeypatch, p) == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert "queue lock held" in heartbeat.read_text(encoding="utf-8")
+
+
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_HEAL_SCAN", "bad")
     monkeypatch.setenv("LIMEN_HEAL_RECONCILE_SCAN_MAX", "bad")
