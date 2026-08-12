@@ -1,0 +1,118 @@
+{
+  "schema_version": "psp-p03-w07-reader-set.v1",
+  "work_id": "PSP-P03-W07",
+  "stimulus": {
+    "repository": "organvm/limen",
+    "head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+    "issue_comment": "https://github.com/organvm/limen/issues/2188#issuecomment-5271321054"
+  },
+  "status": "pending",
+  "collected_at": null,
+  "readers": [
+    {
+      "reader_id": "R1",
+      "archetype": "client",
+      "role_identified": "",
+      "buyer_identified": "",
+      "problem_identified": "",
+      "proof_identified": "",
+      "cta_identified": "",
+      "confidence_1_to_5": 0,
+      "confusions": [],
+      "trust_objections": [],
+      "verbatim_notes": "",
+      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "protocol_integrity": {
+        "independent_target_like_reader": false,
+        "read_once_unprompted": false,
+        "no_facilitator_explanation": false,
+        "no_project_search": false,
+        "not_author_or_agent": false
+      }
+    },
+    {
+      "reader_id": "R2",
+      "archetype": "internal_evaluator",
+      "role_identified": "",
+      "buyer_identified": "",
+      "problem_identified": "",
+      "proof_identified": "",
+      "cta_identified": "",
+      "confidence_1_to_5": 0,
+      "confusions": [],
+      "trust_objections": [],
+      "verbatim_notes": "",
+      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "protocol_integrity": {
+        "independent_target_like_reader": false,
+        "read_once_unprompted": false,
+        "no_facilitator_explanation": false,
+        "no_project_search": false,
+        "not_author_or_agent": false
+      }
+    },
+    {
+      "reader_id": "R3",
+      "archetype": "recruiter",
+      "role_identified": "",
+      "buyer_identified": "",
+      "problem_identified": "",
+      "proof_identified": "",
+      "cta_identified": "",
+      "confidence_1_to_5": 0,
+      "confusions": [],
+      "trust_objections": [],
+      "verbatim_notes": "",
+      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "protocol_integrity": {
+        "independent_target_like_reader": false,
+        "read_once_unprompted": false,
+        "no_facilitator_explanation": false,
+        "no_project_search": false,
+        "not_author_or_agent": false
+      }
+    },
+    {
+      "reader_id": "R4",
+      "archetype": "executive_sponsor",
+      "role_identified": "",
+      "buyer_identified": "",
+      "problem_identified": "",
+      "proof_identified": "",
+      "cta_identified": "",
+      "confidence_1_to_5": 0,
+      "confusions": [],
+      "trust_objections": [],
+      "verbatim_notes": "",
+      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "protocol_integrity": {
+        "independent_target_like_reader": false,
+        "read_once_unprompted": false,
+        "no_facilitator_explanation": false,
+        "no_project_search": false,
+        "not_author_or_agent": false
+      }
+    },
+    {
+      "reader_id": "R5",
+      "archetype": "product_partner",
+      "role_identified": "",
+      "buyer_identified": "",
+      "problem_identified": "",
+      "proof_identified": "",
+      "cta_identified": "",
+      "confidence_1_to_5": 0,
+      "confusions": [],
+      "trust_objections": [],
+      "verbatim_notes": "",
+      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "protocol_integrity": {
+        "independent_target_like_reader": false,
+        "read_once_unprompted": false,
+        "no_facilitator_explanation": false,
+        "no_project_search": false,
+        "not_author_or_agent": false
+      }
+    }
+  ]
+}

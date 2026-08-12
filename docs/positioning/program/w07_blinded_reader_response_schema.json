@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:organvm:positioning:psp-p03-w07-reader-set:v1",
+  "title": "PSP-P03-W07 anonymous blinded-reader response set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "work_id",
+    "stimulus",
+    "status",
+    "collected_at",
+    "readers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "psp-p03-w07-reader-set.v1"
+    },
+    "work_id": {
+      "const": "PSP-P03-W07"
+    },
+    "stimulus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "head", "issue_comment"],
+      "properties": {
+        "repository": {"const": "organvm/limen"},
+        "head": {"const": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"},
+        "issue_comment": {
+          "const": "https://github.com/organvm/limen/issues/2188#issuecomment-5271321054"
+        }
+      }
+    },
+    "status": {
+      "enum": ["pending", "complete"]
+    },
+    "collected_at": {
+      "type": ["string", "null"]
+    },
+    "readers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reader_id",
+          "archetype",
+          "role_identified",
+          "buyer_identified",
+          "problem_identified",
+          "proof_identified",
+          "cta_identified",
+          "confidence_1_to_5",
+          "confusions",
+          "trust_objections",
+          "verbatim_notes",
+          "element_scores",
+          "protocol_integrity"
+        ],
+        "properties": {
+          "reader_id": {"enum": ["R1", "R2", "R3", "R4", "R5"]},
+          "archetype": {
+            "enum": [
+              "client",
+              "internal_evaluator",
+              "recruiter",
+              "executive_sponsor",
+              "product_partner"
+            ]
+          },
+          "role_identified": {"type": "string", "maxLength": 1000},
+          "buyer_identified": {"type": "string", "maxLength": 1000},
+          "problem_identified": {"type": "string", "maxLength": 1000},
+          "proof_identified": {"type": "string", "maxLength": 1000},
+          "cta_identified": {"type": "string", "maxLength": 1000},
+          "confidence_1_to_5": {"type": "integer", "minimum": 0, "maximum": 5},
+          "confusions": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {"type": "string", "minLength": 1, "maxLength": 500}
+          },
+          "trust_objections": {
+            "type": "array",
+            "maxItems": 10,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["category", "summary", "unresolved"],
+              "properties": {
+                "category": {
+                  "enum": [
+                    "role_confusion",
+                    "buyer_confusion",
+                    "proof_skepticism",
+                    "cta_ambiguity",
+                    "authority_takeover_concern",
+                    "detail_density_concern",
+                    "unrelated"
+                  ]
+                },
+                "summary": {"type": "string", "minLength": 1, "maxLength": 500},
+                "unresolved": {"type": "boolean"}
+              }
+            }
+          },
+          "verbatim_notes": {"type": "string", "maxLength": 2000},
+          "element_scores": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "buyer", "problem", "proof", "cta"],
+            "properties": {
+              "role": {"type": "boolean"},
+              "buyer": {"type": "boolean"},
+              "problem": {"type": "boolean"},
+              "proof": {"type": "boolean"},
+              "cta": {"type": "boolean"}
+            }
+          },
+          "protocol_integrity": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "independent_target_like_reader",
+              "read_once_unprompted",
+              "no_facilitator_explanation",
+              "no_project_search",
+              "not_author_or_agent"
+            ],
+            "properties": {
+              "independent_target_like_reader": {"type": "boolean"},
+              "read_once_unprompted": {"type": "boolean"},
+              "no_facilitator_explanation": {"type": "boolean"},
+              "no_project_search": {"type": "boolean"},
+              "not_author_or_agent": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
