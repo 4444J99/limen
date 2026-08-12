@@ -44,6 +44,7 @@ sanctioned:
   - {path: corpus, kind: dir, owner: corpus, why: "creative/reference corpora store"}
   - {path: docker-compose.yml, kind: config, owner: fleet, why: "local compose stack"}
   - {path: docs, kind: dir, owner: docs, why: "documentation + reviews + continuations"}
+  - {path: engagements, kind: dir, owner: governance, why: "engagement register + per-engagement configs read by scripts/engagement-guard.py --all"}
   - {path: experience-surfaces.json, kind: registry, owner: observation, why: "experience audit surface registry"}
   - {path: face-ownership.json, kind: registry, owner: observation, why: "estate face-ownership registry (organ-ladder cites)"}
   - {path: firebase.json, kind: config, owner: fleet, why: "firebase hosting config (deploy-trigger path)"}

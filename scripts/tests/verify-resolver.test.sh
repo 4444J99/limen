@@ -49,6 +49,22 @@ check-docs-manifest
 check-docs-exports
 check-note-links' docs/some-note.md
 
+# Evidence packet files are nested below the registry path; the recursive glob keeps the
+# W04/W05 validator selected even when a packet-only diff does not touch its script or manifest.
+expect flagship-evidence-packet 'syntax-changed
+diff-hygiene
+flagship-evidence-test
+check-docs-exports
+check-note-links' docs/positioning/evidence/new-packet.md
+
+expect research-adjudication-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+research-adjudication-test
+check-params
+check-note-links
+check-effectors' scripts/positioning-research-adjudication.py
+
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
 # listing `cli/src/limen/*.py` silently drops this case, and dispatch.py (a live `gh pr merge`
@@ -191,6 +207,11 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+github-estate-census-custody-test
+flagship-proof-set-test
+flagship-evidence-test
+claim-policy-test
+research-adjudication-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 

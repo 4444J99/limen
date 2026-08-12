@@ -143,23 +143,52 @@ people:
         dossier: null
         notes: transcripts are vault-class; public face is a split, never a flip
 
+  # T3 protocol gate CLEARED 2026-08-12 by full conversation review (2023-08-20..2026-08-12,
+  # 3,201 rows). Promoted T3 -> T2: the review found an inbound, self-initiated PAID request for
+  # the social lane — the only inbound commercial approach in the record — so this is no longer
+  # protocol-first backlog. Demand evidence: _people-private/people/dustin/decisions/demand-review.md
   - slug: dustin
-    tier: T3
-    engagement_ref: null
+    tier: T2
+    engagement_ref: organs/consulting/engagements/dustin.yaml
     funnel_instance_ref: null
     projects:
+      # Both ventures were HIS ideas (2026-03-24) and he ratified both specs within four days.
+      # Supply, not demand, is the constraint: 4.5 months produced no artifact from his side.
+      # Held at dossier until their gating questions are answered — see open-asks DUS-003/004.
       - name: dsp-platform
-        repo: null
+        repo: 4444J99/post-dsp-platform
         keywords: [dsp, music platform, post-dsp, streaming alternative]
-        stage: idea
+        stage: dossier
         public_face_state: none
         dossier: null
+        notes: >-
+          gated on ten design questions sent 2026-03-28 and never answered; he is the correct
+          respondent (working musician + practising UI/UX). Research corpus is Drive-only.
       - name: ai-consultation
-        repo: null
-        keywords: [ai audit, ai consultation, ai consulting]
-        stage: idea
+        repo: 4444J99/the-consulate
+        keywords: [ai audit, ai consultation, ai consulting, consulate, ai remediation, ai governance]
+        stage: dossier
         public_face_state: none
         dossier: null
+        notes: >-
+          gated on choosing one entry point and one segment for a first offer; his enterprise-UX
+          vantage is the credibility asset, not delivery capacity.
+      # The lane the review surfaced. His ask, in his words, in a voice memo — which is why it
+      # appears in no text corpus. Not a greenfield build: the delivery asset already exists.
+      - name: social-presence
+        # repo stays null ON PURPOSE. Delivery runs on the content yield engine, but that repo is
+        # SCOTT's lane (see his content-cannibalizer row). Naming it here would attach one repo to
+        # two partner lanes, and Rule #7 would then happily validate a grant that shows one
+        # partner the other's lane. This is an instance OF the engine, not shared custody of it —
+        # a dedicated instance repo gets registered here when it is cut.
+        repo: null
+        keywords: [social presence, new ancients, ghastly occurrences, shorts campaign, music promotion, release cycle]
+        stage: building
+        public_face_state: none
+        dossier: null
+        notes: >-
+          independent-musician instance of the content yield engine; inbound PAID request
+          2026-08-06, unanswered. Hard scope constraint set by him: no generative filler.
 
   - slug: david
     tier: T3

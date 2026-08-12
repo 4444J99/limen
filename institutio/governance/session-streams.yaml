@@ -470,6 +470,22 @@ streams:
     max_children: 3
     note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): charles's whole collaboration domain — lanes: mirror-mirror (stage building), your-fit-tailored (stage building), cosmetics-universe (stage idea)."
 
+  dustin:
+    family: constellation
+    register_tier: T2
+    title: "dustin's domain (T2, 3 lanes)"
+    branch_prefix: feat
+    intent: docs/continuations/dustin/intent.md
+    requires: []
+    unblocks: []
+    job_class: synthesis
+    predicate: organs/consulting/constellation/constellation-done.sh
+    predicate_status: existing
+    runway: 1d
+    owner_of_record: organs/consulting/constellation/registry.yaml
+    max_children: 3
+    note: "Derived from the constellation register (T2, tiers operator-accepted 2026-07-22): dustin's whole collaboration domain — lanes: dsp-platform (stage dossier), ai-consultation (stage dossier), social-presence (stage building)."
+
   scott:
     family: constellation
     register_tier: T2
