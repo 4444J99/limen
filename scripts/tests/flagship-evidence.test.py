@@ -65,10 +65,13 @@ class FlagshipEvidenceTests(unittest.TestCase):
 
     def test_rejects_out_of_order_dependency_closure(self) -> None:
         index = copy.deepcopy(self.index)
+        index["dependency_gate"]["w03_state"] = "open"
         index["dependency_gate"]["w04_state"] = "closed"
         self.assert_error_contains(index, "W04 may close only after W03")
 
     def test_open_dependencies_do_not_require_completion_receipts(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["dependency_gate"]["w03_state"] = "open"
         responses = {"2175": "open", "2176": "open", "2177": "open"}
 
         def fetcher(url: str) -> tuple[int, bytes]:
@@ -78,7 +81,7 @@ class FlagshipEvidenceTests(unittest.TestCase):
         def receipt_verifier(_work_id: str) -> None:
             raise AssertionError("an open preflight must not invoke receipt verification")
 
-        self.assertEqual(MODULE.verify_dependency_states(self.index, fetcher, receipt_verifier), [])
+        self.assertEqual(MODULE.verify_dependency_states(index, fetcher, receipt_verifier), [])
 
     def test_closed_predecessor_requires_latest_marked_receipt_predicate(self) -> None:
         index = copy.deepcopy(self.index)
@@ -97,11 +100,15 @@ class FlagshipEvidenceTests(unittest.TestCase):
         self.assertTrue(any("latest marked receipt predicate did not pass" in error for error in errors), errors)
 
     def test_live_dependency_state_must_match_issue_owner(self) -> None:
+        gate = self.index["dependency_gate"]
         responses = {
-            "2175": "closed",
-            "2176": "open",
-            "2177": "open",
+            gate["w03_issue"].rsplit("/", 1)[-1]: gate["w03_state"],
+            gate["w04_issue"].rsplit("/", 1)[-1]: gate["w04_state"],
+            gate["w05_issue"].rsplit("/", 1)[-1]: gate["w05_state"],
         }
+        responses[gate["w03_issue"].rsplit("/", 1)[-1]] = (
+            "open" if gate["w03_state"] == "closed" else "closed"
+        )
 
         def fetcher(url: str) -> tuple[int, bytes]:
             issue_number = url.rsplit("/", 1)[-1]

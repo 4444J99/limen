@@ -26,8 +26,9 @@ interface and remain out of this public-safe directory.
 
 ## Dependency boundary
 
-These are implementation preflight artifacts. They do not close W04 or W05: W04 remains gated on
-the receipt-verified W03, and W05 remains gated on the receipt-verified W04. When a predecessor is
-declared and observed closed, live verification runs that leaf's canonical `--verify-work`
-predicate against the latest marked receipt. See the dependency gate in the index and the
-continuation relay for the formal sequence.
+W03 is accepted through its closed issue and latest marked receipt, so these W04 artifacts are
+formally admitted for sanctioned integration. They do not themselves close W04 or W05: W04 still
+requires a merged-head predicate and marked receipt, while W05 remains gated on a closed,
+receipt-verified W04. For every predecessor declared and observed closed, live verification runs
+that leaf's canonical `--verify-work` predicate against the latest marked receipt. See the
+dependency gate in the index and the continuation relay for the formal sequence.
