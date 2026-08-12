@@ -38,6 +38,7 @@ sanctioned:
   - {path: CANON.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/evocator.py"}
   - {path: CODEX-SESSION-LIFECYCLE.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_codex_quicken.py (+1 more)"}
   - {path: DISPATCH-ARCHITECTURE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/conductor-tranche.py"}
+  - {path: engagement-intake-standard.md, kind: doc, owner: governance, why: "consumed at this exact path by scripts/engagement-guard.py (+1 more: engagements/REGISTER.md)"}
   - {path: IDEAL-FORMS-LEDGER.md, kind: doc, owner: fleet, why: "consumed at this exact path by his-hand-levers.json (+7 more)"}
   - {path: MERGE-READY.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/check-removal-acceptance.py (+1 more)"}
   - {path: NEEDS-HUMAN-DIGEST.md, kind: doc, owner: fleet, why: "consumed at this exact path by container/launchd/com.limen.watchdog.plist (+2 more)"}
