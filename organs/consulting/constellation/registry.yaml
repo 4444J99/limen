@@ -154,25 +154,37 @@ people:
     projects:
       # Both ventures were HIS ideas (2026-03-24) and he ratified both specs within four days.
       # Supply, not demand, is the constraint: 4.5 months produced no artifact from his side.
-      # Held at dossier until their gating questions are answered — see open-asks DUS-003/004.
+      #
+      # Promoted dossier -> building 2026-08-12 after an audit found both repos held a README and
+      # zero code. The re-read that produced the promotion: each venture's open questions gate a
+      # NARROWER slice than "the project". DSP's ten questions are all about the consumer shell,
+      # while its own stage 1 is an unblocked substrate; the Consulate's offer was already reduced
+      # in its own README and only the PRICE was open. Neither gate moved — the buildable surface
+      # in front of each one was simply never measured. Both are now unfunded-but-real.
       - name: dsp-platform
         repo: 4444J99/post-dsp-platform
         keywords: [dsp, music platform, post-dsp, streaming alternative]
-        stage: dossier
+        stage: building
         public_face_state: none
         dossier: null
         notes: >-
-          gated on ten design questions sent 2026-03-28 and never answered; he is the correct
-          respondent (working musician + practising UI/UX). Research corpus is Drive-only.
+          consumer shell still gated on ten design questions sent 2026-03-28 and never answered;
+          he is the correct respondent (working musician + practising UI/UX). Stage-1 coordination
+          substrate built 2026-08-12 — split sheets, settlement (pro-rata vs user-centric with the
+          delta computed), provenance attestation, delivery validation; 59 tests, no network, no
+          persistence. Research corpus is Drive-only.
       - name: ai-consultation
         repo: 4444J99/the-consulate
         keywords: [ai audit, ai consultation, ai consulting, consulate, ai remediation, ai governance]
-        stage: dossier
+        stage: building
         public_face_state: none
         dossier: null
         notes: >-
-          gated on choosing one entry point and one segment for a first offer; his enterprise-UX
-          vantage is the credibility asset, not delivery capacity.
+          entry point and segment were already chosen in the repo's own README (AI Estate Audit,
+          higher education, fixed scope); only PRICE is open, and it does not gate the instrument.
+          Audit instrument built 2026-08-12 — estate schema, legibility rubric where every lost
+          point names a missing artifact, derived risk register, capped first wave; 66 tests. His
+          enterprise-UX vantage is the credibility asset, not delivery capacity.
       # The lane the review surfaced. His ask, in his words, in a voice memo — which is why it
       # appears in no text corpus. Not a greenfield build: the delivery asset already exists.
       - name: social-presence
