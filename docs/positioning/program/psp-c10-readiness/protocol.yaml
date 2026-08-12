@@ -1,4 +1,4 @@
-schema_version: limen.positioning_c10_readiness.v1
+schema_version: limen.positioning_c10_readiness.v2
 mode: preflight_only
 scope:
   chunk_id: PSP-C10
@@ -26,9 +26,14 @@ truth_boundary:
   synthetic_closes_chunk: false
   synthetic_counts_as_outreach: false
   synthetic_counts_as_payment: false
+  synthetic_counts_as_conversion: false
+  synthetic_counts_as_revenue: false
+  synthetic_counts_as_testimonial_or_reference: false
   synthetic_counts_as_delivery_acceptance: false
   synthetic_counts_as_external_outcome: false
   synthetic_can_refresh_public_claims: false
+  prepared_dependency_counts_as_closed: false
+  agent_or_synthetic_testimonial_counts_as_real: false
 
 model_routing:
   source: institutio/positioning/program.yaml
@@ -52,6 +57,15 @@ leaf_gate_matrix:
   PSP-P12-W05: [HG-PUBLICATION-SEND, HG-CONTRACT]
   PSP-P12-W06: []
   PSP-P10-W08: []
+
+leaf_dependency_matrix:
+  PSP-P12-W01: [PSP-P09-W08, PSP-P10-W01, PSP-P11-W02]
+  PSP-P12-W02: [PSP-P12-W01, PSP-P10-W05, PSP-P11-W07]
+  PSP-P12-W03: [PSP-P12-W02, PSP-P11-W04]
+  PSP-P12-W04: [PSP-P12-W02, PSP-P11-W08]
+  PSP-P12-W05: [PSP-P12-W02]
+  PSP-P12-W06: [PSP-P12-W02, PSP-P12-W04, PSP-P12-W05, PSP-P02-W08]
+  PSP-P10-W08: [PSP-P09-W08, PSP-P10-W07, PSP-P12-W02]
 
 recruitment:
   cohort_limit: 3
@@ -217,7 +231,8 @@ evidence_capture:
   evidence_classes:
     - qualification
     - terms
-    - payment_or_bounded_pilot
+    - payment
+    - bounded_pilot
     - delivery
     - client_acceptance
     - no_outcome
@@ -235,16 +250,24 @@ evidence_capture:
 
 outcome_adjudication:
   paid_path:
-    minimum_paid_or_bounded_pilot_audits: 1
+    minimum_paid_audits: 1
     requires_terms_receipt: true
+    requires_payment_receipt: true
     requires_client_acceptance: true
+  bounded_pilot_path:
+    supports_p12_delivery_evidence: true
+    satisfies_p10_w08: false
+    counts_as_conversion: false
+    counts_as_revenue: false
+    counts_as_commercial_proof: false
   no_path:
     minimum_unique_qualified_no_outcomes: 5
     reason_required: true
+    revision_receipt_required: true
   decisions: [keep, narrow, pivot, insufficient_evidence]
-  keep_rule: A paid or explicitly bounded audit is accepted and its declared outcome is met.
-  narrow_rule: A paid or explicitly bounded audit is accepted but its declared outcome is not met.
-  pivot_rule: Five unique qualified no outcomes with reasons reject the current wedge.
+  keep_rule: A paid audit has terms, payment, and client-acceptance evidence and its declared outcome is met.
+  narrow_rule: A paid audit has terms, payment, and client-acceptance evidence but its declared outcome is not met.
+  pivot_rule: Five unique qualified no outcomes with reasons and a recorded revision reject the current wedge.
   insufficient_rule: Neither acceptance path has enough real evidence; extend only under the bounded extension rule.
   synthetic_decisions_are_hypothetical: true
 
@@ -262,8 +285,8 @@ experiment_90_day:
   checkpoints_days: [0, 14, 30, 45, 60, 75, 90]
   denominator_unit: unique qualified door-mail
   denominator_threshold: 5
-  success_or_revision_rule: one accepted paid or bounded audit OR five documented qualified no outcomes
-  required_outcome_fields: [candidate_id, qualification_receipt, outcome_type, reason, evidence_ids, occurred_at]
+  success_or_revision_rule: one paid audit with payment evidence OR five documented qualified no outcomes with reasons and a recorded revision
+  required_outcome_fields: [candidate_id, qualification_receipt, outcome_type, reason, payment_receipt_present, evidence_ids, occurred_at]
   extension:
     maximum_count: 1
     maximum_days: 14

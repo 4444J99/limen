@@ -16,7 +16,7 @@ or reference exists, a claim was refreshed, or a PSP predicate passed.
 |---|---|---|
 | Contract check passes | Registry scope, exact model routing, gates, record fields, thresholds, and bounds agree | Readiness of formal predecessors or authority for a real effect |
 | Synthetic dry run passes | Keep, narrow, pivot, and insufficient-evidence branches work over fixture-only records | Qualified demand, payment, delivery acceptance, commercial proof, or wedge invalidation |
-| Committed synthetic receipt verifies | The receipt exactly matches the tracked protocol, fixture, and program manifest | Leaf, phase, chunk, issue, or external-outcome completion |
+| Committed synthetic receipt verifies | The receipt exactly matches the tracked protocol, fixture, and canonical C10 registry projection | Leaf, phase, chunk, issue, or external-outcome completion |
 
 Real-world evidence belongs in the owning private or public-safe receipt surface under the relevant
 terms. This public kit contains no client identity, contact detail, private evidence, price, signed
@@ -24,9 +24,11 @@ term, testimonial, or external outcome.
 
 ## Scope and exact routing
 
-The validator derives scope and routing from `institutio/positioning/program.yaml` and fails when
-this snapshot drifts. A future leaf executor must use the exact registry pair; no substitution is
-permitted.
+The validator derives scope, dependencies, routing, and gates from
+`institutio/positioning/program.yaml` and fails when the C10 projection drifts. Its receipt binds a
+canonical digest of only the C10 chunk and leaf projection, so an unrelated manifest edit does not
+invalidate unchanged readiness evidence. A future leaf executor must use the exact registry pair;
+no substitution is permitted.
 
 | Work | Assigned model | Effort | Prepared contract |
 |---|---|---|---|
@@ -71,12 +73,16 @@ Every evidence record carries source time and method, a content digest, visibili
 authority references, machine-assistance treatment, and limitations. Synthetic records are forced
 to `internal_synthetic` visibility and `fixture://` sources.
 
-The adjudicator exercises four branches:
+The adjudicator exercises four decisions across five scenarios:
 
-- `keep`: an accepted paid or explicitly bounded audit meets its declared outcome;
-- `narrow`: an accepted audit does not meet its declared outcome;
-- `pivot`: five unique qualified no outcomes carry documented reasons; and
+- `keep`: a paid audit has terms, payment, and client-acceptance evidence and meets its declared outcome;
+- `narrow`: a paid audit has terms, payment, and client-acceptance evidence but misses its declared outcome;
+- `pivot`: five unique qualified no outcomes carry documented reasons and a recorded revision; and
 - `insufficient_evidence`: neither real threshold is met.
+
+An explicitly bounded pilot may support P12 delivery evidence, but it cannot by itself satisfy
+P10-W08, conversion, revenue, or commercial proof. Synthetic or agent-authored testimonial and
+reference objects are likewise never attributed as real evidence.
 
 In this kit those verdicts are always labelled hypothetical. The real 90-day decision requires
 source-linked outcomes and may use at most one 14-day extension with a named missing-evidence

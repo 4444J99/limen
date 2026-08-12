@@ -2,10 +2,11 @@
   "authority": {
     "external_gates": {
       "REAL-AGREEMENT": "not_satisfied",
+      "REAL-BOUNDED-PILOT": "not_satisfied",
       "REAL-DELIVERY-ACCEPTANCE": "not_satisfied",
       "REAL-EXTERNAL-OUTCOME": "not_satisfied",
       "REAL-OUTREACH": "not_satisfied",
-      "REAL-PAYMENT-OR-BOUNDED-PILOT": "not_satisfied",
+      "REAL-PAID-AUDIT": "not_satisfied",
       "REAL-TESTIMONIAL-OR-REFERENCE": "not_satisfied"
     },
     "human_gates": {
@@ -17,11 +18,11 @@
   },
   "bindings": {
     "contract_path": "docs/positioning/program/psp-c10-readiness/protocol.yaml",
-    "contract_sha256": "01dcffa580b4b2cd9abe8e79964da9d1100407428f3a8211da00d5b32eb925dc",
+    "contract_sha256": "97726a703b7769fe98c00b6468feee8a52315bc585ee9694faea7121ccbf3e7a",
     "fixture_path": "docs/positioning/program/psp-c10-readiness/synthetic-fixture.json",
-    "fixture_sha256": "49600347a9fe8c7197115cc06260ea61ec503a289afb9376af916c3948db07ff",
+    "fixture_sha256": "5a7bce27a8d4cfc52443af1dd5025147daf3aa47a83520fb12c47652d611cfc5",
     "program_manifest_path": "institutio/positioning/program.yaml",
-    "program_manifest_sha256": "6e9e9a5dbc77de1f2c655acd5dfb5ae2b1ffd413eade9114fb2a33972147295a"
+    "program_registry_projection_sha256": "be2dc20217dfc53bf1f55ad49ce3e84705756b90a9471e7972ff53c59fb4ff14"
   },
   "claim_refresh": {
     "applied": 0,
@@ -33,11 +34,14 @@
     "established": false,
     "public_claims_refreshed": 0,
     "real_agreements": 0,
+    "real_bounded_pilots": 0,
+    "real_conversions": 0,
     "real_delivery_acceptances": 0,
     "real_external_outcomes": 0,
     "real_outreach": 0,
-    "real_payments_or_bounded_pilots": 0,
+    "real_paid_audits": 0,
     "real_qualified_denominator": 0,
+    "real_revenue_receipts": 0,
     "real_testimonials_or_references": 0
   },
   "dry_run_id": "PSP-C10-SYNTHETIC-2026-08-10",
@@ -84,6 +88,7 @@
   "operational_readiness": {
     "adjudication_branches_validated": [
       "insufficient_evidence",
+      "insufficient_evidence",
       "keep",
       "narrow",
       "pivot"
@@ -92,7 +97,7 @@
     "bounded_fixture_cohort": 3,
     "claim_refresh_proposals_validated": 3,
     "consent_receipt_types_validated": 4,
-    "evidence_records_validated": 10,
+    "evidence_records_validated": 13,
     "experiment_duration_days": 90,
     "pilot_stages_validated": 11,
     "qualified_fixture_candidates": 5,
@@ -203,6 +208,12 @@
     "phase_predicate_satisfied": false
   },
   "scenario_results": {
+    "SYN-SCENARIO-BOUNDED-PILOT": {
+      "hypothetical_decision": "insufficient_evidence",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
     "SYN-SCENARIO-INSUFFICIENT": {
       "hypothetical_decision": "insufficient_evidence",
       "outcome_count": 3,
@@ -228,7 +239,7 @@
       "status": "synthetic_branch_exercised"
     }
   },
-  "schema_version": "limen.positioning_c10_synthetic_receipt.v1",
+  "schema_version": "limen.positioning_c10_synthetic_receipt.v2",
   "scope": {
     "chunk_id": "PSP-C10",
     "formal_predecessor_chunks": [

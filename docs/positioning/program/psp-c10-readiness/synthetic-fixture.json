@@ -1,5 +1,5 @@
 {
-  "schema_version": "limen.positioning_c10_synthetic_fixture.v1",
+  "schema_version": "limen.positioning_c10_synthetic_fixture.v2",
   "mode": "synthetic",
   "dry_run_id": "PSP-C10-SYNTHETIC-2026-08-10",
   "fixture_time_anchor": "2026-08-10T20:00:00Z",
@@ -7,6 +7,7 @@
   "contains_private_evidence": false,
   "real_world_assertions": false,
   "external_effects": [],
+  "testimonial_objects": [],
   "candidates": [
     {
       "candidate_id": "SYN-DM-001",
@@ -175,11 +176,13 @@
     {
       "scenario_id": "SYN-SCENARIO-KEEP",
       "outcome_ids": ["SYN-OUT-KEEP-001"],
+      "revision_recorded": false,
       "expected_hypothetical_decision": "keep"
     },
     {
       "scenario_id": "SYN-SCENARIO-NARROW",
       "outcome_ids": ["SYN-OUT-NARROW-001"],
+      "revision_recorded": false,
       "expected_hypothetical_decision": "narrow"
     },
     {
@@ -191,11 +194,19 @@
         "SYN-OUT-NO-004",
         "SYN-OUT-NO-005"
       ],
+      "revision_recorded": true,
       "expected_hypothetical_decision": "pivot"
     },
     {
       "scenario_id": "SYN-SCENARIO-INSUFFICIENT",
       "outcome_ids": ["SYN-OUT-INC-001", "SYN-OUT-INC-002", "SYN-OUT-INC-003"],
+      "revision_recorded": false,
+      "expected_hypothetical_decision": "insufficient_evidence"
+    },
+    {
+      "scenario_id": "SYN-SCENARIO-BOUNDED-PILOT",
+      "outcome_ids": ["SYN-OUT-BOUNDED-001"],
+      "revision_recorded": false,
       "expected_hypothetical_decision": "insufficient_evidence"
     }
   ],
@@ -207,12 +218,13 @@
       "candidate_id": "SYN-DM-001",
       "qualification_receipt": "SYN-QUAL-001",
       "qualified": true,
-      "outcome_type": "paid_or_bounded_audit",
-      "reason": "fixture exercises accepted audit and met outcome",
+      "outcome_type": "paid_audit",
+      "reason": "fixture exercises a paid audit with accepted and met outcome",
       "terms_receipt_present": true,
+      "payment_receipt_present": true,
       "client_acceptance": true,
       "declared_outcome_met": true,
-      "evidence_ids": ["SYN-EV-KEEP-001"],
+      "evidence_ids": ["SYN-EV-KEEP-001", "SYN-EV-KEEP-PAYMENT"],
       "occurred_at": "2026-08-10T20:00:00Z"
     },
     {
@@ -222,12 +234,13 @@
       "candidate_id": "SYN-DM-002",
       "qualification_receipt": "SYN-QUAL-002",
       "qualified": true,
-      "outcome_type": "paid_or_bounded_audit",
-      "reason": "fixture exercises accepted audit with unmet outcome",
+      "outcome_type": "paid_audit",
+      "reason": "fixture exercises a paid audit with accepted but unmet outcome",
       "terms_receipt_present": true,
+      "payment_receipt_present": true,
       "client_acceptance": true,
       "declared_outcome_met": false,
-      "evidence_ids": ["SYN-EV-NARROW-001"],
+      "evidence_ids": ["SYN-EV-NARROW-001", "SYN-EV-NARROW-PAYMENT"],
       "occurred_at": "2026-08-10T20:00:00Z"
     },
     {
@@ -240,6 +253,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture reason one",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-001"],
@@ -255,6 +269,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture reason two",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-002"],
@@ -270,6 +285,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture reason three",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-003"],
@@ -285,6 +301,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture reason four",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-004"],
@@ -300,6 +317,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture reason five",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-NO-005"],
@@ -315,6 +333,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason one",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-001"],
@@ -330,6 +349,7 @@
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason two",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-002"],
@@ -345,9 +365,26 @@
       "outcome_type": "no_outcome",
       "reason": "fixture incomplete reason three",
       "terms_receipt_present": false,
+      "payment_receipt_present": false,
       "client_acceptance": false,
       "declared_outcome_met": false,
       "evidence_ids": ["SYN-EV-INC-003"],
+      "occurred_at": "2026-08-10T20:00:00Z"
+    },
+    {
+      "outcome_id": "SYN-OUT-BOUNDED-001",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-BOUNDED-PILOT",
+      "candidate_id": "SYN-DM-003",
+      "qualification_receipt": "SYN-QUAL-003",
+      "qualified": true,
+      "outcome_type": "explicitly_bounded_pilot",
+      "reason": "fixture proves a bounded pilot can support delivery evidence without proving paid demand",
+      "terms_receipt_present": true,
+      "payment_receipt_present": false,
+      "client_acceptance": true,
+      "declared_outcome_met": true,
+      "evidence_ids": ["SYN-EV-BOUNDED-001"],
       "occurred_at": "2026-08-10T20:00:00Z"
     }
   ],
@@ -385,6 +422,57 @@
       "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
       "machine_assistance": "fully synthetic test record",
       "limitations": "not a client, payment, delivery, acceptance, or outcome receipt"
+    },
+    {
+      "evidence_id": "SYN-EV-KEEP-PAYMENT",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-KEEP",
+      "subject_id": "SYN-DM-001",
+      "work_id": "PSP-P12-W02",
+      "evidence_class": "payment",
+      "source_locator": "fixture://evidence/keep/payment",
+      "source_observed_at": "2026-08-10T20:00:00Z",
+      "capture_method": "synthetic fixture",
+      "content_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "visibility": "internal_synthetic",
+      "consent_receipt_id": "SYN-CONSENT-OUTCOME",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "machine_assistance": "fully synthetic test record",
+      "limitations": "not a payment or revenue receipt"
+    },
+    {
+      "evidence_id": "SYN-EV-NARROW-PAYMENT",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-NARROW",
+      "subject_id": "SYN-DM-002",
+      "work_id": "PSP-P12-W02",
+      "evidence_class": "payment",
+      "source_locator": "fixture://evidence/narrow/payment",
+      "source_observed_at": "2026-08-10T20:00:00Z",
+      "capture_method": "synthetic fixture",
+      "content_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "visibility": "internal_synthetic",
+      "consent_receipt_id": "SYN-CONSENT-OUTCOME",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "machine_assistance": "fully synthetic test record",
+      "limitations": "not a payment or revenue receipt"
+    },
+    {
+      "evidence_id": "SYN-EV-BOUNDED-001",
+      "mode": "synthetic",
+      "scenario_id": "SYN-SCENARIO-BOUNDED-PILOT",
+      "subject_id": "SYN-DM-003",
+      "work_id": "PSP-P12-W02",
+      "evidence_class": "bounded_pilot",
+      "source_locator": "fixture://evidence/bounded/001",
+      "source_observed_at": "2026-08-10T20:00:00Z",
+      "capture_method": "synthetic fixture",
+      "content_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+      "visibility": "internal_synthetic",
+      "consent_receipt_id": "SYN-CONSENT-OUTCOME",
+      "authority_receipt_ids": ["SYN-AUTH-CONTRACT"],
+      "machine_assistance": "fully synthetic test record",
+      "limitations": "not a paid audit, conversion, revenue, or commercial proof receipt"
     },
     {
       "evidence_id": "SYN-EV-NO-001",
