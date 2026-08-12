@@ -715,8 +715,7 @@ def take_admission_snapshot(limen_root: Path | None = None) -> WorktreeAdmission
     Fails CLOSED for NEW LOCAL creation on any unknown state; remote lanes always continue.
     """
     root = limen_root or Path(os.environ.get("LIMEN_ROOT", "."))
-    floor = _required_free_gib()
-    floor_error = "" if floor is not None else _required_free_diagnostic()[1]
+    floor, floor_error = _required_free_diagnostic()
     if not _gate_active():
         # Operator override (LIMEN_WORKTREE_DEBT_GATE=0, documented reason/receipt): admit everything.
         return {

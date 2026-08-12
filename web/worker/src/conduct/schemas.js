@@ -193,7 +193,9 @@ export async function validateWorkPacket(payload) {
   }
   const storageClaimIds = new Set();
   for (const claim of packet.storage_envelope_claims) {
-    assertIdentifier(claim.claim_id, "storage_envelope_claim.claim_id");
+    if (typeof claim.claim_id !== "string" || !/^[A-Za-z0-9_-]{16,128}$/.test(claim.claim_id)) {
+      fail("storage_envelope_claim.claim_id must be a 16-128 character opaque ID");
+    }
     if (storageClaimIds.has(claim.claim_id)) fail("storage envelope claims must have unique claim IDs");
     storageClaimIds.add(claim.claim_id);
     assertDate(claim.effective_from, "storage_envelope_claim.effective_from");
