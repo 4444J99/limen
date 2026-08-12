@@ -55,6 +55,39 @@ _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a re
   [ "$any" = 1 ]
 }
 
+# _paths_identical_upstream <base> <local> <remote>
+# exit 0 ⟺ every path the local-only commits touch resolves to the SAME blob at <local> and
+# <remote> (or is absent from both) — i.e. the bytes are ALREADY upstream, so `reset --hard
+# <remote>` provably discards no committed content.
+#
+# Why this exists beside the patch-id valve: patch-id hashes a commit's WHOLE diff, so it only
+# recognises the content as upstream when the upstream commit changed exactly the same set of
+# files. The common real case is the same content landing upstream bundled inside a LARGER
+# commit — measured 2026-08-12, a 2-file local commit (docs/ci-red-disposition-*, +141) against
+# the byte-identical files inside a 24-file release commit (+1684/-594) hashed differently, so
+# valve 1 declared "genuinely unique work" and the organ fail-opened protecting content origin
+# already had. Nothing about those two facts ever changes, so that wedge is PERMANENT: the live
+# checkout sat 29 behind while every beat re-printed the same loud notice, and the fleet executed
+# stale code — including merged fixes whose gates were all green.
+#
+# Content identity is the question the reset actually poses ("would this lose anything?"), and it
+# is decided per PATH, not per commit. Strictly narrower than it looks: a local commit that
+# deletes a file origin still has, or adds one origin lacks, compares unequal and still fails
+# open. An empty changed-path set returns 1 — absence of paths is not evidence of safety.
+_paths_identical_upstream() {
+  local base="$1" lref="$2" rref="$3" f a b any=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    any=1
+    a="$(git rev-parse --quiet --verify "$lref:$f" 2>/dev/null || echo absent)"
+    b="$(git rev-parse --quiet --verify "$rref:$f" 2>/dev/null || echo absent)"
+    [ "$a" = "$b" ] || return 1
+  done <<EOF
+$(git diff --name-only "$base..$lref" 2>/dev/null)
+EOF
+  [ "$any" = 1 ]
+}
+
 # exit 0 ⟺ $BRANCH is checked out in some OTHER worktree of this repository — the one refusal git
 # raises that no amount of tidying THIS tree can clear, because the obstacle is not here.
 #
@@ -423,6 +456,15 @@ EOF
      && git diff --name-only "$BASE..$LOCAL" 2>/dev/null | _only_receipts; then
     unique=0
     reconcile_reason="local commit(s) touch ONLY regenerable receipts"
+  fi
+  # Third loss-free valve: every path the unique local commits touch is already byte-identical at
+  # origin. Catches the content-landed-inside-a-larger-upstream-commit wedge that patch-id misses
+  # (see _paths_identical_upstream). Same --is-ancestor guard: never on a rewound remote.
+  if [ "$unique" = 1 ] && [ -n "$BASE" ] \
+     && git merge-base --is-ancestor "$BASE" "$REMOTE" 2>/dev/null \
+     && _paths_identical_upstream "$BASE" "$LOCAL" "$REMOTE"; then
+    unique=0
+    reconcile_reason="every path in the local commit(s) is already byte-identical at origin"
   fi
   CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
   if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ] && ! _contended "skipped-reset-hard"; then

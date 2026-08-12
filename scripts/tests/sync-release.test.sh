@@ -161,6 +161,66 @@ grep -Fq "with UNIQUE local work — fail open" <<<"$mixed_out" \
 grep -q "local-real-work" "$tmp/diverged-live/docs/real-work.md" \
   || { echo "FAIL: mixed divergence lost genuine local work"; echo "$mixed_out"; exit 1; }
 
+# Content-identity valve: the SAME content landed upstream bundled inside a LARGER commit.
+# patch-id compares whole-commit diffs, so a 2-file local commit and a 3-file upstream commit
+# carrying byte-identical copies of those 2 files hash differently — valve 1 calls it unique and
+# the organ wedges FOREVER (measured 2026-08-12: live root 29 behind, fleet on stale code).
+# First clear the genuine work above, or that older unique commit keeps the fail-open correct.
+git -C "$tmp/diverged-live" push -q origin main --force
+mkdir -p "$tmp/diverged-peer/docs"
+git -C "$tmp/diverged-peer" fetch -q origin main
+git -C "$tmp/diverged-peer" reset -q --hard origin/main
+printf 'ledger-a\n' > "$tmp/diverged-live/docs/ledger.json"
+printf 'ledger-b\n' > "$tmp/diverged-live/docs/ledger.jsonl"
+git -C "$tmp/diverged-live" add docs/ledger.json docs/ledger.jsonl
+git -C "$tmp/diverged-live" commit -q -m "local: two-file ledger"
+# Upstream: the identical two files PLUS a third, in one commit -> different patch-id.
+printf 'ledger-a\n' > "$tmp/diverged-peer/docs/ledger.json"
+printf 'ledger-b\n' > "$tmp/diverged-peer/docs/ledger.jsonl"
+printf 'bundled\n' > "$tmp/diverged-peer/docs/bundled.md"
+git -C "$tmp/diverged-peer" add docs/ledger.json docs/ledger.jsonl docs/bundled.md
+git -C "$tmp/diverged-peer" commit -q -m "release: ledger bundled with other work"
+git -C "$tmp/diverged-peer" push -q origin main
+
+ident_out="$(LIMEN_ROOT="$tmp/diverged-live" LIMEN_RELEASE_BRANCH=main \
+  LIMEN_SYNC_RECEIPT_GLOBS="$panel_receipt_globs" bash "$script" 2>&1)" \
+  || { echo "FAIL: content-identical divergence sync exited nonzero"; echo "$ident_out"; exit 1; }
+ident_remote="$(git --git-dir="$tmp/diverged-origin.git" rev-parse refs/heads/main)"
+[ "$(git -C "$tmp/diverged-live" rev-parse HEAD)" = "$ident_remote" ] \
+  || { echo "FAIL: content-identical divergence did not re-converge"; echo "$ident_out"; exit 1; }
+grep -Fq "already byte-identical at origin" <<<"$ident_out" \
+  || { echo "FAIL: content-identity valve emitted no reason"; echo "$ident_out"; exit 1; }
+# The bytes must survive the reset — that is the whole claim.
+grep -q "ledger-a" "$tmp/diverged-live/docs/ledger.json" \
+  || { echo "FAIL: content-identity reconcile lost the ledger content"; echo "$ident_out"; exit 1; }
+
+# Negative control: a local ADDITION origin does NOT have must still fail open, even though the
+# commit's other paths are identical upstream. Otherwise the valve is a content-loss bug.
+printf 'only-here\n' > "$tmp/diverged-live/docs/only-local.md"
+printf 'ledger-a\n' > "$tmp/diverged-live/docs/ledger2.json"
+git -C "$tmp/diverged-live" add docs/only-local.md docs/ledger2.json
+git -C "$tmp/diverged-live" commit -q -m "local: partially-unique"
+partial_head="$(git -C "$tmp/diverged-live" rev-parse HEAD)"
+printf 'ledger-a\n' > "$tmp/diverged-peer/docs/ledger2.json"
+printf 'more\n' > "$tmp/diverged-peer/docs/more.md"
+git -C "$tmp/diverged-peer" fetch -q origin main
+git -C "$tmp/diverged-peer" reset -q --hard origin/main
+printf 'ledger-a\n' > "$tmp/diverged-peer/docs/ledger2.json"
+printf 'more\n' > "$tmp/diverged-peer/docs/more.md"
+git -C "$tmp/diverged-peer" add docs/ledger2.json docs/more.md
+git -C "$tmp/diverged-peer" commit -q -m "release: ledger2 bundled"
+git -C "$tmp/diverged-peer" push -q origin main
+
+partial_out="$(LIMEN_ROOT="$tmp/diverged-live" LIMEN_RELEASE_BRANCH=main \
+  LIMEN_SYNC_RECEIPT_GLOBS="$panel_receipt_globs" bash "$script" 2>&1)" \
+  || { echo "FAIL: partially-unique divergence sync exited nonzero"; echo "$partial_out"; exit 1; }
+[ "$(git -C "$tmp/diverged-live" rev-parse HEAD)" = "$partial_head" ] \
+  || { echo "FAIL: content-identity valve discarded a genuinely unique local addition"; echo "$partial_out"; exit 1; }
+grep -Fq "with UNIQUE local work — fail open" <<<"$partial_out" \
+  || { echo "FAIL: partially-unique divergence should fail open"; echo "$partial_out"; exit 1; }
+grep -q "only-here" "$tmp/diverged-live/docs/only-local.md" \
+  || { echo "FAIL: partially-unique divergence lost the unique local file"; echo "$partial_out"; exit 1; }
+
 
 # --check: a real predicate, not the informational --census. Fresh clone at HEAD==origin/main
 # with default RECEIPT_GLOBS (no override) proves the shipped defaults, not just the test panel's.
@@ -298,4 +358,4 @@ held_check2_out="$(LIMEN_ROOT="$tmp/held-live" LIMEN_RELEASE_BRANCH=main bash "$
 [ "$held_check2_rc" = 0 ] \
   || { echo "FAIL: --check should PASS after re-attach"; echo "$held_check2_out"; exit 1; }
 
-echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach"
+echo "PASS: preserve/unpark + override guard + tasks-only self-heal + mixed divergence fail-open + content-identity reconcile + partially-unique fail-open + --check predicate + contended receipts-only unpark + held-name detach/advance/re-attach"
