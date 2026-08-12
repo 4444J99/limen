@@ -17,11 +17,11 @@ Engagement: `organs/consulting/engagements/dustin.yaml` · Funnel instance: none
 
 ## Lanes (from the register — verify before acting; re-derive, never trust this file's memory)
 
-### dsp-platform — stage **dossier**, public face **none**
+### dsp-platform — stage **building**, public face **none**
 
-> Register note: gated on ten design questions sent 2026-03-28 and never answered; he is the correct respondent (working musician + practising UI/UX). Research corpus is Drive-only.
+> Register note: consumer shell still gated on ten design questions sent 2026-03-28 and never answered; he is the correct respondent (working musician + practising UI/UX). Stage-1 coordination substrate built 2026-08-12 — split sheets, settlement (pro-rata vs user-centric with the delta computed), provenance attestation, delivery validation; 59 tests, no network, no persistence. Research corpus is Drive-only.
 
-The dossier exists; sharpen it into a build/no-build recommendation for the operator's demand review, naming the smallest first build if the answer is build.
+Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
 - `4444J99/post-dsp-platform`
@@ -29,11 +29,11 @@ Repos:
 Keywords: dsp, music platform, post-dsp, streaming alternative · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug dustin --project dsp-platform`
 
-### ai-consultation — stage **dossier**, public face **none**
+### ai-consultation — stage **building**, public face **none**
 
-> Register note: gated on choosing one entry point and one segment for a first offer; his enterprise-UX vantage is the credibility asset, not delivery capacity.
+> Register note: entry point and segment were already chosen in the repo's own README (AI Estate Audit, higher education, fixed scope); only PRICE is open, and it does not gate the instrument. Audit instrument built 2026-08-12 — estate schema, legibility rubric where every lost point names a missing artifact, derived risk register, capped first wave; 66 tests. His enterprise-UX vantage is the credibility asset, not delivery capacity.
 
-The dossier exists; sharpen it into a build/no-build recommendation for the operator's demand review, naming the smallest first build if the answer is build.
+Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
 Repos:
 - `4444J99/the-consulate`
