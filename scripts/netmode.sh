@@ -38,6 +38,28 @@
 # No sudo. No password stored on disk (Wi-Fi re-homes via keychain/power-cycle).
 # ============================================================================
 
+_notify_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"
+if [ -z "${LIMEN_NOTIFY_HELPER:-}" ]; then
+  for _notify_candidate in \
+    "${LIMEN_ROOT:+$LIMEN_ROOT/scripts/_notify.py}" \
+    "$_notify_script_dir/_notify.py" \
+    "$HOME/Workspace/limen/scripts/_notify.py" \
+    "$HOME/.local/share/limen/current/source/scripts/_notify.py"
+  do
+    if [ -n "$_notify_candidate" ] && [ -f "$_notify_candidate" ]; then
+      LIMEN_NOTIFY_HELPER="$_notify_candidate"
+      break
+    fi
+  done
+fi
+if [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && [ -f "$LIMEN_NOTIFY_HELPER" ] \
+  && [ "$(basename "$(dirname "$LIMEN_NOTIFY_HELPER")")" = scripts ]; then
+  # An installed netmode copy has no checkout context of its own. Bind liveness to the
+  # checkout that actually owns the selected helper (invoking checkout first, live primary
+  # before the immutable runtime fallback).
+  _notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"
+fi
 DIR="$HOME/Library/Application Support/netmeter"
 CONFIG="$DIR/config"
 MODEFILE="$DIR/mode"
@@ -580,7 +602,7 @@ health_record() {  # writes "phonelat phoneloss starlat starloss" to $HEALTH + r
 # ---- events / notifications ------------------------------------------------
 log_event() { local ts; ts=$(date "+%Y-%m-%d %H:%M"); printf '%s\t%s\n' "$ts" "$1" >> "$EVENTS"
   [ -f "$EVENTS" ] && { tail -n 60 "$EVENTS" > "$EVENTS.tmp" 2>/dev/null && mv "$EVENTS.tmp" "$EVENTS"; }; }
-notify() { osascript -e "display notification \"$1\" with title \"🌐 netmode\" subtitle \"${2:-}\"" >/dev/null 2>&1; }
+notify() { [ -n "${LIMEN_NOTIFY_HELPER:-}" ] && python3 "$LIMEN_NOTIFY_HELPER" --root "$_notify_root" --title "🌐 netmode" --message "$1${2:+ — $2}" >/dev/null 2>&1 || true; }
 
 _nrank() { case "$1" in none)echo 0;; warn)echo 1;; crit)echo 2;; cap)echo 3;; *)echo 0;; esac; }
 notify_check() {  # throttled cap-threshold notifications, per metered link (state lines: "link cyclekey level")

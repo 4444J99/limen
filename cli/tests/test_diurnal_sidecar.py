@@ -146,6 +146,16 @@ def test_midday_records_the_drift_it_announced(mod, root, scored):
     assert "worsened" in line and "68" in line and "73" in line, f"drift line must stand alone: {line!r}"
 
 
+def test_midday_headline_names_the_drifted_subject(mod):
+    drift = ["only you: open_levers falls below 68 — worsened (68 → 73)"]
+
+    subject = mod.headline("midday", [], {"drift": drift})
+
+    assert subject.startswith("1 drift")
+    assert "open_levers" in subject
+    assert "worsened" in subject
+
+
 def test_the_other_phases_carry_no_drift_key_because_only_midday_derives_one(mod, root, scored):
     """Absence is meaningful here, not missing data — the same discipline `engaged` uses.
 

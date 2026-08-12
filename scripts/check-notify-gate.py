@@ -66,9 +66,12 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
+import shlex
 import subprocess
 import sys
 import time
+import tokenize
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -77,7 +80,9 @@ import _root  # noqa: E402  — hard import: this predicate has no meaning witho
 
 NOTIFIER_REL = Path("scripts") / "_notify.py"
 GATE_FUNC = "_root_may_speak"
-EFFECTOR_FUNC = "notify_once"
+PUBLIC_EFFECTORS = frozenset({"notify", "notify_event", "notify_once", "notify_ntfy"})
+DELIVERY_FUNC = "_deliver"
+NETWORK_DELIVERY_FUNCS = frozenset({"urlopen"})
 
 # The runtime install tree. Domus rotates it under `runtimes/<sha>/source` and points
 # `current` at one; launchd runs overnight-watch from there, so it is a real speaker even
@@ -135,28 +140,766 @@ def enumerate_roots(live: Path) -> list[Path]:
     return list(seen)
 
 
+def _called_names(function: ast.FunctionDef | ast.AsyncFunctionDef) -> set[str]:
+    called: set[str] = set()
+    for node in ast.walk(function):
+        if not isinstance(node, ast.Call):
+            continue
+        if isinstance(node.func, ast.Name):
+            called.add(node.func.id)
+        elif isinstance(node.func, ast.Attribute):
+            called.add(node.func.attr)
+    return called
+
+
+def _gate_polarities(node: ast.AST, *, negated: bool = False) -> set[bool]:
+    """Return whether each gate call is positively or negatively tested."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == GATE_FUNC:
+        return {negated}
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return _gate_polarities(node.operand, negated=not negated)
+    polarities: set[bool] = set()
+    for child in ast.iter_child_nodes(node):
+        polarities.update(_gate_polarities(child, negated=negated))
+    return polarities
+
+
+def _has_delivery_call(node: ast.Call) -> bool:
+    if isinstance(node.func, ast.Name) and node.func.id in {
+        DELIVERY_FUNC,
+        *NETWORK_DELIVERY_FUNCS,
+    }:
+        return True
+    if isinstance(node.func, ast.Attribute) and node.func.attr in NETWORK_DELIVERY_FUNCS:
+        return True
+    literals = [
+        child.value for child in ast.walk(node) if isinstance(child, ast.Constant) and isinstance(child.value, str)
+    ]
+    return any("osascript" in value.lower() for value in literals)
+
+
+def _body_exits(body: list[ast.stmt]) -> bool:
+    return bool(body) and isinstance(body[-1], (ast.Return, ast.Raise))
+
+
+def _condition_guarantees_gate(node: ast.AST) -> bool:
+    """Return whether a true branch proves the positive liveness gate."""
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == GATE_FUNC:
+        return True
+    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.And):
+        return any(_condition_guarantees_gate(value) for value in node.values)
+    return False
+
+
+def _condition_returns_when_gate_false(node: ast.AST) -> bool:
+    """Return whether the condition is guaranteed true whenever the gate is false."""
+    if (
+        isinstance(node, ast.UnaryOp)
+        and isinstance(node.op, ast.Not)
+        and isinstance(node.operand, ast.Call)
+        and isinstance(node.operand.func, ast.Name)
+        and node.operand.func.id == GATE_FUNC
+    ):
+        return True
+    if isinstance(node, ast.BoolOp) and isinstance(node.op, ast.Or):
+        return any(_condition_returns_when_gate_false(value) for value in node.values)
+    return False
+
+
+def _walk_delivery_paths(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef],
+    *,
+    gate_active: bool = False,
+    stack: frozenset[tuple[str, bool]] = frozenset(),
+) -> tuple[bool, bool]:
+    """Return (found_delivery, every_delivery_controlled) through helper calls."""
+    state = (function.name, gate_active)
+    if state in stack:
+        return False, True
+    next_stack = stack | {state}
+    found = False
+    safe = True
+
+    def inspect_expr(node: ast.AST, active: bool) -> None:
+        nonlocal found, safe
+        if isinstance(node, ast.Call):
+            if _has_delivery_call(node):
+                found = True
+                safe = safe and active
+            if isinstance(node.func, ast.Name) and node.func.id in functions:
+                nested_found, nested_safe = _walk_delivery_paths(
+                    functions[node.func.id],
+                    functions,
+                    gate_active=active,
+                    stack=next_stack,
+                )
+                found = found or nested_found
+                safe = safe and nested_safe
+            for argument in (*node.args, *(keyword.value for keyword in node.keywords)):
+                inspect_expr(argument, active)
+            return
+        for child in ast.iter_child_nodes(node):
+            inspect_expr(child, active)
+
+    def inspect_block(body: list[ast.stmt], active: bool) -> None:
+        nonlocal found, safe
+        after_guard = active
+        for statement in body:
+            if isinstance(statement, ast.If):
+                inspect_expr(statement.test, after_guard)
+                inspect_block(
+                    statement.body,
+                    after_guard or _condition_guarantees_gate(statement.test),
+                )
+                inspect_block(statement.orelse, after_guard)
+                if _condition_returns_when_gate_false(statement.test) and _body_exits(statement.body):
+                    after_guard = True
+                continue
+            inspect_expr(statement, after_guard)
+
+    inspect_block(function.body, gate_active)
+    return found, safe
+
+
+def _gate_controls_delivery(
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
+) -> tuple[bool, bool]:
+    """Prove delivery safety and whether a route reaches the macOS effector."""
+    function_map = functions or {function.name: function}
+    found, safe = _walk_delivery_paths(function, function_map)
+    return safe, found
+
+
 def gate_state(notifier: Path) -> tuple[bool, str]:
-    """(is_gated, reason). Parsed, not grepped — a mention in a comment is not a gate."""
+    """Prove that every public route to the macOS effector controls delivery with the gate."""
     try:
         tree = ast.parse(notifier.read_text(encoding="utf-8"))
-    except (OSError, SyntaxError) as exc:
+    except (OSError, UnicodeError, SyntaxError) as exc:
         return False, f"unparseable ({exc})"
 
-    defines = {n.name for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    if GATE_FUNC not in defines:
-        return False, f"no {GATE_FUNC}() — notify_once reaches osascript ungated"
+    functions = {
+        node.name: node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    if GATE_FUNC not in functions:
+        return False, f"no {GATE_FUNC}() — public notification routes are ungated"
 
-    effector = next(
-        (n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == EFFECTOR_FUNC),
-        None,
+    effectors: list[str] = []
+    ungated: list[str] = []
+    for name in sorted(PUBLIC_EFFECTORS):
+        function = functions.get(name)
+        if function is None:
+            continue
+        controlled, reaches_delivery = _gate_controls_delivery(function, functions)
+        if not reaches_delivery:
+            continue
+        effectors.append(name)
+        if not controlled:
+            ungated.append(name)
+    if ungated:
+        return False, f"public effector(s) bypass {GATE_FUNC}(): {', '.join(sorted(ungated))}"
+    if not effectors:
+        return True, "no public macOS notification effector"
+    return True, f"public delivery effector(s) gated on {GATE_FUNC}(): {', '.join(sorted(effectors))}"
+
+
+DIRECT_SUFFIXES = {".py", ".sh", ".bash", ".zsh"}
+_DISPLAY_RE = re.compile(
+    r"\bosascript\b[\s\S]{0,8192}?\bdisplay\s+notification\b",
+    re.IGNORECASE,
+)
+_PROCESS_CALLS = frozenset({"run", "Popen", "call", "check_call", "check_output", "system", "popen"})
+# Match both argv elements (such as ["osascript", ...]) and shell command strings
+# (such as os.system("osascript -e ...")), without treating prose as an executable token.
+_OSASCRIPT_COMMAND_RE = re.compile(
+    r"(?<![\w./-])(?:[\w./-]+/)?osascript(?=[\s\"'`]|$)",
+    re.IGNORECASE,
+)
+_SOURCE_PATH_CACHE: dict[str, tuple[str, ...]] = {}
+SOURCE_SCAN_FAILURE = "<notification-source-scan-unavailable>"
+SOURCE_FALLBACK_MAX_PATHS = 10_000
+SOURCE_FALLBACK_TIMEOUT_SECONDS = 30.0
+
+
+def _clean_exact_head(root: Path) -> str | None:
+    """Return a reusable exact-head key only when tracked content is unchanged."""
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if head.returncode != 0 or not head.stdout.strip():
+            return None
+        status = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain", "--untracked-files=no"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        if status.returncode != 0 or status.stdout.strip():
+            return None
+        return head.stdout.strip()
+    except (OSError, UnicodeError, subprocess.SubprocessError):
+        return None
+
+
+def _source_mentions_notification_command(candidate: Path) -> bool:
+    """Cheaply retain literal and statically concatenated AppleScript senders.
+
+    Removing source punctuation joins adjacent string fragments, so both
+    ``"osascript"`` and ``"osa" + "script"`` reach the structural scanner.  This is
+    deliberately only a prefilter: the AST/shlex passes below still decide whether the
+    file actually executes a notification.
+    """
+    try:
+        lowered = candidate.read_bytes().lower()
+    except OSError:
+        return True
+    if b"osascript" in lowered:
+        return True
+    compact = re.sub(rb"[^a-z]+", b"", lowered)
+    return b"osascript" in compact and b"displaynotification" in compact
+
+
+def _tracked_source_paths(root: Path) -> list[Path] | None:
+    """Enumerate tracked executable sources, or return None when git is unavailable."""
+    try:
+        tracked = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "-z",
+                "--",
+                "*.py",
+                "*.sh",
+                "*.bash",
+                "*.zsh",
+            ],
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if tracked.returncode != 0:
+        return None
+    return [root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw]
+
+
+def _fallback_source_paths(root: Path) -> list[Path]:
+    """Recover from git degradation without narrowing the tree to scripts/."""
+    tracked = _tracked_source_paths(root)
+    if tracked is not None:
+        return [candidate for candidate in tracked if _source_mentions_notification_command(candidate)]
+
+    # Synthetic roots in focused tests are intentionally not git repositories. Scan the
+    # whole supplied root; a scripts-only fallback would hide a direct effector elsewhere.
+    # The fallback still has a finite budget: an incomplete scan is unsafe evidence and
+    # therefore becomes SOURCE_SCAN_FAILURE instead of silently clearing the tree.
+    deadline = time.monotonic() + SOURCE_FALLBACK_TIMEOUT_SECONDS
+    candidates: list[Path] = []
+    try:
+        for candidate in root.rglob("*"):
+            if len(candidates) >= SOURCE_FALLBACK_MAX_PATHS or time.monotonic() >= deadline:
+                raise RuntimeError("notification source scan exceeded fallback budget")
+            candidates.append(candidate)
+        return candidates
+    except OSError as exc:
+        raise RuntimeError(f"notification source scan unavailable: {exc}") from exc
+
+
+def _source_paths(root: Path) -> list[Path]:
+    """Return tracked sources that can construct a notification command."""
+    cache_key = _clean_exact_head(root)
+    if cache_key is not None and cache_key in _SOURCE_PATH_CACHE:
+        return [root / relative for relative in _SOURCE_PATH_CACHE[cache_key]]
+    candidates = _tracked_source_paths(root)
+    if candidates is None:
+        candidates = _fallback_source_paths(root)
+    selected = [
+        candidate
+        for candidate in candidates
+        if candidate.is_file()
+        and candidate.suffix in DIRECT_SUFFIXES
+        and candidate != root / NOTIFIER_REL
+        and _source_mentions_notification_command(candidate)
+    ]
+    if cache_key is not None:
+        try:
+            _SOURCE_PATH_CACHE[cache_key] = tuple(str(path.relative_to(root)) for path in selected)
+        except ValueError:
+            pass
+    return selected
+
+
+def _static_string(node: ast.AST) -> str | None:
+    """Return the statically visible text of a string or f-string expression."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        return "".join(_static_string(part) or " " for part in node.values)
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        left = _static_string(node.left)
+        right = _static_string(node.right)
+        if left is not None and right is not None:
+            return left + right
+    return None
+
+
+def _static_argv(
+    node: ast.AST,
+    bindings: dict[str, list[str]] | None = None,
+) -> list[str] | None:
+    """Resolve statically visible command fragments against the current lexical bindings."""
+    bindings = bindings or {}
+    if isinstance(node, ast.Name):
+        value = bindings.get(node.id)
+        return list(value) if value is not None else None
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
+        key = _static_string(node.slice)
+        binding = f"{node.value.id}[{key!r}]" if key is not None else f"{node.value.id}[*]"
+        value = bindings.get(binding)
+        return list(value) if value is not None else None
+    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Dict):
+        key = _static_string(node.slice)
+        if key is not None:
+            for mapping_key, mapping_value in zip(node.value.keys, node.value.values, strict=True):
+                if mapping_key is not None and _static_string(mapping_key) == key:
+                    return _static_argv(mapping_value, bindings)
+    if (value := _static_string(node)) is not None:
+        return [value]
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        values: list[str] = []
+        for element in node.elts:
+            resolved = _static_argv(element, bindings)
+            if resolved is not None:
+                values.extend(resolved)
+        return values or None
+    return None
+
+
+class _PythonBypassVisitor(ast.NodeVisitor):
+    """Flow-sensitive scanner for process calls and the bindings visible at each call."""
+
+    def __init__(
+        self,
+        bindings: dict[str, list[str]] | None = None,
+        process_aliases: set[str] | None = None,
+        local_functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
+        active_helpers: set[str] | None = None,
+    ) -> None:
+        self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
+        self.found = False
+        self.process_aliases = set(process_aliases or _PROCESS_CALLS)
+        self.local_functions = dict(local_functions or {})
+        self.active_helpers = set(active_helpers or ())
+
+    def _child(
+        self,
+        bindings: dict[str, list[str]] | None = None,
+        *,
+        active_helpers: set[str] | None = None,
+    ) -> "_PythonBypassVisitor":
+        return _PythonBypassVisitor(
+            self.bindings if bindings is None else bindings,
+            self.process_aliases,
+            self.local_functions,
+            self.active_helpers if active_helpers is None else active_helpers,
+        )
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        if node.module in {"subprocess", "os"}:
+            for alias in node.names:
+                if alias.name in _PROCESS_CALLS:
+                    self.process_aliases.add(alias.asname or alias.name)
+
+    def _assign(self, target: ast.AST, values: list[str] | None) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                self._assign(element, None)
+            return
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None:
+            return
+        for binding in [key for key in self.bindings if key.startswith(f"{name}[")]:
+            self.bindings.pop(binding, None)
+        if values is None:
+            self.bindings.pop(name, None)
+        else:
+            self.bindings[name] = list(values)
+
+    def _bind_mapping(self, target: ast.AST, value: ast.AST | None) -> None:
+        """Bind exact static mapping keys plus one conservative dynamic-key union."""
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None or not isinstance(value, ast.Dict):
+            return
+        aggregate: list[str] = []
+        for mapping_key, mapping_value in zip(value.keys, value.values, strict=True):
+            resolved = _static_argv(mapping_value, self.bindings)
+            if resolved is None:
+                continue
+            aggregate.extend(resolved)
+            key = _static_string(mapping_key) if mapping_key is not None else None
+            if key is not None:
+                self.bindings[f"{name}[{key!r}]"] = list(resolved)
+        if aggregate:
+            self.bindings[f"{name}[*]"] = aggregate
+
+    def _is_process_callable(self, node: ast.AST) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in self.process_aliases
+        return isinstance(node, ast.Attribute) and node.attr in _PROCESS_CALLS
+
+    def _assign_process_alias(self, target: ast.AST, is_alias: bool) -> None:
+        if isinstance(target, (ast.Tuple, ast.List)):
+            for element in target.elts:
+                self._assign_process_alias(element, False)
+            return
+        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
+        if name is None:
+            return
+        if is_alias:
+            self.process_aliases.add(name)
+        elif name not in _PROCESS_CALLS:
+            self.process_aliases.discard(name)
+
+    def _bind_assignment(self, target: ast.AST, value: ast.AST | None) -> None:
+        """Bind literal destructuring element-by-element instead of erasing it."""
+        if isinstance(target, (ast.Tuple, ast.List)):
+            if isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
+                for target_element, value_element in zip(target.elts, value.elts, strict=True):
+                    self._bind_assignment(target_element, value_element)
+            else:
+                self._assign(target, None)
+                self._assign_process_alias(target, False)
+            return
+        self._assign(target, _static_argv(value, self.bindings) if value is not None else None)
+        self._bind_mapping(target, value)
+        self._assign_process_alias(target, self._is_process_callable(value) if value is not None else False)
+
+    def visit_Module(self, node: ast.Module) -> None:
+        """Collect module bindings before scanning function bodies.
+
+        Python functions resolve globals when called, not when defined. Scan executable
+        module statements first and preserve every statically visible value, then inspect
+        functions/classes with that conservative union so definition order cannot hide an
+        effector command.
+        """
+        self.local_functions.update(
+            {
+                statement.name: statement
+                for statement in node.body
+                if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef))
+            }
+        )
+        deferred: list[ast.stmt] = []
+        observed = {name: set(values) for name, values in self.bindings.items()}
+        observed_aliases = set(self.process_aliases)
+        for statement in node.body:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                deferred.append(statement)
+                continue
+            self.visit(statement)
+            observed_aliases.update(self.process_aliases)
+            for name, values in self.bindings.items():
+                observed.setdefault(name, set()).update(values)
+        self.bindings = {name: sorted(values) for name, values in observed.items() if values}
+        self.process_aliases.update(observed_aliases)
+        for statement in deferred:
+            self.visit(statement)
+
+    def _visit_function(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+    ) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for default in [*node.args.defaults, *node.args.kw_defaults]:
+            if default is not None:
+                self.visit(default)
+        child = self._child(active_helpers=self.active_helpers | {node.name})
+
+        def bind_parameter(argument: ast.arg, default: ast.AST | None) -> None:
+            child._bind_assignment(argument, default)
+
+        positional = [*node.args.posonlyargs, *node.args.args]
+        positional_defaults: list[ast.AST | None] = [None] * (len(positional) - len(node.args.defaults)) + list(
+            node.args.defaults
+        )
+        for argument, default in zip(positional, positional_defaults, strict=True):
+            bind_parameter(argument, default)
+        for argument, default in zip(node.args.kwonlyargs, node.args.kw_defaults, strict=True):
+            bind_parameter(argument, default)
+        for argument in (node.args.vararg, node.args.kwarg):
+            if argument is not None:
+                bind_parameter(argument, None)
+        for statement in node.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+        self.bindings.pop(node.name, None)
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        self._visit_function(node)
+
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self._visit_function(node)
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+        for base in node.bases:
+            self.visit(base)
+        child = self._child()
+        for statement in node.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+        self.bindings.pop(node.name, None)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        self.visit(node.value)
+        for target in node.targets:
+            self._bind_assignment(target, node.value)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value is not None:
+            self.visit(node.value)
+        self._bind_assignment(node.target, node.value)
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        self.visit(node.value)
+        self._assign(node.target, None)
+        self._assign_process_alias(node.target, False)
+
+    def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
+        self.visit(node.value)
+        self._bind_assignment(node.target, node.value)
+
+    def _visit_comprehension(self, node: ast.AST, values: list[ast.AST]) -> None:
+        """Scan comprehension bodies with their target bindings in lexical scope."""
+        child = self._child()
+        generators = getattr(node, "generators", [])
+        for generator in generators:
+            child.visit(generator.iter)
+            child._assign(generator.target, _static_argv(generator.iter, child.bindings))
+            child._assign_process_alias(generator.target, False)
+            for condition in generator.ifs:
+                child.visit(condition)
+        for value in values:
+            child.visit(value)
+        self.found = self.found or child.found
+
+    def visit_ListComp(self, node: ast.ListComp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_SetComp(self, node: ast.SetComp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> None:
+        self._visit_comprehension(node, [node.elt])
+
+    def visit_DictComp(self, node: ast.DictComp) -> None:
+        self._visit_comprehension(node, [node.key, node.value])
+
+    def visit_If(self, node: ast.If) -> None:
+        self.visit(node.test)
+        before = {name: list(values) for name, values in self.bindings.items()}
+        body = self._child(before)
+        for statement in node.body:
+            body.visit(statement)
+        alternate = self._child(before)
+        for statement in node.orelse:
+            alternate.visit(statement)
+        self.found = self.found or body.found or alternate.found
+        self.process_aliases.update(body.process_aliases, alternate.process_aliases)
+        possible = [body.bindings, alternate.bindings if node.orelse else before]
+        merged: dict[str, list[str]] = {}
+        for name in set().union(*(state.keys() for state in possible)):
+            values = {value for state in possible for value in state.get(name, [])}
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+
+    def visit_Try(self, node: ast.Try) -> None:
+        """Merge every path that can continue after try/except/else."""
+        before = {name: list(values) for name, values in self.bindings.items()}
+        success = self._child(before)
+        for statement in node.body:
+            success.visit(statement)
+        for statement in node.orelse:
+            success.visit(statement)
+        paths = [success]
+        for handler in node.handlers:
+            branch = self._child(before)
+            if handler.type is not None:
+                branch.visit(handler.type)
+            if handler.name:
+                branch.bindings.pop(handler.name, None)
+                branch.process_aliases.discard(handler.name)
+            for statement in handler.body:
+                branch.visit(statement)
+            paths.append(branch)
+        self.found = self.found or any(path.found for path in paths)
+        for path in paths:
+            self.process_aliases.update(path.process_aliases)
+        merged: dict[str, list[str]] = {}
+        for name in set().union(*(path.bindings.keys() for path in paths)):
+            values = {value for path in paths for value in path.bindings.get(name, [])}
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+        for statement in node.finalbody:
+            self.visit(statement)
+
+    visit_TryStar = visit_Try
+
+    def _visit_loop(self, node: ast.For | ast.AsyncFor | ast.While) -> None:
+        if isinstance(node, (ast.For, ast.AsyncFor)):
+            self.visit(node.iter)
+        else:
+            self.visit(node.test)
+        before = {name: list(values) for name, values in self.bindings.items()}
+        body = self._child(before)
+        if isinstance(node, (ast.For, ast.AsyncFor)):
+            # A loop target is a real assignment in the body's lexical scope. Bind
+            # every statically visible command fragment from a literal iterable so
+            # ordinary for/async-for forms cannot evade the effector scan.
+            body._assign(node.target, _static_argv(node.iter, before))
+            body._assign_process_alias(node.target, False)
+        for statement in node.body:
+            body.visit(statement)
+        self.found = self.found or body.found
+        self.process_aliases.update(body.process_aliases)
+        merged: dict[str, list[str]] = {}
+        for name in set(before) | set(body.bindings):
+            values = set(before.get(name, [])) | set(body.bindings.get(name, []))
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+        for statement in node.orelse:
+            self.visit(statement)
+
+    visit_For = _visit_loop
+    visit_AsyncFor = _visit_loop
+    visit_While = _visit_loop
+
+    def _visit_local_helper_call(
+        self,
+        name: str,
+        function: ast.FunctionDef | ast.AsyncFunctionDef,
+        call: ast.Call,
+    ) -> None:
+        """Scan a local helper with the statically visible arguments from this call site."""
+        child = self._child(active_helpers=self.active_helpers | {name})
+        positional = [*function.args.posonlyargs, *function.args.args]
+        defaults: list[ast.AST | None] = [None] * (len(positional) - len(function.args.defaults)) + list(
+            function.args.defaults
+        )
+        keywords = {keyword.arg: keyword.value for keyword in call.keywords if keyword.arg is not None}
+        for index, (argument, default) in enumerate(zip(positional, defaults, strict=True)):
+            supplied = call.args[index] if index < len(call.args) else keywords.get(argument.arg, default)
+            child._bind_assignment(argument, supplied)
+        for argument, default in zip(function.args.kwonlyargs, function.args.kw_defaults, strict=True):
+            child._bind_assignment(argument, keywords.get(argument.arg, default))
+        if function.args.vararg is not None:
+            extras = call.args[len(positional) :]
+            child._assign(
+                function.args.vararg,
+                [value for extra in extras for value in (_static_argv(extra, self.bindings) or [])] or None,
+            )
+        if function.args.kwarg is not None:
+            extra_values = [
+                value
+                for keyword in call.keywords
+                if keyword.arg is None or keyword.arg not in {argument.arg for argument in positional}
+                for value in (_static_argv(keyword.value, self.bindings) or [])
+            ]
+            child._assign(function.args.kwarg, extra_values or None)
+        for statement in function.body:
+            child.visit(statement)
+        self.found = self.found or child.found
+
+    def visit_Call(self, node: ast.Call) -> None:
+        call_name = (
+            node.func.id
+            if isinstance(node.func, ast.Name)
+            else (node.func.attr if isinstance(node.func, ast.Attribute) else "")
+        )
+        if call_name in self.process_aliases:
+            values: list[str] = []
+            for argument in [*node.args, *(keyword.value for keyword in node.keywords)]:
+                values.extend(_static_argv(argument, self.bindings) or [])
+            has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
+            if has_osascript and "display notification" in " ".join(values).lower():
+                self.found = True
+        helper_name = node.func.id if isinstance(node.func, ast.Name) else None
+        if (
+            helper_name is not None
+            and helper_name not in self.active_helpers
+            and (function := self.local_functions.get(helper_name)) is not None
+        ):
+            self._visit_local_helper_call(helper_name, function, node)
+        self.generic_visit(node)
+
+
+def _python_bypasses(path: Path) -> bool:
+    try:
+        # tokenize.open honors a PEP 263 encoding cookie; decoding with a hard-coded UTF-8
+        # would turn a valid source into a false clean result. An unreadable source is unsafe
+        # evidence, so the estate gate fails closed rather than clearing it.
+        with tokenize.open(path) as source:
+            tree = ast.parse(source.read(), filename=str(path))
+    except (OSError, UnicodeError, SyntaxError, LookupError):
+        return True
+    visitor = _PythonBypassVisitor()
+    visitor.visit(tree)
+    return visitor.found
+
+
+def _shell_bypasses(path: Path) -> bool:
+    try:
+        raw = path.read_bytes()
+    except OSError:
+        return True
+    try:
+        text = raw.decode("utf-8").replace("\\\n", " ")
+    except UnicodeDecodeError:
+        # Shell accepts arbitrary non-NUL bytes. We cannot prove the source is harmless, so
+        # represent undecodable content as a finding and let the estate predicate fail closed.
+        return True
+    try:
+        lexer = shlex.shlex(text, posix=True)
+        lexer.whitespace_split = True
+        lexer.commenters = "#"
+        executable = " ".join(lexer)
+    except ValueError:
+        return True
+    return bool(re.search(r"\bosascript\b", executable, re.IGNORECASE)) and bool(
+        re.search(r"\bdisplay\s+notification\b", executable, re.IGNORECASE)
     )
-    if effector is None:
-        return True, f"{GATE_FUNC}() defined; no {EFFECTOR_FUNC}() to gate"
 
-    called = {n.func.id for n in ast.walk(effector) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
-    if GATE_FUNC not in called:
-        return False, f"{GATE_FUNC}() is defined but {EFFECTOR_FUNC}() never calls it"
-    return True, f"{EFFECTOR_FUNC}() is gated on {GATE_FUNC}()"
+
+def direct_notification_effectors(root: Path) -> list[str]:
+    """Every notification that bypasses _notify.py, relative to the surveyed root."""
+    found = []
+    try:
+        paths = _source_paths(root)
+    except RuntimeError:
+        return [SOURCE_SCAN_FAILURE]
+    for path in paths:
+        bypasses = _python_bypasses(path) if path.suffix == ".py" else _shell_bypasses(path)
+        if bypasses:
+            try:
+                found.append(str(path.relative_to(root)))
+            except ValueError:
+                found.append(str(path))
+    return sorted(found)
 
 
 # Rotations ran near-daily (Jul 27→31) and then stopped. A gap this size is a stall, not a
@@ -223,14 +966,23 @@ def survey(live: Path) -> list[dict]:
     scheduled = scheduled_root()
     for root in enumerate_roots(live):
         notifier = root / NOTIFIER_REL
-        if not notifier.is_file():
-            continue  # not every checkout ships the notifier; absent cannot pop the phone
-        gated, reason = gate_state(notifier)
+        direct_effectors = direct_notification_effectors(root)
+        if notifier.is_file():
+            gated, reason = gate_state(notifier)
+        elif direct_effectors:
+            gated = False
+            reason = "shared notifier absent while direct effectors exist"
+        else:
+            continue
+        if direct_effectors:
+            gated = False
+            reason = "direct display-notification effector(s) bypass _notify.py: " + ", ".join(direct_effectors)
         rows.append(
             {
                 "root": str(root),
                 "gated": gated,
                 "reason": reason,
+                "direct_effectors": direct_effectors,
                 "is_live": root == live,
                 "is_worktree": _root.is_worktree(root),
                 "executor": classify(root, live, scheduled),
@@ -252,13 +1004,12 @@ def main(argv: list[str] | None = None) -> int:
 
     rows = survey(live)
     ungated = [r for r in rows if not r["gated"]]
-    ungated_roots = {r["root"] for r in ungated}
 
     if args.update:
         # A scheduled executor is never recorded. The baseline means "known, draining"; writing
         # the launchd-run copy into it would convert a live hazard into an accepted one with a
         # single flag — precisely the shape of guard this lineage keeps learning not to build.
-        recordable = {r["root"] for r in ungated if r["executor"] != "scheduled"}
+        recordable = {r["root"] for r in ungated if r["executor"] != "scheduled" and not r["direct_effectors"]}
         write_baseline(recordable)
         print(f"check-notify-gate: baseline updated — {len(recordable)} dormant ungated copy(ies) recorded")
         return 0
@@ -269,7 +1020,9 @@ def main(argv: list[str] | None = None) -> int:
     # are cut from main, so a fresh one inherits the gate; an unrecorded ungated copy means the
     # gate came off somewhere.
     scheduled_ungated = [r for r in ungated if r["executor"] == "scheduled"]
-    regressions = [r for r in ungated if r["root"] not in baseline and r["executor"] != "scheduled"]
+    regressions = [
+        r for r in ungated if r["executor"] != "scheduled" and (r["direct_effectors"] or r["root"] not in baseline)
+    ]
 
     if args.json:
         print(
@@ -328,7 +1081,7 @@ def main(argv: list[str] | None = None) -> int:
             print("      osascript regardless — run-pytest-hermetic.sh exports LIMEN_NOTIFY=0, which")
             print("      every copy on this host honors, gated or not.")
         else:
-            print("  \033[32m✓\033[0m every copy gates osascript on the liveness predicate")
+            print("  \033[32m✓\033[0m every copy gates macOS notifications on the shared liveness predicate")
         return 0
     return 1
 

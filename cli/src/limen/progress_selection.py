@@ -23,7 +23,7 @@ DEFAULT_WEIGHTS = {
     "capacity_cost": -0.5,
 }
 TERMINAL_STATES = frozenset({"done", "archived"})
-HOLD_LABELS = frozenset({"operator-paused", "needs-human", "workstream:successor-required"})
+HOLD_LABELS = frozenset({"operator-paused", "needs-human", "workstream:successor-required", "jules:landing-held"})
 
 
 def _canonical_sha256(value: Any) -> str:

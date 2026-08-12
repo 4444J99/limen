@@ -162,7 +162,10 @@ def test_apply_failure_is_visible_and_nonzero(tmp_path: Path, mode: str):
 
 def test_full_cycle_deadline_includes_apply(tmp_path: Path):
     started = time.monotonic()
-    result, calls = _run(tmp_path, mode="slow-cycle", timeout="0.25")
+    # Leave enough of the shared deadline for a loaded CI host to start the check interpreter
+    # and reach apply. The apply fixture then sleeps well past the remaining budget, so this still
+    # proves the one cycle deadline covers both phases without racing process-start latency.
+    result, calls = _run(tmp_path, mode="slow-cycle", timeout="1")
     elapsed = time.monotonic() - started
 
     assert result.returncode == 124

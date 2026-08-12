@@ -12,12 +12,16 @@ LIMEN_NTFY_TOPIC is set, a free ntfy.sh push to your phone (subscribe to the top
 works at the pool / on the road). Quiet by default: nothing changes -> nothing fires. Fail-open: a
 missing feed or a network error skips silently, never crashes the beat.
 """
+
 import json
 import os
-import subprocess
-import urllib.request
+import sys
 from datetime import datetime
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _notify import NotificationResult, notify_event, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -34,34 +38,32 @@ def _load(path, default):
         return default
 
 
-def _notify_macos(title, msg):
-    try:
-        safe = msg.replace('"', "'")
-        subprocess.run(
-            ["osascript", "-e", f'display notification "{safe}" with title "{title}"'],
-            capture_output=True, timeout=10)
-    except Exception:
-        pass  # best-effort; never block the beat
+def _notify_macos(title, msg, *, stable_id):
+    return notify_event(
+        ROOT,
+        source="money-view",
+        event=title,
+        message=msg,
+        title=title,
+        stable_id=stable_id,
+        payload={"message": msg},
+    )
 
 
 def _notify_ntfy(title, msg):
-    topic = os.environ.get("LIMEN_NTFY_TOPIC")
-    if not topic:
-        return  # opt-in: no topic -> no phone push (don't spray a public topic)
-    base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
-    try:
-        req = urllib.request.Request(
-            f"{base}/{topic}", data=msg.encode("utf-8"),
-            headers={"Title": title, "Tags": "money_with_wings"})
-        urllib.request.urlopen(req, timeout=10)
-    except Exception:
-        pass  # network down / topic unreachable -> skip, self-corrects next event
+    return notify_ntfy(ROOT, msg, title=title, tags="money_with_wings")
 
 
-def _emit(title, msg):
-    _notify_macos(title, msg)
-    _notify_ntfy(title, msg)
-    print(f"[notify] {title}: {msg}")
+def _emit(title, msg, *, stable_id) -> NotificationResult:
+    result = _notify_macos(title, msg, stable_id=stable_id)
+    pushed = _notify_ntfy(title, msg) if result.reserved else False
+    print(f"[notify:{result.status}{'+ntfy' if pushed else ''}] {title}: {msg}")
+    return result
+
+
+def _event_settled(result: NotificationResult) -> bool:
+    """Whether advancing source state can no longer lose this notification event."""
+    return result.reserved or result.status == "duplicate"
 
 
 def main():
@@ -84,23 +86,44 @@ def main():
         before = prev_stages.get(key)
         if before is not None and before != stage and stage in _LOUD:
             if p.get("whose_hand") == "yours":
-                events.append(("⟶ YOUR MOVE",
-                               f"{p.get('product')} is {stage} — {p.get('next_action','')} = first $"))
+                events.append(
+                    (
+                        "⟶ YOUR MOVE",
+                        f"{p.get('product')} is {stage} — {p.get('next_action', '')} = first $",
+                        f"{key}@{stage}",
+                    )
+                )
             else:
-                events.append(("milestone", f"{p.get('product')} reached {stage}"))
+                events.append(("milestone", f"{p.get('product')} reached {stage}", f"{key}@{stage}"))
 
     # ship milestone (rolling 24h; only fire when crossing a NEW higher bucket today)
     ships = (view.get("ships_24h") or {}).get("total", 0)
     cur_bucket = max([b for b in SHIP_BUCKETS if ships >= b], default=0)
     if cur_bucket > prev_bucket:
-        events.append(("shipping", f"{ships} PRs shipped in the last 24h across the fleet"))
+        events.append(
+            (
+                "shipping",
+                f"{ships} PRs shipped in the last 24h across the fleet",
+                f"ships-24h@{today}:{cur_bucket}",
+            )
+        )
 
-    for title, msg in events:
-        _emit(f"LIMEN {title}", msg)
+    results = [_emit(f"LIMEN {title}", msg, stable_id=stable_id) for title, msg, stable_id in events]
 
-    STATE.write_text(json.dumps(
-        {"stages": cur_stages, "ship_bucket": cur_bucket, "ship_date": today,
-         "updated": datetime.now().isoformat(timespec="seconds")}, indent=2))
+    if all(_event_settled(result) for result in results):
+        STATE.write_text(
+            json.dumps(
+                {
+                    "stages": cur_stages,
+                    "ship_bucket": cur_bucket,
+                    "ship_date": today,
+                    "updated": datetime.now().isoformat(timespec="seconds"),
+                },
+                indent=2,
+            )
+        )
+    else:
+        print("[notify] source state withheld — an event reservation was not established")
     if not events:
         print("[notify] no change — quiet")
     return 0

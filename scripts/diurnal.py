@@ -884,7 +884,10 @@ def headline(phase: str, rendered: list[Rendered], ctx: dict) -> str:
         if ov and ov.metric:
             bits.append(f"{ov.metric} overnight alert(s)")
     elif phase == "midday":
-        bits.append(f"{len(ctx.get('drift') or [])} drift")
+        drift = ctx.get("drift") or []
+        bits.append(f"{len(drift)} drift")
+        if drift:
+            bits.append(_clip(str(drift[0])))
     else:
         scored = ctx.get("scored") or []
         held = sum(1 for s in scored if s["verdict"] == "held")

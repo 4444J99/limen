@@ -8,6 +8,7 @@ import sys
 import threading
 from datetime import date, datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -34,6 +35,50 @@ from limen.models import (
 )
 from limen.status import print_status
 from limen.workstream_contract import packet_contract
+
+
+@pytest.mark.parametrize(
+    ("observed_providers", "expected"),
+    [
+        ({"provider-a"}, set()),
+        ({"provider-a", "provider-b"}, {"opencode"}),
+    ],
+)
+def test_provider_health_dead_lane_uses_live_catalog_denominator(
+    monkeypatch, observed_providers: set[str], expected: set[str]
+) -> None:
+    fingerprint = "a" * 64
+    profile_hash = "b" * 64
+    outcomes = [
+        SimpleNamespace(
+            provider=provider,
+            catalog_hash=fingerprint,
+            execution_profile_hash=profile_hash,
+        )
+        for provider in observed_providers
+    ]
+    models = [
+        SimpleNamespace(model_id="provider-a/model", active=True),
+        SimpleNamespace(model_id="provider-b/model", active=True),
+    ]
+
+    class Blocked:
+        def blocked(self, _now):
+            return True
+
+    monkeypatch.setattr(D, "load_provider_outcomes", lambda _path: outcomes)
+    monkeypatch.setattr(D, "provider_outcome_ledger_path", lambda: Path("unused"))
+    monkeypatch.setattr(D, "discover_opencode_models", lambda *_args, **_kwargs: models)
+    monkeypatch.setattr(D, "catalog_hash", lambda _models: fingerprint)
+    monkeypatch.setattr(D, "provider_for_model", lambda model_id: model_id.split("/", 1)[0])
+    monkeypatch.setattr(D, "provider_health_policy", object)
+    monkeypatch.setattr(
+        D,
+        "project_provider_health",
+        lambda rows, _policy, **_kwargs: SimpleNamespace(providers={row.provider: Blocked() for row in rows}),
+    )
+
+    assert D._provider_health_dead_lanes() == expected
 
 
 def load_route_module():

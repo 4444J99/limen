@@ -158,6 +158,25 @@ verify.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
 )
 if not verify.process_group_alive(process):
     raise SystemExit("live process-group member was ignored")
+
+attempts = 0
+def disappearing_group(pid, sig):
+    global attempts
+    attempts += 1
+    if attempts > 1:
+        raise ProcessLookupError()
+
+verify.os.killpg = disappearing_group
+verify.subprocess.run = lambda *args, **kwargs: SimpleNamespace(
+    returncode=1,
+    stdout="",
+)
+if verify.process_group_alive(process):
+    raise SystemExit("a process group that vanished before ps was treated as lingering")
+
+verify.os.killpg = lambda pid, sig: None
+if not verify.process_group_alive(process):
+    raise SystemExit("a live process group was ignored when ps returned no rows")
 print("zombie-group-ok")
 PY
   cat >"$dir/scripts/lock-holder.py" <<'PY'
