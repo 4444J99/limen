@@ -102,4 +102,3 @@ export function publicBoardProjection(board, now = new Date().toISOString()) {
 export function privateBoardStoreContract() {
   return clone(PRIVATE_BOARD_STORE_OPTIONS);
 }
-

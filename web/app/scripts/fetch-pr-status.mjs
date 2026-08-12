@@ -28,6 +28,7 @@ function resolveGitHubToken() {
 const GITHUB_TOKEN = resolveGitHubToken();
 const outPath = join(__dirname, "..", "public", "pr-status.json");
 const previous = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : null;
+const REQUEST_TIMEOUT_MS = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 15_000);
 
 function previousRepo(repo) {
   return previous?.repos?.find((item) => item.repo === repo) || null;
@@ -40,7 +41,7 @@ async function fetchPRs(repo) {
 
   let res;
   try {
-    res = await fetch(url, { headers });
+    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   } catch (error) {
     console.error(`Failed to fetch PRs for ${repo}: ${error instanceof Error ? error.message : "network error"}`);
     return null;
@@ -72,7 +73,7 @@ async function fetchCheckRuns(repo, headSha) {
 
   let res;
   try {
-    res = await fetch(url, { headers });
+    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   } catch {
     return null;
   }
