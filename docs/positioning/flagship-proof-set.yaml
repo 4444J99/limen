@@ -69,13 +69,13 @@ candidate_screen:
       - organvm-vii-kerygma/portfolio
       - organvm/universal-mail--automation
     explicit_additions:
-      - {candidate_id: limen, source_set: manifest_primary_proof}
-      - {candidate_id: recursive_engine, source_set: current_public_entry_point}
-      - {candidate_id: metasystem_master, source_set: current_public_entry_point}
-      - {candidate_id: public_process, source_set: current_public_entry_point}
-      - {candidate_id: moneta, source_set: current_front_door_endpoint}
-      - {candidate_id: styx, source_set: claims_ledger}
-      - {candidate_id: archived_landing, source_set: legacy_entry_point}
+      - {candidate_id: limen, source_set: manifest_primary_proof, candidate_identity: "repository:organvm/limen"}
+      - {candidate_id: recursive_engine, source_set: current_public_entry_point, candidate_identity: "repository:organvm/recursive-engine--generative-entity"}
+      - {candidate_id: metasystem_master, source_set: current_public_entry_point, candidate_identity: "repository:organvm/metasystem-master"}
+      - {candidate_id: public_process, source_set: current_public_entry_point, candidate_identity: "repository:organvm-vi-koinonia/public-process"}
+      - {candidate_id: moneta, source_set: current_front_door_endpoint, candidate_identity: "endpoint:https://mint.4444j99.dev/"}
+      - {candidate_id: styx, source_set: claims_ledger, candidate_identity: "repository:4444J99/peer-audited--behavioral-blockchain"}
+      - {candidate_id: archived_landing, source_set: legacy_entry_point, candidate_identity: "repository:organvm/4444J99.github.io"}
   optimization_prohibitions:
     - repository count
     - stars or forks alone

@@ -125,6 +125,37 @@ EXPLICIT_ENDPOINT_BINDINGS = {
         "url": "https://limen-dashboard.pages.dev/public-status.json",
     }
 }
+EXPLICIT_ADDITION_BINDINGS = {
+    "limen": {
+        "source_set": "manifest_primary_proof",
+        "candidate_identity": "repository:organvm/limen",
+    },
+    "recursive_engine": {
+        "source_set": "current_public_entry_point",
+        "candidate_identity": "repository:organvm/recursive-engine--generative-entity",
+    },
+    "metasystem_master": {
+        "source_set": "current_public_entry_point",
+        "candidate_identity": "repository:organvm/metasystem-master",
+    },
+    "public_process": {
+        "source_set": "current_public_entry_point",
+        "candidate_identity": "repository:organvm-vi-koinonia/public-process",
+    },
+    "moneta": {
+        "source_set": "current_front_door_endpoint",
+        "candidate_identity": "endpoint:https://mint.4444j99.dev/",
+    },
+    "styx": {
+        "source_set": "claims_ledger",
+        "candidate_identity": "repository:4444J99/peer-audited--behavioral-blockchain",
+    },
+    "archived_landing": {
+        "source_set": "legacy_entry_point",
+        "candidate_identity": "repository:organvm/4444J99.github.io",
+    },
+}
+FUTURE_OBSERVATION_SKEW = dt.timedelta(minutes=5)
 
 
 class ProofSetError(RuntimeError):
@@ -237,7 +268,19 @@ def public_https_url(value: object) -> bool:
         or port not in {None, 443}
     ):
         return False
-    if hostname == "localhost" or hostname.endswith((".localhost", ".local")):
+    hostname = hostname.casefold()
+    if "." not in hostname or hostname == "localhost" or hostname.endswith(
+        (
+            ".localhost",
+            ".local",
+            ".internal",
+            ".home",
+            ".lan",
+            ".example",
+            ".invalid",
+            ".test",
+        )
+    ):
         return False
     try:
         ipaddress.ip_address(hostname)
@@ -274,6 +317,54 @@ def expected_endpoint_binding(candidate: dict[str, Any]) -> dict[str, str] | Non
 def endpoint_matches_candidate(anchor: dict[str, Any], candidate: dict[str, Any]) -> bool:
     binding = expected_endpoint_binding(candidate)
     return binding is not None and all(anchor.get(key) == value for key, value in binding.items())
+
+
+def candidate_public_identity(candidate: dict[str, Any]) -> str | None:
+    repository = candidate.get("repository")
+    if isinstance(repository, str) and REPOSITORY_RE.fullmatch(repository):
+        return f"repository:{repository}"
+    public_url = candidate.get("public_url")
+    if candidate.get("kind") == "endpoint" and public_https_url(public_url):
+        return f"endpoint:{public_url}"
+    return None
+
+
+def github_repository_from_anchor_url(value: object) -> str | None:
+    """Return the repository identity encoded by a GitHub/Pages evidence URL."""
+
+    if not public_https_url(value):
+        return None
+    assert isinstance(value, str)
+    parsed = urlsplit(value)
+    hostname = str(parsed.hostname or "").casefold()
+    parts = [part for part in parsed.path.split("/") if part]
+    if hostname == "github.com" and len(parts) >= 2:
+        return f"{parts[0]}/{parts[1].removesuffix('.git')}"
+    if hostname.endswith(".github.io") and parts:
+        owner = hostname.removesuffix(".github.io")
+        return f"{owner}/{parts[0]}"
+    return None
+
+
+def validate_public_anchor_custody(
+    anchor: object,
+    public_canonical: dict[str, str],
+    prefix: str,
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(anchor, dict):
+        return [f"{prefix}: evidence anchor must be a mapping"]
+    url = anchor.get("url")
+    if not public_https_url(url):
+        return [f"{prefix}: evidence URL must use a credential-free public HTTPS hostname"]
+    assert isinstance(url, str)
+    parsed = urlsplit(url)
+    if parsed.query or parsed.fragment:
+        errors.append(f"{prefix}: evidence URL must not contain query or fragment data")
+    repository = github_repository_from_anchor_url(url)
+    if repository is not None and repository.casefold() not in public_canonical:
+        errors.append(f"{prefix}: evidence repository is not present in the tracked public census")
+    return errors
 
 
 def repository_workflow_api_path(value: object, repository: object) -> str | None:
@@ -628,16 +719,34 @@ def validate_source_projection(
     addition_ids: list[str] = []
     addition_source_sets: collections.Counter[str] = collections.Counter()
     for addition in additions:
-        if not isinstance(addition, dict) or set(addition) != {"candidate_id", "source_set"}:
-            errors.append("every source projection addition must bind one candidate id to one source set")
+        if not isinstance(addition, dict) or set(addition) != {
+            "candidate_id",
+            "source_set",
+            "candidate_identity",
+        }:
+            errors.append(
+                "every source projection addition must bind one candidate id, source set, and public identity"
+            )
             continue
         candidate_id = addition.get("candidate_id")
         source_set = addition.get("source_set")
-        if not isinstance(candidate_id, str) or not candidate_id or not isinstance(source_set, str) or not source_set:
-            errors.append("every source projection addition needs nonempty candidate and source-set identities")
+        candidate_identity = addition.get("candidate_identity")
+        if (
+            not isinstance(candidate_id, str)
+            or not candidate_id
+            or not isinstance(source_set, str)
+            or not source_set
+            or not isinstance(candidate_identity, str)
+            or not candidate_identity
+        ):
+            errors.append(
+                "every source projection addition needs nonempty candidate, source-set, and public identities"
+            )
             continue
         addition_ids.append(candidate_id)
         addition_source_sets[source_set] += 1
+        if addition != {"candidate_id": candidate_id, **EXPLICIT_ADDITION_BINDINGS.get(candidate_id, {})}:
+            errors.append("an explicit candidate addition differs from its pinned source-registry identity")
     if len(set(addition_ids)) != len(addition_ids):
         errors.append("source projection contains duplicate explicit candidate additions")
 
@@ -657,7 +766,11 @@ def validate_source_projection(
         if not isinstance(addition, dict):
             continue
         candidate = candidate_by_id.get(str(addition.get("candidate_id")))
-        if candidate is None or addition.get("source_set") not in (candidate.get("source_sets") or []):
+        if (
+            candidate is None
+            or addition.get("source_set") not in (candidate.get("source_sets") or [])
+            or candidate_public_identity(candidate) != addition.get("candidate_identity")
+        ):
             errors.append("an explicit candidate addition is not bound to its declared source set")
 
     projected_ids = {
@@ -738,8 +851,16 @@ def validate_matrix(
         dimension_minima = {}
     if not strict_int(minimum_selected) or not strict_int(maximum_selected):
         errors.append("selection_policy needs integer selected bounds")
+    elif not (1 <= minimum_selected <= maximum_selected <= len(candidates)):
+        errors.append("selection_policy selected bounds must be positive, ordered, and within the matrix")
     if not strict_int(minimum_total):
         errors.append("selection_policy.minimum_weighted_total must be an integer")
+    elif not 0 <= minimum_total <= 100:
+        errors.append("selection_policy.minimum_weighted_total must be within the score range")
+    if set(dimension_minima) - set(dimensions):
+        errors.append("selection_policy.minimum_dimension_scores names an unknown rubric dimension")
+    if any(not strict_int(value) or not 0 <= value <= 5 for value in dimension_minima.values()):
+        errors.append("selection_policy.minimum_dimension_scores must stay within the 0-5 score range")
 
     ids: list[str] = []
     repositories: list[str] = []
@@ -810,7 +931,14 @@ def validate_matrix(
         if not isinstance(anchors, list):
             errors.append(f"{prefix}: evidence_anchors must be a list")
             anchors = []
-        for anchor in anchors:
+        for anchor_index, anchor in enumerate(anchors):
+            errors.extend(
+                validate_public_anchor_custody(
+                    anchor,
+                    public_canonical,
+                    f"{prefix}.evidence_anchors[{anchor_index}]",
+                )
+            )
             if not isinstance(anchor, dict) or anchor.get("kind") != "public_endpoint":
                 continue
             identity = anchor.get("deployment_identity")
@@ -823,10 +951,10 @@ def validate_matrix(
         if status == "selected":
             errors.extend(validate_selected_claim(candidate.get("flagship_claim"), repository, prefix))
             role = candidate.get("story_role")
-            if not isinstance(role, str) or not role:
+            if not isinstance(role, str) or not role.strip():
                 errors.append(f"{prefix}: selected candidate needs a story_role")
             else:
-                selected_roles[role].append(candidate_id)
+                selected_roles[role.strip().casefold()].append(candidate_id)
             if candidate.get("eligible") is not True:
                 errors.append(f"{prefix}: selected candidate is marked excluded/ineligible")
             if candidate.get("stale") is not False:
@@ -837,11 +965,19 @@ def validate_matrix(
                 errors.append(f"{prefix}: selected candidate has a private-only dependency")
             if candidate.get("hard_gate_failures"):
                 errors.append(f"{prefix}: selected candidate has hard-gate failures")
-            if strict_int(minimum_total) and candidate.get("weighted_total", -1) < minimum_total:
+            candidate_total = candidate.get("weighted_total")
+            if strict_int(minimum_total) and (
+                not strict_int(candidate_total) or candidate_total < minimum_total
+            ):
                 errors.append(f"{prefix}: selected score is below the minimum")
             if isinstance(scores, dict):
                 for dimension, minimum in dimension_minima.items():
-                    if not strict_int(minimum) or scores.get(dimension, -1) < minimum:
+                    dimension_score = scores.get(dimension)
+                    if (
+                        not strict_int(minimum)
+                        or not strict_int(dimension_score)
+                        or dimension_score < minimum
+                    ):
                         errors.append(f"{prefix}: {dimension} is below the selected minimum")
 
             live_anchors = [anchor for anchor in anchors if isinstance(anchor, dict) and anchor.get("live") is True]
@@ -854,8 +990,11 @@ def validate_matrix(
                 anchor_prefix = f"{prefix}.evidence_anchors[{anchor_index}]"
                 if anchor.get("status") != "pass":
                     errors.append(f"{anchor_prefix}: live anchor must be passing")
-                if anchor.get("kind") == "public_endpoint" and not endpoint_matches_candidate(anchor, candidate):
-                    errors.append(f"{anchor_prefix}: endpoint identity is not bound to this candidate")
+                if anchor.get("kind") == "public_endpoint":
+                    if not endpoint_matches_candidate(anchor, candidate):
+                        errors.append(f"{anchor_prefix}: endpoint identity is not bound to this candidate")
+                    if anchor.get("expected_http_status") != 200:
+                        errors.append(f"{anchor_prefix}: endpoint must require exact HTTP 200 success")
                 if anchor.get("kind") == "workflow_run":
                     errors.extend(validate_workflow_anchor(anchor, candidate, anchor_prefix))
                 url = anchor.get("url")
@@ -869,8 +1008,11 @@ def validate_matrix(
                 max_age = anchor.get("max_age_days")
                 if observed is None or not strict_int(max_age) or max_age <= 0:
                     errors.append(f"{anchor_prefix}: live anchor needs a valid observation and max age")
-                elif enforce_freshness and check_now - observed > dt.timedelta(days=max_age):
-                    errors.append(f"{anchor_prefix}: live anchor is stale")
+                else:
+                    if observed > check_now + FUTURE_OBSERVATION_SKEW:
+                        errors.append(f"{anchor_prefix}: live anchor observation is future-dated")
+                    elif enforce_freshness and check_now - observed > dt.timedelta(days=max_age):
+                        errors.append(f"{anchor_prefix}: live anchor is stale")
         elif status == "alternate":
             if not candidate.get("verdict_reason"):
                 errors.append(f"{prefix}: alternate needs a verdict_reason")
@@ -960,11 +1102,12 @@ def live_w02_dependency_snapshot() -> dict[str, Any]:
     try:
         pull_request = command_json(["gh", "api", "repos/organvm/limen/pulls/2307"])
         issue = command_json(["gh", "api", "repos/organvm/limen/issues/2174"])
+        w03_issue = command_json(["gh", "api", "repos/organvm/limen/issues/2175"])
         comments = github_pages("repos/organvm/limen/issues/2174/comments")
         current_main = command_json(["gh", "api", "repos/organvm/limen/commits/main"])
     except ProofSetError as exc:
         raise ProofSetError("accepted W02 formal state is unavailable") from exc
-    if not all(isinstance(value, dict) for value in (pull_request, issue, current_main)):
+    if not all(isinstance(value, dict) for value in (pull_request, issue, w03_issue, current_main)):
         raise ProofSetError("accepted W02 formal state has an invalid GitHub response")
 
     marker = f"<!-- positioning-receipt:{W02_WORK_ID} -->"
@@ -1007,6 +1150,7 @@ def live_w02_dependency_snapshot() -> dict[str, Any]:
     receipt_head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
     return {
         "issue_state": str(issue.get("state") or "").lower(),
+        "w03_issue_state": str(w03_issue.get("state") or "").lower(),
         "pull_request_state": "merged"
         if pull_request.get("merged_at") and pull_request.get("merged") is True
         else str(pull_request.get("state") or "").lower(),
@@ -1033,6 +1177,7 @@ def validate_live_formal_dependency(
     errors: list[str] = []
     comparisons = {
         "issue_state": "w02_issue_state",
+        "w03_issue_state": "w03_issue_state",
         "pull_request_state": "w02_pull_request_state",
         "pull_request_merge_head": "w02_head",
         "receipt_url": "w02_receipt",
@@ -1041,6 +1186,7 @@ def validate_live_formal_dependency(
     }
     labels = {
         "issue_state": "issue state",
+        "w03_issue_state": "W03 issue state",
         "pull_request_state": "pull request state",
         "pull_request_merge_head": "merged pull request head",
         "receipt_url": "latest marked receipt URL",
@@ -1200,6 +1346,9 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                     run = command_json(["gh", "api", api_path])
                 except ProofSetError:
                     errors.append(f"{candidate_id}: workflow anchor is unavailable")
+                    continue
+                if not isinstance(run, dict):
+                    errors.append(f"{candidate_id}: workflow anchor returned an invalid response")
                     continue
                 if run.get("status") != "completed" or run.get("conclusion") != "success":
                     errors.append(f"{candidate_id}: workflow anchor is not a completed success")

@@ -23,7 +23,7 @@ SPEC.loader.exec_module(MODULE)
 class FlagshipProofSetTests(unittest.TestCase):
     def setUp(self) -> None:
         self.matrix = MODULE.load_matrix()
-        self.observed_at = dt.datetime(2026, 8, 10, 16, 57, 12, tzinfo=dt.UTC)
+        self.observed_at = dt.datetime(2026, 8, 10, 22, 0, 0, tzinfo=dt.UTC)
 
     def candidate(self, candidate_id: str) -> dict:
         return next(row for row in self.matrix["candidates"] if row["id"] == candidate_id)
@@ -79,6 +79,7 @@ class FlagshipProofSetTests(unittest.TestCase):
         dependency = self.matrix["dependency_snapshot"]
         return {
             "issue_state": dependency["w02_issue_state"],
+            "w03_issue_state": dependency["w03_issue_state"],
             "pull_request_state": dependency["w02_pull_request_state"],
             "pull_request_merge_head": dependency["w02_head"],
             "receipt_url": dependency["w02_receipt"],
@@ -136,6 +137,7 @@ class FlagshipProofSetTests(unittest.TestCase):
     def test_live_formal_binding_rejects_remote_state_mutations(self) -> None:
         mutations = (
             ("issue_state", "open", "issue state differs"),
+            ("w03_issue_state", "closed", "W03 issue state differs"),
             ("pull_request_state", "closed", "pull request state differs"),
             ("pull_request_merge_head", "f" * 40, "merged pull request head differs"),
             (
@@ -191,12 +193,22 @@ class FlagshipProofSetTests(unittest.TestCase):
         paths = set(gates["flagship-proof-set-test"]["paths"])
         self.assertIn(str(MODULE.W02_RELAY.relative_to(ROOT)), paths)
         self.assertIn(str(MODULE.W03_RELAY.relative_to(ROOT)), paths)
+        self.assertIn("institutio/governance/gates.yaml", paths)
 
     def test_duplicate_selected_story_role_is_rejected(self) -> None:
         matrix = copy.deepcopy(self.matrix)
         selected = [row for row in matrix["candidates"] if row["status"] == "selected"]
         selected[1]["story_role"] = selected[0]["story_role"]
         self.assert_error_contains(matrix, "duplicate selected story roles")
+
+    def test_selected_story_roles_are_normalized_and_nonblank(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        selected = [row for row in matrix["candidates"] if row["status"] == "selected"]
+        selected[1]["story_role"] = f"  {selected[0]['story_role'].upper()}  "
+        self.assert_error_contains(matrix, "duplicate selected story roles")
+        matrix = copy.deepcopy(self.matrix)
+        self.candidate_from(matrix, "limen")["story_role"] = "   "
+        self.assert_error_contains(matrix, "needs a story_role")
 
     def test_missing_live_evidence_anchor_is_rejected(self) -> None:
         matrix = copy.deepcopy(self.matrix)
@@ -249,6 +261,27 @@ class FlagshipProofSetTests(unittest.TestCase):
             "max_age_days"
         ] = True
         self.assert_error_contains(matrix, "valid observation and max age")
+
+    def test_selection_thresholds_are_nonnegative_ordered_and_bounded(self) -> None:
+        mutations = (
+            ("minimum_selected", -1, "positive, ordered"),
+            ("maximum_selected", 99, "positive, ordered"),
+            ("minimum_weighted_total", -1, "within the score range"),
+            ("minimum_weighted_total", 101, "within the score range"),
+        )
+        for field, value, expected in mutations:
+            with self.subTest(field=field, value=value):
+                matrix = copy.deepcopy(self.matrix)
+                matrix["selection_policy"][field] = value
+                self.assert_error_contains(matrix, expected)
+
+    def test_null_selected_scores_return_validation_errors(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        self.candidate_from(matrix, "limen")["weighted_total"] = None
+        self.assert_error_contains(matrix, "selected score is below the minimum")
+        matrix = copy.deepcopy(self.matrix)
+        self.candidate_from(matrix, "limen")["scores"]["public_visibility"] = None
+        self.assert_error_contains(matrix, "public_visibility is below the selected minimum")
 
     def test_dimension_minima_must_be_a_mapping(self) -> None:
         matrix = copy.deepcopy(self.matrix)
@@ -347,6 +380,18 @@ class FlagshipProofSetTests(unittest.TestCase):
         candidate["public_url"] = f"https://github.com/{substitute}"
         self.assert_error_contains(matrix, "matrix W02 rows do not match the authoritative source projection")
 
+    def test_explicit_additions_are_pinned_to_public_source_identities(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        candidate = self.candidate_from(matrix, "recursive_engine")
+        candidate["repository"] = "organvm/limen"
+        candidate["public_url"] = "https://github.com/organvm/limen"
+        self.assert_error_contains(matrix, "not bound to its declared source set")
+        matrix = copy.deepcopy(self.matrix)
+        matrix["candidate_screen"]["source_projection"]["explicit_additions"][0][
+            "candidate_identity"
+        ] = "repository:organvm/example"
+        self.assert_error_contains(matrix, "differs from its pinned source-registry identity")
+
     def test_repository_public_url_must_be_canonical(self) -> None:
         matrix = copy.deepcopy(self.matrix)
         self.candidate_from(matrix, "limen")["public_url"] = "https://github.com/organvm/limen/"
@@ -382,6 +427,32 @@ class FlagshipProofSetTests(unittest.TestCase):
         )
         records_endpoint["url"] = exporter_endpoint["url"]
         self.assert_error_contains(matrix, "endpoint identity is not bound to this candidate")
+
+    def test_selected_endpoint_requires_exact_http_200(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        endpoint = self.candidate_from(matrix, "limen")["evidence_anchors"][1]
+        endpoint["expected_http_status"] = 404
+        self.assert_error_contains(matrix, "must require exact HTTP 200 success")
+
+    def test_future_dated_live_anchor_is_rejected(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        endpoint = self.candidate_from(matrix, "limen")["evidence_anchors"][1]
+        endpoint["observed_at"] = "2026-08-11T16:57:12Z"
+        self.assert_error_contains(matrix, "observation is future-dated")
+
+    def test_every_evidence_anchor_uses_public_safe_custody(self) -> None:
+        matrix = copy.deepcopy(self.matrix)
+        excluded = self.candidate_from(matrix, "archived_landing")
+        excluded["evidence_anchors"][0]["url"] = "https://token@internal.local/private"
+        self.assert_error_contains(matrix, "evidence URL must use a credential-free public HTTPS hostname")
+
+        matrix = copy.deepcopy(self.matrix)
+        excluded = self.candidate_from(matrix, "archived_landing")
+        private_like_identity = "example/internal-only"
+        excluded["evidence_anchors"][0]["url"] = f"https://github.com/{private_like_identity}"
+        errors = MODULE.validate_matrix(matrix, now=self.observed_at, enforce_freshness=True)
+        self.assertTrue(any("evidence repository is not present" in error for error in errors), errors)
+        self.assertFalse(any(private_like_identity in error for error in errors), errors)
 
     def test_live_workflow_must_match_current_default_branch_head(self) -> None:
         candidate = copy.deepcopy(self.candidate("public_records"))
@@ -444,6 +515,16 @@ class FlagshipProofSetTests(unittest.TestCase):
         ):
             errors = MODULE.validate_live({"candidates": [candidate]})
         self.assertTrue(any("workflow identity differs" in error for error in errors), errors)
+
+    def test_live_workflow_response_must_be_a_mapping(self) -> None:
+        candidate = copy.deepcopy(self.candidate("limen"))
+        with (
+            mock.patch.object(MODULE, "live_w02_snapshot", return_value=self.live_snapshot(candidate)),
+            mock.patch.object(MODULE, "command_json", return_value=[]),
+            mock.patch.object(MODULE, "http_status", return_value=200),
+        ):
+            errors = MODULE.validate_live({"candidates": [candidate]})
+        self.assertTrue(any("workflow anchor returned an invalid response" in error for error in errors), errors)
 
     def test_live_repository_maturity_comes_from_w02_metadata(self) -> None:
         candidate = copy.deepcopy(self.candidate("universal_mail"))
