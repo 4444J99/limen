@@ -374,15 +374,16 @@ def test_refresh_admission_is_bounded_and_writes_start_finish_receipts(tmp_path,
 
     def fake_run(args, **kwargs):
         calls.append((args, kwargs))
-        return SimpleNamespace(returncode=0)
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(module, "_run_bounded_subprocess", fake_run)
 
     assert module._refresh_admission() is True
     assert calls[0][0] == [module.sys.executable, str(SCRIPT.with_name("handoff-relay.py"))]
-    assert calls[0][1]["timeout"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
-    assert calls[0][1]["stdout"] is module.subprocess.DEVNULL
-    assert calls[0][1]["stderr"] is module.subprocess.DEVNULL
+    assert calls[0][1]["cwd"] == module.ROOT
+    assert calls[0][1]["timeout_seconds"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
+    assert calls[0][1]["stdout_ceiling"] == module.ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES
+    assert calls[0][1]["stderr_ceiling"] == module.ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES
     receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
     assert [receipt["event"] for receipt in receipts] == ["start", "finish"]
     assert receipts[-1]["outcome"] == "ok"
@@ -394,9 +395,10 @@ def test_refresh_admission_timeout_is_a_finite_failed_receipt(tmp_path, monkeypa
     monkeypatch.setenv("LIMEN_CONDUCTING_REFRESH_TIMEOUT", "1")
 
     def timeout(*_args, **_kwargs):
-        raise module.subprocess.TimeoutExpired(["handoff-relay.py"], 1)
+        assert module._BoundedSubprocessError is not None
+        raise module._BoundedSubprocessError("timeout")
 
-    monkeypatch.setattr(module.subprocess, "run", timeout)
+    monkeypatch.setattr(module, "_run_bounded_subprocess", timeout)
 
     assert module._refresh_admission() is False
     receipts = [json.loads(line) for line in module.ADMISSION_REFRESH_RECEIPT.read_text().splitlines()]
@@ -409,13 +411,13 @@ def test_refresh_admission_rejects_non_finite_timeout(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_CONDUCTING_REFRESH_TIMEOUT", "nan")
     calls = []
     monkeypatch.setattr(
-        module.subprocess,
-        "run",
-        lambda _args, **kwargs: calls.append(kwargs) or SimpleNamespace(returncode=0),
+        module,
+        "_run_bounded_subprocess",
+        lambda _args, **kwargs: calls.append(kwargs) or SimpleNamespace(returncode=0, stdout=b"", stderr=b""),
     )
 
     assert module._refresh_admission() is True
-    assert calls[0]["timeout"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
+    assert calls[0]["timeout_seconds"] == module.ADMISSION_REFRESH_TIMEOUT_SECONDS
 
 
 def test_routing_reason_is_a_canonical_enum(tmp_path, monkeypatch):
@@ -593,6 +595,8 @@ def test_daily_state_advances_only_after_one_delivery_channel_succeeds(tmp_path,
 
 def test_withheld_duplicate_retries_ntfy_until_delivery_succeeds(tmp_path, monkeypatch):
     module = _load(monkeypatch, tmp_path)
+    day = "2026-08-12"
+    monkeypatch.setattr(module, "_local_day", lambda: day)
     logs = tmp_path / "logs"
     _handoff(logs, admissible=1)
     (logs / "usage.json").write_text(
@@ -621,7 +625,7 @@ def test_withheld_duplicate_retries_ntfy_until_delivery_succeeds(tmp_path, monke
     assert not module.STATE.exists()
 
     assert module.main([]) == 0
-    assert json.loads(module.STATE.read_text())["last_day"] == module._local_day()
+    assert json.loads(module.STATE.read_text())["last_day"] == day
 
 
 def test_emitted_duplicate_rebuilds_state_after_transient_state_write_failure(tmp_path, monkeypatch):

@@ -1045,6 +1045,17 @@ def test_admission_preserves_generated_buildout_registry_gate(monkeypatch):
     assert admission["reason_counts"] == {"admission_blocked": 1}
 
 
+def test_load_board_rejects_parseable_but_schema_invalid_keeper_projection(tmp_path):
+    mod = _load()
+    mod.TASKS = tmp_path / "tasks.yaml"
+    mod.TASKS.write_text(
+        "version: '1.0'\ntasks:\n  - id: INVALID-MISSING-REQUIRED-FIELDS\n",
+        encoding="utf-8",
+    )
+
+    assert mod._load_board() is None
+
+
 def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):
     mod = _load()
     _configure(mod, monkeypatch, tmp_path, _board([]))

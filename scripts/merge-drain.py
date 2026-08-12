@@ -104,7 +104,7 @@ def lifecycle_disposition(labels) -> str | None:
     return next(iter(matches)) if len(matches) == 1 else None
 
 
-def _failing_required_checks(repo: str, num: int) -> tuple[str, ...]:
+def _failing_required_checks(repo: str, num: int) -> tuple[str, ...] | None:
     result = gh(
         [
             "pr",
@@ -121,7 +121,9 @@ def _failing_required_checks(repo: str, num: int) -> tuple[str, ...]:
     try:
         rows = json.loads(result.stdout)
     except (TypeError, ValueError):
-        return ()
+        return None
+    if not isinstance(rows, list):
+        return None
     return tuple(
         sorted(
             str(row.get("name"))
@@ -255,8 +257,14 @@ def assess(rn):
             return (repo, num, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            head = str(d.get("headRefOid") or "")
-            return (repo, num, "CI-RED", head, _failing_required_checks(repo, num))
+            failing_required = _failing_required_checks(repo, num)
+            if failing_required is None:
+                return (repo, num, "ERR")
+            if failing_required:
+                head = str(d.get("headRefOid") or "")
+                return (repo, num, "CI-RED", head, failing_required)
+            # Optional check failures stay visible in GitHub, but do not create
+            # an operator-facing CI-red onset or block the required-check rail.
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":

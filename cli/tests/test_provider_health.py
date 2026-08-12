@@ -291,5 +291,11 @@ def test_down_lanes_consumes_provider_level_health_as_fourth_source(tmp_path, mo
     monkeypatch.setenv("LIMEN_PROVIDER_OUTCOME_LEDGER", str(ledger))
     monkeypatch.setattr(dispatch, "_usage_dead_lanes", lambda: set())
     monkeypatch.setattr(dispatch, "_oauth_unreachable_lanes", lambda: set())
+    monkeypatch.setattr(
+        dispatch,
+        "discover_opencode_models",
+        lambda *_args, **_kwargs: [model("provider-z/runtime-one")],
+    )
+    monkeypatch.setattr(dispatch, "catalog_hash", lambda _models: HASH)
 
     assert "opencode" in dispatch._down_lanes()

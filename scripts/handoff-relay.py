@@ -49,7 +49,7 @@ from limen.dispatch import (
     chronic_dispatch_reason,
     task_passes_value_gate,
 )  # noqa: E402
-from limen.io import load_limen_file  # noqa: E402
+from limen.io import load_limen_file, load_limen_text  # noqa: E402
 from limen.models import LimenFile, Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -95,16 +95,23 @@ def _load_json(path: Path, default: Any) -> Any:
 
 
 def _load_board() -> dict[str, Any] | None:
-    """Load the keeper projection while preserving unavailable versus genuinely empty."""
+    """Load one schema-valid keeper projection from a single immutable byte snapshot."""
     try:
         import yaml
     except Exception:
         return None
     try:
-        board = yaml.safe_load(TASKS.read_text())
+        raw = TASKS.read_text()
+        board = yaml.safe_load(raw)
+        if not isinstance(board, dict):
+            return None
+        # Dispatch consumes LimenFile, so a merely parseable mapping is not proof that
+        # the keeper is available. Validate the exact bytes we return instead of
+        # re-reading a projection that could be atomically replaced between reads.
+        load_limen_text(raw, name=TASKS.name)
     except Exception:
         return None
-    return board if isinstance(board, dict) else None
+    return board
 
 
 def _load_tasks(board: dict[str, Any] | None = None) -> list[dict[str, Any]]:

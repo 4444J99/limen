@@ -17,7 +17,6 @@ import argparse
 import json
 import math
 import os
-import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -53,6 +52,7 @@ ADMISSION_REFRESH_RECEIPT = LOGS / "conducting-admission-refresh.jsonl"
 ROUTING_REASONS = frozenset({"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"})
 TELEMETRY_MAX_AGE_SECONDS = 5400
 ADMISSION_REFRESH_TIMEOUT_SECONDS = 60.0
+ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES = 8192
 SESSION_VALUE_TIMEOUT_SECONDS = 90.0
 SESSION_VALUE_OUTPUT_LIMIT_BYTES = 8192
 
@@ -80,7 +80,7 @@ def _admission_refresh_receipt(event: str, **fields: object) -> None:
 
 
 def _refresh_admission() -> bool:
-    """Refresh keeper-owned admission through one bounded relay process."""
+    """Refresh keeper-owned admission through one process-group-bounded relay."""
     path = Path(__file__).with_name("handoff-relay.py")
     try:
         configured_timeout = float(
@@ -92,27 +92,42 @@ def _refresh_admission() -> bool:
     except ValueError:
         timeout = ADMISSION_REFRESH_TIMEOUT_SECONDS
     started = time.monotonic()
-    _admission_refresh_receipt("start", timeout_seconds=timeout)
-    try:
-        result = subprocess.run(
-            [sys.executable, str(path)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired:
+    _admission_refresh_receipt(
+        "start",
+        timeout_seconds=timeout,
+        output_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES * 2,
+        stdout_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
+        stderr_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
+    )
+    if _run_bounded_subprocess is None:
         _admission_refresh_receipt(
             "finish",
             elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome="timeout",
+            outcome="runner_unavailable",
         )
         return False
-    except OSError:
+    try:
+        result = _run_bounded_subprocess(
+            [sys.executable, str(path)],
+            cwd=ROOT,
+            timeout_seconds=timeout,
+            stdout_ceiling=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
+            stderr_ceiling=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
+        )
+    except Exception as exc:
+        failure_kind = (
+            str(exc.kind)
+            if _BoundedSubprocessError is not None and isinstance(exc, _BoundedSubprocessError)
+            else "unavailable"
+        )
+        outcome = {
+            "output": "output_limit",
+            "unavailable": "launch_failed",
+        }.get(failure_kind, failure_kind)
         _admission_refresh_receipt(
             "finish",
             elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome="launch_failed",
+            outcome=outcome,
         )
         return False
     outcome = "ok" if result.returncode == 0 else "failed"

@@ -71,7 +71,9 @@ def test_failing_required_check_names_are_preserved(monkeypatch, tmp_path: Path)
     module = _load(tmp_path)
 
     class Result:
-        returncode = 0
+        # `gh pr checks` returns non-zero when a required check is red; the JSON
+        # payload remains authoritative and must still drive CI-red classification.
+        returncode = 1
         stdout = json.dumps(
             [
                 {"name": "pr-gate", "bucket": "fail", "state": "FAILURE"},
@@ -81,6 +83,46 @@ def test_failing_required_check_names_are_preserved(monkeypatch, tmp_path: Path)
 
     monkeypatch.setattr(module, "gh", lambda *_args, **_kwargs: Result())
     assert module._failing_required_checks("organvm/repo", 7) == ("pr-gate",)
+
+
+def test_optional_failure_does_not_create_ci_red_onset(monkeypatch, tmp_path: Path) -> None:
+    module = _load(tmp_path)
+    payload = {
+        "state": "OPEN",
+        "isDraft": False,
+        "labels": [{"name": "lifecycle:delivery"}],
+        "mergeable": "MERGEABLE",
+        "mergeStateStatus": "UNSTABLE",
+        "statusCheckRollup": [
+            {"name": "advisory", "conclusion": "FAILURE"},
+            {"name": "pr-gate", "conclusion": "SUCCESS"},
+        ],
+        "files": [],
+        "baseRefName": "main",
+        "headRefOid": "a" * 40,
+    }
+
+    def fake_gh(args, **_kwargs):
+        if args[:2] == ["pr", "view"]:
+            return SimpleNamespace(returncode=0, stdout=json.dumps(payload))
+        assert args[:2] == ["pr", "checks"]
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([{"name": "pr-gate", "bucket": "pass", "state": "SUCCESS"}]),
+        )
+
+    monkeypatch.setattr(module, "gh", fake_gh)
+    monkeypatch.setattr(module, "stale_base_verdict", lambda *_args: None)
+    monkeypatch.setattr(module, "merge_queue_capability", lambda *_args: "inactive")
+    monkeypatch.setattr(module, "_is_trivial", lambda *_args: False)
+
+    assert module.assess(("organvm/repo", 7)) == (
+        "organvm/repo",
+        7,
+        "READY",
+        "a" * 40,
+        "direct",
+    )
 
 
 def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tmp_path: Path, capsys) -> None:
