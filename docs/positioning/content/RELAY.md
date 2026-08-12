@@ -76,6 +76,7 @@ leaves at `gpt-5.6-terra/high`.
 ## Risks and prohibitions
 
 - Human gates still unpulled: `HG-PUBLIC-IDENTITY` (W02) and `HG-PUBLICATION-SEND` (W08).
+- PR metadata boundary: draft PR #2316 tracks the pushed branch, but its description refresh is blocked by the credential owner's invalid GitHub CLI token; after credential repair, run `gh pr edit 2316 --body-file <reviewed-body>` without changing draft status.
 - Sensitive/private material boundary: no private evidence, personal contact data, or real incident record belongs in this package.
 - Files or sibling work that must not be touched: `tasks.yaml`, generated program indexes, external target repositories, and active sibling preflight paths.
 - Rollback route: remove or quarantine a staged asset under this directory; for a later real release, use the correction/withdrawal contract and preserve its external receipt.
