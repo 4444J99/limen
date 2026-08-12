@@ -214,6 +214,10 @@ def _live_profile_fixture():
         for index in range(0, len(contribution_days), 7)
     ]
 
+    compare_url = (
+        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
+        f"{accepted_head}...{current_head}"
+    )
     public_payloads = {
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
@@ -233,14 +237,13 @@ def _live_profile_fixture():
             "commit": {"committer": {"date": "2026-08-12T07:10:00Z"}},
             "parents": [{"sha": latest_trigger}],
         },
-        (
-            f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
-            f"{accepted_head}...{current_head}"
-        ): {
+        compare_url: {
+            "url": compare_url,
             "status": "ahead",
+            "ahead_by": 2,
             "base_commit": {"sha": accepted_head},
             "merge_base_commit": {"sha": accepted_head},
-            "commits": [{"sha": current_head}],
+            "commits": [{"sha": "4" * 40}],
         },
     }
     contribution_payload = {
@@ -473,6 +476,27 @@ def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
     errors = _errors(wrong_path)
     assert "source PROFILE_README must bind its exact public path" in errors
     assert "source PROFILE_README must bind its exact public url" in errors
+
+
+def test_public_sources_reject_unexpected_and_credential_bearing_fields() -> None:
+    unexpected = _bundle()
+    unexpected["artifact"] = copy.deepcopy(unexpected["artifact"])
+    unexpected["artifact"]["sources"]["PROFILE_API_RECEIPT"]["authorization"] = (
+        "Bearer SECRET"
+    )
+    assert (
+        "source PROFILE_API_RECEIPT must match its exact typed public contract"
+        in _errors(unexpected)
+    )
+
+    changed = _bundle()
+    changed["artifact"] = copy.deepcopy(changed["artifact"])
+    changed["artifact"]["sources"]["PROFILE_API_RECEIPT"]["receipt_path"] = (
+        "unexpected/private-metadata"
+    )
+    errors = _errors(changed)
+    assert "source PROFILE_API_RECEIPT must match its exact typed public contract" in errors
+    assert "source PROFILE_API_RECEIPT must bind its exact public receipt_path" in errors
 
 
 def test_live_public_sources_require_public_repositories_and_exact_paths() -> None:
@@ -1043,6 +1067,49 @@ def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() ->
     assert set(http_calls) == {
         url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
     }
+
+
+def test_live_profile_window_ignores_older_failures_and_truncated_compare_commits() -> None:
+    now, public_payloads, contribution_payload = _live_profile_fixture()
+    runs = public_payloads[MODULE.PROFILE_RUNS_API_URL]["workflow_runs"]
+    oldest_created = datetime.fromisoformat(runs[-1]["created_at"].replace("Z", "+00:00"))
+    for offset in range(2):
+        run_id = 8000 + offset
+        created_at = oldest_created - timedelta(days=offset + 1)
+        runs.append(
+            {
+                "id": run_id,
+                "event": "schedule",
+                "status": "completed",
+                "conclusion": "failure",
+                "created_at": _rfc3339(created_at),
+                "updated_at": _rfc3339(created_at + timedelta(minutes=5)),
+                "head_sha": f"{offset + 20:040x}",
+                "html_url": (
+                    f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"
+                ),
+            }
+        )
+    compare_url = next(url for url in public_payloads if "/compare/" in url)
+    public_payloads[compare_url]["ahead_by"] = 500
+    public_payloads[compare_url]["commits"] = [{"sha": "f" * 40}]
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
+        public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        http_fetch=lambda url: {
+            "status": next(
+                status
+                for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
+                if expected_url == url
+            ),
+            "url": url,
+        },
+        now=now,
+    )
+
+    assert errors == []
 
 
 def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payloads() -> None:

@@ -294,6 +294,56 @@ EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
         "url": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
     },
 }
+_EXPECTED_PUBLIC_SOURCE_METADATA: dict[str, dict[str, object]] = {
+    "PROFILE_README": {"kind": "head_pinned_public_source", "public": True},
+    "PROFILE_MANIFEST": {"kind": "head_pinned_public_source", "public": True},
+    "PROFILE_WORKFLOW": {"kind": "head_pinned_public_source", "public": True},
+    "PROFILE_API_RECEIPT": {
+        "kind": "dated_public_api_receipt",
+        "observed_at": "2026-08-10T19:14:05Z",
+        "receipt_path": str(RECEIPT_PATH.relative_to(ROOT)),
+        "public": True,
+    },
+    "PROFILE_RUNS": {
+        "kind": "dated_public_api_receipt",
+        "observed_at": "2026-08-10T19:14:05Z",
+        "receipt_path": str(RECEIPT_PATH.relative_to(ROOT)),
+        "public": True,
+    },
+    "W01_CENSUS_RECEIPT": {
+        "kind": "head_pinned_public_safe_receipt",
+        "public": True,
+    },
+    "W03_PROOF_SET": {
+        "kind": "head_pinned_public_safe_receipt",
+        "public": True,
+    },
+    "CLAIMS_LEDGER": {"kind": "head_pinned_public_source", "public": True},
+    "W05_FLAGSHIP_EVIDENCE": {
+        "kind": "head_pinned_public_source",
+        "public": True,
+    },
+    "LAVREA_METHODOLOGY": {"kind": "head_pinned_public_source", "public": True},
+    "LAVREA_BASELINES": {"kind": "head_pinned_public_source", "public": True},
+    "GITHUB_CONTRIBUTIONS": {"kind": "primary_documentation", "public": True},
+    "GITHUB_GRAPHQL": {"kind": "primary_documentation", "public": True},
+    "GITHUB_REPOSITORIES": {"kind": "primary_documentation", "public": True},
+    "GITHUB_TRANSFER": {"kind": "primary_documentation", "public": True},
+    "GITHUB_OCTOVERSE_2023": {
+        "kind": "primary_population_report",
+        "public": True,
+    },
+    "PORTFOLIO_IDENTITY": {
+        "kind": "stable_public_repository_identity",
+        "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+        "receipt_path": str(RECEIPT_PATH.relative_to(ROOT)),
+        "public": True,
+    },
+}
+EXPECTED_PUBLIC_SOURCES = {
+    source_id: {**source, **_EXPECTED_PUBLIC_SOURCE_METADATA[source_id]}
+    for source_id, source in EXPECTED_PUBLIC_SOURCES.items()
+}
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
     "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
@@ -734,8 +784,10 @@ def validate_bundle(
             f"artifact.sources.{source_id}",
             errors,
         )
+        if not _exact_typed_mapping(source, expected_source):
+            errors.append(f"source {source_id} must match its exact typed public contract")
         for key, expected in expected_source.items():
-            if source.get(key) != expected:
+            if type(source.get(key)) is not type(expected) or source.get(key) != expected:
                 errors.append(f"source {source_id} must bind its exact public {key}")
 
     w01_source = _mapping(
@@ -1756,8 +1808,6 @@ def validate_live_profile_observations(
         if run_id in run_ids:
             errors.append(f"live scheduled workflow run id {run_id} is duplicated")
         run_ids.add(run_id)
-        if run.get("event") != "schedule" or run.get("status") != "completed" or run.get("conclusion") != "success":
-            errors.append(f"live scheduled workflow run {run_id} must be a completed scheduled success")
         expected_url = f"https://github.com/{PROFILE_REPOSITORY}/actions/runs/{run_id}"
         if run.get("html_url") != expected_url:
             errors.append(f"live scheduled workflow run {run_id} must bind its exact public URL")
@@ -1771,13 +1821,27 @@ def validate_live_profile_observations(
     latest_eight = parsed_runs[:8]
     if len(latest_eight) != 8:
         errors.append("live profile workflow must expose eight recent successful scheduled runs")
-    elif len({created_at.date() for created_at, _run in latest_eight}) != 8:
-        errors.append("live profile workflow must expose one recent scheduled success per UTC day")
     else:
-        observed_days = sorted(created_at.date() for created_at, _run in latest_eight)
-        expected_days = [observed_days[0] + timedelta(days=offset) for offset in range(8)]
-        if observed_days != expected_days:
-            errors.append("live profile workflow scheduled successes must cover eight consecutive UTC days")
+        for _created_at, run in latest_eight:
+            if (
+                run.get("event") != "schedule"
+                or run.get("status") != "completed"
+                or run.get("conclusion") != "success"
+            ):
+                errors.append(
+                    f"live scheduled workflow run {run['id']} must be a completed scheduled success"
+                )
+        if len({created_at.date() for created_at, _run in latest_eight}) != 8:
+            errors.append("live profile workflow must expose one recent scheduled success per UTC day")
+        else:
+            observed_days = sorted(created_at.date() for created_at, _run in latest_eight)
+            expected_days = [
+                observed_days[0] + timedelta(days=offset) for offset in range(8)
+            ]
+            if observed_days != expected_days:
+                errors.append(
+                    "live profile workflow scheduled successes must cover eight consecutive UTC days"
+                )
     latest_run = latest_eight[0][1] if latest_eight else {}
     latest_created_at = latest_eight[0][0] if latest_eight else None
     if latest_created_at is not None and not (
@@ -1827,27 +1891,25 @@ def validate_live_profile_observations(
             base_commit = comparison.get("base_commit")
             merge_base = comparison.get("merge_base_commit")
             comparison_status = comparison.get("status")
+            ahead_by = comparison.get("ahead_by")
+            if comparison.get("url") != compare_url:
+                errors.append("live profile comparison must bind its exact requested endpoint")
             if comparison_status not in {"ahead", "identical"}:
                 errors.append("live profile main head must remain ahead of its accepted observation")
             if not isinstance(base_commit, dict) or base_commit.get("sha") != accepted_head:
                 errors.append("live profile comparison must retain the accepted base head")
             if not isinstance(merge_base, dict) or merge_base.get("sha") != accepted_head:
                 errors.append("live profile accepted head must remain the merge base")
-            comparison_commits = comparison.get("commits")
-            comparison_tip = (
-                comparison_commits[-1]
-                if isinstance(comparison_commits, list) and comparison_commits
-                else None
-            )
-            resolves_current_head = (
-                comparison_status == "identical" and current_head == accepted_head
-            ) or (
-                comparison_status == "ahead"
-                and isinstance(comparison_tip, dict)
-                and comparison_tip.get("sha") == current_head
-            )
-            if not resolves_current_head:
-                errors.append("live profile comparison must resolve the current main head")
+            if comparison_status == "identical" and (
+                current_head != accepted_head or ahead_by != 0
+            ):
+                errors.append("identical live profile comparison must retain the accepted head")
+            if comparison_status == "ahead" and (
+                not isinstance(ahead_by, int)
+                or isinstance(ahead_by, bool)
+                or ahead_by <= 0
+            ):
+                errors.append("ahead live profile comparison needs a positive commit distance")
 
     try:
         contribution_payload = gh_fetch(
