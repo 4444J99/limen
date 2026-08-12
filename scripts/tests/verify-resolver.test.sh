@@ -202,6 +202,7 @@ agent-docs
 github-estate-census-custody-test
 flagship-proof-set-test
 flagship-evidence-test
+claim-policy-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
