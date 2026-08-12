@@ -118,6 +118,37 @@ def test_non_interactive_subcommands_are_not_sessions(monkeypatch) -> None:
         assert liveness._is_session(pid) is False, invocation
 
 
+def test_a_desktop_app_stdio_server_is_not_a_session(monkeypatch) -> None:
+    # The exact process that pinned this guard on 2026-08-12: ChatGPT.app spawns
+    # `codex app-server --listen stdio://` and it lives for the app's whole lifetime. Counting it
+    # made "occupied" permanent, so sync-release never reconciled and the live checkout sat 29
+    # commits behind while the fleet ran stale code. Asserted across runtimes because the shape is
+    # the runtime-agnostic one: any agent CLI serving a desktop app over stdio is a service.
+    invocations = {
+        20: "/Applications/ChatGPT.app/Contents/Resources/codex app-server --listen stdio://",
+        21: "/Users/x/.local/bin/claude app-server",
+        22: "/opt/homebrew/bin/gemini app-server --listen stdio://",
+    }
+    monkeypatch.setattr(liveness.subprocess, "run", _fake_ps(invocations))
+    for pid, invocation in invocations.items():
+        assert liveness._is_session(pid) is False, invocation
+
+
+def test_app_server_exemption_does_not_leak_to_neighbouring_subcommands(monkeypatch) -> None:
+    # The exclusion is the only thing between "the guard ignores a service" and "the guard ignores
+    # a session", so it must match the whole bare subcommand and nothing adjacent to it. A prefix
+    # match would silently exempt a real session, and that failure is invisible from the guard's
+    # own output.
+    invocations = {
+        23: "/Users/x/.local/bin/codex app-server-inspect",
+        24: "/Users/x/.local/bin/codex app",
+        25: "/Users/x/.local/bin/codex serve",
+    }
+    monkeypatch.setattr(liveness.subprocess, "run", _fake_ps(invocations))
+    for pid, invocation in invocations.items():
+        assert liveness._is_session(pid) is True, invocation
+
+
 def test_a_genuine_session_is_still_a_session(monkeypatch) -> None:
     invocations = {
         10: "/Users/x/.local/bin/claude",
