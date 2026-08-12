@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from datetime import datetime, timedelta, timezone
 import importlib.machinery
 import importlib.util
 import json
@@ -150,6 +151,111 @@ def _sync_projected_issue_receipt(bundle) -> None:
         }
         for work_id in work_ids
     ]
+
+
+def _rfc3339(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _live_profile_fixture():
+    now = datetime(2026, 8, 12, 13, 0, tzinfo=timezone.utc)
+    latest_trigger = "2" * 40
+    current_head = "3" * 40
+    accepted_head = _bundle()["receipt"]["public_profile"]["head"]
+    run_start = now.replace(hour=7, minute=0, second=0, microsecond=0)
+    runs = []
+    for offset in range(8):
+        created_at = run_start - timedelta(days=offset)
+        run_id = 9000 + offset
+        trigger_head = latest_trigger if offset == 0 else f"{offset + 3:040x}"
+        runs.append(
+            {
+                "id": run_id,
+                "event": "schedule",
+                "status": "completed",
+                "conclusion": "success",
+                "created_at": _rfc3339(created_at),
+                "updated_at": _rfc3339(created_at + timedelta(minutes=5)),
+                "head_sha": trigger_head,
+                "html_url": (
+                    f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"
+                ),
+            }
+        )
+
+    stats = {}
+    for name, value in {
+        "personal_public_repos": 8,
+        "followers": 41,
+        "member_since": "2016",
+        "ecosystem_public_repos": 227,
+        "ecosystem_original_repos": 198,
+        "contributions_last_year": 33203,
+    }.items():
+        stats[name] = {
+            "value": value,
+            "basis": "live-public-gh-api",
+            "source_query": f"gh api public/{name}",
+            "attest": "api",
+        }
+
+    contribution_days = []
+    first_day = now.date() - timedelta(days=365)
+    for offset in range(366):
+        contribution_days.append(
+            {
+                "contributionCount": 91 if offset < 365 else 2,
+                "date": (first_day + timedelta(days=offset)).isoformat(),
+            }
+        )
+    contribution_total = sum(day["contributionCount"] for day in contribution_days)
+    weeks = [
+        {"contributionDays": contribution_days[index : index + 7]}
+        for index in range(0, len(contribution_days), 7)
+    ]
+
+    public_payloads = {
+        MODULE.PROFILE_USER_API_URL: {
+            **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
+            "updated_at": "2026-08-12T08:00:00Z",
+        },
+        MODULE.PROFILE_MANIFEST_RAW_URL: {
+            "login": "4444J99",
+            "generated": "2026-08-12T07:05:00Z",
+            "stats": stats,
+        },
+        MODULE.PROFILE_RUNS_API_URL: {"workflow_runs": runs},
+        MODULE.PROFILE_MAIN_COMMIT_API_URL: {
+            "sha": current_head,
+            "html_url": (
+                f"https://github.com/{MODULE.PROFILE_REPOSITORY}/commit/{current_head}"
+            ),
+            "commit": {"committer": {"date": "2026-08-12T07:10:00Z"}},
+            "parents": [{"sha": latest_trigger}],
+        },
+        (
+            f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
+            f"{accepted_head}...{current_head}"
+        ): {
+            "status": "ahead",
+            "base_commit": {"sha": accepted_head},
+            "merge_base_commit": {"sha": accepted_head},
+            "commits": [{"sha": current_head}],
+        },
+    }
+    contribution_payload = {
+        "data": {
+            "user": {
+                "contributionsCollection": {
+                    "contributionCalendar": {
+                        "totalContributions": contribution_total,
+                        "weeks": weeks,
+                    }
+                }
+            }
+        }
+    }
+    return now, public_payloads, contribution_payload
 
 
 def test_tracked_adjudication_bundle_passes_static_contract() -> None:
@@ -776,6 +882,56 @@ def test_api_receipt_ids_bind_their_exact_expected_source_endpoints() -> None:
         )
 
 
+def test_public_receipt_schemas_reject_credential_bearing_extra_fields() -> None:
+    for receipt_id in MODULE.EXPECTED_API_RECEIPT_IDS:
+        bundle = _bundle()
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        row = next(
+            row
+            for row in bundle["receipt"]["api_query_receipts"]
+            if row["id"] == receipt_id
+        )
+        row["authorization"] = "Bearer SECRET"
+
+        assert any(
+            f"API query receipt {receipt_id} must contain exactly" in error
+            for error in _errors(bundle)
+        )
+
+    for receipt_id in MODULE.EXPECTED_HTTP_RECEIPTS:
+        bundle = _bundle()
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        row = next(
+            row
+            for row in bundle["receipt"]["http_receipts"]
+            if row["id"] == receipt_id
+        )
+        row["authorization"] = "Bearer SECRET"
+
+        assert any(
+            f"HTTP receipt {receipt_id} must contain exactly" in error
+            for error in _errors(bundle)
+        )
+
+    daily = _bundle()
+    daily["receipt"] = copy.deepcopy(daily["receipt"])
+    daily["receipt"]["daily_generation_receipt"]["authorization"] = "Bearer SECRET"
+    assert (
+        "daily generation receipt must contain its exact public field set"
+        in _errors(daily)
+    )
+
+    run = _bundle()
+    run["receipt"] = copy.deepcopy(run["receipt"])
+    run["receipt"]["daily_generation_receipt"]["runs"][0]["authorization"] = (
+        "Bearer SECRET"
+    )
+    assert (
+        "every daily generation run must contain its exact public field set"
+        in _errors(run)
+    )
+
+
 def test_projected_issue_numbers_are_positive_non_boolean_and_distinct() -> None:
     for invalid_number in (True, 0, -1):
         bundle = _bundle()
@@ -844,6 +1000,115 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
                 f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
                 in _errors(credentialed)
             )
+
+
+def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() -> None:
+    now, public_payloads, contribution_payload = _live_profile_fixture()
+    public_calls = []
+    graphql_calls = []
+    http_calls = []
+
+    def public_fetch(url):
+        public_calls.append(url)
+        return copy.deepcopy(public_payloads[url])
+
+    def gh_fetch(args):
+        graphql_calls.append(args)
+        return copy.deepcopy(contribution_payload)
+
+    def http_fetch(url):
+        http_calls.append(url)
+        status = MODULE.EXPECTED_HTTP_RECEIPTS[
+            next(
+                receipt_id
+                for receipt_id, (expected_url, _status) in MODULE.EXPECTED_HTTP_RECEIPTS.items()
+                if expected_url == url
+            )
+        ][1]
+        return {"status": status, "url": url}
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        gh_fetch=gh_fetch,
+        public_fetch=public_fetch,
+        http_fetch=http_fetch,
+        now=now,
+    )
+
+    assert errors == []
+    assert set(public_calls) == set(public_payloads)
+    assert graphql_calls == [
+        ["api", "graphql", "-f", f"query={MODULE.PROFILE_CONTRIBUTION_QUERY}"]
+    ]
+    assert set(http_calls) == {
+        url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
+    }
+
+
+def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payloads() -> None:
+    now, public_payloads, contribution_payload = _live_profile_fixture()
+
+    def validate(payloads, contribution=contribution_payload, http_statuses=None):
+        statuses = http_statuses or {
+            url: status for url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
+        }
+        return MODULE.validate_live_profile_observations(
+            _bundle()["receipt"],
+            gh_fetch=lambda _args: copy.deepcopy(contribution),
+            public_fetch=lambda url: copy.deepcopy(payloads[url]),
+            http_fetch=lambda url: {"status": statuses[url], "url": url},
+            now=now,
+        )
+
+    changed_profile = copy.deepcopy(public_payloads)
+    changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 9
+    assert any(
+        "live profile metadata public_repos must remain 8" in error
+        for error in validate(changed_profile)
+    )
+
+    missing_runs = copy.deepcopy(public_payloads)
+    missing_runs[MODULE.PROFILE_RUNS_API_URL] = {"workflow_runs": []}
+    assert (
+        "live profile workflow must expose eight recent successful scheduled runs"
+        in validate(missing_runs)
+    )
+
+    changed_contribution = copy.deepcopy(contribution_payload)
+    calendar = changed_contribution["data"]["user"]["contributionsCollection"][
+        "contributionCalendar"
+    ]
+    calendar["totalContributions"] -= 1
+    assert (
+        "live contribution total must equal the sum of daily counts"
+        in validate(public_payloads, changed_contribution)
+    )
+
+    changed_http = {
+        url: 500 if index == 0 else status
+        for index, (url, status) in enumerate(MODULE.EXPECTED_HTTP_RECEIPTS.values())
+    }
+    assert any(
+        "live HTTP receipt" in error and "must remain" in error
+        for error in validate(public_payloads, http_statuses=changed_http)
+    )
+
+    malformed = copy.deepcopy(public_payloads)
+    malformed[MODULE.PROFILE_USER_API_URL] = []
+    malformed[MODULE.PROFILE_MANIFEST_RAW_URL] = "not-a-mapping"
+    malformed[MODULE.PROFILE_RUNS_API_URL] = None
+    malformed[MODULE.PROFILE_MAIN_COMMIT_API_URL] = []
+    compare_url = next(url for url in malformed if "/compare/" in url)
+    malformed[compare_url] = "not-a-mapping"
+    malformed_errors = validate(malformed, contribution=[])
+    assert "live profile metadata response must be a mapping" in malformed_errors
+    assert "live profile stats manifest response must be a mapping" in malformed_errors
+    assert "live scheduled workflow response must be a mapping" in malformed_errors
+    assert "live profile main-head response must be a mapping" in malformed_errors
+    assert (
+        "live contribution calendar response must contain the expected mapping"
+        in malformed_errors
+    )
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:

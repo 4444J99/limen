@@ -12,7 +12,9 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Callable
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote, unquote, urlsplit
+from urllib.request import Request, urlopen
 
 import yaml
 
@@ -107,6 +109,21 @@ RECEIPT_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
 PROFILE_RENDERED_CONTRIBUTIONS = 33130
 PROFILE_FRESH_CONTRIBUTIONS = 33168
 PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
+PROFILE_REPOSITORY = "4444J99/4444J99"
+PROFILE_REPOSITORY_ID = 1292733696
+PROFILE_USER_API_URL = "https://api.github.com/users/4444J99"
+PROFILE_RUNS_API_URL = (
+    "https://api.github.com/repos/4444J99/4444J99/actions/workflows/"
+    "profile.yml/runs?event=schedule&status=completed&per_page=10"
+)
+PROFILE_MAIN_COMMIT_API_URL = "https://api.github.com/repos/4444J99/4444J99/commits/main"
+PROFILE_MANIFEST_RAW_URL = (
+    "https://raw.githubusercontent.com/4444J99/4444J99/main/assets/stats-manifest.json"
+)
+PROFILE_CONTRIBUTION_QUERY = (
+    'query { user(login:"4444J99") { contributionsCollection { contributionCalendar '
+    "{ totalContributions weeks { contributionDays { contributionCount date } } } } } }"
+)
 EXPECTED_PROFILE_METADATA_RESULT = {
     "login": "4444J99",
     "id": 24796448,
@@ -143,6 +160,52 @@ EXPECTED_HTTP_REPRODUCTIONS = {
     )
     for receipt_id, (url, _status) in EXPECTED_HTTP_RECEIPTS.items()
 }
+EXPECTED_HTTP_RECEIPT_KEYS = frozenset(
+    {"id", "url", "status", "observed_at", "reproduction"}
+)
+EXPECTED_API_RECEIPT_KEYS = {
+    "profile_metadata": frozenset(
+        {"id", "source", "reproduction", "observed_at", "result"}
+    ),
+    "public_organization_repository_counts": frozenset(
+        {"id", "source", "query", "observed_at", "organization_count", "counts", "total"}
+    ),
+    "public_original_organization_repository_counts": frozenset(
+        {"id", "source", "query", "observed_at", "organization_count", "counts", "total"}
+    ),
+    "contribution_calendar_fresh_observation": frozenset(
+        {"id", "source", "reproduction", "observed_at", "result", "interpretation"}
+    ),
+    "w01_public_safe_census": frozenset(
+        {"id", "source", "reproduction", "observed_at", "result", "privacy"}
+    ),
+}
+EXPECTED_CONTRIBUTION_RESULT_KEYS = frozenset(
+    {"starts_at", "ends_at", "total_contributions", "sum_of_daily_counts"}
+)
+EXPECTED_W01_RESULT = {
+    "organization_count": 10,
+    "accessible_repository_count": 314,
+    "public_repository_count": 235,
+    "private_repository_count": 79,
+    "profile_basis_reconciliation": (
+        "8 personal public repositories + 227 public organization repositories = "
+        "235 public repositories"
+    ),
+}
+EXPECTED_DAILY_RECEIPT_KEYS = frozenset(
+    {
+        "window_start",
+        "window_end",
+        "scheduled_runs_observed",
+        "successful_runs",
+        "runs",
+        "bounded_interpretation",
+    }
+)
+EXPECTED_DAILY_RUN_KEYS = frozenset(
+    {"run_id", "url", "created_at", "event", "conclusion", "resulting_head"}
+)
 EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
     "PROFILE_README": {
         "repository": "4444J99/4444J99",
@@ -1017,6 +1080,11 @@ def validate_bundle(
             errors.append(f"API query receipt id {receipt_id} is duplicated")
         else:
             api_receipts[receipt_id] = row
+        expected_keys = EXPECTED_API_RECEIPT_KEYS.get(receipt_id)
+        if expected_keys is not None and set(row) != expected_keys:
+            errors.append(
+                f"API query receipt {receipt_id} must contain exactly {sorted(expected_keys)!r}"
+            )
         if not _credential_free_https_url(row.get("source")):
             errors.append(f"API query receipt {receipt_id} needs a credential-free HTTPS source")
         expected_source = EXPECTED_API_RECEIPT_SOURCES.get(receipt_id)
@@ -1097,6 +1165,8 @@ def validate_bundle(
         "API query receipt contribution_calendar_fresh_observation.result",
         errors,
     )
+    if set(contributions) != EXPECTED_CONTRIBUTION_RESULT_KEYS:
+        errors.append("fresh contribution result must contain its exact public field set")
     w01_receipt = _mapping(
         api_receipts.get("w01_public_safe_census"),
         "API query receipt w01_public_safe_census",
@@ -1107,6 +1177,8 @@ def validate_bundle(
         "API query receipt w01_public_safe_census.result",
         errors,
     )
+    if not _exact_typed_mapping(w01_result, EXPECTED_W01_RESULT):
+        errors.append("W01 query result must match the exact typed public-safe observation")
     rendered_contributions = rendered.get("contributions_last_year")
     total_contributions = contributions.get("total_contributions")
     sum_of_daily_counts = contributions.get("sum_of_daily_counts")
@@ -1168,6 +1240,10 @@ def validate_bundle(
             errors.append(f"HTTP receipt id {receipt_id} is duplicated")
             continue
         http[receipt_id] = row
+        if set(row) != EXPECTED_HTTP_RECEIPT_KEYS:
+            errors.append(
+                f"HTTP receipt {receipt_id} must contain exactly {sorted(EXPECTED_HTTP_RECEIPT_KEYS)!r}"
+            )
     if len(http_rows) != len(http) or set(http) != set(EXPECTED_HTTP_RECEIPTS):
         errors.append("HTTP receipts must contain each expected endpoint exactly once")
     for receipt_id, (expected_url, expected_status) in EXPECTED_HTTP_RECEIPTS.items():
@@ -1192,6 +1268,8 @@ def validate_bundle(
         "receipt.daily_generation_receipt",
         errors,
     )
+    if set(daily) != EXPECTED_DAILY_RECEIPT_KEYS:
+        errors.append("daily generation receipt must contain its exact public field set")
     runs = _list(daily.get("runs"), "receipt.daily_generation_receipt.runs", errors)
     if daily.get("scheduled_runs_observed") != 8 or daily.get("successful_runs") != 8 or len(runs) != 8:
         errors.append("daily generation receipt must contain eight observed successful runs")
@@ -1207,6 +1285,8 @@ def validate_bundle(
         if not isinstance(row, dict):
             errors.append("every daily generation run must be a mapping")
             continue
+        if set(row) != EXPECTED_DAILY_RUN_KEYS:
+            errors.append("every daily generation run must contain its exact public field set")
         run_id = row.get("run_id")
         if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
             errors.append("every daily generation run needs a positive integer run_id")
@@ -1308,6 +1388,49 @@ def _gh_json(args: list[str]) -> Any:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         raise AdjudicationError("GitHub query returned invalid JSON") from exc
+
+
+def _public_json(url: str) -> Any:
+    """Fetch one credential-free public JSON endpoint with a finite deadline."""
+
+    if url != PROFILE_RUNS_API_URL and not _credential_free_https_url(url):
+        raise AdjudicationError("public JSON query needs a credential-free HTTPS URL")
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "limen-positioning-adjudication/1",
+        },
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = response.read()
+    except HTTPError as exc:
+        raise AdjudicationError(f"public JSON query returned HTTP {exc.code}") from exc
+    except (URLError, OSError) as exc:
+        raise AdjudicationError(f"public JSON query failed: {exc}") from exc
+    try:
+        return json.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise AdjudicationError("public JSON query returned invalid JSON") from exc
+
+
+def _http_observation(url: str) -> dict[str, object]:
+    """Observe one public endpoint without credentials, preserving HTTP failures as status."""
+
+    if not _credential_free_https_url(url):
+        raise AdjudicationError("HTTP observation needs a credential-free HTTPS URL")
+    request = Request(
+        url,
+        headers={"User-Agent": "limen-positioning-adjudication/1"},
+    )
+    try:
+        with urlopen(request, timeout=20) as response:
+            return {"status": response.status, "url": response.geturl()}
+    except HTTPError as exc:
+        return {"status": exc.code, "url": exc.geturl()}
+    except (URLError, OSError) as exc:
+        raise AdjudicationError(f"HTTP observation failed: {exc}") from exc
 
 
 def validate_live_identity(
@@ -1529,6 +1652,285 @@ def validate_live_dependencies(
     return errors
 
 
+def validate_live_profile_observations(
+    receipt: dict[str, Any],
+    gh_fetch: Callable[[list[str]], Any] = _gh_json,
+    public_fetch: Callable[[str], Any] = _public_json,
+    http_fetch: Callable[[str], Any] = _http_observation,
+    now: datetime | None = None,
+) -> list[str]:
+    """Reproduce every moving public observation that supports current profile claims."""
+
+    errors: list[str] = []
+    observed_now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+
+    def fetch_public(label: str, url: str) -> Any:
+        try:
+            return public_fetch(url)
+        except AdjudicationError as exc:
+            errors.append(f"cannot reproduce live {label}: {exc}")
+            return None
+
+    profile = fetch_public("profile metadata", PROFILE_USER_API_URL)
+    if not isinstance(profile, dict):
+        errors.append("live profile metadata response must be a mapping")
+        profile = {}
+    for key in ("login", "id", "type", "public_repos", "created_at", "blog"):
+        expected = EXPECTED_PROFILE_METADATA_RESULT[key]
+        if type(profile.get(key)) is not type(expected) or profile.get(key) != expected:
+            errors.append(f"live profile metadata {key} must remain {expected!r}")
+    for key in ("followers", "following"):
+        if not _nonnegative_integer(profile.get(key)):
+            errors.append(f"live profile metadata {key} must be a non-negative integer")
+    profile_updated_at = _rfc3339(profile.get("updated_at"))
+    accepted_updated_at = _rfc3339(EXPECTED_PROFILE_METADATA_RESULT["updated_at"])
+    if profile_updated_at is None:
+        errors.append("live profile metadata updated_at must be RFC3339")
+    elif accepted_updated_at is not None and profile_updated_at < accepted_updated_at:
+        errors.append("live profile metadata updated_at predates the accepted observation")
+
+    manifest = fetch_public("profile stats manifest", PROFILE_MANIFEST_RAW_URL)
+    if not isinstance(manifest, dict):
+        errors.append("live profile stats manifest response must be a mapping")
+        manifest = {}
+    if manifest.get("login") != "4444J99":
+        errors.append("live profile stats manifest must remain bound to 4444J99")
+    manifest_generated = _rfc3339(manifest.get("generated"))
+    if manifest_generated is None:
+        errors.append("live profile stats manifest generated time must be RFC3339")
+    elif not observed_now - timedelta(hours=48) <= manifest_generated <= observed_now + timedelta(minutes=5):
+        errors.append("live profile stats manifest must be generated within the current 48-hour window")
+    stats = manifest.get("stats")
+    if not isinstance(stats, dict):
+        errors.append("live profile stats manifest stats must be a mapping")
+        stats = {}
+
+    def stat_value(name: str) -> object:
+        row = stats.get(name)
+        if not isinstance(row, dict):
+            errors.append(f"live profile stat {name} must be a mapping")
+            return None
+        if set(row) != {"value", "basis", "source_query", "attest"}:
+            errors.append(f"live profile stat {name} must contain its exact public field set")
+        if row.get("attest") != "api" or not _safe_public_metadata(row.get("source_query")):
+            errors.append(f"live profile stat {name} must retain public API attestation metadata")
+        return row.get("value")
+
+    current_personal_repos = stat_value("personal_public_repos")
+    if current_personal_repos != profile.get("public_repos"):
+        errors.append("live profile manifest and API personal repository counts must agree")
+    current_followers = stat_value("followers")
+    if current_followers != profile.get("followers"):
+        errors.append("live profile manifest and API follower counts must agree")
+    if stat_value("member_since") != "2016":
+        errors.append("live profile manifest tenure must remain bound to the account creation year")
+    if stat_value("ecosystem_public_repos") != 227:
+        errors.append("live profile manifest ecosystem public repository count must remain 227")
+    if stat_value("ecosystem_original_repos") != 198:
+        errors.append("live profile manifest ecosystem original repository count must remain 198")
+    manifest_contributions = stat_value("contributions_last_year")
+    if not _nonnegative_integer(manifest_contributions) or manifest_contributions < PROFILE_RENDERED_CONTRIBUTIONS:
+        errors.append(
+            f"live profile manifest contributions must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
+        )
+
+    runs_payload = fetch_public("scheduled profile workflow history", PROFILE_RUNS_API_URL)
+    if not isinstance(runs_payload, dict):
+        errors.append("live scheduled workflow response must be a mapping")
+        runs_payload = {}
+    workflow_runs = runs_payload.get("workflow_runs")
+    if not isinstance(workflow_runs, list):
+        errors.append("live scheduled workflow response must contain a run list")
+        workflow_runs = []
+    parsed_runs: list[tuple[datetime, dict[str, Any]]] = []
+    run_ids: set[int] = set()
+    for index, run in enumerate(workflow_runs):
+        if not isinstance(run, dict):
+            errors.append(f"live scheduled workflow run[{index}] must be a mapping")
+            continue
+        run_id = run.get("id")
+        created_at = _rfc3339(run.get("created_at"))
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            errors.append(f"live scheduled workflow run[{index}] needs a positive integer id")
+            continue
+        if run_id in run_ids:
+            errors.append(f"live scheduled workflow run id {run_id} is duplicated")
+        run_ids.add(run_id)
+        if run.get("event") != "schedule" or run.get("status") != "completed" or run.get("conclusion") != "success":
+            errors.append(f"live scheduled workflow run {run_id} must be a completed scheduled success")
+        expected_url = f"https://github.com/{PROFILE_REPOSITORY}/actions/runs/{run_id}"
+        if run.get("html_url") != expected_url:
+            errors.append(f"live scheduled workflow run {run_id} must bind its exact public URL")
+        if not HEAD_RE.fullmatch(str(run.get("head_sha") or "")):
+            errors.append(f"live scheduled workflow run {run_id} needs an exact trigger head")
+        if created_at is None or _rfc3339(run.get("updated_at")) is None:
+            errors.append(f"live scheduled workflow run {run_id} needs RFC3339 timestamps")
+        else:
+            parsed_runs.append((created_at, run))
+    parsed_runs.sort(key=lambda item: item[0], reverse=True)
+    latest_eight = parsed_runs[:8]
+    if len(latest_eight) != 8:
+        errors.append("live profile workflow must expose eight recent successful scheduled runs")
+    elif len({created_at.date() for created_at, _run in latest_eight}) != 8:
+        errors.append("live profile workflow must expose one recent scheduled success per UTC day")
+    else:
+        observed_days = sorted(created_at.date() for created_at, _run in latest_eight)
+        expected_days = [observed_days[0] + timedelta(days=offset) for offset in range(8)]
+        if observed_days != expected_days:
+            errors.append("live profile workflow scheduled successes must cover eight consecutive UTC days")
+    latest_run = latest_eight[0][1] if latest_eight else {}
+    latest_created_at = latest_eight[0][0] if latest_eight else None
+    if latest_created_at is not None and not (
+        observed_now - timedelta(hours=48)
+        <= latest_created_at
+        <= observed_now + timedelta(minutes=5)
+    ):
+        errors.append("latest successful scheduled profile run must be within 48 hours")
+
+    current_commit = fetch_public("profile main head", PROFILE_MAIN_COMMIT_API_URL)
+    if not isinstance(current_commit, dict):
+        errors.append("live profile main-head response must be a mapping")
+        current_commit = {}
+    current_head = current_commit.get("sha")
+    if not isinstance(current_head, str) or not HEAD_RE.fullmatch(current_head):
+        errors.append("live profile main head must be an exact 40-character commit")
+        current_head = ""
+    if current_commit.get("html_url") != f"https://github.com/{PROFILE_REPOSITORY}/commit/{current_head}":
+        errors.append("live profile main head must bind its exact public commit URL")
+    commit = current_commit.get("commit")
+    committer = commit.get("committer") if isinstance(commit, dict) else None
+    committed_at = _rfc3339(committer.get("date")) if isinstance(committer, dict) else None
+    if committed_at is None:
+        errors.append("live profile main head needs an RFC3339 committer time")
+    elif latest_created_at is not None and committed_at < latest_created_at:
+        errors.append("live profile main head must be committed after the latest scheduled run starts")
+    parents = current_commit.get("parents")
+    parent_heads = {
+        row.get("sha")
+        for row in parents
+        if isinstance(row, dict) and isinstance(row.get("sha"), str)
+    } if isinstance(parents, list) else set()
+    if latest_run and latest_run.get("head_sha") not in parent_heads:
+        errors.append("live profile main head must descend directly from the latest scheduled run trigger head")
+
+    accepted_profile = receipt.get("public_profile")
+    accepted_head = accepted_profile.get("head") if isinstance(accepted_profile, dict) else None
+    if isinstance(accepted_head, str) and HEAD_RE.fullmatch(accepted_head) and current_head:
+        compare_url = (
+            f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/"
+            f"{accepted_head}...{current_head}"
+        )
+        comparison = fetch_public("profile main-line continuity", compare_url)
+        if not isinstance(comparison, dict):
+            errors.append("live profile comparison response must be a mapping")
+        else:
+            base_commit = comparison.get("base_commit")
+            merge_base = comparison.get("merge_base_commit")
+            comparison_status = comparison.get("status")
+            if comparison_status not in {"ahead", "identical"}:
+                errors.append("live profile main head must remain ahead of its accepted observation")
+            if not isinstance(base_commit, dict) or base_commit.get("sha") != accepted_head:
+                errors.append("live profile comparison must retain the accepted base head")
+            if not isinstance(merge_base, dict) or merge_base.get("sha") != accepted_head:
+                errors.append("live profile accepted head must remain the merge base")
+            comparison_commits = comparison.get("commits")
+            comparison_tip = (
+                comparison_commits[-1]
+                if isinstance(comparison_commits, list) and comparison_commits
+                else None
+            )
+            resolves_current_head = (
+                comparison_status == "identical" and current_head == accepted_head
+            ) or (
+                comparison_status == "ahead"
+                and isinstance(comparison_tip, dict)
+                and comparison_tip.get("sha") == current_head
+            )
+            if not resolves_current_head:
+                errors.append("live profile comparison must resolve the current main head")
+
+    try:
+        contribution_payload = gh_fetch(
+            ["api", "graphql", "-f", f"query={PROFILE_CONTRIBUTION_QUERY}"]
+        )
+    except AdjudicationError as exc:
+        errors.append(f"cannot reproduce live contribution calendar: {exc}")
+        contribution_payload = None
+    data = contribution_payload.get("data") if isinstance(contribution_payload, dict) else None
+    user = data.get("user") if isinstance(data, dict) else None
+    collection = user.get("contributionsCollection") if isinstance(user, dict) else None
+    calendar = collection.get("contributionCalendar") if isinstance(collection, dict) else None
+    if not isinstance(calendar, dict):
+        errors.append("live contribution calendar response must contain the expected mapping")
+        calendar = {}
+    live_total = calendar.get("totalContributions")
+    weeks = calendar.get("weeks")
+    contribution_days: list[tuple[date, int]] = []
+    if not isinstance(weeks, list):
+        errors.append("live contribution calendar must contain weeks")
+        weeks = []
+    for week_index, week in enumerate(weeks):
+        days = week.get("contributionDays") if isinstance(week, dict) else None
+        if not isinstance(days, list):
+            errors.append(f"live contribution calendar week[{week_index}] must contain days")
+            continue
+        for day_index, day in enumerate(days):
+            if not isinstance(day, dict) or set(day) != {"contributionCount", "date"}:
+                errors.append(
+                    f"live contribution calendar week[{week_index}].day[{day_index}] must contain count and date"
+                )
+                continue
+            day_date = _iso_date(day.get("date"))
+            count = day.get("contributionCount")
+            if day_date is None or not _nonnegative_integer(count):
+                errors.append(
+                    f"live contribution calendar week[{week_index}].day[{day_index}] needs a date and non-negative count"
+                )
+                continue
+            contribution_days.append((day_date, count))
+    day_dates = [day_date for day_date, _count in contribution_days]
+    if len(set(day_dates)) != len(day_dates):
+        errors.append("live contribution calendar dates must be unique")
+    if not _nonnegative_integer(live_total):
+        errors.append("live contribution total must be a non-negative integer")
+    elif sum(count for _day, count in contribution_days) != live_total:
+        errors.append("live contribution total must equal the sum of daily counts")
+    elif live_total < PROFILE_RENDERED_CONTRIBUTIONS:
+        errors.append(
+            f"live contribution total must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
+        )
+    if contribution_days:
+        first_day = min(day_dates)
+        last_day = max(day_dates)
+        if first_day > last_day - timedelta(days=365):
+            errors.append("live contribution calendar must cover at least the trailing year")
+        if not observed_now.date() - timedelta(days=1) <= last_day <= observed_now.date():
+            errors.append("live contribution calendar must end on the current UTC date")
+    if (
+        _nonnegative_integer(manifest_contributions)
+        and _nonnegative_integer(live_total)
+        and manifest_contributions > live_total
+    ):
+        errors.append("live profile manifest contribution count cannot exceed the reproduced calendar")
+
+    for receipt_id, (url, expected_status) in EXPECTED_HTTP_RECEIPTS.items():
+        try:
+            observation = http_fetch(url)
+        except AdjudicationError as exc:
+            errors.append(f"cannot reproduce live HTTP receipt {receipt_id}: {exc}")
+            continue
+        if not isinstance(observation, dict):
+            errors.append(f"live HTTP receipt {receipt_id} response must be a mapping")
+            continue
+        if set(observation) != {"status", "url"}:
+            errors.append(f"live HTTP receipt {receipt_id} response must contain only status and URL")
+        if observation.get("status") != expected_status or observation.get("url") != url:
+            errors.append(
+                f"live HTTP receipt {receipt_id} must remain {expected_status} at its exact endpoint"
+            )
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="validate static adjudication and relay artifacts")
@@ -1567,6 +1969,7 @@ def main() -> int:
         errors.extend(validate_live_sources(artifact))
         errors.extend(validate_live_reference())
         errors.extend(validate_live_dependencies())
+        errors.extend(validate_live_profile_observations(receipt))
     if errors:
         for error in errors:
             print(f"research-adjudication: FAIL: {error}", file=sys.stderr)
