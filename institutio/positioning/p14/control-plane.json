@@ -1,5 +1,5 @@
 {
-  "schema_version": "limen.positioning_p14_control_plane.v2",
+  "schema_version": "limen.positioning_p14_control_plane.v3",
   "phase_id": "PSP-P14",
   "chunk_id": "PSP-C12",
   "predecessor_policy": {
@@ -9,10 +9,31 @@
   },
   "dependency_ledger": {
     "path": "institutio/positioning/p14/dependency-ledger.json",
-    "schema_version": "limen.positioning_p14_dependency_ledger.v1",
+    "schema_version": "limen.positioning_p14_dependency_ledger.v2",
     "predecessor_chunk_count": 9,
     "terminal_node_count": 23,
     "counts_as_closure": false
+  },
+  "operations": {
+    "path": "institutio/positioning/p14/operations.json",
+    "schema_version": "limen.positioning_p14_operations.v1",
+    "fixture_path": "cli/tests/fixtures/positioning-p14/operational-cycle.json",
+    "counts_as_closure": false
+  },
+  "frontier_policy": {
+    "formal_execution_frontier": "The first registry-ready work whose formal dependencies and lifecycle predicates are satisfied.",
+    "reversible_preparation_frontier": "Prepared owner lanes with bounded repository-only work that is safe before formal dependency closure.",
+    "frontiers_are_independent": true,
+    "formal_gate_must_not_empty_reversible_frontier": true,
+    "allowed_preparation_effect_scope": "repository_reversible",
+    "non_closure_signals": [
+      "preflight",
+      "prepared",
+      "draft_pull_request",
+      "green_ci",
+      "synthetic_fixture",
+      "generated_visual_direction"
+    ]
   },
   "public_evidence_contract": {
     "deny_keys": [
@@ -128,7 +149,8 @@
   "release_recovery": {
     "work_id": "PSP-P14-W06",
     "sequence": ["record known-green release", "observe synthetic bad release", "restore exact known-green release", "verify all health checks", "verify capture owner continuity"],
-    "required_health": "healthy"
+    "required_health": "healthy",
+    "minimum_repositories": 2
   },
   "feedback_loops": {
     "sales": {
@@ -170,7 +192,7 @@
     {"code": "MONTHLY_LIVE_CYCLES_MISSING", "work_id": "PSP-P14-W03", "kind": "minimum_records", "path": "review_receipts.monthly", "minimum": 2, "required_scope": "live", "required_fields": ["period_start", "verdict", "unowned_stale_claims", "unowned_broken_links", "unowned_private_leaks", "unowned_surface_parity_defects", "evidence_url"], "cadence": "monthly", "consecutive": true, "owner": "issue #2277", "description": "Two consecutive live monthly audit receipts with zero unowned truth, link, privacy, or parity defects."},
     {"code": "QUARTERLY_LIVE_REVIEW_MISSING", "work_id": "PSP-P14-W04", "kind": "minimum_records", "path": "review_receipts.quarterly", "minimum": 1, "required_scope": "live", "required_fields": ["conversation_evidence", "funnel_evidence", "delivery_evidence", "claim_evidence", "decision", "evidence_url"], "owner": "issue #2278", "description": "A live quarterly strategy decision grounded in all four evidence classes."},
     {"code": "CLAIM_INCIDENT_DRILL_MISSING", "work_id": "PSP-P14-W05", "kind": "status_record", "path": "claim_incident_drill", "expected_status": "pass", "required_fields": ["quarantined_surfaces", "blocked_republish", "corrected_evidence", "evidence_url"], "owner": "issue #2279", "description": "Durable synthetic incident drill proving quarantine before corrected republication."},
-    {"code": "RELEASE_RECOVERY_DRILL_MISSING", "work_id": "PSP-P14-W06", "kind": "status_record", "path": "release_recovery_drill", "expected_status": "pass", "required_fields": ["resolved_repositories", "before_release_ids", "bad_release_ids", "restored_release_ids", "health_checks", "capture_continuity", "evidence_url"], "owner": "issue #2280", "description": "Multi-repository bad-release drill with exact restoration, health, and capture continuity."},
+    {"code": "RELEASE_RECOVERY_DRILL_MISSING", "work_id": "PSP-P14-W06", "kind": "status_record", "path": "release_recovery_drill", "expected_status": "pass", "minimum_repositories": 2, "required_fields": ["resolved_repositories", "before_release_ids", "bad_release_ids", "restored_release_ids", "health_checks", "capture_continuity", "evidence_url"], "owner": "issue #2280", "description": "Multi-repository bad-release drill with exact restoration, health, and capture continuity."},
     {"code": "REAL_DEMAND_OUTCOMES_MISSING", "work_id": "PSP-P14-W07", "kind": "minimum_records", "path": "sales_outcomes", "minimum": 5, "required_scope": "live", "required_fields": ["outcome_id", "offer_version", "disposition", "evidence_url"], "owner": "private demand ledger plus issue #2281", "description": "Five qualified live demand outcomes; synthetic conversations do not count."},
     {"code": "DEMAND_DECISION_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "path": "demand_decision", "expected_status": "decided", "required_scope": "live", "required_fields": ["outcome_ids", "decision", "before_offer_version", "after_offer_version", "evidence_url"], "owner": "issue #2281", "description": "A live offer decision preserving the outcome history and before/after versions."},
     {"code": "COMMERCIAL_SUCCESS_OUTCOME_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "path": "commercial_outcome", "expected_status": "validated", "required_scope": "live", "required_fields": ["mode", "outcome_ids", "evidence_url"], "owner": "private demand ledger plus PSP-P12/P14 receipts", "description": "One paid-audit receipt or five documented no outcomes; synthetic or staged work does not count."},

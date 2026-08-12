@@ -1,6 +1,6 @@
 {
-  "schema_version": "limen.positioning_p14_dependency_ledger.v1",
-  "observed_at": "2026-08-12T20:15:00Z",
+  "schema_version": "limen.positioning_p14_dependency_ledger.v2",
+  "observed_at": "2026-08-12T23:15:01Z",
   "authoritative_registry": "institutio/positioning/program.yaml",
   "program_repository": "organvm/limen",
   "counts_as_closure": false,
@@ -35,7 +35,7 @@
       "counts_as_closure": false,
       "accepted_checkpoint": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "evidence": [
-        {"target": "limen", "pull_request": 2312, "head": "c7c932205faa405e291f8030235a73cedeaa219e"}
+        {"target": "limen", "pull_request": 2312, "head": "3ad04e23f0b65d92f2cd24e742acab5a8efc7487"}
       ],
       "frontier_work": [
         {
@@ -56,7 +56,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2313, "head": "23712398c6586e005c303eff632604985cd0a25c"},
+        {"target": "limen", "pull_request": 2313, "head": "5bf686f6ceba200c6157bd87eb6e5298750a4ffb"},
         {"target": "portfolio", "pull_request": 220, "head": "9bcc4606b68da83dc0878b060989d35c3b649d7f"}
       ],
       "frontier_work": []
@@ -84,7 +84,7 @@
       "preflight_state": "prepared_three_visual_directions_unselected",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2317, "head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668"},
+        {"target": "limen", "pull_request": 2317, "head": "4eb50463b7f4136b47a103c9792c1ded5caf7873"},
         {"target": "portfolio", "pull_request": 221, "head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea"}
       ],
       "frontier_work": []
@@ -98,7 +98,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2318, "head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"}
+        {"target": "limen", "pull_request": 2318, "head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9"}
       ],
       "frontier_work": []
     },
@@ -111,7 +111,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2316, "head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"}
+        {"target": "limen", "pull_request": 2316, "head": "ef6e4df64f97c11dba2c159752d5a13b50a96c10"}
       ],
       "frontier_work": []
     },
@@ -139,7 +139,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2321, "head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"}
+        {"target": "limen", "pull_request": 2321, "head": "620ae2e87131cb871f73b8c0f230d20f9883d85c"}
       ],
       "frontier_work": []
     },
@@ -152,22 +152,141 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2319, "head": "92325b04eb741f63a7013bf33d6900568fbef185"}
+        {"target": "limen", "pull_request": 2319, "head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114"}
       ],
       "frontier_work": []
     }
   ],
   "p14_conductor": {"slug": "gpt-5.6-sol", "effort": "ultra"},
+  "preparation_owners": [
+    {
+      "chunk_id": "PSP-C04",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c04-proof-experience-preflight",
+      "pull_request": 2313,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2313",
+      "state": "open",
+      "draft": true,
+      "observed_head": "5bf686f6ceba200c6157bd87eb6e5298750a4ffb",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["proof contract validation", "synthetic source and claim fixtures", "rollback tests"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C05",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c05-delivery-os-preflight-relay",
+      "pull_request": 2315,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2315",
+      "state": "open",
+      "draft": true,
+      "observed_head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["delivery templates", "synthetic intake and closeout fixtures", "bounded validators"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C06",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c06-public-surfaces-relay",
+      "pull_request": 2317,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2317",
+      "state": "open",
+      "draft": true,
+      "observed_head": "4eb50463b7f4136b47a103c9792c1ded5caf7873",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["surface contracts", "three unselected visual direction records", "offline parity checks"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C07",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c07-private-inbound-preflight",
+      "pull_request": 2318,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2318",
+      "state": "open",
+      "draft": true,
+      "observed_head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["private inbound schemas", "synthetic routing fixtures", "hard-closed send valves"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C08",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c08-proof-led-content-preflight",
+      "pull_request": 2316,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2316",
+      "state": "open",
+      "draft": true,
+      "observed_head": "ef6e4df64f97c11dba2c159752d5a13b50a96c10",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["proof-led content contracts", "synthetic measurement fixtures", "correction and withdrawal tests"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C09",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c09-qualification-conversion-relay",
+      "pull_request": 2322,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2322",
+      "state": "open",
+      "draft": true,
+      "observed_head": "21f3132f129aa6e1eba515f03aa19619533cef4b",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["qualification contracts", "synthetic conversion fixtures", "no-send validation"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C10",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c10-readiness-preflight",
+      "pull_request": 2321,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2321",
+      "state": "open",
+      "draft": true,
+      "observed_head": "620ae2e87131cb871f73b8c0f230d20f9883d85c",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["commercial readiness schemas", "synthetic outcome fixtures", "receipt validators"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C11",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c11-governed-foundry-preflight",
+      "pull_request": 2319,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2319",
+      "state": "open",
+      "draft": true,
+      "observed_head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["foundry candidate schemas", "synthetic operator and return drills", "private-boundary validation"],
+      "counts_as_closure": false
+    },
+    {
+      "chunk_id": "PSP-C12",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c12-control-plane-preflight",
+      "pull_request": 2320,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2320",
+      "state": "open",
+      "draft": true,
+      "head_binding": "runtime_exact_head",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": ["P14 operational runners", "typed schemas and synthetic fixtures", "fail-closed frontier and Omega validators"],
+      "counts_as_closure": false
+    }
+  ],
   "p14_stages": [
-    {"work_id": "PSP-P14-W01", "issue": "https://github.com/organvm/limen/issues/2275", "depends_on": ["PSP-P07-W08", "PSP-P08-W06", "PSP-P11-W07", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W02", "issue": "https://github.com/organvm/limen/issues/2276", "depends_on": ["PSP-P14-W01", "PSP-P00-W07"], "assignment": {"slug": "gpt-5.6-luna", "effort": "medium"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W03", "issue": "https://github.com/organvm/limen/issues/2277", "depends_on": ["PSP-P02-W06", "PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W04", "issue": "https://github.com/organvm/limen/issues/2278", "depends_on": ["PSP-P10-W08", "PSP-P12-W06", "PSP-P14-W01"], "assignment": {"slug": "gpt-5.6-sol", "effort": "max"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W05", "issue": "https://github.com/organvm/limen/issues/2279", "depends_on": ["PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W06", "issue": "https://github.com/organvm/limen/issues/2280", "depends_on": ["PSP-P07-W09", "PSP-P08-W07"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W07", "issue": "https://github.com/organvm/limen/issues/2281", "depends_on": ["PSP-P10-W07", "PSP-P10-W08"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W08", "issue": "https://github.com/organvm/limen/issues/2282", "depends_on": ["PSP-P12-W06", "PSP-P13-W08", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "contract_ready", "counts_as_closure": false},
-    {"work_id": "PSP-P14-W09", "issue": "https://github.com/organvm/limen/issues/2283", "depends_on": ["PSP-P14-W02", "PSP-P14-W03", "PSP-P14-W04", "PSP-P14-W05", "PSP-P14-W06", "PSP-P14-W07", "PSP-P14-W08"], "assignment": {"slug": "gpt-5.6-sol", "effort": "ultra"}, "closure_state": "open", "preflight_state": "synthetic_pair_only", "counts_as_closure": false}
+    {"work_id": "PSP-P14-W01", "issue": "https://github.com/organvm/limen/issues/2275", "depends_on": ["PSP-P07-W08", "PSP-P08-W06", "PSP-P11-W07", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "collector_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W02", "issue": "https://github.com/organvm/limen/issues/2276", "depends_on": ["PSP-P14-W01", "PSP-P00-W07"], "assignment": {"slug": "gpt-5.6-luna", "effort": "medium"}, "closure_state": "open", "preflight_state": "weekly_runner_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W03", "issue": "https://github.com/organvm/limen/issues/2277", "depends_on": ["PSP-P02-W06", "PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "monthly_audit_runner_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W04", "issue": "https://github.com/organvm/limen/issues/2278", "depends_on": ["PSP-P10-W08", "PSP-P12-W06", "PSP-P14-W01"], "assignment": {"slug": "gpt-5.6-sol", "effort": "max"}, "closure_state": "open", "preflight_state": "quarterly_decision_runner_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W05", "issue": "https://github.com/organvm/limen/issues/2279", "depends_on": ["PSP-P02-W07", "PSP-P07-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "quarantine_drill_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W06", "issue": "https://github.com/organvm/limen/issues/2280", "depends_on": ["PSP-P07-W09", "PSP-P08-W07"], "assignment": {"slug": "gpt-5.6-sol", "effort": "xhigh"}, "closure_state": "open", "preflight_state": "multi_repo_recovery_drill_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W07", "issue": "https://github.com/organvm/limen/issues/2281", "depends_on": ["PSP-P10-W07", "PSP-P10-W08"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "private_demand_projection_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W08", "issue": "https://github.com/organvm/limen/issues/2282", "depends_on": ["PSP-P12-W06", "PSP-P13-W08", "PSP-P13-W09"], "assignment": {"slug": "gpt-5.6-terra", "effort": "high"}, "closure_state": "open", "preflight_state": "private_outcome_projection_ready", "counts_as_closure": false},
+    {"work_id": "PSP-P14-W09", "issue": "https://github.com/organvm/limen/issues/2283", "depends_on": ["PSP-P14-W02", "PSP-P14-W03", "PSP-P14-W04", "PSP-P14-W05", "PSP-P14-W06", "PSP-P14-W07", "PSP-P14-W08"], "assignment": {"slug": "gpt-5.6-sol", "effort": "ultra"}, "closure_state": "open", "preflight_state": "observation_and_pair_tooling_ready", "counts_as_closure": false}
   ],
   "terminal_nodes": [
     {"code": "W01_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W01", "kind": "work_receipt", "closure_state": "open", "counts_as_closure": false},

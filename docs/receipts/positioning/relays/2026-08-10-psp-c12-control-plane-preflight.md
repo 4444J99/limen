@@ -19,7 +19,8 @@ compression_level: high
   [#2283](https://github.com/organvm/limen/issues/2283)
 - Branch: `codex/psp-c12-control-plane-preflight`
 - Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
-- Exact predicate-tested implementation head: `8a9a7af246af27eba807552e2332c66bb691ec1a`
+- Prior predicate-tested implementation head: `8a9a7af246af27eba807552e2332c66bb691ec1a`
+- Live C12 head before this additive patch: `34d9abb3145e8794e7a4602d401af9a09a20a74f`
 - State: **PREPARED/PREFLIGHT**
 - Formal leaf receipts, phase proof, root proof, and closure: not run or claimed
 - External effects: draft branch and PR metadata only
@@ -27,22 +28,23 @@ compression_level: high
 This lane has no authority to convert preparation into closure, invent external outcomes, solicit
 readers, choose a visual direction, send, publish, deploy, sign, spend, or mutate accounts.
 
-## Dependency truth and execution frontier
+## Dependency truth and two independent frontiers
 
-The v2 control plane validates a full tracked dependency ledger against the canonical program
-registry. `preflight_state` and `closure_state` are independent, and every prepared row says
+The v3 control plane validates a full tracked dependency ledger against the canonical program
+registry. `formal_execution_frontier` and `reversible_preparation_frontier` are distinct.
+An external gate on the formal frontier blocks formal activation/closure only; it must not suppress
+independent bounded repository work in later prepared owner lanes. Every prepared row says
 `counts_as_closure: false`.
 
 - P02 is closed at accepted main `8faa5fb9899231ebf5f87e78bb171544c11b79d7`.
 - Nine predecessor chunks, C03 through C11, remain formal blockers.
 - C03 is accepted through W06 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`.
-- The exact first frontier is `PSP-P03-W07` / [#2188](https://github.com/organvm/limen/issues/2188),
+- The formal frontier is `PSP-P03-W07` / [#2188](https://github.com/organvm/limen/issues/2188),
   assigned `gpt-5.4-mini` / `low`.
 - W07 requires five genuine independent target-like readers. Model, author, coached, or fabricated
   responses do not count; this preflight performed no outreach.
-- C04-C11 reversible drafts are bound at their current exact PR heads. C11 is now
-  [#2319](https://github.com/organvm/limen/pull/2319) head
-  `92325b04eb741f63a7013bf33d6900568fbef185`.
+- C04-C12 remain independently admissible for non-effect repository preparation in their existing
+  owner lanes. No owner branch or PR is duplicated by this relay.
 - C06 still has exactly three Product Design directions; all remain **UNSELECTED**.
 - All 23 P14 terminal requirement nodes remain open.
 - Derived current blocker total: 9 predecessor chunks + 23 P14 requirements = **32**.
@@ -50,10 +52,45 @@ registry. `preflight_state` and `closure_state` are independent, and every prepa
 The ledger validates phase ownership, chunk dependencies, chunk conductors, all nine P14 issue
 URLs, full work dependencies, and exact model/effort assignments. A registry drift fails closed.
 
-## What the v2 control plane proves
+### Reversible preparation owners observed live on 2026-08-12
 
-- The event/KPI, review, claim-incident, release-recovery, sales-feedback, delivery-feedback, and
-  synthetic two-pass mechanisms are internally coherent and execute no predecessor commands.
+| Chunk | Owner PR | Owner branch | Observed head | Closure value |
+|---|---:|---|---|---|
+| C04 | [#2313](https://github.com/organvm/limen/pull/2313) | `codex/psp-c04-proof-experience-preflight` | `5bf686f6ceba200c6157bd87eb6e5298750a4ffb` | false |
+| C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `codex/psp-c05-delivery-os-preflight-relay` | `a72a05d917bf14d53221c7d02ec52d3786b4f88e` | false |
+| C06 | [#2317](https://github.com/organvm/limen/pull/2317) | `codex/psp-c06-public-surfaces-relay` | `4eb50463b7f4136b47a103c9792c1ded5caf7873` | false |
+| C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `codex/psp-c07-private-inbound-preflight` | `c3b92707a0f6d0ea3076680d100d60d0217f8fe9` | false |
+| C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `ef6e4df64f97c11dba2c159752d5a13b50a96c10` | false |
+| C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `21f3132f129aa6e1eba515f03aa19619533cef4b` | false |
+| C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `620ae2e87131cb871f73b8c0f230d20f9883d85c` | false |
+| C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` | false |
+| C12 | [#2320](https://github.com/organvm/limen/pull/2320) | `codex/psp-c12-control-plane-preflight` | runtime exact-head binding | false |
+
+All nine PRs were open drafts when queried. Their existence, heads, green checks, and prepared
+artifacts are owner receipts only; none closes a dependency, leaf, phase, or the program.
+
+### P14 model/effort assignments
+
+| Work | Model | Effort |
+|---|---|---|
+| W01 | `gpt-5.6-terra` | `high` |
+| W02 | `gpt-5.6-luna` | `medium` |
+| W03 | `gpt-5.6-sol` | `xhigh` |
+| W04 | `gpt-5.6-sol` | `max` |
+| W05 | `gpt-5.6-terra` | `high` |
+| W06 | `gpt-5.6-sol` | `xhigh` |
+| W07 | `gpt-5.6-terra` | `high` |
+| W08 | `gpt-5.6-terra` | `high` |
+| W09 | `gpt-5.6-sol` | `ultra` |
+
+## What the v3 control plane proves
+
+- Typed schemas and deterministic commands now cover KPI collection; weekly, monthly, and quarterly
+  review construction; claim quarantine/corrected republication; exact multi-repository release
+  recovery; private demand/delivery/operator projection; portfolio impact coverage; evidence
+  envelope construction; automatic frontier activation checks; and two unchanged observations.
+- Every prepared runner is read-only or synthetic-temporary, executes no predecessor commands, and
+  emits `counts_as_closure: false`. Runner output also refuses to self-certify terminal evidence.
 - Public evidence is recursively key-denylisted. Contact/client/operator names, private repository
   names, price amounts, credentials, authorization, tokens, secrets, email, phone, and private
   evidence bodies block terminal status wherever they occur.
@@ -71,27 +108,24 @@ URLs, full work dependencies, and exact model/effort assignments. A registry dri
 |---|---|
 | `python3 -B scripts/positioning-program.py --check` | PASS; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
 | `python3 -B scripts/positioning-program.py --verify-model-assignments` | PASS; all 127 assignments valid |
-| `python3 -B scripts/positioning-p14-control-plane.py --check` | PASS; v2 contract, 9 predecessor chunks, 23 terminal nodes, exact W07 frontier |
+| `python3 -B scripts/positioning-p14-control-plane.py --check` | Pending for the additive v3 exact tree |
 | synthetic fixture | PASS; no predecessor command or external effect |
 | `python3 -B scripts/positioning-p14-control-plane.py --preflight` | PASS; terminal truth blocked on exactly 32 current atoms |
 | `python3 -B scripts/positioning-p14-control-plane.py --terminal` | expected exit 3; 9 predecessor blockers + 23 P14 requirements |
-| focused pytest | 17 passed |
-| Ruff lint and format | PASS |
-| scoped cheap wave | PASS; 13 implicated gates |
-| scoped serialized CLI suite | 5705 passed, 2 skipped; 2 unrelated process-timing tests failed in `test_campaign_relay_effector.py` |
+| operational fixture | Pending for the additive v3 exact tree |
+| focused pytest | Pending for the additive v3 exact tree |
+| scoped exact-tree gate | Pending for the additive v3 exact tree |
 
-The two heavy-suite failures did not touch P14 code or assertions: one fixture did not create its
-provider PID file before assertion, and one timeout fixture did not create its child PID file. The
-unchanged heavy suite was not replayed for reassurance. Draft-PR CI on the superseding exact head is
-the next independent integration receipt.
+The prior v2 receipts remain history, not verification for this changed tree. The exact v3 results
+and predicate-tested implementation commit are recorded here only after their one bounded batch.
 
 ## Activation and completion predicates
 
 1. Re-read the registry and dependency ledger; do not infer readiness from this dated relay.
-2. Do not create a duplicate lane. Continue the existing chunk/PR and activate only the exact
-   frontier admitted by live state.
-3. `PSP-P03-W07` remains the first frontier until five genuine-reader receipts satisfy its predicate and
-   the owning C03 lane closes it correctly.
+2. Do not create a duplicate lane. Continue the existing owner branch/PR for each chunk.
+3. `PSP-P03-W07` remains the formal lifecycle frontier until five genuine-reader receipts satisfy
+   its predicate and the owning C03 lane closes it correctly. This does not suppress independent
+   reversible preparation in the C04-C12 owner lanes listed above.
 4. Populate `docs/receipts/positioning/p14/live-evidence.json` only from durable owner receipts.
    Private bodies remain in private ledgers; the public envelope carries opaque IDs, aggregates,
    exact commits, predicates, and HTTPS receipts.
@@ -111,9 +145,12 @@ the next independent integration receipt.
 
 - Control contract: `institutio/positioning/p14/control-plane.json`
 - Dependency ledger: `institutio/positioning/p14/dependency-ledger.json`
+- Operations registry and schemas: `institutio/positioning/p14/operations.json` and
+  `institutio/positioning/p14/schemas/`
 - Runner: `scripts/positioning-p14-control-plane.py`
 - Operator guide: `docs/positioning/p14/README.md`
 - Synthetic fixture: `cli/tests/fixtures/positioning-p14/synthetic-cycle.json`
+- Full operational fixture: `cli/tests/fixtures/positioning-p14/operational-cycle.json`
 - Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
 
 The receiver must verify live state and obtain its own authority. This relay transfers context, not

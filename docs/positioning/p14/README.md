@@ -4,6 +4,8 @@ This directory documents the reversible control plane for `PSP-C12` / `PSP-P14`.
 contract is [`institutio/positioning/p14/control-plane.json`](../../../institutio/positioning/p14/control-plane.json),
 the full dependency snapshot is
 [`institutio/positioning/p14/dependency-ledger.json`](../../../institutio/positioning/p14/dependency-ledger.json),
+the typed runner inventory is
+[`institutio/positioning/p14/operations.json`](../../../institutio/positioning/p14/operations.json),
 and the read-only runner is [`scripts/positioning-p14-control-plane.py`](../../../scripts/positioning-p14-control-plane.py).
 
 This is a preflight, not a completion receipt. It defines the event/KPI dictionary, the weekly,
@@ -23,6 +25,9 @@ accumulate another green result.
 python3 scripts/positioning-p14-control-plane.py --check
 python3 scripts/positioning-p14-control-plane.py \
   --run-fixture cli/tests/fixtures/positioning-p14/synthetic-cycle.json
+python3 scripts/positioning-p14-control-plane.py \
+  --run-operational-fixture cli/tests/fixtures/positioning-p14/operational-cycle.json
+python3 scripts/positioning-p14-control-plane.py --frontiers
 python3 scripts/positioning-p14-control-plane.py --preflight
 ```
 
@@ -30,18 +35,47 @@ python3 scripts/positioning-p14-control-plane.py --preflight
 terminal result still fails truthfully on the absent external receipts. A green preflight therefore
 means “the scaffold is ready and honest,” never “P14 is done.”
 
-The v2 preflight distinguishes two independent facts for every upstream chunk: `preflight_state`
-records reversible preparation, while `closure_state` records formal lifecycle truth. Every
-prepared row also says `counts_as_closure: false`. The ledger is checked against the canonical
+The v3 preflight makes two frontiers explicit and independent:
+
+- `formal_execution_frontier` is the first registry-ready work whose formal dependencies and
+  lifecycle predicates are satisfied. An external gate here blocks lifecycle advancement and
+  closure claims.
+- `reversible_preparation_frontier` is the set of existing owner lanes with bounded,
+  repository-only work that is admissible before formal dependency closure. A formal gate must not
+  empty or suppress this frontier.
+
+`execution_frontier` remains a compatibility alias for the formal frontier. It is not a global
+stop-work signal. Every prepared owner row says `counts_as_closure: false`; a branch, draft PR,
+green CI run, synthetic fixture, or generated visual direction is ownership/preparation evidence,
+not dependency, leaf, phase, or program closure. The ledger is checked against the canonical
 registry for chunk dependencies, phase ownership, conductors, all nine P14 model/effort
 assignments, issue URLs, and all 23 terminal requirement nodes.
 
 At the 2026-08-12 reconciliation point, all nine C03-C11 predecessor chunks remain formal blockers
-and all 23 P14 terminal nodes remain open: 32 blockers, derived rather than hard-coded. The first
+and all 23 P14 terminal nodes remain open: 32 blockers, derived rather than hard-coded. The formal
 execution frontier is `PSP-P03-W07` / issue
 [#2188](https://github.com/organvm/limen/issues/2188), assigned to `gpt-5.4-mini` / `low`. Its
 five-reader acceptance boundary requires genuine independent target-like readers; model, author,
-coached, or fabricated responses do not count.
+coached, or fabricated responses do not count. It is owned by the existing
+`codex/psp-c03-identity-offers-preflight` branch and draft PR #2312.
+
+The independent reversible preparation frontier reuses these existing owner lanes; it never creates
+a duplicate:
+
+| Chunk | Owner PR | Owner branch |
+|---|---:|---|
+| C04 | #2313 | `codex/psp-c04-proof-experience-preflight` |
+| C05 | #2315 | `codex/psp-c05-delivery-os-preflight-relay` |
+| C06 | #2317 | `codex/psp-c06-public-surfaces-relay` |
+| C07 | #2318 | `codex/psp-c07-private-inbound-preflight` |
+| C08 | #2316 | `codex/psp-c08-proof-led-content-preflight` |
+| C09 | #2322 | `codex/psp-c09-qualification-conversion-relay` |
+| C10 | #2321 | `codex/psp-c10-readiness-preflight` |
+| C11 | #2319 | `codex/psp-c11-governed-foundry-preflight` |
+| C12 | #2320 | `codex/psp-c12-control-plane-preflight` |
+
+The machine report includes each lane's current branch, PR, observed head (or runtime head binding
+for C12), reversible action list, and `counts_as_closure: false`.
 
 The live terminal predicate is separate:
 
@@ -59,6 +93,34 @@ contact, client, operator, private-repository, price, credential, token, secret,
 field blocks terminal status wherever it appears. Private evidence bodies remain in their private
 owners; the public envelope holds only opaque IDs, aggregates, exact commits, predicates, and HTTPS
 receipts.
+
+## Executable operations
+
+Each W01-W09 preparation path has a JSON Schema, deterministic runner, and synthetic fixture. The
+review templates live under `docs/positioning/p14/templates/`. Individual runners are available for
+metric collection, weekly/monthly/quarterly review construction, claim quarantine, multi-repository
+release recovery, privacy-safe demand/delivery/operator ledger projection, evidence-envelope
+construction, and one- or two-pass Omega observation validation:
+
+```bash
+python3 scripts/positioning-p14-control-plane.py --collect-metrics EVENT_BUNDLE.json
+python3 scripts/positioning-p14-control-plane.py --weekly-review WEEKLY.json
+python3 scripts/positioning-p14-control-plane.py --monthly-audit MONTHLY.json
+python3 scripts/positioning-p14-control-plane.py --quarterly-decision QUARTERLY.json
+python3 scripts/positioning-p14-control-plane.py --claim-drill CLAIM_INCIDENT.json
+python3 scripts/positioning-p14-control-plane.py --release-drill RELEASE_RECOVERY.json
+python3 scripts/positioning-p14-control-plane.py \
+  --project-private-ledger PRIVATE_LEDGER.json --ledger-kind demand
+python3 scripts/positioning-p14-control-plane.py --build-evidence-envelope SOURCE_BUNDLE.json
+python3 scripts/positioning-p14-control-plane.py --omega-observation OBSERVATION.json
+python3 scripts/positioning-p14-control-plane.py \
+  --assemble-omega-pair PASS_1.json PASS_2.json
+```
+
+These commands validate and project inputs; they do not write receipts or self-certify terminal
+evidence. Their output carries `counts_as_terminal_evidence: false` until an owning leaf predicate
+produces a durable exact-head receipt. Live-scoped input requires HTTPS source receipts, but a scope
+label or syntactically valid URL alone never closes a leaf.
 
 ## Event and KPI contract
 
@@ -102,10 +164,11 @@ dependency, records the regeneration block, accepts only a new `verified` eviden
 restores the corrected claim only to the previously affected surfaces. This proves the mechanism;
 it does not assert that a real claim incident occurred.
 
-The release fixture records a known-green ID, a distinct bad ID, the exact restored ID, every health
-check, the resolved synthetic repository set, and capture ownership before and after. Restoration
-must equal the known-green ID and capture ownership must not change. A live W06 receipt still needs
-the concrete public-surface repositories and exact predicate-tested heads.
+The release fixture covers at least two distinct repositories. For each repository it records its
+own known-green ID, distinct bad ID, exact restored ID, health checks, and capture owner before and
+after. Every restored ID must match that repository's known-green ID, repository IDs must be unique,
+and capture ownership must not change. A live W06 receipt still needs the concrete public-surface
+repositories and exact predicate-tested heads.
 
 ## Feedback and reclassification
 
@@ -127,7 +190,8 @@ threshold exists. This preflight neither chooses a price nor asks for the decisi
 
 The pair envelope contains exactly two `limen.positioning_omega_pass.v1` records. They must be
 separate pass numbers with strictly increasing RFC3339 observation times and the same SHA-256 state
-digest. A live pass must also preserve the canonical clean result: `ok: true`, exact green parity,
+digest. Both observations must also bind one unchanged exact repository head. A live pass must
+preserve the canonical clean result: `ok: true`, exact green parity,
 no open IDs, no failures, and a positive verified-receipt count. The live pair binds exactly two
 unique HTTPS pass receipts. The verifier rejects a copied/reversed timestamp, changed digest,
 wrong pass number, wrong schema, incomplete parity, duplicate receipt URL, or synthetic pair

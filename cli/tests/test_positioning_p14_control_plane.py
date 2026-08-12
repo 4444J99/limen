@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / "scripts" / "positioning-p14-control-plane.py"
 MANIFEST = ROOT / "institutio" / "positioning" / "p14" / "control-plane.json"
 LEDGER = ROOT / "institutio" / "positioning" / "p14" / "dependency-ledger.json"
+OPERATIONS = ROOT / "institutio" / "positioning" / "p14" / "operations.json"
 FIXTURE = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "synthetic-cycle.json"
+OPERATION_FIXTURE = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "operational-cycle.json"
 
 
 def _load():
@@ -35,7 +37,7 @@ def test_contract_covers_every_p14_stage_and_refuses_predecessor_replay():
     }
     assert len(contract["events"]) == 18
     assert len(contract["metrics"]) == 9
-    assert contract["schema_version"] == "limen.positioning_p14_control_plane.v2"
+    assert contract["schema_version"] == "limen.positioning_p14_control_plane.v3"
     assert set(contract["public_evidence_contract"]["deny_keys"]) == module.EXPECTED_DENY_KEYS
 
 
@@ -57,15 +59,37 @@ def test_dependency_ledger_binds_full_dag_assignments_and_current_frontier():
             "acceptance_boundary": "Five genuine independent target-like readers; model, author, coached, or fabricated responses do not count.",
         }
     ]
+    assert report["formal_execution_frontier"] == report["execution_frontier"]
+    assert [row["chunk_id"] for row in report["reversible_preparation_frontier"]] == [
+        f"PSP-C{number:02d}" for number in range(4, 13)
+    ]
+    assert all(row["counts_as_closure"] is False for row in report["reversible_preparation_frontier"])
+    assert all(row["pull_request"] and row["branch"] for row in report["reversible_preparation_frontier"])
+    assert report["frontier_invariant"] == {
+        "independent": True,
+        "formal_gate_suppresses_reversible_preparation": False,
+        "owner_branches_or_pull_requests_count_as_closure": False,
+    }
     assert ledger["predecessor_chunks"][-1]["evidence"] == [
         {
             "target": "limen",
             "pull_request": 2319,
-            "head": "92325b04eb741f63a7013bf33d6900568fbef185",
+            "head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114",
         }
     ]
     assert all(row["counts_as_closure"] is False for row in ledger["predecessor_chunks"])
     assert all(row["counts_as_closure"] is False for row in ledger["p14_stages"])
+
+
+def test_open_formal_reader_gate_cannot_empty_reversible_preparation_frontier():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    ledger = module._load_json(LEDGER)
+
+    assert ledger["predecessor_chunks"][0]["frontier_work"][0]["work_id"] == "PSP-P03-W07"
+    ledger["preparation_owners"] = []
+    with pytest.raises(module.P14Error, match="canonical C04-C12 order"):
+        module.validate_dependency_ledger(ledger, contract)
 
 
 def test_dependency_ledger_fails_closed_on_registry_assignment_drift():
@@ -294,11 +318,11 @@ def test_terminal_drill_receipts_hold_correction_and_exact_restore_semantics():
     }
     release = {
         "status": "pass",
-        "resolved_repositories": ["fixture/repository"],
-        "before_release_ids": ["good"],
-        "bad_release_ids": ["bad"],
-        "restored_release_ids": ["good"],
-        "health_checks": {"surface": "healthy"},
+        "resolved_repositories": ["fixture/repository-one", "fixture/repository-two"],
+        "before_release_ids": ["good-one", "good-two"],
+        "bad_release_ids": ["bad-one", "bad-two"],
+        "restored_release_ids": ["good-one", "good-two"],
+        "health_checks": {"repository-one:surface": "healthy", "repository-two:surface": "healthy"},
         "capture_continuity": True,
         "evidence_url": "https://example.test/release-drill",
     }
@@ -442,3 +466,263 @@ def test_preflight_is_green_only_when_terminal_truth_remains_blocked():
     assert len(result["missing_external_outcomes"]) == 23
     assert result["predecessor_blocker_count"] == 9
     assert result["blocking_total"] == 32
+
+
+def test_operations_contract_binds_every_schema_template_and_runner_mapping():
+    module = _load()
+    operations = module.load_operations(OPERATIONS)
+
+    assert set(operations["schemas"]) == module.EXPECTED_OPERATION_SCHEMAS
+    assert {row["id"] for row in operations["runners"]} == module.EXPECTED_RUNNER_IDS
+    assert all(row["counts_as_closure"] is False for row in operations["runners"])
+
+    drifted = deepcopy(operations)
+    drifted["schemas"]["weekly_review"] = drifted["schemas"]["monthly_audit"]
+    with pytest.raises(module.P14Error, match="schema path mapping drift"):
+        module.validate_operations_contract(drifted)
+
+    remapped = deepcopy(operations)
+    next(row for row in remapped["runners"] if row["id"] == "demand_projection")["work_id"] = "PSP-P14-W01"
+    with pytest.raises(module.P14Error, match="demand_projection mapping drift"):
+        module.validate_operations_contract(remapped)
+
+
+def test_operational_fixture_executes_every_reversible_stage_without_live_or_closure_claims():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    operations = module.load_operations(OPERATIONS)
+    result = module.run_operational_fixture(contract, operations, module._load_json(OPERATION_FIXTURE))
+
+    assert set(result["stages"]) == set(module.WORK_IDS)
+    assert result["status"] == "synthetic-pass"
+    assert result["terminal"] is False
+    assert result["counts_as_live_outcomes"] is False
+    assert result["counts_as_closure"] is False
+    assert result["executed_predecessor_commands"] == []
+    assert result["stages"]["PSP-P14-W01"]["metrics"]["qualified_demand_rate"]["value"] == 0.5
+    assert len(result["stages"]["PSP-P14-W06"]["resolved_repositories"]) == 2
+    assert result["stages"]["PSP-P14-W09"]["counts_as_live_omega"] is False
+    assert "Omega" in result["not_evidence_for"]
+
+
+def test_operational_fixture_rejects_missing_fields_nested_live_scope_and_head_drift():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    operations = module.load_operations(OPERATIONS)
+    fixture = module._load_json(OPERATION_FIXTURE)
+
+    missing = deepcopy(fixture)
+    del missing["event_bundle"]
+    with pytest.raises(module.P14Error, match="missing required fields"):
+        module.run_operational_fixture(contract, operations, missing)
+
+    mixed = deepcopy(fixture)
+    mixed["weekly_review"]["scope"] = "live"
+    mixed["weekly_review"]["evidence_url"] = "https://example.test/receipt"
+    with pytest.raises(module.P14Error, match="weekly_review must remain synthetic"):
+        module.run_operational_fixture(contract, operations, mixed)
+
+    head_drift = deepcopy(fixture)
+    head_drift["omega_observations"][1]["observed_head"] = "c" * 40
+    with pytest.raises(module.P14Error, match="exact head mismatch"):
+        module.run_operational_fixture(contract, operations, head_drift)
+
+
+def test_metric_collector_recomputes_denominators_and_requires_live_source_receipts():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    operations = module.load_operations(OPERATIONS)
+    bundle = module._load_json(OPERATION_FIXTURE)["event_bundle"]
+
+    result = module.collect_metrics(contract, operations, bundle)
+    metric = result["metrics"]["qualified_demand_rate"]
+    assert metric["numerator"] == 1
+    assert metric["denominator"] == 2
+    assert metric["source"]["numerator"] == "qualification receipt"
+    assert metric["decision_use"] and metric["guardrail"]
+    assert result["counts_as_live_outcomes"] is False
+
+    live = deepcopy(bundle)
+    live["scope"] = "live"
+    for event in live["events"]:
+        event["scope"] = "live"
+    with pytest.raises(module.P14Error, match="requires an HTTPS source_receipt_url"):
+        module.collect_metrics(contract, operations, live)
+
+    mixed = deepcopy(bundle)
+    mixed["events"][0]["scope"] = "live"
+    with pytest.raises(module.P14Error, match="scope differs"):
+        module.collect_metrics(contract, operations, mixed)
+
+    orphan_numerator = deepcopy(bundle)
+    extra = deepcopy(next(event for event in orphan_numerator["events"] if event["type"] == "claim.current"))
+    extra["event_id"] = "op-evt-extra-current"
+    extra["entity_id"] = "claim-fixture-orphan"
+    orphan_numerator["events"].append(extra)
+    with pytest.raises(module.P14Error, match="not a subset"):
+        module.collect_metrics(contract, operations, orphan_numerator)
+
+
+def test_review_runners_are_replay_safe_and_never_self_certify_terminal_evidence():
+    module = _load()
+    operations = module.load_operations(OPERATIONS)
+    fixture = module._load_json(OPERATION_FIXTURE)
+
+    weekly = module.run_weekly_review(operations, fixture["weekly_review"])
+    assert weekly["counts_as_live_cycle"] is False
+    assert weekly["counts_as_terminal_evidence"] is False
+    live_weekly = deepcopy(fixture["weekly_review"])
+    live_weekly["scope"] = "live"
+    live_weekly["evidence_url"] = "https://example.test/live-weekly-source"
+    prepared_live_weekly = module.run_weekly_review(operations, live_weekly)
+    assert prepared_live_weekly["source_scope_live"] is True
+    assert prepared_live_weekly["counts_as_live_cycle"] is False
+    assert prepared_live_weekly["counts_as_terminal_evidence"] is False
+    replay = deepcopy(fixture["weekly_review"])
+    replay["closed_work_ids"].append(replay["ready_work"][0]["work_id"])
+    with pytest.raises(module.P14Error, match="replay already-closed work"):
+        module.run_weekly_review(operations, replay)
+
+    monthly = module.run_monthly_audit(operations, fixture["monthly_audit"])
+    assert monthly["verdict"] == "pass"
+    assert monthly["counts_as_terminal_evidence"] is False
+    unowned = deepcopy(fixture["monthly_audit"])
+    unowned["findings"]["privacy"][0]["status"] = "leak"
+    unowned["findings"]["privacy"][0]["owner"] = None
+    unowned["findings"]["privacy"][0]["next_predicate"] = None
+    assert module.run_monthly_audit(operations, unowned)["verdict"] == "blocked"
+
+    missing_packet = deepcopy(fixture["monthly_audit"])
+    missing_packet["correction_packets"].pop()
+    with pytest.raises(module.P14Error, match="lack correction packets"):
+        module.run_monthly_audit(operations, missing_packet)
+
+    quarterly = module.run_quarterly_decision(operations, fixture["quarterly_decision"])
+    assert quarterly["prior_strategy_version"] != quarterly["proposed_strategy_version"]
+    rollback_drift = deepcopy(fixture["quarterly_decision"])
+    rollback_drift["proposed_strategy_version"] = rollback_drift["prior_strategy_version"]
+    with pytest.raises(module.P14Error, match="distinct proposed version"):
+        module.run_quarterly_decision(operations, rollback_drift)
+
+
+def test_claim_and_multi_repository_release_drills_fail_closed_on_bad_restore():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    operations = module.load_operations(OPERATIONS)
+    fixture = module._load_json(OPERATION_FIXTURE)
+
+    claim = module.run_claim_incident(contract, operations, fixture["claim_incident"])
+    assert claim["blocked_republish"] is True
+    assert claim["counts_as_terminal_evidence"] is False
+    same_evidence = deepcopy(fixture["claim_incident"])
+    same_evidence["correction"]["version"] = same_evidence["claim"]["version"]
+    with pytest.raises(module.P14Error, match="new evidence version"):
+        module.run_claim_incident(contract, operations, same_evidence)
+
+    recovery = module.run_release_recovery(contract, operations, fixture["release_recovery"])
+    assert recovery["before_release_ids"] == recovery["restored_release_ids"]
+    assert len(set(recovery["resolved_repositories"])) == 2
+    duplicate = deepcopy(fixture["release_recovery"])
+    duplicate["repositories"][1]["repository_id"] = duplicate["repositories"][0]["repository_id"]
+    with pytest.raises(module.P14Error, match="duplicate release recovery repository"):
+        module.run_release_recovery(contract, operations, duplicate)
+
+    wrong_restore = deepcopy(fixture["release_recovery"])
+    wrong_restore["repositories"][1]["restored_release_id"] = "not-the-known-green-release"
+    with pytest.raises(module.P14Error, match="exactly restore"):
+        module.run_release_recovery(contract, operations, wrong_restore)
+
+
+def test_private_ledger_projection_is_public_safe_and_does_not_promote_synthetic_outcomes():
+    module = _load()
+    operations = module.load_operations(OPERATIONS)
+    ledgers = module._load_json(OPERATION_FIXTURE)["private_ledgers"]
+
+    for kind, private_key in (
+        ("demand", "private_identity_ref"),
+        ("delivery", "private_evidence_ref"),
+        ("operator", "private_operator_ref"),
+    ):
+        projection = module.project_private_ledger(operations, kind, ledgers[kind])
+        assert projection["counts_as_real_outcomes"] is False
+        assert projection["counts_as_terminal_evidence"] is False
+        assert private_key not in repr(projection)
+        assert all(row["counts_as_terminal_evidence"] is False for row in projection["records"])
+
+    live = deepcopy(ledgers["demand"])
+    live["scope"] = "live"
+    with pytest.raises(module.P14Error, match="requires an HTTPS evidence_url"):
+        module.project_private_ledger(operations, "demand", live)
+
+
+def test_evidence_envelope_preserves_scope_head_privacy_and_non_closure():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    operations = module.load_operations(OPERATIONS)
+    operational = module.run_operational_fixture(contract, operations, module._load_json(OPERATION_FIXTURE))
+    envelope = operational["evidence_envelope"]
+
+    assert envelope["scope"] == "synthetic"
+    assert envelope["counts_as_live_evidence"] is False
+    assert envelope["counts_as_terminal_evidence"] is False
+    assert envelope["counts_as_closure"] is False
+    assert not module._privacy_violations(envelope, module.EXPECTED_DENY_KEYS)
+    assert module.terminal_report(contract, envelope)["terminal"] is False
+
+    source = {
+        "schema_version": "limen.positioning_p14_evidence_source_bundle.v1",
+        "scope": "synthetic",
+        "observed_head": "a" * 40,
+        "work_receipts": {},
+        "review_receipts": {"weekly": [], "monthly": [], "quarterly": []},
+        "private_ledgers": module._load_json(OPERATION_FIXTURE)["private_ledgers"],
+        "omega_pair": {
+            "schema_version": module.PAIR_SCHEMA,
+            "scope": "synthetic",
+            "observed_head": "c" * 40,
+            "passes": [],
+        },
+    }
+    with pytest.raises(module.P14Error, match="Omega pair exact head mismatch"):
+        module.build_evidence_envelope(contract, operations, source)
+
+
+def test_omega_observation_builder_requires_two_unchanged_exact_head_passes():
+    module = _load()
+    operations = module.load_operations(OPERATIONS)
+    observations = module._load_json(OPERATION_FIXTURE)["omega_observations"]
+
+    result = module.assemble_omega_pair(operations, observations)
+    assert result["observed_head"] == "a" * 40
+    assert result["counts_as_live_omega"] is False
+    assert result["counts_as_terminal_evidence"] is False
+    assert result["counts_as_closure"] is False
+
+    drifted = deepcopy(observations)
+    drifted[1]["observed_head"] = "c" * 40
+    with pytest.raises(module.P14Error, match="one unchanged exact head"):
+        module.assemble_omega_pair(operations, drifted)
+
+    reversed_passes = list(reversed(deepcopy(observations)))
+    with pytest.raises(module.P14Error, match="pass-1 then pass-2"):
+        module.assemble_omega_pair(operations, reversed_passes)
+
+
+def test_cli_exposes_and_dispatches_operational_modes(capsys):
+    module = _load()
+
+    assert module.main(["--frontiers"]) == 0
+    frontiers = capsys.readouterr().out
+    assert '"formal_execution_frontier"' in frontiers
+    assert '"reversible_preparation_frontier"' in frontiers
+
+    assert module.main(["--run-operational-fixture", str(OPERATION_FIXTURE)]) == 0
+    operational = capsys.readouterr().out
+    assert '"status": "synthetic-pass"' in operational
+
+    demand = module._load_json(OPERATION_FIXTURE)["private_ledgers"]["demand"]
+    temp_path = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "operational-cycle.json"
+    assert demand["schema_version"] == "limen.positioning_p14_demand_private_ledger.v1"
+    assert module.main(["--project-private-ledger", str(temp_path)]) == 2
+    error = capsys.readouterr().err
+    assert "requires --ledger-kind" in error

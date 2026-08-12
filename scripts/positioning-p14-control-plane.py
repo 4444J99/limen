@@ -20,16 +20,22 @@ import runpy
 import sys
 from typing import Any
 
+from jsonschema import Draft202012Validator, FormatChecker
+
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "p14" / "control-plane.json"
 DEFAULT_LEDGER = ROOT / "institutio" / "positioning" / "p14" / "dependency-ledger.json"
 DEFAULT_FIXTURE = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "synthetic-cycle.json"
+DEFAULT_OPERATIONS = ROOT / "institutio" / "positioning" / "p14" / "operations.json"
+DEFAULT_OPERATION_FIXTURE = ROOT / "cli" / "tests" / "fixtures" / "positioning-p14" / "operational-cycle.json"
 DEFAULT_EVIDENCE = ROOT / "docs" / "receipts" / "positioning" / "p14" / "live-evidence.json"
 PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
 
-CONTROL_SCHEMA = "limen.positioning_p14_control_plane.v2"
-LEDGER_SCHEMA = "limen.positioning_p14_dependency_ledger.v1"
+CONTROL_SCHEMA = "limen.positioning_p14_control_plane.v3"
+LEDGER_SCHEMA = "limen.positioning_p14_dependency_ledger.v2"
+OPERATIONS_SCHEMA = "limen.positioning_p14_operations.v1"
+OPERATION_FIXTURE_SCHEMA = "limen.positioning_p14_operational_fixture.v1"
 FIXTURE_SCHEMA = "limen.positioning_p14_fixture.v1"
 EVIDENCE_SCHEMA = "limen.positioning_p14_evidence.v1"
 PAIR_SCHEMA = "limen.positioning_p14_omega_pair.v1"
@@ -63,6 +69,121 @@ PROGRAM_RECEIPT_FIELDS = {
     "observed_head",
     "observed_at",
     "evidence_url",
+}
+EXPECTED_OPERATION_SCHEMAS = {
+    "event_bundle",
+    "weekly_review",
+    "monthly_audit",
+    "quarterly_decision",
+    "claim_incident",
+    "release_recovery",
+    "demand_private_ledger",
+    "delivery_private_ledger",
+    "operator_private_ledger",
+    "evidence_source_bundle",
+    "omega_observation",
+}
+EXPECTED_OPERATION_SCHEMA_PATHS = {
+    name: f"institutio/positioning/p14/schemas/{name.replace('_', '-')}.schema.json"
+    for name in (
+        "event_bundle",
+        "weekly_review",
+        "monthly_audit",
+        "quarterly_decision",
+        "claim_incident",
+        "release_recovery",
+        "evidence_source_bundle",
+        "omega_observation",
+    )
+}
+EXPECTED_OPERATION_SCHEMA_PATHS.update(
+    {
+        "demand_private_ledger": "institutio/positioning/p14/schemas/demand-ledger.private.schema.json",
+        "delivery_private_ledger": "institutio/positioning/p14/schemas/delivery-ledger.private.schema.json",
+        "operator_private_ledger": "institutio/positioning/p14/schemas/operator-ledger.private.schema.json",
+    }
+)
+EXPECTED_RUNNER_IDS = {
+    "collect_metrics",
+    "weekly_review",
+    "monthly_audit",
+    "quarterly_decision",
+    "claim_incident",
+    "release_recovery",
+    "demand_projection",
+    "delivery_projection",
+    "operator_projection",
+    "evidence_envelope",
+    "omega_observation",
+    "omega_pair",
+    "frontiers",
+}
+EXPECTED_RUNNERS = {
+    "collect_metrics": (WORK_IDS[0], "--collect-metrics", "event_bundle", "read_only"),
+    "weekly_review": (WORK_IDS[1], "--weekly-review", "weekly_review", "read_only"),
+    "monthly_audit": (WORK_IDS[2], "--monthly-audit", "monthly_audit", "read_only"),
+    "quarterly_decision": (WORK_IDS[3], "--quarterly-decision", "quarterly_decision", "read_only"),
+    "claim_incident": (WORK_IDS[4], "--claim-drill", "claim_incident", "synthetic_temp_only"),
+    "release_recovery": (WORK_IDS[5], "--release-drill", "release_recovery", "synthetic_temp_only"),
+    "demand_projection": (WORK_IDS[6], "--project-private-ledger", "demand_private_ledger", "read_only"),
+    "delivery_projection": (WORK_IDS[7], "--project-private-ledger", "delivery_private_ledger", "read_only"),
+    "operator_projection": (WORK_IDS[7], "--project-private-ledger", "operator_private_ledger", "read_only"),
+    "evidence_envelope": (WORK_IDS[8], "--build-evidence-envelope", "evidence_source_bundle", "read_only"),
+    "omega_observation": (WORK_IDS[8], "--omega-observation", "omega_observation", "read_only"),
+    "omega_pair": (WORK_IDS[8], "--assemble-omega-pair", "omega_observation", "read_only"),
+    "frontiers": ("PSP-C12", "--frontiers", "dependency_ledger", "read_only"),
+}
+EXPECTED_TEMPLATE_MARKERS = {
+    "weekly": {
+        "{{period_start}}",
+        "{{scope}}",
+        "{{ready_work}}",
+        "{{blockers}}",
+        "{{qualified_demand_count}}",
+        "{{delivery_risks}}",
+        "{{evidence_changes}}",
+        "{{decision}}",
+        "{{owner}}",
+        "{{next_predicate}}",
+        "{{routed_packet_ids}}",
+    },
+    "monthly": {
+        "{{period_start}}",
+        "{{scope}}",
+        "{{truth_findings}}",
+        "{{link_findings}}",
+        "{{privacy_findings}}",
+        "{{parity_findings}}",
+        "{{correction_packets}}",
+        "{{verdict}}",
+    },
+    "quarterly": {
+        "{{period_start}}",
+        "{{scope}}",
+        "{{conversation_evidence}}",
+        "{{funnel_evidence}}",
+        "{{delivery_evidence}}",
+        "{{claim_evidence}}",
+        "{{decision}}",
+        "{{truth_finding}}",
+        "{{prominence_finding}}",
+        "{{prior_strategy_version}}",
+        "{{proposed_strategy_version}}",
+        "{{owner}}",
+        "{{next_experiment}}",
+    },
+}
+PREPARATION_CHUNK_IDS = tuple(f"PSP-C{number:02d}" for number in range(4, 13))
+PREPARATION_OWNERS = {
+    "PSP-C04": (2313, "codex/psp-c04-proof-experience-preflight"),
+    "PSP-C05": (2315, "codex/psp-c05-delivery-os-preflight-relay"),
+    "PSP-C06": (2317, "codex/psp-c06-public-surfaces-relay"),
+    "PSP-C07": (2318, "codex/psp-c07-private-inbound-preflight"),
+    "PSP-C08": (2316, "codex/psp-c08-proof-led-content-preflight"),
+    "PSP-C09": (2322, "codex/psp-c09-qualification-conversion-relay"),
+    "PSP-C10": (2321, "codex/psp-c10-readiness-preflight"),
+    "PSP-C11": (2319, "codex/psp-c11-governed-foundry-preflight"),
+    "PSP-C12": (2320, "codex/psp-c12-control-plane-preflight"),
 }
 
 
@@ -193,6 +314,46 @@ def _periods_are_consecutive(records: list[dict[str, Any]], cadence: str) -> boo
     return False
 
 
+def _schema_path(operations: dict[str, Any], schema_name: str) -> Path:
+    raw_path = _text(
+        _mapping(operations.get("schemas"), "operations.schemas").get(schema_name),
+        f"operations.schemas.{schema_name}",
+    )
+    path = (ROOT / raw_path).resolve()
+    try:
+        path.relative_to(ROOT)
+    except ValueError as exc:
+        raise P14Error(f"operations schema path escapes the repository: {raw_path}") from exc
+    return path
+
+
+def _validate_named_schema(operations: dict[str, Any], schema_name: str, value: object) -> dict[str, Any]:
+    schema = _load_json(_schema_path(operations, schema_name))
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    errors = sorted(validator.iter_errors(value), key=lambda item: tuple(str(part) for part in item.absolute_path))
+    if errors:
+        error = errors[0]
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        raise P14Error(f"{schema_name} schema violation at {location}: {error.message}")
+    return _mapping(value, schema_name)
+
+
+def _require_live_receipt(value: dict[str, Any], *, label: str, field: str = "evidence_url") -> None:
+    if value.get("scope") == "live" and not _is_url(value.get(field)):
+        raise P14Error(f"{label} live scope requires an HTTPS {field}")
+
+
+def _require_single_scope(parent: dict[str, Any], records: list[Any], *, label: str) -> str:
+    scope = _text(parent.get("scope"), f"{label}.scope")
+    if scope not in {"synthetic", "live"}:
+        raise P14Error(f"{label}.scope must be synthetic or live")
+    for index, raw in enumerate(records):
+        record = _mapping(raw, f"{label}[{index}]")
+        if record.get("scope") != scope:
+            raise P14Error(f"{label}[{index}] scope differs from its parent {scope} scope")
+    return scope
+
+
 def _topological_stages(stages: list[dict[str, Any]]) -> list[str]:
     dependencies: dict[str, set[str]] = {}
     for index, raw in enumerate(stages):
@@ -221,6 +382,104 @@ def _topological_stages(stages: list[dict[str, Any]]) -> list[str]:
             ordered.append(work_id)
             remaining.pop(work_id)
     return ordered
+
+
+def validate_operations_contract(value: object) -> dict[str, Any]:
+    operations = _mapping(value, "operations")
+    if operations.get("schema_version") != OPERATIONS_SCHEMA:
+        raise P14Error(f"operations schema_version must be {OPERATIONS_SCHEMA}")
+    if operations.get("control_plane_schema_version") != CONTROL_SCHEMA:
+        raise P14Error("operations must bind the current control-plane schema")
+    if operations.get("counts_as_closure") is not False:
+        raise P14Error("operational preparation must not count as closure")
+
+    separation = _mapping(operations.get("scope_separation"), "operations.scope_separation")
+    if (
+        separation.get("allowed_scopes") != ["synthetic", "live"]
+        or separation.get("require_single_scope_per_input") is not True
+        or separation.get("synthetic_counts_as_live") is not False
+    ):
+        raise P14Error("operations synthetic/live separation contract drift")
+    forbidden = set(_list(separation.get("synthetic_may_not_satisfy"), "synthetic_may_not_satisfy"))
+    if not {"Omega", "real demand", "completed weekly, monthly, or quarterly cycles"}.issubset(forbidden):
+        raise P14Error("operations synthetic non-claims are incomplete")
+
+    schemas = _mapping(operations.get("schemas"), "operations.schemas")
+    if set(schemas) != EXPECTED_OPERATION_SCHEMAS:
+        raise P14Error("operations schema inventory drift")
+    if schemas != EXPECTED_OPERATION_SCHEMA_PATHS:
+        raise P14Error("operations schema path mapping drift")
+    for schema_name in sorted(schemas):
+        schema = _load_json(_schema_path(operations, schema_name))
+        try:
+            Draft202012Validator.check_schema(schema)
+        except Exception as exc:
+            raise P14Error(f"operations schema {schema_name} is invalid: {exc}") from exc
+
+    templates = _mapping(operations.get("templates"), "operations.templates")
+    if set(templates) != {"weekly", "monthly", "quarterly"}:
+        raise P14Error("operations review template inventory drift")
+    for name, raw in templates.items():
+        template = _mapping(raw, f"operations.templates.{name}")
+        path = (ROOT / _text(template.get("path"), f"operations.templates.{name}.path")).resolve()
+        try:
+            path.relative_to(ROOT)
+            body = path.read_text(encoding="utf-8")
+        except (ValueError, OSError) as exc:
+            raise P14Error(f"cannot load {name} review template: {exc}") from exc
+        markers = _list(template.get("required_markers"), f"operations.templates.{name}.required_markers")
+        if set(markers) != EXPECTED_TEMPLATE_MARKERS[name] or len(markers) != len(set(markers)):
+            raise P14Error(f"{name} review template marker contract drift")
+        missing = [marker for marker in markers if marker not in body]
+        if missing:
+            raise P14Error(f"{name} review template is missing markers: {missing}")
+        unresolved = set(re.findall(r"\{\{[a-z0-9_]+\}\}", body)) - set(markers)
+        if unresolved:
+            raise P14Error(f"{name} review template has ungoverned markers: {sorted(unresolved)}")
+
+    runners = _list(operations.get("runners"), "operations.runners", nonempty=True)
+    runner_ids: set[str] = set()
+    for index, raw in enumerate(runners):
+        runner = _mapping(raw, f"operations.runners[{index}]")
+        runner_id = _text(runner.get("id"), f"operations.runners[{index}].id")
+        if runner_id in runner_ids:
+            raise P14Error(f"duplicate operations runner id: {runner_id}")
+        runner_ids.add(runner_id)
+        if runner.get("counts_as_closure") is not False:
+            raise P14Error(f"operations runner {runner_id} must not count as closure")
+        if runner.get("effect_scope") not in {"read_only", "synthetic_temp_only"}:
+            raise P14Error(f"operations runner {runner_id} effect scope is not reversible")
+        _text(runner.get("mode"), f"operations runner {runner_id}.mode")
+        work_id = _text(runner.get("work_id"), f"operations runner {runner_id}.work_id")
+        if work_id not in {*WORK_IDS, "PSP-C12"}:
+            raise P14Error(f"operations runner {runner_id} has an unknown work id")
+        input_schema = _text(runner.get("input_schema"), f"operations runner {runner_id}.input_schema")
+        if input_schema != "dependency_ledger" and input_schema not in schemas:
+            raise P14Error(f"operations runner {runner_id} has an unknown input schema")
+        expected = EXPECTED_RUNNERS.get(runner_id)
+        observed = (work_id, runner.get("mode"), input_schema, runner.get("effect_scope"))
+        if expected != observed:
+            raise P14Error(f"operations runner {runner_id} mapping drift")
+        expected_kind = {
+            "demand_projection": "demand",
+            "delivery_projection": "delivery",
+            "operator_projection": "operator",
+        }.get(runner_id)
+        if expected_kind is not None and runner.get("ledger_kind") != expected_kind:
+            raise P14Error(f"operations runner {runner_id} ledger kind drift")
+        if runner_id == "omega_pair" and runner.get("input_cardinality") != 2:
+            raise P14Error("Omega pair runner must require exactly two observations")
+    if runner_ids != EXPECTED_RUNNER_IDS:
+        raise P14Error("operations runner inventory drift")
+
+    rollback = _mapping(operations.get("rollback_invariants"), "operations.rollback_invariants")
+    if not rollback or any(value is not True for value in rollback.values()):
+        raise P14Error("every operational rollback invariant must be enabled")
+    return operations
+
+
+def load_operations(path: Path = DEFAULT_OPERATIONS) -> dict[str, Any]:
+    return validate_operations_contract(_load_json(path))
 
 
 def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[str, Any]:
@@ -310,6 +569,35 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
     if tuple(chunk_ids) != PREDECESSOR_CHUNK_IDS:
         raise P14Error("predecessor chunks must remain in canonical C03-C11 order")
 
+    preparation_owners = _list(ledger.get("preparation_owners"), "dependency ledger preparation_owners")
+    owner_chunk_ids: list[str] = []
+    for index, raw in enumerate(preparation_owners):
+        owner = _mapping(raw, f"preparation_owners[{index}]")
+        chunk_id = _text(owner.get("chunk_id"), f"preparation_owners[{index}].chunk_id")
+        owner_chunk_ids.append(chunk_id)
+        if chunk_id not in PREPARATION_OWNERS:
+            raise P14Error(f"unexpected reversible preparation owner {chunk_id}")
+        pull_request, branch = PREPARATION_OWNERS[chunk_id]
+        if (
+            owner.get("repository") != "organvm/limen"
+            or owner.get("branch") != branch
+            or owner.get("pull_request") != pull_request
+            or owner.get("pull_request_url") != f"https://github.com/organvm/limen/pull/{pull_request}"
+            or owner.get("state") != "open"
+            or owner.get("draft") is not True
+            or owner.get("effect_scope") != "repository_reversible"
+            or owner.get("counts_as_closure") is not False
+        ):
+            raise P14Error(f"{chunk_id} reversible preparation owner drift")
+        _list(owner.get("reversible_actions"), f"{chunk_id}.reversible_actions", nonempty=True)
+        if chunk_id == "PSP-C12":
+            if owner.get("head_binding") != "runtime_exact_head" or "observed_head" in owner:
+                raise P14Error("C12 preparation owner must bind its runtime exact head without self-reference")
+        elif not HEAD_RE.fullmatch(str(owner.get("observed_head") or "")):
+            raise P14Error(f"{chunk_id} preparation owner must bind an exact observed head")
+    if tuple(owner_chunk_ids) != PREPARATION_CHUNK_IDS:
+        raise P14Error("reversible preparation owners must remain in canonical C04-C12 order")
+
     c12 = graph["chunk_by_id"]["PSP-C12"]
     expected_p14_conductor = {key: c12["conductor"][key] for key in ("slug", "effort")}
     if ledger.get("p14_conductor") != expected_p14_conductor:
@@ -368,17 +656,43 @@ def dependency_report(ledger: dict[str, Any]) -> dict[str, Any]:
         for row in ledger["predecessor_chunks"]
         if row["closure_state"] != "closed"
     ]
-    frontier: list[dict[str, Any]] = []
+    formal_frontier: list[dict[str, Any]] = []
     for row in ledger["predecessor_chunks"]:
         if row["closure_state"] != "closed" and row["frontier_work"]:
-            frontier = deepcopy(row["frontier_work"])
+            formal_frontier = deepcopy(row["frontier_work"])
             break
+    reversible_frontier = [
+        {
+            "chunk_id": owner["chunk_id"],
+            "repository": owner["repository"],
+            "branch": owner["branch"],
+            "pull_request": owner["pull_request"],
+            "pull_request_url": owner["pull_request_url"],
+            "state": owner["state"],
+            "draft": owner["draft"],
+            "observed_head": owner.get("observed_head"),
+            "head_binding": owner.get("head_binding"),
+            "effect_scope": owner["effect_scope"],
+            "reversible_actions": deepcopy(owner["reversible_actions"]),
+            "counts_as_closure": False,
+        }
+        for owner in ledger["preparation_owners"]
+    ]
+    if formal_frontier and not reversible_frontier:
+        raise P14Error("formal execution blockage must not empty the independent reversible preparation frontier")
     return {
         "status": "blocked" if blockers else "pass",
         "predecessor_chunk_count": len(ledger["predecessor_chunks"]),
         "predecessor_blocker_count": len(blockers),
         "predecessor_blockers": blockers,
-        "execution_frontier": frontier,
+        "formal_execution_frontier": formal_frontier,
+        "execution_frontier": formal_frontier,
+        "reversible_preparation_frontier": reversible_frontier,
+        "frontier_invariant": {
+            "independent": True,
+            "formal_gate_suppresses_reversible_preparation": False,
+            "owner_branches_or_pull_requests_count_as_closure": False,
+        },
         "counts_as_closure": False,
     }
 
@@ -401,6 +715,35 @@ def validate_contract(value: object) -> dict[str, Any]:
         or dependency_contract.get("counts_as_closure") is not False
     ):
         raise P14Error("dependency-ledger contract drift")
+    operations_contract = _mapping(contract.get("operations"), "operations")
+    if (
+        operations_contract.get("path") != "institutio/positioning/p14/operations.json"
+        or operations_contract.get("schema_version") != OPERATIONS_SCHEMA
+        or operations_contract.get("fixture_path") != "cli/tests/fixtures/positioning-p14/operational-cycle.json"
+        or operations_contract.get("counts_as_closure") is not False
+    ):
+        raise P14Error("operations contract drift")
+    frontier_policy = _mapping(contract.get("frontier_policy"), "frontier_policy")
+    if (
+        frontier_policy.get("frontiers_are_independent") is not True
+        or frontier_policy.get("formal_gate_must_not_empty_reversible_frontier") is not True
+        or frontier_policy.get("allowed_preparation_effect_scope") != "repository_reversible"
+        or set(frontier_policy.get("non_closure_signals") or [])
+        != {
+            "preflight",
+            "prepared",
+            "draft_pull_request",
+            "green_ci",
+            "synthetic_fixture",
+            "generated_visual_direction",
+        }
+    ):
+        raise P14Error("formal/reversible frontier policy drift")
+    _text(frontier_policy.get("formal_execution_frontier"), "frontier_policy.formal_execution_frontier")
+    _text(
+        frontier_policy.get("reversible_preparation_frontier"),
+        "frontier_policy.reversible_preparation_frontier",
+    )
     public_contract = _mapping(contract.get("public_evidence_contract"), "public_evidence_contract")
     deny_keys = _list(public_contract.get("deny_keys"), "public_evidence_contract.deny_keys", nonempty=True)
     if len(deny_keys) != len(set(deny_keys)) or set(deny_keys) != EXPECTED_DENY_KEYS:
@@ -474,6 +817,9 @@ def validate_contract(value: object) -> dict[str, Any]:
         raise P14Error(f"release_recovery.work_id must be {WORK_IDS[5]}")
     _text(release_recovery.get("required_health"), "release_recovery.required_health")
     _list(release_recovery.get("sequence"), "release_recovery.sequence", nonempty=True)
+    minimum_repositories = release_recovery.get("minimum_repositories")
+    if not isinstance(minimum_repositories, int) or isinstance(minimum_repositories, bool) or minimum_repositories < 2:
+        raise P14Error("release_recovery.minimum_repositories must be at least two")
 
     feedback = _mapping(contract.get("feedback_loops"), "feedback_loops")
     sales = _mapping(feedback.get("sales"), "feedback_loops.sales")
@@ -538,6 +884,14 @@ def validate_contract(value: object) -> dict[str, Any]:
             _text(requirement.get("path"), f"{code}.path")
             _text(requirement.get("expected_status"), f"{code}.expected_status")
             _list(requirement.get("required_fields"), f"{code}.required_fields", nonempty=True)
+            if "minimum_repositories" in requirement:
+                minimum_repositories = requirement["minimum_repositories"]
+                if (
+                    not isinstance(minimum_repositories, int)
+                    or isinstance(minimum_repositories, bool)
+                    or minimum_repositories < 2
+                ):
+                    raise P14Error(f"{code}.minimum_repositories must be at least two")
         elif kind == "human_gate":
             _text(requirement.get("gate_id"), f"{code}.gate_id")
         elif kind == "omega_pair":
@@ -560,6 +914,213 @@ def validate_contract(value: object) -> dict[str, Any]:
 
 def load_contract(path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
     return validate_contract(_load_json(path))
+
+
+def collect_metrics(
+    contract: dict[str, Any],
+    operations: dict[str, Any],
+    value: object,
+) -> dict[str, Any]:
+    bundle = _validate_named_schema(operations, "event_bundle", value)
+    events = _list(bundle.get("events"), "event_bundle.events", nonempty=True)
+    scope = _require_single_scope(bundle, events, label="event_bundle.events")
+    declared = {event["type"]: event for event in contract["events"]}
+    counts = {event_type: 0 for event_type in declared}
+    entities = {event_type: set() for event_type in declared}
+    seen_ids: set[str] = set()
+    for index, raw in enumerate(events):
+        event = _mapping(raw, f"event_bundle.events[{index}]")
+        event_id = _text(event.get("event_id"), f"event_bundle.events[{index}].event_id")
+        if event_id in seen_ids:
+            raise P14Error(f"duplicate event bundle event id: {event_id}")
+        seen_ids.add(event_id)
+        event_type = _text(event.get("type"), f"event_bundle.events[{index}].type")
+        if event_type not in declared:
+            raise P14Error(f"event bundle type is not declared: {event_type}")
+        if scope == "live" and not _is_url(event.get("source_receipt_url")):
+            raise P14Error(f"live event {event_id} requires an HTTPS source_receipt_url")
+        counts[event_type] += 1
+        entities[event_type].add(_text(event.get("entity_id"), f"event bundle {event_id}.entity_id"))
+
+    metrics: dict[str, Any] = {}
+    for metric in contract["metrics"]:
+        numerator = counts[metric["numerator_event"]]
+        denominator = counts[metric["denominator_event"]]
+        if denominator < metric["minimum_denominator"]:
+            raise P14Error(f"metric {metric['id']} denominator {denominator} is below {metric['minimum_denominator']}")
+        orphan_numerators = sorted(entities[metric["numerator_event"]] - entities[metric["denominator_event"]])
+        if orphan_numerators or numerator > denominator:
+            raise P14Error(
+                f"metric {metric['id']} numerator is not a subset of its denominator entities: {orphan_numerators}"
+            )
+        metrics[metric["id"]] = {
+            "numerator": numerator,
+            "denominator": denominator,
+            "value": numerator / denominator,
+            "numerator_event": metric["numerator_event"],
+            "denominator_event": metric["denominator_event"],
+            "source": {
+                "numerator": declared[metric["numerator_event"]]["source"],
+                "denominator": declared[metric["denominator_event"]]["source"],
+            },
+            "owner": metric["owner"],
+            "cadence": metric["cadence"],
+            "decision_use": metric["decision_use"],
+            "guardrail": metric["guardrail"],
+            "scope": scope,
+        }
+    return {
+        "schema_version": "limen.positioning_p14_metric_snapshot.v1",
+        "status": "pass",
+        "scope": scope,
+        "event_counts": counts,
+        "metrics": metrics,
+        "source_event_count": len(events),
+        "source_digest": _canonical_digest(bundle),
+        "source_scope_live": scope == "live",
+        "counts_as_live_outcomes": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+
+
+def run_weekly_review(operations: dict[str, Any], value: object) -> dict[str, Any]:
+    review = _validate_named_schema(operations, "weekly_review", value)
+    _require_live_receipt(review, label="weekly review")
+    start = _period_date(review.get("period_start"))
+    end = _period_date(review.get("period_end"))
+    if start is None or end is None or (end - start).days != 6:
+        raise P14Error("weekly review must cover one inclusive seven-day period")
+    ready = [_mapping(row, "weekly ready work") for row in review["ready_work"]]
+    ready_ids = [_text(row.get("work_id"), "weekly ready work id") for row in ready]
+    closed_ids = set(review["closed_work_ids"])
+    if len(set(ready_ids)) != len(ready_ids):
+        raise P14Error("weekly review contains duplicate ready work")
+    overlap = sorted(set(ready_ids) & closed_ids)
+    if overlap:
+        raise P14Error(f"weekly review would replay already-closed work: {overlap}")
+    decision = _mapping(review["decision"], "weekly review decision")
+    routed = decision["routed_packet_ids"]
+    if decision["action"] == "route" and not routed:
+        raise P14Error("weekly route decision requires a routed packet id")
+    if len(set(routed)) != len(routed):
+        raise P14Error("weekly review contains duplicate routed packets")
+    result = {
+        "schema_version": "limen.positioning_p14_weekly_review_receipt.v1",
+        "status": "pass",
+        "scope": review["scope"],
+        "period_start": review["period_start"],
+        "period_end": review["period_end"],
+        "decision": decision["action"],
+        "owner": decision["owner"],
+        "next_predicate": decision["next_predicate"],
+        "ready_work": ready,
+        "blockers": deepcopy(review["blockers"]),
+        "qualified_demand_count": review["qualified_demand_count"],
+        "delivery_risks": deepcopy(review["delivery_risks"]),
+        "evidence_changes": deepcopy(review["evidence_changes"]),
+        "routed_packet_ids": deepcopy(routed),
+        "source_scope_live": review["scope"] == "live",
+        "counts_as_live_cycle": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+    if "evidence_url" in review:
+        result["evidence_url"] = review["evidence_url"]
+    return result
+
+
+def run_monthly_audit(operations: dict[str, Any], value: object) -> dict[str, Any]:
+    audit = _validate_named_schema(operations, "monthly_audit", value)
+    _require_live_receipt(audit, label="monthly audit")
+    findings = _mapping(audit["findings"], "monthly audit findings")
+    all_findings: dict[str, tuple[str, dict[str, Any]]] = {}
+    unowned = {"truth": 0, "links": 0, "privacy": 0, "parity": 0}
+    for category, rows in findings.items():
+        for raw in rows:
+            finding = _mapping(raw, f"monthly {category} finding")
+            finding_id = _text(finding.get("finding_id"), f"monthly {category} finding_id")
+            if finding_id in all_findings:
+                raise P14Error(f"duplicate monthly finding id: {finding_id}")
+            all_findings[finding_id] = (category, finding)
+            if finding["status"] != "pass" and (
+                not _meaningful(finding.get("owner")) or not _meaningful(finding.get("next_predicate"))
+            ):
+                unowned[category] += 1
+    corrections: dict[str, dict[str, Any]] = {}
+    for raw in audit["correction_packets"]:
+        correction = _mapping(raw, "monthly correction packet")
+        finding_id = _text(correction.get("finding_id"), "monthly correction finding_id")
+        if finding_id in corrections:
+            raise P14Error(f"duplicate monthly correction packet: {finding_id}")
+        if finding_id not in all_findings or all_findings[finding_id][1]["status"] == "pass":
+            raise P14Error(f"monthly correction packet has no failing finding: {finding_id}")
+        finding = all_findings[finding_id][1]
+        if correction["owner"] != finding.get("owner") or correction["next_predicate"] != finding.get("next_predicate"):
+            raise P14Error(f"monthly correction packet does not preserve owner and predicate: {finding_id}")
+        corrections[finding_id] = correction
+    missing_packets = sorted(
+        finding_id
+        for finding_id, (_, finding) in all_findings.items()
+        if finding["status"] != "pass" and _meaningful(finding.get("owner")) and finding_id not in corrections
+    )
+    if missing_packets:
+        raise P14Error(f"monthly failing findings lack correction packets: {missing_packets}")
+    result = {
+        "schema_version": "limen.positioning_p14_monthly_audit_receipt.v1",
+        "status": "pass",
+        "scope": audit["scope"],
+        "period_start": audit["period_start"],
+        "verdict": "pass" if sum(unowned.values()) == 0 else "blocked",
+        "unowned_stale_claims": unowned["truth"],
+        "unowned_broken_links": unowned["links"],
+        "unowned_private_leaks": unowned["privacy"],
+        "unowned_surface_parity_defects": unowned["parity"],
+        "finding_count": len(all_findings),
+        "correction_packets": deepcopy(audit["correction_packets"]),
+        "source_scope_live": audit["scope"] == "live",
+        "counts_as_live_cycle": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+    if "evidence_url" in audit:
+        result["evidence_url"] = audit["evidence_url"]
+    return result
+
+
+def run_quarterly_decision(operations: dict[str, Any], value: object) -> dict[str, Any]:
+    review = _validate_named_schema(operations, "quarterly_decision", value)
+    _require_live_receipt(review, label="quarterly decision")
+    if review["decision"] == "keep":
+        if review["prior_strategy_version"] != review["proposed_strategy_version"]:
+            raise P14Error("quarterly keep decision must preserve the strategy version")
+    elif review["prior_strategy_version"] == review["proposed_strategy_version"]:
+        raise P14Error("quarterly strategy change must use a distinct proposed version")
+    evidence = review["evidence"]
+    result = {
+        "schema_version": "limen.positioning_p14_quarterly_decision_receipt.v1",
+        "status": "pass",
+        "scope": review["scope"],
+        "period_start": review["period_start"],
+        "conversation_evidence": deepcopy(evidence["conversation"]),
+        "funnel_evidence": deepcopy(evidence["funnel"]),
+        "delivery_evidence": deepcopy(evidence["delivery"]),
+        "claim_evidence": deepcopy(evidence["claim"]),
+        "decision": review["decision"],
+        "truth_finding": review["truth_finding"],
+        "prominence_finding": review["prominence_finding"],
+        "next_experiment": review["next_experiment"],
+        "owner": review["owner"],
+        "prior_strategy_version": review["prior_strategy_version"],
+        "proposed_strategy_version": review["proposed_strategy_version"],
+        "source_scope_live": review["scope"] == "live",
+        "counts_as_live_cycle": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+    if "evidence_url" in review:
+        result["evidence_url"] = review["evidence_url"]
+    return result
 
 
 def _event_counts(events: list[Any], event_types: set[str]) -> dict[str, int]:
@@ -660,38 +1221,94 @@ def _claim_incident_result(contract: dict[str, Any], fixture: dict[str, Any]) ->
             "evidence-corrected",
             "corrected-claim-restored",
         ],
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
     }
 
 
 def _release_recovery_result(contract: dict[str, Any], fixture: dict[str, Any]) -> dict[str, Any]:
     recovery = _mapping(fixture.get("release_recovery"), "fixture.release_recovery")
-    before = _text(recovery.get("before_release_id"), "release before_release_id")
-    bad = _text(recovery.get("bad_release_id"), "release bad_release_id")
-    restored = _text(recovery.get("restored_release_id"), "release restored_release_id")
-    if len({before, bad}) != 2 or restored != before:
-        raise P14Error("release drill must restore the exact distinct known-green release")
-    health_checks = _mapping(recovery.get("health_checks"), "release health_checks")
     required_health = contract["release_recovery"]["required_health"]
-    if not health_checks or any(value != required_health for value in health_checks.values()):
-        raise P14Error(f"all release health checks must be {required_health}")
-    owner_before = _text(recovery.get("capture_owner_before"), "capture_owner_before")
-    owner_after = _text(recovery.get("capture_owner_after"), "capture_owner_after")
-    if owner_before != owner_after:
-        raise P14Error("release rollback changed capture ownership")
-    repositories = sorted(
-        _text(item, "release resolved repository")
-        for item in _list(recovery.get("resolved_repositories"), "resolved_repositories", nonempty=True)
-    )
+    minimum_repositories = contract["release_recovery"]["minimum_repositories"]
+    if "repositories" in recovery:
+        repository_rows = [_mapping(row, "release repository") for row in recovery["repositories"]]
+    else:
+        repository_ids = _list(recovery.get("resolved_repositories"), "resolved_repositories", nonempty=True)
+        repository_rows = [
+            {
+                "repository_id": repository_id,
+                "before_release_id": recovery.get("before_release_id"),
+                "bad_release_id": recovery.get("bad_release_id"),
+                "restored_release_id": recovery.get("restored_release_id"),
+                "health_checks": recovery.get("health_checks"),
+                "capture_owner_before": recovery.get("capture_owner_before"),
+                "capture_owner_after": recovery.get("capture_owner_after"),
+            }
+            for repository_id in repository_ids
+        ]
+    if len(repository_rows) < minimum_repositories:
+        raise P14Error(f"release drill must cover at least {minimum_repositories} repositories")
+    repository_ids: list[str] = []
+    before_ids: list[str] = []
+    bad_ids: list[str] = []
+    restored_ids: list[str] = []
+    health_checks: dict[str, str] = {}
+    normalized_rows: list[dict[str, Any]] = []
+    for index, row in enumerate(repository_rows):
+        repository_id = _text(row.get("repository_id"), f"release repositories[{index}].repository_id")
+        before = _text(row.get("before_release_id"), f"{repository_id}.before_release_id")
+        bad = _text(row.get("bad_release_id"), f"{repository_id}.bad_release_id")
+        restored = _text(row.get("restored_release_id"), f"{repository_id}.restored_release_id")
+        if len({before, bad}) != 2 or restored != before:
+            raise P14Error(f"release drill must exactly restore {repository_id}'s distinct known-green release")
+        checks = _mapping(row.get("health_checks"), f"{repository_id}.health_checks")
+        if not checks or any(value not in {required_health, "pass"} for value in checks.values()):
+            raise P14Error(f"all {repository_id} release health checks must be {required_health} or pass")
+        owner_before = _text(row.get("capture_owner_before"), f"{repository_id}.capture_owner_before")
+        owner_after = _text(row.get("capture_owner_after"), f"{repository_id}.capture_owner_after")
+        if owner_before != owner_after:
+            raise P14Error(f"release rollback changed {repository_id} capture ownership")
+        if repository_id in repository_ids:
+            raise P14Error(f"duplicate release recovery repository: {repository_id}")
+        repository_ids.append(repository_id)
+        before_ids.append(before)
+        bad_ids.append(bad)
+        restored_ids.append(restored)
+        for name, status in checks.items():
+            health_checks[f"{repository_id}:{name}"] = status
+        normalized_rows.append(
+            {
+                "repository_id": repository_id,
+                "before_release_id": before,
+                "bad_release_id": bad,
+                "restored_release_id": restored,
+                "health_checks": deepcopy(checks),
+                "capture_owner": owner_before,
+            }
+        )
     return {
         "status": "synthetic-pass",
         "scope": "synthetic",
-        "resolved_repositories": repositories,
-        "before_release_ids": [before],
-        "bad_release_ids": [bad],
-        "restored_release_ids": [restored],
+        "resolved_repositories": repository_ids,
+        "repositories": normalized_rows,
+        "before_release_ids": before_ids,
+        "bad_release_ids": bad_ids,
+        "restored_release_ids": restored_ids,
         "health_checks": health_checks,
         "capture_continuity": True,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
     }
+
+
+def run_claim_incident(contract: dict[str, Any], operations: dict[str, Any], value: object) -> dict[str, Any]:
+    incident = _validate_named_schema(operations, "claim_incident", value)
+    return _claim_incident_result(contract, {"claim_incident": incident})
+
+
+def run_release_recovery(contract: dict[str, Any], operations: dict[str, Any], value: object) -> dict[str, Any]:
+    recovery = _validate_named_schema(operations, "release_recovery", value)
+    return _release_recovery_result(contract, {"release_recovery": recovery})
 
 
 def _sales_feedback_result(contract: dict[str, Any], fixture: dict[str, Any]) -> dict[str, Any]:
@@ -778,6 +1395,417 @@ def _delivery_feedback_result(contract: dict[str, Any], fixture: dict[str, Any])
         "outcome_receipts_preserved": True,
         "real_delivery_claimed": False,
         "real_operator_outcome_claimed": False,
+    }
+
+
+def project_private_ledger(operations: dict[str, Any], ledger_kind: str, value: object) -> dict[str, Any]:
+    schema_names = {
+        "demand": "demand_private_ledger",
+        "delivery": "delivery_private_ledger",
+        "operator": "operator_private_ledger",
+    }
+    if ledger_kind not in schema_names:
+        raise P14Error(f"private ledger kind must be one of {sorted(schema_names)}")
+    ledger = _validate_named_schema(operations, schema_names[ledger_kind], value)
+    records = _list(ledger.get("records"), f"{ledger_kind} private ledger records")
+    scope = _text(ledger.get("scope"), f"{ledger_kind} private ledger scope")
+    seen_ids: set[str] = set()
+    projected: list[dict[str, Any]] = []
+    excluded = 0
+    for index, raw in enumerate(records):
+        record = _mapping(raw, f"{ledger_kind} private ledger records[{index}]")
+        outcome_id = _text(record.get("outcome_id"), f"{ledger_kind} outcome_id")
+        if outcome_id in seen_ids:
+            raise P14Error(f"duplicate {ledger_kind} outcome id: {outcome_id}")
+        seen_ids.add(outcome_id)
+        if scope == "live" and not _is_url(record.get("evidence_url")):
+            raise P14Error(f"live {ledger_kind} outcome {outcome_id} requires an HTTPS evidence_url")
+        if ledger_kind == "demand":
+            if record["eligibility"] != "eligible" or record["qualification"] != "qualified":
+                excluded += 1
+                continue
+            public = {
+                "outcome_id": outcome_id,
+                "scope": scope,
+                "offer_version": record["offer_version"],
+                "disposition": record["disposition"],
+                "objection_code": record["objection_code"],
+                "observed_at": record["observed_at"],
+            }
+        else:
+            public = {
+                "outcome_id": outcome_id,
+                "scope": scope,
+                "result": record["result"],
+                "observed_at": record["observed_at"],
+                "claim_impact": record["claim_impact"],
+                "classification_impact": record["classification_impact"],
+                "proof_impact": record["proof_impact"],
+            }
+        if "evidence_url" in record:
+            public["evidence_url"] = record["evidence_url"]
+        public["counts_as_terminal_evidence"] = False
+        projected.append(public)
+    result = {
+        "schema_version": f"limen.positioning_p14_{ledger_kind}_public_projection.v1",
+        "status": "pass",
+        "scope": scope,
+        "records": projected,
+        "source_count": len(records),
+        "projected_count": len(projected),
+        "excluded_count": excluded,
+        "source_digest": _canonical_digest(ledger),
+        "source_scope_live": scope == "live",
+        "counts_as_real_outcomes": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+    violations = _privacy_violations(
+        result,
+        EXPECTED_DENY_KEYS
+        | {
+            "private_identity_ref",
+            "private_evidence_ref",
+            "private_operator_ref",
+        },
+    )
+    if violations:
+        raise P14Error(f"private ledger projection leaked private fields: {violations}")
+    return result
+
+
+def normalize_omega_observation(operations: dict[str, Any], value: object) -> dict[str, Any]:
+    observation = _validate_named_schema(operations, "omega_observation", value)
+    _require_live_receipt(observation, label="Omega observation")
+    scope = observation["scope"]
+    program_pass = deepcopy(observation["program_pass"])
+    # Validate the canonical pass fields without pretending one observation is a pair.
+    record = program_pass
+    if not DIGEST_RE.fullmatch(str(record.get("state_digest") or "")) or not _is_rfc3339(record.get("observed_at")):
+        raise P14Error("Omega observation pass digest or timestamp is invalid")
+    if scope == "live":
+        missing = [field for field in ("ok", "parity", "open", "verified_receipts", "failures") if field not in record]
+        if missing:
+            raise P14Error(f"Omega observation is missing canonical live fields: {missing}")
+        if record.get("ok") is not True or record.get("open") != [] or record.get("failures") != []:
+            raise P14Error("Omega observation is not a clean canonical live pass")
+        parity = _mapping(record.get("parity"), "Omega observation parity")
+        expected = parity.get("expected")
+        observed = parity.get("observed")
+        if (
+            parity.get("ok") is not True
+            or not isinstance(expected, int)
+            or isinstance(expected, bool)
+            or expected < 1
+            or observed != expected
+            or parity.get("missing") != []
+            or parity.get("orphan") != []
+            or parity.get("drift") != []
+        ):
+            raise P14Error("Omega observation parity is incomplete or drifted")
+        verified = record.get("verified_receipts")
+        if not isinstance(verified, int) or isinstance(verified, bool) or verified < 1:
+            raise P14Error("Omega observation verified_receipts must be positive")
+    return {
+        "schema_version": "limen.positioning_p14_omega_observation_receipt.v1",
+        "status": "pass",
+        "scope": scope,
+        "observed_head": observation["observed_head"],
+        "program_pass": program_pass,
+        "evidence_url": observation.get("evidence_url"),
+        "counts_as_omega_pair": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+
+
+def assemble_omega_pair(operations: dict[str, Any], values: list[object]) -> dict[str, Any]:
+    if len(values) != 2:
+        raise P14Error("Omega pair assembly requires exactly two observations")
+    observations = [normalize_omega_observation(operations, value) for value in values]
+    scopes = {item["scope"] for item in observations}
+    heads = {item["observed_head"] for item in observations}
+    if len(scopes) != 1:
+        raise P14Error("Omega observation scopes differ")
+    if len(heads) != 1:
+        raise P14Error("Omega observations do not bind one unchanged exact head")
+    scope = observations[0]["scope"]
+    passes = [item["program_pass"] for item in observations]
+    if [item.get("pass") for item in passes] != [1, 2]:
+        raise P14Error("Omega observations must be supplied in pass-1 then pass-2 order")
+    pair: dict[str, Any] = {
+        "schema_version": PAIR_SCHEMA,
+        "scope": scope,
+        "observed_head": observations[0]["observed_head"],
+        "passes": passes,
+    }
+    if scope == "live":
+        pair["evidence_urls"] = [item["evidence_url"] for item in observations]
+    verified = verify_omega_pair(pair, required_scope=scope)
+    return {
+        **verified,
+        "schema_version": "limen.positioning_p14_omega_pair_receipt.v1",
+        "observed_head": observations[0]["observed_head"],
+        "pair": pair,
+        "source_scope_live": scope == "live",
+        "counts_as_live_omega": False,
+        "counts_as_terminal_evidence": False,
+        "counts_as_closure": False,
+    }
+
+
+def build_evidence_envelope(contract: dict[str, Any], operations: dict[str, Any], value: object) -> dict[str, Any]:
+    source = _validate_named_schema(operations, "evidence_source_bundle", value)
+    scope = source["scope"]
+    observed_head = source["observed_head"]
+    ledgers = _mapping(source["private_ledgers"], "evidence source private_ledgers")
+    projections = {
+        kind: project_private_ledger(operations, kind, ledgers[kind]) for kind in ("demand", "delivery", "operator")
+    }
+    if any(projection["scope"] != scope for projection in projections.values()):
+        raise P14Error("evidence envelope mixes synthetic and live private ledgers")
+    reviews = _mapping(source["review_receipts"], "evidence source review_receipts")
+    for cadence in ("weekly", "monthly", "quarterly"):
+        for index, raw in enumerate(_list(reviews[cadence], f"review_receipts.{cadence}")):
+            review = _mapping(raw, f"review_receipts.{cadence}[{index}]")
+            if review.get("scope") != scope:
+                raise P14Error(f"evidence envelope review_receipts.{cadence}[{index}] scope mismatch")
+    work_receipts = _mapping(source["work_receipts"], "evidence source work_receipts")
+    for work_id, raw in work_receipts.items():
+        receipt = _mapping(raw, f"work_receipts.{work_id}")
+        if receipt.get("scope") != scope:
+            raise P14Error(f"evidence envelope work receipt {work_id} scope mismatch")
+        if scope == "live" and receipt.get("exact_head") != observed_head:
+            raise P14Error(f"evidence envelope work receipt {work_id} exact head mismatch")
+    for field in (
+        "claim_incident_drill",
+        "release_recovery_drill",
+        "demand_decision",
+        "commercial_outcome",
+        "program_omega",
+    ):
+        raw = source.get(field)
+        if isinstance(raw, dict) and raw.get("scope") != scope:
+            raise P14Error(f"evidence envelope {field} scope mismatch")
+    for index, raw in enumerate(source.get("portfolio_impacts") or []):
+        impact = _mapping(raw, f"portfolio_impacts[{index}]")
+        if impact.get("scope") != scope:
+            raise P14Error(f"evidence envelope portfolio_impacts[{index}] scope mismatch")
+    omega_pair = source.get("omega_pair")
+    if isinstance(omega_pair, dict):
+        if omega_pair.get("scope") != scope:
+            raise P14Error("evidence envelope Omega pair scope mismatch")
+        if omega_pair.get("observed_head") != observed_head:
+            raise P14Error("evidence envelope Omega pair exact head mismatch")
+    program_omega = source.get("program_omega")
+    if isinstance(program_omega, dict) and program_omega.get("observed_head") != observed_head:
+        raise P14Error("evidence envelope program Omega exact head mismatch")
+    envelope: dict[str, Any] = {
+        "schema_version": EVIDENCE_SCHEMA,
+        "scope": scope,
+        "observed_head": observed_head,
+        "work_receipts": deepcopy(source["work_receipts"]),
+        "review_receipts": deepcopy(source["review_receipts"]),
+        "sales_outcomes": deepcopy(projections["demand"]["records"]),
+        "delivery_outcomes": deepcopy(projections["delivery"]["records"]),
+        "operator_outcomes": deepcopy(projections["operator"]["records"]),
+        "counts_as_closure": False,
+    }
+    passthrough = (
+        "claim_incident_drill",
+        "release_recovery_drill",
+        "demand_decision",
+        "commercial_outcome",
+        "portfolio_impacts",
+        "human_gates",
+        "omega_pair",
+        "program_omega",
+    )
+    for field in passthrough:
+        if field in source:
+            envelope[field] = deepcopy(source[field])
+    violations = _privacy_violations(envelope, set(contract["public_evidence_contract"]["deny_keys"]))
+    if violations:
+        raise P14Error(f"evidence envelope contains denied public fields: {violations}")
+    envelope["source_digest"] = _canonical_digest(source)
+    envelope["source_scope_live"] = scope == "live"
+    envelope["counts_as_live_evidence"] = False
+    envelope["counts_as_terminal_evidence"] = False
+    return envelope
+
+
+def run_operational_fixture(contract: dict[str, Any], operations: dict[str, Any], value: object) -> dict[str, Any]:
+    fixture = _mapping(value, "operational fixture")
+    if fixture.get("schema_version") != OPERATION_FIXTURE_SCHEMA or fixture.get("scope") != "synthetic":
+        raise P14Error(f"operational fixture must use {OPERATION_FIXTURE_SCHEMA} with synthetic scope")
+    required = {
+        "observed_head",
+        "event_bundle",
+        "weekly_review",
+        "monthly_audit",
+        "quarterly_decision",
+        "claim_incident",
+        "release_recovery",
+        "private_ledgers",
+        "demand_decision",
+        "commercial_outcome",
+        "portfolio_impacts",
+        "human_gates",
+        "omega_observations",
+    }
+    missing = sorted(required - set(fixture))
+    if missing:
+        raise P14Error(f"operational fixture is missing required fields: {missing}")
+    if not HEAD_RE.fullmatch(str(fixture.get("observed_head") or "")):
+        raise P14Error("operational fixture observed_head must be an exact commit")
+    nested_scope_values: list[tuple[str, object]] = [
+        (name, _mapping(fixture[name], f"operational fixture {name}").get("scope"))
+        for name in (
+            "event_bundle",
+            "weekly_review",
+            "monthly_audit",
+            "quarterly_decision",
+            "claim_incident",
+            "release_recovery",
+            "demand_decision",
+            "commercial_outcome",
+        )
+    ]
+    private_ledgers = _mapping(fixture["private_ledgers"], "operational fixture private_ledgers")
+    if set(private_ledgers) != {"demand", "delivery", "operator"}:
+        raise P14Error("operational fixture requires demand, delivery, and operator private ledgers")
+    nested_scope_values.extend(
+        (f"private_ledgers.{kind}", _mapping(private_ledgers[kind], kind).get("scope"))
+        for kind in ("demand", "delivery", "operator")
+    )
+    omega_observations = _list(fixture["omega_observations"], "omega observations")
+    nested_scope_values.extend(
+        (f"omega_observations[{index}]", _mapping(row, "omega observation").get("scope"))
+        for index, row in enumerate(omega_observations)
+    )
+    for name, scope in nested_scope_values:
+        if scope != "synthetic":
+            raise P14Error(f"operational fixture {name} must remain synthetic")
+    for index, raw in enumerate(omega_observations):
+        observation = _mapping(raw, f"omega observations[{index}]")
+        if observation.get("observed_head") != fixture["observed_head"]:
+            raise P14Error(f"operational fixture omega observations[{index}] exact head mismatch")
+    portfolio_impacts = _list(fixture["portfolio_impacts"], "portfolio impacts", nonempty=True)
+    impact_ids: list[str] = []
+    for index, raw in enumerate(portfolio_impacts):
+        impact = _mapping(raw, f"portfolio impacts[{index}]")
+        required_impact_fields = {
+            "outcome_id",
+            "scope",
+            "before_class",
+            "after_class",
+            "reason",
+            "evidence_url",
+        }
+        if set(impact) != required_impact_fields:
+            raise P14Error(f"operational fixture portfolio impacts[{index}] field contract drift")
+        if impact.get("scope") != "synthetic":
+            raise P14Error(f"operational fixture portfolio impacts[{index}] must remain synthetic")
+        impact_ids.append(_text(impact.get("outcome_id"), f"portfolio impacts[{index}].outcome_id"))
+        for field in ("before_class", "after_class", "reason"):
+            _text(impact.get(field), f"portfolio impacts[{index}].{field}")
+        if not _is_url(impact.get("evidence_url")):
+            raise P14Error(f"operational fixture portfolio impacts[{index}] evidence_url must be HTTPS")
+    if len(set(impact_ids)) != len(impact_ids):
+        raise P14Error("operational fixture portfolio impacts contain duplicate outcome ids")
+    metric_result = collect_metrics(contract, operations, fixture["event_bundle"])
+    weekly = run_weekly_review(operations, fixture["weekly_review"])
+    monthly = run_monthly_audit(operations, fixture["monthly_audit"])
+    quarterly = run_quarterly_decision(operations, fixture["quarterly_decision"])
+    claim = run_claim_incident(contract, operations, fixture["claim_incident"])
+    release = run_release_recovery(contract, operations, fixture["release_recovery"])
+    projections = {
+        kind: project_private_ledger(operations, kind, fixture["private_ledgers"][kind])
+        for kind in ("demand", "delivery", "operator")
+    }
+    demand_ids = {row["outcome_id"] for row in projections["demand"]["records"]}
+    demand_decision = _mapping(fixture["demand_decision"], "operational fixture demand_decision")
+    if (
+        demand_decision.get("status") != "decided"
+        or demand_decision.get("scope") != "synthetic"
+        or demand_decision.get("decision") not in contract["feedback_loops"]["sales"]["allowed_decisions"]
+        or demand_decision.get("before_offer_version") == demand_decision.get("after_offer_version")
+        or not _is_url(demand_decision.get("evidence_url"))
+    ):
+        raise P14Error("operational fixture demand decision contract is incomplete")
+    decision_ids = demand_decision.get("outcome_ids")
+    if not isinstance(decision_ids, list) or set(decision_ids) != demand_ids or len(decision_ids) != len(demand_ids):
+        raise P14Error("operational fixture demand decision must exactly preserve projected demand outcomes")
+    commercial = _mapping(fixture["commercial_outcome"], "operational fixture commercial_outcome")
+    commercial_ids = commercial.get("outcome_ids")
+    if (
+        commercial.get("status") != "validated"
+        or commercial.get("scope") != "synthetic"
+        or commercial.get("mode") not in {"paid_audit", "documented_no"}
+        or not isinstance(commercial_ids, list)
+        or not commercial_ids
+        or len(set(commercial_ids)) != len(commercial_ids)
+        or not set(commercial_ids).issubset(demand_ids)
+        or not _is_url(commercial.get("evidence_url"))
+    ):
+        raise P14Error("operational fixture commercial outcome contract is incomplete")
+    outcome_ids = {row["outcome_id"] for kind in ("delivery", "operator") for row in projections[kind]["records"]}
+    if set(impact_ids) != outcome_ids:
+        raise P14Error("operational fixture portfolio impacts must exactly cover delivery and operator outcomes")
+    gates = _mapping(fixture["human_gates"], "operational fixture human_gates")
+    expected_gate = contract["feedback_loops"]["sales"]["required_human_gate"]
+    if gates != {expected_gate: {"status": "pending"}}:
+        raise P14Error("operational fixture must leave the price-anchor human gate pending")
+    omega = assemble_omega_pair(operations, omega_observations)
+    if omega["observed_head"] != fixture["observed_head"]:
+        raise P14Error("operational fixture Omega pair exact head mismatch")
+    source_bundle = {
+        "schema_version": "limen.positioning_p14_evidence_source_bundle.v1",
+        "scope": "synthetic",
+        "observed_head": fixture["observed_head"],
+        "work_receipts": {},
+        "review_receipts": {"weekly": [weekly], "monthly": [monthly], "quarterly": [quarterly]},
+        "claim_incident_drill": claim,
+        "release_recovery_drill": release,
+        "private_ledgers": deepcopy(fixture["private_ledgers"]),
+        "demand_decision": deepcopy(demand_decision),
+        "commercial_outcome": deepcopy(commercial),
+        "portfolio_impacts": deepcopy(portfolio_impacts),
+        "human_gates": deepcopy(gates),
+        "omega_pair": deepcopy(omega["pair"]),
+    }
+    envelope = build_evidence_envelope(contract, operations, source_bundle)
+    terminal = terminal_report(contract, envelope)
+    if terminal["terminal"]:
+        raise P14Error("synthetic operational fixture must never satisfy the live terminal predicate")
+    stages = {
+        WORK_IDS[0]: metric_result,
+        WORK_IDS[1]: weekly,
+        WORK_IDS[2]: monthly,
+        WORK_IDS[3]: quarterly,
+        WORK_IDS[4]: claim,
+        WORK_IDS[5]: release,
+        WORK_IDS[6]: projections["demand"],
+        WORK_IDS[7]: {
+            "delivery": projections["delivery"],
+            "operator": projections["operator"],
+            "portfolio_impacts": deepcopy(fixture["portfolio_impacts"]),
+            "counts_as_closure": False,
+        },
+        WORK_IDS[8]: omega,
+    }
+    return {
+        "schema_version": "limen.positioning_p14_operational_fixture_result.v1",
+        "status": "synthetic-pass",
+        "scope": "synthetic",
+        "stages": stages,
+        "evidence_envelope": envelope,
+        "terminal_status": terminal["status"],
+        "terminal": False,
+        "executed_predecessor_commands": [],
+        "counts_as_live_outcomes": False,
+        "counts_as_closure": False,
+        "not_evidence_for": deepcopy(operations["scope_separation"]["synthetic_may_not_satisfy"]),
     }
 
 
@@ -942,6 +1970,8 @@ def _valid_work_receipt(value: object) -> tuple[bool, str]:
 def _valid_record(value: object, requirement: dict[str, Any]) -> tuple[bool, str]:
     if not isinstance(value, dict):
         return False, "no record object"
+    if value.get("counts_as_terminal_evidence") is False:
+        return False, "prepared runner output lacks its durable owner receipt"
     expected = requirement.get("expected_status")
     if expected is not None and value.get("status") != expected:
         return False, f"status is not {expected}"
@@ -962,6 +1992,15 @@ def _valid_record(value: object, requirement: dict[str, Any]) -> tuple[bool, str
         if not isinstance(corrected, dict) or corrected.get("status") != "verified":
             return False, "corrected evidence is not verified"
     if requirement["code"] == "RELEASE_RECOVERY_DRILL_MISSING":
+        repositories = value.get("resolved_repositories")
+        minimum_repositories = requirement.get("minimum_repositories", 2)
+        if (
+            not isinstance(repositories, list)
+            or len(repositories) < minimum_repositories
+            or len(set(repositories)) != len(repositories)
+            or not all(isinstance(item, str) and item for item in repositories)
+        ):
+            return False, f"release recovery needs {minimum_repositories} distinct repositories"
         before = value.get("before_release_ids")
         bad = value.get("bad_release_ids")
         restored = value.get("restored_release_ids")
@@ -972,6 +2011,8 @@ def _valid_record(value: object, requirement: dict[str, Any]) -> tuple[bool, str
             or not isinstance(restored, list)
             or not all(isinstance(item, str) and item for item in restored)
             or before != restored
+            or len(before) != len(repositories)
+            or len(set(before)) != len(before)
         ):
             return False, "restored release ids do not exactly match the known-green ids"
         if (
@@ -979,6 +2020,8 @@ def _valid_record(value: object, requirement: dict[str, Any]) -> tuple[bool, str
             or not bad
             or not all(isinstance(item, str) and item for item in bad)
             or set(bad) & set(before)
+            or len(bad) != len(repositories)
+            or len(set(bad)) != len(bad)
         ):
             return False, "bad release ids are missing or overlap the known-green ids"
         checks = value.get("health_checks")
@@ -1049,6 +2092,9 @@ def _valid_records(value: object, requirement: dict[str, Any]) -> tuple[bool, st
         if not isinstance(record, dict):
             invalid_reasons.append("non-object record")
             continue
+        if record.get("counts_as_terminal_evidence") is False:
+            invalid_reasons.append("prepared runner output lacks its durable owner receipt")
+            continue
         if requirement.get("required_scope") and record.get("scope") != requirement["required_scope"]:
             invalid_reasons.append(f"scope {record.get('scope')!r}")
             continue
@@ -1101,7 +2147,8 @@ def terminal_report(
     deny_keys = set(contract["public_evidence_contract"]["deny_keys"])
     privacy_violations = _privacy_violations(evidence, deny_keys) if evidence else []
     public_safe = not privacy_violations
-    evidence_valid = schema_ok and scope_ok and public_safe
+    owner_receipt_ok = bool(evidence) and evidence.get("counts_as_terminal_evidence") is not False
+    evidence_valid = schema_ok and scope_ok and public_safe and owner_receipt_ok
     missing: list[dict[str, Any]] = []
     work_receipts = evidence.get("work_receipts") if isinstance(evidence.get("work_receipts"), dict) else {}
     human_gates = evidence.get("human_gates") if isinstance(evidence.get("human_gates"), dict) else {}
@@ -1225,7 +2272,7 @@ def terminal_report(
     privacy_blocker_count = 0 if public_safe else 1
     total_missing = predecessor_count + p14_missing_count + privacy_blocker_count
     return {
-        "schema_version": "limen.positioning_p14_terminal_report.v1",
+        "schema_version": "limen.positioning_p14_terminal_report.v2",
         "status": "pass" if total_missing == 0 else "blocked",
         "terminal": total_missing == 0,
         "p14_terminal": p14_missing_count == 0,
@@ -1233,11 +2280,15 @@ def terminal_report(
             "path_schema_valid": schema_ok,
             "scope_live": scope_ok,
             "public_safe": public_safe,
+            "owner_receipt_eligible": owner_receipt_ok,
             "privacy_violations": privacy_violations,
         },
         "predecessor_blockers": dependency["predecessor_blockers"],
         "predecessor_blocker_count": predecessor_count,
-        "execution_frontier": dependency["execution_frontier"],
+        "formal_execution_frontier": dependency["formal_execution_frontier"],
+        "execution_frontier": dependency["formal_execution_frontier"],
+        "reversible_preparation_frontier": dependency["reversible_preparation_frontier"],
+        "frontier_invariant": dependency["frontier_invariant"],
         "missing_external_outcomes": missing,
         "p14_missing_count": p14_missing_count,
         "privacy_blocker_count": privacy_blocker_count,
@@ -1256,23 +2307,34 @@ def preflight(
     fixture: object,
     evidence: object,
     ledger: dict[str, Any] | None = None,
+    operations: dict[str, Any] | None = None,
+    operation_fixture: object | None = None,
 ) -> dict[str, Any]:
     if ledger is None:
         ledger = load_dependency_ledger(contract=contract)
+    if operations is None:
+        operations = load_operations()
+    if operation_fixture is None:
+        operation_fixture = _load_json(DEFAULT_OPERATION_FIXTURE)
     fixture_result = run_synthetic(contract, fixture)
+    operational_result = run_operational_fixture(contract, operations, operation_fixture)
     terminal = terminal_report(contract, evidence, ledger)
     if terminal["terminal"]:
         raise P14Error("preflight unexpectedly received terminal live evidence; run the owning live predicates")
     return {
-        "schema_version": "limen.positioning_p14_preflight.v1",
+        "schema_version": "limen.positioning_p14_preflight.v2",
         "status": "pass",
         "contract": "valid",
         "synthetic_fixture": fixture_result["status"],
+        "operational_fixture": operational_result["status"],
         "predecessor_commands_executed": fixture_result["executed_predecessor_commands"],
         "terminal_status": terminal["status"],
         "predecessor_blockers": terminal["predecessor_blockers"],
         "predecessor_blocker_count": terminal["predecessor_blocker_count"],
-        "execution_frontier": terminal["execution_frontier"],
+        "formal_execution_frontier": terminal["formal_execution_frontier"],
+        "execution_frontier": terminal["formal_execution_frontier"],
+        "reversible_preparation_frontier": terminal["reversible_preparation_frontier"],
+        "frontier_invariant": terminal["frontier_invariant"],
         "missing_external_outcomes": terminal["missing_external_outcomes"],
         "p14_missing_count": terminal["p14_missing_count"],
         "blocking_total": terminal["missing_count"],
@@ -1285,18 +2347,35 @@ def main(argv: list[str] | None = None) -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--run-fixture", type=Path, metavar="PATH")
+    mode.add_argument("--run-operational-fixture", type=Path, metavar="PATH")
+    mode.add_argument("--collect-metrics", type=Path, metavar="PATH")
+    mode.add_argument("--weekly-review", type=Path, metavar="PATH")
+    mode.add_argument("--monthly-audit", type=Path, metavar="PATH")
+    mode.add_argument("--quarterly-decision", type=Path, metavar="PATH")
+    mode.add_argument("--claim-drill", type=Path, metavar="PATH")
+    mode.add_argument("--release-drill", type=Path, metavar="PATH")
+    mode.add_argument("--project-private-ledger", type=Path, metavar="PATH")
+    mode.add_argument("--build-evidence-envelope", type=Path, metavar="PATH")
+    mode.add_argument("--omega-observation", type=Path, metavar="PATH")
+    mode.add_argument("--assemble-omega-pair", type=Path, nargs=2, metavar=("PASS1", "PASS2"))
+    mode.add_argument("--frontiers", action="store_true")
     mode.add_argument("--verify-two-pass", type=Path, metavar="PATH")
     mode.add_argument("--terminal", action="store_true")
     mode.add_argument("--preflight", action="store_true")
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--operations", type=Path, default=DEFAULT_OPERATIONS)
     parser.add_argument("--ledger", type=Path, default=DEFAULT_LEDGER)
     parser.add_argument("--evidence", type=Path, default=DEFAULT_EVIDENCE)
+    parser.add_argument("--ledger-kind", choices=("demand", "delivery", "operator"))
     parser.add_argument("--scope", choices=("synthetic", "live"), default="live")
     args = parser.parse_args(argv)
     try:
         contract = load_contract(args.manifest)
+        operations = load_operations(args.operations)
         ledger = load_dependency_ledger(args.ledger, contract)
+        dependency = dependency_report(ledger)
         if args.check:
+            operational_fixture = run_operational_fixture(contract, operations, _load_json(DEFAULT_OPERATION_FIXTURE))
             result: object = {
                 "schema_version": CONTROL_SCHEMA,
                 "status": "ok",
@@ -1305,13 +2384,58 @@ def main(argv: list[str] | None = None) -> int:
                 "stages": contract["stage_order"],
                 "terminal_requirements": len(contract["terminal_requirements"]),
                 "predecessor_chunks": len(ledger["predecessor_chunks"]),
-                "dependency_blockers": dependency_report(ledger)["predecessor_blocker_count"],
-                "execution_frontier": dependency_report(ledger)["execution_frontier"],
+                "operations_schema_version": operations["schema_version"],
+                "operational_runners": len(operations["runners"]),
+                "operational_fixture": operational_fixture["status"],
+                "dependency_blockers": dependency["predecessor_blocker_count"],
+                "formal_execution_frontier": dependency["formal_execution_frontier"],
+                "execution_frontier": dependency["formal_execution_frontier"],
+                "reversible_preparation_frontier": dependency["reversible_preparation_frontier"],
+                "frontier_invariant": dependency["frontier_invariant"],
                 "predecessor_policy": contract["predecessor_policy"],
+                "counts_as_closure": False,
             }
             exit_code = 0
         elif args.run_fixture:
             result = run_synthetic(contract, _load_json(args.run_fixture))
+            exit_code = 0
+        elif args.run_operational_fixture:
+            result = run_operational_fixture(contract, operations, _load_json(args.run_operational_fixture))
+            exit_code = 0
+        elif args.collect_metrics:
+            result = collect_metrics(contract, operations, _load_json(args.collect_metrics))
+            exit_code = 0
+        elif args.weekly_review:
+            result = run_weekly_review(operations, _load_json(args.weekly_review))
+            exit_code = 0
+        elif args.monthly_audit:
+            result = run_monthly_audit(operations, _load_json(args.monthly_audit))
+            exit_code = 0
+        elif args.quarterly_decision:
+            result = run_quarterly_decision(operations, _load_json(args.quarterly_decision))
+            exit_code = 0
+        elif args.claim_drill:
+            result = run_claim_incident(contract, operations, _load_json(args.claim_drill))
+            exit_code = 0
+        elif args.release_drill:
+            result = run_release_recovery(contract, operations, _load_json(args.release_drill))
+            exit_code = 0
+        elif args.project_private_ledger:
+            if args.ledger_kind is None:
+                raise P14Error("--project-private-ledger requires --ledger-kind")
+            result = project_private_ledger(operations, args.ledger_kind, _load_json(args.project_private_ledger))
+            exit_code = 0
+        elif args.build_evidence_envelope:
+            result = build_evidence_envelope(contract, operations, _load_json(args.build_evidence_envelope))
+            exit_code = 0
+        elif args.omega_observation:
+            result = normalize_omega_observation(operations, _load_json(args.omega_observation))
+            exit_code = 0
+        elif args.assemble_omega_pair:
+            result = assemble_omega_pair(operations, [_load_json(path) for path in args.assemble_omega_pair])
+            exit_code = 0
+        elif args.frontiers:
+            result = dependency
             exit_code = 0
         elif args.verify_two_pass:
             result = verify_omega_pair(_load_json(args.verify_two_pass), required_scope=args.scope)
@@ -1325,6 +2449,8 @@ def main(argv: list[str] | None = None) -> int:
                 _load_json(DEFAULT_FIXTURE),
                 _load_json(args.evidence, missing={}),
                 ledger,
+                operations,
+                _load_json(DEFAULT_OPERATION_FIXTURE),
             )
             exit_code = 0
         print(json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True))
