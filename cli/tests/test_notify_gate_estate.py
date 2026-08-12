@@ -495,6 +495,37 @@ def test_process_attribute_assignment_alias_is_tracked(tmp_path, check_gate):
     assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
 
 
+def test_function_uses_module_binding_assigned_after_definition(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        "def fire():\n"
+        "    subprocess.run(command)\n"
+        "command = ['osascript', '-e', 'display notification \\\"x\\\"']\n"
+        "fire()\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
+def test_try_and_exception_command_bindings_are_merged(tmp_path, check_gate):
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "sender.py").write_text(
+        "import subprocess\n"
+        "try:\n"
+        "    command = ['osascript', '-e', 'display notification \\\"x\\\"']\n"
+        "except OSError:\n"
+        "    command = ['echo', 'quiet']\n"
+        "subprocess.run(command)\n",
+        encoding="utf-8",
+    )
+
+    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
+
+
 def test_os_popen_notification_bypass_is_rejected(tmp_path, check_gate):
     scripts = tmp_path / "scripts"
     scripts.mkdir()

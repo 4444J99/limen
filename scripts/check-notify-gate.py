@@ -527,6 +527,30 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         elif target.id not in _PROCESS_CALLS:
             self.process_aliases.discard(target.id)
 
+    def visit_Module(self, node: ast.Module) -> None:
+        """Collect module bindings before scanning function bodies.
+
+        Python functions resolve globals when called, not when defined. Scan executable
+        module statements first and preserve every statically visible value, then inspect
+        functions/classes with that conservative union so definition order cannot hide an
+        effector command.
+        """
+        deferred: list[ast.stmt] = []
+        observed = {name: set(values) for name, values in self.bindings.items()}
+        observed_aliases = set(self.process_aliases)
+        for statement in node.body:
+            if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                deferred.append(statement)
+                continue
+            self.visit(statement)
+            observed_aliases.update(self.process_aliases)
+            for name, values in self.bindings.items():
+                observed.setdefault(name, set()).update(values)
+        self.bindings = {name: sorted(values) for name, values in observed.items() if values}
+        self.process_aliases.update(observed_aliases)
+        for statement in deferred:
+            self.visit(statement)
+
     def _visit_function(
         self,
         node: ast.FunctionDef | ast.AsyncFunctionDef,
@@ -618,6 +642,39 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             if values:
                 merged[name] = sorted(values)
         self.bindings = merged
+
+    def visit_Try(self, node: ast.Try) -> None:
+        """Merge every path that can continue after try/except/else."""
+        before = {name: list(values) for name, values in self.bindings.items()}
+        success = _PythonBypassVisitor(before, self.process_aliases)
+        for statement in node.body:
+            success.visit(statement)
+        for statement in node.orelse:
+            success.visit(statement)
+        paths = [success]
+        for handler in node.handlers:
+            branch = _PythonBypassVisitor(before, self.process_aliases)
+            if handler.type is not None:
+                branch.visit(handler.type)
+            if handler.name:
+                branch.bindings.pop(handler.name, None)
+                branch.process_aliases.discard(handler.name)
+            for statement in handler.body:
+                branch.visit(statement)
+            paths.append(branch)
+        self.found = self.found or any(path.found for path in paths)
+        for path in paths:
+            self.process_aliases.update(path.process_aliases)
+        merged: dict[str, list[str]] = {}
+        for name in set().union(*(path.bindings.keys() for path in paths)):
+            values = {value for path in paths for value in path.bindings.get(name, [])}
+            if values:
+                merged[name] = sorted(values)
+        self.bindings = merged
+        for statement in node.finalbody:
+            self.visit(statement)
+
+    visit_TryStar = visit_Try
 
     def _visit_loop(self, node: ast.For | ast.AsyncFor | ast.While) -> None:
         if isinstance(node, (ast.For, ast.AsyncFor)):

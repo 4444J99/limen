@@ -127,6 +127,31 @@ def test_delivery_failure_is_reserved_before_effector_and_replay_stays_suppresse
     assert ledger["events"][failed.event_key]["status"] == "delivery_failed"
 
 
+@pytest.mark.parametrize(
+    "ledger",
+    (
+        "{not-json",
+        json.dumps({"schema_version": "limen.notification_events.v1", "events": []}),
+        json.dumps({"events": {}}),
+    ),
+)
+def test_corrupt_or_schema_invalid_ledger_withholds_replay(tmp_path, monkeypatch, ledger):
+    module = _load()
+    monkeypatch.setattr(module, "_root_may_speak", lambda _root: True)
+    deliveries = []
+    monkeypatch.setattr(module, "_deliver", lambda *_args: deliveries.append(True) or True)
+    path = module._event_state_path(tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_text(ledger, encoding="utf-8")
+
+    result = _event(module, tmp_path)
+
+    assert result.status == "withheld"
+    assert result.reserved is False
+    assert deliveries == []
+    assert path.read_text(encoding="utf-8") == ledger
+
+
 def test_lock_contention_has_a_finite_withheld_outcome(tmp_path, monkeypatch):
     module = _load()
     monkeypatch.setattr(module, "_root_may_speak", lambda _root: True)

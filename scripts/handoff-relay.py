@@ -747,6 +747,10 @@ def _dispatch_admission(
             reason = "open_pr_receipt"
         labels = {str(label) for label in task.get("labels") or []}
         held = labels & HOLD_LABELS
+        # The serial dispatcher's _dispatchable() intentionally does not treat the
+        # grandfathered operator-paused label as a task-local hold. A global pause is a
+        # separate runtime gate; this snapshot must not invent a stricter task predicate.
+        held.discard("operator-paused")
         if reason is None and held:
             reason = _HOLD_LABEL_REASONS.get(min(held), "hold_label")
         deps = [str(value) for value in task.get("depends_on") or []]

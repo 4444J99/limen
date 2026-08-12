@@ -43,13 +43,16 @@ try:
         project_provider_health as _project_provider_health,
         provider_health_policy as _provider_health_policy,
         provider_outcome_ledger_path as _provider_outcome_ledger_path,
-        PROVIDER_TERMINALS as _PROVIDER_TERMINALS,
     )
 except Exception:  # pragma: no cover - installed fleet may briefly precede this module
     _load_provider_outcomes = None
     _project_provider_health = None
     _provider_health_policy = None
     _provider_outcome_ledger_path = None
+
+try:
+    from limen.provider_health import PROVIDER_TERMINALS as _PROVIDER_TERMINALS
+except Exception:  # pragma: no cover - optional export may trail the compatible core APIs
     _PROVIDER_TERMINALS = frozenset({"auth_failure", "rate_limit"})
 
 HOME = Path.home()
@@ -577,12 +580,8 @@ def _provider_outcome_projection() -> dict:
     provider_entries = list(snapshot.providers.items())
     model_entries = list(snapshot.models.items())
     entries = [*snapshot.providers.values(), *snapshot.models.values()]
-    blocked_provider_entries = [
-        (name, entry) for name, entry in provider_entries if entry.blocked(NOW)
-    ]
-    blocked_model_entries = [
-        (name, entry) for name, entry in model_entries if entry.blocked(NOW)
-    ]
+    blocked_provider_entries = [(name, entry) for name, entry in provider_entries if entry.blocked(NOW)]
+    blocked_model_entries = [(name, entry) for name, entry in model_entries if entry.blocked(NOW)]
     last_success = max((entry.last_success for entry in entries if entry.last_success), default=None)
     last_failure = max(
         (entry.last_terminal_failure for entry in entries if entry.last_terminal_failure),
@@ -605,9 +604,7 @@ def _provider_outcome_projection() -> dict:
         provider: terminal for provider, (_finished, terminal) in latest_provider_failure.items()
     }
     latest_terminal_class = (
-        max(latest_provider_failure.values(), key=lambda row: row[0])[1]
-        if latest_provider_failure
-        else None
+        max(latest_provider_failure.values(), key=lambda row: row[0])[1] if latest_provider_failure else None
     )
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
@@ -616,9 +613,7 @@ def _provider_outcome_projection() -> dict:
         "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
         # Dispatch needs the terminal class, not only its timestamp, to distinguish an auth
         # cooldown from a capacity/transport failure.
-        "provider_last_terminal_failure_class": provider_failure_classes.get(
-            "opencode", latest_terminal_class
-        ),
+        "provider_last_terminal_failure_class": provider_failure_classes.get("opencode", latest_terminal_class),
         "provider_terminal_failure_classes": provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),

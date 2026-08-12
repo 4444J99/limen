@@ -186,7 +186,7 @@ def test_dispatchable_next_skips_successor_required_open_row():
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
-def test_dispatchable_next_skips_operator_paused_open_row():
+def test_dispatchable_next_matches_dispatcher_for_legacy_operator_paused_label():
     mod = _load()
     tasks = [
         _task("PAUSED", priority="critical", labels=["operator-paused"]),
@@ -196,8 +196,8 @@ def test_dispatchable_next_skips_operator_paused_open_row():
     providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
 
     admission = mod._dispatch_admission(tasks, budget, providers)
-    assert admission["dispatchable_next"]["id"] == "READY"
-    assert admission["reason_counts"]["operator_paused"] == 1
+    assert admission["dispatchable_next"]["id"] == "PAUSED"
+    assert admission["reason_counts"] == {}
 
 
 def test_dispatchable_next_reports_stable_work_loan_denial() -> None:

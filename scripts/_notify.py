@@ -199,15 +199,24 @@ def _event_identity(
 
 
 def _load_event_state(root: Path | str) -> dict[str, Any]:
+    path = _event_state_path(root)
     try:
-        value = json.loads(_event_state_path(root).read_text(encoding="utf-8"))
-    except (OSError, TypeError, ValueError):
+        raw = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
         return {"schema_version": "limen.notification_events.v1", "events": {}}
-    events = value.get("events") if isinstance(value, dict) else None
-    return {
-        "schema_version": "limen.notification_events.v1",
-        "events": events if isinstance(events, dict) else {},
-    }
+    except OSError as exc:
+        raise OSError(f"notification event ledger is unreadable: {exc}") from exc
+    try:
+        value = json.loads(raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("notification event ledger is corrupt") from exc
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != "limen.notification_events.v1"
+        or not isinstance(value.get("events"), dict)
+    ):
+        raise ValueError("notification event ledger has an invalid schema")
+    return value
 
 
 def _prune_event_state(state: dict[str, Any], today: str) -> None:

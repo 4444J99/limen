@@ -6,14 +6,40 @@ These tests pin the fix: a lane is gated ONLY by a real, RECENT rate-limit — a
 headroom and no fresh signal is never benched.
 """
 
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "usage-telemetry.py"
+
+
+def test_optional_terminal_constant_does_not_disable_compatible_provider_apis(monkeypatch):
+    provider_health = types.ModuleType("limen.provider_health")
+    sentinels = {
+        "load_provider_outcomes": lambda *_args: "loaded",
+        "project_provider_health": lambda *_args: "projected",
+        "provider_health_policy": lambda *_args: "policy",
+        "provider_outcome_ledger_path": lambda *_args: "ledger",
+    }
+    for name, value in sentinels.items():
+        setattr(provider_health, name, value)
+    monkeypatch.setitem(sys.modules, "limen.provider_health", provider_health)
+    spec = importlib.util.spec_from_file_location("usage_telemetry_mixed_version", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+
+    spec.loader.exec_module(module)
+
+    assert module._load_provider_outcomes is sentinels["load_provider_outcomes"]
+    assert module._project_provider_health is sentinels["project_provider_health"]
+    assert module._provider_health_policy is sentinels["provider_health_policy"]
+    assert module._provider_outcome_ledger_path is sentinels["provider_outcome_ledger_path"]
+    assert module._PROVIDER_TERMINALS == frozenset({"auth_failure", "rate_limit"})
 
 
 def _run(tmp_path, heartbeat_lines, opencode_clock=None, extra_env=None, provider_outcomes=None):
