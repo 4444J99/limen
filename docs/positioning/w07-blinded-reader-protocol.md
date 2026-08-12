@@ -3,8 +3,8 @@
 This is the collection instrument for `PSP-P03-W07`. It does not contain reader
 results and does not satisfy the work packet by itself. Use one qualified,
 independent reader for each of the five archetypes below. Do not coach a reader,
-explain the intended answer, or count an author, implementation agent, or model
-response.
+explain the intended answer, or count an author, implementation agent, model,
+inferred, or synthetic response.
 
 ## Copy-ready reader block
 
@@ -59,8 +59,11 @@ Use exactly these five slots, with one person per slot:
 Record responses in
 `docs/positioning/program/w07_blinded_reader_response_template.json`. Keep only
 anonymous IDs `R1` through `R5`; do not record names, companies, email
-addresses, phone numbers, handles, or private project details. Score only what
-the reader independently identified. If the facilitator explains an answer,
+addresses, phone numbers, handles, URLs, network identifiers, postal addresses,
+or private project details. Every completed record must attest that the response
+came from a genuine independent human, was not model-generated or synthetic,
+was not written by the author or an implementation agent, and was not coached.
+Score only what the reader independently identified. If the facilitator explains an answer,
 the reader searches the project, or prompt leakage occurs, discard that
 response and collect a fresh one.
 
@@ -83,3 +86,41 @@ the accepted W01-W06 public-facing copy in:
 The durable protocol-of-record is also preserved in issue #2188 comment
 `5271321054`. The issue remains open until five genuine responses, a decision
 memo, and the registered non-circular receipt predicate all pass.
+
+## Deterministic intake and receipt workflow
+
+The reversible workflow lives at
+`docs/positioning/program/w07_blinded_reader_workflow.py`. It never contacts a
+reader, infers an answer, or posts a receipt.
+
+1. Initialize one anonymous collection file:
+
+   `python3 docs/positioning/program/w07_blinded_reader_workflow.py init /tmp/psp-p03-w07-reader-import.json`
+
+2. After five genuine readers have independently supplied the five answers,
+   fill the initialized records, scores, objections, and integrity attestations.
+   Then import once:
+
+   `python3 docs/positioning/program/w07_blinded_reader_workflow.py import /tmp/psp-p03-w07-reader-import.json --responses docs/receipts/positioning/psp-p03-w07-reader-responses.json --memo docs/receipts/positioning/psp-p03-w07-decision-memo.md`
+
+   Import injects the immutable work/stimulus identity, applies the tracked JSON
+   Schema, rejects prohibited identity/contact data, validates all five
+   independent-human attestations, scores the set, classifies objections by
+   category, and writes an aggregate-only decision memo. A valid but
+   below-threshold set returns exit 2 and remains revision evidence; it never
+   creates a passing receipt.
+
+3. Commit the response set and decision memo on this same branch. On that clean
+   exact head, create the ready-to-post marked receipt candidate:
+
+   `python3 docs/positioning/program/w07_blinded_reader_workflow.py receipt docs/receipts/positioning/psp-p03-w07-reader-responses.json docs/receipts/positioning/psp-p03-w07-decision-memo.md --output /tmp/psp-p03-w07-receipt-candidate.md`
+
+The receipt command refuses pending, invalid, dirty, untracked, stale-memo, or
+below-threshold evidence. It binds the candidate to the accepted stimulus head
+and digest, the clean current Git head, the exact non-circular validator output
+hash, the manifest acceptance digest, pinned response/memo URLs, direct-human
+authority, changed paths, and rollback. The candidate is still not completion:
+post it only through the authorized GitHub surface, then run
+`python3 scripts/positioning-program.py --verify-work PSP-P03-W07` and close
+#2188 only after that verifier passes.
+

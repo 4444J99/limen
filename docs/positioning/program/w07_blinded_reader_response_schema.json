@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:organvm:positioning:psp-p03-w07-reader-set:v1",
+  "$id": "urn:organvm:positioning:psp-p03-w07-reader-set:v2",
   "title": "PSP-P03-W07 anonymous blinded-reader response set",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "psp-p03-w07-reader-set.v1"
+      "const": "psp-p03-w07-reader-set.v2"
     },
     "work_id": {
       "const": "PSP-P03-W07"
@@ -22,20 +22,39 @@
     "stimulus": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "head", "issue_comment"],
+      "required": [
+        "repository",
+        "head",
+        "reader_block_sha256",
+        "issue_comment"
+      ],
       "properties": {
-        "repository": {"const": "organvm/limen"},
-        "head": {"const": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"},
+        "repository": {
+          "const": "organvm/limen"
+        },
+        "head": {
+          "const": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"
+        },
         "issue_comment": {
           "const": "https://github.com/organvm/limen/issues/2188#issuecomment-5271321054"
+        },
+        "reader_block_sha256": {
+          "const": "d2f95a2b2ee6d1b2f7a924125eb65e5045613ff7d7c38654b2e0503c57edd8b7",
+          "description": "SHA-256 of the exact copy-ready reader block, canonicalized with one trailing newline."
         }
       }
     },
     "status": {
-      "enum": ["pending", "complete"]
+      "enum": [
+        "pending",
+        "complete"
+      ]
     },
     "collected_at": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "readers": {
       "type": "array",
@@ -60,7 +79,15 @@
           "protocol_integrity"
         ],
         "properties": {
-          "reader_id": {"enum": ["R1", "R2", "R3", "R4", "R5"]},
+          "reader_id": {
+            "enum": [
+              "R1",
+              "R2",
+              "R3",
+              "R4",
+              "R5"
+            ]
+          },
           "archetype": {
             "enum": [
               "client",
@@ -70,16 +97,39 @@
               "product_partner"
             ]
           },
-          "role_identified": {"type": "string", "maxLength": 1000},
-          "buyer_identified": {"type": "string", "maxLength": 1000},
-          "problem_identified": {"type": "string", "maxLength": 1000},
-          "proof_identified": {"type": "string", "maxLength": 1000},
-          "cta_identified": {"type": "string", "maxLength": 1000},
-          "confidence_1_to_5": {"type": "integer", "minimum": 0, "maximum": 5},
+          "role_identified": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "buyer_identified": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "problem_identified": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "proof_identified": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "cta_identified": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "confidence_1_to_5": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
           "confusions": {
             "type": "array",
             "maxItems": 10,
-            "items": {"type": "string", "minLength": 1, "maxLength": 500}
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
           },
           "trust_objections": {
             "type": "array",
@@ -87,7 +137,11 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["category", "summary", "unresolved"],
+              "required": [
+                "category",
+                "summary",
+                "unresolved"
+              ],
               "properties": {
                 "category": {
                   "enum": [
@@ -100,22 +154,47 @@
                     "unrelated"
                   ]
                 },
-                "summary": {"type": "string", "minLength": 1, "maxLength": 500},
-                "unresolved": {"type": "boolean"}
+                "summary": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "unresolved": {
+                  "type": "boolean"
+                }
               }
             }
           },
-          "verbatim_notes": {"type": "string", "maxLength": 2000},
+          "verbatim_notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
           "element_scores": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["role", "buyer", "problem", "proof", "cta"],
+            "required": [
+              "role",
+              "buyer",
+              "problem",
+              "proof",
+              "cta"
+            ],
             "properties": {
-              "role": {"type": "boolean"},
-              "buyer": {"type": "boolean"},
-              "problem": {"type": "boolean"},
-              "proof": {"type": "boolean"},
-              "cta": {"type": "boolean"}
+              "role": {
+                "type": "boolean"
+              },
+              "buyer": {
+                "type": "boolean"
+              },
+              "problem": {
+                "type": "boolean"
+              },
+              "proof": {
+                "type": "boolean"
+              },
+              "cta": {
+                "type": "boolean"
+              }
             }
           },
           "protocol_integrity": {
@@ -123,17 +202,48 @@
             "additionalProperties": false,
             "required": [
               "independent_target_like_reader",
+              "genuine_human_response",
+              "not_model_or_synthetic",
+              "not_author_or_implementation_agent",
+              "not_coached",
               "read_once_unprompted",
               "no_facilitator_explanation",
               "no_project_search",
-              "not_author_or_agent"
+              "contains_no_names_companies_or_contact_data"
             ],
             "properties": {
-              "independent_target_like_reader": {"type": "boolean"},
-              "read_once_unprompted": {"type": "boolean"},
-              "no_facilitator_explanation": {"type": "boolean"},
-              "no_project_search": {"type": "boolean"},
-              "not_author_or_agent": {"type": "boolean"}
+              "independent_target_like_reader": {
+                "type": "boolean"
+              },
+              "genuine_human_response": {
+                "type": "boolean",
+                "description": "True only for a response written by a genuine human reader."
+              },
+              "not_model_or_synthetic": {
+                "type": "boolean",
+                "description": "False for model-generated, simulated, inferred, or synthetic responses."
+              },
+              "not_author_or_implementation_agent": {
+                "type": "boolean",
+                "description": "False for the author or any implementation/review agent."
+              },
+              "not_coached": {
+                "type": "boolean",
+                "description": "False if the intended answer or scoring categories were disclosed."
+              },
+              "read_once_unprompted": {
+                "type": "boolean"
+              },
+              "no_facilitator_explanation": {
+                "type": "boolean"
+              },
+              "no_project_search": {
+                "type": "boolean"
+              },
+              "contains_no_names_companies_or_contact_data": {
+                "type": "boolean",
+                "description": "Facilitator attestation that direct identity and contact data were removed."
+              }
             }
           }
         }

@@ -1,10 +1,11 @@
 {
-  "schema_version": "psp-p03-w07-reader-set.v1",
+  "schema_version": "psp-p03-w07-reader-set.v2",
   "work_id": "PSP-P03-W07",
   "stimulus": {
     "repository": "organvm/limen",
     "head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
-    "issue_comment": "https://github.com/organvm/limen/issues/2188#issuecomment-5271321054"
+    "issue_comment": "https://github.com/organvm/limen/issues/2188#issuecomment-5271321054",
+    "reader_block_sha256": "d2f95a2b2ee6d1b2f7a924125eb65e5045613ff7d7c38654b2e0503c57edd8b7"
   },
   "status": "pending",
   "collected_at": null,
@@ -21,13 +22,23 @@
       "confusions": [],
       "trust_objections": [],
       "verbatim_notes": "",
-      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "element_scores": {
+        "role": false,
+        "buyer": false,
+        "problem": false,
+        "proof": false,
+        "cta": false
+      },
       "protocol_integrity": {
         "independent_target_like_reader": false,
+        "genuine_human_response": false,
+        "not_model_or_synthetic": false,
+        "not_author_or_implementation_agent": false,
+        "not_coached": false,
         "read_once_unprompted": false,
         "no_facilitator_explanation": false,
         "no_project_search": false,
-        "not_author_or_agent": false
+        "contains_no_names_companies_or_contact_data": false
       }
     },
     {
@@ -42,13 +53,23 @@
       "confusions": [],
       "trust_objections": [],
       "verbatim_notes": "",
-      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "element_scores": {
+        "role": false,
+        "buyer": false,
+        "problem": false,
+        "proof": false,
+        "cta": false
+      },
       "protocol_integrity": {
         "independent_target_like_reader": false,
+        "genuine_human_response": false,
+        "not_model_or_synthetic": false,
+        "not_author_or_implementation_agent": false,
+        "not_coached": false,
         "read_once_unprompted": false,
         "no_facilitator_explanation": false,
         "no_project_search": false,
-        "not_author_or_agent": false
+        "contains_no_names_companies_or_contact_data": false
       }
     },
     {
@@ -63,13 +84,23 @@
       "confusions": [],
       "trust_objections": [],
       "verbatim_notes": "",
-      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "element_scores": {
+        "role": false,
+        "buyer": false,
+        "problem": false,
+        "proof": false,
+        "cta": false
+      },
       "protocol_integrity": {
         "independent_target_like_reader": false,
+        "genuine_human_response": false,
+        "not_model_or_synthetic": false,
+        "not_author_or_implementation_agent": false,
+        "not_coached": false,
         "read_once_unprompted": false,
         "no_facilitator_explanation": false,
         "no_project_search": false,
-        "not_author_or_agent": false
+        "contains_no_names_companies_or_contact_data": false
       }
     },
     {
@@ -84,13 +115,23 @@
       "confusions": [],
       "trust_objections": [],
       "verbatim_notes": "",
-      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "element_scores": {
+        "role": false,
+        "buyer": false,
+        "problem": false,
+        "proof": false,
+        "cta": false
+      },
       "protocol_integrity": {
         "independent_target_like_reader": false,
+        "genuine_human_response": false,
+        "not_model_or_synthetic": false,
+        "not_author_or_implementation_agent": false,
+        "not_coached": false,
         "read_once_unprompted": false,
         "no_facilitator_explanation": false,
         "no_project_search": false,
-        "not_author_or_agent": false
+        "contains_no_names_companies_or_contact_data": false
       }
     },
     {
@@ -105,13 +146,23 @@
       "confusions": [],
       "trust_objections": [],
       "verbatim_notes": "",
-      "element_scores": {"role": false, "buyer": false, "problem": false, "proof": false, "cta": false},
+      "element_scores": {
+        "role": false,
+        "buyer": false,
+        "problem": false,
+        "proof": false,
+        "cta": false
+      },
       "protocol_integrity": {
         "independent_target_like_reader": false,
+        "genuine_human_response": false,
+        "not_model_or_synthetic": false,
+        "not_author_or_implementation_agent": false,
+        "not_coached": false,
         "read_once_unprompted": false,
         "no_facilitator_explanation": false,
         "no_project_search": false,
-        "not_author_or_agent": false
+        "contains_no_names_companies_or_contact_data": false
       }
     }
   ]

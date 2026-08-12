@@ -44,13 +44,7 @@ def passing_payload() -> dict:
                 "cta_identified": "Discuss the bounded audit or a named senior systems mandate.",
                 "confidence_1_to_5": 5,
                 "element_scores": {"role": True, "buyer": True, "problem": True, "proof": True, "cta": True},
-                "protocol_integrity": {
-                    "independent_target_like_reader": True,
-                    "read_once_unprompted": True,
-                    "no_facilitator_explanation": True,
-                    "no_project_search": True,
-                    "not_author_or_agent": True,
-                },
+                "protocol_integrity": {field: True for field in MODULE.INTEGRITY_FIELDS},
             }
         )
     return payload
@@ -58,9 +52,7 @@ def passing_payload() -> dict:
 
 def test_protocol_preserves_exact_copy_ready_stimulus_and_questions() -> None:
     document = PROTOCOL.read_text(encoding="utf-8")
-    reader_block = document.split("<!-- READER BLOCK START -->", 1)[1].split(
-        "<!-- READER BLOCK END -->", 1
-    )[0]
+    reader_block = document.split("<!-- READER BLOCK START -->", 1)[1].split("<!-- READER BLOCK END -->", 1)[0]
     for fragment in (
         "I build production systems that solve expensive problems.",
         "A written mandate defines authority",
@@ -80,6 +72,12 @@ def test_schema_is_strict_and_requires_exactly_five_records() -> None:
     assert readers["minItems"] == readers["maxItems"] == 5
     assert readers["items"]["additionalProperties"] is False
     assert set(readers["items"]["required"]) == MODULE.READER_KEYS
+    assert schema["properties"]["schema_version"]["const"] == MODULE.SCHEMA_VERSION
+    assert (
+        schema["properties"]["stimulus"]["properties"]["reader_block_sha256"]["const"]
+        == MODULE.STIMULUS["reader_block_sha256"]
+    )
+    assert set(readers["items"]["properties"]["protocol_integrity"]["required"]) == set(MODULE.INTEGRITY_FIELDS)
 
 
 def test_tracked_template_is_pending_and_fails_closed() -> None:
@@ -111,13 +109,17 @@ def test_numeric_threshold_failure_stays_blocked() -> None:
 
 def test_repeated_objection_is_structural_even_when_numeric_score_passes() -> None:
     payload = passing_payload()
-    for reader in payload["readers"][:3]:
-        reader["trust_objections"] = [
-            {"category": "proof_skepticism", "summary": "The proof feels too internal.", "unresolved": False}
-        ]
+    summaries = (
+        "The proof feels too internal.",
+        "I cannot tell whether the evidence transfers.",
+        "The example does not establish an outside result.",
+    )
+    for reader, summary in zip(payload["readers"][:3], summaries, strict=True):
+        reader["trust_objections"] = [{"category": "proof_skepticism", "summary": summary, "unresolved": False}]
     verdict = MODULE.validate(payload)
     assert verdict.state == "blocked"
     assert "structural objection" in verdict.message
+    assert "proof_skepticism" in verdict.message
 
 
 def test_unresolved_authority_objection_blocks() -> None:
