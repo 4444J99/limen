@@ -12,10 +12,17 @@
 
 ## Dependency boundary
 
-Formal closure remains blocked until `PSP-C02` and `PSP-C03` close with predicate-backed receipts.
-The stale `organvm/portfolio` target in `program.yaml` is recorded as a C02 adjudication dependency;
-this relay does not rewrite that unrelated registry state. The live portfolio owner is the Kerygma
-repository named above.
+`PSP-P02` is formally closed. C03 W01-W06 are formally closed on PR #2312 at exact head
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. Its W06 receipt is
+https://github.com/organvm/limen/issues/2187#issuecomment-5271254820 with receipt SHA-256
+`260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
+
+Formal C04 activation remains blocked only on `PSP-P03-W07` and the resulting C03 formal closure.
+W07 requires five blinded, target-like readers; C04 does not solicit those readers or substitute
+the accepted W06 model review for that evidence. This relay remains `PREPARED/PREFLIGHT`.
+
+The live portfolio owner is the Kerygma repository named above. This relay does not rewrite
+unrelated registry state.
 
 Relevant remote evidence snapshots consumed by this preflight:
 
@@ -25,12 +32,12 @@ Relevant remote evidence snapshots consumed by this preflight:
 
 C03 checkpoint integration is exact-head-only. C04 consumed the committed contract and successor
 relay from `codex/psp-c03-identity-offers-preflight` at current fetched head
-`b5bc01585a10615e85e1ef5b31a2356c24fb9bc9`, including the registry-alignment checkpoint
-`986ebb41778cf082e01ede0cb6d268cebf54a106`. C03 is still dependency-blocked on C02 and is not
-closed. C04 binds its public identity, audience, narrative, authority, and offer-boundary tokens
-without copying private pricing amounts or creating a public offer.
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, including accepted W01-W06 and the
+registry-alignment checkpoint `986ebb41778cf082e01ede0cb6d268cebf54a106`. C03 is not formally
+closed because W07 remains open. C04 binds the accepted identity, audience, narrative, authority,
+and offer-boundary tokens without copying private pricing amounts or creating a public offer.
 
-## What can formalize automatically after C02 and C03
+## What can formalize automatically after W07 and C03 closure
 
 1. Refresh and record the exact committed heads of the flagship-selection, public-evidence,
    claim-policy, and C03 contract branches.
@@ -39,15 +46,15 @@ without copying private pricing amounts or creating a public offer.
    unsupported implications.
 4. Instantiate fresh exact-head reproduction receipt requests for Limen, the UCC Public-Records
    Intelligence Platform, and AI Chat Exporter.
-5. Refresh the bound C03 exact head, then bind its identity/audience/CTA tokens into the portfolio
-   content contract without changing route or disclosure invariants.
+5. Confirm the accepted C03 head descends from `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`,
+   then bind its identity/audience/CTA tokens without changing route or disclosure invariants.
 
 ## What still requires the later visual-selection gate
 
 The portfolio package intentionally contains no redesigned UI, mock, scaffold, new route, server,
-deployment, or public mutation. Once merged C02 evidence and the exact committed C03 contract are
-bound, Product Design must generate exactly three materially distinct visual directions from the
-same content/interaction contract. A human selects one direction before any implementation begins.
+deployment, or public mutation. Once C03 formally closes and its exact accepted contract is bound,
+Product Design must generate exactly three materially distinct visual directions from the same
+content/interaction contract. A human selects one direction before any implementation begins.
 The selection receipt must name the chosen direction, rejected directions, rationale, accessibility
 risk, performance risk, and rollback to the current public release.
 
@@ -70,6 +77,6 @@ risk, performance risk, and rollback to the current public release.
 
 ## Next action
 
-After both predecessor chunks close, refresh this relay with their exact merged receipts, run the
-two preflight validators, bind C03 tokens, and invoke the three-direction visual ideation gate. Do
-not start visual implementation before the selection receipt exists.
+After W07 and C03 close, refresh this relay with the final C03 receipt, run the two preflight
+validators, bind the final C03 tokens, and invoke the three-direction visual ideation gate. Do not
+start visual implementation before the selection receipt exists.

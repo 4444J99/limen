@@ -28,6 +28,7 @@ def validate(contract: dict[str, Any]) -> list[str]:
         "phase_id",
         "status",
         "formalization_gate",
+        "dependency_progress",
         "dependency_sources",
         "claim_policy",
         "flagships",
@@ -44,9 +45,49 @@ def validate(contract: dict[str, Any]) -> list[str]:
     if contract.get("status") != "PREPARED/PREFLIGHT":
         errors.append("status must remain PREPARED/PREFLIGHT")
 
-    formalization = contract.get("formalization_gate", {})
-    if set(formalization.get("required_chunks", [])) != {"PSP-C02", "PSP-C03"}:
-        errors.append("formalization requires PSP-C02 and PSP-C03")
+    formalization = contract.get("formalization_gate")
+    if not isinstance(formalization, dict):
+        errors.append("formalization_gate must be an object")
+    elif formalization.get("required_chunks") != ["PSP-C03"]:
+        errors.append("formalization must require only PSP-C03 after PSP-P02 closure")
+
+    progress = contract.get("dependency_progress")
+    if not isinstance(progress, dict):
+        errors.append("dependency_progress must be an object")
+        c03: dict[str, Any] = {}
+    else:
+        p02 = progress.get("p02")
+        if not isinstance(p02, dict) or p02.get("status") != "closed":
+            errors.append("PSP-P02 must be recorded closed")
+        raw_c03 = progress.get("c03")
+        if not isinstance(raw_c03, dict):
+            errors.append("dependency_progress.c03 must be an object")
+            c03 = {}
+        else:
+            c03 = raw_c03
+    if c03:
+        if c03.get("status") != "w01_w06_closed_w07_open":
+            errors.append("C03 progress status mismatch")
+        if c03.get("exact_head") != "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec":
+            errors.append("C03 accepted head mismatch")
+        if c03.get("closed_leaves") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
+            errors.append("C03 closed leaves must be W01-W06")
+        sole_unsatisfied = c03.get("sole_unsatisfied_leaf")
+        if not isinstance(sole_unsatisfied, dict):
+            errors.append("C03 sole_unsatisfied_leaf must be an object")
+        else:
+            if sole_unsatisfied.get("work_id") != "PSP-P03-W07":
+                errors.append("C03 sole unsatisfied leaf must be PSP-P03-W07")
+            if sole_unsatisfied.get("outbound_from_c04") is not False:
+                errors.append("C04 must not solicit W07 readers")
+        receipt = c03.get("w06_receipt")
+        if not isinstance(receipt, dict):
+            errors.append("C03 w06_receipt must be an object")
+        else:
+            if receipt.get("url") != "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820":
+                errors.append("C03 W06 receipt URL mismatch")
+            if receipt.get("sha256") != "260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617":
+                errors.append("C03 W06 receipt SHA mismatch")
 
     dependencies = contract.get("dependency_sources", [])
     for dependency in dependencies:
@@ -56,6 +97,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
             errors.append(f"dependency {dependency_id} requires a full exact head")
         if dependency.get("integration") != "exact_committed_head_only":
             errors.append(f"dependency {dependency_id} must integrate exact committed heads only")
+    c03_dependency = next(
+        (dependency for dependency in dependencies if dependency.get("id") == "c03_identity_offers"),
+        {},
+    )
+    if c03_dependency.get("exact_head") != c03.get("exact_head"):
+        errors.append("C03 dependency source must match accepted progress head")
 
     sources = contract.get("sources", [])
     source_ids = {source.get("id") for source in sources if isinstance(source, dict)}

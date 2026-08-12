@@ -1,7 +1,9 @@
 # PSP-C04 P05 proof-production preflight
 
 Status: **PREPARED/PREFLIGHT**. This package is deliberately non-publishing and cannot close
-PSP-P05 or PSP-C04 while PSP-C02 and PSP-C03 remain open.
+PSP-P05 or PSP-C04. PSP-P02 is formally closed; C03 W01-W06 are closed at exact head
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, while W07 remains open on its genuine
+five-reader external-evidence gate.
 
 The machine-readable contract is
 [`psp-c04-proof-contract.json`](psp-c04-proof-contract.json). It turns the P05 scope into six
@@ -65,7 +67,8 @@ outreach, send, upload, or publication.
 
 ## Formalization boundary
 
-After C02 and C03 close, the resolver may automatically refresh exact heads, bind merged evidence
-and claim rows, emit the surface audit, instantiate reproduction requests, and withhold expired
-sources. Publication, outreach, claim promotion, visual selection, phase closure, and deployment
-always remain separate gates.
+After W07 closes and C03 formally closes, the resolver may automatically refresh exact heads, bind
+accepted evidence and claim rows, emit the surface audit, instantiate reproduction requests, and
+withhold expired sources. Publication, outreach, claim promotion, visual selection, phase closure,
+and deployment always remain separate gates. C04 does not solicit W07 readers or treat the accepted
+W06 model review as five-reader evidence.

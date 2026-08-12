@@ -5,8 +5,8 @@
   "status": "PREPARED/PREFLIGHT",
   "prepared_at": "2026-08-10",
   "formalization_gate": {
-    "required_chunks": ["PSP-C02", "PSP-C03"],
-    "rule": "This contract may formalize only after both predecessor chunks close with predicate-backed receipts.",
+    "required_chunks": ["PSP-C03"],
+    "rule": "PSP-P02 is formally closed. This contract may formalize only after PSP-C03 closes with predicate-backed receipts; PSP-P03-W07 is its sole unsatisfied leaf.",
     "automatic_after_dependencies": [
       "refresh every branch and source exact head",
       "resolve every candidate claim against the merged claims ledger and evidence index",
@@ -21,6 +21,36 @@
       "select a visual direction",
       "close PSP-P05, PSP-P06, or PSP-C04"
     ]
+  },
+  "dependency_progress": {
+    "p02": {
+      "phase_id": "PSP-P02",
+      "status": "closed",
+      "observed_at": "2026-08-12"
+    },
+    "c03": {
+      "chunk_id": "PSP-C03",
+      "status": "w01_w06_closed_w07_open",
+      "exact_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "closed_leaves": [
+        "PSP-P03-W01",
+        "PSP-P03-W02",
+        "PSP-P03-W03",
+        "PSP-P03-W04",
+        "PSP-P03-W05",
+        "PSP-P03-W06"
+      ],
+      "sole_unsatisfied_leaf": {
+        "work_id": "PSP-P03-W07",
+        "issue": "https://github.com/organvm/limen/issues/2188",
+        "gate": "five blinded target-like readers",
+        "outbound_from_c04": false
+      },
+      "w06_receipt": {
+        "url": "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820",
+        "sha256": "260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617"
+      }
+    }
   },
   "dependency_sources": [
     {
@@ -47,11 +77,11 @@
     {
       "id": "c03_identity_offers",
       "branch": "codex/psp-c03-identity-offers-preflight",
-      "exact_head": "b5bc01585a10615e85e1ef5b31a2356c24fb9bc9",
+      "exact_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "registry_alignment_commit": "986ebb41778cf082e01ede0cb6d268cebf54a106",
       "required_path": "institutio/positioning/commercial-contract.yaml",
       "integration": "exact_committed_head_only",
-      "availability": "committed_preflight_dependency_blocked"
+      "availability": "accepted_w01_w06_w07_open"
     }
   ],
   "claim_policy": {

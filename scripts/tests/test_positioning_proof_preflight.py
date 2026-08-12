@@ -32,6 +32,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertIn("status must remain PREPARED/PREFLIGHT", errors)
         self.assertIn("external validation must remain rubric-only/no-outreach", errors)
 
+    def test_only_w07_remains_unsatisfied(self) -> None:
+        progress = self.contract["dependency_progress"]
+        self.assertEqual("closed", progress["p02"]["status"])
+        self.assertEqual(
+            [f"PSP-P03-W0{index}" for index in range(1, 7)],
+            progress["c03"]["closed_leaves"],
+        )
+        self.assertEqual(
+            "PSP-P03-W07",
+            progress["c03"]["sole_unsatisfied_leaf"]["work_id"],
+        )
+        self.assertFalse(progress["c03"]["sole_unsatisfied_leaf"]["outbound_from_c04"])
+
+    def test_malformed_dependency_progress_fails_closed(self) -> None:
+        changed = json.loads(json.dumps(self.contract))
+        changed["dependency_progress"] = "not-an-object"
+        self.assertIn("dependency_progress must be an object", MODULE.validate(changed))
+
     def test_resolver_withholds_all_preflight_claims(self) -> None:
         claims = MODULE.resolve_claims(self.contract)
         self.assertEqual(3, len(claims))
