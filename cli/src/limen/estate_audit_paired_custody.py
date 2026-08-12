@@ -50,8 +50,11 @@ MAX_REGISTRY_BYTES = 1024 * 1024
 MAX_CHILD_STDOUT_BYTES = 1024 * 1024
 MAX_CHILD_STDERR_BYTES = 256 * 1024
 MAX_PREPARED_RECORD_BYTES = 4 * 1024 * 1024
-PROCESS_GROUP_TERM_SECONDS = 0.25
-PROCESS_GROUP_KILL_SECONDS = 2.0
+PROCESS_GROUP_TERM_SECONDS = 0.5
+# Full xdist runs can starve a just-signalled child long enough that a two-second wait
+# replaces the triggering output-limit error with termination-failed. Cleanup stays
+# finite, but the hard-kill/reap deadline must tolerate the admitted heavy test load.
+PROCESS_GROUP_KILL_SECONDS = 5.0
 TARGET_REFS = ("archive4t", "t7recovery")
 TARGET_NAMES = {
     "archive4t": "Archive4T",

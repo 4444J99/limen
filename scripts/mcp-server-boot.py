@@ -21,6 +21,7 @@ to start / is unreachable; the offenders are printed (env VALUES are never print
 beat runs this at `severity: advisory`, so a red surfaces in the log without breaking the beat, the
 same fail-open contract as its Lane-B sibling. No secret material is ever emitted.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,19 +37,27 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
-# ── The agent-CLI MCP config estate (paths confirmed by the 2026-07-18 estate recon) ──────────────
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from agent_config_paths import (  # noqa: E402
+    MCP_VENDOR_KEYS,
+    VENDORS,
+    active_config_path,
+    candidate_config_paths,
+)
+
+# ── The agent-CLI MCP config estate ────────────────────────────────────────────────────────────────
 # Each entry: the on-disk config + the format hint used to parse it. Absent files are skipped
 # silently (an agent that isn't installed on this host simply contributes no servers).
+#
+# These paths are DERIVED, never composed here. Hardcoding `HOME / ".claude.json"` is what made this
+# sensor report 4 claude servers — including two "boot failures" routed to issue #2045 and recorded
+# in lever L-MCP-BOOT-HEAL-ARM — on a host whose `claude mcp list` returned zero, because
+# `CLAUDE_CONFIG_DIR` had moved the live config into the agent runtime and the abandoned copy still
+# parsed fine. `active_config_path` is the single owner of that fact; see agent_config_paths.py.
 HOME = Path.home()
-CODEX_HOME = Path(os.environ.get("CODEX_HOME", "").strip() or str(HOME / ".codex")).expanduser()
 CONFIG_PATHS: list[tuple[str, Path, str]] = [
-    ("copilot", HOME / ".copilot" / "mcp-config.json", "json"),
-    ("codex", CODEX_HOME / "config.toml", "toml"),
-    ("gemini", HOME / ".gemini" / "settings.json", "json"),
-    ("agy", HOME / ".gemini" / "config" / "mcp_config.json", "json"),
-    ("claude", HOME / ".claude.json", "json"),
-    ("cline", HOME / ".cline" / "data" / "settings" / "cline_mcp_settings.json", "json"),
-    ("opencode", HOME / ".config" / "opencode" / "opencode.jsonc", "jsonc"),
+    (key, active_config_path(key), VENDORS[key].fmt) for key in MCP_VENDOR_KEYS
 ]
 
 # The doorway everything points at — a bare 127.0.0.1 hub reachability is checked once, separately,
@@ -66,9 +75,7 @@ _AUTH_NEEDED_STATES = frozenset(
         "login_required",
     }
 )
-_AUTHENTICATED_STATES = frozenset(
-    {"authenticated", "connected", "ready", "logged_in"}
-)
+_AUTHENTICATED_STATES = frozenset({"authenticated", "connected", "ready", "logged_in"})
 _HEALABLE_STATES = frozenset({"unreachable", "boot_failed", "invalid"})
 
 
@@ -105,11 +112,7 @@ def parse_codex_mcp_statuses(payload: object) -> dict[str, str | dict[str, str]]
     if isinstance(rows, dict):
         entries = rows.items()
     elif isinstance(rows, list):
-        entries = (
-            (row.get("name"), row)
-            for row in rows
-            if isinstance(row, dict) and isinstance(row.get("name"), str)
-        )
+        entries = ((row.get("name"), row) for row in rows if isinstance(row, dict) and isinstance(row.get("name"), str))
     else:
         return {}
 
@@ -299,25 +302,67 @@ def _normalize(name: str, spec: dict) -> dict:
     }
 
 
+def _servers_in(agent: str, path: Path, fmt: str) -> list[dict]:
+    """Every non-disabled MCP server declared by ONE config file."""
+    if not path.exists():
+        return []
+    data = _load_toml(path) if fmt == "toml" else _load_json_lenient(path)
+    if not data:
+        return []
+    found: list[dict] = []
+    for name, spec in _server_map(data).items():
+        if not isinstance(spec, dict):
+            continue
+        s = _normalize(name, spec)
+        if s["disabled"]:
+            continue
+        s["agent"] = agent
+        s["config"] = str(path)
+        found.append(s)
+    return found
+
+
 def discover() -> list[dict]:
-    """Enumerate every non-disabled MCP server across every present agent config."""
+    """Enumerate every non-disabled MCP server across every ACTIVE agent config."""
     servers: list[dict] = []
     for agent, path, fmt in CONFIG_PATHS:
-        if not path.exists():
-            continue
-        data = _load_toml(path) if fmt == "toml" else _load_json_lenient(path)
-        if not data:
-            continue
-        for name, spec in _server_map(data).items():
-            if not isinstance(spec, dict):
-                continue
-            s = _normalize(name, spec)
-            if s["disabled"]:
-                continue
-            s["agent"] = agent
-            s["config"] = str(path)
-            servers.append(s)
+        servers.extend(_servers_in(agent, path, fmt))
     return servers
+
+
+def stranded_configs() -> list[dict]:
+    """Vendors whose live config declares nothing while an abandoned copy still declares servers.
+
+    Resolving paths correctly removes a false RED, but on its own it would replace that red with
+    SILENCE: a vendor contributing zero servers looks exactly like a vendor that never had any,
+    and the sensor simply stops mentioning it. That is the wrong trade — the operator loses the
+    only evidence that a relocation dropped four working servers on the floor.
+
+    So the migration is named directly. Relocating a config root (CLAUDE_CONFIG_DIR,
+    GEMINI_CLI_HOME, CODEX_HOME) leaves the previous file intact and parseable; the CLI reads the
+    new root and finds nothing. Active-empty while a candidate root is non-empty is precisely that
+    situation, and it is a finding, not a hush.
+    """
+    findings: list[dict] = []
+    for agent, active, fmt in CONFIG_PATHS:
+        if _servers_in(agent, active, fmt):
+            continue
+        resolved_active = active.resolve(strict=False)
+        for candidate in candidate_config_paths(agent):
+            if candidate.resolve(strict=False) == resolved_active:
+                continue
+            orphaned = _servers_in(agent, candidate, fmt)
+            if orphaned:
+                findings.append(
+                    {
+                        "agent": agent,
+                        "active": str(active),
+                        "stale": str(candidate),
+                        "servers": sorted(s["name"] for s in orphaned),
+                    }
+                )
+                break
+    return findings
 
 
 def _probe_http(url: str, timeout: int) -> tuple[bool, str]:
@@ -464,9 +509,7 @@ def _apply_codex_semantic_state(
         missing_env = None
     if auth_state == "auth_needed":
         auth_detail = (
-            f"missing bearer environment {missing_env}"
-            if missing_env
-            else "Codex OAuth authentication required"
+            f"missing bearer environment {missing_env}" if missing_env else "Codex OAuth authentication required"
         )
         return {
             **result,
@@ -513,7 +556,9 @@ def _failure_cures(failed: list[dict]) -> list[str]:
     for result in failed:
         state = result.get("state")
         if state == "auth_needed":
-            missing_env_match = re.search(r"missing bearer environment ([A-Za-z_][A-Za-z0-9_]*)", result.get("detail", ""))
+            missing_env_match = re.search(
+                r"missing bearer environment ([A-Za-z_][A-Za-z0-9_]*)", result.get("detail", "")
+            )
             if missing_env_match:
                 cure = f"populate {missing_env_match.group(1)} through the credential organ"
             else:
@@ -541,7 +586,9 @@ def _heal(failed: list[dict]) -> list[str]:
         try:
             r = subprocess.run(
                 ["ianva", "install-configs", "--apply"],
-                capture_output=True, text=True, timeout=60,
+                capture_output=True,
+                text=True,
+                timeout=60,
             )
             actions.append(f"ianva install-configs --apply -> rc={r.returncode}")
         except Exception as e:
@@ -561,10 +608,24 @@ def _heal(failed: list[dict]) -> list[str]:
     return actions
 
 
+def _print_stranded(stranded: list[dict]) -> None:
+    """Name a relocation that dropped servers, with the exact re-land command."""
+    for row in stranded:
+        names = ", ".join(row["servers"])
+        print(f"  ✗ {row['agent']:32} STRANDED — active config declares 0 servers")
+        print(f"      active: {row['active']}")
+        print(f"      stale : {row['stale']}  (still declares: {names})")
+    if stranded:
+        print("  Cure: re-land the entries into the ACTIVE config (`ianva install-configs --apply`,")
+        print("  or `claude mcp add …`). The stale file is not read and must not be edited.")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Verify local MCP servers boot across every agent CLI (Lane A).")
     ap.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT, help="seconds per server (default 15)")
-    ap.add_argument("--apply", action="store_true", help="arm the heal effector (ianva install-configs + npx-cache clear)")
+    ap.add_argument(
+        "--apply", action="store_true", help="arm the heal effector (ianva install-configs + npx-cache clear)"
+    )
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     args = ap.parse_args(argv)
 
@@ -575,10 +636,15 @@ def main(argv=None) -> int:
         return 0
 
     servers = discover()
+    stranded = stranded_configs()
     if not servers:
         note = f"{len(present_configs)} config(s) present but declare 0 MCP servers — nothing to probe."
-        print(json.dumps({"exit": 0, "note": "no-servers"}) if args.json else f"mcp-server-boot: {note}")
-        return 0
+        if args.json:
+            print(json.dumps({"exit": 1 if stranded else 0, "note": "no-servers", "stranded": stranded}))
+        else:
+            print(f"mcp-server-boot: {note}")
+            _print_stranded(stranded)
+        return 1 if stranded else 0
 
     results = probe_all(servers, args.timeout)
     failed = [r for r in results if not r["ok"]]
@@ -592,7 +658,8 @@ def main(argv=None) -> int:
 
     if args.json:
         payload = {
-            "exit": 1 if failed else 0,
+            "exit": 1 if (failed or stranded) else 0,
+            "stranded": stranded,
             "servers": [
                 {
                     "agent": r["agent"],
@@ -620,6 +687,7 @@ def main(argv=None) -> int:
         print("  heal (--apply):")
         for a in healed:
             print(f"    · {a}")
+    _print_stranded(stranded)
     if failed:
         names = ", ".join(f"{r['agent']}/{r['name']}" for r in failed)
         print(f"mcp-server-boot: {len(failed)} configured server(s) fail to boot/reach — {names}.")
@@ -627,6 +695,10 @@ def main(argv=None) -> int:
             print(f"  Cure: {cure}")
         print("  An EMPTY ianva upstream registry is a registry decision — see verify-mcp-estate.sh")
         print("  doorway check + `ianva add-upstream`. Surfaced in the beat log, non-fatal.")
+        return 1
+    if stranded:
+        agents = ", ".join(row["agent"] for row in stranded)
+        print(f"mcp-server-boot: {len(stranded)} relocated config(s) stranded their servers — {agents}.")
         return 1
     print(f"  all {len(results)} configured MCP server(s) boot/reach.")
     return 0

@@ -13,11 +13,10 @@ repo's own production-grade proof signals.
 
 It emits TWO sinks per repo, and the split is the point:
 
-  • PUBLIC  docs/positioning/{slug}.md           — buyer · the expensive problem · cost of not
-      having it · the RPG engagement ladder (names + what-they-get + cadence) · proof signals ·
-      what's OPEN vs the running ENGINE you rent (the form/operation split — the code is the lure,
-      not the leak) · the two-door CTA.  CONTAINS NO PRICES. A hard guard refuses to write it if a
-      currency token ever leaks in — "no dollar signs on the page" is enforced by the tool, not care.
+  • PUBLIC  docs/positioning/{slug}.md           — current state · evidence labels · an inspectable
+      source link · a neutral evidence-discussion CTA. It contains no buyer economics, offer ladder,
+      private-operation promise, or prices: commercial terms remain unproven until the claims ledger admits them.
+      A hard guard refuses to write it if a currency token ever leaks in.
 
 The two-door CTA is the capture funnel: when the seeds' frontdoor block carries a `contact`, each
 CTA renders as a `mailto:` pre-tagged with the repo + door (deploy=client / hire=recruiter), so a
@@ -40,6 +39,7 @@ Usage:
     --fetch   best-effort overlay live signals via `gh` (description/topics/homepage);
               off by default so the generator is deterministic and offline-testable
 """
+
 from __future__ import annotations
 
 import argparse
@@ -51,6 +51,8 @@ import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import quote
+
+from positioning_claims import assert_public_claims
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 
@@ -105,6 +107,7 @@ def _awaiting_publish(seed: dict) -> bool:
 # cases, so the derivation is fail-closed offline with no live visibility probe). First-name
 # slugs only — the register's Rule #2 already bans surnames from its public half.
 
+
 def _constellation_registry_path() -> Path:
     return Path(
         os.environ.get(
@@ -139,7 +142,11 @@ def _constellation_showcase_entries() -> list[dict]:
             repo = project.get("repo")
             if project.get("public_face_state") in _SHOWCASE_FACES and isinstance(repo, str) and repo:
                 entries.append(
-                    {"name": str(project.get("name") or _slug(repo)), "repo": repo, "slug": str(person.get("slug") or "")}
+                    {
+                        "name": str(project.get("name") or _slug(repo)),
+                        "repo": repo,
+                        "slug": str(person.get("slug") or ""),
+                    }
                 )
     return sorted(entries, key=lambda e: (e["slug"], e["name"]))
 
@@ -151,6 +158,7 @@ def _constellation_showcase_entries() -> list[dict]:
 # obligations triage routes it with zero new infrastructure and nothing is ever auto-sent.
 # Gated on a configured `contact` in the seeds' frontdoor block: no contact → plain CTA text
 # (so we never publish an address he hasn't chosen to expose).
+
 
 def _mailto(contact: str, slug: str | None, door: str) -> str:
     tag = f"[{slug} · {door}]" if slug else f"[front door · {door}]"
@@ -183,18 +191,107 @@ def _fetch_signals(repo: str) -> dict:
     """Best-effort live overlay via gh. Degrades to {} on any failure — never blocks."""
     try:
         out = subprocess.run(
-            ["gh", "api", f"repos/{repo}", "--jq",
-             "{description: .description, homepage: .homepage, topics: .topics, "
-             "pushed_at: .pushed_at, language: .language}"],
-            capture_output=True, text=True, timeout=20, check=True,
+            [
+                "gh",
+                "api",
+                f"repos/{repo}",
+                "--jq",
+                "{description: .description, homepage: .homepage, topics: .topics, "
+                "pushed_at: .pushed_at, language: .language}",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=True,
         ).stdout.strip()
         return json.loads(out) if out else {}
     except Exception:
         return {}
 
 
-def render_public(repo: str, seed: dict, signals: dict | None = None,
-                  contact: str | None = None) -> str:
+_EVIDENCE_STATUSES = {"verified", "repository-asserted", "derived", "conflicted"}
+
+
+def _product_state(seed: dict) -> str:
+    """Return a conservative maturity label for every public surface."""
+    return str(seed.get("product_state") or "Unclassified; deployment and adoption are not established.").strip()
+
+
+def _proof_items(seed: dict) -> list[tuple[str, str]]:
+    """Normalize proof signals and default unlabeled claims to repository-asserted.
+
+    The safe default matters: a test count or deployment phrase copied from a README is useful
+    evidence, but it is not independently verified merely because it reached this generator.
+    """
+    normalized: list[tuple[str, str]] = []
+    for item in seed.get("proof_signals", []):
+        if isinstance(item, dict):
+            claim = str(item.get("claim") or "").strip()
+            status = str(item.get("status") or "repository-asserted").strip()
+        else:
+            claim = str(item).strip()
+            status = "repository-asserted"
+        if not claim:
+            continue
+        if status not in _EVIDENCE_STATUSES:
+            raise ValueError(f"unsupported proof status {status!r} for claim {claim!r}")
+        normalized.append((claim, status))
+    return normalized
+
+
+def _proof_text(items: list[tuple[str, str]]) -> str:
+    return " · ".join(f"{status}: {claim}" for claim, status in items)
+
+
+def _target_url(target: str, seed: dict) -> str:
+    """Return the public destination for a front-door system card."""
+    explicit = str(seed.get("url") or "").strip()
+    if explicit:
+        return explicit
+    return f"https://github.com/{target}"
+
+
+def _details_url(target: str, seed: dict) -> str:
+    """Return a portable public details URL for content copied outside this repository."""
+    explicit = str(seed.get("details_url") or "").strip()
+    if explicit:
+        return explicit
+    return f"https://github.com/organvm/limen/blob/main/docs/positioning/{_slug(target)}.md"
+
+
+def _frontdoor_systems(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> list[tuple[str, dict]]:
+    """Resolve the curated Level-1 flagship set without changing the funded value-repo list.
+
+    String entries select an existing seeded repository. Mapping entries may override a seed or
+    define a verified external product surface such as MONETA. Without an explicit set, preserve
+    the historical value-repo ordering for callers and hermetic tests.
+    """
+    configured = frontdoor.get("flagships") if isinstance(frontdoor, dict) else None
+    if not isinstance(configured, list) or not configured:
+        return repos_seeds
+
+    by_repo = {repo: seed for repo, seed in repos_seeds}
+    resolved: list[tuple[str, dict]] = []
+    for entry in configured:
+        if isinstance(entry, str):
+            target = entry.strip()
+            override: dict = {}
+        elif isinstance(entry, dict):
+            override = dict(entry)
+            target = str(override.pop("repo", "") or override.get("url", "")).strip()
+        else:
+            continue
+        if not target:
+            continue
+        base = by_repo.get(target, {})
+        seed = {**base, **override}
+        if not seed or _awaiting_publish(seed):
+            continue
+        resolved.append((target, seed))
+    return resolved
+
+
+def render_public(repo: str, seed: dict, signals: dict | None = None, contact: str | None = None) -> str:
     """Render the public positioning page. No prices — enforced by the caller's guard."""
     signals = signals or {}
     name = seed.get("display_name", _slug(repo))
@@ -203,71 +300,41 @@ def render_public(repo: str, seed: dict, signals: dict | None = None,
     lines.append("")
     lines.append(f"<!-- generated by scripts/generate-positioning.py from positioning-seeds.json · repo: {repo} -->")
     lines.append("")
-    if seed.get("what_it_is"):
-        lines.append(seed["what_it_is"])
-        lines.append("")
+    lines.append(f"**Current state:** {_product_state(seed)}")
+    lines.append("")
+    lines.append(f"**Repository:** [inspect the source](https://github.com/{repo})")
+    lines.append("")
 
-    # Proof signals — the production-grade weight that signals "this is not free," not a price.
-    proof = list(seed.get("proof_signals", []))
+    # Proof signals retain their evidence status instead of silently upgrading repository claims.
+    proof = _proof_items(seed)
     if signals.get("topics"):
         proof_topics = ", ".join(signals["topics"][:8])
         if proof_topics:
-            proof.append(f"topics: {proof_topics}")
+            proof.append((f"topics: {proof_topics}", "verified"))
     if proof:
-        lines.append("**Built to production weight:** " + " · ".join(proof) + ".")
+        lines.append("**Evidence:** " + _proof_text(proof) + ".")
         lines.append("")
 
-    if seed.get("buyer"):
-        lines.append(f"**Who this is for:** {seed['buyer']}")
-        lines.append("")
-    if seed.get("expensive_problem"):
-        lines.append(f"**The expensive problem:** {seed['expensive_problem']}")
-        lines.append("")
-    if seed.get("cost_of_not_having_it"):
-        lines.append(f"**What it costs you to not have this:** {seed['cost_of_not_having_it']}")
-        lines.append("")
+    # Commercial ladders and internal anchors may exist in a seed as L3 planning material, but
+    # no public offer has been admitted by the claims ledger. Keep them in render_internal only.
 
-    ladder = seed.get("ladder", [])
-    if ladder:
-        lines.append("## Ways to work together")
-        lines.append("")
-        lines.append("Pick the depth that fits. Each level is a deeper build than the last.")
-        lines.append("")
-        lines.append("| Path | What you get | Cadence |")
-        lines.append("|------|--------------|---------|")
-        for step in ladder:
-            n = step.get("name", "")
-            kind = step.get("kind", "")
-            label = f"**{step.get('level', '')} · {n}**" + (f" ({kind})" if kind else "")
-            lines.append(f"| {label} | {step.get('what_they_get', '')} | {step.get('cadence', '')} |")
-        lines.append("")
-
-    # Form vs. operation — the doctrine made concrete (see publish-form-rent-operation).
-    # The code being open is the lure, not the leak: what you pay for is the running, fed
-    # engine, which no fork clones. Naming that distinction on the page is the strongest
-    # value signal there is — it tells the buyer exactly why "it's all public" and "you'll
-    # pay" are both true. No prices (the caller guards this text too).
+    # The public source is inspectable; private-operation language is commercial planning rather
+    # than proof, so it is never rendered here.
     public_face = seed.get("public_face")
-    private_operation = seed.get("private_operation")
-    if public_face or private_operation:
-        lines.append("## What's open — and what you're buying")
+    if public_face:
+        lines.append("## Inspectable source")
         lines.append("")
-        if public_face:
-            lines.append(f"**Open:** {public_face}")
-            lines.append("")
-        if private_operation:
-            lines.append(f"**What you're buying:** {private_operation}")
-            lines.append("")
+        lines.append(f"**Available to inspect:** {public_face}")
+        lines.append("")
 
-    cta_client = seed.get("cta_client", "Deploy this for your shop")
-    cta_recruiter = seed.get("cta_recruiter", "Work with the team that built this")
+    cta_client = "Discuss the system evidence"
+    cta_recruiter = "Discuss the builder's work"
     slug = _slug(repo)
     lines.append("---")
     lines.append("")
-    lines.append(f"{_cta(cta_client, contact, slug, 'deploy')}  ·  "
-                 f"{_cta(cta_recruiter, contact, slug, 'hire')}")
+    lines.append(f"{_cta(cta_client, contact, slug, 'deploy')}  ·  {_cta(cta_recruiter, contact, slug, 'hire')}")
     lines.append("")
-    lines.append("_If it fits, reach out — this conversation starts at serious._")
+    lines.append("_Evidence comes first; any future collaboration remains subject to its own proof and approval._")
     lines.append("")
     return "\n".join(lines)
 
@@ -287,6 +354,9 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
     if fd.get("subhead"):
         lines.append(fd["subhead"])
         lines.append("")
+    if fd.get("authorship"):
+        lines.append(str(fd["authorship"]).strip())
+        lines.append("")
     contact = fd.get("contact") or None
     client = fd.get("door_client", {})
     recruiter = fd.get("door_recruiter", {})
@@ -304,22 +374,23 @@ def render_frontdoor(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> st
     lines.append("")
     lines.append("## The systems")
     lines.append("")
-    for repo, seed in repos_seeds:
+    for repo, seed in _frontdoor_systems(repos_seeds, fd):
         name = seed.get("display_name", _slug(repo))
-        lines.append(f"### [{name}](https://github.com/{repo})")
+        lines.append(f"### [{name}]({_target_url(repo, seed)})")
         lines.append("")
-        if seed.get("what_it_is"):
-            lines.append(seed["what_it_is"])
+        frontdoor_summary = seed.get("frontdoor_summary")
+        if frontdoor_summary:
+            lines.append(frontdoor_summary)
             lines.append("")
-        proof = seed.get("proof_signals", [])
+        lines.append(f"**Current state:** {_product_state(seed)}")
+        lines.append("")
+        # Level 1 carries verified proof only. Repository assertions remain available on the
+        # linked Level-2 positioning page with their evidence labels intact.
+        proof = [item for item in _proof_items(seed) if item[1] == "verified"]
         if proof:
-            lines.append("`" + "` · `".join(proof) + "`")
+            lines.append("**Evidence:** " + _proof_text(proof) + ".")
             lines.append("")
-        if seed.get("expensive_problem"):
-            lines.append(f"**Solves:** {seed['expensive_problem']}")
-            lines.append("")
-        cta = seed.get("cta_client", "Deploy this for your shop")
-        lines.append(f"→ **{cta}** · see [the ways to work together](docs/positioning/{_slug(repo)}.md)")
+        lines.append(f"→ **Inspect the evidence** · see [the documented current state]({_details_url(repo, seed)})")
         lines.append("")
     showcase = fd.get("showcase") or {}
     if showcase:
@@ -360,9 +431,11 @@ def _current_topics(repo: str) -> list[str] | None:
     """Best-effort current topics via gh. None on failure (so the report says 'unknown')."""
     try:
         out = subprocess.run(
-            ["gh", "api", f"repos/{repo}/topics",
-             "-H", "Accept: application/vnd.github+json", "--jq", ".names[]"],
-            capture_output=True, text=True, timeout=20, check=True,
+            ["gh", "api", f"repos/{repo}/topics", "-H", "Accept: application/vnd.github+json", "--jq", ".names[]"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=True,
         ).stdout.strip()
         return [ln for ln in out.splitlines() if ln] if out else []
     except Exception:
@@ -395,7 +468,9 @@ def render_discoverability(repos_seeds: list[tuple[str, dict]], *, fetch: bool) 
         lines.append("")
         if fetch:
             cur = _current_topics(repo)
-            lines.append(f"- **Current topics:** {', '.join(cur) if cur else ('(none)' if cur == [] else '(unknown — gh fetch failed)')}")
+            lines.append(
+                f"- **Current topics:** {', '.join(cur) if cur else ('(none)' if cur == [] else '(unknown — gh fetch failed)')}"
+            )
         lines.append(f"- **Recommended topics:** {', '.join(good) if good else '(none)'}")
         if bad:
             lines.append(f"- ⚠ **Invalid topics (fix in seed):** {', '.join(bad)}")
@@ -439,7 +514,7 @@ def render_internal(repo: str, seed: dict) -> str:
     if seed.get("recruiter_bridge_level"):
         lines.append(
             f"**Recruiter bridge:** level {seed['recruiter_bridge_level']} "
-            "(\"be our data org on retainer\") is the same conversation as a senior-hire offer — "
+            '("be our data org on retainer") is the same conversation as a senior-hire offer — '
             "the page that opens this client path opens the employer door."
         )
         lines.append("")
@@ -521,7 +596,9 @@ def census() -> dict:
             report["seo_description_count"] += 1
         ladder = seed.get("ladder") if isinstance(seed.get("ladder"), list) else []
         report["ladder_step_count"] += len(ladder)
-        report["internal_anchor_count"] += sum(1 for step in ladder if isinstance(step, dict) and step.get("internal_anchor"))
+        report["internal_anchor_count"] += sum(
+            1 for step in ladder if isinstance(step, dict) and step.get("internal_anchor")
+        )
 
     out_dir = _out_dir()
     if out_dir.is_dir():
@@ -536,11 +613,11 @@ def census() -> dict:
     return report
 
 
-def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path,
-                 contact: str | None = None) -> dict:
+def generate_for(repo: str, seed: dict, *, apply: bool, fetch: bool, out_dir: Path, contact: str | None = None) -> dict:
     signals = _fetch_signals(repo) if fetch else {}
     public = render_public(repo, seed, signals, contact=contact)
     _assert_no_prices(public, repo)  # hard guard before anything is written
+    assert_public_claims(public, repo)
     internal = render_internal(repo, seed)
     slug = _slug(repo)
     public_path = out_dir / f"{slug}.md"
@@ -562,12 +639,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repo", help="one repo (owner/name); default = all seeded value-repos")
     ap.add_argument("--apply", action="store_true", help="write artifacts (default: dry-run)")
     ap.add_argument("--fetch", action="store_true", help="best-effort live signal overlay via gh")
-    ap.add_argument("--out-profile", action="store_true",
-                    help="with --frontdoor: also stage the org-profile README artifact (org hub)")
-    ap.add_argument("--frontdoor", action="store_true",
-                    help="render the aggregate two-door front door over all seeded value-repos")
-    ap.add_argument("--discoverability", action="store_true",
-                    help="render buyer-search topics + SEO + apply-commands per repo (recommends, never mutates)")
+    ap.add_argument(
+        "--out-profile",
+        action="store_true",
+        help="with --frontdoor: also stage the org-profile README artifact (org hub)",
+    )
+    ap.add_argument(
+        "--frontdoor", action="store_true", help="render the aggregate two-door front door over all seeded value-repos"
+    )
+    ap.add_argument(
+        "--discoverability",
+        action="store_true",
+        help="render buyer-search topics + SEO + apply-commands per repo (recommends, never mutates)",
+    )
     ap.add_argument("--census", action="store_true", help="print redacted positioning seed/artifact counts and exit")
     args = ap.parse_args(argv)
 
@@ -581,19 +665,21 @@ def main(argv: list[str] | None = None) -> int:
     contact = (doc.get("frontdoor", {}) or {}).get("contact") or None
 
     if args.frontdoor:
-        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path())
-                   if r in seeds and not _awaiting_publish(seeds[r])]
+        ordered = [
+            (r, seeds[r]) for r in _value_repos(_value_repos_path()) if r in seeds and not _awaiting_publish(seeds[r])
+        ]
         if not ordered:
-            print("generate-positioning: no seeded value-repos to render a front door from.",
-                  file=sys.stderr)
+            print("generate-positioning: no seeded value-repos to render a front door from.", file=sys.stderr)
             return 0
         page = render_frontdoor(ordered, doc.get("frontdoor", {}))
         _assert_no_prices(page, "FRONTDOOR")  # same hard no-price guard as per-repo pages
+        assert_public_claims(page, "FRONTDOOR")
         fd_path = out_dir / "_frontdoor.md"
         if args.apply:
             _atomic_write(fd_path, page)
         verb = "WROTE" if args.apply else "would write"
-        print(f"=== FRONTDOOR — {verb} {fd_path} ({len(ordered)} systems) ===")
+        system_count = len(_frontdoor_systems(ordered, doc.get("frontdoor", {})))
+        print(f"=== FRONTDOOR — {verb} {fd_path} ({system_count} systems) ===")
         if args.out_profile:
             # the org-hub artifact: same front door, headed for organvm/.github/profile/README.md
             # (the one README GitHub renders on the org page — the hub of the hub-and-spoke lure
@@ -611,13 +697,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.discoverability:
-        ordered = [(r, seeds[r]) for r in _value_repos(_value_repos_path())
-                   if r in seeds and not _awaiting_publish(seeds[r])]
+        ordered = [
+            (r, seeds[r]) for r in _value_repos(_value_repos_path()) if r in seeds and not _awaiting_publish(seeds[r])
+        ]
         if not ordered:
-            print("generate-positioning: no seeded value-repos for a discoverability pass.",
-                  file=sys.stderr)
+            print("generate-positioning: no seeded value-repos for a discoverability pass.", file=sys.stderr)
             return 0
         page = render_discoverability(ordered, fetch=args.fetch)
+        _assert_no_prices(page, "DISCOVERABILITY")
+        assert_public_claims(page, "DISCOVERABILITY")
         disc_path = out_dir / "_discoverability.md"
         if args.apply:
             _atomic_write(disc_path, page)
@@ -638,8 +726,9 @@ def main(argv: list[str] | None = None) -> int:
         targets = [r for r in all_value if not _awaiting_publish(seeds[r])]
 
     if not targets:
-        print("generate-positioning: no seeded value-repos to render. Add entries to "
-              f"{_seeds_path()}.", file=sys.stderr)
+        print(
+            f"generate-positioning: no seeded value-repos to render. Add entries to {_seeds_path()}.", file=sys.stderr
+        )
         return 0
 
     rendered = 0
@@ -654,8 +743,7 @@ def main(argv: list[str] | None = None) -> int:
         if _awaiting_publish(seed):
             held.append(repo)
             continue
-        result = generate_for(repo, seed, apply=args.apply, fetch=args.fetch, out_dir=out_dir,
-                              contact=contact)
+        result = generate_for(repo, seed, apply=args.apply, fetch=args.fetch, out_dir=out_dir, contact=contact)
         rendered += 1
         verb = "WROTE" if args.apply else "would write"
         print(f"\n=== {repo} — {verb} {result['public_path']} (+ .internal) ===")
@@ -663,14 +751,22 @@ def main(argv: list[str] | None = None) -> int:
             print(result["public"])
 
     if held:
-        print(f"\ngenerate-positioning: {len(held)} repo(s) authored + verified but "
-              f"AWAITING PUBLISH (private repo → not rendered until it's public): "
-              f"{', '.join(held)}", file=sys.stderr)
+        print(
+            f"\ngenerate-positioning: {len(held)} repo(s) authored + verified but "
+            f"AWAITING PUBLISH (private repo → not rendered until it's public): "
+            f"{', '.join(held)}",
+            file=sys.stderr,
+        )
     if skipped:
-        print(f"\ngenerate-positioning: {len(skipped)} repo(s) have no seed yet "
-              f"(positioning not yet authored): {', '.join(skipped)}", file=sys.stderr)
-    print(f"\ngenerate-positioning: {rendered} repo(s) "
-          f"{'written' if args.apply else 'rendered (dry-run)'}.", file=sys.stderr)
+        print(
+            f"\ngenerate-positioning: {len(skipped)} repo(s) have no seed yet "
+            f"(positioning not yet authored): {', '.join(skipped)}",
+            file=sys.stderr,
+        )
+    print(
+        f"\ngenerate-positioning: {rendered} repo(s) {'written' if args.apply else 'rendered (dry-run)'}.",
+        file=sys.stderr,
+    )
     return 0
 
 

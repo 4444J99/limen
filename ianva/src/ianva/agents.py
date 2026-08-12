@@ -15,10 +15,32 @@ which transports the agent accepts). Per-agent we choose the most robust single 
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
 HOME = Path.home()
+
+
+def _config_path(home_relative: str, root_env: str | None = None, env_relative: str = "") -> Path:
+    """The config file an agent CLI actually reads, honouring its relocation variable.
+
+    `CLAUDE_CONFIG_DIR`, `GEMINI_CLI_HOME` and `CODEX_HOME` move a CLI's whole config root. A
+    target hardcoded to `$HOME` writes somewhere the CLI never looks, and because the abandoned
+    file keeps its old contents the write appears to succeed — measured 2026-08-12, that is how
+    `install-configs --apply` would have "re-landed" MCP servers into a file nothing reads.
+
+    `CODEX_HOME` replaces the `~/.codex` directory itself, so its relative segment differs from
+    the `$HOME` one; `GEMINI_CLI_HOME` stands in for `$HOME` and keeps the `.gemini/` segment.
+
+    (`scripts/agent_config_paths.py` owns this fact for the repo, but ianva ships as a standalone
+    package with `dependencies = []` and cannot import it. Keep the two in step.)
+    """
+    if root_env:
+        root = (os.environ.get(root_env) or "").strip()
+        if root:
+            return Path(root).expanduser() / env_relative
+    return HOME / home_relative
 
 
 @dataclass(frozen=True)
@@ -49,21 +71,21 @@ AGENTS: list[AgentTarget] = [
     AgentTarget(
         key="claude",
         label="Claude Code",
-        path=HOME / ".claude.json",
+        path=_config_path(".claude.json", "CLAUDE_CONFIG_DIR", ".claude.json"),
         fmt="claude_cli",
         note="Installed via `claude mcp add --transport http`; first-class streamable-HTTP support.",
     ),
     AgentTarget(
         key="codex",
         label="Codex (OpenAI)",
-        path=HOME / ".codex" / "config.toml",
+        path=_config_path(".codex/config.toml", "CODEX_HOME", "config.toml"),
         fmt="toml_codex",
         note="TOML [mcp_servers.NAME]; supports url= + bearer_token_env_var for HTTP servers.",
     ),
     AgentTarget(
         key="gemini",
         label="Gemini CLI",
-        path=HOME / ".gemini" / "settings.json",
+        path=_config_path(".gemini/settings.json", "GEMINI_CLI_HOME", ".gemini/settings.json"),
         fmt="json_mcpservers",
         note="settings.json mcpServers; httpUrl key for streamable HTTP. User-scope file created if absent.",
     ),
@@ -77,7 +99,11 @@ AGENTS: list[AgentTarget] = [
     AgentTarget(
         key="agy",
         label="antigravity (agy)",
-        path=HOME / ".gemini" / "config" / "mcp_config.json",
+        path=_config_path(
+            ".gemini/config/mcp_config.json",
+            "GEMINI_CLI_HOME",
+            ".gemini/config/mcp_config.json",
+        ),
         fmt="json_stdio_mcpservers",
         note="agy has no `mcp` subcommand → file edit only. stdio via mcp-proxy avoids guessing its HTTP key.",
     ),
