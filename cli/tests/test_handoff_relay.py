@@ -20,6 +20,14 @@ def _load():
     assert spec.loader is not None
     spec.loader.exec_module(module)
     module._worktree_admission_snapshot = lambda: {"active": False, "block_new_local": False}
+    # Unit fixtures own provider reachability. Falling through to capacity.agent_status
+    # probes the host binaries for every canonical lane, making 48 hermetic cases take
+    # minutes and exceed the shared CI gate deadline on slower runners.
+    module.agent_status = lambda _agent: {"reachable": True}
+    # Direct admission tests must not parse the live 3,000-row projection merely because
+    # they supplied an in-memory task list. _configure replaces this with its tiny board
+    # for tests that intentionally exercise keeper-backed budget governance.
+    module.TASKS = SCRIPT.with_name(".handoff-relay-test-missing-tasks.yaml")
     return module
 
 
