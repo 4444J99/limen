@@ -9,7 +9,7 @@ phase: PROVE
 compression_level: medium
 ---
 
-# Relay — PSP-P02-W04 formal admission and W05 dependency boundary
+# Relay — PSP-P02-W04 accepted and W05 formally admitted
 
 ## Routing
 
@@ -30,28 +30,31 @@ compression_level: medium
 - W03 marked receipt: https://github.com/organvm/limen/issues/2175#issuecomment-5265611241,
   canonical receipt SHA-256 `f4d5a01afdeed0f258f3efc62a46eef4dc0c1bba537449ca2243f59cb5b762ee`.
 - One-time main-integration merge checkpoint: `26f465409455fd27c51858fdef293823ae4142e3`.
-- W04 formal-ready implementation source: `5adcfe26c68fee0f9ba673bec1379aca3dd17b8f`;
+- Accepted W04 main head: `a594c66980c8c40ce3f55b3a666a70ecf0ebd96b`.
+- W04 marked receipt: https://github.com/organvm/limen/issues/2176#issuecomment-5265745105,
+  canonical receipt SHA-256 `b2c9a4925505dc718e1f41be66fdf8e072fe03bbf677a2326f40bbfbf3fc36f5`.
+- W05 formal-ready implementation source: `39fcb28627a0a01f054f1e3be02c4fcc2c3e6563`;
   the successor delta is this relay only.
-- Authority receipt: human-authorized Codex continuation. This state admits W04 to the sanctioned
-  merge rail; it is not itself the W04 completion receipt.
+- Authority receipt: human-authorized Codex continuation. This state admits W05 to the sanctioned
+  merge rail; it is not itself the W05 completion receipt.
 
 ## Verified current state
 
 | Item | Live state |
 |---|---|
 | Selected packet denominator | 3, exactly the W03 public flagship triad |
-| Exact formal-ready source | `5adcfe26c68fee0f9ba673bec1379aca3dd17b8f`; fetch PR #2310 for its relay-only descendant |
+| Exact W05 formal-ready source | `39fcb28627a0a01f054f1e3be02c4fcc2c3e6563`; fetch PR #2328 for its relay-only descendant |
 | Private repository identity guard | Derived from the redacted W01 public-repository projection; aggregate result 0 unregistered controlled identities, with no private names loaded or emitted |
 | Public workflow anchors | 3 successful exact-head workflow snapshots |
 | Public endpoint anchors | 3 HTTP 200 snapshots |
 | Indexed metrics made publishable | 4 exact statements across the 3 bounded packets |
 | Explicitly withheld | usage, installs, customers, adoption, revenue, rankings, and private implementation |
-| W03 / W04 / W05 issue state | closed / open / open |
-| Accepted predecessor predicate | `python3 scripts/positioning-program.py --verify-work PSP-P02-W03` passed against the latest marked receipt above |
-| Task-specific predicate | `python3 scripts/flagship-evidence.py --verify-live --json` passed against closed/open/open live parity and the accepted W03 receipt |
-| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 40 tests, including state-relative dependency fixtures and predecessor receipt enforcement |
-| Scoped verification | One bare `scripts/verify-scoped.sh` batch passed all 24 implicated gates on the relay-complete tree |
-| External effects | W03 receipt/closure and #2310 base retarget to `main`; no W04/W05 receipt, closure, publication, or account change |
+| W03 / W04 / W05 issue state | closed / closed / open |
+| Accepted predecessor predicates | `--verify-work PSP-P02-W03` and `--verify-work PSP-P02-W04` passed against their latest marked receipts |
+| Task-specific predicate | `python3 scripts/flagship-evidence.py --verify-live --json` passed against closed/closed/open live parity and both accepted predecessor receipts |
+| Focused regressions | `python3 scripts/tests/flagship-evidence.test.py` passed 40 tests, including fully state-relative open-dependency fixtures and predecessor receipt enforcement |
+| Scoped verification | One bare `scripts/verify-scoped.sh` batch passed all 7 implicated gates on the relay-complete tree |
+| External effects | W04 receipt/closure and draft W05 transition PR #2328; no W05 receipt, W05 closure, publication, or account change |
 
 ## Completed work
 
@@ -86,8 +89,8 @@ compression_level: medium
   statuses, observed values, and public-safe wording.
 - Made dependency declarations follow their live issue owners through the W03 -> W04 -> W05
   closure order and invoke the canonical latest-marked-receipt predicate for every closed
-  predecessor. The current formal state is closed/open/open: W03 is accepted, W04 is admitted, and
-  W05 remains blocked on W04.
+  predecessor. The current formal state is closed/closed/open: W03 and W04 are accepted, and W05 is
+  admitted while its own receipt remains pending.
 - Converted timeout, reset, incomplete-read, and other response-body I/O failures—including HTTP
   error-body reads—into public-safe machine-readable evidence errors.
 
@@ -102,19 +105,18 @@ compression_level: medium
 
 ## Next actions
 
-1. Require exact-head checks and review clearance, then merge PR #2310 only through
+1. Require exact-head checks and review clearance, then merge PR #2328 only through
    `scripts/await-pr.sh --merge`.
 2. On the actual merged main head, rerun the unchanged live evidence predicate, attach the marked
-   PSP-P02-W04 receipt, run `python3 scripts/positioning-program.py --verify-work PSP-P02-W04`, and
-   close #2176 only on pass.
-3. After #2176 closes, create the required state-only transition declaring closed/closed/open,
-   rerun live/scoped/review evidence, and integrate it through a new sanctioned PR before issuing
-   the W05 receipt or closing #2177.
+   PSP-P02-W05 receipt, run `python3 scripts/positioning-program.py --verify-work PSP-P02-W05`, and
+   close #2177 only on pass.
+3. Hand the accepted W05 main head and W04/W05 marked receipt URLs to the conductor. Do not mutate
+   the separately owned W06/W07 or W08 branches from this lane.
 
 ## Risks and prohibitions
 
-- W03 is satisfied. W04 closure remains gated on sanctioned merge plus its marked receipt and
-  executable predicate; W05 remains gated on the separate closed/closed/open transition.
+- W03 and W04 are satisfied. W05 closure remains gated on PR #2328's sanctioned merge plus its
+  marked receipt and executable predicate.
 - Sensitive/private boundary: no private names, paths, hashes, customer data, or invented
   encrypted-addendum contents may enter these packets, PRs, or issue receipts.
 - Files and sibling work that must not be touched: `tasks.yaml`, the W03/W02 branches, live profile
@@ -127,8 +129,9 @@ compression_level: medium
 - Flagship selection: `docs/positioning/flagship-proof-set.yaml`
 - Packet index: `docs/positioning/evidence/flagship-evidence.yaml`
 - Claims authority: `docs/positioning/claims-ledger.md`
-- Pull request: https://github.com/organvm/limen/pull/2310 (ready, retargeted to `main`); all review
-  threads through the late seven-finding audit were resolved before this formal-state refresh.
+- W04 integration: https://github.com/organvm/limen/pull/2310 (merged).
+- W05 state transition: https://github.com/organvm/limen/pull/2328 (draft until relay-complete
+  exact-head verification and review clearance).
 
 The fresh-agent injection phrase is:
 

@@ -71,7 +71,8 @@ class FlagshipEvidenceTests(unittest.TestCase):
 
     def test_open_dependencies_do_not_require_completion_receipts(self) -> None:
         index = copy.deepcopy(self.index)
-        index["dependency_gate"]["w03_state"] = "open"
+        for work in ("w03", "w04", "w05"):
+            index["dependency_gate"][f"{work}_state"] = "open"
         responses = {"2175": "open", "2176": "open", "2177": "open"}
 
         def fetcher(url: str) -> tuple[int, bytes]:

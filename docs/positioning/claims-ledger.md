@@ -115,10 +115,9 @@ preserve the disagreement explicitly.
 ## 8. PSP-P02 selected-flagship packet claims
 
 The rows in this section are the public-safe, machine-reproducible subset prepared by the
-PSP-P02-W04/W05 evidence cohort. W03 is accepted and W04 is formally admitted for sanctioned
-integration; W05 remains blocked on a closed, receipt-verified W04. This ledger is not a completion
-receipt for W04 or W05, does not close either issue, and does not authorize a new public surface by
-itself. The verifier is
+PSP-P02-W04/W05 evidence cohort. W03 and W04 are accepted, and W05 is formally admitted for
+sanctioned integration. This ledger is not the W05 completion receipt, does not close its issue,
+and does not authorize a new public surface by itself. The verifier is
 `python3 scripts/flagship-evidence.py --verify-live --json`; its exact snapshot comparisons require
 a dated packet refresh when a live source changes.
 
