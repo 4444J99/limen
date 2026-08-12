@@ -919,6 +919,8 @@ def test_entire_public_artifact_and_receipt_reject_credential_fields_recursively
         "apiKey",
         "clientSecret",
         "privateKey",
+        "refreshToken",
+        "idToken",
     )
     for root_name in ("artifact", "receipt"):
         for path in mapping_paths(baseline[root_name]):
@@ -935,6 +937,50 @@ def test_entire_public_artifact_and_receipt_reject_credential_fields_recursively
     credentialed_value["artifact"] = copy.deepcopy(credentialed_value["artifact"])
     credentialed_value["artifact"]["reviewer_verdict"]["note"] = "api_key=SECRET"  # allow-secret
     assert "artifact must be recursively credential-free" in _errors(credentialed_value)
+
+
+def test_entire_public_artifact_and_receipt_match_exact_recursive_field_shapes() -> None:
+    baseline = _bundle()
+    expected = {
+        "artifact": MODULE.EXPECTED_ARTIFACT_SHAPE_SHA256,
+        "receipt": MODULE.EXPECTED_RECEIPT_SHAPE_SHA256,
+    }
+
+    def mapping_paths(value, path=()):
+        if isinstance(value, dict):
+            yield path
+            for key, child in value.items():
+                yield from mapping_paths(child, path + (key,))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                yield from mapping_paths(child, path + (index,))
+
+    for root_name, expected_digest in expected.items():
+        assert MODULE._public_contract_shape_sha256(baseline[root_name]) == expected_digest
+        for path in mapping_paths(baseline[root_name]):
+            public_tree = copy.deepcopy(baseline[root_name])
+            target = public_tree
+            for key in path:
+                target = target[key]
+            target["unexpected_public_field"] = "harmless"
+
+            assert MODULE._public_contract_shape_sha256(public_tree) != expected_digest
+
+    artifact = _bundle()
+    artifact["artifact"] = copy.deepcopy(artifact["artifact"])
+    artifact["artifact"]["unexpected_public_field"] = "harmless"
+    assert (
+        "artifact must match its complete recursively typed field-shape contract"
+        in _errors(artifact)
+    )
+
+    receipt = _bundle()
+    receipt["receipt"] = copy.deepcopy(receipt["receipt"])
+    receipt["receipt"]["unexpected_public_field"] = "harmless"
+    assert (
+        "receipt must match its complete recursively typed field-shape contract"
+        in _errors(receipt)
+    )
 
 
 def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:

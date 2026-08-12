@@ -54,6 +54,13 @@ CREDENTIAL_FIELD_RE = re.compile(
     r"(?:^|[-_])(?:access[-_]?token|accesstoken|api[-_]?key|apikey|authorization|bearer|client[-_]?(?:cert|certificate|key|secret)|client(?:cert|certificate|key|secret)|credential|jwt|oauth(?:2[-_]?bearer)?|oauth2bearer|password|passwd|private[-_]?key|privatekey|proxy[-_]?(?:authorization|user)|proxyauthorization|proxyuser|secret|session|signature|token)(?:$|[-_])",
     re.IGNORECASE,
 )
+CREDENTIAL_FIELD_COMPACT_RE = re.compile(
+    r"(?:access|refresh|id|auth|bearer|session)?token|api(?:key|token|secret)|client(?:cert|certificate|key|secret)|privatekey|proxy(?:authorization|user)|oauth(?:2)?(?:bearer|token|secret)?|authorization|bearer|credentials?|jwt|password|passwd|secret|session|signature",
+    re.IGNORECASE,
+)
+CAMEL_CASE_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+EXPECTED_ARTIFACT_SHAPE_SHA256 = "dd72a7aaa85e4de558dc6465b822baec0e40d81518f6276a0fe90c283064c448"
+EXPECTED_RECEIPT_SHAPE_SHA256 = "56db1b1ae7a42f181fcb38ef327738e56bc0dc1cdd45962b122a0103158a1985"
 EXPECTED_CLAIM_COUNT = 13
 EXPECTED_API_RECEIPT_SOURCES = {
     "profile_metadata": "https://api.github.com/users/4444J99",
@@ -536,11 +543,20 @@ def _safe_public_metadata(value: object) -> bool:
     return _text(value) and CREDENTIAL_METADATA_RE.search(str(value)) is None
 
 
+def _credential_shaped_field(value: str) -> bool:
+    separated = CAMEL_CASE_BOUNDARY_RE.sub("_", value)
+    compact = re.sub(r"[^A-Za-z0-9]", "", value)
+    return (
+        CREDENTIAL_FIELD_RE.search(separated) is not None
+        or CREDENTIAL_FIELD_COMPACT_RE.fullmatch(compact) is not None
+    )
+
+
 def _credential_free_public_tree(value: object) -> bool:
     if isinstance(value, dict):
         return all(
             isinstance(key, str)
-            and CREDENTIAL_FIELD_RE.search(key) is None
+            and not _credential_shaped_field(key)
             and _credential_free_public_tree(child)
             for key, child in value.items()
         )
@@ -609,6 +625,34 @@ def _git_blob_oid(path: Path) -> str:
 def _canonical_sha256(value: object) -> str:
     canonical = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(canonical).hexdigest()
+
+
+def _public_contract_shape(value: object) -> object:
+    if isinstance(value, dict):
+        return {
+            "type": "mapping",
+            "fields": [[key, _public_contract_shape(value[key])] for key in sorted(value)],
+        }
+    if isinstance(value, list):
+        return {
+            "type": "list",
+            "items": [_public_contract_shape(item) for item in value],
+        }
+    if isinstance(value, bool):
+        return "bool"
+    if isinstance(value, int):
+        return "int"
+    if isinstance(value, float):
+        return "float"
+    if isinstance(value, str):
+        return "str"
+    if value is None:
+        return "null"
+    return type(value).__name__
+
+
+def _public_contract_shape_sha256(value: object) -> str:
+    return _canonical_sha256(_public_contract_shape(value))
 
 
 def _accepted_dependency_contract(work_id: str) -> dict[str, Any]:
@@ -697,6 +741,10 @@ def validate_bundle(
         errors.append(f"artifact.schema must be {ARTIFACT_SCHEMA}")
     if receipt.get("schema") != RECEIPT_SCHEMA:
         errors.append(f"receipt.schema must be {RECEIPT_SCHEMA}")
+    if _public_contract_shape_sha256(artifact) != EXPECTED_ARTIFACT_SHAPE_SHA256:
+        errors.append("artifact must match its complete recursively typed field-shape contract")
+    if _public_contract_shape_sha256(receipt) != EXPECTED_RECEIPT_SHAPE_SHA256:
+        errors.append("receipt must match its complete recursively typed field-shape contract")
     if not _credential_free_public_tree(artifact):
         errors.append("artifact must be recursively credential-free")
     if not _credential_free_public_tree(receipt):
