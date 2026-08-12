@@ -99,8 +99,9 @@ def _sample_seconds() -> float:
 
 
 def _sample_timeout_seconds() -> float:
-    """Mirror the heartbeat's bounded VIGILIA sampler timeout."""
-    return min(_positive_float("LIMEN_VITALS_SAMPLE_TIMEOUT", 30.0), 3600.0)
+    """Mirror the heartbeat's positive-integer VIGILIA sampler timeout."""
+    raw = _configured_env("LIMEN_VITALS_SAMPLE_TIMEOUT", "30")
+    return float(min(int(raw), 3600)) if raw.isdigit() and int(raw) > 0 else 30.0
 
 
 def _sample_grace_seconds(sample_seconds: float) -> float:

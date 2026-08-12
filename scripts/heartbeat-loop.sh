@@ -370,7 +370,8 @@ PY
 }
 
 _fast_wave_kill_tree() {
-  _fw_tree_root="$1"
+  local _fw_tree_root="$1"
+  local _fw_descendant
   for _fw_descendant in $(pgrep -P "$_fw_tree_root" 2>/dev/null || true); do
     _fast_wave_kill_tree "$_fw_descendant"
     kill "$_fw_descendant" 2>/dev/null || true
