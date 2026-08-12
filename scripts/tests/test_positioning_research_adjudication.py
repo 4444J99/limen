@@ -834,6 +834,33 @@ def test_public_profile_head_and_blobs_bind_cited_sources_and_latest_run() -> No
     )
 
 
+def test_public_profile_and_nested_mappings_match_complete_typed_contract() -> None:
+    assert MODULE._exact_typed_mapping(
+        _bundle()["receipt"]["public_profile"],
+        MODULE.EXPECTED_PUBLIC_PROFILE,
+    )
+
+    mutations = (
+        (("repository",), "other-owner/profile"),
+        (("readme", "url"), "https://example.test/readme"),
+        (("readme", "authorization"), "Bearer SECRET"),
+        (("stats_manifest", "rendered_values", "personal_public_repositories"), True),
+        (("workflow", "url"), "https://example.test/workflow"),
+    )
+    for path, replacement in mutations:
+        bundle = _bundle()
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        target = bundle["receipt"]["public_profile"]
+        for key in path[:-1]:
+            target = target[key]
+        target[path[-1]] = replacement
+
+        assert (
+            "public-profile receipt must match its complete exact typed contract"
+            in _errors(bundle)
+        )
+
+
 def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
     malformed = _bundle()
     malformed["receipt"] = copy.deepcopy(malformed["receipt"])

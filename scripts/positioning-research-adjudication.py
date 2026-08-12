@@ -344,6 +344,40 @@ EXPECTED_PUBLIC_SOURCES = {
     source_id: {**source, **_EXPECTED_PUBLIC_SOURCE_METADATA[source_id]}
     for source_id, source in EXPECTED_PUBLIC_SOURCES.items()
 }
+EXPECTED_PUBLIC_PROFILE = {
+    "repository_id": PROFILE_REPOSITORY_ID,
+    "repository": PROFILE_REPOSITORY,
+    "visibility": "public",
+    "default_branch": "main",
+    "head": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["head"],
+    "head_committed_at": "2026-08-10T08:06:01Z",
+    "head_url": (
+        f"https://github.com/{PROFILE_REPOSITORY}/commit/"
+        f"{EXPECTED_PUBLIC_SOURCES['PROFILE_README']['head']}"
+    ),
+    "readme": {
+        "blob": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["blob"],
+        "url": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["url"],
+    },
+    "stats_manifest": {
+        "blob": EXPECTED_PUBLIC_SOURCES["PROFILE_MANIFEST"]["blob"],
+        "url": EXPECTED_PUBLIC_SOURCES["PROFILE_MANIFEST"]["url"],
+        "generated_at": "2026-08-10T08:05:30Z",
+        "rendered_values": {
+            "personal_public_repositories": 8,
+            "ecosystem_public_repositories": 227,
+            "ecosystem_original_repositories": 198,
+            "contributions_last_year": PROFILE_RENDERED_CONTRIBUTIONS,
+            "ecosystem_organizations_with_public_repositories": 9,
+        },
+    },
+    "workflow": {
+        "url": EXPECTED_PUBLIC_SOURCES["PROFILE_WORKFLOW"]["url"],
+        "schedule": "17 6 * * *",
+        "engine_checkout_is_floating": True,
+        "engine_checkout_ref_recorded_in_manifest": False,
+    },
+}
 LAYERS = ("measurement", "inference", "implication", "prominence")
 DISPOSITION_VOCABULARIES = {
     "measurement": ("verified", "partially_verified", "contradicted", "unverified", "not_applicable"),
@@ -452,12 +486,23 @@ def _string_token_list(value: object) -> bool:
     return isinstance(value, list) and bool(value) and all(_text(item) for item in value)
 
 
+def _exact_typed_value(value: object, expected: object) -> bool:
+    if type(value) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return set(value) == set(expected) and all(
+            _exact_typed_value(value[key], expected[key]) for key in expected
+        )
+    if isinstance(expected, list):
+        return len(value) == len(expected) and all(
+            _exact_typed_value(item, expected_item)
+            for item, expected_item in zip(value, expected, strict=True)
+        )
+    return value == expected
+
+
 def _exact_typed_mapping(value: object, expected: dict[str, object]) -> bool:
-    return (
-        isinstance(value, dict)
-        and set(value) == set(expected)
-        and all(type(value[key]) is type(expected[key]) and value[key] == expected[key] for key in expected)
-    )
+    return _exact_typed_value(value, expected)
 
 
 def _mapping(value: object, label: str, errors: list[str]) -> dict[str, Any]:
@@ -1077,6 +1122,8 @@ def validate_bundle(
         errors.append("generated issue index still contains the retired portfolio slug")
 
     public_profile = _mapping(receipt.get("public_profile"), "receipt.public_profile", errors)
+    if not _exact_typed_mapping(public_profile, EXPECTED_PUBLIC_PROFILE):
+        errors.append("public-profile receipt must match its complete exact typed contract")
     profile_readme = _mapping(
         public_profile.get("readme"),
         "receipt.public_profile.readme",
