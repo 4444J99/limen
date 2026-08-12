@@ -14,11 +14,11 @@ DEFAULT_MANIFEST = ROOT / "docs" / "positioning" / "sales" / "psp-c09" / "icp-an
 
 EXPECTED_SOURCE_LOCK = {
     "commercialContract": "organvm/limen#2312@c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
-    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b",
-    "proofLedContent": "organvm/limen#2316@a7937bb1e122574edc5d9e9cb74e18538d2b86c5",
-    "proofExperience": "organvm/limen#2313@23712398c6586e005c303eff632604985cd0a25c",
-    "portfolioExperience": "organvm-vii-kerygma/portfolio#220@9bcc4606b68da83dc0878b060989d35c3b649d7f",
-    "deliveryOsRelay": "organvm/limen#2315@a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@2c4efce84082f344fd5e0d90cc110662a379435f",
+    "proofLedContent": "organvm/limen#2316@ef6e4df64f97c11dba2c159752d5a13b50a96c10",
+    "proofExperience": "organvm/limen#2313@5bf686f6ceba200c6157bd87eb6e5298750a4ffb",
+    "portfolioExperience": "organvm-vii-kerygma/portfolio#220@8974543ba9675ed0504141895812476efef5dd80",
+    "deliveryOsRelay": "organvm/limen#2315@fdd41da45bdf5909e7b782a03dbaedf85e105c25",
 }
 
 EXPECTED_UPSTREAM_STATE = {

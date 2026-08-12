@@ -6,11 +6,11 @@ commercial outcome, leaf receipt, or authorization to contact anyone.
 The rubric consumes the accepted-through-W06 identity/offer/qualification contract in Limen PR
 #2312 at checkpoint `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. W07/#2188 remains the open
 five-independent-reader gate; no model or synthetic record can satisfy it. Delivery feasibility is
-constrained by private PR #135 at `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` and its public relay
-#2315 at `a72a05d917bf14d53221c7d02ec52d3786b4f88e`. Proof-led content is PREPARED in
-Limen PR #2316 at `a7937bb1e122574edc5d9e9cb74e18538d2b86c5`; proof-experience contracts are
-PREPARED in Limen PR #2313 at `23712398c6586e005c303eff632604985cd0a25c` and portfolio PR
-#220 at `9bcc4606b68da83dc0878b060989d35c3b649d7f`. Those source contracts remain
+constrained by private PR #135 at `2c4efce84082f344fd5e0d90cc110662a379435f` and its public relay
+#2315 at `fdd41da45bdf5909e7b782a03dbaedf85e105c25`. Proof-led content is PREPARED in
+Limen PR #2316 at `ef6e4df64f97c11dba2c159752d5a13b50a96c10`; proof-experience contracts are
+PREPARED in Limen PR #2313 at `5bf686f6ceba200c6157bd87eb6e5298750a4ffb` and portfolio PR
+#220 at `8974543ba9675ed0504141895812476efef5dd80`. Those source contracts remain
 authoritative and are not duplicated or promoted here.
 
 ## Ideal client
