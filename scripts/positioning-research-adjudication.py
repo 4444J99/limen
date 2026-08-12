@@ -51,7 +51,7 @@ CREDENTIAL_METADATA_RE = re.compile(
     re.IGNORECASE,
 )
 CREDENTIAL_FIELD_RE = re.compile(
-    r"(?:^|[-_])(?:access[-_]?token|api[-_]?key|authorization|bearer|client[-_]?(?:cert|certificate|key)|credential|jwt|oauth(?:2[-_]?bearer)?|password|passwd|private[-_]?key|proxy[-_]?(?:authorization|user)|secret|session|signature|token)(?:$|[-_])",
+    r"(?:^|[-_])(?:access[-_]?token|accesstoken|api[-_]?key|apikey|authorization|bearer|client[-_]?(?:cert|certificate|key|secret)|client(?:cert|certificate|key|secret)|credential|jwt|oauth(?:2[-_]?bearer)?|oauth2bearer|password|passwd|private[-_]?key|privatekey|proxy[-_]?(?:authorization|user)|proxyauthorization|proxyuser|secret|session|signature|token)(?:$|[-_])",
     re.IGNORECASE,
 )
 EXPECTED_CLAIM_COUNT = 13
@@ -1947,14 +1947,41 @@ def validate_live_profile_observations(
         errors.append("live profile main head needs an RFC3339 committer time")
     elif latest_created_at is not None and committed_at < latest_created_at:
         errors.append("live profile main head must be committed after the latest scheduled run starts")
-    parents = current_commit.get("parents")
-    parent_heads = {
-        row.get("sha")
-        for row in parents
-        if isinstance(row, dict) and isinstance(row.get("sha"), str)
-    } if isinstance(parents, list) else set()
-    if latest_run and latest_run.get("head_sha") not in parent_heads:
-        errors.append("live profile main head must descend directly from the latest scheduled run trigger head")
+    trigger_head = latest_run.get("head_sha") if latest_run else None
+    if isinstance(trigger_head, str) and HEAD_RE.fullmatch(trigger_head) and current_head:
+        trigger_compare_url = (
+            f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/"
+            f"{trigger_head}...{current_head}"
+        )
+        trigger_comparison = fetch_public(
+            "profile scheduled-run trigger continuity",
+            trigger_compare_url,
+        )
+        if not isinstance(trigger_comparison, dict):
+            errors.append("live scheduled-run trigger comparison response must be a mapping")
+        else:
+            trigger_base = trigger_comparison.get("base_commit")
+            trigger_merge_base = trigger_comparison.get("merge_base_commit")
+            trigger_status = trigger_comparison.get("status")
+            trigger_ahead_by = trigger_comparison.get("ahead_by")
+            if trigger_comparison.get("url") != trigger_compare_url:
+                errors.append("live scheduled-run trigger comparison must bind its exact requested endpoint")
+            if trigger_status not in {"ahead", "identical"}:
+                errors.append("live profile main head must descend from the latest scheduled run trigger head")
+            if not isinstance(trigger_base, dict) or trigger_base.get("sha") != trigger_head:
+                errors.append("live scheduled-run trigger comparison must retain the trigger base head")
+            if not isinstance(trigger_merge_base, dict) or trigger_merge_base.get("sha") != trigger_head:
+                errors.append("latest scheduled run trigger must remain the live main merge base")
+            if trigger_status == "identical" and (
+                current_head != trigger_head or trigger_ahead_by != 0
+            ):
+                errors.append("identical trigger comparison must retain the trigger head")
+            if trigger_status == "ahead" and (
+                not isinstance(trigger_ahead_by, int)
+                or isinstance(trigger_ahead_by, bool)
+                or trigger_ahead_by <= 0
+            ):
+                errors.append("ahead trigger comparison needs a positive commit distance")
 
     accepted_profile = receipt.get("public_profile")
     accepted_head = accepted_profile.get("head") if isinstance(accepted_profile, dict) else None

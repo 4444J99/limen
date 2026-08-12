@@ -218,6 +218,10 @@ def _live_profile_fixture():
         f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
         f"{accepted_head}...{current_head}"
     )
+    trigger_compare_url = (
+        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
+        f"{latest_trigger}...{current_head}"
+    )
     public_payloads = {
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
@@ -235,7 +239,15 @@ def _live_profile_fixture():
                 f"https://github.com/{MODULE.PROFILE_REPOSITORY}/commit/{current_head}"
             ),
             "commit": {"committer": {"date": "2026-08-12T07:10:00Z"}},
-            "parents": [{"sha": latest_trigger}],
+            "parents": [{"sha": "9" * 40}],
+        },
+        trigger_compare_url: {
+            "url": trigger_compare_url,
+            "status": "ahead",
+            "ahead_by": 2,
+            "base_commit": {"sha": latest_trigger},
+            "merge_base_commit": {"sha": latest_trigger},
+            "commits": [{"sha": "8" * 40}],
         },
         compare_url: {
             "url": compare_url,
@@ -869,6 +881,10 @@ def test_privacy_review_matches_complete_typed_public_safe_contract() -> None:
 
     mutations = (
         ("authorization", "Bearer SECRET"),
+        ("accessToken", "opaque"),
+        ("apiKey", "opaque"),
+        ("clientSecret", "opaque"),
+        ("privateKey", "opaque"),
         ("rule", "Only selected fields are inspected."),
         ("private_repository_names", False),
     )
@@ -888,31 +904,32 @@ def test_entire_public_artifact_and_receipt_reject_credential_fields_recursively
     assert MODULE._credential_free_public_tree(baseline["artifact"])
     assert MODULE._credential_free_public_tree(baseline["receipt"])
 
-    cases = (
-        ("artifact", ()),
-        ("artifact", ("formalization",)),
-        ("artifact", ("claims", 0)),
-        ("artifact", ("lavrea_axis_audit", 0)),
-        ("artifact", ("repository_drift_relay",)),
-        ("receipt", ()),
-        ("receipt", ("formal_completion",)),
-        ("receipt", ("lavrea_baseline", "methodology")),
-        ("receipt", ("portfolio_repository_identity",)),
-        ("receipt", ("claims_ledger_integration",)),
-    )
-    for root_name, path in cases:
-        bundle = _bundle()
-        bundle[root_name] = copy.deepcopy(bundle[root_name])
-        target = bundle[root_name]
-        for key in path:
-            target = target[key]
-        target["authorization"] = "Bearer SECRET"
+    def mapping_paths(value, path=()):
+        if isinstance(value, dict):
+            yield path
+            for key, child in value.items():
+                yield from mapping_paths(child, path + (key,))
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                yield from mapping_paths(child, path + (index,))
 
-        assert not MODULE._credential_free_public_tree(bundle[root_name])
-        assert (
-            f"{root_name} must be recursively credential-free"
-            in _errors(bundle)
-        )
+    credential_keys = (
+        "authorization",
+        "accessToken",
+        "apiKey",
+        "clientSecret",
+        "privateKey",
+    )
+    for root_name in ("artifact", "receipt"):
+        for path in mapping_paths(baseline[root_name]):
+            for credential_key in credential_keys:
+                public_tree = copy.deepcopy(baseline[root_name])
+                target = public_tree
+                for key in path:
+                    target = target[key]
+                target[credential_key] = "opaque"
+
+                assert not MODULE._credential_free_public_tree(public_tree)
 
     credentialed_value = _bundle()
     credentialed_value["artifact"] = copy.deepcopy(credentialed_value["artifact"])
@@ -1179,6 +1196,38 @@ def test_live_profile_window_ignores_older_failures_and_truncated_compare_commit
     compare_url = next(url for url in public_payloads if "/compare/" in url)
     public_payloads[compare_url]["ahead_by"] = 500
     public_payloads[compare_url]["commits"] = [{"sha": "f" * 40}]
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
+        public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        http_fetch=lambda url: {
+            "status": next(
+                status
+                for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
+                if expected_url == url
+            ),
+            "url": url,
+        },
+        now=now,
+    )
+
+    assert errors == []
+
+
+def test_live_profile_accepts_transitive_scheduled_trigger_ancestry() -> None:
+    now, public_payloads, contribution_payload = _live_profile_fixture()
+    latest_trigger = public_payloads[MODULE.PROFILE_RUNS_API_URL]["workflow_runs"][0]["head_sha"]
+    current_head = public_payloads[MODULE.PROFILE_MAIN_COMMIT_API_URL]["sha"]
+    trigger_compare_url = (
+        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
+        f"{latest_trigger}...{current_head}"
+    )
+    assert public_payloads[MODULE.PROFILE_MAIN_COMMIT_API_URL]["parents"] == [
+        {"sha": "9" * 40}
+    ]
+    assert public_payloads[trigger_compare_url]["status"] == "ahead"
+    assert public_payloads[trigger_compare_url]["ahead_by"] == 2
 
     errors = MODULE.validate_live_profile_observations(
         _bundle()["receipt"],

@@ -214,7 +214,6 @@
     "visibility": "public",
     "default_branch": "main",
     "archived": false,
-    "admin_access_observed": true,
     "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
     "head_url": "https://github.com/organvm-vii-kerygma/portfolio/commit/85bfaa84287e4a3b90b49187caa4313c4edda1aa",
     "source": "https://api.github.com/repositories/1155412125",
