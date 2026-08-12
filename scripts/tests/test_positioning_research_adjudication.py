@@ -139,6 +139,19 @@ def _errors(bundle):
     )
 
 
+def _sync_projected_issue_receipt(bundle) -> None:
+    work_ids = bundle["artifact"]["repository_drift_relay"]["affected_work_ids"]
+    bundle["receipt"]["portfolio_repository_identity"][
+        "live_issue_bodies_requiring_refresh"
+    ] = [
+        {
+            "work_id": work_id,
+            "issue": bundle["issue_map"]["issues"][work_id]["number"],
+        }
+        for work_id in work_ids
+    ]
+
+
 def test_tracked_adjudication_bundle_passes_static_contract() -> None:
     assert _errors(_bundle()) == []
 
@@ -727,6 +740,55 @@ def test_api_receipts_require_exact_ids_public_metadata_and_no_credentials() -> 
     )
 
 
+def test_api_receipt_ids_bind_their_exact_expected_source_endpoints() -> None:
+    assert set(MODULE.EXPECTED_API_RECEIPT_SOURCES) == MODULE.EXPECTED_API_RECEIPT_IDS
+    for receipt_id in MODULE.EXPECTED_API_RECEIPT_SOURCES:
+        bundle = _bundle()
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        row = next(
+            row
+            for row in bundle["receipt"]["api_query_receipts"]
+            if row["id"] == receipt_id
+        )
+        row["source"] = f"https://example.test/unrelated/{receipt_id}"
+
+        assert (
+            f"API query receipt {receipt_id} must bind its exact expected source endpoint"
+            in _errors(bundle)
+        )
+
+
+def test_projected_issue_numbers_are_positive_non_boolean_and_distinct() -> None:
+    for invalid_number in (True, 0, -1):
+        bundle = _bundle()
+        bundle["issue_map"] = copy.deepcopy(bundle["issue_map"])
+        bundle["receipt"] = copy.deepcopy(bundle["receipt"])
+        work_ids = bundle["artifact"]["repository_drift_relay"]["affected_work_ids"]
+        assert len(work_ids) == 18
+        work_id = work_ids[0]
+        bundle["issue_map"]["issues"][work_id]["number"] = invalid_number
+        _sync_projected_issue_receipt(bundle)
+
+        assert (
+            f"{work_id} issue number must be a positive non-boolean integer"
+            in _errors(bundle)
+        )
+
+    duplicate = _bundle()
+    duplicate["issue_map"] = copy.deepcopy(duplicate["issue_map"])
+    duplicate["receipt"] = copy.deepcopy(duplicate["receipt"])
+    work_ids = duplicate["artifact"]["repository_drift_relay"]["affected_work_ids"]
+    first_work_id, second_work_id = work_ids[:2]
+    issue_number = duplicate["issue_map"]["issues"][first_work_id]["number"]
+    duplicate["issue_map"]["issues"][second_work_id]["number"] = issue_number
+    _sync_projected_issue_receipt(duplicate)
+
+    assert (
+        f"issue number {issue_number} is duplicated by {first_work_id} and {second_work_id}"
+        in _errors(duplicate)
+    )
+
+
 def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
     bundle = _bundle()
     bundle["receipt"] = copy.deepcopy(bundle["receipt"])
@@ -761,7 +823,7 @@ def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
     assert "daily generation run times must fall inside the observation window" in _errors(outside_window)
 
 
-def test_issue_map_change_selects_the_research_adjudication_gate() -> None:
+def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() -> None:
     gates = MODULE._load_yaml(ROOT / "institutio" / "governance" / "gates.yaml")
     gate = gates["gates"]["research-adjudication-test"]
 
@@ -769,4 +831,12 @@ def test_issue_map_change_selects_the_research_adjudication_gate() -> None:
     assert "docs/positioning/claims-ledger.md" in gate["paths"]
     assert "docs/positioning/evidence/flagship-evidence.yaml" in gate["paths"]
     assert "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json" in gate["paths"]
-    assert "scripts/positioning-research-adjudication.py --check" in gate["command"]
+    assert gate["command"] == (
+        "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py "
+        "scripts/tests/test_positioning_research_adjudication.py -q && "
+        "python3 scripts/positioning-research-adjudication.py --verify-live"
+    )
+    assert gate["command"].endswith(
+        "python3 scripts/positioning-research-adjudication.py --verify-live"
+    )
+    assert gate["timeout_seconds"] == 300

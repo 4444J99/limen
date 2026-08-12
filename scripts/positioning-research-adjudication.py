@@ -49,13 +49,22 @@ CREDENTIAL_METADATA_RE = re.compile(
     re.IGNORECASE,
 )
 EXPECTED_CLAIM_COUNT = 13
-EXPECTED_API_RECEIPT_IDS = {
-    "profile_metadata",
-    "public_organization_repository_counts",
-    "public_original_organization_repository_counts",
-    "contribution_calendar_fresh_observation",
-    "w01_public_safe_census",
+EXPECTED_API_RECEIPT_SOURCES = {
+    "profile_metadata": "https://api.github.com/users/4444J99",
+    "public_organization_repository_counts": "https://docs.github.com/en/graphql/reference/orgs",
+    "public_original_organization_repository_counts": (
+        "https://docs.github.com/en/graphql/reference/queries#search"
+    ),
+    "contribution_calendar_fresh_observation": (
+        "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
+    ),
+    "w01_public_safe_census": (
+        "https://github.com/organvm/limen/blob/"
+        "10cf8476d5e88309c71d5fac25167ec7b7af59c4/"
+        "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json"
+    ),
 }
+EXPECTED_API_RECEIPT_IDS = set(EXPECTED_API_RECEIPT_SOURCES)
 EXPECTED_ORGANIZATION_KEYS = {
     "a-organvm",
     "meta-organvm",
@@ -916,12 +925,23 @@ def validate_bundle(
 
     issues = _mapping(issue_map.get("issues"), "issue_map.issues", errors)
     expected_issue_rows = []
+    issue_number_owners: dict[int, str] = {}
     for work_id in canonical_work_ids:
         mapped = _mapping(issues.get(work_id), f"issue_map.issues.{work_id}", errors)
         number = mapped.get("number")
-        if not isinstance(number, int):
-            errors.append(f"{work_id} is missing its generated issue number")
+        if (
+            not isinstance(number, int)
+            or isinstance(number, bool)
+            or number <= 0
+        ):
+            errors.append(f"{work_id} issue number must be a positive non-boolean integer")
             continue
+        if number in issue_number_owners:
+            errors.append(
+                f"issue number {number} is duplicated by {issue_number_owners[number]} and {work_id}"
+            )
+        else:
+            issue_number_owners[number] = work_id
         expected_issue_rows.append({"work_id": work_id, "issue": number})
         expected_index_fragment = f"| `{work_id}` "
         if expected_index_fragment not in issue_index or PORTFOLIO_CANONICAL_SLUG not in next(
@@ -991,6 +1011,11 @@ def validate_bundle(
             api_receipts[receipt_id] = row
         if not _credential_free_https_url(row.get("source")):
             errors.append(f"API query receipt {receipt_id} needs a credential-free HTTPS source")
+        expected_source = EXPECTED_API_RECEIPT_SOURCES.get(receipt_id)
+        if expected_source is not None and row.get("source") != expected_source:
+            errors.append(
+                f"API query receipt {receipt_id} must bind its exact expected source endpoint"
+            )
         if _rfc3339(row.get("observed_at")) is None:
             errors.append(f"API query receipt {receipt_id} needs an RFC3339 observation time")
         metadata = [row[key] for key in ("reproduction", "query") if key in row]
