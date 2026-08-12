@@ -17,6 +17,10 @@ The machine-readable owners are:
   return, and governance replay using invented records only;
 - [`scripts/positioning-foundry-preflight.py`](../../../../scripts/positioning-foundry-preflight.py)
   — the validator and public-safe live census.
+- [`foundry-handoff-contract.json`](foundry-handoff-contract.json) — accepted C02 taxonomy
+  comparison, non-binding decision records, authority/privacy boundaries, and rollback contract;
+- [`scripts/positioning-foundry-handoff.py`](../../../../scripts/positioning-foundry-handoff.py)
+  — deterministic classification, decision-record, and five-case rollback validation.
 
 ## Dependency and authority boundary
 
@@ -55,6 +59,12 @@ Public candidates retain their public repository identity in the snapshot. The e
 are `private-candidate-NNN` only. Their names, URLs, descriptions, topics, timestamps, and
 owner-specific row identities never enter this package. The validator scans the complete C11 public
 package against the current private-name set and fails on an exact private repository token.
+
+The executable classification comparison reapplies the accepted C02 rule order to every public
+candidate using the current governance and access registries. It records whether each candidate is
+primarily a product, proof surface, archive, infrastructure component, or partner lane. Private
+rows remain classified only in restricted custody; the public package records eight withheld
+classifications and no private role, maturity, or repository detail.
 
 ## W02 — Demand and market evidence
 
@@ -124,6 +134,11 @@ runway, transfer trigger, and stop condition; private amounts remain outside the
 Park/kill rules stop narrative and maintenance drag when evidence, safety, legality, custody, or
 economics cannot clear the declared thresholds.
 
+A deterministic non-binding decision record is generated for every candidate. Each record carries
+classification, demand, readiness, economics state, next action, no-go codes, required human gates,
+and unchanged-custody state. Generated records can route only to park, bounded experiment, or
+no-go; none can select terms, appoint an operator, or mark transfer eligibility.
+
 ## W06 — Structure and return options
 
 Five draft-only structures are fully enumerated without selecting one:
@@ -151,6 +166,10 @@ data, private source, repository administration, domain control, IP licenses, an
 are denied before approved terms. The synthetic drill proves those denials and grants no real
 access.
 
+The operating-authority matrix permits reversible analysis only. Contact, private disclosure,
+credentials, production access, term selection, signature, spend, publication, deployment,
+custody transfer, and an observed-pilot claim all fail closed to their owning gate or receipt.
+
 ## W08 — Bounded pilot design, not an observed pilot
 
 The 28-day pilot design has day-zero baselines, weekly reviews, a midpoint access/economics audit,
@@ -162,6 +181,11 @@ Every real-world flag is explicitly false: no product selected, no operator sele
 no terms selected or signed, no rights transferred, no credentials or production access granted,
 and no observed pilot. The only rehearsal uses invented product/operator/data records and ends with
 owner custody unchanged.
+
+Five synthetic rollback cases cover evidence failure, access or security breach, custody
+ambiguity, operator failure, and downside-economics failure. Every case executes the same
+nine-step freeze, capture, revoke, return, verify, reconcile, decide, and receipt workflow with
+zero external effects and owner custody unchanged.
 
 ## W09 — Institutional governance and return paths
 
@@ -195,7 +219,10 @@ python3 -B scripts/positioning-program.py --verify-model-assignments
 python3 -B scripts/positioning-foundry-preflight.py --json
 python3 -B scripts/positioning-foundry-preflight.py --drills --json
 python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json
-python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight
+python3 -B scripts/positioning-foundry-handoff.py --json
+python3 -B scripts/positioning-foundry-handoff.py --records --json
+python3 -B scripts/positioning-foundry-handoff.py --drills --json
+python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight scripts.tests.test_positioning_foundry_handoff
 ```
 
 Formal leaf predicates remain intentionally deferred. After predecessors close, a fresh correctly

@@ -324,6 +324,26 @@ economics, access, custody, and return readiness. Event review handles harm or b
 The annual review updates rubrics and structure templates with qualified counsel; it never rewrites
 historical receipts.
 
+## 11. Executable acceptance boundary
+
+`foundry-handoff-contract.json` is the executable owner for the classification comparison,
+decision-record schema, authority matrix, private-evidence zones, no-go contract, and synthetic
+rollback workflow.
+
+The generated decision record is advisory and machine-produced. It cannot appoint an operator,
+select a structure, establish authority, satisfy a human gate, or change custody. A real handoff
+must replace each generated evidence state with dated primary receipts and pass the same validator
+against a current two-pass live census.
+
+Private candidate classification occurs only in restricted custody. Public output contains an
+opaque candidate ID and `private_classification_withheld`; it must not expose role, maturity,
+governance class, partner state, repository identity, or economics.
+
+Rollback validation is mandatory before any real pilot. A failed boundary freezes new authority,
+captures exact state, revokes temporary access, rotates applicable credentials, restores assets,
+verifies deletion and custody, reconciles surviving obligations, records the disposition, and
+writes an immutable reviewed receipt.
+
 ## Completion boundary
 
 This playbook becomes formal leaf evidence only after the exact assigned leaf executor obtains a
