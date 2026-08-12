@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-09T00:32:28+00:00`
+Generated: `2026-08-10T21:04:04+00:00`
 
 Status: `blocked`
 
@@ -27,7 +27,7 @@ Status: `blocked`
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-09T00:32:28.544754+00:00 UNHEALTHY sig=beating`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-08-10T21:04:04.983709+00:00 HEALTHY sig=healthy`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -52,66 +52,56 @@ Status: `blocked`
 - Reconciliation index present: `True`.
 - Reconciliation status: `needs-work`.
 - Required open workstreams: `5`.
-- Blocked workstreams: `1`.
-- Done from receipt: `5`.
+- Blocked workstreams: `2`.
+- Done from receipt: `4`.
 - Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 70.5%, PRs 17.9%, issues 10.7%, reviews 0.9%.
-  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 236 active flagged non-deleted messages require classification.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 69.9%, PRs 17.9%, issues 11.2%, reviews 1.0%.
+  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 242 active flagged non-deleted messages require classification.
   - `REPO-BOIL-UP`: `repo-boil-up` / `needs_assignment`; repo surface ledger missing; assignment must refresh existing roots before new work.
   - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 19 value repos define the funded work lane.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main`.
-- HEAD: `38e4fdca05839de229c55801e46cc3b4eea6b018`.
-- origin/main: `38e4fdca05839de229c55801e46cc3b4eea6b018`.
-- Matches origin/main: `True`; ahead `0` behind `0`.
-- Dirty entries: `39`.
+- Branch: `main`; status `## main...origin/main [behind 9]`.
+- HEAD: `c32f846006d517dd01738ea02107f7233ed849bd`.
+- origin/main: `7c269d54e51024c37099ce2f4bcd248fdcfa58bf`.
+- Matches origin/main: `False`; ahead `0` behind `9`.
+- Dirty entries: `19`.
+- Ignored generated receipt dirty entries: `1`.
+  - `docs/dispatch-health.md`
+  - `docs/RECLASSIFY-PROPOSAL.md`
+  - `docs/always-working.md`
+  - `docs/branch-hygiene.md`
   - `docs/capacity-fill.md`
+  - `docs/diurnal/INDEX.md`
+  - `docs/github-actions-usage.json`
+  - `docs/receipts/session-contention-ledger.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
   - `logs/overnight-watch.md`
-  - `docs/diurnal/2026-08-06.md`
-  - `docs/diurnal/2026-08-08.md`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260805T222100Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T022247Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T025632Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T065717Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T073041Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T113740Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T122116Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T162356Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T165721Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T210343Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260806T215728Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T000415Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T015152Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T032817Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T051706Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T070333Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T084228Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T105537Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T133517Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T152313Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T172014Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T210509Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260807T230147Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260808T013735Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260808T035621Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260808T060613Z.json`
-  - `<truncated>`
+  - `organs/contributions/MIRROR.md`
+  - `organs/contributions/opportunities.json`
+  - `organs/financial/cashflow.md`
+  - `docs/diurnal/2026-08-10.md`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260810T133238Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260810T155418Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260810T172244Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260810T190416Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260810T205244Z.json`
+  - `studium/ledger/studium-2026-08-10.md`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main`.
-- HEAD matches origin/main: `True`.
+- Branch: `main`; status `## main...origin/main [behind 9]`.
+- HEAD matches origin/main: `False`.
 
 ## Blockers
 
-- `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `live-root-dirty`: live root has 39 dirty entries.
+- `live-root-not-at-origin-main`: live root branch main head c32f846006d5 differs from origin/main 7c269d54e510.
+- `live-root-dirty`: live root has 19 dirty entries.
 - `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands

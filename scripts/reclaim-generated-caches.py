@@ -56,8 +56,8 @@ def directory_size(path: Path) -> int:
 
 def cache_is_ignored(path: Path, root: Path) -> bool:
     relative = path.relative_to(root)
-    # Global Git excludes are developer-local convenience settings, not a
-    # repository-owned authorization to delete a cache directory.
+    # The reclaim decision must follow the repository's checked-in/local ignore rules, not a
+    # machine-wide global ignore file (which can make an unignored fixture look reclaimable).
     return (
         run(
             ["git", "-c", "core.excludesFile=/dev/null", "check-ignore", "-q", "--", str(relative)],

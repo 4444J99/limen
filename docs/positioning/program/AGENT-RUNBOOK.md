@@ -28,6 +28,11 @@ The seed is not a lease. It is cross-agent input carrying the human model overri
 registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource
 claims, spend, retry, and authority.
 
+PSP strategy execution runs in fresh Codex tasks using the exact registry-derived model, effort,
+dependencies, repository, and scope. Generic cross-agent or broker support is reusable substrate,
+not a program acceptance gate: a non-Codex canary must never block ready expert-positioning work
+unless a newer explicit human requirement adds that exact condition.
+
 ## 2. Claim before mutation
 
 Register the native session under its real identity and submit the bounded packet to the conduct
