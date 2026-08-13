@@ -47,9 +47,16 @@ def test_codex_config_discovery_honors_relocated_home(monkeypatch: pytest.Monkey
 
 
 def test_empty_codex_home_falls_back_to_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An exported-but-empty relocation variable must not resolve to `/config.toml`.
+
+    Asserted through CONFIG_PATHS rather than a module constant: the resolution moved into
+    scripts/agent_config_paths.py so all three relocation variables get the same treatment, and
+    a test pinned to the old `CODEX_HOME` constant would pass while claude and gemini stayed broken.
+    """
     module = _load_module(monkeypatch, "")
 
-    assert module.CODEX_HOME == Path.home() / ".codex"
+    codex_config = next(path for agent, path, _ in module.CONFIG_PATHS if agent == "codex")
+    assert codex_config == Path.home() / ".codex" / "config.toml"
 
 
 def test_codex_status_probe_honors_registered_executable(
@@ -257,8 +264,22 @@ def test_non_codex_http_probe_remains_transport_only(monkeypatch: pytest.MonkeyP
     assert (result["ok"], result["state"]) == (True, "reachable")
 
 
-def test_estate_ownership_scan_honors_relocated_codex_home() -> None:
+def test_estate_ownership_scan_hardcodes_no_agent_config_path() -> None:
+    """The ownership invariant must scan the configs the CLIs actually read.
+
+    Honouring CODEX_HOME alone was not enough: the array still spelled out the claude and gemini
+    paths, so on this host it audited files those CLIs abandoned on 2026-08-05. A placeholder
+    secret in the live config was therefore invisible while a stale copy passed the check. The
+    array is now derived from scripts/agent_config_paths.py, which owns the fact for the estate.
+    """
     shell = VERIFY.read_text(encoding="utf-8")
 
-    assert '"${CODEX_HOME:-$HOME/.codex}/config.toml"' in shell
-    assert '"$HOME/.codex/config.toml"' not in shell
+    assert "agent_config_paths.py" in shell
+    for hardcoded in (
+        '"$HOME/.codex/config.toml"',
+        '"${CODEX_HOME:-$HOME/.codex}/config.toml"',
+        '"$HOME/.claude.json"',
+        '"$HOME/.gemini/settings.json"',
+        '"$HOME/.gemini/config/mcp_config.json"',
+    ):
+        assert hardcoded not in shell, f"{hardcoded} is hardcoded; derive it instead"

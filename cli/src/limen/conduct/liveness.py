@@ -172,10 +172,22 @@ SESSION_RUNTIMES = ("claude", "codex", "gemini", "opencode")
 
 #: Subcommands that make an agent-runtime process something OTHER than an interactive session.
 #: `bg-spare` is a session process pre-warmed ahead of demand; `bg-pty-host` is its terminal;
-#: `agents` is the FleetView viewer. All three are the same kind of thing as the MCP server and the
-#: static file server SESSION_RUNTIMES' docstring already excludes — they are simply harder to see,
-#: because they are the runtime, byte-identical in argv[0] to a real session.
-NON_INTERACTIVE_SUBCOMMANDS = ("bg-spare", "bg-pty-host", "agents")
+#: `agents` is the FleetView viewer; `app-server` is a desktop app's stdio server (ChatGPT.app
+#: ships `codex app-server --listen stdio://`). All four are the same kind of thing as the MCP
+#: server and the static file server SESSION_RUNTIMES' docstring already excludes — they are
+#: simply harder to see, because they are the runtime, byte-identical in argv[0] to a real session.
+#:
+#: `app-server` was added after this list's own documented failure recurred through a DIFFERENT
+#: runtime. Measured 2026-08-12: `codex app-server --listen stdio://` (pid 95485, alive ~14h as a
+#: ChatGPT.app child) was read as an interactive session holding $LIMEN_ROOT, so sync-release
+#: declined its reconcile while the live checkout stood 29 commits behind and the fleet executed
+#: stale code — including merged, green fixes. That is verbatim the "occupied becomes the modal
+#: state and the sync organ never converges again" outcome SESSION_RUNTIMES' docstring refuses;
+#: the previous instance arrived through `claude`'s spares, this one through Codex's app-server.
+#: A desktop app's stdio server is a SERVICE: it is spawned by an app, works nowhere in the tree,
+#: and its cwd merely records where it was launched — the exact "a runtime process's cwd is not its
+#: workspace" case `_is_session` exists to answer.
+NON_INTERACTIVE_SUBCOMMANDS = ("bg-spare", "bg-pty-host", "agents", "app-server")
 
 
 def _invocation_subcommand(pid: int) -> str:

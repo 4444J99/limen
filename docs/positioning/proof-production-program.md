@@ -15,14 +15,30 @@ candidate derived from the W02 `front_door_proof` class and current public profi
 points. It names no private repository; private material remains in sanctioned custody and may
 appear only in a later encrypted diligence addendum.
 
+The denominator is an executable source projection, not a self-reported row count: 15 repositories
+derive from the current W02 policy and metadata, and seven explicit public additions produce 22
+rows. Reconciliation against W02 made four source-safe corrections: the public profile carrier and
+Padavano entered the W02 set; the peer-audited Styx implementation remains a claims-ledger
+addition rather than W02 proof; and the archived root landing remains a legacy-entry-point
+addition rather than W02 proof. The registered static gate binds those rows to the redacted W01
+public-identity projection and W02 policy digest. It reports only counts when an identity is not in
+the public projection, so a malformed matrix cannot turn validation output into a private-name
+oracle.
+
 The rubric weights technical depth and reproducible evidence most heavily, then distinct claim
 role and system leverage, then current maturity, public visibility, and buyer relevance. Repository
 count, stars, recent activity, and aesthetic preference cannot independently qualify a flagship.
 The hard gates override the numeric score: a selection must have one unique story role, a current
-public evidence anchor, no private-only dependency, a bounded claim, and no stale or archived proof
-surface.
+workflow anchor and one candidate-bound public endpoint, no private-only dependency, a structured
+bounded/non-circular claim, and no stale or archived proof surface. Repository maturity comes from
+the W02 taxonomy and current GitHub metadata; a stale proof endpoint is recorded separately from an
+otherwise active repository. Workflow receipts pin the workflow id, file, name, display URL,
+default branch, and observed head. External flagships must remain on the current default-branch
+head. Limen uses a dated successful default-branch snapshot because requiring a same-repository
+matrix commit to equal moving `main` would make every corrective commit invalidate its own proof;
+freshness and intended-workflow identity remain fail-closed.
 
-### Selected preflight set
+### Selected formal set
 
 | Flagship | Distinct story role | Score | Live reproducible anchors | Claim boundary |
 | --- | --- | ---: | --- | --- |
@@ -48,10 +64,13 @@ supporting satellites, circular proof carriers, stale surfaces, specification-on
 weak buyer relevance. Exclusion removes a project from the front-door set; it does not delete its
 evidence or diminish its availability for diligence.
 
-This verdict is a dependency-blocked preflight, not formal PSP completion. #2174 must close first;
-then W03 refreshes against its merged exact classification, obtains the normal receipt, and runs
-`python3 scripts/positioning-program.py --verify-work PSP-P02-W03`. Until then #2175 remains open
-and no live profile generator is changed from this document alone.
+W02 is accepted at main head `35134b95650a26185a58eb3b3a82632e5b80b5b2`; its
+[marked receipt](https://github.com/organvm/limen/issues/2174#issuecomment-5247059070)
+passed the W02 completion predicate. This formally admits the W03 integration,
+but does not itself complete W03: after sanctioned merge, W03 still requires a
+marked receipt and a passing
+`python3 scripts/positioning-program.py --verify-work PSP-P02-W03` before #2175
+may close. No live profile generator is changed from this document alone.
 
 ## P1 — Limen engineering report (flagship proof object)
 

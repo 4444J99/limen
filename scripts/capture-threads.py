@@ -47,10 +47,35 @@ from datetime import datetime, timezone
 
 try:
     from zoneinfo import ZoneInfo
-
-    ET = ZoneInfo("America/New_York")
 except Exception:  # pragma: no cover
-    ET = None
+    ZoneInfo = None
+
+
+def _resolve_tape_zone():
+    """The zone the tape renders alongside canonical UTC.
+
+    Defaults to THIS DEVICE's zone — exactly what Messages.app shows — because a tape that
+    renders a fixed remote zone silently asserts a location fact no channel establishes, and
+    reads as authoritative to whoever opens it next. This hardcoded `America/New_York` for a
+    device on `America/Sao_Paulo`, so every rendered time sat 1h off the operator's own screen;
+    a later review "explained" that gap with a plausible DST story and corrected four documents
+    in the wrong direction. Set LIMEN_TAPE_TZ (an IANA name) to read in a known other party's
+    zone — deliberately, and it is then recorded in the `tz` field of every row.
+    """
+    name = os.environ.get("LIMEN_TAPE_TZ", "").strip()
+    if not name:
+        return None  # None => astimezone() renders in the device's own zone
+    if ZoneInfo is None:
+        print("warn: LIMEN_TAPE_TZ set but zoneinfo is unavailable; using device local", file=sys.stderr)
+        return None
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        print(f"warn: LIMEN_TAPE_TZ={name!r} is not a known zone; using device local", file=sys.stderr)
+        return None
+
+
+TAPE_TZ = _resolve_tape_zone()
 
 APPLE_EPOCH = 978307200  # seconds from 1970-01-01 to 2001-01-01 (UTC)
 
@@ -106,10 +131,19 @@ def _dt_utc(seconds: float | None) -> datetime | None:
 
 
 def stamp(dt: datetime | None) -> dict:
+    """UTC is canonical; `local` carries the rendered zone in the value AND names it in `tz`.
+
+    The key is `local`, never `et`: a field named for one zone but holding another is the
+    mislabeling this function exists to prevent.
+    """
     if dt is None:
-        return {"utc": None, "et": None}
-    et = dt.astimezone(ET) if ET else dt
-    return {"utc": dt.strftime("%Y-%m-%d %H:%M:%S"), "et": et.strftime("%Y-%m-%d %H:%M:%S %Z")}
+        return {"utc": None, "local": None, "tz": None}
+    loc = dt.astimezone(TAPE_TZ) if TAPE_TZ else dt.astimezone()
+    return {
+        "utc": dt.strftime("%Y-%m-%d %H:%M:%S"),
+        "local": loc.strftime("%Y-%m-%d %H:%M:%S %z"),
+        "tz": str(loc.tzinfo),
+    }
 
 
 def decode_attributed_body(blob: bytes | None) -> str | None:
@@ -181,7 +215,64 @@ def normalize_observations(rows: list[dict], *, person: str, channel: str) -> li
     return [_observation(row, person=person, channel=channel) for row in rows]
 
 
-def capture_imessage(chatdb: str, handles: list[str]) -> list[dict]:
+AUDIO_SUFFIXES = (".caf", ".m4a", ".amr", ".wav", ".mp3", ".aac")
+
+
+def _is_audio_attachment(mime: str | None, filename: str | None, transfer: str | None) -> bool:
+    """True for a voice memo / audio blob. Checked three ways because iMessage audio rows carry a NULL mime."""
+    if mime and mime.startswith("audio/"):
+        return True
+    for name in (filename, transfer):
+        if name and str(name).lower().endswith(AUDIO_SUFFIXES):
+            return True
+    return bool(transfer and str(transfer).startswith("Audio Message"))
+
+
+def _imessage_attachments(c, rowid: int, media_dst: str | None, copy_audio: bool) -> list[dict]:
+    """Attachment metadata for one message, preserving audio blobs into `media_dst`.
+
+    WHY THIS EXISTS: media preservation was implemented for WhatsApp only, so an iMessage-only thread
+    produced a tape that reported a confident row count while silently dropping every voice memo — and
+    created no media/ directory at all, so the omission was invisible. On one 12,336-row thread that was
+    ~730 audio messages, including the two that immediately preceded the decisive exchange. A tape that
+    looks complete exactly where it is lossy is the failure a primary-source tape exists to prevent.
+    """
+    out: list[dict] = []
+    for mime, filename, transfer, nbytes in c.execute(
+        "SELECT a.mime_type, a.filename, a.transfer_name, a.total_bytes FROM attachment a "
+        "JOIN message_attachment_join j ON j.attachment_id = a.ROWID WHERE j.message_id = ?",
+        (rowid,),
+    ):
+        rec: dict = {
+            "mime_type": mime,
+            "transfer_name": transfer,
+            "bytes": nbytes,
+            "is_audio": _is_audio_attachment(mime, filename, transfer),
+            "preserved": None,
+            "sha256": None,
+        }
+        if rec["is_audio"] and copy_audio and media_dst and filename:
+            src = os.path.expanduser(str(filename))  # chat.db stores attachment paths as ~/Library/…
+            try:
+                if os.path.exists(src):
+                    os.makedirs(media_dst, exist_ok=True)
+                    base = f"{rowid}-{os.path.basename(src)}".replace(" ", "_")
+                    dst = os.path.join(media_dst, base)
+                    if not os.path.exists(dst):
+                        shutil.copy2(src, dst)
+                    rec["preserved"] = os.path.join("media", base)
+                    rec["sha256"] = _file_sha256(dst)
+                else:
+                    rec["preserved"] = "source-missing"
+            except OSError as e:
+                rec["preserved"] = f"copy-failed: {type(e).__name__}"
+        out.append(rec)
+    return out
+
+
+def capture_imessage(
+    chatdb: str, handles: list[str], media_dst: str | None = None, copy_audio: bool = True
+) -> list[dict]:
     c = open_ro(chatdb)
     cols = {r[1] for r in c.execute("PRAGMA table_info(message)")}
     amt = "m.associated_message_type" if "associated_message_type" in cols else "NULL"
@@ -229,6 +320,11 @@ def capture_imessage(chatdb: str, handles: list[str]) -> list[dict]:
             kind = "reaction-removed"
         elif not body and att:
             kind = "attachment"
+        # NOTE: deliberately does NOT alter `kind`. _observation() derives source_message_id from kind,
+        # so re-labelling an audio row would change its stable ID and the next capture would append it
+        # again as "new" — silently duplicating the append-only tape. The audio fact travels in
+        # `attachments`/`attachment_hashes` instead, which are additive and identity-neutral.
+        atts = _imessage_attachments(c, rid, media_dst, copy_audio) if att else []
         out.append(
             {
                 "seq": rid,
@@ -237,7 +333,8 @@ def capture_imessage(chatdb: str, handles: list[str]) -> list[dict]:
                 "kind": kind,
                 "text": body,
                 "handle": hid,
-                "attachment_hashes": [],
+                "attachments": atts,
+                "attachment_hashes": [a["sha256"] for a in atts if a.get("sha256")],
             }
         )
     c.close()
@@ -373,10 +470,20 @@ def write_checkpoint(out_root: str, slug: str, channel: str, rows: list[dict], a
 
 def write_md(path: str, rows: list[dict], title: str, source: str, name: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    now = datetime.now(ET) if ET else datetime.now()
-    lines = [f"# {title}", f"Captured {now.strftime('%Y-%m-%d %H:%M %Z')} · source `{source}` · {len(rows)} rows", ""]
+    now = datetime.now(TAPE_TZ) if TAPE_TZ else datetime.now().astimezone()
+    zone = str(now.tzinfo)
+    lines = [
+        f"# {title}",
+        f"Captured {now.strftime('%Y-%m-%d %H:%M %z')} · source `{source}` · {len(rows)} rows",
+        "",
+        # The frame is stated on the artifact, not left for a reader to infer. A bare wall-clock
+        # time in a tape gets compared against Messages.app and other artifacts months later.
+        f"**Clock frame:** every `[timestamp]` below is **{zone}** (offset shown). UTC is in the "
+        f"`.jsonl` beside this file, under `ts.utc`; `ts.tz` names this zone on every row.",
+        "",
+    ]
     for r in rows:
-        et = r["ts"]["et"] or "?"
+        et = r["ts"]["local"] or "?"
         if r["direction"] == "sent":
             who = "→ (sent)"
         else:
@@ -401,11 +508,23 @@ def run_person(slug: str, cfg: dict, args) -> dict:
     tape = os.path.join(args.out_root, slug, "tape")
     summary = {"slug": slug, "imessage": 0, "whatsapp": 0, "audio_preserved": 0}
     if cfg.get("imessage"):
-        rows = normalize_observations(capture_imessage(args.chatdb, cfg["imessage"]), person=slug, channel="imessage")
+        rows = normalize_observations(
+            capture_imessage(
+                args.chatdb,
+                cfg["imessage"],
+                media_dst=os.path.join(tape, "media"),
+                copy_audio=not args.no_audio,
+            ),
+            person=slug,
+            channel="imessage",
+        )
         appended = append_jsonl(os.path.join(tape, "imessage.jsonl"), rows, person=slug, channel="imessage")
         write_checkpoint(args.out_root, slug, "imessage", rows, appended)
         write_md(os.path.join(tape, "imessage.md"), rows, f"{slug} — iMessage/SMS tape", args.chatdb, slug)
         summary["imessage"] = len(rows)
+        summary["audio_preserved"] += sum(
+            1 for r in rows for a in (r.get("attachments") or []) if str(a.get("preserved") or "").startswith("media/")
+        )
     if cfg.get("whatsapp_jid"):
         rows = normalize_observations(
             capture_whatsapp(

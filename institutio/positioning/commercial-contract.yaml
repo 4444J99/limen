@@ -2,27 +2,57 @@ schema_version: limen.positioning_commercial_contract.v1
 contract:
   id: PSP-C03-COMMERCIAL-CONTRACT
   title: Production-systems identity and commercial contract
-  status: preflight_dependency_blocked
-  observed_at: "2026-08-10"
+  status: p03_reader_gate_p04_staged
+  observed_at: "2026-08-12"
   work_chunk: PSP-C03
   canonical_source: institutio/positioning/commercial-contract.yaml
   public_render: docs/positioning/commercial-contract.md
   formal_dependency:
-    chunk_id: PSP-C02
-    phase_id: PSP-P02
-    state: open
+    chunk_id: PSP-C03
+    phase_id: PSP-P03
+    work_id: PSP-P03-W07
+    state: reader_gate_open
     consequence: >-
-      Strategy copy may be drafted, but evidence-sensitive claims remain provisional. No PSP-P03
-      or PSP-P04 leaf may close, no leaf receipt verifier may run, and this contract may not merge
-      to main until PSP-C02 closes with valid receipts and every evidence anchor is refreshed.
+      PSP-P02 and PSP-P03-W01 through PSP-P03-W06 are accepted. PSP-P03-W07 still requires five
+      genuine independent target-like readers, so PSP-P03 cannot close and PSP-P04 remains formally
+      dependency-blocked. Reversible P04 implementation may continue, but it is not a leaf receipt,
+      phase receipt, merge authorization, or public offer.
+  accepted_state:
+    p02:
+      phase_id: PSP-P02
+      issue: https://github.com/organvm/limen/issues/2172
+      receipt: https://github.com/organvm/limen/issues/2172#issuecomment-5270095170
+      receipt_sha256: f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434
+      accepted_head: 8faa5fb9899231ebf5f87e78bb171544c11b79d7
+      claims_ledger_blob: 3e49114563075dcd6926e3b7f8fd24bf8b9c3fee
+      flagship_blob: ce59d44794f44e0511436cbabbcd4fba1a938891
+    p03_accepted_work:
+      - {id: PSP-P03-W01, head: a1558654fc4bc904da2017a9004185a45914ae9e, receipt: "https://github.com/organvm/limen/issues/2182#issuecomment-5270558298"}
+      - {id: PSP-P03-W02, head: a9617ef59341c0194026293b3b1b677bb6ea4a8b, receipt: "https://github.com/organvm/limen/issues/2183#issuecomment-5270872274"}
+      - {id: PSP-P03-W03, head: 450128ce1199e665a67649f522787634ac48117e, receipt: "https://github.com/organvm/limen/issues/2184#issuecomment-5270998058"}
+      - {id: PSP-P03-W04, head: a89ac24b7891f9634f262835ea2e1777857bc945, receipt: "https://github.com/organvm/limen/issues/2185#issuecomment-5271170207"}
+      - {id: PSP-P03-W05, head: a89ac24b7891f9634f262835ea2e1777857bc945, receipt: "https://github.com/organvm/limen/issues/2186#issuecomment-5271169957"}
+      - {id: PSP-P03-W06, head: c94bc3748fcf2d1dc802a4bae972df23d9a9fbec, receipt: "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820"}
+    active_reader_gate:
+      work_id: PSP-P03-W07
+      issue: https://github.com/organvm/limen/issues/2188
+      stimulus_head: c94bc3748fcf2d1dc802a4bae972df23d9a9fbec
+      required_independent_readers: 5
+      current_valid_readers: 0
+      synthetic_or_model_readers_allowed: false
+    p04:
+      phase_id: PSP-P04
+      state: staged_dependency_blocked
+      dependency: PSP-P03
   allowed_preflight_effects:
-    - reversible drafting in the isolated PSP-C03 branch
+    - reversible P04 implementation in the isolated PSP-C03 branch
     - focused static and live read-only validation
-    - a stacked draft pull request against the PSP-P02-W03 flagship branch
+    - preserving accepted P03 leaves and their exact receipt bindings
+    - maintaining the existing draft pull request without history rewriting
   prohibited_preflight_effects:
     - public-surface publication
-    - issue or phase closure
-    - leaf or phase receipt submission
+    - issue or phase closure without its non-circular predicate and marked receipt
+    - P04 leaf or phase receipt submission before PSP-P03 closes
     - merge to main
     - outbound sending
     - spend or account mutation
@@ -51,7 +81,7 @@ evidence_policy:
       role: claim status, permitted wording, and placement
     - id: flagship-proof-set
       path: docs/positioning/flagship-proof-set.yaml
-      role: provisional flagship selection and bounded claim wording
+      role: accepted flagship selection and bounded claim wording
     - id: authorship-policy
       url: https://github.com/organvm/limen/blob/main/docs/positioning/authorship-disclosure-policy.md
       role: machine-assistance disclosure
@@ -88,23 +118,23 @@ claim_register:
     evidence_refs: [authorship-policy, claims-ledger]
     limits: Does not imply that every line was manually authored or that all work is autonomous.
   - id: C02-PROOF-LIMEN
-    statement: Limen demonstrates governed multi-agent delivery with inspectable operating, failure, and verification evidence.
+    statement: Limen demonstrates governed multi-agent delivery with public operating, failure, and verification receipts.
     kind: evidence_sensitive
-    status: provisional_c02
+    status: verified
     public_tiers: [L1, L2, L3]
     evidence_refs: [flagship-proof-set]
     limits: No customer, adoption, revenue, zero-maintenance, or client-production claim.
   - id: C02-PROOF-PUBLIC-RECORDS
-    statement: The UCC Public-Records Intelligence Platform demonstrates a bounded public-record decision pipeline.
+    statement: Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture.
     kind: evidence_sensitive
-    status: provisional_c02
+    status: repository_asserted_with_public_anchor
     public_tiers: [L2, L3]
     evidence_refs: [flagship-proof-set]
     limits: Use only the collector and architecture boundary ratified by PSP-C02; never imply nationwide deployment or adoption.
   - id: C02-PROOF-AI-CHAT-EXPORTER
-    statement: AI Chat Exporter demonstrates privacy-first, client-side data portability.
+    statement: The public AI Chat Exporter surface presents five export formats without a server dependency.
     kind: evidence_sensitive
-    status: provisional_c02
+    status: verified
     public_tiers: [L2, L3]
     evidence_refs: [flagship-proof-set]
     limits: No usage, customer, revenue, or unsupported compatibility claim.
@@ -137,7 +167,7 @@ identity:
     - id: system
       prominence: primary
       label: Limen
-      explanation: The inspectable system-level proof; exact evidence remains provisional until PSP-C02 closes.
+      explanation: The inspectable system-level proof, bounded to the accepted claims-ledger wording and owner-environment evidence.
       claim_refs: [C02-PROOF-LIMEN]
     - id: products
       prominence: supporting
@@ -151,7 +181,7 @@ identity:
       claim_refs: [C03-HEADLINE-001]
   prominence_rules:
     L1: Identity, expensive problem, Limen proof, and one bounded next step.
-    L2: Method, three provisional proof roles, offer boundaries, and authorship disclosure.
+    L2: Method, three accepted proof roles, offer boundaries, and authorship disclosure.
     L3: Full evidence register, limitations, failure modes, economics gates, and change history.
   forbidden_claims:
     - best-in-world or category-dominance language
@@ -253,7 +283,7 @@ narrative_ladder:
     beats:
       - Complex AI and software initiatives rarely fail for lack of another demo; they fail because nobody can say who may decide, what verified done means, how cost is bounded, or who owns the system afterward.
       - The work is to design those missing controls around one real initiative, not to replace the team or rewrite the organization.
-      - Limen is the method proof. The provisional UCC platform and AI Chat Exporter show the same discipline applied to a data pipeline and a user-facing privacy tool.
+      - Limen is the method proof. The accepted UCC platform and AI Chat Exporter roles show the same discipline applied to a data pipeline and a user-facing privacy tool, within the exact claims-ledger wording.
       - Clients enter through a read-only audit, then a one-team install when the evidence supports it. Hiring conversations map a named role to the same proof without claiming unsupported executive standing.
       - Every path ends in evidence, named owners, and handoff. If the mandate cannot be bounded, it is declined or escalated for human review.
     next_actions:
