@@ -2,6 +2,8 @@
 
 Status: `PREPARED/PREFLIGHT`
 
+`counts_as_closure: false` — this package is a reversible preflight, never a P08 or leaf receipt.
+
 Chunk predecessor: `PSP-C06`. Formal P08 phase dependencies: `PSP-P04` and `PSP-P07`; both remain
 open, and no capture surface is selected.
 
@@ -9,9 +11,9 @@ Scope: `PSP-P08-W01` through `PSP-P08-W07` contract preparation only
 
 The current upstream C06 preflight receipts are portfolio draft
 [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at
-`6cb7f291ef758d26d136620398c6e9c09f74d0ea` and Limen relay
+`6cb1abf0bf08e71341476886385eba5499c51bb7` and Limen relay
 [PR #2317](https://github.com/organvm/limen/pull/2317) at
-`b3c8dcb8ee461fad7be971efc0fc60ca27726668`. The portfolio head durably tracks the
+`4eb50463b7f4136b47a103c9792c1ded5caf7873`. The portfolio head durably tracks the
 manifest and exactly three source-grounded mockup PNGs; all three remain explicitly
 unselected. Both receipts are `PREPARED/PREFLIGHT`, not C06 closure: operator selection
 is still required, no visual implementation or deployment is authorized, 11 legacy
@@ -20,7 +22,8 @@ is still required, no visual implementation or deployment is authorized, 11 lega
 
 P02 is closed. C03 W01-W06 are accepted at
 `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; the current C03 preflight head
-`c7c932205faa405e291f8030235a73cedeaa219e` only adds the fail-closed W07 intake package. W06 is
+`b6af8086c9050634313f519c29a6dfcb922c3721` is an offer preflight; W07 remains genuinely
+five-reader blocked. W06 is
 bound to [its marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820)
 and SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
 W07/#2188 remains open for five genuine independent target-like reader records; synthetic and model

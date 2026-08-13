@@ -30,17 +30,17 @@ compression_level: medium
 |---|---|
 | C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
 | P02 | closed with its accepted phase receipt |
-| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; current preflight `c7c932205faa405e291f8030235a73cedeaa219e` adds only the fail-closed W07 intake package |
+| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; current offer preflight is `b6af8086c9050634313f519c29a6dfcb922c3721`; W07 remains genuinely five-reader blocked |
 | W06 receipt | [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
 | W07 / P04 | W07 #2188 remains open for five genuine independent target-like readers; synthetic/model responses are forbidden; P04 is open and blocked on P03 |
 | Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
-| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `6cb7f291ef758d26d136620398c6e9c09f74d0ea`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `b3c8dcb8ee461fad7be971efc0fc60ca27726668` |
+| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `6cb1abf0bf08e71341476886385eba5499c51bb7`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `4eb50463b7f4136b47a103c9792c1ded5caf7873` |
 | C06 durable visual artifacts | the portfolio head tracks the manifest and exactly three source-grounded PNG mockups; all remain explicitly unselected |
 | C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
 | Initial private-inbound implementation commit | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` |
 | Dependency-binding baseline | `bbd0f0135858f7cf5e5de68b45c7c5c94ee2d9a7`; superseded only by this durable C06-head refresh |
 | Final draft-PR head | recorded after push in the #2318 body and exact-head receipt comment; this tracked file does not self-name its containing commit |
-| Acceptance condition | preflight prepared; every W01-W07 and P08 completion predicate remains unmet and open |
+| Acceptance condition | `counts_as_closure: false`; preflight prepared; every W01-W07 and P08 completion predicate remains unmet and open |
 | External effects | branch push and draft PR only; no form, alias, CTA, mail, publish, deploy, DNS, spend, signature, merge, account, board, or send effect |
 | Private evidence | none consumed or emitted; tracked fixtures use reserved `.invalid` data and synthetic owner partitions only |
 
@@ -93,7 +93,7 @@ All passing commands below were run bare on the implementation exact tree:
 | `python3 scripts/positioning-program.py --verify-remote` | pass; 127 observed, zero drift, missing, or orphan objects |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode validate --json` | pass; contract and synthetic fixtures valid |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode traverse --json` | pass; five private-shaped records, two owner partitions, 5/5 labeled category-and-route results, zero external sends |
-| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 26 tests |
+| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 27 tests |
 | `scripts/verify-scoped.sh` | pass; seven implicated cheap gates |
 | `python3 scripts/positioning-private-inbound-preflight.py --mode live-gate --json` | expected fail-closed exit `2`: W07 five-reader predicate receipt absent; reported order is W07, P04, P07, selected C06 surface, separate P08 leaf authority |
 

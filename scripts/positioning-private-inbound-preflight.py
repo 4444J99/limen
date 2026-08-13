@@ -57,6 +57,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         "chunk_id",
         "phase_id",
         "status",
+        "counts_as_closure",
         "leaf_assignments",
         "leaf_coverage",
         "formal_dependency_gate",
@@ -80,6 +81,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("contract must remain scoped to PSP-C07/PSP-P08")
     if contract.get("status") != "PREPARED/PREFLIGHT":
         errors.append("status must remain PREPARED/PREFLIGHT")
+    if contract.get("counts_as_closure") is not False:
+        errors.append("preflight must never count as formal closure")
     if contract.get("schema_version") != "limen.psp_c07_private_inbound_preflight.v2":
         errors.append("contract schema must remain at private-inbound preflight v2")
     expected_assignments = {
@@ -149,7 +152,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("P03 must remain open while W07 lacks reader evidence")
     if p03.get("accepted_w01_w06_head") != "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec":
         errors.append("P03 accepted W01-W06 head must remain pinned")
-    if p03.get("current_preflight_head") != "c7c932205faa405e291f8030235a73cedeaa219e":
+    if p03.get("current_preflight_head") != "b6af8086c9050634313f519c29a6dfcb922c3721":
         errors.append("P03 current preflight head must include the W07 intake package")
     if p03.get("closed_work_ids") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
         errors.append("P03 must name exactly W01-W06 as closed")
@@ -178,8 +181,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     if upstream.get("status") != "PREPARED":
         errors.append("C06 upstream evidence must remain PREPARED, not complete")
     expected_c06_heads = {
-        "portfolio_draft": "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
-        "limen_relay": "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+        "portfolio_draft": "6cb1abf0bf08e71341476886385eba5499c51bb7",
+        "limen_relay": "4eb50463b7f4136b47a103c9792c1ded5caf7873",
     }
     for owner, expected_head in expected_c06_heads.items():
         if upstream.get(owner, {}).get("exact_head") != expected_head:

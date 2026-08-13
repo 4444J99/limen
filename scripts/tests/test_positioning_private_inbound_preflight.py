@@ -24,6 +24,15 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
     def test_tracked_contract_and_fixtures_are_valid(self) -> None:
         self.assertEqual([], MODULE.validate_contract(self.contract))
         self.assertEqual([], MODULE.validate_fixtures(self.fixtures, self.contract))
+        self.assertFalse(self.contract["counts_as_closure"])
+
+    def test_preflight_cannot_be_recast_as_a_closure(self) -> None:
+        changed = deepcopy(self.contract)
+        changed["counts_as_closure"] = True
+        self.assertIn(
+            "preflight must never count as formal closure",
+            MODULE.validate_contract(changed),
+        )
 
     def test_live_capture_fails_closed_on_w07_reader_evidence_first(self) -> None:
         ready, reason = MODULE.live_gate(self.contract)
@@ -49,11 +58,11 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         upstream = self.contract["formal_dependency_gate"]["upstream_preflight"]
         self.assertEqual("PREPARED", upstream["status"])
         self.assertEqual(
-            "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
+            "6cb1abf0bf08e71341476886385eba5499c51bb7",
             upstream["portfolio_draft"]["exact_head"],
         )
         self.assertEqual(
-            "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+            "4eb50463b7f4136b47a103c9792c1ded5caf7873",
             upstream["limen_relay"]["exact_head"],
         )
         self.assertEqual(3, upstream["visual_selection"]["grounded_direction_count"])
@@ -79,7 +88,7 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
             p03["accepted_w01_w06_head"],
         )
         self.assertEqual(
-            "c7c932205faa405e291f8030235a73cedeaa219e",
+            "b6af8086c9050634313f519c29a6dfcb922c3721",
             p03["current_preflight_head"],
         )
         self.assertEqual([f"PSP-P03-W0{index}" for index in range(1, 7)], p03["closed_work_ids"])

@@ -3,6 +3,7 @@
   "chunk_id": "PSP-C07",
   "phase_id": "PSP-P08",
   "status": "PREPARED/PREFLIGHT",
+  "counts_as_closure": false,
   "leaf_assignments": {
     "PSP-P08-W01": {
       "model": "gpt-5.6-terra",
@@ -104,7 +105,7 @@
       "PSP-P03": {
         "state": "open",
         "accepted_w01_w06_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
-        "current_preflight_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+        "current_preflight_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
         "closed_work_ids": [
           "PSP-P03-W01",
           "PSP-P03-W02",
@@ -136,11 +137,11 @@
       "status": "PREPARED",
       "portfolio_draft": {
         "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/221",
-        "exact_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea"
+        "exact_head": "6cb1abf0bf08e71341476886385eba5499c51bb7"
       },
       "limen_relay": {
         "url": "https://github.com/organvm/limen/pull/2317",
-        "exact_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668"
+        "exact_head": "4eb50463b7f4136b47a103c9792c1ded5caf7873"
       },
       "visual_selection": {
         "grounded_direction_count": 3,
