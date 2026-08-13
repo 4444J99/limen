@@ -16,7 +16,9 @@ generalizes to other constellation lanes if the operator widens scope later.
 ## Resolved design decisions
 
 1. **Machine-read roadmap data is JSON, not YAML** — the venture repos are zero-dependency
-   Node 22 and gain no YAML parser. Binds: `roadmap/*.json` in each venture repo.
+   Node 22 and gain no YAML parser. Binds: `scripts/dustin-alpha-omega-done.sh` (predicate,
+   ships with this task's register PR), which asserts each repo's `roadmap/*.json` validates
+   via that repo's own `check-roadmap.js`.
 2. **Atom vocabulary is limen's eight kinds** (projects-to-start, decisions, tasks, vacuums,
    questions-unresolved, client-offerings, schema-proposals, functionality-to-repeat) — binds:
    `institutio/governance/atom-homing.yaml`; atoms are minted directly into each repo's
@@ -55,8 +57,9 @@ generalizes to other constellation lanes if the operator widens scope later.
    manifests. Binds: `docs/fable-allotment.md`, `scripts/fable-allotment.py`.
 9. **The pre-existing `constellation-registry` red is pinned as an exact string**
    (Rule #6, 12 public-only slugs) — any validator output differing from the pinned baseline
-   is a fresh regression owned by this work. Binds: `logs/dustin-preexisting-red.txt`
-   (session worktree), `organs/consulting/constellation/validate-constellation.py`.
+   is a fresh regression owned by this work. Binds: `scripts/dustin-alpha-omega-done.sh`
+   (predicate, ships with this task's register PR), which embeds the pinned violation line
+   and fails on any non-identical validator output.
 
 ## Steps
 
