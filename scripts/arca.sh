@@ -404,17 +404,55 @@ cmd_restore() {
   rm -rf "$tmp_vault"
 }
 
-cmd_status() {
+cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hold what is on disk NOW?
+  # This is the coverage half of the ARCA predicate, and it is deliberately distinct from
+  # arca-freshness.py's *recency* half ("did the vault move lately?"). Recency alone cannot see
+  # a store that changed after the last seal, nor one the cap SKIPPED, because the vault moved
+  # for some OTHER store and went green. Both were live on 2026-08-12: three stores Δ and
+  # _collaboration-operations-private (4.9GB vs ARCA_MAX_MB=512) NEVER sealed, while the beat's
+  # arca-freshness sensor reported OK.
+  #
+  # --strict makes it a PREDICATE (exit 1 on any Δ/✗) so something other than a human reading a
+  # 21MB log can consume it. Without --strict it stays the exit-0 display it has always been.
+  local as_json=0 strict=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --json) as_json=1 ;;
+      --strict) strict=1 ;;
+      *) die "unknown status flag '$1' (--json|--strict)" ;;
+    esac
+    shift
+  done
   ensure_vault
-  local name h old when
+  local name h old when state stale=0 first=1
+  if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","stores":['; fi
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     name=$(basename "$s"); h=$(store_hash "$s"); old=$(manifest_get "$name" hash); when=$(manifest_get "$name" updated)
-    if [ -z "$old" ]; then echo "  ✗ $name — NEVER sealed"
-    elif [ "$h" = "$old" ]; then echo "  ✓ $name — current (sealed $when)"
-    else echo "  Δ $name — CHANGED since seal $when (next backup will re-seal)"
+    if [ -z "$old" ]; then state="never_sealed"; stale=1
+    elif [ "$h" = "$old" ]; then state="current"
+    else state="changed"; stale=1
+    fi
+    if [ "$as_json" = "1" ]; then
+      [ "$first" = "1" ] || printf ','
+      first=0
+      # store NAMES only — never a path inside a store, never contents (same PII rule as the sensor)
+      printf '{"name":"%s","state":"%s","sealed_at":"%s"}' "$name" "$state" "$when"
+    else
+      case "$state" in
+        never_sealed) echo "  ✗ $name — NEVER sealed" ;;
+        current)      echo "  ✓ $name — current (sealed $when)" ;;
+        changed)      echo "  Δ $name — CHANGED since seal $when (next backup will re-seal)" ;;
+      esac
     fi
   done
+  if [ "$as_json" = "1" ]; then
+    local ok_json=true
+    if [ "$stale" = "1" ]; then ok_json=false; fi
+    printf '],"ok":%s}\n' "$ok_json"
+  fi
+  if [ "$strict" = "1" ] && [ "$stale" = "1" ]; then return 1; fi
+  return 0
 }
 
 cmd_seal() {
@@ -453,7 +491,7 @@ case "$CMD" in
   backup)  cmd_backup ;;
   rotate)  shift; cmd_rotate "$@" ;;
   restore) shift; cmd_restore "$@" ;;
-  status)  cmd_status ;;
+  status)  shift; cmd_status "$@" ;;
   seal)    shift; cmd_seal "$@" ;;
   unseal)  shift; cmd_unseal "$@" ;;
   *) die "unknown verb '$CMD' (backup|rotate|restore|status|seal|unseal)" ;;
