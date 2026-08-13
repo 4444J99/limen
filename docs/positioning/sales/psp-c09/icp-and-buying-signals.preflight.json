@@ -69,6 +69,13 @@
     "security_or_approval_bypass",
     "production_write_access_required"
   ],
+  "humanReviewReasons": [
+    "account_or_custody",
+    "legal",
+    "pricing",
+    "public_claim",
+    "regulated_data"
+  ],
   "liveEvidenceSignals": [
     "named decision and date",
     "named sponsor and internal owner roles",
@@ -92,17 +99,20 @@
       "decision_owner",
       "bounded_initiative",
       "read_only_evidence",
-      "decision_window"
+      "decision_window",
+      "handoff_owner",
+      "willing_to_stop_or_narrow"
     ],
     "qualifiedAuditMinimum": 8,
     "boundedFollowUpMinimum": 5,
-    "rule": "Hard disqualifiers decline. Missing required signals or high uncertainty route to one bounded follow-up. Otherwise score >=8 qualifies; score 5-7 gets one bounded follow-up; lower scores decline."
+    "rule": "Hard disqualifiers decline. Legal, pricing, regulated-data, account/custody, or public-claim exceptions route to human review. Missing required signals or high uncertainty route to one bounded follow-up. Otherwise score >=8 qualifies; score 5-7 gets one bounded follow-up; lower scores decline."
   },
   "syntheticAccounts": [
     {
       "id": "synthetic_account_01",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_decision_record_01", "synthetic_workflow_map_01"],
       "uncertainty": "low",
       "expectedScore": 10,
@@ -112,15 +122,17 @@
       "id": "synthetic_account_02",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": false, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_sponsor_attestation_02", "synthetic_ci_summary_02"],
       "uncertainty": "medium",
       "expectedScore": 9,
-      "expectedDisposition": "qualified_audit"
+      "expectedDisposition": "one_bounded_follow_up"
     },
     {
       "id": "synthetic_account_03",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": false, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_decision_record_03", "synthetic_evidence_gap_03"],
       "uncertainty": "medium",
       "expectedScore": 9,
@@ -130,6 +142,7 @@
       "id": "synthetic_account_04",
       "facts": { "decision_owner": false, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": ["no_sponsor"],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_intake_note_04", "synthetic_authority_gap_04"],
       "uncertainty": "low",
       "expectedScore": 8,
@@ -139,6 +152,7 @@
       "id": "synthetic_account_05",
       "facts": { "decision_owner": true, "bounded_initiative": false, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": false },
       "hardDisqualifiers": ["unbounded_scope"],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_scope_request_05", "synthetic_discovery_note_05"],
       "uncertainty": "low",
       "expectedScore": 7,
@@ -148,6 +162,7 @@
       "id": "synthetic_account_06",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": false, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_workflow_map_06", "synthetic_missing_date_06"],
       "uncertainty": "medium",
       "expectedScore": 9,
@@ -157,6 +172,7 @@
       "id": "synthetic_account_07",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": false, "read_only_evidence": true, "decision_window": false, "handoff_owner": false, "willing_to_stop_or_narrow": false },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_early_signal_07", "synthetic_gap_register_07"],
       "uncertainty": "medium",
       "expectedScore": 5,
@@ -166,6 +182,7 @@
       "id": "synthetic_account_08",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": ["security_or_approval_bypass"],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_bypass_request_08", "synthetic_security_note_08"],
       "uncertainty": "low",
       "expectedScore": 10,
@@ -175,29 +192,84 @@
       "id": "synthetic_account_09",
       "facts": { "decision_owner": true, "bounded_initiative": true, "material_failure_cost": true, "read_only_evidence": true, "decision_window": true, "handoff_owner": false, "willing_to_stop_or_narrow": false },
       "hardDisqualifiers": [],
+      "humanReviewReasons": ["public_claim"],
       "evidenceRefs": ["synthetic_decision_record_09", "synthetic_uncertainty_register_09"],
       "uncertainty": "high",
       "expectedScore": 8,
-      "expectedDisposition": "one_bounded_follow_up"
+      "expectedDisposition": "human_review"
     },
     {
       "id": "synthetic_account_10",
       "facts": { "decision_owner": true, "bounded_initiative": false, "material_failure_cost": false, "read_only_evidence": false, "decision_window": false, "handoff_owner": true, "willing_to_stop_or_narrow": true },
       "hardDisqualifiers": [],
+      "humanReviewReasons": [],
       "evidenceRefs": ["synthetic_weak_signal_10", "synthetic_unknowns_10"],
       "uncertainty": "medium",
       "expectedScore": 4,
       "expectedDisposition": "decline"
     }
   ],
+  "assignmentPolicy": {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalogPredicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailableAction": "fail_blocked_no_silent_substitution"
+  },
   "assignments": {
-    "PSP-C09": { "model": "gpt-5.6-sol", "effort": "xhigh" },
-    "PSP-P10-W01": { "model": "gpt-5.6-terra", "effort": "high" },
-    "PSP-P10-W02": { "model": "gpt-5.6-terra", "effort": "high" },
-    "PSP-P10-W03": { "model": "gpt-5.6-sol", "effort": "xhigh" },
-    "PSP-P10-W04": { "model": "gpt-5.6-terra", "effort": "high" },
-    "PSP-P10-W05": { "model": "gpt-5.6-luna", "effort": "medium" },
-    "PSP-P10-W06": { "model": "gpt-5.6-terra", "effort": "high" },
-    "PSP-P10-W07": { "model": "gpt-5.6-luna", "effort": "medium" }
+    "PSP-C09": {
+      "selection": "runtime_catalog",
+      "role": "chunk_conductor",
+      "effort": "xhigh",
+      "capabilities": ["automation", "career_strategy", "conversion_design", "data_modeling", "form_design", "frontend", "interview_preparation", "market_research", "privacy", "sales_analysis", "sales_conversation", "sales_copy", "sales_operations", "sales_strategy", "technical_discovery"]
+    },
+    "PSP-P10-W01": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["sales_strategy", "market_research"]
+    },
+    "PSP-P10-W02": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["sales_conversation", "technical_discovery"]
+    },
+    "PSP-P10-W03": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "xhigh",
+      "capabilities": ["technical_discovery", "privacy", "form_design"]
+    },
+    "PSP-P10-W04": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["sales_copy", "frontend", "conversion_design"]
+    },
+    "PSP-P10-W05": {
+      "selection": "runtime_catalog",
+      "reasoning": "routine",
+      "effect": "write",
+      "effort": "medium",
+      "capabilities": ["sales_operations", "automation"]
+    },
+    "PSP-P10-W06": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["career_strategy", "interview_preparation"]
+    },
+    "PSP-P10-W07": {
+      "selection": "runtime_catalog",
+      "reasoning": "routine",
+      "effect": "write",
+      "effort": "medium",
+      "capabilities": ["sales_analysis", "data_modeling"]
+    }
   }
 }

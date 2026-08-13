@@ -4,13 +4,26 @@
 from __future__ import annotations
 
 import argparse
+from functools import lru_cache
 import json
 from pathlib import Path
+import re
+import runpy
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = ROOT / "docs" / "positioning" / "sales" / "psp-c09" / "icp-and-buying-signals.preflight.json"
+PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
+
+SCHEMA_VERSION = "limen.psp-c09.icp-preflight.v1"
+WORK_ID = "PSP-P10-W01"
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalogPredicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailableAction": "fail_blocked_no_silent_substitution",
+}
 
 EXPECTED_SOURCE_LOCK = {
     "commercialContract": "organvm/limen#2312@b6af8086c9050634313f519c29a6dfcb922c3721",
@@ -40,29 +53,124 @@ EXPECTED_UPSTREAM_STATE = {
     "c08State": "prepared_preflight",
 }
 
-EXPECTED_ASSIGNMENTS = {
-    "PSP-C09": {"model": "gpt-5.6-sol", "effort": "xhigh"},
-    "PSP-P10-W01": {"model": "gpt-5.6-terra", "effort": "high"},
-    "PSP-P10-W02": {"model": "gpt-5.6-terra", "effort": "high"},
-    "PSP-P10-W03": {"model": "gpt-5.6-sol", "effort": "xhigh"},
-    "PSP-P10-W04": {"model": "gpt-5.6-terra", "effort": "high"},
-    "PSP-P10-W05": {"model": "gpt-5.6-luna", "effort": "medium"},
-    "PSP-P10-W06": {"model": "gpt-5.6-terra", "effort": "high"},
-    "PSP-P10-W07": {"model": "gpt-5.6-luna", "effort": "medium"},
+WORK_IDS = tuple(f"PSP-P10-W0{index}" for index in range(1, 8))
+EXPECTED_ROOT_KEYS = {
+    "schemaVersion",
+    "status",
+    "workId",
+    "formalPredicateRun",
+    "formalIssueClosed",
+    "countsAsClosure",
+    "syntheticOnly",
+    "externalEffects",
+    "sourceLock",
+    "upstreamState",
+    "idealClientProfile",
+    "buyingCommittee",
+    "triggerEvents",
+    "painTypes",
+    "hardDisqualifiers",
+    "humanReviewReasons",
+    "liveEvidenceSignals",
+    "scorecard",
+    "syntheticAccounts",
+    "assignmentPolicy",
+    "assignments",
 }
-
-PROHIBITED_KEYS = {
+EXPECTED_SCORECARD_KEYS = {
+    "weights",
+    "requiredForQualifiedAudit",
+    "qualifiedAuditMinimum",
+    "boundedFollowUpMinimum",
+    "rule",
+}
+EXPECTED_FACT_KEYS = {
+    "decision_owner",
+    "bounded_initiative",
+    "material_failure_cost",
+    "read_only_evidence",
+    "decision_window",
+    "handoff_owner",
+    "willing_to_stop_or_narrow",
+}
+EXPECTED_REQUIRED_SIGNALS = [
+    "decision_owner",
+    "bounded_initiative",
+    "read_only_evidence",
+    "decision_window",
+    "handoff_owner",
+    "willing_to_stop_or_narrow",
+]
+EXPECTED_ACCOUNT_KEYS = {
+    "id",
+    "facts",
+    "hardDisqualifiers",
+    "humanReviewReasons",
+    "evidenceRefs",
+    "uncertainty",
+    "expectedScore",
+    "expectedDisposition",
+}
+EXPECTED_HUMAN_REVIEW_REASONS = {
+    "legal",
+    "pricing",
+    "regulated_data",
+    "account_or_custody",
+    "public_claim",
+}
+PROHIBITED_NORMALIZED_KEYS = {
     "company",
-    "companyName",
+    "companyname",
     "contact",
-    "contactEmail",
-    "contactName",
+    "contactemail",
+    "contactname",
     "email",
+    "emailaddress",
+    "firstname",
+    "fullname",
+    "lastname",
+    "paidoutcome",
+    "personname",
     "phone",
+    "phonenumber",
+    "postaladdress",
+    "realoutcome",
     "revenue",
-    "paidOutcome",
-    "realOutcome",
+    "socialhandle",
+    "streetaddress",
+    "userhandle",
+    "username",
 }
+EMAIL_RE = re.compile(r"(?i)(?<![\w.+-])[\w.+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+(?![\w.-])")
+PHONE_RE = re.compile(r"(?<!\w)(?:\+?\d[\d(). -]{8,}\d)(?!\w)")
+
+
+@lru_cache(maxsize=1)
+def expected_assignments() -> dict[str, dict[str, Any]]:
+    """Derive capability/effort requirements without freezing provider slugs."""
+    program = runpy.run_path(str(PROGRAM_SCRIPT))
+    graph = program["index_program"](program["load_manifest"]())
+    chunk_work = [graph["work_by_id"][work_id] for work_id in WORK_IDS]
+    chunk_assignment = program["chunk_assignment_for"]("PSP-C09", graph)
+    requirements: dict[str, dict[str, Any]] = {
+        "PSP-C09": {
+            "selection": "runtime_catalog",
+            "role": "chunk_conductor",
+            "effort": chunk_assignment["effort"],
+            "capabilities": sorted({capability for packet in chunk_work for capability in packet["capabilities"]}),
+        }
+    }
+    for work_id in WORK_IDS:
+        packet = graph["work_by_id"][work_id]
+        assignment = program["model_assignment_for"](work_id, graph)
+        requirements[work_id] = {
+            "selection": "runtime_catalog",
+            "reasoning": packet["reasoning"],
+            "effect": packet["effect"],
+            "effort": assignment["effort"],
+            "capabilities": packet["capabilities"],
+        }
+    return requirements
 
 
 def score_account(account: dict[str, Any], scorecard: dict[str, Any]) -> int:
@@ -74,6 +182,8 @@ def disposition(account: dict[str, Any], scorecard: dict[str, Any]) -> str:
     score = score_account(account, scorecard)
     if account.get("hardDisqualifiers"):
         return "decline"
+    if account.get("humanReviewReasons"):
+        return "human_review"
     facts = account.get("facts", {})
     if any(facts.get(signal) is not True for signal in scorecard["requiredForQualifiedAudit"]):
         return "one_bounded_follow_up" if score >= scorecard["boundedFollowUpMinimum"] else "decline"
@@ -86,20 +196,50 @@ def disposition(account: dict[str, Any], scorecard: dict[str, Any]) -> str:
     return "decline"
 
 
-def _walk_keys(value: Any) -> set[str]:
+def _walk(value: Any) -> tuple[set[str], list[str]]:
     keys: set[str] = set()
+    strings: list[str] = []
     if isinstance(value, dict):
         for key, child in value.items():
             keys.add(str(key))
-            keys.update(_walk_keys(child))
+            child_keys, child_strings = _walk(child)
+            keys.update(child_keys)
+            strings.extend(child_strings)
     elif isinstance(value, list):
         for child in value:
-            keys.update(_walk_keys(child))
-    return keys
+            child_keys, child_strings = _walk(child)
+            keys.update(child_keys)
+            strings.extend(child_strings)
+    elif isinstance(value, str):
+        strings.append(value)
+    return keys, strings
+
+
+def _normalized_key(key: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", key.casefold())
+
+
+def _contains_phone(value: str) -> bool:
+    return any(sum(character.isdigit() for character in match.group(0)) >= 10 for match in PHONE_RE.finditer(value))
+
+
+def _is_unique_nonempty_text_list(value: Any, *, minimum: int = 0) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) >= minimum
+        and all(isinstance(item, str) and bool(item.strip()) for item in value)
+        and len(value) == len(set(value))
+    )
 
 
 def validate(data: dict[str, Any]) -> list[str]:
     failures: list[str] = []
+    if set(data) != EXPECTED_ROOT_KEYS:
+        failures.append("manifest must contain the exact public preflight schema")
+    if data.get("schemaVersion") != SCHEMA_VERSION:
+        failures.append(f"schemaVersion must be {SCHEMA_VERSION}")
+    if data.get("workId") != WORK_ID:
+        failures.append(f"workId must be {WORK_ID}")
     if data.get("status") != "prepared_preflight":
         failures.append("status must remain prepared_preflight")
     if (
@@ -114,29 +254,72 @@ def validate(data: dict[str, Any]) -> list[str]:
         failures.append("source lock drifted from exact upstream heads")
     if data.get("upstreamState") != EXPECTED_UPSTREAM_STATE:
         failures.append("upstream state must preserve the accepted/open/prepared boundary")
-    if data.get("assignments") != EXPECTED_ASSIGNMENTS:
-        failures.append("model/effort assignments drifted from the live registry")
+    if data.get("assignmentPolicy") != ASSIGNMENT_POLICY:
+        failures.append("assignment policy must require runtime catalog discovery and fail-closed substitution")
+    if data.get("assignments") != expected_assignments():
+        failures.append("assignment capability/effort requirements drifted from the canonical runtime registry")
+
+    if data.get("humanReviewReasons") != sorted(EXPECTED_HUMAN_REVIEW_REASONS):
+        failures.append(
+            "human-review reasons must exactly preserve legal/pricing/regulated/custody/public-claim routes"
+        )
 
     scorecard = data.get("scorecard", {})
+    if not isinstance(scorecard, dict) or set(scorecard) != EXPECTED_SCORECARD_KEYS:
+        failures.append("scorecard must use the exact public schema")
+        scorecard = {}
     weights = scorecard.get("weights", {})
-    if sum(weights.values()) != 10:
+    if (
+        not isinstance(weights, dict)
+        or set(weights) != EXPECTED_FACT_KEYS
+        or not all(
+            isinstance(weight, int) and not isinstance(weight, bool) and weight > 0 for weight in weights.values()
+        )
+        or sum(weights.values()) != 10
+    ):
         failures.append("scorecard weights must total 10")
+        weights = {}
+    if scorecard.get("requiredForQualifiedAudit") != EXPECTED_REQUIRED_SIGNALS:
+        failures.append(
+            "qualified audit requires sponsor, scope, evidence, window, handoff owner, and willingness to narrow"
+        )
     accounts = data.get("syntheticAccounts", [])
-    if len(accounts) != 10:
+    if not isinstance(accounts, list) or len(accounts) != 10:
         failures.append("exactly ten synthetic accounts are required")
+        accounts = []
 
     seen: set[str] = set()
     allowed_uncertainty = {"low", "medium", "high"}
-    allowed_dispositions = {"qualified_audit", "one_bounded_follow_up", "decline"}
+    allowed_dispositions = {"qualified_audit", "one_bounded_follow_up", "human_review", "decline"}
     for account in accounts:
+        if not isinstance(account, dict):
+            failures.append("synthetic account must be a mapping")
+            continue
         account_id = account.get("id", "<missing>")
+        if set(account) != EXPECTED_ACCOUNT_KEYS:
+            failures.append(f"{account_id}: account must use the exact synthetic schema")
         if not str(account_id).startswith("synthetic_account_"):
             failures.append(f"{account_id}: id must be synthetic")
         if account_id in seen:
             failures.append(f"{account_id}: duplicate id")
         seen.add(account_id)
-        if len(account.get("evidenceRefs", [])) < 2:
-            failures.append(f"{account_id}: at least two evidence refs required")
+        if not _is_unique_nonempty_text_list(account.get("evidenceRefs"), minimum=2):
+            failures.append(f"{account_id}: evidenceRefs must be a list of at least two unique nonblank strings")
+        facts = account.get("facts")
+        if (
+            not isinstance(facts, dict)
+            or set(facts) != EXPECTED_FACT_KEYS
+            or not all(isinstance(value, bool) for value in facts.values())
+        ):
+            failures.append(f"{account_id}: facts must contain the exact boolean scorecard signals")
+            continue
+        if not _is_unique_nonempty_text_list(account.get("hardDisqualifiers")):
+            failures.append(f"{account_id}: hardDisqualifiers must be unique nonblank strings")
+        review_reasons = account.get("humanReviewReasons")
+        if not _is_unique_nonempty_text_list(review_reasons):
+            failures.append(f"{account_id}: humanReviewReasons must be a unique text list")
+        elif not set(review_reasons).issubset(EXPECTED_HUMAN_REVIEW_REASONS):
+            failures.append(f"{account_id}: unsupported human-review reason")
         if account.get("uncertainty") not in allowed_uncertainty:
             failures.append(f"{account_id}: invalid uncertainty")
         if account.get("expectedDisposition") not in allowed_dispositions:
@@ -148,9 +331,12 @@ def validate(data: dict[str, Any]) -> list[str]:
         if actual_disposition != account.get("expectedDisposition"):
             failures.append(f"{account_id}: expected {account.get('expectedDisposition')} != {actual_disposition}")
 
-    leaked_keys = sorted(_walk_keys(data) & PROHIBITED_KEYS)
+    keys, strings = _walk(data)
+    leaked_keys = sorted(key for key in keys if _normalized_key(key) in PROHIBITED_NORMALIZED_KEYS)
     if leaked_keys:
         failures.append(f"real-contact/commercial outcome keys prohibited: {', '.join(leaked_keys)}")
+    if any(EMAIL_RE.search(value) or _contains_phone(value) for value in strings):
+        failures.append("real contact details are prohibited in all public preflight values")
     return failures
 
 
@@ -160,11 +346,25 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     args = parser.parse_args()
     data = json.loads(args.manifest.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        print(
+            json.dumps(
+                {
+                    "status": "failed",
+                    "synthetic_accounts": 0,
+                    "assignments": 0,
+                    "failures": ["manifest must be a mapping"],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 1
     failures = validate(data)
     result = {
         "status": "ok" if not failures else "failed",
         "synthetic_accounts": len(data.get("syntheticAccounts", [])),
-        "assignments": len(data.get("assignments", {})),
+        "assignments": len(data.get("assignments", {})) if isinstance(data.get("assignments"), dict) else 0,
         "failures": failures,
     }
     print(json.dumps(result, indent=2, sort_keys=True))

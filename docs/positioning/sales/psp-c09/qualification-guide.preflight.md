@@ -31,6 +31,10 @@ govern based on evidence.
 - Read-only evidence is an availability signal, not permission to ingest it.
 - Missing required evidence routes to one bounded follow-up or decline, never indefinite nurture.
 
+Execution assignments store only the canonical capability, reasoning, effect, and effort requirements.
+The provider is selected from the live runtime catalog, and an unavailable assignment fails blocked
+rather than silently substituting a stale model name.
+
 ## Disqualification
 
 No sponsor, unbounded scope, emergency/on-call demand, organization takeover, outcome guarantee,
@@ -38,6 +42,7 @@ security/approval bypass, or required production-write access is terminal for th
 pricing, regulated-data, account/custody, or public-claim exceptions route to human review rather
 than being “handled” in a sales conversation.
 
-Ten fictional accounts exercise qualified, follow-up, and decline routes with explicit evidence and
-uncertainty. No company, person, contact detail, live deal, paid outcome, or fabricated market result
+Ten fictional accounts exercise qualified, follow-up, human-review, and decline routes with explicit
+evidence and uncertainty. A qualified route requires a handoff owner and willingness to stop or
+narrow. No company, person, contact detail, live deal, paid outcome, or fabricated market result
 appears in the fixture.

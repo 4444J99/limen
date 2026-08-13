@@ -23,7 +23,9 @@ def test_live_source_heads_assignments_and_ten_synthetic_accounts_are_valid() ->
     data = load_manifest()
     assert MODULE.validate(data) == []
     assert len(data["syntheticAccounts"]) == 10
-    assert data["assignments"] == MODULE.EXPECTED_ASSIGNMENTS
+    assert data["assignmentPolicy"] == MODULE.ASSIGNMENT_POLICY
+    assert data["assignments"] == MODULE.expected_assignments()
+    assert all("model" not in assignment for assignment in data["assignments"].values())
     assert data["sourceLock"] == MODULE.EXPECTED_SOURCE_LOCK
     assert data["upstreamState"] == MODULE.EXPECTED_UPSTREAM_STATE
 
@@ -41,6 +43,7 @@ def test_each_synthetic_account_scores_and_routes_deterministically() -> None:
     assert set(route for _, route in observed.values()) == {
         "qualified_audit",
         "one_bounded_follow_up",
+        "human_review",
         "decline",
     }
     for account in data["syntheticAccounts"]:
@@ -66,11 +69,73 @@ def test_missing_required_evidence_cannot_be_laundered_by_total_score() -> None:
     assert MODULE.disposition(account, data["scorecard"]) == "one_bounded_follow_up"
 
 
+def test_missing_handoff_owner_or_willingness_cannot_qualify() -> None:
+    data = load_manifest()
+    account = copy.deepcopy(data["syntheticAccounts"][0])
+    account["facts"]["handoff_owner"] = False
+    assert MODULE.score_account(account, data["scorecard"]) == 9
+    assert MODULE.disposition(account, data["scorecard"]) == "one_bounded_follow_up"
+    account["facts"]["handoff_owner"] = True
+    account["facts"]["willing_to_stop_or_narrow"] = False
+    assert MODULE.score_account(account, data["scorecard"]) == 9
+    assert MODULE.disposition(account, data["scorecard"]) == "one_bounded_follow_up"
+
+
+def test_documented_exception_routes_require_human_review() -> None:
+    data = load_manifest()
+    account = copy.deepcopy(data["syntheticAccounts"][0])
+    for reason in MODULE.EXPECTED_HUMAN_REVIEW_REASONS:
+        account["humanReviewReasons"] = [reason]
+        assert MODULE.disposition(account, data["scorecard"]) == "human_review"
+
+
 def test_real_contact_or_commercial_outcome_fields_fail_closed() -> None:
     data = load_manifest()
-    data["syntheticAccounts"][0]["contactEmail"] = "nobody@example.invalid"
+    data["syntheticAccounts"][0]["contact_email"] = "synthetic"
     failures = MODULE.validate(data)
     assert any("real-contact/commercial outcome keys prohibited" in failure for failure in failures)
+
+    data = load_manifest()
+    data["syntheticAccounts"][0]["evidenceRefs"][0] = "write to nobody@example.invalid"
+    failures = MODULE.validate(data)
+    assert "real contact details are prohibited in all public preflight values" in failures
+
+    data = load_manifest()
+    data["syntheticAccounts"][0]["evidenceRefs"][0] = "call +1 (212) 555-0199"
+    failures = MODULE.validate(data)
+    assert "real contact details are prohibited in all public preflight values" in failures
+
+
+def test_schema_version_work_id_and_account_shape_fail_closed() -> None:
+    data = load_manifest()
+    data["schemaVersion"] = "wrong"
+    data["workId"] = "PSP-P10-W02"
+    data["syntheticAccounts"][0]["unknown"] = "synthetic"
+    failures = MODULE.validate(data)
+    assert f"schemaVersion must be {MODULE.SCHEMA_VERSION}" in failures
+    assert f"workId must be {MODULE.WORK_ID}" in failures
+    assert any("account must use the exact synthetic schema" in failure for failure in failures)
+
+
+def test_evidence_refs_require_two_unique_nonblank_strings() -> None:
+    for invalid in ("not-a-list", ["one"], ["same", "same"], ["one", " "]):
+        data = load_manifest()
+        data["syntheticAccounts"][0]["evidenceRefs"] = invalid
+        failures = MODULE.validate(data)
+        assert any(
+            "evidenceRefs must be a list of at least two unique nonblank strings" in failure for failure in failures
+        )
+
+
+def test_assignment_contract_is_capability_based_and_registry_derived() -> None:
+    data = load_manifest()
+    assert data["assignmentPolicy"]["selection"] == "runtime_catalog"
+    assert data["assignmentPolicy"]["catalogPredicate"].endswith("--verify-model-assignments")
+    assert data["assignments"] == MODULE.expected_assignments()
+    data["assignments"]["PSP-P10-W01"]["capabilities"] = ["stale_capability"]
+    assert "assignment capability/effort requirements drifted from the canonical runtime registry" in MODULE.validate(
+        data
+    )
 
 
 def test_formal_or_effectful_state_fails_closed() -> None:
