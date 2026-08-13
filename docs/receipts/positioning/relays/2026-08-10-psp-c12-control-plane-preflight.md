@@ -63,7 +63,7 @@ URLs, full work dependencies, and exact model/effort assignments. A registry dri
 | C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `codex/psp-c07-private-inbound-preflight` | `c3b92707a0f6d0ea3076680d100d60d0217f8fe9` | false |
 | C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `ef6e4df64f97c11dba2c159752d5a13b50a96c10` | false |
 | C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `03d5e8fcefd73249f8c7edf61ace31e98b6d73e0` | false |
-| C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `620ae2e87131cb871f73b8c0f230d20f9883d85c` | false |
+| C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `98e10060a31a69c3d6cfe54375c68fe298c6c53a` | false |
 | C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` | false |
 | C12 | [#2320](https://github.com/organvm/limen/pull/2320) | `codex/psp-c12-control-plane-preflight` | runtime exact-head binding | false |
 

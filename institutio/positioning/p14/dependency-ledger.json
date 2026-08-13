@@ -139,7 +139,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2321, "head": "620ae2e87131cb871f73b8c0f230d20f9883d85c"}
+        {"target": "limen", "pull_request": 2321, "head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a"}
       ],
       "frontier_work": []
     },
@@ -245,7 +245,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2321",
       "state": "open",
       "draft": true,
-      "observed_head": "620ae2e87131cb871f73b8c0f230d20f9883d85c",
+      "observed_head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["commercial readiness schemas", "synthetic outcome fixtures", "receipt validators"],
       "counts_as_closure": false
