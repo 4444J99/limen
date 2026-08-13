@@ -92,6 +92,16 @@ def test_open_formal_reader_gate_cannot_empty_reversible_preparation_frontier():
         module.validate_dependency_ledger(ledger, contract)
 
 
+def test_preparation_owner_head_must_match_predecessor_evidence():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    ledger = module._load_json(LEDGER)
+    ledger["preparation_owners"][0]["observed_head"] = "f" * 40
+
+    with pytest.raises(module.P14Error, match="C04 preparation owner head must match predecessor evidence head"):
+        module.validate_dependency_ledger(ledger, contract)
+
+
 def test_dependency_ledger_fails_closed_on_registry_assignment_drift():
     module = _load()
     contract = module.load_contract(MANIFEST)

@@ -1,6 +1,6 @@
 {
   "schema_version": "limen.positioning_p14_dependency_ledger.v2",
-  "observed_at": "2026-08-13T01:20:04Z",
+  "observed_at": "2026-08-13T01:51:06Z",
   "authoritative_registry": "institutio/positioning/program.yaml",
   "program_repository": "organvm/limen",
   "counts_as_closure": false,
@@ -56,7 +56,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2313, "head": "5bf686f6ceba200c6157bd87eb6e5298750a4ffb"},
+        {"target": "limen", "pull_request": 2313, "head": "543fa28df52c9db7be3b7307019dcf209361d0b9"},
         {"target": "portfolio", "pull_request": 220, "head": "8974543ba9675ed0504141895812476efef5dd80"}
       ],
       "frontier_work": []
@@ -70,7 +70,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2315, "head": "fdd41da45bdf5909e7b782a03dbaedf85e105c25"},
+        {"target": "limen", "pull_request": 2315, "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307"},
         {"target": "private_custody", "pull_request": 135, "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926"}
       ],
       "frontier_work": []
@@ -167,7 +167,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2313",
       "state": "open",
       "draft": true,
-      "observed_head": "5bf686f6ceba200c6157bd87eb6e5298750a4ffb",
+      "observed_head": "543fa28df52c9db7be3b7307019dcf209361d0b9",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["proof contract validation", "synthetic source and claim fixtures", "rollback tests"],
       "counts_as_closure": false
@@ -180,7 +180,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2315",
       "state": "open",
       "draft": true,
-      "observed_head": "fdd41da45bdf5909e7b782a03dbaedf85e105c25",
+      "observed_head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["delivery templates", "synthetic intake and closeout fixtures", "bounded validators"],
       "counts_as_closure": false

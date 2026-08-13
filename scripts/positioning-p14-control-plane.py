@@ -569,6 +569,16 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
     if tuple(chunk_ids) != PREDECESSOR_CHUNK_IDS:
         raise P14Error("predecessor chunks must remain in canonical C03-C11 order")
 
+    predecessor_limen_heads: dict[str, str] = {}
+    for raw in raw_chunks:
+        row = _mapping(raw, "predecessor chunk")
+        chunk_id = _text(row.get("chunk_id"), "predecessor chunk id")
+        for raw_evidence in _list(row.get("evidence"), f"{chunk_id}.evidence", nonempty=True):
+            evidence = _mapping(raw_evidence, f"{chunk_id}.evidence")
+            if evidence.get("target") == "limen":
+                predecessor_limen_heads[chunk_id] = _text(evidence.get("head"), f"{chunk_id}.limen head")
+                break
+
     preparation_owners = _list(ledger.get("preparation_owners"), "dependency ledger preparation_owners")
     owner_chunk_ids: list[str] = []
     for index, raw in enumerate(preparation_owners):
@@ -595,6 +605,8 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
                 raise P14Error("C12 preparation owner must bind its runtime exact head without self-reference")
         elif not HEAD_RE.fullmatch(str(owner.get("observed_head") or "")):
             raise P14Error(f"{chunk_id} preparation owner must bind an exact observed head")
+        elif owner["observed_head"] != predecessor_limen_heads.get(chunk_id):
+            raise P14Error(f"{chunk_id} preparation owner head must match predecessor evidence head")
     if tuple(owner_chunk_ids) != PREPARATION_CHUNK_IDS:
         raise P14Error("reversible preparation owners must remain in canonical C04-C12 order")
 
