@@ -12,10 +12,12 @@ import argparse
 import hashlib
 import json
 import re
+import runpy
 from collections import Counter
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
@@ -23,6 +25,7 @@ from typing import Any, Callable, Iterable
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = ROOT / "institutio/positioning/preflights/psp-c07-private-inbound/contract.json"
 DEFAULT_FIXTURES = ROOT / "institutio/positioning/preflights/psp-c07-private-inbound/fixtures/synthetic-leads.json"
+PROGRAM_SCRIPT = ROOT / "scripts/positioning-program.py"
 MAIL_TAG = re.compile(r"^\[(?P<surface>[^\]·]+?)\s*·\s*(?P<audience>[^\]]+?)\]\s*—\s*inbound$")
 LIVE_GATE_ORDER = (
     "PSP-P03-W07",
@@ -31,6 +34,13 @@ LIVE_GATE_ORDER = (
     "PSP-C06-selected-capture-surface",
     "PSP-P08-separate-leaf-authority",
 )
+WORK_IDS = tuple(f"PSP-P08-W0{index}" for index in range(1, 8))
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution",
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -50,6 +60,34 @@ def _field_names(value: Any) -> Iterable[str]:
             yield from _field_names(child)
 
 
+@lru_cache(maxsize=1)
+def expected_assignment_requirements() -> dict[str, dict[str, Any]]:
+    """Derive execution requirements without freezing provider model names."""
+    program = runpy.run_path(str(PROGRAM_SCRIPT))
+    graph = program["index_program"](program["load_manifest"]())
+    packets = [graph["work_by_id"][work_id] for work_id in WORK_IDS]
+    chunk_assignment = program["chunk_assignment_for"]("PSP-C07", graph)
+    requirements: dict[str, dict[str, Any]] = {
+        "PSP-C07": {
+            "selection": "runtime_catalog",
+            "role": "chunk_conductor",
+            "effort": chunk_assignment["effort"],
+            "capabilities": sorted({capability for packet in packets for capability in packet["capabilities"]}),
+        }
+    }
+    for work_id in WORK_IDS:
+        packet = graph["work_by_id"][work_id]
+        assignment = program["model_assignment_for"](work_id, graph)
+        requirements[work_id] = {
+            "selection": "runtime_catalog",
+            "reasoning": packet["reasoning"],
+            "effect": packet["effect"],
+            "effort": assignment["effort"],
+            "capabilities": packet["capabilities"],
+        }
+    return requirements
+
+
 def validate_contract(contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     required = {
@@ -58,7 +96,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         "phase_id",
         "status",
         "counts_as_closure",
-        "leaf_assignments",
+        "assignment_policy",
+        "assignment_requirements",
         "leaf_coverage",
         "formal_dependency_gate",
         "safety",
@@ -83,28 +122,16 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("status must remain PREPARED/PREFLIGHT")
     if contract.get("counts_as_closure") is not False:
         errors.append("preflight must never count as formal closure")
-    if contract.get("schema_version") != "limen.psp_c07_private_inbound_preflight.v2":
-        errors.append("contract schema must remain at private-inbound preflight v2")
-    expected_assignments = {
-        "PSP-P08-W01": ("gpt-5.6-terra", "high"),
-        "PSP-P08-W02": ("gpt-5.6-sol", "xhigh"),
-        "PSP-P08-W03": ("gpt-5.6-sol", "xhigh"),
-        "PSP-P08-W04": ("gpt-5.6-terra", "high"),
-        "PSP-P08-W05": ("gpt-5.6-luna", "medium"),
-        "PSP-P08-W06": ("gpt-5.6-sol", "xhigh"),
-        "PSP-P08-W07": ("gpt-5.6-sol", "xhigh"),
-    }
-    assignments = contract.get("leaf_assignments", {})
-    if set(assignments) != set(expected_assignments):
-        errors.append("leaf assignment set must remain exactly PSP-P08-W01 through W07")
-    for work_id, (model, effort) in expected_assignments.items():
-        observed = assignments.get(work_id, {})
-        if observed.get("model") != model or observed.get("effort") != effort:
-            errors.append(f"{work_id} must remain assigned to {model}/{effort}")
+    if contract.get("schema_version") != "limen.psp_c07_private_inbound_preflight.v3":
+        errors.append("contract schema must remain at private-inbound preflight v3")
+    if contract.get("assignment_policy") != ASSIGNMENT_POLICY:
+        errors.append("assignment policy must require runtime catalog discovery and fail closed")
+    if contract.get("assignment_requirements") != expected_assignment_requirements():
+        errors.append("assignment requirements drifted from the canonical runtime registry")
     coverage = contract.get("leaf_coverage", {})
-    if set(coverage) != set(expected_assignments):
+    if set(coverage) != set(WORK_IDS):
         errors.append("leaf coverage must remain exactly PSP-P08-W01 through W07")
-    for work_id in expected_assignments:
+    for work_id in WORK_IDS:
         observed = coverage.get(work_id, {})
         if observed.get("reversible_status") != "implemented_in_preflight":
             errors.append(f"{work_id} reversible coverage must remain implemented in preflight")
@@ -152,8 +179,10 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("P03 must remain open while W07 lacks reader evidence")
     if p03.get("accepted_w01_w06_head") != "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec":
         errors.append("P03 accepted W01-W06 head must remain pinned")
-    if p03.get("current_preflight_head") != "b6af8086c9050634313f519c29a6dfcb922c3721":
-        errors.append("P03 current preflight head must include the W07 intake package")
+    if p03.get("current_preflight_source_head") != "b6af8086c9050634313f519c29a6dfcb922c3721":
+        errors.append("P03 current preflight source head must include the W07 intake package")
+    if p03.get("integrated_main_head") != "8f89ad16ca1df84b00cb8227c88f368d0d64631a":
+        errors.append("P03 integrated main head must remain pinned")
     if p03.get("closed_work_ids") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
         errors.append("P03 must name exactly W01-W06 as closed")
     w06 = p03.get("w06_receipt", {})
@@ -178,15 +207,23 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     if gate.get("live_capture_activation") != "forbidden_until_predicate_receipt":
         errors.append("live activation must fail closed on a predicate receipt")
     upstream = gate.get("upstream_preflight", {})
-    if upstream.get("status") != "PREPARED":
-        errors.append("C06 upstream evidence must remain PREPARED, not complete")
+    if upstream.get("status") != "MERGED_PREPARED":
+        errors.append("C06 upstream evidence must remain merged/prepared, not complete")
     expected_c06_heads = {
-        "portfolio_draft": "6cb1abf0bf08e71341476886385eba5499c51bb7",
-        "limen_relay": "4eb50463b7f4136b47a103c9792c1ded5caf7873",
+        "portfolio_package": {
+            "source_head": "7c150fc81184df1715824be28b32472baadbb3b6",
+            "integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
+        },
+        "limen_relay": {
+            "source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+            "integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd",
+        },
     }
-    for owner, expected_head in expected_c06_heads.items():
-        if upstream.get(owner, {}).get("exact_head") != expected_head:
-            errors.append(f"C06 {owner} exact head must remain pinned")
+    for owner, expected_heads in expected_c06_heads.items():
+        observed = upstream.get(owner, {})
+        for field_name, expected_head in expected_heads.items():
+            if observed.get(field_name) != expected_head:
+                errors.append(f"C06 {owner} {field_name} must remain pinned")
     visual = upstream.get("visual_selection", {})
     if visual.get("grounded_direction_count") != 3:
         errors.append("C06 preflight must preserve exactly three grounded directions")

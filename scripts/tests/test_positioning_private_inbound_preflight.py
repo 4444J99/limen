@@ -56,14 +56,22 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
 
     def test_c06_preflight_receipts_do_not_promote_the_formal_gate(self) -> None:
         upstream = self.contract["formal_dependency_gate"]["upstream_preflight"]
-        self.assertEqual("PREPARED", upstream["status"])
+        self.assertEqual("MERGED_PREPARED", upstream["status"])
         self.assertEqual(
-            "6cb1abf0bf08e71341476886385eba5499c51bb7",
-            upstream["portfolio_draft"]["exact_head"],
+            "7c150fc81184df1715824be28b32472baadbb3b6",
+            upstream["portfolio_package"]["source_head"],
         )
         self.assertEqual(
-            "4eb50463b7f4136b47a103c9792c1ded5caf7873",
-            upstream["limen_relay"]["exact_head"],
+            "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
+            upstream["portfolio_package"]["integrated_main_head"],
+        )
+        self.assertEqual(
+            "854b6385de6b340485baaf59b1be55bd4d243a4d",
+            upstream["limen_relay"]["source_head"],
+        )
+        self.assertEqual(
+            "690617fc2aeea79acfe5604799e6413d70b6e4dd",
+            upstream["limen_relay"]["integrated_main_head"],
         )
         self.assertEqual(3, upstream["visual_selection"]["grounded_direction_count"])
         self.assertEqual(
@@ -89,7 +97,11 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         )
         self.assertEqual(
             "b6af8086c9050634313f519c29a6dfcb922c3721",
-            p03["current_preflight_head"],
+            p03["current_preflight_source_head"],
+        )
+        self.assertEqual(
+            "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
+            p03["integrated_main_head"],
         )
         self.assertEqual([f"PSP-P03-W0{index}" for index in range(1, 7)], p03["closed_work_ids"])
         self.assertEqual(
@@ -118,15 +130,22 @@ class PositioningPrivateInboundPreflightTest(unittest.TestCase):
         changed["formal_dependency_gate"]["separate_leaf_authority"] = "leased"
         self.assertTrue(MODULE.live_gate(changed)[0])
 
-    def test_leaf_model_assignments_are_pinned_to_the_live_registry(self) -> None:
+    def test_assignment_requirements_are_registry_derived_without_frozen_models(self) -> None:
+        self.assertEqual(MODULE.ASSIGNMENT_POLICY, self.contract["assignment_policy"])
         self.assertEqual(
-            {"model": "gpt-5.6-luna", "effort": "medium"},
-            self.contract["leaf_assignments"]["PSP-P08-W05"],
+            MODULE.expected_assignment_requirements(),
+            self.contract["assignment_requirements"],
+        )
+        self.assertTrue(
+            all(
+                "model" not in assignment and "slug" not in assignment
+                for assignment in self.contract["assignment_requirements"].values()
+            )
         )
         changed = deepcopy(self.contract)
-        changed["leaf_assignments"]["PSP-P08-W07"]["effort"] = "high"
+        changed["assignment_requirements"]["PSP-P08-W07"]["effort"] = "high"
         self.assertIn(
-            "PSP-P08-W07 must remain assigned to gpt-5.6-sol/xhigh",
+            "assignment requirements drifted from the canonical runtime registry",
             MODULE.validate_contract(changed),
         )
         self.assertEqual(

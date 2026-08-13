@@ -2,7 +2,7 @@
 type: prompt-relay-envelope
 version: 1.0
 date: 2026-08-10
-last_reconciled: 2026-08-12
+last_reconciled: 2026-08-13
 from: codex desktop direct-session preflight
 to: next healthy Codex session assigned from the live PSP registry
 scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/8f85/limen
@@ -30,11 +30,11 @@ compression_level: medium
 |---|---|
 | C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
 | P02 | closed with its accepted phase receipt |
-| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; current offer preflight is `b6af8086c9050634313f519c29a6dfcb922c3721`; W07 remains genuinely five-reader blocked |
+| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; source `b6af8086c9050634313f519c29a6dfcb922c3721` is integrated at `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W07 remains genuinely five-reader blocked |
 | W06 receipt | [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
 | W07 / P04 | W07 #2188 remains open for five genuine independent target-like readers; synthetic/model responses are forbidden; P04 is open and blocked on P03 |
 | Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
-| C06 prepared evidence | portfolio draft [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at `6cb1abf0bf08e71341476886385eba5499c51bb7`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) at `4eb50463b7f4136b47a103c9792c1ded5caf7873` |
+| C06 prepared evidence | portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) source `7c150fc81184df1715824be28b32472baadbb3b6`, integrated `797cda3fb903b07d4152e5bbde9f468beeeab3e0`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) source `854b6385de6b340485baaf59b1be55bd4d243a4d`, integrated `690617fc2aeea79acfe5604799e6413d70b6e4dd` |
 | C06 durable visual artifacts | the portfolio head tracks the manifest and exactly three source-grounded PNG mockups; all remain explicitly unselected |
 | C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
 | Initial private-inbound implementation commit | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` |
@@ -44,20 +44,21 @@ compression_level: medium
 | External effects | branch push and draft PR only; no form, alias, CTA, mail, publish, deploy, DNS, spend, signature, merge, account, board, or send effect |
 | Private evidence | none consumed or emitted; tracked fixtures use reserved `.invalid` data and synthetic owner partitions only |
 
-## Exact model and effort assignments
+## Runtime assignment requirements
 
-These live-registry assignments are preserved for later separately leased leaf execution. This
-conductor preflight does not substitute for them.
+The registry supplies capability, reasoning, effect, and effort requirements. Dispatch resolves an
+eligible provider from the live runtime catalog and fails blocked if none is available; no provider
+slug is frozen in this preflight. This conductor package does not substitute for leaf execution.
 
-| Work ID | Model | Effort |
-|---|---|---|
-| `PSP-P08-W01` | `gpt-5.6-terra` | `high` |
-| `PSP-P08-W02` | `gpt-5.6-sol` | `xhigh` |
-| `PSP-P08-W03` | `gpt-5.6-sol` | `xhigh` |
-| `PSP-P08-W04` | `gpt-5.6-terra` | `high` |
-| `PSP-P08-W05` | `gpt-5.6-luna` | `medium` |
-| `PSP-P08-W06` | `gpt-5.6-sol` | `xhigh` |
-| `PSP-P08-W07` | `gpt-5.6-sol` | `xhigh` |
+| Work ID | Reasoning | Effect | Effort |
+|---|---|---|---|
+| `PSP-P08-W01` | routine | external | high |
+| `PSP-P08-W02` | deep | write | xhigh |
+| `PSP-P08-W03` | deep | write | xhigh |
+| `PSP-P08-W04` | deep | write | high |
+| `PSP-P08-W05` | routine | write | medium |
+| `PSP-P08-W06` | deep | write | xhigh |
+| `PSP-P08-W07` | deep | read | xhigh |
 
 ## Completed reversible preparation
 
@@ -105,7 +106,7 @@ The last row is the intended dependency valve. It is not evidence that C07 is re
 |---|---|
 | Do not revive the Agy/non-Codex gate | PR #2300 and closed P00 encode the authoritative correction; the live runbook says provider diversity is not a PSP acceptance gate. |
 | Do not wire a public form or alias | C06/P07 is open and no selected capture surface exists. The preflight adapter boundary permits later binding without premature publication. |
-| Do not promote C06 preflight to closure | PRs #221/#2317 are prepared receipts only. Operator selection, visual implementation/deploy authority, legacy-link repair, and the P07 phase predicate remain unsatisfied. |
+| Do not promote C06 preflight to closure | PRs #221/#2317 are merged prepared packages only. Operator selection, visual implementation authority, legacy-link repair, and the P07 phase predicate remain unsatisfied. |
 | Keep fixtures synthetic and receipts aggregate-safe | Private lead evidence cannot enter public artifacts. `.invalid` fixtures exercise behavior without creating real-world proof. |
 | Keep leaf issues open | No broker lease, target-repository implementation, real provider integration, deliverability receipt, or phase proof exists. Synthetic traversal is preparation only. |
 
@@ -119,7 +120,7 @@ The last row is the intended dependency valve. It is not evidence that C07 is re
 3. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
    the selected capture surface is explicit.
 4. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
-   seed it and obtain a fresh broker lease using its exact `gpt-5.6-terra/high` assignment.
+   seed it and obtain a fresh broker lease using its runtime-derived routine/external/high requirements.
 5. Bind the selected surface to one contract adapter, preserving the live gate and separate
    `HG-PUBLICATION-SEND` boundary; then dispatch downstream leaves only as the registry makes them
    ready.

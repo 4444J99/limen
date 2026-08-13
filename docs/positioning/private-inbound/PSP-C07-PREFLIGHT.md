@@ -9,21 +9,24 @@ open, and no capture surface is selected.
 
 Scope: `PSP-P08-W01` through `PSP-P08-W07` contract preparation only
 
-The current upstream C06 preflight receipts are portfolio draft
-[PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) at
-`6cb1abf0bf08e71341476886385eba5499c51bb7` and Limen relay
-[PR #2317](https://github.com/organvm/limen/pull/2317) at
-`4eb50463b7f4136b47a103c9792c1ded5caf7873`. The portfolio head durably tracks the
+The current upstream C06 preflight packages are merged: portfolio
+[PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) source
+`7c150fc81184df1715824be28b32472baadbb3b6` is integrated at
+`797cda3fb903b07d4152e5bbde9f468beeeab3e0`, and Limen relay
+[PR #2317](https://github.com/organvm/limen/pull/2317) source
+`854b6385de6b340485baaf59b1be55bd4d243a4d` is integrated at
+`690617fc2aeea79acfe5604799e6413d70b6e4dd`. The portfolio package durably tracks the
 manifest and exactly three source-grounded mockup PNGs; all three remain explicitly
-unselected. Both receipts are `PREPARED/PREFLIGHT`, not C06 closure: operator selection
+unselected. Both merged packages remain `PREPARED/PREFLIGHT`, not C06 closure: operator selection
 is still required, no visual implementation or deployment is authorized, 11 legacy
 `organvm.github.io/portfolio` links remain dead, and the canonical
 `organvm-vii-kerygma/portfolio` paths resolve.
 
 P02 is closed. C03 W01-W06 are accepted at
-`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; the current C03 preflight head
-`b6af8086c9050634313f519c29a6dfcb922c3721` is an offer preflight; W07 remains genuinely
-five-reader blocked. W06 is
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; C03 source
+`b6af8086c9050634313f519c29a6dfcb922c3721` is integrated at
+`8f89ad16ca1df84b00cb8227c88f368d0d64631a`, while W07 remains genuinely five-reader
+blocked. W06 is
 bound to [its marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820)
 and SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
 W07/#2188 remains open for five genuine independent target-like reader records; synthetic and model
@@ -60,16 +63,18 @@ draft bodies, and ledger rows never enter its public projection.
 
 | Leaf | Prepared artifact | Formal boundary retained |
 |---|---|---|
-| `PSP-P08-W01` · `gpt-5.6-terra/high` | client/recruiter CTA-to-intake map, source/proof/audience tag contract, and tagged-mail fallback | contract only: no alias, CTA, deliverability, or public address activation |
-| `PSP-P08-W02` · `gpt-5.6-sol/xhigh` | exact minimum contact/request/consent schema, bounded fields, privacy copy, and overcollection denylist | no public form or selected C06 surface |
-| `PSP-P08-W03` · `gpt-5.6-sol/xhigh` | idempotent normalizer, dedupe index, synthetic fixtures, and seal/open/delete custody boundary | no cryptographic implementation, key material, provider mail, or real lead payload |
-| `PSP-P08-W04` · `gpt-5.6-terra/high` | declared signals, thresholds, margin rule, and manual-review fallback | scores remain suggestions, never authority |
-| `PSP-P08-W05` · `gpt-5.6-luna/medium` | seven declarative response-template families and authority-absent, hard-closed send valve | no transport or send capability; `HG-PUBLICATION-SEND` remains unpulled |
-| `PSP-P08-W06` · `gpt-5.6-sol/xhigh` | owner-partitioned ledger, non-contact operator view, aggregate dashboard, and category retention/deletion contracts | in-memory synthetic harness only; retention defaults require private-owner ratification |
-| `PSP-P08-W07` · `gpt-5.6-sol/xhigh` | five-route synthetic traversal, abuse/privacy negatives, zero-send assertion, and dependency-ordered live gate | synthetic proof is not a leaf or phase receipt |
+| `PSP-P08-W01` · routine/external/high | client/recruiter CTA-to-intake map, source/proof/audience tag contract, and tagged-mail fallback | contract only: no alias, CTA, deliverability, or public address activation |
+| `PSP-P08-W02` · deep/write/xhigh | exact minimum contact/request/consent schema, bounded fields, privacy copy, and overcollection denylist | no public form or selected C06 surface |
+| `PSP-P08-W03` · deep/write/xhigh | idempotent normalizer, dedupe index, synthetic fixtures, and seal/open/delete custody boundary | no cryptographic implementation, key material, provider mail, or real lead payload |
+| `PSP-P08-W04` · deep/write/high | declared signals, thresholds, margin rule, and manual-review fallback | scores remain suggestions, never authority |
+| `PSP-P08-W05` · routine/write/medium | seven declarative response-template families and authority-absent, hard-closed send valve | no transport or send capability; `HG-PUBLICATION-SEND` remains unpulled |
+| `PSP-P08-W06` · deep/write/xhigh | owner-partitioned ledger, non-contact operator view, aggregate dashboard, and category retention/deletion contracts | in-memory synthetic harness only; retention defaults require private-owner ratification |
+| `PSP-P08-W07` · deep/read/xhigh | five-route synthetic traversal, abuse/privacy negatives, zero-send assertion, and dependency-ordered live gate | synthetic proof is not a leaf or phase receipt |
 
-These are the exact live-registry assignments reconciled on 2026-08-12. They are recorded for later
-leaf dispatch; this conductor preflight does not impersonate those separately leased executions.
+These capability, reasoning, effect, and effort requirements are derived from the live registry.
+The actual provider is selected from the runtime catalog at dispatch; an unavailable assignment
+fails blocked rather than silently substituting a stale model name. This conductor preflight does
+not impersonate those separately leased executions.
 
 ## Integration contract
 
