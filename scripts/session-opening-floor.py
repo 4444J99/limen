@@ -75,6 +75,25 @@ def _armed_valve_audit():
     return _load(SCRIPT_ROOT / "scripts" / "armed-valve-audit.py", "_limen_ava_floor")
 
 
+def _agent_config_paths():
+    return _load(SCRIPT_ROOT / "scripts" / "agent_config_paths.py", "_limen_acp_floor")
+
+
+def _config_file(floor, acp) -> Path:
+    """The file this lane's pin actually lives in.
+
+    `config_path` is a `~`-shaped label, and expanding it was reading configs the CLIs had
+    abandoned: CODEX_HOME and GEMINI_CLI_HOME relocate those roots, the old copies keep parsing,
+    and the probe therefore reported a stale pin with full confidence. Measured 2026-08-12, the
+    codex row's `above-ceiling` finding came from a file six days out of date whose live
+    counterpart carried a *different, higher* value. A row that names its vendor is resolved
+    through the estate's path owner; an unmapped row keeps the old expansion.
+    """
+    if floor.config_vendor and acp is not None:
+        return acp.active_config_path(floor.config_vendor)
+    return Path(os.path.expandvars(floor.config_path)).expanduser()
+
+
 def _resolve_ladder(floor, ms) -> tuple[str, ...]:
     """A declared ladder, or the one named by `ladder_ref` — a REFERENCE to live code, never a
     copied snapshot, so the Claude ladder is not re-typed in the census and cannot drift."""
@@ -130,6 +149,7 @@ def _arm_state(valve_id: str, registry_path: Path):
 def rows(levers_text: str = "", registry_path: Path | None = None) -> list[dict]:
     census = _census()
     ms = _model_selection()
+    acp = _agent_config_paths()
     if census is None:
         return [{"lane": "-", "verdict": "UNDECLARED", "detail": "census.py could not be loaded"}]
     registry_path = registry_path or (SCRIPT_ROOT / "spec" / "armed-valves.json")
@@ -166,7 +186,7 @@ def rows(levers_text: str = "", registry_path: Path | None = None) -> list[dict]
             continue
 
         # kind == "config-file": the provider-neutral probe.
-        path = Path(os.path.expandvars(floor.config_path)).expanduser()
+        path = _config_file(floor, acp)
         value, detail = _read_pin(path, floor.pointer)
         if value is None:
             row["verdict"] = "unset"
@@ -198,7 +218,7 @@ def rows(levers_text: str = "", registry_path: Path | None = None) -> list[dict]
             row["verdict"] = "above-ceiling" if cited else "ABOVE-CEILING"
             row["detail"] = (
                 f"pin={value!r} is rung {verdict['rung']!r}, above ceiling {verdict['ceiling']!r} "
-                f"({floor.config_path} :: {floor.pointer})"
+                f"({path} :: {floor.pointer})"
                 + ("  [owned: L-LANE-OPENING-FLOOR]" if cited else "  [NO lever cites it]")
             )
         out.append(row)

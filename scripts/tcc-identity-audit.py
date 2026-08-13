@@ -11,10 +11,22 @@ import platform
 import re
 import sqlite3
 import subprocess
+import sys
 import tomllib
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from agent_config_paths import active_config_path, candidate_config_paths  # noqa: E402
+
+# Ingress surfaces whose config root a vendor env var can relocate, mapped to their vendor key.
+# Everything else in CONFIGURED_INGRESSES is genuinely home-relative — the *desktop* apps keep
+# their `Library/Application Support/…` paths and are unaffected by CLAUDE_CONFIG_DIR et al.
+# Without this, the principal audit read `~/.claude.json` and vouched for servers the CLI does
+# not load, while the live config went unexamined.
+RELOCATABLE_INGRESSES: dict[str, str] = {"claude_code": "claude"}
 
 
 SCHEMA = "limen.tcc_identity_audit.v2"
@@ -86,10 +98,7 @@ CONFIGURED_INGRESSES: tuple[tuple[str, str, str, frozenset[str]], ...] = (
     (
         "cline",
         "json",
-        (
-            "Library/Application Support/Code/User/globalStorage/"
-            "saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
-        ),
+        ("Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"),
         frozenset({"github", "jupyter", "serena"}),
     ),
 )
@@ -266,11 +275,7 @@ def classify_client(
         return "unrelated", None, exists
     if baseline_identities is None:
         return "managed_unbaselined", pattern, exists
-    classification = (
-        "baseline_managed"
-        if _identity_id(client, client_type) in baseline_identities
-        else "new_managed"
-    )
+    classification = "baseline_managed" if _identity_id(client, client_type) in baseline_identities else "new_managed"
     return classification, pattern, exists
 
 
@@ -341,15 +346,9 @@ def _read_clients(
         if classification == "unrelated":
             unrelated += 1
         decisions = sorted(item["decisions"].values(), key=lambda value: value["service"])
-        active_services = [
-            decision["service"]
-            for decision in decisions
-            if int(decision["auth_value"]) != 0
-        ]
+        active_services = [decision["service"] for decision in decisions if int(decision["auth_value"]) != 0]
         app_management_active = any(
-            decision["service"] == APP_MANAGEMENT_SERVICE
-            and int(decision["auth_value"]) != 0
-            for decision in decisions
+            decision["service"] == APP_MANAGEMENT_SERVICE and int(decision["auth_value"]) != 0 for decision in decisions
         )
         inventory.append(
             {
@@ -357,9 +356,7 @@ def _read_clients(
                 "client_type": item["client_type"],
                 "identity": _identity_id(str(item["client"]), int(item["client_type"])),
                 "client_kind": (
-                    "path"
-                    if int(item["client_type"]) == 1 or str(item["client"]).startswith("/")
-                    else "bundle"
+                    "path" if int(item["client_type"]) == 1 or str(item["client"]).startswith("/") else "bundle"
                 ),
                 "last_modified": item["last_modified"],
                 "classification": classification,
@@ -385,11 +382,7 @@ def _identity_baseline_path(env: Mapping[str, str]) -> Path:
 
 def _app_management_decision(item: Mapping[str, Any]) -> Mapping[str, Any] | None:
     return next(
-        (
-            decision
-            for decision in item.get("decisions", [])
-            if decision.get("service") == APP_MANAGEMENT_SERVICE
-        ),
+        (decision for decision in item.get("decisions", []) if decision.get("service") == APP_MANAGEMENT_SERVICE),
         None,
     )
 
@@ -428,13 +421,7 @@ def _identity_baseline_document(
 ) -> dict[str, Any]:
     body = {
         "schema": BASELINE_SCHEMA,
-        "managed_identities": sorted(
-            {
-                str(item["identity"])
-                for item in clients
-                if item.get("pattern") is not None
-            }
-        ),
+        "managed_identities": sorted({str(item["identity"]) for item in clients if item.get("pattern") is not None}),
         "app_management_bundle_grants": _app_management_bundle_grants(clients),
     }
     return {**body, "digest": _baseline_digest(body)}
@@ -452,8 +439,7 @@ def _load_identity_baseline(path: Path) -> dict[str, Any]:
     identities = document.get("managed_identities")
     grants = document.get("app_management_bundle_grants")
     if not isinstance(identities, list) or not all(
-        isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value)
-        for value in identities
+        isinstance(value, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", value) for value in identities
     ):
         raise AuditError("identity baseline managed identities are malformed")
     if not isinstance(grants, list) or not all(
@@ -488,9 +474,7 @@ def _write_identity_baseline(path: Path, document: Mapping[str, Any]) -> None:
         try:
             os.link(temporary, path)
         except FileExistsError as exc:
-            raise AuditError(
-                "identity baseline already exists; refusing to overwrite the cutover anchor"
-            ) from exc
+            raise AuditError("identity baseline already exists; refusing to overwrite the cutover anchor") from exc
         path.chmod(0o600)
     finally:
         try:
@@ -506,11 +490,7 @@ def _apply_baseline_classification(
     for item in clients:
         if item.get("pattern") is None:
             continue
-        item["classification"] = (
-            "baseline_managed"
-            if item["identity"] in identities
-            else "new_managed"
-        )
+        item["classification"] = "baseline_managed" if item["identity"] in identities else "new_managed"
 
 
 def _redacted_item(item: Mapping[str, Any]) -> dict[str, Any]:
@@ -539,7 +519,8 @@ def _configured_ingress_violations(
     home = _home(env)
     expected_host = (home / ".local/bin/domus-agent-host").resolve(strict=False)
     for surface, format_name, relative, managed_names in CONFIGURED_INGRESSES:
-        path = home / relative
+        vendor = RELOCATABLE_INGRESSES.get(surface)
+        path = active_config_path(vendor, env) if vendor else home / relative
         try:
             raw = path.read_bytes()
         except FileNotFoundError:
@@ -593,9 +574,7 @@ def _configured_ingress_violations(
             if isinstance(command, str) and command.strip():
                 command_value = command.strip()
                 command_name = Path(command_value).name
-                command_path = _expand_user_path(command_value, env).resolve(
-                    strict=False
-                )
+                command_path = _expand_user_path(command_value, env).resolve(strict=False)
             hosted = (
                 command_name == "domus-agent-host"
                 and command_path == expected_host
@@ -616,25 +595,8 @@ def _configured_ingress_violations(
 
 
 def _settings_paths(env: Mapping[str, str]) -> list[Path]:
-    home = _home(env)
-    limen_root = _expand_user_path(
-        env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
-        env,
-    )
-    candidates = [
-        home / ".claude/settings.json",
-        limen_root / ".agent-runtime/claude/settings.json",
-    ]
-    if config := env.get("CLAUDE_CONFIG_DIR"):
-        candidates.append(_expand_user_path(config, env) / "settings.json")
-    seen: set[Path] = set()
-    result: list[Path] = []
-    for path in candidates:
-        resolved = path.resolve(strict=False)
-        if resolved not in seen:
-            seen.add(resolved)
-            result.append(path)
-    return result
+    """Every root `settings.json` could be read from — see `_config_paths`."""
+    return candidate_config_paths("claude-settings", env)
 
 
 def _config_paths(env: Mapping[str, str]) -> list[Path]:
@@ -645,26 +607,14 @@ def _config_paths(env: Mapping[str, str]) -> list[Path]:
     explicit `CLAUDE_CONFIG_DIR`. Both are live on this host simultaneously — a session
     under `CLAUDE_CONFIG_DIR` reads the runtime copy and never sees the home one, so
     flipping only `~/.claude.json` leaves updates off where it counts.
+
+    The roots themselves are resolved by `agent_config_paths`, which owns that fact for the
+    whole estate. This audit is the one consumer that genuinely wants EVERY candidate: the
+    switch has to be true wherever a session might read it. Anything that measures or counts
+    wants `active_config_path` instead — see that module's header for why the distinction is
+    load-bearing.
     """
-    home = _home(env)
-    limen_root = _expand_user_path(
-        env.get("LIMEN_ROOT", str(home / "Workspace/limen")),
-        env,
-    )
-    candidates = [
-        home / ".claude.json",
-        limen_root / ".agent-runtime/claude/.claude.json",
-    ]
-    if config := env.get("CLAUDE_CONFIG_DIR"):
-        candidates.append(_expand_user_path(config, env) / ".claude.json")
-    seen: set[Path] = set()
-    result: list[Path] = []
-    for path in candidates:
-        resolved = path.resolve(strict=False)
-        if resolved not in seen:
-            seen.add(resolved)
-            result.append(path)
-    return result
+    return candidate_config_paths("claude", env)
 
 
 def _disabled_updates(env: Mapping[str, str]) -> list[dict[str, str]]:
@@ -955,11 +905,7 @@ def audit(
             baseline = _load_identity_baseline(baseline_path)
         except AuditError as exc:
             baseline_error = str(exc)
-    baseline_identities = (
-        frozenset(baseline["managed_identities"])
-        if baseline is not None
-        else None
-    )
+    baseline_identities = frozenset(baseline["managed_identities"]) if baseline is not None else None
     try:
         clients, unrelated = _read_clients(
             _tcc_databases(values),
@@ -1000,22 +946,13 @@ def audit(
         item
         for item in clients
         if item.get("pattern") is not None
-        and (
-            item["app_management_active"]
-            or item["classification"] == "new_managed"
-        )
+        and (item["app_management_active"] or item["classification"] == "new_managed")
     ]
     visible_path_rows = [
-        item
-        for item in clients
-        if item["client_kind"] == "path"
-        and _app_management_decision(item) is not None
+        item for item in clients if item["client_kind"] == "path" and _app_management_decision(item) is not None
     ]
     stable_host_rows = [
-        item
-        for item in clients
-        if item["client"] == HOST_BUNDLE_ID
-        and _app_management_decision(item) is not None
+        item for item in clients if item["client"] == HOST_BUNDLE_ID and _app_management_decision(item) is not None
     ]
     stable_host_grants = [
         item
@@ -1040,9 +977,7 @@ def audit(
     rotating_grants = [
         item
         for item in clients
-        if item.get("pattern") is not None
-        and item["client_kind"] == "path"
-        and item["active_services"]
+        if item.get("pattern") is not None and item["client_kind"] == "path" and item["active_services"]
     ]
     ingress_violations, configured_ingresses = _configured_ingress_violations(values)
 
@@ -1063,16 +998,11 @@ def audit(
         },
         "visible_app_management_path_rows": {
             "ok": (
-                db_measured
-                and not visible_path_rows
-                and len(stable_host_rows) == 1
-                and len(stable_host_grants) == 1
+                db_measured and not visible_path_rows and len(stable_host_rows) == 1 and len(stable_host_grants) == 1
             ),
             "measured": db_measured,
             "count": len(visible_path_rows),
-            "identities": [
-                _redacted_predicate_identity(item) for item in visible_path_rows
-            ],
+            "identities": [_redacted_predicate_identity(item) for item in visible_path_rows],
             "stable_host_row_count": len(stable_host_rows),
             "stable_host_grant_count": len(stable_host_grants),
         },
@@ -1088,25 +1018,15 @@ def audit(
             "ok": db_measured and not rotating_grants,
             "measured": db_measured,
             "count": len(rotating_grants),
-            "identities": [
-                _redacted_predicate_identity(item) for item in rotating_grants
-            ],
+            "identities": [_redacted_predicate_identity(item) for item in rotating_grants],
             # Every distinct TCC service still pinned to a rotating path — the exact
             # set of dialogs the operator will be shown again on the next update.
-            "services": sorted(
-                {
-                    service
-                    for item in rotating_grants
-                    for service in item["active_services"]
-                }
-            ),
+            "services": sorted({service for item in rotating_grants for service in item["active_services"]}),
         },
     }
 
     counts = {
-        classification: sum(
-            1 for item in clients if item["classification"] == classification
-        )
+        classification: sum(1 for item in clients if item["classification"] == classification)
         for classification in (
             "stable_host",
             "baseline_managed",
@@ -1140,13 +1060,9 @@ def audit(
         failures.append("stable_host_tcc_identity_missing")
 
     current_bundle_grants = _app_management_bundle_grants(clients)
-    expected_bundle_grants = (
-        baseline["app_management_bundle_grants"] if baseline is not None else None
-    )
+    expected_bundle_grants = baseline["app_management_bundle_grants"] if baseline is not None else None
     preservation_ok = (
-        db_measured
-        and expected_bundle_grants is not None
-        and current_bundle_grants == expected_bundle_grants
+        db_measured and expected_bundle_grants is not None and current_bundle_grants == expected_bundle_grants
     )
     # Same guard: an empty grant map read from an unreadable database is not a change.
     if db_measured and expected_bundle_grants is not None and not preservation_ok:
@@ -1189,24 +1105,16 @@ def audit(
             "loaded": baseline is not None,
             "written": baseline_written,
             "digest": baseline.get("digest") if baseline is not None else None,
-            "managed_identity_count": (
-                len(baseline["managed_identities"]) if baseline is not None else 0
-            ),
+            "managed_identity_count": (len(baseline["managed_identities"]) if baseline is not None else 0),
             "app_management_bundle_grant_count": (
-                len(baseline["app_management_bundle_grants"])
-                if baseline is not None
-                else 0
+                len(baseline["app_management_bundle_grants"]) if baseline is not None else 0
             ),
             "error": baseline_error,
         },
         "unrelated_app_management_preservation": {
             "ok": preservation_ok,
             "current_count": len(current_bundle_grants),
-            "baseline_count": (
-                len(expected_bundle_grants)
-                if expected_bundle_grants is not None
-                else 0
-            ),
+            "baseline_count": (len(expected_bundle_grants) if expected_bundle_grants is not None else 0),
         },
         "malformed_claude_helpers": malformed,
         "tcc_database_error": database_error,
@@ -1241,14 +1149,9 @@ def print_human(payload: Mapping[str, Any]) -> None:
         print(line + ("" if rotating["measured"] else "  (unmeasured)"))
     visible = predicates["visible_app_management_path_rows"]
     print(
-        "  App Management: "
-        f"{visible['count']} path row(s), "
-        f"{visible['stable_host_grant_count']} stable host grant(s)"
+        f"  App Management: {visible['count']} path row(s), {visible['stable_host_grant_count']} stable host grant(s)"
     )
-    print(
-        "  unhosted configured ingresses: "
-        f"{predicates['unhosted_configured_ingresses']['count']}"
-    )
+    print(f"  unhosted configured ingresses: {predicates['unhosted_configured_ingresses']['count']}")
     for item in payload.get("clients", []):
         print(f"  [{item['classification']}] {item['client']} ({len(item['services'])} service(s))")
     if payload.get("malformed_claude_helpers"):
@@ -1272,9 +1175,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         env["LIMEN_TCC_IDENTITY_BASELINE"] = args.baseline
     write_baseline = Path(args.write_baseline).expanduser() if args.write_baseline else None
     if write_baseline is not None and args.baseline:
-        if write_baseline.resolve(strict=False) != Path(args.baseline).expanduser().resolve(
-            strict=False
-        ):
+        if write_baseline.resolve(strict=False) != Path(args.baseline).expanduser().resolve(strict=False):
             parser.error("--baseline and --write-baseline must name the same path")
     payload = audit(
         env,

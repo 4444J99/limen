@@ -1,6 +1,6 @@
 {
   "schema": "limen.psp-p02-w01-estate-census-preflight.v1",
-  "generated_at": "2026-08-10T14:13:06Z",
+  "generated_at": "2026-08-10T21:20:04Z",
   "issue": "https://github.com/organvm/limen/issues/2173",
   "dependency_issue": "https://github.com/organvm/limen/issues/2171",
   "owner_login": "4444J99",
@@ -58,19 +58,28 @@
     }
   },
   "live_passes": {
-    "pass_1_stable_digest": "2184e2e0ebad2cbb2a9058d84d53dea890c43753f7a73083f9855584cbfcfce2",
-    "pass_2_stable_digest": "2184e2e0ebad2cbb2a9058d84d53dea890c43753f7a73083f9855584cbfcfce2",
+    "pass_1_stable_digest": "0a0db6f52b8d32cbf32af1daadd14fe0bff30487dd9cd4166066953b0b7ac2a9",
+    "pass_2_stable_digest": "0a0db6f52b8d32cbf32af1daadd14fe0bff30487dd9cd4166066953b0b7ac2a9",
+    "stable_digest_scope": "sorted repository identity and visibility pairs",
     "new_owner_keys": 0,
     "new_organization_keys": 0,
     "new_repository_keys": 0
   },
   "source_timestamps": {
-    "user_lookup_utc": "2026-08-10T14:13:06Z",
-    "org_lookup_utc": "2026-08-10T14:13:06Z",
-    "repo_lookup_utc": "2026-08-10T14:13:06Z"
+    "user_lookup_utc": "2026-08-10T21:20:04Z",
+    "org_lookup_utc": "2026-08-10T21:20:04Z",
+    "repo_lookup_utc": "2026-08-10T21:20:04Z",
+    "stable_pass_1_utc": "2026-08-10T21:15:43Z",
+    "stable_pass_2_utc": "2026-08-10T21:20:04Z"
+  },
+  "private_facts_custody": {
+    "storage": "gitignored local custody receipt",
+    "file_mode": "0600",
+    "write_semantics": "atomic replacement",
+    "tracked_projection": "opaque private leaf keys and aggregate counts only"
   },
   "visibility_notes": [
     "Public receipt only; private repository names are intentionally omitted.",
-    "The raw live facts were observed through GitHub API pagination and retained in the working tree logs, not this receipt."
+    "The raw live facts were observed through GitHub API pagination and retained in the owner-only local custody receipt, not this public receipt."
   ]
 }

@@ -69,10 +69,10 @@ _VIEW = {
 
 
 class _R:
-    def __init__(self, out):
-        self.returncode = 0
+    def __init__(self, out, returncode=0, stderr=""):
+        self.returncode = returncode
         self.stdout = out
-        self.stderr = ""
+        self.stderr = stderr
 
 
 def _fake_gh(args, timeout=60):
@@ -116,6 +116,54 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
     assert rc == 0
     assert p.read_text() == before, "dry-run must not mutate tasks.yaml"
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "dry-run must not touch the queue lock"
+
+
+def test_empty_live_pass_refreshes_the_monitored_writer_heartbeat(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", lambda *_args, **_kwargs: _R("[]"))
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert heartbeat.is_file()
+    assert "confirmed complete empty" in heartbeat.read_text(encoding="utf-8")
+
+
+def test_locked_live_pass_records_busy_without_refreshing_source_freshness(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "acquire_lock", lambda: False)
+
+    assert _run(m, monkeypatch, p) == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert not heartbeat.exists()
+    liveness = tmp_path / "logs" / "self-heal-liveness.jsonl"
+    assert '"event": "busy"' in liveness.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("response", "detail"),
+    [
+        (_R("", returncode=1, stderr="authentication failed"), "authentication failed"),
+        (_R("not-json"), "malformed GitHub output"),
+        (_R('{"unexpected": true}'), "expected a list"),
+    ],
+)
+def test_failed_enumeration_records_error_without_refreshing_source_freshness(tmp_path, monkeypatch, response, detail):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", lambda *_args, **_kwargs: response)
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == m.EX_TEMPFAIL
+    assert not (tmp_path / "logs" / "self-heal.log").exists()
+    liveness = (tmp_path / "logs" / "self-heal-liveness.jsonl").read_text(encoding="utf-8")
+    assert '"event": "error"' in liveness
+    assert detail in liveness
 
 
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
@@ -287,6 +335,38 @@ def test_releases_queue_lock_after_live_pass(tmp_path, monkeypatch):
     _board(p)
     _run(m, monkeypatch, p)
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "live pass must release the lock"
+
+
+# ── KEEPER QUOTA WALL (the L-CLOUDFLARE-DO-QUOTA gate) ───────────────────────────────────────────
+# A spent keeper storage plan is an owner decision, not a heal failure. The rung must report it as
+# one legible BLOCKED line naming the registry owner and exit EX_TEMPFAIL (75) — a tidy exit 0 would
+# restore exactly the "everything looks healthy" blindness that let the quota sit invisible.
+# Mirrors scripts/heal-board.py's handler for the identical condition.
+
+
+def test_broker_quota_wall_exits_tempfail_and_names_lever(tmp_path, monkeypatch, capsys):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+
+    from limen.conduct.client import BrokerQuotaExhausted
+
+    def boom(tasks_path, lf, *, agent, session_id):
+        raise BrokerQuotaExhausted(
+            'conduct broker rejected request (500): {"detail": "Exceeded allowed rows written '
+            'in Durable Objects free tier." }',
+            status=500,
+        )
+
+    monkeypatch.setattr(m, "apply_limen_file_sync", boom)
+    rc = _run(m, monkeypatch, p)
+    out = capsys.readouterr().out
+    assert rc == 75, "quota wall must exit EX_TEMPFAIL, not 0 — silence would hide the spent plan"
+    assert "BLOCKED" in out and "L-CLOUDFLARE-DO-QUOTA" in out, (
+        "the rung must name its durable lever owner in the beat log"
+    )
+    assert "keeper said:" in out
+    assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "quota exit must still release the lock"
 
 
 # ── STALE-BASE GATE (the #111 guard) ────────────────────────────────────────────────────────────
