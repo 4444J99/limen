@@ -124,7 +124,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2322, "head": "7e485f436c6f2e709c4a23a8970247f3fd169e74"},
+        {"target": "limen", "pull_request": 2322, "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0"},
         {"target": "private_custody", "pull_request": 136, "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9"},
         {"target": "portfolio", "pull_request": 222, "head": "da79fb63b9756b5cce0d42ed2a7722668854a228"}
       ],
@@ -232,7 +232,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2322",
       "state": "open",
       "draft": true,
-      "observed_head": "7e485f436c6f2e709c4a23a8970247f3fd169e74",
+      "observed_head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["qualification contracts", "synthetic conversion fixtures", "no-send validation"],
       "counts_as_closure": false
