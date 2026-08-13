@@ -1,0 +1,71 @@
+{
+  "branch": "codex/psp-p01-w05-baseline-relay",
+  "candidate_state": {
+    "source_branch": "feat/private-artifact-vault",
+    "source_head": "ccc87f0f476bbd58cb675f49ee3d6e4ce1ba8146"
+  },
+  "captured_at_utc": "2026-08-10T21:05:25Z",
+  "public_surfaces": [
+    {
+      "id": "profile-readme",
+      "ref": "organvm/4444J99",
+      "repo_head": "667fc943e9487b1322f0c8645d3d43e5ac84e780"
+    },
+    {
+      "id": "portfolio",
+      "probe": {
+        "ok": true,
+        "status": 200,
+        "stderr": null,
+        "title": null
+      },
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/",
+      "repo_head": null
+    },
+    {
+      "id": "resume",
+      "probe": {
+        "ok": true,
+        "status": 200,
+        "stderr": null,
+        "title": null
+      },
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/resume/",
+      "repo_head": null
+    }
+  ],
+  "repo_head": "385447806c1e0de3f636ad849af7f751130be284",
+  "schema": "limen.psp_p01_w05_baseline_preflight.v1",
+  "selected_flagships": [
+    {
+      "name": "Limen",
+      "repo": "organvm/limen",
+      "repo_head": "7c269d54e51024c37099ce2f4bcd248fdcfa58bf",
+      "surface_docs": [
+        "docs/positioning/limen.md"
+      ]
+    },
+    {
+      "name": "UCC Public-Records Intelligence Platform",
+      "repo": "organvm/public-record-data-scrapper",
+      "repo_head": "139fa7b40d875ecfe3a8c693dedfab46671739fd",
+      "surface_docs": [
+        "docs/positioning/public-record-data-scrapper.md"
+      ]
+    },
+    {
+      "name": "AI Chat Exporter",
+      "repo": "organvm/a-i-chat--exporter",
+      "repo_head": "e3a0b8d9a47183163cd92d18f479fc580eaf314d",
+      "surface_docs": [
+        "docs/positioning/a-i-chat--exporter.md"
+      ]
+    }
+  ],
+  "status": "PREFLIGHT",
+  "task": "PSP-P01-W05",
+  "verification": {
+    "not_run_reason": "refresh helper only",
+    "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P01-W05"
+  }
+}

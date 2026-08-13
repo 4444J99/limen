@@ -216,6 +216,7 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 - **Confirm the loop/driver actually runs** — that the entrypoint executes, not merely that files compile.
 - **Check for regressions introduced by merges**: dropped imports, dumped/abandoned lanes, silently overwritten files. After any branch reconcile, diff against the prior green state.
 - **Reconcile divergent branches against authoritative data** — GitHub redirect/PR state via `gh`, or `scripts/verify-dispatch.py` — never against heuristics or guesses.
+- **A/B a change against its own parent commit, never against a branch name.** Once the PR merges, `origin/main` *contains* the change, so `git show origin/main:<file>` silently hands back the fixed file as the "before" — and the A/B compares the fix to itself and passes. The three-dot `git diff origin/main...HEAD` keeps showing a correct diff throughout (it resolves the merge base), so nothing looks wrong. Extract the baseline from `<sha>^` and assert a marker is absent from it before trusting any before/after. (2026-08-07: a post-merge runtime verification's first "pre-fix" extraction was the fixed file.)
 - Report status terse and factual: if tests fail, say so with the output; if a step was skipped, say so; call something done only when the predicate proves it.
 
 ## Data Grounding
@@ -265,6 +266,26 @@ this section is their generalization):
   scripts/corpus_resolve.py` must name a populated home. The estate has now twice reported "no
   populated corpus" with hundreds of MB on disk (registry header, and again 2026-07-31 from a
   relocated store) — "I found nothing" and "I read nothing" are indistinguishable in the output.
+- **On a "since we last reviewed" ask, the PRIOR SESSIONS are one of the channels — and their
+  findings live in the assistant's prose, not in their tool results.** Reconstructing the watermark
+  from the earlier session's *user prompts* is under-reading it. (2026-08-07: a Charles review did
+  exactly that, then reported "Instagram was never read — no export on disk." It had been read, live
+  via the Chrome bridge, in that same prior session; the four-phase relationship arc, the lifetime
+  money total, and a decisive verbatim exchange were all already established there and had to be
+  recovered from the transcript after the operator said "a lot happened in the previous sessions.")
+  Browser-read evidence leaves **no artifact on disk** — it survives as screenshots, so grep the
+  assistant `text` blocks. Absence of a file is not absence of a reading. Locate the prior work
+  (`grep -rli <subject> .agent-runtime/*/projects/*/*.jsonl`), inherit its findings **with
+  provenance**, then state only what is new — and write the result to a durable artifact so the next
+  session never pays this cost again.
+- **A binary or attachment-backed event is invisible to a text dump, and reads as "it didn't
+  happen."** Rendering a thread by its text column silently drops every non-text event. (2026-08-07,
+  same review: two Apple Cash transfers rendered as `[media]` placeholders and were reported as "no
+  money moved in this window" — they had moved, mid-call, six days after the operator said "dont ask
+  me for money ever again," which was the single most load-bearing fact in the window.) In
+  `chat.db`, payments are `message.balloon_bundle_id LIKE '%PeerPayment%'` with the amount inside
+  `payload_data`; enumerate the distinct `balloon_bundle_id` values before trusting any dump, and
+  never conclude "no X occurred" from a channel rendered in one modality.
 
 ## Edits Policy
 
@@ -433,5 +454,7 @@ For a **website-sensitive** PR, merging *is* the deploy — so it requires **gre
 The script **derives** its deploy classification from the GATES registry at run time and fails *toward caution*: if derivation is impossible (broken python/PyYAML/registry), it forces website-sensitive, so a broken environment can only HOLD, never blind-deploy. There is no path list to keep in lockstep — `check-gates.py` enforces registry↔workflow parity on every PR.
 
 **Waiting on a gate.** Never hand-roll a background poll loop on a PR gate (`for … gh pr … sleep … done` is banned — the 2026-07-15 endless-watcher incident: bespoke pollers, silent on FAIL, outliving their sessions). The one sanctioned synchronous waiter is **`scripts/await-pr.sh <PR#> [--merge]`** — hard deadline, loud CLEARED/QUEUED/MERGED/FAILED/TIMEOUT verdicts, single instance per PR, and it refuses to start under a merge-prohibiting pause marker. Queue mode never rewrites the PR head when `main` moves: GitHub creates a synthetic latest-base merge group and the always-on `pr-gate` verifies only that integration composition. Anything longer than the deadline belongs to the beat's merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) — hand off and end. Before arming any watcher or merging, read `logs/AUTONOMY_PAUSED`: its `prohibitions:` bind interactive sessions too — a marker that prohibits merges means no watcher and no merge until the operator releases it.
+
+**Revising against a gate — an automated reviewer is a GENERATOR, not a gate.** The twin of the watcher ban above, and it costs more. A bot that re-reviews **each new head** has no fixed point: handed a fresh diff it always emits something, and every fix *adds* lines, so the surface the next round reviews is larger than the last. Chasing it diverges. (2026-08-12: PR #2122 ran 4 days, ~180 commits, +5,838/−204 across 29 files and 167 inline comments — 119 from one bot — while `merge-policy.sh` had returned **CLEARED** the whole time; the degenerate tail is `style(test): restore terminal newline` three commits in a row. Sibling PRs that week drew 0, 6, and 0 comments.) So: **the merge decision belongs to `scripts/merge-policy.sh` alone** — when it exits `0 CLEARED`, merge, and residual reviewer findings become follow-up issues, never a pre-merge obligation (this is the same rule as "an advisory check never holds a non-deploy merge", applied to prose instead of checks). Bound any fix-on-review cycle at **two rounds**, then stop with a loud verdict naming what you did not address; a third round is evidence the reviewer is generating rather than converging. Precedent: `PREC-2026-08-12-advisory-review-loop-has-no-fixed-point`.
 
 **Still human-gated levers** (unchanged): mass cross-org/fleet merges, anything that **sends** (email) or **wipes/deletes**, and **large spends**. Those stay human-gated; routine code merges do not.

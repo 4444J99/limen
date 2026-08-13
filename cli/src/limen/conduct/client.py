@@ -10,13 +10,62 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from limen.conduct.broker import ConductBroker, ConductError
+from limen.conduct.broker import ConductBroker, ConductConflict, ConductError
 from limen.conduct.models import ConductorSessionV1, ExecutorAttemptV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.store import SQLiteStateStore
 
 
 class BrokerUnavailable(ConductError):
     pass
+
+
+class BrokerQuotaExhausted(ConductError):
+    """The keeper's storage plan is spent — every relay WRITE is refused until it is raised or resets.
+
+    Not a bug and not a transient network fault, which is why it needs its own type: no retry, no
+    backoff, and no amount of correct client code makes the next write land. The resolution is a
+    spend/billing decision by the owner, so the condition's real home is a lever in
+    ``his-hand-levers.json`` (``L-CLOUDFLARE-DO-QUOTA``), not a traceback in a beat log.
+
+    Measured 2026-08-07: ``POST /api/conduct/sessions`` began answering
+
+        500 {"detail": "Exceeded allowed rows written in Durable Objects free tier."}
+
+    ``_register_relay_session`` is on EVERY relay write path, so this one wall blocked the
+    canonical-heal rung, dispatch receipts, and board publication simultaneously — while twelve
+    regressed ``needs-human`` atoms stayed regressed and the beat log showed a bare ``}``.
+
+    **This classifies on the rejection PROSE, which the estate otherwise forbids** (see
+    ``ConductError``: three keepers word the same condition differently, so callers are told to
+    classify on ``status``). The exemption is narrow and deliberate: a Cloudflare storage-quota
+    refusal surfaces as an undifferentiated 500 with no machine-readable field to read, so prose is
+    the ONLY available signal. The durable fix is for the keeper to answer a structured code — that
+    work is recorded on the lever, and this detection becomes the compatibility fallback for a
+    keeper that has not been redeployed. Until then, matching a generic 500 is strictly better than
+    the alternative, which is what actually happened: a 61-line traceback nobody could see.
+    """
+
+
+# Substrings that identify a storage-plan wall rather than a keeper defect. Kept narrow on purpose:
+# a broad match here would reclassify real 500s as "blocked on the owner" and hide genuine bugs.
+_QUOTA_MARKERS = (
+    "exceeded allowed rows written",
+    "durable objects free tier",
+    "exceeded your storage limit",
+)
+
+
+def _is_quota_refusal(status: int | None, detail: str) -> bool:
+    """A storage-plan wall, as opposed to a keeper defect or a rate limit.
+
+    A quota marker is REQUIRED — status alone is never enough, because 500 is exactly what a real
+    bug also returns. 429 is included because a plan ceiling can surface as a throttle, but only
+    when the body still names the ceiling.
+    """
+    if status not in (429, 500, 503):
+        return False
+    lowered = detail.lower()
+    return any(marker in lowered for marker in _QUOTA_MARKERS)
 
 
 class HttpConductClient:
@@ -47,7 +96,16 @@ class HttpConductClient:
                 raw = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")[:1000]
-            raise ConductError(f"conduct broker rejected request ({exc.code}): {detail}") from exc
+            message = f"conduct broker rejected request ({exc.code}): {detail}"
+            # The status code is the stable signal; `detail` is keeper-authored prose that
+            # differs per implementation. Carry the code so callers never parse the text.
+            if exc.code == 409:
+                raise ConductConflict(message, status=exc.code) from exc
+            if _is_quota_refusal(exc.code, detail):
+                # Distinguished from a generic 500 so callers can report "blocked on the owner's
+                # spend lever" instead of retrying a write that cannot land until he acts.
+                raise BrokerQuotaExhausted(message, status=exc.code) from exc
+            raise ConductError(message, status=exc.code) from exc
         except (urllib.error.URLError, TimeoutError) as exc:
             raise BrokerUnavailable(f"conduct broker unavailable: {exc}") from exc
         try:
@@ -60,6 +118,16 @@ class HttpConductClient:
 
     def capabilities(self) -> dict[str, Any]:
         return self._request("GET", "/api/conduct/capabilities")
+
+    def private_board(self) -> dict[str, Any]:
+        """Read the authenticated full board from private keeper custody."""
+
+        return self._request("GET", "/api/board/private")
+
+    def initialize_private_board(self, board: dict[str, Any]) -> dict[str, Any]:
+        """Seed private custody once; the keeper publishes only its aggregate projection."""
+
+        return self._request("POST", "/api/board/initialize", {"board": board})
 
     def register(self, session: ConductorSessionV1) -> dict[str, Any]:
         return self._request("POST", "/api/conduct/sessions", session.model_dump(mode="json"))

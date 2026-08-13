@@ -1,6 +1,6 @@
 # Financial Office — Rolling Cash-Flow Projection
 
-> Generated: 2026-07-18T07:07:24Z
+> Generated: 2026-08-10T13:51:57Z
 > *Forward-looking estimate based on known revenue stages and obligations.
 > Confidence increases as more balances and obligation amounts are confirmed.*
 
@@ -23,18 +23,18 @@
 
 | Week | Starting | Known Inflows | Known Outflows | Net | Cumulative | Note |
 |---|---|---|---|---|---|---|
-| W1 | 2026-07-18 | — | — | $+0.00 | $+0.00 |  |
-| W2 | 2026-07-25 | — | — | $+0.00 | $+0.00 |  |
-| W3 | 2026-08-01 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W4 | 2026-08-08 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W5 | 2026-08-15 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W6 | 2026-08-22 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W7 | 2026-08-29 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W8 | 2026-09-05 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W9 | 2026-09-12 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W10 | 2026-09-19 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W11 | 2026-09-26 | — | — | $+0.00 | $+0.00 | post-deploy |
-| W12 | 2026-10-03 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W1 | 2026-08-10 | — | — | $+0.00 | $+0.00 |  |
+| W2 | 2026-08-17 | — | — | $+0.00 | $+0.00 |  |
+| W3 | 2026-08-24 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W4 | 2026-08-31 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W5 | 2026-09-07 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W6 | 2026-09-14 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W7 | 2026-09-21 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W8 | 2026-09-28 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W9 | 2026-10-05 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W10 | 2026-10-12 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W11 | 2026-10-19 | — | — | $+0.00 | $+0.00 | post-deploy |
+| W12 | 2026-10-26 | — | — | $+0.00 | $+0.00 | post-deploy |
 
 ### Runway
 
@@ -43,9 +43,8 @@
 
 ## Obligations (financial-material)
 
-Sourced from `obligations-ledger.json` — 2 protocol-class obligations:
+Sourced from `obligations-ledger.json` — 1 protocol-class obligations:
 
 | Priority | Title | Owner | Next Step |
 |---|---|---|---|
-| 88 | Student loan — default risk — U.S. Department of Education | anthony-personal | Log in at nelnet.studentaid.gov: check default status, recertify IDR plan |
-| 78 | KYC / identity verification — Stripe | sovereign-systems-llc | Prefer individual monetization rail (Ko-fi/Lemon Squeezy/MONETA) — dead LLC blocks Stripe KYC |
+| 76 | Warm lead — deploy door — gmail.com | yours | A prospective client wrote you FIRST — a warm deploy lead. Reply by email: acknowledge, ask which engagement depth fits, and propose an email-first next step. |

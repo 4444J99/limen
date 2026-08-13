@@ -19,6 +19,15 @@ def _load():
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
+    module._worktree_admission_snapshot = lambda: {"active": False, "block_new_local": False}
+    # Unit fixtures own provider reachability. Falling through to capacity.agent_status
+    # probes the host binaries for every canonical lane, making 48 hermetic cases take
+    # minutes and exceed the shared CI gate deadline on slower runners.
+    module.agent_status = lambda _agent: {"reachable": True}
+    # Direct admission tests must not parse the live 3,000-row projection merely because
+    # they supplied an in-memory task list. _configure replaces this with its tiny board
+    # for tests that intentionally exercise keeper-backed budget governance.
+    module.TASKS = SCRIPT.with_name(".handoff-relay-test-missing-tasks.yaml")
     return module
 
 
@@ -53,6 +62,8 @@ def _configure(mod, monkeypatch, tmp_path, board):
     monkeypatch.setattr(mod, "OVERNIGHT", overnight)
     monkeypatch.setattr(mod, "SELF_HEAL", logs / "self-heal.log")
     monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 12, 12, 5, tzinfo=dt.timezone.utc))
+    # The fixture represents a healthy provider receipt without requiring host binaries.
+    monkeypatch.setattr(mod, "agent_status", lambda _agent: {"reachable": True})
     return logs
 
 
@@ -80,7 +91,7 @@ def _task(task_id, *, priority="medium", agent="codex", **extra):
     return {
         "id": task_id,
         "title": task_id,
-        "repo": "organvm/limen",
+        "repo": "organvm/session-meta",
         "target_agent": agent,
         "priority": priority,
         "budget_cost": 1,
@@ -91,6 +102,7 @@ def _task(task_id, *, priority="medium", agent="codex", **extra):
         "predicate": "pytest -q cli/tests/test_handoff_relay.py",
         "receipt_target": f"github:organvm/limen:pull-request:{task_id}",
         "status": "open",
+        "created": "2026-07-12",
         "labels": [],
         "depends_on": [],
         "dispatch_log": [],
@@ -111,12 +123,14 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
     assert payload["next_action"] == payload["dispatchable_next"]
     assert payload["dispatch_admission"]["admissible"] == 1
     assert payload["dispatch_admission"]["reason_counts"] == {"provider_health": 1}
+    assert payload["dispatch_admission"]["provider_health_reason_counts"] == {"gemini": 1}
+    assert payload["dispatch_admission"]["admissible_agent_counts"] == {"codex": 1}
     assert payload["board_budget"] == {
         "daily": 10,
         "unit": "runs",
         "track_date": "2026-07-12",
-        "spent": 3,
-        "remaining": 7,
+        "spent": 2,
+        "remaining": 8,
         "per_agent": {
             "codex": {
                 "cap": 5,
@@ -124,7 +138,7 @@ def test_build_splits_ostensible_from_dispatchable_and_preserves_aliases(monkeyp
                 "remaining": 3,
                 "reset_at": "2026-07-12T10:00:00+00:00",
             },
-            "gemini": {"cap": 10, "spent": 1, "remaining": 7, "reset_at": None},
+            "gemini": {"cap": 10, "spent": 0, "remaining": 10, "reset_at": None},
         },
     }
     assert payload["provider_headroom"]["generated"] == "2026-07-12T12:00:00+00:00"
@@ -172,7 +186,7 @@ def test_dispatchable_next_skips_successor_required_open_row():
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
 
 
-def test_dispatchable_next_skips_operator_paused_open_row():
+def test_dispatchable_next_matches_dispatcher_for_legacy_operator_paused_label():
     mod = _load()
     tasks = [
         _task("PAUSED", priority="critical", labels=["operator-paused"]),
@@ -182,8 +196,8 @@ def test_dispatchable_next_skips_operator_paused_open_row():
     providers = {"generated": "now", "vendors": {"codex": {"remaining": 2}}}
 
     admission = mod._dispatch_admission(tasks, budget, providers)
-    assert admission["dispatchable_next"]["id"] == "READY"
-    assert admission["reason_counts"]["operator_paused"] == 1
+    assert admission["dispatchable_next"]["id"] == "PAUSED"
+    assert admission["reason_counts"] == {}
 
 
 def test_dispatchable_next_reports_stable_work_loan_denial() -> None:
@@ -214,6 +228,357 @@ def test_dispatchable_next_rejects_live_low_health_even_with_remaining_capacity(
     }
 
     assert mod._dispatchable_next(tasks, budget, providers)["id"] == "READY"
+
+
+def test_dispatch_admission_projects_named_provider_blocked_tasks(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    tasks = [_task("CONST-CORPUS-REFRESH", agent="claude")]
+    budget = {"remaining": 3, "per_agent": {"claude": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"claude": {"remaining": 0, "health": "exhausted"}},
+    }
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["dispatchable_next"] is None
+    assert admission["gated_tasks"] == [
+        {
+            "id": "CONST-CORPUS-REFRESH",
+            "agent": "claude",
+            "reason": "provider_health",
+        }
+    ]
+
+
+def test_dispatch_admission_records_only_capable_lanes_for_any_control_host_task(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: False)
+    task = _task("CONTROL", agent="any", labels=["execution:control-host"])
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {
+        "generated": "now",
+        "vendors": {"jules": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+    assert admission["admissible_agent_counts"] == {}
+    assert admission["admissible_any_agent_counts"] == {}
+
+
+def test_dispatch_admission_excludes_any_lane_over_per_agent_budget(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
+    task = _task("ANY-EXPENSIVE", agent="any", budget_cost=2)
+    budget = {"remaining": 3, "per_agent": {"jules": {"cap": 2, "remaining": 1}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"jules": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible_any_agent_counts"] == {}
+
+
+def test_dispatch_admission_rejects_ineligible_explicit_lane():
+    mod = _load()
+    task = _task("CONTROL", agent="jules", labels=["execution:control-host"])
+    budget = {"remaining": 3, "per_agent": {"jules": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {"jules": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+    assert admission["admissible_agent_counts"] == {}
+
+
+def test_dispatch_admission_uses_effective_route_for_provider_health():
+    mod = _load()
+    routed = _task(
+        "ROUTED",
+        agent="codex",
+        dispatch_log=[
+            {
+                "timestamp": "2026-07-12T12:00:00+00:00",
+                "agent": "codex",
+                "session_id": "route-receipt",
+                "status": "open",
+                "route_to": "claude",
+            }
+        ],
+    )
+    budget = {"remaining": 3, "per_agent": {"claude": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "codex": {"remaining": 0, "health": "auth_needed"},
+            "claude": {"remaining": 5, "health": "ok"},
+        },
+    }
+
+    admission = mod._dispatch_admission([routed], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_agent_counts"] == {"claude": 1}
+
+
+def test_dispatch_admission_names_auth_blocked_provider():
+    mod = _load()
+    tasks = [_task("LOGIN", priority="high", agent="jules"), _task("READY", agent="codex")]
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "jules": {"remaining": 5, "health": "auth_needed"},
+            "codex": {"remaining": 5, "health": "ok"},
+        },
+    }
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["dispatchable_next"]["id"] == "READY"
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"jules": 1}
+
+
+def test_dispatch_admission_projects_provider_outcome_auth_cooldown():
+    mod = _load()
+    task = _task("OPENCODE-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_cooldown_count": 1,
+                "provider_last_terminal_failure": "2026-07-12T12:00:00+00:00",
+                "provider_last_terminal_failure_class": "auth_failure",
+                "provider_outcome_all_blocked": True,
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
+def test_auth_cooldown_precedes_generic_down_lane_classification():
+    mod = _load()
+    task = _task("OPENCODE-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "down_lanes": ["opencode"],
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_all_blocked": True,
+                "provider_last_terminal_failure_class": "auth_failure",
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_projects_provider_map_auth_cooldown():
+    mod = _load()
+    task = _task("HOSTED-LOGIN", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_outcome_all_blocked": True,
+                "provider_terminal_failure_classes": {"openrouter": "auth_failure"},
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"auth_blocked": 1}
+    assert admission["provider_health_reason_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_preserves_agy_weak_proxy_lane():
+    mod = _load()
+    task = _task("AGY-PROXY", agent="agy")
+    budget = {"remaining": 3, "per_agent": {"agy": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "agy": {
+                "remaining": 0,
+                "health": "low",
+                "signal": "dispatch-count",
+                "limit_source": "operator board cap",
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
+
+
+def test_dispatch_admission_filters_unreachable_any_lane(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("github_actions", "codex"))
+    monkeypatch.setattr(mod, "agent_status", lambda agent: {"reachable": agent == "codex"})
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    task = _task("ANY-LIVE", agent="any")
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_any_agent_counts"] == {"codex": 1}
+
+
+def test_board_budget_clears_expired_same_day_reset_window(monkeypatch):
+    mod = _load()
+    now = dt.datetime(2026, 7, 12, 16, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(mod, "_now", lambda: now)
+    monkeypatch.setattr(mod, "_window_hours", lambda _agent: 5.0)
+    board = _board([])
+    board["portal"]["budget"]["track"] = {
+        "date": "2026-07-12",
+        "spent": 9,
+        "per_agent": {"codex": 2, "gemini": 1},
+        "per_agent_reset": {"codex": "2026-07-12T10:00:00+00:00"},
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 0
+    assert budget["per_agent"]["codex"]["spent"] == 0
+    assert budget["per_agent"]["gemini"]["spent"] == 0
+
+
+def test_dispatch_admission_applies_chronic_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "chronic_dispatch_reason", lambda _task: "repeated-no-op")
+    monkeypatch.setattr(mod, "_worktree_admission_snapshot", lambda: {"active": False})
+    task = _task("CHRONIC")
+    admission = mod._dispatch_admission(
+        [task],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"chronic_dispatch": 1}
+    assert admission["reason_counts_by_agent"] == {"codex": {"chronic_dispatch": 1}}
+
+
+def test_dispatch_admission_applies_local_worktree_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(
+        mod,
+        "_worktree_admission_snapshot",
+        lambda: {"active": True, "block_new_local": True},
+    )
+    monkeypatch.setattr(
+        mod,
+        "_worktree_admission_for_task",
+        lambda _task, _agent, _snapshot: (True, "disk-pressure"),
+    )
+    task = _task("LOCAL-BLOCKED")
+    admission = mod._dispatch_admission(
+        [task],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"worktree_admission": 1}
+    assert admission["reason_counts_by_agent"] == {"codex": {"worktree_admission": 1}}
+
+
+def test_board_budget_preserves_active_per_agent_reset_window(monkeypatch):
+    mod = _load()
+    now = dt.datetime(2026, 7, 13, 2, 0, tzinfo=dt.timezone.utc)
+    monkeypatch.setattr(mod, "_now", lambda: now)
+    monkeypatch.setattr(mod, "_window_hours", lambda agent: 5.0 if agent == "codex" else 24.0)
+    board = _board([])
+    board["portal"]["budget"]["track"] = {
+        "date": "2026-07-12",
+        "spent": 9,
+        "per_agent": {"codex": 2, "gemini": 7},
+        "per_agent_reset": {
+            "codex": "2026-07-13T00:00:00+00:00",
+            "gemini": "2026-07-12T00:00:00+00:00",
+        },
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 2
+    assert budget["remaining"] == 8
+    assert budget["per_agent"]["codex"]["spent"] == 2
+    assert budget["per_agent"]["gemini"]["spent"] == 0
+
+
+def test_dispatch_admission_discovers_unmetered_canonical_lane(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("github_actions",))
+    monkeypatch.setattr(mod, "agent_status", lambda _agent: {"reachable": True})
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda task, agent: agent == "github_actions")
+    task = _task(
+        "ANY-VERIFY",
+        agent="any",
+        type="verification",
+        labels=["mode:verification-only"],
+        depends_on=[],
+    )
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["admissible_any_agent_counts"] == {"github_actions": 1}
+
+
+def test_dispatch_admission_preserves_any_budget_block(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("jules",))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    task = _task("ANY-BUDGET", agent="any", budget_cost=2)
+    budget = {"remaining": 3, "per_agent": {"jules": {"cap": 2, "remaining": 1}}}
+    providers = {"generated": "now", "vendors": {"jules": {"remaining": 5, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
 
 
 def test_dispatchable_next_skips_task_with_unavailable_explicit_mount(tmp_path):
@@ -265,6 +630,18 @@ def test_check_requires_fresh_truthful_schema(monkeypatch, tmp_path, capsys):
     mod.HANDOFF.write_text(json.dumps(payload), encoding="utf-8")
     assert mod.check() == 1
     assert "missing 'board_budget'" in capsys.readouterr().out
+
+
+def test_check_rejects_keeper_unavailable_handoff(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([_task("READY")]))
+    assert mod.write() == 0
+    payload = json.loads(mod.HANDOFF.read_text(encoding="utf-8"))
+    payload["dispatch_admission"]["keeper_available"] = False
+    mod.HANDOFF.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert mod.check() == 1
+    assert "canonical keeper unavailable" in capsys.readouterr().out
 
 
 def test_check_rejects_missing_or_stale_provider_truth(monkeypatch, tmp_path, capsys):
@@ -397,3 +774,317 @@ def test_heartbeat_loop_drains_before_paused_and_offline_early_continues_once():
     assert drain_call < mode < paused_continue < connectivity < offline_continue
     assert lines.count("drain_session_end_breadcrumbs") == 1
     assert "consume-session-end-breadcrumbs.py" not in heartbeat[drain_call:]
+
+
+def test_dispatch_admission_keeps_opencode_route_when_one_provider_is_healthy():
+    mod = _load()
+    task = _task("OPENCODE-FALLBACK", agent="opencode")
+    budget = {"remaining": 3, "per_agent": {"opencode": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "vendors": {
+            "opencode": {
+                "remaining": 5,
+                "health": "ok",
+                "provider_outcome_health": "degraded",
+                "provider_cooldown_count": 1,
+                "provider_outcome_all_blocked": False,
+            }
+        },
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
+    assert admission["admissible_agent_counts"] == {"opencode": 1}
+
+
+def test_dispatch_admission_honors_live_down_lane_snapshot():
+    mod = _load()
+    task = _task("AGY-DOWN", agent="agy")
+    budget = {"remaining": 3, "per_agent": {"agy": {"remaining": 3}}}
+    providers = {
+        "generated": "now",
+        "down_lanes": ["agy"],
+        "vendors": {"agy": {"remaining": 5, "health": "ok"}},
+    }
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"provider_health": 1}
+    assert admission["provider_health_reason_counts"] == {"agy": 1}
+    assert admission["down_lanes"] == ["agy"]
+
+
+def test_dispatch_admission_applies_value_gate_before_counting(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: False)
+    task = _task("PARTNER-GATED", agent="codex")
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 5, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+
+
+def test_dispatch_admission_caches_lane_reachability(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex", "jules"))
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: True)
+    calls = []
+    monkeypatch.setattr(
+        mod,
+        "_lane_reachable",
+        lambda agent, _providers: calls.append(agent) or True,
+    )
+    tasks = [_task("ANY-1", agent="any"), _task("ANY-2", agent="any")]
+    budget = {"remaining": 10, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    admission = mod._dispatch_admission(tasks, budget, providers)
+
+    assert admission["admissible"] == 2
+    assert calls == ["codex", "jules"]
+
+
+def test_board_budget_discards_expired_track_counters(monkeypatch):
+    mod = _load()
+    board = _board([])
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 13, tzinfo=dt.timezone.utc))
+    monkeypatch.setattr(mod, "_window_hours", lambda _agent: 5.0)
+
+    budget = mod._board_budget(board)
+
+    assert budget["track_date"] == "2026-07-12"
+    assert budget["spent"] == 0
+    assert budget["remaining"] == 10
+    assert budget["per_agent"]["codex"]["spent"] == 0
+    assert budget["per_agent"]["codex"]["remaining"] == 5
+
+
+def test_board_budget_applies_schema_defaults_and_recomputes_missing_spent(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 8, 12, 12, tzinfo=dt.timezone.utc))
+    board = {
+        "portal": {
+            "budget": {
+                "per_agent": {"codex": 5},
+                "track": {
+                    "date": "2026-08-12",
+                    "per_agent": {"codex": 2},
+                    "per_agent_reset": {"codex": "2026-08-12T10:00:00+00:00"},
+                },
+            }
+        }
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["daily"] == 100
+    assert budget["unit"] == "runs"
+    assert budget["spent"] == 2
+    assert budget["remaining"] == 98
+
+
+def test_board_budget_clears_current_day_counter_without_lane_reset(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 8, 12, 12, tzinfo=dt.timezone.utc))
+    board = {
+        "portal": {
+            "budget": {
+                "per_agent": {"codex": 5},
+                "track": {
+                    "date": "2026-08-12",
+                    "spent": 2,
+                    "per_agent": {"codex": 2},
+                },
+            }
+        }
+    }
+
+    budget = mod._board_budget(board)
+
+    assert budget["spent"] == 0
+    assert budget["remaining"] == 100
+    assert budget["per_agent"]["codex"]["spent"] == 0
+
+
+def test_board_budget_fails_closed_on_invalid_daily_value():
+    mod = _load()
+    budget = mod._board_budget(
+        {
+            "portal": {
+                "budget": {
+                    "daily": "not-an-integer",
+                    "unit": "runs",
+                    "track": {"date": "2026-07-12", "spent": 1},
+                }
+            }
+        }
+    )
+
+    assert budget == {
+        "daily": None,
+        "unit": "runs",
+        "track_date": "2026-07-12",
+        "spent": None,
+        "remaining": 0,
+        "per_agent": {},
+    }
+
+
+def test_admission_attributes_global_budget_block_to_candidate_lanes(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+
+    admission = mod._dispatch_admission(
+        [_task("GLOBAL", agent="any", budget_cost=8)],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["reason_counts"] == {"budget_global": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_global"] == 1
+
+
+def test_explicit_capped_lane_ignores_aggregate_daily_remaining(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    monkeypatch.setattr(mod, "_eligible_any_agent", lambda *_args: True)
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 10)
+
+    admission = mod._dispatch_admission(
+        [_task("CAPPED", agent="codex", budget_cost=8)],
+        {
+            "remaining": 3,
+            "per_agent": {"codex": {"cap": 10, "spent": 0, "remaining": 10}},
+        },
+        {"generated": "now", "vendors": {"codex": {"health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 1
+    assert admission["reason_counts"] == {}
+
+
+def test_any_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 0)
+
+    admission = mod._dispatch_admission(
+        [_task("ANY", agent="any", budget_cost=1)],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_agent"] == 1
+
+
+def test_admission_honors_open_pr_receipts_and_active_repair_owners(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+    budget = {"remaining": 3, "per_agent": {}}
+    providers = {"generated": "now", "vendors": {}}
+
+    open_pr = _task(
+        "OPEN-PR",
+        dispatch_log=[{"status": "dispatched", "session_id": "https://github.com/organvm/limen/pull/42"}],
+    )
+    open_admission = mod._dispatch_admission([open_pr], budget, providers)
+    assert open_admission["reason_counts"] == {"open_pr_receipt": 1}
+
+    stale = _task("HEAL-cifix-foo-123")
+    owner = _task("HEAL-rebase-foo-123", status="in_progress")
+    repair_admission = mod._dispatch_admission([stale, owner], budget, providers)
+    assert repair_admission["reason_counts"]["superseded_active_owner"] == 1
+
+
+def test_targeted_admission_uses_dispatcher_throughput_governor(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_remaining_budget_readonly", lambda *_args: 0)
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: True)
+
+    admission = mod._dispatch_admission(
+        [_task("TARGETED", agent="codex", budget_cost=1)],
+        {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}},
+        {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"budget_agent": 1}
+    assert admission["reason_counts_by_agent"]["codex"]["budget_agent"] == 1
+
+
+def test_admission_preserves_generated_buildout_registry_gate(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "task_passes_value_gate", lambda _task: True)
+    monkeypatch.setattr(mod, "_routine_generated_buildout_allowed", lambda _task: False)
+    task = _task("GENERATED", labels=["generated", "build-out"])
+    budget = {"remaining": 3, "per_agent": {"codex": {"remaining": 3}}}
+    providers = {"generated": "now", "vendors": {"codex": {"remaining": 3, "health": "ok"}}}
+
+    admission = mod._dispatch_admission([task], budget, providers)
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"admission_blocked": 1}
+
+
+def test_load_board_rejects_parseable_but_schema_invalid_keeper_projection(tmp_path):
+    mod = _load()
+    mod.TASKS = tmp_path / "tasks.yaml"
+    mod.TASKS.write_text(
+        "version: '1.0'\ntasks:\n  - id: INVALID-MISSING-REQUIRED-FIELDS\n",
+        encoding="utf-8",
+    )
+
+    assert mod._load_board() is None
+
+
+def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):
+    mod = _load()
+    _configure(mod, monkeypatch, tmp_path, _board([]))
+    monkeypatch.setattr(mod, "_load_board", lambda: None)
+
+    payload = mod.build()
+
+    admission = payload["dispatch_admission"]
+    assert admission["keeper_available"] is False
+    assert admission["reason_counts"] == {"keeper_unavailable": 1}
+    assert admission["gated_tasks"] == []
+    assert admission["dispatchable_next"] is None
+
+
+def test_any_lane_checks_reachability_before_capability(monkeypatch):
+    mod = _load()
+    monkeypatch.setattr(mod, "PAID_AGENT_ORDER", ("codex",))
+    monkeypatch.setattr(mod, "_lane_reachable", lambda *_args: False)
+    monkeypatch.setattr(
+        mod,
+        "_eligible_any_agent",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("unreachable lane must stop before capability")),
+    )
+
+    admission = mod._dispatch_admission(
+        [_task("ANY-UNREACHABLE", agent="any")],
+        {"remaining": 3, "per_agent": {}},
+        {"generated": "now", "vendors": {}},
+    )
+
+    assert admission["admissible"] == 0
+    assert admission["reason_counts"] == {"provider_health": 1}

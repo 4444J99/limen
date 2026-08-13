@@ -1,0 +1,40 @@
+# A healthy engagement — the shape to aim for. `engagement-guard.py` exits 0 on this file.
+#
+# Every field here is the direct inverse of a real failure recorded in engagements/victoroff.yaml.
+# Copy this file to start a new engagement, then fill it in HONESTLY on day one — the guard is
+# only worth running against a truthful config.
+
+engagement: examples/healthy
+counterparty: "Example Corp (operating, revenue-positive)"
+max_unpaid_days: 14
+
+work:
+  started: 2026-09-01 # AFTER the instrument was executed, not before
+  description: "bounded discovery phase, defined in the SOW"
+
+instrument:
+  name: "MSA + SOW-01"
+  signed_by_me: 2026-08-28
+  signed_by_them: 2026-08-29 # countersigned before work began
+  blank_fields_at_signature: false # every money field was filled before signing
+  compensation:
+    fixed_amount: 12000.00
+    fixed_due: 2026-09-15 # a DATE, not an event the client controls
+    contingent: "optional success fee, defined in SOW-01 §4"
+
+payments_received: 4000.00 # deposit cleared before the first commit
+
+asset:
+  name: "example-project (private repository)"
+  custody: me # transfers on final payment, per SOW-01 §7
+  transfer_requested: null
+
+counterparty_can_pay:
+  verified: true
+  evidence: "deposit cleared; trade references checked; operating revenue confirmed"
+
+counsel:
+  me: true
+  them: true
+
+promises_not_in_instrument: [] # everything material is on paper

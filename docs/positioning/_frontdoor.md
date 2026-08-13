@@ -2,7 +2,9 @@
 
 # I build production systems that solve expensive problems.
 
-Not demos. Live platforms — tested, deployed, and running. Each repo below is a working system someone can put to work today. Two doors:
+Selected systems range from live infrastructure to deployed tools and working prototypes. Every card states its current maturity and evidence basis. Two doors:
+
+Architected and directed by one person through a governed, multi-agent production system.
 
 **[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
 > Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
@@ -14,78 +16,64 @@ Not demos. Live platforms — tested, deployed, and running. Each repo below is 
 
 ## The systems
 
-### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
-
-A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.
-
-`170 tests across 16 suites` · `~5,900 lines of TypeScript` · `distributed on GreasyFork, GitHub, Docker (GHCR), and Cloudflare Pages` · `5 export formats` · `9-language UI` · `MIT-licensed · 549 commits, actively maintained`
-
-**Solves:** ChatGPT conversations are ephemeral by design. There's no native export to Markdown or HTML and no bulk download — the official dump is one unwieldy JSON blob most people can't use. Knowledge you paid for in thinking time evaporates or gets locked in a format you can't pipe anywhere.
-
-→ **Build this into my product** · see [the ways to work together](docs/positioning/a-i-chat--exporter.md)
-
-### [50-State UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
-
-A production platform that collects UCC-1 filings from all 50 Secretary-of-State portals, enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.
-
-`3,399 passing tests` · `Terraform AWS (multi-AZ RDS, Redis, S3)` · `60+ collection agents` · `all 50 states` · `live deploy`
-
-**Solves:** Commodity aged UCC lists are cheap and worthless. Exclusive, fresh, enriched, scored UCC leads are the difference between a dialer full of dead numbers and a funded deal.
-
-→ **Deploy this for your shop** · see [the ways to work together](docs/positioning/public-record-data-scrapper.md)
-
-### [Styx Peer-Audited Behavioral Market](https://github.com/organvm/peer-audited--behavioral-blockchain)
-
-A production-grade enforcement layer for commitments with real financial stakes: Stripe FBO escrow, a double-entry ledger, peer-audited proof review, bounty incentives, honeypot QA, and privacy-firewalled B2B funding where employers can sponsor engagement without seeing individual health data.
-
-`1,107 tests across workspaces` · `public pitch surface returns 200 OK` · `NestJS + Next.js + React Native + Tauri monorepo` · `Stripe escrow and double-entry ledger` · `CodeQL, secret scan, Terraform, beta-readiness, and e2e CI gates`
-
-**Solves:** Accountability and corporate-wellness programs spend money on intent but do not create follow-through. The proof is usually self-reported, the incentives are weak, and holding personal health data creates liability.
-
-→ **Deploy this for a commitment program** · see [the ways to work together](docs/positioning/peer-audited--behavioral-blockchain.md)
-
-### [Autonomous Inbox-Triage & Draft System](https://github.com/organvm/universal-mail--automation)
-
-A production system that sweeps Gmail and Apple Mail across accounts, classifies every thread against a protocol ladder, tracks every owed reply in an obligations ledger, and composes voice-matched draft replies — draft-only, it never sends. Deploys as a Cloudflare Worker; runs keyless (IMAP app-password / Apple Mail osascript).
-
-`400+ tests` · `Cloudflare Worker deploy (wrangler)` · `Gmail + Apple Mail, keyless` · `draft-only by design — composes replies, never sends` · `obligations ledger — every owed reply tracked`
-
-**Solves:** Obligations fall through the cracks — the escalation you missed, the reply you owed a week ago — while triage burns the most expensive hours of the day. Every 'AI email tool' wants send authority nobody sane will give it.
-
-→ **Run this on my inbox** · see [the ways to work together](docs/positioning/universal-mail--automation.md)
-
 ### [Self-Healing Agent Fleet Infrastructure](https://github.com/organvm/limen)
 
-A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that run autonomously on a heartbeat. The fleet maintains itself: monitors liveness, reaps stale work, syncs state, escalates failures. Built-in organs: proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, health monitoring.
+A live orchestration and governance system operating in its owner's environment since May 2026, with explicit failure states and human gates.
 
-`9-rung organ ladder (each self-* owns its own domain)` · `Heartbeat-driven autonomic loop (scripts/metabolize.sh)` · `Self-healing on regression (heal/ branch pattern)` · `Live: proprioception organ, VIGILIA federation, branch-reap, credential-wall` · `Zero manual upkeep — runs forever once seeded`
+**Current state:** Live in the owner's environment; external adoption unvalidated; human gates remain explicit.
 
-**Solves:** Every agent fleet needs: health checks, credential refresh, stale-work cleanup, state reconciliation, failure escalation. If manual, each system costs ~2h/week ops. If ignored, cascading failures ripple through the fleet.
+**Evidence:** verified: heartbeat-driven autonomic loop (scripts/metabolize.sh) · verified: proprioception, VIGILIA federation, branch-reap, and credential-wall organs are present · verified: failure states and human gates are explicit.
 
-→ **Adopt self-healing fleet ops** · see [the ways to work together](docs/positioning/limen.md)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/limen.md)
 
-### [Portfolio & Case Studies — 16 Production Systems](https://github.com/organvm/portfolio)
+### [UCC Public-Records Intelligence Platform](https://github.com/organvm/public-record-data-scrapper)
 
-A public portfolio site showcasing 16 completed production systems — each with a case study, real architecture diagrams (p5.js interactive), live demos where applicable, and the decision trees behind the build. Built with Astro, deployed on Netlify, fully indexed and discoverable.
+A working prototype with four state collectors implemented on a fifty-state architecture; deployment and adoption are unvalidated.
 
-`609 files · Astro + TypeScript · p5.js interactive visualizations` · `69 test files across the portfolio + content` · `16 case studies with architecture, decisions, and outcomes` · `Live demos & interactive diagrams` · `Netlify deployment + CI/CD` · `SEO-optimized content sites`
+**Current state:** Working prototype; four collectors implemented; deployment and adoption unvalidated.
 
-**Solves:** A portfolio of demos and one-liners doesn't prove judgment. Seeing the tradeoffs, the decisions, the outcomes, and the architecture is the difference between 'built something' and 'ships production systems'.
+**Evidence:** verified: 4 state collectors implemented on a 50-state architecture.
 
-→ **Explore the case studies** · see [the ways to work together](docs/positioning/portfolio.md)
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md)
+
+### [AI Chat Exporter](https://github.com/organvm/a-i-chat--exporter)
+
+A deployed public exporter with an active repository and MIT licence; functionality metrics remain repository-asserted on the linked Level-2 page.
+
+**Current state:** Deployed distribution surfaces; external adoption unvalidated.
+
+**Evidence:** verified: MIT license and active repository history.
+
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/a-i-chat--exporter.md)
+
+### [a-i--skills](https://github.com/organvm-iv-taxis/a-i--skills)
+
+**Current state:** Deployed public library; external adoption is modest and directly observable.
+
+**Evidence:** verified: 15 stars and 7 forks, with external accounts verified on 2026-08-09.
+
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm-iv-taxis/a-i--skills)
+
+### [MONETA](https://mint.4444j99.dev)
+
+**Current state:** Live; revenue and external adoption are unverified.
+
+**Evidence:** verified: public mint endpoint returned HTTP 200 on 2026-08-09.
+
+→ **Inspect the evidence** · see [the documented current state](https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims)
 
 ---
 
 ## Built with partners
 
-Systems the same engine produced with collaborators — each a working venture where the partner drives the domain and the engine builds the machine.
+Collaborative systems and ventures produced through the same engine. Maturity varies; each project page is the source of truth.
 
-- **[mirror-mirror](https://github.com/organvm/mirror-mirror)** — with charles
-- **[your-fit-tailored](https://github.com/organvm/your-fit-tailored)** — with charles
-- **[styx](https://github.com/organvm/peer-audited--behavioral-blockchain)** — with jessica
-- **[spiral](https://github.com/organvm/sovereign-systems--elevate-align)** — with maddie
-- **[hokage-chess](https://github.com/organvm/hokage-chess)** — with rob
-- **[micro-tato](https://github.com/organvm/micro-tato)** — with rob
+- **[mirror-mirror](https://github.com/4444J99/mirror-mirror)** — with charles
+- **[your-fit-tailored](https://github.com/4444J99/your-fit-tailored)** — with charles
+- **[styx](https://github.com/4444J99/peer-audited--behavioral-blockchain)** — with jessica
+- **[spiral](https://github.com/4444J99/sovereign-systems--elevate-align)** — with maddie
+- **[hokage-chess](https://github.com/4444J99/hokage-chess)** — with rob
+- **[micro-tato](https://github.com/4444J99/micro-tato)** — with rob
 
 ---
 

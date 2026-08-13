@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/delivery-ledger.private.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "records"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_delivery_private_ledger.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["outcome_id", "engagement_id", "observed_at", "result", "claim_impact", "classification_impact", "proof_impact", "private_evidence_ref"],
+        "properties": {
+          "outcome_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "engagement_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "result": {"enum": ["positive", "neutral", "negative", "no_go"]},
+          "claim_impact": {"type": "string", "minLength": 1},
+          "classification_impact": {"type": "string", "minLength": 1},
+          "proof_impact": {"type": "string", "minLength": 1},
+          "private_evidence_ref": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "evidence_url": {"type": "string", "pattern": "^https://"}
+        }
+      }
+    }
+  }
+}

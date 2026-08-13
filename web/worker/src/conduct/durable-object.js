@@ -10,7 +10,9 @@ import {
 import {
   ConductProjectionError,
   commitTaskCompatibilityEvent,
+  initializePrivateBoard,
 } from "./projection.js";
+import { loadPrivateBoard } from "./private-board.js";
 import {
   ConductValidationError,
   validateExecutorAttempt,
@@ -49,15 +51,20 @@ function duration(env, name, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed * 1000 : fallback;
 }
 
-async function parseBody(request) {
+export async function parseBody(request, maxBytes = 1024 * 1024) {
   const length = Number(request.headers.get("content-length") || 0);
-  if (Number.isFinite(length) && length > 1024 * 1024) {
-    throw new ConductValidationError("conduct request body exceeds 1 MiB");
+  if (Number.isFinite(length) && length > maxBytes) {
+    throw new ConductValidationError(`conduct request body exceeds ${Math.round(maxBytes / (1024 * 1024))} MiB`);
   }
   let value;
   try {
-    value = await request.json();
-  } catch {
+    const bytes = await request.arrayBuffer();
+    if (bytes.byteLength > maxBytes) {
+      throw new ConductValidationError(`conduct request body exceeds ${Math.round(maxBytes / (1024 * 1024))} MiB`);
+    }
+    value = JSON.parse(new TextDecoder().decode(bytes));
+  } catch (error) {
+    if (error instanceof ConductValidationError) throw error;
     throw new ConductValidationError("invalid JSON body");
   }
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -138,11 +145,14 @@ export class ConductKeeperDurableObject {
     this.service = new SerializedConductService(
       new DurableConductStore(ctx.storage),
       {
-        projectTaskEvent: (event) => commitTaskCompatibilityEvent(env, event),
+        projectTaskEvent: (event) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage }),
         sessionTtlMs: duration(env, "LIMEN_CONDUCT_SESSION_TTL_SECONDS", 5 * 60 * 1000),
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
         capabilitySecret: String(env.LIMEN_CONDUCT_CAPABILITY_SECRET || ""),
+        steadyHeartbeatPersistence: String(
+          env.LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY ?? "1",
+        ) !== "0",
       },
     );
   }
@@ -163,6 +173,20 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path === "/api/board/private" && request.method === "GET") {
+      requireRole(principal, "observer", "conductor", "compatibility");
+      const board = await loadPrivateBoard(this.ctx.storage);
+      if (!board) return errorResponse("private canonical board is not initialized", 503, this.env);
+      return json(board, 200, this.env);
+    }
+    if (path === "/api/board/initialize" && request.method === "POST") {
+      requireRole(principal, "compatibility");
+      const body = await parseBody(request, 16 * 1024 * 1024);
+      if (!body.board || typeof body.board !== "object" || Array.isArray(body.board)) {
+        throw new ConductValidationError("board must be an object");
+      }
+      return json(await initializePrivateBoard(this.env, this.ctx.storage, body.board), 200, this.env);
+    }
     if (path === "/api/conduct/capabilities" && request.method === "GET") {
       requireRole(principal, "observer");
       return json(await this.service.call("capabilities"), 200, this.env);
@@ -289,6 +313,16 @@ export async function forwardConductRequest(request, env) {
   if (!env.CONDUCT_KEEPER) {
     return errorResponse("conduct keeper binding is not configured", 503, env);
   }
+  const id = env.CONDUCT_KEEPER.idFromName(
+    String(env.LIMEN_CONDUCT_KEEPER_NAME || "tabularius-conduct-v1"),
+  );
+  return env.CONDUCT_KEEPER.get(id).fetch(request);
+}
+
+export async function forwardPrivateBoardRequest(request, env) {
+  const auth = await authorizeConductRequest(request, env);
+  if (!auth.ok) return errorResponse(auth.detail, auth.status, env);
+  if (!env.CONDUCT_KEEPER) return errorResponse("conduct keeper binding is not configured", 503, env);
   const id = env.CONDUCT_KEEPER.idFromName(
     String(env.LIMEN_CONDUCT_KEEPER_NAME || "tabularius-conduct-v1"),
   );

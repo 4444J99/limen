@@ -413,6 +413,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_CONDUCTING_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_CONDUCTING_REFRESH_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Finite subprocess deadline in seconds for conducting-report.py to refresh keeper-owned handoff admission before pairing it with current usage telemetry. Timeout withholds the daily delivery and records a bounded public-safe finish receipt."
   LIMEN_WATCH_RSS_MB:
     default: 512
     env: LIMEN_WATCH_RSS_MB
@@ -511,6 +517,12 @@ parameters:
     self_update: none
     owner: integrity
     note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane expands user-relative paths and fails closed unless status --json proves the fixed bundle, stable path, signature, and signing requirement."
+  LIMEN_AGENT_RUNTIME_ROOT:
+    default: "$LIMEN_ROOT/.agent-runtime"
+    env: LIMEN_AGENT_RUNTIME_ROOT
+    self_update: none
+    owner: integrity
+    note: "Where the relocated per-vendor agent CLI runtimes live (claude/, codex/, gemini/). Exported by the operator's shell profile alongside CLAUDE_CONFIG_DIR, CODEX_HOME and GEMINI_CLI_HOME, which are VENDOR variables this panel does not own. Read by scripts/agent_config_paths.py to enumerate the non-active candidate roots a config could still be sitting in; the ACTIVE path always comes from the vendor variable, never from this. Accepted alongside the older $LIMEN_ROOT/.agent-runtime derivation so a host exporting only one spelling still resolves."
   LIMEN_TCC_DB:
     default: "~/Library/Application Support/com.apple.TCC/TCC.db"
     env: LIMEN_TCC_DB
@@ -1329,6 +1341,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for the corpus-feed outer process so prompt ingestion cannot wedge the beat."
+  LIMEN_TAPE_TZ:
+    default: ""                # SAFE CODE DEFAULT — blank renders the DEVICE's own zone, i.e. what Messages.app shows
+    env: LIMEN_TAPE_TZ
+    self_update: none
+    owner: continuity
+    note: "IANA zone name for the local-time rendering in scripts/capture-threads.py tapes (`ts.local` in the .jsonl, the `[timestamp]` column in the .md). Blank — the default — renders THIS DEVICE's zone, so a tape always agrees with the operator's own screen. Set it only to read deliberately in a known other party's zone; the chosen zone is then recorded in `ts.tz` on every row and in the tape's Clock frame header, so no reader has to infer it. Founded on a measured defect: the script hardcoded America/New_York on a device set to America/Sao_Paulo, so every rendered time sat 1h off Messages.app; a later review saw that gap, explained it with a plausible DST story, and 'corrected' four documents in the wrong direction. UTC (`ts.utc`) is canonical and unaffected by this setting."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
@@ -1463,6 +1481,12 @@ parameters:
     self_update: "credential wall rotation only"
     owner: dispatch
     note: "Remote-keeper HMAC secret for loss-recoverable executor lease capabilities bound to lease ID, generation, and executor principal. It is never returned; only the derived executor capability is delivered by the authenticated claim route."
+  LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY:
+    default: "1"
+    env: LIMEN_CONDUCT_STEADY_HEARTBEAT_OVERLAY
+    self_update: "deployment rollback valve only"
+    owner: dispatch
+    note: "Remote-keeper liveness write path. Enabled writes one generation-bound per-lease overlay for an ordinary active heartbeat. Set to 0 before rollback; the next authenticated request materializes selected overlays into the cold manifest and removes them before an older binary is restored."
   LIMEN_CONDUCT_STATE:
     default: ""
     env: LIMEN_CONDUCT_STATE
@@ -2433,6 +2457,24 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_SELF_HEAL_STALE:
+    default: "1"
+    env: LIMEN_SELF_HEAL_STALE
+    self_update: none
+    owner: heal
+    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/state-freshness.py --field mtime fails (advisory) when logs/self-heal.log hasn't been refreshed within ~6h (~2 windows of the C_HEAL=6-beat rung's worst-case tempo). Sibling of host-pressure-stale — watches the PR-repair FACTORY's writer so the 2026-08-09 ~26h-silent death (quota wall exits self-heal.py before its success-path write) can't recur unseen; a frozen writer fires one onset-deduped notification (scripts/_notify.py). Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0) doesn't alarm on a log stale by design. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+  LIMEN_HEAL_RECONCILE_SCAN_MAX:
+    default: 1000               # ceiling on self-heal.py's full-fleet enumeration (--reconcile-scan-max)
+    env: LIMEN_HEAL_RECONCILE_SCAN_MAX
+    self_update: none
+    owner: heal
+    note: "Cap on the single `gh search prs` enumeration self-heal.py draws its rotating window from. Named RECONCILE, not SCAN, because the reconcile pass is what constrains it — four sibling organs (merge-drain, pr-lifecycle-autotype, owner-route-drain) cap the same enumeration under the plain name `--scan-max`/LIMEN_MERGE_SCAN_MAX and those really are cost knobs, since none of them reads absence from the list. Transferring that meaning here is the specific mistake this rename exists to prevent. It has a SECOND consumer with the opposite requirement, and that is what makes the number load-bearing rather than a cost knob: the reconcile pass retires any active HEAL task whose PR is absent from this list, so a cap below the live open-PR count turns a prefix into a false closure proof. self-heal.py refuses to retire from a truncated set, which is safe but silent — measured 2026-08-09, the shipped default of 500 against 818-822 live open PRs meant the beat printed `retirement SKIPPED ... would-retire=0` every beat while the same run at 900 reported `would-retire=257`; the retirement valve was wired, scheduled, and had never fired. 1000 is GitHub's search-result ceiling, not a preference — `gh search --limit N` above it returns an EMPTY list rather than an error (_pr_scan.SEARCH_RESULT_CEILING clamps it), so raising this further disables the organ instead of widening it. Once the estate exceeds 1000 open PRs, search cannot answer completely at all and retirement must move to a paginated REST enumeration like scripts/check-heal-retirement.py's."
+  LIMEN_HEAL_RETIREMENT_MAX_PAGES:
+    default: 20                 # runaway guard on REST pagination in check-heal-retirement.py
+    env: LIMEN_HEAL_RETIREMENT_MAX_PAGES
+    self_update: none
+    owner: heal
+    note: "Runaway bound on the paginated REST open-PR enumeration behind scripts/check-heal-retirement.py — NOT a coverage cap. REST pagination proves its own completeness by ending on a short page, so this only stops a pathological loop; hitting it reports TRUNCATED (exit 2, flags nothing) because a prefix must never pass as the whole set. That distinction is load-bearing: absence from the enumerated set is what marks a HEAL task retirable, so an incomplete list makes open PRs read as closed. The predicate uses REST rather than `gh search` for exactly this reason, plus pool isolation — measured 2026-08-09 with two lanes sweeping PRs, `graphql` sat at 0/5000 (gh search runs on it, returning an EMPTY list) while `core` held 4887/5000, and the search-based gate on main reported '51 active HEAL tasks name closed/merged PRs' when the true count was 15."
   LIMEN_HEAL_DISPATCH:
     default: 1                  # default-ON: apply verify-dispatch.py's findings each HEAL beat
     env: LIMEN_HEAL_DISPATCH
@@ -2586,6 +2628,18 @@ parameters:
     self_update: none
     owner: censor
     note: "Archived /insights snapshot directory scanned by insight-cadence.py's suggestion-coverage gatherer: every snapshot must appear in a `reports` list in censor/insights-suggestions.jsonl or it is surfaced as an unaudited report each due tier. Fails open when absent (CI / other hosts)."
+  LIMEN_LOOP_SELF_KICKSTART:
+    default: "1"               # ON — a merged loop-body rung loads itself instead of waiting on a human
+    env: LIMEN_LOOP_SELF_KICKSTART
+    self_update: none
+    owner: limen-daemon
+    note: "Whether heartbeat-loop.sh restarts its own daemon when logs/.loop-update-pending says its script changed under it. A `while true` loop never re-reads itself, and launchd's KeepAlive only restarts on EXIT — which this loop never does — so a merged rung stayed inert indefinitely. Three touchpoints existed for that marker and none acted: sync-release.sh sets it on a loop-body ff, enactment-audit.py reports it RED with the exact kickstart command, and the loop clears it at startup. The flag was cleared by the very restart it was meant to cause and nothing caused that restart, so every loop-body edit waited on a human reading a log line (measured 2026-08-07: the #2016 board-publication rung merged, fast-forwarded onto disk, and stayed dark behind a daemon 5h15m older than its own wiring — the repair for a 12-day board freeze shipped and did not run). Self-limiting without a counter: the replacement process clears the marker at startup, so it fires at most once per loop-body change. No-ops when the label is not launchd-managed. Set 0 to require a manual kickstart."
+  LIMEN_LOOP_KICKSTART_SETTLE:
+    default: 5                 # seconds to wait for launchd's SIGTERM after a self-load kickstart
+    env: LIMEN_LOOP_KICKSTART_SETTLE
+    self_update: none
+    owner: limen-daemon
+    note: "How long heartbeat-loop.sh waits after asking launchctl to kickstart itself, giving launchd's SIGTERM time to land before the beat would otherwise continue on the stale body. Not a correctness dependency — if the kill never arrives the beat simply runs and the marker is still set for the next one — so this is a politeness window, not a race fix. Parameterised because the rung's own test suite (cli/tests/test_loop_self_load.py) executes the real extracted rung and would otherwise pay five real seconds per case; a test that is slow for no information gets skipped and then rots."
   LIMEN_HEARTBEAT_PLIST:
     default: "~/Library/LaunchAgents/com.limen.heartbeat.plist"
     env: LIMEN_HEARTBEAT_PLIST
@@ -2597,7 +2651,7 @@ parameters:
     env: LIMEN_HEARTBEAT_LABEL
     self_update: none
     owner: limen-daemon
-    note: "launchctl service label used by dispatch-health.py to compare loaded heartbeat env with the plist. Probe-only, never a launchd write."
+    note: "launchctl service label. Read by dispatch-health.py to compare loaded heartbeat env with the plist, and — since the loop-body self-load rung — by heartbeat-loop.sh to kickstart the daemon when its own script has changed under it. NO LONGER PROBE-ONLY: that rung is the first launchd WRITE keyed on this label, so a wrong value here now restarts the wrong service rather than merely misreporting one. It fires only with logs/.loop-update-pending present and only when `launchctl list` actually knows the label, so an unmanaged or misnamed label is a no-op with a log line, never a blind kickstart."
   LIMEN_CAMPAIGN_WAKE_TIMEOUT:
     default: 300
     env: LIMEN_CAMPAIGN_WAKE_TIMEOUT
@@ -2616,6 +2670,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Space-separated globs of REGENERABLE daemon receipt files. sync-release.sh re-converges a diverged live checkout when its unique local commits touch ONLY these (loss-free — the beat rewrites them), instead of failing open forever and pinning the daemon to stale code. Genuinely-unique history still fails open to hand-reconcile."
+  LIMEN_SYNC_RELEASE_SCRIPT:
+    default: null              # unset in every runtime path; the tests resolve scripts/sync-release.sh
+    env: LIMEN_SYNC_RELEASE_SCRIPT
+    self_update: none
+    owner: limen-daemon
+    note: "TEST-ONLY: which sync-release.sh the drive tests execute (scripts/tests/sync-release.test.sh and cli/tests/test_session_contention.py's end-to-end section). Unset everywhere at runtime — the daemon always runs $LIMEN_ROOT/scripts/sync-release.sh — and it exists solely so the A/B that PROVES a regression test can be one command: extract the parent commit's script, point this at it, and require a FAIL. Declared here rather than renamed outside the LIMEN_* namespace because a knob that steers which code a gate exercises is exactly what the panel is for; a name chosen to dodge the ratchet would make it invisible on the one surface that enumerates such knobs. Used 2026-08-09 to prove the held-branch detach fallback: the baseline reproduced the live beat's own refusal line verbatim."
   LIMEN_DISPATCH_CEILING:
     default: null              # currently in heartbeat-loop.sh
     env: LIMEN_DISPATCH_CEILING
@@ -2821,6 +2881,30 @@ parameters:
     self_update: none
     owner: substrate
     note: "Timeout for one check-beat-freshness run (a pgrep + ps + stat)."
+  LIMEN_LIVE_CHECKOUT_CURRENCY:
+    default: "1"
+    env: LIMEN_LIVE_CHECKOUT_CURRENCY
+    self_update: none
+    owner: substrate
+    note: "Beat gate for the live-checkout-currency sensor (sensors.yaml live-checkout-currency): the tree the beat EXECUTES must be origin/main, and — new on 2026-08-07 — the answer must persist as an offline receipt. beat-freshness's sibling one layer out (daemon vs its loop body; this one, code on disk vs the remote). Set 0 only on a host with no live checkout, where the probe already self-reports unverifiable-here."
+  LIMEN_LIVE_CHECKOUT_CADENCE:
+    default: 4
+    env: LIMEN_LIVE_CHECKOUT_CADENCE
+    self_update: none
+    owner: substrate
+    note: "Run the live-checkout currency probe every Nth sensor pass. It costs one network `git ls-remote`, so it is not a per-beat rung; the receipt it writes is what point-of-use consumers read, and they read it every time."
+  LIMEN_LIVE_CHECKOUT_TIMEOUT:
+    default: 90
+    env: LIMEN_LIVE_CHECKOUT_TIMEOUT
+    self_update: none
+    owner: substrate
+    note: "Timeout for one check-live-checkout run. Larger than beat-freshness's because this one talks to origin; on timeout the probe simply does not refresh its receipt, which ages out and degrades consumers toward the warning — the correct direction."
+  LIMEN_LIVE_CHECKOUT_RECEIPT:
+    default: ""
+    env: LIMEN_LIVE_CHECKOUT_RECEIPT
+    self_update: none
+    owner: substrate
+    note: "Override path for the offline live-checkout currency receipt (default logs/live-checkout-currency.json at LIMEN_ROOT). Consumed by the Fable meter's provenance dimension (model_selection.balance_verdict) to answer 'was the deployed tree current when this beat-written artifact was produced?' without a network call. Tests point it at a fixture; production never sets it."
   LIMEN_LANE_THROUGHPUT_HISTORY:
     default: ""
     env: LIMEN_LANE_THROUGHPUT_HISTORY
@@ -3025,6 +3109,12 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "The Limen task ID injected into the opencode lane run environment so the agent knows which task it is executing. Set by dispatch.py at dispatch time."
+  LIMEN_PRIVATE_TASKS:
+    default: ""
+    env: LIMEN_PRIVATE_TASKS
+    self_update: none
+    owner: vigilia
+    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty reads the configured public projection; never point this at public tasks.yaml."
   LIMEN_ISOLATION_PROMPT_GUARD:
     default: "1"
     env: LIMEN_ISOLATION_PROMPT_GUARD
@@ -3139,7 +3229,71 @@ parameters:
     env: LIMEN_FABLE_BALANCE_PATH
     self_update: none
     owner: arms-agents
-    note: "Override path to the live weekly Fable balance file (default $LIMEN_ROOT/logs/fable-allotment.json). Read by the model_selection cap gate, the session guard, and the vendor advisor; used by tests to seed a mock balance. Empty means the default location."
+    note: "Override path to the live weekly Fable balance file (default $LIMEN_ROOT/logs/fable-allotment.json). ONE reader since 2026-08-07 — model_selection.balance_verdict(); the session guard and the vendor advisor importlib-load it by file path instead of carrying the forked copies this note used to describe. Setting it names a CALLER-SUPPLIED file (a test fixture or a deliberate pin), which is not the beat's artifact, so the deployment-provenance dimension does not apply to it. Empty means the default location."
+  LIMEN_FABLE_BALANCE_MAX_AGE_S:
+    default: 21600
+    env: LIMEN_FABLE_BALANCE_MAX_AGE_S
+    self_update: none
+    owner: arms-agents
+    guard_state:
+      reader: "limen.model_selection:balance_verdict"
+      degenerate:
+        - name: "meter absent"
+          env: {LIMEN_FABLE_BALANCE_PATH: "@missing"}
+        - name: "meter unreadable"
+          env: {LIMEN_FABLE_BALANCE_PATH: "@garbage"}
+        - name: "meter is not an object"
+          env: {LIMEN_FABLE_BALANCE_PATH: "@notdict"}
+        - name: "meter is a prior week"
+          env: {LIMEN_FABLE_BALANCE_PATH: "@staleweek"}
+        - name: "meter frozen (writer stopped)"
+          env: {LIMEN_FABLE_BALANCE_PATH: "@frozen"}
+    note: "Freshness budget (seconds, default 6h) for the weekly Fable meter, measured from the file's MTIME — the body carries no wall-clock field by design, because compute_balance() derives every value from data so two consecutive runs are byte-identical (verify-fable-gate.sh block 5 asserts exactly that). logs/ is gitignored runtime state with one writer, so the mtime IS the writer's heartbeat. THE DECLARED HATCH: a value <= 0 disables both the freshness and the deployment-provenance dimensions, restoring the pre-2026-08-07 fail-open behaviour for a host that genuinely runs no beat. The hatch is POLICY, not truth: balance_verdict() still reports the real state (an absent meter still reads `absent`), and only the consumer's decision to withhold a tier is switched off. Do not add a second, broader quiet switch — that re-creates the defect as a supported feature."
+  LIMEN_SESSION_OPENING_FLOOR:
+    default: "1"
+    env: LIMEN_SESSION_OPENING_FLOOR
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the session-opening-floor sensor (sensors.yaml session-opening-floor): the per-lane cadence census, answering 'all providers, not just Claude'. Rows derive from census.OPENING_FLOORS and are completeness-checked against census.VENDORS, so a new vendor lands RED as UNDECLARED rather than inheriting 'no cadence applies'. Read-only — the remedies are operator-owned home-directory configs (lever L-LANE-OPENING-FLOOR, issue #2000)."
+  LIMEN_SESSION_OPENING_FLOOR_CADENCE:
+    default: 12
+    env: LIMEN_SESSION_OPENING_FLOOR_CADENCE
+    self_update: none
+    owner: arms-agents
+    note: "Run the per-lane opening-floor census every Nth sensor pass. Config pins change on human timescales, so this needs no per-beat cadence."
+  LIMEN_SESSION_OPENING_FLOOR_TIMEOUT:
+    default: 60
+    env: LIMEN_SESSION_OPENING_FLOOR_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one session-opening-floor run (a handful of local config reads; no network)."
+  LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER:
+    default: "sonnet"
+    env: LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER
+    self_update: none
+    owner: arms-agents
+    guard_state:
+      reader: "limen.model_selection:opening_verdict"
+      degenerate:
+        - name: "pin matches no rung of the ladder"
+          args: ["some-other-vendor-model-9"]
+        - name: "pin above the declared ceiling"
+          args: ["claude-opus-5"]
+        - name: "empty pin"
+          args: [""]
+        # THE OTHER INPUT. opening_verdict(pin, ceiling) takes two declarations and the three cases
+        # above all pass only args[0] — so the ratchet proved everything it was told about while the
+        # ceiling axis stayed invisible through the whole 2026-08-07 arc. The pin is deliberately the
+        # CHEAPEST rung: an unresolvable ceiling collapsed to `haiku`, and a haiku pin measured
+        # against it came back state='ok', trusted=True. Every dearer pin returned above-ceiling, so
+        # this returned TRUSTED for exactly one pin and produced no incident to force it up.
+        - name: "ceiling flag names no rung"
+          args: ["claude-haiku-4-5", "banana"]
+        - name: "ceiling env names no rung"
+          args: ["claude-haiku-4-5"]
+          env:
+            LIMEN_CLAUDE_SESSION_OPEN_MAX_TIER: "banana"
+    note: "The cadence CEILING for an interactive session's OPENING model (CLAUDE.md Session Phase Entry: open cheap on sonnet, escalate deliberately). Read by model_selection.session_open_max_tier() and enforced by fable-session-guard.py's exit 4. Hard-capped at opus by the same accessor the --ceiling flag uses — the cap belongs to the VALUE, not to one entry point, so nothing can declare Fable an acceptable opening default. Before 2026-08-07 the guard asked `\"fable\" in model`, one rung of a four-rung ladder: every tier between the floor and Fable was unguarded, so a saved Opus default (~15x sonnet) opened every session while the guard reported a clean no-op. Raise this to `opus` if opening on Opus is the deliberate house cadence — that is the tuning knob, and it is a one-token registry change. Do NOT answer warning-fatigue with a quiet switch instead; that re-creates the defect as a supported feature."
   LIMEN_CLAUDE_FABLE_CAP_TIER:
     default: "opus"
     env: LIMEN_CLAUDE_FABLE_CAP_TIER
@@ -3434,6 +3588,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Extra branch names (space-separated) reap-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
+  LIMEN_BRANCH_REAP_PR_LIMIT:
+    default: 3000
+    env: LIMEN_BRANCH_REAP_PR_LIMIT
+    self_update: none
+    owner: limen-daemon
+    note: "How many RECENT PRs reap-branches.py reads for proofs 2 (merged) and 3 (closed-unmerged). `gh pr list` returns the N most recent, so a limit below the repo's PR count silently blinds every proof for older heads — and an unseen PR is indistinguishable from no PR, i.e. it reads as live-work. Measured 2026-08-07 at the former hard-coded 800 against organvm/limen's 1724 PRs: of 241 local branches that HAD a PR, 132 were invisible (64 CLOSED, 50 OPEN, 18 MERGED) — the 50 OPEN being the sharp edge, since those heads were not protected as in-flight at all. Hitting this ceiling WARNs rather than truncating silently."
   LIMEN_REMOTE_REAP_APPLY:
     default: 0
     env: LIMEN_REMOTE_REAP_APPLY
@@ -4239,6 +4399,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether save_limen_file refuses a catastrophic board shrink (a clobber). The board only ever grows/holds steady — all callers load→mutate→save — so a collapse toward zero is always a bug. Set 0 to disable; pass allow_shrink=True in code for an intentional bulk archive. See io.py BoardCollapseError."
+  LIMEN_BOARD_PARTITION_BASELINE:
+    default: "institutio/governance/board-partition-baseline.txt"   # the tracked, shrink-only pinned leak
+    env: LIMEN_BOARD_PARTITION_BASELINE
+    self_update: none
+    owner: tabularius
+    note: "Where scripts/check-board-partition.py reads and re-pins its baseline. Redirectable INDEPENDENTLY of LIMEN_ROOT, which is the point rather than a convenience: --update is that predicate's only write, and overriding LIMEN_ROOT to redirect it also relocates the partner-lane registries, so findings() raises PartitionRegistryError before any baseline logic runs. The one surface that could violate the shrink-only ratchet was therefore the one surface no test could reach — and the ratchet went unenforced through three separate written statements of it (module docstring, baseline header, and a test named test_the_baseline_only_shrinks that actually exercises --check, where nothing is written). Set only by that suite; a production run must leave it unset so the tracked file is the target."
   LIMEN_BOARD_SHRINK_FLOOR:
     default: 5                 # never guard tiny boards (tests, fresh bootstrap); only substantial queues
     env: LIMEN_BOARD_SHRINK_FLOOR
@@ -4257,6 +4423,78 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Whether scripts/heal-board.py (heartbeat preflight) auto-restores the live board from `git show HEAD:tasks.yaml` when it is unloadable or collapsed (≤ LIMEN_BOARD_SHRINK_FLOOR tasks). Idempotent: a healthy board is a no-op. The recovery net behind the save-time guard. Set 0 to disable."
+  LIMEN_BOARD_PUBLISH_PR:
+    default: "1"               # ON — keep a publication PR open whenever the keeper is ahead of main
+    env: LIMEN_BOARD_PUBLISH_PR
+    self_update: none
+    owner: tabularius
+    note: "Whether the beat runs scripts/publish-board-pr.sh, which opens the PR that carries the keeper's published projection into main. The PR-opening half of preserve_board_projection was retired along with the local publication writer and never replaced — BOARD_PUBLICATION_TITLE has been a dead constant since — so the keeper published to tabularius/board-projection and nothing carried it to main. Last publication merged 2026-07-26 (#1569), exactly the track.date the board sat frozen at for 12 days while the local tasks.yaml was byte-identical to origin/main (a current checkout with a dead rung, not a sync failure). The frozen copy is what dispatch SELECTS from, what every receipt's compare-and-swap precondition is computed from, and what lane_throughput_window counts 0 dispatches in — pinning the jules lane in bootstrap at 25/day and putting the requested 100/day out of reach (#1995). Opens or reports only: never merges, never pushes; merge-policy.sh decides and the beat's merge rung owns it. Idempotent — an already-open PR and a projection with no tasks.yaml change are both no-ops. Set 0 to disable."
+  LIMEN_BOARD_PUBLICATION_BRANCH:
+    default: "tabularius/board-projection"   # the keeper's only sanctioned publication ref
+    env: LIMEN_BOARD_PUBLICATION_BRANCH
+    self_update: none
+    owner: tabularius
+    note: "Head branch scripts/publish-board-pr.sh opens its PR from. Mirrors BOARD_PUBLICATION_BRANCH in cli/src/limen/tabularius.py; the keeper publishes only through this ref, and its exact head enters the normal merge queue."
+  LIMEN_BOARD_PUBLICATION_BASE:
+    default: "main"            # trunk and live deploy source; the board fast lane targets it
+    env: LIMEN_BOARD_PUBLICATION_BASE
+    self_update: none
+    owner: tabularius
+    note: "Base branch scripts/publish-board-pr.sh targets. Per ci.yml's board fast lane a board-projection PR implicates no code, so the matrix runs post-merge for check-main-green's exact-head evidence rather than on the PR's critical path."
+  LIMEN_BOARD_CANONICAL_HEAL:
+    default: "1"               # ON — reconcile the KEEPER's published projection, not just the local mirror
+    env: LIMEN_BOARD_CANONICAL_HEAL
+    self_update: none
+    owner: limen-daemon
+    note: "Whether the beat runs `scripts/heal-board.py --canonical`, applying the same lifecycle repairs to the keeper's PUBLISHED projection instead of the local mirror. Every other self-heal rung reads tasks.yaml, which mirrors the keeper only after a board-publication PR merges to main — so when that merge stalls, canonical drift lands where no rung can see it and each reports a healthy board while looking at a stale copy. Measured 2026-08-07: twelve needs-human-labelled ASK-quicken-* tasks (login/credential/delete/send) sat at `open` on the keeper while main had them at needs_human, so heal-board found nothing wrong while the canonical board offered human-gated levers to the fleet — and that same drift held main red on validate-task-board.py (needs-human-in-open), blocking the very publication merge that would have refreshed the mirror. Submits through the authenticated relay with the published board as the explicit compare-and-swap base; never writes locally. Set 0 to disable."
+  LIMEN_BOARD_CANONICAL_REF:
+    default: "origin/tabularius/board-projection"   # the keeper's publication ref IS the projection contract
+    env: LIMEN_BOARD_CANONICAL_REF
+    self_update: none
+    owner: tabularius
+    note: "Which ref `heal-board.py --canonical` reads the keeper's published board from. Read from the publication ref rather than over HTTP because that ref is the projection contract (the keeper publishes only through it) and a several-MB fetch has no place on a beat rung. An unreadable ref (shallow clone, unfetched remote) makes the rung a no-op rather than a guess; a keeper that has published past this head simply fails the compare-and-swap and the next pass re-derives."
+  LIMEN_RUNG_FAIL_LINES:
+    default: "15"              # how much of a FAILING rung's real output the beat log keeps
+    env: LIMEN_RUNG_FAIL_LINES
+    self_update: none
+    owner: limen-daemon
+    note: "Lines of a failed rung's captured output that heartbeat-loop.sh's beat_run helper prints under its `── RUNG FAIL [label] ──` banner. Replaces the estate's old `2>&1 | tail -1` idiom, which discarded the exit status (heartbeat-loop.sh sets `pipefail`, so the pipeline did carry the organ's status — measured 2026-08-07: rc=9 with pipefail, rc=0 without — and the trailing `|| true` then dropped it at the call site, uncaptured, so nothing could tell a failure from a clean run; this corrects an earlier note claiming tail destroyed it), destroyed the diagnostic (tail -1 of a Python traceback is the last line of the exception's own repr; for an HTTP error carrying a JSON body that is a bare `}`), and recorded nothing. Measured 2026-08-07: the canonical-heal rung failed on EVERY beat with `conduct broker rejected request (500): Exceeded allowed rows written in Durable Objects free tier`, emitting 61 lines; the beat log received `}` and the string appeared in NO log file estate-wide. 15 is enough to carry a traceback's frames plus the exception body while keeping a noisy organ from flooding the log. The happy path is unchanged at one line. Gate: check-beat-diagnostics."
+  LIMEN_BEAT_RUNG_LOG:
+    default: "$LIMEN_ROOT/logs/beat-rungs.jsonl"   # the per-rung outcome ledger
+    env: LIMEN_BEAT_RUNG_LOG
+    self_update: none
+    owner: limen-daemon
+    note: "Where beat_run appends one `{ts,rung,exit}` record per rung per beat. This is the READER the old idiom lacked: scripts/enactment-audit.py folds the tail of this file into per-rung consecutive-failure streaks, so 'this rung has failed N beats running' becomes a RED rung instead of a silence. Labels are stable per rung (script basename plus a disambiguating flag, e.g. heal-board vs heal-board-canonical) because they are the streak buckets. Append-only and bounded — see LIMEN_BEAT_RUNG_LOG_MAX."
+  LIMEN_RUNG_FAIL_STREAK_RED:
+    default: "3"               # consecutive failing beats before a rung is called INEFFECTIVE
+    env: LIMEN_RUNG_FAIL_STREAK_RED
+    self_update: none
+    owner: enactment
+    note: "How many CONSECUTIVE failing beats make scripts/enactment-audit.py's efficacy rung go RED for a rung. The third audit axis: wiring proves a flag is set, liveness proves the daemon is not older than its wiring, and NEITHER can see a rung that is wired, live, and fails every beat. Measured 2026-08-07: heal-board.py --canonical failed on EVERY beat with 'Exceeded allowed rows written in Durable Objects free tier' while the audit printed '3 rung(s) green/skip' and twelve regressed needs-human atoms stayed regressed — the gap was not a flag missing from a list (that flag was declared AND on), it was a missing axis. 3 filters a single bad beat (a timeout, a transient network fault) as noise while catching anything persistent within ~6 minutes at the 120s floor. Streaks are TRAILING, so a recovered rung is healthy. Exit 75 (EX_TEMPFAIL) is reported but never RED: it means 'blocked on a condition already filed with a human owner', and a permanently-red gate is an ignored gate."
+  LIMEN_VALVE_EFFECT_LOG:
+    default: "$LIMEN_ROOT/logs/valve-effects.jsonl"   # the per-run destructive-valve effect ledger
+    env: LIMEN_VALVE_EFFECT_LOG
+    self_update: none
+    owner: enactment
+    note: "Where scripts/_valve_effects.record appends one `{ts,valve,authorized,candidates,effects,dry_run,detail}` row per destructive-valve run, and where enactment-audit.py's POTENCY rung reads them from. Resolved against the root the DAEMON runs from, never the invoking worktree — #2053 fixed that same asymmetry for the liveness rung, and splitting the writer and reader across two logs/ directories would read as 'no data' rather than as a misconfiguration. The `candidates` field is the load-bearing one: it is the denominator that separates a valve with nothing to do from a valve that cannot act, which is the distinction the shipped-and-dead retirement pass had no way to express (see LIMEN_VALVE_IDLE_STREAK_RED). Overridable so tests and replays can drive the rung against a fixture ledger. Append-only and bounded at _valve_effects.MAX_ROWS."
+  LIMEN_VALVE_IDLE_STREAK_RED:
+    default: "3"               # consecutive no-effect runs before a destructive valve is called INERT
+    env: LIMEN_VALVE_IDLE_STREAK_RED
+    self_update: none
+    owner: enactment
+    note: "How many CONSECUTIVE no-effect runs make scripts/enactment-audit.py's POTENCY rung go RED for a destructive valve. The FOURTH audit axis, and it exists because the third is blind to a specific shape: wiring proves a flag is set, liveness proves the daemon post-dates its wiring, efficacy proves the rung is not exiting non-zero — and a valve that succeeds at doing NOTHING passes all three. Measured 2026-08-09 (#2150): self-heal.py's retirement pass was wired, live, and exited 0 on every beat for a day while retiring nothing, because its enumeration was capped below the live open-PR count and the truncation guard correctly, silently refused to retire from a prefix; the same run at a sufficient cap found 257 retirable tasks. armed-valve-audit.py could not see it either — that organ classifies ARMING, and this valve was ARMED. The rung reads logs/valve-effects.jsonl, where _valve_effects.record requires every valve to report the CANDIDATES it evaluated alongside the effects it produced, computed independently of whether it was authorized to act. That denominator is the whole mechanism: an alarm on 'effects == 0' alone would fire forever on a healthy valve with a drained backlog, get muted, and take the real signal with it — '0 of 0' is idle, '0 of 257' is dead. Dry runs are recorded but never counted (a dry run does not act by design). Streaks are TRAILING, so a valve that fires again is healthy. 3 matches LIMEN_RUNG_FAIL_STREAK_RED: one quiet run is noise, three is a pattern."
+  LIMEN_BEAT_RUNG_LOG_MAX:
+    default: "20000"           # trim threshold in records (~5 beats' worth of headroom over KEEP)
+    env: LIMEN_BEAT_RUNG_LOG_MAX
+    self_update: none
+    owner: limen-daemon
+    note: "Record count above which heartbeat-loop.sh's trim_beat_rung_log() truncates the outcome ledger to LIMEN_BEAT_RUNG_LOG_KEEP. ~65 rungs fire per full beat, so 20000 is a few hundred beats — far more history than the audit's streak window reads, and the trim is one `wc -l` per beat."
+  LIMEN_BEAT_RUNG_LOG_KEEP:
+    default: "4000"            # records retained after a trim
+    env: LIMEN_BEAT_RUNG_LOG_KEEP
+    self_update: none
+    owner: limen-daemon
+    note: "Records kept when the outcome ledger is trimmed. Must stay comfortably above the audit's streak window (a streak is at most a few beats × ~65 rungs), so a trim can never manufacture a fake 'no failures' history by discarding the evidence of an ongoing one."
   LIMEN_TABVLARIVS:
     default: "1"               # ON — the record-keeper drains the ticket inbox onto the board each beat
     env: LIMEN_TABVLARIVS
@@ -4683,6 +4921,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the trunk-green sensor (scripts/check-main-green.py) run each beat by metabolize.sh section 0g3. Closes the 2026-07-10 gap where main's REQUIRED pr-gate silently went red (non-hermetic tests) and no sensor detected it. pr-gate runs on pull_request only; ci.yml runs the same suite on push:[main], so the latest completed CI run on main is the trunk-health proxy. On RED the sensor exits non-zero so the beat surfaces it. Throttled gh (LIMEN_MAIN_GREEN_THROTTLE) + fail-open offline. Set 0 to silence."
 
+  LIMEN_REVIEW_HARVEST:
+    default: "1"               # ON — surface merged-past agent review findings in the beat log (§0g3a), never in chat
+    env: LIMEN_REVIEW_HARVEST
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the review-harvest sensor (scripts/check-review-harvest.py) run each beat by metabolize.sh section 0g3a. Closes the gap between two organs that both look at review traffic and neither asks this: check-review-engine.py counts distinct reviewer LOGINS and never reads what they said, and preflight-thread-state.py gates an outbound COMMENT rather than a merge. Measured 2026-08-07: 17 unresolved agent findings across 10 merged PRs, every one of which check-review-engine called green. Resolution state is read from GitHub's own reviewThreads (isResolved/isOutdated) — no local ledger, so a human clears a finding from the UI and it stays cleared; outdated threads decay on their own. ADVISORY and strictly downstream of the merge: merge-policy.sh counts only REQUIRED checks on purpose (2026-07-24 insights lineage) and bot reviews are slower than the merge, so this never votes on one. Offline/unreadable is a SKIP at exit 0 that SAYS skip — 'I read nothing' must never print as 'I found nothing'. Set 0 to silence."
+
   LIMEN_MAIN_GREEN_APPLY:
     default: "0"               # OFF (DARK) — detection-only until armed; then auto-emits one heal task
     env: LIMEN_MAIN_GREEN_APPLY
@@ -4995,8 +5240,51 @@ parameters:
     env: LIMEN_ARCA
     self_update: none
     owner: limen-daemon
-    note: "Beat gate for ARCA (scripts/arca.sh backup, step 5c): every ~/Workspace/_*-private store, AES-256-encrypted with a key that lives only in the macOS Keychain, roundtrip-verified, pushed as ciphertext to the private organvm/arca repo. 1=seal each beat (no-op in seconds when unchanged); 0=off. Fails soft (locked Keychain / offline). Script-level knobs are ARCA_WORKSPACE / ARCA_REPO / ARCA_VAULT_DIR / ARCA_KEY_SERVICE / ARCA_MAX_MB."
+    note: "Beat gate for ARCA (scripts/arca.sh backup, step 5c): every ~/Workspace/_*-private store, AES-256-encrypted with a key that lives only in the macOS Keychain, roundtrip-verified, pushed as ciphertext to the CURRENT generation repo — organvm/arca, then organvm/arca-g2, then organvm/arca-g3 (POTESTAS 0.3, #2089). 1=seal each beat (no-op in seconds when unchanged); 0=off. Fails soft (locked Keychain / offline). Vaults are shallow-cloned (depth 1); when the pack outgrows ARCA_MAX_MB (default 512), `rotate` cuts an orphan-root generation so the new vault never inherits prior growth and the old repo stays byte-identical as a cold archive. The local vault manifest owns `_generation.current/repo`, so the fleet follows each rotation with zero env changes. Script-level knobs are ARCA_WORKSPACE / ARCA_REPO / ARCA_VAULT_DIR / ARCA_KEY_SERVICE / ARCA_MAX_MB / ARCA_CLONE_URL_BASE."
+  LIMEN_ARCA_FRESHNESS:
+    default: "1"               # ON — assert the vault is actually ADVANCING (sensor 5c1)
+    env: LIMEN_ARCA_FRESHNESS
+    self_update: none
+    owner: continuity
+    note: "Gate for the arca-freshness beat sensor (institutio/governance/sensors.yaml section 5c1), the observability sibling of LIMEN_ARCA. The 5c rung is `arca.sh backup || echo` — fail-open by design, which makes a permanently dead vault look identical to a momentarily locked one. Measured 2026-08-07: no backup for 8 days, every beat green, because the vault repo had outgrown its own git clone. This asserts the OUTCOME (recent off-machine push + a resolvable local vault) rather than the mechanism, so it survives any later vault reshaping; 'cannot determine' counts as a finding. Read-only, advisory. 0 disables."
+  LIMEN_BEAT_ARCA_FRESHNESS:
+    default: "6"
+    env: LIMEN_BEAT_ARCA_FRESHNESS
+    self_update: none
+    owner: continuity
+    note: "Beat-modulo cadence for the arca-freshness sensor (5c1). Default 6 — a backup that has stopped is a slow-moving fact, so checking every 6th beat surfaces it well inside the 2-day staleness threshold without spending a `gh repo view` call every beat."
+  LIMEN_ARCA_FRESHNESS_TIMEOUT:
+    default: "90"
+    env: LIMEN_ARCA_FRESHNESS_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Timeout in seconds for the arca-freshness sensor (5c1). Bounds the single `gh repo view` call; on expiry the predicate reports UNDETERMINED, which is a finding rather than a pass."
 
+  # --- POTESTAS exchange guard (organvm/limen#2088) -----------------------------
+  LIMEN_EXCHANGE_GUARD_WINDOW_MIN:
+    default: "15"
+    env: LIMEN_EXCHANGE_GUARD_WINDOW_MIN
+    self_update: none
+    owner: governance
+    note: "Minutes either side of a CONNECTED call within which a money transfer is flagged by scripts/exchange-guard.py. Default 15 — wide enough to catch a transfer decided during a call and executed just after it ends, narrow enough that a same-afternoon-but-unrelated transfer does not register. Widening it does not make the guard stricter, it makes it noisier: at a large enough window every transfer falls inside some call and the signal is gone. Validated against ground truth at 15: 3/3 known in-call transfers flagged, 0 of 383 2024-era transfers flagged (no connected calls were logged that year, so the negative is real rather than vacuous)."
+  LIMEN_EXCHANGE_GUARD:
+    default: "1"
+    env: LIMEN_EXCHANGE_GUARD
+    self_update: none
+    owner: governance
+    note: "Gate for the exchange detector beat sensor. Evaluates whether payments occurred inside a call window."
+  LIMEN_BEAT_EXCHANGE_GUARD:
+    default: "24"
+    env: LIMEN_BEAT_EXCHANGE_GUARD
+    self_update: none
+    owner: governance
+    note: "Cadence for the exchange guard beat sensor."
+  LIMEN_EXCHANGE_GUARD_TIMEOUT:
+    default: "300"
+    env: LIMEN_EXCHANGE_GUARD_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Timeout in seconds for the exchange guard beat sensor."
   # --- dispatch admission gate (closeout/dispatch-admission-20260709) -----------
   LIMEN_DISPATCH_ADMISSION:
     default: "1"               # ON — gate dispatch on session-value admission evidence
@@ -5255,6 +5543,12 @@ parameters:
     self_update: none
     owner: tabularius
     note: "How many NEW inbound messages since a person's last review make a delta dice-up worth running (relationship-review-delta.py). Default 20 — a meaningful wave, not a single text. Raise to reduce noise, lower to trigger sooner."
+  LIMEN_RELATIONSHIP_PIPELINE_ROOT:
+    default: ""
+    env: LIMEN_RELATIONSHIP_PIPELINE_ROOT
+    self_update: none
+    owner: tabularius
+    note: "Override for the relationship-pipeline checkout that relationship-review-delta.py reads people.json from. Empty (default) = resolve at run time across known locations (~/Workspace/4444J99/relationship-pipeline, then the ~/Workspace/.limen-worktrees/m1_repos mirror). Exists because the root was HARDCODED to the first path, the repo moved, and the sensor then fail-opened on every beat for weeks — a 27-day review gap went undetected because 'no pipeline' and 'no review owed' printed identically. The canonical handle source is now _people-private/people/roster.json; people.json is a legacy fallback and its absence is reported explicitly rather than silently."
 
   LIMEN_OPPORTUNITY_PIPELINE:
     default: "1"
@@ -5504,6 +5798,42 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_PR_AUTOTYPE:
+    default: "1"
+    env: LIMEN_PR_AUTOTYPE
+    self_update: none
+    owner: gitvs
+    note: "Master on/off for the `github-pr-autotype` sensor declared in sensors.yaml — the continuous typing rung that keeps newly-arrived mechanical PRs from re-reddening gitvs.py pr-debt --check at arrival rate. On means the DRY-RUN scan runs and receipts accrue (observable before autonomous); the mutation itself is the separate LIMEN_PR_AUTOTYPE_APPLY valve."
+  LIMEN_BEAT_PR_AUTOTYPE:
+    default: 4
+    env: LIMEN_BEAT_PR_AUTOTYPE
+    self_update: none
+    owner: gitvs
+    note: "Cadence (every N beats) for the auto-typing rung. Cheap by construction — the negated-label search returns only the untyped mechanical residual (normally empty) — so unlike LIMEN_BEAT_PR_DEBT no script-owned wall-clock throttle backs it; the cadence IS the throttle."
+  LIMEN_PR_AUTOTYPE_TIMEOUT:
+    default: 300
+    env: LIMEN_PR_AUTOTYPE_TIMEOUT
+    self_update: none
+    owner: gitvs
+    note: "Seconds the auto-typing rung may take (2 gh searches across the estate-derived owner set, plus per-candidate pr view / repo view / edit calls bounded by LIMEN_PR_AUTOTYPE_LIMIT). Advisory; never breaks the fail-open beat. A timeout is NOT silent: gh transport errors are converted to named per-item skips, and a failed arrival search exits non-zero so the sensor's escalation line fires."
+  LIMEN_PR_AUTOTYPE_APPLY:
+    default: "0"
+    env: LIMEN_PR_AUTOTYPE_APPLY
+    self_update: none
+    owner: gitvs
+    note: "SAFE CODE DEFAULT — dry-run; the armed deliverable valve on the auto-typing rung (adds --apply). Arm via lever L-PR-AUTOTYPE-ARM after reviewing dry-run receipts in logs/pr-lifecycle-autotype.jsonl; logs/AUTONOMY_PAUSED forces observation-only even when armed. WHEN ARMING: set 1 in the daemon env AND add fleet_runtime: \"1\" here in the same change, so enactment-audit.py locks it live (the #576 dark-switch lesson)."
+  LIMEN_PR_AUTOTYPE_LIMIT:
+    default: 20
+    env: LIMEN_PR_AUTOTYPE_LIMIT
+    self_update: none
+    owner: gitvs
+    note: "Effects-per-run cap for the auto-typing rung — EFFECTS, not candidates examined: a candidate that can never be typed (archived, closed, human) must not consume the budget a real arrival needs, and because the cohort is sorted it would consume the same leading slot every visit. Arrival rate is a few PRs an hour at worst, so 20 per visit drains any burst within one cadence without a mass-mutation blast radius. Truncation is announced (residual=N), never silent."
+  LIMEN_PR_AUTOTYPE_AUTHORS:
+    default: "app/dependabot"
+    env: LIMEN_PR_AUTOTYPE_AUTHORS
+    self_update: none
+    owner: gitvs
+    note: "Comma-separated bot authors whose untyped arrivals the rung may auto-type (search form app/<name>; the effect-time rail also accepts the bare login gh pr view reports). Humans are never in this list — human-authored untyped arrivals are counted and surfaced, never typed."
   LIMEN_ESTATE_CENSUS_RECORD:
     default: "1"
     env: LIMEN_ESTATE_CENSUS_RECORD
@@ -5533,7 +5863,7 @@ parameters:
     env: LIMEN_SESSION_CONTENTION_GUARD
     self_update: none
     owner: substrate
-    note: "Master on/off for the occupancy guard in sync-release.sh (IF-SESSION-NON-CONTENTION). 1 means the organ probes for a live interactive session in the live checkout and declines its DESTRUCTIVE valves — unpark, reset --hard, stash push — when one is present, recording an incident. A clean fast-forward is never blocked either way: IF-LIVE-TREE-COHERENCE wins there, because a silently-never-converging sync is a failure this fleet has already paid for. 0 restores the pre-guard behaviour exactly, and is the escape hatch if the probe itself ever misbehaves — the guard is fail-open by construction, so this should never be needed."
+    note: "Master on/off for the occupancy guard in sync-release.sh (IF-SESSION-NON-CONTENTION). 1 means the organ probes for a live interactive session in the live checkout and declines its DESTRUCTIVE valves — unpark, reset --hard, stash push — when one is present, recording an incident. THE FAST-FORWARD IS NOT EXEMPT IN PRACTICE, and this note used to claim it was (\"a clean fast-forward is never blocked either way\"): that holds only for a CLEAN tree, and capture.sh guarantees the live checkout is never clean — it snapshots default-branch dirt to a stable custody side ref and deliberately never commits the working tree. So every ff routes through the stash-push valve, consults the guard, and is declined whenever the probe names anyone. Measured 2026-08-07: 8 consecutive declines, all of them false positives (the probe counted pre-warmed `claude bg-spare` processes and the FleetView viewer as interactive sessions), live checkout 37 commits behind release, the sync organ silently never converging — the exact failure IF-LIVE-TREE-COHERENCE exists to prevent, reached through the guard that was supposed to be exempt from it. 0 restores the pre-guard behaviour exactly, and is the escape hatch when the probe itself misbehaves; it was needed twice that day to break the deadlock, because a checkout cannot apply the fix to a probe that is blocking its own fast-forward."
   LIMEN_SESSION_CONTENTION_SHIP:
     default: "1"
     env: LIMEN_SESSION_CONTENTION_SHIP
@@ -5570,6 +5900,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_NOTIFY_HELPER:
+    default: "<calling checkout>/scripts/_notify.py"
+    env: LIMEN_NOTIFY_HELPER
+    self_update: none
+    owner: diurnal
+    note: "Path to the one permitted macOS notification effector. Shell callers such as netmode derive their sibling scripts/_notify.py when unset; tests and relocated runtime trees may override the path without reintroducing a direct osascript call."
   LIMEN_NOTIFY_GATE:
     default: "1"
     env: LIMEN_NOTIFY_GATE

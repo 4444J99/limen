@@ -1,13 +1,18 @@
 """test_reap_branches.py — proves the branch-reap gate is LOSS-FREE.
 
 The organ deletes local branches autonomically (git branch -D), so a wrong 'reap' verdict would
-drop a ref. `git branch -D` is reflog-recoverable, but the gate must still only reap branches it can
-PROVE are landed on the default branch. These tests exhaust the pure classify() matrix and drive
+drop a ref. `git branch -D` is reflog-recoverable, but the gate must still only reap branches whose
+work it can PROVE survives the deletion. These tests exhaust the pure classify() matrix and drive
 gather_facts() against real temp git repos to confirm:
   • a merged/fast-forwarded branch (tip is an ancestor of default) → reap,
   • a squash-merged branch (PR MERGED, tip not advanced past mergedAt) → reap,
+  • a CLOSED-unmerged PR whose head IS the local tip → reap as DECIDED (proof 3: a recorded human
+    rejection, preserved at refs/pull/N/head — reapable but NOT landed, so --check never demands it),
   • a merged branch ADVANCED past its merge (post-merge commits) → KEEP (unpushed work),
+  • a closed-PR branch whose tip DIFFERS from the PR head → KEEP (commits that exist nowhere else),
   • an unmerged branch, a checked-out branch, an open-PR branch, a trunk → KEEP.
+Plus the two ways the gh window itself can lie: a reused branch name (matched by SHA, never by name)
+and a truncated --limit (an unseen PR is indistinguishable from no PR, so it WARNs).
 This is the executable predicate for the organ.
 """
 
@@ -150,7 +155,7 @@ def test_targeted_apply_preserves_global_state_and_ledger(tmp_path, monkeypatch)
     monkeypatch.setattr(reap, "default_ref", lambda: "origin/main")
     monkeypatch.setattr(reap, "default_name", lambda _ref: "main")
     monkeypatch.setattr(reap, "checked_out_branches", set)
-    monkeypatch.setattr(reap, "gh_head_states", lambda: ({}, set(), True))
+    monkeypatch.setattr(reap, "gh_head_states", lambda: ({}, set(), {}, True))
     monkeypatch.setattr(reap, "gather_facts", lambda *_args: F(is_ancestor=True))
     monkeypatch.setattr(reap, "load_branch_reap_acceptance", list)
     monkeypatch.setattr(reap, "branch_reap_accepted", lambda *_args: (True, "accepted"))
@@ -338,10 +343,11 @@ def test_github_open_head_snapshot_keeps_exact_oid(monkeypatch):
         lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
     )
 
-    merged, open_heads, online = reap.gh_head_states()
+    merged, open_heads, closed_heads, online = reap.gh_head_states()
 
     assert merged == {}
     assert open_heads == {"same-name": "a" * 40}
+    assert closed_heads == {}
     assert online is True
 
 
@@ -417,3 +423,160 @@ def test_standing_grant_requires_proof_fields(repo):
     ok, reason = reap.branch_reap_accepted("spent", "landed-ancestor", events)
     assert ok is False
     assert reason == "incomplete-branch-reap-acceptance"
+
+
+# ------------------------------------------------- proof 3: the DECIDED class (closed-unmerged PR)
+# A closed PR is a recorded human rejection, and GitHub keeps the exact commit at refs/pull/N/head
+# forever, so deleting the local ref loses nothing. The belt is by SHA, not by clock: a tip that
+# differs from the PR head carries commits that exist NOWHERE else (measured 2026-08-07 on
+# organvm/limen: 14 of 94 such branches had advanced) and must be kept.
+def test_closed_pr_with_exact_tip_is_reaped_as_decided():
+    v = reap.classify(F(pr_closed_safe=True, pr_closed_raw=True))
+    assert v.action == "reap" and v.reason == "decided-pr-closed"
+
+
+def test_decided_is_reapable_but_not_landed():
+    """The whole point of the landed/reap split: --apply may take it, --check must not demand it.
+
+    If decided were landed=True the closeout gate would go red for every closed-PR branch until an
+    operator widened deletion authority — a red nobody is authorized to clear."""
+    v = reap.classify(F(pr_closed_safe=True, pr_closed_raw=True))
+    assert v.action == "reap"
+    assert v.landed is False
+
+
+def test_closed_but_advanced_is_kept():
+    # A closed PR exists, but the local tip is NOT its head → the extra commits exist only here.
+    v = reap.classify(F(pr_closed_raw=True, pr_closed_safe=False))
+    assert v.action == "keep" and v.reason == "pr-closed-but-advanced" and v.landed is False
+
+
+def test_a_merged_proof_outranks_a_same_named_closed_pr():
+    # Branch names are reused. A head with both a MERGED and a CLOSED PR is LANDED, not rejected —
+    # reporting it as 'decided' would misfile landed work as a rejection.
+    v = reap.classify(F(pr_merged_safe=True, pr_merged_raw=True, pr_closed_safe=True, pr_closed_raw=True))
+    assert v.reason == "landed-pr-merged" and v.landed is True
+
+
+def test_merged_but_advanced_outranks_the_decided_proof():
+    # The merged-advanced report must survive a same-named closed PR: those post-merge commits are
+    # unpushed work, and a 'decided' verdict would make them reapable.
+    v = reap.classify(F(pr_merged_raw=True, pr_closed_safe=True, pr_closed_raw=True))
+    assert v.action == "keep" and v.reason == "pr-merged-but-advanced"
+
+
+def test_open_pr_beats_the_decided_proof():
+    # A reopened head: an OPEN PR always wins — never yank a live PR's branch.
+    v = reap.classify(F(pr_open=True, pr_closed_safe=True, pr_closed_raw=True))
+    assert v.action == "keep" and v.reason == "inflight"
+
+
+def test_protected_and_checked_out_still_beat_the_decided_proof():
+    assert reap.classify(F(protected=True, pr_closed_safe=True)).reason == "protected"
+    assert reap.classify(F(checked_out=True, pr_closed_safe=True)).reason == "checked-out"
+
+
+def test_gather_facts_matches_a_closed_pr_by_sha_not_by_name(repo):
+    """The proof is object identity. A closed PR recorded under the same NAME but a different SHA
+    must not vouch for this tip — that is the branch-name-reuse loss path."""
+    tip = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "refs/heads/livework"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+
+    exact = reap.gather_facts("livework", "main", set(), {}, {}, "main", {"livework": {tip}})
+    assert exact.pr_closed_safe is True
+    assert reap.classify(exact).reason == "decided-pr-closed"
+
+    other = reap.gather_facts("livework", "main", set(), {}, {}, "main", {"livework": {"b" * 40}})
+    assert other.pr_closed_safe is False
+    assert other.pr_closed_raw is True
+    assert reap.classify(other).reason == "pr-closed-but-advanced"
+
+
+def test_gather_facts_without_a_closed_map_is_unchanged(repo):
+    """The `closed` arg defaults to None so pre-existing callers keep working — and default to the
+    conservative answer (no proof 3), never to a reap."""
+    f = reap.gather_facts("livework", "main", set(), {}, set(), "main")
+    assert f.pr_closed_safe is False and f.pr_closed_raw is False
+    assert reap.classify(f).reason == "livework"
+
+
+def test_gh_head_states_keeps_every_closed_head_oid_for_a_reused_name(monkeypatch):
+    """Closed heads are a SET per name: several closed PRs may share a branch name, and proof 3 must
+    match whichever one preserves THIS commit. Collapsing to last-wins would let an unrelated PR's
+    identity vouch for the tip."""
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    payload = [
+        {"headRefName": "reused", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
+        {"headRefName": "reused", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
+        {"headRefName": "no-oid", "headRefOid": "", "state": "CLOSED", "mergedAt": None},
+    ]
+    monkeypatch.setattr(
+        reap.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    )
+
+    _merged, _open, closed, online = reap.gh_head_states()
+
+    assert closed == {"reused": {"a" * 40, "b" * 40}}
+    assert "no-oid" not in closed  # an empty OID would match an unreadable tip — never recorded
+    assert online is True
+
+
+def test_gh_head_states_warns_when_the_pr_window_truncates(monkeypatch, capsys):
+    """`gh pr list` returns the N most recent PRs, so a limit below the repo's PR count silently
+    blinds every proof for older heads — and an unseen PR is indistinguishable from no PR."""
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "2")
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    payload = [
+        {"headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
+        {"headRefName": "b", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
+    ]
+    monkeypatch.setattr(
+        reap.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    )
+
+    reap.gh_head_states()
+
+    out = capsys.readouterr().out
+    assert "WARN" in out and "LIMEN_BRANCH_REAP_PR_LIMIT" in out
+
+
+def test_gh_head_states_is_quiet_below_the_ceiling(monkeypatch, capsys):
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "50")
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    payload = [{"headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None}]
+    monkeypatch.setattr(
+        reap.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    )
+
+    reap.gh_head_states()
+
+    assert "WARN" not in capsys.readouterr().out
+
+
+def test_ledger_files_decided_separately_from_unfulfilled_intentions(tmp_path, monkeypatch):
+    """A decided branch is NOT an unfulfilled intention — the ledger must stop telling a reader to
+    'open a PR and land it' for work a human already rejected."""
+    ledger = tmp_path / "branch-hygiene.md"
+    monkeypatch.setattr(reap, "LEDGER", ledger)
+    monkeypatch.setattr(reap, "_branch_tip_desc", lambda b: f"deadbee {b} subject")
+
+    reap.write_ledger(["still-open"], ["adv"], 0, ["closed-adv"], ["rejected"])
+    text = ledger.read_text()
+
+    assert "## Decided — closed PR, work preserved (1)" in text
+    assert "refs/pull/N/head" in text
+    assert "## Closed-but-advanced (1)" in text
+    assert "`rejected`" in text and "`closed-adv`" in text and "`still-open`" in text

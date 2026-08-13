@@ -164,7 +164,7 @@ def test_gather_weekly_annotates_codified(tmp_path):
     old_logs, old_prec = censor.LOGS, censor.PRECEDENTS_PATH
     censor.LOGS, censor.PRECEDENTS_PATH = tmp_path, prec
     try:
-        sigs = censor.gather_signals("weekly", refresh=False)
+        sigs, _absent_sources = censor.gather_signals("weekly", refresh=False)
     finally:
         censor.LOGS, censor.PRECEDENTS_PATH = old_logs, old_prec
     flags = {s["subject"]: s["codified"] for s in sigs if s["type"] == "recurring_friction"}

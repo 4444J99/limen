@@ -49,6 +49,22 @@ check-docs-manifest
 check-docs-exports
 check-note-links' docs/some-note.md
 
+# Evidence packet files are nested below the registry path; the recursive glob keeps the
+# W04/W05 validator selected even when a packet-only diff does not touch its script or manifest.
+expect flagship-evidence-packet 'syntax-changed
+diff-hygiene
+flagship-evidence-test
+check-docs-exports
+check-note-links' docs/positioning/evidence/new-packet.md
+
+expect research-adjudication-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+research-adjudication-test
+check-params
+check-note-links
+check-effectors' scripts/positioning-research-adjudication.py
+
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
 # listing `cli/src/limen/*.py` silently drops this case, and dispatch.py (a live `gh pr merge`
@@ -56,6 +72,7 @@ check-note-links' docs/some-note.md
 # NOT pull in an AST scan.
 expect cli-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params
@@ -68,6 +85,7 @@ pytest-api' cli/src/limen/io.py
 
 expect api-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 check-params
 check-note-links
@@ -77,6 +95,7 @@ pytest-api' web/api/main.py
 
 expect mcp-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 agent-docs
 check-note-links
@@ -104,6 +123,7 @@ check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
 diff-hygiene
+operator-gates
 task-board
 tasks-parse
 check-root-manifest
@@ -166,9 +186,15 @@ web-build' spec/contracts/readiness.schema.json
 # paused-beat-test is implicated because its fixtures assert that each paused-branch escape hatch
 # (LIMEN_PAUSED_SENSING, LIMEN_PAUSED_SYNC) is DECLARED in the panel — deleting a declaration there
 # is exactly the drift those checks exist to catch, so a params change must run them.
+#
+# guard-degradation joined 2026-08-07: the guards subject to IF-GUARD-FAIL-TOWARD-WARNING are
+# DECLARED as `guard_state:` blocks on the parameters.yaml row that governs each one, and that
+# population is grow-only — so deleting a declaration here is precisely the drift the gate exists
+# to catch, and a params change must re-run it.
 expect params-change 'syntax-changed
 diff-hygiene
 sync-release-test
+guard-degradation
 check-params
 paused-beat-test
 check-note-links' institutio/governance/parameters.yaml
@@ -181,6 +207,12 @@ merge-policy-test
 verify-resolver-test
 verify-parallel-test
 agent-docs
+github-estate-census-custody-test
+flagship-proof-set-test
+flagship-evidence-test
+claim-policy-test
+research-adjudication-test
+positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
@@ -205,6 +237,7 @@ check-note-links' scripts/tests/verify-parallel.test.sh
 
 expect mixed-change 'syntax-changed
 diff-hygiene
+python-typecheck
 direct-main-writer-contract
 tasks-parse
 check-params

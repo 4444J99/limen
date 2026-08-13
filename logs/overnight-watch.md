@@ -1,12 +1,12 @@
 # Overnight Watch
 
-- Status: `alert`
-- Updated: `2026-08-05T13:59:34+00:00`
-- Log age: `117` seconds
+- Status: `ok`
+- Updated: `2026-08-10T22:33:15+00:00`
+- Log age: `6` seconds
 - Launchd: `active`
-- Latest tick: `None`
+- Latest tick: `tick emitted: 2026-08-10T22:30:08+00:00 total=3111 open=829 spent=8/600`
 - Latest async: `None`
-- Stale tick samples: `918`
+- Stale tick samples: `0`
 - Active workers: `0`
 - Heartbeat child processes: `1`
 
@@ -14,27 +14,22 @@
 
 - Launched: `0`; harvested: `0`; reaped: `0`.
 - Done: `0`; failed: `0`; no-op: `0`; timed out: `0`.
-- Stale handoff: `true`.
-- Gate action: `stop_no_durable_progress` (exit `20`).
-- Dispatch allowed: `false`.
-- Lane switch: `blocked`; owner packet: `none`; tickets: `0`.
-- Lane blocker: `overnight-handoff-blocked`.
-- Next command: `python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check`.
+- Stale handoff: `false`.
+- Gate action: `continue_direct_product_work` (exit `0`).
+- Dispatch allowed: `true`.
+- Lane switch: `not_requested`; owner packet: `none`; tickets: `0`.
+- Lane blocker: `none`.
+- Next command: `python3 scripts/product-ledger.py --refresh --redacted-summary`.
 
 ## Gate Checks
 
-- Handoff refresh: `0`; check: `1`.
-- Value gate: `20`; action: `stop_no_durable_progress`.
-- Dispatch control: handoff relay is not fresh enough to transfer one owner packet.
-- Selected owner: `organvm/limen`.
+- Handoff refresh: `0`; check: `0`.
+- Value gate: `0`; action: `continue_direct_product_work`.
+- Dispatch control: dispatch allowed.
+- Selected owner: `none`.
 
 ## Throughput
 
-- Recent per-60min completions: `None` (derived floor `None`, median `None`).
+- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0.0`).
 - Below floor: `false`; suppressed: `no`.
-  - child `2720` `S` `02-02:43:35` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
-
-## WATCH_ALERT
-- `heartbeat-tick-missing`: no tick emitted line found in recent heartbeat log
-- `handoff-relay-stale`: handoff-relay --check: FAIL — provider headroom stale (4363m > 90m)
-- `overnight-lane-switch-blocked`: blocker=overnight-handoff-blocked owner=organvm/limen reason=handoff relay is not fresh enough to transfer one owner packet
+  - child `84915` `S` `02-22:41:20` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`

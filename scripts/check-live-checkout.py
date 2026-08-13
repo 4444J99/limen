@@ -9,8 +9,11 @@ axis merged in those six days (CORPORA, CONVERGENCE, ATOM-HOMING) did not exist 
 the fleet ran. `scripts/sync-release.sh` auto-unparks only a fully-pushed, clean park and fails
 open loudly otherwise; loudly into a log nothing reads is silently.
 
-Exit 0 iff the live checkout is on the default branch, carries no unpushed commits, and its
-HEAD is the CURRENT remote head.
+Exit 0 iff the live checkout RUNS the current remote head — on the default branch with no
+unpushed commits, or DETACHED at that exact head while another worktree holds the branch name.
+That second form is not a loophole: sync-release.sh's unpark valve produces it deliberately
+(git refuses to check a name out twice, but has no objection to the commit), and a probe that
+demanded the name would report the organ's own repair as the failure it had just fixed.
 
 TRUTH IS THE REMOTE, NOT THE REMOTE-TRACKING REF. The first draft of this probe compared HEAD
 to the local `origin/main` ref and reported `behind=0` on a checkout whose ref had not been
@@ -33,8 +36,26 @@ Machine line (parsed by scripts/check-ideal-forms.py via the ideal-forms registr
     live-checkout: state=<state> branch=<b> drift=<n> ahead=<n> behind=<n> dirty=<n>
 
 `drift` is the single measurement: 0 iff the fleet is running exactly what origin/main holds.
+
+THE RECEIPT (2026-08-07, the cadence-guard arc). This probe answers only when RUN, needs a
+network `git ls-remote`, and left no artifact — so no point-of-use consumer could afford to ask
+it inline, and the answer existed nowhere between runs. That is how a guard came to read a
+*fresh* meter file written by *stale code* and call it fine: freshness of an artifact is not
+truth of its value when the writer is the stale party. Every run now also writes an OFFLINE
+receipt (``logs/live-checkout-currency.json``, ``--receipt`` to override) so a guard deciding
+whether to trust any beat-written artifact can read one local file with no network and no git.
+
+The receipt carries NO wall-clock field, on purpose and for the same reason the Fable meter
+does not: ``logs/`` is gitignored runtime state with exactly one writer, so the file's own mtime
+IS the writer's heartbeat, and a body without a timestamp stays byte-identical across runs when
+nothing changed — an idempotent artifact whose every diff is a real change. Consumers age it
+with ``os.stat().st_mtime``.
+
+Receipt absence is NOT "fine": a consumer that cannot find this file has learned that deployment
+currency is unestablished, which is exactly the state that must degrade toward the warning.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -44,31 +65,113 @@ DEFAULT_ROOT = Path.home() / "Workspace" / "limen"
 DEFAULT_BRANCH = "main"
 UNVERIFIABLE = "live-checkout: state=unverifiable-here branch={b} drift=0 ahead=0 behind=0 dirty=0  ({why})"
 
+RECEIPT_SCHEMA = "limen.live_checkout_currency.v1"
+RECEIPT_REL = os.path.join("logs", "live-checkout-currency.json")
+
+
+def receipt_path(root: Path) -> Path:
+    """Where the offline currency receipt lives. ``--receipt``/``LIMEN_LIVE_CHECKOUT_RECEIPT``
+    override it (tests, alternate hosts)."""
+    raw = os.environ.get("LIMEN_LIVE_CHECKOUT_RECEIPT")
+    return Path(raw).expanduser() if raw else root / RECEIPT_REL
+
+
+def write_receipt(path: Path, **fields) -> None:
+    """Write the offline receipt. NEVER raises: a probe that cannot record its own answer must
+    still report it on stdout, and an unwritable receipt reads downstream as absent — which
+    already degrades toward the warning, the correct direction."""
+    body = {"schema": RECEIPT_SCHEMA, **fields}
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n")
+    except Exception:
+        pass
+
 
 def git(root: Path, *args: str) -> tuple[int, str]:
     proc = subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True, check=False)
     return proc.returncode, proc.stdout.strip()
 
 
+def branch_held_elsewhere(root: Path, branch: str) -> bool:
+    """True iff ``branch`` is checked out in some OTHER worktree of this repository — the one
+    obstacle to holding the branch NAME that no amount of tidying THIS tree can clear.
+
+    Derived STRUCTURALLY from ``git worktree list --porcelain``, never by matching git's refusal
+    text: that text is unstable across versions ("is already checked out at" / "is already used by
+    worktree at") and localised, so a string match would silently stop recognising the case on an
+    upgrade — and the failure mode reads exactly like normal operation. This mirrors, deliberately,
+    ``_branch_held_elsewhere`` in scripts/sync-release.sh; the two predicates answer the same
+    question about the same tree and must not disagree about it.
+
+    Paths compare PHYSICALLY (``Path.resolve()``): LIMEN_ROOT commonly reaches the repo through a
+    symlink, and a textual compare would then read the live root's own entry as "somebody else" and
+    exempt a checkout from its own currency check — a false green in the one direction that matters.
+    """
+    rc, out = git(root, "worktree", "list", "--porcelain")
+    if rc != 0:
+        return False
+    try:
+        root_p = root.resolve()
+    except OSError:  # pragma: no cover — an unresolvable root cannot be proven contended
+        return False
+    wt: str | None = None
+    for line in out.splitlines():
+        if line.startswith("worktree "):
+            wt = line[len("worktree ") :]
+        elif line == f"branch refs/heads/{branch}" and wt is not None:
+            try:
+                other = Path(wt).resolve() != root_p
+            except OSError:  # pragma: no cover
+                other = wt != str(root_p)
+            if other:
+                return True
+    return False
+
+
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Is the tree the beat executes identical to origin/main?")
+    ap.add_argument("--receipt", default=None, help="offline receipt path (default logs/live-checkout-currency.json)")
+    ap.add_argument("--no-receipt", action="store_true", help="report only; write no receipt")
+    args = ap.parse_args()
+
     root = Path(os.environ.get("LIMEN_ROOT", DEFAULT_ROOT)).expanduser()
+    rpath = Path(args.receipt).expanduser() if args.receipt else receipt_path(root)
+
+    def unverifiable(branch: str, why: str) -> int:
+        # "I could not establish this" is its OWN state, never folded into `coherent`. A consumer
+        # reading state != "coherent" degrades toward the warning; that is the whole contract.
+        if not args.no_receipt:
+            write_receipt(
+                rpath,
+                state="unverifiable-here",
+                branch=branch,
+                drift=0,
+                ahead=0,
+                behind=0,
+                dirty=0,
+                unfetched=False,
+                root=str(root),
+                detail=why,
+            )
+        print(UNVERIFIABLE.format(b=branch, why=why))
+        return 0
 
     # Host-aware: no live checkout here at all (the CI case) is not drift.
     if not (root / ".git").exists():
-        print(UNVERIFIABLE.format(b="-", why=f"{root} is not a checkout"))
-        return 0
+        return unverifiable("-", f"{root} is not a checkout")
 
     rc, branch = git(root, "rev-parse", "--abbrev-ref", "HEAD")
     if rc != 0:
-        print(UNVERIFIABLE.format(b="-", why=f"git failed in {root}"))
-        return 0
+        return unverifiable("-", f"git failed in {root}")
     _, head = git(root, "rev-parse", "HEAD")
 
     # Ground truth: what origin/main IS right now, not what this checkout last heard.
     rc, ls = git(root, "ls-remote", "origin", f"refs/heads/{DEFAULT_BRANCH}")
     if rc != 0 or not ls:
-        print(UNVERIFIABLE.format(b=branch, why="origin unreachable — cannot establish the true head"))
-        return 0
+        return unverifiable(branch, "origin unreachable — cannot establish the true head")
     remote_head = ls.split()[0]
 
     # Exact counts need the remote objects locally. Their absence IS drift (this checkout has
@@ -86,8 +189,25 @@ def main() -> int:
     _, porcelain = git(root, "status", "--porcelain")
     dirty = len([ln for ln in porcelain.splitlines() if ln.strip()])
 
+    # DETACHED AT THE EXACT RELEASE, while another worktree legitimately holds the branch NAME, is
+    # the converged state under contention — not a park. What this probe measures is whether the
+    # tree the beat EXECUTES is origin/main; the branch name is the ordinary means to that, never
+    # the end, and no version of this check that demands the name can go green while a second
+    # worktree holds it. sync-release.sh's unpark valve now produces this state deliberately (it
+    # takes the release by SHA when the name is held), so without this arm the organ's own success
+    # is reported as the failure it just repaired — on every beat, forever.
+    #
+    # Bounded three ways, and each bound matters:
+    #   • ``head == remote_head`` — a detach at a STALE commit is still drift. This is the bound
+    #     that keeps the exemption from laundering the very condition the probe exists to find.
+    #   • the name must actually be HELD elsewhere — a gratuitous detach on a free name is a park
+    #     by another spelling and still fails.
+    #   • ``unfetched`` is untouched below, so a checkout that cannot even see the remote head
+    #     cannot reach this arm (head != remote_head whenever the objects are absent).
+    detached_at_release = branch == "HEAD" and head == remote_head and branch_held_elsewhere(root, DEFAULT_BRANCH)
+
     problems = []
-    if branch != DEFAULT_BRANCH:
+    if branch != DEFAULT_BRANCH and not detached_at_release:
         problems.append(f"parked on {branch!r}, not {DEFAULT_BRANCH} — the running fleet is pinned to a work branch")
     if unfetched:
         problems.append(
@@ -102,10 +222,39 @@ def main() -> int:
             "sync-release from fast-forwarding"
         )
 
-    drift = behind + ahead + (1 if unfetched else 0) + (0 if branch == DEFAULT_BRANCH else 1)
+    # `drift` is the ONE measurement consumers threshold on, so the exemption has to reach it too:
+    # a contended detach that still counted 1 would report `state=coherent drift=1`, and any reader
+    # keying on the number rather than the state would draw the opposite conclusion from the same
+    # receipt. One condition, one answer, on both surfaces.
+    on_release = branch == DEFAULT_BRANCH or detached_at_release
+    drift = behind + ahead + (1 if unfetched else 0) + (0 if on_release else 1)
     state = "drift" if problems else "coherent"
+    if not args.no_receipt:
+        write_receipt(
+            rpath,
+            state=state,
+            branch=branch,
+            drift=drift,
+            ahead=ahead,
+            behind=behind,
+            dirty=dirty,
+            unfetched=unfetched,
+            # Additive and optional — every consumer reads this receipt with .get(), so an older
+            # reader is unaffected. It exists because `branch: "HEAD"` with `state: "coherent"` is
+            # otherwise unreadable: a reader cannot tell the converged contended detach apart from
+            # a bug in the probe, and "why is this green?" is the question that gets an exemption
+            # deleted by a later session that cannot see what it was for.
+            detached_at_release=detached_at_release,
+            root=str(root),
+            detail="; ".join(problems),
+        )
     print(f"live-checkout: state={state} branch={branch} drift={drift} ahead={ahead} behind={behind} dirty={dirty}")
     print(f"  root: {root}")
+    if detached_at_release:
+        print(
+            f"  detached at exact origin/{DEFAULT_BRANCH} {head[:8]} — converged; the {DEFAULT_BRANCH!r} "
+            "name is held by another worktree, and the fleet needs the release CODE, not the NAME"
+        )
     if dirty:
         print(f"  {dirty} dirty path(s) — expected on a live beat (daemon-written); reported, not failed")
     for p in problems:

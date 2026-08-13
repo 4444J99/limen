@@ -64,18 +64,18 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 | dependency | used across our repos |
 |---|---|
-| pytest | 35 |
-| typescript | 30 |
-| vitest | 24 |
-| ruff | 23 |
-| pyyaml | 22 |
-| eslint | 21 |
-| react | 15 |
-| react-dom | 14 |
-| node | 13 |
-| pytest-cov | 12 |
-| js | 10 |
-| httpx | 9 |
+| pytest | 9 |
+| pyyaml | 7 |
+| playwright | 6 |
+| pytest-cov | 6 |
+| typescript | 6 |
+| beautifulsoup4 | 4 |
+| node | 4 |
+| ruff | 4 |
+| test | 4 |
+| tsx | 4 |
+| vitest | 4 |
+| cryptography | 3 |
 
 ## Backflow (the inward product)
 
@@ -87,9 +87,21 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 ## Estate register (`ESTATE.yaml`)
 
-42 artifacts registered — 38 verified present locally, 3 cited (remote/receipt), 0 DRIFT, 1 optional-absent.
+42 artifacts registered — 28 verified present locally, 3 cited (remote/receipt), 9 DRIFT, 2 optional-absent.
 
-_Optional-absent (expected): `hub-seed-root`_
+**DRIFT — registered artifacts gone absent (repair or re-home, never delete the entry):**
+
+- `backflow-knowledge`
+- `bodi-charter`
+- `engine-b`
+- `memory-constellation`
+- `memory-engine-design`
+- `memory-specvlvm`
+- `memory-sweep`
+- `outreach-protocol`
+- `plan-vacuums`
+
+_Optional-absent (expected): `hub-seed-root`, `session-discovery-worktrees`_
 
 ## The estate this mirror reflects
 

@@ -26,6 +26,7 @@ HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser()
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.resource_envelope import current_required_free_gib  # noqa: E402
+import gitvs
 
 LIVE_ROOT = Path(os.environ.get("LIMEN_LIVE_ROOT", HOME / "Workspace" / "limen")).expanduser()
 DOC_PATH = ROOT / "docs" / "estate-closeout-audit.md"
@@ -370,7 +371,13 @@ def summarize_local(rows: list[dict[str, Any]], discovery: dict[str, Any]) -> di
 
 def disk_snapshot() -> dict[str, Any]:
     rows = []
-    for path in (Path("/System/Volumes/Data"), HOME, HOME / "Workspace", Path("/Volumes/Scratch"), Path("/Volumes/Archive4T")):
+    for path in (
+        Path("/System/Volumes/Data"),
+        HOME,
+        HOME / "Workspace",
+        Path("/Volumes/Scratch"),
+        Path("/Volumes/Archive4T"),
+    ):
         if not path.exists():
             rows.append({"path": stable(path), "exists": False})
             continue
@@ -388,20 +395,14 @@ def disk_snapshot() -> dict[str, Any]:
         required = current_required_free_gib()
     except (RuntimeError, ValueError):
         required = None
-    headroom = (
-        round(float(free) - required, 1)
-        if isinstance(free, (int, float)) and required is not None
-        else None
-    )
+    headroom = round(float(free) - required, 1) if isinstance(free, (int, float)) and required is not None else None
     return {
         "required_free_gib": required,
         "internal_free_gib": free,
         "resource_headroom_gib": headroom,
         "filesystems": rows,
         "status": (
-            "resource-envelope-unavailable"
-            if headroom is None
-            else ("needs-owner-gates" if headroom < 0 else "clear")
+            "resource-envelope-unavailable" if headroom is None else ("needs-owner-gates" if headroom < 0 else "clear")
         ),
     }
 
@@ -438,33 +439,41 @@ def run_text_command(args: list[str], timeout: int = 120, env: dict[str, str] | 
 
 
 def query_remote_prs(owners: list[str], *, limit: int, classify_limit: int) -> dict[str, Any]:
-    args = [
-        "gh",
-        "search",
-        "prs",
-        "--state",
-        "open",
-        "--limit",
-        str(limit),
-        "--json",
-        "number,repository,title,url,isDraft,createdAt,updatedAt",
-    ]
+    token = gitvs._token()  # allow-secret
+    rows = []
+    error = None
+
     for owner in owners:
-        args.extend(["--owner", owner])
-    proc = run(args, cwd=ROOT, timeout=120)
-    if proc.returncode != 0:
-        return {
-            "ok": False,
-            "owners": owners,
-            "limit": limit,
-            "error": (proc.stderr or proc.stdout or "gh search failed").strip()[:2000],
-        }
-    try:
-        rows = json.loads(proc.stdout or "[]")
-    except ValueError as exc:
-        return {"ok": False, "owners": owners, "limit": limit, "error": f"invalid gh JSON: {exc}"}
-    if not isinstance(rows, list):
-        rows = []
+        canonical = gitvs._resolve_owner_login(owner, token) if token else owner
+        if not canonical:
+            continue
+
+        inventory = gitvs._owner_repo_inventory(canonical, token)
+        if not inventory:
+            continue
+
+        for repository in inventory["repositories"]:
+            repo_name = repository["name_with_owner"]
+            expected_total = repository["open_pr_total"]
+            if expected_total == 0:
+                continue
+
+            page = gitvs._repo_open_prs(repo_name, expected_total, token)
+            if not page.get("exhaustive"):
+                error = page.get("error")
+
+            for pr in page.get("rows", []):
+                pr["repository"] = {"nameWithOwner": repo_name}
+                rows.append(pr)
+
+            if len(rows) >= limit:
+                break
+        if len(rows) >= limit:
+            break
+
+    if error and not rows:
+        return {"ok": False, "owners": owners, "limit": limit, "error": error}
+
     by_repo = collections.Counter(str(row.get("repository", {}).get("nameWithOwner")) for row in rows)
     draft = [row for row in rows if row.get("isDraft")]
     non_draft = [row for row in rows if not row.get("isDraft")]
@@ -532,7 +541,9 @@ def classify_remote_prs(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         except ValueError:
             data = {}
         checks = data.get("statusCheckRollup") if isinstance(data.get("statusCheckRollup"), list) else []
-        states = [status_state(check.get("conclusion") or check.get("state")) for check in checks if isinstance(check, dict)]
+        states = [
+            status_state(check.get("conclusion") or check.get("state")) for check in checks if isinstance(check, dict)
+        ]
         if data.get("isDraft"):
             classification = "draft"
         elif data.get("mergeable") == "CONFLICTING":
@@ -692,7 +703,7 @@ def render(snapshot: dict[str, Any]) -> str:
     local = snapshot.get("local_estate", {})
     remote = snapshot.get("remote_prs", {})
     remote_ok = remote.get("ok") is True
-    session = ((snapshot.get("session_value_gate") or {}).get("data") or {})
+    session = (snapshot.get("session_value_gate") or {}).get("data") or {}
     dispatch = snapshot.get("dispatch_health") or {}
     live = snapshot.get("live_root_gate") or {}
 
@@ -803,7 +814,7 @@ def render(snapshot: dict[str, Any]) -> str:
         "",
         "- `python3 scripts/estate-closeout-audit.py --write --remote-pr-classify-limit 250`",
         "- `python3 scripts/worktree-pr-receipts.py --apply` only for clean local work that needs draft PR custody.",
-        "- `python3 scripts/self-heal.py --dry-run --scan 1000 --scan-max 1000` to queue exact PR repair candidates without mutating.",
+        "- `python3 scripts/self-heal.py --dry-run --scan 1000 --reconcile-scan-max 1000` to queue exact PR repair candidates without mutating.",
         "- `python3 scripts/merge-drain.py --dry-run --scan 1000 --scan-max 1000 --limit 0` to refresh merge-ready candidates without merging.",
         "- `python3 scripts/substrate-storage-pressure.py --write` to keep byte owners current.",
     ]

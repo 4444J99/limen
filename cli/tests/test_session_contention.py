@@ -21,6 +21,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -102,6 +103,87 @@ def test_an_unavailable_probe_fails_OPEN(occupancy):
     """Inverts the sibling probe deliberately: failing closed here means never syncing again."""
     occupancy({Path("/"): -1})
     assert liveness.live_checkout_occupant(ROOT) is None
+
+
+# ── what the runtime was INVOKED as, read off real `ps` lines from the operator host ───────
+
+
+def _fake_ps(monkeypatch, comm, command):
+    """`_is_session` asks two questions with two `ps` calls; answer them by which field was asked."""
+
+    def run(cmd, *a, **k):
+        return SimpleNamespace(stdout=(comm if "comm=" in cmd else command))
+
+    monkeypatch.setattr(liveness.subprocess, "run", run)
+
+
+def test_a_pre_warmed_spare_is_not_an_interactive_session(monkeypatch):
+    """The fourth load-bearing exclusion, found the same way as the other three — by running the
+    probe on the operator host (2026-08-07). A `claude bg-spare` is a session process pre-warmed
+    ahead of demand: argv[0] identical to a real session, sitting in tracked root content, outside
+    every linked worktree, and doing nothing at all. Nine were alive at once and every one of the
+    eight records in logs/session-contention.jsonl named one of these shapes, so sync-release
+    declined the fast-forward for eight straight beats while the checkout fell 37 commits behind
+    release with no interactive session anywhere in it.
+    """
+    _fake_ps(monkeypatch, "claude bg-spare\n", "claude bg-spare --bg-spare /tmp/x.claim.sock\n")
+    assert liveness._is_session(1) is False
+
+
+def test_a_spares_pty_host_is_not_an_interactive_session(monkeypatch):
+    _fake_ps(
+        monkeypatch,
+        "claude bg-pty-host\n",
+        "claude bg-pty-host --bg-pty-host /tmp/x.pty.sock 200 50 -- /v/2.1.224 --bg-spare /tmp/x.sock\n",
+    )
+    assert liveness._is_session(1) is False
+
+
+def test_the_fleetview_viewer_is_not_an_interactive_session(monkeypatch):
+    """Why `command=` and not `comm=`: this process's comm is a bare binary path with no subcommand
+    in it at all, so the title cannot tell it from an operator's own session. Its argv can. It is a
+    viewer — the same kind of thing as the MCP server this module already excluded, and it was the
+    live occupant of the checkout while this was being written.
+    """
+    _fake_ps(monkeypatch, "/Users/4jp/.local/bin/claude\n", "/Users/4jp/.local/bin/claude agents\n")
+    assert liveness._is_session(1) is False
+
+
+def test_an_operators_own_session_in_the_live_checkout_still_counts(monkeypatch):
+    """The protective direction, which narrowing this guard must not weaken: a real session carries
+    no subcommand, keeps its trusted cwd, and goes on blocking the sync organ.
+    """
+    _fake_ps(monkeypatch, "/Users/4jp/.local/bin/claude\n", "/Users/4jp/.local/bin/claude\n")
+    assert liveness._is_session(1) is True
+
+
+def test_a_leading_flag_is_not_mistaken_for_a_subcommand(monkeypatch):
+    """`claude --permission-mode plan` is a session, and argv[1] is a flag rather than a verb — so
+    the parse must reject flags outright instead of testing the next bare word it can find, which
+    would read "plan" (or a prompt's first word) as a subcommand.
+    """
+    _fake_ps(monkeypatch, "claude\n", "claude --permission-mode plan\n")
+    assert liveness._is_session(1) is True
+
+
+def test_a_non_runtime_is_still_rejected_without_consulting_argv(monkeypatch):
+    """Order matters: the program check comes first, so a service never reaches the argv read."""
+    _fake_ps(monkeypatch, "node\n", "node /srv/http-server .\n")
+    assert liveness._is_session(1) is False
+
+
+def test_an_unreadable_argv_leaves_the_runtime_verdict_standing(monkeypatch):
+    """Opposite fail-direction from the program check, deliberately: being unable to read argv is no
+    evidence that a runtime is a service, so a matched runtime stays an occupant.
+    """
+
+    def run(cmd, *a, **k):
+        if "comm=" in cmd:
+            return SimpleNamespace(stdout="claude\n")
+        raise OSError("no ps")
+
+    monkeypatch.setattr(liveness.subprocess, "run", run)
+    assert liveness._is_session(1) is True
 
 
 def test_an_unavailable_probe_is_distinguishable_from_a_free_tree(occupancy):
@@ -433,7 +515,11 @@ def test_probe_treats_an_unreadable_ledger_as_distance(probe, tmp_path):
 # running the script against a live process. These cases are the cheap standing half of that
 # drive: the REAL script, both verdicts, no process required.
 
-SYNC_RELEASE = REPO / "scripts" / "sync-release.sh"
+# Overridable (same knob as scripts/tests/sync-release.test.sh) so the A/B that PROVES these drive
+# tests — run them against the parent commit's script and require a FAIL — is one command rather
+# than a hand-edited copy. A drive test that has only ever been seen to pass is exactly the shape
+# this section was written to distrust.
+SYNC_RELEASE = Path(os.environ.get("LIMEN_SYNC_RELEASE_SCRIPT") or (REPO / "scripts" / "sync-release.sh"))
 
 
 def _stub_probe(line: str, code: int) -> str:
@@ -446,12 +532,13 @@ def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True)
 
 
-def _parked_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[subprocess.CompletedProcess, str]:
-    """A checkout parked on a work branch + the REAL sync-release.sh, probe stubbed to a verdict.
+def _harness(tmp_path: Path, probe_line: str, probe_exit: int) -> Path:
+    """A repo carrying the REAL sync-release.sh with the probe stubbed to one verdict, left on
+    `main` at origin/main. The callers below put HEAD into the shape their valve needs.
 
-    Parked-and-clean is the UNPARK valve's precondition, and unpark is the cheapest of the three
-    destructive sites to drive: it fires before the at-release early exit, and its effect is a
-    single observable fact — which branch HEAD ends up on.
+    Extracted rather than copied when the re-attach valve gained its own driver: two hand-maintained
+    copies of "how this organ is driven" is two places the stub contract can drift, and the one that
+    drifts is the one nobody re-reads.
     """
     origin, repo = tmp_path / "origin.git", tmp_path / "repo"
     subprocess.run(["git", "init", "--quiet", "--bare", str(origin)], check=True)
@@ -469,10 +556,11 @@ def _parked_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[
     _git(repo, "commit", "--quiet", "-m", "harness base")
     _git(repo, "remote", "add", "origin", str(origin))
     _git(repo, "push", "--quiet", "origin", "main")
-    _git(repo, "checkout", "--quiet", "-b", "work/park")
-    _git(repo, "push", "--quiet", "-u", "origin", "work/park")
+    return repo
 
-    proc = subprocess.run(
+
+def _drive(repo: Path, tmp_path: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
         ["bash", str(repo / "scripts" / "sync-release.sh")],
         cwd=str(repo),  # load-bearing: the daemon invokes it from inside $ROOT, and the probe
         capture_output=True,  # process therefore shares the occupant's cwd — the colliding case
@@ -480,7 +568,46 @@ def _parked_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[
         check=False,
         env={**os.environ, "LIMEN_ROOT": str(repo), "HOME": str(tmp_path)},
     )
-    return proc, _git(repo, "symbolic-ref", "--short", "HEAD").stdout.strip()
+
+
+def _head_branch(repo: Path) -> str:
+    """The branch HEAD rests on, or "" when detached. Deliberately NOT `_git`, which uses
+    check=True: `symbolic-ref` exits 1 on a detached HEAD, and detached is a VERDICT here, not an
+    error — the same status-versus-text confusion that once blanked this guard's occupant pid."""
+    proc = subprocess.run(
+        ["git", "-C", str(repo), "symbolic-ref", "--quiet", "--short", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.stdout.strip()
+
+
+def _parked_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[subprocess.CompletedProcess, str]:
+    """A checkout parked on a work branch + the REAL sync-release.sh, probe stubbed to a verdict.
+
+    Parked-and-clean is the UNPARK valve's precondition, and unpark is the cheapest destructive site
+    to drive: it fires before the at-release early exit, and its effect is a single observable fact
+    — which branch HEAD ends up on.
+    """
+    repo = _harness(tmp_path, probe_line, probe_exit)
+    _git(repo, "checkout", "--quiet", "-b", "work/park")
+    _git(repo, "push", "--quiet", "-u", "origin", "work/park")
+    return _drive(repo, tmp_path), _head_branch(repo)
+
+
+def _detached_checkout(tmp_path: Path, probe_line: str, probe_exit: int) -> tuple[subprocess.CompletedProcess, str]:
+    """A checkout DETACHED at the release with the branch name free — the RE-ATTACH valve's
+    precondition, and the state the detach fallback leaves behind once the other worktree lets go.
+
+    A fourth destructive site was added with that valve, and this organ's own registry records why a
+    marker is not enough: `_contended` was present at every site on 2026-08-06 while the guard was
+    inert. A site whose guard is only asserted structurally is a site whose guard has never been
+    seen to fire.
+    """
+    repo = _harness(tmp_path, probe_line, probe_exit)
+    _git(repo, "checkout", "--quiet", "--detach", "main")
+    return _drive(repo, tmp_path), _head_branch(repo)
 
 
 def test_the_guard_declines_the_unpark_when_a_session_holds_the_tree(tmp_path):
@@ -523,4 +650,28 @@ def test_a_blind_probe_announces_itself_instead_of_passing_for_free(tmp_path):
     assert "DISARMED" in proc.stdout, proc.stdout + proc.stderr
     assert "UNPARKED" in proc.stdout, "fail-open is the contract — a blind probe must not block"
     assert head == "main"
+    assert "declining" not in proc.stdout
+
+
+def test_the_guard_declines_the_reattach_when_a_session_holds_the_tree(tmp_path):
+    """The re-attach valve moves HEAD in the live checkout, so it is a destructive site and defers
+    like the other three. Detached-at-the-release is a working state, not a broken one — declining
+    to leave it costs the fleet nothing, because the code is already current."""
+    proc, head = _detached_checkout(tmp_path, "session-contention: /x OCCUPIED by pid 5150", 1)
+
+    assert "declining skipped-reattach" in proc.stdout, proc.stdout + proc.stderr
+    assert "pid 5150" in proc.stdout
+    assert head == "", "HEAD was re-attached out from under a live session"
+    assert "RE-ATTACHED" not in proc.stdout
+
+
+def test_the_reattach_fires_when_the_tree_is_free(tmp_path):
+    """The other half, and the half that keeps the detach fallback a CONTINGENCY. A guard that
+    declined unconditionally would leave the first contention detaching the live checkout forever,
+    which is the same never-converging park the unpark valve exists to prevent — reached from the
+    other side and harder to see, because a detached HEAD at the release still runs correct code."""
+    proc, head = _detached_checkout(tmp_path, "session-contention: /x free", 0)
+
+    assert head == "main", proc.stdout + proc.stderr
+    assert "RE-ATTACHED" in proc.stdout
     assert "declining" not in proc.stdout

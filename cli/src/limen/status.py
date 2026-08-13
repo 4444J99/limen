@@ -68,6 +68,26 @@ def _throughput(limen: LimenFile) -> dict[str, int | str | None]:
     }
 
 
+def _track_window_label(track_date: str, *, today: date | None = None) -> str:
+    """Name the window the recorded spend actually belongs to.
+
+    `spent`/`per_agent` are scoped to `track.date`, which advances only when a writer resets the
+    window. Printing them as "used today" is a lie the moment the board stops moving — and this is
+    the one surface an operator checks to answer "is the quota moving?", so it answered
+    confidently and wrongly for 12 days while `track.date` sat at 2026-07-26 (#1995). A stale
+    window says so, with its age, rather than borrowing today's authority.
+    """
+    now = today or date.today()
+    try:
+        recorded = date.fromisoformat(str(track_date).strip()[:10])
+    except ValueError:
+        return f"in window {track_date!r} (UNPARSEABLE — not today)"
+    if recorded == now:
+        return "today"
+    age = (now - recorded).days
+    return f"on {recorded.isoformat()} (STALE — {age}d old, not today)"
+
+
 def print_status(
     limen: LimenFile,
     agent_filter: str | None = None,
@@ -76,7 +96,7 @@ def print_status(
     track = limen.portal.budget.track
     daily = limen.portal.budget.daily
     print(f"Portal: {limen.portal.name}")
-    print(f"Budget: {track.spent}/{daily} runs used today")
+    print(f"Budget: {track.spent}/{daily} runs used {_track_window_label(track.date)}")
     if track.per_agent:
         per = ", ".join(f"{k}: {v}" for k, v in track.per_agent.items())
         print(f"  per agent: {per}")

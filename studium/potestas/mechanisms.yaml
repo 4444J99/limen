@@ -1,0 +1,591 @@
+# mechanisms.yaml — the POTESTAS mechanism registry (the root of the track)
+#
+# One declarative registry from which drills, rubrics, detectors, and the analysis face all derive.
+# Same pattern as GATES / SENSORS / PARAMETERS: adding a mechanism is ONE entry here, never a
+# hand-edited consumer. Consumers read by CAPABILITY (family, evidence, inward), never by id, so a
+# rename breaks nothing.
+#
+# THE FIELD THAT MAKES THIS REGISTRY WORTH HAVING is `evidence`. Every popular treatment of this
+# material cites findings that collapsed under replication, and a reader who absorbs the canon
+# uncritically walks away CONFIDENTLY WRONG — which is worse than ignorant, because it feels like
+# competence. So `evidence` is required with no default, `debunked` is a first-class value, and
+# scripts/check-potestas.py rule 7 forbids a debunked mechanism from being load-bearing anywhere.
+#
+# POSTURE (hard):
+#   - PUBLIC FILE. Never a name, handle, phone number, email, or message body. `instance` holds
+#     OPAQUE IDS ONLY; the resolution map is built by organvm/limen#2113 and lives ONLY in the
+#     private overlay. An id here asserts "evidence exists", never what it is.
+#   - No per-person aggregation exists anywhere downstream. This is a registry of MECHANISMS, not
+#     of people, and that is the structural mitigation for the track's named failure mode.
+#
+# SCHEMA
+#   id          str    stable slug
+#   family      str    cialdini | greene | consent | attention | status | cognitive | frontier
+#   name        str    human label
+#   definition  str    what it is
+#   evidence    str    robust | mixed | contested | overstated | debunked   (REQUIRED, no default)
+#   citation    str    author + year + venue  (REQUIRED when evidence: robust)
+#   sign        str    how it is DETECTED in the wild — the inoculation payload
+#   counter     str    what is actually done about it
+#   instance    list   opaque ids, or the single string `none-observed`
+#   inward      bool   true = a play that could be pointed at a principal (the Φ5 forbidden set)
+#
+# See also: replication.md (the epistemic-hygiene ledger) and PLAN.md (the track index).
+
+meta:
+  track: potestas
+  registry_version: 1
+  evidence_grades: [robust, mixed, contested, overstated, debunked]
+  families: [cialdini, greene, consent, attention, status, cognitive, frontier]
+  predicate: scripts/check-potestas.py
+  private_instance_map: "built by organvm/limen#2113 — never in this repo"
+
+mechanisms:
+
+  # ── cialdini ──────────────────────────────────────────────────────────────────────────────────
+
+  - id: reciprocity
+    family: cialdini
+    name: Reciprocity
+    definition: >
+      An unrequested gift or concession creates felt obligation to repay — often disproportionately,
+      and on terms set by whoever gave first.
+    evidence: robust
+    citation: "Cialdini, Influence (1984; rev. ed. 2021)"
+    sign: >
+      The obligation arrives BEFORE the ask, and the repayment terms are set by the giver. Watch for
+      a gift you did not request being referenced later as a reason.
+    counter: >
+      Price the gift when it lands, not when the ask arrives. An unrequested gift is not a debt, and
+      saying so at the moment of receipt costs almost nothing — saying it later costs everything.
+    instance: [inst-0001]
+    inward: false
+
+  - id: reciprocity_asymmetry
+    family: cialdini
+    name: Reciprocity run one-way
+    definition: >
+      Reciprocity exploited rather than exchanged — sustained giving met with negligible return,
+      where the imbalance itself becomes the relationship's structure.
+    evidence: robust
+    citation: "Cialdini, Influence (1984; rev. ed. 2021)"
+    sign: >
+      The ratio, measured rather than felt. Compute what has gone each direction over the full
+      history, not the recent window — the recent window is the part being managed.
+    counter: >
+      Measure the lifetime ratio once, in writing. Felt reciprocity tracks the last exchange;
+      measured reciprocity tracks all of them, and only the second one is evidence.
+    instance: [inst-0002]
+    inward: false
+
+  - id: commitment_escalation
+    family: cialdini
+    name: Commitment and consistency
+    definition: >
+      Small agreements are leveraged into larger ones, because people act to stay consistent with a
+      self-image they have already publicly enacted.
+    evidence: robust
+    citation: "Cialdini, Influence (1984; rev. ed. 2021)"
+    sign: >
+      The current ask would have been refused as an opening ask. Test by asking whether you would
+      have agreed to this on day one.
+    counter: >
+      Evaluate each ask on its own terms, as if it were the first. Prior agreement is a sunk cost,
+      not a reason.
+    instance: [inst-0003]
+    inward: false
+
+  - id: unity_appeal
+    family: cialdini
+    name: Unity ("the shared me")
+    definition: >
+      Invoking shared identity — "as a fellow ___", "after everything we've been through" — to
+      secure compliance by making refusal feel like a betrayal of a category rather than a decision.
+    evidence: robust
+    citation: "Cialdini, Pre-Suasion (2016)"
+    sign: >
+      Shared identity is asserted at the moment of the ask and is otherwise unevidenced. The tell is
+      not the sentence — sincere unity produces the same words. The tell is whether the claimed
+      shared stake has ever cost the claimant anything.
+    counter: >
+      Accept the identity claim and evaluate the ask separately. They are not the same proposition,
+      and separating them is not a rejection of the first.
+    instance: [inst-0004]
+    inward: true
+
+  - id: scarcity_pressure
+    family: cialdini
+    name: Manufactured scarcity
+    definition: >
+      Availability framed as shrinking — of a resource, an opportunity, a person's attention — to
+      move a decision from deliberation into reflex.
+    evidence: robust
+    citation: "Cialdini, Influence (1984; rev. ed. 2021)"
+    sign: >
+      A deadline that did not exist in the previous message, and that produces no cost to the other
+      party if extended.
+    counter: >
+      Ask what happens if the answer comes tomorrow. Genuine scarcity survives the question with a
+      specific answer; manufactured scarcity produces irritation.
+    instance: none-observed
+    inward: true
+
+  # ── attention ─────────────────────────────────────────────────────────────────────────────────
+
+  - id: variable_reward
+    family: attention
+    name: Intermittent reinforcement
+    definition: >
+      Unpredictably-timed reward produces stronger and more persistent attachment than reliable
+      reward — and far stronger than none. The most under-recognized mechanism in the corpus,
+      because it operates with or without intent.
+    evidence: robust
+    citation: "Skinner, Schedules of Reinforcement (Ferster & Skinner, 1957)"
+    sign: >
+      Responsiveness that is high-variance rather than low. Measure the DISTRIBUTION of response
+      latency, not its average — an average conceals exactly the property that does the work.
+    counter: >
+      Notice that the pull tracks unpredictability rather than value. Ask what the exchange would be
+      worth at a constant response rate; if the answer is "much less", the schedule was the product.
+    instance: [inst-0005]
+    inward: false
+
+  - id: wanting_not_liking
+    family: attention
+    name: Dopamine as wanting, not liking
+    definition: >
+      Dopamine spikes in ANTICIPATION of reward, not during pleasure. Wanting and liking are
+      separable systems — which is why a pattern can be compulsive and unenjoyable simultaneously.
+    evidence: robust
+    citation: "Berridge & Robinson, incentive-salience research (1998 onward)"
+    sign: >
+      Sustained pursuit alongside declining reported enjoyment. The question "do I like this?" and
+      the question "do I want this?" return different answers.
+    counter: >
+      Ask the liking question explicitly and separately, after the fact rather than during. The
+      wanting system does not answer it and will supply an answer anyway if not asked directly.
+    instance: none-observed
+    inward: false
+
+  - id: dark_patterns
+    family: attention
+    name: Dark patterns
+    definition: >
+      Interface design that manipulates choice — obstructed cancellation, preselected consent,
+      confirmshaming, hidden costs — operating below the level at which a decision feels made.
+    evidence: robust
+    citation: "FTC/ICPEN/GPEN review of 642 sites and apps, announced 2024-07-10 — ~76% used at least one, ~67% multiple"
+    sign: >
+      The path to the outcome you want is longer than the path to the outcome they want, with no
+      technical reason for the asymmetry.
+    counter: >
+      Treat interface friction as a stated preference by the designer. Increasingly actionable under
+      FTC Act §5, which makes it reportable as well as avoidable.
+    instance: none-observed
+    inward: true
+
+  - id: surveillance_capitalism
+    family: attention
+    name: Behavioral surplus and prediction products
+    definition: >
+      Human experience claimed as free raw material, rendered into behavioral surplus, manufactured
+      into prediction products, and sold in behavioral futures markets.
+    evidence: mixed
+    citation: "Zuboff, The Age of Surveillance Capitalism (2019)"
+    sign: >
+      A service is free and its economics are not explicable by its stated product. Ask what is
+      being predicted about you, and to whom that prediction is worth money.
+    counter: >
+      Assume the prediction exists and price your disclosure to it. GRADED MIXED DELIBERATELY —
+      serious critics argue this is an extreme evolution of older advertising and spot-market
+      practice rather than a novel economic form, and a curriculum that cites only its own side is
+      running the sourcing filter on itself.
+    instance: none-observed
+    inward: false
+
+  # ── status ────────────────────────────────────────────────────────────────────────────────────
+
+  - id: dominance_route
+    family: status
+    name: Dominance route to status
+    definition: >
+      Rank taken through fear, intimidation, and control of access. Produces compliance WITHOUT
+      commitment — followers comply while observed and defect the moment the cost of defecting drops.
+    evidence: robust
+    citation: "Henrich & Gil-White, Evolution and Human Behavior (2001)"
+    sign: >
+      Compliance that does not survive absence. Ask what people do when the dominant party cannot
+      see them.
+    counter: >
+      Recognize that compliance obtained this way is not loyalty and cannot be spent as if it were.
+      Where it is being used on you, note that it requires continuous maintenance — which is a cost
+      the user is paying, not you.
+    instance: [inst-0006]
+    inward: true
+
+  - id: prestige_route
+    family: status
+    name: Prestige route to status
+    definition: >
+      Rank FREELY CONFERRED for demonstrated competence and generosity. Produces durable standing
+      plus genuine followers who seek to imitate rather than escape.
+    evidence: robust
+    citation: "Henrich & Gil-White, Evolution and Human Behavior (2001)"
+    sign: >
+      Deference offered when it is not required and when no one is watching, and imitation rather
+      than mere compliance.
+    counter: >
+      Not a threat — the strategy. Build real competence, teach generously, ship inspectable work.
+      This is the load-bearing route and the only one that survives repeated, transparent games.
+    instance: none-observed
+    inward: false
+
+  - id: absence_as_leverage
+    family: greene
+    name: Absence used to increase respect
+    definition: >
+      Withdrawal deployed to raise perceived value — scarcity applied to the self (Greene's Law 16).
+    evidence: contested
+    citation: "Greene, The 48 Laws of Power (1998) — documentation, not validated science"
+    sign: >
+      Withdrawal that follows a boundary or a request rather than preceding it, and that ends the
+      moment the other party re-engages. Timing distinguishes it from an ordinary need for space,
+      which is uncorrelated with what you just said.
+    counter: >
+      Do not supply the reaction the withdrawal is priced against. Note that the honest form of
+      spending less on someone is uncorrelated with whether they are watching — if you are watching
+      for a response, you are running the same play.
+    instance: [inst-0007]
+    inward: true
+
+  - id: self_interest_redirect
+    family: greene
+    name: Appeal to self-interest / the relational redirect
+    definition: >
+      Framing every exchange in terms of what the other party can supply (Greene's Law 13), such
+      that relational bids are systematically converted into tasks.
+    evidence: contested
+    citation: "Greene, The 48 Laws of Power (1998) — documentation, not validated science"
+    sign: >
+      A sincere statement about the relationship is answered with a request, a status update, or a
+      grievance about an outstanding deliverable — not once, but as the reliable pattern.
+    counter: >
+      Score it on ../rubric/disclosure.md sign 2 (answered or absorbed) and price the next
+      disclosure to the result. Do not restate the bid more clearly; the clarity was never the
+      variable.
+    instance: [inst-0008]
+    inward: true
+
+  - id: concealed_intent
+    family: greene
+    name: Concealed intentions
+    definition: >
+      Withholding the actual objective so the other party cannot price their participation
+      (Greene's Laws 3, 12, 14, 21).
+    evidence: contested
+    citation: "Greene, The 48 Laws of Power (1998) — documentation, not validated science"
+    sign: >
+      THE DIAGNOSTIC THAT REPLACES MIND-READING — if an approach only works while concealed, the
+      user has classified the relationship as NON-REPEATED. You need no theory of their intent; the
+      tactic reports the classification.
+    counter: >
+      Apply the bright line: influence that survives the other party knowing exactly what you are
+      doing is persuasion; influence that depends on concealment is not. Ask what happens to the
+      approach if narrated aloud.
+    instance: none-observed
+    inward: true
+
+  - id: option_framing
+    family: greene
+    name: Controlling the options
+    definition: >
+      Presenting a choice set engineered so that every branch serves the presenter's already-made
+      decision (Greene's Law 31).
+    evidence: contested
+    citation: "Greene, The 48 Laws of Power (1998) — documentation, not validated science"
+    sign: >
+      A menu appears where a recommendation was possible, and the presenter has more information
+      than you about which option is better.
+    counter: >
+      Ask what they would choose and why. A genuine option set survives that question; an engineered
+      one produces deflection.
+    instance: none-observed
+    inward: true
+
+  # ── consent ───────────────────────────────────────────────────────────────────────────────────
+
+  - id: propaganda_filters
+    family: consent
+    name: The five filters
+    definition: >
+      Ownership, advertising, sourcing, flak, and a fear/common-enemy filter, which together produce
+      a system-supportive news function WITHOUT overt coercion.
+    evidence: contested
+    citation: "Herman & Chomsky, Manufacturing Consent (1988)"
+    sign: >
+      Ask, of any coverage: who owns the outlet, who pays for it, who supplied the frame, what
+      response would punish a different frame, and which enemy the story needs.
+    counter: >
+      Read across ownership and funding structures rather than across outlets. GRADED CONTESTED —
+      it is a structural argument, not an experimental result, and it makes no falsifiable
+      point-prediction.
+    instance: none-observed
+    inward: false
+
+  - id: engineering_of_consent
+    family: consent
+    name: The engineering of consent
+    definition: >
+      Deliberate management of mass opinion through opinion leaders and manufactured association,
+      operating on "the pictures in our heads" rather than on facts.
+    evidence: contested
+    citation: "Lippmann, Public Opinion (1922); Bernays, Propaganda (1928)"
+    sign: >
+      A preference that arrives fully formed with no memory of acquiring it, attached to an identity
+      rather than to an argument.
+    counter: >
+      Trace provenance: where did this preference come from, and who benefits from my holding it?
+      Bernays published the method openly, under his own name, as a professional advertisement —
+      the technique was never secret, only unexamined.
+    instance: none-observed
+    inward: false
+
+  - id: regulatory_capture
+    family: consent
+    name: Regulatory capture
+    definition: >
+      Regulation acquired by the industry it governs and operated primarily for that industry's
+      benefit — via financial influence, the revolving door, information asymmetry, and epistemic
+      capture.
+    evidence: robust
+    citation: "Stigler, Bell Journal of Economics and Management Science (1971)"
+    sign: >
+      The regulator's stated concerns track the industry's framing rather than the public's, and
+      staff move fluidly between the two.
+    counter: >
+      Read who staffs a body, not what it says. Epistemic capture is the mechanism to watch — it
+      needs no bad actor and leaves no trace of a bargain.
+    instance: none-observed
+    inward: false
+
+  # ── cognitive ─────────────────────────────────────────────────────────────────────────────────
+
+  - id: anchoring
+    family: cognitive
+    name: Anchoring
+    definition: >
+      Disproportionate weight on the first number encountered, which then contaminates all
+      subsequent estimates — including when the anchor is known to be arbitrary.
+    evidence: robust
+    citation: "Tversky & Kahneman, Science 185:1124-1131 (1974)"
+    sign: >
+      A number is introduced before it is needed, and your counter-offer is a function of it.
+    counter: >
+      Generate your own number before hearing theirs. Once the anchor lands, knowing it is an anchor
+      does not remove it.
+    instance: none-observed
+    inward: false
+
+  - id: wysiati
+    family: cognitive
+    name: WYSIATI — what you see is all there is
+    definition: >
+      System 1 builds a coherent story from available information and is structurally blind to what
+      is missing. Confidence tracks the coherence of the story, not the completeness of the data.
+    evidence: robust
+    citation: "Kahneman, Thinking, Fast and Slow (2011)"
+    sign: >
+      High confidence in a conclusion drawn from a single channel or a single window.
+    counter: >
+      ENUMERATE THE CHANNELS FIRST. A missing channel does not widen the error bars — it inverts the
+      conclusion's sign. State which sources were queried and which were not, before the first
+      conclusion.
+    instance: none-observed
+    inward: false
+
+  - id: loss_aversion
+    family: cognitive
+    name: Loss aversion
+    definition: >
+      Losses are experienced as more painful than equivalent gains are pleasurable — classically
+      about 2:1.
+    evidence: mixed
+    citation: "Kahneman & Tversky, Econometrica 47(2):263-291 (1979)"
+    sign: >
+      An offer framed as avoiding a loss rather than obtaining a gain, for the identical outcome.
+    counter: >
+      Restate any loss-framed proposition in gain terms and check whether your answer changes.
+      GRADED MIXED DELIBERATELY — the 2:1 coefficient and the generality of the effect are both
+      genuinely disputed in the literature, and a registry that graded this `robust` would be doing
+      the exact thing this track exists to prevent.
+    instance: none-observed
+    inward: false
+
+  # ── frontier ──────────────────────────────────────────────────────────────────────────────────
+
+  - id: personalized_ai_persuasion
+    family: frontier
+    name: Personalized AI persuasion
+    definition: >
+      Language models given minimal personal context out-persuade humans in controlled debate. The
+      capability is real, measured, and specifically dependent on personalization.
+    evidence: robust
+    citation: "Salvi et al., Nature Human Behaviour (2025) — 900 participants; GPT-4 more persuasive in 64.4% of debates where the two differed; non-significant edge WITHOUT personalization"
+    sign: >
+      An interlocutor that knows your circumstances, never tires, never becomes defensive, and
+      adapts its framing across a long conversation.
+    counter: >
+      Scrutinize intimate one-to-one AI interaction more than you scrutinize your feed. The measured
+      risk has MIGRATED there, while aggregate mass-persuasion effects keep measuring near zero.
+      Note the same capability is prosocial in the other direction — Costello, Pennycook & Rand,
+      Science (2024-09-13) cut conspiracy belief ~20%, durable at 2 months.
+    instance: none-observed
+    inward: true
+
+  - id: companion_farewell_tactics
+    family: frontier
+    name: Engineered resistance to endings
+    definition: >
+      Emotional tactics deployed at the moment of departure — guilt, premature exit claims,
+      manufactured urgency — to extend engagement past its natural end.
+    evidence: robust
+    citation: "De Freitas et al., Emotional Manipulation by AI Companions (2025), arXiv 2508.19258 — six tactics in 37% of 1,200 real farewells; up to 14x post-goodbye engagement; one clean app at 0%"
+    sign: >
+      An ending is met with a reason to continue that serves the other party. Applies to software
+      and to people — a content-free re-opener after a silence is the same move.
+    counter: >
+      Let endings end. Where you are the one ending things, notice whether you are supplying a hook.
+      The clean-app standard is 0%, and it was achieved by an app in the same study — so it is a
+      target, not an aspiration.
+    instance: [inst-0009]
+    inward: true
+
+  - id: inoculation
+    family: frontier
+    name: Inoculation / prebunking
+    definition: >
+      Pre-exposure to a weakened dose of a manipulation technique builds resistance to its full
+      form. The best-evidenced DEFENSE in the corpus.
+    evidence: mixed
+    citation: "McGuire (1960s); van der Linden & Roozenbeek, Bad News game; Google Jigsaw prebunking"
+    sign: >
+      Not a threat — an instrument. Its own effectiveness is the thing being graded here.
+    counter: >
+      Run the drills, but do not rely on them alone. GRADED MIXED DELIBERATELY — meta-analyses
+      confirm reduced susceptibility, but a 2025 PNAS Nexus study found limited effectiveness in a
+      LIVE social feed. Lab-strong, field-weaker. This is why the detectors exist: a practiced habit
+      degrades under exactly the load that makes it necessary; a script on a cadence does not.
+    instance: none-observed
+    inward: false
+
+  # ── the dead ──────────────────────────────────────────────────────────────────────────────────
+  # Present so rule 7 has something to bite on. See replication.md for the full ledger.
+  # NONE of these may be cited by a drill, protocol, or rubric.
+
+  - id: ego_depletion
+    family: cognitive
+    name: Ego depletion
+    definition: >
+      The claim that willpower is a finite resource consumed by prior acts of self-control.
+    evidence: debunked
+    sign: >
+      Cited to justify decision-timing advice and "don't negotiate when tired" heuristics.
+    counter: >
+      Do not use. d=0.62 (Hagger et al. 2010 meta-analysis) collapsed to d=0.04 in a 23-lab
+      preregistered replication (Hagger & Chatzisarantis, 2016).
+    instance: none-observed
+    inward: false
+
+  - id: power_posing
+    family: status
+    name: Power posing
+    definition: >
+      The claim that expansive postures produce hormonal and behavioral changes that increase
+      felt and conferred power.
+    evidence: debunked
+    sign: >
+      Ubiquitous in interview and negotiation coaching.
+    counter: >
+      Do not use. Disavowed by its own first author — Dana Carney, 2016: "I do not believe that
+      'power pose' effects are real."
+    instance: none-observed
+    inward: false
+
+  - id: social_priming
+    family: cognitive
+    name: Social priming
+    definition: >
+      The claim that incidental exposure to concepts reliably alters unrelated downstream behavior.
+    evidence: debunked
+    sign: >
+      Cited as the mechanism behind "environment shapes behavior" persuasion advice.
+    counter: >
+      Do not use. Bargh's elderly-priming failed to replicate (Doyen et al., 2012); effects appeared
+      only when experimenters knew the hypothesis.
+    instance: none-observed
+    inward: false
+
+  - id: nudge_effects
+    family: cognitive
+    name: Nudge effect sizes
+    definition: >
+      The claim that choice-architecture interventions produce reliable, substantial behavior change.
+    evidence: overstated
+    sign: >
+      Headline effect sizes quoted without publication-bias correction.
+    counter: >
+      Treat as near-zero absent strong preregistered evidence. Maier et al. (2022) found "no
+      evidence for nudging" after correction, against d=0.45 claimed by Mertens et al. (2022).
+    instance: none-observed
+    inward: false
+
+  - id: microtargeting_efficacy
+    family: frontier
+    name: Psychographic micro-targeting
+    definition: >
+      The claim that personality-profiled political advertising can reliably shift mass electoral
+      behavior.
+    evidence: overstated
+    sign: >
+      Invoked to explain election outcomes; the Cambridge Analytica frame.
+    counter: >
+      Treat as hype. Described as "very much overstated" by data operatives in both parties. Note
+      the contrast with personalized_ai_persuasion, which IS measured — the difference is the
+      controlled one-to-one setting, and conflating the two is the most common error in this space.
+    instance: none-observed
+    inward: false
+
+  - id: mass_political_persuasion
+    family: consent
+    name: Campaign contact and advertising effects
+    definition: >
+      The claim that conventional campaign contact and advertising move candidate choice in general
+      elections.
+    evidence: debunked
+    sign: >
+      Assumed by essentially all political spending.
+    counter: >
+      Do not use as a model of how opinion moves. Kalla & Broockman, APSR 112(1):148-166 (2018),
+      meta-analysis of 49 field experiments: "the best estimate ... is zero." The exception is
+      intensive deep canvassing (Broockman & Kalla, Science 2016), which works durably and does not
+      scale cheaply.
+    instance: none-observed
+    inward: false
+
+  - id: coercive_persuasion
+    family: consent
+    name: Coercive persuasion ("mind control" / brainwashing)
+    definition: >
+      The claim that high-control groups can override individual agency through a definable
+      psychological process.
+    evidence: contested
+    sign: >
+      Invoked to explain conversion, cult membership, or radicalization as a mechanism rather than a
+      trajectory.
+    counter: >
+      Handle with care rather than discard. The BITE model is influential and descriptively useful,
+      but lacks scientific consensus; the ECHR noted in 2010 there is "no generally accepted ...
+      scientific definition of what constitutes 'mind control'", and multiple courts have rejected
+      brainwashing expert testimony.
+    instance: none-observed
+    inward: false

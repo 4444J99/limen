@@ -19,6 +19,7 @@ from limen.conduct.models import (
     CampaignReceiptV1,
     ConductorSessionV1,
     ConductPrincipalV1,
+    ConductRole,
     LeaseV1,
     ExecutorAttemptV1,
     ResourceClaimV1,
@@ -33,11 +34,38 @@ from limen.work_loan import packet_is_non_capacity_projection, packet_work_loan_
 
 
 class ConductError(RuntimeError):
-    pass
+    """A keeper rejection. ``status`` carries the HTTP code when it crossed the wire.
+
+    Callers classify on ``status`` (and on the marker attributes below), never on the
+    rejection prose: the detail text is authored by whichever keeper answered — Worker,
+    FastAPI adapter, or the in-process broker — and three of them already word the same
+    condition differently.
+    """
+
+    def __init__(self, *args: Any, status: int | None = None) -> None:
+        super().__init__(*args)
+        self.status = status
 
 
 class ConductConflict(ConductError):
     pass
+
+
+class TaskAlreadyHomed(ValueError):
+    """A create was refused because the task is already homed on the keeper.
+
+    Deliberately a ``ValueError``: every in-process raise site it replaces was one, and
+    the compatibility seam's callers catch that type. What it adds is the pair a caller
+    actually needs — ``already_homed`` (this is the benign already-exists condition, not
+    some other conflict) and ``task_id`` (which task) — so nobody has to read English.
+    """
+
+    already_homed = True
+    status = 409
+
+    def __init__(self, *args: Any, task_id: str | None = None) -> None:
+        super().__init__(*args)
+        self.task_id = task_id
 
 
 def _dump(model) -> dict[str, Any]:
@@ -1674,7 +1702,7 @@ class ConductBroker:
         }
 
     @staticmethod
-    def _require_role(principal: ConductPrincipalV1, *roles: str) -> None:
+    def _require_role(principal: ConductPrincipalV1, *roles: ConductRole) -> None:
         if principal.roles.isdisjoint(roles):
             raise ConductConflict(f"authenticated principal lacks required {'/'.join(roles)} role")
 

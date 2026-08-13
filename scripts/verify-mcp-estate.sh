@@ -98,15 +98,15 @@ fi
 
 # ── Invariant 3: OWNERSHIP (no placeholder secret; cartridge-ownership reported) ────────────────────
 step "MCP config ownership — no placeholder secret; each config cartridge-owned (WARN until Phase C)"
-CONFIGS=(
-  "$HOME/.copilot/mcp-config.json"
-  "$HOME/.codex/config.toml"
-  "$HOME/.gemini/settings.json"
-  "$HOME/.gemini/config/mcp_config.json"
-  "$HOME/.claude.json"
-  "$HOME/.cline/data/settings/cline_mcp_settings.json"
-  "$HOME/.config/opencode/opencode.jsonc"
-)
+# DERIVED, never hardcoded. This array used to spell out each agent config under $HOME, which
+# on a host that exports CLAUDE_CONFIG_DIR / GEMINI_CLI_HOME scanned configs the CLIs had abandoned
+# — so a placeholder secret in the LIVE config was invisible to the ownership invariant while a
+# stale copy was audited instead. scripts/agent_config_paths.py owns which file each CLI reads.
+# Read-loop rather than `mapfile` so this keeps working on the stock macOS bash 3.2.
+CONFIGS=()
+while IFS= read -r cfg; do
+  [[ -n "$cfg" ]] && CONFIGS+=("$cfg")
+done < <(python3 "$ROOT/scripts/agent_config_paths.py" --existing | cut -f2-)
 # Placeholder tokens = a broken server (github's YOUR_GITHUB_PERSONAL_ACCESS_TOKEN 401s). Hard fail.
 PLACEHOLDER_RE='YOUR_[A-Z0-9_]*(TOKEN|KEY|SECRET|PAT)|<[A-Za-z0-9_]*(TOKEN|KEY|SECRET|PAT)[A-Za-z0-9_]*>|CHANGEME|PLACEHOLDER_TOKEN'
 # Real literal tokens = a Phase-C cartridge-templating concern (should be op://-hydrated). Reported WARN.

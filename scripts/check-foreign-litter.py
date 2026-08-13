@@ -9,12 +9,24 @@ watched for either class, so they polluted `git status` for a day and blocked sy
 clean-park test. This sensor is the durable answer: detect the two litter classes every beat,
 loudly; reap into a dated quarantine (move, never delete — reversible) only when armed.
 
-Litter classes (both must be UNTRACKED — tracked content, e.g. `.agents/skills/`, is never litter):
+The 2026-08-07 sequel: an npm user-config carrying `prefix=${XDG_DATA_HOME}/npm` was read by a child
+process whose environment had been filtered down to an allowlist that dropped `XDG_*`. npm only
+substitutes `${VAR}` for variables actually present, so the prefix stayed literal, became a relative
+path, and resolved against cwd — planting 121 MB of `@google/gemini-cli` in a directory named
+`${XDG_DATA_HOME}` at this repo's root. This sensor reported CLEAN over it: class 1 looks only under
+`.agents/`, and class 2 considers only single-component *files*. An untracked root-level DIRECTORY
+fell between them, which is class 3 below.
+
+Litter classes (all must be UNTRACKED — tracked content, e.g. `.agents/skills/`, is never litter):
   1. foreign orchestration state under `.agents/` — the Antigravity teamwork-preview layout
      (orchestrator/sentinel/teamwork_preview_*/per-agent BRIEFING/handoff scratch), or any other
      vendor's session tree that lands there uninvited;
   2. repo-root droppings — bare-numeral filenames (`1`, `2>`-style redirect accidents), stray
-     `*.sqlite`/`*.db` files, or any root-level file whose magic bytes say SQLite.
+     `*.sqlite`/`*.db` files, or any root-level file whose magic bytes say SQLite;
+  3. repo-root directories git tracks nothing under — a foreign toolchain or vendor tree installed
+     into the checkout by a misconfigured prefix. "Tracks nothing under" is the whole predicate:
+     grouping untracked paths by first component alone would flag every tracked directory that
+     happens to hold one untracked file (`docs/`, `studium/`).
 
 Read-only by default; exit 0 ⟺ clean, exit 1 ⟺ litter found (advisory in the beat — never breaks
 it). `--reap` moves findings to logs/foreign-litter-quarantine/<stamp>/ and stamps
@@ -24,6 +36,7 @@ LIMEN_FOREIGN_LITTER_REAP=1 (SAFE-OFF: detection earns trust first, the orphan-w
   python3 scripts/check-foreign-litter.py            # detect, print, exit 0/1
   python3 scripts/check-foreign-litter.py --reap     # quarantine findings, stamp, exit 0
 """
+
 from __future__ import annotations
 
 import argparse
@@ -98,12 +111,41 @@ def find_root_droppings() -> list[Path]:
     return sorted(found)
 
 
+def _tracks_nothing_under(prefix: str) -> bool:
+    """True ⟺ git tracks no file under `prefix` — i.e. the directory is wholly foreign to the repo."""
+    args = ["git", "-C", str(ROOT), "ls-files", "--", prefix]
+    try:
+        out = subprocess.run(args, capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return False  # fail open: a broken git can not fabricate litter
+    return not out.strip()
+
+
+def find_root_dirs() -> list[Path]:
+    """Class 3: untracked repo-root directories git tracks nothing under, grouped at the top entry."""
+    tops: dict[str, Path] = {}
+    seen: set[str] = set()  # decided components — a tracked dir must not be re-probed per file
+    for rel in _untracked():
+        parts = Path(rel).parts
+        if len(parts) < 2:
+            continue  # single-component paths are class 2's job
+        top = parts[0]
+        if top in seen:
+            continue
+        seen.add(top)
+        if (ROOT / top).is_dir() and _tracks_nothing_under(top):
+            tops[top] = ROOT / top
+    return sorted(tops.values())
+
+
 def _label(path: Path) -> str:
     name = path.name
     if name in {"orchestrator", "sentinel"} or name.startswith("teamwork_preview_"):
         return "antigravity-style orchestration state"
     if path.parent.name == ".agents":
         return "foreign agent session state"
+    if path.is_dir():
+        return "repo-root directory git tracks nothing under (foreign toolchain install)"
     return "repo-root dropping (redirect accident / stray database)"
 
 
@@ -117,18 +159,20 @@ def reap(findings: list[Path]) -> Path:
         shutil.move(str(path), str(dest))
         moved.append({"from": str(path.relative_to(ROOT)), "to": str(dest.relative_to(ROOT))})
     STAMP.parent.mkdir(parents=True, exist_ok=True)
-    STAMP.write_text(json.dumps(
-        {"ts": datetime.now(timezone.utc).isoformat(), "reaped": moved}, indent=2))
+    STAMP.write_text(json.dumps({"ts": datetime.now(timezone.utc).isoformat(), "reaped": moved}, indent=2))
     return dest_root
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--reap", action="store_true",
-                    help="quarantine findings into logs/foreign-litter-quarantine/<stamp>/ (move, never delete)")
+    ap.add_argument(
+        "--reap",
+        action="store_true",
+        help="quarantine findings into logs/foreign-litter-quarantine/<stamp>/ (move, never delete)",
+    )
     args = ap.parse_args()
 
-    findings = find_agents_litter() + find_root_droppings()
+    findings = find_agents_litter() + find_root_droppings() + find_root_dirs()
     if not findings:
         print("foreign-litter: clean — no untracked foreign session state or root droppings")
         return 0
@@ -138,12 +182,16 @@ def main() -> int:
 
     if args.reap:
         dest = reap(findings)
-        print(f"foreign-litter: {len(findings)} item(s) quarantined under {dest.relative_to(ROOT)} "
-              f"(reversible move; stamped logs/foreign-litter.json)")
+        print(
+            f"foreign-litter: {len(findings)} item(s) quarantined under {dest.relative_to(ROOT)} "
+            f"(reversible move; stamped logs/foreign-litter.json)"
+        )
         return 0
 
-    print("foreign-litter: excavate first (handoffs may carry findings owed to another repo), "
-          "then reap — arm LIMEN_FOREIGN_LITTER_REAP=1 for the beat, or run --reap once by hand")
+    print(
+        "foreign-litter: excavate first (handoffs may carry findings owed to another repo), "
+        "then reap — arm LIMEN_FOREIGN_LITTER_REAP=1 for the beat, or run --reap once by hand"
+    )
     return 1
 
 

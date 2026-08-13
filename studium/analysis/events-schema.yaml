@@ -37,7 +37,8 @@ event_types:
     note: "also derivable post-hoc from ledger/studium-YYYY-MM-DD.md (the face reads those directly)"
   rubric_score:
     emitted_by: "the daily page (optional scoring)"
-    fields: {rubric: "comprehension|handwriting|translation|music-engagement|film-engagement|seminar", level: "1..4"}
+    fields: {rubric: "comprehension|handwriting|translation|music-engagement|film-engagement|seminar|disclosure", level: "1..4"}
+    note: "`disclosure` (../rubric/disclosure.md) is the POTESTAS track's rubric. Level ONLY — never a counterparty, per the non-PII posture above. There is deliberately no per-person aggregation anywhere downstream."
   keep_replace:
     emitted_by: "the daily page (music KEEP/REPLACE verdict)"
     fields: {verdict: "keep|replace", proposed: "composer — work (if replace; optional)"}

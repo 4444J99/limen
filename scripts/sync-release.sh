@@ -13,7 +13,11 @@
 #     an exit would not respawn — that is the documented dead-daemon failure mode).
 #   • HEAD RESTS ON THE RELEASE BRANCH — a checkout parked on a work branch is UNPARKED back to
 #     the release, but only when provably loss-free (branch tip safe on origin + no tracked dirt
-#     beyond generated cache drift); see the unpark valve below.
+#     beyond generated cache drift); see the unpark valve below. When ANOTHER WORKTREE holds the
+#     branch name, git refuses the switch and the valve DETACHES at origin/$BRANCH instead: the
+#     fleet needs the release CODE, not the NAME, and detaching needs nothing from the other
+#     worktree. That is a contingency, not a resting state — the re-attach valve returns HEAD to
+#     the branch the moment the name is free again.
 #
 # Untracked runtime state (logs/autonomy-policy.json governor gate, usage.json, caches) is SAFE:
 # a fast-forward only advances committed history and leaves untracked files untouched. This organ
@@ -22,6 +26,27 @@ set -uo pipefail
 export HOME="${HOME:-/Users/4jp}"
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
+
+# THE ORGAN'S OWN REPOSITORY ROOT — where THIS script lives, which is not necessarily the tree it
+# operates on. Normally they are the same directory and nothing below behaves differently.
+#
+# They diverge in exactly one situation, and it is the one that matters: BOOTSTRAPPING A WEDGED
+# TREE. This organ is the only thing that advances $ROOT, so when a fix to the organ itself is
+# needed to unwedge $ROOT, that fix cannot arrive by the usual route — the tree that needs the new
+# code is the tree the new code exists to update. The escape is to run a CURRENT copy of the organ
+# (from a worktree at origin/main) against the stale $ROOT. That already worked for the organ's own
+# logic, because bash reads this file from where it was invoked. It did NOT work for the organ's
+# HELPERS: they were resolved from "$ROOT", so a current organ still asked the STALE tree's probe
+# for its verdict and got the stale answer back — which is precisely the two-rail confusion the
+# repo's verify recipe warns about, appearing inside a single script.
+#
+# Measured 2026-08-12: a current organ, run against a live checkout 29 commits behind, correctly
+# proved the divergence loss-free and then declined anyway, because $ROOT's OLD occupancy classifier
+# reported a ChatGPT.app stdio server as an interactive session. The organ's fix and the probe's fix
+# were both already merged and green; neither could be reached. A tool must use ITS OWN libraries
+# and only take the TARGET from its argument.
+SELF_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd -P)" || SELF_ROOT="$ROOT"
+[ -n "$SELF_ROOT" ] || SELF_ROOT="$ROOT"
 
 # Regenerable daemon bookkeeping — receipt files the beat REWRITES every cycle. A commit touching ONLY
 # these is "unique" by patch-id yet carries NO genuine work: it is loss-free to re-converge past. This
@@ -34,7 +59,7 @@ BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 # republishes it every beat and the collapse guard restores from the projection branch. Observed
 # park this closes: a local-only "fix validation errors in tasks.yaml" commit (2026-07-19) pinned
 # the live checkout 60 commits behind for 3 days of loud fail-open beats.
-RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md}"
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md docs/always-working.md docs/capacity-fill.md docs/dispatch-health.md docs/diurnal/INDEX.md docs/github-*.json organs/contributions/* organs/financial/* docs/RECLASSIFY-PROPOSAL.md}"
 _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
   local f p matched any=0
   local -a globs
@@ -51,8 +76,76 @@ _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a re
   [ "$any" = 1 ]
 }
 
+# _paths_identical_upstream <base> <local> <remote>
+# exit 0 ⟺ every path the local-only commits touch resolves to the SAME blob at <local> and
+# <remote> (or is absent from both) — i.e. the bytes are ALREADY upstream, so `reset --hard
+# <remote>` provably discards no committed content.
+#
+# Why this exists beside the patch-id valve: patch-id hashes a commit's WHOLE diff, so it only
+# recognises the content as upstream when the upstream commit changed exactly the same set of
+# files. The common real case is the same content landing upstream bundled inside a LARGER
+# commit — measured 2026-08-12, a 2-file local commit (docs/ci-red-disposition-*, +141) against
+# the byte-identical files inside a 24-file release commit (+1684/-594) hashed differently, so
+# valve 1 declared "genuinely unique work" and the organ fail-opened protecting content origin
+# already had. Nothing about those two facts ever changes, so that wedge is PERMANENT: the live
+# checkout sat 29 behind while every beat re-printed the same loud notice, and the fleet executed
+# stale code — including merged fixes whose gates were all green.
+#
+# Content identity is the question the reset actually poses ("would this lose anything?"), and it
+# is decided per PATH, not per commit. Strictly narrower than it looks: a local commit that
+# deletes a file origin still has, or adds one origin lacks, compares unequal and still fails
+# open. An empty changed-path set returns 1 — absence of paths is not evidence of safety.
+_paths_identical_upstream() {
+  local base="$1" lref="$2" rref="$3" f a b any=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    any=1
+    a="$(git rev-parse --quiet --verify "$lref:$f" 2>/dev/null || echo absent)"
+    b="$(git rev-parse --quiet --verify "$rref:$f" 2>/dev/null || echo absent)"
+    [ "$a" = "$b" ] || return 1
+  done <<EOF
+$(git diff --name-only "$base..$lref" 2>/dev/null)
+EOF
+  [ "$any" = 1 ]
+}
+
+# exit 0 ⟺ $BRANCH is checked out in some OTHER worktree of this repository — the one refusal git
+# raises that no amount of tidying THIS tree can clear, because the obstacle is not here.
+#
+# Derived STRUCTURALLY from `git worktree list --porcelain`, never by matching git's refusal text.
+# That text is not stable across versions ("is already checked out at" / "is already used by
+# worktree at") and it is localised, so a string match would silently stop recognising the case on
+# a git upgrade — failing back to the fail-open branch, which looks exactly like normal operation.
+# Paths are compared physically (`pwd -P`): $ROOT commonly reaches the repo through a symlink, and
+# a textual compare would then read the live root as "some other worktree" and detach against
+# itself.
+_branch_held_elsewhere() {
+  local wt="" line root_p wt_p
+  root_p="$(cd "$ROOT" 2>/dev/null && pwd -P)" || return 1
+  while IFS= read -r line; do
+    case "$line" in
+      "worktree "*) wt="${line#worktree }" ;;
+      "branch refs/heads/$BRANCH")
+        wt_p="$(cd "$wt" 2>/dev/null && pwd -P)" || wt_p="$wt"
+        [ "$wt_p" = "$root_p" ] || return 0
+        ;;
+    esac
+    # `git -C "$ROOT"`, not bare git: --census answers from wherever it was invoked and never cd's,
+    # so a cwd-dependent helper would be correct on two of its three call sites and quietly wrong on
+    # the third — reporting "nobody holds it" from outside the repo, which is the answer that
+    # disables the whole valve.
+  done < <(git -C "$ROOT" worktree list --porcelain 2>/dev/null)
+  return 1
+}
+
 if [ "${1:-}" = "--census" ]; then
-  python3 - "$ROOT" "$BRANCH" "$RECEIPT_GLOBS" <<'PY'
+  # Computed in SHELL and passed in, rather than re-derived in the heredoc: two implementations of
+  # "who holds the branch" is two things that can disagree, and the one that decides (the valve)
+  # would not be the one a reader is looking at (the census). Same reason the retirement denominator
+  # got extracted to a single predicate.
+  census_held=false
+  _branch_held_elsewhere && census_held=true
+  python3 - "$ROOT" "$BRANCH" "$RECEIPT_GLOBS" "$census_held" <<'PY'
 import json
 import subprocess
 import sys
@@ -61,6 +154,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 branch = sys.argv[2]
 receipt_globs = [item for item in sys.argv[3].split() if item]
+branch_held_elsewhere = sys.argv[4] == "true" if len(sys.argv) > 4 else False
 
 
 def git(*args: str) -> subprocess.CompletedProcess[str]:
@@ -87,6 +181,11 @@ print(
             "root_present": root.exists(),
             "git_repo": is_repo,
             "on_release_branch": bool(current.stdout.strip() == branch) if is_repo else False,
+            # Without this field a detached-at-the-release root reports on_release_branch=false and
+            # says nothing about WHY — indistinguishable in the census from a genuine park, which is
+            # the state it is the converged answer to.
+            "detached_head": bool(is_repo and not current.stdout.strip()),
+            "branch_held_elsewhere": branch_held_elsewhere,
             "remote_tracking_present": remote.returncode == 0,
             "tracked_dirty_count": count_lines(tracked_dirty),
             "cached_dirty_count": count_lines(cached_dirty),
@@ -115,8 +214,19 @@ if [ "${1:-}" = "--check" ]; then
   git rev-parse --git-dir >/dev/null 2>&1 || { echo "sync-release --check: FAIL — not a git repo"; exit 1; }
   git fetch --quiet origin "$BRANCH" 2>/dev/null || { echo "sync-release --check: FAIL — fetch failed"; exit 1; }
   CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
+  detached_ok=0
   if [ "$CUR" != "$BRANCH" ]; then
-    echo "sync-release --check: FAIL — on '${CUR:-detached}' not '$BRANCH'"; exit 1
+    # DETACHED AT THE RELEASE, while another worktree legitimately holds the branch name, is the
+    # converged state under contention — not a park. What this predicate asserts is that the live
+    # root RUNS the release; the branch name is the ordinary means to that, not the end, and there
+    # is no version of this check that both demands the name and can ever go green while a second
+    # worktree holds it. The HEAD==origin/$BRANCH comparison below is UNCHANGED and still fails a
+    # detach at a stale commit, so this arm cannot launder a behind checkout — it only stops
+    # calling the contended-but-current one a failure. A gratuitous detach (name free) still FAILs.
+    if [ -n "$CUR" ] || ! _branch_held_elsewhere; then
+      echo "sync-release --check: FAIL — on '${CUR:-detached}' not '$BRANCH'"; exit 1
+    fi
+    detached_ok=1
   fi
   LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
   REMOTE="$(git rev-parse "origin/$BRANCH" 2>/dev/null || echo)"
@@ -127,6 +237,10 @@ if [ "${1:-}" = "--check" ]; then
               git ls-files --others --exclude-standard 2>/dev/null; } | sort -u)"
   if [ -n "$dirty" ] && ! printf '%s\n' "$dirty" | _only_receipts; then
     echo "sync-release --check: FAIL — non-receipt dirt: $(printf '%s' "$dirty" | tr '\n' ' ')"; exit 1
+  fi
+  if [ "$detached_ok" = 1 ]; then
+    echo "sync-release --check: PASS — live root DETACHED at exact origin/$BRANCH and clean (or receipts-only); branch name held by another worktree"
+    exit 0
   fi
   echo "sync-release --check: PASS — live root exact origin/$BRANCH and clean (or receipts-only)"
   exit 0
@@ -193,7 +307,11 @@ if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
   # — so it shipped inert and every gate stayed green. A defensive `||` became an eraser.
   # `|| true` absorbs the intended non-zero; the sed then reads a variable, where no exit status
   # of the probe's can reach it. The TEXT is the verdict here, never the status.
-  _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
+  # SELF_ROOT for the helper, $ROOT for the TARGET (see SELF_ROOT above). LIMEN_ROOT is passed
+  # explicitly because session-contention.py resolves its own `limen` package from it — without
+  # that, the current script would still import the stale tree's classifier and get its verdict.
+  _probe_out="$(LIMEN_ROOT="$SELF_ROOT" python3 "$SELF_ROOT/scripts/session-contention.py" \
+    probe --root "$ROOT" 2>/dev/null || true)"
   OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
   # A BLIND PROBE MUST NOT BE A QUIET ONE. The capture above swallows the probe's stdout, so on a
   # host where the probe cannot run — package unimportable, lsof missing — the guard disarms and
@@ -227,7 +345,34 @@ _contended() {
 # work to origin ITSELF (commits tracked dirt onto the branch, pushes the tip), THEN rests HEAD on
 # the release. tasks.yaml must already be a clean remote-owned cache. The ONLY fail-open is a push
 # that genuinely fails (offline/auth) — because then the work is not yet preserved and switching
-# away would lose it. Detached HEAD is left alone.
+# away would lose it.
+#
+# ── RE-ATTACH valve — the mirror of the detach fallback at the bottom of the unpark block, and the
+# reason that fallback is a contingency rather than a one-way door. A detached live root is this
+# organ's answer to a held branch NAME, never its resting state, so the moment the name is free HEAD
+# comes home to it. Without this arm the first contention would detach the checkout permanently and
+# "HEAD RESTS ON THE RELEASE BRANCH" would survive only in its weakened detached form — the same
+# never-converging shape as the park, arrived at from the other side.
+#
+# Two conditions beyond "the name is free", both narrowing what re-attaching can cost:
+#   • the local branch REF must have no unique work (ancestor of origin/$BRANCH). Re-attaching to a
+#     diverged local branch would trade a detached-but-current HEAD for an attached-and-diverged one,
+#     which the ff below can only fail open on — strictly worse than staying detached.
+#   • it is a destructive valve (it moves HEAD in a tree a session may hold), so it defers to the
+#     contention guard exactly like unpark, reset --hard, and stash push.
+# The ff below then advances the re-attached branch normally; this valve only restores the name.
+if [ -z "$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)" ] \
+   && ! _branch_held_elsewhere \
+   && git rev-parse --verify --quiet "refs/heads/$BRANCH" >/dev/null 2>&1 \
+   && git merge-base --is-ancestor "refs/heads/$BRANCH" "origin/$BRANCH" 2>/dev/null; then
+  if ! _contended "skipped-reattach"; then
+    if git switch --quiet "$BRANCH" 2>/dev/null; then
+      LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
+      echo "sync-release: RE-ATTACHED detached HEAD → '$BRANCH' ✓ (branch name free again)"
+    fi
+  fi
+fi
+
 CUR="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)"
 if [ -n "$CUR" ] && [ "$CUR" != "$BRANCH" ]; then
   # Unpark commits the session's dirt, pushes it, and switches HEAD out from under them. Every
@@ -277,6 +422,25 @@ UNPARK_EOF
   if [ "$unparked" = 1 ]; then
     LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
     echo "sync-release: UNPARKED '$CUR' → '$BRANCH' (branch tip safe on origin/$CUR) ✓"
+  # ── DETACH fallback. Git's constraint is that a branch NAME cannot be checked out twice; it has no
+  # objection whatsoever to the COMMIT. So when the refusal is another worktree holding the name —
+  # and only then — take the release by SHA instead. This asks nothing of the other worktree: no
+  # file it holds is touched, nothing is removed, and it keeps working on exactly the tree it had.
+  #
+  # This arm exists because the alternative was a sensor with no effector. The organ already
+  # captured the refusal reason (git's message literally names the holding worktree) and then did
+  # nothing but ask a human, every beat, forever — while the park FED ITSELF: unpark stays blocked,
+  # so the daemon keeps committing captures onto the parked branch (21 of them, all `capture:`, over
+  # one day, live checkout three merges stale). Fail-open was the right default and the wrong
+  # terminus.
+  #
+  # Loss-free by construction: the preserve-then-push above has already proven the parked branch tip
+  # is safe on origin/$CUR, and this only moves HEAD to a commit origin already has. The re-attach
+  # valve above returns HEAD to the branch once the name is free, so this is a contingency the organ
+  # exits on its own — not a state it has to be rescued from.
+  elif _branch_held_elsewhere && git switch --quiet --detach "origin/$BRANCH" 2>/dev/null; then
+    LOCAL="$(git rev-parse HEAD 2>/dev/null || echo)"
+    echo "sync-release: UNPARKED '$CUR' → DETACHED at origin/$BRANCH ${LOCAL:0:7} ✓ (branch name held by another worktree — the fleet needs the release CODE, not the NAME)"
   else
     why="$(printf '%s' "$why" | head -2 | tr '\n' ' ' | cut -c1-200)"
     echo "sync-release: switch '$CUR' → '$BRANCH' refused (${why}) — fail open (reconcile by hand)"
@@ -318,6 +482,15 @@ EOF
     unique=0
     reconcile_reason="local commit(s) touch ONLY regenerable receipts"
   fi
+  # Third loss-free valve: every path the unique local commits touch is already byte-identical at
+  # origin. Catches the content-landed-inside-a-larger-upstream-commit wedge that patch-id misses
+  # (see _paths_identical_upstream). Same --is-ancestor guard: never on a rewound remote.
+  if [ "$unique" = 1 ] && [ -n "$BASE" ] \
+     && git merge-base --is-ancestor "$BASE" "$REMOTE" 2>/dev/null \
+     && _paths_identical_upstream "$BASE" "$LOCAL" "$REMOTE"; then
+    unique=0
+    reconcile_reason="every path in the local commit(s) is already byte-identical at origin"
+  fi
   CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
   if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ] && ! _contended "skipped-reset-hard"; then
     # reset --hard leaves UNTRACKED runtime (logs/, usage.json) untouched; the valve above proved no
@@ -332,7 +505,22 @@ EOF
   exit 0
 fi
 CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
-[ "$CUR" = "$BRANCH" ] || { echo "sync-release: on '$CUR' not '$BRANCH' — fail open (no auto-switch)"; exit 0; }
+if [ "$CUR" != "$BRANCH" ]; then
+  # DETACHED AT THE RELEASE is a steady state, not a park (see the detach fallback in the unpark
+  # valve) — and this arm is what makes it one. `git merge --ff-only` on a detached HEAD advances
+  # HEAD and switches NOTHING, so the "no auto-switch" refusal below has nothing to refuse: there is
+  # no branch to move. The ancestry proof above has already established there is no unique local
+  # work, and the stash / collision valves below are reused unchanged rather than re-implemented for
+  # this path.
+  #
+  # Without this the organ would unpark once and then fail open on EVERY beat afterwards — the same
+  # never-converging park it just escaped, one level down and harder to see, because the log line
+  # would read as an ordinary refusal rather than as a valve that fires once and dies.
+  if [ -n "$(git symbolic-ref --quiet --short HEAD 2>/dev/null || echo)" ] || ! _branch_held_elsewhere; then
+    echo "sync-release: on '$CUR' not '$BRANCH' — fail open (no auto-switch)"; exit 0
+  fi
+  echo "sync-release: DETACHED at ${LOCAL:0:7}, '$BRANCH' still held by another worktree — advancing detached HEAD to the release"
+fi
 
 # Set tracked working changes aside so the ff is not blocked by build artifacts. The dirty-cache
 # guard above ensures tasks.yaml is not among them; the released projection wins.
@@ -341,7 +529,11 @@ if ! git diff --quiet 2>/dev/null; then
   # A dirty tree under a live session is that session's UNCOMMITTED WORK. Stashing it is exactly
   # the thing the ideal forbids — and worse than a reset, because the stack is shared across every
   # worktree on this host, so the session cannot even safely pop it back.
-  _contended "skipped-stash-push" && exit 0
+  # EXCEPTION: If the dirty tracked files are purely daemon-regenerable bookkeeping, they are NOT
+  # session work. We stash them so the ff can proceed, and skip the contention exit.
+  if ! git diff --name-only 2>/dev/null | _only_receipts; then
+    _contended "skipped-stash-push" && exit 0
+  fi
   git stash push --quiet 2>/dev/null && stashed=1 || true
 fi
 

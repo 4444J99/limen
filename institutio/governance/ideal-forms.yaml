@@ -96,6 +96,19 @@ ideals:
       environment: host
       at_ideal_when: exit_zero
 
+  IF-PR-LIFECYCLE:
+    ideal: >
+      Every open PR carries exactly one declared disposition, written under a declared admits
+      predicate; every consumer derives policy from lifecycle capabilities; and the estate's
+      mechanically reachable PR population is a registry fact rather than a code literal.
+    owner: "Claude (registry + predicate) -> lifecycle typer and merge organs"
+    probe:
+      command: "python3 scripts/check-lifecycle.py --measure"
+      derives: "open PRs outside any declared mechanically actionable lifecycle disposition in the committed exhaustive census"
+      environment: network
+      extract: "unreachable PRs: ([0-9]+)"
+      ideal_value: 0
+
   IF-PUBLICATION-ESTATE:
     ideal: >
       The whole GitHub estate carries its publication policy as declared data — every repo
@@ -113,6 +126,34 @@ ideals:
       of this row probed `--check`; that is a stamp-PRESENCE test which fails on a gitignored
       local artifact, so it reported distance for a reason unrelated to the ideal. Measuring
       the wrong question is worse than declaring the vacuum.
+
+  IF-GUARD-FAIL-TOWARD-WARNING:
+    ideal: >
+      No safety guard in the estate can degrade toward "everything is fine". Every guard whose
+      verdict gates a capability declares its degenerate inputs, and each one is EXECUTED against
+      them: an input the guard cannot resolve must come back untrusted, never silently permissive.
+      "I could not establish this" and "this is fine" are never the same value.
+    owner: "Claude + the cadence guards"
+    probe:
+      command: "python3 scripts/check-guard-degradation.py"
+      derives: "declared guards whose degenerate inputs return TRUSTED (findings), plus the declared population"
+      environment: repo
+      extract: "findings=([0-9]+)"
+      ideal_value: 0
+      # NOT `instantaneous`. This is a RATCHET, not a thermometer: the declared population is
+      # grow-only (institutio/governance/guard-state-baseline.txt), so a green reading means "every
+      # guard the estate has DECLARED degrades correctly", and the honest distance is the guards not
+      # yet declared. The number therefore only improves by declaring more, never by measuring again.
+      #
+      # Provenance: four instances of one defect found in a single stack on 2026-08-07 — three
+      # forked `dict | None` meter readers where None meant both "absent" and "distrusted"; a
+      # session-model resolver returning "" so an unresolvable model took the cheap branch; an
+      # undeployed guard printing superseded advice; an unarmed hook indistinguishable from a
+      # silent one. Censor precedent PREC-2026-08-07-guard-degrades-toward-silence.
+      #
+      # The proofs are EXECUTED, never inspected, and that is the load-bearing choice:
+      # verify-fable-gate.sh was green through the entire incident, all five blocks passing,
+      # because the question it asked was answered correctly by a meter that was itself lying.
 
   IF-LIVE-TREE-COHERENCE:
     ideal: >

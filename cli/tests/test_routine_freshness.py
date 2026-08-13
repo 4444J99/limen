@@ -368,3 +368,104 @@ def test_omega_scorecard_is_may_be_silent_and_flag_is_opt_in():
     assert 0 < len(flagged) < len(delta_gated), (
         "may_be_silent must be a deliberate per-routine opt-in, not applied to every delta-gated row"
     )
+
+
+# ── _relay_ledger tests (a keeper 409 must never kill the beat) ───────────────
+#
+# Regression: the local tasks.yaml projection LAGS the conduct keeper. An atom already homed on
+# the keeper but absent from that projection sent hang_down_atoms down the create branch, and the
+# keeper answered 409 "already exists". That ConductError was uncaught and killed the whole audit
+# before it wrote its artifact or retired recovered atoms — invisibly, since the beat runs this
+# sensor at severity:silent.
+
+
+class _FakeTask:
+    def __init__(self, tid):
+        self.id = tid
+
+
+class _FakeFile:
+    def __init__(self, ids):
+        self.tasks = [_FakeTask(i) for i in ids]
+
+
+class _FakeDrain:
+    def __init__(self, already_homed=()):
+        self.already_homed = list(already_homed)
+
+
+def test_relay_ledger_already_homed_is_recorded_not_fatal():
+    """A keeper's already-homed answer for a just-created atom is benign, never raised."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-a"])
+    res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
+
+    def sync(_ledger, _lf, **_kw):
+        return _FakeDrain(["ASK-routine-a"])
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
+
+    assert "error" not in res
+    assert res["created"] == []
+    assert any("ASK-routine-a" in h for h in res["homed"])
+
+
+def test_relay_ledger_reads_the_keepers_verdict_never_the_rejection_prose():
+    """The organ must not classify on error text. Three keepers word this condition three ways;
+    matching one of them silently reverts this severity:silent sensor to fatal on a reword."""
+    relay = SCRIPT.read_text().split("def _relay_ledger", 1)[1].split("\ndef ", 1)[0]
+    code = relay.split('"""', 2)[2]  # skip the docstring's own explanatory prose
+    for prose in ("already exists", "no longer absent", "409"):
+        assert prose not in code, f"_relay_ledger matches keeper prose: {prose!r}"
+
+
+def test_relay_ledger_opts_in_only_the_atoms_this_run_appended():
+    """Tolerating a task this run did NOT append would let it be dropped, and a dropped task
+    diffs as EV_TASK_REMOVE — which the keeper refuses outright."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-preexisting", "ASK-routine-new"])
+    res = {"created": ["ASK-routine-new"], "refreshed": ["ASK-routine-preexisting"], "homed": []}
+    seen = {}
+
+    def sync(_ledger, _lf, **kw):
+        seen.update(kw)
+        return _FakeDrain()
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-new"}, res=res)
+
+    assert seen["tolerate_already_homed"] == {"ASK-routine-new"}
+    assert "ASK-routine-preexisting" not in seen["tolerate_already_homed"]
+
+
+def test_relay_ledger_relays_the_whole_batch_in_one_pass():
+    """N already-homed atoms cost one round trip, not N: the keeper reports them together."""
+    mod = _load()
+    ids = [f"ASK-routine-{n}" for n in range(5)]
+    lf = _FakeFile(ids)
+    res = {"created": list(ids), "refreshed": [], "homed": []}
+    calls = []
+
+    def sync(_ledger, _lf, **_kw):
+        calls.append(1)
+        return _FakeDrain(ids)
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids=set(ids), res=res)
+
+    assert len(calls) == 1
+    assert res["created"] == []
+    assert len(res["homed"]) == 5
+
+
+def test_relay_ledger_error_is_recorded_not_raised():
+    """Any keeper failure is fail-open: recorded on the result, never crashes the beat."""
+    mod = _load()
+    lf = _FakeFile(["ASK-routine-a"])
+    res = {"created": ["ASK-routine-a"], "refreshed": [], "homed": []}
+
+    def sync(_ledger, _lf, **_kw):
+        raise RuntimeError("conduct broker is not configured")
+
+    mod._relay_ledger(sync, lf, session_id="hang-down", new_ids={"ASK-routine-a"}, res=res)
+
+    assert "keeper sync failed" in res["error"]
+    assert [t.id for t in lf.tasks] == ["ASK-routine-a"]

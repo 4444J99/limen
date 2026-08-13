@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/omega-observation.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "observed_head", "program_pass"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_omega_observation.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "observed_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "evidence_url": {"type": "string", "pattern": "^https://"},
+    "program_pass": {
+      "type": "object",
+      "required": ["schema_version", "status", "pass", "state_digest", "observed_at"],
+      "properties": {
+        "schema_version": {"const": "limen.positioning_omega_pass.v1"},
+        "status": {"const": "pass"},
+        "pass": {"enum": [1, 2]},
+        "state_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "ok": {"type": "boolean"},
+        "parity": {"type": "object"},
+        "open": {"type": "array"},
+        "verified_receipts": {"type": "integer", "minimum": 0},
+        "failures": {"type": "array"}
+      },
+      "additionalProperties": true
+    }
+  }
+}

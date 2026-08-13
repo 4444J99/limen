@@ -197,6 +197,42 @@ def classify(
     return "down", age_days
 
 
+def _relay_ledger(sync, lf, *, session_id: str, new_ids: set[str], res: dict) -> None:
+    """Relay ledger changes to the conduct keeper — fail-open, never fatal to the beat.
+
+    Both callers build their "does this atom exist" index from the local tasks.yaml projection,
+    which LAGS the keeper (the projection republishes on its own cadence). An atom already homed
+    on the keeper but absent from that projection sends the caller down the create branch, and
+    the keeper refuses the create. That is benign — the atom IS homed — but the raw rejection
+    escaped and killed the whole audit before it wrote its artifact or retired recovered atoms,
+    and the beat runs this sensor at severity:silent, so it failed invisibly for days.
+
+    The keeper decides which ids were already homed and says so structurally
+    (`DrainResult.already_homed`, attributed by the in-flight ticket). This organ never reads
+    the rejection's wording: three keepers word the same condition three ways, and matching
+    prose would silently revert this sensor to fatal the day one of them is reworded.
+
+    Only atoms THIS run appended (`new_ids`) are tolerated: dropping a task that was already in
+    the projection would diff as EV_TASK_REMOVE, which the keeper refuses outright.
+    """
+    try:
+        drain = sync(
+            LEDGER,
+            lf,
+            agent="routine-freshness",
+            session_id=session_id,
+            tolerate_already_homed=new_ids,
+        )
+    except Exception as exc:  # noqa: BLE001 — fail-open: a missed pass self-corrects next beat
+        res["error"] = f"keeper sync failed ({exc}); ledger unchanged this beat"
+        return
+    for tid in getattr(drain, "already_homed", ()) or ():
+        res.setdefault("homed", []).append(f"{tid} → already homed on keeper")
+        for key in ("created", "refreshed"):
+            if tid in res.get(key, []):
+                res[key].remove(tid)
+
+
 def hang_down_atoms(down_rows: list[dict]) -> dict:
     """Upsert ASK-routine-<name> needs_human tasks for each down routine.
 
@@ -324,11 +360,12 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
                 res["created"].append(tid)
 
         if changed:
-            apply_limen_file_sync(
-                LEDGER,
+            _relay_ledger(
+                apply_limen_file_sync,
                 lf,
-                agent="routine-freshness",
                 session_id="hang-down",
+                new_ids=set(res["created"]),
+                res=res,
             )
 
     return res
@@ -405,11 +442,12 @@ def retire_recovered_atoms(down_names: set[str], all_names: list[str]) -> dict:
                 res["retired"].append(tid)
 
         if changed:
-            apply_limen_file_sync(
-                LEDGER,
+            _relay_ledger(
+                apply_limen_file_sync,
                 lf,
-                agent="routine-freshness",
                 session_id="retire-recovered",
+                new_ids=set(),
+                res=res,
             )
 
     return res
@@ -502,9 +540,12 @@ def main() -> int:
             row_copy["_days_silent"] = age_days
             down_rows.append(row_copy)
 
-    # Hang needs_human atoms for down routines
+    # Hang needs_human atoms for down routines. The outcome is persisted into the artifact below,
+    # not just printed: the beat runs this sensor at severity:silent, so a stdout-only escalation
+    # result is unobservable — which is exactly how a keeper 409 killed this organ unnoticed.
+    escalation: dict = {}
     if down_rows:
-        h = hang_down_atoms(down_rows)
+        h = escalation = hang_down_atoms(down_rows)
         bits = []
         if h.get("created"):
             bits.append(f"created {', '.join(h['created'])}")
@@ -531,6 +572,8 @@ def main() -> int:
         "generated": now_iso,
         "routines": results,
         "summary": summary,
+        "escalation": escalation,
+        "retire": rr,
     }
     try:
         LOGS.mkdir(parents=True, exist_ok=True)

@@ -6,7 +6,9 @@ import { authorizeConductRequest } from "../src/conduct/auth.js";
 import {
   ConductKeeperDurableObject,
 } from "../src/conduct/durable-object.js";
+import { durableStateStoreContract } from "../src/conduct/durable-store.js";
 import {
+  DurableConductStore,
   MemoryConductStore,
   SerializedConductService,
 } from "../src/conduct/keeper.js";
@@ -238,6 +240,168 @@ function principalMeta(principalId, agent, roles) {
     surface: "cloud",
     roles,
   };
+}
+
+class InstrumentedConductStorage {
+  constructor(values = new Map()) {
+    this.values = new Map(
+      [...values].map(([key, value]) => [key, structuredClone(value)]),
+    );
+    this.resetMutationTrace();
+  }
+
+  clone() {
+    return new InstrumentedConductStorage(this.values);
+  }
+
+  async get(key) {
+    if (Array.isArray(key)) {
+      return new Map(
+        key
+          .filter((candidate) => this.values.has(candidate))
+          .map((candidate) => [candidate, structuredClone(this.values.get(candidate))]),
+      );
+    }
+    return this.values.has(key) ? structuredClone(this.values.get(key)) : undefined;
+  }
+
+  async put(key, value) {
+    const entries = typeof key === "string"
+      ? [[key, value]]
+      : key instanceof Map
+        ? [...key]
+        : Object.entries(key);
+    for (const [candidate, stored] of entries) {
+      this.writeAttempts += 1;
+      this.attemptedWriteKeys.push(candidate);
+      if (this.failAtWrite === this.writeAttempts) {
+        throw new Error(`injected durable commit failure at ${candidate}`);
+      }
+      this.values.set(candidate, structuredClone(stored));
+      this.writtenKeys.push(candidate);
+    }
+  }
+
+  async delete(key) {
+    const candidates = Array.isArray(key) ? key : [key];
+    this.deletedKeys.push(...candidates);
+    let removed = 0;
+    for (const candidate of candidates) removed += Number(this.values.delete(candidate));
+    return Array.isArray(key) ? removed : Boolean(removed);
+  }
+
+  async list({ prefix } = {}) {
+    return new Map(
+      [...this.values]
+        .filter(([key]) => !prefix || key.startsWith(prefix))
+        .map(([key, value]) => [key, structuredClone(value)]),
+    );
+  }
+
+  resetMutationTrace({ failAtWrite = null } = {}) {
+    this.writtenKeys = [];
+    this.attemptedWriteKeys = [];
+    this.deletedKeys = [];
+    this.writeAttempts = 0;
+    this.failAtWrite = failAtWrite;
+  }
+}
+
+function withHistoricalEvents(state, historySize, leaseId, runId) {
+  const cold = structuredClone(state);
+  const firstHeartbeat = NOW.toISOString();
+  cold.events = Array.from({ length: historySize }, (_, index) => ({
+    sequence: index + 1,
+    timestamp: new Date(NOW.getTime() - 1000).toISOString(),
+    kind: "test.history",
+    detail: `${index}:${"cold-conduct-history-".repeat(4)}`,
+  }));
+  cold.events.push({
+    sequence: historySize + 1,
+    timestamp: firstHeartbeat,
+    kind: "lease.heartbeat",
+    lease_id: leaseId,
+    run_id: runId,
+    count: 1,
+    first_timestamp: firstHeartbeat,
+    last_timestamp: firstHeartbeat,
+  });
+  cold.next_event_sequence = historySize + 1;
+  cold.event_history = { pruned_count: 0, pruned_through_sequence: 0 };
+  return cold;
+}
+
+async function coldHeartbeatFixture(historySize) {
+  const capabilitySecret = "heartbeat-overlay-regression-secret";
+  const codex = session("codex", { sessionId: `overlay-codex-${historySize}` });
+  const memory = new MemoryConductStore();
+  const service = new SerializedConductService(memory, {
+    clock: () => NOW,
+    capabilitySecret,
+  });
+  await service.call("register", { session: codex });
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: `heartbeat-overlay-${historySize}`,
+      conductor: codex.identity,
+      resource: `path/organvm/limen/main/cli/overlay-${historySize}`,
+    }),
+  });
+  const capabilityToken = await leaseCapability(service, reserved);
+  await service.call("heartbeat", {
+    lease_id: reserved.lease.lease_id,
+    capability_token: capabilityToken,
+    generation: reserved.lease.generation,
+    observed_heads: { pr: "abc123" },
+  });
+  const coldState = withHistoricalEvents(
+    memory.snapshot(),
+    historySize,
+    reserved.lease.lease_id,
+    reserved.run_id,
+  );
+  const storage = new InstrumentedConductStorage();
+  await new DurableConductStore(storage).save(coldState);
+  storage.resetMutationTrace();
+  return {
+    capabilitySecret,
+    capabilityToken,
+    codex,
+    coldState,
+    historySize,
+    reserved,
+    storage,
+  };
+}
+
+async function steadyHeartbeat(fixture, storage, now) {
+  const service = new SerializedConductService(new DurableConductStore(storage), {
+    clock: () => now,
+    capabilitySecret: fixture.capabilitySecret,
+  });
+  return service.call("heartbeat", {
+    lease_id: fixture.reserved.lease.lease_id,
+    capability_token: fixture.capabilityToken,
+    generation: fixture.reserved.lease.generation,
+    observed_heads: { pr: "abc123" },
+  });
+}
+
+function assertHeartbeatLiveness(state, fixture, timestamp, count, sequence) {
+  const leaseId = fixture.reserved.lease.lease_id;
+  const runId = fixture.reserved.run_id;
+  assert.equal(state.leases[leaseId].heartbeat_at, timestamp);
+  assert.equal(state.runs[runId].updated_at, timestamp);
+  assert.equal(state.sessions[fixture.codex.session_id].heartbeat_at, timestamp);
+  const audit = state.events.filter((event) =>
+    event.kind === "lease.heartbeat" && event.lease_id === leaseId);
+  assert.equal(audit.length, 1);
+  assert.equal(audit[0].count, count);
+  assert.equal(audit[0].first_timestamp, NOW.toISOString());
+  assert.equal(audit[0].last_timestamp, timestamp);
+  assert.equal(audit[0].timestamp, timestamp);
+  assert.equal(audit[0].sequence, sequence);
+  assert.equal(state.next_event_sequence, sequence);
 }
 
 test("conduct auth fails closed without a principal registry and derives identity from its secret", async () => {
@@ -1925,6 +2089,241 @@ test("heartbeat, cooperative stop, report idempotency, cancel, and hard deadline
   assert.equal(store.snapshot().leases[expiring.lease.lease_id].state, "expired");
 });
 
+test("repeated heartbeats retain bounded audit evidence with the latest timestamp and coverage", async () => {
+  const heartbeatCount = 128;
+  const codex = session("codex");
+  let clock = new Date(NOW);
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => clock });
+  await service.call("register", { session: codex });
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: "bounded-heartbeat-audit",
+      conductor: codex.identity,
+      resource: "path/organvm/limen/main/cli/heartbeat-audit",
+    }),
+  });
+  const capabilityToken = await leaseCapability(service, reserved);
+
+  for (let index = 1; index <= heartbeatCount; index += 1) {
+    clock = new Date(NOW.getTime() + index * 1000);
+    const heartbeat = await service.call("heartbeat", {
+      lease_id: reserved.lease.lease_id,
+      capability_token: capabilityToken,
+      generation: reserved.lease.generation,
+      observed_heads: { pr: "abc123" },
+    });
+    assert.equal(heartbeat.status, "active");
+  }
+
+  const snapshot = store.snapshot();
+  const latestTimestamp = clock.toISOString();
+  const heartbeatEvents = snapshot.events.filter((event) =>
+    event.kind === "lease.heartbeat"
+    && event.lease_id === reserved.lease.lease_id);
+  assert.equal(snapshot.leases[reserved.lease.lease_id].heartbeat_at, latestTimestamp);
+  assert.equal(heartbeatEvents.length, 1);
+  assert.equal(heartbeatEvents[0].count, heartbeatCount);
+  assert.equal(
+    heartbeatEvents[0].first_timestamp,
+    new Date(NOW.getTime() + 1000).toISOString(),
+  );
+  assert.equal(heartbeatEvents[0].last_timestamp, latestTimestamp);
+  assert.equal(heartbeatEvents[0].timestamp, latestTimestamp);
+  assert.equal(heartbeatEvents[0].sequence, snapshot.next_event_sequence);
+});
+
+test("steady heartbeats use an atomic bounded liveness overlay independent of cold history", async (t) => {
+  for (const historySize of [0, 2_400, 12_000]) {
+    await t.test(`${historySize} historical events`, async () => {
+      const fixture = await coldHeartbeatFixture(historySize);
+      const failedStorage = fixture.storage.clone();
+      const coldManifest = structuredClone(
+        fixture.storage.values.get(durableStateStoreContract.manifest_key),
+      );
+      const secondHeartbeat = new Date(NOW.getTime() + 60 * 1000);
+
+      fixture.storage.resetMutationTrace();
+      const heartbeat = await steadyHeartbeat(fixture, fixture.storage, secondHeartbeat);
+      assert.equal(heartbeat.status, "active");
+      assert.deepEqual(
+        fixture.storage.values.get(durableStateStoreContract.manifest_key),
+        coldManifest,
+      );
+      assert.ok(fixture.storage.writtenKeys.length > 0);
+      assert.ok(
+        fixture.storage.writtenKeys.length <= 3,
+        `${historySize} historical events caused ${fixture.storage.writtenKeys.length} row writes`,
+      );
+      assert.equal(fixture.storage.deletedKeys.length, 0);
+
+      const restartedStore = new DurableConductStore(fixture.storage);
+      const restarted = new SerializedConductService(restartedStore, {
+        clock: () => secondHeartbeat,
+        capabilitySecret: fixture.capabilitySecret,
+      });
+      const graph = await restarted.call("graph", { run_id: fixture.reserved.run_id });
+      const node = graph.nodes.find((candidate) => candidate.run_id === fixture.reserved.run_id);
+      assert.equal(node.updated_at, secondHeartbeat.toISOString());
+      assert.equal(node.lease.heartbeat_at, secondHeartbeat.toISOString());
+      assertHeartbeatLiveness(
+        await restartedStore.load(),
+        fixture,
+        secondHeartbeat.toISOString(),
+        2,
+        historySize + 2,
+      );
+
+      const commitWrite = fixture.storage.attemptedWriteKeys.length;
+      assert.equal(commitWrite, fixture.storage.writtenKeys.length);
+      failedStorage.resetMutationTrace({ failAtWrite: commitWrite });
+      await assert.rejects(
+        steadyHeartbeat(fixture, failedStorage, secondHeartbeat),
+        /injected durable commit failure/,
+      );
+      assert.deepEqual(
+        failedStorage.values.get(durableStateStoreContract.manifest_key),
+        coldManifest,
+      );
+      assertHeartbeatLiveness(
+        await new DurableConductStore(failedStorage).load(),
+        fixture,
+        NOW.toISOString(),
+        1,
+        historySize + 1,
+      );
+    });
+  }
+});
+
+test("a newer cold checkpoint wins over a stale heartbeat overlay", async () => {
+  const fixture = await coldHeartbeatFixture(2_400);
+  const originalManifest = structuredClone(
+    fixture.storage.values.get(durableStateStoreContract.manifest_key),
+  );
+  await steadyHeartbeat(fixture, fixture.storage, new Date(NOW.getTime() + 60 * 1000));
+
+  const replacement = structuredClone(fixture.coldState);
+  const replacementTimestamp = new Date(NOW.getTime() + 120 * 1000).toISOString();
+  const leaseId = fixture.reserved.lease.lease_id;
+  const runId = fixture.reserved.run_id;
+  replacement.leases[leaseId].heartbeat_at = replacementTimestamp;
+  replacement.leases[leaseId].hard_deadline = new Date(
+    NOW.getTime() + 420 * 1000,
+  ).toISOString();
+  replacement.runs[runId].updated_at = replacementTimestamp;
+  replacement.runs[runId].status = "stop_requested";
+  replacement.sessions[fixture.codex.session_id].heartbeat_at = replacementTimestamp;
+  const audit = replacement.events.find((event) =>
+    event.kind === "lease.heartbeat" && event.lease_id === leaseId);
+  audit.count = 3;
+  audit.timestamp = replacementTimestamp;
+  audit.last_timestamp = replacementTimestamp;
+  audit.sequence = fixture.historySize + 3;
+  replacement.next_event_sequence = audit.sequence;
+
+  await new DurableConductStore(fixture.storage).save(replacement);
+
+  assert.notDeepEqual(
+    fixture.storage.values.get(durableStateStoreContract.manifest_key),
+    originalManifest,
+  );
+  const reloaded = await new DurableConductStore(fixture.storage).load();
+  assert.equal(reloaded.runs[runId].status, "stop_requested");
+  assertHeartbeatLiveness(
+    reloaded,
+    fixture,
+    replacementTimestamp,
+    3,
+    fixture.historySize + 3,
+  );
+});
+
+test("disabling the heartbeat fast path materializes overlays before rollback", async () => {
+  const fixture = await coldHeartbeatFixture(2_400);
+  const heartbeatAt = new Date(NOW.getTime() + 60 * 1000);
+  await steadyHeartbeat(fixture, fixture.storage, heartbeatAt);
+  assert.ok(
+    [...fixture.storage.values.keys()].some((key) =>
+      key.startsWith(durableStateStoreContract.liveness_prefix)),
+  );
+
+  const drainingStore = new DurableConductStore(fixture.storage);
+  const drainingService = new SerializedConductService(drainingStore, {
+    clock: () => heartbeatAt,
+    capabilitySecret: fixture.capabilitySecret,
+    steadyHeartbeatPersistence: false,
+  });
+  await drainingService.call("capabilities");
+
+  assert.equal(
+    [...fixture.storage.values.keys()].some((key) =>
+      key.startsWith(durableStateStoreContract.liveness_prefix)),
+    false,
+  );
+  const materialized = await new DurableConductStore(fixture.storage).load();
+  assert.equal(
+    materialized.events.filter((event) => event.kind === "test.history").length,
+    fixture.historySize,
+    "rollback materialization must preserve immutable lifecycle history",
+  );
+  assertHeartbeatLiveness(
+    materialized,
+    fixture,
+    heartbeatAt.toISOString(),
+    2,
+    fixture.historySize + 2,
+  );
+});
+
+test("a steady heartbeat does not sweep unrelated expired leases", async () => {
+  const codex = session("codex", { concurrency: 4 });
+  let clock = new Date(NOW);
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, {
+    clock: () => clock,
+    leaseTtlMs: 60 * 1000,
+  });
+  await service.call("register", { session: codex });
+  const target = await service.call("submit", { packet: await packet({
+    workId: "targeted-heartbeat-expiry",
+    conductor: codex.identity,
+    resource: "path/organvm/limen/main/cli/targeted-heartbeat-expiry",
+  }) });
+  const unrelated = await service.call("submit", { packet: await packet({
+    workId: "unrelated-heartbeat-expiry",
+    conductor: codex.identity,
+    resource: "path/organvm/limen/main/cli/unrelated-heartbeat-expiry",
+  }) });
+  const targetToken = await leaseCapability(service, target);
+  await service.call("heartbeat", {
+    lease_id: target.lease.lease_id,
+    capability_token: targetToken,
+    generation: target.lease.generation,
+    observed_heads: { pr: "abc123" },
+  });
+
+  const staged = store.snapshot();
+  staged.leases[unrelated.lease.lease_id].hard_deadline = new Date(
+    NOW.getTime() - 1000,
+  ).toISOString();
+  await store.save(staged);
+  clock = new Date(NOW.getTime() + 1000);
+  await service.call("heartbeat", {
+    lease_id: target.lease.lease_id,
+    capability_token: targetToken,
+    generation: target.lease.generation,
+    observed_heads: { pr: "abc123" },
+  });
+  assert.equal(store.snapshot().leases[unrelated.lease.lease_id].state, "reserved");
+
+  await service.call("claim", {
+    lease_id: target.lease.lease_id,
+    generation: target.lease.generation,
+  });
+  assert.equal(store.snapshot().leases[unrelated.lease.lease_id].state, "expired");
+});
+
 test("dead conductors are adoptable without cancelling children; protected humans are not signal targets", async () => {
   const codex = session("codex", { concurrency: 4 });
   const claude = session("claude", { concurrency: 4 });
@@ -2899,8 +3298,30 @@ test("GitHub task projection quotes strings for YAML 1.1-compatible consumers", 
 test("Durable Object HTTP routes match the authenticated client surface and survive recreation", async () => {
   class FakeStorage {
     constructor() { this.values = new Map(); }
-    async get(key) { return structuredClone(this.values.get(key)); }
+    async get(key) {
+      if (Array.isArray(key)) {
+        return new Map(
+          key
+            .filter((candidate) => this.values.has(candidate))
+            .map((candidate) => [candidate, structuredClone(this.values.get(candidate))]),
+        );
+      }
+      return structuredClone(this.values.get(key));
+    }
     async put(key, value) { this.values.set(key, structuredClone(value)); }
+    async delete(key) {
+      const candidates = Array.isArray(key) ? key : [key];
+      let removed = 0;
+      for (const candidate of candidates) removed += Number(this.values.delete(candidate));
+      return Array.isArray(key) ? removed : Boolean(removed);
+    }
+    async list({ prefix } = {}) {
+      return new Map(
+        [...this.values]
+          .filter(([key]) => !prefix || key.startsWith(prefix))
+          .map(([key, value]) => [key, structuredClone(value)]),
+      );
+    }
   }
   const storage = new FakeStorage();
   const bearer = "http-conduct-secret-at-least-24-characters";
@@ -2939,4 +3360,58 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   assert.equal(graphResponse.status, 200);
   const graph = await graphResponse.json();
   assert.equal(graph.nodes[0].lease_id, reserved.lease.lease_id);
+});
+
+// The already-homed answer is a STATUS CODE, and this keeper is the one that has to say it.
+//
+// A create carrying `expected_absent` against a board that already holds the task is refused
+// with 409. Callers — notably `_is_tolerated_already_homed` in cli/src/limen/tabularius.py —
+// classify that refusal on the code, because three keepers (this Worker, the FastAPI adapter,
+// the in-process broker) word the same condition three different ways. Reword the message here
+// and nothing breaks; change the 409 and the routine-freshness organ silently goes fatal again.
+//
+// So this asserts `.status`, never the text. `cli/tests/test_tabularius.py` holds the Python
+// side to the same number and reads this file to prove the two agree.
+test("an expected_absent create against an existing task is refused with 409, not a message", () => {
+  const board = {
+    tasks: [{
+      id: "TASK-HOMED",
+      title: "Already homed on the keeper",
+      repo: "organvm/limen",
+      status: "open",
+      budget_cost: 1,
+      created: "2026-07-18",
+      dispatch_log: [],
+    }],
+  };
+  const before = structuredClone(board);
+  const event = {
+    schema_version: "limen.task_packet_projection_event.v1",
+    event_id: "conduct:already-homed:1:compatibility",
+    timestamp: NOW.toISOString(),
+    task_id: "TASK-HOMED",
+    run_id: "run-already-homed",
+    lease_id: "lease-already-homed",
+    generation: 1,
+    agent: "tabularius",
+    session_id: "tabularius-session",
+    intent: {
+      kind: "task.upsert",
+      task_id: "TASK-HOMED",
+      expected_absent: true,
+      task: { id: "TASK-HOMED", title: "Already homed on the keeper" },
+    },
+  };
+
+  let raised;
+  try {
+    applyTaskPacketProjectionEvent(board, event);
+  } catch (err) {
+    raised = err;
+  }
+  assert.ok(raised, "an expected_absent create over an existing task must be refused");
+  assert.equal(raised.status, 409, "the already-homed refusal must carry HTTP 409");
+  // The refusal is a read-only verdict: the board must be untouched, or a "benign" 409 would
+  // still have mutated production state before the caller got to tolerate it.
+  assert.deepEqual(board, before);
 });

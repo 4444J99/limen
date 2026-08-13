@@ -1,0 +1,651 @@
+{
+  "assignment_requirements": {
+    "conductor": {
+      "capabilities": [
+        "case_study",
+        "claim_adjudication",
+        "client_delivery",
+        "data_analysis",
+        "decision_review",
+        "delivery",
+        "editorial",
+        "evidence_curation",
+        "implementation",
+        "partner_coordination",
+        "partner_strategy",
+        "privacy",
+        "sales",
+        "sales_analysis",
+        "sales_operations",
+        "strategy",
+        "systems_architecture",
+        "technical_audit"
+      ],
+      "effort": "max",
+      "role": "chunk_conductor",
+      "selection": "runtime_catalog"
+    },
+    "leaves": {
+      "PSP-P10-W08": {
+        "capabilities": [
+          "sales_analysis",
+          "strategy",
+          "decision_review"
+        ],
+        "effect": "write",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W01": {
+        "capabilities": [
+          "partner_strategy",
+          "sales_operations"
+        ],
+        "effect": "external",
+        "effort": "xhigh",
+        "reasoning": "deep",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W02": {
+        "capabilities": [
+          "sales",
+          "technical_audit",
+          "delivery"
+        ],
+        "effect": "external",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W03": {
+        "capabilities": [
+          "systems_architecture",
+          "implementation",
+          "client_delivery"
+        ],
+        "effect": "external",
+        "effort": "xhigh",
+        "reasoning": "deep",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W04": {
+        "capabilities": [
+          "case_study",
+          "editorial",
+          "privacy"
+        ],
+        "effect": "external",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W05": {
+        "capabilities": [
+          "evidence_curation",
+          "partner_coordination"
+        ],
+        "effect": "write",
+        "effort": "medium",
+        "reasoning": "routine",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W06": {
+        "capabilities": [
+          "claim_adjudication",
+          "strategy",
+          "data_analysis"
+        ],
+        "effect": "write",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      }
+    },
+    "policy": {
+      "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+      "registry": "institutio/positioning/program.yaml",
+      "selection": "runtime_catalog",
+      "unavailable_action": "fail_blocked_no_silent_substitution"
+    },
+    "verified_against_registry": true
+  },
+  "authority": {
+    "external_gates": {
+      "REAL-AGREEMENT": "not_satisfied",
+      "REAL-BOUNDED-PILOT": "not_satisfied",
+      "REAL-CASE-STUDY-PUBLICATION": "not_satisfied",
+      "REAL-CLAIM-PROMOTION": "not_satisfied",
+      "REAL-DELIVERY-ACCEPTANCE": "not_satisfied",
+      "REAL-EXTERNAL-OUTCOME": "not_satisfied",
+      "REAL-OUTREACH": "not_satisfied",
+      "REAL-PAID-AUDIT": "not_satisfied",
+      "REAL-TESTIMONIAL-OR-REFERENCE": "not_satisfied"
+    },
+    "human_gates": {
+      "HG-CONTRACT": "not_granted_by_synthetic_run",
+      "HG-PUBLIC-IDENTITY": "not_granted_by_synthetic_run",
+      "HG-PUBLICATION-SEND": "not_granted_by_synthetic_run"
+    },
+    "real_human_gate_grants": 0
+  },
+  "bindings": {
+    "contract_path": "docs/positioning/program/psp-c10-readiness/protocol.yaml",
+    "contract_sha256": "a5290b0ad4ca46652111a10c5cb2d35de53b0f91669ddbbba9b5bf1050c5b4ae",
+    "fixture_path": "docs/positioning/program/psp-c10-readiness/synthetic-fixture.json",
+    "fixture_sha256": "aa2712df09413f107956c70a24df81249259708228945e2f98bba720c9f45d3a",
+    "program_manifest_path": "institutio/positioning/program.yaml",
+    "program_registry_projection_sha256": "6a4e1221a88f304726273339470e29d208e59282e236f39744c71ac4ecfb8a73",
+    "source_bindings": [
+      {
+        "counts_as_closure": false,
+        "id": "c05_delivery_relay",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
+        "pull_request": 2315,
+        "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "id": "c05_private_templates",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
+        "pull_request": 135,
+        "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "id": "c09_qualification_relay",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
+        "pull_request": 2322,
+        "role": "qualification, CTA-routing, and conversion source lock",
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "id": "c09_private_package",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
+        "pull_request": 136,
+        "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "id": "c09_portfolio_package",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
+        "pull_request": 222,
+        "role": "public audit and conversion-path contract without publication",
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "target": "portfolio"
+      }
+    ]
+  },
+  "claim_refresh": {
+    "applied": 0,
+    "claims_ledger_changed": false,
+    "promotion_gates": "blocked_synthetic",
+    "proposals_only": true,
+    "publishable": 0
+  },
+  "commercial_proof": {
+    "established": false,
+    "public_claims_refreshed": 0,
+    "real_agreements": 0,
+    "real_bounded_pilots": 0,
+    "real_conversions": 0,
+    "real_delivery_acceptances": 0,
+    "real_external_outcomes": 0,
+    "real_outreach": 0,
+    "real_paid_audits": 0,
+    "real_public_case_studies": 0,
+    "real_qualified_denominator": 0,
+    "real_revenue_receipts": 0,
+    "real_testimonials_or_references": 0
+  },
+  "dry_run_id": "PSP-C10-SYNTHETIC-2026-08-10",
+  "external_effects": [],
+  "fixture_time_anchor": "2026-08-10T20:00:00Z",
+  "mode": "synthetic",
+  "operational_readiness": {
+    "adjudication_branches_validated": [
+      "insufficient_evidence",
+      "insufficient_evidence",
+      "keep",
+      "narrow",
+      "pivot"
+    ],
+    "authority_receipt_types_validated": 3,
+    "before_after_strategy_decisions_validated": 5,
+    "blocked_claim_promotion_receipts_validated": 3,
+    "bounded_fixture_cohort": 3,
+    "claim_refresh_proposals_validated": 3,
+    "consent_receipt_types_validated": 4,
+    "evidence_records_validated": 13,
+    "experiment_duration_days": 90,
+    "fixture_only_acceptance_receipts_validated": 3,
+    "fixture_only_delivery_receipts_validated": 3,
+    "fixture_only_payment_receipts_validated": 2,
+    "pilot_stages_validated": 11,
+    "qualified_fixture_candidates": 5,
+    "recruitment_criteria_validated": 6,
+    "status": "synthetic_dry_run_pass",
+    "testimonial_or_reference_collection": "not_attempted",
+    "unpublished_case_study_receipts_validated": 1,
+    "unsent_recruitment_records_validated": 5
+  },
+  "pilot_stage_results": [
+    {
+      "human_gates": [],
+      "real_effect_status": "not_performed",
+      "requires_real_outcome": false,
+      "stage_id": "qualify",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLICATION-SEND"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "invite",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "agree_terms",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "intake",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": false,
+      "stage_id": "audit_and_verdict",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "acceptance_and_closeout",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "conditional_install",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLIC-IDENTITY",
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "consented_case_study",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [
+        "HG-PUBLICATION-SEND",
+        "HG-CONTRACT"
+      ],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "independent_validation",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "claim_refresh",
+      "synthetic_status": "pass"
+    },
+    {
+      "human_gates": [],
+      "real_effect_status": "blocked_pending_real_authority_or_outcome",
+      "requires_real_outcome": true,
+      "stage_id": "demand_adjudication",
+      "synthetic_status": "pass"
+    }
+  ],
+  "program_completion": {
+    "chunk_exit_gate_satisfied": false,
+    "issues_closed": [],
+    "leaf_predicates_satisfied": [],
+    "phase_predicate_satisfied": false
+  },
+  "registry_audit": {
+    "all_owned_leaves_audited": true,
+    "leaf_contracts": [
+      {
+        "acceptance": "Up to three qualified partners have explicit scope and outcome terms, or every declined invitation is recorded with reason.",
+        "assignment_requirement": {
+          "capabilities": [
+            "partner_strategy",
+            "sales_operations"
+          ],
+          "effect": "external",
+          "effort": "xhigh",
+          "reasoning": "deep",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "partner_strategy",
+          "sales_operations"
+        ],
+        "depends_on": [
+          "PSP-P09-W08",
+          "PSP-P10-W01",
+          "PSP-P11-W02"
+        ],
+        "effect": "external",
+        "human_gates": [
+          "HG-PUBLICATION-SEND",
+          "HG-CONTRACT"
+        ],
+        "id": "PSP-P12-W01",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W01",
+        "target_paths": [
+          "campaigns",
+          "pipelines"
+        ],
+        "target_repo": "organvm-iii-ergon/collaboration-operations-platform",
+        "title": "Recruit a bounded design-partner cohort"
+      },
+      {
+        "acceptance": "Engagement closes under PSP-P11-W07 and payment/pilot terms plus client acceptance have durable receipts.",
+        "assignment_requirement": {
+          "capabilities": [
+            "sales",
+            "technical_audit",
+            "delivery"
+          ],
+          "effect": "external",
+          "effort": "max",
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "sales",
+          "technical_audit",
+          "delivery"
+        ],
+        "depends_on": [
+          "PSP-P12-W01",
+          "PSP-P10-W05",
+          "PSP-P11-W07"
+        ],
+        "effect": "external",
+        "human_gates": [
+          "HG-CONTRACT"
+        ],
+        "id": "PSP-P12-W02",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W02",
+        "target_paths": [
+          "clients",
+          "receipts"
+        ],
+        "target_repo": "organvm-iii-ergon/collaboration-operations-platform",
+        "title": "Close and deliver the first paid or explicitly bounded pilot audit"
+      },
+      {
+        "acceptance": "Client acceptance passes and the installed gate improves its declared outcome without exceeding one-team authority.",
+        "assignment_requirement": {
+          "capabilities": [
+            "systems_architecture",
+            "implementation",
+            "client_delivery"
+          ],
+          "effect": "external",
+          "effort": "xhigh",
+          "reasoning": "deep",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "systems_architecture",
+          "implementation",
+          "client_delivery"
+        ],
+        "depends_on": [
+          "PSP-P12-W02",
+          "PSP-P11-W04"
+        ],
+        "effect": "external",
+        "human_gates": [
+          "HG-CONTRACT"
+        ],
+        "id": "PSP-P12-W03",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W03",
+        "target_paths": [
+          "clients",
+          "receipts"
+        ],
+        "target_repo": "organvm-iii-ergon/collaboration-operations-platform",
+        "title": "Deliver the first Governance Install when the audit supports it"
+      },
+      {
+        "acceptance": "Client and owner approve exact copy; claims, privacy, links, accessibility, and rollback checks pass live.",
+        "assignment_requirement": {
+          "capabilities": [
+            "case_study",
+            "editorial",
+            "privacy"
+          ],
+          "effect": "external",
+          "effort": "max",
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "case_study",
+          "editorial",
+          "privacy"
+        ],
+        "depends_on": [
+          "PSP-P12-W02",
+          "PSP-P11-W08"
+        ],
+        "effect": "external",
+        "human_gates": [
+          "HG-PUBLIC-IDENTITY",
+          "HG-CONTRACT"
+        ],
+        "id": "PSP-P12-W04",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W04",
+        "target_paths": [
+          "src/content/case-studies",
+          "public"
+        ],
+        "target_repo": "organvm/portfolio",
+        "title": "Produce the first consented public case study"
+      },
+      {
+        "acceptance": "Each object identifies author, date, context, consent, permitted wording, and withdrawal path.",
+        "assignment_requirement": {
+          "capabilities": [
+            "evidence_curation",
+            "partner_coordination"
+          ],
+          "effect": "write",
+          "effort": "medium",
+          "reasoning": "routine",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "evidence_curation",
+          "partner_coordination"
+        ],
+        "depends_on": [
+          "PSP-P12-W02"
+        ],
+        "effect": "write",
+        "human_gates": [
+          "HG-PUBLICATION-SEND",
+          "HG-CONTRACT"
+        ],
+        "id": "PSP-P12-W05",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W05",
+        "target_paths": [
+          "docs/positioning/proof",
+          "docs/receipts"
+        ],
+        "target_repo": "organvm/limen",
+        "title": "Capture testimonials, references, reproductions, and independent review"
+      },
+      {
+        "acceptance": "Every changed claim cites an external outcome and all dependent generated surfaces pass parity and staleness checks.",
+        "assignment_requirement": {
+          "capabilities": [
+            "claim_adjudication",
+            "strategy",
+            "data_analysis"
+          ],
+          "effect": "write",
+          "effort": "max",
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "claim_adjudication",
+          "strategy",
+          "data_analysis"
+        ],
+        "depends_on": [
+          "PSP-P12-W02",
+          "PSP-P12-W04",
+          "PSP-P12-W05",
+          "PSP-P02-W08"
+        ],
+        "effect": "write",
+        "human_gates": [],
+        "id": "PSP-P12-W06",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P12-W06",
+        "target_paths": [
+          "docs/positioning/claims-ledger.md",
+          "docs/positioning",
+          "positioning-seeds.json"
+        ],
+        "target_repo": "organvm/limen",
+        "title": "Refresh positioning, proof, and offer claims from real outcomes"
+      },
+      {
+        "acceptance": "At least five qualified door-mails exist and either one paid audit or five documented no outcomes support an explicit decision.",
+        "assignment_requirement": {
+          "capabilities": [
+            "sales_analysis",
+            "strategy",
+            "decision_review"
+          ],
+          "effect": "write",
+          "effort": "max",
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
+        },
+        "capabilities": [
+          "sales_analysis",
+          "strategy",
+          "decision_review"
+        ],
+        "depends_on": [
+          "PSP-P09-W08",
+          "PSP-P10-W07",
+          "PSP-P12-W02"
+        ],
+        "effect": "write",
+        "human_gates": [],
+        "id": "PSP-P10-W08",
+        "predicate": "python3 scripts/positioning-program.py --verify-work PSP-P10-W08",
+        "target_paths": [
+          "docs/positioning/decisions",
+          "docs/receipts"
+        ],
+        "target_repo": "organvm/limen",
+        "title": "Run and adjudicate the 90-day demand experiment"
+      }
+    ],
+    "owned_leaf_count": 7
+  },
+  "scenario_results": {
+    "SYN-SCENARIO-BOUNDED-PILOT": {
+      "decision_record_id": "SYN-DECISION-BOUNDED",
+      "hypothetical_decision": "insufficient_evidence",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-INSUFFICIENT": {
+      "decision_record_id": "SYN-DECISION-INSUFFICIENT",
+      "hypothetical_decision": "insufficient_evidence",
+      "outcome_count": 3,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-KEEP": {
+      "decision_record_id": "SYN-DECISION-KEEP",
+      "hypothetical_decision": "keep",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-NARROW": {
+      "decision_record_id": "SYN-DECISION-NARROW",
+      "hypothetical_decision": "narrow",
+      "outcome_count": 1,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    },
+    "SYN-SCENARIO-PIVOT": {
+      "decision_record_id": "SYN-DECISION-PIVOT",
+      "hypothetical_decision": "pivot",
+      "outcome_count": 5,
+      "real_world_decision": "not_adjudicated",
+      "status": "synthetic_branch_exercised"
+    }
+  },
+  "schema_version": "limen.positioning_c10_synthetic_receipt.v4",
+  "scope": {
+    "chunk_id": "PSP-C10",
+    "formal_predecessor_chunks": [
+      "PSP-C05",
+      "PSP-C09"
+    ],
+    "formal_predecessors_satisfied": "not_evaluated_by_synthetic_dry_run",
+    "leaf_ids": [
+      "PSP-P12-W01",
+      "PSP-P12-W02",
+      "PSP-P12-W03",
+      "PSP-P12-W04",
+      "PSP-P12-W05",
+      "PSP-P12-W06",
+      "PSP-P10-W08"
+    ]
+  },
+  "status": "prepared_preflight",
+  "truth_statement": "Synthetic readiness passed. No outreach, agreement, payment, conversion, revenue, delivery acceptance, client reference, public case study, testimonial, external outcome, public claim refresh, leaf completion, phase completion, or chunk completion is established."
+}

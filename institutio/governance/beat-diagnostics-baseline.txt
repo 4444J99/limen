@@ -1,0 +1,36 @@
+# BEAT DIAGNOSTICS baseline — per-file ceiling for `2>&1 | tail -N` rungs, for ANY N.
+#
+# The idiom discards the exit status (all six of these scripts set `pipefail`, so the pipeline
+# does carry the organ's status — measured 2026-08-07: rc=9 with pipefail, rc=0 without — and
+# the trailing `|| true` then drops it at the call site, uncaptured), destroys the diagnostic (a
+# traceback's last N lines are the exception's own repr — for a JSON error body `tail -1` is a
+# bare `}` and `tail -6` is six lines of the same repr), and records nothing (so a rung can fail
+# every beat forever with every observable green). scripts/check-beat-diagnostics.py is the gate.
+#
+# HAZARD for the conversion work: publish-board-pr.sh sets `-e` as well as `pipefail`, so a
+# failing rung there ABORTS the script today. beat_run is fail-open by contract — converting one
+# of those sites unthinkingly turns a fatal error into a continue.
+#
+# SHRINK-ONLY. `--update` refuses to grow any count; a ceiling moves UP only by editing this
+# file by hand, which is a reviewable diff rather than a flag someone reached for.
+#
+# CORRECTED 2026-08-07, hours after this baseline was first written. Its first version matched
+# only `tail -1`, recorded `scripts/heartbeat-loop.sh 0`, and the gate closed with "no rung
+# hides the reason it failed" — while 29 further sites across these same six files went on
+# hiding it at `tail -2` .. `tail -8`. The counts below are the real ones. Among the sites the
+# narrow definition could not see: sync-release.sh (its silent failure IS the #2023 stale-code
+# class), drain.sh (the merge rung), capture.sh (the backup), and `limen dispatch --live` in
+# saturate.sh — the lane whose fifteen silent days started this work.
+#
+# heartbeat-loop.sh's 65 `tail -1` rungs already run through the loop's own beat_run helper;
+# what remains here are its wider-N sites. beat_run is deliberately INLINE in the loop so the
+# daemon takes on no new file dependency (a missing sourced helper would kill the beat
+# outright), so converting those, and giving the sibling scripts a shared helper, are their own
+# changes. These ceilings are what keep that a declared position instead of a leak — each goes
+# to 0 as its script is converted.
+scripts/heartbeat-loop.sh 19
+scripts/heartbeat.sh 8
+scripts/mail-beat.sh 2
+scripts/publish-board-pr.sh 1
+scripts/saturate.sh 6
+scripts/deploy-corpus-organs.sh 1

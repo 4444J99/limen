@@ -29,7 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.capacity import select_lanes  # noqa: E402
 from limen.io import load_limen_file, queue_lock  # noqa: E402
-from limen.intake import contract_fields, github_pr_contract  # noqa: E402
+from limen.intake import REPO_RE, contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
 from limen.tabularius import submit_task_upsert  # noqa: E402
 
@@ -176,6 +176,26 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
         info["no_organs"] = True
         return [], info
 
+    # An organ may legitimately span two repositories — BIFRONS carries "organvm/limen (beat) +
+    # organvm-engine/alchemia/ontologia (loop)" — and one `repo` field cannot say that, so for
+    # those rows the value is prose, not a slug. Every generated task carries a github_pr_contract
+    # keyed on an exact owner/repo, so such an organ cannot have one built for it: skip it and SAY
+    # SO. It used to raise IntakeContractError out of the middle of the plan, which took the whole
+    # rung down — and only when there was work to do, because the floor/headroom early-return above
+    # skips this loop entirely when the organ queue is full. So the generator crashed exactly when
+    # it was needed and stayed quiet when it was not, and nothing recorded either (measured live
+    # 2026-08-07, once #2050 gave the beat a rung recorder). _organs() already promises "[] on any
+    # error (the generator must never break the feed beat)" — the raise simply happened one layer
+    # below that promise. REPO_RE is imported from limen.intake rather than restated, so the guard
+    # and the raiser cannot drift into two definitions of "exact owner/repo".
+    unslugged = [o for o in orgs if not REPO_RE.fullmatch(str(o.get("repo") or ""))]
+    if unslugged:
+        orgs = [o for o in orgs if REPO_RE.fullmatch(str(o.get("repo") or ""))]
+        info["unslugged_organs"] = [str(o.get("organ") or o.get("repo") or "?") for o in unslugged]
+    if not orgs:
+        info["no_organs"] = True
+        return [], info
+
     existing = {t.id for t in tasks}
     lever_keys = {k for k, *_ in (_SCAFFOLD_LEVERS + _BUILDING_LEVERS + _MATURING_LEVERS)}
     # dedup handle is (pillar, lever) — many organs share one repo (organvm/limen), so scope by pillar.
@@ -249,6 +269,11 @@ def main() -> int:
     hr = info.get("avg_hr")
     print(f"# generate-organ-backlog: open-organ={info['open_org']} floor={info['floor']} "
           f"(base {args.floor}, avg headroom {hr if hr is None else round(hr)}%)")
+    # Named, not silent: a skipped organ is one the ladder cannot generate work for, and a quiet
+    # skip is how this class of defect keeps its cover.
+    if info.get("unslugged_organs"):
+        print(f"# skipped {len(info['unslugged_organs'])} organ(s) with no exact owner/repo "
+              f"(a PR contract needs one): {', '.join(info['unslugged_organs'])}")
     if info.get("no_organs"):
         print("no build-stage organs in organ-ladder.json — nothing to generate.")
         return 0

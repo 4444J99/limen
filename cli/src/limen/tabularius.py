@@ -30,6 +30,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from collections import OrderedDict
+from collections.abc import Collection
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -38,7 +39,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel
 
-from limen.conduct.broker import ConductError
+from limen.conduct.broker import ConductConflict, ConductError, TaskAlreadyHomed
 from limen.conduct.client import BrokerUnavailable, LocalConductClient, client_from_env
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -396,6 +397,7 @@ class DrainResult:
     applied_ids: list[str] = field(default_factory=list)
     rejected_ids: list[str] = field(default_factory=list)
     projected_tasks: dict[str, dict[str, Any]] = field(default_factory=dict)
+    already_homed: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -693,7 +695,10 @@ def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[s
 
     precondition = ticket.precondition or {}
     if precondition.get("absent") is True:
-        raise ValueError(f"task precondition failed: {ticket.task_id} is no longer absent")
+        raise TaskAlreadyHomed(
+            f"task precondition failed: {ticket.task_id} is no longer absent",
+            task_id=str(ticket.task_id),
+        )
     if "status" in precondition and base.get("status") != precondition["status"]:
         raise ValueError(
             f"task precondition failed: {ticket.task_id} status is {base.get('status')!r}, "
@@ -914,6 +919,18 @@ def _lifecycle_repair_authorized(
             and ref_match
             and (not task_repo or ref_match.group(1) == task_repo)
         )
+    if marker == "pr-closed-reconcile":
+        ref = str(log.get("pr_observed_ref") or "")
+        observed = str(log.get("pr_observed_state") or "")
+        ref_match = re.fullmatch(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9][0-9]*)", ref)
+        task_repo = str(patch.get("repo", task.get("repo")) or "")
+        return bool(
+            prior_status in {"open", "dispatched", "failed", "failed_blocked", "needs_human"}
+            and next_status == "done"
+            and observed in {"closed", "merged", "not_found"}
+            and ref_match
+            and (not task_repo or ref_match.group(1) == task_repo)
+        )
     if marker == "routine-recovered":
         name = str(log.get("routine_name") or "")
         return bool(
@@ -1003,7 +1020,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
 
     if kind == "task.upsert":
         if intent.get("expected_absent") and existing:
-            raise ValueError(f"task {task_id} already exists")
+            raise TaskAlreadyHomed(f"task {task_id} already exists", task_id=str(task_id))
         supplied = dict(intent.get("task") or {})
         if supplied.get("id") != task_id:
             raise ValueError(f"task projection id {supplied.get('id')} does not match {task_id}")
@@ -1132,6 +1149,81 @@ def _materialize_local_result(
     return canonical
 
 
+# register() binds these three identity fields from the authenticated principal; every OTHER
+# identity field is client-declared and is compared verbatim against the stored session.
+_RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS = ("agent", "surface", "session_id")
+
+
+def _relay_identity_key(identity: AgentIdentityV1) -> str:
+    """A short digest of the identity fields `register()` compares but does NOT normalize.
+
+    The keeper binds agent/surface/session_id from the principal and then rejects a
+    re-registration whose whole identity object differs. Post-binding those three are forced
+    equal, so that check can only ever fire on the remaining client-declared fields
+    (`provider_identity`, `native_run_id`) — never on an authority mismatch, which
+    ``session_principals`` guards two lines later. With a FIXED relay session id the first
+    client to register owns the literal forever and every later build takes a permanent 409:
+    the #1408 relay freeze, recurring on the fields the #1408 fix did not normalize.
+
+    The digest covers whatever the binding leaves unbound, so adding an identity field keys it
+    automatically instead of re-opening the freeze, and it derives from stable per-build values
+    (never per-process) so the recovery below cannot grow the keeper's session table without bound.
+    """
+    unbound = {
+        name: value
+        for name, value in identity.model_dump(mode="json").items()
+        if name not in _RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS
+    }
+    return canonical_hash(unbound)[:12]
+
+
+def _register_relay_session(remote: Any, session: ConductorSessionV1) -> tuple[Any, ConductorSessionV1]:
+    """Register the relay session, recovering the one way a fixed session id becomes unusable.
+
+    THE FREEZE. Every relay call site passes a fixed ``session_id`` literal
+    (``dispatch-serial-results``, ``harvest``, ``dispatch-async/reserve``, …), and a literal is
+    claimable exactly once: whichever identity registers it first owns it, and a later client whose
+    client-declared identity metadata differs by a single field is refused forever. Reproduced
+    against the real broker with ONE principal throughout — ``limen-cli`` OK, ``limen-cli`` OK
+    (idempotent), ``limen-cli-2`` CONFLICT, and CONFLICT on every retry after.
+
+    It froze ``dispatch-serial-results`` on 2026-07-19 (#1995): jules sessions kept launching while
+    no receipt was ever recorded, so ``lane_throughput_window`` counted 0 dispatches and the
+    governor pinned the lane in bootstrap at 25/day for 19 days. Every other literal kept working,
+    which is why the board went on moving and only the dispatch receipt vanished.
+
+    WHY A FALLBACK RATHER THAN ALWAYS KEYING THE ID. The relay session id is not internal plumbing —
+    the keeper stamps it into ``session_id`` on every projection event, so it is part of the recorded
+    receipt that harvest and 14 tests read. Keying it unconditionally renames an observable
+    identifier estate-wide to fix a condition that only arises once a literal is already poisoned.
+    So the healthy path keeps the stable literal and only a REFUSED one falls back, which also makes
+    the fallback legible: a keyed ``session_id`` in a dispatch_log entry *is* the signal that its
+    literal is frozen.
+
+    CLASSIFIED ON THE STATUS, NEVER THE PROSE — ``ConductError``'s own documented contract, because
+    three keepers word this refusal three ways. Both 409 shapes, frozen identity and bound principal,
+    mean one thing to this caller: that literal is not mine to use. Both are answered the same safe
+    way, since registering a DIFFERENT id cannot touch the session the keeper is protecting, and
+    every authority check still applies to whatever this client does register.
+    """
+    try:
+        return remote.register(session), session
+    except ConductConflict:
+        keyed = _safe_identifier(
+            f"{session.session_id}-{_relay_identity_key(session.identity)}",
+            "tabularius-relay-session",
+        )
+        if keyed == session.session_id:
+            raise
+        fallback = session.model_copy(
+            update={
+                "session_id": keyed,
+                "identity": session.identity.model_copy(update={"session_id": keyed}),
+            }
+        )
+        return remote.register(fallback), fallback
+
+
 def _submit_compatibility_ticket(
     ticket: Ticket,
     intent: dict[str, Any],
@@ -1161,7 +1253,7 @@ def _submit_compatibility_ticket(
         registered_at=registration_now,
         heartbeat_at=registration_now,
     )
-    registration = remote.register(session)
+    registration, session = _register_relay_session(remote, session)
     registered_payload = registration.get("session", registration) if isinstance(registration, dict) else registration
     try:
         registered_session = ConductorSessionV1.model_validate(registered_payload)
@@ -1273,6 +1365,30 @@ def _relay_ticket(
     return _submit_compatibility_ticket(ticket, intent, remote, work_id)
 
 
+def _is_tolerated_already_homed(exc: Exception, ticket: Ticket, tolerated: set[str]) -> bool:
+    """Is this rejection the benign "the keeper already holds it" answer, for an opted-in id?
+
+    Three conditions, none of which reads the rejection's English:
+
+    1. The caller opted this task id in. A conflict on any other id stays fatal.
+    2. The ticket was a *create* (``{"absent": True}``). A precondition failure on an
+       update means the state moved under us, which is never benign.
+    3. The keeper answered with the already-homed signal — the in-process
+       :class:`TaskAlreadyHomed` marker, or HTTP ``409`` from a remote keeper.
+
+    Condition 3's HTTP arm is deliberately broader than "already exists": a remote 409 on
+    an absent-precondition create leaves the task uncreated either way, and the caller
+    already accepted that outcome for this id. The next pass re-derives and retries, so a
+    misclassification self-corrects instead of killing the run.
+    """
+
+    if str(ticket.task_id) not in tolerated:
+        return False
+    if (ticket.precondition or {}).get("absent") is not True:
+        return False
+    return bool(getattr(exc, "already_homed", False)) or getattr(exc, "status", None) == 409
+
+
 def apply_limen_file_sync(
     board_path: Path,
     limen: LimenFile,
@@ -1282,6 +1398,7 @@ def apply_limen_file_sync(
     allow_shrink: bool = False,
     before: LimenFile | None = None,
     now: datetime | None = None,
+    tolerate_already_homed: Collection[str] | None = None,
 ) -> DrainResult:
     """Submit a legacy in-memory delta to the authenticated conduct keeper.
 
@@ -1289,6 +1406,13 @@ def apply_limen_file_sync(
     derives bounded per-task packets and waits for remote projection receipts;
     it never writes, commits, pushes, or refreshes the local file. Unsupported
     board metadata, ordering, removal, or field mutations fail closed.
+
+    ``tolerate_already_homed`` names task ids whose *create* may legitimately race a
+    keeper that already holds them — the caller derived "this task is absent" from the
+    local projection, which lags. For those ids only, an already-homed rejection is
+    recorded in ``DrainResult.already_homed`` and the remaining tickets still relay,
+    instead of the first conflict aborting the whole batch. Attribution is by the
+    in-flight ``ticket.task_id``, never by parsing the keeper's rejection prose.
     """
 
     board_path = Path(board_path)
@@ -1355,23 +1479,35 @@ def apply_limen_file_sync(
     if not tickets:
         return DrainResult(note="no task transition; budget-window metadata is derived by the remote keeper")
     remote = client_from_env()
+    tolerated = {str(task_id) for task_id in (tolerate_already_homed or ())}
     projected_tasks: dict[str, dict[str, Any]] = {}
+    already_homed: list[str] = []
+    applied_ids: list[str] = []
     for ticket in tickets:
-        task = _relay_ticket(
-            ticket,
-            prior_by_id.get(str(ticket.task_id)),
-            client=remote,
-            board_path=board_path,
-        )
-        prior_by_id[str(ticket.task_id)] = task
-        projected_tasks[str(ticket.task_id)] = task
+        task_id = str(ticket.task_id)
+        try:
+            task = _relay_ticket(
+                ticket,
+                prior_by_id.get(task_id),
+                client=remote,
+                board_path=board_path,
+            )
+        except Exception as exc:
+            if not _is_tolerated_already_homed(exc, ticket, tolerated):
+                raise
+            already_homed.append(task_id)
+            continue
+        prior_by_id[task_id] = task
+        projected_tasks[task_id] = task
+        applied_ids.append(ticket.ticket_id)
     return DrainResult(
         pending=len(tickets),
-        applied=len(tickets),
+        applied=len(applied_ids),
         wrote=isinstance(remote, LocalConductClient),
         note="broker-committed",
-        applied_ids=[ticket.ticket_id for ticket in tickets],
+        applied_ids=applied_ids,
         projected_tasks=projected_tasks,
+        already_homed=already_homed,
     )
 
 
@@ -1516,7 +1652,10 @@ def _apply(ticket: Ticket, tasks: OrderedDict[str, dict[str, Any]], meta: dict[s
         if unknown_preconditions:
             raise ValueError(f"unknown task preconditions: {sorted(unknown_preconditions)}")
         if precondition.get("absent") is True and not is_new:
-            raise ValueError(f"task precondition failed: {ticket.task_id} is no longer absent")
+            raise TaskAlreadyHomed(
+                f"task precondition failed: {ticket.task_id} is no longer absent",
+                task_id=str(ticket.task_id),
+            )
         if "task_sha256" in precondition:
             if is_new:
                 raise ValueError(f"task precondition failed: {ticket.task_id} is absent")

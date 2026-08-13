@@ -1,7 +1,8 @@
 # PR estate drain — the full fix, v2: the lifecycle axis gets an ideal form
 
 Issue: #1981
-PR: (pending)
+PR: #2127
+Campaign: W0 axis implemented; campaign remains open for W1–W7 enactment
 
 Supersedes the *framing* of `docs/plans/2026-08-07-pr-estate-drain-full-fix.md` (#1975, merged as
 #1976). That plan is not overwritten and not withdrawn: its measurements stand, four of its five
@@ -61,7 +62,7 @@ PR-lifecycle axis has **one third of it**, and that third is the weakest third:
 | Element | PR lifecycle today |
 |---|---|
 | Declared registry | `institutio/github/estate.yaml` `pr_debt_policy.lifecycle_labels` — **names only**, no capabilities |
-| Consumers derive | **No.** Four private copies: `merge-drain.py:47`, `pr-lifecycle-manifest.py:15`, `gitvs.py:554`, `pr-lifecycle-estate-manifest.py:33` (`DISPOSITION_META`) |
+| Consumers derive | **Almost never.** Four private copies of the label set: `merge-drain.py:47`, `pr-lifecycle-manifest.py:15`, `gitvs.py:554`, `pr-lifecycle-estate-manifest.py:33` (`DISPOSITION_META`). One partial exception, found by verifying this plan: `gitvs.py:568-570` **does** derive `preservation_labels`/`preservation_markers` from `estate.yaml` — so the derive pattern is already half-present in the consumer this table treats as furthest from it, and W0's `gitvs` conversion is the smallest of the four, not the largest |
 | Parity predicate | **None.** A sixth disposition means editing four files and hoping |
 | Ideal form | **None.** 22 ledger entries, none for lifecycle/dispositions/drain |
 
@@ -128,6 +129,10 @@ one predicate, one ideal form. Everything in v1's W1–W6 then becomes a consume
    in `docs/receipts/pr-estate-drain-diagnosis-20260807.json` via an explicit `corrections` block;
    the merged plan file and the merged receipt's original measurements stay exactly as shipped.
    A superseding plan that edits its predecessor's findings destroys the evidence of the error.
+   Homed as case law in `censor/precedents.jsonl` →
+   `PREC-2026-08-07-corrections-are-additive`. (It was homed here only by citing the receipt
+   above until `scripts/check-plan-decisions.py` stopped counting a record as a registry — a
+   receipt is where a measurement lives, never where a decision binds.)
 
 ## The registry — `institutio/governance/lifecycle.yaml`
 

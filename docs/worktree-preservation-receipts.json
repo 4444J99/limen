@@ -4667,21 +4667,96 @@
       "worktree": "/Users/4jp/Workspace/limen/.worktrees/codex-runaway-prevention-20260717"
     },
     {
-      "branch": "docs/settings-estate-leftovers-20260806213824",
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+merged+idle:abandonment=e5b44e1da66e74e653d1ec7cfbb0d985d8580a546372bd14db9b30c5ddd991e2.json",
+        "root": "ceiling-unresolved-speaks"
+      },
+      "root": "ceiling-unresolved-speaks",
+      "status": "reclaimed"
+    },
+    {
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+pushed+idle:abandonment=64c9b01eecc860706ded5aaaf0cf55497ad964ae375643e1df99dffc6b86d6b9.json",
+        "root": "ship-docs-board-partition-verify-20260808014448-76312"
+      },
+      "root": "ship-docs-board-partition-verify-20260808014448-76312",
+      "status": "reclaimed"
+    },
+    {
+      "apply_receipt": {
+        "detail": "remove-worktree:clean+merged+idle:abandonment=2bc098515b8ab95cd2044a3e7910e8f9cdec0922487349f91c11250cca83db5d.json",
+        "root": "ship-docs-board-partition-verify-20260808124816-28816"
+      },
+      "root": "ship-docs-board-partition-verify-20260808124816-28816",
+      "status": "reclaimed"
+    },
+    {
+      "branch": "docs/diurnal-20260813000917",
       "classification": "open draft PR preserves local worktree head",
-      "evidence_updated_utc": "2026-08-07T03:47:59Z",
-      "head": "1bc09bddca40c029aceb16c33252f94210701ca7",
+      "evidence_updated_utc": "2026-08-13T16:33:19Z",
+      "head": "08aef0e887a4c9ccdbb3d54cbf76a8a339468284",
       "lane": "remote-pr-open",
-      "next_action": "Review draft PR #1899, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "next_action": "Review draft PR #2356, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
       "pr_draft": false,
-      "pr_number": 1899,
+      "pr_number": 2356,
       "pr_state": "OPEN",
-      "pr_url": "https://github.com/organvm/limen/pull/1899",
+      "pr_url": "https://github.com/organvm/limen/pull/2356",
       "repo": "organvm/limen",
-      "root": "ship-docs-settings-estate-leftovers-20260806213824-68415",
+      "root": "ship-docs-diurnal-20260813000917-27397",
       "score_discount": 35,
       "status": "open_pr_preserved",
-      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-settings-estate-leftovers-20260806213824-68415"
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-diurnal-20260813000917-27397"
+    },
+    {
+      "branch": "docs/estate-census-observation-20260812221211",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-08-13T16:33:19Z",
+      "head": "fa5e42b6833eea1e9659558b97eaea6120fa52bc",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #2345, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": false,
+      "pr_number": 2345,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/2345",
+      "repo": "organvm/limen",
+      "root": "ship-docs-estate-census-observation-20260812221211-59939",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-estate-census-observation-20260812221211-59939"
+    },
+    {
+      "branch": "docs/session-contention-incident-20260812221242",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-08-13T16:33:19Z",
+      "head": "196d269e4a9d9c19f0072b9acf1335c2ef15d337",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #2346, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": false,
+      "pr_number": 2346,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/2346",
+      "repo": "organvm/limen",
+      "root": "ship-docs-session-contention-incident-20260812221242-60293",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260812221242-60293"
+    },
+    {
+      "branch": "docs/session-contention-incident-20260813024505",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-08-13T16:33:19Z",
+      "head": "b2754fce569244b0faeabf1cbc1dcc6184edbede",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #2360, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": false,
+      "pr_number": 2360,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/2360",
+      "repo": "organvm/limen",
+      "root": "ship-docs-session-contention-incident-20260813024505-25032",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260813024505-25032"
     }
   ],
   "schema": 1

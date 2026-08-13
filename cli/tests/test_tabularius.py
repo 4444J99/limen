@@ -15,7 +15,10 @@ from typing import Any
 
 import limen.tabularius as tabularius
 import pytest
+from limen.conduct.broker import ConductBroker, ConductConflict, TaskAlreadyHomed
 from limen.conduct.client import BrokerUnavailable
+from limen.conduct.models import AgentIdentityV1, ConductorSessionV1
+from limen.conduct.store import SQLiteStateStore
 from limen.io import load_limen_file, queue_lock, save_limen_file
 from limen.models import DispatchLogEntry, LimenFile
 from limen.tabularius import (
@@ -42,6 +45,7 @@ from limen.tabularius import (
 )
 
 _NOW = datetime(2026, 7, 2, 12, 0, 0, tzinfo=timezone.utc)
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def _task(tid: str, **over: Any) -> dict[str, Any]:
@@ -97,9 +101,11 @@ class FakeConductClient:
         unavailable_on_register: bool = False,
         bound_agent: str | None = None,
         bound_surface: str | None = None,
+        conflict_on: set[str] | None = None,
     ):
         self.tasks = {str(task["id"]): dict(task) for task in tasks}
         self.fail_after = fail_after
+        self.conflict_on = set(conflict_on or ())
         self.unavailable_on_register = unavailable_on_register
         self.bound_agent = bound_agent
         self.bound_surface = bound_surface
@@ -120,9 +126,16 @@ class FakeConductClient:
     def submit(self, packet):
         if self.fail_after is not None and len(self.packets) >= self.fail_after:
             raise BrokerUnavailable("test broker interrupted")
-        self.packets.append(packet)
         intent = dict(packet.intent)
         task_id = str(intent["task_id"])
+        if task_id in self.conflict_on:
+            # The deployed Worker's answer, verbatim: HTTP 409 whose detail is keeper prose.
+            # Callers must classify on the status, never on the sentence.
+            raise ConductConflict(
+                f'conduct broker rejected request (409): {{"detail": "task {task_id} already exists"}}',
+                status=409,
+            )
+        self.packets.append(packet)
         if intent["kind"] == "task.upsert":
             projected = dict(intent["task"])
         else:
@@ -437,6 +450,141 @@ def test_remote_registration_identity_is_bound_into_compatibility_packet():
     assert fake.packets[0].initiator == fake.packets[0].conductor
 
 
+def test_the_healthy_path_keeps_the_stable_relay_literal():
+    """The recorded ``session_id`` is an observable identifier — the keeper stamps it into every
+    projection event, and harvest reads it. It must NOT change when nothing is wrong."""
+    fake = FakeConductClient([])
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-STABLE",
+        patch=_task("T-STABLE", status="open"),
+        ticket_id="stable-relay",
+    )
+
+    tabularius._relay_ticket(ticket, None, client=fake)
+
+    assert fake.registered[0].session_id == f"{ticket.agent}-{ticket.session_id}"
+    assert len(fake.registered) == 1
+
+
+def test_a_frozen_relay_literal_falls_back_to_a_keyed_id_and_still_relays():
+    """A FIXED relay session id is claimable exactly once, and the loser is refused forever.
+
+    ``register()`` binds agent/surface/session_id from the principal and then rejects any
+    re-registration whose whole identity object differs — so post-binding the only fields that can
+    still differ are client-declared, and a drift in them is a permanent 409. That froze
+    ``dispatch-serial-results`` from 2026-07-19: jules sessions launched, receipts were never
+    recorded, and the throughput governor read 0 dispatches (#1995). A refused literal must fall
+    back to an id this client can own, rather than killing the relay.
+    """
+    refused: list[str] = []
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-FROZEN",
+        patch=_task("T-FROZEN", status="open"),
+        ticket_id="frozen-relay",
+    )
+    frozen_literal = f"{ticket.agent}-{ticket.session_id}"
+
+    class FrozenLiteralClient(FakeConductClient):
+        def register(self, session):
+            if session.session_id == frozen_literal:
+                refused.append(session.session_id)
+                raise ConductConflict(
+                    'conduct broker rejected request (409): {"detail": '
+                    '"session_id is already registered to another identity"}',
+                    status=409,
+                )
+            return super().register(session)
+
+    fake = FrozenLiteralClient([])
+
+    tabularius._relay_ticket(ticket, None, client=fake)
+
+    literal = f"{ticket.agent}-{ticket.session_id}"
+    assert refused == [literal]  # the literal was tried first, and only once
+    assert fake.registered[0].session_id.startswith(f"{literal}-")
+    assert fake.registered[0].identity.session_id == fake.registered[0].session_id
+    assert fake.packets, "the ticket must still relay after the fallback"
+
+
+def test_a_non_conflict_registration_failure_is_never_retried():
+    """Only a conflict means "that literal is not mine". Anything else must surface unchanged."""
+
+    class BrokenClient(FakeConductClient):
+        def register(self, session):
+            raise BrokerUnavailable("keeper down")
+
+    fake = BrokenClient([])
+    ticket = _ticket(
+        INTENT_UPSERT,
+        task_id="T-DOWN",
+        patch=_task("T-DOWN", status="open"),
+        ticket_id="down-relay",
+    )
+
+    with pytest.raises(BrokerUnavailable):
+        tabularius._relay_ticket(ticket, None, client=fake)
+
+
+def test_relay_identity_key_tracks_only_the_fields_register_leaves_unbound():
+    """The key must cover exactly what the keeper compares verbatim — no more, no less.
+
+    Principal-bound fields are normalized on both sides, so keying them would split one relay
+    session into many for no reason; client-declared fields are compared as sent, so NOT keying
+    them re-opens the freeze.
+    """
+    base = AgentIdentityV1(
+        agent="dispatch",
+        surface="tabularius-relay",
+        session_id="dispatch-serial-results",
+        provider_identity="limen-cli",
+    )
+    key = tabularius._relay_identity_key(base)
+
+    assert tabularius._relay_identity_key(base.model_copy(update={"agent": "codex"})) == key
+    assert tabularius._relay_identity_key(base.model_copy(update={"surface": "other-surface"})) == key
+    assert tabularius._relay_identity_key(base.model_copy(update={"session_id": "other-session"})) == key
+
+    assert tabularius._relay_identity_key(base.model_copy(update={"provider_identity": "limen-cli-2"})) != key
+    assert tabularius._relay_identity_key(base.model_copy(update={"native_run_id": "run-7"})) != key
+
+
+def test_fixed_relay_session_id_freezes_on_provider_drift_but_a_keyed_one_does_not(tmp_path):
+    """The regression, against the real broker: same principal, drifted provider identity."""
+    broker = ConductBroker(store=SQLiteStateStore(tmp_path / "conduct.db"))
+    now = datetime.now(timezone.utc)
+
+    def session(session_id: str, provider: str) -> ConductorSessionV1:
+        return ConductorSessionV1(
+            session_id=session_id,
+            identity=AgentIdentityV1(
+                agent="dispatch",
+                surface="tabularius-relay",
+                session_id=session_id,
+                provider_identity=provider,
+            ),
+            origin="relay",
+            capabilities=frozenset({"task-submit"}),
+            transport="ianva",
+            harvest_method="receipt",
+            registered_at=now,
+            heartbeat_at=now,
+        )
+
+    broker.register(session("dispatch-serial-results", "limen-cli"))
+    with pytest.raises(ConductConflict):
+        broker.register(session("dispatch-serial-results", "limen-cli-2"))
+
+    def keyed(provider: str) -> ConductorSessionV1:
+        identity = session("dispatch-serial-results", provider).identity
+        return session(f"dispatch-serial-results-{tabularius._relay_identity_key(identity)}", provider)
+
+    broker.register(keyed("limen-cli"))
+    broker.register(keyed("limen-cli-2"))
+    broker.register(keyed("limen-cli"))
+
+
 def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeypatch):
     head = "f" * 40
     document = tabularius.yaml.safe_dump(
@@ -700,3 +848,218 @@ def test_canonical_revision_matches_worker_millisecond_canon() -> None:
     # Non-datetime revisions pass through untouched, exactly like the worker.
     assert canon({"created": "2026-07-23"}) == "2026-07-23"
     assert canon({"status": "open"}) == "open"
+
+
+# ── already-homed tolerance (the local projection LAGS the keeper) ────────────
+#
+# A caller derives "this task is absent" from tasks.yaml, which republishes on its own
+# cadence. When the keeper already holds the task, the create is refused — benignly. Three
+# keepers word that refusal three ways (the Worker's 409 "already exists", the in-process
+# compat path's "already exists", the ticket path's "is no longer absent"), so tolerance is
+# keyed on the STATUS/marker and attributed to the in-flight ticket, never parsed out of
+# the sentence.
+
+
+def test_sync_tolerates_an_opted_in_already_homed_create_and_keeps_relaying(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    desired.tasks.append(_board([_task("T-fresh", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        desired,
+        agent="legacy-adapter",
+        session_id="sync-relay",
+        tolerate_already_homed={"T-homed", "T-fresh"},
+    )
+
+    assert result.already_homed == ["T-homed"]
+    # The conflict did not hold the genuinely-new task hostage.
+    assert "T-fresh" in fake.tasks
+    assert result.applied == 1
+
+
+def test_sync_refuses_a_conflict_for_a_task_the_caller_did_not_opt_in(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    with pytest.raises(ConductConflict):
+        apply_limen_file_sync(
+            board,
+            desired,
+            agent="legacy-adapter",
+            session_id="sync-relay",
+            tolerate_already_homed={"T-something-else"},
+        )
+
+
+def test_sync_without_the_opt_in_still_fails_closed_on_a_conflict(tmp_path, monkeypatch):
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board, conflict_on={"T-homed"})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    with pytest.raises(ConductConflict):
+        apply_limen_file_sync(board, desired, agent="legacy-adapter", session_id="sync-relay")
+
+
+def test_already_homed_tolerance_is_keyed_on_status_not_on_keeper_prose(tmp_path, monkeypatch):
+    """Reword every keeper's detail text: tolerance must survive, because it reads the code."""
+    board = _seed_board(tmp_path, n=1)
+    fake = _fake_for_board(board)
+    reworded = []
+
+    def submit(packet):
+        task_id = str(dict(packet.intent)["task_id"])
+        if task_id == "T-homed":
+            reworded.append(task_id)
+            raise ConductConflict("HTTP 409 Conflict", status=409)
+        return FakeConductClient.submit(fake, packet)
+
+    fake.submit = submit
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: fake)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        desired,
+        agent="legacy-adapter",
+        session_id="sync-relay",
+        tolerate_already_homed={"T-homed"},
+    )
+
+    assert reworded == ["T-homed"]
+    assert result.already_homed == ["T-homed"]
+
+
+def test_local_keepers_own_wording_is_tolerated_too(tmp_path):
+    """The in-tree LocalConductClient says 'is no longer absent', not 'already exists'.
+
+    Regression: keying on the remote keeper's sentence made this path fatal, and the
+    genuinely-new atom in the same batch was lost with it.
+    """
+    board = _seed_board(tmp_path, n=1)
+    desired = load_limen_file(board)
+    desired.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    # First pass homes T-homed on the real local keeper.
+    apply_limen_file_sync(board, desired, agent="legacy-adapter", session_id="first")
+
+    # Now rewind the local projection so it LAGS the keeper — exactly what the beat sees.
+    save_limen_file(board, _board([_task("T-0", status="open")]))
+    lagging = load_limen_file(board)
+    lagging.tasks.append(_board([_task("T-homed", status="open")]).tasks[0])
+    lagging.tasks.append(_board([_task("T-fresh", status="open")]).tasks[0])
+
+    result = apply_limen_file_sync(
+        board,
+        lagging,
+        agent="legacy-adapter",
+        session_id="second",
+        tolerate_already_homed={"T-homed", "T-fresh"},
+    )
+
+    assert result.already_homed == ["T-homed"]
+    assert "T-fresh" in result.projected_tasks
+
+
+def test_already_homed_marker_carries_its_task_identity():
+    """The signal a caller needs is structural: which task, and 'this is the benign one'."""
+    exc = TaskAlreadyHomed("task T-1 already exists", task_id="T-1")
+    assert exc.task_id == "T-1"
+    assert exc.already_homed is True
+    assert exc.status == 409
+    # Still a ValueError: every raise site it replaced was one, and callers catch that type.
+    assert isinstance(exc, ValueError)
+
+
+def test_a_non_absent_precondition_failure_is_never_tolerated():
+    """Tolerance covers creates only. A failed update precondition means state moved."""
+    ticket = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"task_sha256": "deadbeef"})
+    exc = TaskAlreadyHomed("task precondition failed: T-1 is no longer absent", task_id="T-1")
+    assert tabularius._is_tolerated_already_homed(exc, ticket, {"T-1"}) is False
+
+    create = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"absent": True})
+    assert tabularius._is_tolerated_already_homed(exc, create, {"T-1"}) is True
+    assert tabularius._is_tolerated_already_homed(exc, create, set()) is False
+    assert tabularius._is_tolerated_already_homed(RuntimeError("boom"), create, {"T-1"}) is False
+
+
+def test_every_local_refusal_of_a_settled_create_reaches_the_classifier():
+    """Completeness, not behaviour: are there only three sites, and do all three answer alike?
+
+    The earlier tests prove the sites we know about behave. This one exists because the bug
+    being guarded was a site nobody had enumerated — the local adapter's own wording, which
+    the previous prose regex did not match, so a genuinely-new atom was dropped on the floor.
+
+    Each of the three in-process paths is DRIVEN here (not asserted about), and the exception
+    it actually raises is fed to the real classifier. A fourth path added later that refuses a
+    settled create with a bare ``ValueError`` fails this test, because the classifier will
+    reject it — which is the whole point.
+    """
+    create = _ticket(INTENT_UPSERT, task_id="T-1", precondition={"absent": True})
+    settled = _task("T-1", status="open")
+    raised: list[Exception] = []
+
+    # Site 1 — the compatibility intent builder, before anything crosses the wire.
+    with pytest.raises(TaskAlreadyHomed) as one:
+        tabularius._compatibility_intent(create, settled)
+    raised.append(one.value)
+
+    # Site 2 — the local projection of a keeper task event, over a board that already holds it.
+    event = {
+        "task_id": "T-1",
+        "intent": {"kind": "task.upsert", "task_id": "T-1", "expected_absent": True, "task": settled},
+        "event_id": "conduct:already-homed:local:1",
+    }
+    with pytest.raises(TaskAlreadyHomed) as two:
+        tabularius._project_local_task_event(_board([settled]), event)
+    raised.append(two.value)
+
+    # Site 3 — the ticket applier over an in-memory board that already holds the task.
+    tasks: OrderedDict[str, dict[str, Any]] = OrderedDict({"T-1": dict(settled)})
+    with pytest.raises(TaskAlreadyHomed) as three:
+        _apply(create, tasks, {})
+    raised.append(three.value)
+
+    assert len(raised) == 3
+    for exc in raised:
+        assert exc.task_id == "T-1"
+        assert exc.status == 409
+        assert tabularius._is_tolerated_already_homed(exc, create, {"T-1"}) is True
+
+    # Three sites, three different sentences — which is exactly why nobody reads the sentence.
+    assert len({str(exc) for exc in raised}) > 1
+
+
+def test_the_worker_and_the_python_keepers_agree_on_the_already_homed_status():
+    """Cross-language parity: one condition, three keepers, one number.
+
+    The whole tolerance path rests on 409 being what a keeper answers when a create loses to
+    an already-homed task — and the production keeper is JavaScript, so no Python test touches
+    it. This reads the Worker's own source and holds it to the number Python declares.
+
+    It deliberately asserts on the STATUS ARGUMENT, not on the message: the two implementations
+    are free to word the refusal differently (they do), and must not be free to number it
+    differently.
+    """
+    projection = ROOT / "web" / "worker" / "src" / "conduct" / "projection.js"
+    source = projection.read_text()
+    absent_branch = source.split("if (intent.expected_absent && existing)", 1)
+    assert len(absent_branch) == 2, (
+        f"{projection} no longer refuses an expected_absent create over an existing task; "
+        "the Python already-homed tolerance has nothing to key on"
+    )
+    # End at the call's own `);` — a `}` boundary would land inside the `${taskId}` literal.
+    throw = absent_branch[1].split(");", 1)[0]
+    assert f", {TaskAlreadyHomed.status}" in throw, (
+        f"the Worker's already-homed refusal must carry {TaskAlreadyHomed.status}, "
+        f"matching TaskAlreadyHomed.status; found: {throw.strip()}"
+    )

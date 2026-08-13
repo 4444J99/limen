@@ -1,0 +1,44 @@
+{
+  "schema_version": "limen.positioning_cost_failure_sample.v1",
+  "synthetic_or_public_safe": true,
+  "window_start": "2026-08-01",
+  "window_end": "2026-08-07",
+  "rows": [
+    {
+      "sample_id": "synthetic-001",
+      "observed_at": "2026-08-01T12:00:00Z",
+      "terminal_state": "done",
+      "model_cost_usd": 1.2,
+      "model_cost_basis": "estimated",
+      "human_minutes": 14,
+      "retry_count": 0,
+      "retry_cost_usd": 0,
+      "verification_cost_usd": 0.25,
+      "failure_class": null
+    },
+    {
+      "sample_id": "synthetic-002",
+      "observed_at": "2026-08-03T12:00:00Z",
+      "terminal_state": "failed",
+      "model_cost_usd": 0.8,
+      "model_cost_basis": "estimated",
+      "human_minutes": 9,
+      "retry_count": 1,
+      "retry_cost_usd": 0.3,
+      "verification_cost_usd": 0.1,
+      "failure_class": "predicate_failure"
+    },
+    {
+      "sample_id": "synthetic-003",
+      "observed_at": "2026-08-05T12:00:00Z",
+      "terminal_state": "failed_blocked",
+      "model_cost_usd": 0.4,
+      "model_cost_basis": "estimated",
+      "human_minutes": 6,
+      "retry_count": 0,
+      "retry_cost_usd": 0,
+      "verification_cost_usd": 0.05,
+      "failure_class": "external_gate"
+    }
+  ]
+}

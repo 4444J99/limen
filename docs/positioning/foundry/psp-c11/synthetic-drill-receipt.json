@@ -1,0 +1,164 @@
+{
+  "access_drills": [
+    {
+      "decision": "allow",
+      "drill_id": "public-source",
+      "expected": "allow",
+      "pass": true
+    },
+    {
+      "decision": "allow",
+      "drill_id": "synthetic-sandbox",
+      "expected": "allow",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-credential",
+      "expected": "deny",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-private-source",
+      "expected": "deny",
+      "pass": true
+    },
+    {
+      "decision": "deny",
+      "drill_id": "early-license",
+      "expected": "deny",
+      "pass": true
+    }
+  ],
+  "external_effects": [],
+  "final_custody": "owner_unchanged",
+  "human_acceptance_simulated": false,
+  "lifecycle_replay": [
+    {
+      "artifact": "invented_product",
+      "external_effect": false,
+      "step": "inventory"
+    },
+    {
+      "artifact": "invented_evidence",
+      "external_effect": false,
+      "step": "score"
+    },
+    {
+      "artifact": "invented_operator",
+      "external_effect": false,
+      "step": "diligence"
+    },
+    {
+      "artifact": "invented_data_isolated_sandbox",
+      "external_effect": false,
+      "step": "synthetic_trial"
+    },
+    {
+      "artifact": "sandbox_destroyed_no_live_access",
+      "external_effect": false,
+      "step": "return_rehearsal"
+    },
+    {
+      "artifact": "synthetic_decision_receipt",
+      "external_effect": false,
+      "step": "governance_review"
+    }
+  ],
+  "observed_pilot": false,
+  "operator_cases": [
+    {
+      "case_id": "case-proceed",
+      "expected_route": "proceed",
+      "pass": true,
+      "route": "proceed",
+      "score": 90
+    },
+    {
+      "case_id": "case-diligence",
+      "expected_route": "diligence",
+      "pass": true,
+      "route": "diligence",
+      "score": 73
+    },
+    {
+      "case_id": "case-trial",
+      "expected_route": "trial",
+      "pass": true,
+      "route": "trial",
+      "score": 60
+    },
+    {
+      "case_id": "case-decline",
+      "expected_route": "decline",
+      "pass": true,
+      "route": "decline",
+      "score": 0
+    },
+    {
+      "case_id": "case-human-review",
+      "expected_route": "human_review",
+      "pass": true,
+      "route": "human_review",
+      "score": 96
+    }
+  ],
+  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v3",
+  "source_lock": {
+    "chunk_id": "PSP-C10",
+    "counts_as_closure": false,
+    "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+    "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2",
+    "receipt_sha256": "d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa",
+    "source_bindings": [
+      {
+        "counts_as_closure": false,
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
+        "id": "c05_delivery_relay",
+        "pull_request": 2315,
+        "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
+        "id": "c05_private_templates",
+        "pull_request": 135,
+        "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
+        "id": "c09_qualification_relay",
+        "pull_request": 2322,
+        "role": "qualification, CTA-routing, and conversion source lock",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
+        "id": "c09_private_package",
+        "pull_request": 136,
+        "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
+        "id": "c09_portfolio_package",
+        "pull_request": 222,
+        "role": "public audit and conversion-path contract without publication",
+        "target": "portfolio"
+      }
+    ]
+  },
+  "status": "pass",
+  "synthetic_only": true
+}

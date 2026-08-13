@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-07T14:17:56Z",
-  "incident_count": 7,
+  "generated_at": "2026-08-10T21:37:38Z",
+  "incident_count": 24,
   "incidents": [
     {
       "action": "skipped-stash-push",
@@ -42,6 +42,108 @@
       "action": "skipped-stash-push",
       "observed_at": "2026-08-07T14:00:50Z",
       "pid": 15849,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-07T14:41:29Z",
+      "pid": 86854,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T00:59:48Z",
+      "pid": 13194,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T02:02:08Z",
+      "pid": 70982,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T12:45:45Z",
+      "pid": 24983,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:12:03Z",
+      "pid": 88466,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:12:03Z",
+      "pid": 88466,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:41:49Z",
+      "pid": 31336,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:12:03Z",
+      "pid": 88466,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-08T19:41:49Z",
+      "pid": 31336,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T00:58:33Z",
+      "pid": 44702,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T01:34:42Z",
+      "pid": 63482,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T01:34:42Z",
+      "pid": 63482,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T09:15:06Z",
+      "pid": 24377,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-09T10:54:35Z",
+      "pid": 51552,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-10T12:51:20Z",
+      "pid": 90173,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-10T12:51:20Z",
+      "pid": 90173,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-10T12:51:20Z",
+      "pid": 90173,
       "root": "/Users/4jp/Workspace/limen"
     }
   ],

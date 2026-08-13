@@ -50,6 +50,10 @@ def _init_origin_and_clone(tmp: Path, name: str) -> Path:
     subprocess.run(["git", "clone", "-q", str(origin), str(clone)], check=True, capture_output=True)
     _git(clone, "config", "user.email", "t@t.t")
     _git(clone, "config", "user.name", "t")
+    # The host may require signed tags globally. That turns the lightweight tag fixture
+    # below into an annotated tag and opens core.editor inside a non-interactive xdist
+    # worker. Fixture repositories own their Git policy: keep this suite hermetic.
+    _git(clone, "config", "tag.gpgSign", "false")
     return clone
 
 

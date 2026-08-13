@@ -29,7 +29,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -249,7 +249,23 @@ def _last_log_ts(path):
 
 
 def _json_field_ts(path, *fields):
-    """Epoch from the first present ISO/'%Y-%m-%d %H:%M:%S' field in a json file."""
+    """Epoch from the first present ISO/'%Y-%m-%d %H:%M:%S' field in a json file.
+
+    A trailing `Z` is HONOURED. `datetime.strptime(...).timestamp()` on a naive datetime means
+    LOCAL time, so a UTC artifact read that way lands one UTC-offset in the past — and since
+    every consumer subtracts the result from `time.time()`, the organ reads exactly that much
+    YOUNGER than it is (4h in EDT). Producers really do write UTC: routine-freshness-audit
+    stamps `generated` from `datetime.now(timezone.utc)`.
+
+    Two things depended on this being right, and both were silently wrong. The freshness probes
+    that fall back to an artifact reported a manufactured youth — the one failure this file
+    exists to catch, arriving through the reader. And `_json_nested_error`'s `stamp=` suffix
+    (#2027) is computed from this helper, so a defect recorded 6.1h ago was published as
+    "recorded 2.1h ago" — measured live, against the same run whose voice stamp said 6.1h.
+
+    Naive strings stay local: some artifacts genuinely write local time, and assuming UTC for
+    them would invent the same error mirrored.
+    """
     try:
         obj = json.loads(Path(path).read_text())
     except (OSError, ValueError):
@@ -264,9 +280,59 @@ def _json_field_ts(path, *fields):
         if not m:
             continue
         try:
-            return datetime.strptime(m.group(1).replace("T", " "), "%Y-%m-%d %H:%M:%S").timestamp()
+            when = datetime.strptime(m.group(1).replace("T", " "), "%Y-%m-%d %H:%M:%S")
         except ValueError:
             continue
+        if v[m.end(1) : m.end(1) + 1].upper() == "Z":
+            when = when.replace(tzinfo=timezone.utc)
+        return when.timestamp()
+    return None
+
+
+def _json_nested_error(path, *trails, stamp=None):
+    """First recorded failure inside an organ's OWN artifact, or None.
+
+    Freshness answers "did it run"; it cannot answer "did it work". Every signal this file
+    reads — the voice stamp and the artifact's `generated` field — is written at the END of a
+    run that completed, including a run whose effector half failed and swallowed the error to
+    stay fail-open. Such an organ is fresh, green, and not delivering.
+
+    That is not hypothetical: routine-freshness ran for 50 consecutive days at severity:silent
+    while a keeper 409 killed its atom-hanging half on every pass (fixed in #1999). The repair
+    made the failure non-fatal and RECORDED it in the artifact — which moved the defect from
+    "crashes silently" to "records silently", because nothing read the record. This reads it.
+
+    Fail-open in the reader too: an unreadable or oddly-shaped artifact is NOT a defect, or
+    every artifact format change would manufacture a false operator atom.
+
+    Each trail is a key path into the artifact, e.g. ("escalation", "error").
+
+    `stamp` names the artifact's OWN timestamp field, and the reason it exists is that the row's
+    `age_h` measures a DIFFERENT clock. The voice stamp is written unconditionally after a
+    sensor's steps (beat-sensors.py `_stamp`, regardless of exit code) while an audit may be
+    throttled and skip without rewriting its artifact — routine-freshness runs at
+    `--throttle 21600`, so up to 6h can pass with a fresh voice over an untouched artifact. The
+    recorded failure is then real but stale, and shown beside `0.0h ago` it reads as happening
+    right now. Naming the artifact's own age keeps the verdict (last known state of the effector
+    half IS failed) while ending the false immediacy.
+    """
+    try:
+        obj = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+    for trail in trails:
+        node = obj
+        for key in trail:
+            if not isinstance(node, dict):
+                node = None
+                break
+            node = node.get(key)
+        if isinstance(node, str) and node.strip():
+            msg = f"{'.'.join(trail)}: {node.strip()}"
+            recorded = _json_field_ts(path, stamp) if stamp else None
+            if recorded is not None:
+                msg = f"{msg} (recorded {round((time.time() - recorded) / 3600, 1)}h ago)"
+            return msg
     return None
 
 
@@ -488,15 +554,36 @@ def _registry():
         ),
         # no cadence_key: routine-freshness-audit runs inside metabolize.sh step 0e (not a standalone
         # heartbeat voice), so it claims no cadence and never trips the absent-from-heartbeat drift
-        # check; green when its per-beat state stamp (logs/routine-freshness.json) is fresh.
+        # check; green when its state stamp (logs/routine-freshness.json) is fresh.
+        #
+        # interval_s DECLARES that budget instead of deriving it. Without it the else-branch below
+        # computes beats(1) x loop_max(1800s) = 30min — but this organ is invoked at
+        # `--throttle 21600` (sensors.yaml -> routine-freshness), so it deliberately rewrites its
+        # artifact at most every 6h. A 30-min budget against a 6h cadence made a HEALTHY organ read
+        # `down` for ~5.5 of every 6 hours (measured live: age_h 5.7 / expected_h 0.5 / status down,
+        # against an artifact whose escalation and retire were both clean). Not cosmetic:
+        # avtopoiesis.py maps down -> 0.0, so the organ contributed a floor score as its STEADY
+        # state — and it made the `defect` probe below near-unobservable, since a defect could only
+        # add `down` to a row that was already down. Keep this equal to the sensor's throttle.
         dict(
             key="routines",
             rung="ROUTINES",
             voice="routines",
             gate="LIMEN_ROUTINE_FRESHNESS",
             gate_default="1",
+            interval_s=21600,
             what="cloud-routine delivery freshness (13 routines; firing must equal delivering)",
             probe=lambda: _json_field_ts(LOGS / "routine-freshness.json", "generated"),
+            # This organ's whole point is hanging an operator atom when a routine goes down.
+            # If that half fails, a fresh timestamp is a lie — so read the failure it records.
+            defect=lambda: _json_nested_error(
+                LOGS / "routine-freshness.json",
+                ("escalation", "error"),
+                ("retire", "error"),
+                # The audit is throttled at 21600s and skips WITHOUT rewriting this artifact, while
+                # the voice stamps every beat — so the row's age_h can read 0.0 over a 6h-old error.
+                stamp="generated",
+            ),
         ),
         # no cadence_key: session-walk-census runs inside metabolize.sh step 0j; green when its
         # per-beat census stamp is fresh.
@@ -643,6 +730,23 @@ def build():
             kind = "intended HOLD" if hold_vs_residual else "residual (capability)"
             bits = [kind] + ([f"lever {bound_lever}"] if bound_lever else []) + ([note] if note else [])
             note = " · ".join(bits)
+
+        # A recorded self-reported failure outranks freshness. Deliberately AFTER the gate branch
+        # and skipped when gated: an organ held off on purpose is not defective, and a stale
+        # artifact from before the hold must not resurrect as a "down". Reuses the existing "down"
+        # vocabulary rather than adding a status the dot/label maps and every downstream reader
+        # would have to learn.
+        #
+        # The message embeds free text from the organ's own artifact. That is safe to render today
+        # because the HTML lands only in web/app/{out,public}, both gitignored (.gitignore:28, :36)
+        # and untracked — so an arbitrary error string has no path to the public Pages site. Any
+        # change that starts tracking those paths, or routes this note into a published contract,
+        # has to escape it first.
+        defect_probe = o.get("defect")
+        defect = defect_probe() if (defect_probe and not gated) else None
+        if defect:
+            status = "down"
+            note = " · ".join([b for b in (f"self-reported defect — {defect}", note) if b])
 
         organs.append(
             {

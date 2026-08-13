@@ -67,6 +67,16 @@ DECISION_HEADING = re.compile(r"^#{2,4}\s+.*\bDecisions?\b", re.I)
 ANY_HEADING = re.compile(r"^#{1,4}\s+")
 NUMBERED = re.compile(r"^(\d+)\.\s+(.*)$")
 
+# A receipt and a log are RECORDS, not registries. A decision that cites one has named where its
+# MEASUREMENT lives, never where the decision binds — nothing derives from a receipt, and no run
+# fails when the decision is violated. The bare-filename `registry` rule below is deliberately
+# loose (that is how these plans are written), and it scored a decision `→ registry` on the
+# strength of `docs/receipts/pr-estate-drain-diagnosis-20260807.json` — the exact
+# declared-but-unwired shape this predicate exists to catch, one level down in its own matcher.
+# Blanked before matching so a receipt-only citation falls through to UNHOMED, where `owed:` and
+# a real precedent are both still available and both honest.
+NON_BINDING = re.compile(r"\b(?:docs/receipts|receipts|logs)/[\w./-]+\.(?:yaml|json)\b")
+
 HOMES = (
     (re.compile(r"institutio/[\w./-]+\.(?:yaml|json)"), "registry"),
     (re.compile(r"\b[\w-]+\.(?:yaml|json)\b(?!\s*—\s*never)"), "registry"),
@@ -113,6 +123,7 @@ def decisions_in(path: Path) -> list[dict]:
 
 
 def home_of(body: str) -> str | None:
+    body = NON_BINDING.sub(" ", body)
     for rx, kind in HOMES:
         if rx.search(body):
             return kind

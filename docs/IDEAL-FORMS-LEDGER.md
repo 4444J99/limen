@@ -76,6 +76,24 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   reading was **+105 over three days**, and the ideal's word is monotonically down.
 - **Owner:** Claude (predicate) + merge daemon.
 
+### IF-PR-LIFECYCLE — every PR is typed by declared capability
+- **Ideal form:** every open PR carries exactly one declared disposition, written by an organ under
+  a declared admits-predicate; every consumer derives policy from the lifecycle registry; and the
+  estate's mechanically reachable population is a registry fact rather than a private code literal.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure` runs
+  `python3 scripts/check-lifecycle.py --measure`; the latter prints the unreachable-PR denominator
+  from the committed exhaustive census. The offline gate separately holds registry parity and
+  shrink-only conversion debt without treating network availability as policy health.
+- **Evidence (2026-08-08):** campaign #1981 established the eighth derive axis at
+  `institutio/governance/lifecycle.yaml`. Four consumers remain explicitly ratcheted false, with
+  25 lifecycle-label literals held to exact shrink-only baselines; the axis is therefore declared
+  but not falsely described as fully converted. The draft cohort's bulk governance decision is
+  owned by `L-PR-DRAFT-COHORT-DISPOSITION` rather than guessed by an effector.
+- **Status:** PARTIAL — registry, predicate, ideal, and cohort ownership are mechanical; consumer
+  conversion, label materialization, and delivery-typer enactment remain campaign #1981 work.
+- **Owner:** Claude (registry + predicate) → lifecycle typer and merge organs; Anthony only for the
+  draft-cohort governance lever.
+
 ### IF-PUBLICATION-ESTATE — every repo's visibility is a judged, enforced decision
 - **Ideal form:** the whole GitHub estate carries its publication policy as declared data — every
   repo classified (vault / operation / portal / floor) with a `why:`, visibility drift a red
@@ -117,6 +135,38 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   Measuring was the missing half, and it was missing entirely.
 - **Owner:** Claude (the census + the court) · the reap organs for relief · his hand only where
   relief is destructive (the archive-then-delete step, the remote-reap lever).
+
+### IF-GUARD-FAIL-TOWARD-WARNING — a guard that cannot see warns, it does not pass
+- **Ideal form:** no safety guard in the estate degrades toward "everything is fine". Every guard
+  whose verdict gates a capability declares its degenerate inputs, and each is **executed** against
+  them: an input the guard cannot resolve comes back untrusted, never silently permissive.
+  "I could not establish this" and "this is fine" are never the same value.
+- **Distance:** DERIVED — `python3 scripts/check-guard-degradation.py` (`findings=N`, ideal 0).
+- **Evidence (2026-08-07):** the same defect found **four times in one stack** in a single session.
+  Three forked weekly-meter readers typed `dict | None`, where `None` meant both "no meter" and "a
+  meter I decided not to trust" — and all three callers read it as permissive. `_resolve_model`
+  returned `""` for an unresolvable session model, so `_is_fable("")` was False and the guard exited
+  0 printing **zero bytes**, byte-identical to a session confirmed cheap. An undeployed copy of a
+  guard printed superseded advice with no sign it was pre-merge. An unarmed SessionStart hook was
+  indistinguishable from one that ran and found nothing.
+  The incident it produced: the live checkout sat **36 commits behind**, so the deployed
+  `fable-allotment.py` scanned a directory holding 0 transcripts and rewrote the weekly meter to
+  `spent_pct 0.0 / over_cap false` **every beat** while the true figure was **75.47% / over_cap
+  true** — releasing both Fable brakes and burning ~50% of a weekly allotment in two days with no
+  downgrade and no warning.
+  **The load-bearing detail:** the meter file was **fresh and wrong** — rewritten 09:17 that morning
+  and every beat before it — so any age bound on the artifact *passes* on this incident. Freshness
+  of an artifact is not truth of its value when the stale party is the writer's code.
+  **Why the proofs are executed, not inspected:** `verify-fable-gate.sh` was **green throughout**,
+  all five blocks passing, because the question it asked was answered correctly by a meter that was
+  itself lying. Inspection cannot catch a guard whose code looks right and whose input is wrong.
+- **Status:** RATCHET ARMED — 2 guards declared, 8 degenerate cases, all degrading. The honest
+  distance is the guards **not yet declared**, not the ones measured: the population is grow-only
+  (`institutio/governance/guard-state-baseline.txt`), so this number improves by declaring more,
+  never by measuring again. Losing a declaration is a RED, because deleting one is exactly how a
+  class-wide invariant quietly stops covering its subject.
+- **Owner:** Claude (`limen.guard_contract` + `scripts/check-guard-degradation.py`). Precedent:
+  `PREC-2026-08-07-guard-degrades-toward-silence`.
 
 ### IF-LIVE-TREE-COHERENCE — the live checkout never drifts
 - **Ideal form:** the live daemon checkout is always `≡ origin/main`; capture/sync keeps it
