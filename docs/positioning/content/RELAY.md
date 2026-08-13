@@ -38,17 +38,19 @@ compression_level: medium
 
 | Dependency | Current evidence and boundary |
 |---|---|
-| P02 | closed |
-| C03 / P03 | current preflight `c7c932205faa405e291f8030235a73cedeaa219e`; W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; #2188/W07 remains the sole five-reader gate |
-| C04 | Limen #2313 `23712398c6586e005c303eff632604985cd0a25c`; portfolio #220 `9bcc4606b68da83dc0878b060989d35c3b649d7f` |
-| C05 | Limen #2315 `a72a05d917bf14d53221c7d02ec52d3786b4f88e`; private #135 `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b` |
-| C06 | portfolio #221 `6cb7f291ef758d26d136620398c6e9c09f74d0ea`; Limen #2317 `b3c8dcb8ee461fad7be971efc0fc60ca27726668`; exactly three directions remain unselected |
-| C07 | Limen #2318 `6ee6bd7d546a56474cf3bd38e06fad794ab7bc45`; private inbound remains synthetic-only and P08 remains open |
+| P02 | accepted main `8faa5fb9899231ebf5f87e78bb171544c11b79d7`; phase receipt [#2172](https://github.com/organvm/limen/issues/2172#issuecomment-5270095170) |
+| C03 / P03 | current offer #2312 `b6af8086c9050634313f519c29a6dfcb922c3721`; W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; [#2188/W07](https://github.com/organvm/limen/issues/2188) remains genuinely reader-blocked |
+| C04 | prepared proof: Limen #2313 `543fa28df52c9db7be3b7307019dcf209361d0b9`; portfolio #220 `8974543ba9675ed0504141895812476efef5dd80` |
+| C06 | prepared public-surface relay: Limen #2317 `4eb50463b7f4136b47a103c9792c1ded5caf7873`; portfolio #221 `6cb1abf0bf08e71341476886385eba5499c51bb7`; all three directions remain `UNSELECTED` |
+| C07 | prepared private inbound: Limen #2318 `c3b92707a0f6d0ea3076680d100d60d0217f8fe9`; no inbound evidence is admitted |
 | P09 formal frontier | P05, P07, and P08 remain open/prepared; this C08 package cannot promote them |
 
 Conductor assignment remains `gpt-5.6-terra / high`. The manifest retains the registered leaf
 assignments, including W02 `gpt-5.6-sol/max`, W07 `gpt-5.6-luna/medium`, and the remaining declared
 leaves at `gpt-5.6-terra/high`.
+
+`dependency-bindings.json` is the machine-validated exact binding record. It remains `PREPARED` and
+`counts_as_closure=false`; it records no reader evidence, approval, or external distribution effect.
 
 ## Completed work
 
@@ -62,7 +64,7 @@ leaves at `gpt-5.6-terra/high`.
 
 | Decision | Evidence and rationale |
 |---|---|
-| Use the current dependency frontier | P02 is closed; P03 is blocked only on genuine W07 reader evidence; C04-C07 remain prepared and cannot be promoted by this private staging package. |
+| Use the current dependency frontier | P02 is accepted; P03 is blocked only on genuine W07 reader evidence; C04, C06, and C07 remain prepared and cannot be promoted by this private staging package. |
 | Keep the report as a private draft | The claims ledger admits internal operational evidence and authorship disclosure, while commercial, adoption, ranking, and unsanitized-incident claims remain withheld. |
 | Keep the measurement fixture synthetic | The capture policy permits attributable door tags, but a fixture cannot become observed demand or a distribution receipt. |
 
@@ -76,7 +78,7 @@ leaves at `gpt-5.6-terra/high`.
 ## Risks and prohibitions
 
 - Human gates still unpulled: `HG-PUBLIC-IDENTITY` (W02) and `HG-PUBLICATION-SEND` (W08).
-- PR metadata boundary: draft PR #2316 tracks the pushed branch, but its description refresh is blocked by the credential owner's invalid GitHub CLI token; after credential repair, run `gh pr edit 2316 --body-file <reviewed-body>` without changing draft status.
+- PR metadata boundary: draft PR #2316 tracks the pushed branch; its body is public-safe and must retain draft status plus the exact prepared-binding boundary.
 - Sensitive/private material boundary: no private evidence, personal contact data, or real incident record belongs in this package.
 - Files or sibling work that must not be touched: `tasks.yaml`, generated program indexes, external target repositories, and active sibling preflight paths.
 - Rollback route: remove or quarantine a staged asset under this directory; for a later real release, use the correction/withdrawal contract and preserve its external receipt.

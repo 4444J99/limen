@@ -1,0 +1,53 @@
+{
+  "schema": "psp-c08-dependency-bindings/v1",
+  "state": "PREPARED",
+  "counts_as_closure": false,
+  "scope": "private-staging-only",
+  "bindings": [
+    {
+      "id": "P02",
+      "disposition": "accepted",
+      "head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "phase_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170"
+    },
+    {
+      "id": "C03",
+      "disposition": "current-offer-with-reader-gate",
+      "offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "accepted_through": "PSP-P03-W06",
+      "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "reader_gate": {
+        "work_id": "PSP-P03-W07",
+        "issue": "https://github.com/organvm/limen/issues/2188",
+        "state": "genuine-reader-blocked"
+      }
+    },
+    {
+      "id": "C04",
+      "disposition": "prepared-proof",
+      "limen_pr": 2313,
+      "limen_head": "543fa28df52c9db7be3b7307019dcf209361d0b9",
+      "portfolio_pr": 220,
+      "portfolio_head": "8974543ba9675ed0504141895812476efef5dd80"
+    },
+    {
+      "id": "C06",
+      "disposition": "prepared-public-surface-relay",
+      "limen_pr": 2317,
+      "limen_head": "4eb50463b7f4136b47a103c9792c1ded5caf7873",
+      "portfolio_pr": 221,
+      "portfolio_head": "6cb1abf0bf08e71341476886385eba5499c51bb7",
+      "visual_directions": "UNSELECTED"
+    },
+    {
+      "id": "C07",
+      "disposition": "prepared-private-inbound",
+      "limen_pr": 2318,
+      "limen_head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9"
+    }
+  ],
+  "prohibitions": [
+    "No binding promotes a prepared dependency, reader evidence, or external effect.",
+    "No binding authorizes publication, scheduling, sending, capture activation, analytics mutation, deployment, or formal closure."
+  ]
+}

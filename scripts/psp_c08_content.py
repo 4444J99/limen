@@ -13,6 +13,7 @@ from typing import Any
 
 CONTENT_RELATIVE = Path("docs/positioning/content")
 REQUIRED_FILES = (
+    "dependency-bindings.json",
     "content-control.json",
     "narrative-fixtures.json",
     "review-gates.json",
@@ -21,6 +22,7 @@ REQUIRED_FILES = (
     "dry-run-publication-package.json",
 )
 WORK_IDS = {f"PSP-P09-W0{number}" for number in range(1, 9)}
+REQUIRED_BINDINGS = {"P02", "C03", "C04", "C06", "C07"}
 EMAIL_RE = re.compile(r"\b[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 SECRET_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]+|Bearer\s+\S+|AKIA[0-9A-Z]{16})\b")
 
@@ -100,6 +102,7 @@ def validate(root: Path) -> dict[str, Any]:
             raise ContentError(f"missing {CONTENT_RELATIVE / name}")
 
     register = load_json(content / "claim-source-register.json")
+    bindings = load_json(content / "dependency-bindings.json")
     control = load_json(content / "content-control.json")
     fixtures = load_json(content / "narrative-fixtures.json")
     review = load_json(content / "review-gates.json")
@@ -109,6 +112,22 @@ def validate(root: Path) -> dict[str, Any]:
 
     if control.get("state") != "private-staging-only":
         raise ContentError("content control must remain private-staging-only")
+    if bindings.get("state") != "PREPARED" or bindings.get("counts_as_closure") is not False:
+        raise ContentError("dependency bindings must remain PREPARED without closure credit")
+    binding_items = {item.get("id"): item for item in bindings.get("bindings", [])}
+    if set(binding_items) != REQUIRED_BINDINGS:
+        raise ContentError("dependency bindings must cover the current P02/C03/C04/C06/C07 chain exactly")
+    if binding_items["P02"].get("disposition") != "accepted":
+        raise ContentError("P02 must be recorded as accepted")
+    if binding_items["C03"].get("accepted_through") != "PSP-P03-W06":
+        raise ContentError("C03 must stop formal acceptance at PSP-P03-W06")
+    if binding_items["C03"].get("reader_gate", {}).get("state") != "genuine-reader-blocked":
+        raise ContentError("C03 reader evidence must remain genuinely blocked")
+    for binding_id in ("C04", "C06", "C07"):
+        if not binding_items[binding_id].get("disposition", "").startswith("prepared-"):
+            raise ContentError(f"{binding_id} must remain prepared")
+    if binding_items["C06"].get("visual_directions") != "UNSELECTED":
+        raise ContentError("C06 visual directions must remain unselected")
     source_ids = {entry.get("id") for entry in register.get("sources", [])}
     assets = control.get("assets", [])
     if {asset.get("work_id") for asset in assets} != WORK_IDS:

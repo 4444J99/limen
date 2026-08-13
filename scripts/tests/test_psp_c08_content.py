@@ -49,6 +49,15 @@ class ContentControlTests(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.ContentError, "deterministic staged assets"):
             MODULE.validate(target)
 
+    def test_dependency_binding_cannot_claim_closure(self) -> None:
+        target = self.copy_root()
+        path = target / "docs" / "positioning" / "content" / "dependency-bindings.json"
+        bindings = json.loads(path.read_text(encoding="utf-8"))
+        bindings["counts_as_closure"] = True
+        path.write_text(json.dumps(bindings), encoding="utf-8")
+        with self.assertRaisesRegex(MODULE.ContentError, "without closure credit"):
+            MODULE.validate(target)
+
     def test_expiry_logic_quarantines_old_copy(self) -> None:
         self.assertEqual(MODULE.freshness_state("2026-08-11", "2026-08-12"), "expired")
 
