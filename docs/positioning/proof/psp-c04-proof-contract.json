@@ -1,11 +1,15 @@
 {
-  "schema_version": "limen.psp_c04_proof_preflight.v2",
+  "schema_version": "limen.psp_c04_proof_preflight.v3",
   "chunk_id": "PSP-C04",
   "phase_id": "PSP-P05",
   "status": "PREPARED/PREFLIGHT",
+  "counts_as_closure": false,
   "prepared_at": "2026-08-10",
   "program_binding": {
     "source_path": "institutio/positioning/program.yaml",
+    "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+    "expected_blob": "de8c489667f2ad797dde60dfb84a9fa1fb4b0e16",
+    "canonical_portfolio": {"slug": "organvm-vii-kerygma/portfolio", "repository_id": 1155412125},
     "phase_outcome": "High-value claims are demonstrated through compact, reproducible proof objects rather than volume theater.",
     "phase_exit_gate": "The six declared proof classes exist, are public-safe, and link back to current evidence rows.",
     "leaf_audit": [
@@ -81,12 +85,18 @@
     "p02": {
       "phase_id": "PSP-P02",
       "status": "closed",
-      "observed_at": "2026-08-12"
+      "observed_at": "2026-08-12",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "receipt": {
+        "url": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+        "sha256": "f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434"
+      }
     },
     "c03": {
       "chunk_id": "PSP-C03",
-      "status": "w01_w06_closed_w07_open",
-      "exact_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "status": "p03_w01_w06_closed_p04_staged_w07_open",
+      "exact_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "accepted_p03_ancestor": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "closed_leaves": [
         "PSP-P03-W01",
         "PSP-P03-W02",
@@ -99,6 +109,9 @@
         "work_id": "PSP-P03-W07",
         "issue": "https://github.com/organvm/limen/issues/2188",
         "gate": "five blinded target-like readers",
+        "required_independent_readers": 5,
+        "current_valid_readers": 0,
+        "synthetic_or_model_readers_allowed": false,
         "outbound_from_c04": false
       },
       "w06_receipt": {
@@ -109,36 +122,68 @@
   },
   "dependency_sources": [
     {
+      "id": "p02_live_registry",
+      "branch": "main",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "required_path": "institutio/positioning/program.yaml",
+      "expected_blob": "de8c489667f2ad797dde60dfb84a9fa1fb4b0e16",
+      "integration": "exact_committed_head_only"
+    },
+    {
       "id": "p02_flagship_selection",
-      "branch": "codex/psp-p02-w03-flagship-proof-preflight",
-      "exact_head": "528c94d31a426f3a9cac29a72cd38bc942d45171",
+      "branch": "main",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
       "required_path": "docs/positioning/flagship-proof-set.yaml",
+      "expected_blob": "5d4776efc7a811b0163cdfea5cf083409157feae",
       "integration": "exact_committed_head_only"
     },
     {
       "id": "p02_public_evidence",
-      "branch": "codex/psp-p02-w04-w05-public-evidence-preflight",
-      "exact_head": "3a752d530633c8a2ec4b7942e325b4838e56c233",
+      "branch": "main",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
       "required_path": "docs/positioning/evidence/flagship-evidence.yaml",
+      "expected_blob": "ce59d44794f44e0511436cbabbcd4fba1a938891",
       "integration": "exact_committed_head_only"
     },
     {
       "id": "p02_claim_policy",
-      "branch": "codex/psp-p02-w06-w07-preflight",
-      "exact_head": "2a0550862091a976b756034d4ddfa3965fd206ec",
+      "branch": "main",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
       "required_path": "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md",
+      "expected_blob": "57565f0d0dc72d2200b41be0e21fe6d323ec7f83",
+      "integration": "exact_committed_head_only"
+    },
+    {
+      "id": "p02_claims_ledger",
+      "branch": "main",
+      "exact_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "required_path": "docs/positioning/claims-ledger.md",
+      "expected_blob": "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
       "integration": "exact_committed_head_only"
     },
     {
       "id": "c03_identity_offers",
       "branch": "codex/psp-c03-identity-offers-preflight",
-      "exact_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "exact_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
       "registry_alignment_commit": "986ebb41778cf082e01ede0cb6d268cebf54a106",
       "required_path": "institutio/positioning/commercial-contract.yaml",
+      "expected_blob": "11ebfe5cb972c5b535059e5aa1f607ea64e90d17",
       "integration": "exact_committed_head_only",
-      "availability": "accepted_w01_w06_w07_open"
+      "availability": "p03_w01_w06_accepted_p04_staged_w07_open"
     }
   ],
+  "commercial_artifact_set": {
+    "source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+    "status": "source_bound_preflight_not_public",
+    "artifacts": [
+      {"id": "agentic_delivery_audit", "path": "docs/positioning/offers/agentic-delivery-audit.md", "expected_blob": "34bd10760afe6e8e8b778e0f6ad59c8aa1766097", "levels": ["L2", "L3"]},
+      {"id": "governance_install", "path": "docs/positioning/offers/governance-install.md", "expected_blob": "2ddb46f8d2a4bc122720d4a2d890298ee1c5e380", "levels": ["L2", "L3"]},
+      {"id": "bounded_governance_retainer", "path": "docs/positioning/offers/bounded-delivery-governance-retainer.md", "expected_blob": "1b46928d216fb2ed7299907a292ecc92511b0d60", "levels": ["L2", "L3"]},
+      {"id": "qualification_and_routing", "path": "docs/positioning/offers/qualification-and-routing.md", "expected_blob": "1cf8bd4e42d96533973418f2de26e1aad313d205", "levels": ["L2", "L3"]},
+      {"id": "product_operating_partnership_review", "path": "docs/positioning/offers/product-operating-partnership-review.md", "expected_blob": "9240e1fc1142eca6ca58d792f09581e1b514e046", "levels": ["L3"], "public_front_door": false}
+    ],
+    "invariants": ["no L1 offer payload", "partnership remains L3-only and non-public-door", "no numeric public pricing", "no contractual effect", "no public-surface mutation"]
+  },
   "claim_policy": {
     "resolver_order": [
       "claim_id",
@@ -151,7 +196,7 @@
       "withdrawal action"
     ],
     "publishable_statuses": ["verified", "derived_reviewed"],
-    "non_publishable_statuses": ["candidate", "repository_asserted", "stale", "conflicted", "unverified", "withheld", "private"],
+    "non_publishable_statuses": ["candidate", "repository_asserted", "repository_asserted_with_public_anchor", "stale", "conflicted", "unverified", "withheld", "private"],
     "withheld_classes": [
       "adoption, usage, install, or customer counts without primary receipts",
       "revenue, payment, or commercial outcomes without primary receipts",
@@ -163,9 +208,12 @@
   "flagships": [
     {
       "id": "limen",
+      "claim_id": "C02-PROOF-LIMEN",
       "name": "Limen",
       "role": "governed_agent_delivery",
-      "candidate_claim": "Governed multi-agent delivery with public operating, failure, and verification receipts.",
+      "candidate_claim": "Limen demonstrates governed multi-agent delivery with public operating, failure, and verification receipts.",
+      "evidence_wording": "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026.",
+      "accepted_source_status": "verified",
       "status": "candidate",
       "max_disclosure": "L2",
       "required_source_ids": ["limen_exact_head", "limen_public_status"],
@@ -173,9 +221,12 @@
     },
     {
       "id": "public_records",
+      "claim_id": "C02-PROOF-PUBLIC-RECORDS",
       "name": "UCC Public-Records Intelligence Platform",
       "role": "public_records_decision_pipeline",
-      "candidate_claim": "Four implemented state collectors sit on a broader public-record architecture.",
+      "candidate_claim": "Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture.",
+      "evidence_wording": "Four implemented state collectors on a fifty-state architecture",
+      "accepted_source_status": "repository_asserted_with_public_anchor",
       "status": "candidate",
       "max_disclosure": "L2",
       "required_source_ids": ["public_records_exact_head", "public_records_public_surface"],
@@ -183,9 +234,12 @@
     },
     {
       "id": "ai_chat_exporter",
+      "claim_id": "C02-PROOF-AI-CHAT-EXPORTER",
       "name": "AI Chat Exporter",
       "role": "privacy_first_data_portability",
-      "candidate_claim": "Client-side conversation export is available across five named portable formats.",
+      "candidate_claim": "The public AI Chat Exporter surface presents five export formats without a server dependency.",
+      "evidence_wording": "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text.",
+      "accepted_source_status": "verified",
       "status": "candidate",
       "max_disclosure": "L2",
       "required_source_ids": ["ai_chat_exporter_exact_head", "ai_chat_exporter_public_surface"],

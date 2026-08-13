@@ -1,14 +1,15 @@
 # PSP-C04 P05 proof-production preflight
 
 Status: **PREPARED/PREFLIGHT**. This package is deliberately non-publishing and cannot close
-PSP-P05 or PSP-C04. PSP-P02 is formally closed; C03 W01-W06 are closed at exact head
-`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, while W07 remains open on its genuine
-five-reader external-evidence gate.
+PSP-P05 or PSP-C04 (`counts_as_closure=false`). PSP-P02 is formally closed at exact head
+`8faa5fb9899231ebf5f87e78bb171544c11b79d7`. C03's current preflight head is
+`b6af8086c9050634313f519c29a6dfcb922c3721`: P03 W01-W06 are accepted, P04's five generated
+offer artifacts are staged, and W07 remains open on its genuine five-reader external-evidence gate.
 
 The machine-readable contract is
 [`psp-c04-proof-contract.json`](psp-c04-proof-contract.json). It turns the P05 scope into six
-bounded production contracts without borrowing identity, audience, offer, or CTA decisions from
-the unfinished C03 lane.
+bounded production contracts and binds the exact upstream identity, audience, claim, offer, and
+CTA artifacts without duplicating or promoting C03 decisions.
 
 ## 1. Source and claim resolution
 
@@ -20,6 +21,9 @@ Missing, stale, contradictory, private, or implication-only evidence fails close
 must include an observation date. A repository assertion is useful discovery input but is not a
 publishable status. Adoption, revenue, rankings, percentile claims, and private implementation
 details remain withheld unless a later independent primary receipt changes their ledger state.
+The resolver also verifies the accepted registry, flagship, evidence, claim-policy, claims-ledger,
+commercial-contract, and five generated-offer Git blobs before treating the upstream bindings as
+current.
 
 ## 2. Surface-by-claim audit
 
@@ -71,4 +75,5 @@ After W07 closes and C03 formally closes, the resolver may automatically refresh
 accepted evidence and claim rows, emit the surface audit, instantiate reproduction requests, and
 withhold expired sources. Publication, outreach, claim promotion, visual selection, phase closure,
 and deployment always remain separate gates. C04 does not solicit W07 readers or treat the accepted
-W06 model review as five-reader evidence.
+W06 model review as five-reader evidence. The three C06 visual directions remain unselected under
+Product Design ownership.

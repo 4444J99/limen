@@ -33,6 +33,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertIn("status must remain PREPARED/PREFLIGHT", errors)
         self.assertIn("external validation must remain rubric-only/no-outreach", errors)
 
+    def test_preflight_never_counts_as_closure(self) -> None:
+        self.assertFalse(self.contract["counts_as_closure"])
+        changed = json.loads(json.dumps(self.contract))
+        changed["counts_as_closure"] = True
+        self.assertIn("counts_as_closure must remain false", MODULE.validate(changed))
+
     def test_only_w07_remains_unsatisfied(self) -> None:
         progress = self.contract["dependency_progress"]
         self.assertEqual("closed", progress["p02"]["status"])
@@ -45,6 +51,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
             progress["c03"]["sole_unsatisfied_leaf"]["work_id"],
         )
         self.assertFalse(progress["c03"]["sole_unsatisfied_leaf"]["outbound_from_c04"])
+        self.assertEqual(MODULE.P02_ACCEPTED_HEAD, progress["p02"]["exact_head"])
+        self.assertEqual(MODULE.C03_CURRENT_HEAD, progress["c03"]["exact_head"])
+        self.assertEqual(
+            MODULE.C03_ACCEPTED_P03_ANCESTOR,
+            progress["c03"]["accepted_p03_ancestor"],
+        )
+        self.assertEqual(0, progress["c03"]["sole_unsatisfied_leaf"]["current_valid_readers"])
+        self.assertFalse(progress["c03"]["sole_unsatisfied_leaf"]["synthetic_or_model_readers_allowed"])
 
     def test_malformed_dependency_progress_fails_closed(self) -> None:
         changed = json.loads(json.dumps(self.contract))
@@ -62,7 +76,36 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(3, len(claims))
         self.assertTrue(all(not claim["publishable"] for claim in claims))
         self.assertTrue(all(claim["observation_dates"] for claim in claims))
-        self.assertTrue(all("claim_not_ratified" in claim["reason_codes"] for claim in claims))
+        self.assertTrue(all("c04_formalization_pending" in claim["reason_codes"] for claim in claims))
+        self.assertEqual(
+            {"C02-PROOF-LIMEN", "C02-PROOF-PUBLIC-RECORDS", "C02-PROOF-AI-CHAT-EXPORTER"},
+            {claim["claim_id"] for claim in claims},
+        )
+
+    def test_dependency_resolver_enforces_exact_blob_identity(self) -> None:
+        changed = json.loads(json.dumps(self.contract))
+        changed["dependency_sources"][0]["expected_blob"] = "0" * 40
+        rows = MODULE.resolve_dependency_sources(changed)
+        registry = next(row for row in rows if row["source_id"] == "p02_live_registry")
+        self.assertFalse(registry["resolved"])
+        self.assertEqual("blob_mismatch", registry["reason"])
+
+    def test_upstream_registry_claims_and_offer_bindings_are_exact(self) -> None:
+        result = MODULE.verify_upstream_bindings(self.contract)
+        self.assertEqual("pass", result["status"])
+        self.assertEqual([], result["errors"])
+        self.assertEqual(8, len(result["checked"]))
+        self.assertTrue(all(row["blob_match"] for row in result["checked"]))
+
+    def test_commercial_set_has_five_generated_offers_and_no_l1_payload(self) -> None:
+        artifacts = self.contract["commercial_artifact_set"]["artifacts"]
+        self.assertEqual(set(MODULE.EXPECTED_OFFER_BINDINGS), {artifact["id"] for artifact in artifacts})
+        self.assertTrue(all("L1" not in artifact["levels"] for artifact in artifacts))
+        partnership = next(
+            artifact for artifact in artifacts if artifact["id"] == "product_operating_partnership_review"
+        )
+        self.assertEqual(["L3"], partnership["levels"])
+        self.assertFalse(partnership["public_front_door"])
 
     def test_surface_audit_has_an_explicit_denominator(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)

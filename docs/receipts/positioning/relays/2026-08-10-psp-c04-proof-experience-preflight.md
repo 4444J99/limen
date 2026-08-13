@@ -8,12 +8,17 @@
 - Portfolio owner: `organvm-vii-kerygma/portfolio` (repository id `1155412125`)
 - Portfolio branch: `codex/psp-p06-experience-preflight`
 - Portfolio draft checkpoint: https://github.com/organvm-vii-kerygma/portfolio/pull/220 at exact head
-  `fa86b67a7283c15ab801302ffac655c30898b6a1`
+  `8974543ba9675ed0504141895812476efef5dd80`
 
 ## Dependency boundary
 
-`PSP-P02` is formally closed. C03 W01-W06 are formally closed on PR #2312 at exact head
-`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. Its W06 receipt is
+`PSP-P02` is formally closed at exact main head
+`8faa5fb9899231ebf5f87e78bb171544c11b79d7`, with receipt
+https://github.com/organvm/limen/issues/2172#issuecomment-5270095170 and receipt SHA-256
+`f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434`. C03's current
+preflight head on PR #2312 is `b6af8086c9050634313f519c29a6dfcb922c3721`; P03 W01-W06
+are accepted at ancestor `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, and P04's five
+generated offer artifacts are staged. Its W06 receipt is
 https://github.com/organvm/limen/issues/2187#issuecomment-5271254820 with receipt SHA-256
 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
 
@@ -24,30 +29,33 @@ the accepted W06 model review for that evidence. This relay remains `PREPARED/PR
 The live portfolio owner is the Kerygma repository named above. This relay does not rewrite
 unrelated registry state.
 
-Relevant remote evidence snapshots consumed by this preflight:
+Accepted PSP-P02 objects consumed from exact head
+`8faa5fb9899231ebf5f87e78bb171544c11b79d7`:
 
-- flagship selection: `528c94d31a426f3a9cac29a72cd38bc942d45171`;
-- public evidence packets: `3a752d530633c8a2ec4b7942e325b4838e56c233`;
-- claim/correction policy: `2a0550862091a976b756034d4ddfa3965fd206ec`.
+- live registry blob: `de8c489667f2ad797dde60dfb84a9fa1fb4b0e16`;
+- flagship selection blob: `5d4776efc7a811b0163cdfea5cf083409157feae`;
+- public evidence blob: `ce59d44794f44e0511436cbabbcd4fba1a938891`;
+- claim/correction policy blob: `57565f0d0dc72d2200b41be0e21fe6d323ec7f83`;
+- claims-ledger blob: `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee`.
 
 C03 checkpoint integration is exact-head-only. C04 consumed the committed contract and successor
 relay from `codex/psp-c03-identity-offers-preflight` at current fetched head
-`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, including accepted W01-W06 and the
-registry-alignment checkpoint `986ebb41778cf082e01ede0cb6d268cebf54a106`. C03 is not formally
-closed because W07 remains open. C04 binds the accepted identity, audience, narrative, authority,
-and offer-boundary tokens without copying private pricing amounts or creating a public offer.
+`b6af8086c9050634313f519c29a6dfcb922c3721`, including accepted W01-W06, the refreshed
+commercial contract, and all five generated offer artifacts. C03 is not formally closed because
+W07 remains open. C04 binds the accepted identity, audience, narrative, authority, claim, and
+offer-boundary tokens without copying private pricing amounts or creating a public offer.
 
 ## What can formalize automatically after W07 and C03 closure
 
-1. Refresh and record the exact committed heads of the flagship-selection, public-evidence,
-   claim-policy, and C03 contract branches.
+1. Confirm that the final C03 closure head descends from
+   `b6af8086c9050634313f519c29a6dfcb922c3721`, then refresh all dated evidence sources.
 2. Resolve the three candidate flagship claims against the merged evidence and claims ledgers.
 3. Emit the surface-by-claim audit and quarantine missing, stale, contradictory, private, or
    unsupported implications.
 4. Instantiate fresh exact-head reproduction receipt requests for Limen, the UCC Public-Records
    Intelligence Platform, and AI Chat Exporter.
-5. Confirm the accepted C03 head descends from `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`,
-   then bind its identity/audience/CTA tokens without changing route or disclosure invariants.
+5. Bind the final C03 identity, audience, claim, offer, and CTA tokens without changing route or
+   disclosure invariants.
 
 ## What still requires the later visual-selection gate
 
@@ -63,9 +71,10 @@ risk, performance risk, and rollback to the current public release.
 - Contract: `docs/positioning/proof/psp-c04-proof-contract.json`
 - Narrative: `docs/positioning/proof/PSP-C04-P05-PREFLIGHT.md`
 - Validator: `python3 scripts/positioning-proof-preflight.py --json`
+- Upstream object binding: `python3 scripts/positioning-proof-preflight.py --mode upstream-bindings --json`
 - Claim resolver: `python3 scripts/positioning-proof-preflight.py --mode resolve --json`
 - Surface-audit denominator: `python3 scripts/positioning-proof-preflight.py --mode surface-audit --json`
-- Focused test: `python3 -m unittest discover -s scripts/tests -p 'test_positioning_proof_preflight.py'`
+- Focused test: `python3 -m unittest discover -s scripts/tests -p 'test_positioning_proof*.py'`
 
 ## Safety state
 
@@ -74,6 +83,7 @@ risk, performance risk, and rollback to the current public release.
 - No outreach or send; `HG-PUBLICATION-SEND` remains unsatisfied.
 - Adoption, revenue, rankings, percentiles, and private evidence remain withheld.
 - No phase or issue may close from this relay.
+- `counts_as_closure=false`; the branch and both draft PRs remain PREPARED/PREFLIGHT.
 
 ## Next action
 

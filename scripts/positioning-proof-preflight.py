@@ -16,6 +16,89 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
+P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
+C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
+C03_ACCEPTED_P03_ANCESTOR = "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"
+CANONICAL_PORTFOLIO = {"slug": "organvm-vii-kerygma/portfolio", "repository_id": 1155412125}
+EXPECTED_FLAGSHIPS = {
+    "limen": {
+        "claim_id": "C02-PROOF-LIMEN",
+        "candidate_claim": "Limen demonstrates governed multi-agent delivery with public operating, failure, and verification receipts.",
+        "evidence_wording": "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026.",
+        "accepted_source_status": "verified",
+    },
+    "public_records": {
+        "claim_id": "C02-PROOF-PUBLIC-RECORDS",
+        "candidate_claim": "Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture.",
+        "evidence_wording": "Four implemented state collectors on a fifty-state architecture",
+        "accepted_source_status": "repository_asserted_with_public_anchor",
+    },
+    "ai_chat_exporter": {
+        "claim_id": "C02-PROOF-AI-CHAT-EXPORTER",
+        "candidate_claim": "The public AI Chat Exporter surface presents five export formats without a server dependency.",
+        "evidence_wording": "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text.",
+        "accepted_source_status": "verified",
+    },
+}
+EXPECTED_DEPENDENCY_BINDINGS = {
+    "p02_live_registry": (
+        P02_ACCEPTED_HEAD,
+        "institutio/positioning/program.yaml",
+        "de8c489667f2ad797dde60dfb84a9fa1fb4b0e16",
+    ),
+    "p02_flagship_selection": (
+        P02_ACCEPTED_HEAD,
+        "docs/positioning/flagship-proof-set.yaml",
+        "5d4776efc7a811b0163cdfea5cf083409157feae",
+    ),
+    "p02_public_evidence": (
+        P02_ACCEPTED_HEAD,
+        "docs/positioning/evidence/flagship-evidence.yaml",
+        "ce59d44794f44e0511436cbabbcd4fba1a938891",
+    ),
+    "p02_claim_policy": (
+        P02_ACCEPTED_HEAD,
+        "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md",
+        "57565f0d0dc72d2200b41be0e21fe6d323ec7f83",
+    ),
+    "p02_claims_ledger": (
+        P02_ACCEPTED_HEAD,
+        "docs/positioning/claims-ledger.md",
+        "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
+    ),
+    "c03_identity_offers": (
+        C03_CURRENT_HEAD,
+        "institutio/positioning/commercial-contract.yaml",
+        "11ebfe5cb972c5b535059e5aa1f607ea64e90d17",
+    ),
+}
+EXPECTED_OFFER_BINDINGS = {
+    "agentic_delivery_audit": (
+        "docs/positioning/offers/agentic-delivery-audit.md",
+        "34bd10760afe6e8e8b778e0f6ad59c8aa1766097",
+        ["L2", "L3"],
+    ),
+    "governance_install": (
+        "docs/positioning/offers/governance-install.md",
+        "2ddb46f8d2a4bc122720d4a2d890298ee1c5e380",
+        ["L2", "L3"],
+    ),
+    "bounded_governance_retainer": (
+        "docs/positioning/offers/bounded-delivery-governance-retainer.md",
+        "1b46928d216fb2ed7299907a292ecc92511b0d60",
+        ["L2", "L3"],
+    ),
+    "qualification_and_routing": (
+        "docs/positioning/offers/qualification-and-routing.md",
+        "1cf8bd4e42d96533973418f2de26e1aad313d205",
+        ["L2", "L3"],
+    ),
+    "product_operating_partnership_review": (
+        "docs/positioning/offers/product-operating-partnership-review.md",
+        "9240e1fc1142eca6ca58d792f09581e1b514e046",
+        ["L3"],
+    ),
+}
 FORBIDDEN_DEMO_KEYS = {
     "credential",
     "customer",
@@ -46,9 +129,11 @@ def validate(contract: dict[str, Any]) -> list[str]:
         "chunk_id",
         "phase_id",
         "status",
+        "counts_as_closure",
         "formalization_gate",
         "dependency_progress",
         "dependency_sources",
+        "commercial_artifact_set",
         "program_binding",
         "claim_policy",
         "flagships",
@@ -64,6 +149,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append(f"missing root fields: {', '.join(missing)}")
     if contract.get("status") != "PREPARED/PREFLIGHT":
         errors.append("status must remain PREPARED/PREFLIGHT")
+    if contract.get("counts_as_closure") is not False:
+        errors.append("counts_as_closure must remain false")
 
     program_binding = contract.get("program_binding")
     if not isinstance(program_binding, dict):
@@ -71,6 +158,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
     else:
         if program_binding.get("source_path") != "institutio/positioning/program.yaml":
             errors.append("program binding must name the canonical manifest")
+        if program_binding.get("exact_head") != P02_ACCEPTED_HEAD:
+            errors.append("program binding must use the accepted PSP-P02 head")
+        if not FULL_HEAD.fullmatch(str(program_binding.get("expected_blob", ""))):
+            errors.append("program binding requires the exact registry blob")
+        if program_binding.get("canonical_portfolio") != CANONICAL_PORTFOLIO:
+            errors.append("program binding must name the live canonical portfolio owner")
         audits = program_binding.get("leaf_audit")
         if not isinstance(audits, list):
             errors.append("program binding leaf audit must be a list")
@@ -100,6 +193,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
         p02 = progress.get("p02")
         if not isinstance(p02, dict) or p02.get("status") != "closed":
             errors.append("PSP-P02 must be recorded closed")
+        elif p02.get("exact_head") != P02_ACCEPTED_HEAD:
+            errors.append("PSP-P02 progress head mismatch")
         raw_c03 = progress.get("c03")
         if not isinstance(raw_c03, dict):
             errors.append("dependency_progress.c03 must be an object")
@@ -107,10 +202,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         else:
             c03 = raw_c03
     if c03:
-        if c03.get("status") != "w01_w06_closed_w07_open":
+        if c03.get("status") != "p03_w01_w06_closed_p04_staged_w07_open":
             errors.append("C03 progress status mismatch")
-        if c03.get("exact_head") != "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec":
-            errors.append("C03 accepted head mismatch")
+        if c03.get("exact_head") != C03_CURRENT_HEAD:
+            errors.append("C03 current preflight head mismatch")
+        if c03.get("accepted_p03_ancestor") != C03_ACCEPTED_P03_ANCESTOR:
+            errors.append("C03 accepted P03 ancestor mismatch")
         if c03.get("closed_leaves") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
             errors.append("C03 closed leaves must be W01-W06")
         sole_unsatisfied = c03.get("sole_unsatisfied_leaf")
@@ -119,6 +216,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         else:
             if sole_unsatisfied.get("work_id") != "PSP-P03-W07":
                 errors.append("C03 sole unsatisfied leaf must be PSP-P03-W07")
+            if sole_unsatisfied.get("required_independent_readers") != 5:
+                errors.append("C03 W07 must require five independent readers")
+            if sole_unsatisfied.get("current_valid_readers") != 0:
+                errors.append("C03 W07 valid-reader count must remain zero until genuine receipts exist")
+            if sole_unsatisfied.get("synthetic_or_model_readers_allowed") is not False:
+                errors.append("C03 W07 must reject synthetic or model readers")
             if sole_unsatisfied.get("outbound_from_c04") is not False:
                 errors.append("C04 must not solicit W07 readers")
         receipt = c03.get("w06_receipt")
@@ -134,6 +237,9 @@ def validate(contract: dict[str, Any]) -> list[str]:
     if not isinstance(dependencies, list):
         errors.append("dependency_sources must be a list")
         dependencies = []
+    dependency_ids = {dependency.get("id") for dependency in dependencies if isinstance(dependency, dict)}
+    if dependency_ids != set(EXPECTED_DEPENDENCY_BINDINGS):
+        errors.append("dependency sources must bind the complete accepted P02 and current C03 artifact set")
     for dependency in dependencies:
         if not isinstance(dependency, dict):
             errors.append("dependency source must be an object")
@@ -142,6 +248,9 @@ def validate(contract: dict[str, Any]) -> list[str]:
         exact_head = dependency.get("exact_head")
         if not isinstance(exact_head, str) or not FULL_HEAD.fullmatch(exact_head):
             errors.append(f"dependency {dependency_id} requires a full exact head")
+        expected_blob = dependency.get("expected_blob")
+        if not isinstance(expected_blob, str) or not FULL_HEAD.fullmatch(expected_blob):
+            errors.append(f"dependency {dependency_id} requires a full expected blob")
         if dependency.get("integration") != "exact_committed_head_only":
             errors.append(f"dependency {dependency_id} must integrate exact committed heads only")
         if not dependency.get("required_path"):
@@ -151,7 +260,62 @@ def validate(contract: dict[str, Any]) -> list[str]:
         {},
     )
     if c03_dependency.get("exact_head") != c03.get("exact_head"):
-        errors.append("C03 dependency source must match accepted progress head")
+        errors.append("C03 dependency source must match current progress head")
+    for dependency in dependencies:
+        dependency_id = dependency.get("id", "<unknown>")
+        expected_binding = EXPECTED_DEPENDENCY_BINDINGS.get(dependency_id)
+        if (
+            expected_binding
+            and (
+                dependency.get("exact_head"),
+                dependency.get("required_path"),
+                dependency.get("expected_blob"),
+            )
+            != expected_binding
+        ):
+            errors.append(f"dependency {dependency_id} is not pinned to its accepted upstream object")
+
+    commercial_artifacts = contract.get("commercial_artifact_set")
+    if not isinstance(commercial_artifacts, dict):
+        errors.append("commercial_artifact_set must be an object")
+    else:
+        if commercial_artifacts.get("source_head") != C03_CURRENT_HEAD:
+            errors.append("commercial artifact set must use the current C03 preflight head")
+        artifacts = commercial_artifacts.get("artifacts")
+        if not isinstance(artifacts, list):
+            errors.append("commercial artifact set must contain an artifacts list")
+        else:
+            artifact_ids = {artifact.get("id") for artifact in artifacts if isinstance(artifact, dict)}
+            if artifact_ids != set(EXPECTED_OFFER_BINDINGS):
+                errors.append("commercial artifact set must bind the five generated offers")
+            for artifact in artifacts:
+                if not isinstance(artifact, dict):
+                    errors.append("commercial artifact must be an object")
+                    continue
+                artifact_id = artifact.get("id", "<unknown>")
+                if not artifact.get("path"):
+                    errors.append(f"commercial artifact {artifact_id} requires a path")
+                if not FULL_HEAD.fullmatch(str(artifact.get("expected_blob", ""))):
+                    errors.append(f"commercial artifact {artifact_id} requires a full expected blob")
+                if "L1" in artifact.get("levels", []):
+                    errors.append(f"commercial artifact {artifact_id} must not expose an L1 offer payload")
+                expected_offer = EXPECTED_OFFER_BINDINGS.get(artifact_id)
+                if (
+                    expected_offer
+                    and (
+                        artifact.get("path"),
+                        artifact.get("expected_blob"),
+                        artifact.get("levels"),
+                    )
+                    != expected_offer
+                ):
+                    errors.append(f"commercial artifact {artifact_id} is not pinned to the accepted C03 object")
+            partnership = next(
+                (artifact for artifact in artifacts if artifact.get("id") == "product_operating_partnership_review"),
+                {},
+            )
+            if partnership.get("levels") != ["L3"] or partnership.get("public_front_door") is not False:
+                errors.append("product operating partnership review must remain L3-only and off the public front door")
 
     sources = contract.get("sources", [])
     if not isinstance(sources, list):
@@ -176,6 +340,11 @@ def validate(contract: dict[str, Any]) -> list[str]:
         if flagship_id in flagship_ids:
             errors.append(f"duplicate flagship id: {flagship_id}")
         flagship_ids.add(flagship_id)
+        expected_flagship = EXPECTED_FLAGSHIPS.get(flagship_id)
+        if expected_flagship:
+            for field, expected_value in expected_flagship.items():
+                if flagship.get(field) != expected_value:
+                    errors.append(f"flagship {flagship_id} has stale {field}")
         if flagship.get("status") != "candidate":
             errors.append(f"flagship {flagship_id} must remain candidate in preflight")
         missing_sources = sorted(set(flagship.get("required_source_ids", [])) - source_ids)
@@ -260,30 +429,154 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
                     "source_id": dependency["id"],
                     "exact_head": dependency["exact_head"],
                     "path": dependency["required_path"],
+                    "expected_blob": dependency["expected_blob"],
                     "resolved": False,
                     "reason": "missing_exact_head_object_or_path",
                 }
             )
             continue
         blob = subprocess.run(
-            ["git", "rev-parse", f"{source_spec}^{{blob}}"],
+            ["git", "rev-parse", source_spec],
             cwd=repository,
             check=False,
             capture_output=True,
             text=True,
         )
+        actual_blob = blob.stdout.strip() if blob.returncode == 0 else None
+        blob_match = actual_blob == dependency["expected_blob"]
         rows.append(
             {
                 "source_id": dependency["id"],
                 "exact_head": dependency["exact_head"],
                 "path": dependency["required_path"],
-                "resolved": True,
-                "blob": blob.stdout.strip() if blob.returncode == 0 else None,
+                "expected_blob": dependency["expected_blob"],
+                "resolved": blob_match,
+                "reason": "resolved" if blob_match else "blob_mismatch",
+                "blob": actual_blob,
+                "blob_match": blob_match,
                 "sha256": hashlib.sha256(completed.stdout).hexdigest(),
                 "bytes": len(completed.stdout),
             }
         )
     return rows
+
+
+def _read_git_object(repository: Path, head: str, path: str) -> tuple[str | None, str | None]:
+    source_spec = f"{head}:{path}"
+    content = subprocess.run(
+        ["git", "show", source_spec],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    blob = subprocess.run(
+        ["git", "rev-parse", source_spec],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if content.returncode or blob.returncode:
+        return None, None
+    return content.stdout, blob.stdout.strip()
+
+
+def verify_upstream_bindings(contract: dict[str, Any], repository: Path = ROOT) -> dict[str, Any]:
+    """Verify accepted registry, claim, commercial, and generated-offer objects without checkout mutation."""
+    errors: list[str] = []
+    checked: list[dict[str, Any]] = []
+    binding = contract.get("program_binding", {})
+    registry_content, registry_blob = _read_git_object(
+        repository,
+        str(binding.get("exact_head")),
+        str(binding.get("source_path")),
+    )
+    if registry_blob != binding.get("expected_blob"):
+        errors.append("accepted PSP-P02 registry blob mismatch")
+    elif registry_content is None:
+        errors.append("accepted PSP-P02 registry object is unavailable")
+    else:
+        required_registry_markers = (
+            "canonical_slug: organvm-vii-kerygma/portfolio",
+            "github_repository_id: 1155412125",
+            "target_repo: organvm-vii-kerygma/portfolio",
+        )
+        missing_markers = [marker for marker in required_registry_markers if marker not in registry_content]
+        if missing_markers:
+            errors.append("accepted PSP-P02 registry does not bind the live portfolio owner")
+    checked.append(
+        {
+            "id": "p02_live_registry",
+            "head": binding.get("exact_head"),
+            "path": binding.get("source_path"),
+            "blob": registry_blob,
+            "blob_match": registry_blob == binding.get("expected_blob"),
+        }
+    )
+
+    dependencies = {row.get("id"): row for row in contract.get("dependency_sources", [])}
+    claims_dependency = dependencies.get("p02_claims_ledger", {})
+    ledger_content, ledger_blob = _read_git_object(
+        repository,
+        str(claims_dependency.get("exact_head")),
+        str(claims_dependency.get("required_path")),
+    )
+    commercial_dependency = dependencies.get("c03_identity_offers", {})
+    commercial_content, commercial_blob = _read_git_object(
+        repository,
+        str(commercial_dependency.get("exact_head")),
+        str(commercial_dependency.get("required_path")),
+    )
+    checked.extend(
+        [
+            {
+                "id": "p02_claims_ledger",
+                "head": claims_dependency.get("exact_head"),
+                "path": claims_dependency.get("required_path"),
+                "blob": ledger_blob,
+                "blob_match": ledger_blob == claims_dependency.get("expected_blob"),
+            },
+            {
+                "id": "c03_identity_offers",
+                "head": commercial_dependency.get("exact_head"),
+                "path": commercial_dependency.get("required_path"),
+                "blob": commercial_blob,
+                "blob_match": commercial_blob == commercial_dependency.get("expected_blob"),
+            },
+        ]
+    )
+    if ledger_blob != claims_dependency.get("expected_blob") or ledger_content is None:
+        errors.append("accepted PSP-P02 claims ledger binding failed")
+    if commercial_blob != commercial_dependency.get("expected_blob") or commercial_content is None:
+        errors.append("current C03 commercial contract binding failed")
+    if ledger_content is not None and commercial_content is not None:
+        for flagship in contract.get("flagships", []):
+            claim_id = flagship.get("claim_id")
+            if claim_id not in commercial_content:
+                errors.append(f"claim {claim_id} is absent from the current C03 contract")
+            if flagship.get("evidence_wording") not in ledger_content:
+                errors.append(f"claim {claim_id} evidence wording is stale")
+            if flagship.get("candidate_claim") not in commercial_content:
+                errors.append(f"claim {claim_id} commercial wording is stale")
+
+    artifact_set = contract.get("commercial_artifact_set", {})
+    source_head = artifact_set.get("source_head")
+    for artifact in artifact_set.get("artifacts", []):
+        _content, actual_blob = _read_git_object(repository, str(source_head), str(artifact.get("path")))
+        blob_match = actual_blob == artifact.get("expected_blob")
+        checked.append(
+            {
+                "id": artifact.get("id"),
+                "head": source_head,
+                "path": artifact.get("path"),
+                "blob": actual_blob,
+                "blob_match": blob_match,
+            }
+        )
+        if not blob_match:
+            errors.append(f"commercial artifact {artifact.get('id')} blob mismatch")
+    return {"status": "pass" if not errors else "fail", "errors": errors, "checked": checked}
 
 
 def resolve_claims(
@@ -300,28 +593,39 @@ def resolve_claims(
     publishable_statuses = set(contract.get("claim_policy", {}).get("publishable_statuses", []))
     resolved: list[dict[str, Any]] = []
     for flagship in contract.get("flagships", []):
-        source_rows = [sources[source_id] for source_id in flagship.get("required_source_ids", []) if source_id in sources]
+        source_rows = [
+            sources[source_id] for source_id in flagship.get("required_source_ids", []) if source_id in sources
+        ]
         current_sources = bool(source_rows) and all(freshness[row["id"]]["current"] for row in source_rows)
-        publishable = flagship.get("status") in publishable_statuses and current_sources and dependency_ok
+        source_status = flagship.get("accepted_source_status")
+        publishable = (
+            source_status in publishable_statuses
+            and current_sources
+            and dependency_ok
+            and contract.get("status") != "PREPARED/PREFLIGHT"
+        )
         reasons: list[str] = []
-        if flagship.get("status") not in publishable_statuses:
-            reasons.append("claim_not_ratified")
+        if contract.get("status") == "PREPARED/PREFLIGHT":
+            reasons.append("c04_formalization_pending")
+        if source_status not in publishable_statuses:
+            reasons.append("source_status_not_publishable")
         if not current_sources:
             reasons.append("source_refresh_required")
         if dependency_rows is not None and not dependency_ok:
             reasons.append("dependency_source_unresolved")
         resolved.append(
             {
-                "claim_id": flagship["id"],
+                "claim_id": flagship["claim_id"],
+                "flagship_id": flagship["id"],
                 "candidate_claim": flagship["candidate_claim"],
                 "source_ids": [row["id"] for row in source_rows],
                 "observation_dates": sorted({row["observed_at"] for row in source_rows}),
-                "status": flagship["status"],
+                "status": source_status,
                 "max_disclosure": flagship["max_disclosure"],
                 "limitations": flagship["limitations"],
                 "publishable": publishable,
                 "reason_codes": reasons,
-                "action": "eligible_for_surface_audit" if publishable else "withhold_until_refresh_and_ratification",
+                "action": "eligible_for_surface_audit" if publishable else "withhold_until_refresh_and_formalization",
             }
         )
     return resolved
@@ -351,10 +655,7 @@ def build_surface_audit_skeleton(contract: dict[str, Any]) -> list[dict[str, Any
 
 
 def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
-    expected = {
-        (row["surface"], row["claim_id"])
-        for row in build_surface_audit_skeleton(contract)
-    }
+    expected = {(row["surface"], row["claim_id"]) for row in build_surface_audit_skeleton(contract)}
     supplied_rows = manifest.get("rows") if isinstance(manifest, dict) else None
     errors: list[str] = []
     if not isinstance(supplied_rows, list):
@@ -478,6 +779,10 @@ def formalization_readiness(
     unresolved_sources = [row["source_id"] for row in dependency_rows if not row.get("resolved")]
     if unresolved_sources:
         receipt_errors.append(f"unresolved pinned sources: {', '.join(unresolved_sources)}")
+    upstream_bindings = verify_upstream_bindings(contract, repository)
+    receipt_errors.extend(upstream_bindings["errors"])
+    if contract.get("counts_as_closure") is not False:
+        receipt_errors.append("C04 preflight must not count as closure")
     ready = closure_receipt is not None and not receipt_errors and not residual
     return {
         "status": "ready_for_formal_c04_activation" if ready else "PREPARED/PREFLIGHT",
@@ -486,7 +791,10 @@ def formalization_readiness(
         "residual_gates": residual,
         "errors": receipt_errors,
         "dependency_sources": dependency_rows,
-        "automatic_actions": contract.get("formalization_gate", {}).get("automatic_after_dependencies", []) if ready else [],
+        "upstream_bindings": upstream_bindings,
+        "automatic_actions": contract.get("formalization_gate", {}).get("automatic_after_dependencies", [])
+        if ready
+        else [],
         "prohibited_actions": contract.get("formalization_gate", {}).get("never_automatic", []),
     }
 
@@ -511,6 +819,7 @@ def main() -> int:
             "resolve",
             "surface-audit",
             "dependency-sources",
+            "upstream-bindings",
             "freshness",
             "demo",
             "external-validation",
@@ -530,10 +839,22 @@ def main() -> int:
     }
     if not errors:
         as_of = args.as_of or datetime.now(timezone.utc).date()
-        if args.mode == "dependency-sources":
+        if args.mode == "validate":
+            result["sources"] = resolve_dependency_sources(contract)
+            result["upstream_bindings"] = verify_upstream_bindings(contract)
+            unresolved = [row["source_id"] for row in result["sources"] if not row["resolved"]]
+            if unresolved:
+                result["errors"].append(f"unresolved pinned sources: {', '.join(unresolved)}")
+            result["errors"].extend(result["upstream_bindings"]["errors"])
+            if result["errors"]:
+                result["status"] = "fail"
+        elif args.mode == "dependency-sources":
             result["sources"] = resolve_dependency_sources(contract)
             if not all(row["resolved"] for row in result["sources"]):
                 result["status"] = "fail"
+        elif args.mode == "upstream-bindings":
+            result["upstream_bindings"] = verify_upstream_bindings(contract)
+            result["status"] = result["upstream_bindings"]["status"]
         elif args.mode == "freshness":
             result["sources"] = source_freshness(contract, as_of)
         elif args.mode == "resolve":
