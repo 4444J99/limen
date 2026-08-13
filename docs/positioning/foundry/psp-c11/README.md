@@ -31,7 +31,7 @@ P04, P11, and P12 remain unsatisfied. PSP-C10's prepared package was integrated 
 [#2321](https://github.com/organvm/limen/pull/2321): source
 `71a6046c2186b4d4ead5136920b82b412ff5d540`, integrated main
 `f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2`. It is still not formal closure. Its deterministic
-synthetic readiness receipt is bound at
+synthetic readiness receipt has digest
 `d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa` with all five current
 C05/C09 source and integrated-main pairs explicitly marked `counts_as_closure: false`. C03's offer
 package was integrated from source `b6af8086c9050634313f519c29a6dfcb922c3721` to main
@@ -58,7 +58,7 @@ receipt is a dependency binding, not a candidate-data source.
 Two consecutive authenticated owner-wide passes returned the same repository identity digest:
 
 - 10 controlled organizations;
-- 317 accessible repositories;
+- 319 accessible repositories;
 - 62 product-ledger candidates, all resolving to exactly one currently owned repository;
 - 54 public candidates and 8 private candidates;
 - zero new organization, repository, or candidate keys between passes.

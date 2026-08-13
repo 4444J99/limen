@@ -41,7 +41,7 @@ compression_level: medium
 | C10 integration receipt | Five exact C05/C09 source/integrated-main bindings, each `counts_as_closure: false`; deterministic receipt `d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa` |
 | C03 checkpoint | Offer #2312 source `b6af8086c9050634313f519c29a6dfcb922c3721`, integrated main `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W01-W06 formal acceptance remains `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
 | Live ready-work | No C11/P13 leaf is ready |
-| Candidate census | Two identical passes: 10 organizations, 317 repositories, 62 candidates, zero new organization/repository/candidate keys |
+| Candidate census | Two identical passes: 10 organizations, 319 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
 | Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 60 diligence-required, 2 archived; 0 transfer-eligible |
 | Generated comparison | 62 classifications and 62 non-binding decision records; 54 public comparisons, 8 private classifications withheld, 0 transfer-eligible |
@@ -61,7 +61,7 @@ The exact containing head and CI state for this source-lock correction are pinne
 | `python3 -B scripts/positioning-program.py --verify-model-assignments` | pass; all 127 assignments valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v3 contract, snapshot, exact source/integrated dependency heads, C10 source lock, runtime assignment requirements, gates, structures, and drills valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, exact non-closing C10 readiness receipt, return/governance replay, zero external effects |
-| `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-12T20:14:01Z; full tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c`; leak count 0 |
+| `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass source captured at 2026-08-13T04:52:53.725120Z; 10 organizations, 319 repositories, 62 candidates; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8`; leak count 0 after tracked projection reconciliation |
 | `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld, exact C10 integration receipt |
 | `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `d432e5c271504bcc13fd3cb9bbb94e5366549ec1063889ad8c319864aa41864e` |
 | `python3 -B scripts/positioning-foundry-handoff.py --drills --json` | pass; five rollback cases, zero external effects, owner custody unchanged |
@@ -75,7 +75,7 @@ this preflight package, not a leaf completion.
 
 ## Completed reversible work
 
-- Refreshed the complete 62-row product-candidate snapshot over the 317-repository live owner-wide denominator.
+- Refreshed the complete 62-row product-candidate snapshot over the 319-repository live owner-wide denominator.
 - Bound merged C02 census/classification inputs at accepted commits without copying private facts.
 - Fail-closed the v3 contract on the accepted C03 W01-W06 checkpoint, open W07 reader gate,
   C04-C10 exact source/integrated-main heads, C10-not-closed truth, and P02/P04/P11/P12 phase state.
