@@ -1,89 +1,67 @@
 # PSP-C06 public-surfaces preflight relay
 
-Status: **PREPARED/PREFLIGHT**. This relay preserves a reversible downstream checkpoint. It does
-not close PSP-P07, any P07 leaf, or a formal dependency.
+Status: **PREPARED/PREFLIGHT — INTEGRATED CONTRACT**. This public-safe relay records the accepted
+portfolio contract and its actual repository effects. It does not close PSP-P07, any P07 leaf, or
+a formal dependency.
 
-## Exact inputs
+## Exact accepted inputs
 
-- PSP-C00/P00 is closed through merged [PR #2300](https://github.com/organvm/limen/pull/2300).
-  The former non-Codex/Agy identity condition is superseded; it is not a C06 blocker.
-- C04 preflight: [PR #2313](https://github.com/organvm/limen/pull/2313), exact head
-  `23712398c6586e005c303eff632604985cd0a25c`.
-- P06 preflight: [portfolio PR #220](https://github.com/organvm-vii-kerygma/portfolio/pull/220),
-  exact head `9bcc4606b68da83dc0878b060989d35c3b649d7f`.
-- C03 [PR #2312](https://github.com/organvm/limen/pull/2312) is currently staged at
-  `c7c932205faa405e291f8030235a73cedeaa219e`. Its W01-W06 acceptance tree is
-  `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; W06 is bound to the
-  [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820) with
-  SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
-  W07/#2188 is the sole unresolved C03 dependency and requires five genuine independent
-  target-like reader records. The tracked protocol/template at the current C03 head is intake
-  machinery, not reader evidence.
-- Canonical portfolio: `organvm-vii-kerygma/portfolio` (repository id `1155412125`), current
-  public baseline `https://organvm-vii-kerygma.github.io/portfolio/` at main
-  `85bfaa84287e4a3b90b49187caa4313c4edda1aa`.
+- PSP-C00/P00 and PSP-P02 are formally closed.
+- C03 [PR #2312](https://github.com/organvm/limen/pull/2312) merged from
+  `b6af8086c9050634313f519c29a6dfcb922c3721` as
+  `8f89ad16ca1df84b00cb8227c88f368d0d64631a`. Its W01-W06 acceptance tree remains
+  `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; W07/#2188 remains open and requires five genuine
+  independent target-like reader records. The tracked intake machinery is not reader evidence.
+- C04 proof/experience preflight [PR #2313](https://github.com/organvm/limen/pull/2313) remains open
+  at `543fa28df52c9db7be3b7307019dcf209361d0b9`.
+- P06 portfolio experience contract [PR #220](https://github.com/organvm-vii-kerygma/portfolio/pull/220)
+  merged from `8974543ba9675ed0504141895812476efef5dd80` as
+  `a01b6d85f78d2d744c0c994f7220081bb54a85c5`.
+- Canonical portfolio repository: `organvm-vii-kerygma/portfolio`, immutable repository id
+  `1155412125`, canonical public URL `https://organvm-vii-kerygma.github.io/portfolio/`.
 
-## Downstream checkpoint
+## Accepted C06 contract
 
-Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221), branch
-`codex/psp-c06-public-surfaces-preflight`, exact head
-`6cb7f291ef758d26d136620398c6e9c09f74d0ea`, stages only:
+Portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) merged through the
+required rail from exact source head `7c150fc81184df1715824be28b32472baadbb3b6` as
+`797cda3fb903b07d4152e5bbde9f468beeeab3e0`. The accepted package contains:
 
-- one W01–W09 source and release/rollback inventory;
-- a disabled-by-default, allowlist-only analytics schema that differentiates client and
-  recruiter/executive doors while rejecting personal, free-text, content, private-identifier, and
-  cross-site fields;
-- a machine-checked claim/disclosure contract that renders only verified or reviewed-derived
-  claims, withholds private or unverified material, and exposes only the client and
-  recruiter/executive public doors;
-- canonical URL/domain truth, declared WCAG 2.2 AA and performance acceptance budgets, and a
-  synthetic rollback dry-run contract that cannot contact deployment, DNS, routing, or analytics
-  services;
-- selection-gated visual and analytics implementation; and
-- a public-safe link-health finding and a source-owned repair path.
+- an exact W01-W09 source, analytics, release, rollback, performance, and accessibility contract;
+- exact schema versions, portfolio baseline, analytics event dictionary, before-release gates,
+  performance budgets, and accessibility requirements;
+- a complete privacy-field denylist and exactly two approved public doors;
+- renderable evidence-card traceability requirements and fail-closed claim/disclosure rules;
+- recursive rejection of selection-bearing fields before an authorized selection receipt; and
+- exactly three digest-pinned visual directions, all still `UNSELECTED`.
 
-The exact three review PNGs are now durable in the portfolio branch at:
+The direction assets remain at:
 
 - `docs/positioning/visual-directions/psp-c06/option-1-evidence-ledger.png`
 - `docs/positioning/visual-directions/psp-c06/option-2-systems-field-guide.png`
 - `docs/positioning/visual-directions/psp-c06/option-3-decision-brief.png`
 
-Their public-safe manifest pins the source capture, direction names, SHA-256 digests,
-`UNSELECTED` status, and the no-build boundary at
-`docs/positioning/visual-directions/psp-c06/manifest.json`. The portfolio predicate verifies all
-three digests before passing.
+No direction was selected and no PSP visual implementation was authorized.
 
-The portfolio predicate passed on that exact checkpoint:
+## Actual repository and deployment effects
 
-```text
-node scripts/validate-psp-p07-preflight.mjs
-node --test scripts/__tests__/psp-p07-preflight.test.mjs
-npm exec --package=@biomejs/biome@2.5.4 -- biome check src/data/psp-p07-public-surface-contract.json docs/positioning/PSP-C06-P07-PUBLIC-SURFACES-PREFLIGHT.md scripts/validate-psp-p07-preflight.mjs scripts/__tests__/psp-p07-preflight.test.mjs
-```
+Merging #221 changed only the contract, validator/tests, workflow gate, documentation, manifest,
+and the three review images. The repository's standing main-branch workflow then ran normally and
+completed successfully in
+[CI run 31665762837](https://github.com/organvm-vii-kerygma/portfolio/actions/runs/31665762837)
+at exact main `797cda3fb903b07d4152e5bbde9f468beeeab3e0`. That workflow includes the repository's standard
+GitHub Pages deployment and metrics refresh. This deployment effect is recorded truthfully; it is
+not evidence of a selected direction, PSP surface completion, target-reader acceptance, or P07
+closure.
 
-All three passed before the checkpoint was committed. They validate the containment and schema,
-not public-surface completion.
+The accepted contract still records 11 legacy dead links as an unresolved finding. It does not
+claim they were repaired.
 
-The refreshed contract distinguishes the accepted W01-W06 head from the current C03 preflight
-head, pins the W06 receipt, and fails any inference that the W07 intake package satisfies the
-five-reader gate. C05 remains a separate child of C03 and is not introduced as a C06 dependency.
-It also makes post-selection prerequisites explicit: an operator selection receipt, C03 W07's
-five-reader receipt, P05 W02 claim reconciliation, P06 W07 visual/comprehension QA, and
-HG-PUBLIC-IDENTITY are required before any implementation effect. Selection alone cannot close a
-P07 leaf or phase.
+## Remaining gates and boundary
 
-## Live finding and boundary
+Before any PSP visual implementation or public-content rollout, the contract still requires an
+operator selection receipt, C03 W07 genuine-reader evidence, P05 W02 claim reconciliation, P06 W07
+visual/comprehension QA, and `HG-PUBLIC-IDENTITY`. Selection alone cannot authorize implementation
+or close a P07 leaf or phase.
 
-`python3 scripts/link-health.py --verify` observed 11 dead legacy
-`organvm.github.io/portfolio` links across the tracked profile, portfolio, and resume surfaces.
-The canonical `organvm-vii-kerygma.github.io/portfolio` counterparts resolve. The finding remains
-failed until an owner-approved source repair and a new link-health receipt prove otherwise.
-
-Exactly three grounded visual directions were prepared from captured current public surfaces and
-the P06 design brief. Human selection, rejected-direction rationale, identity/proof fit,
-accessibility/performance risk, and rollback must be recorded before any visual implementation,
-route, server, analytics instrumentation, deployment, DNS, or public-surface mutation.
-
-No private evidence, external send, DNS/TLS change, deployment, selection simulation, or claim
-promotion occurred. Rollback is closing the portfolio draft and this relay draft and retaining the
-current public release.
+No private evidence, external send, DNS/TLS mutation, analytics instrumentation, claim promotion,
+simulated reader acceptance, or formal PSP closure occurred in this relay.
