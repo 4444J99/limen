@@ -16,7 +16,9 @@ compression_level: high
 - Work: `PSP-P12-W01` through `PSP-P12-W06`, plus `PSP-P10-W08`
 - Branch: `codex/psp-c10-readiness-preflight`
 - Draft PR: [organvm/limen#2321](https://github.com/organvm/limen/pull/2321)
-- Exact tested v3 implementation commit: `cc5f89bbc92239caa0422c1bcc3fa4460ff279fe`
+- Foundational v3 implementation commit: `cc5f89bbc92239caa0422c1bcc3fa4460ff279fe`
+- Superseding integrated source-lock head: pinned in draft PR #2321 because this tracked relay
+  cannot self-name its containing commit
 - Final relay-containing head and scoped predicate receipt: pinned in draft PR #2321 because this
   tracked relay cannot self-name its containing commit
 - State: **PREPARED/PREFLIGHT**
@@ -34,10 +36,10 @@ leaf executor, grant authority, or replace live registry admission.
   `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. W07/#2188 remains open for five genuine
   independent target-like readers; model and synthetic records cannot satisfy it.
 - C05 remains PREPARED: private #135
-  `6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b`; Limen relay #2315
-  `a72a05d917bf14d53221c7d02ec52d3786b4f88e`.
-- C04 remains PREPARED at Limen draft #2313 / fetched branch checkpoint
-  `23712398c6586e005c303eff632604985cd0a25c`; neither P05 nor P06 is promoted by this relay.
+  `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926`; Limen relay #2315
+  `bcb69fa25dc93fa15b5ec4d985d845067a58c307`.
+- C04 remains PREPARED at Limen draft #2313
+  `543fa28df52c9db7be3b7307019dcf209361d0b9`; neither P05 nor P06 is promoted by this relay.
 - C06 remains PREPARED at Limen fetched branch checkpoint
   `4eb50463b7f4136b47a103c9792c1ded5caf7873`; the three Product Design directions remain
   **UNSELECTED**, so no visual implementation or public-surface effect is admitted.
@@ -45,11 +47,11 @@ leaf executor, grant authority, or replace live registry admission.
   `c3b92707a0f6d0ea3076680d100d60d0217f8fe9`; its private-inbound fixtures remain synthetic and
   its send valve remains closed.
 - C08 remains PREPARED at Limen #2316
-  `a7937bb1e122574edc5d9e9cb74e18538d2b86c5`.
+  `ef6e4df64f97c11dba2c159752d5a13b50a96c10`.
 - C09 remains PREPARED across existing drafts: Limen #2322
-  `21f3132f129aa6e1eba515f03aa19619533cef4b`; private #136
-  `1da9b00ce26e8d6b466750906f5cfc0a373a9086`; portfolio #222
-  `a4c5165421344042efcc7a8b47660c1658b786d1`.
+  `03d5e8fcefd73249f8c7edf61ace31e98b6d73e0`; private #136
+  `7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9`; portfolio #222
+  `da79fb63b9756b5cce0d42ed2a7722668854a228`.
 - Prepared heads are inputs, not dependency closure. C10 acceptance still follows the canonical
   registry predicates rather than branch existence or green preflight checks.
 
@@ -59,6 +61,9 @@ leaf executor, grant authority, or replace live registry admission.
   and paths, capabilities, effect class, acceptance, predicate, exact model/effort, and human gates.
 - The deterministic receipt binds a canonical C10 registry-projection digest rather than the whole
   program-manifest blob.
+- The contract and deterministic receipt exact-bind five current C05/C09 source packages, all with
+  `counts_as_closure: false`, so commercial-readiness rehearsal cannot silently consume superseded
+  delivery templates, offer routing, or qualification controls.
 - Five complete recruitment packets bind qualification, all six hard-exclusion results, cohort
   disposition, invitation digest, `not_sent`, absent send receipt, and `not_agreed` terms.
 - Typed fixture-only payment, acceptance, and delivery receipts are separately linked by candidate,
@@ -84,8 +89,8 @@ leaf executor, grant authority, or replace live registry admission.
 
 | Predicate | Result |
 |---|---|
-| `python3 scripts/positioning-c10-readiness.py --check` | PASS; seven leaves; canonical registry projection `b0db1fc88d686665c08041d1263c0b95cd808b4d744c1ef8382835ba87753d33` |
-| `python3 scripts/positioning-c10-readiness.py --write-receipt` | PASS; generated receipt SHA-256 `1f2ee06d21e6604ecd732edee81405d42f26d31c894c35a3762658ae8a1b8671`; zero external effects |
+| `python3 scripts/positioning-c10-readiness.py --check` | PASS; seven leaves; five exact C05/C09 source bindings; canonical registry projection `b0db1fc88d686665c08041d1263c0b95cd808b4d744c1ef8382835ba87753d33` |
+| `python3 scripts/positioning-c10-readiness.py --write-receipt` | PASS; generated receipt SHA-256 `bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6`; zero external effects |
 | `python3 scripts/positioning-c10-readiness.py --verify-receipt docs/receipts/positioning/preflights/2026-08-10-psp-c10-readiness-synthetic.json` | PASS; deterministic receipt match at the same SHA-256 |
 | focused pytest | 14 passed |
 | Ruff check | PASS |

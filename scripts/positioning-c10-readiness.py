@@ -40,6 +40,49 @@ CONTRACT_SCHEMA = "limen.positioning_c10_readiness.v3"
 FIXTURE_SCHEMA = "limen.positioning_c10_synthetic_fixture.v3"
 RECEIPT_SCHEMA = "limen.positioning_c10_synthetic_receipt.v3"
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
+GIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
+EXPECTED_SOURCE_BINDINGS = [
+    {
+        "id": "c05_delivery_relay",
+        "target": "limen",
+        "pull_request": 2315,
+        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c05_private_templates",
+        "target": "private_custody",
+        "pull_request": 135,
+        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_qualification_relay",
+        "target": "limen",
+        "pull_request": 2322,
+        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "role": "qualification, CTA-routing, and conversion source lock",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_private_package",
+        "target": "private_custody",
+        "pull_request": 136,
+        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_portfolio_package",
+        "target": "portfolio",
+        "pull_request": 222,
+        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "role": "public audit and conversion-path contract without publication",
+        "counts_as_closure": False,
+    },
+]
 
 
 class ReadinessError(RuntimeError):
@@ -184,6 +227,16 @@ def validate_contract(
         scope.get("formal_predecessor_chunks") == list(graph["chunk_by_id"][chunk_id]["depends_on"]),
         "formal predecessor chunks drifted from the registry",
     )
+
+    source_bindings = _list(contract.get("source_bindings"), "source_bindings")
+    _expect(source_bindings == EXPECTED_SOURCE_BINDINGS, "C10 source bindings drifted from accepted C05/C09 heads")
+    _expect(
+        len({row["id"] for row in source_bindings}) == len(source_bindings),
+        "C10 source binding IDs must be unique",
+    )
+    for row in source_bindings:
+        _expect(GIT_SHA_RE.fullmatch(str(row["head"] or "")) is not None, f"{row['id']} head must be SHA-1")
+        _expect(row["counts_as_closure"] is False, f"{row['id']} may not count as closure")
 
     truth = _mapping(contract.get("truth_boundary"), "truth_boundary")
     required_false = {
@@ -434,6 +487,7 @@ def validate_contract(
         "stage_ids": stage_ids,
         "leaf_dependencies": {work_id: list(dependency_matrix[work_id]) for work_id in expected_leaves},
         "leaf_contract_audit": list(registry_projection["work"]),
+        "source_bindings": source_bindings,
         "strategy_decision_required_fields": decision_fields,
         "registry_projection_sha256": _sha256_json(registry_projection),
     }
@@ -1030,6 +1084,7 @@ def build_receipt(
             "fixture_sha256": _sha256_path(fixture_path),
             "program_manifest_path": _relative(PROGRAM_MANIFEST),
             "program_registry_projection_sha256": contract_state["registry_projection_sha256"],
+            "source_bindings": contract_state["source_bindings"],
         },
         "model_routing": {
             "conductor": contract_state["conductor_assignment"],

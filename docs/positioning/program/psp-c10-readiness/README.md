@@ -30,6 +30,11 @@ canonical digest of only the C10 chunk and leaf projection, so an unrelated mani
 invalidate unchanged readiness evidence. A future leaf executor must use the exact registry pair;
 no substitution is permitted.
 
+The contract also exact-binds the current C05 delivery relay/private templates and the C09
+qualification relay/private/portfolio packages. Those five prepared inputs remain
+`counts_as_closure: false`; the bindings prevent this readiness kit from silently validating
+against superseded offers, delivery templates, or conversion controls.
+
 | Work | Assigned model | Effort | Prepared contract |
 |---|---|---|---|
 | `PSP-P12-W01` | `gpt-5.6-sol` | `xhigh` | cohort criteria, invitation and terms stops |

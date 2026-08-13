@@ -65,6 +65,8 @@ def test_contract_preserves_exact_registry_scope_assignments_and_gates() -> None
         "PSP-P10-W08": ["PSP-P09-W08", "PSP-P10-W07", "PSP-P12-W02"],
     }
     assert len(state["leaf_contract_audit"]) == 7
+    assert state["source_bindings"] == MODULE.EXPECTED_SOURCE_BINDINGS
+    assert all(row["counts_as_closure"] is False for row in state["source_bindings"])
     assert all(row["acceptance"] and row["predicate"] and row["target_paths"] for row in state["leaf_contract_audit"])
     for key in (
         "synthetic_counts_as_conversion",
@@ -236,6 +238,16 @@ def test_registry_or_gate_drift_fails_closed() -> None:
     with pytest.raises(MODULE.ReadinessError, match="PSP-P12-W06 dependencies drifted"):
         MODULE.validate_contract(drifted, program, graph)
 
+    drifted = copy.deepcopy(contract)
+    drifted["source_bindings"][2]["head"] = "0" * 40
+    with pytest.raises(MODULE.ReadinessError, match="C10 source bindings drifted"):
+        MODULE.validate_contract(drifted, program, graph)
+
+    drifted = copy.deepcopy(contract)
+    drifted["source_bindings"][0]["counts_as_closure"] = True
+    with pytest.raises(MODULE.ReadinessError, match="C10 source bindings drifted"):
+        MODULE.validate_contract(drifted, program, graph)
+
 
 def test_receipt_binds_only_the_c10_registry_projection() -> None:
     contract, _fixture, program, graph = MODULE.load_inputs()
@@ -251,6 +263,8 @@ def test_committed_receipt_is_the_deterministic_synthetic_run() -> None:
     assert result["status"] == "ok"
     assert result["commercial_proof"] is False
     assert result["external_effects"] == []
+    observed = json.loads(RECEIPT.read_text(encoding="utf-8"))
+    assert observed["bindings"]["source_bindings"] == MODULE.EXPECTED_SOURCE_BINDINGS
 
 
 def test_receipt_writer_generates_the_deterministic_synthetic_run(tmp_path: Path) -> None:

@@ -14,6 +14,38 @@ scope:
     - PSP-P10-W08
   formal_predecessor_chunks: [PSP-C05, PSP-C09]
 
+source_bindings:
+  - id: c05_delivery_relay
+    target: limen
+    pull_request: 2315
+    head: bcb69fa25dc93fa15b5ec4d985d845067a58c307
+    role: delivery operating-system relay and public-safe acceptance boundary
+    counts_as_closure: false
+  - id: c05_private_templates
+    target: private_custody
+    pull_request: 135
+    head: 432c31ea6bcaf2c175b0fde08b6e1733fe4c2926
+    role: proposal, SOW, commercial-decision, and acceptance-closeout templates
+    counts_as_closure: false
+  - id: c09_qualification_relay
+    target: limen
+    pull_request: 2322
+    head: 03d5e8fcefd73249f8c7edf61ace31e98b6d73e0
+    role: qualification, CTA-routing, and conversion source lock
+    counts_as_closure: false
+  - id: c09_private_package
+    target: private_custody
+    pull_request: 136
+    head: 7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9
+    role: private discovery, proposal, follow-up, and no-outcome controls
+    counts_as_closure: false
+  - id: c09_portfolio_package
+    target: portfolio
+    pull_request: 222
+    head: da79fb63b9756b5cce0d42ed2a7722668854a228
+    role: public audit and conversion-path contract without publication
+    counts_as_closure: false
+
 truth_boundary:
   operational_readiness_means: >-
     The templates, state transitions, evidence fields, authority stops, and adjudication branches
