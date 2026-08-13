@@ -1,0 +1,765 @@
+schema_version: limen.positioning_commercial_contract.v1
+contract:
+  id: PSP-C03-COMMERCIAL-CONTRACT
+  title: Production-systems identity and commercial contract
+  status: p03_reader_gate_p04_staged
+  observed_at: "2026-08-12"
+  work_chunk: PSP-C03
+  canonical_source: institutio/positioning/commercial-contract.yaml
+  public_render: docs/positioning/commercial-contract.md
+  formal_dependency:
+    chunk_id: PSP-C03
+    phase_id: PSP-P03
+    work_id: PSP-P03-W07
+    state: reader_gate_open
+    consequence: >-
+      PSP-P02 and PSP-P03-W01 through PSP-P03-W06 are accepted. PSP-P03-W07 still requires five
+      genuine independent target-like readers, so PSP-P03 cannot close and PSP-P04 remains formally
+      dependency-blocked. Reversible P04 implementation may continue, but it is not a leaf receipt,
+      phase receipt, merge authorization, or public offer.
+  accepted_state:
+    p02:
+      phase_id: PSP-P02
+      issue: https://github.com/organvm/limen/issues/2172
+      receipt: https://github.com/organvm/limen/issues/2172#issuecomment-5270095170
+      receipt_sha256: f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434
+      accepted_head: 8faa5fb9899231ebf5f87e78bb171544c11b79d7
+      claims_ledger_blob: 3e49114563075dcd6926e3b7f8fd24bf8b9c3fee
+      flagship_blob: ce59d44794f44e0511436cbabbcd4fba1a938891
+    p03_accepted_work:
+      - {id: PSP-P03-W01, head: a1558654fc4bc904da2017a9004185a45914ae9e, receipt: "https://github.com/organvm/limen/issues/2182#issuecomment-5270558298"}
+      - {id: PSP-P03-W02, head: a9617ef59341c0194026293b3b1b677bb6ea4a8b, receipt: "https://github.com/organvm/limen/issues/2183#issuecomment-5270872274"}
+      - {id: PSP-P03-W03, head: 450128ce1199e665a67649f522787634ac48117e, receipt: "https://github.com/organvm/limen/issues/2184#issuecomment-5270998058"}
+      - {id: PSP-P03-W04, head: a89ac24b7891f9634f262835ea2e1777857bc945, receipt: "https://github.com/organvm/limen/issues/2185#issuecomment-5271170207"}
+      - {id: PSP-P03-W05, head: a89ac24b7891f9634f262835ea2e1777857bc945, receipt: "https://github.com/organvm/limen/issues/2186#issuecomment-5271169957"}
+      - {id: PSP-P03-W06, head: c94bc3748fcf2d1dc802a4bae972df23d9a9fbec, receipt: "https://github.com/organvm/limen/issues/2187#issuecomment-5271254820"}
+    active_reader_gate:
+      work_id: PSP-P03-W07
+      issue: https://github.com/organvm/limen/issues/2188
+      stimulus_head: c94bc3748fcf2d1dc802a4bae972df23d9a9fbec
+      required_independent_readers: 5
+      current_valid_readers: 0
+      synthetic_or_model_readers_allowed: false
+    p04:
+      phase_id: PSP-P04
+      state: staged_dependency_blocked
+      dependency: PSP-P03
+  allowed_preflight_effects:
+    - reversible P04 implementation in the isolated PSP-C03 branch
+    - focused static and live read-only validation
+    - preserving accepted P03 leaves and their exact receipt bindings
+    - maintaining the existing draft pull request without history rewriting
+  prohibited_preflight_effects:
+    - public-surface publication
+    - issue or phase closure without its non-circular predicate and marked receipt
+    - P04 leaf or phase receipt submission before PSP-P03 closes
+    - merge to main
+    - outbound sending
+    - spend or account mutation
+    - DNS or visibility changes
+    - contractual or partnership commitment
+  evidence_matrices:
+    p03: docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md
+    p04: docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md
+
+evidence_policy:
+  precedence:
+    - current authenticated primary evidence
+    - dated PSP-C02 receipts and claims ledger
+    - current repository checks and public endpoints
+    - this commercial contract
+    - generated or derived public copy
+    - research interpretation
+  c02_refresh_fields:
+    - claim_register evidence status and wording
+    - selected flagship set and claim boundaries
+    - proof hierarchy and diligence links
+    - any quantitative or liveness statement
+  public_sources:
+    - id: claims-ledger
+      url: https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md
+      role: claim status, permitted wording, and placement
+    - id: flagship-proof-set
+      path: docs/positioning/flagship-proof-set.yaml
+      role: accepted flagship selection and bounded claim wording
+    - id: authorship-policy
+      url: https://github.com/organvm/limen/blob/main/docs/positioning/authorship-disclosure-policy.md
+      role: machine-assistance disclosure
+    - id: live-profile
+      url: https://github.com/4444J99/4444J99
+      role: current headline and front-door baseline
+    - id: research-adjudication
+      path: docs/positioning/program/RESEARCH-ADJUDICATION.md
+      role: rule that current primary evidence outranks stale criticism
+  private_input_rule: >-
+    Private research may challenge the strategy, but no private path, session identifier, price,
+    customer fact, repository identity, or verbatim private passage enters this public contract.
+
+claim_register:
+  - id: C03-IDENTITY-001
+    statement: Production-systems architect is the canonical professional identity.
+    kind: positioning_decision
+    status: preflight_ratified
+    public_tiers: [L1, L2, L3]
+    evidence_refs: [claims-ledger, live-profile]
+    limits: A positioning title, not an employment, executive, or licensure claim.
+  - id: C03-HEADLINE-001
+    statement: I build production systems that solve expensive problems.
+    kind: positioning_decision
+    status: verified_current_surface
+    public_tiers: [L1, L2, L3]
+    evidence_refs: [live-profile, claims-ledger]
+    limits: Must be followed by a concrete buyer problem, proof object, and bounded next step.
+  - id: C03-AUTHORSHIP-001
+    statement: Architected and directed by one person through a governed, multi-agent production system.
+    kind: disclosure_policy
+    status: verified_policy
+    public_tiers: [L1, L2, L3]
+    evidence_refs: [authorship-policy, claims-ledger]
+    limits: Does not imply that every line was manually authored or that all work is autonomous.
+  - id: C02-PROOF-LIMEN
+    statement: Limen demonstrates governed multi-agent delivery with public operating, failure, and verification receipts.
+    kind: evidence_sensitive
+    status: verified
+    public_tiers: [L1, L2, L3]
+    evidence_refs: [flagship-proof-set]
+    limits: No customer, adoption, revenue, zero-maintenance, or client-production claim.
+  - id: C02-PROOF-PUBLIC-RECORDS
+    statement: Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture.
+    kind: evidence_sensitive
+    status: repository_asserted_with_public_anchor
+    public_tiers: [L2, L3]
+    evidence_refs: [flagship-proof-set]
+    limits: Use only the collector and architecture boundary ratified by PSP-C02; never imply nationwide deployment or adoption.
+  - id: C02-PROOF-AI-CHAT-EXPORTER
+    statement: The public AI Chat Exporter surface presents five export formats without a server dependency.
+    kind: evidence_sensitive
+    status: verified
+    public_tiers: [L2, L3]
+    evidence_refs: [flagship-proof-set]
+    limits: No usage, customer, revenue, or unsupported compatibility claim.
+  - id: C03-COMMERCIAL-BOUNDARY-001
+    statement: The commercial promise is a bounded decision and operating system, not control of the buyer's organization.
+    kind: authority_policy
+    status: preflight_ratified
+    public_tiers: [L1, L2, L3]
+    evidence_refs: [claims-ledger]
+    limits: Every engagement still requires a written scope, decision-rights map, and human approval gates.
+
+identity:
+  canonical_title: Production-systems architect
+  headline: I build production systems that solve expensive problems.
+  operating_thesis: >-
+    I design the operating system around complex software delivery: decision rights, work routing,
+    verification, cost boundaries, evidence, and handoff. The outcome is a system a team can judge,
+    operate, and own after the engagement ends.
+  supporting_line: >-
+    Governed delivery, made legible: a bounded mandate, inspectable proof, and a clean handoff to the
+    people who own the system.
+  authorship_disclosure: Architected and directed by one person through a governed, multi-agent production system.
+  claim_refs: [C03-IDENTITY-001, C03-HEADLINE-001, C03-AUTHORSHIP-001, C03-COMMERCIAL-BOUNDARY-001]
+  proof_hierarchy:
+    - id: method
+      prominence: primary
+      label: The governed delivery method
+      explanation: The packet, authority, verification, evidence, and handoff discipline that makes complex delivery governable.
+      claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+    - id: system
+      prominence: primary
+      label: Limen
+      explanation: The inspectable system-level proof, bounded to the accepted claims-ledger wording and owner-environment evidence.
+      claim_refs: [C02-PROOF-LIMEN]
+    - id: products
+      prominence: supporting
+      label: Selected operating systems
+      explanation: Two non-overlapping proof objects show that the method produces buyer-facing and user-facing systems.
+      claim_refs: [C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
+    - id: estate
+      prominence: diligence_only
+      label: The broader estate
+      explanation: Context for breadth and repeatability, never the lead claim and never a substitute for outcomes.
+      claim_refs: [C03-HEADLINE-001]
+  prominence_rules:
+    L1: Identity, expensive problem, Limen proof, and one bounded next step.
+    L2: Method, three accepted proof roles, offer boundaries, and authorship disclosure.
+    L3: Full evidence register, limitations, failure modes, economics gates, and change history.
+  forbidden_claims:
+    - best-in-world or category-dominance language
+    - percentile or ranking language without independent reproducible evidence
+    - COO, CAIO, or other unsupported executive standing
+    - solo-built language that conceals machine assistance
+    - repository volume as quality, product, customer, or impact proof
+    - production-client, revenue, adoption, or customer language without receipts
+    - nationwide public-record deployment beyond the ratified collector boundary
+    - zero-maintenance, fully autonomous, or runs-forever language
+  change_control: >-
+    A stronger identity or prominence claim requires a higher-authority evidence receipt and a new
+    target-reader test. A weaker evidence result narrows copy immediately; it never waits for a
+    marketing cycle.
+
+audiences:
+  - id: direct_client
+    label: Direct client
+    public_door: true
+    disclosure_entry: L1
+    job: Decide whether a stalled or risky AI/software delivery initiative can become a governable operating capability.
+    decision_questions:
+      - What is actually failing: decision rights, verification, cost control, handoff, or the underlying product thesis?
+      - What can be diagnosed without granting production control?
+      - What bounded intervention produces a decision or a working control system?
+      - What evidence will show that the team can own the result?
+    proof_needs:
+      - a live governance system with visible failure states
+      - a bounded method and explicit authority model
+      - product examples that do not depend on inflated adoption claims
+      - deliverables, acceptance tests, exclusions, and handoff
+    primary_cta: Discuss a fixed-scope Agentic Delivery Audit.
+    disqualifiers:
+      - no executive sponsor or decision owner
+      - demand for an outcome guarantee without access or evidence
+      - undefined organization-wide transformation
+      - emergency on-call or staff-augmentation request
+      - request to bypass security, legal, privacy, or approval controls
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  - id: recruiter_executive
+    label: Recruiter or hiring executive
+    public_door: true
+    disclosure_entry: L1
+    job: Decide whether the candidate has evidence-backed senior systems judgment for a specific role and mandate.
+    decision_questions:
+      - Which role family and decision scope match the demonstrated work?
+      - Can the candidate improve a team's system without displacing its owners?
+      - What evidence shows architecture, delivery judgment, and disciplined handoff?
+      - Which leadership claims remain unproven and therefore unstated?
+    proof_needs:
+      - system architecture and operating evidence
+      - examples of explicit decision rights and failure handling
+      - a precise machine-assistance disclosure
+      - role-to-proof mapping without executive-title inflation
+    primary_cta: Discuss a senior systems architecture or engineering role with a named mandate.
+    disqualifiers:
+      - title offered in place of real scope
+      - role cannot define verified done or decision ownership
+      - process demands concealment of the public estate or machine assistance
+      - conversation seeks unpaid competitive intelligence rather than a genuine role
+    claim_refs: [C03-IDENTITY-001, C03-AUTHORSHIP-001, C02-PROOF-LIMEN]
+  - id: product_operating_partner
+    label: Product-operating partner
+    public_door: false
+    disclosure_entry: L3
+    job: Decide whether a specific product and operator are ready for a bounded operating partnership after evidence review.
+    decision_questions:
+      - Is there validated demand or another credible operating signal?
+      - Are product custody, rights, support burden, and return conditions clear?
+      - Can the operator own distribution and day-to-day decisions?
+      - Does the structure preserve explicit authority and a reversible handoff?
+    proof_needs:
+      - product-specific demand and operating evidence
+      - deployable runbook and support inventory
+      - rights, custody, data, and return-path review
+      - owner-approved economics and legal terms
+    primary_cta: No public call to action; enter only through qualified diligence.
+    disqualifiers:
+      - speculative idea without an inspectable product
+      - unclear operator accountability or distribution plan
+      - equity, licensing, custody, or revenue terms requested before diligence
+      - reliance on private evidence that cannot be shared safely
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
+
+narrative_ladder:
+  - id: L1
+    label: Ten seconds
+    audience_ids: [direct_client, recruiter_executive]
+    beats:
+      - Production-systems architect. I build the operating system around complex software delivery—decision rights, verification, cost boundaries, and handoff—so engineering teams can own what ships. Limen is the inspectable proof.
+    next_actions:
+      direct_client: Start with a fixed-scope Agentic Delivery Audit.
+      recruiter_executive: Start with the role mandate and the system evidence relevant to it.
+    stop_rule: A reader may stop here and still identify the role, buyer, expensive problem, strongest proof, and next action.
+    claim_refs: [C03-IDENTITY-001, C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  - id: L2
+    label: Five minutes
+    audience_ids: [direct_client, recruiter_executive]
+    beats:
+      - Complex AI and software initiatives rarely fail for lack of another demo; they fail because nobody can say who may decide, what verified done means, how cost is bounded, or who owns the system afterward.
+      - The work is to design those missing controls around one real initiative, not to replace the team or rewrite the organization.
+      - Limen is the method proof. The accepted UCC platform and AI Chat Exporter roles show the same discipline applied to a data pipeline and a user-facing privacy tool, within the exact claims-ledger wording.
+      - Clients enter through a read-only audit, then a one-team install when the evidence supports it. Hiring conversations map a named role to the same proof without claiming unsupported executive standing.
+      - Every path ends in evidence, named owners, and handoff. If the mandate cannot be bounded, it is declined or escalated for human review.
+    next_actions:
+      direct_client: Review the Audit entry criteria and bring one bounded initiative.
+      recruiter_executive: Review the role-to-proof map and name the decision scope.
+    stop_rule: Deeper architecture and the full estate remain available, but are never required to understand the offer.
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
+  - id: L3
+    label: Diligence
+    audience_ids: [direct_client, recruiter_executive, product_operating_partner]
+    beats:
+      - Inspect the claim register, exact-head evidence, failure states, limitations, authorship policy, and change history.
+      - Inspect the proposed scope, authority map, acceptance evidence, data boundaries, economics gate, and handoff plan.
+      - For a product-operating partnership, add product-specific demand, custody, rights, support, operator, and return-path diligence; no terms are implied by access to this layer.
+    diligence_index:
+      - {label: Claim truth, artifact: claims ledger and PSP-C02 receipts}
+      - {label: System proof, artifact: selected flagship evidence packets and current limitations}
+      - {label: Method, artifact: decision-rights, packet, verification, receipt, and handoff model}
+      - {label: Commercial boundary, artifact: offer contract, qualification route, exclusions, and escalation}
+      - {label: Delivery agreement, artifact: proposal, SOW, acceptance, change, and closeout templates}
+      - {label: Economics, artifact: private approved anchor IDs and capacity decision record}
+      - {label: Partnership, artifact: operator-readiness, custody, rights, and return-path review}
+    next_actions:
+      direct_client: Approve, narrow, or decline a written bounded scope.
+      recruiter_executive: Continue only on a role whose mandate and evidence match.
+      product_operating_partner: Request a gated product-specific diligence review.
+    stop_rule: Private material is shared only through its sanctioned owner and is never required to understand a public claim.
+    claim_refs: [C03-AUTHORSHIP-001, C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
+
+interview_threat_contract:
+  objective: Communicate leverage as service to a named mandate, with bounded authority, collaboration, and handoff.
+  required_signals:
+    - Warmth first: begin with the team's goal and the sponsor's bet, not the size of the estate.
+    - Agenda transparency: state whether the conversation is for a role, an audit, or diligence.
+    - Bounded mandate: name what is in scope, what remains with current owners, and what requires approval.
+    - Additive leverage: improve the decision and delivery system around the team rather than presenting as a replacement team.
+    - Handoff: make documentation, training, ownership, and exit conditions part of the initial promise.
+  responses:
+    - id: why_this_role
+      prompt: Why do you want this role?
+      answer: >-
+        The mandate is a systems problem I want to help this team solve. My public work shows how I
+        reason and deliver; it is not a competing operating obligation. This role offers a scale,
+        domain, and group of collaborators that independent work cannot reproduce.
+      boundary_signals: [named mandate, team ownership, explicit agenda]
+    - id: takeover
+      prompt: Are you trying to take over how the team works?
+      answer: >-
+        No. I work from the authority the sponsor grants, preserve the team's existing ownership,
+        and make decisions and interfaces explicit. The goal is a system the team can operate without
+        me, with a clear handoff and a written return path.
+      boundary_signals: [sponsor-granted authority, incumbent ownership, independence after handoff]
+    - id: flight_risk
+      prompt: Why will you stay if you can build all of this independently?
+      answer: >-
+        Independent work proves a method; this mandate offers problems, scale, and collaborators that
+        do not exist in a solo environment. I am choosing the stated role and outcome directly, and I
+        address changes early rather than surprise the team.
+      boundary_signals: [specific motivation, no false permanence, direct communication]
+    - id: intelligence_fishing
+      prompt: Are you here to study our operation for your own work?
+      answer: >-
+        My agenda is the stated role or engagement. I use only the access needed for that mandate,
+        keep confidential material inside the agreed controls, and document what the organization
+        owns. If a question is outside scope, I ask before pursuing it.
+      boundary_signals: [need-to-know access, confidentiality, permission before expansion]
+    - id: overqualification
+      prompt: Is this role too small for you?
+      answer: >-
+        I care about the decision scope and the problem, not title inflation. If the mandate has a
+        meaningful system to improve, clear ownership, and room to deliver with others, the work is
+        not small. If it needs only narrow execution, we should say that plainly and decide fit.
+      boundary_signals: [scope over status, mutual fit, no title claim]
+  avoid_phrases:
+    - I can replace the whole team.
+    - I can run everything.
+    - I built all of this alone.
+    - I will make myself indispensable.
+    - Your organization needs my system everywhere.
+    - I am effectively the COO or CAIO already.
+  review_rubric:
+    authority: High authority means a precise mandate and decision rule, not dominance.
+    collaboration: Current owners and sponsor outcomes remain visible in every answer.
+    boundedness: Access, scope, escalation, and exclusions are explicit.
+    handoff: The listener can tell how control and knowledge return to the team.
+
+expensive_problem_map:
+  - id: decision_ambiguity
+    before_state: A pilot or platform has activity but no shared definition of verified done or a decision to continue, narrow, or stop.
+    costly_consequence: Spend and attention continue while leaders cannot distinguish progress from motion.
+    bounded_intervention: Reconstruct the decision chain, evidence standard, and kill/keep/govern verdict.
+    default_route: audit
+    required_evidence: decision records, current workflow, failure examples, and sponsor criteria
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  - id: ungoverned_delivery
+    before_state: Agentic or software delivery lacks explicit authority, verification gates, cost boundaries, and durable receipts.
+    costly_consequence: Rework, hidden risk, and uncontrolled spend compound across every delivery cycle.
+    bounded_intervention: Install one governed packet-to-handoff loop around one team or pipeline.
+    default_route: install
+    required_evidence: an accepted baseline, named sponsor, bounded change authority, and one target workflow
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  - id: governance_drift
+    before_state: Controls exist but decay as tools, models, policies, and delivery conditions change.
+    costly_consequence: Exceptions become the operating model and the team loses trust in its gates.
+    bounded_intervention: Review evidence and evolve controls on a finite cadence without becoming an on-call substitute.
+    default_route: retainer
+    required_evidence: installed baseline, internal owner, change history, and recurring governance need
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  - id: key_person_handoff
+    before_state: A useful system depends on one person's tacit knowledge, access, or recovery habits.
+    costly_consequence: Growth, hiring, partnership, and exit all remain fragile.
+    bounded_intervention: Make decision rights, operating evidence, support, and return conditions transferable.
+    default_route: audit
+    required_evidence: asset inventory, access map, runbook, support history, and named future owner
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001]
+
+offer_ladder:
+  primary_sequence: [audit, install, retainer]
+  items:
+    - id: audit
+      name: Agentic Delivery Audit
+      stage: diagnose
+      position: primary_entry
+      buyer: CTO, VP Engineering, Head of Platform, or another leader who owns one stalled delivery decision.
+      trigger: A material AI or software initiative is active, but its value, risk, cost, or path to verified delivery is unclear.
+      entry_criteria:
+        - one named sponsor and decision owner
+        - one bounded initiative, workflow, or delivery system
+        - read access to the evidence needed for diagnosis
+        - a decision window and willingness to stop or narrow work
+      promise: A written, evidence-linked decision about what to stop, keep, or govern, plus the minimum control design needed next.
+      deliverables:
+        - current-state system and decision map
+        - failure, risk, and evidence register
+        - keep, kill, narrow, or govern verdict
+        - verification and authority gate specification
+        - sequenced implementation options with owner and dependency notes
+        - recorded walkthrough and handoff package
+      exclusions:
+        - production mutation or deployment
+        - organization redesign or executive substitution
+        - penetration test, legal opinion, compliance certification, or financial audit
+        - unlimited repository, team, or vendor scope
+        - on-call response or outcome guarantee
+      timeline: Two to three weeks from complete intake and agreed access.
+      authority:
+        mode: read_only
+        boundary: Inspect agreed evidence; do not mutate production, send messages, change accounts, or expand access without written approval.
+      evidence:
+        acceptance: The sponsor can make the named decision and trace every material recommendation to evidence or an explicit uncertainty.
+        artifacts: [source register, findings log, verdict, gate specification, handoff receipt]
+      economics:
+        model: fixed_scope_decision_fee
+        anchor_id: PRICE-AUDIT
+        range_id: RANGE-AUDIT
+        approval_gate: HG-PRICE-ANCHORS
+        public_price: prohibited
+        capacity_rule: Reserve a named diagnostic window only after intake proves the evidence is accessible and the decision owner will attend.
+        discount_rule: Reduce scope, evidence depth, or artifact set; never sell the same risk and scope for less.
+      handoff: Deliver the evidence register, decision memo, control specification, and a walkthrough to the sponsor and named internal owner.
+      escalation:
+        - pause if access reveals a material security, privacy, legal, or regulatory issue
+        - route new implementation work to a separately scoped install
+        - route pricing, contractual, or data exceptions to the named human gate
+      claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+    - id: install
+      name: Governance Install
+      stage: implement
+      position: primary_expansion
+      buyer: The audit sponsor or an equivalent leader with authority over one team or delivery pipeline.
+      trigger: Evidence shows that a bounded control system can repair the delivery path.
+      entry_criteria:
+        - a completed audit or equivalent accepted evidence baseline
+        - one named sponsor, internal owner, team, and pipeline
+        - bounded change authority and an agreed test environment
+        - acceptance tests and a handoff owner agreed before work starts
+      promise: One working governance loop—decision, packet, authority, verification, receipt, and handoff—integrated into the team's real delivery path.
+      deliverables:
+        - decision-rights and escalation map
+        - intake and work-packet contract
+        - verification, budget, and evidence gates
+        - operating-status and exception view
+        - runbook, training, rollback, and acceptance receipts
+      exclusions:
+        - enterprise-wide platform rewrite
+        - reorganization, hiring authority, or replacement of current leaders
+        - indefinite feature delivery or general staff augmentation
+        - unrestricted production, credential, or data access
+        - on-call operations after handoff
+      timeline: Four to eight weeks for one team or pipeline after prerequisites are met.
+      authority:
+        mode: bounded_write
+        boundary: Change only the named workflow and repositories; production effects, credentials, sends, and broader policy changes require explicit owner approval.
+      evidence:
+        acceptance: The agreed synthetic or real workflow traverses the installed controls, produces a durable receipt, and can be operated and rolled back by the named internal owner.
+        artifacts: [decision-rights map, working controls, tests, runbook, training record, acceptance receipt]
+      economics:
+        model: milestone_fixed_scope
+        anchor_id: PRICE-INSTALL
+        range_id: RANGE-INSTALL
+        approval_gate: HG-PRICE-ANCHORS
+        public_price: prohibited
+        capacity_rule: Never run more than one implementation-heavy install at a time without an explicit capacity review and a separate delivery owner.
+        discount_rule: Narrow the workflow, modules, timeline, or support envelope; never hide a platform rewrite inside an install.
+      handoff: Train the internal owner, transfer the runbook and evidence, test rollback, remove temporary access, and record the next review date.
+      escalation:
+        - stop on scope expansion beyond the named team or pipeline
+        - return unresolved product or organization strategy to the sponsor
+        - create a change record before adding modules, access, or delivery time
+      claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+    - id: retainer
+      name: Bounded Delivery-Governance Retainer
+      stage: sustain
+      position: primary_continuity
+      buyer: A sponsor whose installed governance loop has a named internal owner and a recurring evidence-review need.
+      trigger: The controls work, but changing tools, policies, and operating conditions create a finite need for senior review.
+      entry_criteria:
+        - an accepted installed baseline
+        - a named internal owner who operates the system
+        - a finite review cadence, response envelope, and artifact list
+        - an exit condition and renewal decision date
+      promise: Bounded access to senior systems judgment that keeps the governance loop current without outsourcing ownership.
+      deliverables:
+        - scheduled evidence and exception review
+        - gate and decision-record updates within the agreed envelope
+        - bounded incident postmortems and risk notes
+        - capacity, drift, and next-decision review
+        - renewal or exit recommendation with handoff updates
+      exclusions:
+        - on-call, emergency, or round-the-clock response
+        - unlimited implementation, feature work, or repository coverage
+        - executive substitution or ownership of daily operations
+        - unrecorded access expansion or informal side projects
+      timeline: One fixed review period at a time, renewable only after evidence and capacity review.
+      authority:
+        mode: advisory_with_named_changes
+        boundary: The internal owner operates the system; changes occur only through the agreed backlog, access boundary, and acceptance path.
+      evidence:
+        acceptance: Each period ends with reviewed evidence, explicit changes, current owners, and a written renew, narrow, or exit decision.
+        artifacts: [review record, exception ledger, approved change receipts, updated runbook, renewal or exit memo]
+      economics:
+        model: capacity_reservation
+        anchor_id: PRICE-RETAINER
+        range_id: RANGE-RETAINER
+        approval_gate: HG-PRICE-ANCHORS
+        public_price: prohibited
+        capacity_rule: Sell a finite review and response envelope; reserve no invisible on-call or unlimited build capacity.
+        discount_rule: Change cadence, included artifacts, or response envelope; never imply unlimited availability.
+      handoff: Keep the internal owner current throughout; on exit, return the latest records, remove access, and identify the next internal review date.
+      escalation:
+        - scope new implementation as a separate install or change order
+        - pause material security, privacy, legal, or contractual exceptions for human review
+        - exit when the internal owner no longer exists or the review need is no longer finite
+      claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-LIMEN]
+  secondary:
+    id: partnership_review
+    name: Product-Operating Partnership Review
+    stage: diligence
+    position: secondary_only
+    public_cta: false
+    disclosure_entry: L3
+    buyer: A demonstrated domain operator evaluating one inspectable product after the public proof and qualification layers.
+    trigger: A specific product and operator appear ready for custody, distribution, and operating diligence.
+    entry_criteria:
+      - an inspectable product with current maturity and demand evidence
+      - a credible operator with a distribution and operating plan
+      - a clean rights, custody, data, support, and return-path inventory
+      - owner willingness to consider terms after diligence
+    promise: A decision on whether to run a bounded partnership pilot; no equity, licence, revenue, custody, or transfer term is implied.
+    deliverables:
+      - product and operator readiness memo
+      - decision-rights, custody, support, and return-path matrix
+      - bounded pilot option or evidence-backed no-go verdict
+      - list of owner, counsel, data, and economics gates required before any agreement
+    exclusions:
+      - public cofounder or operator solicitation
+      - implied equity, licence, revenue-share, sale, or custody offer
+      - transfer before rights, data, support, and return conditions are approved
+      - operating authority granted by diligence access alone
+    timeline: Defined per product only after the readiness floor is met.
+    authority:
+      mode: diligence_only
+      boundary: No operating, account, custody, financial, publication, or legal authority exists until a separate owner-approved agreement is executed.
+    evidence:
+      acceptance: The owner can approve a bounded pilot, request more evidence, or decline without any implied commitment.
+      artifacts: [readiness memo, rights and custody map, pilot option, gate register, return path]
+    economics:
+      model: negotiated_after_diligence
+      anchor_id: PRICE-PARTNERSHIP
+      range_id: RANGE-PARTNERSHIP
+      approval_gate: HG-OPERATOR-TERMS
+      public_price: prohibited
+      capacity_rule: Partnership work cannot displace a committed audit, install, or retainer without an explicit portfolio decision.
+      discount_rule: No economic term exists before readiness, owner, and professional-review gates are satisfied.
+    handoff: A pilot, if separately approved, begins with explicit operating custody and ends with a tested return or continuation decision.
+    escalation:
+      - route any equity, licence, revenue, custody, data, or transfer term to HG-OPERATOR-TERMS
+      - route contract, liability, privacy, or regulatory questions to HG-CONTRACT
+      - decline when demand, operator accountability, or return conditions remain untestable
+    claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
+
+qualification:
+  routing_priority: [human_review, decline, recruiter, partnership_review, retainer, install, audit]
+  rules:
+    - id: guarded_exception
+      route: human_review
+      priority: 10
+      any: [pricing_exception, legal_terms, regulated_data, account_or_custody_change, public_claim_exception]
+      all: []
+      none: []
+    - id: prohibited_scope
+      route: decline
+      priority: 20
+      any: [emergency_on_call, organization_takeover, bypass_request, no_sponsor, outcome_guarantee, speculative_equity_only]
+      all: []
+      none: []
+    - id: employment_path
+      route: recruiter
+      priority: 30
+      any: []
+      all: [employment_opportunity, named_role_mandate]
+      none: [client_procurement]
+    - id: operator_path
+      route: partnership_review
+      priority: 40
+      any: []
+      all: [partnership_interest, product_readiness_evidence, qualified_operator]
+      none: [public_front_door]
+    - id: continuity_path
+      route: retainer
+      priority: 50
+      any: []
+      all: [ongoing_governance_need, installed_baseline, internal_owner]
+      none: [implementation_needed, diagnosis_needed]
+    - id: implementation_path
+      route: install
+      priority: 60
+      any: []
+      all: [implementation_needed, accepted_evidence_baseline, sponsor_authority, bounded_change_scope]
+      none: [diagnosis_needed]
+    - id: diagnostic_path
+      route: audit
+      priority: 70
+      any: []
+      all: [diagnosis_needed, read_access, sponsor_authority, bounded_initiative]
+      none: [implementation_authority]
+  scenarios:
+    - id: stalled_agent_pilot
+      facts: {diagnosis_needed: true, read_access: true, sponsor_authority: true, bounded_initiative: true}
+      expected_route: audit
+    - id: accepted_audit_one_team
+      facts: {implementation_needed: true, accepted_evidence_baseline: true, sponsor_authority: true, bounded_change_scope: true}
+      expected_route: install
+    - id: installed_controls_drifting
+      facts: {ongoing_governance_need: true, installed_baseline: true, internal_owner: true}
+      expected_route: retainer
+    - id: senior_role_with_mandate
+      facts: {employment_opportunity: true, named_role_mandate: true}
+      expected_route: recruiter
+    - id: qualified_operator_after_diligence
+      facts: {partnership_interest: true, product_readiness_evidence: true, qualified_operator: true}
+      expected_route: partnership_review
+    - id: operator_terms_requested_early
+      facts: {partnership_interest: true, product_readiness_evidence: true, qualified_operator: true, legal_terms: true}
+      expected_route: human_review
+    - id: rescue_without_sponsor
+      facts: {diagnosis_needed: true, read_access: true, bounded_initiative: true, no_sponsor: true}
+      expected_route: decline
+    - id: emergency_takeover_request
+      facts: {implementation_needed: true, organization_takeover: true, emergency_on_call: true}
+      expected_route: decline
+  decline_language: >-
+    This request needs broader authority or a different operating model than the bounded work offered
+    here. I will not imply a safe scope where the sponsor, evidence, ownership, or handoff conditions
+    are absent.
+  review_language: >-
+    This request touches a price, legal, data, account, public-claim, or partnership gate. The reversible
+    analysis may continue, but no external or contractual effect occurs until the named owner approves it.
+
+economics_contract:
+  public_rule: No numeric fee, rate, discount, margin, equity, revenue-share, or transfer term appears in a public surface.
+  private_anchor_rule: Every proposal references an approved symbolic anchor ID; the actual amount remains in its sanctioned private owner.
+  range_structure:
+    floor: The private minimum that covers the stated scope, evidence uncertainty, acceptance burden, handoff, and protected capacity.
+    target: The private default for the normal scope and risk envelope defined by the offer.
+    exception: Any amount outside the approved private floor-to-target range requires a recorded scope trade and HG-PRICE-ANCHORS approval.
+    public_representation: Use only RANGE-AUDIT, RANGE-INSTALL, RANGE-RETAINER, or RANGE-PARTNERSHIP; never expose the underlying numbers in repository or public copy.
+  pricing_basis:
+    - value and consequence of the decision or operating capability
+    - evidence uncertainty, access risk, and delivery complexity
+    - bounded scope, artifacts, acceptance burden, and handoff
+    - reserved capacity and opportunity cost
+  capacity_guardrails:
+    - Never commit overlapping implementation-heavy installs without a separate delivery owner and explicit capacity review.
+    - Audits start only after intake, evidence access, sponsor attendance, and a decision window are confirmed.
+    - Retainers reserve a finite review and response envelope; they never imply on-call capacity.
+    - Partnership diligence cannot silently displace committed client or role obligations.
+  discount_guardrails:
+    - Trade fee movement for less scope, fewer artifacts, slower timing, narrower access, or a smaller risk envelope.
+    - Never discount the same scope in exchange for vague exposure, possible future work, testimonial pressure, or speculative economics.
+    - Record every exception and its capacity consequence in the commercial decision record.
+  walk_away_rules:
+    - the buyer cannot name a sponsor or decision owner
+    - authority is broader than the acceptance and handoff model
+    - the work depends on bypassing security, privacy, legal, or evidence controls
+    - the economics consume protected capacity without a commensurate scope or value decision
+    - payment, data, IP, liability, or partnership terms remain unresolved at the agreement gate
+  gates: [HG-PRICE-ANCHORS, HG-CONTRACT, HG-OPERATOR-TERMS]
+
+commercial_templates:
+  formal_owner: organvm-iii-ergon/collaboration-operations-platform/templates/production-systems
+  preflight_owner: PSP-C03 commercial contract
+  status: blueprint_only_until_PSP-P04-W06
+  placeholder_policy: Bracketed fields are required inputs, not permission to invent facts or terms.
+  templates:
+    - id: proposal
+      title: Production-Systems Proposal
+      purpose: Convert a qualified route into one decision-ready bounded offer.
+      sections:
+        - {title: Decision, fields: [buyer decision, current state, expensive consequence, recommended route]}
+        - {title: Scope, fields: [bounded system or workflow, entry criteria, deliverables, exclusions]}
+        - {title: Evidence and acceptance, fields: [source register, acceptance tests, uncertainty, receipt owner]}
+        - {title: Timeline and dependencies, fields: [start condition, duration, buyer dependencies, decision dates]}
+        - {title: Authority and data, fields: [decision rights, access boundary, security and privacy, prohibited effects]}
+        - {title: Economics, fields: [approved anchor ID, approved private fee, assumptions, payment schedule, capacity impact]}
+        - {title: Change and handoff, fields: [change trigger, approval route, handoff owner, rollback or exit]}
+        - {title: Approval, fields: [owner review, contract gate, expiry date, next action]}
+    - id: sow
+      title: Production-Systems Statement of Work
+      purpose: Bind scope, authority, acceptance, economics, and exit in one implementation agreement.
+      sections:
+        - {title: Parties and objective, fields: [parties, effective date, bounded objective, governing agreement]}
+        - {title: In scope, fields: [systems, repositories, teams, environments, deliverables]}
+        - {title: Out of scope, fields: [excluded systems, excluded authority, excluded services, no outcome guarantee]}
+        - {title: Roles and decision rights, fields: [sponsor, internal owner, provider authority, escalation owner]}
+        - {title: Access data and security, fields: [access method, minimum data, retention, incident route, revocation]}
+        - {title: Timeline and milestones, fields: [start conditions, milestones, review dates, completion date]}
+        - {title: Acceptance, fields: [tests, evidence, reviewer, cure path, acceptance receipt]}
+        - {title: Fees and payment, fields: [approved private fee, approved anchor ID, schedule, expenses, taxes]}
+        - {title: Change control, fields: [change record, impact review, written approval, rebaseline rule]}
+        - {title: IP confidentiality and legal terms, fields: [preexisting IP, work product, licence, confidentiality, liability and counsel review]}
+        - {title: Termination return and handoff, fields: [termination event, data return or destruction, access removal, runbook, transition]}
+        - {title: Signatures, fields: [authorized signatories, dates, gate receipts]}
+    - id: commercial_decision_record
+      title: Commercial Decision Record
+      purpose: Make qualification, pricing, capacity, exceptions, and the final go/no-go reproducible.
+      sections:
+        - {title: Lead and audience, fields: [source, audience, buyer role, decision owner]}
+        - {title: Route, fields: [facts, matched rule, selected offer, rejected alternatives]}
+        - {title: Evidence and risk, fields: [evidence available, uncertainty, data sensitivity, escalation]}
+        - {title: Economics and capacity, fields: [anchor ID, approved private fee, scope trade, capacity impact, discount rationale]}
+        - {title: Gates, fields: [pricing, contract, data, account, public claim, operator terms]}
+        - {title: Decision, fields: [proceed, narrow, review, or decline, reason, owner, expiry, next action]}
+    - id: closeout
+      title: Engagement Acceptance and Closeout Record
+      purpose: End the engagement at a reproducible handoff with no hidden authority or access.
+      sections:
+        - {title: Acceptance evidence, fields: [deliverables, tests, receipts, accepted exceptions, reviewer]}
+        - {title: Ownership and handoff, fields: [internal owner, runbook, training, decision records, next review]}
+        - {title: Access and data disposition, fields: [access removed, credentials rotated, data returned or destroyed, retained evidence]}
+        - {title: Commercial close, fields: [invoice state, change records, credits or disputes, contract owner]}
+        - {title: Continuation or exit, fields: [renew, install, retainer, internal operation, or stop, rationale, next owner]}
+        - {title: Signoff, fields: [buyer acceptance, provider closeout, date, unresolved gated atom owner]}
+  required_gates:
+    - HG-PRICE-ANCHORS before a numeric fee governs a proposal
+    - HG-CONTRACT before terms are sent, signed, or create liability, data, payment, or service commitments
+    - HG-OPERATOR-TERMS before equity, licence, revenue, custody, access, or product-transfer terms
+
+change_control:
+  conflict_rule: >-
+    Evidence truth comes from the current claims ledger and PSP-C02 receipts; commercial meaning comes
+    from this contract; the Markdown render and downstream surfaces must be generated from it. A lower
+    layer never overrules a higher one.
+  identity_change: Requires a frontier review, claim-register update, and target-reader retest.
+  offer_change: Requires one commercial decision record, overlap and authority validation, and updated template fields.
+  evidence_change: May narrow or withdraw copy immediately; promotion requires a refreshed receipt and placement decision.
+  pricing_change: Changes only the private anchor owner after HG-PRICE-ANCHORS; no public contract edit may expose the amount.
+  partnership_change: Requires HG-OPERATOR-TERMS and cannot create a new L1 call to action.
+  rollback: Revert the contract and regenerated render together; preserve the rejected rationale and evidence state in the next decision record.
