@@ -1,4 +1,14 @@
-# PSP-C03 identity and offers preflight relay
+# PSP-C03 identity and offers continuation relay
+
+## Current checkpoint — 2026-08-12
+
+- PSP-P02 is accepted and closed at `8faa5fb9899231ebf5f87e78bb171544c11b79d7`; its marked phase receipt is [issue comment 5270095170](https://github.com/organvm/limen/issues/2172#issuecomment-5270095170).
+- PSP-P03-W01 through PSP-P03-W06 are accepted with marked receipts bound in `institutio/positioning/commercial-contract.yaml`.
+- PSP-P03-W07 is the sole open P03 leaf. It requires five genuine independent target-like readers of the exact `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec` stimulus. Synthetic, model, author, coached, or implementation-agent responses do not count.
+- PSP-P04 implementation is staged on the existing branch and PR #2312, but every P04 leaf remains formally dependency-blocked until PSP-P03 closes.
+- The contract now consumes accepted P02 claim wording and exact accepted P03 receipt bindings. Public publication, outbound sending, numeric pricing, contractual effect, issue closure without receipts, and merge remain prohibited.
+
+## Historical branch-creation checkpoint — superseded for dependency state
 
 ## Checkpoint contract
 
@@ -10,7 +20,7 @@
 - Continuation anchor: consumers must resolve the current exact PR head and confirm it descends from the core-contract checkpoint before starting.
 - Canonical source: `institutio/positioning/commercial-contract.yaml`
 - Validation: `python3 scripts/positioning-commercial-contract.py --check`
-- State: preflight is blocked on PSP-C02. PSP-P03/P04 leaves remain open; their formal receipt predicates have not run.
+- Historical state at branch creation: preflight was blocked on PSP-C02. This line is retained only as provenance and is superseded by the current checkpoint above.
 
 The checkpoint ratifies the strategy shape, not C02 evidence: production-systems architect; three audience contracts; L1/L2/L3 progressive disclosure; bounded Audit → Install → Retainer sequence; secondary partnership diligence; qualification, symbolic pricing ranges, capacity rules, templates, authority, handoff, and anti-takeover language.
 

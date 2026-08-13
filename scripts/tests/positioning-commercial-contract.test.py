@@ -44,11 +44,32 @@ class CommercialContractTests(unittest.TestCase):
         changed["claim_register"][0]["evidence_refs"].append("missing-evidence")
         self.assert_has_error(changed, "unknown evidence ref")
 
-    def test_evidence_sensitive_claim_cannot_be_promoted_before_c02(self) -> None:
+    def test_accepted_evidence_sensitive_claim_cannot_drift(self) -> None:
         changed = copy.deepcopy(self.contract)
         claim = next(item for item in changed["claim_register"] if item["kind"] == "evidence_sensitive")
-        claim["status"] = "verified"
-        self.assert_has_error(changed, "not provisional_c02")
+        claim["status"] = "provisional_c02"
+        self.assert_has_error(changed, "status drifted")
+
+    def test_accepted_p02_binding_cannot_drift(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["contract"]["accepted_state"]["p02"]["accepted_head"] = "0" * 40
+        self.assert_has_error(changed, "accepted P02 binding drifted")
+
+    def test_accepted_p03_receipt_binding_cannot_drift(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["contract"]["accepted_state"]["p03_accepted_work"][5]["receipt"] = "https://example.invalid"
+        self.assert_has_error(changed, "accepted P03 W01-W06 bindings drifted")
+
+    def test_reader_gate_cannot_count_synthetic_or_model_responses(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        gate = changed["contract"]["accepted_state"]["active_reader_gate"]
+        gate["synthetic_or_model_readers_allowed"] = True
+        self.assert_has_error(changed, "reject synthetic and model readers")
+
+    def test_reader_gate_count_cannot_advance_without_durable_evidence(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["contract"]["accepted_state"]["active_reader_gate"]["current_valid_readers"] = 1
+        self.assert_has_error(changed, "must reflect durable collected evidence")
 
     def test_audience_confusion_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
@@ -59,11 +80,13 @@ class CommercialContractTests(unittest.TestCase):
     def test_offer_overlap_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
         scenario = next(item for item in changed["qualification"]["scenarios"] if item["id"] == "stalled_agent_pilot")
-        scenario["facts"].update({
-            "implementation_needed": True,
-            "accepted_evidence_baseline": True,
-            "bounded_change_scope": True,
-        })
+        scenario["facts"].update(
+            {
+                "implementation_needed": True,
+                "accepted_evidence_baseline": True,
+                "bounded_change_scope": True,
+            }
+        )
         install_rule = next(item for item in changed["qualification"]["rules"] if item["route"] == "install")
         install_rule["none"] = []
         self.assert_has_error(changed, "overlaps commercial offers")
