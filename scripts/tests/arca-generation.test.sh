@@ -52,7 +52,11 @@ if [ "$op" = view ]; then
   done
   case "$field" in
     visibility) echo PRIVATE ;;
-    pushedAt) cat "$FAKE_GH_PUSHEDAT" 2>/dev/null || echo "2026-08-08T00:00:00Z" ;;
+    # FAKE_GH_PUSHEDAT is a VALUE, not a path. It was `cat`-ed here, so the read always failed
+    # and every run silently fell through to the literal below — which turned this fixture into
+    # a time bomb: green while the wall clock sat near that date, then permanently stale once it
+    # passed --max-age-days. Echo the value; keep the literal only as a genuine last resort.
+    pushedAt) echo "${FAKE_GH_PUSHEDAT:-2026-08-08T00:00:00Z}" ;;
     diskUsage) cat "$BASE/disk/$(printf '%s' "$name" | tr '/' '_')" 2>/dev/null || echo 128 ;;
   esac
   exit 0
@@ -216,16 +220,93 @@ printf '%s\n' "$out" | grep -q "✓ _collab-private — current" && pass=$((pass
   || { echo "  MISMATCH (case10b current store not marked current)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1)); }
 
 # ── Case 11: the freshness sensor follows the manifest's _generation.repo ──
-out="$(python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --json 2>&1)"; rc=$?
+# --skip-coverage: this case asserts GENERATION RESOLUTION only. ws2 deliberately holds an
+# unsealed _life-private (case 10a), which is a true coverage finding and would mask the thing
+# under test here. Coverage gets its own cases below.
+out="$(python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --skip-coverage --json 2>&1)"; rc=$?
 if [ "$rc" = "0" ] && printf '%s\n' "$out" | grep -q '"repo": "organvm/arcaseed-g2"' \
    && printf '%s\n' "$out" | grep -q '"ok": true'; then
   pass=$((pass+1))
 else
   echo "  MISMATCH (case11 sensor does not follow manifest): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
-out="$(python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --repo organvm/explicit --json 2>&1)"
+out="$(python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --repo organvm/explicit --skip-coverage --json 2>&1)"
 printf '%s\n' "$out" | grep -q '"repo": "organvm/explicit"' && pass=$((pass+1)) \
   || { echo "  MISMATCH (case11b explicit --repo ignored)"; fail=$((fail+1)); }
+
+# ── Case 12: COVERAGE — the vault holding what is on disk NOW ──────────────────
+# Regression for 2026-08-12: recency reported OK while three stores held unsealed changes and a
+# store over ARCA_MAX_MB had NEVER been sealed. Recency answers "did the vault move?"; only
+# coverage answers "did it take what changed?".
+
+# 12a: `status --strict` is a PREDICATE — nonzero while ws2 holds an unsealed store.
+run_expect 1 "NEVER sealed" "case12a status --strict reds on never-sealed" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" ARCA_REPO=organvm/arcaseed "$ARCA" status --strict
+
+# 12b: plain `status` stays exit 0 — the display contract predates the predicate.
+run_expect 0 "NEVER sealed" "case12b bare status stays exit 0" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" ARCA_REPO=organvm/arcaseed "$ARCA" status
+
+# 12c: --json carries machine-readable per-store state and ok:false.
+out="$(env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" ARCA_REPO=organvm/arcaseed "$ARCA" status --json 2>&1)"
+if printf '%s\n' "$out" | grep -q '"name":"_life-private","state":"never_sealed"' \
+   && printf '%s\n' "$out" | grep -q '"ok":false'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12c status --json shape)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+# 12d: THE REGRESSION. Same instant, same vault — the sensor must now red on the unsealed store
+# that recency alone reported OK for. This is the exact A/B that was measured live on 2026-08-12.
+out="$(env ARCA_WORKSPACE="$work/ws2" python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --json 2>&1)"; rc=$?
+if [ "$rc" = "1" ] && printf '%s\n' "$out" | grep -q 'NEVER SEALED' \
+   && printf '%s\n' "$out" | grep -q '"ok": false'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12d sensor blind to unsealed store): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+# 12e: sealing clears it — coverage is satisfiable, not a permanent red.
+env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" ARCA_REPO=organvm/arcaseed-g2 "$ARCA" backup >/dev/null 2>&1
+out="$(env ARCA_WORKSPACE="$work/ws2" python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --json 2>&1)"; rc=$?
+if [ "$rc" = "0" ] && printf '%s\n' "$out" | grep -q '"ok": true'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12e coverage not cleared by a seal): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+# 12f/12g: the GRACE boundary. Live stores are written constantly — measured 2026-08-12, four
+# files changed within 3.5 minutes of a successful seal — so a bare "differs from the vault"
+# would red permanently and become noise. Grace runs from the SEAL: recent seal + drift = fine;
+# stale seal + drift = the sealer is not keeping up. Driven by the flag, so no test sleeps.
+printf 'drift\n' >> "$work/ws2/_life-private/x"
+
+out="$(env ARCA_WORKSPACE="$work/ws2" python3 "$ROOT/scripts/arca-freshness.py" \
+  --vault-dir "$work/vault2" --max-unsealed-minutes 999999 --json 2>&1)"; rc=$?
+if [ "$rc" = "0" ] && printf '%s\n' "$out" | grep -q '"ok": true'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12f churn inside grace should not red): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+out="$(env ARCA_WORKSPACE="$work/ws2" python3 "$ROOT/scripts/arca-freshness.py" \
+  --vault-dir "$work/vault2" --max-unsealed-minutes 0 --json 2>&1)"; rc=$?
+if [ "$rc" = "1" ] && printf '%s\n' "$out" | grep -q 'UNSEALED CHANGES'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12g drift past grace should red): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+# 12h: --json keeps STDOUT pure. arca.sh's log() writes to stdout and ensure_vault logs while
+# seeding, so a cold vault dir would otherwise prepend prose to the payload and the sensor would
+# read it as "coverage UNDETERMINED". Cold dir here on purpose — 2>/dev/null keeps only stdout.
+out="$(env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault_cold" ARCA_REPO=organvm/arcaseed-g2 \
+  "$ARCA" status --json 2>/dev/null)"
+if printf '%s' "$out" | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12h --json stdout polluted by log lines)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
 
 echo
 if [ "$fail" -eq 0 ]; then
