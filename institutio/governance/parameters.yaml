@@ -1341,6 +1341,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for the corpus-feed outer process so prompt ingestion cannot wedge the beat."
+  LIMEN_TAPE_TZ:
+    default: ""                # SAFE CODE DEFAULT — blank renders the DEVICE's own zone, i.e. what Messages.app shows
+    env: LIMEN_TAPE_TZ
+    self_update: none
+    owner: continuity
+    note: "IANA zone name for the local-time rendering in scripts/capture-threads.py tapes (`ts.local` in the .jsonl, the `[timestamp]` column in the .md). Blank — the default — renders THIS DEVICE's zone, so a tape always agrees with the operator's own screen. Set it only to read deliberately in a known other party's zone; the chosen zone is then recorded in `ts.tz` on every row and in the tape's Clock frame header, so no reader has to infer it. Founded on a measured defect: the script hardcoded America/New_York on a device set to America/Sao_Paulo, so every rendered time sat 1h off Messages.app; a later review saw that gap, explained it with a plausible DST story, and 'corrected' four documents in the wrong direction. UTC (`ts.utc`) is canonical and unaffected by this setting."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
