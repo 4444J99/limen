@@ -1,0 +1,46 @@
+{
+  "schema": "psp-c08-measurement-contract/v1",
+  "state": "synthetic-staging-only",
+  "principles": [
+    "Synthetic events are fixtures, never proof of distribution or demand.",
+    "An observed outcome requires an approved send or released canonical source plus a durable receiving-system receipt.",
+    "Door attribution is a classification aid, not consent to send or a claim that a lead was captured."
+  ],
+  "door_tags": [
+    {
+      "tag": "deploy",
+      "audience": "technical buyer or system-audit conversation",
+      "allowed_source": "owner-approved canonical report",
+      "success_signal": "attributable inbound initiated from that canonical source",
+      "stop_rule": "pause on source drift, missing approval, or no qualified signal in the review window"
+    },
+    {
+      "tag": "hire",
+      "audience": "recruiter or builder-work conversation",
+      "allowed_source": "owner-approved canonical report",
+      "success_signal": "attributable inbound initiated from that canonical source",
+      "stop_rule": "pause on source drift, missing approval, or no qualified signal in the review window"
+    }
+  ],
+  "event_contract": {
+    "required_fields": ["event_id", "occurred_at", "channel", "asset_id", "canonical_source", "door_tag", "event_type", "evidence_ref", "is_synthetic"],
+    "allowed_event_types": ["source_open", "door_initiated", "qualified_inbound", "correction_requested", "withdrawal_completed"],
+    "outcome_rule": "Only is_synthetic=false with an evidence_ref from the receiving system may appear in an outcome report."
+  },
+  "synthetic_fixture": {
+    "event_id": "fixture-psp-c08-001",
+    "occurred_at": "2026-08-10T00:00:00Z",
+    "channel": "fixture",
+    "asset_id": "W07-technical-thread",
+    "canonical_source": "https://example.invalid/withheld-canonical-report",
+    "door_tag": "deploy",
+    "event_type": "door_initiated",
+    "evidence_ref": "fixture-only",
+    "is_synthetic": true
+  },
+  "external_effect_boundary": {
+    "publication_gate": "HG-PUBLIC-IDENTITY",
+    "send_gate": "HG-PUBLICATION-SEND",
+    "prohibited_actions": ["send", "schedule", "publish", "deploy", "activate capture", "change analytics configuration"]
+  }
+}
