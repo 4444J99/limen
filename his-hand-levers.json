@@ -1111,16 +1111,16 @@
       "label": "Retired as a human lever on 2026-08-10: a transient reset briefly restored the conduct keeper, but recurrence proved the active defect is Limen's unbounded heartbeat persistence and full-state write amplification, owned by fleet issue #2054.",
       "owner": "fleet via issue #2054",
       "cost": "none for the operator",
-      "unlocks": "none by human action; issue #2054 owns only the generic broker repair. PSP-P00-W07 and P00 are already closed under the corrected fresh-Codex contract from merged PR #2300.",
+      "unlocks": "none by human action; issue #2054 owns the internal broker repair, after which PSP-P00-W07 reruns the required native Agy canary",
       "source_task": "/verify finding 2026-08-07 (limen PR #2050 lineage): driving the #2014 canonical-heal rung with the beat's own environment produced a 61-line traceback ending in ConductError 500 'Exceeded allowed rows written in Durable Objects free tier', raised from cli/src/limen/tabularius.py:1198 _register_relay_session -> POST /api/conduct/sessions. Invisible until then because the rung was piped through `2>&1 | tail -1`, which reduced it to a bare `}` (fixed by the beat_run rung runner + check-beat-diagnostics gate). Last successful keeper write 2026-08-07T12:55:47-04:00, immediately after #2016's merge — unblocking the write path is what consumed the day's remaining allowance.",
       "gate": "none; no Cloudflare email, support case, billing or plan change, credential mint, or other operator action is required",
       "status": "retired",
       "steps": [
-        "No operator action: merged PR #2300 superseded the provider-diversity canary and PSP-P00-W07 now has its passing fresh-Codex receipt.",
-        "Do not relaunch Agy or another non-Codex principal as a PSP acceptance gate; the positioning runbook makes that constraint explicitly obsolete.",
-        "Any future keeper-capacity recurrence remains generic fleet work under issue #2054 and does not reopen P00."
+        "Correction recorded: the Agy-specific principal credential is present and passed the broker authorization boundary; credentials are not the W07 blocker.",
+        "Fleet repairs the bounded-persistence defect under issue #2054 and lands it through the sanctioned merge rail.",
+        "After the fix lands, PSP-P00-W07 reruns capabilities, registration, no-op/read claim, and schema-valid receipt with native Agy identity."
       ],
-      "note": "Historical Agy and quota observations remain evidence about the generic conduct substrate only. They are not current PSP acceptance criteria. PR #2300 and the live PSP-P00-W07 receipt supersede that old gate; issue #2054 remains the owner only for bounded keeper persistence.",
+      "note": "Historical evidence is retained: authenticated `/opt/homebrew/bin/limen conduct capabilities` returned `limen.conduct_capabilities.v1` at 2026-08-10T00:38:12Z and later mutations briefly succeeded. That was transient recovery, not completion. On recurrence, a request using the Agy principal again passed authorization before the keeper returned the storage error. Repository diagnosis shows every heartbeat appends an in-state event and causes the entire growing chunked state generation to be written while the previous generation is deleted. The external error string is a symptom; issue #2054 owns the internal repair.",
       "issue": 2054
     },
     {
@@ -1136,24 +1136,6 @@
       "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh."
     },
     {
-      "id": "L-PSP-PRICE-ANCHORS",
-      "label": "Decide the PSP offer price anchors only after PSP-P14-W07 has a threshold-crossing set of real, privacy-safe demand outcomes. The reversible P14 preflight may define the decision contract, but it cannot choose a price or turn synthetic objections into market evidence.",
-      "owner": "yours",
-      "cost": "one bounded commercial decision after the live outcome set exists",
-      "unlocks": "the price-decision portion of PSP-P14-W07 and any evidence-backed offer revision that depends on it",
-      "source_task": "PSP-P14-W07 / manifest gate HG-PRICE-ANCHORS / issue #2281",
-      "gate": "price anchors are a product and values decision with outward commercial consequences; no agent or fixture may infer the owner's acceptance",
-      "status": "open",
-      "steps": [
-        "Wait for the W07 owner to attach the declared real demand-outcome set; synthetic fixtures and staged copy do not count.",
-        "Review the preserved before/after offer versions, qualification threshold, and outcome reasons without exposing private identities.",
-        "Record keep, narrow, promote, or withdraw plus the approved price-anchor decision in the durable W07 receipt."
-      ],
-      "issue": 2281,
-      "added": "2026-08-10",
-      "note": "Recorded once as the durable owner for HG-PRICE-ANCHORS. It authorizes no send, publication, spend, signature, account change, or synthetic acceptance, and should not be re-surfaced before the live W07 outcome threshold exists."
-    },
-    {
       "id": "L-MADDIE-CUSTODY-TRANSFER",
       "label": "Transfer hosting custody of the maddie/spiral client lane out of your personal Cloudflare account, and add a deploy workflow to 4444J99/sovereign-systems--elevate-align so the client is not dependent on your laptop. Verified live 2026-08-12: stopdrinkingacid.com and eaucohub.com are SERVING from your Cloudflare (A 162.159.140.166, NS still at GoDaddy) and the spiral runs on your own sovereign-systems-spiral.ivixivi.workers.dev, while the client repo has ci.yml only and NO deploy workflow. The client already holds repo admin, which does NOT let them run any of it, so handover means a custody transfer, not repo access. Order matters: enumerate what you control, get the client a Cloudflare account, re-deploy into it and re-point the custom domains, ADD THE DEPLOY WORKFLOW, verify externally, and only THEN decommission your copies. Do not decommission before external verification: two live client sites would go dark visibly to their customers. When it closes, re-tier maddie in organs/consulting/constellation/registry.yaml and rerun derive-streams.py --write, which is the only thing that removes the domain from the session launcher.",
       "owner": "yours",
@@ -1164,6 +1146,56 @@
       "note": "Provenance: Surfaced by the 2026-08-12 lane review; had no owner because neither party ever raised it (a standing condition, not an ask). elevatealign.com itself is still PARKED at GoDaddy (client-side nameserver change never made) and its registry expiry is 2026-09-10T19:30Z - the only hard external clock on this lane. Commercial terms and correspondence are deliberately NOT here: this file publishes. They live in the ARCA-sealed private register (_people-private/people/maddie/ - open-asks.yaml MAD-020 + handover-packet-2026-08-12.md).",
       "source_task": "maddie/spiral delta review 2026-08-12",
       "issue": 2339
+    },
+    {
+      "id": "L-DUSTIN-GH-PROFILE",
+      "label": "Ask the partner (dustin lane) to create a GitHub profile so the three venture repos can be shared with him. Ask DUS-003, open since 2026-03-26. As of 2026-08-13 all three venture repos (post-dsp-platform, the-consulate, new-ancients-social) carry full alpha-to-omega roadmaps as milestones+issues he cannot see. Highest-leverage lever in the dustin set: every review, answer, and collaboration path runs through repo visibility.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "one conversational ask in-channel; his account creation",
+      "cost": "~1 message + his ~5 minutes",
+      "unlocks": "repo invites for all three ventures; the ten-questions and terms conversations gain a durable surface",
+      "note": "Ask registry: _people-private/people/dustin/open-asks.yaml DUS-003. Delivery constraints per the dialogue persona record: one ask per message, never bundled."
+    },
+    {
+      "id": "L-DSP-TEN-QUESTIONS",
+      "label": "The ten post-DSP consumer-shell design questions (sent 2026-03-28, unanswered — DUS-004). Gate for post-dsp-platform phases P09 (v0.9.0 decision record) and P10 (v0.10.0 consumer shell); phases P02-P08 are deliberately independent of them. The questions live product-side in 4444J99/post-dsp-platform docs/research/QUESTIONS.md; deliver a few at a time in-channel, never as another long document (both prior ~4,000-word sends drew one-line praise and zero answers).",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "the partner answers, in any channel, a few at a time",
+      "cost": "conversation over weeks, zero build cost",
+      "unlocks": "post-dsp-platform P09/P10 (consumer shell); v1.0.0 omega is NOT gated on this (deferral path recorded in the repo ladder)",
+      "note": "Ask registry: DUS-004. Roadmap: 4444J99/post-dsp-platform roadmap/ladder.json levers block."
+    },
+    {
+      "id": "L-CONS-PRICE",
+      "label": "Set the AI Estate Audit price. The one open commercial variable for the-consulate; gates ONLY phase P07 (v0.7.0 pricing/SOW/contracts) — the instrument, intake, deliverable, benchmarks and rehearsal phases are price-independent. Decision inputs already researched product-side (docs/research/landscape-2026.md): the ~$10k-$25k higher-ed micro-purchase band lets a single budget-holder buy without an RFP cycle; four dollar-banded tiers from the concept-thread research are recorded as atoms.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "operator decision (a number), optionally after the partner conversation",
+      "cost": "one decision",
+      "unlocks": "the-consulate P07 (pricing ladder, SOW, contract templates)",
+      "note": "Also referenced by engagement human-gates (organs/consulting/engagements/dustin.yaml). The partner's own price question (DUS-001, 2026-08-06) belongs to the social lane; this lever is the consulting practice's own price."
+    },
+    {
+      "id": "L-NAS-TERMS",
+      "label": "Agree written terms for the social-presence lane: answer the partner's inbound paid request of 2026-08-06 (DUS-001) and resolve it against the standing runway counter-proposal (DUS-002). Gates new-ancients-social phases P08 (v0.8.0 offer instrument) and, jointly with credentials, P09 (posting adapters). All build phases P02-P07 proceed without it; nothing posts regardless.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "principal names a number in-channel; partner accepts or the counter-proposal resolves",
+      "cost": "one message each way",
+      "unlocks": "new-ancients-social P08; jointly with L-NAS-CREDENTIALS, P09",
+      "note": "Ask registry: DUS-001/DUS-002. Engagement record holds the no-bundling exclusion: never fold the two unfunded ventures into this offer."
+    },
+    {
+      "id": "L-NAS-CREDENTIALS",
+      "label": "Written posting authorization + credential/approval flow for the partner's social accounts. Gates new-ancients-social P09 (v0.9.0 posting adapters) only. Engagement record (organs/consulting/engagements/dustin.yaml) already binds: no posting under any account of his until credentials and approval flow are agreed in writing; the P09 design enforces it in code (authorization receipt hash-match, per-post named human approver, no force flag).",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "written agreement + credential handover through the credential organ (never chat)",
+      "cost": "one written agreement; credential atoms go to the credential organ + Wall #320",
+      "unlocks": "new-ancients-social P09 posting adapters",
+      "note": "Terms (L-NAS-TERMS) come first; this lever is deliberately separate so terms can close without any credential exposure."
     }
   ]
 }
