@@ -1,6 +1,6 @@
 {
   "schema_version": "limen.positioning_p14_dependency_ledger.v2",
-  "observed_at": "2026-08-12T23:15:01Z",
+  "observed_at": "2026-08-13T01:20:04Z",
   "authoritative_registry": "institutio/positioning/program.yaml",
   "program_repository": "organvm/limen",
   "counts_as_closure": false,
@@ -35,7 +35,7 @@
       "counts_as_closure": false,
       "accepted_checkpoint": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "evidence": [
-        {"target": "limen", "pull_request": 2312, "head": "3ad04e23f0b65d92f2cd24e742acab5a8efc7487"}
+        {"target": "limen", "pull_request": 2312, "head": "b6af8086c9050634313f519c29a6dfcb922c3721"}
       ],
       "frontier_work": [
         {
@@ -57,7 +57,7 @@
       "counts_as_closure": false,
       "evidence": [
         {"target": "limen", "pull_request": 2313, "head": "5bf686f6ceba200c6157bd87eb6e5298750a4ffb"},
-        {"target": "portfolio", "pull_request": 220, "head": "9bcc4606b68da83dc0878b060989d35c3b649d7f"}
+        {"target": "portfolio", "pull_request": 220, "head": "8974543ba9675ed0504141895812476efef5dd80"}
       ],
       "frontier_work": []
     },
@@ -71,7 +71,7 @@
       "counts_as_closure": false,
       "evidence": [
         {"target": "limen", "pull_request": 2315, "head": "fdd41da45bdf5909e7b782a03dbaedf85e105c25"},
-        {"target": "private_custody", "pull_request": 135, "head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b"}
+        {"target": "private_custody", "pull_request": 135, "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926"}
       ],
       "frontier_work": []
     },
@@ -85,7 +85,7 @@
       "counts_as_closure": false,
       "evidence": [
         {"target": "limen", "pull_request": 2317, "head": "4eb50463b7f4136b47a103c9792c1ded5caf7873"},
-        {"target": "portfolio", "pull_request": 221, "head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea"}
+        {"target": "portfolio", "pull_request": 221, "head": "6cb1abf0bf08e71341476886385eba5499c51bb7"}
       ],
       "frontier_work": []
     },
@@ -125,8 +125,8 @@
       "counts_as_closure": false,
       "evidence": [
         {"target": "limen", "pull_request": 2322, "head": "7e485f436c6f2e709c4a23a8970247f3fd169e74"},
-        {"target": "private_custody", "pull_request": 136, "head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086"},
-        {"target": "portfolio", "pull_request": 222, "head": "a4c5165421344042efcc7a8b47660c1658b786d1"}
+        {"target": "private_custody", "pull_request": 136, "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9"},
+        {"target": "portfolio", "pull_request": 222, "head": "da79fb63b9756b5cce0d42ed2a7722668854a228"}
       ],
       "frontier_work": []
     },
