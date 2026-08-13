@@ -98,7 +98,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2318, "head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9"}
+        {"target": "limen", "pull_request": 2318, "head": "947921af6c1101acda6b1085d45381a393f3b20a"}
       ],
       "frontier_work": []
     },
@@ -206,7 +206,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2318",
       "state": "open",
       "draft": true,
-      "observed_head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9",
+      "observed_head": "947921af6c1101acda6b1085d45381a393f3b20a",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["private inbound schemas", "synthetic routing fixtures", "hard-closed send valves"],
       "counts_as_closure": false
