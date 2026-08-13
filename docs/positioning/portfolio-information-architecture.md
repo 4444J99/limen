@@ -7,14 +7,71 @@ cosmology is brand depth, never the front door.
 Companion docs: `claims-ledger.md` (what may be said where), `estate-classification.md`
 (flagship evidence), `authorship-disclosure-policy.md` (how authorship is described).
 
+## Audience jobs
+
+The public architecture serves three audiences, but exposes only two front-door actions.
+Every public block must name one job below and one disclosure level; blocks without both are
+removed rather than routed ambiguously.
+
+| ID | Audience | Job to be done | Decision | Disqualifier | Permitted next step |
+| --- | --- | --- | --- | --- | --- |
+| J-ENTRY | Direct client or recruiter | Decide which public path fits the reader's immediate decision. | Take the client door or recruiter door; otherwise stop. | Reader needs commercial, legal, private, or product-operating diligence. | Choose one of the two front-door CTAs. |
+| J-C1 | Direct client | Decide whether one active AI or software initiative has an expensive delivery-control problem worth a bounded diagnosis. | Seek a fixed-scope audit conversation or decline. | No named initiative, sponsor, decision, or willingness to bound scope. | Client CTA only. |
+| J-C2 | Direct client | Judge whether public proof shows relevant systems judgment without inferring customer deployment, adoption, or revenue. | Continue to a bounded audit discussion or stop. | Reader needs a guarantee, broad organizational control, or unverified commercial proof. | Client CTA only. |
+| J-R1 | Recruiter or hiring executive | Map evidence-backed systems judgment to one named role and mandate. | Start a role-specific conversation or stop. | Mandate is title-led, undefined, or expects unsupported executive standing. | Recruiter CTA only. |
+| J-R2 | Recruiter or hiring executive | Evaluate collaboration, bounded authority, and handoff rather than a takeover narrative. | Continue role diligence or stop. | The role requires concealed commitments, unbounded authority, or organizational replacement. | Recruiter CTA only. |
+| J-O1 | Potential product-operating partner | Decide whether a specific product and operator merit private readiness diligence. | Admit to gated diligence, request evidence, or decline. | No product-specific rights, custody, demand, support, operator, or return-path evidence. | No public CTA; qualified diligence only. |
+
+## Disclosure hierarchy
+
+| Level | Reader question | Allowed material | Excluded material |
+| --- | --- | --- | --- |
+| L1 — front door | Is this relevant, and which public path applies? | Canonical headline, authorship disclosure, one bounded problem statement, and the two public CTAs. | Pricing, offer terms, partner solicitation, private evidence, rankings, revenue, adoption, or a third CTA. |
+| L2 — proof and method | Is the method credible for my decision? | Evidence-labelled flagship proof, method boundaries, role-fit and collaboration language, and links back to the relevant L1 CTA. | Claims beyond the ledger's approved status, private diligence, guarantees, or operating authority. |
+| L3 — gated diligence | What must be true before a bounded engagement or partnership? | Claim register, limitations, authority map, data boundary, handoff plan, and product-specific readiness evidence through its sanctioned owner. | Public pricing, terms, credentials, customer data, custody, legal, financial, or transfer commitments. |
+
+## Public content map
+
+| Public-content class | Location / surface | Audience job | Level | Proof and disclosure rule | Action |
+| --- | --- | --- | --- | --- | --- |
+| Identity and audience orientation | Profile README, portfolio header, bios | J-ENTRY | L1 | Use the canonical headline and authorship disclosure from `commercial-contract.md`; no ranking, client-production, revenue, or executive-title inference. | Present the two doors below. |
+| Client decision door | Front door | J-C1 | L1 | State only the bounded delivery-control problem: unclear decision rights, verification, cost boundaries, or handoff in one active initiative. | **Client CTA:** discuss a fixed-scope Agentic Delivery Audit. |
+| Recruiter role door | Front door | J-R1 | L1 | State only the role-specific value: evidence-backed senior systems judgment for a named mandate. | **Recruiter CTA:** discuss a senior systems architecture or engineering role with a named mandate. |
+| Flagship proof collection | Front-door system cards and method layer | J-C2 | L2 | Use only accepted P02 wording and limitations. No customer, adoption, revenue, nationwide deployment, or guarantee claim. | Return to the client CTA. |
+| Collaboration and handoff note | Role and method layer | J-R2 | L2 | Authority comes from a written mandate, current owners remain visible, and work ends in evidence and handoff. | Return to the recruiter CTA. |
+| Collaborative-systems index | "Built with partners" context layer | J-R2 | L2 | Context for collaboration only; maturity varies and each project page remains authoritative. It is not an operator solicitation or a commercial offer. | Return to the recruiter CTA. |
+| Product-operating readiness index | Gated diligence index | J-O1 | L3 | Show only product, operator, demand, rights, custody, data, support, and return-path categories. Terms require `HG-OPERATOR-TERMS`. | No public CTA; access only after qualification. |
+
+## Front-door CTA invariant
+
+The front door has exactly these two interactive actions:
+
+1. **Client:** discuss a fixed-scope Agentic Delivery Audit.
+2. **Recruiter:** discuss a senior systems architecture or engineering role with a named mandate.
+
+The product-operating path is deliberately not a third public CTA. It is an L3 qualification
+route with no implied equity, licence, revenue, custody, transfer, or operating authority.
+
+## Content assembly and rollback rules
+
+- Start with the canonical identity and authorship disclosure from W01; do not create a
+  surface-specific title, headline, or disclosure.
+- Attach each proof object to the client or recruiter job it serves. Proof density, repository
+  volume, rankings, and mythology are never generic leads.
+- Label every evidence-sensitive statement at the disclosure status its accepted source permits.
+- Keep partnership material gated. Product interest is not qualification, and diligence is not
+  an offer.
+- If a block serves multiple jobs, lacks a level, or adds a third CTA, remove it and preserve the
+  two-door L1 route plus the gated L3 operator path.
+
 ## Level 1 — The front door (10 seconds)
 
 Surfaces: `4444J99` profile README, portfolio landing page, bios, org profile README header.
 
 Must answer, in order:
 1. **What does Anthony do?** — "I build production systems that solve expensive problems."
-   Supporting line: "One person, directing a governed multi-agent production system — with the
-   receipts public."
+   Authorship disclosure: "Architected and directed by one person through a governed,
+   multi-agent production system."
 2. **For whom?** — the two doors, unchanged: clients who want a system deployed for their shop;
    employers/recruiters hiring a senior systems builder.
 3. **What expensive problem?** — agentic delivery that survives contact with reality: most AI
