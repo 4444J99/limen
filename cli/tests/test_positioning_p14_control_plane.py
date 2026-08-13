@@ -74,7 +74,7 @@ def test_dependency_ledger_binds_full_dag_assignments_and_current_frontier():
         {
             "target": "limen",
             "pull_request": 2319,
-            "head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114",
+            "head": "c38a8386c3c4247b6b01f5867b267f0f65ebfb0c",
         }
     ]
     assert all(row["counts_as_closure"] is False for row in ledger["predecessor_chunks"])

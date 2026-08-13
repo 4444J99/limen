@@ -111,7 +111,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2316, "head": "ef6e4df64f97c11dba2c159752d5a13b50a96c10"}
+        {"target": "limen", "pull_request": 2316, "head": "78736b8133c98e59d85069ea54eba2f20ed7b0a2"}
       ],
       "frontier_work": []
     },
@@ -152,7 +152,7 @@
       "preflight_state": "prepared_draft",
       "counts_as_closure": false,
       "evidence": [
-        {"target": "limen", "pull_request": 2319, "head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114"}
+        {"target": "limen", "pull_request": 2319, "head": "c38a8386c3c4247b6b01f5867b267f0f65ebfb0c"}
       ],
       "frontier_work": []
     }
@@ -219,7 +219,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2316",
       "state": "open",
       "draft": true,
-      "observed_head": "ef6e4df64f97c11dba2c159752d5a13b50a96c10",
+      "observed_head": "78736b8133c98e59d85069ea54eba2f20ed7b0a2",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["proof-led content contracts", "synthetic measurement fixtures", "correction and withdrawal tests"],
       "counts_as_closure": false
@@ -258,7 +258,7 @@
       "pull_request_url": "https://github.com/organvm/limen/pull/2319",
       "state": "open",
       "draft": true,
-      "observed_head": "db0d991af5bfbfdec19e9fa3b0f5a89d9337e114",
+      "observed_head": "c38a8386c3c4247b6b01f5867b267f0f65ebfb0c",
       "effect_scope": "repository_reversible",
       "reversible_actions": ["foundry candidate schemas", "synthetic operator and return drills", "private-boundary validation"],
       "counts_as_closure": false

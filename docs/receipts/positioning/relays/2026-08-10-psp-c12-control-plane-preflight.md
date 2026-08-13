@@ -61,10 +61,10 @@ URLs, full work dependencies, and exact model/effort assignments. A registry dri
 | C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `codex/psp-c05-delivery-os-preflight-relay` | `bcb69fa25dc93fa15b5ec4d985d845067a58c307` | false |
 | C06 | [#2317](https://github.com/organvm/limen/pull/2317) | `codex/psp-c06-public-surfaces-relay` | `4eb50463b7f4136b47a103c9792c1ded5caf7873` | false |
 | C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `codex/psp-c07-private-inbound-preflight` | `c3b92707a0f6d0ea3076680d100d60d0217f8fe9` | false |
-| C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `ef6e4df64f97c11dba2c159752d5a13b50a96c10` | false |
+| C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `78736b8133c98e59d85069ea54eba2f20ed7b0a2` | false |
 | C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `03d5e8fcefd73249f8c7edf61ace31e98b6d73e0` | false |
 | C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `98e10060a31a69c3d6cfe54375c68fe298c6c53a` | false |
-| C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` | false |
+| C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `c38a8386c3c4247b6b01f5867b267f0f65ebfb0c` | false |
 | C12 | [#2320](https://github.com/organvm/limen/pull/2320) | `codex/psp-c12-control-plane-preflight` | runtime exact-head binding | false |
 
 All nine PRs were open drafts when queried. Their existence, heads, green checks, and prepared
