@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic delivery-gates flow</title>
+  <desc id="desc">A private preflight diagram from authority through a bounded packet, native execution, predicate, and either receipt or rollback.</desc>
+  <rect width="1200" height="260" fill="#101827" rx="24"/>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <g fill="#172554" stroke="#93c5fd" stroke-width="2">
+      <rect x="35" y="85" width="160" height="76" rx="12"/>
+      <rect x="270" y="85" width="160" height="76" rx="12"/>
+      <rect x="505" y="85" width="160" height="76" rx="12"/>
+      <rect x="740" y="30" width="160" height="76" rx="12"/>
+      <rect x="740" y="155" width="160" height="76" rx="12"/>
+      <rect x="975" y="30" width="180" height="76" rx="12"/>
+      <rect x="975" y="155" width="180" height="76" rx="12"/>
+    </g>
+    <g fill="#e0f2fe" font-size="18" font-weight="700">
+      <text x="115" y="130">Authority</text>
+      <text x="350" y="122">Bounded</text><text x="350" y="145">packet</text>
+      <text x="585" y="122">Native</text><text x="585" y="145">execution</text>
+      <text x="820" y="76">Predicate passes</text>
+      <text x="820" y="201">Fails or lacks authority</text>
+      <text x="1065" y="76">Exact-head receipt</text>
+      <text x="1065" y="201">Blocked / rollback</text>
+    </g>
+  </g>
+  <g fill="none" stroke="#7dd3fc" stroke-width="4" marker-end="url(#arrow)">
+    <path d="M195 123H270"/><path d="M430 123H505"/><path d="M665 123H710V68H740"/><path d="M665 123H710V193H740"/><path d="M900 68H975"/><path d="M900 193H975"/>
+  </g>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7dd3fc"/></marker></defs>
+</svg>

@@ -1,0 +1,86 @@
+{
+  "schema": "psp-c08-claim-source-register/v1",
+  "package_state": "private-staging-only",
+  "sources": [
+    {
+      "id": "CLM-LIMEN-OPERATING",
+      "status": "verified",
+      "source": "docs/positioning/claims-ledger.md#2-product-claims",
+      "allowed_wording": "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026.",
+      "qualification": "Production means operational internally; it does not mean customer deployment."
+    },
+    {
+      "id": "CLM-AUTHORSHIP",
+      "status": "verified",
+      "source": "docs/positioning/claims-ledger.md#5-authorship",
+      "allowed_wording": "Architected and directed by one person through a governed, multi-agent production system.",
+      "qualification": "Machine assistance is central and must be disclosed, not concealed."
+    },
+    {
+      "id": "CLM-PROOF-METHOD",
+      "status": "ratified-method",
+      "source": "docs/positioning/proof-production-program.md#p1--limen-engineering-report-flagship-proof-object",
+      "allowed_wording": "The proof object must make its method reproducible and give failure modes equal weight to successes.",
+      "qualification": "No current headline metric is asserted by this package."
+    },
+    {
+      "id": "CLM-CAPTURE-DOORS",
+      "status": "ratified-method",
+      "source": "docs/positioning/_capture.md#the-mechanism-live-in-this-repo",
+      "allowed_wording": "Client and recruiter doors are attributable through pre-tagged inbound subjects, with no cold outreach or autonomous send implied.",
+      "qualification": "The package records door tags only; it does not configure or expose a contact address."
+    },
+    {
+      "id": "WITHHELD-ADOPTION",
+      "status": "withheld",
+      "source": "docs/positioning/claims-ledger.md#6-commercial-evidence",
+      "prohibited": [
+        "revenue",
+        "paying customers",
+        "external adoption",
+        "daily installs",
+        "customer deployment"
+      ],
+      "replacement": "No commercial or adoption claim is staged."
+    },
+    {
+      "id": "WITHHELD-RANKING-AND-VOLUME",
+      "status": "withheld",
+      "source": "docs/positioning/claims-ledger.md#never-publish-list",
+      "prohibited": [
+        "top 1%",
+        "top 0.1%",
+        "100 shipped products",
+        "solo-built"
+      ],
+      "replacement": "Use dated, method-backed evidence only when separately admitted."
+    },
+    {
+      "id": "WITHHELD-INCIDENT",
+      "status": "withheld",
+      "source": "institutio/positioning/program.yaml (PSP-P09-W06)",
+      "prohibited": [
+        "real incident details without sanitization review",
+        "unverified causal claims",
+        "private evidence"
+      ],
+      "replacement": "Use the synthetic correction drill until a separately verified and sanitized incident source is admitted."
+    }
+  ],
+  "external_gates": [
+    {
+      "work_id": "PSP-P09-W02",
+      "gate": "HG-PUBLIC-IDENTITY",
+      "state": "unapproved",
+      "effect": "public identity publication",
+      "prohibited_until_satisfied": ["publish", "deploy", "expose report", "claim a live URL"]
+    },
+    {
+      "work_id": "PSP-P09-W08",
+      "gate": "HG-PUBLICATION-SEND",
+      "state": "unapproved",
+      "effect": "social, newsletter, community, or direct-message send",
+      "prohibited_until_satisfied": ["send", "schedule distribution", "claim channel outcomes", "automate outreach"]
+    }
+  ]
+}

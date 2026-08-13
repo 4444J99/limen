@@ -1,0 +1,23 @@
+{
+  "schema": "psp-c08-narrative-fixtures/v1",
+  "state": "synthetic-only",
+  "architecture": {
+    "fixture_id": "architecture-governed-change-v1",
+    "repository": "example.invalid/governed-docs",
+    "change": "A fictional documentation update is limited to one public path.",
+    "authority": "synthetic packet grants a documentation-only scope",
+    "predicate": "synthetic check confirms the expected heading",
+    "success_receipt": "fixture receipt tied to synthetic revision 0000000",
+    "failure_path": "missing authority or failed predicate leaves the change blocked",
+    "private_data": "[redacted]"
+  },
+  "incident": {
+    "fixture_id": "correction-drill-v1",
+    "status": "synthetic drill; not a real incident",
+    "timeline": ["synthetic claim drift detected", "asset quarantined", "source reviewed", "corrected draft prepared"],
+    "impact": "No external impact is asserted.",
+    "cause": "Unknown until a verifiable source is admitted.",
+    "prevention": "A claim-source check is run before a staged asset re-enters review.",
+    "private_data": "[redacted]"
+  }
+}
