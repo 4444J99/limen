@@ -1155,7 +1155,10 @@
       "gate": "one conversational ask in-channel; his account creation",
       "cost": "~1 message + his ~5 minutes",
       "unlocks": "repo invites for all three ventures; the ten-questions and terms conversations gain a durable surface",
-      "note": "Ask registry: _people-private/people/dustin/open-asks.yaml DUS-003. Delivery constraints per the dialogue persona record: one ask per message, never bundled."
+      "note": "Ask registry: _people-private/people/dustin/open-asks.yaml DUS-003. Delivery constraints per the dialogue persona record: one ask per message, never bundled.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2367
     },
     {
       "id": "L-DSP-TEN-QUESTIONS",
@@ -1165,7 +1168,10 @@
       "gate": "the partner answers, in any channel, a few at a time",
       "cost": "conversation over weeks, zero build cost",
       "unlocks": "post-dsp-platform P09/P10 (consumer shell); v1.0.0 omega is NOT gated on this (deferral path recorded in the repo ladder)",
-      "note": "Ask registry: DUS-004. Roadmap: 4444J99/post-dsp-platform roadmap/ladder.json levers block."
+      "note": "Ask registry: DUS-004. Roadmap: 4444J99/post-dsp-platform roadmap/ladder.json levers block.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2368
     },
     {
       "id": "L-CONS-PRICE",
@@ -1175,7 +1181,10 @@
       "gate": "operator decision (a number), optionally after the partner conversation",
       "cost": "one decision",
       "unlocks": "the-consulate P07 (pricing ladder, SOW, contract templates)",
-      "note": "Also referenced by engagement human-gates (organs/consulting/engagements/dustin.yaml). The partner's own price question (DUS-001, 2026-08-06) belongs to the social lane; this lever is the consulting practice's own price."
+      "note": "Also referenced by engagement human-gates (organs/consulting/engagements/dustin.yaml). The partner's own price question (DUS-001, 2026-08-06) belongs to the social lane; this lever is the consulting practice's own price.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2369
     },
     {
       "id": "L-NAS-TERMS",
@@ -1185,7 +1194,10 @@
       "gate": "principal names a number in-channel; partner accepts or the counter-proposal resolves",
       "cost": "one message each way",
       "unlocks": "new-ancients-social P08; jointly with L-NAS-CREDENTIALS, P09",
-      "note": "Ask registry: DUS-001/DUS-002. Engagement record holds the no-bundling exclusion: never fold the two unfunded ventures into this offer."
+      "note": "Ask registry: DUS-001/DUS-002. Engagement record holds the no-bundling exclusion: never fold the two unfunded ventures into this offer.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2370
     },
     {
       "id": "L-NAS-CREDENTIALS",
@@ -1195,7 +1207,10 @@
       "gate": "written agreement + credential handover through the credential organ (never chat)",
       "cost": "one written agreement; credential atoms go to the credential organ + Wall #320",
       "unlocks": "new-ancients-social P09 posting adapters",
-      "note": "Terms (L-NAS-TERMS) come first; this lever is deliberately separate so terms can close without any credential exposure."
+      "note": "Terms (L-NAS-TERMS) come first; this lever is deliberately separate so terms can close without any credential exposure.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2371
     }
   ]
 }
