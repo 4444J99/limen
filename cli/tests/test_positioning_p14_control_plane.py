@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 import importlib.util
 from pathlib import Path
+import tempfile
 
 import pytest
 
@@ -55,7 +56,13 @@ def test_dependency_ledger_binds_full_dag_assignments_and_current_frontier():
             "work_id": "PSP-P03-W07",
             "issue": "https://github.com/organvm/limen/issues/2188",
             "state": "open",
-            "assignment": {"slug": "gpt-5.4-mini", "effort": "low"},
+            "assignment_requirement": {
+                "selection": "runtime_catalog",
+                "reasoning": "routine",
+                "effect": "read",
+                "effort": "low",
+                "capabilities": ["research", "qualitative_analysis"],
+            },
             "acceptance_boundary": "Five genuine independent target-like readers; model, author, coached, or fabricated responses do not count.",
         }
     ]
@@ -74,7 +81,8 @@ def test_dependency_ledger_binds_full_dag_assignments_and_current_frontier():
         {
             "target": "limen",
             "pull_request": 2319,
-            "head": "c38a8386c3c4247b6b01f5867b267f0f65ebfb0c",
+            "source_head": "96b1371e7c62e149d8a20ad9426c4955ebb87800",
+            "integrated_main_head": "a16e269bec766f2ffed335f9010dababce5b6f35",
         }
     ]
     assert all(row["counts_as_closure"] is False for row in ledger["predecessor_chunks"])
@@ -96,9 +104,9 @@ def test_preparation_owner_head_must_match_predecessor_evidence():
     module = _load()
     contract = module.load_contract(MANIFEST)
     ledger = module._load_json(LEDGER)
-    ledger["preparation_owners"][0]["observed_head"] = "f" * 40
+    ledger["preparation_owners"][0]["source_head"] = "f" * 40
 
-    with pytest.raises(module.P14Error, match="C04 preparation owner head must match predecessor evidence head"):
+    with pytest.raises(module.P14Error, match="C04 preparation owner heads must match predecessor evidence"):
         module.validate_dependency_ledger(ledger, contract)
 
 
@@ -106,8 +114,26 @@ def test_dependency_ledger_fails_closed_on_registry_assignment_drift():
     module = _load()
     contract = module.load_contract(MANIFEST)
     ledger = module._load_json(LEDGER)
-    ledger["p14_stages"][-1]["assignment"]["effort"] = "max"
+    ledger["p14_stages"][-1]["assignment_requirement"]["effort"] = "max"
     with pytest.raises(module.P14Error, match="PSP-P14-W09 dependency, issue, assignment, or closure drift"):
+        module.validate_dependency_ledger(ledger, contract)
+
+
+def test_dependency_ledger_rejects_duplicate_json_members():
+    module = _load()
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "duplicate.json"
+        path.write_text('{"status":"safe","status":"shadowed"}', encoding="utf-8")
+        with pytest.raises(module.P14Error, match="duplicate JSON member: status"):
+            module._load_json(path)
+
+
+def test_dependency_ledger_rejects_surplus_root_fields():
+    module = _load()
+    contract = module.load_contract(MANIFEST)
+    ledger = module._load_json(LEDGER)
+    ledger["unexpected"] = "surplus"
+    with pytest.raises(module.P14Error, match="exact public-safe root schema"):
         module.validate_dependency_ledger(ledger, contract)
 
 

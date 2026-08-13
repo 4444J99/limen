@@ -48,16 +48,17 @@ The v3 preflight makes two frontiers explicit and independent:
 stop-work signal. Every prepared owner row says `counts_as_closure: false`; a branch, draft PR,
 green CI run, synthetic fixture, or generated visual direction is ownership/preparation evidence,
 not dependency, leaf, phase, or program closure. The ledger is checked against the canonical
-registry for chunk dependencies, phase ownership, conductors, all nine P14 model/effort
-assignments, issue URLs, and all 23 terminal requirement nodes.
+registry for chunk dependencies, phase ownership, runtime catalog requirements, all nine P14
+capability/reasoning/effect/effort contracts, issue URLs, and all 23 terminal requirement nodes.
 
-At the 2026-08-12 reconciliation point, all nine C03-C11 predecessor chunks remain formal blockers
+At the 2026-08-13 reconciliation point, all nine C03-C11 predecessor chunks remain formal blockers
 and all 23 P14 terminal nodes remain open: 32 blockers, derived rather than hard-coded. The formal
 execution frontier is `PSP-P03-W07` / issue
-[#2188](https://github.com/organvm/limen/issues/2188), assigned to `gpt-5.4-mini` / `low`. Its
+[#2188](https://github.com/organvm/limen/issues/2188), requiring routine/read/low reasoning and
+`research` plus `qualitative_analysis` capability from the live provider catalog. Its
 five-reader acceptance boundary requires genuine independent target-like readers; model, author,
 coached, or fabricated responses do not count. It is owned by the existing
-`codex/psp-c03-identity-offers-preflight` branch and draft PR #2312.
+`codex/psp-c03-identity-offers-preflight` branch and merged PR #2312.
 
 The independent reversible preparation frontier reuses these existing owner lanes; it never creates
 a duplicate:
@@ -74,8 +75,9 @@ a duplicate:
 | C11 | #2319 | `codex/psp-c11-governed-foundry-preflight` |
 | C12 | #2320 | `codex/psp-c12-control-plane-preflight` |
 
-The machine report includes each lane's current branch, PR, observed head (or runtime head binding
-for C12), reversible action list, and `counts_as_closure: false`.
+The C04-C11 packages are merged, while C12 remains the current open integration lane. The machine
+report includes each lane's source and integrated-main heads (or runtime head binding for C12),
+reversible action list, lifecycle truth, and `counts_as_closure: false`.
 
 The live terminal predicate is separate:
 

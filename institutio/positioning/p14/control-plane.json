@@ -9,7 +9,7 @@
   },
   "dependency_ledger": {
     "path": "institutio/positioning/p14/dependency-ledger.json",
-    "schema_version": "limen.positioning_p14_dependency_ledger.v2",
+    "schema_version": "limen.positioning_p14_dependency_ledger.v3",
     "predecessor_chunk_count": 9,
     "terminal_node_count": 23,
     "counts_as_closure": false

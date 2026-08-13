@@ -33,7 +33,7 @@ DEFAULT_EVIDENCE = ROOT / "docs" / "receipts" / "positioning" / "p14" / "live-ev
 PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
 
 CONTROL_SCHEMA = "limen.positioning_p14_control_plane.v3"
-LEDGER_SCHEMA = "limen.positioning_p14_dependency_ledger.v2"
+LEDGER_SCHEMA = "limen.positioning_p14_dependency_ledger.v3"
 OPERATIONS_SCHEMA = "limen.positioning_p14_operations.v1"
 OPERATION_FIXTURE_SCHEMA = "limen.positioning_p14_operational_fixture.v1"
 FIXTURE_SCHEMA = "limen.positioning_p14_fixture.v1"
@@ -185,6 +185,27 @@ PREPARATION_OWNERS = {
     "PSP-C11": (2319, "codex/psp-c11-governed-foundry-preflight"),
     "PSP-C12": (2320, "codex/psp-c12-control-plane-preflight"),
 }
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution",
+}
+EXPECTED_LEDGER_KEYS = {
+    "schema_version",
+    "observed_at",
+    "authoritative_registry",
+    "program_repository",
+    "counts_as_closure",
+    "closed_baseline",
+    "phase_ownership",
+    "predecessor_chunks",
+    "preparation_owners",
+    "p14_stages",
+    "terminal_nodes",
+    "assignment_policy",
+    "p14_assignment_requirement",
+}
 
 
 class P14Error(RuntimeError):
@@ -194,9 +215,21 @@ class P14Error(RuntimeError):
 def _load_json(path: Path, *, missing: object | None = None) -> Any:
     if missing is not None and not path.exists():
         return missing
+
+    def object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise P14Error(f"duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, P14Error) as exc:
         raise P14Error(f"cannot load JSON {path}: {exc}") from exc
 
 
@@ -281,6 +314,42 @@ def _program_graph_and_map() -> tuple[dict[str, Any], dict[str, Any], dict[str, 
     except Exception as exc:
         raise P14Error(f"cannot derive P14 dependency truth from the program registry: {exc}") from exc
     return graph, mapping, module
+
+
+def _chunk_assignment_requirement(
+    chunk_id: str,
+    graph: dict[str, Any],
+    program: dict[str, Any],
+) -> dict[str, Any]:
+    assignment = program["chunk_assignment_for"](chunk_id, graph)
+    return {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": assignment["effort"],
+        "capabilities": sorted(
+            {
+                capability
+                for work_id in graph["chunk_work"][chunk_id]
+                for capability in graph["work_by_id"][work_id]["capabilities"]
+            }
+        ),
+    }
+
+
+def _work_assignment_requirement(
+    work_id: str,
+    graph: dict[str, Any],
+    program: dict[str, Any],
+) -> dict[str, Any]:
+    packet = graph["work_by_id"][work_id]
+    assignment = program["model_assignment_for"](work_id, graph)
+    return {
+        "selection": "runtime_catalog",
+        "reasoning": packet["reasoning"],
+        "effect": packet["effect"],
+        "effort": assignment["effort"],
+        "capabilities": packet["capabilities"],
+    }
 
 
 def _path_value(value: object, path: str) -> object:
@@ -484,6 +553,8 @@ def load_operations(path: Path = DEFAULT_OPERATIONS) -> dict[str, Any]:
 
 def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[str, Any]:
     ledger = _mapping(value, "dependency ledger")
+    if set(ledger) != EXPECTED_LEDGER_KEYS:
+        raise P14Error("dependency ledger must use the exact public-safe root schema")
     if ledger.get("schema_version") != LEDGER_SCHEMA:
         raise P14Error(f"dependency ledger schema_version must be {LEDGER_SCHEMA}")
     if ledger.get("authoritative_registry") != "institutio/positioning/program.yaml":
@@ -492,6 +563,8 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
         raise P14Error("dependency ledger repository drift")
     if ledger.get("counts_as_closure") is not False:
         raise P14Error("dependency ledger preparation must not count as closure")
+    if ledger.get("assignment_policy") != ASSIGNMENT_POLICY:
+        raise P14Error("dependency ledger assignment policy drift")
     if not _is_rfc3339(ledger.get("observed_at")):
         raise P14Error("dependency ledger observed_at must be RFC3339")
 
@@ -527,9 +600,9 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
         registry = graph["chunk_by_id"][chunk_id]
         if row.get("depends_on") != registry["depends_on"] or row.get("phase_ids") != registry["phase_ids"]:
             raise P14Error(f"{chunk_id} dependency or phase ownership drift")
-        expected_conductor = {key: registry["conductor"][key] for key in ("slug", "effort")}
-        if row.get("conductor") != expected_conductor:
-            raise P14Error(f"{chunk_id} conductor assignment drift")
+        expected_requirement = _chunk_assignment_requirement(chunk_id, graph, program)
+        if row.get("assignment_requirement") != expected_requirement:
+            raise P14Error(f"{chunk_id} runtime assignment requirement drift")
         expected_closure = "partial" if chunk_id == "PSP-C03" else "open"
         if row.get("closure_state") != expected_closure or row.get("counts_as_closure") is not False:
             raise P14Error(f"{chunk_id} closure truth drift")
@@ -545,20 +618,21 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
             pull_request = receipt.get("pull_request")
             if not isinstance(pull_request, int) or isinstance(pull_request, bool) or pull_request < 1:
                 raise P14Error(f"{chunk_id} evidence pull_request must be a positive integer")
-            if not HEAD_RE.fullmatch(str(receipt.get("head") or "")):
-                raise P14Error(f"{chunk_id} evidence head must be an exact commit")
+            if not HEAD_RE.fullmatch(str(receipt.get("source_head") or "")):
+                raise P14Error(f"{chunk_id} evidence source_head must be an exact commit")
+            if not HEAD_RE.fullmatch(str(receipt.get("integrated_main_head") or "")):
+                raise P14Error(f"{chunk_id} evidence integrated_main_head must be an exact commit")
         frontier = _list(row.get("frontier_work"), f"{chunk_id}.frontier_work")
         if chunk_id == "PSP-C03":
             if len(frontier) != 1:
                 raise P14Error("C03 must expose exactly the current W07 reader frontier")
             reader = _mapping(frontier[0], "C03 frontier work")
-            assignment = program["model_assignment_for"]("PSP-P03-W07", graph)
-            expected_assignment = {key: assignment[key] for key in ("slug", "effort")}
+            expected_requirement = _work_assignment_requirement("PSP-P03-W07", graph, program)
             if (
                 reader.get("work_id") != "PSP-P03-W07"
                 or reader.get("issue") != mapping["issues"]["PSP-P03-W07"]["url"]
                 or reader.get("state") != "open"
-                or reader.get("assignment") != expected_assignment
+                or reader.get("assignment_requirement") != expected_requirement
             ):
                 raise P14Error("C03 reader frontier drift")
             _text(reader.get("acceptance_boundary"), "C03 reader frontier acceptance_boundary")
@@ -569,14 +643,20 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
     if tuple(chunk_ids) != PREDECESSOR_CHUNK_IDS:
         raise P14Error("predecessor chunks must remain in canonical C03-C11 order")
 
-    predecessor_limen_heads: dict[str, str] = {}
+    predecessor_limen_heads: dict[str, dict[str, str]] = {}
     for raw in raw_chunks:
         row = _mapping(raw, "predecessor chunk")
         chunk_id = _text(row.get("chunk_id"), "predecessor chunk id")
         for raw_evidence in _list(row.get("evidence"), f"{chunk_id}.evidence", nonempty=True):
             evidence = _mapping(raw_evidence, f"{chunk_id}.evidence")
             if evidence.get("target") == "limen":
-                predecessor_limen_heads[chunk_id] = _text(evidence.get("head"), f"{chunk_id}.limen head")
+                predecessor_limen_heads[chunk_id] = {
+                    "source_head": _text(evidence.get("source_head"), f"{chunk_id}.limen source_head"),
+                    "integrated_main_head": _text(
+                        evidence.get("integrated_main_head"),
+                        f"{chunk_id}.limen integrated_main_head",
+                    ),
+                }
                 break
 
     preparation_owners = _list(ledger.get("preparation_owners"), "dependency ledger preparation_owners")
@@ -593,39 +673,45 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
             or owner.get("branch") != branch
             or owner.get("pull_request") != pull_request
             or owner.get("pull_request_url") != f"https://github.com/organvm/limen/pull/{pull_request}"
-            or owner.get("state") != "open"
-            or owner.get("draft") is not True
             or owner.get("effect_scope") != "repository_reversible"
             or owner.get("counts_as_closure") is not False
         ):
             raise P14Error(f"{chunk_id} reversible preparation owner drift")
+        expected_state = "open" if chunk_id == "PSP-C12" else "merged"
+        expected_draft = True if chunk_id == "PSP-C12" else False
+        if owner.get("state") != expected_state or owner.get("draft") != expected_draft:
+            raise P14Error(f"{chunk_id} reversible preparation owner lifecycle drift")
         _list(owner.get("reversible_actions"), f"{chunk_id}.reversible_actions", nonempty=True)
         if chunk_id == "PSP-C12":
             if owner.get("head_binding") != "runtime_exact_head" or "observed_head" in owner:
                 raise P14Error("C12 preparation owner must bind its runtime exact head without self-reference")
-        elif not HEAD_RE.fullmatch(str(owner.get("observed_head") or "")):
-            raise P14Error(f"{chunk_id} preparation owner must bind an exact observed head")
-        elif owner["observed_head"] != predecessor_limen_heads.get(chunk_id):
-            raise P14Error(f"{chunk_id} preparation owner head must match predecessor evidence head")
+        elif not HEAD_RE.fullmatch(str(owner.get("source_head") or "")) or not HEAD_RE.fullmatch(
+            str(owner.get("integrated_main_head") or "")
+        ):
+            raise P14Error(f"{chunk_id} preparation owner must bind exact source and integrated heads")
+        elif {
+            "source_head": owner["source_head"],
+            "integrated_main_head": owner["integrated_main_head"],
+        } != predecessor_limen_heads.get(chunk_id):
+            raise P14Error(f"{chunk_id} preparation owner heads must match predecessor evidence")
     if tuple(owner_chunk_ids) != PREPARATION_CHUNK_IDS:
         raise P14Error("reversible preparation owners must remain in canonical C04-C12 order")
 
-    c12 = graph["chunk_by_id"]["PSP-C12"]
-    expected_p14_conductor = {key: c12["conductor"][key] for key in ("slug", "effort")}
-    if ledger.get("p14_conductor") != expected_p14_conductor:
-        raise P14Error("P14 conductor assignment drift")
+    expected_p14_requirement = _chunk_assignment_requirement("PSP-C12", graph, program)
+    if ledger.get("p14_assignment_requirement") != expected_p14_requirement:
+        raise P14Error("P14 runtime assignment requirement drift")
     p14_stages = _list(ledger.get("p14_stages"), "dependency ledger p14_stages")
     if len(p14_stages) != len(WORK_IDS):
         raise P14Error("dependency ledger must contain all nine P14 stages")
     for index, work_id in enumerate(WORK_IDS):
         row = _mapping(p14_stages[index], f"p14_stages[{index}]")
         packet = graph["work_by_id"][work_id]
-        assignment = program["model_assignment_for"](work_id, graph)
+        assignment_requirement = _work_assignment_requirement(work_id, graph, program)
         if (
             row.get("work_id") != work_id
             or row.get("issue") != mapping["issues"][work_id]["url"]
             or row.get("depends_on") != packet["depends_on"]
-            or row.get("assignment") != {key: assignment[key] for key in ("slug", "effort")}
+            or row.get("assignment_requirement") != assignment_requirement
             or row.get("closure_state") != "open"
             or row.get("counts_as_closure") is not False
         ):
@@ -682,7 +768,8 @@ def dependency_report(ledger: dict[str, Any]) -> dict[str, Any]:
             "pull_request_url": owner["pull_request_url"],
             "state": owner["state"],
             "draft": owner["draft"],
-            "observed_head": owner.get("observed_head"),
+            "source_head": owner.get("source_head"),
+            "integrated_main_head": owner.get("integrated_main_head"),
             "head_binding": owner.get("head_binding"),
             "effect_scope": owner["effect_scope"],
             "reversible_actions": deepcopy(owner["reversible_actions"]),

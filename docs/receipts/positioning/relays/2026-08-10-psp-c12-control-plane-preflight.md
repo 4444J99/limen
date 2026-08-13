@@ -1,7 +1,7 @@
 ---
 type: prompt-relay-envelope
 version: 2.0
-date: 2026-08-12
+date: 2026-08-13
 from: Codex direct-session reversible preflight
 to: next authorized PSP-C12 conductor
 scope: organvm/limen branch codex/psp-c12-control-plane-preflight
@@ -19,12 +19,10 @@ compression_level: high
   [#2283](https://github.com/organvm/limen/issues/2283)
 - Branch: `codex/psp-c12-control-plane-preflight`
 - Draft PR: [#2320](https://github.com/organvm/limen/pull/2320)
-- Prior predicate-tested implementation head: `8a9a7af246af27eba807552e2332c66bb691ec1a`
-- Live C12 head before this additive patch: `34d9abb3145e8794e7a4602d401af9a09a20a74f`
-- Additive v3 implementation commit: `3dc24535d819c7253bc19f5170115439925b8911`
+- Exact integration head: pinned by PR #2320 because this tracked relay cannot self-name its containing commit
 - State: **PREPARED/PREFLIGHT**
 - Formal leaf receipts, phase proof, root proof, and closure: not run or claimed
-- External effects: draft branch and PR metadata only
+- External effects: C04-C11 package merges plus the C12 branch/PR; no formal closure or human-gated effect
 
 This lane has no authority to convert preparation into closure, invent external outcomes, solicit
 readers, choose a visual direction, send, publish, deploy, sign, spend, or mutate accounts.
@@ -41,7 +39,8 @@ independent bounded repository work in later prepared owner lanes. Every prepare
 - Nine predecessor chunks, C03 through C11, remain formal blockers.
 - C03 is accepted through W06 at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`.
 - The formal frontier is `PSP-P03-W07` / [#2188](https://github.com/organvm/limen/issues/2188),
-  assigned `gpt-5.4-mini` / `low`.
+  requiring routine/read/low execution with `research` and `qualitative_analysis` capability from
+  the runtime catalog.
 - W07 requires five genuine independent target-like readers. Model, author, coached, or fabricated
   responses do not count; this preflight performed no outreach.
 - C04-C12 remain independently admissible for non-effect repository preparation in their existing
@@ -50,39 +49,41 @@ independent bounded repository work in later prepared owner lanes. Every prepare
 - All 23 P14 terminal requirement nodes remain open.
 - Derived current blocker total: 9 predecessor chunks + 23 P14 requirements = **32**.
 
-The ledger validates phase ownership, chunk dependencies, chunk conductors, all nine P14 issue
-URLs, full work dependencies, and exact model/effort assignments. A registry drift fails closed.
+The ledger validates phase ownership, chunk dependencies, runtime assignment requirements, all
+nine P14 issue URLs, full work dependencies, and exact capability/reasoning/effect/effort
+contracts. Provider/model selection remains live and fails closed when no lane qualifies.
 
-### Reversible preparation owners observed live on 2026-08-12
+### Reversible preparation owners reconciled on 2026-08-13
 
-| Chunk | Owner PR | Owner branch | Observed head | Closure value |
-|---|---:|---|---|---|
-| C04 | [#2313](https://github.com/organvm/limen/pull/2313) | `codex/psp-c04-proof-experience-preflight` | `543fa28df52c9db7be3b7307019dcf209361d0b9` | false |
-| C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `codex/psp-c05-delivery-os-preflight-relay` | `bcb69fa25dc93fa15b5ec4d985d845067a58c307` | false |
-| C06 | [#2317](https://github.com/organvm/limen/pull/2317) | `codex/psp-c06-public-surfaces-relay` | `4eb50463b7f4136b47a103c9792c1ded5caf7873` | false |
-| C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `codex/psp-c07-private-inbound-preflight` | `947921af6c1101acda6b1085d45381a393f3b20a` | false |
-| C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `codex/psp-c08-proof-led-content-preflight` | `78736b8133c98e59d85069ea54eba2f20ed7b0a2` | false |
-| C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `codex/psp-c09-qualification-conversion-relay` | `03d5e8fcefd73249f8c7edf61ace31e98b6d73e0` | false |
-| C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `codex/psp-c10-readiness-preflight` | `98e10060a31a69c3d6cfe54375c68fe298c6c53a` | false |
-| C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `codex/psp-c11-governed-foundry-preflight` | `c38a8386c3c4247b6b01f5867b267f0f65ebfb0c` | false |
-| C12 | [#2320](https://github.com/organvm/limen/pull/2320) | `codex/psp-c12-control-plane-preflight` | runtime exact-head binding | false |
+| Chunk | Owner PR | Source head | Integrated main | Lifecycle | Closure value |
+|---|---:|---|---|---|---|
+| C04 | [#2313](https://github.com/organvm/limen/pull/2313) | `1bb0ceca162129f6c90ae47958712bb19cd99cbb` | `3f2269dd38865244f826aaff4818912a636167be` | merged | false |
+| C05 | [#2315](https://github.com/organvm/limen/pull/2315) | `d31ce37a85adf5d2e448dab8273a61e388f1e589` | `7a0682722185d17095a0b44de17d4bd5cf3284dd` | merged | false |
+| C06 | [#2317](https://github.com/organvm/limen/pull/2317) | `854b6385de6b340485baaf59b1be55bd4d243a4d` | `690617fc2aeea79acfe5604799e6413d70b6e4dd` | merged | false |
+| C07 | [#2318](https://github.com/organvm/limen/pull/2318) | `9d81552a65cab1a8785e74251853881ac1957925` | `799c4bbe80634bb870e379061d03d08a74ea5405` | merged | false |
+| C08 | [#2316](https://github.com/organvm/limen/pull/2316) | `4e55e76b672b296f246bb18f96eccb4de10a8fb4` | `26dba96c74d18ead1244bee8dbbd18c630942b2f` | merged | false |
+| C09 | [#2322](https://github.com/organvm/limen/pull/2322) | `63f82f3cd9ee225cd4baeb84fef36305c7ee4593` | `d1861e3c9b493ecd735f1360d3eacb4daf811ad3` | merged | false |
+| C10 | [#2321](https://github.com/organvm/limen/pull/2321) | `71a6046c2186b4d4ead5136920b82b412ff5d540` | `f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2` | merged | false |
+| C11 | [#2319](https://github.com/organvm/limen/pull/2319) | `96b1371e7c62e149d8a20ad9426c4955ebb87800` | `a16e269bec766f2ffed335f9010dababce5b6f35` | merged | false |
+| C12 | [#2320](https://github.com/organvm/limen/pull/2320) | runtime exact-head binding | pending | open | false |
 
-All nine PRs were open drafts when queried. Their existence, heads, green checks, and prepared
-artifacts are owner receipts only; none closes a dependency, leaf, phase, or the program.
+The C04-C11 packages are merged; C12 remains open until its exact-head rail clears. Integration,
+heads, green checks, and prepared artifacts are owner receipts only; none closes a dependency,
+leaf, phase, or the program.
 
-### P14 model/effort assignments
+### P14 runtime assignment requirements
 
-| Work | Model | Effort |
-|---|---|---|
-| W01 | `gpt-5.6-terra` | `high` |
-| W02 | `gpt-5.6-luna` | `medium` |
-| W03 | `gpt-5.6-sol` | `xhigh` |
-| W04 | `gpt-5.6-sol` | `max` |
-| W05 | `gpt-5.6-terra` | `high` |
-| W06 | `gpt-5.6-sol` | `xhigh` |
-| W07 | `gpt-5.6-terra` | `high` |
-| W08 | `gpt-5.6-terra` | `high` |
-| W09 | `gpt-5.6-sol` | `ultra` |
+| Work | Reasoning/effect | Effort | Required capabilities |
+|---|---|---|---|
+| W01 | deep/write | high | analytics, KPI design, governance |
+| W02 | routine/write | medium | program management, analytics |
+| W03 | deep/write | xhigh | audit, privacy, link check, claim adjudication |
+| W04 | frontier review/write | max | strategy, claim adjudication, sales analysis |
+| W05 | deep/write | high | Python, incident response, content generation |
+| W06 | deep/external | xhigh | deployment, incident response, browser testing |
+| W07 | deep/write | high | sales analysis, offer design |
+| W08 | deep/write | high | product analysis, claim adjudication, portfolio strategy |
+| W09 | frontier review/read | ultra | verification, GitHub read, governance, closeout |
 
 ## What the v3 control plane proves
 
@@ -114,15 +115,14 @@ artifacts are owner receipts only; none closes a dependency, leaf, phase, or the
 | `python3 scripts/positioning-p14-control-plane.py --preflight` | PASS; terminal truth blocked on exactly 32 current atoms |
 | `python3 scripts/positioning-p14-control-plane.py --terminal` | expected exit 3; 9 predecessor blockers + 23 P14 requirements |
 | operational fixture | PASS; W01-W09 runnable, synthetic, non-closing, no predecessor command |
-| focused pytest | PASS; 28 tests, including the W07-open/non-empty C04-C12 frontier regression |
-| scoped exact-tree batch | New P14 gate PASS; all other selected shards passed except `verify-resolver-test`, which correctly caught its stale registry-change expectation after the new gate was registered |
-| invalidated resolver shard | PASS after adding `positioning-p14-control-plane-test` to the expected registry selection; all selection fixtures pass |
+| focused pytest | PASS; 31 tests, including dynamic assignment, exact source/integrated-head, duplicate-member, surplus-root, and W07-open/non-empty C04-C12 frontier regressions |
+| scoped exact-tree cheap wave | PASS; all 24 implicated gates, including live research adjudication, resolver parity, P14, Ruff, and policy gates |
+| admission-gated `pytest-cli` tail | 5,836 passed / 2 skipped; two unrelated campaign-relay host/process timing failures; no P14 failure and no rerun |
 | diff hygiene and Ruff | PASS |
 
-The scoped batch was not replayed after the single resolver expectation correction. Its unchanged
-green shard receipts were retained; only the invalidated resolver shard and the P14-focused receipt
-were rerun, as required by the bounded-composition contract. The relay-only receipt commit that
-follows this implementation commit changes no runner, schema, fixture, or frontier truth.
+The exact-tree cheap wave and every C12-focused predicate are green. The unchanged heavy tail was
+not replayed after the two unrelated timing failures, as required by the bounded-composition
+contract. Exact-head CI remains the integration rail.
 
 ## Activation and completion predicates
 
@@ -143,8 +143,9 @@ follows this implementation commit changes no runner, schema, fixture, or fronti
 - `HG-PRICE-ANCHORS` remains unpulled; do not choose or claim a price decision.
 - Reader outreach, publication, and direct-message sends remain behind their exact authority.
 - Visual selection/build remains with Product Design; all three directions remain unselected.
-- No merge, issue closure, send, publication, deployment, DNS, spend, signature, account mutation,
-  private-evidence exposure, or task-board edit occurred.
+- C04-C11 package merges occurred through the sanctioned rail. No formal issue closure, send,
+  publication, deployment, DNS, spend, signature, account mutation, private-evidence exposure, or
+  task-board edit occurred.
 
 ## Durable owners
 
