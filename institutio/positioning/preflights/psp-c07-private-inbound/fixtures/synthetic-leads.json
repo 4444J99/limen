@@ -1,0 +1,160 @@
+{
+  "schema_version": "limen.psp_c07_synthetic_fixture.v1",
+  "synthetic": true,
+  "expectations": {
+    "synthetic-client-form": {
+      "category": "client",
+      "route": "client_review"
+    },
+    "synthetic-recruiter-mail": {
+      "category": "recruiter",
+      "route": "recruiter_review"
+    },
+    "synthetic-operator-mail": {
+      "category": "operator",
+      "route": "operator_review"
+    },
+    "synthetic-spam-form": {
+      "category": "spam",
+      "route": "discard_spam"
+    },
+    "synthetic-ambiguous-form": {
+      "category": "ambiguous",
+      "route": "manual_review"
+    }
+  },
+  "events": [
+    {
+      "fixture_id": "synthetic-client-form",
+      "kind": "form_submission",
+      "event_id": "evt-client-001",
+      "received_at": "2026-08-10T12:00:00Z",
+      "owner_partition": "synthetic-owner-a",
+      "source_tags": {
+        "surface": "capture-surface-placeholder",
+        "proof": "synthetic-proof-a",
+        "audience": "client"
+      },
+      "contact": {
+        "name": "Synthetic Client",
+        "email": "client@example.invalid"
+      },
+      "request": {
+        "summary": "Systems audit request",
+        "details": "We need an audit of a deployment integration and its operating system."
+      },
+      "consent": {
+        "process_contact": true
+      }
+    },
+    {
+      "fixture_id": "synthetic-client-form-duplicate",
+      "kind": "form_submission",
+      "event_id": "evt-client-002",
+      "received_at": "2026-08-10T12:01:00Z",
+      "owner_partition": "synthetic-owner-a",
+      "source_tags": {
+        "surface": "capture-surface-placeholder",
+        "proof": "synthetic-proof-a",
+        "audience": "client"
+      },
+      "contact": {
+        "name": "Synthetic Client",
+        "email": "client@example.invalid"
+      },
+      "request": {
+        "summary": "Systems audit request",
+        "details": "We need an audit of a deployment integration and its operating system."
+      },
+      "consent": {
+        "process_contact": true
+      }
+    },
+    {
+      "fixture_id": "synthetic-recruiter-mail",
+      "kind": "tagged_mail",
+      "event_id": "evt-recruiter-001",
+      "received_at": "2026-08-10T12:02:00Z",
+      "owner_partition": "synthetic-owner-b",
+      "subject": "[capture-surface-placeholder · hire] — inbound",
+      "proof_tag": "synthetic-proof-b",
+      "contact": {
+        "name": "Synthetic Recruiter",
+        "email": "recruiter@example.invalid"
+      },
+      "request": {
+        "summary": "Production systems role",
+        "details": "A platform team would like to schedule an interview for a systems position."
+      },
+      "consent": {
+        "process_contact": true
+      }
+    },
+    {
+      "fixture_id": "synthetic-operator-mail",
+      "kind": "tagged_mail",
+      "event_id": "evt-operator-001",
+      "received_at": "2026-08-10T12:03:00Z",
+      "owner_partition": "synthetic-owner-a",
+      "subject": "[capture-surface-placeholder · operator] — inbound",
+      "proof_tag": "synthetic-proof-c",
+      "contact": {
+        "name": "Synthetic Operator",
+        "email": "operator@example.invalid"
+      },
+      "request": {
+        "summary": "Runbook handoff",
+        "details": "The operator needs a maintenance runbook and incident handoff review."
+      },
+      "consent": {
+        "process_contact": true
+      }
+    },
+    {
+      "fixture_id": "synthetic-spam-form",
+      "kind": "form_submission",
+      "event_id": "evt-spam-001",
+      "received_at": "2026-08-10T12:04:00Z",
+      "owner_partition": "synthetic-owner-b",
+      "source_tags": {
+        "surface": "capture-surface-placeholder",
+        "proof": "synthetic-proof-d",
+        "audience": "spam"
+      },
+      "contact": {
+        "name": "Synthetic Spam",
+        "email": "spam@example.invalid"
+      },
+      "request": {
+        "summary": "SEO package",
+        "details": "Buy followers with our SEO package and crypto promotion."
+      },
+      "consent": {
+        "process_contact": true
+      }
+    },
+    {
+      "fixture_id": "synthetic-ambiguous-form",
+      "kind": "form_submission",
+      "event_id": "evt-ambiguous-001",
+      "received_at": "2026-08-10T12:05:00Z",
+      "owner_partition": "synthetic-owner-a",
+      "source_tags": {
+        "surface": "capture-surface-placeholder",
+        "proof": "synthetic-proof-e",
+        "audience": "unknown"
+      },
+      "contact": {
+        "name": "Synthetic Ambiguous",
+        "email": "ambiguous@example.invalid"
+      },
+      "request": {
+        "summary": "General question",
+        "details": "Could we talk about the work?"
+      },
+      "consent": {
+        "process_contact": true
+      }
+    }
+  ]
+}
