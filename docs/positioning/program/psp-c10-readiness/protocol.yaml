@@ -1,0 +1,491 @@
+schema_version: limen.positioning_c10_readiness.v4
+mode: preflight_only
+scope:
+  chunk_id: PSP-C10
+  phase_ids: [PSP-P12]
+  extra_work_ids: [PSP-P10-W08]
+  leaf_ids:
+    - PSP-P12-W01
+    - PSP-P12-W02
+    - PSP-P12-W03
+    - PSP-P12-W04
+    - PSP-P12-W05
+    - PSP-P12-W06
+    - PSP-P10-W08
+  formal_predecessor_chunks: [PSP-C05, PSP-C09]
+
+source_bindings:
+  - id: c05_delivery_relay
+    target: limen
+    pull_request: 2315
+    source_head: d31ce37a85adf5d2e448dab8273a61e388f1e589
+    integrated_main_head: 7a0682722185d17095a0b44de17d4bd5cf3284dd
+    role: delivery operating-system relay and public-safe acceptance boundary
+    counts_as_closure: false
+  - id: c05_private_templates
+    target: private_custody
+    pull_request: 135
+    source_head: 432c31ea6bcaf2c175b0fde08b6e1733fe4c2926
+    integrated_main_head: 9172619633bb9a09ea3a05eae9f48e987f2b3e7d
+    role: proposal, SOW, commercial-decision, and acceptance-closeout templates
+    counts_as_closure: false
+  - id: c09_qualification_relay
+    target: limen
+    pull_request: 2322
+    source_head: 63f82f3cd9ee225cd4baeb84fef36305c7ee4593
+    integrated_main_head: d1861e3c9b493ecd735f1360d3eacb4daf811ad3
+    role: qualification, CTA-routing, and conversion source lock
+    counts_as_closure: false
+  - id: c09_private_package
+    target: private_custody
+    pull_request: 136
+    source_head: cd92697d596f674c9ddfc56edc919317ffb463e2
+    integrated_main_head: 53784482af1a5b213dd21df7ab5bc2bd38f90f18
+    role: private discovery, proposal, follow-up, and no-outcome controls
+    counts_as_closure: false
+  - id: c09_portfolio_package
+    target: portfolio
+    pull_request: 222
+    source_head: c44bab44dca190ec115dd498ff252f57e2441a58
+    integrated_main_head: 77c27d16a777af5fc0da8d6a0da503ae17f0d29f
+    role: public audit and conversion-path contract without publication
+    counts_as_closure: false
+
+truth_boundary:
+  operational_readiness_means: >-
+    The templates, state transitions, evidence fields, authority stops, and adjudication branches
+    validate against synthetic fixtures and can be instantiated later by an authorized leaf.
+  commercial_proof_requires: >-
+    Real counterparties, durable terms, delivery and client acceptance, and external outcome
+    evidence that satisfies the owning leaf predicates.
+  synthetic_closes_leaf: false
+  synthetic_closes_phase: false
+  synthetic_closes_chunk: false
+  synthetic_counts_as_outreach: false
+  synthetic_counts_as_payment: false
+  synthetic_counts_as_conversion: false
+  synthetic_counts_as_revenue: false
+  synthetic_counts_as_testimonial_or_reference: false
+  synthetic_counts_as_delivery_acceptance: false
+  synthetic_counts_as_external_outcome: false
+  synthetic_can_refresh_public_claims: false
+  prepared_dependency_counts_as_closed: false
+  agent_or_synthetic_testimonial_counts_as_real: false
+
+assignment_policy:
+  selection: runtime_catalog
+  registry: institutio/positioning/program.yaml
+  catalog_predicate: python3 scripts/positioning-program.py --verify-model-assignments
+  unavailable_action: fail_blocked_no_silent_substitution
+assignment_requirements:
+  conductor:
+    selection: runtime_catalog
+    role: chunk_conductor
+    effort: max
+    capabilities: [case_study, claim_adjudication, client_delivery, data_analysis, decision_review, delivery, editorial, evidence_curation, implementation, partner_coordination, partner_strategy, privacy, sales, sales_analysis, sales_operations, strategy, systems_architecture, technical_audit]
+  leaves:
+    PSP-P12-W01: {selection: runtime_catalog, reasoning: deep, effect: external, effort: xhigh, capabilities: [partner_strategy, sales_operations]}
+    PSP-P12-W02: {selection: runtime_catalog, reasoning: frontier_review, effect: external, effort: max, capabilities: [sales, technical_audit, delivery]}
+    PSP-P12-W03: {selection: runtime_catalog, reasoning: deep, effect: external, effort: xhigh, capabilities: [systems_architecture, implementation, client_delivery]}
+    PSP-P12-W04: {selection: runtime_catalog, reasoning: frontier_review, effect: external, effort: max, capabilities: [case_study, editorial, privacy]}
+    PSP-P12-W05: {selection: runtime_catalog, reasoning: routine, effect: write, effort: medium, capabilities: [evidence_curation, partner_coordination]}
+    PSP-P12-W06: {selection: runtime_catalog, reasoning: frontier_review, effect: write, effort: max, capabilities: [claim_adjudication, strategy, data_analysis]}
+    PSP-P10-W08: {selection: runtime_catalog, reasoning: frontier_review, effect: write, effort: max, capabilities: [sales_analysis, strategy, decision_review]}
+
+leaf_gate_matrix:
+  PSP-P12-W01: [HG-PUBLICATION-SEND, HG-CONTRACT]
+  PSP-P12-W02: [HG-CONTRACT]
+  PSP-P12-W03: [HG-CONTRACT]
+  PSP-P12-W04: [HG-PUBLIC-IDENTITY, HG-CONTRACT]
+  PSP-P12-W05: [HG-PUBLICATION-SEND, HG-CONTRACT]
+  PSP-P12-W06: []
+  PSP-P10-W08: []
+
+leaf_dependency_matrix:
+  PSP-P12-W01: [PSP-P09-W08, PSP-P10-W01, PSP-P11-W02]
+  PSP-P12-W02: [PSP-P12-W01, PSP-P10-W05, PSP-P11-W07]
+  PSP-P12-W03: [PSP-P12-W02, PSP-P11-W04]
+  PSP-P12-W04: [PSP-P12-W02, PSP-P11-W08]
+  PSP-P12-W05: [PSP-P12-W02]
+  PSP-P12-W06: [PSP-P12-W02, PSP-P12-W04, PSP-P12-W05, PSP-P02-W08]
+  PSP-P10-W08: [PSP-P09-W08, PSP-P10-W07, PSP-P12-W02]
+
+recruitment:
+  cohort_limit: 3
+  qualified_door_mail_threshold: 5
+  required_criteria:
+    - id: problem_fit
+      rule: The team has an observable agentic-delivery control problem inside the audit wedge.
+    - id: decision_authority
+      rule: A named real-world role can approve bounded scope, terms, and acceptance.
+    - id: evidence_access
+      rule: The team can provide read-only, least-privilege evidence without plaintext secrets.
+    - id: bounded_scope
+      rule: The audit fits one team or pipeline and excludes open-ended consulting.
+    - id: outcome_observable
+      rule: A decision or before/after behavior can be observed inside the agreed window.
+    - id: consent_capacity
+      rule: Evidence, interview, retention, deletion, and any public-proof rights can be decided explicitly.
+  hard_exclusions:
+    - id: no_decision_authority
+      rule: No real-world role can approve bounded scope, terms, and acceptance.
+    - id: production_write_or_plaintext_credentials
+      rule: The candidate requests production write access or plaintext credentials.
+    - id: unbounded_scope
+      rule: The request implies unlimited support, build work, or enterprise-wide scope.
+    - id: no_evidence_governance
+      rule: There is no lawful evidence-use, retention, withdrawal, or deletion path.
+    - id: unobservable_outcome
+      rule: The declared outcome cannot be observed inside the bounded window.
+    - id: uncontained_risk
+      rule: A conflict, safety, privacy, or custody condition cannot be contained.
+  package_contract:
+    required_fields:
+      - recruitment_record_id
+      - mode
+      - candidate_id
+      - qualification_receipt_id
+      - criteria
+      - exclusion_results
+      - cohort_disposition
+      - cohort_slot
+      - invitation_artifact_sha256
+      - invitation_status
+      - send_receipt_id
+      - terms_status
+      - usable_for_real_effect
+    cohort_dispositions: [selected, waitlisted, declined, excluded]
+    synthetic_invitation_status: not_sent
+    synthetic_terms_status: not_agreed
+  invitation_contract:
+    cohort_slots: 3
+    personalization_requires_private_context: true
+    send_requires_per_instance_gate: HG-PUBLICATION-SEND
+    terms_require_gate: HG-CONTRACT
+    decline_reason_required: true
+
+receipt_contracts:
+  authority:
+    required_fields:
+      - receipt_id
+      - mode
+      - gate_id
+      - actor_role
+      - exact_scope
+      - exact_artifact_sha256
+      - decision
+      - decided_at
+      - expires_at
+      - revocation_path
+      - evidence_locator
+      - usable_for_real_effect
+    gate_ids: [HG-PUBLICATION-SEND, HG-CONTRACT, HG-PUBLIC-IDENTITY]
+    real_decisions: [granted, declined, revoked, expired]
+    synthetic_decision: fixture_only
+  consent:
+    required_fields:
+      - receipt_id
+      - mode
+      - consent_type
+      - subject_role
+      - exact_scope
+      - permitted_uses
+      - prohibited_uses
+      - retention_boundary
+      - withdrawal_path
+      - decision
+      - decided_at
+      - evidence_locator
+      - usable_for_real_effect
+    consent_types: [evidence_intake, outcome_interview, public_case_study, validation_object]
+    synthetic_decision: fixture_only
+  payment:
+    required_fields:
+      - receipt_id
+      - mode
+      - candidate_id
+      - engagement_id
+      - payment_status
+      - amount_disclosure
+      - currency_disclosure
+      - received_at
+      - source_locator
+      - content_sha256
+      - usable_for_real_effect
+    real_statuses: [received, refunded, failed]
+    synthetic_status: fixture_only
+    public_fixture_amount_disclosure: not_recorded
+  acceptance:
+    required_fields:
+      - receipt_id
+      - mode
+      - candidate_id
+      - engagement_id
+      - deliverable_sha256
+      - decision
+      - simulated_condition
+      - decided_at
+      - actor_role
+      - limitations
+      - source_locator
+      - authority_receipt_ids
+      - usable_for_real_effect
+    real_decisions: [accepted, rejected, revision_requested]
+    synthetic_decision: fixture_only
+  delivery:
+    required_fields:
+      - receipt_id
+      - mode
+      - engagement_id
+      - stage_id
+      - work_id
+      - deliverable_sha256
+      - custody_status
+      - delivery_status
+      - rollback_locator
+      - source_locator
+      - authority_receipt_ids
+      - usable_for_real_effect
+    synthetic_status: fixture_only
+  case_study:
+    required_fields:
+      - receipt_id
+      - mode
+      - source_outcome_ids
+      - exact_copy_sha256
+      - client_copy_decision
+      - owner_publication_decision
+      - consent_receipt_id
+      - identity_authority_receipt_id
+      - contract_authority_receipt_id
+      - publication_status
+      - withdrawal_path
+      - rollback_locator
+      - usable_for_real_effect
+    synthetic_publication_status: not_published
+  claim_promotion:
+    required_fields:
+      - receipt_id
+      - mode
+      - proposal_id
+      - disposition
+      - source_outcome_ids
+      - external_outcome_evidence_ids
+      - consent_receipt_ids
+      - owner_authority_receipt_ids
+      - target_claim_keys
+      - prior_claim_set_sha256
+      - proposed_claim_set_sha256
+      - promotion_status
+      - rollback_locator
+      - usable_for_real_effect
+    synthetic_promotion_status: blocked_synthetic
+
+bounded_pilot:
+  active_engagement_limit: 1
+  team_limit: 1
+  default_duration_days: 21
+  scope_change_requires_new_receipt: true
+  stages:
+    - id: qualify
+      work_ids: [PSP-P12-W01]
+      real_effect: none
+      human_gates: []
+      requires_real_outcome: false
+      evidence: [qualification record, exclusion check, cohort-slot decision]
+    - id: invite
+      work_ids: [PSP-P12-W01]
+      real_effect: send
+      human_gates: [HG-PUBLICATION-SEND]
+      requires_real_outcome: false
+      evidence: [exact invitation digest, per-instance send receipt, response disposition]
+    - id: agree_terms
+      work_ids: [PSP-P12-W01, PSP-P12-W02]
+      real_effect: contract
+      human_gates: [HG-CONTRACT]
+      requires_real_outcome: false
+      evidence: [signed scope, price or bounded-pilot terms, liability and data boundary]
+    - id: intake
+      work_ids: [PSP-P12-W02]
+      real_effect: delivery
+      human_gates: [HG-CONTRACT]
+      requires_real_outcome: false
+      evidence: [evidence manifest, custody receipt, prohibited-input check]
+    - id: audit_and_verdict
+      work_ids: [PSP-P12-W02]
+      real_effect: delivery
+      human_gates: [HG-CONTRACT]
+      requires_real_outcome: false
+      evidence: [report digest, evidence links, verdict, limitations]
+    - id: acceptance_and_closeout
+      work_ids: [PSP-P12-W02]
+      real_effect: delivery_acceptance
+      human_gates: [HG-CONTRACT]
+      requires_real_outcome: true
+      evidence: [client acceptance, access return, residual owner, outcome interview]
+    - id: conditional_install
+      work_ids: [PSP-P12-W03]
+      real_effect: delivery
+      human_gates: [HG-CONTRACT]
+      requires_real_outcome: true
+      evidence: [one-team install plan, before and after measure, rollback, handoff]
+    - id: consented_case_study
+      work_ids: [PSP-P12-W04]
+      real_effect: publish
+      human_gates: [HG-PUBLIC-IDENTITY, HG-CONTRACT]
+      requires_real_outcome: true
+      evidence: [exact copy approval, evidence anchors, consent, release and withdrawal IDs]
+    - id: independent_validation
+      work_ids: [PSP-P12-W05]
+      real_effect: send
+      human_gates: [HG-PUBLICATION-SEND, HG-CONTRACT]
+      requires_real_outcome: true
+      evidence: [author, date, context, permitted wording, withdrawal path]
+    - id: claim_refresh
+      work_ids: [PSP-P12-W06]
+      real_effect: none
+      human_gates: []
+      requires_real_outcome: true
+      evidence: [external outcome links, claim disposition, prominence decision, regeneration receipt]
+    - id: demand_adjudication
+      work_ids: [PSP-P10-W08]
+      real_effect: none
+      human_gates: []
+      requires_real_outcome: true
+      evidence: [qualified denominator, paid or no outcomes, reasons, keep narrow or pivot decision]
+  closeout_requires:
+    - acceptance or explicit failed-assumption receipt
+    - access and evidence custody returned or deleted under terms
+    - every residual assigned to a durable owner
+    - no public proof without exact consent and owner publication authority
+
+evidence_capture:
+  required_fields:
+    - evidence_id
+    - mode
+    - scenario_id
+    - subject_id
+    - work_id
+    - evidence_class
+    - source_locator
+    - source_observed_at
+    - capture_method
+    - content_sha256
+    - visibility
+    - consent_receipt_id
+    - authority_receipt_ids
+    - machine_assistance
+    - limitations
+  evidence_classes:
+    - qualification
+    - terms
+    - payment
+    - bounded_pilot
+    - delivery
+    - client_acceptance
+    - no_outcome
+    - before_after
+    - consent
+    - independent_validation
+    - claim_refresh
+  public_safe_visibility: public_safe
+  synthetic_visibility: internal_synthetic
+  forbidden_capture:
+    - plaintext secrets or credentials
+    - private client data in public receipts
+    - evidence without source date, method, limits, and consent reference
+    - synthetic data relabelled as external or client-authored evidence
+
+outcome_adjudication:
+  paid_path:
+    minimum_paid_audits: 1
+    requires_terms_receipt: true
+    requires_payment_receipt: true
+    requires_client_acceptance: true
+  bounded_pilot_path:
+    supports_p12_delivery_evidence: true
+    satisfies_p10_w08: false
+    counts_as_conversion: false
+    counts_as_revenue: false
+    counts_as_commercial_proof: false
+  no_path:
+    minimum_unique_qualified_no_outcomes: 5
+    reason_required: true
+    revision_receipt_required: true
+  decisions: [keep, narrow, pivot, insufficient_evidence]
+  keep_rule: A paid audit has terms, payment, and client-acceptance evidence and its declared outcome is met.
+  narrow_rule: A paid audit has terms, payment, and client-acceptance evidence but its declared outcome is not met.
+  pivot_rule: Five unique qualified no outcomes with reasons and a recorded revision reject the current wedge.
+  insufficient_rule: Neither acceptance path has enough real evidence; extend only under the bounded extension rule.
+  synthetic_decisions_are_hypothetical: true
+
+claim_refresh:
+  dispositions: [strengthen, narrow, invalidate]
+  required_source_classes: [client_acceptance, no_outcome, before_after, independent_validation]
+  every_change_requires_external_outcome: true
+  synthetic_apply: false
+  synthetic_publishable: false
+  public_promotion_requires_consent: true
+  rollback: Restore the prior claim set and quarantine disputed outcome interpretation.
+
+strategy_decision_records:
+  required_fields:
+    - decision_record_id
+    - mode
+    - scenario_id
+    - decision
+    - decision_basis
+    - before_strategy
+    - after_strategy
+    - changed_assumptions
+    - source_outcome_ids
+    - external_outcome_evidence_ids
+    - decided_at
+    - apply
+    - publishable
+    - usable_for_real_effect
+  synthetic_apply: false
+  synthetic_publishable: false
+  synthetic_real_effect: false
+
+testimonial_reference_policy:
+  synthetic_or_agent_authored_objects_forbidden: true
+  attribution_requires_real_human_source: true
+  preflight_collection_status: not_attempted
+  real_object_required_fields:
+    - author
+    - date
+    - context
+    - exact_permitted_wording
+    - consent_receipt_id
+    - withdrawal_path
+    - source_locator
+
+experiment_90_day:
+  duration_days: 90
+  checkpoints_days: [0, 14, 30, 45, 60, 75, 90]
+  denominator_unit: unique qualified door-mail
+  denominator_threshold: 5
+  success_or_revision_rule: one paid audit with payment evidence OR five documented qualified no outcomes with reasons and a recorded revision
+  required_outcome_fields:
+    - candidate_id
+    - qualification_receipt
+    - outcome_type
+    - reason
+    - terms_authority_receipt_id
+    - payment_receipt_id
+    - acceptance_receipt_id
+    - delivery_receipt_ids
+    - evidence_ids
+    - occurred_at
+  extension:
+    maximum_count: 1
+    maximum_days: 14
+    requires_named_missing_evidence: true
+    requires_fixed_end_date: true
+    may_not_reduce_thresholds: true
+  terminal_receipt:
+    decision_required: true
+    allowed_decisions: [keep, narrow, pivot]
+    source_outcome_links_required: true
+    synthetic_terminal_receipt_forbidden: true
