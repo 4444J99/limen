@@ -23,6 +23,10 @@ This directory is a **private staging package**, not a publishing queue. It prep
 
 The live program graph remains authoritative. This preflight is deliberately not a PSP-P09 receipt and does not satisfy a leaf or phase predicate.
 
+Execution requirements are derived from that graph as capabilities plus reasoning, effect, and
+effort. Provider selection happens from the live runtime catalog at dispatch; this package stores
+no provider model slug and silently substitutes none.
+
 ## Deterministic staging controls
 
 `content-control.json` maps every P09 work item to admitted or explicitly withheld source IDs, exact draft citations, a door tag, and a 30-day review date. `narrative-fixtures.json` provides architecture and correction drills with `[redacted]` private-data fields. `review-gates.json`, `campaign-analytics-schema.json`, and `dry-run-publication-package.json` keep review, analytics, and publication packaging in a no-effect state.

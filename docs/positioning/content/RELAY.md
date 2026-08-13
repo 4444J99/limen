@@ -25,7 +25,7 @@ compression_level: medium
 |---|---|
 | Original package commit | `fb77c679b84064162675f6851e816e46e5ee07be` |
 | Reconciliation base head | `36bf386c22e64785db8e7843899bf9aabf85bf89` |
-| Pull request | [#2316](https://github.com/organvm/limen/pull/2316), draft, base `main` |
+| Pull request | [#2316](https://github.com/organvm/limen/pull/2316), integration package, base `main` |
 | Current package state | `PREPARED`; private staging only; no P09 leaf or phase is closed |
 | Acceptance condition | private staging package is met; every PSP-P09 leaf and the phase exit remain deliberately unmet |
 | Package predicate | `python3 scripts/check-psp-c08-preflight.py` must pass on the current exact tree |
@@ -39,15 +39,15 @@ compression_level: medium
 | Dependency | Current evidence and boundary |
 |---|---|
 | P02 | accepted main `8faa5fb9899231ebf5f87e78bb171544c11b79d7`; phase receipt [#2172](https://github.com/organvm/limen/issues/2172#issuecomment-5270095170) |
-| C03 / P03 | current offer #2312 `b6af8086c9050634313f519c29a6dfcb922c3721`; W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; [#2188/W07](https://github.com/organvm/limen/issues/2188) remains genuinely reader-blocked |
-| C04 | prepared proof: Limen #2313 `543fa28df52c9db7be3b7307019dcf209361d0b9`; portfolio #220 `8974543ba9675ed0504141895812476efef5dd80` |
-| C06 | prepared public-surface relay: Limen #2317 `4eb50463b7f4136b47a103c9792c1ded5caf7873`; portfolio #221 `6cb1abf0bf08e71341476886385eba5499c51bb7`; all three directions remain `UNSELECTED` |
-| C07 | prepared private inbound: Limen #2318 `c3b92707a0f6d0ea3076680d100d60d0217f8fe9`; no inbound evidence is admitted |
+| C03 / P03 | offer #2312 source `b6af8086c9050634313f519c29a6dfcb922c3721`, integrated `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; [#2188/W07](https://github.com/organvm/limen/issues/2188) remains genuinely reader-blocked |
+| C04 | merged prepared proof: Limen #2313 source `1bb0ceca162129f6c90ae47958712bb19cd99cbb`, integrated `3f2269dd38865244f826aaff4818912a636167be`; portfolio #220 source `8974543ba9675ed0504141895812476efef5dd80`, integrated `a01b6d85f78d2d744c0c994f7220081bb54a85c5` |
+| C06 | merged prepared public-surface relay: Limen #2317 source `854b6385de6b340485baaf59b1be55bd4d243a4d`, integrated `690617fc2aeea79acfe5604799e6413d70b6e4dd`; portfolio #221 source `7c150fc81184df1715824be28b32472baadbb3b6`, integrated `797cda3fb903b07d4152e5bbde9f468beeeab3e0`; all three directions remain `UNSELECTED` |
+| C07 | merged prepared private inbound: Limen #2318 source `9d81552a65cab1a8785e74251853881ac1957925`, integrated `799c4bbe80634bb870e379061d03d08a74ea5405`; no inbound evidence is admitted |
 | P09 formal frontier | P05, P07, and P08 remain open/prepared; this C08 package cannot promote them |
 
-Conductor assignment remains `gpt-5.6-terra / high`. The manifest retains the registered leaf
-assignments, including W02 `gpt-5.6-sol/max`, W07 `gpt-5.6-luna/medium`, and the remaining declared
-leaves at `gpt-5.6-terra/high`.
+Execution records retain only capability, reasoning, effect, and effort requirements. The provider
+is selected from the live runtime catalog at dispatch; an unavailable assignment fails blocked
+rather than silently substituting a stale model name.
 
 `dependency-bindings.json` is the machine-validated exact binding record. It remains `PREPARED` and
 `counts_as_closure=false`; it records no reader evidence, approval, or external distribution effect.
@@ -64,7 +64,7 @@ leaves at `gpt-5.6-terra/high`.
 
 | Decision | Evidence and rationale |
 |---|---|
-| Use the current dependency frontier | P02 is accepted; P03 is blocked only on genuine W07 reader evidence; C04, C06, and C07 remain prepared and cannot be promoted by this private staging package. |
+| Use the current dependency frontier | P02 is accepted; P03 is blocked only on genuine W07 reader evidence; C04, C06, and C07 are merged prepared packages and cannot be promoted by this private staging package. |
 | Keep the report as a private draft | The claims ledger admits internal operational evidence and authorship disclosure, while commercial, adoption, ranking, and unsanitized-incident claims remain withheld. |
 | Keep the measurement fixture synthetic | The capture policy permits attributable door tags, but a fixture cannot become observed demand or a distribution receipt. |
 
@@ -78,7 +78,7 @@ leaves at `gpt-5.6-terra/high`.
 ## Risks and prohibitions
 
 - Human gates still unpulled: `HG-PUBLIC-IDENTITY` (W02) and `HG-PUBLICATION-SEND` (W08).
-- PR metadata boundary: draft PR #2316 tracks the pushed branch; its body is public-safe and must retain draft status plus the exact prepared-binding boundary.
+- PR metadata boundary: PR #2316 tracks the pushed branch; its body is public-safe and must retain the exact prepared-binding boundary through integration.
 - Sensitive/private material boundary: no private evidence, personal contact data, or real incident record belongs in this package.
 - Files or sibling work that must not be touched: `tasks.yaml`, generated program indexes, external target repositories, and active sibling preflight paths.
 - Rollback route: remove or quarantine a staged asset under this directory; for a later real release, use the correction/withdrawal contract and preserve its external receipt.

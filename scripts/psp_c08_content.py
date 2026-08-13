@@ -6,11 +6,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import runpy
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+PROGRAM_SCRIPT = REPOSITORY_ROOT / "scripts" / "positioning-program.py"
 CONTENT_RELATIVE = Path("docs/positioning/content")
 REQUIRED_FILES = (
     "dependency-bindings.json",
@@ -21,8 +25,78 @@ REQUIRED_FILES = (
     "freshness-withdrawal-policy.json",
     "dry-run-publication-package.json",
 )
-WORK_IDS = {f"PSP-P09-W0{number}" for number in range(1, 9)}
+WORK_IDS = tuple(f"PSP-P09-W0{number}" for number in range(1, 9))
+WORK_ID_SET = set(WORK_IDS)
 REQUIRED_BINDINGS = {"P02", "C03", "C04", "C06", "C07"}
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution",
+}
+EXPECTED_BINDING_DOCUMENT_KEYS = {
+    "schema",
+    "state",
+    "counts_as_closure",
+    "scope",
+    "assignment_policy",
+    "assignment_requirements",
+    "bindings",
+    "prohibitions",
+}
+EXPECTED_DEPENDENCY_BINDINGS = [
+    {
+        "id": "P02",
+        "disposition": "accepted",
+        "head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+        "phase_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+    },
+    {
+        "id": "C03",
+        "disposition": "current-offer-integrated-with-reader-gate",
+        "offer_source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+        "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
+        "accepted_through": "PSP-P03-W06",
+        "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+        "reader_gate": {
+            "work_id": "PSP-P03-W07",
+            "issue": "https://github.com/organvm/limen/issues/2188",
+            "state": "genuine-reader-blocked",
+        },
+    },
+    {
+        "id": "C04",
+        "disposition": "merged-prepared-proof",
+        "limen_pr": 2313,
+        "limen_source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+        "limen_integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be",
+        "portfolio_pr": 220,
+        "portfolio_source_head": "8974543ba9675ed0504141895812476efef5dd80",
+        "portfolio_integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5",
+    },
+    {
+        "id": "C06",
+        "disposition": "merged-prepared-public-surface-relay",
+        "limen_pr": 2317,
+        "limen_source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+        "limen_integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd",
+        "portfolio_pr": 221,
+        "portfolio_source_head": "7c150fc81184df1715824be28b32472baadbb3b6",
+        "portfolio_integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
+        "visual_directions": "UNSELECTED",
+    },
+    {
+        "id": "C07",
+        "disposition": "merged-prepared-private-inbound",
+        "limen_pr": 2318,
+        "limen_source_head": "9d81552a65cab1a8785e74251853881ac1957925",
+        "limen_integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405",
+    },
+]
+EXPECTED_PROHIBITIONS = [
+    "No binding promotes a prepared dependency, reader evidence, or external effect.",
+    "No binding authorizes publication, scheduling, sending, capture activation, analytics mutation, deployment, or formal closure.",
+]
 EMAIL_RE = re.compile(r"\b[\w.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 SECRET_RE = re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]+|Bearer\s+\S+|AKIA[0-9A-Z]{16})\b")
 
@@ -31,14 +105,54 @@ class ContentError(ValueError):
     """A staged-content rule was violated."""
 
 
+def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ContentError(f"duplicate JSON member: {key}")
+        value[key] = item
+    return value
+
+
 def load_json(path: Path) -> dict[str, Any]:
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, ContentError) as error:
         raise ContentError(f"cannot read {path}: {error}") from error
     if not isinstance(value, dict):
         raise ContentError(f"{path} must contain an object")
     return value
+
+
+@lru_cache(maxsize=1)
+def expected_assignment_requirements() -> dict[str, dict[str, Any]]:
+    """Derive execution requirements without persisting provider model names."""
+    program = runpy.run_path(str(PROGRAM_SCRIPT))
+    graph = program["index_program"](program["load_manifest"]())
+    packets = [graph["work_by_id"][work_id] for work_id in WORK_IDS]
+    chunk_assignment = program["chunk_assignment_for"]("PSP-C08", graph)
+    requirements: dict[str, dict[str, Any]] = {
+        "PSP-C08": {
+            "selection": "runtime_catalog",
+            "role": "chunk_conductor",
+            "effort": chunk_assignment["effort"],
+            "capabilities": sorted({capability for packet in packets for capability in packet["capabilities"]}),
+        }
+    }
+    for work_id in WORK_IDS:
+        packet = graph["work_by_id"][work_id]
+        assignment = program["model_assignment_for"](work_id, graph)
+        requirements[work_id] = {
+            "selection": "runtime_catalog",
+            "reasoning": packet["reasoning"],
+            "effect": packet["effect"],
+            "effort": assignment["effort"],
+            "capabilities": packet["capabilities"],
+        }
+    return requirements
 
 
 def flatten(value: Any) -> str:
@@ -112,25 +226,30 @@ def validate(root: Path) -> dict[str, Any]:
 
     if control.get("state") != "private-staging-only":
         raise ContentError("content control must remain private-staging-only")
-    if bindings.get("state") != "PREPARED" or bindings.get("counts_as_closure") is not False:
+    if set(bindings) != EXPECTED_BINDING_DOCUMENT_KEYS:
+        raise ContentError("dependency binding document must use the exact public-safe schema")
+    if bindings.get("schema") != "psp-c08-dependency-bindings/v2":
+        raise ContentError("dependency bindings must use schema v2")
+    if (
+        bindings.get("state") != "PREPARED"
+        or bindings.get("counts_as_closure") is not False
+        or bindings.get("scope") != "private-staging-only"
+    ):
         raise ContentError("dependency bindings must remain PREPARED without closure credit")
+    if bindings.get("assignment_policy") != ASSIGNMENT_POLICY:
+        raise ContentError("assignment policy must require runtime catalog discovery and fail closed")
+    if bindings.get("assignment_requirements") != expected_assignment_requirements():
+        raise ContentError("assignment requirements drifted from the canonical runtime registry")
+    if bindings.get("bindings") != EXPECTED_DEPENDENCY_BINDINGS:
+        raise ContentError("dependency bindings drifted from the accepted source and integration receipts")
+    if bindings.get("prohibitions") != EXPECTED_PROHIBITIONS:
+        raise ContentError("dependency binding prohibitions must remain exact")
     binding_items = {item.get("id"): item for item in bindings.get("bindings", [])}
     if set(binding_items) != REQUIRED_BINDINGS:
         raise ContentError("dependency bindings must cover the current P02/C03/C04/C06/C07 chain exactly")
-    if binding_items["P02"].get("disposition") != "accepted":
-        raise ContentError("P02 must be recorded as accepted")
-    if binding_items["C03"].get("accepted_through") != "PSP-P03-W06":
-        raise ContentError("C03 must stop formal acceptance at PSP-P03-W06")
-    if binding_items["C03"].get("reader_gate", {}).get("state") != "genuine-reader-blocked":
-        raise ContentError("C03 reader evidence must remain genuinely blocked")
-    for binding_id in ("C04", "C06", "C07"):
-        if not binding_items[binding_id].get("disposition", "").startswith("prepared-"):
-            raise ContentError(f"{binding_id} must remain prepared")
-    if binding_items["C06"].get("visual_directions") != "UNSELECTED":
-        raise ContentError("C06 visual directions must remain unselected")
     source_ids = {entry.get("id") for entry in register.get("sources", [])}
     assets = control.get("assets", [])
-    if {asset.get("work_id") for asset in assets} != WORK_IDS:
+    if {asset.get("work_id") for asset in assets} != WORK_ID_SET:
         raise ContentError("content control must cover PSP-P09-W01 through PSP-P09-W08 exactly")
     if len({asset.get("id") for asset in assets}) != len(assets):
         raise ContentError("content asset IDs must be unique")
@@ -147,12 +266,17 @@ def validate(root: Path) -> dict[str, Any]:
         validate_private_text(asset, asset["id"])
 
     transformations = control.get("channel_transformations", [])
-    if {item.get("channel") for item in transformations} != {"technical-thread", "newsletter-blurb", "community-post", "recruiter-pointer"}:
+    if {item.get("channel") for item in transformations} != {
+        "technical-thread",
+        "newsletter-blurb",
+        "community-post",
+        "recruiter-pointer",
+    }:
         raise ContentError("channel transformations must cover the four staged channel forms")
     for transformation in transformations:
         if set(transformation.get("requires", [])) != {"canonical_source", "door_tag", "expiry"}:
             raise ContentError(f"{transformation.get('channel')} must require source, door tag, and expiry")
-        if not set(transformation.get("allowed_work_ids", [])) <= WORK_IDS:
+        if not set(transformation.get("allowed_work_ids", [])) <= WORK_ID_SET:
             raise ContentError(f"{transformation.get('channel')} has an invalid work scope")
 
     if fixtures.get("state") != "synthetic-only":

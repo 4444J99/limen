@@ -1,8 +1,93 @@
 {
-  "schema": "psp-c08-dependency-bindings/v1",
+  "schema": "psp-c08-dependency-bindings/v2",
   "state": "PREPARED",
   "counts_as_closure": false,
   "scope": "private-staging-only",
+  "assignment_policy": {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution"
+  },
+  "assignment_requirements": {
+    "PSP-C08": {
+      "selection": "runtime_catalog",
+      "role": "chunk_conductor",
+      "effort": "high",
+      "capabilities": [
+        "analytics",
+        "content_repurposing",
+        "data_storytelling",
+        "design",
+        "distribution_operations",
+        "editorial_strategy",
+        "frontend",
+        "incident_analysis",
+        "publishing",
+        "reliability",
+        "sales_strategy",
+        "technical_editing",
+        "technical_writing",
+        "visualization"
+      ]
+    },
+    "PSP-P09-W01": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["editorial_strategy", "sales_strategy"]
+    },
+    "PSP-P09-W02": {
+      "selection": "runtime_catalog",
+      "reasoning": "frontier_review",
+      "effect": "external",
+      "effort": "max",
+      "capabilities": ["publishing", "frontend", "technical_editing"]
+    },
+    "PSP-P09-W03": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["technical_writing", "reliability"]
+    },
+    "PSP-P09-W04": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["data_storytelling", "technical_writing"]
+    },
+    "PSP-P09-W05": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["technical_writing", "visualization"]
+    },
+    "PSP-P09-W06": {
+      "selection": "runtime_catalog",
+      "reasoning": "deep",
+      "effect": "write",
+      "effort": "high",
+      "capabilities": ["incident_analysis", "technical_writing"]
+    },
+    "PSP-P09-W07": {
+      "selection": "runtime_catalog",
+      "reasoning": "routine",
+      "effect": "write",
+      "effort": "medium",
+      "capabilities": ["content_repurposing", "design"]
+    },
+    "PSP-P09-W08": {
+      "selection": "runtime_catalog",
+      "reasoning": "routine",
+      "effect": "external",
+      "effort": "high",
+      "capabilities": ["distribution_operations", "analytics"]
+    }
+  },
   "bindings": [
     {
       "id": "P02",
@@ -12,8 +97,9 @@
     },
     {
       "id": "C03",
-      "disposition": "current-offer-with-reader-gate",
-      "offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "disposition": "current-offer-integrated-with-reader-gate",
+      "offer_source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "accepted_through": "PSP-P03-W06",
       "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "reader_gate": {
@@ -24,26 +110,31 @@
     },
     {
       "id": "C04",
-      "disposition": "prepared-proof",
+      "disposition": "merged-prepared-proof",
       "limen_pr": 2313,
-      "limen_head": "543fa28df52c9db7be3b7307019dcf209361d0b9",
+      "limen_source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+      "limen_integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be",
       "portfolio_pr": 220,
-      "portfolio_head": "8974543ba9675ed0504141895812476efef5dd80"
+      "portfolio_source_head": "8974543ba9675ed0504141895812476efef5dd80",
+      "portfolio_integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5"
     },
     {
       "id": "C06",
-      "disposition": "prepared-public-surface-relay",
+      "disposition": "merged-prepared-public-surface-relay",
       "limen_pr": 2317,
-      "limen_head": "4eb50463b7f4136b47a103c9792c1ded5caf7873",
+      "limen_source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+      "limen_integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd",
       "portfolio_pr": 221,
-      "portfolio_head": "6cb1abf0bf08e71341476886385eba5499c51bb7",
+      "portfolio_source_head": "7c150fc81184df1715824be28b32472baadbb3b6",
+      "portfolio_integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
       "visual_directions": "UNSELECTED"
     },
     {
       "id": "C07",
-      "disposition": "prepared-private-inbound",
+      "disposition": "merged-prepared-private-inbound",
       "limen_pr": 2318,
-      "limen_head": "c3b92707a0f6d0ea3076680d100d60d0217f8fe9"
+      "limen_source_head": "9d81552a65cab1a8785e74251853881ac1957925",
+      "limen_integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405"
     }
   ],
   "prohibitions": [

@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "docs" / "positioning" / "content"
 sys.path.insert(0, str(ROOT / "scripts"))
 from psp_c08_content import ContentError, validate as validate_content  # noqa: E402
+
 REGISTER = CONTENT / "claim-source-register.json"
 MEASUREMENT = CONTENT / "measurement-contract.json"
 MANIFEST = CONTENT / "staging-manifest.json"
@@ -44,9 +45,20 @@ def fail(message: str) -> None:
 
 
 def load_json(path: Path) -> dict:
+    def object_without_duplicate_keys(pairs: list[tuple[str, object]]) -> dict:
+        value: dict = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as error:
         fail(f"cannot read {path.relative_to(ROOT)}: {error}")
     if not isinstance(value, dict):
         fail(f"{path.relative_to(ROOT)} must contain an object")
@@ -82,7 +94,11 @@ def main() -> None:
     if set(work) != set(REQUIRED_WORK_IDS):
         fail("staging manifest must cover PSP-P09-W01 through PSP-P09-W08 exactly")
     for work_id, entry in work.items():
-        if entry.get("state") not in {"staged-not-complete", "human-gated-not-complete", "withheld-until-sanitized-source"}:
+        if entry.get("state") not in {
+            "staged-not-complete",
+            "human-gated-not-complete",
+            "withheld-until-sanitized-source",
+        }:
             fail(f"{work_id} has an invalid preflight state")
         if not entry.get("source_ids"):
             fail(f"{work_id} lacks source coverage")
@@ -102,13 +118,20 @@ def main() -> None:
         "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
         "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
         "b6af8086c9050634313f519c29a6dfcb922c3721",
-        "543fa28df52c9db7be3b7307019dcf209361d0b9",
+        "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
+        "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+        "3f2269dd38865244f826aaff4818912a636167be",
         "8974543ba9675ed0504141895812476efef5dd80",
-        "4eb50463b7f4136b47a103c9792c1ded5caf7873",
-        "6cb1abf0bf08e71341476886385eba5499c51bb7",
-        "c3b92707a0f6d0ea3076680d100d60d0217f8fe9",
+        "a01b6d85f78d2d744c0c994f7220081bb54a85c5",
+        "854b6385de6b340485baaf59b1be55bd4d243a4d",
+        "690617fc2aeea79acfe5604799e6413d70b6e4dd",
+        "7c150fc81184df1715824be28b32472baadbb3b6",
+        "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
+        "9d81552a65cab1a8785e74251853881ac1957925",
+        "799c4bbe80634bb870e379061d03d08a74ea5405",
         "#2188/W07",
         "UNSELECTED",
+        "runtime catalog",
         "counts_as_closure=false",
         "HG-PUBLIC-IDENTITY",
         "HG-PUBLICATION-SEND",
@@ -122,7 +145,9 @@ def main() -> None:
     except ContentError as error:
         fail(f"private content controls invalid: {error}")
 
-    print("PSP-C08 private content preflight passed: staged sources, gates, synthetic measurement, and no-effect publication controls are intact")
+    print(
+        "PSP-C08 private content preflight passed: staged sources, gates, synthetic measurement, and no-effect publication controls are intact"
+    )
 
 
 if __name__ == "__main__":
