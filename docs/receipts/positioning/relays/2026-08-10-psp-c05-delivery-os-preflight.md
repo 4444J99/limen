@@ -24,16 +24,16 @@ compression_level: high
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926` |
-| Exact remote branch head | `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926` |
-| C03 dependency head consumed | PR #2312 at current preflight head `b6af8086c9050634313f519c29a6dfcb922c3721`; accepted W01-W06 ancestor `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
+| Exact implementation head | PR #135 source head `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926`, integrated as main commit `9172619633bb9a09ea3a05eae9f48e987f2b3e7d` |
+| Exact remote state | Target PR #135 merged through the sanctioned rail; the source branch is no longer the lifecycle owner |
+| C03 dependency head consumed | PR #2312 source head `b6af8086c9050634313f519c29a6dfcb922c3721`, integrated as main commit `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; accepted W01-W06 ancestor `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; core contract `2a1a01149adc2c036b7d3da624740a78d140a672` |
 | Accepted upstream progress | PSP-P02 closed at main head `8faa5fb9899231ebf5f87e78bb171544c11b79d7`; PSP-P03-W01 through W06 closed; W06 receipt [#2187 comment 5271254820](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
 | Working tree | Clean at checkpoint |
-| Acceptance condition | PREPARED/PREFLIGHT only; W07 is C03's sole unsatisfied leaf and blocks formal acceptance, not reversible construction; formal P11 acceptance remains unmet until C03 closes and registry admission opens |
+| Acceptance condition | PREPARED/PREFLIGHT only; W07 is P03's sole unsatisfied leaf. All seven P04 leaves remain dependency-blocked until P03 closes, so C03 cannot close yet. Formal P11 acceptance remains unmet until the full C03 chunk closes and registry admission opens |
 | Underlying predicate | Exact target head retains the aggregate W01-W08 validator and 9/9 delivery tests; its four commercial templates passed 6/6 focused tests, formatting and diff hygiene, and exact-head remote verification |
 | Receipt verifier | Formal `--verify-work` predicates intentionally not run |
 | Phase exit proof | `python3 scripts/positioning-program.py --phase-proof PSP-P11` intentionally not run |
-| External effects | None; no client data, send, terms, account action, publication, spend, DNS, or production effect |
+| External effects | Repository effects only: target branch push, PR #135 creation, and sanctioned merge. No client data, send, terms, account action, publication, spend, DNS, or production effect |
 
 ## Completed work
 
@@ -55,14 +55,15 @@ compression_level: high
   templates with the Audit → Install → Retainer lifecycle. Reusable values remain placeholders;
   acceptance, change, termination, access return, rollback, and handoff remain receipt-driven;
   sending, signature, numeric pricing, and contract effects remain behind their named gates.
-- [x] Opened target draft PR [#135](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/135).
+- [x] Opened and merged target PR [#135](https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/135)
+  through the sanctioned rail at source head `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926`.
 
 ## Decisions and rationale
 
 | Decision | Evidence and rationale |
 | --- | --- |
 | Keep status `prepared_preflight` | W07 has not supplied its genuine five-reader evidence, C03/P04 has not formally closed, and the live registry has not admitted formal P11 execution. Reversible synthetic construction does not count as closure. |
-| Pin C03 PR #2312 current exact head | `b6af8086c9050634313f519c29a6dfcb922c3721` preserves the accepted W01-W06 ancestor while adding deterministic P04 offer artifacts and the registered private template contract. |
+| Pin C03 integration | Source head `b6af8086c9050634313f519c29a6dfcb922c3721` preserves the accepted W01-W06 ancestor while adding deterministic P04 offer artifacts and the registered private template contract; ancestry checks must use integrated commit `8f89ad16ca1df84b00cb8227c88f368d0d64631a` after the squash merge. |
 | Treat private templates as draft-only bridges | They connect qualification and offer choice to delivery acceptance/closeout without authorizing a send, signature, payment, access change, service start, or legal conclusion. |
 | Keep W07 explicitly unsatisfied | W06 model review is authority-language evidence, not five independent target-reader responses. |
 | Keep private economics out | C03 permits only symbolic `PRICE-*` / `RANGE-*` anchors outside their sanctioned private owner. |
@@ -70,10 +71,11 @@ compression_level: high
 
 ## Next actions
 
-1. After PSP-P03-W07 closes with genuine external-reader evidence and PSP-C03 formally closes,
-   confirm the admitted head descends from `b6af8086c9050634313f519c29a6dfcb922c3721`; when live
-   ready-work admits PSP-C05, obtain fresh authority for each leaf and preserve the registered
-   path/effect/model boundaries.
+1. After PSP-P03-W07 closes with genuine external-reader evidence, close P03 through its receipt
+   rail, then execute and close PSP-P04-W01 through W07 and the P04 phase predicate. Only then can
+   C03 close and admit PSP-C05. Confirm the admitted main lineage descends from integrated commit
+   `8f89ad16ca1df84b00cb8227c88f368d0d64631a`, then obtain fresh authority for each P11 leaf while
+   preserving the registered path/effect/model boundaries.
 2. Run each leaf underlying predicate and durable receipt flow separately, then the P11 phase proof;
    do not treat this preflight PR, local tests, or synthetic receipts as formal completion evidence.
 
@@ -83,8 +85,9 @@ compression_level: high
   respective external/commercial effects.
 - Sensitive boundary: no client data, credentials, private pricing values, private paths, or private
   implementation bodies may enter Limen.
-- Do not touch `tasks.yaml`, close P11 issues, merge either draft, publish proof, send or sign terms,
-  or grant access before the formal dependency and authority predicates pass.
+- Do not touch `tasks.yaml`, close P11 issues, publish proof, send or sign terms, or grant access
+  before the formal dependency and authority predicates pass. Repository integration already
+  occurred and is not evidence of P11 completion.
 - Rollback: revert target template commit `432c31ea6bcaf2c175b0fde08b6e1733fe4c2926` to its parent or
   close target draft PR #135; all checked-in delivery fixtures and template values are synthetic or
   bracketed placeholders.
