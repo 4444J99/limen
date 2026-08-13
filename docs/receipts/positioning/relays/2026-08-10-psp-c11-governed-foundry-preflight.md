@@ -1,7 +1,7 @@
 ---
 type: prompt-relay-envelope
 version: 3.0
-date: 2026-08-12
+date: 2026-08-13
 from: Codex direct-session reversible preflight
 to: next authorized PSP-C11 conductor or correctly assigned leaf
 scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen
@@ -36,10 +36,10 @@ compression_level: medium
 | Working tree | Clean at the implementation checkpoint; this relay is the only planned subsequent file |
 | Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
 | Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
-| Model assignment parity | `--verify-model-assignments`: all 127 objects valid; C11 Sol/max and all nine leaf pairs unchanged |
-| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `98e10060a31a69c3d6cfe54375c68fe298c6c53a`, not closed |
-| C10 integration receipt | Five exact C05/C09 bindings, each `counts_as_closure: false`; deterministic receipt `bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6` |
-| C03 checkpoint | Current offer #2312 head `b6af8086c9050634313f519c29a6dfcb922c3721`; W01-W06 formal acceptance remains `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
+| Assignment parity | `--verify-model-assignments`: all 127 registry requirements valid; C11 and all nine leaves resolve through the runtime catalog with no frozen provider/model slug |
+| Dependency truth | P02 closed; P04/P11/P12 open; C10 package integrated from #2321 source `71a6046c2186b4d4ead5136920b82b412ff5d540` to main `f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2`, but not formally closed |
+| C10 integration receipt | Five exact C05/C09 source/integrated-main bindings, each `counts_as_closure: false`; deterministic receipt `d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa` |
+| C03 checkpoint | Offer #2312 source `b6af8086c9050634313f519c29a6dfcb922c3721`, integrated main `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W01-W06 formal acceptance remains `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
 | Live ready-work | No C11/P13 leaf is ready |
 | Candidate census | Two identical passes: 10 organizations, 317 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
@@ -59,13 +59,13 @@ The exact containing head and CI state for this source-lock correction are pinne
 | --- | --- |
 | `python3 -B scripts/positioning-program.py --check` | pass; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
 | `python3 -B scripts/positioning-program.py --verify-model-assignments` | pass; all 127 assignments valid |
-| `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v2 contract, snapshot, exact dependency heads, C10 source lock, assignments, gates, structures, and drills valid |
+| `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v3 contract, snapshot, exact source/integrated dependency heads, C10 source lock, runtime assignment requirements, gates, structures, and drills valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, exact non-closing C10 readiness receipt, return/governance replay, zero external effects |
 | `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-12T20:14:01Z; full tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c`; leak count 0 |
 | `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld, exact C10 integration receipt |
 | `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `d432e5c271504bcc13fd3cb9bbb94e5366549ec1063889ad8c319864aa41864e` |
 | `python3 -B scripts/positioning-foundry-handoff.py --drills --json` | pass; five rollback cases, zero external effects, owner custody unchanged |
-| Combined focused tests | 28 passed |
+| Combined focused tests | 30 passed |
 | Ruff | pass |
 | `scripts/verify-scoped.sh` | passed all 7 implicated gates |
 | `git diff --cached --check` | pass before implementation commit |
@@ -77,10 +77,11 @@ this preflight package, not a leaf completion.
 
 - Refreshed the complete 62-row product-candidate snapshot over the 317-repository live owner-wide denominator.
 - Bound merged C02 census/classification inputs at accepted commits without copying private facts.
-- Fail-closed the v2 contract on the accepted C03 W01-W06 checkpoint, open W07 reader gate,
-  prepared C04-C10 exact heads, C10-not-closed truth, and P02/P04/P11/P12 phase state.
-- Exact-bound C10 head `98e10060a31a69c3d6cfe54375c68fe298c6c53a`, its deterministic receipt,
-  and all five current C05/C09 inputs without promoting any prepared source to closure.
+- Fail-closed the v3 contract on the accepted C03 W01-W06 checkpoint, open W07 reader gate,
+  C04-C10 exact source/integrated-main heads, C10-not-closed truth, and P02/P04/P11/P12 phase state.
+- Exact-bound C10 source `71a6046c2186b4d4ead5136920b82b412ff5d540`, integrated main
+  `f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2`, its deterministic receipt, and all five current
+  C05/C09 source/integrated pairs without promoting any prepared source to closure.
 - Added per-candidate demand evidence/zero-evidence state, next experiment, stop condition,
   conservative readiness/custody screen, economics hypothesis, and transfer blockers.
 - Added the operator profile/scorecard, diligence checklist, economics and transfer floors,
@@ -95,7 +96,8 @@ this preflight package, not a leaf completion.
 - Added five executable rollback cases covering evidence, security, custody, operator, and
   downside-economics failures with zero external effects.
 - Retained the base validator and synthetic operator/access/return/governance drills; the combined
-  base plus handoff focused suite now contains 28 tests.
+  base plus handoff focused suite now contains 30 tests, including duplicate-member and surplus-root
+  fail-closed cases for both public contracts.
 - Restricted snapshot sources to the two accepted C02 inventory inputs; the P02 closure receipt is
   dependency evidence, not candidate data.
 
@@ -116,8 +118,9 @@ this preflight package, not a leaf completion.
    current.
 2. Wait for the formal dependency graph to expose a leaf as ready; predecessor openness blocks
    closure but not continued reversible, non-duplicative preparation.
-3. Start the leaf in a fresh Codex task using the exact model/effort from its live issue, configure
-   and register the conduct broker, obtain a lease, and honor that leaf repository/path/effect scope.
+3. Start the leaf in a fresh eligible task after the live catalog resolves its registry-owned
+   capability/reasoning/effect/effort requirement; configure and register the conduct broker,
+   obtain a lease, and honor that leaf repository/path/effect scope. Fail closed if no lane qualifies.
 4. Integrate only the exact merged C02 census/classification receipts. Re-run the two-pass live
    inventory and privacy scan; never copy private facts into Limen, the PR, or an issue comment.
 5. Run the leaf-specific non-circular predicate, attach a structured receipt, and only then run

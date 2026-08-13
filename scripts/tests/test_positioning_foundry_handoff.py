@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -43,6 +44,19 @@ class HandoffTest(unittest.TestCase):
             "C10 integrated readiness source-lock drift",
             MODULE.validate_contract(value),
         )
+
+    def test_contract_root_schema_and_duplicate_members_fail_closed(self):
+        value = copy.deepcopy(self.contract)
+        value["unexpected"] = "surplus"
+        self.assertIn(
+            "handoff contract must use the exact public-safe root schema",
+            MODULE.validate_contract(value),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "duplicate.json"
+            path.write_text('{"status":"safe","status":"shadowed"}', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate JSON member: status"):
+                MODULE.load_json(path)
 
     def test_62_deterministic_non_binding_records(self):
         self.assertEqual(62, self.package["classification"]["count"])

@@ -104,16 +104,18 @@
       "score": 96
     }
   ],
-  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v2",
+  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v3",
   "source_lock": {
     "chunk_id": "PSP-C10",
     "counts_as_closure": false,
-    "head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
-    "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+    "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+    "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2",
+    "receipt_sha256": "d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa",
     "source_bindings": [
       {
         "counts_as_closure": false,
-        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
         "id": "c05_delivery_relay",
         "pull_request": 2315,
         "role": "delivery operating-system relay and public-safe acceptance boundary",
@@ -121,7 +123,8 @@
       },
       {
         "counts_as_closure": false,
-        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
         "id": "c05_private_templates",
         "pull_request": 135,
         "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
@@ -129,7 +132,8 @@
       },
       {
         "counts_as_closure": false,
-        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
         "id": "c09_qualification_relay",
         "pull_request": 2322,
         "role": "qualification, CTA-routing, and conversion source lock",
@@ -137,7 +141,8 @@
       },
       {
         "counts_as_closure": false,
-        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
         "id": "c09_private_package",
         "pull_request": 136,
         "role": "private discovery, proposal, follow-up, and no-outcome controls",
@@ -145,7 +150,8 @@
       },
       {
         "counts_as_closure": false,
-        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
         "id": "c09_portfolio_package",
         "pull_request": 222,
         "role": "public audit and conversion-path contract without publication",

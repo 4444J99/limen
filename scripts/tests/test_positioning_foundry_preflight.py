@@ -3,6 +3,7 @@ import datetime as dt
 import importlib.util
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -25,15 +26,18 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertEqual([], MODULE.validate_contract(self.contract))
         self.assertEqual([], MODULE.validate_snapshot(self.snapshot, self.contract))
 
-    def test_exact_leaf_assignments_are_fail_closed(self) -> None:
+    def test_runtime_assignment_requirements_are_fail_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["leaf_assignments"]["PSP-P13-W08"]["effort"] = "xhigh"
-        self.assertIn("leaf model, effort, or effect assignment drift", MODULE.validate_contract(changed))
+        changed["assignment_requirements"]["leaves"]["PSP-P13-W08"]["effort"] = "xhigh"
+        self.assertIn(
+            "assignment requirements drift from the canonical runtime registry",
+            MODULE.validate_contract(changed),
+        )
 
     def test_upstream_c02_and_c03_bindings_are_fail_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["live_sources"][1]["merge_commit"] = "0" * 40
-        changed["dependency_boundary"]["c03_checkpoint"]["reader_gate"]["assignment"]["effort"] = "medium"
+        changed["dependency_boundary"]["c03_checkpoint"]["reader_gate"]["assignment_requirement"]["effort"] = "medium"
         errors = MODULE.validate_contract(changed)
         self.assertIn(
             "c02_estate_census must remain bound to its accepted merged commit",
@@ -44,14 +48,18 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
     def test_prepared_chunk_heads_are_exact_and_not_closure(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["dependency_boundary"]["prepared_chunks"]["PSP-C10"]["closed"] = True
-        changed["dependency_boundary"]["formal_predecessor"]["exact_head"] = "f" * 40
+        changed["dependency_boundary"]["formal_predecessor"]["source_head"] = "f" * 40
         errors = MODULE.validate_contract(changed)
         self.assertIn("C04-C10 prepared checkpoint heads drift", errors)
         self.assertIn("C10 predecessor checkpoint head drift", errors)
 
     def test_c10_readiness_source_lock_is_exact_and_non_closing(self) -> None:
         predecessor = self.contract["dependency_boundary"]["formal_predecessor"]
-        self.assertEqual(MODULE.EXPECTED_C10_INTEGRATION["head"], predecessor["exact_head"])
+        self.assertEqual(MODULE.EXPECTED_C10_INTEGRATION["source_head"], predecessor["source_head"])
+        self.assertEqual(
+            MODULE.EXPECTED_C10_INTEGRATION["integrated_main_head"],
+            predecessor["integrated_main_head"],
+        )
         self.assertEqual(
             MODULE.EXPECTED_C10_INTEGRATION["receipt_sha256"],
             predecessor["receipt_sha256"],
@@ -98,8 +106,28 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertEqual([], receipt["external_effects"])
         self.assertTrue(all(not row["external_effect"] for row in receipt["lifecycle_replay"]))
         self.assertEqual("owner_unchanged", receipt["final_custody"])
-        self.assertEqual(MODULE.EXPECTED_C10_INTEGRATION["head"], receipt["source_lock"]["head"])
+        self.assertEqual(
+            MODULE.EXPECTED_C10_INTEGRATION["source_head"],
+            receipt["source_lock"]["source_head"],
+        )
+        self.assertEqual(
+            MODULE.EXPECTED_C10_INTEGRATION["integrated_main_head"],
+            receipt["source_lock"]["integrated_main_head"],
+        )
         self.assertFalse(receipt["source_lock"]["counts_as_closure"])
+
+    def test_contract_root_schema_and_duplicate_members_fail_closed(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["unexpected"] = "credential-like-surplus"
+        self.assertIn(
+            "contract must use the exact public-safe root schema",
+            MODULE.validate_contract(changed),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "duplicate.json"
+            path.write_text('{"status":"safe","status":"shadowed"}', encoding="utf-8")
+            with self.assertRaisesRegex(MODULE.PreflightError, "duplicate JSON member: status"):
+                MODULE.load_json(path)
 
     def test_private_snapshot_rows_are_opaque(self) -> None:
         private_rows = [row for row in self.snapshot["candidates"] if row["visibility"] == "private"]

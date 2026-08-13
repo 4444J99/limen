@@ -1,11 +1,60 @@
 {
-  "schema_version": "limen.psp_c11_foundry_preflight.v2",
+  "schema_version": "limen.psp_c11_foundry_preflight.v3",
   "chunk_id": "PSP-C11",
   "phase_id": "PSP-P13",
   "status": "PREPARED/PREFLIGHT",
   "prepared_at": "2026-08-10",
-  "reconciled_at": "2026-08-12",
-  "conductor": {"model": "gpt-5.6-sol", "effort": "max"},
+  "reconciled_at": "2026-08-13",
+  "assignment_policy": {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution"
+  },
+  "assignment_requirements": {
+    "conductor": {
+      "selection": "runtime_catalog",
+      "role": "chunk_conductor",
+      "effort": "max",
+      "capabilities": [
+        "automation",
+        "classification",
+        "data_modeling",
+        "due_diligence",
+        "finance",
+        "financial_modeling",
+        "github_read",
+        "governance",
+        "legal_issue_spotting",
+        "market_analysis",
+        "operations",
+        "operator_assessment",
+        "partnership_delivery",
+        "partnership_design",
+        "partnership_operations",
+        "partnership_strategy",
+        "portfolio_operations",
+        "portfolio_strategy",
+        "privacy",
+        "product_inventory",
+        "product_operations",
+        "product_strategy",
+        "security",
+        "technical_due_diligence"
+      ]
+    },
+    "leaves": {
+      "PSP-P13-W01": {"selection": "runtime_catalog", "reasoning": "routine", "effect": "read", "effort": "low", "capabilities": ["github_read", "product_inventory", "classification"]},
+      "PSP-P13-W02": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["product_strategy", "market_analysis", "data_modeling"]},
+      "PSP-P13-W03": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "xhigh", "capabilities": ["technical_due_diligence", "security", "operations"]},
+      "PSP-P13-W04": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["partnership_strategy", "operator_assessment"]},
+      "PSP-P13-W05": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["financial_modeling", "portfolio_strategy"]},
+      "PSP-P13-W06": {"selection": "runtime_catalog", "reasoning": "frontier_review", "effect": "write", "effort": "max", "capabilities": ["legal_issue_spotting", "partnership_design", "finance"]},
+      "PSP-P13-W07": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "xhigh", "capabilities": ["partnership_operations", "privacy", "due_diligence"]},
+      "PSP-P13-W08": {"selection": "runtime_catalog", "reasoning": "frontier_review", "effect": "external", "effort": "max", "capabilities": ["product_operations", "partnership_delivery", "security"]},
+      "PSP-P13-W09": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["governance", "portfolio_operations", "automation"]}
+    }
+  },
   "objective": "Stage a public-safe, reversible governed-foundry handoff system without selecting an operator, agreeing terms, transferring access or assets, or claiming an observed pilot.",
   "dependency_boundary": {
     "formal_predecessor": {
@@ -13,15 +62,16 @@
       "prepared": true,
       "closed": false,
       "pull_request": "https://github.com/organvm/limen/pull/2321",
-      "exact_head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
-      "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+      "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+      "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2",
+      "receipt_sha256": "d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa",
       "counts_as_closure": false,
       "source_bindings": [
-        {"id": "c05_delivery_relay", "target": "limen", "pull_request": 2315, "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307", "role": "delivery operating-system relay and public-safe acceptance boundary", "counts_as_closure": false},
-        {"id": "c05_private_templates", "target": "private_custody", "pull_request": 135, "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates", "counts_as_closure": false},
-        {"id": "c09_qualification_relay", "target": "limen", "pull_request": 2322, "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0", "role": "qualification, CTA-routing, and conversion source lock", "counts_as_closure": false},
-        {"id": "c09_private_package", "target": "private_custody", "pull_request": 136, "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9", "role": "private discovery, proposal, follow-up, and no-outcome controls", "counts_as_closure": false},
-        {"id": "c09_portfolio_package", "target": "portfolio", "pull_request": 222, "head": "da79fb63b9756b5cce0d42ed2a7722668854a228", "role": "public audit and conversion-path contract without publication", "counts_as_closure": false}
+        {"id": "c05_delivery_relay", "target": "limen", "pull_request": 2315, "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589", "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd", "role": "delivery operating-system relay and public-safe acceptance boundary", "counts_as_closure": false},
+        {"id": "c05_private_templates", "target": "private_custody", "pull_request": 135, "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d", "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates", "counts_as_closure": false},
+        {"id": "c09_qualification_relay", "target": "limen", "pull_request": 2322, "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593", "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3", "role": "qualification, CTA-routing, and conversion source lock", "counts_as_closure": false},
+        {"id": "c09_private_package", "target": "private_custody", "pull_request": 136, "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2", "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18", "role": "private discovery, proposal, follow-up, and no-outcome controls", "counts_as_closure": false},
+        {"id": "c09_portfolio_package", "target": "portfolio", "pull_request": 222, "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58", "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f", "role": "public audit and conversion-path contract without publication", "counts_as_closure": false}
       ]
     },
     "phase_dependencies": {
@@ -38,7 +88,8 @@
       "status": "accepted_through_w06",
       "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
-      "current_offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "current_offer_source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "closed_leaves": [
         "PSP-P03-W01",
         "PSP-P03-W02",
@@ -51,17 +102,17 @@
         "work_id": "PSP-P03-W07",
         "issue": "https://github.com/organvm/limen/issues/2188",
         "state": "open",
-        "assignment": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"}
+        "assignment_requirement": {"selection": "runtime_catalog", "reasoning": "routine", "effect": "read", "effort": "low", "capabilities": ["research", "qualitative_analysis"]}
       }
     },
     "prepared_chunks": {
-      "PSP-C04": {"closed": false, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
-      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307", "private_pr": 135, "private_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926"},
-      "PSP-C06": {"closed": false, "limen_pr": 2317, "limen_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668", "portfolio_pr": 221, "portfolio_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea", "visual_direction_state": "three_unselected"},
-      "PSP-C07": {"closed": false, "limen_pr": 2318, "limen_head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"},
-      "PSP-C08": {"closed": false, "limen_pr": 2316, "limen_head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"},
-      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0", "private_pr": 136, "private_head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9", "portfolio_pr": 222, "portfolio_head": "da79fb63b9756b5cce0d42ed2a7722668854a228"},
-      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a"}
+      "PSP-C04": {"closed": false, "limen_pr": 2313, "limen_source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb", "limen_integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be", "portfolio_pr": 220, "portfolio_source_head": "8974543ba9675ed0504141895812476efef5dd80", "portfolio_integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5"},
+      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589", "limen_integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd", "private_pr": 135, "private_source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "private_integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d"},
+      "PSP-C06": {"closed": false, "limen_pr": 2317, "limen_source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d", "limen_integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd", "portfolio_pr": 221, "portfolio_source_head": "7c150fc81184df1715824be28b32472baadbb3b6", "portfolio_integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0", "visual_direction_state": "three_unselected"},
+      "PSP-C07": {"closed": false, "limen_pr": 2318, "limen_source_head": "9d81552a65cab1a8785e74251853881ac1957925", "limen_integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405"},
+      "PSP-C08": {"closed": false, "limen_pr": 2316, "limen_source_head": "4e55e76b672b296f246bb18f96eccb4de10a8fb4", "limen_integrated_main_head": "26dba96c74d18ead1244bee8dbbd18c630942b2f"},
+      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593", "limen_integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3", "private_pr": 136, "private_source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2", "private_integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18", "portfolio_pr": 222, "portfolio_source_head": "c44bab44dca190ec115dd498ff252f57e2441a58", "portfolio_integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f"},
+      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540", "limen_integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2"}
     },
     "ready_work_observation": "no_psp_c11_leaf_ready",
     "rule": "Predecessor state blocks leaf and phase closure, not reversible preflight preparation in this explicitly authorized direct-session lane.",
@@ -107,17 +158,6 @@
       "use": "Public-safe role, maturity, visibility, relevance, and uncertainty policy over the census denominator."
     }
   ],
-  "leaf_assignments": {
-    "PSP-P13-W01": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"},
-    "PSP-P13-W02": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W03": {"model": "gpt-5.6-sol", "effort": "xhigh", "effect": "write"},
-    "PSP-P13-W04": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W05": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W06": {"model": "gpt-5.6-sol", "effort": "max", "effect": "write"},
-    "PSP-P13-W07": {"model": "gpt-5.6-sol", "effort": "xhigh", "effect": "write"},
-    "PSP-P13-W08": {"model": "gpt-5.6-sol", "effort": "max", "effect": "external"},
-    "PSP-P13-W09": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"}
-  },
   "candidate_inventory": {
     "canonical_source": "institutio/github/estate.yaml#/product_ledger/repos",
     "source_ids": ["c02_estate_census", "c02_estate_classification"],

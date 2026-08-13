@@ -72,6 +72,16 @@ STEPS = [
     "record_disposition",
     "write_receipt",
 ]
+EXPECTED_CONTRACT_KEYS = {
+    "schema_version",
+    "status",
+    "source",
+    "candidate_count",
+    "decision",
+    "authority",
+    "privacy",
+    "rollback",
+}
 
 
 def module(name: str, path: Path) -> Any:
@@ -89,7 +99,21 @@ GITVS = module("psp_c11_gitvs", GITVS_PATH)
 
 
 def load_json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"))
+    def object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
+    try:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"cannot load {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"{path} must contain an object")
     return value
@@ -108,6 +132,8 @@ def digest(value: Any) -> str:
 
 def validate_contract(contract: dict[str, Any]) -> list[str]:
     errors = []
+    if set(contract) != EXPECTED_CONTRACT_KEYS:
+        errors.append("handoff contract must use the exact public-safe root schema")
     try:
         source = contract["source"]["c02"]
         c10 = contract["source"]["c10"]

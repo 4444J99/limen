@@ -14,7 +14,9 @@ import datetime as dt
 import hashlib
 import json
 import re
+import runpy
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -27,19 +29,40 @@ SNAPSHOT = ROOT / "docs/positioning/foundry/psp-c11/product-candidate-snapshot.j
 PUBLIC_PACKAGE = ROOT / "docs/positioning/foundry/psp-c11"
 RELAY = ROOT / "docs/receipts/positioning/relays/2026-08-10-psp-c11-governed-foundry-preflight.md"
 ESTATE = ROOT / "institutio/github/estate.yaml"
-
-EXPECTED_ASSIGNMENTS = {
-    "PSP-P13-W01": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"},
-    "PSP-P13-W02": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W03": {"model": "gpt-5.6-sol", "effort": "xhigh", "effect": "write"},
-    "PSP-P13-W04": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W05": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
-    "PSP-P13-W06": {"model": "gpt-5.6-sol", "effort": "max", "effect": "write"},
-    "PSP-P13-W07": {"model": "gpt-5.6-sol", "effort": "xhigh", "effect": "write"},
-    "PSP-P13-W08": {"model": "gpt-5.6-sol", "effort": "max", "effect": "external"},
-    "PSP-P13-W09": {"model": "gpt-5.6-terra", "effort": "high", "effect": "write"},
+PROGRAM_SCRIPT = ROOT / "scripts/positioning-program.py"
+WORK_IDS = tuple(f"PSP-P13-W0{index}" for index in range(1, 10))
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution",
 }
-EXPECTED_CONDUCTOR = {"model": "gpt-5.6-sol", "effort": "max"}
+EXPECTED_CONTRACT_KEYS = {
+    "schema_version",
+    "chunk_id",
+    "phase_id",
+    "status",
+    "prepared_at",
+    "reconciled_at",
+    "assignment_policy",
+    "assignment_requirements",
+    "objective",
+    "dependency_boundary",
+    "live_sources",
+    "candidate_inventory",
+    "demand_model",
+    "readiness_model",
+    "operator_profile",
+    "economics_and_kill_rules",
+    "structure_options",
+    "operator_pipeline",
+    "bounded_pilot",
+    "institutional_governance",
+    "human_gates",
+    "synthetic_cases",
+    "synthetic_access_drills",
+}
+
 EXPECTED_P02_CLOSURE = {
     "url": "https://github.com/organvm/limen/issues/2172",
     "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
@@ -60,13 +83,20 @@ EXPECTED_C03_CHECKPOINT = {
     "status": "accepted_through_w06",
     "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
     "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
-    "current_offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+    "current_offer_source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+    "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
     "closed_leaves": [f"PSP-P03-W{index:02d}" for index in range(1, 7)],
     "reader_gate": {
         "work_id": "PSP-P03-W07",
         "issue": "https://github.com/organvm/limen/issues/2188",
         "state": "open",
-        "assignment": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"},
+        "assignment_requirement": {
+            "selection": "runtime_catalog",
+            "reasoning": "routine",
+            "effect": "read",
+            "effort": "low",
+            "capabilities": ["research", "qualitative_analysis"],
+        },
     },
 }
 EXPECTED_C10_SOURCE_BINDINGS = [
@@ -74,7 +104,8 @@ EXPECTED_C10_SOURCE_BINDINGS = [
         "id": "c05_delivery_relay",
         "target": "limen",
         "pull_request": 2315,
-        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
         "role": "delivery operating-system relay and public-safe acceptance boundary",
         "counts_as_closure": False,
     },
@@ -82,7 +113,8 @@ EXPECTED_C10_SOURCE_BINDINGS = [
         "id": "c05_private_templates",
         "target": "private_custody",
         "pull_request": 135,
-        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
         "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
         "counts_as_closure": False,
     },
@@ -90,7 +122,8 @@ EXPECTED_C10_SOURCE_BINDINGS = [
         "id": "c09_qualification_relay",
         "target": "limen",
         "pull_request": 2322,
-        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
         "role": "qualification, CTA-routing, and conversion source lock",
         "counts_as_closure": False,
     },
@@ -98,7 +131,8 @@ EXPECTED_C10_SOURCE_BINDINGS = [
         "id": "c09_private_package",
         "target": "private_custody",
         "pull_request": 136,
-        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
         "role": "private discovery, proposal, follow-up, and no-outcome controls",
         "counts_as_closure": False,
     },
@@ -106,47 +140,79 @@ EXPECTED_C10_SOURCE_BINDINGS = [
         "id": "c09_portfolio_package",
         "target": "portfolio",
         "pull_request": 222,
-        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
         "role": "public audit and conversion-path contract without publication",
         "counts_as_closure": False,
     },
 ]
 EXPECTED_C10_INTEGRATION = {
     "pull_request": "https://github.com/organvm/limen/pull/2321",
-    "head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
-    "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+    "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+    "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2",
+    "receipt_sha256": "d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa",
     "source_bindings": EXPECTED_C10_SOURCE_BINDINGS,
     "counts_as_closure": False,
 }
 EXPECTED_PREPARED_CHUNKS = {
-    "PSP-C04": {"closed": False, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
+    "PSP-C04": {
+        "closed": False,
+        "limen_pr": 2313,
+        "limen_source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+        "limen_integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be",
+        "portfolio_pr": 220,
+        "portfolio_source_head": "8974543ba9675ed0504141895812476efef5dd80",
+        "portfolio_integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5",
+    },
     "PSP-C05": {
         "closed": False,
         "limen_pr": 2315,
-        "limen_head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "limen_source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "limen_integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
         "private_pr": 135,
-        "private_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "private_source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "private_integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
     },
     "PSP-C06": {
         "closed": False,
         "limen_pr": 2317,
-        "limen_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668",
+        "limen_source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+        "limen_integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd",
         "portfolio_pr": 221,
-        "portfolio_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea",
+        "portfolio_source_head": "7c150fc81184df1715824be28b32472baadbb3b6",
+        "portfolio_integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0",
         "visual_direction_state": "three_unselected",
     },
-    "PSP-C07": {"closed": False, "limen_pr": 2318, "limen_head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"},
-    "PSP-C08": {"closed": False, "limen_pr": 2316, "limen_head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"},
+    "PSP-C07": {
+        "closed": False,
+        "limen_pr": 2318,
+        "limen_source_head": "9d81552a65cab1a8785e74251853881ac1957925",
+        "limen_integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405",
+    },
+    "PSP-C08": {
+        "closed": False,
+        "limen_pr": 2316,
+        "limen_source_head": "4e55e76b672b296f246bb18f96eccb4de10a8fb4",
+        "limen_integrated_main_head": "26dba96c74d18ead1244bee8dbbd18c630942b2f",
+    },
     "PSP-C09": {
         "closed": False,
         "limen_pr": 2322,
-        "limen_head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "limen_source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "limen_integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
         "private_pr": 136,
-        "private_head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "private_source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "private_integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
         "portfolio_pr": 222,
-        "portfolio_head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "portfolio_source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "portfolio_integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
     },
-    "PSP-C10": {"closed": False, "limen_pr": 2321, "limen_head": EXPECTED_C10_INTEGRATION["head"]},
+    "PSP-C10": {
+        "closed": False,
+        "limen_pr": 2321,
+        "limen_source_head": EXPECTED_C10_INTEGRATION["source_head"],
+        "limen_integrated_main_head": EXPECTED_C10_INTEGRATION["integrated_main_head"],
+    },
 }
 
 REQUIRED_STRUCTURES = {
@@ -190,13 +256,54 @@ class PreflightError(RuntimeError):
 
 
 def load_json(path: Path) -> dict[str, Any]:
+    def object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise PreflightError(f"duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, PreflightError) as exc:
         raise PreflightError(f"cannot load {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise PreflightError(f"{path} must contain an object")
     return value
+
+
+@lru_cache(maxsize=1)
+def expected_assignment_requirements() -> dict[str, Any]:
+    """Derive C11 execution requirements without freezing provider model names."""
+    program = runpy.run_path(str(PROGRAM_SCRIPT))
+    graph = program["index_program"](program["load_manifest"]())
+    chunk_assignment = program["chunk_assignment_for"]("PSP-C11", graph)
+    requirements: dict[str, Any] = {
+        "conductor": {
+            "selection": "runtime_catalog",
+            "role": "chunk_conductor",
+            "effort": chunk_assignment["effort"],
+            "capabilities": sorted(
+                {capability for work_id in WORK_IDS for capability in graph["work_by_id"][work_id]["capabilities"]}
+            ),
+        },
+        "leaves": {},
+    }
+    for work_id in WORK_IDS:
+        packet = graph["work_by_id"][work_id]
+        assignment = program["model_assignment_for"](work_id, graph)
+        requirements["leaves"][work_id] = {
+            "selection": "runtime_catalog",
+            "reasoning": packet["reasoning"],
+            "effect": packet["effect"],
+            "effort": assignment["effort"],
+            "capabilities": packet["capabilities"],
+        }
+    return requirements
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -411,16 +518,16 @@ def build_snapshot(
     missing = [name for name in product_names if len(by_name.get(name, [])) == 0]
     ambiguous = [name for name in product_names if len(by_name.get(name, [])) > 1]
     if missing or ambiguous:
-        raise PreflightError(
-            f"candidate resolution failed: missing={len(missing)} ambiguous={len(ambiguous)}"
-        )
+        raise PreflightError(f"candidate resolution failed: missing={len(missing)} ambiguous={len(ambiguous)}")
     candidates = [by_name[name][0] for name in product_names]
     candidate_names = sorted(str(row["full_name"]) for row in candidates)
     identity_digest = hashlib.sha256("\n".join(candidate_names).encode("utf-8")).hexdigest()
     repository_digest = hashlib.sha256(
         "\n".join(sorted(str(row["full_name"]) for row in repositories)).encode("utf-8")
     ).hexdigest()
-    public_rows = sorted((row for row in candidates if not bool(row.get("private"))), key=lambda row: str(row["full_name"]))
+    public_rows = sorted(
+        (row for row in candidates if not bool(row.get("private"))), key=lambda row: str(row["full_name"])
+    )
     private_rows = [row for row in candidates if bool(row.get("private"))]
     demand_model = contract["demand_model"]
     readiness_model = contract["readiness_model"]
@@ -465,11 +572,7 @@ def build_snapshot(
     repository_owner_counts = collections.Counter(str(row["owner"]["login"]) for row in repositories)
     for organization in organizations:
         repository_owner_counts.setdefault(organization, 0)
-    source_rows = {
-        str(source.get("id")): source
-        for source in contract["live_sources"]
-        if isinstance(source, dict)
-    }
+    source_rows = {str(source.get("id")): source for source in contract["live_sources"] if isinstance(source, dict)}
     source_ids = contract["candidate_inventory"]["source_ids"]
     return {
         "schema_version": "limen.psp_c11_product_candidate_snapshot.v1",
@@ -565,7 +668,7 @@ def run_synthetic_drills(contract: dict[str, Any]) -> dict[str, Any]:
     passed = all(row["pass"] for row in operator_results + access_results)
     predecessor = contract["dependency_boundary"]["formal_predecessor"]
     return {
-        "schema_version": "limen.psp_c11_synthetic_drill_receipt.v2",
+        "schema_version": "limen.psp_c11_synthetic_drill_receipt.v3",
         "status": "pass" if passed else "fail",
         "synthetic_only": True,
         "human_acceptance_simulated": False,
@@ -577,7 +680,8 @@ def run_synthetic_drills(contract: dict[str, Any]) -> dict[str, Any]:
         "observed_pilot": False,
         "source_lock": {
             "chunk_id": predecessor["chunk_id"],
-            "head": predecessor["exact_head"],
+            "source_head": predecessor["source_head"],
+            "integrated_main_head": predecessor["integrated_main_head"],
             "receipt_sha256": predecessor["receipt_sha256"],
             "source_bindings": predecessor["source_bindings"],
             "counts_as_closure": predecessor["counts_as_closure"],
@@ -587,26 +691,25 @@ def run_synthetic_drills(contract: dict[str, Any]) -> dict[str, Any]:
 
 def validate_contract(contract: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    if set(contract) != EXPECTED_CONTRACT_KEYS:
+        errors.append("contract must use the exact public-safe root schema")
     if contract.get("status") != "PREPARED/PREFLIGHT":
         errors.append("contract status must remain PREPARED/PREFLIGHT")
     if contract.get("chunk_id") != "PSP-C11" or contract.get("phase_id") != "PSP-P13":
         errors.append("contract must remain bound to PSP-C11 / PSP-P13")
-    if contract.get("schema_version") != "limen.psp_c11_foundry_preflight.v2":
-        errors.append("contract schema must remain at reconciled v2")
-    if contract.get("reconciled_at") != "2026-08-12":
+    if contract.get("schema_version") != "limen.psp_c11_foundry_preflight.v3":
+        errors.append("contract schema must remain at reconciled v3")
+    if contract.get("reconciled_at") != "2026-08-13":
         errors.append("contract reconciliation date drift")
-    if contract.get("conductor") != EXPECTED_CONDUCTOR:
-        errors.append("C11 conductor assignment drift")
-    if contract.get("leaf_assignments") != EXPECTED_ASSIGNMENTS:
-        errors.append("leaf model, effort, or effect assignment drift")
+    if contract.get("assignment_policy") != ASSIGNMENT_POLICY:
+        errors.append("assignment policy must require runtime catalog discovery and fail closed")
+    if contract.get("assignment_requirements") != expected_assignment_requirements():
+        errors.append("assignment requirements drift from the canonical runtime registry")
     live_sources = {row.get("id"): row for row in contract.get("live_sources", []) if isinstance(row, dict)}
     if set(live_sources) != {"p02_closure", *EXPECTED_C02_SOURCES}:
         errors.append("live source set must contain only P02 closure and the two accepted C02 inputs")
     p02 = live_sources.get("p02_closure") or {}
-    if (
-        p02.get("state") != "closed"
-        or any(p02.get(key) != value for key, value in EXPECTED_P02_CLOSURE.items())
-    ):
+    if p02.get("state") != "closed" or any(p02.get(key) != value for key, value in EXPECTED_P02_CLOSURE.items()):
         errors.append("P02 closure must remain bound to its accepted main head and marked receipt")
     for source_id, expected in EXPECTED_C02_SOURCES.items():
         source = live_sources.get(source_id) or {}
@@ -629,12 +732,14 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         errors.append("C10 must remain prepared but not closed")
     elif (
         predecessor.get("pull_request") != "https://github.com/organvm/limen/pull/2321"
-        or predecessor.get("exact_head") != EXPECTED_PREPARED_CHUNKS["PSP-C10"]["limen_head"]
+        or predecessor.get("source_head") != EXPECTED_PREPARED_CHUNKS["PSP-C10"]["limen_source_head"]
+        or predecessor.get("integrated_main_head") != EXPECTED_PREPARED_CHUNKS["PSP-C10"]["limen_integrated_main_head"]
     ):
         errors.append("C10 predecessor checkpoint head drift")
     integration = {
         "pull_request": predecessor.get("pull_request"),
-        "head": predecessor.get("exact_head"),
+        "source_head": predecessor.get("source_head"),
+        "integrated_main_head": predecessor.get("integrated_main_head"),
         "receipt_sha256": predecessor.get("receipt_sha256"),
         "source_bindings": predecessor.get("source_bindings"),
         "counts_as_closure": predecessor.get("counts_as_closure"),
@@ -715,11 +820,7 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
     errors: list[str] = []
     if snapshot.get("status") != "PREPARED/PREFLIGHT":
         errors.append("snapshot status must remain PREPARED/PREFLIGHT")
-    source_rows = {
-        str(row.get("id")): row
-        for row in contract.get("live_sources", [])
-        if isinstance(row, dict)
-    }
+    source_rows = {str(row.get("id")): row for row in contract.get("live_sources", []) if isinstance(row, dict)}
     expected_sources = [
         source_rows[source_id].get("url")
         for source_id in contract.get("candidate_inventory", {}).get("source_ids", [])
@@ -753,7 +854,11 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
             errors.append(f"{candidate_id}: demand evidence contract is incomplete")
         if not readiness.get("unverified_dimensions") or not readiness.get("custody_risk"):
             errors.append(f"{candidate_id}: readiness/custody contract is incomplete")
-        if not economics.get("hypothesis") or not economics.get("transfer_trigger") or not economics.get("stop_condition"):
+        if (
+            not economics.get("hypothesis")
+            or not economics.get("transfer_trigger")
+            or not economics.get("stop_condition")
+        ):
             errors.append(f"{candidate_id}: economics contract is incomplete")
         if row.get("transfer_eligible") is not False:
             errors.append(f"{candidate_id}: preflight cannot mark a candidate transfer-eligible")
@@ -804,9 +909,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--contract", type=Path, default=CONTRACT)
     parser.add_argument("--snapshot", type=Path, default=SNAPSHOT)
-    parser.add_argument("--live", action="store_true", help="run two complete owner-wide censuses and emit a public-safe snapshot")
-    parser.add_argument("--verify-live-snapshot", action="store_true", help="compare the tracked identity/visibility denominator to two live passes")
-    parser.add_argument("--drills", action="store_true", help="emit synthetic operator, access, return, and governance drill results")
+    parser.add_argument(
+        "--live", action="store_true", help="run two complete owner-wide censuses and emit a public-safe snapshot"
+    )
+    parser.add_argument(
+        "--verify-live-snapshot",
+        action="store_true",
+        help="compare the tracked identity/visibility denominator to two live passes",
+    )
+    parser.add_argument(
+        "--drills", action="store_true", help="emit synthetic operator, access, return, and governance drill results"
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     try:
@@ -843,9 +956,7 @@ def main() -> int:
                 "new_candidate_keys": 0,
             }
             private_names = {str(row["full_name"]) for row in repositories_2 if bool(row.get("private"))}
-            public_bare_names = {
-                str(row.get("name") or "") for row in repositories_2 if not bool(row.get("private"))
-            }
+            public_bare_names = {str(row.get("name") or "") for row in repositories_2 if not bool(row.get("private"))}
             private_unique_bare_names = {
                 str(row.get("name") or "")
                 for row in repositories_2

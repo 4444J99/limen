@@ -4,13 +4,15 @@ Status: **PREPARED/PREFLIGHT**. This package is reversible, public-safe, and del
 close PSP-P13 or any W01-W09 leaf. It does not select or contact an operator, choose binding terms,
 grant access, move custody, sign anything, spend, or claim an observed pilot.
 
-Reconciled 2026-08-12 under the exact Sol/max conductor assignment. Reconciliation updates live
-dependencies and evidence; it does not convert preparation into formal closure.
+Reconciled 2026-08-13 against the runtime provider catalog contract. The registry pins capability,
+reasoning, effect, and effort requirements while provider/model selection remains live and fails
+closed when no eligible lane exists. Reconciliation updates dependencies and evidence; it does not
+convert preparation into formal closure.
 
 The machine-readable owners are:
 
 - [`foundry-preflight-contract.json`](foundry-preflight-contract.json) — rubrics, floors, structure
-  options, pipeline, pilot design, governance, exact model assignments, and human gates;
+  options, pipeline, pilot design, governance, runtime assignment requirements, and human gates;
 - [`product-candidate-snapshot.json`](product-candidate-snapshot.json) — the live two-pass candidate
   denominator and conservative per-candidate demand/readiness screen;
 - [`synthetic-drill-receipt.json`](synthetic-drill-receipt.json) — operator routing, access denial,
@@ -25,13 +27,15 @@ The machine-readable owners are:
 ## Dependency and authority boundary
 
 The formal graph still owns closure. [P02](https://github.com/organvm/limen/issues/2172) is closed;
-P04, P11, and P12 remain unsatisfied. PSP-C10 is prepared at draft PR
-[#2321](https://github.com/organvm/limen/pull/2321) head
-`98e10060a31a69c3d6cfe54375c68fe298c6c53a`, but is not closed. Its deterministic synthetic
-readiness receipt is bound at
-`bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6` with all five current
-C05/C09 sources explicitly marked `counts_as_closure: false`. C03's current offer draft is
-`b6af8086c9050634313f519c29a6dfcb922c3721`, while formal acceptance remains through W06 at
+P04, P11, and P12 remain unsatisfied. PSP-C10's prepared package was integrated through
+[#2321](https://github.com/organvm/limen/pull/2321): source
+`71a6046c2186b4d4ead5136920b82b412ff5d540`, integrated main
+`f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2`. It is still not formal closure. Its deterministic
+synthetic readiness receipt is bound at
+`d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa` with all five current
+C05/C09 source and integrated-main pairs explicitly marked `counts_as_closure: false`. C03's offer
+package was integrated from source `b6af8086c9050634313f519c29a6dfcb922c3721` to main
+`8f89ad16ca1df84b00cb8227c88f368d0d64631a`, while formal acceptance remains through W06 at
 `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; its genuine-reader W07 gate remains open in
 [#2188](https://github.com/organvm/limen/issues/2188). No C11/P13 leaf is ready. The authorized
 preflight therefore prepares downstream machinery but posts no leaf receipt and changes no issue
