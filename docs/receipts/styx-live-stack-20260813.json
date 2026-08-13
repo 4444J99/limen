@@ -1,0 +1,67 @@
+{
+  "receipt": "styx-live-stack",
+  "recorded_utc": "2026-08-13T05:05:00Z",
+  "subject": {
+    "product": "styx",
+    "repo": "4444J99/peer-audited--behavioral-blockchain",
+    "note": "The constellation register names this repo. revenue-ladder.json and REV-organvm-styx-revenue-ship-0623 still key it as organvm/styx, which 404s; organ-ladder.json:185 already flags that drift."
+  },
+  "predicate": {
+    "command": "npm run demo:reset:verify",
+    "path": "native fallback (scripts/demo/native.sh) -- no Docker on the running host",
+    "exit_code": 0,
+    "consecutive_green_runs": 2,
+    "idempotent_fixed_point": true,
+    "checks_reported": [
+      "live API",
+      "browser",
+      "ledger",
+      "proof",
+      "behavioral",
+      "coach",
+      "enterprise-preview"
+    ],
+    "synthetic_identities": 12,
+    "runs": [
+      { "id": "run-3", "exit_code": 0, "note": "first green after the readiness-probe repair" },
+      { "id": "run-4", "exit_code": 0, "note": "immediate repeat -- the idempotency check" },
+      { "id": "run-5", "exit_code": 0, "note": "rebuilt with the guided tour compiled in" },
+      { "id": "run-6", "exit_code": 0, "note": "rebuilt after the tour layout repair" }
+    ]
+  },
+  "heads": {
+    "pr_874_merged_as": "849fc4e",
+    "pr_874_merged_utc": "2026-08-13T04:52:28Z",
+    "guided_tour_head": "9af8dc56d29d795b626034a8b1fb5d0a594cd981",
+    "guided_tour_pr": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/876"
+  },
+  "boundary": {
+    "moves_real_money": false,
+    "data": "synthetic seed only (src/api/database/seed.sql + scripts/demo/seed-circles.sql)",
+    "payment_provider": "internal test-credit ledger; no Stripe call is made",
+    "hosted": false,
+    "what_this_is_not": "This is a LOCAL live-stack receipt. It is not evidence of a hosted environment, an external beta, real-money settlement, clinical use, or public launch. Those gates are audited in the product repo at docs/evidence/styx-launch-gates.md and remain open."
+  },
+  "repairs_landed": [
+    {
+      "defect": "The launcher's readiness probe used bare curl, which inherits $CURL_HOME/.curlrc. An --http2 line there makes curl request an h2c upgrade on plain HTTP that Next answers by closing the connection, so a healthy stack reported 'web tour did not become ready'.",
+      "why_ci_missed_it": "Browsers and Playwright never attempt h2c over cleartext, so every browser check stayed green while the local launcher failed.",
+      "fix": "wait_for_http now runs curl -q --http1.1"
+    },
+    {
+      "defect": "scripts/dev/run-api.mjs spawns the Nest server as a child and never forwarded signals, so a failed launch reparented a live API to init while it kept the API port. The next launch's readiness probe could then pass against a stale server bound to a database the reset in between had already dropped.",
+      "fix": "signals are forwarded, and cleanup waits for the process tree to die instead of firing and exiting"
+    }
+  ],
+  "consumes": {
+    "registry": "docs/positioning/flagship-proof-set.yaml",
+    "entry": "styx",
+    "current_verdict": "alternate / eligible:false",
+    "hard_gate_failures": ["prototype_maturity", "current_governance_checks_red"],
+    "promotion_condition": "Attach a live-stack receipt and clear or adjudicate the current default-head governance failures.",
+    "adjudication": "This receipt answers the live-stack half of that condition for prototype_maturity, on the local synthetic path only. current_governance_checks_red is a separate question and is NOT addressed here; the entry should stay excluded until it is answered on its own evidence."
+  },
+  "related": {
+    "custody_debt": "docs/github-estate-census.json carried feat/styx-launch-package as custody_debt:true. PR #874 is now merged, so the underlying condition is cleared; the census is generated and should re-derive rather than be hand-edited."
+  }
+}
