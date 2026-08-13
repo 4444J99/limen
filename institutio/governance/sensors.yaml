@@ -2074,7 +2074,7 @@ sensors:
 
   arca-freshness:
     section: "5c1"
-    title: "ARCA freshness — the private estate's off-machine copy is actually ADVANCING, not merely attempted"
+    title: "ARCA freshness — every private store's ciphertext actually EXISTS off-machine, not merely that the vault repo moved"
     gate: LIMEN_ARCA_FRESHNESS
     default: "1"
     source: [metabolize, heartbeat]
@@ -2084,9 +2084,17 @@ sensors:
     # and a locked Keychain must not red it — but it makes a PERMANENTLY dead vault indistinguishable
     # from a momentarily locked one. Measured 2026-08-07: no backup since 2026-07-30, eight days of
     # skip lines, nothing red; the vault repo had outgrown its own `git clone` (>19 GB expanded).
-    # This asserts the OUTCOME (ciphertext landed off-machine recently) rather than the mechanism, so
-    # it survives any later reshaping of the vault — new generation, new remote, new chunking.
+    # This asserts the OUTCOME (ciphertext for each store exists off-machine) rather than the
+    # mechanism, so it survives any later reshaping of the vault — new generation, remote, chunking.
     # "Cannot determine" is a FINDING, not a pass: undetermined is exactly the state that hid this.
+    # RECENCY IS NOT COVERAGE (#2354, PREC-2026-08-12-custody-recency-is-not-coverage): the first cut
+    # asked only "did the vault repo push recently?" and answered OK on beat 72 while
+    # _collaboration-operations-private — 4.9 GB, over ARCA_MAX_MB, skipped every beat — had never
+    # been sealed at all. A source-side "did it move?" is a different question from "does the target
+    # hold what the source has NOW", and only the second one is custody. The sensor now joins each
+    # store's store_hash against the manifest and graces from the SEAL, not from the change: these
+    # stores take writes constantly, so a naive content-differs check would red permanently.
+    # `never_sealed` gets no grace — there is nothing to be recently-fresh ABOUT.
     # POTESTAS 0.3 (#2089): the vault rotates across generations (organvm/arca → organvm/arca-g2 → …),
     # and the local manifest owns which is CURRENT. The sensor resolves the repo under test in order
     # --repo → $ARCA_REPO → manifest `_generation.repo` → organvm/arca, so it follows every rotation
@@ -2100,7 +2108,7 @@ sensors:
     steps:
       - command: "python3 scripts/arca-freshness.py"
         severity: advisory
-        escalation: "the private estate has no recent off-machine copy — every _*-private store exists on ONE machine; owner organvm/limen#2072 (vault shape), #719 L-ARCA-KEY-ESCROW (key escrow, still open, so a botched vault repair is unrecoverable)"
+        escalation: "a private store's current contents have no off-machine copy — the named store exists on ONE machine, and a store that was NEVER sealed has no off-machine copy at all (a vault repo pushing on schedule proves nothing about it: recency is not coverage); owner organvm/limen#2072 (vault shape), #719 L-ARCA-KEY-ESCROW (key escrow, still open, so a botched vault repair is unrecoverable)"
 
   diurnal:
     section: "0h"
