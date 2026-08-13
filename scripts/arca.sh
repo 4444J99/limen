@@ -423,7 +423,10 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
     esac
     shift
   done
-  ensure_vault
+  # log() writes to STDOUT, and ensure_vault logs (seeding a manifest, recording a generation).
+  # Under --json that would prepend prose to the payload and make it unparseable — a
+  # machine-readable interface has to keep stdout pure, so its chatter goes to stderr instead.
+  if [ "$as_json" = "1" ]; then ensure_vault 1>&2; else ensure_vault; fi
   local name h old when state stale=0 first=1
   if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","stores":['; fi
   for s in "$WORKSPACE"/_*-private; do

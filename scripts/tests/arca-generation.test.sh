@@ -297,6 +297,17 @@ else
   echo "  MISMATCH (case12g drift past grace should red): rc=$rc"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# 12h: --json keeps STDOUT pure. arca.sh's log() writes to stdout and ensure_vault logs while
+# seeding, so a cold vault dir would otherwise prepend prose to the payload and the sensor would
+# read it as "coverage UNDETERMINED". Cold dir here on purpose — 2>/dev/null keeps only stdout.
+out="$(env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault_cold" ARCA_REPO=organvm/arcaseed-g2 \
+  "$ARCA" status --json 2>/dev/null)"
+if printf '%s' "$out" | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case12h --json stdout polluted by log lines)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "arca-generation.test.sh: PASS ($pass checks)"
