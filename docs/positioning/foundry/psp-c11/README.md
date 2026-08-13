@@ -27,7 +27,11 @@ The machine-readable owners are:
 The formal graph still owns closure. [P02](https://github.com/organvm/limen/issues/2172) is closed;
 P04, P11, and P12 remain unsatisfied. PSP-C10 is prepared at draft PR
 [#2321](https://github.com/organvm/limen/pull/2321) head
-`ba8dab7821b420cdc46c9129f96e91c908e01e93`, but is not closed. C03 is accepted through W06 at
+`98e10060a31a69c3d6cfe54375c68fe298c6c53a`, but is not closed. Its deterministic synthetic
+readiness receipt is bound at
+`bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6` with all five current
+C05/C09 sources explicitly marked `counts_as_closure: false`. C03's current offer draft is
+`b6af8086c9050634313f519c29a6dfcb922c3721`, while formal acceptance remains through W06 at
 `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; its genuine-reader W07 gate remains open in
 [#2188](https://github.com/organvm/limen/issues/2188). No C11/P13 leaf is ready. The authorized
 preflight therefore prepares downstream machinery but posts no leaf receipt and changes no issue

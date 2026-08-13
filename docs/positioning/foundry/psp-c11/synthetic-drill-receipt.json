@@ -104,7 +104,55 @@
       "score": 96
     }
   ],
-  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v1",
+  "schema_version": "limen.psp_c11_synthetic_drill_receipt.v2",
+  "source_lock": {
+    "chunk_id": "PSP-C10",
+    "counts_as_closure": false,
+    "head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
+    "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+    "source_bindings": [
+      {
+        "counts_as_closure": false,
+        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "id": "c05_delivery_relay",
+        "pull_request": 2315,
+        "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "id": "c05_private_templates",
+        "pull_request": 135,
+        "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "id": "c09_qualification_relay",
+        "pull_request": 2322,
+        "role": "qualification, CTA-routing, and conversion source lock",
+        "target": "limen"
+      },
+      {
+        "counts_as_closure": false,
+        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "id": "c09_private_package",
+        "pull_request": 136,
+        "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "target": "private_custody"
+      },
+      {
+        "counts_as_closure": false,
+        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "id": "c09_portfolio_package",
+        "pull_request": 222,
+        "role": "public audit and conversion-path contract without publication",
+        "target": "portfolio"
+      }
+    ]
+  },
   "status": "pass",
   "synthetic_only": true
 }

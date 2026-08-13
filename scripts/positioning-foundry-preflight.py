@@ -60,7 +60,7 @@ EXPECTED_C03_CHECKPOINT = {
     "status": "accepted_through_w06",
     "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
     "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
-    "integration_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+    "current_offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
     "closed_leaves": [f"PSP-P03-W{index:02d}" for index in range(1, 7)],
     "reader_gate": {
         "work_id": "PSP-P03-W07",
@@ -69,14 +69,63 @@ EXPECTED_C03_CHECKPOINT = {
         "assignment": {"model": "gpt-5.4-mini", "effort": "low", "effect": "read"},
     },
 }
+EXPECTED_C10_SOURCE_BINDINGS = [
+    {
+        "id": "c05_delivery_relay",
+        "target": "limen",
+        "pull_request": 2315,
+        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c05_private_templates",
+        "target": "private_custody",
+        "pull_request": 135,
+        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_qualification_relay",
+        "target": "limen",
+        "pull_request": 2322,
+        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "role": "qualification, CTA-routing, and conversion source lock",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_private_package",
+        "target": "private_custody",
+        "pull_request": 136,
+        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "counts_as_closure": False,
+    },
+    {
+        "id": "c09_portfolio_package",
+        "target": "portfolio",
+        "pull_request": 222,
+        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "role": "public audit and conversion-path contract without publication",
+        "counts_as_closure": False,
+    },
+]
+EXPECTED_C10_INTEGRATION = {
+    "pull_request": "https://github.com/organvm/limen/pull/2321",
+    "head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
+    "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+    "source_bindings": EXPECTED_C10_SOURCE_BINDINGS,
+    "counts_as_closure": False,
+}
 EXPECTED_PREPARED_CHUNKS = {
     "PSP-C04": {"closed": False, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
     "PSP-C05": {
         "closed": False,
         "limen_pr": 2315,
-        "limen_head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e",
+        "limen_head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
         "private_pr": 135,
-        "private_head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b",
+        "private_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
     },
     "PSP-C06": {
         "closed": False,
@@ -91,13 +140,13 @@ EXPECTED_PREPARED_CHUNKS = {
     "PSP-C09": {
         "closed": False,
         "limen_pr": 2322,
-        "limen_head": "21f3132f129aa6e1eba515f03aa19619533cef4b",
+        "limen_head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
         "private_pr": 136,
-        "private_head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086",
+        "private_head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
         "portfolio_pr": 222,
-        "portfolio_head": "a4c5165421344042efcc7a8b47660c1658b786d1",
+        "portfolio_head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
     },
-    "PSP-C10": {"closed": False, "limen_pr": 2321, "limen_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"},
+    "PSP-C10": {"closed": False, "limen_pr": 2321, "limen_head": EXPECTED_C10_INTEGRATION["head"]},
 }
 
 REQUIRED_STRUCTURES = {
@@ -514,8 +563,9 @@ def run_synthetic_drills(contract: dict[str, Any]) -> dict[str, Any]:
         {"step": "governance_review", "artifact": "synthetic_decision_receipt", "external_effect": False},
     ]
     passed = all(row["pass"] for row in operator_results + access_results)
+    predecessor = contract["dependency_boundary"]["formal_predecessor"]
     return {
-        "schema_version": "limen.psp_c11_synthetic_drill_receipt.v1",
+        "schema_version": "limen.psp_c11_synthetic_drill_receipt.v2",
         "status": "pass" if passed else "fail",
         "synthetic_only": True,
         "human_acceptance_simulated": False,
@@ -525,6 +575,13 @@ def run_synthetic_drills(contract: dict[str, Any]) -> dict[str, Any]:
         "lifecycle_replay": lifecycle,
         "final_custody": "owner_unchanged",
         "observed_pilot": False,
+        "source_lock": {
+            "chunk_id": predecessor["chunk_id"],
+            "head": predecessor["exact_head"],
+            "receipt_sha256": predecessor["receipt_sha256"],
+            "source_bindings": predecessor["source_bindings"],
+            "counts_as_closure": predecessor["counts_as_closure"],
+        },
     }
 
 
@@ -575,6 +632,15 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
         or predecessor.get("exact_head") != EXPECTED_PREPARED_CHUNKS["PSP-C10"]["limen_head"]
     ):
         errors.append("C10 predecessor checkpoint head drift")
+    integration = {
+        "pull_request": predecessor.get("pull_request"),
+        "head": predecessor.get("exact_head"),
+        "receipt_sha256": predecessor.get("receipt_sha256"),
+        "source_bindings": predecessor.get("source_bindings"),
+        "counts_as_closure": predecessor.get("counts_as_closure"),
+    }
+    if integration != EXPECTED_C10_INTEGRATION:
+        errors.append("C10 integrated readiness source-lock drift")
     if dependency.get("ready_work_observation") != "no_psp_c11_leaf_ready":
         errors.append("C11 ready-work observation drift")
     if dependency.get("c03_checkpoint") != EXPECTED_C03_CHECKPOINT:

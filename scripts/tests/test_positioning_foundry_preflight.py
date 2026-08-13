@@ -49,6 +49,21 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertIn("C04-C10 prepared checkpoint heads drift", errors)
         self.assertIn("C10 predecessor checkpoint head drift", errors)
 
+    def test_c10_readiness_source_lock_is_exact_and_non_closing(self) -> None:
+        predecessor = self.contract["dependency_boundary"]["formal_predecessor"]
+        self.assertEqual(MODULE.EXPECTED_C10_INTEGRATION["head"], predecessor["exact_head"])
+        self.assertEqual(
+            MODULE.EXPECTED_C10_INTEGRATION["receipt_sha256"],
+            predecessor["receipt_sha256"],
+        )
+        self.assertTrue(all(row["counts_as_closure"] is False for row in predecessor["source_bindings"]))
+        changed = copy.deepcopy(self.contract)
+        changed["dependency_boundary"]["formal_predecessor"]["source_bindings"][0]["counts_as_closure"] = True
+        self.assertIn(
+            "C10 integrated readiness source-lock drift",
+            MODULE.validate_contract(changed),
+        )
+
     def test_observed_pilot_or_transfer_claim_is_rejected(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["bounded_pilot"]["observed_pilot"] = True
@@ -83,6 +98,8 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertEqual([], receipt["external_effects"])
         self.assertTrue(all(not row["external_effect"] for row in receipt["lifecycle_replay"]))
         self.assertEqual("owner_unchanged", receipt["final_custody"])
+        self.assertEqual(MODULE.EXPECTED_C10_INTEGRATION["head"], receipt["source_lock"]["head"])
+        self.assertFalse(receipt["source_lock"]["counts_as_closure"])
 
     def test_private_snapshot_rows_are_opaque(self) -> None:
         private_rows = [row for row in self.snapshot["candidates"] if row["visibility"] == "private"]

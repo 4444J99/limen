@@ -13,7 +13,16 @@
       "prepared": true,
       "closed": false,
       "pull_request": "https://github.com/organvm/limen/pull/2321",
-      "exact_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"
+      "exact_head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a",
+      "receipt_sha256": "bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6",
+      "counts_as_closure": false,
+      "source_bindings": [
+        {"id": "c05_delivery_relay", "target": "limen", "pull_request": 2315, "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307", "role": "delivery operating-system relay and public-safe acceptance boundary", "counts_as_closure": false},
+        {"id": "c05_private_templates", "target": "private_custody", "pull_request": 135, "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates", "counts_as_closure": false},
+        {"id": "c09_qualification_relay", "target": "limen", "pull_request": 2322, "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0", "role": "qualification, CTA-routing, and conversion source lock", "counts_as_closure": false},
+        {"id": "c09_private_package", "target": "private_custody", "pull_request": 136, "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9", "role": "private discovery, proposal, follow-up, and no-outcome controls", "counts_as_closure": false},
+        {"id": "c09_portfolio_package", "target": "portfolio", "pull_request": 222, "head": "da79fb63b9756b5cce0d42ed2a7722668854a228", "role": "public audit and conversion-path contract without publication", "counts_as_closure": false}
+      ]
     },
     "phase_dependencies": {
       "PSP-P02": {
@@ -29,7 +38,7 @@
       "status": "accepted_through_w06",
       "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
-      "integration_head": "c7c932205faa405e291f8030235a73cedeaa219e",
+      "current_offer_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
       "closed_leaves": [
         "PSP-P03-W01",
         "PSP-P03-W02",
@@ -47,12 +56,12 @@
     },
     "prepared_chunks": {
       "PSP-C04": {"closed": false, "limen_pr": 2313, "limen_head": "23712398c6586e005c303eff632604985cd0a25c"},
-      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_head": "a72a05d917bf14d53221c7d02ec52d3786b4f88e", "private_pr": 135, "private_head": "6ff7d4e6bd9003213e2675f4e8d59c41a3726b3b"},
+      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307", "private_pr": 135, "private_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926"},
       "PSP-C06": {"closed": false, "limen_pr": 2317, "limen_head": "b3c8dcb8ee461fad7be971efc0fc60ca27726668", "portfolio_pr": 221, "portfolio_head": "6cb7f291ef758d26d136620398c6e9c09f74d0ea", "visual_direction_state": "three_unselected"},
       "PSP-C07": {"closed": false, "limen_pr": 2318, "limen_head": "6ee6bd7d546a56474cf3bd38e06fad794ab7bc45"},
       "PSP-C08": {"closed": false, "limen_pr": 2316, "limen_head": "a7937bb1e122574edc5d9e9cb74e18538d2b86c5"},
-      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_head": "21f3132f129aa6e1eba515f03aa19619533cef4b", "private_pr": 136, "private_head": "1da9b00ce26e8d6b466750906f5cfc0a373a9086", "portfolio_pr": 222, "portfolio_head": "a4c5165421344042efcc7a8b47660c1658b786d1"},
-      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_head": "ba8dab7821b420cdc46c9129f96e91c908e01e93"}
+      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0", "private_pr": 136, "private_head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9", "portfolio_pr": 222, "portfolio_head": "da79fb63b9756b5cce0d42ed2a7722668854a228"},
+      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_head": "98e10060a31a69c3d6cfe54375c68fe298c6c53a"}
     },
     "ready_work_observation": "no_psp_c11_leaf_ready",
     "rule": "Predecessor state blocks leaf and phase closure, not reversible preflight preparation in this explicitly authorized direct-session lane.",

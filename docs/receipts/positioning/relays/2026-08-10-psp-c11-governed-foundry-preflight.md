@@ -30,15 +30,16 @@ compression_level: medium
 
 | Item | Live state |
 | --- | --- |
-| Exact implementation head | `db88cb9c892e42bde0a9213248c09eb61bb2a299` |
-| Exact remote checkpoint | Final relay-containing head is pinned in draft PR #2319 because this tracked relay cannot self-name its containing commit |
+| Pre-integration C11 checkpoint | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` |
+| Exact source-lock correction head | Pinned in draft PR #2319 because this tracked relay cannot self-name its containing commit |
 | Pull request | Draft PR #2319, base `main`; no merge requested or performed |
 | Working tree | Clean at the implementation checkpoint; this relay is the only planned subsequent file |
 | Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
 | Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
 | Model assignment parity | `--verify-model-assignments`: all 127 objects valid; C11 Sol/max and all nine leaf pairs unchanged |
-| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `620ae2e87131cb871f73b8c0f230d20f9883d85c`, not closed |
-| C03 checkpoint | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
+| Dependency truth | P02 closed; P04/P11/P12 open; C10 PREPARED at #2321 head `98e10060a31a69c3d6cfe54375c68fe298c6c53a`, not closed |
+| C10 integration receipt | Five exact C05/C09 bindings, each `counts_as_closure: false`; deterministic receipt `bcb248826040197de8ef143da48ff61234d2cb2f6d73962fbc424eb2848856e6` |
+| C03 checkpoint | Current offer #2312 head `b6af8086c9050634313f519c29a6dfcb922c3721`; W01-W06 formal acceptance remains `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
 | Live ready-work | No C11/P13 leaf is ready |
 | Candidate census | Two identical passes: 10 organizations, 317 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
@@ -52,20 +53,19 @@ compression_level: medium
 
 ## Exact predicate receipts
 
-All commands below passed against implementation head
-`db88cb9c892e42bde0a9213248c09eb61bb2a299` unless noted otherwise.
+The exact containing head and CI state for this source-lock correction are pinned in draft PR #2319.
 
 | Predicate | Result |
 | --- | --- |
 | `python3 -B scripts/positioning-program.py --check` | pass; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
 | `python3 -B scripts/positioning-program.py --verify-model-assignments` | pass; all 127 assignments valid |
-| `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v2 contract, snapshot, exact dependency heads, assignments, gates, structures, and drills valid |
-| `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, return/governance replay, zero external effects |
+| `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v2 contract, snapshot, exact dependency heads, C10 source lock, assignments, gates, structures, and drills valid |
+| `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, exact non-closing C10 readiness receipt, return/governance replay, zero external effects |
 | `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass at 2026-08-12T20:14:01Z; full tracked snapshot match; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `330521ea037e8913b40052a62b20192203dc60e3cf0194ed01f097f6a4b7d39c`; leak count 0 |
-| `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld |
+| `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld, exact C10 integration receipt |
 | `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `d432e5c271504bcc13fd3cb9bbb94e5366549ec1063889ad8c319864aa41864e` |
 | `python3 -B scripts/positioning-foundry-handoff.py --drills --json` | pass; five rollback cases, zero external effects, owner custody unchanged |
-| Combined focused tests | 25 passed |
+| Combined focused tests | 28 passed |
 | Ruff | pass |
 | `scripts/verify-scoped.sh` | passed all 7 implicated gates |
 | `git diff --cached --check` | pass before implementation commit |
@@ -79,6 +79,8 @@ this preflight package, not a leaf completion.
 - Bound merged C02 census/classification inputs at accepted commits without copying private facts.
 - Fail-closed the v2 contract on the accepted C03 W01-W06 checkpoint, open W07 reader gate,
   prepared C04-C10 exact heads, C10-not-closed truth, and P02/P04/P11/P12 phase state.
+- Exact-bound C10 head `98e10060a31a69c3d6cfe54375c68fe298c6c53a`, its deterministic receipt,
+  and all five current C05/C09 inputs without promoting any prepared source to closure.
 - Added per-candidate demand evidence/zero-evidence state, next experiment, stop condition,
   conservative readiness/custody screen, economics hypothesis, and transfer blockers.
 - Added the operator profile/scorecard, diligence checklist, economics and transfer floors,
@@ -93,7 +95,7 @@ this preflight package, not a leaf completion.
 - Added five executable rollback cases covering evidence, security, custody, operator, and
   downside-economics failures with zero external effects.
 - Retained the base validator and synthetic operator/access/return/governance drills; the combined
-  base plus handoff focused suite now contains 25 tests.
+  base plus handoff focused suite now contains 28 tests.
 - Restricted snapshot sources to the two accepted C02 inventory inputs; the P02 closure receipt is
   dependency evidence, not candidate data.
 

@@ -110,6 +110,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     errors = []
     try:
         source = contract["source"]["c02"]
+        c10 = contract["source"]["c10"]
         decision_contract = contract["decision"]
         authority = contract["authority"]
         privacy = contract["privacy"]
@@ -121,6 +122,8 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
             errors.append("C02 classification binding drift")
         if set(source["taxonomy"]) != TAX or source["order"] != ORDER:
             errors.append("C02 taxonomy drift")
+        if c10 != BASE.EXPECTED_C10_INTEGRATION:
+            errors.append("C10 integrated readiness source-lock drift")
         if contract["candidate_count"] != 62:
             errors.append("candidate denominator drift")
         if (
@@ -286,6 +289,10 @@ def build_package(contract: dict[str, Any], snapshot: dict[str, Any]) -> dict[st
         "schema_version": "limen.psp_c11_handoff_package.v1",
         "status": "PREPARED/PREFLIGHT",
         "snapshot_identity": snapshot["candidate_denominator"]["identity_sha256"],
+        "source_lock": {
+            "c02_merge_commit": contract["source"]["c02"]["merge_commit"],
+            "c10": copy.deepcopy(contract["source"]["c10"]),
+        },
         "classification": {
             "policy_commit": contract["source"]["c02"]["merge_commit"],
             "count": len(classifications),
@@ -344,6 +351,11 @@ def validate_package(package: dict[str, Any], contract: dict[str, Any], snapshot
             errors.append(f"{candidate_id}: no-go or gate drift")
     if package.get("classification", {}).get("digest") != digest(classifications):
         errors.append("classification digest drift")
+    if package.get("source_lock") != {
+        "c02_merge_commit": contract["source"]["c02"]["merge_commit"],
+        "c10": contract["source"]["c10"],
+    }:
+        errors.append("package source-lock drift")
     if package.get("decision_summary", {}).get("digest") != digest(records):
         errors.append("decision digest drift")
     if (

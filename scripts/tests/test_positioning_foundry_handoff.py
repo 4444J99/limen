@@ -32,6 +32,18 @@ class HandoffTest(unittest.TestCase):
         value["source"]["c02"]["order"].reverse()
         self.assertIn("C02 taxonomy drift", MODULE.validate_contract(value))
 
+    def test_c10_source_lock_tamper(self):
+        self.assertEqual(MODULE.BASE.EXPECTED_C10_INTEGRATION, self.contract["source"]["c10"])
+        self.assertTrue(
+            all(row["counts_as_closure"] is False for row in self.contract["source"]["c10"]["source_bindings"])
+        )
+        value = copy.deepcopy(self.contract)
+        value["source"]["c10"]["receipt_sha256"] = "0" * 64
+        self.assertIn(
+            "C10 integrated readiness source-lock drift",
+            MODULE.validate_contract(value),
+        )
+
     def test_62_deterministic_non_binding_records(self):
         self.assertEqual(62, self.package["classification"]["count"])
         self.assertEqual(62, self.package["decision_summary"]["count"])
@@ -97,6 +109,14 @@ class HandoffTest(unittest.TestCase):
         value["external_effects"] = ["send"]
         self.assertIn(
             "package recorded external effects",
+            MODULE.validate_package(value, self.contract, self.snapshot),
+        )
+
+    def test_package_source_lock_tamper(self):
+        value = copy.deepcopy(self.package)
+        value["source_lock"]["c10"]["source_bindings"][0]["counts_as_closure"] = True
+        self.assertIn(
+            "package source-lock drift",
             MODULE.validate_package(value, self.contract, self.snapshot),
         )
 
