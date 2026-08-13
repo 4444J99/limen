@@ -1,0 +1,206 @@
+{
+  "schema_version": "limen.positioning_p14_control_plane.v3",
+  "phase_id": "PSP-P14",
+  "chunk_id": "PSP-C12",
+  "predecessor_policy": {
+    "mode": "receipt-only",
+    "execute_commands": false,
+    "description": "Consume current durable receipts; never replay a predecessor merely to accumulate reassurance."
+  },
+  "dependency_ledger": {
+    "path": "institutio/positioning/p14/dependency-ledger.json",
+    "schema_version": "limen.positioning_p14_dependency_ledger.v3",
+    "predecessor_chunk_count": 9,
+    "terminal_node_count": 23,
+    "counts_as_closure": false
+  },
+  "operations": {
+    "path": "institutio/positioning/p14/operations.json",
+    "schema_version": "limen.positioning_p14_operations.v1",
+    "fixture_path": "cli/tests/fixtures/positioning-p14/operational-cycle.json",
+    "counts_as_closure": false
+  },
+  "frontier_policy": {
+    "formal_execution_frontier": "The first registry-ready work whose formal dependencies and lifecycle predicates are satisfied.",
+    "reversible_preparation_frontier": "Prepared owner lanes with bounded repository-only work that is safe before formal dependency closure.",
+    "frontiers_are_independent": true,
+    "formal_gate_must_not_empty_reversible_frontier": true,
+    "allowed_preparation_effect_scope": "repository_reversible",
+    "non_closure_signals": [
+      "preflight",
+      "prepared",
+      "draft_pull_request",
+      "green_ci",
+      "synthetic_fixture",
+      "generated_visual_direction"
+    ]
+  },
+  "public_evidence_contract": {
+    "deny_keys": [
+      "access_token",
+      "api_key",
+      "authorization",
+      "client_name",
+      "contact_name",
+      "credential",
+      "email",
+      "operator_name",
+      "phone",
+      "price_amount",
+      "private_evidence_body",
+      "private_repository_name",
+      "secret"
+    ],
+    "identity_rule": "Public evidence uses opaque outcome, engagement, operator, and product IDs only.",
+    "violation_rule": "A denied key anywhere in the live evidence envelope blocks terminal status."
+  },
+  "program_receipt_contract": {
+    "command": "python3 scripts/positioning-program.py --omega --require-two-pass",
+    "required_fields": ["command", "exit_code", "output_sha256", "state_digest", "observed_head", "observed_at", "evidence_url"],
+    "scope": "live",
+    "bind_state_digest_to_omega_pair": true,
+    "require_observation_at_or_after_second_pass": true
+  },
+  "stages": [
+    {"work_id": "PSP-P14-W01", "kind": "metric_dictionary", "depends_on": []},
+    {"work_id": "PSP-P14-W02", "kind": "review_contract", "depends_on": ["PSP-P14-W01"]},
+    {"work_id": "PSP-P14-W03", "kind": "review_contract", "depends_on": []},
+    {"work_id": "PSP-P14-W04", "kind": "review_contract", "depends_on": ["PSP-P14-W01"]},
+    {"work_id": "PSP-P14-W05", "kind": "claim_incident", "depends_on": []},
+    {"work_id": "PSP-P14-W06", "kind": "release_recovery", "depends_on": []},
+    {"work_id": "PSP-P14-W07", "kind": "sales_feedback", "depends_on": []},
+    {"work_id": "PSP-P14-W08", "kind": "delivery_feedback", "depends_on": []},
+    {
+      "work_id": "PSP-P14-W09",
+      "kind": "omega_pair",
+      "depends_on": [
+        "PSP-P14-W02",
+        "PSP-P14-W03",
+        "PSP-P14-W04",
+        "PSP-P14-W05",
+        "PSP-P14-W06",
+        "PSP-P14-W07",
+        "PSP-P14-W08"
+      ]
+    }
+  ],
+  "events": [
+    {"type": "claim.material", "owner": "docs/positioning/claims-ledger.md", "source": "claims ledger snapshot", "cadence": "monthly", "privacy": "public-safe aggregate", "decision_use": "Denominator for claim currency."},
+    {"type": "claim.current", "owner": "docs/positioning/claims-ledger.md", "source": "current evidence binding", "cadence": "monthly", "privacy": "public-safe aggregate", "decision_use": "Withdraw or quarantine stale claims."},
+    {"type": "surface.tracked", "owner": "link-surfaces.json", "source": "tracked public-surface registry", "cadence": "monthly", "privacy": "public URL only", "decision_use": "Denominator for public-surface health."},
+    {"type": "surface.healthy", "owner": "link-surfaces.json", "source": "bounded surface health receipt", "cadence": "monthly", "privacy": "public URL only", "decision_use": "Rollback unhealthy releases."},
+    {"type": "inbound.eligible", "owner": "private demand ledger", "source": "privacy-redacted inbound disposition", "cadence": "weekly", "privacy": "opaque outcome id only", "decision_use": "Denominator for qualified demand."},
+    {"type": "inbound.qualified", "owner": "private demand ledger", "source": "qualification receipt", "cadence": "weekly", "privacy": "opaque outcome id only", "decision_use": "Revise qualification or offer only after threshold evidence."},
+    {"type": "offer.decision", "owner": "docs/positioning/decisions", "source": "versioned offer decision", "cadence": "weekly", "privacy": "aggregate only", "decision_use": "Denominator for offer conversion."},
+    {"type": "offer.accepted", "owner": "private demand ledger", "source": "accepted-offer receipt", "cadence": "weekly", "privacy": "opaque outcome id only", "decision_use": "Measure validated demand without asserting revenue."},
+    {"type": "delivery.closed", "owner": "private delivery ledger", "source": "delivery closeout receipt", "cadence": "weekly", "privacy": "opaque engagement id only", "decision_use": "Denominator for delivery outcome coverage."},
+    {"type": "delivery.outcome_recorded", "owner": "private delivery ledger", "source": "evidence-backed delivery outcome", "cadence": "weekly", "privacy": "public-safe aggregate only", "decision_use": "Narrow or strengthen claims after delivery."},
+    {"type": "operator.outcome_observed", "owner": "private operator ledger", "source": "operator return or no-go receipt", "cadence": "quarterly", "privacy": "opaque product and operator ids", "decision_use": "Denominator for foundry feedback coverage."},
+    {"type": "operator.outcome_classified", "owner": "docs/positioning/estate-classification.md", "source": "outcome impact record", "cadence": "quarterly", "privacy": "public-safe classification only", "decision_use": "Promote, narrow, park, or retain a product class."},
+    {"type": "claim_incident.closed", "owner": "docs/receipts/positioning", "source": "claim incident receipt", "cadence": "event", "privacy": "public-safe claim id only", "decision_use": "Denominator for correction recovery."},
+    {"type": "claim_incident.corrected", "owner": "docs/receipts/positioning", "source": "corrected evidence receipt", "cadence": "event", "privacy": "public-safe claim id only", "decision_use": "Permit regeneration only after correction."},
+    {"type": "release.rollback_attempted", "owner": "release manifest owner", "source": "release recovery drill", "cadence": "release", "privacy": "public release ids only", "decision_use": "Denominator for release recovery."},
+    {"type": "release.recovered", "owner": "release manifest owner", "source": "post-rollback health receipt", "cadence": "release", "privacy": "public release ids only", "decision_use": "Stop releases when restoration is not exact."},
+    {"type": "portfolio.eligible", "owner": "docs/positioning/estate-classification.md", "source": "portfolio classification census", "cadence": "quarterly", "privacy": "public-safe aggregate", "decision_use": "Denominator for evidence-backed classification."},
+    {"type": "portfolio.evidence_classified", "owner": "docs/positioning/estate-classification.md", "source": "classification evidence receipt", "cadence": "quarterly", "privacy": "public-safe aggregate", "decision_use": "Find products whose prominence exceeds their evidence."}
+  ],
+  "metrics": [
+    {"id": "claim_currency_rate", "numerator_event": "claim.current", "denominator_event": "claim.material", "owner": "claims ledger owner", "cadence": "monthly", "decision_use": "Quarantine any material claim missing current evidence.", "minimum_denominator": 1, "guardrail": "Never infer truth from the ratio; inspect each failed claim."},
+    {"id": "surface_health_rate", "numerator_event": "surface.healthy", "denominator_event": "surface.tracked", "owner": "surface registry owner", "cadence": "monthly", "decision_use": "Rollback or repair an unhealthy tracked surface.", "minimum_denominator": 1, "guardrail": "A green aggregate cannot hide a failed named surface."},
+    {"id": "qualified_demand_rate", "numerator_event": "inbound.qualified", "denominator_event": "inbound.eligible", "owner": "demand ledger owner", "cadence": "weekly", "decision_use": "Revisit targeting or qualification after the declared outcome threshold.", "minimum_denominator": 1, "guardrail": "Synthetic, spam, and private identities never count as demand."},
+    {"id": "offer_conversion_rate", "numerator_event": "offer.accepted", "denominator_event": "offer.decision", "owner": "offer decision owner", "cadence": "weekly", "decision_use": "Keep, narrow, or withdraw an offer after threshold evidence.", "minimum_denominator": 1, "guardrail": "An accepted offer is not a revenue or client-outcome claim."},
+    {"id": "delivery_outcome_coverage", "numerator_event": "delivery.outcome_recorded", "denominator_event": "delivery.closed", "owner": "delivery ledger owner", "cadence": "weekly", "decision_use": "Block proof promotion when a closed delivery lacks an outcome receipt.", "minimum_denominator": 1, "guardrail": "Outcome coverage does not imply a positive outcome."},
+    {"id": "operator_outcome_coverage", "numerator_event": "operator.outcome_classified", "denominator_event": "operator.outcome_observed", "owner": "portfolio classification owner", "cadence": "quarterly", "decision_use": "Route each operator result, including no-go, into classification.", "minimum_denominator": 1, "guardrail": "A no-go is evidence, not success."},
+    {"id": "claim_correction_recovery_rate", "numerator_event": "claim_incident.corrected", "denominator_event": "claim_incident.closed", "owner": "claim incident owner", "cadence": "event", "decision_use": "Keep generation disabled until every closed incident is corrected or withdrawn.", "minimum_denominator": 1, "guardrail": "Quarantine precedes correction and correction precedes republication."},
+    {"id": "release_recovery_rate", "numerator_event": "release.recovered", "denominator_event": "release.rollback_attempted", "owner": "release owner", "cadence": "release", "decision_use": "Stop releases when exact restoration fails.", "minimum_denominator": 1, "guardrail": "Health and capture continuity must both pass."},
+    {"id": "portfolio_evidence_coverage", "numerator_event": "portfolio.evidence_classified", "denominator_event": "portfolio.eligible", "owner": "portfolio classification owner", "cadence": "quarterly", "decision_use": "Lower prominence for unclassified or weakly evidenced products.", "minimum_denominator": 1, "guardrail": "Repository count is never a product-quality proxy."}
+  ],
+  "reviews": {
+    "weekly": {
+      "work_id": "PSP-P14-W02",
+      "period": "P7D",
+      "minimum_live_receipts": 4,
+      "inputs": ["ready work", "named blockers", "qualified demand", "delivery risk", "evidence changes"],
+      "outputs": ["decision", "owner", "next predicate", "routed packet ids"],
+      "synthetic_counts_as_live": false
+    },
+    "monthly": {
+      "work_id": "PSP-P14-W03",
+      "period": "P1M",
+      "minimum_live_receipts": 2,
+      "inputs": ["claims", "sources", "links", "public/private boundaries", "generated surfaces"],
+      "outputs": ["stale or changed source list", "owned correction packets", "privacy and surface verdict"],
+      "synthetic_counts_as_live": false
+    },
+    "quarterly": {
+      "work_id": "PSP-P14-W04",
+      "period": "P3M",
+      "minimum_live_receipts": 1,
+      "inputs": ["conversation evidence", "funnel evidence", "delivery evidence", "claim evidence"],
+      "outputs": ["keep/narrow/promote/withdraw decision", "truth versus prominence finding", "next experiment"],
+      "synthetic_counts_as_live": false
+    }
+  },
+  "claim_incident": {
+    "work_id": "PSP-P14-W05",
+    "sequence": ["quarantine ledger claim", "remove every dependent surface", "block regeneration", "bind corrected evidence", "restore only corrected claim"],
+    "required_correction_status": "verified"
+  },
+  "release_recovery": {
+    "work_id": "PSP-P14-W06",
+    "sequence": ["record known-green release", "observe synthetic bad release", "restore exact known-green release", "verify all health checks", "verify capture owner continuity"],
+    "required_health": "healthy",
+    "minimum_repositories": 2
+  },
+  "feedback_loops": {
+    "sales": {
+      "work_id": "PSP-P14-W07",
+      "minimum_revision_outcomes": 2,
+      "required_human_gate": "HG-PRICE-ANCHORS",
+      "allowed_decisions": ["keep", "narrow", "promote", "withdraw"],
+      "preserve_history": true
+    },
+    "delivery": {
+      "work_id": "PSP-P14-W08",
+      "required_impacts": ["claim_impact", "classification_impact", "proof_impact"],
+      "allow_none_impact": true,
+      "preserve_outcome_receipt": true
+    }
+  },
+  "omega": {
+    "work_id": "PSP-P14-W09",
+    "pair_schema_version": "limen.positioning_p14_omega_pair.v1",
+    "pass_schema_version": "limen.positioning_omega_pass.v1",
+    "require_distinct_observed_at": true,
+    "require_strict_observation_order": true,
+    "require_equal_state_digest": true,
+    "live_pass_required_fields": ["ok", "parity", "open", "verified_receipts", "failures"],
+    "live_pair_evidence_urls": 2,
+    "live_predicate": "python3 scripts/positioning-program.py --omega --require-two-pass"
+  },
+  "terminal_requirements": [
+    {"code": "W01_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W01", "kind": "work_receipt", "owner": "issue #2275", "description": "Current KPI dictionary predicate and durable work receipt."},
+    {"code": "W02_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W02", "kind": "work_receipt", "owner": "issue #2276", "description": "Current weekly-review predicate and durable work receipt."},
+    {"code": "W03_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W03", "kind": "work_receipt", "owner": "issue #2277", "description": "Current monthly-audit predicate and durable work receipt."},
+    {"code": "W04_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W04", "kind": "work_receipt", "owner": "issue #2278", "description": "Current quarterly-review predicate and durable work receipt."},
+    {"code": "W05_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W05", "kind": "work_receipt", "owner": "issue #2279", "description": "Current claim-incident predicate and durable work receipt."},
+    {"code": "W06_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W06", "kind": "work_receipt", "owner": "issue #2280", "description": "Current multi-repository recovery predicate and durable work receipt."},
+    {"code": "W07_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W07", "kind": "work_receipt", "owner": "issue #2281", "description": "Current sales-feedback predicate and durable work receipt."},
+    {"code": "W08_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W08", "kind": "work_receipt", "owner": "issue #2282", "description": "Current delivery-feedback predicate and durable work receipt."},
+    {"code": "W09_DURABLE_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "work_receipt", "owner": "issue #2283", "description": "Current terminal Omega work receipt."},
+    {"code": "WEEKLY_LIVE_CYCLES_MISSING", "work_id": "PSP-P14-W02", "kind": "minimum_records", "path": "review_receipts.weekly", "minimum": 4, "required_scope": "live", "required_fields": ["period_start", "decision", "owner", "next_predicate", "evidence_url"], "cadence": "weekly", "consecutive": true, "owner": "issue #2276", "description": "Four consecutive live weekly review receipts."},
+    {"code": "MONTHLY_LIVE_CYCLES_MISSING", "work_id": "PSP-P14-W03", "kind": "minimum_records", "path": "review_receipts.monthly", "minimum": 2, "required_scope": "live", "required_fields": ["period_start", "verdict", "unowned_stale_claims", "unowned_broken_links", "unowned_private_leaks", "unowned_surface_parity_defects", "evidence_url"], "cadence": "monthly", "consecutive": true, "owner": "issue #2277", "description": "Two consecutive live monthly audit receipts with zero unowned truth, link, privacy, or parity defects."},
+    {"code": "QUARTERLY_LIVE_REVIEW_MISSING", "work_id": "PSP-P14-W04", "kind": "minimum_records", "path": "review_receipts.quarterly", "minimum": 1, "required_scope": "live", "required_fields": ["conversation_evidence", "funnel_evidence", "delivery_evidence", "claim_evidence", "decision", "evidence_url"], "owner": "issue #2278", "description": "A live quarterly strategy decision grounded in all four evidence classes."},
+    {"code": "CLAIM_INCIDENT_DRILL_MISSING", "work_id": "PSP-P14-W05", "kind": "status_record", "path": "claim_incident_drill", "expected_status": "pass", "required_fields": ["quarantined_surfaces", "blocked_republish", "corrected_evidence", "evidence_url"], "owner": "issue #2279", "description": "Durable synthetic incident drill proving quarantine before corrected republication."},
+    {"code": "RELEASE_RECOVERY_DRILL_MISSING", "work_id": "PSP-P14-W06", "kind": "status_record", "path": "release_recovery_drill", "expected_status": "pass", "minimum_repositories": 2, "required_fields": ["resolved_repositories", "before_release_ids", "bad_release_ids", "restored_release_ids", "health_checks", "capture_continuity", "evidence_url"], "owner": "issue #2280", "description": "Multi-repository bad-release drill with exact restoration, health, and capture continuity."},
+    {"code": "REAL_DEMAND_OUTCOMES_MISSING", "work_id": "PSP-P14-W07", "kind": "minimum_records", "path": "sales_outcomes", "minimum": 5, "required_scope": "live", "required_fields": ["outcome_id", "offer_version", "disposition", "evidence_url"], "owner": "private demand ledger plus issue #2281", "description": "Five qualified live demand outcomes; synthetic conversations do not count."},
+    {"code": "DEMAND_DECISION_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "path": "demand_decision", "expected_status": "decided", "required_scope": "live", "required_fields": ["outcome_ids", "decision", "before_offer_version", "after_offer_version", "evidence_url"], "owner": "issue #2281", "description": "A live offer decision preserving the outcome history and before/after versions."},
+    {"code": "COMMERCIAL_SUCCESS_OUTCOME_MISSING", "work_id": "PSP-P14-W07", "kind": "status_record", "path": "commercial_outcome", "expected_status": "validated", "required_scope": "live", "required_fields": ["mode", "outcome_ids", "evidence_url"], "owner": "private demand ledger plus PSP-P12/P14 receipts", "description": "One paid-audit receipt or five documented no outcomes; synthetic or staged work does not count."},
+    {"code": "PRICE_ANCHOR_HUMAN_GATE_MISSING", "work_id": "PSP-P14-W07", "kind": "human_gate", "gate_id": "HG-PRICE-ANCHORS", "owner": "his-hand-levers.json -> L-PSP-PRICE-ANCHORS", "description": "Owner price-anchor decision receipt; preflight must not simulate acceptance."},
+    {"code": "REAL_DELIVERY_OUTCOME_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "path": "delivery_outcomes", "minimum": 1, "required_scope": "live", "required_fields": ["outcome_id", "claim_impact", "classification_impact", "proof_impact", "evidence_url"], "owner": "private delivery ledger plus issue #2282", "description": "At least one real delivery outcome mapped to claim, classification, and proof impact."},
+    {"code": "REAL_OPERATOR_OUTCOME_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "path": "operator_outcomes", "minimum": 1, "required_scope": "live", "required_fields": ["outcome_id", "claim_impact", "classification_impact", "proof_impact", "evidence_url"], "owner": "private operator ledger plus issue #2282", "description": "At least one observed operator result or evidence-backed no-go mapped upstream."},
+    {"code": "PORTFOLIO_IMPACT_RECEIPT_MISSING", "work_id": "PSP-P14-W08", "kind": "minimum_records", "path": "portfolio_impacts", "minimum": 1, "required_scope": "live", "required_fields": ["outcome_id", "before_class", "after_class", "reason", "evidence_url"], "owner": "estate classification owner", "description": "Evidence-backed classification impact, including an explicit no-change result when appropriate."},
+    {"code": "TWO_LIVE_OMEGA_PASSES_MISSING", "work_id": "PSP-P14-W09", "kind": "omega_pair", "path": "omega_pair", "owner": "issue #2283", "description": "Two distinct live observations with one unchanged complete-state digest."},
+    {"code": "PROGRAM_OMEGA_RECEIPT_MISSING", "work_id": "PSP-P14-W09", "kind": "status_record", "path": "program_omega", "expected_status": "pass", "required_scope": "live", "required_fields": ["command", "exit_code", "output_sha256", "state_digest", "observed_head", "observed_at", "evidence_url"], "owner": "issue #2283", "description": "Passing live `positioning-program.py --omega --require-two-pass` receipt bound to the two-pass digest and exact observed head."}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/demand-ledger.private.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "records"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_demand_private_ledger.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["outcome_id", "observed_at", "eligibility", "qualification", "disposition", "offer_version", "objection_code", "private_identity_ref"],
+        "properties": {
+          "outcome_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "eligibility": {"enum": ["eligible", "ineligible"]},
+          "qualification": {"enum": ["qualified", "unqualified", "not_assessed"]},
+          "disposition": {"enum": ["accepted", "declined", "documented_no", "no_response", "disqualified"]},
+          "offer_version": {"type": "string", "minLength": 1},
+          "objection_code": {"type": "string", "minLength": 1},
+          "private_identity_ref": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "evidence_url": {"type": "string", "pattern": "^https://"}
+        }
+      }
+    }
+  }
+}
