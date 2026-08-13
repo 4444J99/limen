@@ -21,32 +21,55 @@ from types import ModuleType
 from typing import Any
 
 import yaml
+from yaml.constructor import ConstructorError
 
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONTRACT = ROOT / "docs" / "positioning" / "program" / "psp-c10-readiness" / "protocol.yaml"
 DEFAULT_FIXTURE = ROOT / "docs" / "positioning" / "program" / "psp-c10-readiness" / "synthetic-fixture.json"
 DEFAULT_RECEIPT = (
-    ROOT
-    / "docs"
-    / "receipts"
-    / "positioning"
-    / "preflights"
-    / "2026-08-10-psp-c10-readiness-synthetic.json"
+    ROOT / "docs" / "receipts" / "positioning" / "preflights" / "2026-08-10-psp-c10-readiness-synthetic.json"
 )
 PROGRAM_SCRIPT = ROOT / "scripts" / "positioning-program.py"
 PROGRAM_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
-CONTRACT_SCHEMA = "limen.positioning_c10_readiness.v3"
+CONTRACT_SCHEMA = "limen.positioning_c10_readiness.v4"
 FIXTURE_SCHEMA = "limen.positioning_c10_synthetic_fixture.v3"
-RECEIPT_SCHEMA = "limen.positioning_c10_synthetic_receipt.v3"
+RECEIPT_SCHEMA = "limen.positioning_c10_synthetic_receipt.v4"
 SHA256_RE = re.compile(r"[0-9a-f]{64}\Z")
 GIT_SHA_RE = re.compile(r"[0-9a-f]{40}\Z")
+ASSIGNMENT_POLICY = {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution",
+}
+EXPECTED_CONTRACT_KEYS = {
+    "schema_version",
+    "mode",
+    "scope",
+    "source_bindings",
+    "truth_boundary",
+    "assignment_policy",
+    "assignment_requirements",
+    "leaf_gate_matrix",
+    "leaf_dependency_matrix",
+    "recruitment",
+    "receipt_contracts",
+    "bounded_pilot",
+    "evidence_capture",
+    "outcome_adjudication",
+    "claim_refresh",
+    "strategy_decision_records",
+    "testimonial_reference_policy",
+    "experiment_90_day",
+}
 EXPECTED_SOURCE_BINDINGS = [
     {
         "id": "c05_delivery_relay",
         "target": "limen",
         "pull_request": 2315,
-        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
         "role": "delivery operating-system relay and public-safe acceptance boundary",
         "counts_as_closure": False,
     },
@@ -54,7 +77,8 @@ EXPECTED_SOURCE_BINDINGS = [
         "id": "c05_private_templates",
         "target": "private_custody",
         "pull_request": 135,
-        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
         "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
         "counts_as_closure": False,
     },
@@ -62,7 +86,8 @@ EXPECTED_SOURCE_BINDINGS = [
         "id": "c09_qualification_relay",
         "target": "limen",
         "pull_request": 2322,
-        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
         "role": "qualification, CTA-routing, and conversion source lock",
         "counts_as_closure": False,
     },
@@ -70,7 +95,8 @@ EXPECTED_SOURCE_BINDINGS = [
         "id": "c09_private_package",
         "target": "private_custody",
         "pull_request": 136,
-        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
         "role": "private discovery, proposal, follow-up, and no-outcome controls",
         "counts_as_closure": False,
     },
@@ -78,7 +104,8 @@ EXPECTED_SOURCE_BINDINGS = [
         "id": "c09_portfolio_package",
         "target": "portfolio",
         "pull_request": 222,
-        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
         "role": "public audit and conversion-path contract without publication",
         "counts_as_closure": False,
     },
@@ -89,9 +116,39 @@ class ReadinessError(RuntimeError):
     """Raised when the preflight contract or fixture fails closed."""
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """YAML loader that rejects duplicate mapping keys."""
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeyLoader,
+    node: yaml.MappingNode,
+    deep: bool = False,
+) -> dict[Any, Any]:
+    loader.flatten_mapping(node)
+    value: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in value:
+            raise ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                f"found duplicate key {key!r}",
+                key_node.start_mark,
+            )
+        value[key] = loader.construct_object(value_node, deep=deep)
+    return value
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
+)
+
+
 def _load_yaml(path: Path) -> dict[str, Any]:
     try:
-        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+        value = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
     except (OSError, yaml.YAMLError) as exc:
         raise ReadinessError(f"cannot load YAML {path}: {exc}") from exc
     if not isinstance(value, dict):
@@ -100,9 +157,20 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _load_json(path: Path) -> dict[str, Any]:
+    def object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        value: dict[str, Any] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ReadinessError(f"duplicate JSON member: {key}")
+            value[key] = item
+        return value
+
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=object_without_duplicate_keys,
+        )
+    except (OSError, json.JSONDecodeError, ReadinessError) as exc:
         raise ReadinessError(f"cannot load JSON {path}: {exc}") from exc
     if not isinstance(value, dict):
         raise ReadinessError(f"{path} must contain a mapping")
@@ -166,8 +234,37 @@ def load_inputs(
     return contract, fixture, program, graph
 
 
-def _assignment_pair(row: dict[str, Any]) -> dict[str, str]:
-    return {"slug": str(row["slug"]), "effort": str(row["effort"])}
+def _leaf_assignment_requirement(
+    work_id: str,
+    program: ModuleType,
+    graph: dict[str, Any],
+) -> dict[str, Any]:
+    packet = graph["work_by_id"][work_id]
+    assignment = program.model_assignment_for(work_id, graph)
+    return {
+        "selection": "runtime_catalog",
+        "reasoning": str(packet["reasoning"]),
+        "effect": str(packet["effect"]),
+        "effort": str(assignment["effort"]),
+        "capabilities": list(packet["capabilities"]),
+    }
+
+
+def _chunk_assignment_requirement(
+    chunk_id: str,
+    work_ids: list[str],
+    program: ModuleType,
+    graph: dict[str, Any],
+) -> dict[str, Any]:
+    assignment = program.chunk_assignment_for(chunk_id, graph)
+    return {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": str(assignment["effort"]),
+        "capabilities": sorted(
+            {capability for work_id in work_ids for capability in graph["work_by_id"][work_id]["capabilities"]}
+        ),
+    }
 
 
 def _registry_projection(
@@ -187,7 +284,12 @@ def _registry_projection(
             "extra_work_ids": list(chunk["extra_work_ids"]),
             "objective": str(chunk["objective"]),
             "exit_gate": str(chunk["exit_gate"]),
-            "assignment": _assignment_pair(program.chunk_assignment_for(chunk_id, graph)),
+            "assignment_requirement": _chunk_assignment_requirement(
+                chunk_id,
+                work_ids,
+                program,
+                graph,
+            ),
         },
         "work": [
             {
@@ -201,7 +303,7 @@ def _registry_projection(
                 "effect": str(graph["work_by_id"][work_id]["effect"]),
                 "acceptance": str(graph["work_by_id"][work_id]["acceptance"]),
                 "predicate": str(graph["work_by_id"][work_id]["predicate"]),
-                "assignment": _assignment_pair(program.model_assignment_for(work_id, graph)),
+                "assignment_requirement": _leaf_assignment_requirement(work_id, program, graph),
             }
             for work_id in work_ids
         ],
@@ -213,6 +315,7 @@ def validate_contract(
     program: ModuleType,
     graph: dict[str, Any],
 ) -> dict[str, Any]:
+    _expect(set(contract) == EXPECTED_CONTRACT_KEYS, "C10 readiness contract must use the exact root schema")
     _expect(contract.get("schema_version") == CONTRACT_SCHEMA, "unsupported C10 readiness contract schema")
     _expect(contract.get("mode") == "preflight_only", "C10 readiness contract must be preflight_only")
 
@@ -235,7 +338,14 @@ def validate_contract(
         "C10 source binding IDs must be unique",
     )
     for row in source_bindings:
-        _expect(GIT_SHA_RE.fullmatch(str(row["head"] or "")) is not None, f"{row['id']} head must be SHA-1")
+        _expect(
+            GIT_SHA_RE.fullmatch(str(row["source_head"] or "")) is not None,
+            f"{row['id']} source_head must be SHA-1",
+        )
+        _expect(
+            GIT_SHA_RE.fullmatch(str(row["integrated_main_head"] or "")) is not None,
+            f"{row['id']} integrated_main_head must be SHA-1",
+        )
         _expect(row["counts_as_closure"] is False, f"{row['id']} may not count as closure")
 
     truth = _mapping(contract.get("truth_boundary"), "truth_boundary")
@@ -257,21 +367,34 @@ def validate_contract(
     for key in required_false:
         _expect(truth.get(key) is False, f"truth_boundary.{key} must remain false")
 
-    routing = _mapping(contract.get("model_routing"), "model_routing")
-    _expect(routing.get("exact_assignment_required") is True, "exact model assignments must remain required")
-    conductor = program.chunk_assignment_for(chunk_id, graph)
     _expect(
-        routing.get("conductor") == _assignment_pair(conductor),
-        "PSP-C10 conductor assignment drifted from the registry",
+        contract.get("assignment_policy") == ASSIGNMENT_POLICY,
+        "assignment policy must require runtime catalog discovery and fail closed",
     )
-    leaf_assignments: dict[str, dict[str, str]] = {}
-    configured_leaves = _mapping(routing.get("leaves"), "model_routing.leaves")
+    assignment_requirements = _mapping(contract.get("assignment_requirements"), "assignment_requirements")
+    conductor_requirement = _chunk_assignment_requirement(
+        chunk_id,
+        expected_leaves,
+        program,
+        graph,
+    )
+    _expect(
+        assignment_requirements.get("conductor") == conductor_requirement,
+        "PSP-C10 conductor assignment requirements drifted from the registry",
+    )
+    leaf_assignment_requirements: dict[str, dict[str, Any]] = {}
+    configured_leaves = _mapping(assignment_requirements.get("leaves"), "assignment_requirements.leaves")
     for work_id in expected_leaves:
-        assignment = program.model_assignment_for(work_id, graph)
-        pair = _assignment_pair(assignment)
-        _expect(configured_leaves.get(work_id) == pair, f"{work_id} model assignment drifted from the registry")
-        leaf_assignments[work_id] = pair
-    _expect(set(configured_leaves) == set(expected_leaves), "model_routing.leaves contains extra or missing work IDs")
+        requirement = _leaf_assignment_requirement(work_id, program, graph)
+        _expect(
+            configured_leaves.get(work_id) == requirement,
+            f"{work_id} assignment requirements drifted from the registry",
+        )
+        leaf_assignment_requirements[work_id] = requirement
+    _expect(
+        set(configured_leaves) == set(expected_leaves),
+        "assignment_requirements.leaves contains extra or missing work IDs",
+    )
 
     gate_matrix = _mapping(contract.get("leaf_gate_matrix"), "leaf_gate_matrix")
     _expect(set(gate_matrix) == set(expected_leaves), "leaf_gate_matrix contains extra or missing work IDs")
@@ -473,8 +596,8 @@ def validate_contract(
         "criterion_ids": criterion_ids,
         "exclusion_ids": exclusion_ids,
         "gate_ids": expected_gate_ids,
-        "conductor_assignment": _assignment_pair(conductor),
-        "leaf_assignments": leaf_assignments,
+        "conductor_assignment_requirement": conductor_requirement,
+        "leaf_assignment_requirements": leaf_assignment_requirements,
         "qualified_threshold": threshold,
         "authority_required_fields": list(authority_contract["required_fields"]),
         "consent_required_fields": list(consent_contract["required_fields"]),
@@ -621,9 +744,7 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
         set(recruitment_by_candidate) == set(candidate_by_id),
         "fixture must provide exactly one recruitment record per candidate",
     )
-    selected_recruitment = [
-        row for row in recruitment_by_id.values() if row["cohort_disposition"] == "selected"
-    ]
+    selected_recruitment = [row for row in recruitment_by_id.values() if row["cohort_disposition"] == "selected"]
     _expect(
         {str(row["candidate_id"]) for row in selected_recruitment} == set(cohort),
         "selected recruitment records drifted from cohort_selected",
@@ -942,7 +1063,9 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
         _expect(proposal_id in proposal_by_id, f"{receipt_id} references unknown proposal {proposal_id}")
         _expect(proposal_id not in promoted_proposals, f"duplicate promotion gate for {proposal_id}")
         _expect(row.get("mode") == "synthetic", f"{receipt_id} must remain synthetic")
-        _expect(row.get("disposition") == proposal_by_id[proposal_id]["disposition"], f"{receipt_id} disposition drifted")
+        _expect(
+            row.get("disposition") == proposal_by_id[proposal_id]["disposition"], f"{receipt_id} disposition drifted"
+        )
         _expect(
             row.get("source_outcome_ids") == proposal_by_id[proposal_id]["source_outcome_ids"],
             f"{receipt_id} source outcomes drifted",
@@ -950,11 +1073,11 @@ def validate_fixture(fixture: dict[str, Any], contract_state: dict[str, Any]) ->
         _expect(row.get("external_outcome_evidence_ids") == [], f"{receipt_id} may not claim external outcomes")
         for consent_id in _list(row.get("consent_receipt_ids"), f"{receipt_id}.consent_receipt_ids"):
             _expect(consent_id in consent_by_id, f"{receipt_id} references unknown consent {consent_id}")
-        for authority_id in _list(
-            row.get("owner_authority_receipt_ids"), f"{receipt_id}.owner_authority_receipt_ids"
-        ):
+        for authority_id in _list(row.get("owner_authority_receipt_ids"), f"{receipt_id}.owner_authority_receipt_ids"):
             _expect(authority_id in authority_by_id, f"{receipt_id} references unknown authority {authority_id}")
-        _expect(bool(_list(row.get("target_claim_keys"), f"{receipt_id}.target_claim_keys")), f"{receipt_id} lacks targets")
+        _expect(
+            bool(_list(row.get("target_claim_keys"), f"{receipt_id}.target_claim_keys")), f"{receipt_id} lacks targets"
+        )
         for digest_field in ("prior_claim_set_sha256", "proposed_claim_set_sha256"):
             _expect(
                 SHA256_RE.fullmatch(str(row.get(digest_field) or "")) is not None,
@@ -1086,9 +1209,10 @@ def build_receipt(
             "program_registry_projection_sha256": contract_state["registry_projection_sha256"],
             "source_bindings": contract_state["source_bindings"],
         },
-        "model_routing": {
-            "conductor": contract_state["conductor_assignment"],
-            "leaves": contract_state["leaf_assignments"],
+        "assignment_requirements": {
+            "policy": ASSIGNMENT_POLICY,
+            "conductor": contract_state["conductor_assignment_requirement"],
+            "leaves": contract_state["leaf_assignment_requirements"],
             "verified_against_registry": True,
         },
         "registry_audit": {
@@ -1176,7 +1300,7 @@ def check_summary(
         "contract_sha256": receipt["bindings"]["contract_sha256"],
         "fixture_sha256": receipt["bindings"]["fixture_sha256"],
         "program_registry_projection_sha256": receipt["bindings"]["program_registry_projection_sha256"],
-        "model_routing": receipt["model_routing"],
+        "assignment_requirements": receipt["assignment_requirements"],
         "commercial_proof": False,
         "external_effects": [],
     }

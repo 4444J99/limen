@@ -14,7 +14,7 @@ or reference exists, a claim was refreshed, or a PSP predicate passed.
 
 | Result | What it establishes | What it cannot establish |
 |---|---|---|
-| Contract check passes | Registry scope, exact model routing, gates, record fields, thresholds, and bounds agree | Readiness of formal predecessors or authority for a real effect |
+| Contract check passes | Registry scope, runtime assignment requirements, gates, record fields, thresholds, and bounds agree | Readiness of formal predecessors or authority for a real effect |
 | Synthetic dry run passes | Keep, narrow, pivot, and insufficient-evidence branches work over fixture-only records | Qualified demand, payment, delivery acceptance, commercial proof, or wedge invalidation |
 | Committed synthetic receipt verifies | The receipt exactly matches the tracked protocol, fixture, and canonical C10 registry projection | Leaf, phase, chunk, issue, or external-outcome completion |
 
@@ -30,22 +30,25 @@ canonical digest of only the C10 chunk and leaf projection, so an unrelated mani
 invalidate unchanged readiness evidence. A future leaf executor must use the exact registry pair;
 no substitution is permitted.
 
-The contract also exact-binds the current C05 delivery relay/private templates and the C09
-qualification relay/private/portfolio packages. Those five prepared inputs remain
+The contract also exact-binds both source and integrated-main commits for the current C05 delivery
+relay/private templates and the C09 qualification relay/private/portfolio packages. Those five
+merged prepared inputs remain
 `counts_as_closure: false`; the bindings prevent this readiness kit from silently validating
 against superseded offers, delivery templates, or conversion controls.
 
-| Work | Assigned model | Effort | Prepared contract |
-|---|---|---|---|
-| `PSP-P12-W01` | `gpt-5.6-sol` | `xhigh` | cohort criteria, invitation and terms stops |
-| `PSP-P12-W02` | `gpt-5.6-sol` | `max` | bounded audit, acceptance, and closeout evidence |
-| `PSP-P12-W03` | `gpt-5.6-sol` | `xhigh` | conditional one-team install and before/after evidence |
-| `PSP-P12-W04` | `gpt-5.6-sol` | `max` | exact-copy consent, publication, and withdrawal stops |
-| `PSP-P12-W05` | `gpt-5.6-luna` | `medium` | provenance, permitted wording, and withdrawal inventory |
-| `PSP-P12-W06` | `gpt-5.6-sol` | `max` | strengthen, narrow, or invalidate proposals only |
-| `PSP-P10-W08` | `gpt-5.6-sol` | `max` | qualified denominator and keep/narrow/pivot adjudication |
+| Work | Reasoning | Effect | Effort | Prepared contract |
+|---|---|---|---|---|
+| `PSP-P12-W01` | deep | external | xhigh | cohort criteria, invitation and terms stops |
+| `PSP-P12-W02` | frontier review | external | max | bounded audit, acceptance, and closeout evidence |
+| `PSP-P12-W03` | deep | external | xhigh | conditional one-team install and before/after evidence |
+| `PSP-P12-W04` | frontier review | external | max | exact-copy consent, publication, and withdrawal stops |
+| `PSP-P12-W05` | routine | write | medium | provenance, permitted wording, and withdrawal inventory |
+| `PSP-P12-W06` | frontier review | write | max | strengthen, narrow, or invalidate proposals only |
+| `PSP-P10-W08` | frontier review | write | max | qualified denominator and keep/narrow/pivot adjudication |
 
-The `PSP-C10` conductor assignment remains `gpt-5.6-sol` at `max` effort.
+The `PSP-C10` conductor requirement remains `max` effort. The provider is selected from the live
+runtime catalog using these capability, reasoning, effect, and effort requirements; an unavailable
+assignment fails blocked rather than silently substituting a stale model name.
 
 ## Recruitment and pilot bounds
 
@@ -124,6 +127,6 @@ python3 scripts/positioning-c10-readiness.py --verify-receipt docs/receipts/posi
 `--write-receipt` deterministically regenerates the tracked synthetic receipt from the canonical
 C10 registry projection, contract, and fixture. It performs no network or external action.
 
-Formal leaf execution still begins from live registry readiness, the exact leaf assignment, and
-current authority. This kit is an integration input, not a lease, approval, receipt for real work,
+Formal leaf execution still begins from live registry readiness, the exact runtime-derived leaf
+requirements, and current authority. This kit is an integration input, not a lease, approval, receipt for real work,
 or substitute for any `--verify-work` or phase predicate.

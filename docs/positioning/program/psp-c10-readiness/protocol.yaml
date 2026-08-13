@@ -1,4 +1,4 @@
-schema_version: limen.positioning_c10_readiness.v3
+schema_version: limen.positioning_c10_readiness.v4
 mode: preflight_only
 scope:
   chunk_id: PSP-C10
@@ -18,31 +18,36 @@ source_bindings:
   - id: c05_delivery_relay
     target: limen
     pull_request: 2315
-    head: bcb69fa25dc93fa15b5ec4d985d845067a58c307
+    source_head: d31ce37a85adf5d2e448dab8273a61e388f1e589
+    integrated_main_head: 7a0682722185d17095a0b44de17d4bd5cf3284dd
     role: delivery operating-system relay and public-safe acceptance boundary
     counts_as_closure: false
   - id: c05_private_templates
     target: private_custody
     pull_request: 135
-    head: 432c31ea6bcaf2c175b0fde08b6e1733fe4c2926
+    source_head: 432c31ea6bcaf2c175b0fde08b6e1733fe4c2926
+    integrated_main_head: 9172619633bb9a09ea3a05eae9f48e987f2b3e7d
     role: proposal, SOW, commercial-decision, and acceptance-closeout templates
     counts_as_closure: false
   - id: c09_qualification_relay
     target: limen
     pull_request: 2322
-    head: 03d5e8fcefd73249f8c7edf61ace31e98b6d73e0
+    source_head: 63f82f3cd9ee225cd4baeb84fef36305c7ee4593
+    integrated_main_head: d1861e3c9b493ecd735f1360d3eacb4daf811ad3
     role: qualification, CTA-routing, and conversion source lock
     counts_as_closure: false
   - id: c09_private_package
     target: private_custody
     pull_request: 136
-    head: 7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9
+    source_head: cd92697d596f674c9ddfc56edc919317ffb463e2
+    integrated_main_head: 53784482af1a5b213dd21df7ab5bc2bd38f90f18
     role: private discovery, proposal, follow-up, and no-outcome controls
     counts_as_closure: false
   - id: c09_portfolio_package
     target: portfolio
     pull_request: 222
-    head: da79fb63b9756b5cce0d42ed2a7722668854a228
+    source_head: c44bab44dca190ec115dd498ff252f57e2441a58
+    integrated_main_head: 77c27d16a777af5fc0da8d6a0da503ae17f0d29f
     role: public audit and conversion-path contract without publication
     counts_as_closure: false
 
@@ -67,19 +72,25 @@ truth_boundary:
   prepared_dependency_counts_as_closed: false
   agent_or_synthetic_testimonial_counts_as_real: false
 
-model_routing:
-  source: institutio/positioning/program.yaml
-  verification_command: python3 scripts/positioning-program.py --verify-model-assignments
-  exact_assignment_required: true
-  conductor: {slug: gpt-5.6-sol, effort: max}
+assignment_policy:
+  selection: runtime_catalog
+  registry: institutio/positioning/program.yaml
+  catalog_predicate: python3 scripts/positioning-program.py --verify-model-assignments
+  unavailable_action: fail_blocked_no_silent_substitution
+assignment_requirements:
+  conductor:
+    selection: runtime_catalog
+    role: chunk_conductor
+    effort: max
+    capabilities: [case_study, claim_adjudication, client_delivery, data_analysis, decision_review, delivery, editorial, evidence_curation, implementation, partner_coordination, partner_strategy, privacy, sales, sales_analysis, sales_operations, strategy, systems_architecture, technical_audit]
   leaves:
-    PSP-P12-W01: {slug: gpt-5.6-sol, effort: xhigh}
-    PSP-P12-W02: {slug: gpt-5.6-sol, effort: max}
-    PSP-P12-W03: {slug: gpt-5.6-sol, effort: xhigh}
-    PSP-P12-W04: {slug: gpt-5.6-sol, effort: max}
-    PSP-P12-W05: {slug: gpt-5.6-luna, effort: medium}
-    PSP-P12-W06: {slug: gpt-5.6-sol, effort: max}
-    PSP-P10-W08: {slug: gpt-5.6-sol, effort: max}
+    PSP-P12-W01: {selection: runtime_catalog, reasoning: deep, effect: external, effort: xhigh, capabilities: [partner_strategy, sales_operations]}
+    PSP-P12-W02: {selection: runtime_catalog, reasoning: frontier_review, effect: external, effort: max, capabilities: [sales, technical_audit, delivery]}
+    PSP-P12-W03: {selection: runtime_catalog, reasoning: deep, effect: external, effort: xhigh, capabilities: [systems_architecture, implementation, client_delivery]}
+    PSP-P12-W04: {selection: runtime_catalog, reasoning: frontier_review, effect: external, effort: max, capabilities: [case_study, editorial, privacy]}
+    PSP-P12-W05: {selection: runtime_catalog, reasoning: routine, effect: write, effort: medium, capabilities: [evidence_curation, partner_coordination]}
+    PSP-P12-W06: {selection: runtime_catalog, reasoning: frontier_review, effect: write, effort: max, capabilities: [claim_adjudication, strategy, data_analysis]}
+    PSP-P10-W08: {selection: runtime_catalog, reasoning: frontier_review, effect: write, effort: max, capabilities: [sales_analysis, strategy, decision_review]}
 
 leaf_gate_matrix:
   PSP-P12-W01: [HG-PUBLICATION-SEND, HG-CONTRACT]

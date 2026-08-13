@@ -1,4 +1,115 @@
 {
+  "assignment_requirements": {
+    "conductor": {
+      "capabilities": [
+        "case_study",
+        "claim_adjudication",
+        "client_delivery",
+        "data_analysis",
+        "decision_review",
+        "delivery",
+        "editorial",
+        "evidence_curation",
+        "implementation",
+        "partner_coordination",
+        "partner_strategy",
+        "privacy",
+        "sales",
+        "sales_analysis",
+        "sales_operations",
+        "strategy",
+        "systems_architecture",
+        "technical_audit"
+      ],
+      "effort": "max",
+      "role": "chunk_conductor",
+      "selection": "runtime_catalog"
+    },
+    "leaves": {
+      "PSP-P10-W08": {
+        "capabilities": [
+          "sales_analysis",
+          "strategy",
+          "decision_review"
+        ],
+        "effect": "write",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W01": {
+        "capabilities": [
+          "partner_strategy",
+          "sales_operations"
+        ],
+        "effect": "external",
+        "effort": "xhigh",
+        "reasoning": "deep",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W02": {
+        "capabilities": [
+          "sales",
+          "technical_audit",
+          "delivery"
+        ],
+        "effect": "external",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W03": {
+        "capabilities": [
+          "systems_architecture",
+          "implementation",
+          "client_delivery"
+        ],
+        "effect": "external",
+        "effort": "xhigh",
+        "reasoning": "deep",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W04": {
+        "capabilities": [
+          "case_study",
+          "editorial",
+          "privacy"
+        ],
+        "effect": "external",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W05": {
+        "capabilities": [
+          "evidence_curation",
+          "partner_coordination"
+        ],
+        "effect": "write",
+        "effort": "medium",
+        "reasoning": "routine",
+        "selection": "runtime_catalog"
+      },
+      "PSP-P12-W06": {
+        "capabilities": [
+          "claim_adjudication",
+          "strategy",
+          "data_analysis"
+        ],
+        "effect": "write",
+        "effort": "max",
+        "reasoning": "frontier_review",
+        "selection": "runtime_catalog"
+      }
+    },
+    "policy": {
+      "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+      "registry": "institutio/positioning/program.yaml",
+      "selection": "runtime_catalog",
+      "unavailable_action": "fail_blocked_no_silent_substitution"
+    },
+    "verified_against_registry": true
+  },
   "authority": {
     "external_gates": {
       "REAL-AGREEMENT": "not_satisfied",
@@ -20,50 +131,55 @@
   },
   "bindings": {
     "contract_path": "docs/positioning/program/psp-c10-readiness/protocol.yaml",
-    "contract_sha256": "04a180cfa18afcf27baf9ad726ebf8bbc02bfac9f00c66e62fde5bdac53c5253",
+    "contract_sha256": "a5290b0ad4ca46652111a10c5cb2d35de53b0f91669ddbbba9b5bf1050c5b4ae",
     "fixture_path": "docs/positioning/program/psp-c10-readiness/synthetic-fixture.json",
     "fixture_sha256": "aa2712df09413f107956c70a24df81249259708228945e2f98bba720c9f45d3a",
     "program_manifest_path": "institutio/positioning/program.yaml",
-    "program_registry_projection_sha256": "b0db1fc88d686665c08041d1263c0b95cd808b4d744c1ef8382835ba87753d33",
+    "program_registry_projection_sha256": "6a4e1221a88f304726273339470e29d208e59282e236f39744c71ac4ecfb8a73",
     "source_bindings": [
       {
         "counts_as_closure": false,
-        "head": "bcb69fa25dc93fa15b5ec4d985d845067a58c307",
         "id": "c05_delivery_relay",
+        "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd",
         "pull_request": 2315,
         "role": "delivery operating-system relay and public-safe acceptance boundary",
+        "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
         "target": "limen"
       },
       {
         "counts_as_closure": false,
-        "head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
         "id": "c05_private_templates",
+        "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d",
         "pull_request": 135,
         "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates",
+        "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
         "target": "private_custody"
       },
       {
         "counts_as_closure": false,
-        "head": "03d5e8fcefd73249f8c7edf61ace31e98b6d73e0",
         "id": "c09_qualification_relay",
+        "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3",
         "pull_request": 2322,
         "role": "qualification, CTA-routing, and conversion source lock",
+        "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
         "target": "limen"
       },
       {
         "counts_as_closure": false,
-        "head": "7e5715d813a20d7c7b7b68c2d2c2f808cc3909f9",
         "id": "c09_private_package",
+        "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18",
         "pull_request": 136,
         "role": "private discovery, proposal, follow-up, and no-outcome controls",
+        "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
         "target": "private_custody"
       },
       {
         "counts_as_closure": false,
-        "head": "da79fb63b9756b5cce0d42ed2a7722668854a228",
         "id": "c09_portfolio_package",
+        "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f",
         "pull_request": 222,
         "role": "public audit and conversion-path contract without publication",
+        "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
         "target": "portfolio"
       }
     ]
@@ -94,43 +210,6 @@
   "external_effects": [],
   "fixture_time_anchor": "2026-08-10T20:00:00Z",
   "mode": "synthetic",
-  "model_routing": {
-    "conductor": {
-      "effort": "max",
-      "slug": "gpt-5.6-sol"
-    },
-    "leaves": {
-      "PSP-P10-W08": {
-        "effort": "max",
-        "slug": "gpt-5.6-sol"
-      },
-      "PSP-P12-W01": {
-        "effort": "xhigh",
-        "slug": "gpt-5.6-sol"
-      },
-      "PSP-P12-W02": {
-        "effort": "max",
-        "slug": "gpt-5.6-sol"
-      },
-      "PSP-P12-W03": {
-        "effort": "xhigh",
-        "slug": "gpt-5.6-sol"
-      },
-      "PSP-P12-W04": {
-        "effort": "max",
-        "slug": "gpt-5.6-sol"
-      },
-      "PSP-P12-W05": {
-        "effort": "medium",
-        "slug": "gpt-5.6-luna"
-      },
-      "PSP-P12-W06": {
-        "effort": "max",
-        "slug": "gpt-5.6-sol"
-      }
-    },
-    "verified_against_registry": true
-  },
   "operational_readiness": {
     "adjudication_branches_validated": [
       "insufficient_evidence",
@@ -266,9 +345,15 @@
     "leaf_contracts": [
       {
         "acceptance": "Up to three qualified partners have explicit scope and outcome terms, or every declined invitation is recorded with reason.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "partner_strategy",
+            "sales_operations"
+          ],
+          "effect": "external",
           "effort": "xhigh",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "deep",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "partner_strategy",
@@ -295,9 +380,16 @@
       },
       {
         "acceptance": "Engagement closes under PSP-P11-W07 and payment/pilot terms plus client acceptance have durable receipts.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "sales",
+            "technical_audit",
+            "delivery"
+          ],
+          "effect": "external",
           "effort": "max",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "sales",
@@ -324,9 +416,16 @@
       },
       {
         "acceptance": "Client acceptance passes and the installed gate improves its declared outcome without exceeding one-team authority.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "systems_architecture",
+            "implementation",
+            "client_delivery"
+          ],
+          "effect": "external",
           "effort": "xhigh",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "deep",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "systems_architecture",
@@ -352,9 +451,16 @@
       },
       {
         "acceptance": "Client and owner approve exact copy; claims, privacy, links, accessibility, and rollback checks pass live.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "case_study",
+            "editorial",
+            "privacy"
+          ],
+          "effect": "external",
           "effort": "max",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "case_study",
@@ -381,9 +487,15 @@
       },
       {
         "acceptance": "Each object identifies author, date, context, consent, permitted wording, and withdrawal path.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "evidence_curation",
+            "partner_coordination"
+          ],
+          "effect": "write",
           "effort": "medium",
-          "slug": "gpt-5.6-luna"
+          "reasoning": "routine",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "evidence_curation",
@@ -408,9 +520,16 @@
       },
       {
         "acceptance": "Every changed claim cites an external outcome and all dependent generated surfaces pass parity and staleness checks.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "claim_adjudication",
+            "strategy",
+            "data_analysis"
+          ],
+          "effect": "write",
           "effort": "max",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "claim_adjudication",
@@ -437,9 +556,16 @@
       },
       {
         "acceptance": "At least five qualified door-mails exist and either one paid audit or five documented no outcomes support an explicit decision.",
-        "assignment": {
+        "assignment_requirement": {
+          "capabilities": [
+            "sales_analysis",
+            "strategy",
+            "decision_review"
+          ],
+          "effect": "write",
           "effort": "max",
-          "slug": "gpt-5.6-sol"
+          "reasoning": "frontier_review",
+          "selection": "runtime_catalog"
         },
         "capabilities": [
           "sales_analysis",
@@ -502,7 +628,7 @@
       "status": "synthetic_branch_exercised"
     }
   },
-  "schema_version": "limen.positioning_c10_synthetic_receipt.v3",
+  "schema_version": "limen.positioning_c10_synthetic_receipt.v4",
   "scope": {
     "chunk_id": "PSP-C10",
     "formal_predecessor_chunks": [

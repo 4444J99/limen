@@ -44,15 +44,29 @@ def test_contract_preserves_exact_registry_scope_assignments_and_gates() -> None
         "PSP-P12-W06",
         "PSP-P10-W08",
     ]
-    assert state["conductor_assignment"] == {"slug": "gpt-5.6-sol", "effort": "max"}
-    assert state["leaf_assignments"]["PSP-P12-W05"] == {
-        "slug": "gpt-5.6-luna",
+    assert state["conductor_assignment_requirement"]["effort"] == "max"
+    assert state["conductor_assignment_requirement"]["selection"] == "runtime_catalog"
+    assert state["leaf_assignment_requirements"]["PSP-P12-W05"] == {
+        "selection": "runtime_catalog",
+        "reasoning": "routine",
+        "effect": "write",
         "effort": "medium",
+        "capabilities": ["evidence_curation", "partner_coordination"],
     }
-    assert state["leaf_assignments"]["PSP-P10-W08"] == {
-        "slug": "gpt-5.6-sol",
+    assert state["leaf_assignment_requirements"]["PSP-P10-W08"] == {
+        "selection": "runtime_catalog",
+        "reasoning": "frontier_review",
+        "effect": "write",
         "effort": "max",
+        "capabilities": ["sales_analysis", "strategy", "decision_review"],
     }
+    assert all(
+        "slug" not in requirement and "model" not in requirement
+        for requirement in [
+            state["conductor_assignment_requirement"],
+            *state["leaf_assignment_requirements"].values(),
+        ]
+    )
     assert set(state["gate_ids"]) == {"HG-PUBLICATION-SEND", "HG-CONTRACT", "HG-PUBLIC-IDENTITY"}
     assert contract["truth_boundary"]["synthetic_closes_leaf"] is False
     assert state["leaf_dependencies"] == {
@@ -224,8 +238,8 @@ def test_synthetic_testimonial_objects_fail_closed() -> None:
 def test_registry_or_gate_drift_fails_closed() -> None:
     contract, _fixture, program, graph = MODULE.load_inputs()
     drifted = copy.deepcopy(contract)
-    drifted["model_routing"]["leaves"]["PSP-P12-W05"]["effort"] = "high"
-    with pytest.raises(MODULE.ReadinessError, match="PSP-P12-W05 model assignment drifted"):
+    drifted["assignment_requirements"]["leaves"]["PSP-P12-W05"]["effort"] = "high"
+    with pytest.raises(MODULE.ReadinessError, match="PSP-P12-W05 assignment requirements drifted"):
         MODULE.validate_contract(drifted, program, graph)
 
     drifted = copy.deepcopy(contract)
@@ -239,14 +253,39 @@ def test_registry_or_gate_drift_fails_closed() -> None:
         MODULE.validate_contract(drifted, program, graph)
 
     drifted = copy.deepcopy(contract)
-    drifted["source_bindings"][2]["head"] = "0" * 40
+    drifted["source_bindings"][2]["integrated_main_head"] = "0" * 40
     with pytest.raises(MODULE.ReadinessError, match="C10 source bindings drifted"):
+        MODULE.validate_contract(drifted, program, graph)
+
+    drifted = copy.deepcopy(contract)
+    drifted["authorization"] = "unchecked-extra-field"
+    with pytest.raises(MODULE.ReadinessError, match="exact root schema"):
         MODULE.validate_contract(drifted, program, graph)
 
     drifted = copy.deepcopy(contract)
     drifted["source_bindings"][0]["counts_as_closure"] = True
     with pytest.raises(MODULE.ReadinessError, match="C10 source bindings drifted"):
         MODULE.validate_contract(drifted, program, graph)
+
+
+def test_duplicate_yaml_and_json_members_fail_closed(tmp_path: Path) -> None:
+    contract_path = tmp_path / "protocol.yaml"
+    contract_raw = MODULE.DEFAULT_CONTRACT.read_text(encoding="utf-8")
+    contract_path.write_text(
+        contract_raw.replace("mode: preflight_only", "mode: hidden\nmode: preflight_only", 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(MODULE.ReadinessError, match="duplicate key 'mode'"):
+        MODULE.load_inputs(contract_path=contract_path)
+
+    fixture_path = tmp_path / "fixture.json"
+    fixture_raw = MODULE.DEFAULT_FIXTURE.read_text(encoding="utf-8")
+    fixture_path.write_text(
+        fixture_raw.replace('"mode": "synthetic",', '"mode": "hidden",\n  "mode": "synthetic",', 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(MODULE.ReadinessError, match="duplicate JSON member: mode"):
+        MODULE.load_inputs(fixture_path=fixture_path)
 
 
 def test_receipt_binds_only_the_c10_registry_projection() -> None:
