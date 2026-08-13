@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/monthly-audit.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "period_start", "findings", "correction_packets"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_monthly_audit.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "period_start": {"type": "string", "format": "date"},
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["truth", "links", "privacy", "parity"],
+      "properties": {
+        "truth": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "links": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "privacy": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "parity": {"type": "array", "items": {"$ref": "#/$defs/finding"}}
+      }
+    },
+    "correction_packets": {"type": "array", "items": {"$ref": "#/$defs/correction"}},
+    "evidence_url": {"type": "string", "pattern": "^https://"}
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "status", "owner", "next_predicate"],
+      "properties": {
+        "finding_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+        "status": {"enum": ["pass", "stale", "changed", "broken", "leak", "drift"]},
+        "owner": {"type": ["string", "null"]},
+        "next_predicate": {"type": ["string", "null"]}
+      }
+    },
+    "correction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "owner", "next_predicate"],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "next_predicate": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

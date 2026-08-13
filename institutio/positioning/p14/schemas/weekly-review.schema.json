@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/weekly-review.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "period_start", "period_end", "ready_work", "closed_work_ids", "blockers", "qualified_demand_count", "delivery_risks", "evidence_changes", "decision"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_weekly_review.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "period_start": {"type": "string", "format": "date"},
+    "period_end": {"type": "string", "format": "date"},
+    "ready_work": {"type": "array", "items": {"$ref": "#/$defs/work"}},
+    "closed_work_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^PSP-[A-Z0-9-]+$"}},
+    "blockers": {"type": "array", "items": {"$ref": "#/$defs/blocker"}},
+    "qualified_demand_count": {"type": "integer", "minimum": 0},
+    "delivery_risks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "evidence_changes": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "decision": {"$ref": "#/$defs/decision"},
+    "evidence_url": {"type": "string", "pattern": "^https://"}
+  },
+  "$defs": {
+    "work": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["work_id", "issue_url", "owner", "next_predicate"],
+      "properties": {
+        "work_id": {"type": "string", "pattern": "^PSP-[A-Z0-9-]+$"},
+        "issue_url": {"type": "string", "pattern": "^https://"},
+        "owner": {"type": "string", "minLength": 1},
+        "next_predicate": {"type": "string", "minLength": 1}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_id", "owner", "next_predicate"],
+      "properties": {
+        "blocker_id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "next_predicate": {"type": "string", "minLength": 1}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "owner", "next_predicate", "routed_packet_ids"],
+      "properties": {
+        "action": {"enum": ["keep", "narrow", "promote", "withdraw", "route"]},
+        "owner": {"type": "string", "minLength": 1},
+        "next_predicate": {"type": "string", "minLength": 1},
+        "routed_packet_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

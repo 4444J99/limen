@@ -1,0 +1,68 @@
+{
+  "schema_version": "limen.positioning_p14_operations.v1",
+  "control_plane_schema_version": "limen.positioning_p14_control_plane.v3",
+  "counts_as_closure": false,
+  "scope_separation": {
+    "allowed_scopes": ["synthetic", "live"],
+    "require_single_scope_per_input": true,
+    "synthetic_counts_as_live": false,
+    "synthetic_may_not_satisfy": [
+      "Omega",
+      "real demand",
+      "real delivery outcomes",
+      "real operator outcomes",
+      "completed weekly, monthly, or quarterly cycles",
+      "human acceptance"
+    ]
+  },
+  "schemas": {
+    "event_bundle": "institutio/positioning/p14/schemas/event-bundle.schema.json",
+    "weekly_review": "institutio/positioning/p14/schemas/weekly-review.schema.json",
+    "monthly_audit": "institutio/positioning/p14/schemas/monthly-audit.schema.json",
+    "quarterly_decision": "institutio/positioning/p14/schemas/quarterly-decision.schema.json",
+    "claim_incident": "institutio/positioning/p14/schemas/claim-incident.schema.json",
+    "release_recovery": "institutio/positioning/p14/schemas/release-recovery.schema.json",
+    "demand_private_ledger": "institutio/positioning/p14/schemas/demand-ledger.private.schema.json",
+    "delivery_private_ledger": "institutio/positioning/p14/schemas/delivery-ledger.private.schema.json",
+    "operator_private_ledger": "institutio/positioning/p14/schemas/operator-ledger.private.schema.json",
+    "evidence_source_bundle": "institutio/positioning/p14/schemas/evidence-source-bundle.schema.json",
+    "omega_observation": "institutio/positioning/p14/schemas/omega-observation.schema.json"
+  },
+  "templates": {
+    "weekly": {
+      "path": "docs/positioning/p14/templates/weekly-review.md",
+      "required_markers": ["{{period_start}}", "{{scope}}", "{{ready_work}}", "{{blockers}}", "{{qualified_demand_count}}", "{{delivery_risks}}", "{{evidence_changes}}", "{{decision}}", "{{owner}}", "{{next_predicate}}", "{{routed_packet_ids}}"]
+    },
+    "monthly": {
+      "path": "docs/positioning/p14/templates/monthly-audit.md",
+      "required_markers": ["{{period_start}}", "{{scope}}", "{{truth_findings}}", "{{link_findings}}", "{{privacy_findings}}", "{{parity_findings}}", "{{correction_packets}}", "{{verdict}}"]
+    },
+    "quarterly": {
+      "path": "docs/positioning/p14/templates/quarterly-decision.md",
+      "required_markers": ["{{period_start}}", "{{scope}}", "{{conversation_evidence}}", "{{funnel_evidence}}", "{{delivery_evidence}}", "{{claim_evidence}}", "{{decision}}", "{{truth_finding}}", "{{prominence_finding}}", "{{prior_strategy_version}}", "{{proposed_strategy_version}}", "{{owner}}", "{{next_experiment}}"]
+    }
+  },
+  "runners": [
+    {"id": "collect_metrics", "work_id": "PSP-P14-W01", "mode": "--collect-metrics", "input_schema": "event_bundle", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "weekly_review", "work_id": "PSP-P14-W02", "mode": "--weekly-review", "input_schema": "weekly_review", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "monthly_audit", "work_id": "PSP-P14-W03", "mode": "--monthly-audit", "input_schema": "monthly_audit", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "quarterly_decision", "work_id": "PSP-P14-W04", "mode": "--quarterly-decision", "input_schema": "quarterly_decision", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "claim_incident", "work_id": "PSP-P14-W05", "mode": "--claim-drill", "input_schema": "claim_incident", "effect_scope": "synthetic_temp_only", "counts_as_closure": false},
+    {"id": "release_recovery", "work_id": "PSP-P14-W06", "mode": "--release-drill", "input_schema": "release_recovery", "effect_scope": "synthetic_temp_only", "counts_as_closure": false},
+    {"id": "demand_projection", "work_id": "PSP-P14-W07", "mode": "--project-private-ledger", "input_schema": "demand_private_ledger", "ledger_kind": "demand", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "delivery_projection", "work_id": "PSP-P14-W08", "mode": "--project-private-ledger", "input_schema": "delivery_private_ledger", "ledger_kind": "delivery", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "operator_projection", "work_id": "PSP-P14-W08", "mode": "--project-private-ledger", "input_schema": "operator_private_ledger", "ledger_kind": "operator", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "evidence_envelope", "work_id": "PSP-P14-W09", "mode": "--build-evidence-envelope", "input_schema": "evidence_source_bundle", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "omega_observation", "work_id": "PSP-P14-W09", "mode": "--omega-observation", "input_schema": "omega_observation", "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "omega_pair", "work_id": "PSP-P14-W09", "mode": "--assemble-omega-pair", "input_schema": "omega_observation", "input_cardinality": 2, "effect_scope": "read_only", "counts_as_closure": false},
+    {"id": "frontiers", "work_id": "PSP-C12", "mode": "--frontiers", "input_schema": "dependency_ledger", "effect_scope": "read_only", "counts_as_closure": false}
+  ],
+  "rollback_invariants": {
+    "raw_events_are_immutable": true,
+    "review_generation_is_replayable": true,
+    "claim_republication_requires_new_verified_evidence": true,
+    "release_restoration_matches_each_repository_known_green_id": true,
+    "private_outcomes_survive_public_projection": true,
+    "omega_observation_is_non_mutating": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/release-recovery.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "repositories"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_release_recovery.v1"},
+    "scope": {"const": "synthetic"},
+    "repositories": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository_id", "before_release_id", "bad_release_id", "restored_release_id", "health_checks", "capture_owner_before", "capture_owner_after"],
+        "properties": {
+          "repository_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "before_release_id": {"type": "string", "minLength": 1},
+          "bad_release_id": {"type": "string", "minLength": 1},
+          "restored_release_id": {"type": "string", "minLength": 1},
+          "health_checks": {"type": "object", "minProperties": 1, "additionalProperties": {"enum": ["healthy", "pass"]}},
+          "capture_owner_before": {"type": "string", "minLength": 1},
+          "capture_owner_after": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

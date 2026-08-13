@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/event-bundle.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "events"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_event_bundle.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "type", "entity_id", "occurred_at", "scope"],
+        "properties": {
+          "event_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+          "entity_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{2,127}$"},
+          "occurred_at": {"type": "string", "format": "date-time"},
+          "scope": {"enum": ["synthetic", "live"]},
+          "source_receipt_url": {"type": "string", "pattern": "^https://"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.org/limen/positioning/p14/evidence-source-bundle.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scope", "observed_head", "work_receipts", "review_receipts", "private_ledgers"],
+  "properties": {
+    "schema_version": {"const": "limen.positioning_p14_evidence_source_bundle.v1"},
+    "scope": {"enum": ["synthetic", "live"]},
+    "observed_head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "work_receipts": {"type": "object"},
+    "review_receipts": {"type": "object", "required": ["weekly", "monthly", "quarterly"], "properties": {"weekly": {"type": "array"}, "monthly": {"type": "array"}, "quarterly": {"type": "array"}}, "additionalProperties": false},
+    "claim_incident_drill": {"type": "object"},
+    "release_recovery_drill": {"type": "object"},
+    "private_ledgers": {"type": "object", "required": ["demand", "delivery", "operator"], "properties": {"demand": {"type": "object"}, "delivery": {"type": "object"}, "operator": {"type": "object"}}, "additionalProperties": false},
+    "demand_decision": {"type": "object"},
+    "commercial_outcome": {"type": "object"},
+    "portfolio_impacts": {"type": "array"},
+    "human_gates": {"type": "object"},
+    "omega_pair": {"type": "object"},
+    "program_omega": {"type": "object"}
+  }
+}
