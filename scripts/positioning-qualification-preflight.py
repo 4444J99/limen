@@ -13,12 +13,13 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = ROOT / "docs" / "positioning" / "sales" / "psp-c09" / "icp-and-buying-signals.preflight.json"
 
 EXPECTED_SOURCE_LOCK = {
-    "commercialContract": "organvm/limen#2312@c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
-    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@2c4efce84082f344fd5e0d90cc110662a379435f",
+    "commercialContract": "organvm/limen#2312@b6af8086c9050634313f519c29a6dfcb922c3721",
+    "commercialContractAcceptedAncestor": "organvm/limen#2312@c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+    "deliveryOs": "organvm-iii-ergon/collaboration-operations-platform#135@432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
     "proofLedContent": "organvm/limen#2316@ef6e4df64f97c11dba2c159752d5a13b50a96c10",
-    "proofExperience": "organvm/limen#2313@5bf686f6ceba200c6157bd87eb6e5298750a4ffb",
+    "proofExperience": "organvm/limen#2313@543fa28df52c9db7be3b7307019dcf209361d0b9",
     "portfolioExperience": "organvm-vii-kerygma/portfolio#220@8974543ba9675ed0504141895812476efef5dd80",
-    "deliveryOsRelay": "organvm/limen#2315@fdd41da45bdf5909e7b782a03dbaedf85e105c25",
+    "deliveryOsRelay": "organvm/limen#2315@bcb69fa25dc93fa15b5ec4d985d845067a58c307",
 }
 
 EXPECTED_UPSTREAM_STATE = {
@@ -97,7 +98,11 @@ def validate(data: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     if data.get("status") != "prepared_preflight":
         failures.append("status must remain prepared_preflight")
-    if data.get("formalPredicateRun") is not False or data.get("formalIssueClosed") is not False:
+    if (
+        data.get("formalPredicateRun") is not False
+        or data.get("formalIssueClosed") is not False
+        or data.get("countsAsClosure") is not False
+    ):
         failures.append("formal work must remain open")
     if data.get("syntheticOnly") is not True or data.get("externalEffects") != []:
         failures.append("preflight must remain synthetic and effect-free")

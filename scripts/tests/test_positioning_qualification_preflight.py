@@ -76,6 +76,7 @@ def test_real_contact_or_commercial_outcome_fields_fail_closed() -> None:
 def test_formal_or_effectful_state_fails_closed() -> None:
     data = load_manifest()
     data["formalPredicateRun"] = True
+    data["countsAsClosure"] = True
     data["externalEffects"] = ["synthetic_send_misrepresented"]
     failures = MODULE.validate(data)
     assert "formal work must remain open" in failures

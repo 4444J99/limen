@@ -3,13 +3,15 @@
 Status: **PREPARED/PREFLIGHT**. This is the public-safe W01 staging artifact, not a lead list,
 commercial outcome, leaf receipt, or authorization to contact anyone.
 
-The rubric consumes the accepted-through-W06 identity/offer/qualification contract in Limen PR
-#2312 at checkpoint `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. W07/#2188 remains the open
-five-independent-reader gate; no model or synthetic record can satisfy it. Delivery feasibility is
-constrained by private PR #135 at `2c4efce84082f344fd5e0d90cc110662a379435f` and its public relay
-#2315 at `fdd41da45bdf5909e7b782a03dbaedf85e105c25`. Proof-led content is PREPARED in
+The rubric consumes the current identity/offer/qualification artifacts in Limen PR #2312 at
+`b6af8086c9050634313f519c29a6dfcb922c3721`, while formal acceptance remains bounded to the W01-W06
+ancestor `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`. W07/#2188 remains the open
+five-independent-reader gate; no model or synthetic record can satisfy it. Delivery feasibility and
+commercial-template ownership remain with private PR #135 at
+`432c31ea6bcaf2c175b0fde08b6e1733fe4c2926` and its public relay #2315 at
+`bcb69fa25dc93fa15b5ec4d985d845067a58c307`. Proof-led content is PREPARED in
 Limen PR #2316 at `ef6e4df64f97c11dba2c159752d5a13b50a96c10`; proof-experience contracts are
-PREPARED in Limen PR #2313 at `5bf686f6ceba200c6157bd87eb6e5298750a4ffb` and portfolio PR
+PREPARED in Limen PR #2313 at `543fa28df52c9db7be3b7307019dcf209361d0b9` and portfolio PR
 #220 at `8974543ba9675ed0504141895812476efef5dd80`. Those source contracts remain
 authoritative and are not duplicated or promoted here.
 
