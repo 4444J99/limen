@@ -1,0 +1,441 @@
+{
+  "schema_version": "limen.psp_c11_foundry_preflight.v3",
+  "chunk_id": "PSP-C11",
+  "phase_id": "PSP-P13",
+  "status": "PREPARED/PREFLIGHT",
+  "prepared_at": "2026-08-10",
+  "reconciled_at": "2026-08-13",
+  "assignment_policy": {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution"
+  },
+  "assignment_requirements": {
+    "conductor": {
+      "selection": "runtime_catalog",
+      "role": "chunk_conductor",
+      "effort": "max",
+      "capabilities": [
+        "automation",
+        "classification",
+        "data_modeling",
+        "due_diligence",
+        "finance",
+        "financial_modeling",
+        "github_read",
+        "governance",
+        "legal_issue_spotting",
+        "market_analysis",
+        "operations",
+        "operator_assessment",
+        "partnership_delivery",
+        "partnership_design",
+        "partnership_operations",
+        "partnership_strategy",
+        "portfolio_operations",
+        "portfolio_strategy",
+        "privacy",
+        "product_inventory",
+        "product_operations",
+        "product_strategy",
+        "security",
+        "technical_due_diligence"
+      ]
+    },
+    "leaves": {
+      "PSP-P13-W01": {"selection": "runtime_catalog", "reasoning": "routine", "effect": "read", "effort": "low", "capabilities": ["github_read", "product_inventory", "classification"]},
+      "PSP-P13-W02": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["product_strategy", "market_analysis", "data_modeling"]},
+      "PSP-P13-W03": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "xhigh", "capabilities": ["technical_due_diligence", "security", "operations"]},
+      "PSP-P13-W04": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["partnership_strategy", "operator_assessment"]},
+      "PSP-P13-W05": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["financial_modeling", "portfolio_strategy"]},
+      "PSP-P13-W06": {"selection": "runtime_catalog", "reasoning": "frontier_review", "effect": "write", "effort": "max", "capabilities": ["legal_issue_spotting", "partnership_design", "finance"]},
+      "PSP-P13-W07": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "xhigh", "capabilities": ["partnership_operations", "privacy", "due_diligence"]},
+      "PSP-P13-W08": {"selection": "runtime_catalog", "reasoning": "frontier_review", "effect": "external", "effort": "max", "capabilities": ["product_operations", "partnership_delivery", "security"]},
+      "PSP-P13-W09": {"selection": "runtime_catalog", "reasoning": "deep", "effect": "write", "effort": "high", "capabilities": ["governance", "portfolio_operations", "automation"]}
+    }
+  },
+  "objective": "Stage a public-safe, reversible governed-foundry handoff system without selecting an operator, agreeing terms, transferring access or assets, or claiming an observed pilot.",
+  "dependency_boundary": {
+    "formal_predecessor": {
+      "chunk_id": "PSP-C10",
+      "prepared": true,
+      "closed": false,
+      "pull_request": "https://github.com/organvm/limen/pull/2321",
+      "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+      "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2",
+      "receipt_sha256": "d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa",
+      "counts_as_closure": false,
+      "source_bindings": [
+        {"id": "c05_delivery_relay", "target": "limen", "pull_request": 2315, "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589", "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd", "role": "delivery operating-system relay and public-safe acceptance boundary", "counts_as_closure": false},
+        {"id": "c05_private_templates", "target": "private_custody", "pull_request": 135, "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d", "role": "proposal, SOW, commercial-decision, and acceptance-closeout templates", "counts_as_closure": false},
+        {"id": "c09_qualification_relay", "target": "limen", "pull_request": 2322, "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593", "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3", "role": "qualification, CTA-routing, and conversion source lock", "counts_as_closure": false},
+        {"id": "c09_private_package", "target": "private_custody", "pull_request": 136, "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2", "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18", "role": "private discovery, proposal, follow-up, and no-outcome controls", "counts_as_closure": false},
+        {"id": "c09_portfolio_package", "target": "portfolio", "pull_request": 222, "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58", "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f", "role": "public audit and conversion-path contract without publication", "counts_as_closure": false}
+      ]
+    },
+    "phase_dependencies": {
+      "PSP-P02": {
+        "closed": true,
+        "issue": "https://github.com/organvm/limen/issues/2172",
+        "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
+      },
+      "PSP-P04": {"closed": false},
+      "PSP-P11": {"closed": false},
+      "PSP-P12": {"closed": false}
+    },
+    "c03_checkpoint": {
+      "status": "accepted_through_w06",
+      "accepted_head": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "integration_pull_request": "https://github.com/organvm/limen/pull/2312",
+      "current_offer_source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
+      "closed_leaves": [
+        "PSP-P03-W01",
+        "PSP-P03-W02",
+        "PSP-P03-W03",
+        "PSP-P03-W04",
+        "PSP-P03-W05",
+        "PSP-P03-W06"
+      ],
+      "reader_gate": {
+        "work_id": "PSP-P03-W07",
+        "issue": "https://github.com/organvm/limen/issues/2188",
+        "state": "open",
+        "assignment_requirement": {"selection": "runtime_catalog", "reasoning": "routine", "effect": "read", "effort": "low", "capabilities": ["research", "qualitative_analysis"]}
+      }
+    },
+    "prepared_chunks": {
+      "PSP-C04": {"closed": false, "limen_pr": 2313, "limen_source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb", "limen_integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be", "portfolio_pr": 220, "portfolio_source_head": "8974543ba9675ed0504141895812476efef5dd80", "portfolio_integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5"},
+      "PSP-C05": {"closed": false, "limen_pr": 2315, "limen_source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589", "limen_integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd", "private_pr": 135, "private_source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926", "private_integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d"},
+      "PSP-C06": {"closed": false, "limen_pr": 2317, "limen_source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d", "limen_integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd", "portfolio_pr": 221, "portfolio_source_head": "7c150fc81184df1715824be28b32472baadbb3b6", "portfolio_integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0", "visual_direction_state": "three_unselected"},
+      "PSP-C07": {"closed": false, "limen_pr": 2318, "limen_source_head": "9d81552a65cab1a8785e74251853881ac1957925", "limen_integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405"},
+      "PSP-C08": {"closed": false, "limen_pr": 2316, "limen_source_head": "4e55e76b672b296f246bb18f96eccb4de10a8fb4", "limen_integrated_main_head": "26dba96c74d18ead1244bee8dbbd18c630942b2f"},
+      "PSP-C09": {"closed": false, "limen_pr": 2322, "limen_source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593", "limen_integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3", "private_pr": 136, "private_source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2", "private_integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18", "portfolio_pr": 222, "portfolio_source_head": "c44bab44dca190ec115dd498ff252f57e2441a58", "portfolio_integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f"},
+      "PSP-C10": {"closed": false, "limen_pr": 2321, "limen_source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540", "limen_integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2"}
+    },
+    "ready_work_observation": "no_psp_c11_leaf_ready",
+    "rule": "Predecessor state blocks leaf and phase closure, not reversible preflight preparation in this explicitly authorized direct-session lane.",
+    "automatic_after_dependencies": [
+      "refresh the live owner-wide census and candidate identity digest",
+      "bind merged C02 census and classification receipts",
+      "refresh demand and readiness evidence at exact repository heads",
+      "materialize private candidate details only in sanctioned private custody",
+      "run the same synthetic drill suite against the integrated templates"
+    ],
+    "never_automatic": [
+      "recruit or contact an operator",
+      "select binding legal or economic terms",
+      "sign a contract",
+      "grant credentials, data, rights, or production access",
+      "transfer repository, IP, data, domain, or account custody",
+      "claim an observed pilot",
+      "close any PSP-P13 leaf or phase"
+    ]
+  },
+  "live_sources": [
+    {
+      "id": "p02_closure",
+      "url": "https://github.com/organvm/limen/issues/2172",
+      "state": "closed",
+      "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+      "marked_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+      "canonical_receipt_sha256": "f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434",
+      "use": "Formal P02 closure and accepted estate-evidence baseline."
+    },
+    {
+      "id": "c02_estate_census",
+      "url": "https://github.com/organvm/limen/pull/2305",
+      "state": "merged",
+      "merge_commit": "10cf8476d5e88309c71d5fac25167ec7b7af59c4",
+      "use": "Two-pass owner-wide denominator, organization roster, visibility counts, and private-facts custody contract."
+    },
+    {
+      "id": "c02_estate_classification",
+      "url": "https://github.com/organvm/limen/pull/2307",
+      "state": "merged",
+      "merge_commit": "35134b95650a26185a58eb3b3a82632e5b80b5b2",
+      "use": "Public-safe role, maturity, visibility, relevance, and uncertainty policy over the census denominator."
+    }
+  ],
+  "candidate_inventory": {
+    "canonical_source": "institutio/github/estate.yaml#/product_ledger/repos",
+    "source_ids": ["c02_estate_census", "c02_estate_classification"],
+    "expected_candidate_count": 62,
+    "owner_scope": "authenticated owner plus every organization returned by the live GitHub owner census",
+    "identity_rule": "Each owner-independent product-ledger key must resolve to exactly one currently owned repository.",
+    "two_pass_rule": "Two consecutive complete live censuses must have identical owner, organization, repository, and product-candidate identity sets.",
+    "public_projection": "Public repositories may be named; private candidates receive opaque per-snapshot identifiers only.",
+    "private_projection": "Private names, descriptions, topics, URLs, timestamps, and owner-specific row identities remain in process and are never written to this public package.",
+    "snapshot_path": "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
+  },
+  "demand_model": {
+    "score_range": [0, 100],
+    "metadata_cap": 35,
+    "evidence_tiers": [
+      {"id": "E0", "meaning": "No approved demand evidence; a bounded next experiment is mandatory."},
+      {"id": "E1", "meaning": "Public attention signal such as stars or watchers; no adoption inference."},
+      {"id": "E2", "meaning": "Public reuse signal such as forks; no willingness-to-pay inference."},
+      {"id": "E3", "meaning": "Consented problem or usage evidence with a dated primary receipt."},
+      {"id": "E4", "meaning": "Qualified buying or operating intent with a dated primary receipt."},
+      {"id": "E5", "meaning": "Observed paid or transferred operation with a contract-safe outcome receipt."}
+    ],
+    "metadata_points": {
+      "stars": [{"minimum": 1, "points": 5}, {"minimum": 5, "points": 10}, {"minimum": 10, "points": 15}],
+      "forks": [{"minimum": 1, "points": 5}, {"minimum": 2, "points": 10}, {"minimum": 5, "points": 15}],
+      "watchers": [{"minimum": 1, "points": 5}]
+    },
+    "rules": [
+      "Repository volume, a homepage, an internal deployment, and owner activity are not demand evidence.",
+      "Private candidates receive E0 in the public projection unless a separately approved private receipt proves a higher tier.",
+      "Metadata-only evidence can never cross the transfer floor.",
+      "Every E0-E2 candidate carries a next experiment and stop condition."
+    ]
+  },
+  "readiness_model": {
+    "score_range": [0, 100],
+    "metadata_screen_cap": 30,
+    "dimensions": [
+      {"id": "build_test", "weight": 20, "required_proof": "Exact-head build and test receipt."},
+      {"id": "deploy_runtime", "weight": 15, "required_proof": "Dated deployment or runtime receipt; homepage presence is intent only."},
+      {"id": "documentation", "weight": 10, "required_proof": "Operator, recovery, and maintenance documentation."},
+      {"id": "security", "weight": 15, "required_proof": "Security review, dependency posture, and secret boundary."},
+      {"id": "data_privacy", "weight": 15, "required_proof": "Data classes, retention, deletion, and processing boundary."},
+      {"id": "ip_custody", "weight": 10, "required_proof": "Ownership, license, contributor, and repository-custody chain."},
+      {"id": "observability_return", "weight": 10, "required_proof": "Telemetry plus tested rollback, revocation, and restore route."},
+      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, and bounded maintenance estimate."}
+    ],
+    "metadata_screen": [
+      "live owned repository resolution",
+      "not archived",
+      "default branch present",
+      "recent push",
+      "license metadata present where public",
+      "homepage present as deploy-intent only"
+    ],
+    "rules": [
+      "Missing evidence scores zero; absence is never upgraded by inference.",
+      "The metadata screen is discovery evidence and cannot claim reproducible build, test, deploy, security, or custody readiness.",
+      "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
+    ]
+  },
+  "operator_profile": {
+    "score_range": [0, 100],
+    "dimensions": [
+      {"id": "demand_access", "weight": 20},
+      {"id": "domain_credibility", "weight": 15},
+      {"id": "execution_discipline", "weight": 15},
+      {"id": "security_data_stewardship", "weight": 15},
+      {"id": "financial_discipline", "weight": 10},
+      {"id": "product_stewardship", "weight": 10},
+      {"id": "governance_communication", "weight": 10},
+      {"id": "conflict_transparency", "weight": 5}
+    ],
+    "hard_declines": [
+      "requests credentials, production data, IP rights, or customer access before the corresponding gate",
+      "rejects auditability, revocation, termination, or return obligations",
+      "conceals a material conflict or cannot establish lawful operating capacity"
+    ],
+    "human_review": [
+      "unresolved conflict, independence, legal-capacity, sanctions, or beneficial-ownership question",
+      "score conflicts with a reference or diligence finding",
+      "proposed exception to access, data, economics, or return policy"
+    ],
+    "routes": [
+      {"minimum": 80, "route": "proceed"},
+      {"minimum": 65, "route": "diligence"},
+      {"minimum": 50, "route": "trial"},
+      {"minimum": 0, "route": "decline"}
+    ]
+  },
+  "economics_and_kill_rules": {
+    "experiment_floor": {
+      "demand_score_minimum": 20,
+      "readiness_screen_minimum": 15,
+      "requirements": ["bounded hypothesis", "named evidence gap", "finite cost/time box", "stop condition", "no external act without its gate"]
+    },
+    "transfer_floor": {
+      "demand_score_minimum": 60,
+      "technical_readiness_minimum": 75,
+      "operator_score_minimum": 75,
+      "requirements": ["E3 or stronger primary demand evidence", "positive downside-tested contribution hypothesis", "funded maintenance budget", "clean custody chain", "approved terms", "tested return path"]
+    },
+    "institutional_floor": {
+      "demand_score_minimum": 75,
+      "technical_readiness_minimum": 85,
+      "operator_score_minimum": 80,
+      "requirements": ["observed bounded pilot lifecycle", "complete telemetry", "executed decision receipt", "repeatable governance review"]
+    },
+    "economic_fields": [
+      "unit of value",
+      "pricing or revenue-share hypothesis",
+      "direct and maintenance cost",
+      "downside/base/upside scenario",
+      "cash runway and owner time runway",
+      "operator incentive and clawback",
+      "transfer trigger",
+      "park/kill/return condition"
+    ],
+    "public_amount_policy": "No private price, cost, runway, valuation, equity, or revenue-share amount is stored in this public preflight.",
+    "park_rules": [
+      "No approved demand evidence after two bounded experiments.",
+      "Maintenance or security burden remains larger than the downside-tested value case.",
+      "Custody, licensing, contributor, data, or return ownership remains unresolved."
+    ],
+    "kill_rules": [
+      "Unlawful, deceptive, unsafe, or consent-incompatible operating model.",
+      "Material security or data harm cannot be bounded or remediated.",
+      "No credible owner or return path exists before custody would change."
+    ]
+  },
+  "structure_options": [
+    {
+      "id": "revocable_operating_license",
+      "description": "Owner retains IP and custody; operator receives a narrow, revocable operating license.",
+      "economics": "Fixed or variable operating consideration stays private until approved.",
+      "mandatory_boundaries": ["field of use", "territory", "term", "data role", "security", "sub-licensing", "audit", "termination", "return and deletion"],
+      "return": "License ends, access is revoked, owner custody persists, and certified deletion/return receipts are required."
+    },
+    {
+      "id": "performance_revenue_share",
+      "description": "Owner retains IP; operator earns a reviewed share only on defined collected value.",
+      "economics": "Define gross-to-net waterfall, attribution, reserves, audit, payment timing, caps/floors, and clawback privately.",
+      "mandatory_boundaries": ["revenue definition", "attribution", "expenses", "reporting", "audit", "tax", "chargebacks", "termination", "tail", "return"],
+      "return": "Accrued obligations reconcile; future authority stops; assets, data, and access return under the signed clause."
+    },
+    {
+      "id": "performance_vesting_venture",
+      "description": "A separately governed venture may earn rights or equity only through objective milestones.",
+      "economics": "Valuation, dilution, vesting, governance, repurchase, and tax treatment require owner and qualified-counsel approval.",
+      "mandatory_boundaries": ["entity", "IP contribution", "vesting", "milestones", "governance", "reserved matters", "repurchase", "deadlock", "data", "return"],
+      "return": "Unvested rights lapse; licensed assets and access return; surviving obligations remain explicit."
+    },
+    {
+      "id": "custody_preserving_management_mandate",
+      "description": "Operator manages a bounded function while repository, IP, domain, account, and data custody remain with the owner.",
+      "economics": "Management fee or performance consideration remains private and approval-gated.",
+      "mandatory_boundaries": ["decision rights", "change control", "credential isolation", "service levels", "audit", "incident response", "termination", "handover"],
+      "return": "Mandate ends; temporary access is revoked; runbooks, records, and in-flight work return to owner custody."
+    },
+    {
+      "id": "time_boxed_option_trial",
+      "description": "A synthetic or isolated trial creates no transfer and grants no continuing rights.",
+      "economics": "Trial budget, option consideration, and conversion terms remain private and non-binding until approved.",
+      "mandatory_boundaries": ["synthetic-first scope", "sandbox", "time box", "no production credentials", "evaluation metrics", "no implied license", "expiry", "deletion"],
+      "return": "Trial expires automatically; all temporary artifacts and access are revoked or returned with a receipt."
+    }
+  ],
+  "operator_pipeline": {
+    "status": "template_only_no_recruiting",
+    "stages": [
+      {"id": "source", "access": "public_only", "exit": "criteria match; no contact from this preflight"},
+      {"id": "consented_intro", "access": "public_only", "exit": "consent and conflicts recorded"},
+      {"id": "desk_diligence", "access": "public_plus_redacted", "exit": "identity, capacity, references, conflicts, and sanctions checks complete"},
+      {"id": "structured_diligence", "access": "redacted_private_only_after_owner_approval", "exit": "scorecard, security, data, and economics review complete"},
+      {"id": "synthetic_trial", "access": "invented_data_isolated_sandbox", "exit": "synthetic acceptance and denial paths pass"},
+      {"id": "terms_review", "access": "no_new_access", "exit": "HG-OPERATOR-TERMS and HG-CONTRACT are satisfied outside automation"},
+      {"id": "bounded_pilot", "access": "least_privilege_signed_scope_only", "exit": "decision date and complete telemetry reached"},
+      {"id": "continue_revise_return_terminate", "access": "decision_specific", "exit": "custody and access receipt complete"}
+    ],
+    "forbidden_before_terms": ["credentials", "customer data", "production data", "private source", "repository administration", "domain control", "IP license", "product-transfer rights"],
+    "decision_ledger_fields": ["candidate id", "stage", "basis", "score", "conflicts", "access class", "gate state", "decision", "reviewer", "date", "rollback/return action"]
+  },
+  "bounded_pilot": {
+    "status": "DESIGN_ONLY/UNOBSERVED",
+    "product_selected": false,
+    "operator_selected": false,
+    "operator_recruited": false,
+    "terms_selected": false,
+    "terms_signed": false,
+    "rights_transferred": false,
+    "credentials_granted": false,
+    "production_access_granted": false,
+    "observed_pilot": false,
+    "duration_days": 28,
+    "entry_requirements": ["transfer floor met", "operator diligence passed", "signed approved terms", "least-privilege access plan", "baseline telemetry", "tested revocation and restore", "named decision date"],
+    "telemetry": ["demand or operating outcome", "quality and reliability", "security/privacy events", "operator time", "owner time", "direct and maintenance cost", "access changes", "custody changes", "support load", "return readiness"],
+    "cadence": ["day 0 baseline", "weekly operating review", "midpoint access and economics audit", "day 28 decision and custody receipt"],
+    "decisions": ["continue", "revise", "return", "terminate"],
+    "synthetic_rehearsal": "Uses invented product/operator records, invented data, no credentials, no rights, no production access, and no representation of human acceptance."
+  },
+  "institutional_governance": {
+    "roles": [
+      {"id": "portfolio_owner", "accountability": "candidate disposition, capital/time allocation, and human approvals"},
+      {"id": "product_custodian", "accountability": "repository, IP, data, domain, credential, and restore custody"},
+      {"id": "operator", "accountability": "bounded operation, telemetry, incident disclosure, and return obligations"},
+      {"id": "security_data_steward", "accountability": "access class, privacy, incidents, revocation, and deletion evidence"},
+      {"id": "qualified_counsel", "accountability": "legal structure, rights, liability, data, termination, and return review"},
+      {"id": "independent_reviewer", "accountability": "score challenge, conflict review, and lifecycle audit"}
+    ],
+    "cadence": [
+      {"frequency": "monthly", "scope": "candidate evidence, experiment, park, and kill queue"},
+      {"frequency": "quarterly", "scope": "operator performance, economics, access, custody, and return readiness"},
+      {"frequency": "event_driven", "scope": "security, data, ownership, conflict, missed threshold, or terms breach"},
+      {"frequency": "annual", "scope": "rubrics, structures, counsel review, portfolio policy, and archived evidence"}
+    ],
+    "return_workflow": ["freeze new authority", "capture exact state and telemetry", "revoke temporary access", "rotate credentials where applicable", "return repository/domain/data/artifacts", "verify deletion and custody", "adjudicate economics and surviving obligations", "park, kill, resume, or re-source", "record immutable decision receipt"],
+    "template_replay_rule": "The complete synthetic lifecycle must replay without a real operator, client data, private repository name, credential, signed term, or production action."
+  },
+  "human_gates": [
+    {
+      "id": "HG-PUBLICATION-SEND",
+      "state": "unpulled",
+      "registry": "institutio/positioning/program.yaml#/human_gates/HG-PUBLICATION-SEND",
+      "applies_to": ["operator outreach", "direct message", "recruiting send"],
+      "preflight_action": "No contact or send."
+    },
+    {
+      "id": "HG-OPERATOR-TERMS",
+      "state": "unpulled",
+      "registry": "institutio/positioning/program.yaml#/human_gates/HG-OPERATOR-TERMS",
+      "applies_to": ["license", "equity", "revenue share", "custody", "access", "product-transfer terms"],
+      "preflight_action": "Templates remain draft and no structure is selected."
+    },
+    {
+      "id": "HG-CONTRACT",
+      "state": "unpulled",
+      "registry": "institutio/positioning/program.yaml#/human_gates/HG-CONTRACT",
+      "applies_to": ["signature", "spend", "liability", "data processing", "service commitment"],
+      "preflight_action": "No signature, spend, or commitment."
+    }
+  ],
+  "synthetic_cases": [
+    {
+      "id": "case-proceed",
+      "scores": {"demand_access": 5, "domain_credibility": 4, "execution_discipline": 5, "security_data_stewardship": 4, "financial_discipline": 4, "product_stewardship": 4, "governance_communication": 5, "conflict_transparency": 5},
+      "flags": [],
+      "expected_route": "proceed"
+    },
+    {
+      "id": "case-diligence",
+      "scores": {"demand_access": 4, "domain_credibility": 4, "execution_discipline": 4, "security_data_stewardship": 3, "financial_discipline": 3, "product_stewardship": 3, "governance_communication": 4, "conflict_transparency": 4},
+      "flags": [],
+      "expected_route": "diligence"
+    },
+    {
+      "id": "case-trial",
+      "scores": {"demand_access": 3, "domain_credibility": 3, "execution_discipline": 3, "security_data_stewardship": 3, "financial_discipline": 3, "product_stewardship": 3, "governance_communication": 3, "conflict_transparency": 3},
+      "flags": [],
+      "expected_route": "trial"
+    },
+    {
+      "id": "case-decline",
+      "scores": {"demand_access": 5, "domain_credibility": 4, "execution_discipline": 4, "security_data_stewardship": 1, "financial_discipline": 3, "product_stewardship": 2, "governance_communication": 2, "conflict_transparency": 1},
+      "flags": ["requests_credentials_before_terms"],
+      "expected_route": "decline"
+    },
+    {
+      "id": "case-human-review",
+      "scores": {"demand_access": 5, "domain_credibility": 5, "execution_discipline": 5, "security_data_stewardship": 5, "financial_discipline": 4, "product_stewardship": 5, "governance_communication": 5, "conflict_transparency": 3},
+      "flags": ["unresolved_conflict"],
+      "expected_route": "human_review"
+    }
+  ],
+  "synthetic_access_drills": [
+    {"id": "public-source", "stage": "source", "requested": "public_metadata", "expected": "allow"},
+    {"id": "synthetic-sandbox", "stage": "synthetic_trial", "requested": "invented_data_isolated_sandbox", "expected": "allow"},
+    {"id": "early-credential", "stage": "desk_diligence", "requested": "production_credentials", "expected": "deny"},
+    {"id": "early-private-source", "stage": "synthetic_trial", "requested": "private_source", "expected": "deny"},
+    {"id": "early-license", "stage": "terms_review", "requested": "ip_license", "expected": "deny"}
+  ]
+}
