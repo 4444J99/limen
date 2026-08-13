@@ -1,7 +1,7 @@
 # dustin alpha→omega: research, atomize, semver, roadmap, and issue all three ventures
 
 Issue: #2362
-PR: (pending)
+PR: #2364
 
 ## Context
 
