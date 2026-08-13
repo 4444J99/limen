@@ -19,7 +19,7 @@ Engagement: `organs/consulting/engagements/dustin.yaml` · Funnel instance: none
 
 ### dsp-platform — stage **building**, public face **none**
 
-> Register note: consumer shell still gated on ten design questions sent 2026-03-28 and never answered; he is the correct respondent (working musician + practising UI/UX). Stage-1 coordination substrate built 2026-08-12 — split sheets, settlement (pro-rata vs user-centric with the delta computed), provenance attestation, delivery validation; 59 tests, no network, no persistence. Research corpus is Drive-only.
+> Register note: consumer shell still gated on ten design questions sent 2026-03-28 and never answered; he is the correct respondent (working musician + practising UI/UX). Stage-1 coordination substrate built 2026-08-12 — split sheets, settlement (pro-rata vs user-centric with the delta computed), provenance attestation, delivery validation; 59 tests, no network, no persistence. Research corpus was Drive-only until 2026-08-13, now mirrored into the repo's docs/research/. Alpha→omega roadmap issued 2026-08-13: 11 phases as GitHub milestones + issues, ladder at roadmap/ladder.json, consumer-shell phases planned-not- started behind L-DSP-TEN-QUESTIONS.
 
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
@@ -31,7 +31,7 @@ Keywords: dsp, music platform, post-dsp, streaming alternative · Corpus evidenc
 
 ### ai-consultation — stage **building**, public face **none**
 
-> Register note: entry point and segment were already chosen in the repo's own README (AI Estate Audit, higher education, fixed scope); only PRICE is open, and it does not gate the instrument. Audit instrument built 2026-08-12 — estate schema, legibility rubric where every lost point names a missing artifact, derived risk register, capped first wave; 66 tests. His enterprise-UX vantage is the credibility asset, not delivery capacity.
+> Register note: entry point and segment were already chosen in the repo's own README (AI Estate Audit, higher education, fixed scope); only PRICE is open, and it does not gate the instrument. Audit instrument built 2026-08-12 — estate schema, legibility rubric where every lost point names a missing artifact, derived risk register, capped first wave; 66 tests. His enterprise-UX vantage is the credibility asset, not delivery capacity. Alpha→omega roadmap issued 2026-08-13: 10 phases as GitHub milestones + issues, ladder at roadmap/ladder.json; only the commercial-packaging phase waits on L-CONS-PRICE.
 
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
@@ -43,7 +43,7 @@ Keywords: ai audit, ai consultation, ai consulting, consulate, ai remediation, a
 
 ### social-presence — stage **building**, public face **none**
 
-> Register note: independent-musician instance of the content yield engine; inbound PAID request 2026-08-06, unanswered. Hard scope constraint set by him: no generative filler — now enforced in code by the instance repo's caption guard, not by prose. First working code landed 2026-08-12 (release-cycle planner, 38 tests); nothing in it posts, and terms remain unagreed.
+> Register note: independent-musician instance of the content yield engine; inbound PAID request 2026-08-06, unanswered. Hard scope constraint set by him: no generative filler — now enforced in code by the instance repo's caption guard, not by prose. First working code landed 2026-08-12 (release-cycle planner, 38 tests); nothing in it posts, and terms remain unagreed. Alpha→omega roadmap issued 2026-08-13: 10 phases as GitHub milestones + issues, ladder at roadmap/ladder.json; offer and posting phases planned-not-started behind L-NAS-TERMS / L-NAS-CREDENTIALS.
 
 Advance the build to its next verifiable rung. Read the repo's own issues/PRs/README for the current edge; leave the lane one demonstrable increment further with the increment stated in the closeout.
 
