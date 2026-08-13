@@ -53,6 +53,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertFalse(progress["c03"]["sole_unsatisfied_leaf"]["outbound_from_c04"])
         self.assertEqual(MODULE.P02_ACCEPTED_HEAD, progress["p02"]["exact_head"])
         self.assertEqual(MODULE.C03_CURRENT_HEAD, progress["c03"]["exact_head"])
+        self.assertEqual(MODULE.C03_MERGE_COMMIT, progress["c03"]["merge_commit"])
         self.assertEqual(
             MODULE.C03_ACCEPTED_P03_ANCESTOR,
             progress["c03"]["accepted_p03_ancestor"],
@@ -64,6 +65,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed = json.loads(json.dumps(self.contract))
         changed["dependency_progress"] = "not-an-object"
         self.assertIn("dependency_progress must be an object", MODULE.validate(changed))
+
+    def test_c03_source_and_merge_bindings_fail_closed_on_drift(self) -> None:
+        changed = json.loads(json.dumps(self.contract))
+        changed["dependency_progress"]["c03"]["merge_commit"] = "0" * 40
+        c03_source = next(row for row in changed["dependency_sources"] if row["id"] == "c03_identity_offers")
+        c03_source["merge_commit"] = "1" * 40
+        errors = MODULE.validate(changed)
+        self.assertIn("C03 merged integration commit mismatch", errors)
+        self.assertIn("C03 dependency source must bind its merged main commit", errors)
 
     def test_resolver_withholds_all_preflight_claims(self) -> None:
         dependency_rows = MODULE.resolve_dependency_sources(self.contract)

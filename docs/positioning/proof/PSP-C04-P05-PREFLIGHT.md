@@ -3,8 +3,10 @@
 Status: **PREPARED/PREFLIGHT**. This package is deliberately non-publishing and cannot close
 PSP-P05 or PSP-C04 (`counts_as_closure=false`). PSP-P02 is formally closed at exact head
 `8faa5fb9899231ebf5f87e78bb171544c11b79d7`. C03's current preflight head is
-`b6af8086c9050634313f519c29a6dfcb922c3721`: P03 W01-W06 are accepted, P04's five generated
-offer artifacts are staged, and W07 remains open on its genuine five-reader external-evidence gate.
+`b6af8086c9050634313f519c29a6dfcb922c3721`, merged as
+`8f89ad16ca1df84b00cb8227c88f368d0d64631a`: P03 W01-W06 are accepted, P04's five generated
+offer artifacts are integrated, and W07 remains open on its genuine five-reader external-evidence
+gate.
 
 The machine-readable contract is
 [`psp-c04-proof-contract.json`](psp-c04-proof-contract.json). It turns the P05 scope into six

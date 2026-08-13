@@ -6,19 +6,20 @@
 - Limen branch: `codex/psp-c04-proof-experience-preflight`
 - Limen draft checkpoint: https://github.com/organvm/limen/pull/2313
 - Portfolio owner: `organvm-vii-kerygma/portfolio` (repository id `1155412125`)
-- Portfolio branch: `codex/psp-p06-experience-preflight`
-- Portfolio draft checkpoint: https://github.com/organvm-vii-kerygma/portfolio/pull/220 at exact head
-  `8974543ba9675ed0504141895812476efef5dd80`
+- Portfolio source: https://github.com/organvm-vii-kerygma/portfolio/pull/220, merged from exact head
+  `8974543ba9675ed0504141895812476efef5dd80` as
+  `a01b6d85f78d2d744c0c994f7220081bb54a85c5`
 
 ## Dependency boundary
 
 `PSP-P02` is formally closed at exact main head
 `8faa5fb9899231ebf5f87e78bb171544c11b79d7`, with receipt
 https://github.com/organvm/limen/issues/2172#issuecomment-5270095170 and receipt SHA-256
-`f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434`. C03's current
-preflight head on PR #2312 is `b6af8086c9050634313f519c29a6dfcb922c3721`; P03 W01-W06
-are accepted at ancestor `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, and P04's five
-generated offer artifacts are staged. Its W06 receipt is
+`f312ae3536ced23aa782701b4a437866707c2eec4b6b194ba05a735e2d8bb434`. C03 PR #2312 merged
+from exact source head `b6af8086c9050634313f519c29a6dfcb922c3721` as
+`8f89ad16ca1df84b00cb8227c88f368d0d64631a`; P03 W01-W06 are accepted at ancestor
+`c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`, and P04's five generated offer artifacts are
+integrated as a reversible contract. Its W06 receipt is
 https://github.com/organvm/limen/issues/2187#issuecomment-5271254820 with receipt SHA-256
 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617`.
 
@@ -38,12 +39,13 @@ Accepted PSP-P02 objects consumed from exact head
 - claim/correction policy blob: `57565f0d0dc72d2200b41be0e21fe6d323ec7f83`;
 - claims-ledger blob: `3e49114563075dcd6926e3b7f8fd24bf8b9c3fee`.
 
-C03 checkpoint integration is exact-head-only. C04 consumed the committed contract and successor
-relay from `codex/psp-c03-identity-offers-preflight` at current fetched head
+C03 checkpoint integration is exact-source-and-merge-bound. C04 consumed the committed contract and
+successor relay from source head
 `b6af8086c9050634313f519c29a6dfcb922c3721`, including accepted W01-W06, the refreshed
-commercial contract, and all five generated offer artifacts. C03 is not formally closed because
-W07 remains open. C04 binds the accepted identity, audience, narrative, authority, claim, and
-offer-boundary tokens without copying private pricing amounts or creating a public offer.
+commercial contract, and all five generated offer artifacts, and binds their main integration at
+`8f89ad16ca1df84b00cb8227c88f368d0d64631a`. C03 is not formally closed because W07 remains open.
+C04 binds the accepted identity, audience, narrative, authority, claim, and offer-boundary tokens
+without copying private pricing amounts or creating a public offer.
 
 ## What can formalize automatically after W07 and C03 closure
 
@@ -59,8 +61,9 @@ offer-boundary tokens without copying private pricing amounts or creating a publ
 
 ## What still requires the later visual-selection gate
 
-The portfolio package intentionally contains no redesigned UI, mock, scaffold, new route, server,
-deployment, or public mutation. Once C03 formally closes and its exact accepted contract is bound,
+The portfolio P06 package contains no redesigned UI, mock, scaffold, new route, or server. Its
+contract is integrated, but visual implementation remains unselected. Once C03 formally closes and
+its exact accepted contract is bound,
 Product Design must generate exactly three materially distinct visual directions from the same
 content/interaction contract. A human selects one direction before any implementation begins.
 The selection receipt must name the chosen direction, rejected directions, rationale, accessibility
@@ -78,12 +81,12 @@ risk, performance risk, and rollback to the current public release.
 
 ## Safety state
 
-- Current release untouched.
+- This C04 package does not alter the current release.
 - No publication, deployment, DNS, analytics, account, or task-board mutation.
 - No outreach or send; `HG-PUBLICATION-SEND` remains unsatisfied.
 - Adoption, revenue, rankings, percentiles, and private evidence remain withheld.
 - No phase or issue may close from this relay.
-- `counts_as_closure=false`; the branch and both draft PRs remain PREPARED/PREFLIGHT.
+- `counts_as_closure=false`; formal proof/experience work remains PREPARED/PREFLIGHT.
 
 ## Next action
 

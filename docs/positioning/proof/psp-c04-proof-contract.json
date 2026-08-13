@@ -94,8 +94,9 @@
     },
     "c03": {
       "chunk_id": "PSP-C03",
-      "status": "p03_w01_w06_closed_p04_staged_w07_open",
+      "status": "p03_w01_w06_closed_p04_merged_w07_open",
       "exact_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "merge_commit": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "accepted_p03_ancestor": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
       "closed_leaves": [
         "PSP-P03-W01",
@@ -165,11 +166,12 @@
       "id": "c03_identity_offers",
       "branch": "codex/psp-c03-identity-offers-preflight",
       "exact_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "merge_commit": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "registry_alignment_commit": "986ebb41778cf082e01ede0cb6d268cebf54a106",
       "required_path": "institutio/positioning/commercial-contract.yaml",
       "expected_blob": "11ebfe5cb972c5b535059e5aa1f607ea64e90d17",
       "integration": "exact_committed_head_only",
-      "availability": "p03_w01_w06_accepted_p04_staged_w07_open"
+      "availability": "p03_w01_w06_accepted_p04_merged_w07_open"
     }
   ],
   "commercial_artifact_set": {

@@ -18,6 +18,7 @@ DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
+C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
 C03_ACCEPTED_P03_ANCESTOR = "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"
 CANONICAL_PORTFOLIO = {"slug": "organvm-vii-kerygma/portfolio", "repository_id": 1155412125}
 EXPECTED_FLAGSHIPS = {
@@ -202,10 +203,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         else:
             c03 = raw_c03
     if c03:
-        if c03.get("status") != "p03_w01_w06_closed_p04_staged_w07_open":
+        if c03.get("status") != "p03_w01_w06_closed_p04_merged_w07_open":
             errors.append("C03 progress status mismatch")
         if c03.get("exact_head") != C03_CURRENT_HEAD:
             errors.append("C03 current preflight head mismatch")
+        if c03.get("merge_commit") != C03_MERGE_COMMIT:
+            errors.append("C03 merged integration commit mismatch")
         if c03.get("accepted_p03_ancestor") != C03_ACCEPTED_P03_ANCESTOR:
             errors.append("C03 accepted P03 ancestor mismatch")
         if c03.get("closed_leaves") != [f"PSP-P03-W0{index}" for index in range(1, 7)]:
@@ -261,6 +264,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
     )
     if c03_dependency.get("exact_head") != c03.get("exact_head"):
         errors.append("C03 dependency source must match current progress head")
+    if c03_dependency.get("merge_commit") != C03_MERGE_COMMIT:
+        errors.append("C03 dependency source must bind its merged main commit")
     for dependency in dependencies:
         dependency_id = dependency.get("id", "<unknown>")
         expected_binding = EXPECTED_DEPENDENCY_BINDINGS.get(dependency_id)
