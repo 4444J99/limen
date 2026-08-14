@@ -1,6 +1,6 @@
 # PSP-P04 offer and economics preflight matrix
 
-Status: **staged and formally blocked on PSP-P03-W07**. PSP-P02 and PSP-P03-W01 through W06 are accepted; all P04 leaves remain open until PSP-P03 closes. This matrix maps each commercial decision to its reversible implementation evidence; it is not a formal work receipt.
+Status: **leaf execution open; phase closure gated by PSP-P03-W07**. PSP-P02 and PSP-P03-W01 through W06 are accepted. Independently eligible P04 leaves may merge and receipt-close after their own predicates pass; the five-reader gate blocks P03/P04 phase closure only. This matrix maps each commercial decision to its reversible implementation evidence; it is not a formal work receipt.
 
 Canonical source: `institutio/positioning/commercial-contract.yaml`
 
@@ -8,7 +8,7 @@ Implemented public-offer owner: `docs/positioning/offers`, generated and checked
 
 | Work | Live issue | Registry model | Contract evidence | Commercial boundary | Formal integration gap |
 | --- | --- | --- | --- | --- | --- |
-| PSP-P04-W01 | [#2190](https://github.com/organvm/limen/issues/2190) | gpt-5.6-sol / max | `offer_ladder.items.audit`; generated `docs/positioning/offers/agentic-delivery-audit.md` | Fixed-scope, read-only diagnostic; two-to-three-week delivery envelope | After P03 closes, run the live leaf predicate and attach the marked receipt. |
+| PSP-P04-W01 | [#2190](https://github.com/organvm/limen/issues/2190) | gpt-5.6-sol / max | `offer_ladder.items.audit`; generated `docs/positioning/offers/agentic-delivery-audit.md` | Fixed-scope, read-only diagnostic; two-to-three-week delivery envelope | Once its declared leaf dependencies close, run the live leaf predicate and attach the marked receipt. |
 | PSP-P04-W02 | [#2191](https://github.com/organvm/limen/issues/2191) | gpt-5.6-terra / high | `offer_ladder.items.install`; generated `docs/positioning/offers/governance-install.md` | One team or pipeline; four-to-eight-week delivery envelope; named write boundary | After W01 closes, run the live leaf predicate and attach the marked receipt. |
 | PSP-P04-W03 | [#2192](https://github.com/organvm/limen/issues/2192) | gpt-5.6-terra / high | `offer_ladder.items.retainer`; generated `docs/positioning/offers/bounded-delivery-governance-retainer.md` | Finite cadence and response envelope; no on-call or outsourced ownership | After W02 closes, run the live leaf predicate and attach the marked receipt. |
 | PSP-P04-W04 | [#2193](https://github.com/organvm/limen/issues/2193) | gpt-5.6-terra / high | `qualification.rules`, `qualification.scenarios`; generated `docs/positioning/offers/qualification-and-routing.md`; validator `scripts/positioning-offer-artifacts.py` | One priority-ordered route; guarded exceptions go to human review; prohibited scopes decline | After W01-W03 close, mint the scenario receipt from the unchanged generated artifact. |
@@ -20,4 +20,4 @@ Implemented public-offer owner: `docs/positioning/offers`, generated and checked
 
 The offer ladder does not overlap: Audit diagnoses; Governance Install changes one bounded workflow; the retainer sustains an accepted baseline; partnership review is a secondary diligence route. Each offer specifies entry criteria, deliverables, exclusions, timeline, evidence, economics, authority, handoff, and escalation. Numeric pricing stays in its sanctioned private owner behind symbolic range and anchor IDs.
 
-Formal status remains unchanged: PSP-P04-W01 through PSP-P04-W07 are open and dependency-blocked on the five-reader PSP-P03-W07 gate.
+Formal rule: leaf acceptance follows each leaf's declared dependencies and predicate; PSP-P03-W07 blocks P03/P04 phase closure only. This preflight does not claim current live issue state.

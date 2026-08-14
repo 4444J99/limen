@@ -148,6 +148,17 @@ class CommercialContractTests(unittest.TestCase):
         errors = MODULE.validate_p03_matrix(changed)
         self.assertTrue(any("must map to interview_threat_contract" in error for error in errors), errors)
 
+    def test_p04_matrix_cannot_reintroduce_a_phase_wide_leaf_block(self) -> None:
+        matrix = MODULE.P04_MATRIX_PATH.read_text()
+        self.assertEqual([], MODULE.validate_p04_matrix(matrix, self.contract))
+        changed = matrix.replace(
+            "Independently eligible P04 leaves may merge and receipt-close after their own predicates pass",
+            "all P04 leaves remain open until PSP-P03 closes",
+            1,
+        )
+        errors = MODULE.validate_p04_matrix(changed, self.contract)
+        self.assertTrue(any("stale phase-wide leaf block" in error for error in errors), errors)
+
 
 if __name__ == "__main__":
     unittest.main()

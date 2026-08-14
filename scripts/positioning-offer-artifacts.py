@@ -27,6 +27,7 @@ OFFER_FILES = {
 QUALIFICATION_FILE = "qualification-and-routing.md"
 CAPACITY_FILE = "bounded-delivery-governance-retainer-capacity.json"
 EXPECTED_FILES = frozenset((*OFFER_FILES.values(), QUALIFICATION_FILE, CAPACITY_FILE))
+KNOWN_MATERIALIZED_FILES = frozenset((*EXPECTED_FILES, "agentic-delivery-audit-decision-record.json"))
 WORK_ITEMS = {
     "audit": "PSP-P04-W01",
     "install": "PSP-P04-W02",
@@ -207,7 +208,7 @@ REQUIRED_PROHIBITED_EFFECTS = frozenset(
 )
 
 PRIVATE_PATTERNS = (
-    re.compile(r"(?:^|[\s`(])(?:/Users/|/home/|/private/|~/|file://)", re.IGNORECASE),
+    re.compile(r"(?:^|[\s`(\"':])(?:/Users/|/home/|/private/|~/|file://)", re.IGNORECASE),
     re.compile(r"\b[A-Z]:\\Users\\", re.IGNORECASE),
     re.compile(
         r"(?:\.limen-private/|\.agent-runtime/|session-state/|archived_sessions/|"
@@ -326,6 +327,12 @@ def _require_exact_mapping(
 ) -> Mapping[str, Any]:
     expected = set(fields)
     mapping = _require_fields(errors, value, expected, label)
+    non_string_keys = [key for key in mapping if not isinstance(key, str)]
+    if non_string_keys:
+        errors.append(
+            f"{label} keys must be strings; found non-string keys {sorted(repr(key) for key in non_string_keys)}"
+        )
+        return mapping
     if mapping and set(mapping) != expected:
         errors.append(f"{label} fields must be exactly {sorted(expected)}; found {sorted(mapping)}")
     return mapping
@@ -1721,13 +1728,15 @@ def validate_artifact_directory(data: Mapping[str, Any], output_dir: Path = OUTP
     actual: dict[str, str] = {}
     if not output_dir.exists():
         return [f"missing offer artifact directory: {output_dir}"]
-    actual_files = {path.relative_to(output_dir).as_posix() for path in output_dir.rglob("*.md") if path.is_file()}
-    capacity_path = output_dir / CAPACITY_FILE
-    if capacity_path.is_file():
-        actual_files.add(CAPACITY_FILE)
+    actual_files = {
+        path.relative_to(output_dir).as_posix()
+        for pattern in ("*.md", "*.json")
+        for path in output_dir.rglob(pattern)
+        if path.is_file()
+    }
     for missing in sorted(EXPECTED_FILES - actual_files):
         errors.append(f"missing generated offer artifact: {missing}")
-    for unexpected in sorted(actual_files - EXPECTED_FILES):
+    for unexpected in sorted(actual_files - KNOWN_MATERIALIZED_FILES):
         errors.append(f"unexpected unmanaged offer artifact: {unexpected}")
     for filename in sorted(actual_files):
         path = output_dir / filename

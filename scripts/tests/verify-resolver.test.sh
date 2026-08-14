@@ -81,13 +81,44 @@ positioning-offer-contract-test
 check-docs-exports
 check-note-links' docs/positioning/offers/product-operating-partnership-review.md
 
+expect positioning-program-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+research-adjudication-test
+check-note-links' institutio/positioning/program.yaml
+
+expect p03-evidence-matrix-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md
+
+expect p04-evidence-matrix-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md
+
+expect c03-relay-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/relays/2026-08-10-psp-c03-identity-offers-preflight.md
+
 expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 research-adjudication-test
+research-adjudication-live-test
 check-params
 check-note-links
 check-effectors' scripts/positioning-research-adjudication.py
+
+expect research-adjudication-live-input-change 'syntax-changed
+diff-hygiene
+research-adjudication-test
+research-adjudication-live-test
+check-note-links' institutio/positioning/github-map.json
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also

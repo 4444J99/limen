@@ -605,6 +605,50 @@ def validate_p03_matrix(text: str) -> list[str]:
     return errors
 
 
+def validate_p04_matrix(text: str, data: dict[str, Any]) -> list[str]:
+    """Bind the P04 evidence matrix to the canonical leaf/phase execution rule."""
+    errors: list[str] = []
+    found = _matrix_ids(text, "PSP-P04")
+    if found != P04_WORK:
+        errors.append(f"P04 evidence matrix coverage mismatch: expected {sorted(P04_WORK)}, found {sorted(found)}")
+
+    contract = data.get("contract") if isinstance(data, dict) else None
+    accepted = contract.get("accepted_state") if isinstance(contract, dict) else None
+    p04 = accepted.get("p04") if isinstance(accepted, dict) else None
+    expected_binding = {
+        "phase_id": "PSP-P04",
+        "state": "leaf_execution_open_phase_close_blocked",
+        "dependency": "PSP-P03",
+    }
+    if p04 != expected_binding:
+        errors.append("P04 evidence matrix cannot bind a non-canonical leaf/phase execution state")
+
+    for required in (
+        "Status: **leaf execution open; phase closure gated by PSP-P03-W07**.",
+        "Independently eligible P04 leaves may merge and receipt-close after their own predicates pass",
+        "Formal rule: leaf acceptance follows each leaf's declared dependencies and predicate; PSP-P03-W07 blocks P03/P04 phase closure only.",
+    ):
+        if required not in text:
+            errors.append(f"P04 evidence matrix missing canonical execution marker: {required}")
+    for stale in (
+        "all P04 leaves remain open until PSP-P03 closes",
+        "dependency-blocked on the five-reader PSP-P03-W07 gate",
+        "After P03 closes, run the live leaf predicate",
+    ):
+        if stale in text:
+            errors.append(f"P04 evidence matrix retains stale phase-wide leaf block: {stale}")
+
+    for required in (
+        "docs/positioning/offers",
+        "scripts/positioning-offer-artifacts.py",
+        "templates/production-systems",
+        "tests/production-systems/commercial-templates.test.ts",
+    ):
+        if f"`{required}`" not in text:
+            errors.append(f"P04 evidence matrix omits implemented owner {required}")
+    return errors
+
+
 def validate_artifact_text(label: str, text: str) -> list[str]:
     errors: list[str] = []
     for marker in PRIVATE_MARKERS:
@@ -662,17 +706,7 @@ def validate_repository(data: dict[str, Any]) -> list[str]:
     if P03_MATRIX_PATH in artifacts:
         errors.extend(validate_p03_matrix(artifacts[P03_MATRIX_PATH]))
     if P04_MATRIX_PATH in artifacts:
-        found = _matrix_ids(artifacts[P04_MATRIX_PATH], "PSP-P04")
-        if found != P04_WORK:
-            errors.append(f"P04 evidence matrix coverage mismatch: expected {sorted(P04_WORK)}, found {sorted(found)}")
-        for required in (
-            "docs/positioning/offers",
-            "scripts/positioning-offer-artifacts.py",
-            "templates/production-systems",
-            "tests/production-systems/commercial-templates.test.ts",
-        ):
-            if f"`{required}`" not in artifacts[P04_MATRIX_PATH]:
-                errors.append(f"P04 evidence matrix omits implemented owner {required}")
+        errors.extend(validate_p04_matrix(artifacts[P04_MATRIX_PATH], data))
     if RELAY_PATH in artifacts:
         relay = artifacts[RELAY_PATH]
         for required in (

@@ -71,6 +71,12 @@ class OfferArtifactTests(unittest.TestCase):
         self.retainer(extra)["capacity_model"]["hidden_capacity"] = True
         self.assert_contract_error(extra, "capacity_model fields must be exactly")
 
+    def test_retainer_capacity_model_rejects_non_string_keys_without_crashing(self) -> None:
+        malformed = copy.deepcopy(self.contract)
+        self.retainer(malformed)["capacity_model"][1] = "hidden capacity"
+        errors = MODULE.validate_contract(malformed)
+        self.assertTrue(any("capacity_model keys must be strings" in error for error in errors), errors)
+
     def test_duplicate_yaml_members_fail_before_semantic_validation(self) -> None:
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
@@ -199,6 +205,15 @@ class OfferArtifactTests(unittest.TestCase):
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         errors = MODULE.validate_artifact_directory(self.contract, output_dir)
         self.assertTrue(any("drifted from canonical YAML" in error for error in errors), errors)
+
+    def test_every_materialized_json_file_is_manifested_and_safety_scanned(self) -> None:
+        output_dir = self.materialize()
+        extra = output_dir / "obsolete.json"
+        extra.write_text('{"source": "/Users/example/private", "fee": "25000 USD"}\n', encoding="utf-8")
+        errors = MODULE.validate_artifact_directory(self.contract, output_dir)
+        self.assertTrue(any("unexpected unmanaged offer artifact: obsolete.json" in error for error in errors), errors)
+        self.assertTrue(any("private path or source leaked" in error for error in errors), errors)
+        self.assertTrue(any("numeric price leaked" in error for error in errors), errors)
 
     def test_every_offer_page_covers_every_required_canonical_value(self) -> None:
         artifacts = MODULE.render_artifacts(self.contract)
