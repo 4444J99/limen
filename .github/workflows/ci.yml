@@ -208,8 +208,7 @@ jobs:
         working-directory: web/worker
 
       - name: Audit npm dependencies
-        run: npm audit --audit-level=high
-        working-directory: web/worker
+        run: python3 scripts/npm-audit-gate.py web/worker
 
       - name: Check Worker syntax
         run: npm run check
@@ -235,8 +234,7 @@ jobs:
         working-directory: web/app
 
       - name: Audit npm dependencies
-        run: npm audit --audit-level=high
-        working-directory: web/app
+        run: python3 scripts/npm-audit-gate.py web/app
 
       - name: TypeScript type-check
         run: npx --yes -p typescript tsc --noEmit -p tsconfig.json

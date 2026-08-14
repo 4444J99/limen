@@ -1,0 +1,12 @@
+{
+  "_doc": "Expiring exceptions for scripts/npm-audit-gate.py. Every entry MUST carry id, scope, reason, expires. An expired entry stops excepting and the gate goes red by itself — extend only after re-assessing whether a patched release now exists.",
+  "exceptions": [
+    {
+      "id": "GHSA-2v37-7h3g-55p8",
+      "scope": "web/app",
+      "reason": "nanoid <3.3.18 (via next->postcss, range ^3.3.16): no patched 3.x release exists on the registry (3.3.18 is a 404; 3.x dist-tag 'legacy' points at the vulnerable 3.3.17, verified 2026-08-14). Vulnerable path requires calling a CUSTOM generator with size=0; postcss uses the standard API. Re-check `npm view nanoid@3.3.18 version` before extending.",
+      "recorded": "2026-08-14",
+      "expires": "2026-09-14"
+    }
+  ]
+}
