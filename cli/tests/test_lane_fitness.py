@@ -6,7 +6,7 @@ import importlib
 import importlib.util
 import json
 import sys
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
@@ -17,6 +17,8 @@ import limen.dispatch as D
 from limen.models import Task
 
 _TODAY = date.today()
+_RECENT_TIMESTAMP = datetime.now(timezone.utc).isoformat()
+_STALE_TIMESTAMP = (datetime.now(timezone.utc) - timedelta(days=31)).isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +99,7 @@ class TestLaneFitnessScript:
                     {
                         "agent": "opencode",
                         "status": "done" if i == 0 else "failed",
-                        "timestamp": "2026-07-15T12:00:00Z",
+                        "timestamp": _RECENT_TIMESTAMP,
                     },
                 ],
             )
@@ -120,7 +122,7 @@ class TestLaneFitnessScript:
                 task_id="T-0",
                 type_="code",
                 dispatch_log=[
-                    {"agent": "opencode", "status": "failed", "timestamp": "2026-07-15T12:00:00Z"},
+                    {"agent": "opencode", "status": "failed", "timestamp": _RECENT_TIMESTAMP},
                 ],
             )
         ]
@@ -138,7 +140,7 @@ class TestLaneFitnessScript:
                 task_id=f"T-{i}",
                 type_="code",
                 dispatch_log=[
-                    {"agent": "jules", "status": "done", "timestamp": "2026-07-15T12:00:00Z"},
+                    {"agent": "jules", "status": "done", "timestamp": _RECENT_TIMESTAMP},
                 ],
             )
             for i in range(10)
@@ -157,7 +159,7 @@ class TestLaneFitnessScript:
                 task_id=f"T-{i}",
                 type_="code",
                 dispatch_log=[
-                    {"agent": "opencode", "status": "failed", "timestamp": "2025-01-01T00:00:00Z"},
+                    {"agent": "opencode", "status": "failed", "timestamp": _STALE_TIMESTAMP},
                 ],
             )
             for i in range(10)
@@ -190,7 +192,7 @@ class TestLaneFitnessScript:
                 task_id=f"T-{i}",
                 type_="code",
                 dispatch_log=[
-                    {"agent": "opencode", "status": "failed", "timestamp": "2026-07-15T12:00:00Z"},
+                    {"agent": "opencode", "status": "failed", "timestamp": _RECENT_TIMESTAMP},
                 ],
             )
             for i in range(6)
