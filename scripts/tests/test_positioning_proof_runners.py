@@ -1,10 +1,12 @@
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -44,7 +46,51 @@ def attach_origin(repository: Path, remote_root: Path) -> Path:
     return remote
 
 
+def run_request(request: dict[str, object]) -> dict[str, object]:
+    repository = Path(str(request["repository_path"]))
+    return RECEIPT.run_request(
+        request,
+        canonical_remote_lookup=lambda _repository: RECEIPT._run_git(
+            repository,
+            ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
+        ),
+    )
+
+
 class PositioningProofRunnerTest(unittest.TestCase):
+    def test_canonical_remote_lookup_ignores_all_git_rewrite_surfaces(self) -> None:
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        injected = {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "url.file:///mirror.insteadOf",
+            "GIT_CONFIG_VALUE_0": "https://github.com/",
+            "GIT_DIR": "/tmp/untrusted.git",
+            "GIT_WORK_TREE": "/tmp/untrusted-tree",
+        }
+        with mock.patch.dict(os.environ, injected, clear=False):
+            with mock.patch.object(RECEIPT.subprocess, "run", return_value=completed) as run:
+                result = RECEIPT._run_canonical_remote("example/synthetic")
+        self.assertIs(result, completed)
+        argv = run.call_args.args[0]
+        options = run.call_args.kwargs
+        self.assertEqual(
+            [
+                "git",
+                "ls-remote",
+                "--symref",
+                "--exit-code",
+                "https://github.com/example/synthetic.git",
+                "HEAD",
+            ],
+            argv,
+        )
+        self.assertEqual(Path("/"), options["cwd"])
+        self.assertEqual("1", options["env"]["GIT_CONFIG_NOSYSTEM"])
+        self.assertEqual(os.devnull, options["env"]["GIT_CONFIG_GLOBAL"])
+        self.assertNotIn("GIT_CONFIG_COUNT", options["env"])
+        self.assertNotIn("GIT_DIR", options["env"])
+        self.assertNotIn("GIT_WORK_TREE", options["env"])
+
     def test_cost_failure_fixture_reproduces_all_dimensions(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         result = COST.reproduce(payload)
@@ -135,7 +181,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("current_pass", result["result"])
             self.assertEqual(head, result["exact_head"])
             self.assertEqual(head, result["remote_default_branch_head"])
@@ -178,7 +224,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertEqual("example/stale-mirror", result["origin_repository"])
             self.assertTrue(any("origin does not identify" in error for error in result["errors"]))
@@ -199,7 +245,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             },
             "limitations": ["Synthetic fixture only."],
         }
-        self.assertEqual("not_current", RECEIPT.run_request(request)["result"])
+        self.assertEqual("not_current", run_request(request)["result"])
 
     def test_exact_head_runner_rejects_dirty_worktree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -232,7 +278,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertIn("tracked or untracked changes", result["errors"][0])
 
@@ -266,7 +312,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertIn("default-branch tip", result["errors"][0])
 
@@ -304,7 +350,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     "max_output_bytes": 1024,
                 },
             }
-            bounded = RECEIPT.run_request(verbose)
+            bounded = run_request(verbose)
             self.assertEqual("current_fail", bounded["result"], bounded)
             self.assertEqual(1024, bounded["output_bytes"])
             self.assertIn("bounded output budget", bounded["errors"][0])
@@ -316,7 +362,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     "max_output_bytes": 1024,
                 },
             }
-            blocked = RECEIPT.run_request(missing)
+            blocked = run_request(missing)
             self.assertEqual("blocked_external", blocked["result"])
             self.assertIn("predicate could not start", blocked["errors"][0])
 
@@ -367,7 +413,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertIn("remote default-branch tip", result["errors"][0])
 
@@ -404,7 +450,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertIn("authoritative remote default branch", result["errors"][0])
             self.assertEqual("main", result["remote_default_branch"])
@@ -445,7 +491,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any("post-predicate remote default-branch tip" in error for error in result["errors"]))
 
@@ -484,7 +530,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertTrue(any("worktree changed" in error for error in result["errors"]))
 
@@ -516,16 +562,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     "argv": [
                         sys.executable,
                         "-c",
-                        "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)']); print('parent done')",
+                        "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)'], start_new_session=True); print('parent done')",
                     ],
                     "timeout_seconds": 1,
                     "max_output_bytes": 4096,
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("current_fail", result["result"])
-            self.assertTrue(any("bounded timeout" in error for error in result["errors"]))
+            self.assertTrue(any("live descendant" in error for error in result["errors"]))
 
     def test_redirected_predicate_descendant_is_terminated_before_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
@@ -548,7 +594,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             parent = (
                 "import subprocess,sys; "
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
-                "stderr=subprocess.DEVNULL); print('parent done')"
+                "stderr=subprocess.DEVNULL, start_new_session=True); print('parent done')"
             )
             request = {
                 "schema_version": RECEIPT.SCHEMA_VERSION,
@@ -564,7 +610,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
             time.sleep(0.7)
@@ -587,13 +633,18 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
             ).stdout.strip()
             attach_origin(repository, Path(remote_temporary))
-            child = (
+            grandchild = (
                 "import time; from pathlib import Path; time.sleep(0.5); Path('detached-late.txt').write_text('late')"
+            )
+            child = (
+                "import subprocess,sys; "
+                f"subprocess.Popen([sys.executable,'-c',{grandchild!r}], stdout=subprocess.DEVNULL, "
+                "stderr=subprocess.DEVNULL, start_new_session=True, env={})"
             )
             parent = (
                 "import subprocess,sys; "
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
-                "stderr=subprocess.DEVNULL, start_new_session=True); print('parent done')"
+                "stderr=subprocess.DEVNULL, start_new_session=True, env={}); print('parent done')"
             )
             request = {
                 "schema_version": RECEIPT.SCHEMA_VERSION,
@@ -609,7 +660,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
             time.sleep(0.7)

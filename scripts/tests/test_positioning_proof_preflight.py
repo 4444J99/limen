@@ -40,6 +40,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "phase_id": phase_id,
                 "receipt_url": receipt_url,
                 "receipt_sha256": receipt_sha256,
+                "observed_heads": {"organvm/limen": MODULE.C03_CURRENT_HEAD},
             }
         return bindings, live
 
@@ -337,6 +338,22 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("differs from canonical wording" in error for error in result["errors"]))
 
+    def test_present_surface_claim_requires_exact_unique_canonical_sources(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        for suffix in (["unreviewed-extra"], [rows[0]["source_ids"][0]]):
+            manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+            present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+            present.update({"presence": "present", "canonical_or_drift": "canonical"})
+            present["source_ids"] = [*present["source_ids"], *suffix]
+            result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(
+                any(
+                    "source ids differ from canonical inventory" in error or "source_ids contain duplicates" in error
+                    for error in result["errors"]
+                )
+            )
+
     def test_present_surface_claim_binds_exact_iso_observation_dates(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         for invalid in (True, ["not-a-date"], ["2099-01-01"]):
@@ -591,12 +608,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
     def test_phase_receipts_bind_exact_live_marked_receipts(self) -> None:
         bindings, live = self._valid_phase_bindings()
-        self.assertEqual([], MODULE._validate_phase_receipt_bindings(bindings, ROOT, live))
+        self.assertEqual(
+            [],
+            MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live),
+        )
         phase = bindings["PSP-P04"]
         assert isinstance(phase, dict)
         phase["receipt_sha256"] = "c" * 64
-        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, live)
+        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live)
         self.assertTrue(any("differs from the latest marked live phase receipt" in error for error in errors))
+
+    def test_phase_receipt_observed_heads_must_precede_the_closure_head(self) -> None:
+        bindings, live = self._valid_phase_bindings()
+        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, "0" * 40, live)
+        self.assertTrue(any("not an ancestor of the closure head" in error for error in errors))
 
     def test_w07_receipt_requires_the_exact_tracked_predicate_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import tempfile
+from urllib.request import Request, urlopen
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -24,6 +25,10 @@ PHASE_RECEIPT_URLS = {
     "PSP-P03": re.compile(r"^https://github\.com/organvm/limen/issues/2181#issuecomment-[0-9]+$"),
     "PSP-P04": re.compile(r"^https://github\.com/organvm/limen/issues/2189#issuecomment-[0-9]+$"),
 }
+PHASE_RECEIPT_BLOCK = re.compile(
+    r"<!--\s*positioning-phase-receipt:(PSP-P\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
@@ -877,9 +882,14 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
             )
             if not valid_source_ids:
                 errors.append(f"source_ids must be a non-empty string list: {key[0]} / {key[1]}")
-            expected_sources = set(expected_rows.get(key, {}).get("source_ids", []))
-            if valid_source_ids and not expected_sources.issubset(set(source_ids)):
-                errors.append(f"canonical sources missing: {key[0]} / {key[1]}")
+            expected_source_ids = expected_rows.get(key, {}).get("source_ids", [])
+            expected_sources = set(expected_source_ids)
+            if valid_source_ids and len(source_ids) != len(set(source_ids)):
+                errors.append(f"source_ids contain duplicates: {key[0]} / {key[1]}")
+            if valid_source_ids and (
+                len(source_ids) != len(expected_source_ids) or set(source_ids) != expected_sources
+            ):
+                errors.append(f"source ids differ from canonical inventory: {key[0]} / {key[1]}")
             if not isinstance(row.get("disclosure_level"), str) or not row.get("disclosure_level"):
                 errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
             if not isinstance(row.get("action"), str) or not row.get("action"):
@@ -1104,12 +1114,49 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     value = json.loads(completed.stdout)
     if not isinstance(value, dict):
         raise ValueError(f"live {phase_id} verifier returned a non-object")
+    receipt_url = value.get("receipt_url")
+    if not isinstance(receipt_url, str) or not PHASE_RECEIPT_URLS[phase_id].fullmatch(receipt_url):
+        raise ValueError(f"live {phase_id} receipt URL is not an immutable canonical issue comment")
+    comment_match = re.search(r"#issuecomment-([0-9]+)$", receipt_url)
+    if comment_match is None:
+        raise ValueError(f"live {phase_id} receipt URL has no immutable comment identifier")
+    request = Request(
+        f"https://api.github.com/repos/organvm/limen/issues/comments/{comment_match.group(1)}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "limen-positioning-proof-preflight",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urlopen(request, timeout=30) as response:
+        raw_comment = response.read(1_048_577)
+    if len(raw_comment) > 1_048_576:
+        raise ValueError(f"live {phase_id} receipt comment exceeds the bounded response size")
+    comment = json.loads(raw_comment)
+    if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
+        raise ValueError(f"live {phase_id} receipt comment identity differs from the verifier result")
+    body = comment.get("body")
+    matches = PHASE_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
+    matches = [receipt for candidate_phase, receipt in matches if candidate_phase == phase_id]
+    if len(matches) != 1:
+        raise ValueError(f"live {phase_id} comment must contain exactly one marked phase receipt")
+    receipt = json.loads(matches[0])
+    if not isinstance(receipt, dict):
+        raise ValueError(f"live {phase_id} marked receipt returned a non-object")
+    canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if hashlib.sha256(canonical).hexdigest() != value.get("receipt_sha256"):
+        raise ValueError(f"live {phase_id} marked receipt digest differs from the verifier result")
+    observed_heads = receipt.get("observed_heads")
+    if not isinstance(observed_heads, dict):
+        raise ValueError(f"live {phase_id} marked receipt has no observed_heads binding")
+    value["observed_heads"] = observed_heads
     return value
 
 
 def _validate_phase_receipt_bindings(
     value: object,
     repository: Path,
+    closure_head: str | None,
     live_verifications: dict[str, dict[str, Any]] | None = None,
 ) -> list[str]:
     phases = tuple(PHASE_RECEIPT_URLS)
@@ -1121,6 +1168,9 @@ def _validate_phase_receipt_bindings(
         except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
             return [str(exc)]
     errors: list[str] = []
+    valid_closure_head = isinstance(closure_head, str) and bool(FULL_HEAD.fullmatch(closure_head))
+    if not valid_closure_head:
+        errors.append("phase receipts require a full closure exact head")
     for phase_id in phases:
         binding = value.get(phase_id)
         observed = live_verifications.get(phase_id) if isinstance(live_verifications, dict) else None
@@ -1140,6 +1190,24 @@ def _validate_phase_receipt_bindings(
             errors.append(f"{phase_id} receipt URL differs from the latest marked live phase receipt")
         if binding.get("receipt_sha256") != receipt_sha256:
             errors.append(f"{phase_id} receipt digest differs from the latest marked live phase receipt")
+        observed_heads = observed.get("observed_heads")
+        if not isinstance(observed_heads, dict) or set(observed_heads) != {"organvm/limen"}:
+            errors.append(f"live {phase_id} receipt must bind exactly the organvm/limen observed head")
+            continue
+        observed_head = observed_heads.get("organvm/limen")
+        if not isinstance(observed_head, str) or not FULL_HEAD.fullmatch(observed_head):
+            errors.append(f"live {phase_id} receipt observed head is not a full Git head")
+            continue
+        if valid_closure_head:
+            ancestry = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", observed_head, closure_head],
+                cwd=repository,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            if ancestry.returncode != 0:
+                errors.append(f"live {phase_id} receipt observed head is not an ancestor of the closure head")
     return errors
 
 
@@ -1373,6 +1441,7 @@ def formalization_readiness(
             _validate_phase_receipt_bindings(
                 closure_receipt.get("phase_receipts"),
                 repository,
+                closure_head=final_head,
                 live_verifications=phase_verifications,
             )
         )
