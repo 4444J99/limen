@@ -55,6 +55,8 @@ TRUSTED_MODEL_REVIEWERS = {"chatgpt-codex-connector", "coderabbitai"}
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
 ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
+MAX_PUBLIC_NUMBER = 2**53 - 1
+AUTHENTICATED_IDENTITY = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$")
 ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window_end", "population", "rows"}
 POPULATION_FIELDS = {
     "schema_version",
@@ -152,6 +154,24 @@ def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, An
 
 def _loads_public_artifact(raw: str) -> object:
     return json.loads(raw, object_pairs_hook=_reject_duplicate_json_members)
+
+
+def _public_authenticated_identity(value: object) -> bool:
+    return isinstance(value, str) and bool(AUTHENTICATED_IDENTITY.fullmatch(value))
+
+
+def _bounded_nonnegative_number(value: object) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        converted = float(value)
+    except (OverflowError, ValueError):
+        return False
+    return math.isfinite(converted) and 0 <= converted <= MAX_PUBLIC_NUMBER
+
+
+def _bounded_nonnegative_integer(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= MAX_PUBLIC_NUMBER
 
 
 def _parse_window_date(value: object, field: str, errors: list[str]) -> date | None:
@@ -333,6 +353,20 @@ def _safe_tracked_artifact(value: object) -> Path | None:
     return candidate
 
 
+def _load_tracked_public_artifact(value: object) -> object:
+    artifact = _safe_tracked_artifact(value)
+    if artifact is None:
+        raise ValueError("artifact is not a safe Git-tracked file matching its committed HEAD blob")
+    raw = artifact.read_bytes()
+    if len(raw) > 1_048_576:
+        raise ValueError("artifact exceeds the bounded size")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("artifact is not UTF-8 JSON") from exc
+    return _loads_public_artifact(text)
+
+
 def _model_rate_source_record(
     detail: dict[str, Any],
     index: int,
@@ -417,7 +451,7 @@ def _model_rate_source_record(
                 errors.append(f"row {index} model rate source record {record_index} requires {field}")
         for field in ("input_rate_usd_per_million", "output_rate_usd_per_million"):
             value = record.get(field)
-            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            if not _bounded_nonnegative_number(value):
                 errors.append(f"row {index} model rate source record {record_index} requires a valid {field}")
         if record_id == detail.get("source_record_id"):
             selected = record
@@ -485,12 +519,7 @@ def _validate_population_source(
             continue
         seen.add(normalized)
         author_identity = record.get("author_identity")
-        if (
-            not isinstance(author_identity, str)
-            or not author_identity.strip()
-            or author_identity != author_identity.strip()
-            or "\0" in author_identity
-        ):
+        if not _public_authenticated_identity(author_identity):
             errors.append(f"sample population source record {index} requires a public-safe author identity")
         eligible = record.get("eligible")
         reason = record.get("exclusion_reason")
@@ -544,7 +573,7 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     counts: dict[str, int] = {}
     for field in ("population_count", "eligible_count", "selected_count"):
         value = population.get(field)
-        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        if not _bounded_nonnegative_integer(value):
             errors.append(f"sample population {field} must be a nonnegative integer")
         else:
             counts[field] = value
@@ -577,12 +606,7 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
 
     exclusion_counts = population.get("exclusion_counts")
     valid_exclusions = isinstance(exclusion_counts, dict) and all(
-        isinstance(reason, str)
-        and bool(reason.strip())
-        and "\0" not in reason
-        and isinstance(count, int)
-        and not isinstance(count, bool)
-        and count >= 0
+        isinstance(reason, str) and bool(reason.strip()) and "\0" not in reason and _bounded_nonnegative_integer(count)
         for reason, count in exclusion_counts.items()
     )
     if not valid_exclusions:
@@ -649,14 +673,14 @@ def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str
     units: dict[str, int] = {}
     for field in ("input_units", "output_units"):
         value = detail.get(field)
-        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        if not _bounded_nonnegative_integer(value):
             errors.append(f"row {index} model rate basis {field} must be a nonnegative integer")
         else:
             units[field] = value
     rates: dict[str, float] = {}
     for field in ("input_rate_usd_per_million", "output_rate_usd_per_million", "calculated_cost_usd"):
         value = detail.get(field)
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        if not _bounded_nonnegative_number(value):
             errors.append(f"row {index} model rate basis {field} must be a nonnegative finite number")
         else:
             rates[field] = float(value)
@@ -682,10 +706,8 @@ def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str
         ) / 1_000_000
         if not math.isclose(calculated, rates["calculated_cost_usd"], rel_tol=0, abs_tol=1e-9):
             errors.append(f"row {index} model rate basis calculated cost differs from the exact formula")
-        if (
-            isinstance(model_cost, bool)
-            or not isinstance(model_cost, (int, float))
-            or not math.isclose(float(model_cost), rates["calculated_cost_usd"], rel_tol=0, abs_tol=1e-9)
+        if not _bounded_nonnegative_number(model_cost) or not math.isclose(
+            float(model_cost), rates["calculated_cost_usd"], rel_tol=0, abs_tol=1e-9
         ):
             errors.append(f"row {index} estimated model cost differs from its reproducible rate basis")
 
@@ -767,14 +789,10 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
             errors.append(f"row {index} observed_at falls outside the declared window")
         for field in ("model_cost_usd", "human_minutes", "retry_cost_usd", "verification_cost_usd"):
             value = row.get(field)
-            if value is not None and (
-                isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0
-            ):
+            if value is not None and not _bounded_nonnegative_number(value):
                 errors.append(f"row {index} field {field} must be null or non-negative")
         retry_count = row.get("retry_count")
-        if retry_count is not None and (
-            not isinstance(retry_count, int) or isinstance(retry_count, bool) or retry_count < 0
-        ):
+        if retry_count is not None and not _bounded_nonnegative_integer(retry_count):
             errors.append(f"row {index} field retry_count must be null or a non-negative integer")
         _validate_model_rate_basis(row, index, errors, provenance)
         failure_class = row.get("failure_class")
@@ -882,6 +900,16 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         review_artifact = reproduction.get("review_artifact")
         if not _public_artifact_path(input_artifact):
             errors.append("analysis reproduction_command requires a public-safe input artifact path")
+        else:
+            try:
+                committed_input = _load_tracked_public_artifact(input_artifact)
+            except (OSError, ValueError) as exc:
+                errors.append(f"analysis reproduction input is not committed and reproducible: {exc}")
+            else:
+                if not isinstance(committed_input, dict) or _canonical_digest(committed_input) != analysis.get(
+                    "data_digest"
+                ):
+                    errors.append("analysis reproduction input differs from its committed HEAD artifact")
         if reproduction.get("input_sha256") != analysis.get("data_digest"):
             errors.append("analysis reproduction_command input digest does not bind the analyzed data")
         expected_argv = [
@@ -893,6 +921,14 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         if review_artifact is not None:
             if not _public_artifact_path(review_artifact):
                 errors.append("analysis reproduction_command requires a public-safe review artifact path")
+            else:
+                try:
+                    committed_review = _load_tracked_public_artifact(review_artifact)
+                except (OSError, ValueError) as exc:
+                    errors.append(f"analysis reproduction review is not committed and reproducible: {exc}")
+                else:
+                    if not isinstance(committed_review, dict) or committed_review != analysis.get("review_verdict"):
+                        errors.append("analysis reproduction review differs from its committed HEAD artifact")
             expected_argv.extend(["--review", review_artifact])
         if reproduction.get("argv") != expected_argv:
             errors.append("analysis reproduction_command argv does not exactly replay the bound artifacts")
@@ -908,13 +944,10 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     if verdict.get("reviewer_class") not in INDEPENDENT_REVIEWER_CLASSES:
         errors.append("analysis review_verdict requires an independent reviewer class")
     reviewer_identity = verdict.get("reviewer_identity")
-    if (
-        not isinstance(reviewer_identity, str)
-        or not reviewer_identity.strip()
-        or reviewer_identity != reviewer_identity.strip()
-        or "\0" in reviewer_identity
-    ):
-        errors.append("analysis review_verdict requires a nonblank reviewer identity")
+    if not _public_authenticated_identity(reviewer_identity):
+        errors.append(
+            "analysis review_verdict requires a nonblank reviewer identity in the canonical authenticated character set"
+        )
     source_manifest = population.get("source_manifest") if isinstance(population, dict) else None
     source_records = source_manifest.get("records") if isinstance(source_manifest, dict) else None
     author_identities = (

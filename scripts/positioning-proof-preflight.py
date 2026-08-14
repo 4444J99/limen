@@ -80,6 +80,23 @@ DEMO_RELATIONSHIPS = {
     ("harvest", "receipt_id"): "receipt",
     ("harvest", "recovery_id"): "recovery",
 }
+DEMO_ID_NAMESPACE = {
+    "packet": "packet-demo",
+    "lease": "lease-demo",
+    "execution": "run-demo",
+    "predicate": "predicate-demo",
+    "receipt": "receipt-demo",
+    "failure": "failure-demo",
+    "recovery": "recovery-demo",
+    "harvest": "harvest-demo",
+}
+DEMO_BOUNDED_VALUES = {
+    "packet": {"authority": ["bounded"]},
+    "predicate": {"result": ["pass", "fail", "blocked"]},
+    "failure": {"reason": ["bounded synthetic failure"]},
+    "recovery": {"action": ["narrow and rerun"]},
+    "harvest": {"outcome": ["receipt retained"]},
+}
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -222,8 +239,21 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
 )
 
 
+def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, child in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON member: {key}")
+        value[key] = child
+    return value
+
+
+def _loads_preflight_artifact(raw: str) -> object:
+    return json.loads(raw, object_pairs_hook=_reject_duplicate_json_members)
+
+
 def load_contract(path: Path) -> dict[str, Any]:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = _loads_preflight_artifact(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError("contract root must be an object")
     return data
@@ -598,6 +628,10 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("architecture demo must remain contract-only with prohibited inputs")
     if not demo.get("fixture") or not demo.get("validator_mode"):
         errors.append("architecture demo requires a synthetic fixture and validator mode")
+    if demo.get("id_namespace") != DEMO_ID_NAMESPACE:
+        errors.append("architecture demo must bind the exact synthetic identifier namespace")
+    if demo.get("bounded_values") != DEMO_BOUNDED_VALUES:
+        errors.append("architecture demo must bind the exact bounded synthetic vocabulary")
 
     validation = contract.get("external_validation", {})
     if validation.get("status") != "rubric_only_no_outreach":
@@ -1130,7 +1164,10 @@ def _surface_claim_scan(
         if not canonical:
             continue
         if f" {canonical} " in f" {normalized_full} ":
-            matched.append(claim_id)
+            if _canonical_claim_is_negated(normalized_full, canonical):
+                drifted.append(claim_id)
+            else:
+                matched.append(claim_id)
             continue
         canonical_tokens = {
             token
@@ -1162,6 +1199,45 @@ def _surface_claim_scan(
                 drifted.append(claim_id)
                 break
     return sorted(matched), sorted(set(drifted))
+
+
+def _canonical_claim_is_negated(normalized_full: str, canonical: str) -> bool:
+    tokens = normalized_full.split()
+    canonical_tokens = canonical.split()
+    negations = {
+        "cannot",
+        "cant",
+        "contradicts",
+        "denied",
+        "denies",
+        "didn",
+        "doesn",
+        "false",
+        "falsely",
+        "incorrect",
+        "incorrectly",
+        "isn",
+        "never",
+        "no",
+        "not",
+        "rejects",
+        "untrue",
+        "wasn",
+        "without",
+        "won",
+        "wrong",
+        "wrongly",
+    }
+    if not canonical_tokens:
+        return False
+    width = len(canonical_tokens)
+    for index in range(len(tokens) - width + 1):
+        if tokens[index : index + width] != canonical_tokens:
+            continue
+        surrounding = tokens[max(0, index - 3) : index] + tokens[index + width : index + width + 3]
+        if negations.intersection(surrounding):
+            return True
+    return False
 
 
 def _surface_contains_private_material(inspected_text: str) -> bool:
@@ -1581,6 +1657,9 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
     record_types: set[str] = set()
     record_type_counts: dict[str, int] = {}
     records_by_id: dict[str, dict[str, Any]] = {}
+    demo_contract = contract.get("synthetic_architecture_demo", {})
+    id_namespace = demo_contract.get("id_namespace") if isinstance(demo_contract, dict) else None
+    bounded_values = demo_contract.get("bounded_values") if isinstance(demo_contract, dict) else None
     for index, record in enumerate(records):
         if not isinstance(record, dict):
             errors.append(f"demo record {index} must be an object")
@@ -1615,6 +1694,21 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
                 records_by_id[record_id] = record
         else:
             errors.append(f"demo record {index} requires a nonblank text id")
+        expected_id = (
+            id_namespace.get(record_type) if isinstance(id_namespace, dict) and isinstance(record_type, str) else None
+        )
+        if record_id != expected_id:
+            errors.append(f"demo record {index} id must use the contract-owned synthetic namespace")
+        allowed_fields = (
+            bounded_values.get(record_type)
+            if isinstance(bounded_values, dict) and isinstance(record_type, str)
+            else None
+        )
+        if isinstance(allowed_fields, dict):
+            for field, allowed in allowed_fields.items():
+                value = record.get(field)
+                if not isinstance(value, str) or not isinstance(allowed, list) or value not in allowed:
+                    errors.append(f"demo record {index} field {field} is outside the bounded synthetic vocabulary")
         forbidden = sorted(_find_forbidden_demo_material(record))
         if forbidden:
             errors.append(f"demo record {index} contains forbidden material: {', '.join(forbidden)}")
@@ -1972,16 +2066,24 @@ def _sanitized_git_environment() -> dict[str, str]:
                 "GIT_NAMESPACE",
                 "GIT_OBJECT_DIRECTORY",
                 "GIT_SHALLOW_FILE",
+                "GIT_SSL_CAINFO",
+                "GIT_SSL_CAPATH",
                 "GIT_SSL_NO_VERIFY",
+                "GIT_SSL_VERSION",
                 "GIT_WORK_TREE",
                 "ALL_PROXY",
+                "HTTP_PROXY",
                 "HTTPS_PROXY",
+                "NO_PROXY",
                 "all_proxy",
                 "http_proxy",
                 "https_proxy",
+                "no_proxy",
             }
             or key.startswith("GIT_CONFIG_KEY_")
             or key.startswith("GIT_CONFIG_VALUE_")
+            or key.startswith("GIT_SSL_")
+            or key.lower() in {"all_proxy", "http_proxy", "https_proxy", "no_proxy"}
         ):
             environment.pop(key, None)
     environment.update(
@@ -2425,7 +2527,7 @@ def formalization_readiness(
 def _load_optional_json(path: Path | None) -> dict[str, Any] | None:
     if path is None:
         return None
-    value = json.loads(path.read_text(encoding="utf-8"))
+    value = _loads_preflight_artifact(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return value

@@ -339,6 +339,8 @@
     "validator_mode": "python3 scripts/positioning-proof-preflight.py --mode demo --input scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json --json",
     "dataset": "invented non-personal packet, lease, receipt, failure, and recovery records",
     "required_record_types": ["packet", "lease", "execution", "predicate", "receipt", "failure", "recovery", "harvest"],
+    "id_namespace": {"packet": "packet-demo", "lease": "lease-demo", "execution": "run-demo", "predicate": "predicate-demo", "receipt": "receipt-demo", "failure": "failure-demo", "recovery": "recovery-demo", "harvest": "harvest-demo"},
+    "bounded_values": {"packet": {"authority": ["bounded"]}, "predicate": {"result": ["pass", "fail", "blocked"]}, "failure": {"reason": ["bounded synthetic failure"]}, "recovery": {"action": ["narrow and rerun"]}, "harvest": {"outcome": ["receipt retained"]}},
     "required_story": ["bounded packet", "lease and authority", "execution", "predicate", "receipt", "failure or blocked branch", "harvest and correction"],
     "prohibited_inputs": ["tasks.yaml data", "private task bodies", "credentials", "customer data", "private repository names", "live operational identifiers"],
     "acceptance": ["synthetic-only scan passes", "no-secret scan passes", "keyboard and reduced-motion behavior specified", "responsive and link checks specified", "privacy review recorded"]

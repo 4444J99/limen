@@ -453,6 +453,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     self.assertEqual("fail", result["status"])
                     self.assertTrue(any("failed:" in error for error in result["errors"]))
 
+    def test_all_input_modes_reject_duplicate_json_members_before_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            duplicate = Path(directory) / "duplicate.json"
+            duplicate.write_text('{"reason":"person@example.invalid","reason":"synthetic"}', encoding="utf-8")
+            for mode in ("surface-audit", "demo", "external-validation", "formalization"):
+                with self.subTest(mode=mode):
+                    stdout = io.StringIO()
+                    argv = [str(SCRIPT), "--mode", mode, "--input", str(duplicate), "--json"]
+                    with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(stdout):
+                        exit_code = MODULE.main()
+                    result = json.loads(stdout.getvalue())
+                    self.assertEqual(1, exit_code)
+                    self.assertEqual("fail", result["status"])
+                    self.assertTrue(any("duplicate JSON member: reason" in error for error in result["errors"]))
+
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest = self._empty_surface_manifest(rows)
@@ -591,6 +606,22 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ranked_expected = {(surface, "RANKED-CLAIM"): {"claim_text": "Top 1% Python committer"}}
         matched, drifted = MODULE._surface_claim_scan(
             "Top 2% Python committer",
+            ranked_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["RANKED-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            "Not Top 1% Python committer",
+            ranked_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["RANKED-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            "Top 1% Python committer is false",
             ranked_expected,
             surface,
         )
@@ -885,6 +916,28 @@ class PositioningProofPreflightTest(unittest.TestCase):
             result = MODULE.validate_demo_fixture(self.contract, fixture)
             self.assertEqual("fail", result["status"])
             self.assertTrue(any("schema_version" in error for error in result["errors"]))
+
+    def test_demo_requires_contract_owned_synthetic_ids_and_bounded_values(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        for record_type, field, value in (
+            ("packet", "id", "real-packet-id"),
+            ("failure", "reason", "private repository detail"),
+            ("recovery", "action", "contact a customer"),
+            ("harvest", "outcome", "real run retained"),
+        ):
+            with self.subTest(record_type=record_type, field=field):
+                fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+                record = next(row for row in fixture["records"] if row["type"] == record_type)
+                record[field] = value
+                result = MODULE.validate_demo_fixture(self.contract, fixture)
+                self.assertEqual("fail", result["status"])
+                self.assertTrue(
+                    any(
+                        "synthetic namespace" in error or "bounded synthetic vocabulary" in error
+                        for error in result["errors"]
+                    ),
+                    result["errors"],
+                )
 
     def test_demo_rejects_unknown_root_and_record_fields(self) -> None:
         fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
@@ -1285,12 +1338,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "GIT_NAMESPACE": "untrusted",
             "GIT_OBJECT_DIRECTORY": "/tmp/objects",
             "GIT_SHALLOW_FILE": "/tmp/shallow",
+            "GIT_SSL_CAINFO": "/tmp/untrusted-ca.pem",
+            "GIT_SSL_CAPATH": "/tmp/untrusted-ca",
             "GIT_WORK_TREE": "/tmp/tree",
             "ALL_PROXY": "https://proxy.invalid",
+            "HTTP_PROXY": "http://proxy.invalid",
             "HTTPS_PROXY": "https://proxy.invalid",
+            "NO_PROXY": "github.com",
             "all_proxy": "https://proxy.invalid",
             "http_proxy": "https://proxy.invalid",
             "https_proxy": "https://proxy.invalid",
+            "no_proxy": "github.com",
         }
         with (
             mock.patch.dict(MODULE.os.environ, injected, clear=False),

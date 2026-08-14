@@ -168,12 +168,24 @@ class PositioningProofRunnerTest(unittest.TestCase):
             row.pop("model_cost_rate_basis")
         with tempfile.TemporaryDirectory() as directory:
             population_artifact = Path(directory) / "population.json"
+            input_artifact = Path(directory) / "input.json"
+            review_artifact = Path(directory) / "review.json"
             population_raw = json.dumps(
                 payload["population"]["source_manifest"], sort_keys=True, separators=(",", ":")
             ).encode()
             population_artifact.write_bytes(population_raw)
             payload["population"]["source_sha256"] = COST.hashlib.sha256(population_raw).hexdigest()
-            with mock.patch.object(COST, "_safe_tracked_artifact", return_value=population_artifact):
+            review = independent_cost_review(payload)
+            review["authority_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+            review["authority_receipt_sha256"] = "a" * 64
+            input_artifact.write_text(json.dumps(payload), encoding="utf-8")
+            review_artifact.write_text(json.dumps(review), encoding="utf-8")
+            tracked = {
+                payload["population"]["source_artifact"]: population_artifact,
+                COST_INPUT_ARTIFACT: input_artifact,
+                COST_REVIEW_ARTIFACT: review_artifact,
+            }
+            with mock.patch.object(COST, "_safe_tracked_artifact", side_effect=tracked.get):
                 with mock.patch.object(
                     COST,
                     "_verify_authority_receipt",
@@ -183,9 +195,6 @@ class PositioningProofRunnerTest(unittest.TestCase):
                         else ("4444J99", "MEMBER")
                     ),
                 ):
-                    review = independent_cost_review(payload)
-                    review["authority_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
-                    review["authority_receipt_sha256"] = "a" * 64
                     result = COST.reproduce(
                         payload,
                         input_artifact=COST_INPUT_ARTIFACT,
@@ -593,6 +602,56 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_cost_failure_public_artifacts_reject_duplicate_json_members(self) -> None:
         with self.assertRaisesRegex(ValueError, "duplicate JSON member: sample_id"):
             COST._loads_public_artifact('{"row":{"sample_id":"private","sample_id":"public"}}')
+
+    def test_cost_failure_reproduction_requires_committed_replay_artifacts(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        review = independent_cost_review(payload)
+        untracked = COST.reproduce(
+            payload,
+            input_artifact="sample.json",
+            review_artifact="review.json",
+            review_verdict=review,
+        )
+        self.assertTrue(any("input is not committed" in error for error in untracked["errors"]))
+        self.assertTrue(any("review is not committed" in error for error in untracked["errors"]))
+
+        mutated = copy.deepcopy(payload)
+        mutated["rows"][0]["human_minutes"] += 1
+        drifted = COST.reproduce(mutated, input_artifact=COST_INPUT_ARTIFACT)
+        self.assertTrue(any("input differs from its committed HEAD artifact" in error for error in drifted["errors"]))
+
+    def test_cost_failure_identities_reject_unicode_format_controls(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["population"]["source_manifest"]["records"][0]["author_identity"] += "\u200b"
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("public-safe author identity" in error for error in errors), errors)
+
+        clean = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        review = independent_cost_review(clean)
+        review["reviewer_identity"] += "\u200b"
+        result = COST.reproduce(
+            clean,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=review,
+        )
+        self.assertTrue(any("canonical authenticated character set" in error for error in result["errors"]))
+
+    def test_cost_failure_oversized_numbers_fail_closed_without_overflow(self) -> None:
+        cases = (
+            ("model_cost_usd", None),
+            ("retry_count", None),
+            ("input_units", "model_cost_rate_basis"),
+            ("input_rate_usd_per_million", "model_cost_rate_basis"),
+        )
+        for field, parent in cases:
+            with self.subTest(field=field):
+                payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+                target = payload["rows"][0] if parent is None else payload["rows"][0][parent]
+                target[field] = 10**1000
+                result = reproduce_cost(payload)
+                self.assertEqual("withheld", result["status"])
+                self.assertTrue(any(field in error for error in result["errors"]), result["errors"])
 
     def test_cost_failure_unhashable_failure_classes_fail_closed(self) -> None:
         for failure_class in ({"code": "timeout"}, ["timeout"]):
