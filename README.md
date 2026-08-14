@@ -1,8 +1,75 @@
 # Limen
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/organvm/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/organvm/limen/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
 Limen is a cross-agent, cross-repo, budget-capped task intake system. Every AI agent reads a single `tasks.yaml` to discover work. TABVLARIVS is the deterministic state authority and lease keeper. The CLI + SaaS dashboard provide unified visibility, budget management, and lifecycle control across your entire agent fleet.
+
+## Proof destination
+
+### Problem
+
+Multi-agent delivery breaks down when assignment, authority, budget, verification, and failure
+state live in separate tools. Limen gives those concerns one governed lifecycle without treating a
+chat transcript, a branch, or a green-looking log as completion evidence.
+
+### Status
+
+Limen is an active, internally operated governance and orchestration system. Its public surface
+exposes aggregate operating state at
+[`public-status.json`](https://limen-dashboard.pages.dev/public-status.json); protected task and
+client details remain credential-gated. Internal operation is not evidence of customer adoption.
+
+### Architecture
+
+The system separates the deterministic TABVLARIVS keeper from its disposable clients: the CLI,
+dashboard, runtime adapters, and native agent lanes. Work enters as bounded packets, receives an
+exclusive lease and authority envelope, runs an executable predicate, and returns a durable
+receipt. The [`peer conductor protocol`](docs/architecture/peer-conductor-protocol.md) defines the
+portable contract.
+
+### Decisions and tradeoffs
+
+- `tasks.yaml` is a read-only projection; lifecycle mutations belong to the keeper.
+- Claims fail closed when the authenticated broker is unavailable, trading convenience for
+  non-duplicated authority and budget accounting.
+- Exact-head predicates and receipts cost more than prose status updates, but keep failures,
+  retries, and rollback independently inspectable.
+- Public views stay aggregate and redacted; operational detail remains behind persona boundaries.
+
+### Verification
+
+- [Required CI](https://github.com/organvm/limen/actions/workflows/ci.yml) runs the repository's
+  governed checks on proposed changes.
+- [`scripts/verify-scoped.sh`](scripts/verify-scoped.sh) resolves checks from the exact diff before
+  a push; [`scripts/verify-whole.sh`](scripts/verify-whole.sh) is the whole-repository predicate.
+- The [public status endpoint](https://limen-dashboard.pages.dev/public-status.json) is the
+  reproducible public operating anchor; its values are dated snapshots, not reliability rates.
+- [Release history](https://github.com/organvm/limen/releases) is the repository-owned record of
+  published versions; this page does not infer a release from unreleased source.
+
+### Status and authorship disclosure
+
+Architected and directed through a governed multi-agent production system. Machine assistance is
+disclosed in commit, review, and receipt trails rather than presented as unassisted authorship.
+
+### Limitations
+
+- Owner-environment operation does not establish customer adoption, revenue, or market leadership.
+- Public task aggregates change after observation and do not by themselves establish reliability,
+  throughput superiority, or outcome quality.
+- Protected workflows require broker and persona credentials; the public endpoint cannot reproduce
+  private operations.
+
+### What this proves
+
+The public source demonstrates governed multi-agent delivery with inspectable operating, failure,
+and verification contracts. It does not prove zero-maintenance autonomy or commercial outcomes.
+
+### Next action
+
+Read the [peer conductor protocol](docs/architecture/peer-conductor-protocol.md), inspect the
+[public operating snapshot](https://limen-dashboard.pages.dev/public-status.json), and reproduce
+the relevant predicate before relying on a capability claim.
 
 ## Usage
 
