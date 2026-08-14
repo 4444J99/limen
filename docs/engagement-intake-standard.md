@@ -35,11 +35,12 @@ This is that list.
 
 ---
 
-## The twelve rules
+## The thirteen rules
 
-Rules 1–10 are the original intake conditions. **Rules 11–12 were added 2026‑08‑12**, from failure
-modes the same engagement produced *after* the standard was first written — which is the intended
-lifecycle: each rule earns its place by having already cost something.
+Rules 1–10 are the original intake conditions. **Rules 11–12 were added 2026‑08‑12, and
+rule 13 on 2026‑08‑14**, from failure modes the same engagement produced *after* the standard
+was first written — which is the intended lifecycle: each rule earns its place by having
+already cost something.
 
 ### 1. No work before a countersigned instrument
 A document you signed and they didn't **binds only you**. It is worse than no contract, because
@@ -148,6 +149,29 @@ So when a document contradicts what you have been told: do not argue about what 
 do not treat the assurance as proof. **Ask for the sentence.** If the assurance was genuine, the
 sentence costs nothing — and a refusal to add it is the real answer, arriving while you can
 still act on it.
+
+### 13. An instrument must be mutually *bindable* — check who the envelope routed
+*Enforced by* `MUTUALLY-BINDING` (reads the `instruments:` list; falls back to `instrument:`).
+
+Rule 1 checks whether the counterparty *has* signed. This is the harder question underneath it:
+whether the instrument as executed **could ever carry** their signature. An e-signature envelope
+routes a fixed set of recipients; one that never routed the counterparty will report itself
+"completed" with every routed party done — while the counterparty's blocks stay blank forever.
+Waiting for that countersignature is not patience. It is waiting for a train on a track that was
+never laid.
+
+> *Failure mode observed: a completion notice reading "All parties have completed" sixteen
+> minutes after the signing request, while the executed output's counterparty signature, title,
+> and date blocks were blank and its own execution record read "Completed timestamp: Pending."
+> The two records reconcile only one way: the envelope routed exactly one signer.*
+
+Two consequences. First, the **certificate of completion** — recipient routing, timestamps —
+is the authority on what an envelope was built to do; the emailed copy is not (rule 1 already
+says this; this rule is why). Second, across *multiple* instruments the question compounds:
+two documents each signed by one party are **not** one contract, and if the later one carries
+an integration clause, signing it quietly disposes of the earlier one. Record every instrument
+in the set with who signed and who was routed, and let the predicate say whether anything
+actually binds both parties.
 
 ---
 
