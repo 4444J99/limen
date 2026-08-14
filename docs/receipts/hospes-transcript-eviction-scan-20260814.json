@@ -1,0 +1,42 @@
+{
+  "receipt": "hospes-transcript-eviction-scan",
+  "date": "2026-08-14",
+  "repo": "organvm/hospes",
+  "purpose": "Retirement evidence for the estate.yaml split: row (into organvm/arca) and the platform.yaml ari-lane custody gate transcript_vault_split_before_movement. The declared eviction assumed vault-class transcripts might live in the repository; this scan proves none ever did, so the eviction is vacuously satisfied and retires by registry PR, not by data movement.",
+  "verdict": "clean",
+  "scope": {
+    "branches_scanned": 23,
+    "commits_scanned": 90,
+    "coverage": "all refs (git log --all), full history, adds and deletes, content probes, blob-size outliers"
+  },
+  "method": [
+    "git log --all --diff-filter=A --name-only (438 unique added paths) swept against transcript/recording/session/export/mailbox/chat/contacts/db patterns",
+    "git log --all --diff-filter=D --name-only (only 2 deletions in entire history: a benign dedup of the public RSS archive, canonical copy still tracked)",
+    "git log --all -S probes: 'BEGIN PRIVATE', '@gmail.com', 'transcript', 'PeerPayment' — every hit a schema field name, state token (TRANSCRIPT_READY), or the guard rule itself",
+    "git rev-list --objects --all + cat-file batch-check: largest blob in history is a 135KB dependency lockfile",
+    "per-branch main..<ref> diff inspection for every ref not reachable from main"
+  ],
+  "flagged_and_judged_benign": [
+    "config/partnerships/ari-anthony-private-pilot.yaml — partnership status metadata; states 'no contact data in Git'",
+    "docs/contact-roster.md — design doc; only synthetic @example.test addresses",
+    "docs/prior-art.md — design-lineage register citing external conversation ids; raw transcripts declared to live in an external private corpus, not this repo",
+    "docs/sources.md — bibliography of already-public URLs",
+    "data/unlicensed-therapy/{archive.json,guests.json} — public RSS episode metadata for the public podcast; no transcript text"
+  ],
+  "guards_confirmed_at_head": [
+    ".gitignore: transcripts/, private/, data/raw/, *.sqlite3, *.db",
+    "AGENTS.md:5 — never commit raw prompts, transcripts, mailbox contents, private contact data, credentials, or source exports",
+    "scripts/check_private_data.py wired into done.sh gate 8 (committed range AND staged diff; never echoes matched content)",
+    "future transcripts are architecturally off-repo: the salon-archive adapter (transcripts) and media-ark adapter (masters) hold the bytes; HOSPES stores opaque references only"
+  ],
+  "runtime_custody_unchanged": "The product's live vault-class data (pilot runtime DB, recordings) lives outside git in owner-controlled custody (0700/0600 Application Support store; encrypted sparsebundle backup per that repo's docs/private-runtime-custody.md). This receipt makes no claim about, and no change to, that custody lane.",
+  "consequences": [
+    "estate.yaml organvm/hospes row: split: retired (this receipt cited in why)",
+    "platform.yaml ari lane: state vault_split_required -> custody_transfer_pending; custody_gate satisfied_by_receipt (this file)",
+    "custody movement now waits only on the human transfer lever L-HOSPES-CUSTODY-TRANSFER (needs-human issue #2407)"
+  ],
+  "caveats": [
+    "check_private_data.py is a forward-looking diff gate, not a history scanner; this receipt is the independent historical proof",
+    "scan performed by a read-only agent 2026-08-14; four claude/hospes-issue-* build branches appeared mid-scan at the already-scanned main tip and add no content"
+  ]
+}
