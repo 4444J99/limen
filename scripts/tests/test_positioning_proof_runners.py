@@ -92,7 +92,8 @@ def wait_for_recorded_process_exit(pid_path: Path, timeout_seconds: float = 2.0)
     if not pid_path.exists():
         raise AssertionError(f"descendant did not record its pid at {pid_path}")
     pid = int(pid_path.read_text(encoding="utf-8"))
-    while time.monotonic() < deadline:
+    exit_deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < exit_deadline:
         try:
             os.kill(pid, 0)
         except ProcessLookupError:
@@ -312,6 +313,19 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     subject_sha256=subject_sha256,
                     require_trusted_association=True,
                 )
+
+    def test_cost_authority_http_failures_are_structured_without_tracebacks(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        payload["population"]["source_manifest"]["provenance"] = "public_safe_observed"
+        payload["population"]["source_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+        payload["population"]["source_receipt_sha256"] = "a" * 64
+        for row in payload["rows"]:
+            row["model_cost_basis"] = "actual"
+            row.pop("model_cost_rate_basis")
+        with mock.patch.object(COST, "_verify_authority_receipt", side_effect=COST.HTTPException("partial")):
+            errors = COST.validate_sample(payload)
+        self.assertTrue(any("authority failed closed: partial" in error for error in errors), errors)
 
     def test_cost_failure_review_binds_population_and_cannot_be_future_dated(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

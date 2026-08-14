@@ -1563,7 +1563,8 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
         for (source_type, field), target_type in DEMO_RELATIONSHIPS.items():
             if record_type != source_type:
                 continue
-            target = records_by_id.get(record.get(field))
+            reference = record.get(field)
+            target = records_by_id.get(reference) if isinstance(reference, str) else None
             if target is None or target.get("type") != target_type:
                 errors.append(f"demo {source_type} {record.get('id')} must link {field} to a {target_type} record")
     packet = next((record for record in records_by_id.values() if record.get("type") == "packet"), None)
@@ -1816,7 +1817,13 @@ def _sanitized_git_environment() -> dict[str, str]:
                 "GIT_NAMESPACE",
                 "GIT_OBJECT_DIRECTORY",
                 "GIT_SHALLOW_FILE",
+                "GIT_SSL_NO_VERIFY",
                 "GIT_WORK_TREE",
+                "ALL_PROXY",
+                "HTTPS_PROXY",
+                "all_proxy",
+                "http_proxy",
+                "https_proxy",
             }
             or key.startswith("GIT_CONFIG_KEY_")
             or key.startswith("GIT_CONFIG_VALUE_")
@@ -2347,7 +2354,7 @@ def main() -> int:
                 result["formalization"] = formalization_readiness(contract, payload)
                 result["status"] = "pass" if result["formalization"]["ready"] else "fail"
                 result["errors"].extend(result["formalization"]["errors"])
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired, ValueError) as exc:
         failure_label = args.mode.replace("-", " ")
         result = {
             "contract": str(args.contract),

@@ -423,6 +423,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertEqual([f"surface audit failed: {message}"], result["errors"])
 
+    def test_preflight_main_reports_bounded_subprocess_timeout_without_traceback(self) -> None:
+        stdout = io.StringIO()
+        timeout = subprocess.TimeoutExpired(["git", "show"], 30)
+        argv = [str(SCRIPT), "--mode", "resolve", "--json"]
+        with (
+            mock.patch.object(MODULE, "resolve_dependency_sources", side_effect=timeout),
+            mock.patch.object(sys, "argv", argv),
+            contextlib.redirect_stdout(stdout),
+        ):
+            exit_code = MODULE.main()
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(1, exit_code)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("timed out" in error for error in result["errors"]))
+
     def test_all_input_modes_report_malformed_json_without_tracebacks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             malformed = Path(directory) / "malformed.json"
@@ -861,6 +876,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("exactly one packet record" in error for error in result["errors"]))
 
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        lease = next(row for row in fixture["records"] if row["type"] == "lease")
+        lease["packet_id"] = {"unexpected": "object"}
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("field packet_id must be nonblank text" in error for error in result["errors"]))
+
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
             self.contract,
@@ -1145,6 +1167,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         completed = subprocess.CompletedProcess([], 0, "", "")
         injected = {
             "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
+            "GIT_SSL_NO_VERIFY": "1",
             "GIT_COMMON_DIR": "/tmp/common",
             "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
             "GIT_DIR": "/tmp/untrusted.git",
@@ -1153,6 +1176,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "GIT_OBJECT_DIRECTORY": "/tmp/objects",
             "GIT_SHALLOW_FILE": "/tmp/shallow",
             "GIT_WORK_TREE": "/tmp/tree",
+            "ALL_PROXY": "https://proxy.invalid",
+            "HTTPS_PROXY": "https://proxy.invalid",
+            "all_proxy": "https://proxy.invalid",
+            "http_proxy": "https://proxy.invalid",
+            "https_proxy": "https://proxy.invalid",
         }
         with (
             mock.patch.dict(MODULE.os.environ, injected, clear=False),

@@ -9,6 +9,7 @@ import json
 import math
 import re
 from datetime import date, datetime, timezone
+from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
@@ -317,7 +318,7 @@ def _model_rate_source_record(
                 subject_sha256=detail.get("source_sha256"),
                 require_trusted_association=True,
             )
-        except (OSError, ValueError) as exc:
+        except (HTTPException, OSError, ValueError) as exc:
             errors.append(f"row {index} model rate source authority failed closed: {exc}")
     elif detail.get("source_receipt_url") is not None or detail.get("source_receipt_sha256") is not None:
         errors.append(f"row {index} synthetic model rate source must not declare an authority receipt")
@@ -445,7 +446,7 @@ def _validate_population_source(
                 subject_sha256=population.get("source_sha256"),
                 require_trusted_association=True,
             )
-        except (OSError, ValueError) as exc:
+        except (HTTPException, OSError, ValueError) as exc:
             errors.append(f"sample population source authority failed closed: {exc}")
     elif population.get("source_receipt_url") is not None or population.get("source_receipt_sha256") is not None:
         errors.append("synthetic population source must not declare an authority receipt")
@@ -905,7 +906,7 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                 subject_sha256=_canonical_digest(review_subject),
                 expected_actor=reviewer_identity if isinstance(reviewer_identity, str) else None,
             )
-        except (OSError, ValueError) as exc:
+        except (HTTPException, OSError, ValueError) as exc:
             errors.append(f"analysis independent review authority failed closed: {exc}")
         else:
             if verdict.get("reviewer_class") == "independent_model":
@@ -1040,7 +1041,7 @@ def main() -> int:
             review_artifact=args.review.as_posix() if args.review is not None else None,
             review_verdict=review_verdict,
         )
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (HTTPException, OSError, json.JSONDecodeError, ValueError) as exc:
         result = {
             "schema_version": "limen.positioning_cost_failure_analysis.v1",
             "provenance": None,
