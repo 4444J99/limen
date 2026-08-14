@@ -98,15 +98,16 @@ into a build, test, deploy, security, data, IP, observability, return, or mainte
 
 | Screen result | Candidates |
 | --- | ---: |
-| Diligence required | 60 |
-| Parked because archived | 2 |
+| Public diligence required | 53 |
+| Public parked because archived | 1 |
+| Private evidence withheld | 8 |
 | Fully transferable | 0 |
 
 The full 100-point readiness rubric covers exact-head build/test, runtime, documentation, security,
 data/privacy, IP/custody, observability/return, and maintenance. Missing evidence scores zero. Any
 unresolved IP, contributor, data, credential, ownership, or rollback boundary is a hard transfer
-blocker. The public snapshot treats private-candidate custody as restricted review and reveals no
-private detail.
+blocker. The public snapshot withholds every private candidate's state, fork, demand, readiness,
+economics, and custody detail behind an opaque per-snapshot identifier.
 
 ## W04 — Domain-operator profile
 

@@ -1,11 +1,15 @@
+import contextlib
 import copy
 import datetime as dt
 import importlib.util
+import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -134,7 +138,27 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertEqual(8, len(private_rows))
         self.assertTrue(all(row["repository"] is None for row in private_rows))
         self.assertTrue(all(row["candidate_id"].startswith("private-candidate-") for row in private_rows))
-        self.assertTrue(all(row["demand"]["tier"] == "E0" for row in private_rows))
+        self.assertTrue(all(set(row) == MODULE.PRIVATE_CANDIDATE_KEYS for row in private_rows))
+        self.assertTrue(all(row["demand"] == MODULE.PRIVATE_DEMAND for row in private_rows))
+        self.assertTrue(all(row["readiness"] == MODULE.PRIVATE_READINESS for row in private_rows))
+        self.assertTrue(all(row["economics"] == MODULE.PRIVATE_ECONOMICS for row in private_rows))
+        self.assertTrue(all("current_state" not in row and "fork" not in row for row in private_rows))
+
+    def test_private_snapshot_detail_and_summary_tampering_fail_closed(self) -> None:
+        changed = copy.deepcopy(self.snapshot)
+        private = next(row for row in changed["candidates"] if row["visibility"] == "private")
+        private["current_state"] = "archived"
+        changed["candidate_denominator"]["visibility"]["private"] -= 1
+        changed["score_distribution"]["demand_tiers"]["E0"] -= 1
+        errors = MODULE.validate_snapshot(changed, self.contract)
+        self.assertTrue(any("private row shape" in error for error in errors))
+        self.assertIn("snapshot candidate visibility summary drift", errors)
+        self.assertIn("snapshot score distribution drift", errors)
+
+    def test_public_snapshot_rows_bind_fork_fact(self) -> None:
+        public_rows = [row for row in self.snapshot["candidates"] if row["visibility"] == "public"]
+        self.assertTrue(all(set(row) == MODULE.PUBLIC_CANDIDATE_KEYS for row in public_rows))
+        self.assertTrue(all(isinstance(row["fork"], bool) for row in public_rows))
 
     def test_snapshot_sources_are_inventory_only(self) -> None:
         source_rows = {row["id"]: row for row in self.contract["live_sources"]}
@@ -199,6 +223,89 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
             (ROOT / "docs/positioning/foundry/psp-c11/synthetic-drill-receipt.json").read_text(encoding="utf-8")
         )
         self.assertEqual(tracked, MODULE.run_synthetic_drills(self.contract))
+
+    def test_external_contract_and_snapshot_overrides_are_reported_safely(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            contract_path = root / "contract.json"
+            snapshot_path = root / "snapshot.json"
+            contract_path.write_text(json.dumps(self.contract), encoding="utf-8")
+            snapshot_path.write_text(json.dumps(self.snapshot), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--contract",
+                    str(contract_path),
+                    "--snapshot",
+                    str(snapshot_path),
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=60,
+            )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(str(contract_path), payload["contract"])
+        self.assertEqual(str(snapshot_path), payload["snapshot"])
+
+    def test_live_snapshot_write_refuses_invalid_generated_output(self) -> None:
+        invalid = copy.deepcopy(self.snapshot)
+        invalid["candidates"][0]["unexpected"] = "shape drift"
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "must-not-exist.json"
+            argv = [str(SCRIPT), "--live", "--write-snapshot", str(output), "--json"]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(MODULE, "collect_live_repositories", return_value=([], [])),
+                mock.patch.object(MODULE, "build_snapshot", return_value=invalid),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
+
+    def test_live_snapshot_write_rejects_drill_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "must-not-exist.json"
+            argv = [str(SCRIPT), "--live", "--drills", "--write-snapshot", str(output), "--json"]
+            with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
+
+    def test_live_snapshot_write_still_validates_the_tracked_verification_input(self) -> None:
+        invalid_tracked = copy.deepcopy(self.snapshot)
+        invalid_tracked["status"] = "invalid"
+        generated = copy.deepcopy(self.snapshot)
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot_path = Path(directory) / "invalid-tracked.json"
+            output = Path(directory) / "must-not-exist.json"
+            snapshot_path.write_text(json.dumps(invalid_tracked), encoding="utf-8")
+            argv = [
+                str(SCRIPT),
+                "--live",
+                "--verify-live-snapshot",
+                "--snapshot",
+                str(snapshot_path),
+                "--write-snapshot",
+                str(output),
+                "--json",
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(MODULE, "collect_live_repositories", return_value=([], [])),
+                mock.patch.object(MODULE, "build_snapshot", return_value=generated),
+                contextlib.redirect_stdout(stdout),
+            ):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
+            self.assertIn("snapshot status must remain PREPARED/PREFLIGHT", json.loads(stdout.getvalue())["errors"])
 
 
 if __name__ == "__main__":
