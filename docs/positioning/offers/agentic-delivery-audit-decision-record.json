@@ -168,7 +168,7 @@
     "commercial_contract": "../commercial-contract.md",
     "accepted_psp_p02_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
     "work_owner": "https://github.com/organvm/limen/issues/2190",
-    "integration_lane": "https://github.com/organvm/limen/pull/2312",
+    "integration_lane": "https://github.com/organvm/limen/pull/2422",
     "generated_offer": "agentic-delivery-audit.md"
   },
   "rollback": "Keep the offer and decision record internal. If scope, evidence, custody, authority, economics, or acceptance becomes ambiguous, set the overall verdict to HOLD and return the ambiguity to this record without widening access, inventing evidence, exposing a price, or adding an oral exception."

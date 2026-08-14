@@ -3,16 +3,23 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import runpy
 from pathlib import Path
 from typing import Any
 
 
+ROOT = Path(__file__).resolve().parents[3]
 OFFER_DIR = Path(__file__).resolve().parent
 OFFER_PATH = OFFER_DIR / "agentic-delivery-audit.md"
 RECORD_PATH = OFFER_DIR / "agentic-delivery-audit-decision-record.json"
+CANONICAL_VALIDATOR_PATH = ROOT / "scripts/positioning-offer-artifacts.py"
+CANONICAL = runpy.run_path(str(CANONICAL_VALIDATOR_PATH))
+PRIVATE_PATTERNS = tuple(CANONICAL["PRIVATE_PATTERNS"])
 PASS_LINE = "PASS: PSP-P04-W01 audit is priceable, scopeable, deliverable, and declineable without oral exceptions"
+EXPECTED_RECORD_SHA256 = "64e3035c482b28383523d6e2f56a1794aafd15eb64a6a3de80b2a443d671f23c"
 EXPECTED_TOP_LEVEL = {
     "schema_version",
     "status",
@@ -34,6 +41,33 @@ EXPECTED_TOP_LEVEL = {
     "effect_boundary",
     "evidence_links",
     "rollback",
+}
+EXPECTED_CONTRACT_LISTS = {
+    "exclusions": [
+        "production mutation, deployment, or operational command",
+        "outbound messages, account changes, procurement, or vendor commitments",
+        "organization redesign, team surveillance, management takeover, or executive substitution",
+        "penetration testing, legal opinion, compliance certification, or financial audit",
+        "unlimited repository, team, vendor, evidence, meeting, or revision scope",
+        "on-call response, implementation delivery, or guaranteed business outcome",
+    ],
+    "success_criteria": [
+        "The named decision owner can make the stated keep, kill, narrow, or govern decision.",
+        "Every material recommendation resolves to evidence or an explicit uncertainty.",
+        "The final artifact set stays within the agreed initiative, access, custody, and authority boundaries.",
+        "Current owners can see, challenge, and correct findings before the verdict is finalized.",
+        "The sponsor and named internal owner receive the evidence register, verdict, gate specification, options, and walkthrough.",
+        "Access is returned, expired, or deleted under the agreed instructions, with no hidden follow-on work.",
+    ],
+    "decline_or_pause_when": [
+        "no sponsor or decision owner will own the verdict",
+        "the request contains multiple unbounded initiatives or no decision window",
+        "diagnosis requires production write access, unsolicited outreach, covert monitoring, or account control",
+        "required evidence is unavailable, unlawfully sourced, unsafe to transfer, or outside agreed custody",
+        "the expected role is executive substitution, territorial control, team takeover, or an outcome guarantee",
+        "a material security, privacy, legal, regulatory, or contractual question lacks an authorized owner",
+        "the requested timeline cannot support an evidence-linked verdict",
+    ],
 }
 
 
@@ -61,13 +95,43 @@ def exact_keys(errors: list[str], value: Any, expected: set[str], owner: str) ->
     return value
 
 
-def strings(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
+def public_fragments(value: Any, path: str = "record") -> list[str]:
+    """Render every key and scalar so leakage cannot hide in JSON types."""
+
     if isinstance(value, dict):
-        return [item for child in value.values() for item in strings(child)]
+        fragments: list[str] = []
+        for key, child in value.items():
+            child_path = f"{path}.{key}"
+            fragments.append(str(key))
+            fragments.extend(public_fragments(child, child_path))
+        return fragments
     if isinstance(value, list):
-        return [item for child in value for item in strings(child)]
+        return [item for index, child in enumerate(value) for item in public_fragments(child, f"{path}[{index}]")]
+    if isinstance(value, str):
+        return [value, f"{path}={value}"]
+    rendered = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return [rendered, f"{path}={rendered}"]
+
+
+def canonical_record_sha256(record: Any) -> str:
+    canonical = json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def canonical_offer_errors(offer: str) -> list[str]:
+    """Bind the reviewed offer to the exact render of the canonical YAML."""
+
+    try:
+        contract = CANONICAL["load_contract"]()
+        errors = list(CANONICAL["validate_contract"](contract))
+        rendered = CANONICAL["render_artifacts"](contract)
+    except (OSError, ValueError) as exc:
+        return [f"canonical offer validation failed: {exc}"]
+    if errors:
+        return [f"canonical offer contract: {error}" for error in errors]
+    expected = rendered.get(OFFER_PATH.name)
+    if offer != expected:
+        return ["generated offer drifted from the exact canonical commercial-contract render"]
     return []
 
 
@@ -85,6 +149,12 @@ def main() -> int:
         return report([f"decision record JSON is invalid: {exc}"])
 
     record = exact_keys(errors, record, EXPECTED_TOP_LEVEL, "decision record")
+    require(
+        errors,
+        canonical_record_sha256(record) == EXPECTED_RECORD_SHA256,
+        "decision record contract digest differs",
+    )
+    errors.extend(canonical_offer_errors(offer))
     require(
         errors, record.get("schema_version") == "limen.positioning.audit_decision_record.v1", "schema_version mismatch"
     )
@@ -172,17 +242,8 @@ def main() -> int:
             observed_stages.append(item.get("stage"))
         require(errors, observed_stages == expected_stages, "delivery stage IDs or order differ")
 
-    for field, count in (("exclusions", 6), ("success_criteria", 6), ("decline_or_pause_when", 7)):
-        value = record.get(field)
-        require(
-            errors, isinstance(value, list) and len(value) == count, f"{field} must contain exactly {count} records"
-        )
-        if isinstance(value, list):
-            require(
-                errors,
-                all(isinstance(item, str) and item.strip() for item in value),
-                f"{field} records must be non-empty strings",
-            )
+    for field, expected in EXPECTED_CONTRACT_LISTS.items():
+        require(errors, record.get(field) == expected, f"{field} contract differs")
 
     pricing = exact_keys(
         errors,
@@ -304,9 +365,13 @@ def main() -> int:
         "human gate boundary differs",
     )
 
-    public_text = "\n".join(strings(record))
-    for marker in ("/Users/", ".limen-private", "session-state", "session_id", "lease-"):
-        require(errors, marker.casefold() not in public_text.casefold(), f"private-source leakage: {marker!r}")
+    public_text = "\n".join(public_fragments(record))
+    for pattern in PRIVATE_PATTERNS:
+        require(
+            errors,
+            pattern.search(public_text) is None,
+            f"private-source leakage matched canonical pattern: {pattern.pattern!r}",
+        )
     for label, pattern in {
         "numeric dollar amount": r"\$\s*\d",
         "named public currency": r"\b(?:USD|EUR|GBP)\b",
