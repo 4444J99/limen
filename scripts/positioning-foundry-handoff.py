@@ -61,6 +61,13 @@ TRIGGERS = {
     "operator_unavailable_or_breach",
     "economic_downside_failed",
 }
+EXPECTED_ROLLBACK_TRIGGERS = [
+    {"id": "evidence_floor_failed", "decision": "park"},
+    {"id": "access_or_security_breach", "decision": "terminate"},
+    {"id": "custody_or_rights_ambiguity", "decision": "no_go"},
+    {"id": "operator_unavailable_or_breach", "decision": "return"},
+    {"id": "economic_downside_failed", "decision": "revise_or_return"},
+]
 STEPS = [
     "freeze_authority",
     "capture_state",
@@ -166,7 +173,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
             errors.append("authority contract drift")
         if set(privacy["public_forbidden"]) != FORBIDDEN or privacy["private_classification"] != "withheld":
             errors.append("privacy contract drift")
-        if {item["id"] for item in rollback["triggers"]} != TRIGGERS or rollback["steps"] != STEPS:
+        if rollback["triggers"] != EXPECTED_ROLLBACK_TRIGGERS or rollback["steps"] != STEPS:
             errors.append("rollback contract drift")
         if (
             rollback["synthetic_only"] is not True
@@ -197,7 +204,11 @@ def classify(
         }
     repository = str(row.get("repository") or "")
     archived = row.get("current_state") == "archived"
-    governance = GITVS.classify_repo(repository, estate, {"private": False, "archived": archived, "fork": False})
+    governance = GITVS.classify_repo(
+        repository,
+        estate,
+        {"private": False, "archived": archived, "fork": row.get("fork") is True},
+    )
     if not governance:
         raise ValueError(f"{repository}: missing governance classification")
     collaboration = repository in (access.get("grants") or {})
@@ -268,6 +279,10 @@ def decision(row: dict[str, Any], classification: dict[str, Any], contract: dict
 
 
 def rollback_drills(contract: dict[str, Any]) -> dict[str, Any]:
+    exact_contract = (
+        contract.get("rollback", {}).get("triggers") == EXPECTED_ROLLBACK_TRIGGERS
+        and contract.get("rollback", {}).get("steps") == STEPS
+    )
     rows = [
         {
             "id": item["id"],
@@ -275,13 +290,13 @@ def rollback_drills(contract: dict[str, Any]) -> dict[str, Any]:
             "steps": copy.deepcopy(contract["rollback"]["steps"]),
             "external_effects": [],
             "final_custody": "owner_unchanged",
-            "pass": True,
+            "pass": item == expected,
         }
-        for item in contract["rollback"]["triggers"]
+        for item, expected in zip(contract["rollback"]["triggers"], EXPECTED_ROLLBACK_TRIGGERS, strict=False)
     ]
     return {
         "schema_version": "limen.psp_c11_rollback_drills.v1",
-        "status": "pass" if len(rows) == 5 else "fail",
+        "status": "pass" if exact_contract and len(rows) == 5 and all(row["pass"] for row in rows) else "fail",
         "synthetic_only": True,
         "human_acceptance_simulated": False,
         "observed_pilot": False,
