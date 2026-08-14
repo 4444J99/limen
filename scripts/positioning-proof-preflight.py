@@ -737,8 +737,8 @@ def _markdown_cells(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def _ledger_action(status: str, public_safe_wording: str, tier: str) -> str:
-    boundary = f"{status} {public_safe_wording} {tier}".lower()
+def _ledger_action(*dispositions: str) -> str:
+    boundary = " ".join(dispositions).lower()
     unsafe_markers = (
         "conflicted",
         "contradicted",
@@ -795,6 +795,7 @@ def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]
         status = cells[1]
         public_safe_wording = cells[-2] if len(cells) >= 5 else claim_text
         tier = cells[-1] if len(cells) >= 5 else "ledger_only"
+        action = _ledger_action(*cells[1:])
         claim_id = f"LEDGER-{hashlib.sha256(claim_text.encode()).hexdigest()[:16].upper()}"
         claims.append(
             {
@@ -806,9 +807,9 @@ def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]
                 "status": status,
                 "max_disclosure": tier,
                 "limitations": [public_safe_wording],
-                "publishable": _ledger_action(status, public_safe_wording, tier) == "audit_canonical_wording",
+                "publishable": action == "audit_canonical_wording",
                 "reason_codes": ["accepted_claims_ledger_inventory"],
-                "action": _ledger_action(status, public_safe_wording, tier),
+                "action": action,
             }
         )
     return claims

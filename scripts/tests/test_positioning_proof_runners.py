@@ -108,6 +108,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
 
+    def test_cost_failure_unhashable_failure_classes_fail_closed(self) -> None:
+        for failure_class in ({"code": "timeout"}, ["timeout"]):
+            payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+            payload["rows"][1]["failure_class"] = failure_class
+            result = COST.reproduce(payload)
+            self.assertEqual("withheld", result["status"])
+            self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
+
     def test_cost_failure_rows_must_fall_inside_an_ordered_window(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["rows"][0].pop("observed_at")

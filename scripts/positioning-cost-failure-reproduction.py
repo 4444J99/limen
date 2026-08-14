@@ -115,7 +115,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
         if row.get("terminal_state") == "done":
             if failure_class is not None:
                 errors.append(f"row {index} done work must not carry failure_class")
-        elif failure_class not in ALLOWED_FAILURE_CLASSES:
+        elif not isinstance(failure_class, str) or failure_class not in ALLOWED_FAILURE_CLASSES:
             errors.append(f"row {index} requires a reviewed public failure_class for non-done work")
         if row.get("terminal_state") != "done":
             measured = [

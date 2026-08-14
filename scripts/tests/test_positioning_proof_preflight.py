@@ -294,6 +294,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         self.assertFalse(unpublished["publishable"])
         self.assertEqual("withhold_or_remove", unpublished["action"])
+        unsupported = next(
+            claim for claim in claims if claim["candidate_claim"] == "`profile-universal-production-claim`"
+        )
+        self.assertFalse(unsupported["publishable"])
+        self.assertEqual("withhold_or_remove", unsupported["action"])
         self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
