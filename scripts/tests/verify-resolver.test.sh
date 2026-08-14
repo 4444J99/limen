@@ -211,6 +211,7 @@ github-estate-census-custody-test
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
+agentic-delivery-audit-decision-test
 research-adjudication-test
 positioning-p14-control-plane-test
 check-gates
