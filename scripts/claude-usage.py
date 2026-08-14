@@ -33,10 +33,15 @@ import argparse
 import json
 import math
 import os
+import sys
 import time
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+
+from limen import harness_paths
 NOW = time.time()
 
 
@@ -84,7 +89,13 @@ CAL_STALE_DAYS = 30.0
 
 
 def _transcripts_dir() -> Path:
-    return Path(os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR", str(Path.home() / ".claude" / "projects")))
+    # The legacy ~/.claude/projects tree goes stale when the harness relocates its estate
+    # (0 fresh transcripts there vs 117 under .agent-runtime on 2026-08-14) — resolve the
+    # live root the same way fable-allotment.py does, never by a hardcoded layout.
+    env = os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR")
+    if env:
+        return Path(env)
+    return harness_paths.harness_dir("projects", repo_root=ROOT)
 
 
 def _cal_path() -> Path:

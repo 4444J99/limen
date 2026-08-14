@@ -4,7 +4,7 @@
 Each vendor exposes a different truth (see docs/reviews/BACKLOG.md vendor table); this reads the best
 available real signal and writes logs/usage.json for board.py + the portal:
   codex   — sum total_tokens from ~/.codex/sessions/*.jsonl in the 5h rolling window
-  claude  — sum usage tokens from ~/.claude/projects/**/*.jsonl in the 5h window
+  claude  — sum usage tokens from the harness projects dir (harness_paths) in the 5h window
   jules   — dispatch count today vs 100 (the one true proxy; rolling 24h)
   gemini  — dispatch count today vs RPD-ish cap + last rate-limit event
   opencode — opencode-clock token meter when present, else dispatch count today
@@ -26,6 +26,8 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 CLI_SRC = ROOT / "cli" / "src"
 if CLI_SRC.is_dir() and str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
+
+from limen import harness_paths
 
 try:
     import yaml
@@ -458,7 +460,8 @@ def codex_vendor_gauge() -> dict | None:
 
 
 def claude_5h():
-    base = HOME / ".claude" / "projects"
+    # Live harness root, not the legacy ~/.claude layout (which goes stale on relocation).
+    base = harness_paths.harness_dir("projects", repo_root=ROOT)
     total = msgs = rate_limit_events = 0
     recent_rl = False
     gated = False

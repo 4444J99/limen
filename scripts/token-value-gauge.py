@@ -11,7 +11,7 @@ usage already on disk) to compute the sovereignty decision parameters:
   - hardware_payback_months (capex / open-weight-API value of the absorbable volume)
 
 Sources (trust-stamped; gaps are explicit, never silent):
-  measured  claude    ~/.claude/projects/**/*.jsonl  (per-message usage + model)
+  measured  claude    <harness projects dir>/**/*.jsonl  (per-message usage + model; live root via harness_paths)
   measured  opencode  ~/.local/share/opencode/opencode.db  (session table token columns)
   unmodeled codex     vendor persists rate-limit %% only, no token counts on disk
   unmodeled gemini    no local token accounting
@@ -36,6 +36,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+sys.path.insert(0, str(ROOT / "cli" / "src"))
+
+from limen import harness_paths
 OUT_MD = ROOT / "organs" / "financial" / "token-usage.md"
 OUT_JSON = ROOT / "organs" / "financial" / "token-usage.json"
 
@@ -87,7 +91,9 @@ def _iso_ts(s: str) -> float | None:
 def scan_claude() -> tuple[dict, float, float]:
     """Per-model token sums from Claude Code transcripts, last WINDOW_DAYS anchored to the
     newest observed message (data-derived, so re-runs are idempotent). Streaming, mtime-bounded."""
-    root = Path.home() / ".claude" / "projects"
+    # Resolved via harness_paths: the legacy ~/.claude/projects layout goes stale when the
+    # harness relocates (the meter read a dead tree and reported weeks-old numbers).
+    root = harness_paths.harness_dir("projects", repo_root=ROOT)
     rows: list[tuple[float, str, float, float, float, float]] = []
     now = max((os.path.getmtime(f) for f in glob.glob(str(root / "*"))), default=0.0)
     for f in glob.glob(str(root / "**" / "*.jsonl"), recursive=True):
