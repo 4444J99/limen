@@ -2,7 +2,7 @@
 <!-- Canonical source: institutio/positioning/commercial-contract.yaml -->
 # Bounded Delivery-Governance Retainer
 
-> **Preflight status:** `p03_reader_gate_p04_staged`; dependency `PSP-C03` / `PSP-P03` is `reader_gate_open`. PSP-P02 and PSP-P03-W01 through PSP-P03-W06 are accepted. PSP-P03-W07 still requires five genuine independent target-like readers, so PSP-P03 cannot close and PSP-P04 remains formally dependency-blocked. Reversible P04 implementation may continue, but it is not a leaf receipt, phase receipt, merge authorization, or public offer.
+> **Program status:** `p03_reader_gate_open_p04_leaf_execution`; dependency `PSP-C03` / `PSP-P03` is `reader_gate_open_phase_close_only`. PSP-P02 and PSP-P03-W01 through PSP-P03-W06 are accepted. PSP-P03-W07 still requires five genuine independent target-like readers, so PSP-P03 and PSP-P04 cannot close as phases. P04 leaves whose own dependencies and predicates are satisfied may be implemented, merged, and receipt-closed independently; this does not authorize phase closure, outbound promotion, or a customer commitment.
 
 **Work item:** `PSP-P04-W03`
 
@@ -41,15 +41,17 @@ The internal owner operates the system; changes occur only through the agreed ba
 
 - on-call, emergency, or round-the-clock response
 - unlimited implementation, feature work, or repository coverage
+- staff augmentation or an open-ended feature-delivery queue
 - executive substitution or ownership of daily operations
 - unrecorded access expansion or informal side projects
 
 ## Acceptance
 
-Each period ends with reviewed evidence, explicit changes, current owners, and a written renew, narrow, or exit decision.
+Each period ends with a capacity ledger proving consumed hours did not exceed included hours, reviewed evidence, explicit changes, current owners, and a dated written renew, narrow, or exit decision.
 
 ### Acceptance evidence artifacts
 
+- capacity ledger
 - review record
 - exception ledger
 - approved change receipts
@@ -69,6 +71,113 @@ Keep the internal owner current throughout; on exit, return the latest records, 
 ## Claim boundaries
 
 `C03-COMMERCIAL-BOUNDARY-001`, `C02-PROOF-LIMEN`
+
+## Capacity model
+
+- **Schema:** `limen.positioning.retainer_capacity.v1`
+- **Review period:** `calendar_month`
+- **Included delivery days:** `6`
+- **Hours per delivery day:** `6`
+- **Included hours:** `36`
+- **Allocation rule:** Uncommitted capacity is not on-call; it is scheduled only after sponsor approval and expires at period close.
+- **Consumption rule:** Every meeting, review, analysis, message, postmortem, and approved change consumes the same finite capacity ledger.
+- **Rollover:** `false`
+- **Exhaustion route:** At exhaustion, trade off the accepted backlog, move work to the next period, or scope a separate change order or Governance Install; no standby is implied.
+
+### Declared allocation
+
+| Capacity class | Days |
+| --- | ---: |
+| `scheduled_governance_days` | `3` |
+| `approved_change_days` | `1` |
+| `scheduled_contingency_days` | `1` |
+| `uncommitted_days` | `1` |
+
+### Quantity limits
+
+| Limit | Maximum |
+| --- | ---: |
+| `active_change_items` | `1` |
+| `reviews_or_postmortems_per_period` | `6` |
+| `teams` | `1` |
+| `repositories` | `3` |
+| `included_revisions_per_change` | `1` |
+
+### Cadence
+
+- **Evidence reviews per period:** `1`
+- **Exception reviews per period:** `1`
+- **Capacity reviews per period:** `1`
+- **Closeouts per period:** `1`
+- **Change window:** scheduled against the accepted backlog
+
+### Response envelope
+
+- **Channel:** named shared written channel
+- **Timezone:** sponsor-agreed named timezone recorded before the period
+- **Business hours:** sponsor-agreed named business hours recorded before the period
+- **Service window:** scheduled business days only
+- **Acknowledgement target:** `2` business days
+- **Decision target:** `5` business days
+- **Target boundary:** Planning targets only; no emergency or round-the-clock SLA.
+- **Clock pause conditions:**
+  - outside the service window
+  - waiting on an owner decision
+  - waiting on required access or evidence
+- **On-call:** `false`
+- **Emergency response:** `false`
+- **Resolution SLA:** `false`
+
+### Decision rights
+
+- **Internal owner:** Operates the system and owns daily decisions.
+- **Sponsor:** Approves scope, access, capacity changes, renewal, and exit.
+- **Provider:** Advises and executes only named accepted-backlog changes within included delivery days.
+- **Provider prohibited actions:**
+  - direct staff
+  - own daily operations
+  - approve production effects
+  - substitute for an executive
+
+### Included artifacts
+
+- capacity ledger
+- review record
+- exception ledger
+- approved change receipts
+- updated runbook
+- renewal or exit memo
+
+### Capacity exclusions
+
+- on-call, emergency, or round-the-clock response
+- unlimited implementation, feature work, or repository coverage
+- staff augmentation or an open-ended feature-delivery queue
+- executive substitution or ownership of daily operations
+- unrecorded access expansion or informal side projects
+
+### Capacity escalation
+
+- scope new implementation as a separate install or change order
+- pause material security, privacy, legal, or contractual exceptions for human review
+- exit when the internal owner no longer exists or the review need is no longer finite
+
+### Deterministic escalation routes
+
+- **Capacity exhaustion:** Trade off the accepted backlog, defer to the next period, or scope a separate change order or Governance Install.
+- **Missing owner:** Pause service and exit unless a new internal owner is named and accepts the current records.
+- **Authority expansion:** Stop the proposed change until the sponsor approves a named scope and acceptance path.
+- **Security, privacy, legal, or contract exception:** Pause the exception for the registered human review path; no provider override exists.
+
+### Renewal and exit
+
+- **Renewal gate:** Evidence and capacity review plus a dated written renew or narrow decision before the next period.
+- **Exit trigger:** The internal owner disappears, the need is no longer finite, or the sponsor chooses exit.
+- **Exit steps:**
+  - return the latest records and runbook
+  - remove access
+  - record current internal ownership
+  - record the next review date or stop decision
 
 ## Symbolic economics
 
@@ -92,10 +201,9 @@ Use only RANGE-AUDIT, RANGE-INSTALL, RANGE-RETAINER, or RANGE-PARTNERSHIP; never
 
 The canonical contract prohibits:
 
-- public-surface publication
+- external public-surface activation or promotion
 - issue or phase closure without its non-circular predicate and marked receipt
-- P04 leaf or phase receipt submission before PSP-P03 closes
-- merge to main
+- P04 phase closure before PSP-P03 closes
 - outbound sending
 - spend or account mutation
 - DNS or visibility changes

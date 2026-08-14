@@ -57,6 +57,30 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
+expect bounded-retainer-capacity-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer-capacity.json
+
+expect bounded-retainer-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer.md
+
+expect offer-qualification-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/qualification-and-routing.md
+
+expect partnership-review-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/product-operating-partnership-review.md
+
 expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
@@ -212,7 +236,7 @@ flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
 agentic-delivery-audit-decision-test
-governance-install-offer-test
+positioning-offer-contract-test
 research-adjudication-test
 positioning-p14-control-plane-test
 check-gates
