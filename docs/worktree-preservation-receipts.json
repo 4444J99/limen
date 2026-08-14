@@ -4791,6 +4791,40 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260813164557-93982"
+    },
+    {
+      "branch": "docs/estate-census-observation-20260813225521",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-08-14T05:59:35Z",
+      "head": "08a95642e1a01c69cf99ae7a0a9d3e4a10ba22b9",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #2377, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": false,
+      "pr_number": 2377,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/2377",
+      "repo": "organvm/limen",
+      "root": "ship-docs-estate-census-observation-20260813225521-39290",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-estate-census-observation-20260813225521-39290"
+    },
+    {
+      "branch": "docs/session-contention-incident-20260813225552",
+      "classification": "open draft PR preserves local worktree head",
+      "evidence_updated_utc": "2026-08-14T05:59:35Z",
+      "head": "2572693f0be8384ba7b2f6fc6ea9e0d158b96f1b",
+      "lane": "remote-pr-open",
+      "next_action": "Review draft PR #2378, then merge, supersede, or archive this lane. Local checkout is no longer the only review surface.",
+      "pr_draft": false,
+      "pr_number": 2378,
+      "pr_state": "OPEN",
+      "pr_url": "https://github.com/organvm/limen/pull/2378",
+      "repo": "organvm/limen",
+      "root": "ship-docs-session-contention-incident-20260813225552-39597",
+      "score_discount": 35,
+      "status": "open_pr_preserved",
+      "worktree": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260813225552-39597"
     }
   ],
   "schema": 1
