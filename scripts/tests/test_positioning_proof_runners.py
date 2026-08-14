@@ -116,7 +116,12 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "GIT_CONFIG_KEY_0": "url.file:///mirror.insteadOf",
             "GIT_CONFIG_VALUE_0": "https://github.com/",
             "GIT_DIR": "/tmp/untrusted.git",
+            "GIT_SSL_CAINFO": "/tmp/untrusted-ca.pem",
+            "GIT_SSL_NO_VERIFY": "1",
             "GIT_WORK_TREE": "/tmp/untrusted-tree",
+            "HTTPS_PROXY": "http://proxy.invalid",
+            "https_proxy": "http://lower-proxy.invalid",
+            "SSL_CERT_FILE": "/tmp/untrusted-cert.pem",
         }
         with mock.patch.dict(os.environ, injected, clear=False):
             with mock.patch.object(RECEIPT.subprocess, "run", return_value=completed) as run:
@@ -138,9 +143,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual(Path("/"), options["cwd"])
         self.assertEqual("1", options["env"]["GIT_CONFIG_NOSYSTEM"])
         self.assertEqual(os.devnull, options["env"]["GIT_CONFIG_GLOBAL"])
-        self.assertNotIn("GIT_CONFIG_COUNT", options["env"])
+        self.assertEqual("0", options["env"]["GIT_CONFIG_COUNT"])
         self.assertNotIn("GIT_DIR", options["env"])
+        self.assertNotIn("GIT_SSL_CAINFO", options["env"])
+        self.assertNotIn("GIT_SSL_NO_VERIFY", options["env"])
         self.assertNotIn("GIT_WORK_TREE", options["env"])
+        self.assertNotIn("HTTPS_PROXY", options["env"])
+        self.assertNotIn("https_proxy", options["env"])
+        self.assertNotIn("SSL_CERT_FILE", options["env"])
 
     def test_cost_failure_fixture_reproduces_all_dimensions(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

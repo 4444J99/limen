@@ -276,24 +276,62 @@ def _run_git(repository_path: Path, argv: list[str]) -> subprocess.CompletedProc
         check=False,
         capture_output=True,
         timeout=60,
-        env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+        env=_sanitized_git_environment(),
     )
 
 
-def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]:
-    """Query github.com without repository, user, or system Git URL rewrites."""
-    environment = {
-        key: value
-        for key, value in os.environ.items()
-        if not key.startswith("GIT_CONFIG_") and key not in {"GIT_DIR", "GIT_WORK_TREE"}
+def _sanitized_git_environment() -> dict[str, str]:
+    """Remove ambient object, config, and transport overrides from evidence reads."""
+    environment = dict(os.environ)
+    exact_overrides = {
+        "ALL_PROXY",
+        "CURL_CA_BUNDLE",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_COMMON_DIR",
+        "GIT_CONFIG",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_PARAMETERS",
+        "GIT_DIR",
+        "GIT_INDEX_FILE",
+        "GIT_NAMESPACE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_SHALLOW_FILE",
+        "GIT_SSL_CAINFO",
+        "GIT_SSL_CAPATH",
+        "GIT_SSL_NO_VERIFY",
+        "GIT_SSL_VERSION",
+        "GIT_WORK_TREE",
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "NO_PROXY",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_DIR",
+        "SSL_CERT_FILE",
     }
+    for key in tuple(environment):
+        if (
+            key in exact_overrides
+            or key.startswith("GIT_CONFIG_KEY_")
+            or key.startswith("GIT_CONFIG_VALUE_")
+            or key.startswith("GIT_SSL_")
+            or key.lower() in {"all_proxy", "http_proxy", "https_proxy", "no_proxy"}
+        ):
+            environment.pop(key, None)
     environment.update(
         {
             "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_COUNT": "0",
+            "GIT_GRAFT_FILE": os.devnull,
+            "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_TERMINAL_PROMPT": "0",
         }
     )
+    return environment
+
+
+def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]:
+    """Query github.com without repository, user, or system Git URL rewrites."""
     anchor = Path(Path.cwd().anchor or os.sep)
     return subprocess.run(
         [
@@ -308,7 +346,7 @@ def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]
         check=False,
         capture_output=True,
         timeout=60,
-        env=environment,
+        env=_sanitized_git_environment(),
     )
 
 
