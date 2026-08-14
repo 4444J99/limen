@@ -1061,6 +1061,7 @@ def main() -> int:
                 "new_repository_keys": 0,
                 "new_candidate_keys": 0,
             }
+            errors.extend(validate_snapshot(live, contract))
             private_names = {str(row["full_name"]) for row in repositories_2 if bool(row.get("private"))}
             public_bare_names = {str(row.get("name") or "") for row in repositories_2 if not bool(row.get("private"))}
             private_unique_bare_names = {

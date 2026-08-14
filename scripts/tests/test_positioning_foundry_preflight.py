@@ -1,12 +1,15 @@
+import contextlib
 import copy
 import datetime as dt
 import importlib.util
+import io
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -248,6 +251,22 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(str(contract_path), payload["contract"])
         self.assertEqual(str(snapshot_path), payload["snapshot"])
+
+    def test_live_snapshot_write_refuses_invalid_generated_output(self) -> None:
+        invalid = copy.deepcopy(self.snapshot)
+        invalid["candidates"][0]["unexpected"] = "shape drift"
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "must-not-exist.json"
+            argv = [str(SCRIPT), "--live", "--write-snapshot", str(output), "--json"]
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(MODULE, "collect_live_repositories", return_value=([], [])),
+                mock.patch.object(MODULE, "build_snapshot", return_value=invalid),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":
