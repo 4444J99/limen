@@ -214,6 +214,12 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
     re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}\b"),
     re.compile(r"(?i)https?://[^\s/:@]+:[^\s/@]+@"),
 )
+SURFACE_PRIVATE_VALUE_PATTERNS = (
+    *FORBIDDEN_DEMO_VALUE_PATTERNS,
+    re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"),
+)
 
 
 def load_contract(path: Path) -> dict[str, Any]:
@@ -1158,6 +1164,10 @@ def _surface_claim_scan(
     return sorted(matched), sorted(set(drifted))
 
 
+def _surface_contains_private_material(inspected_text: str) -> bool:
+    return any(pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS)
+
+
 def _fetch_bounded_public_surface(source_url: str) -> bytes:
     request = Request(
         source_url,
@@ -1385,6 +1395,7 @@ def _surface_inspection_errors(
                             and hashlib.sha256(live_extraction).hexdigest() != extracted_text_sha256
                         ):
                             errors.append(f"live surface visible claims differ from the tracked extraction: {surface}")
+                        inspected_content = live_extraction
         try:
             inspected_text = inspected_content.decode("utf-8")
         except UnicodeDecodeError:
@@ -1402,6 +1413,9 @@ def _surface_inspection_errors(
             errors.append(f"surface inspection matched_claim_ids are invalid: {surface}")
             matched_claim_ids = []
         recomputed_matches, drifted_claim_ids = _surface_claim_scan(inspected_text, expected_rows, surface)
+        contains_private_material = _surface_contains_private_material(inspected_text)
+        if contains_private_material:
+            errors.append(f"surface inspection found private material in the bound source: {surface}")
         if drifted_claim_ids:
             errors.append(
                 f"surface inspection found noncanonical material claim variants: {surface}: "
@@ -1413,6 +1427,7 @@ def _surface_inspection_errors(
             resolved[surface] = {
                 "inspection_id": inspection_id,
                 "matched_claim_ids": set(matched_claim_ids),
+                "contains_private_material": contains_private_material,
             }
     return errors, resolved
 
@@ -1451,6 +1466,13 @@ def audit_surface_manifest(
         supplied.add(key)
         if row.get("contains_private_material") is not False:
             errors.append(f"private material not disproven: {key[0]} / {key[1]}")
+        inspection = resolved_inspections.get(key[0], {})
+        derived_private_material = inspection.get("contains_private_material")
+        if (
+            isinstance(derived_private_material, bool)
+            and row.get("contains_private_material") is not derived_private_material
+        ):
+            errors.append(f"private-material disposition differs from the bound inspection: {key[0]} / {key[1]}")
         presence = row.get("presence")
         if not isinstance(presence, str) or presence not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")

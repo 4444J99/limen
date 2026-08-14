@@ -141,6 +141,19 @@ def _canonical_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, child in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON member: {key}")
+        value[key] = child
+    return value
+
+
+def _loads_public_artifact(raw: str) -> object:
+    return json.loads(raw, object_pairs_hook=_reject_duplicate_json_members)
+
+
 def _parse_window_date(value: object, field: str, errors: list[str]) -> date | None:
     if not isinstance(value, str):
         errors.append(f"sample {field} must be an ISO date")
@@ -1086,12 +1099,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
-        payload = json.loads(args.input.read_text(encoding="utf-8"))
+        payload = _loads_public_artifact(args.input.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("input root must be an object")
         review_verdict: object = None
         if args.review is not None:
-            review_verdict = json.loads(args.review.read_text(encoding="utf-8"))
+            review_verdict = _loads_public_artifact(args.review.read_text(encoding="utf-8"))
             if not isinstance(review_verdict, dict):
                 raise ValueError("review root must be an object")
         result = reproduce(

@@ -483,6 +483,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
         result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertTrue(any("matched claims differ from the bound source" in error for error in result["errors"]))
 
+    def test_surface_audit_derives_private_material_from_bound_content(self) -> None:
+        surface = self.contract["surface_audit_model"]["surfaces"][0]
+        self.contract["surface_audit_model"]["surfaces"] = [surface]
+        self.contract["surface_audit_model"]["surface_sources"] = {
+            surface: {
+                "source_kind": "tracked_blob",
+                "source_locator": ".gitignore",
+                "receipt_path": None,
+                "extractor": "raw_text_v1",
+            }
+        }
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        inspections = manifest["surface_inspections"]
+        assert isinstance(inspections, dict)
+        inspection = inspections[surface]
+        assert isinstance(inspection, dict)
+        private_content = b"support contact: customer@example.com\n"
+        extraction = MODULE._canonical_surface_extraction(private_content, "raw_text_v1")
+        inspection["extracted_text_sha256"] = hashlib.sha256(extraction).hexdigest()
+        with mock.patch.object(
+            MODULE,
+            "_read_git_object_bytes",
+            return_value=(private_content, inspection["blob_sha1"]),
+        ):
+            result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("private material in the bound source" in error for error in result["errors"]))
+        self.assertTrue(
+            any("private-material disposition differs from the bound inspection" in error for error in result["errors"])
+        )
+
     def test_surface_audit_rejects_wrong_source_path_kind_and_reuse(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         for mutation in ("path", "kind", "reuse"):

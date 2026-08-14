@@ -590,6 +590,10 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
 
+    def test_cost_failure_public_artifacts_reject_duplicate_json_members(self) -> None:
+        with self.assertRaisesRegex(ValueError, "duplicate JSON member: sample_id"):
+            COST._loads_public_artifact('{"row":{"sample_id":"private","sample_id":"public"}}')
+
     def test_cost_failure_unhashable_failure_classes_fail_closed(self) -> None:
         for failure_class in ({"code": "timeout"}, ["timeout"]):
             payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
