@@ -37,6 +37,20 @@
       "why": "selected Level-2 flagship proof destination; its public evidence anchors and doors must remain live"
     },
     {
+      "id": "public-records-proof-readme",
+      "type": "github_readme",
+      "ref": "organvm-iii-ergon/public-record-data-scrapper",
+      "label": "UCC public-records flagship proof README",
+      "why": "selected Level-2 flagship proof destination; its public evidence anchors and doors must remain live"
+    },
+    {
+      "id": "chat-exporter-proof-readme",
+      "type": "github_readme",
+      "ref": "organvm-iii-ergon/a-i-chat--exporter",
+      "label": "AI Chat Exporter flagship proof README",
+      "why": "selected Level-2 flagship proof destination; its public evidence anchors and doors must remain live"
+    },
+    {
       "id": "portfolio",
       "type": "url",
       "ref": "https://organvm-vii-kerygma.github.io/portfolio/",
