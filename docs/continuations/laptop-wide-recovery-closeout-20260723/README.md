@@ -45,6 +45,12 @@ Reach the fixed point defined by the 2026-07-23 recovery plan: restore Claude th
 
 ## Execution order
 
+> **Correction (2026-08-14, hospes campaign limen #2401):** the Hospes claims above are
+> discharged. Draft PR `organvm/hospes#13` MERGED 2026-07-23T17:43Z (same day this record was
+> written); its content (`hospes/synthetic_demo.py`, the `seed-synthetic-demo` verb) is on that
+> repo's `main`, the repo has zero open PRs, and CI runs green on `ubuntu-latest`. "Keep Hospes
+> on PR `#13`" is therefore satisfied-by-merge; no preservation action remains.
+
 1. Close and merge-queue the existing `#1325` owner receipt without repeated base rewrites.
 2. After `#1325` merges, acquire the clean Domus worktree writer scope; run a source-explicit `chezmoi -S` diff/apply of settings plus the complete dependency closure parsed from rendered settings. Reject any missing/non-executable/unowned target. Verify the existing Claude session, then wait for local-heavy admission before three fresh cycles. Record hashes, timing, duplicate convergence, and rollback on `#318`.
 3. Land Domus recurrence prevention: activation docs plus a regression predicate deriving all managed command targets from rendered settings.
