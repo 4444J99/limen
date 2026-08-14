@@ -1211,6 +1211,58 @@
       "owner": "yours",
       "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
       "issue": 2371
+    },
+    {
+      "id": "L-HOSPES-PUBLISH-CONSENT",
+      "label": "Grant or withhold the HOSPES publish gate: co-host consent for any public face of the podcast-suite, plus the guest-data policy review the positioning seed requires (positioning-seeds.json marks organvm/hospes awaiting_publish on exactly these two conditions). Until pulled, everything public-facing stays gated: the constellation face split (CONST-HOSPES-FACE-SPLIT, pending-split -> readme), the portfolio case study (CONST-HOSPES-CASESTUDY), and any repo visibility change. The engine keeps building privately regardless; a public face is a split, never a flip.",
+      "status": "open",
+      "added": "2026-08-14",
+      "gate": "consent belongs to the co-host and the data-policy judgment is a disclosure decision — no machine may make either",
+      "cost": "one conversation + one policy read",
+      "unlocks": "CONST-HOSPES-FACE-SPLIT, CONST-HOSPES-CASESTUDY, positioning awaiting_publish flip",
+      "note": "The repo itself stays private either way; this lever governs the public FACE only. Do not conflate with the retired CI gate (hospes CI has run green on ubuntu-latest since organvm/hospes#8 merged 2026-07-22).",
+      "owner": "yours",
+      "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
+      "issue": 2405
+    },
+    {
+      "id": "L-HOSPES-PILOT-RECEIPTS",
+      "label": "Execute the human half of HOSPES Pilot 1 (organvm/hospes#9): the relationship-owner review session recording exactly three eligible C2/C3 selections, the human-authorized send of the invitation draft (opaque receipt only), the recording itself, masters handoff within 24h, and the scorecard within 48h — the 9-step chain in docs/receipts/pilot-9-readiness-20260810.md and docs/private-pilot-runbook.md of that repo. The software half is machine-owned and being completed; every receipt lives in private custody, never in git. The policy deadline 2026-08-05 has passed with no technical_rehearsal fallback recorded — the runbook says record the rehearsal explicitly rather than close the pilot; Pilots 2-3 target 2026-09-02.",
+      "status": "open",
+      "added": "2026-08-14",
+      "gate": "a real recording session with real people; correspondence sends are human-only by the product's own design (no send route exists)",
+      "cost": "one review session + one send + one production window",
+      "unlocks": "organvm/hospes#9 closure; the board row GH-organvm-hospes-9 moves needs_human -> done on the receipt chain",
+      "note": "The product refuses to start a pilot run without the review + slate + verified routes; nothing here is a software blocker.",
+      "owner": "yours",
+      "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
+      "issue": 2406
+    },
+    {
+      "id": "L-HOSPES-CUSTODY-TRANSFER",
+      "label": "Fire the GitHub custody transfer organvm/hospes -> 4444J99 once the transcript-eviction row is retired (the campaign's history-scan receipt proves the repo never held vault-class plaintext, so the estate.yaml split: row and platform.yaml vault_split_required clear by registry PR, not by data movement). Machine never fires a transfer; after firing, accept the invitation on the personal account, then the one-row re-path PR (estate override, access grant key, constellation repo:) lands mechanically and gitvs.py doctor goes green — the same per-transfer checklist the ten 2026-07-30 partner-lane transfers used (L-CONST-CUSTODY-MIGRATION, discharged).",
+      "status": "open",
+      "added": "2026-08-14",
+      "gate": "repository transfer is an owner-account action GitHub reserves for a human",
+      "cost": "~2 minutes: one transfer click + one invitation accept",
+      "unlocks": "hospes joins custody v1.0.0 semver-lineage doctrine as the 11th partner-lane transfer; custody_gate transcript_vault_split_before_movement is already satisfied by the receipt",
+      "note": "Sequenced AFTER the eviction-retirement PR merges; the lever text will be stale until then — check the campaign plan for the receipt path.",
+      "owner": "yours",
+      "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
+      "issue": 2407
+    },
+    {
+      "id": "L-BOARD-PARTITION-DECISION",
+      "label": "Decide the board-partition fork recorded in docs/plans/2026-08-07-board-partition-public-leak.md (limen #2069): A — build the private board projection (dispatch unions a second, unpublished store; the ideal form, an architecture build) or B — accept the disclosures (scripts/check-board-partition.py --update --accept-new-disclosures; one command that permanently publishes the partner-lane attributions, now grown from 8 findings to include the 21 GH-organvm-hospes rows). Until decided, publication PR #2001 stays red, main's tasks.yaml mirror stays frozen (canonical carries 23 hospes rows, the mirror 2), the beat's release-stale rung fails every cycle against the stale mirror, and HEAL-cifix-organvm-hospes-8 reads false-open on the mirror while canonical has it done.",
+      "status": "open",
+      "added": "2026-08-14",
+      "gate": "the plan states 'Not done unilaterally' — B is flagged in-code as a human decision and A changes the board architecture",
+      "cost": "one decision; B is one command, A is a scoped build the fleet executes on request",
+      "unlocks": "PR #2001 publication, mirror refresh, release-stale rung green, dispatch visibility of the hospes roadmap rows",
+      "note": "The gate being red is the gate working as designed — this lever is the decision, not a defect. The hospes campaign proceeds regardless: the GitHub issues + hospes/resources/spec/completion-registry.yaml are the durable work registry for the build.",
+      "owner": "yours",
+      "source_task": "board-partition plan (limen #2069) + HOSPES full completion campaign (limen #2401)",
+      "issue": 2408
     }
   ]
 }
