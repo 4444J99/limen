@@ -1,10 +1,10 @@
 ---
 type: prompt-relay-envelope
 version: 3.0
-date: 2026-08-13
-from: Codex direct-session reversible preflight
-to: next authorized PSP-C11 conductor or correctly assigned leaf
-scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen
+date: 2026-08-14
+from: Codex PSP-P13-W01 formalization correction
+to: existing PSP-P13-W01 owner and PSP root conductor
+scope: .
 phase: PROVE
 compression_level: medium
 ---
@@ -21,54 +21,48 @@ compression_level: medium
 - Target repository for this preflight: `organvm/limen`
 - Future leaf targets: use each live issue target; the collaboration-platform and selected-product
   repositories were not changed by this preflight
+- Existing owner task: `019fed3c-88e3-7771-b433-7f46fceedef6`
 - Branch: `codex/psp-c11-governed-foundry-preflight`
-- Draft PR: https://github.com/organvm/limen/pull/2319
-- Conduct state: explicit direct-session reversible preflight; no leaf lease, lifecycle transition,
-  completion receipt, or closure claimed
+- Original preflight PR: https://github.com/organvm/limen/pull/2319 (merged)
+- Active correction PR: https://github.com/organvm/limen/pull/2418
+- Conduct state: the existing owner lane is active for `PSP-P13-W01`; formal completion remains
+  pending the sanctioned merge, marked leaf receipt, passing work predicate, and truthful issue
+  closure
 
 ## Verified current state
 
 | Item | Live state |
 | --- | --- |
-| Pre-integration C11 checkpoint | `db0d991af5bfbfdec19e9fa3b0f5a89d9337e114` |
-| Exact source-lock correction head | Pinned in draft PR #2319 because this tracked relay cannot self-name its containing commit |
-| Pull request | Draft PR #2319, base `main`; no merge requested or performed |
-| Working tree | Clean at the implementation checkpoint; this relay is the only planned subsequent file |
-| Program projection | `--check`: 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects, status `ok` |
-| Remote parity | `--verify-remote`: 127 expected / 127 observed / zero missing, orphan, or drift |
-| Assignment parity | `--verify-model-assignments`: all 127 registry requirements valid; C11 and all nine leaves resolve through the runtime catalog with no frozen provider/model slug |
-| Dependency truth | P02 closed; P04/P11/P12 open; C10 package integrated from #2321 source `71a6046c2186b4d4ead5136920b82b412ff5d540` to main `f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2`, but not formally closed |
-| C10 integration receipt | Five exact C05/C09 source/integrated-main bindings, each `counts_as_closure: false`; deterministic receipt `d781c0ca6459d6a0ba620eff9f1a917948af81f16fb6a6a8918480a67781efaa` |
-| C03 checkpoint | Offer #2312 source `b6af8086c9050634313f519c29a6dfcb922c3721`, integrated main `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W01-W06 formal acceptance remains `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; genuine-reader W07 remains open at #2188 |
-| Live ready-work | No C11/P13 leaf is ready |
+| Exact correction head | Pinned in active PR #2418 because this tracked relay cannot self-name its containing commit |
+| Pull request | PR #2418 is the only active correction lane; merge is permitted only through `scripts/await-pr.sh` after exact-head checks and review are clean |
+| Control-plane dependency | PR #2386 merged at main `3cec3399879c9417bcc7639cfcd358ddbc66bc10`; exact work dependencies now admit ready leaves without weakening aggregate phase/chunk closeout order |
+| Live ready-work | `PSP-P13-W01` is registry-ready with issue #2265 open; no marked completion receipt is present yet |
 | Candidate census | Two identical passes: 10 organizations, 319 repositories, 62 candidates, zero new organization/repository/candidate keys |
 | Private boundary | 54 public candidate rows, 8 opaque private rows; current full-name and unique-bare-token scan found zero leaks in C11 public paths |
-| Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 60 diligence-required, 2 archived; 0 transfer-eligible |
+| Demand/readiness | E0 48, E1 9, E2 5; 2 experiment-only, 60 park; 53 diligence-required, 1 park/archived, 8 private-evidence-withheld; 0 transfer-eligible |
 | Generated comparison | 62 classifications and 62 non-binding decision records; 54 public comparisons, 8 private classifications withheld, 0 transfer-eligible |
 | Synthetic drills | Five operator routes, five access decisions, and five rollback cases passed; invented records only; no simulated human acceptance or external effect; owner custody unchanged |
-| Acceptance condition | Preflight met; every formal W01-W09 acceptance and P13 exit predicate remains open |
-| Task-specific predicate | Intentionally not run for any leaf because no leaf is ready, leased, or receipt-backed |
-| Phase exit proof | Not run; P13 cannot close without all children and an observed transfer or evidence-backed no-go decision |
-| External effects | Draft branch/PR only; no contact, send, publication, deploy, DNS, spend, signature, access, transfer, issue close, or merge |
+| Acceptance condition | The correction package is ready for exact-head review and sanctioned integration; W01 remains formally incomplete until its marked receipt and predicate pass |
+| Task-specific predicate | `--verify-work PSP-P13-W01` remains intentionally pending the accepted merge and marked receipt; it is not a substitute for the non-circular predicates below |
+| Phase exit proof | Not run; P13 cannot close until all children and its aggregate phase predicate are receipt-valid |
+| External effects | Correction branch/PR only so far; no contact, send, publication, deploy, DNS, spend, signature, access, transfer, issue close, or merge |
 
 ## Exact predicate receipts
 
-The exact containing head and CI state for this source-lock correction are pinned in draft PR #2319.
+The exact containing head and CI state for this formalization correction are pinned in PR #2418.
 
 | Predicate | Result |
 | --- | --- |
-| `python3 -B scripts/positioning-program.py --check` | pass; 13 chunks, 15 phases, 111 leaves, 127 mapped/projected objects |
-| `python3 -B scripts/positioning-program.py --verify-model-assignments` | pass; all 127 assignments valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --json` | pass; v3 contract, snapshot, exact source/integrated dependency heads, C10 source lock, runtime assignment requirements, gates, structures, and drills valid |
 | `python3 -B scripts/positioning-foundry-preflight.py --drills --json` | pass; five routing cases, five access cases, exact non-closing C10 readiness receipt, return/governance replay, zero external effects |
-| `python3 -B scripts/positioning-foundry-preflight.py --verify-live-snapshot --json` | pass source captured at 2026-08-13T04:52:53.725120Z; 10 organizations, 319 repositories, 62 candidates; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8`; leak count 0 after tracked projection reconciliation |
+| `python3 -B scripts/positioning-foundry-preflight.py --live --verify-live-snapshot --json` | pass observed at 2026-08-14T16:37:44.371084Z against tracked snapshot captured at 2026-08-14T15:58:07.099488Z; 10 organizations, 319 repositories, 62 candidates; candidate digest `9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca`; repository digest `a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8`; 84 private repositories scanned and leak count 0 after tracked projection reconciliation |
 | `python3 -B scripts/positioning-foundry-handoff.py --json` | pass; 62 classifications, 62 decision records, 54 public comparisons, 8 private classifications withheld, exact C10 integration receipt |
-| `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `d432e5c271504bcc13fd3cb9bbb94e5366549ec1063889ad8c319864aa41864e` |
+| `python3 -B scripts/positioning-foundry-handoff.py --records --json` | pass; deterministic records digest `305f3833c42c966a8a62c84900ac7c3901d70f4b26f86c01fde91932c47f855c` |
 | `python3 -B scripts/positioning-foundry-handoff.py --drills --json` | pass; five rollback cases, zero external effects, owner custody unchanged |
-| Combined focused tests | 30 passed |
+| Combined focused tests | 38 passed |
 | Ruff | pass |
 | `scripts/verify-scoped.sh` | passed all 7 implicated gates |
-| `git diff --cached --check` | pass before implementation commit |
+| Diff hygiene | pass before the correction commit |
 
 Do not substitute any `--verify-work` invocation for the non-circular predicates above. They prove
 this preflight package, not a leaf completion.
@@ -96,8 +90,10 @@ this preflight package, not a leaf completion.
 - Added five executable rollback cases covering evidence, security, custody, operator, and
   downside-economics failures with zero external effects.
 - Retained the base validator and synthetic operator/access/return/governance drills; the combined
-  base plus handoff focused suite now contains 30 tests, including duplicate-member and surplus-root
+  base plus handoff focused suite now contains 38 tests, including duplicate-member and surplus-root
   fail-closed cases for both public contracts.
+- Made live snapshot writes fail closed when paired with synthetic drills, and required tracked
+  snapshot validation even when a live verification run also writes a candidate refresh.
 - Restricted snapshot sources to the two accepted C02 inventory inputs; the P02 closure receipt is
   dependency evidence, not candidate data.
 
@@ -114,19 +110,17 @@ this preflight package, not a leaf completion.
 
 ## Next actions
 
-1. Refresh live registry, exact PR heads, and C11 readiness. Do not assume this relay remains
-   current.
-2. Wait for the formal dependency graph to expose a leaf as ready; predecessor openness blocks
-   closure but not continued reversible, non-duplicative preparation.
-3. Start the leaf in a fresh eligible task after the live catalog resolves its registry-owned
-   capability/reasoning/effect/effort requirement; configure and register the conduct broker,
-   obtain a lease, and honor that leaf repository/path/effect scope. Fail closed if no lane qualifies.
-4. Integrate only the exact merged C02 census/classification receipts. Re-run the two-pass live
-   inventory and privacy scan; never copy private facts into Limen, the PR, or an issue comment.
-5. Run the leaf-specific non-circular predicate, attach a structured receipt, and only then run
-   `python3 scripts/positioning-program.py --verify-work <WORK-ID>`.
-6. For W08, stop before recruitment, terms, signature, access, or transfer unless the exact human
-   gates are durably satisfied. A design or synthetic drill is never an observed pilot.
+1. Re-query PR #2418 and issue #2265. Require the exact remote head, clean merge state, green
+   required checks, and zero unresolved review threads.
+2. Merge only through `scripts/await-pr.sh 2418 --repo organvm/limen --merge`; do not use a direct,
+   admin, force, or bypass merge.
+3. On the accepted main head, re-run the non-circular foundry predicates and preserve the private
+   boundary; never copy private facts into Limen, the PR, or an issue comment.
+4. Attach the marked structured receipt for `PSP-P13-W01`, run
+   `python3 scripts/positioning-program.py --verify-work PSP-P13-W01`, and close #2265 only when it
+   passes. Run the same predicate after closure to prove terminal issue state.
+5. Return the accepted main head, marked receipt URL, and passing predicate to the PSP root
+   conductor. Leave P13 aggregate closure to its owning conductor.
 
 ## Human gates and prohibitions
 
@@ -158,14 +152,16 @@ state from this handoff.
 - C02 classification accepted merge: https://github.com/organvm/limen/pull/2307 at
   `35134b95650a26185a58eb3b3a82632e5b80b5b2`
 - C03 reader gate: https://github.com/organvm/limen/issues/2188
-- C11 draft PR: https://github.com/organvm/limen/pull/2319
+- Original C11 preflight PR: https://github.com/organvm/limen/pull/2319
+- Active C11 correction PR: https://github.com/organvm/limen/pull/2418
+- P13-W01 work issue: https://github.com/organvm/limen/issues/2265
 
 The fresh-agent injection phrase is:
 
 ```text
-Continue from relay at /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen/docs/receipts/positioning/relays/2026-08-10-psp-c11-governed-foundry-preflight.md. mid-task — see Next Actions for current step.
+Continue the existing PSP-P13-W01 owner lane from `docs/receipts/positioning/relays/2026-08-10-psp-c11-governed-foundry-preflight.md`. Re-query PR #2418 and issue #2265, then follow Next Actions without creating a duplicate task or PR.
 ```
 
-The receiver must repeat live orientation and obtain its own identity and authority. This relay
-transfers context, not a lease, human approval, legal review, operator acceptance, or permission to
-perform an external act.
+The receiver must repeat live orientation and preserve the existing owner/task identity. This relay
+transfers context, not legal review, operator acceptance, or permission to perform any external act
+beyond the already authorized repository integration and receipt workflow.

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import copy
 import datetime as dt
 import hashlib
 import json
@@ -248,6 +249,41 @@ FORBIDDEN_ACCESS = {
     "domain_control",
     "ip_license",
     "product_transfer_rights",
+}
+PUBLIC_CANDIDATE_KEYS = {
+    "candidate_id",
+    "repository",
+    "visibility",
+    "current_state",
+    "fork",
+    "demand",
+    "readiness",
+    "preflight_disposition",
+    "economics",
+    "transfer_eligible",
+    "blocking_evidence",
+}
+PRIVATE_CANDIDATE_KEYS = PUBLIC_CANDIDATE_KEYS - {"current_state", "fork"}
+PRIVATE_DEMAND = {
+    "score": 0,
+    "tier": "E0",
+    "evidence": ["private_demand_evidence_withheld"],
+    "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
+    "stop_condition": "Park until approved evidence satisfies the public contract.",
+}
+PRIVATE_READINESS = {
+    "metadata_screen_score": 0,
+    "band": "private_evidence_withheld",
+    "evidence": ["private_readiness_evidence_withheld"],
+    "unverified_dimensions": ["all_dimensions"],
+    "custody_risk": "private_custody_withheld",
+}
+PRIVATE_ECONOMICS = {
+    "status": "private_economics_withheld",
+    "hypothesis": "Private economics require restricted review before transfer consideration.",
+    "runway": "not_approved",
+    "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass.",
+    "stop_condition": "Park until approved evidence satisfies the public contract.",
 }
 
 
@@ -533,6 +569,23 @@ def build_snapshot(
     readiness_model = contract["readiness_model"]
 
     def render(candidate_id: str, row: dict[str, Any], public: bool) -> dict[str, Any]:
+        if not public:
+            return {
+                "candidate_id": candidate_id,
+                "repository": None,
+                "visibility": "private",
+                "demand": copy.deepcopy(PRIVATE_DEMAND),
+                "readiness": copy.deepcopy(PRIVATE_READINESS),
+                "preflight_disposition": "park",
+                "economics": copy.deepcopy(PRIVATE_ECONOMICS),
+                "transfer_eligible": False,
+                "blocking_evidence": [
+                    "private_evidence_withheld",
+                    "no_operator_selected_or_scored",
+                    "human_terms_and_contract_gates_unpulled",
+                    "no_observed_pilot",
+                ],
+            }
         demand = score_demand(row, demand_model)
         readiness = score_readiness(row, readiness_model, observed_at)
         disposition = "park"
@@ -543,6 +596,7 @@ def build_snapshot(
             "repository": str(row["full_name"]) if public else None,
             "visibility": "public" if public else "private",
             "current_state": "archived" if bool(row.get("archived")) else "active_repository",
+            "fork": bool(row.get("fork")),
             "demand": demand,
             "readiness": readiness,
             "preflight_disposition": disposition,
@@ -828,7 +882,10 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
     ]
     if snapshot.get("sources") != expected_sources:
         errors.append("snapshot sources must contain only the accepted inventory inputs")
-    candidates = snapshot.get("candidates") or []
+    candidates_value = snapshot.get("candidates")
+    candidates = candidates_value if isinstance(candidates_value, list) else []
+    if not isinstance(candidates_value, list):
+        errors.append("snapshot candidates must be a list")
     expected = int(contract["candidate_inventory"]["expected_candidate_count"])
     if len(candidates) != expected or snapshot.get("candidate_denominator", {}).get("count") != expected:
         errors.append("snapshot candidate denominator is incomplete")
@@ -836,15 +893,30 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
     if len(ids) != len(set(ids)):
         errors.append("snapshot candidate IDs are not unique")
     for row in candidates:
+        if not isinstance(row, dict):
+            errors.append("snapshot candidate rows must be objects")
+            continue
         candidate_id = str(row.get("candidate_id") or "<unknown>")
         visibility = row.get("visibility")
         repository = row.get("repository")
         if visibility == "private":
             if repository is not None or not candidate_id.startswith("private-candidate-"):
                 errors.append(f"{candidate_id}: private row exposes an identity")
+            if set(row) != PRIVATE_CANDIDATE_KEYS:
+                errors.append(f"{candidate_id}: private row shape exposes or omits evidence")
+            if row.get("demand") != PRIVATE_DEMAND:
+                errors.append(f"{candidate_id}: private demand evidence is not fully withheld")
+            if row.get("readiness") != PRIVATE_READINESS:
+                errors.append(f"{candidate_id}: private readiness evidence is not fully withheld")
+            if row.get("economics") != PRIVATE_ECONOMICS:
+                errors.append(f"{candidate_id}: private economics evidence is not fully withheld")
         elif visibility == "public":
             if not isinstance(repository, str) or "/" not in repository:
                 errors.append(f"{candidate_id}: public row lacks a repository")
+            if set(row) != PUBLIC_CANDIDATE_KEYS:
+                errors.append(f"{candidate_id}: public row shape drift")
+            if not isinstance(row.get("fork"), bool):
+                errors.append(f"{candidate_id}: public row lacks an exact fork fact")
         else:
             errors.append(f"{candidate_id}: invalid visibility")
         demand = row.get("demand") or {}
@@ -862,7 +934,34 @@ def validate_snapshot(snapshot: dict[str, Any], contract: dict[str, Any]) -> lis
             errors.append(f"{candidate_id}: economics contract is incomplete")
         if row.get("transfer_eligible") is not False:
             errors.append(f"{candidate_id}: preflight cannot mark a candidate transfer-eligible")
+    visibility_counts = collections.Counter(row.get("visibility") for row in candidates if isinstance(row, dict))
+    demand_tiers = collections.Counter(
+        (row.get("demand") or {}).get("tier") for row in candidates if isinstance(row, dict)
+    )
+    readiness_bands = collections.Counter(
+        (row.get("readiness") or {}).get("band") for row in candidates if isinstance(row, dict)
+    )
+    dispositions = collections.Counter(row.get("preflight_disposition") for row in candidates if isinstance(row, dict))
+    transfer_eligible = sum(row.get("transfer_eligible") is True for row in candidates if isinstance(row, dict))
+    expected_visibility = dict(sorted(visibility_counts.items()))
+    expected_distribution = {
+        "demand_tiers": dict(sorted(demand_tiers.items())),
+        "readiness_bands": dict(sorted(readiness_bands.items())),
+        "preflight_dispositions": dict(sorted(dispositions.items())),
+        "transfer_eligible": transfer_eligible,
+    }
+    if snapshot.get("candidate_denominator", {}).get("visibility") != expected_visibility:
+        errors.append("snapshot candidate visibility summary drift")
+    if snapshot.get("score_distribution") != expected_distribution:
+        errors.append("snapshot score distribution drift")
     return errors
+
+
+def display_path(path: Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(path)
 
 
 def private_name_leaks(private_names: set[str]) -> list[str]:
@@ -920,14 +1019,23 @@ def main() -> int:
     parser.add_argument(
         "--drills", action="store_true", help="emit synthetic operator, access, return, and governance drill results"
     )
+    parser.add_argument(
+        "--write-snapshot",
+        type=Path,
+        help="with --live, write the validated public-safe live snapshot to this path",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     try:
         contract = load_json(args.contract)
         errors = validate_contract(contract)
         snapshot = load_json(args.snapshot) if args.snapshot.is_file() else None
-        if snapshot is not None:
+        if snapshot is not None and (args.write_snapshot is None or args.verify_live_snapshot):
             errors.extend(validate_snapshot(snapshot, contract))
+        if args.write_snapshot is not None and not args.live:
+            errors.append("--write-snapshot requires --live")
+        if args.write_snapshot is not None and args.drills:
+            errors.append("--write-snapshot cannot be combined with --drills")
         if args.drills:
             result = run_synthetic_drills(contract)
             if errors:
@@ -955,6 +1063,7 @@ def main() -> int:
                 "new_repository_keys": 0,
                 "new_candidate_keys": 0,
             }
+            errors.extend(validate_snapshot(live, contract))
             private_names = {str(row["full_name"]) for row in repositories_2 if bool(row.get("private"))}
             public_bare_names = {str(row.get("name") or "") for row in repositories_2 if not bool(row.get("private"))}
             private_unique_bare_names = {
@@ -973,6 +1082,11 @@ def main() -> int:
             if errors:
                 live["status"] = "fail"
                 live["errors"] = errors
+            elif args.write_snapshot is not None:
+                args.write_snapshot.write_text(
+                    json.dumps(live, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
             output = live
             if args.verify_live_snapshot:
                 output = {
@@ -999,8 +1113,8 @@ def main() -> int:
         result = {
             "schema_version": "limen.psp_c11_foundry_preflight_validation.v1",
             "status": "pass" if not errors else "fail",
-            "contract": str(args.contract.relative_to(ROOT)),
-            "snapshot": str(args.snapshot.relative_to(ROOT)) if snapshot is not None else None,
+            "contract": display_path(args.contract),
+            "snapshot": display_path(args.snapshot) if snapshot is not None else None,
             "errors": errors,
             "synthetic_drills": run_synthetic_drills(contract),
         }
