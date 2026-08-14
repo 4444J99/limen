@@ -1,7 +1,7 @@
 # dustin full build: execute the alpha→omega machine runway (18 phases, 202 leaves)
 
 Issue: #2390
-PR: (pending)
+PR: #2395
 
 ## Context
 
