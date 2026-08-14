@@ -3576,12 +3576,6 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Beat gate for the branch-reap sensor (scripts/reap-branches.py --check, sensors.yaml 0g9b). Spent branches accumulated unreaped (87 reapable, 15 provably landed) and the cost was paid by scripts/no-tasks-on-me.sh, a CLOSEOUT gate, which flipped exit 0 -> exit 1 inside forty minutes on 2026-08-14 because branches landed mid-session: a session could no longer tell 'I left something hanging' from 'the fleet's backlog grew'. The reap was owned all along (clone-maintenance.sh:145, armed) but never ran — hygiene is gated on VITALS_PRESSURE and this host sheds continuously, so the ran-for-real banner appears ZERO times in the beat log against 10 deferrals. Detection runs on the metabolize pass, which is not vitals-gated, so the finding surfaces even while the repair path is starved. Read-only; set 0 to silence."
-  LIMEN_BEAT_BRANCH_REAP:
-    default: 4
-    env: LIMEN_BEAT_BRANCH_REAP
-    self_update: none
-    owner: tabularius
-    note: "Cadence (every N beats) of the branch-reap sensor. 4 follows the orphan-watcher precedent; unlike that local ps scan this pass goes online (PR state per branch, ~25 s measured), and branches land a few times a day, so every ~4 beats catches drift well inside the window where it matters."
   LIMEN_BRANCH_REAP_TIMEOUT:
     default: 120
     env: LIMEN_BRANCH_REAP_TIMEOUT
