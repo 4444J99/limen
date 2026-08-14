@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/positioning-foundry-handoff.py"
@@ -101,6 +102,24 @@ class HandoffTest(unittest.TestCase):
         self.assertEqual("owner_unchanged", receipt["final_custody"])
         self.assertEqual(MODULE.TRIGGERS, {item["id"] for item in receipt["drills"]})
         self.assertTrue(all(item["external_effects"] == [] for item in receipt["drills"]))
+
+    def test_rollback_decision_mapping_is_exact(self):
+        changed = copy.deepcopy(self.contract)
+        changed["rollback"]["triggers"][1]["decision"] = "proceed"
+        self.assertIn("rollback contract drift", MODULE.validate_contract(changed))
+        self.assertEqual("fail", MODULE.rollback_drills(changed)["status"])
+
+    def test_public_fork_fact_reaches_governance_classifier(self):
+        row = {
+            "visibility": "public",
+            "repository": "owner/example",
+            "current_state": "active_repository",
+            "fork": True,
+            "readiness": {"evidence": []},
+        }
+        with mock.patch.object(MODULE.GITVS, "classify_repo", return_value="portal_public") as classify_repo:
+            MODULE.classify(row, self.contract, {}, {"grants": {}})
+        self.assertIs(classify_repo.call_args.args[2]["fork"], True)
 
     def test_decision_tamper(self):
         value = copy.deepcopy(self.package)

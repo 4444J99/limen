@@ -35,6 +35,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -88,6 +89,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -140,6 +142,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -193,6 +196,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -245,6 +249,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -297,6 +302,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -350,6 +356,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -403,6 +410,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -456,6 +464,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -509,6 +518,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -547,7 +557,7 @@
       "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "public_stars:5",
+          "public_stars:6",
           "public_forks:2"
         ],
         "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
@@ -562,6 +572,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "experiment",
       "readiness": {
         "band": "diligence_required",
@@ -615,6 +626,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -668,6 +680,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -720,6 +733,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -772,6 +786,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -825,6 +840,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -877,6 +893,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -930,6 +947,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -982,6 +1000,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1034,6 +1053,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1087,6 +1107,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1140,6 +1161,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1191,6 +1213,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1243,6 +1266,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1295,6 +1319,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1348,6 +1373,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1400,6 +1426,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1452,6 +1479,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1505,6 +1533,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1558,6 +1587,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1609,6 +1639,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1660,6 +1691,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1713,6 +1745,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1764,6 +1797,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1817,6 +1851,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "experiment",
       "readiness": {
         "band": "diligence_required",
@@ -1870,6 +1905,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1923,6 +1959,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -1975,6 +2012,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2028,6 +2066,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2080,6 +2119,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2133,6 +2173,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2185,6 +2226,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2236,6 +2278,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2289,6 +2332,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2342,6 +2386,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2395,6 +2440,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2448,6 +2494,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2500,6 +2547,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2553,6 +2601,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2604,6 +2653,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2656,6 +2706,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2708,6 +2759,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2760,6 +2812,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "park_archived",
@@ -2810,6 +2863,7 @@
         "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
+      "fork": false,
       "preflight_disposition": "park",
       "readiness": {
         "band": "diligence_required",
@@ -2838,49 +2892,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-001",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 20,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -2889,49 +2932,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-002",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 20,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -2940,49 +2972,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-003",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 20,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -2991,49 +3012,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-004",
-      "current_state": "archived",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "park_archived",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "default_branch_present",
-          "pushed_within_365_days",
-          "homepage_present_deploy_intent_only"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 18,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -3042,50 +3052,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-005",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days",
-          "homepage_present_deploy_intent_only"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 25,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -3094,49 +3092,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-006",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 20,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -3145,50 +3132,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-007",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days",
-          "homepage_present_deploy_intent_only"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 25,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -3197,49 +3172,38 @@
     },
     {
       "blocking_evidence": [
-        "no_E3_or_stronger_primary_demand_receipt",
-        "no_full_technical_readiness_receipt",
+        "private_evidence_withheld",
         "no_operator_selected_or_scored",
         "human_terms_and_contract_gates_unpulled",
         "no_observed_pilot"
       ],
       "candidate_id": "private-candidate-008",
-      "current_state": "active_repository",
       "demand": {
         "evidence": [
-          "no_approved_public_demand_evidence"
+          "private_demand_evidence_withheld"
         ],
-        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "next_experiment": "Owner-approved, consented private experiment; no send from this preflight.",
         "score": 0,
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "tier": "E0"
       },
       "economics": {
-        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "hypothesis": "Private economics require restricted review before transfer consideration.",
         "runway": "not_approved",
-        "status": "unpriced_public_preflight",
-        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "status": "private_economics_withheld",
+        "stop_condition": "Park until approved evidence satisfies the public contract.",
         "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
       },
       "preflight_disposition": "park",
       "readiness": {
-        "band": "diligence_required",
-        "custody_risk": "restricted_review_required",
+        "band": "private_evidence_withheld",
+        "custody_risk": "private_custody_withheld",
         "evidence": [
-          "resolved_in_live_owned_estate",
-          "not_archived",
-          "default_branch_present",
-          "pushed_within_90_days"
+          "private_readiness_evidence_withheld"
         ],
-        "metadata_screen_score": 20,
+        "metadata_screen_score": 0,
         "unverified_dimensions": [
-          "exact_head_build_test",
-          "runtime_liveness",
-          "security",
-          "data_privacy",
-          "ip_contributor_custody",
-          "observability_return",
-          "maintenance_owner_and_estimate"
+          "all_dimensions"
         ]
       },
       "repository": null,
@@ -3277,7 +3241,7 @@
       "organvm-vii-kerygma": 5
     }
   },
-  "observed_at": "2026-08-13T04:52:53.725120Z",
+  "observed_at": "2026-08-14T15:58:07.099488Z",
   "schema_version": "limen.psp_c11_product_candidate_snapshot.v1",
   "score_distribution": {
     "demand_tiers": {
@@ -3290,8 +3254,9 @@
       "park": 60
     },
     "readiness_bands": {
-      "diligence_required": 60,
-      "park_archived": 2
+      "diligence_required": 53,
+      "park_archived": 1,
+      "private_evidence_withheld": 8
     },
     "transfer_eligible": 0
   },

@@ -4,7 +4,7 @@ version: 3.0
 date: 2026-08-13
 from: Codex direct-session reversible preflight
 to: next authorized PSP-C11 conductor or correctly assigned leaf
-scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen
+scope: .
 phase: PROVE
 compression_level: medium
 ---
@@ -163,7 +163,7 @@ state from this handoff.
 The fresh-agent injection phrase is:
 
 ```text
-Continue from relay at /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/5a58/limen/docs/receipts/positioning/relays/2026-08-10-psp-c11-governed-foundry-preflight.md. mid-task — see Next Actions for current step.
+Continue from relay at `docs/receipts/positioning/relays/2026-08-10-psp-c11-governed-foundry-preflight.md`. mid-task — see Next Actions for current step.
 ```
 
 The receiver must repeat live orientation and obtain its own identity and authority. This relay

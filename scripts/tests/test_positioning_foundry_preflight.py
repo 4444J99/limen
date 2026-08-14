@@ -2,6 +2,7 @@ import copy
 import datetime as dt
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -134,7 +135,27 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
         self.assertEqual(8, len(private_rows))
         self.assertTrue(all(row["repository"] is None for row in private_rows))
         self.assertTrue(all(row["candidate_id"].startswith("private-candidate-") for row in private_rows))
-        self.assertTrue(all(row["demand"]["tier"] == "E0" for row in private_rows))
+        self.assertTrue(all(set(row) == MODULE.PRIVATE_CANDIDATE_KEYS for row in private_rows))
+        self.assertTrue(all(row["demand"] == MODULE.PRIVATE_DEMAND for row in private_rows))
+        self.assertTrue(all(row["readiness"] == MODULE.PRIVATE_READINESS for row in private_rows))
+        self.assertTrue(all(row["economics"] == MODULE.PRIVATE_ECONOMICS for row in private_rows))
+        self.assertTrue(all("current_state" not in row and "fork" not in row for row in private_rows))
+
+    def test_private_snapshot_detail_and_summary_tampering_fail_closed(self) -> None:
+        changed = copy.deepcopy(self.snapshot)
+        private = next(row for row in changed["candidates"] if row["visibility"] == "private")
+        private["current_state"] = "archived"
+        changed["candidate_denominator"]["visibility"]["private"] -= 1
+        changed["score_distribution"]["demand_tiers"]["E0"] -= 1
+        errors = MODULE.validate_snapshot(changed, self.contract)
+        self.assertTrue(any("private row shape" in error for error in errors))
+        self.assertIn("snapshot candidate visibility summary drift", errors)
+        self.assertIn("snapshot score distribution drift", errors)
+
+    def test_public_snapshot_rows_bind_fork_fact(self) -> None:
+        public_rows = [row for row in self.snapshot["candidates"] if row["visibility"] == "public"]
+        self.assertTrue(all(set(row) == MODULE.PUBLIC_CANDIDATE_KEYS for row in public_rows))
+        self.assertTrue(all(isinstance(row["fork"], bool) for row in public_rows))
 
     def test_snapshot_sources_are_inventory_only(self) -> None:
         source_rows = {row["id"]: row for row in self.contract["live_sources"]}
@@ -199,6 +220,34 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
             (ROOT / "docs/positioning/foundry/psp-c11/synthetic-drill-receipt.json").read_text(encoding="utf-8")
         )
         self.assertEqual(tracked, MODULE.run_synthetic_drills(self.contract))
+
+    def test_external_contract_and_snapshot_overrides_are_reported_safely(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            contract_path = root / "contract.json"
+            snapshot_path = root / "snapshot.json"
+            contract_path.write_text(json.dumps(self.contract), encoding="utf-8")
+            snapshot_path.write_text(json.dumps(self.snapshot), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "--contract",
+                    str(contract_path),
+                    "--snapshot",
+                    str(snapshot_path),
+                    "--json",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=60,
+            )
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(str(contract_path), payload["contract"])
+        self.assertEqual(str(snapshot_path), payload["snapshot"])
 
 
 if __name__ == "__main__":
