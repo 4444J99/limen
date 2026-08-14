@@ -36,6 +36,29 @@ W07_WORKFLOW_PATH = "docs/positioning/program/w07_blinded_reader_workflow.py"
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
+COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
+INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
+DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
+DEMO_RECORD_FIELDS = {
+    "packet": {"type", "id", "synthetic", "authority"},
+    "lease": {"type", "id", "synthetic", "packet_id"},
+    "execution": {"type", "id", "synthetic", "lease_id"},
+    "predicate": {"type", "id", "synthetic", "execution_id", "result"},
+    "receipt": {"type", "id", "synthetic", "predicate_id"},
+    "failure": {"type", "id", "synthetic", "predicate_id", "reason"},
+    "recovery": {"type", "id", "synthetic", "failure_id", "action"},
+    "harvest": {"type", "id", "synthetic", "receipt_id", "recovery_id", "outcome"},
+}
+DEMO_RELATIONSHIPS = {
+    ("lease", "packet_id"): "packet",
+    ("execution", "lease_id"): "lease",
+    ("predicate", "execution_id"): "execution",
+    ("receipt", "predicate_id"): "predicate",
+    ("failure", "predicate_id"): "predicate",
+    ("recovery", "failure_id"): "failure",
+    ("harvest", "receipt_id"): "receipt",
+    ("harvest", "recovery_id"): "recovery",
+}
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -426,6 +449,15 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("cost/failure reproduction must be executable with synthetic fixtures only")
     if not reproduction.get("runner") or not reproduction.get("fixture"):
         errors.append("cost/failure reproduction requires runner and fixture")
+    if reproduction.get("review_schema") != COST_REVIEW_SCHEMA:
+        errors.append("cost/failure reproduction must bind the independent review schema")
+    reviewer_classes = reproduction.get("independent_reviewer_classes")
+    if (
+        not isinstance(reviewer_classes, list)
+        or not all(isinstance(value, str) for value in reviewer_classes)
+        or set(reviewer_classes) != INDEPENDENT_REVIEWER_CLASSES
+    ):
+        errors.append("cost/failure reproduction must bind the independent reviewer classes")
     public_failure_classes = reproduction.get("public_failure_classes")
     if (
         not isinstance(public_failure_classes, list)
@@ -911,6 +943,8 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                 errors.append(f"claim disclosure tier does not authorize this surface: {key[0]} / {key[1]}")
             if canonical.get("action") != "audit_canonical_wording":
                 errors.append(f"canonical claim is not eligible for public presence: {key[0]} / {key[1]}")
+            if row.get("claim_text") != canonical.get("claim_text"):
+                errors.append(f"claim text differs from canonical inventory: {key[0]} / {key[1]}")
             if row.get("canonical_or_drift") != "canonical":
                 errors.append(f"present claim differs from canonical wording: {key[0]} / {key[1]}")
             observed_at = row.get("observed_at")
@@ -949,6 +983,12 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
 
 def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
+    missing_root_fields = sorted(DEMO_ROOT_FIELDS - set(fixture))
+    unexpected_root_fields = sorted(set(fixture) - DEMO_ROOT_FIELDS)
+    if missing_root_fields:
+        errors.append(f"demo fixture missing root fields: {', '.join(missing_root_fields)}")
+    if unexpected_root_fields:
+        errors.append(f"demo fixture has unknown root fields: {', '.join(unexpected_root_fields)}")
     if fixture.get("schema_version") != ARCHITECTURE_DEMO_SCHEMA:
         errors.append(f"demo fixture schema_version must be {ARCHITECTURE_DEMO_SCHEMA}")
     if fixture.get("synthetic_only") is not True:
@@ -957,27 +997,77 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
     if not isinstance(records, list):
         return {"status": "fail", "errors": [*errors, "demo records must be a list"]}
     record_types: set[str] = set()
+    record_type_counts: dict[str, int] = {}
+    records_by_id: dict[str, dict[str, Any]] = {}
     for index, record in enumerate(records):
         if not isinstance(record, dict):
+            errors.append(f"demo record {index} must be an object")
             continue
         record_type = record.get("type")
         if not isinstance(record_type, str) or not record_type.strip():
             errors.append(f"demo record {index} requires a nonblank text type")
         else:
             record_types.add(record_type)
-    required = set(contract.get("synthetic_architecture_demo", {}).get("required_record_types", []))
-    missing = sorted(required - record_types)
-    if missing:
-        errors.append(f"demo missing record types: {', '.join(missing)}")
-    for index, record in enumerate(records):
-        if not isinstance(record, dict):
-            errors.append(f"demo record {index} must be an object")
-            continue
+            record_type_counts[record_type] = record_type_counts.get(record_type, 0) + 1
+            expected_fields = DEMO_RECORD_FIELDS.get(record_type)
+            if expected_fields is None:
+                errors.append(f"demo record {index} has unsupported type: {record_type}")
+            else:
+                missing_fields = sorted(expected_fields - set(record))
+                unexpected_fields = sorted(set(record) - expected_fields)
+                if missing_fields:
+                    errors.append(
+                        f"demo record {index} missing {record_type} fields: {', '.join(missing_fields)}"
+                    )
+                if unexpected_fields:
+                    errors.append(
+                        f"demo record {index} has unknown {record_type} fields: {', '.join(unexpected_fields)}"
+                    )
+                for field in sorted(expected_fields - {"type", "synthetic"}):
+                    value = record.get(field)
+                    if not isinstance(value, str) or not value.strip():
+                        errors.append(f"demo record {index} field {field} must be nonblank text")
+        record_id = record.get("id")
+        if isinstance(record_id, str) and record_id.strip():
+            if record_id in records_by_id:
+                errors.append(f"duplicate demo record id: {record_id}")
+            else:
+                records_by_id[record_id] = record
+        else:
+            errors.append(f"demo record {index} requires a nonblank text id")
         forbidden = sorted(_find_forbidden_demo_material(record))
         if forbidden:
             errors.append(f"demo record {index} contains forbidden material: {', '.join(forbidden)}")
         if record.get("synthetic") is not True:
             errors.append(f"demo record {index} must be marked synthetic")
+    required = set(contract.get("synthetic_architecture_demo", {}).get("required_record_types", []))
+    missing = sorted(required - record_types)
+    if missing:
+        errors.append(f"demo missing record types: {', '.join(missing)}")
+    unexpected_types = sorted(record_types - set(DEMO_RECORD_FIELDS))
+    if unexpected_types:
+        errors.append(f"demo has unsupported record types: {', '.join(unexpected_types)}")
+    for record_type in sorted(required):
+        if record_type_counts.get(record_type) != 1:
+            errors.append(f"demo requires exactly one {record_type} record")
+    for record in records_by_id.values():
+        record_type = record.get("type")
+        if not isinstance(record_type, str):
+            continue
+        for (source_type, field), target_type in DEMO_RELATIONSHIPS.items():
+            if record_type != source_type:
+                continue
+            target = records_by_id.get(record.get(field))
+            if target is None or target.get("type") != target_type:
+                errors.append(
+                    f"demo {source_type} {record.get('id')} must link {field} to a {target_type} record"
+                )
+    packet = next((record for record in records_by_id.values() if record.get("type") == "packet"), None)
+    if packet is not None and packet.get("authority") != "bounded":
+        errors.append("demo packet authority must be bounded")
+    predicate = next((record for record in records_by_id.values() if record.get("type") == "predicate"), None)
+    if predicate is not None and predicate.get("result") not in {"pass", "fail", "blocked"}:
+        errors.append("demo predicate result must be pass, fail, or blocked")
     return {"status": "pass" if not errors else "fail", "errors": errors, "record_count": len(records)}
 
 
@@ -1228,9 +1318,12 @@ def _live_authoritative_closure_verification(repository: Path, closure_head: str
     if not FULL_HEAD.fullmatch(closure_head):
         raise ValueError("authoritative closure verification requires a full exact head")
     default_branch, default_head = _canonical_limen_remote_head()
+    ancestry_environment = dict(os.environ)
+    ancestry_environment.update({"GIT_NO_REPLACE_OBJECTS": "1", "GIT_GRAFT_FILE": "/dev/null"})
     ancestry = subprocess.run(
         ["git", "merge-base", "--is-ancestor", closure_head, default_head],
         cwd=repository,
+        env=ancestry_environment,
         check=False,
         capture_output=True,
         text=True,
@@ -1562,9 +1655,8 @@ def formalization_readiness(
     repository: Path = ROOT,
     w07_verification: dict[str, Any] | None = None,
     phase_verifications: dict[str, dict[str, Any]] | None = None,
-    closure_remote_verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("exact_head")
+    accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("merge_commit")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
     receipt_errors: list[str] = []
     final_head: str | None = None
@@ -1578,13 +1670,9 @@ def formalization_readiness(
             receipt_errors.append("closure receipt requires a full exact head")
         else:
             try:
-                authoritative = (
-                    closure_remote_verification
-                    if closure_remote_verification is not None
-                    else _live_authoritative_closure_verification(repository, final_head)
-                )
+                authoritative = _live_authoritative_closure_verification(repository, final_head)
                 receipt_errors.extend(_validate_authoritative_closure_verification(authoritative, final_head))
-            except (json.JSONDecodeError, OSError, ValueError) as exc:
+            except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
                 receipt_errors.append(str(exc))
             ancestry = subprocess.run(
                 ["git", "merge-base", "--is-ancestor", str(accepted_head), final_head],

@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import json
 import os
@@ -27,6 +28,8 @@ COST = load_module(
     "positioning_cost_failure_reproduction",
     ROOT / "scripts/positioning-cost-failure-reproduction.py",
 )
+COST_INPUT_ARTIFACT = "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json"
+COST_REVIEW_ARTIFACT = "scripts/tests/fixtures/positioning-proof/independent-cost-failure-review.json"
 
 
 def attach_origin(repository: Path, remote_root: Path) -> Path:
@@ -54,6 +57,28 @@ def run_request(request: dict[str, object]) -> dict[str, object]:
             repository,
             ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
         ),
+    )
+
+
+def independent_cost_review(payload: dict[str, object]) -> dict[str, object]:
+    return {
+        "schema_version": COST.REVIEW_SCHEMA,
+        "reviewer_class": "independent_model",
+        "reviewer_identity": "hermetic-independent-reviewer",
+        "observed_at": "2026-08-08T12:00:00Z",
+        "data_digest": COST._canonical_digest(payload),
+        "verdict": "publishable_public_safe",
+        "limitations": ["Hermetic contract fixture only; not external publication authority."],
+    }
+
+
+def reproduce_cost(payload: dict[str, object], *, reviewed: bool = False) -> dict[str, object]:
+    review = independent_cost_review(payload) if reviewed else None
+    return COST.reproduce(
+        payload,
+        input_artifact=COST_INPUT_ARTIFACT,
+        review_artifact=COST_REVIEW_ARTIFACT if review is not None else None,
+        review_verdict=review,
     )
 
 
@@ -93,13 +118,85 @@ class PositioningProofRunnerTest(unittest.TestCase):
 
     def test_cost_failure_fixture_reproduces_all_dimensions(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
-        result = COST.reproduce(payload)
-        self.assertEqual("regenerated", result["status"])
+        result = reproduce_cost(payload)
+        self.assertEqual("withheld", result["status"])
+        self.assertFalse(result["publication_eligible"])
+        self.assertEqual(COST_INPUT_ARTIFACT, result["reproduction_command"]["input_artifact"])
+        self.assertIsNone(result["review_verdict"])
         self.assertEqual(3, result["denominator"])
         self.assertEqual(1, result["terminal_states"]["failed"])
         self.assertEqual(1, result["terminal_states"]["failed_blocked"])
         self.assertEqual(5, len(result["dimensions"]))
         self.assertEqual(64, len(result["data_digest"]))
+
+    def test_public_safe_observed_cost_sample_can_be_regenerated(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        result = reproduce_cost(payload, reviewed=True)
+        self.assertEqual("regenerated", result["status"])
+        self.assertTrue(result["publication_eligible"])
+        self.assertEqual("publishable_public_safe", result["review_verdict"]["verdict"])
+        command = result["reproduction_command"]
+        self.assertEqual(result["data_digest"], command["input_sha256"])
+        self.assertEqual(COST._canonical_digest(result["review_verdict"]), command["review_sha256"])
+        self.assertEqual(
+            [
+                "python3",
+                "scripts/positioning-cost-failure-reproduction.py",
+                "--input",
+                COST_INPUT_ARTIFACT,
+                "--review",
+                COST_REVIEW_ARTIFACT,
+            ],
+            command["argv"],
+        )
+
+    def test_cost_failure_required_receipt_fields_fail_closed_before_publication(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        valid = reproduce_cost(payload, reviewed=True)
+        circular_review = copy.deepcopy(valid["review_verdict"])
+        circular_review["reviewer_class"] = "deterministic_contract_validator"
+        drifted_review = copy.deepcopy(valid["review_verdict"])
+        drifted_review["data_digest"] = "0" * 64
+        mutations = (
+            ("reproduction_command", None, "reproduction_command"),
+            ("reproduction_command", ["python3", "unreviewed.py"], "reproduction_command"),
+            ("review_verdict", None, "structured independent review_verdict"),
+            ("review_verdict", {"status": "pass"}, "exact contract fields"),
+            ("review_verdict", circular_review, "independent reviewer class"),
+            ("review_verdict", drifted_review, "does not bind the analyzed data digest"),
+        )
+        for field, value, expected_error in mutations:
+            with self.subTest(field=field, value=value):
+                analysis = copy.deepcopy(valid)
+                if value is None:
+                    analysis.pop(field)
+                else:
+                    analysis[field] = value
+                result = COST._finalize_analysis(analysis, data_complete=True)
+                self.assertEqual("withheld", result["status"])
+                self.assertFalse(result["publication_eligible"])
+                self.assertTrue(any(expected_error in error for error in result["errors"]), result["errors"])
+
+    def test_cost_failure_sample_ids_are_normalized_before_deduplication(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["rows"][1]["sample_id"] = f" {payload['rows'][0]['sample_id']} "
+        result = reproduce_cost(payload)
+        self.assertEqual("withheld", result["status"])
+        self.assertTrue(any("unique public-safe sample_id" in error for error in result["errors"]))
+
+    def test_cost_failure_requires_explicit_provenance(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        for provenance in (None, "synthetic_or_public_safe", {"mode": "synthetic"}):
+            mutated = copy.deepcopy(payload)
+            if provenance is None:
+                mutated.pop("provenance")
+            else:
+                mutated["provenance"] = provenance
+            result = reproduce_cost(mutated)
+            self.assertEqual("withheld", result["status"])
+            self.assertTrue(any("explicit synthetic or public_safe_observed provenance" in error for error in result["errors"]))
 
     def test_receipt_request_requires_a_typed_repository_path(self) -> None:
         for repository_path in (None, {"path": "/tmp/repository"}, ["/tmp/repository"]):
@@ -154,7 +251,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_cost_failure_private_or_unknown_fields_fail_closed(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["rows"][0]["customer"] = "private"
-        result = COST.reproduce(payload)
+        result = reproduce_cost(payload)
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
 
@@ -162,7 +259,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         for failure_class in ({"code": "timeout"}, ["timeout"]):
             payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
             payload["rows"][1]["failure_class"] = failure_class
-            result = COST.reproduce(payload)
+            result = reproduce_cost(payload)
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
 
@@ -178,7 +275,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         for field, value, expected_error in cases:
             payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
             payload["rows"][1][field] = value
-            result = COST.reproduce(payload)
+            result = reproduce_cost(payload)
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any(expected_error in error for error in result["errors"]))
 
@@ -205,7 +302,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         ):
             failed[field] = 0
         failed["failure_class"] = "customer@example.invalid"
-        result = COST.reproduce(payload)
+        result = reproduce_cost(payload)
         self.assertEqual("withheld", result["status"])
         self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
         self.assertTrue(any("positive measured cost/time" in error for error in result["errors"]))
@@ -216,7 +313,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         failed["model_cost_usd"] = None
         failed["model_cost_basis"] = "unknown"
         failed["human_minutes"] = None
-        result = COST.reproduce(payload)
+        result = reproduce_cost(payload)
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
 

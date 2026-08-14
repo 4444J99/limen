@@ -272,9 +272,11 @@
   },
   "cost_failure_reproduction": {
     "status": "executable_synthetic_fixture_only",
-    "runner": "python3 scripts/positioning-cost-failure-reproduction.py --input <public-safe-sample.json>",
+    "runner": "python3 scripts/positioning-cost-failure-reproduction.py --input <public-safe-sample.json> --review <independent-review.json>",
     "fixture": "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json",
     "input_schema": "limen.positioning_cost_failure_sample.v1",
+    "review_schema": "limen.positioning_cost_failure_review.v1",
+    "independent_reviewer_classes": ["independent_human", "independent_model", "consented_collaborator"],
     "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "human-time sampling method", "published price basis or explicit unknown"],
     "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
     "public_failure_classes": ["dependency_failure", "external_gate", "human_gate", "policy_failure", "predicate_failure", "resource_limit", "verification_failure"],

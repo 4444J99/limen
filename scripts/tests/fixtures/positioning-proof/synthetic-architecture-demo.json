@@ -5,10 +5,10 @@
     {"type": "packet", "id": "packet-demo", "synthetic": true, "authority": "bounded"},
     {"type": "lease", "id": "lease-demo", "synthetic": true, "packet_id": "packet-demo"},
     {"type": "execution", "id": "run-demo", "synthetic": true, "lease_id": "lease-demo"},
-    {"type": "predicate", "id": "predicate-demo", "synthetic": true, "result": "fail"},
+    {"type": "predicate", "id": "predicate-demo", "synthetic": true, "execution_id": "run-demo", "result": "fail"},
     {"type": "receipt", "id": "receipt-demo", "synthetic": true, "predicate_id": "predicate-demo"},
-    {"type": "failure", "id": "failure-demo", "synthetic": true, "reason": "bounded synthetic failure"},
-    {"type": "recovery", "id": "recovery-demo", "synthetic": true, "action": "narrow and rerun"},
-    {"type": "harvest", "id": "harvest-demo", "synthetic": true, "outcome": "receipt retained"}
+    {"type": "failure", "id": "failure-demo", "synthetic": true, "predicate_id": "predicate-demo", "reason": "bounded synthetic failure"},
+    {"type": "recovery", "id": "recovery-demo", "synthetic": true, "failure_id": "failure-demo", "action": "narrow and rerun"},
+    {"type": "harvest", "id": "harvest-demo", "synthetic": true, "receipt_id": "receipt-demo", "recovery_id": "recovery-demo", "outcome": "receipt retained"}
   ]
 }

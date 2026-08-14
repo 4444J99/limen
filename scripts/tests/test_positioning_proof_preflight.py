@@ -373,6 +373,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("differs from canonical wording" in error for error in result["errors"]))
 
+    def test_present_surface_claim_binds_the_exact_canonical_text(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+        present.update(
+            {
+                "presence": "present",
+                "canonical_or_drift": "canonical",
+                "claim_text": f"{present['claim_text']} with an inflated implication",
+            }
+        )
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("claim text differs from canonical inventory" in error for error in result["errors"]))
+
     def test_present_surface_claim_requires_exact_unique_canonical_sources(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         for suffix in (["unreviewed-extra"], [rows[0]["source_ids"][0]]):
@@ -485,6 +500,37 @@ class PositioningProofPreflightTest(unittest.TestCase):
             result = MODULE.validate_demo_fixture(self.contract, fixture)
             self.assertEqual("fail", result["status"])
             self.assertTrue(any("schema_version" in error for error in result["errors"]))
+
+    def test_demo_rejects_unknown_root_and_record_fields(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        fixture["repository"] = "private-alias"
+        fixture["records"][0]["task_body"] = "unreviewed"
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("unknown root fields: repository" in error for error in result["errors"]))
+        self.assertTrue(any("unknown packet fields: task_body" in error for error in result["errors"]))
+
+    def test_demo_requires_one_linked_record_for_every_story_stage(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        for record_type, field, invalid_target in (
+            ("lease", "packet_id", "missing-packet"),
+            ("predicate", "execution_id", "missing-execution"),
+            ("recovery", "failure_id", "missing-failure"),
+            ("harvest", "receipt_id", "missing-receipt"),
+        ):
+            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+            record = next(row for row in fixture["records"] if row["type"] == record_type)
+            record[field] = invalid_target
+            result = MODULE.validate_demo_fixture(self.contract, fixture)
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(any(f"must link {field}" in error for error in result["errors"]))
+
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        fixture["records"].append(dict(fixture["records"][0], id="packet-demo-duplicate"))
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("exactly one packet record" in error for error in result["errors"]))
 
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
@@ -687,28 +733,54 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "receipt": {},
             },
         }
-        result = MODULE.formalization_readiness(
-            self.contract,
-            closure,
-            w07_verification={
-                "status": "pass",
-                "work_id": "PSP-P03-W07",
-                "receipt_url": "https://github.com/organvm/limen/issues/2188#issuecomment-1",
-                "receipt_sha256": hashlib.sha256(b"receipt").hexdigest(),
-            },
-            phase_verifications=phase_verifications,
-            closure_remote_verification={
-                "status": "pass",
-                "repository": "organvm/limen",
-                "closure_head": MODULE.C03_CURRENT_HEAD,
-                "default_branch": "main",
-                "default_head": MODULE.C03_CURRENT_HEAD,
-                "contained": True,
-            },
-        )
+        authoritative = {
+            "status": "pass",
+            "repository": "organvm/limen",
+            "closure_head": MODULE.C03_CURRENT_HEAD,
+            "default_branch": "main",
+            "default_head": MODULE.C03_CURRENT_HEAD,
+            "contained": True,
+        }
+        with mock.patch.object(
+            MODULE,
+            "_live_authoritative_closure_verification",
+            return_value=authoritative,
+        ):
+            result = MODULE.formalization_readiness(
+                self.contract,
+                closure,
+                w07_verification={
+                    "status": "pass",
+                    "work_id": "PSP-P03-W07",
+                    "receipt_url": "https://github.com/organvm/limen/issues/2188#issuecomment-1",
+                    "receipt_sha256": hashlib.sha256(b"receipt").hexdigest(),
+                },
+                phase_verifications=phase_verifications,
+            )
         self.assertFalse(result["ready"])
         self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
         self.assertTrue(any("self-declared phase_predicates" in error for error in result["errors"]))
+
+    def test_formalization_uses_the_integrated_c03_main_commit_as_its_ancestry_floor(self) -> None:
+        closure = {
+            "chunk_id": "PSP-C03",
+            "status": "pass",
+            "exact_head": MODULE.C03_MERGE_COMMIT,
+            "phase_receipts": {},
+            "w07_receipt": {},
+        }
+        remote = {
+            "status": "pass",
+            "repository": "organvm/limen",
+            "closure_head": MODULE.C03_MERGE_COMMIT,
+            "default_branch": "main",
+            "default_head": MODULE.C03_MERGE_COMMIT,
+            "contained": True,
+        }
+        with mock.patch.object(MODULE, "_live_authoritative_closure_verification", return_value=remote):
+            result = MODULE.formalization_readiness(self.contract, closure)
+        self.assertFalse(result["ready"])
+        self.assertFalse(any("final C03 head is not a locally proven descendant" in error for error in result["errors"]))
 
     def test_formalization_rejects_a_closure_head_outside_the_authoritative_default_branch(self) -> None:
         errors = MODULE._validate_authoritative_closure_verification(
@@ -723,6 +795,36 @@ class PositioningProofPreflightTest(unittest.TestCase):
             MODULE.C03_CURRENT_HEAD,
         )
         self.assertTrue(any("authoritative default branch" in error for error in errors))
+
+    def test_formalization_converts_remote_timeouts_to_a_failed_receipt(self) -> None:
+        closure = {
+            "chunk_id": "PSP-C03",
+            "status": "pass",
+            "exact_head": MODULE.C03_MERGE_COMMIT,
+            "phase_receipts": {},
+            "w07_receipt": {},
+        }
+        timeout = subprocess.TimeoutExpired(["git", "ls-remote"], 30)
+        with mock.patch.object(MODULE, "_live_authoritative_closure_verification", side_effect=timeout):
+            result = MODULE.formalization_readiness(self.contract, closure)
+        self.assertFalse(result["ready"])
+        self.assertTrue(any("timed out" in error for error in result["errors"]))
+
+    def test_live_closure_ancestry_disables_replacement_and_graft_overrides(self) -> None:
+        completed = subprocess.CompletedProcess([], 0, "", "")
+        with (
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_remote_head",
+                return_value=("main", MODULE.C03_MERGE_COMMIT),
+            ),
+            mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run,
+        ):
+            result = MODULE._live_authoritative_closure_verification(ROOT, MODULE.C03_MERGE_COMMIT)
+        self.assertTrue(result["contained"])
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual("1", environment["GIT_NO_REPLACE_OBJECTS"])
+        self.assertEqual("/dev/null", environment["GIT_GRAFT_FILE"])
 
     def test_live_closure_verification_rejects_an_unpushed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

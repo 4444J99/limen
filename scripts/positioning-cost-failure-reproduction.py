@@ -8,7 +8,7 @@ import hashlib
 import json
 import math
 from datetime import date, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -23,6 +23,12 @@ ALLOWED_FAILURE_CLASSES = {
     "resource_limit",
     "verification_failure",
 }
+REPRODUCTION_SCHEMA = "limen.positioning_cost_failure_reproduction.v1"
+REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
+INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
+REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
+ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
+ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window_end", "rows"}
 ALLOWED_FIELDS = {
     "sample_id",
     "observed_at",
@@ -70,10 +76,14 @@ def _parse_observed_at(value: object, index: int, errors: list[str]) -> datetime
 
 def validate_sample(payload: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    unexpected_sample_fields = sorted(set(payload) - ALLOWED_SAMPLE_FIELDS)
+    if unexpected_sample_fields:
+        errors.append(f"sample has prohibited or unknown fields: {', '.join(unexpected_sample_fields)}")
     if payload.get("schema_version") != SCHEMA_VERSION:
         errors.append("unsupported sample schema")
-    if payload.get("synthetic_or_public_safe") is not True:
-        errors.append("sample must declare synthetic_or_public_safe true")
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, str) or provenance not in ALLOWED_PROVENANCE:
+        errors.append("sample requires explicit synthetic or public_safe_observed provenance")
     window_start = _parse_window_date(payload.get("window_start"), "window_start", errors)
     window_end = _parse_window_date(payload.get("window_end"), "window_end", errors)
     if window_start is not None and window_end is not None and window_start > window_end:
@@ -90,10 +100,11 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
         if unexpected:
             errors.append(f"row {index} has prohibited or unknown fields: {', '.join(unexpected)}")
         sample_id = row.get("sample_id")
-        if not isinstance(sample_id, str) or not sample_id.strip() or sample_id in seen:
+        normalized_sample_id = sample_id.strip() if isinstance(sample_id, str) else None
+        if not normalized_sample_id or normalized_sample_id in seen:
             errors.append(f"row {index} requires a unique public-safe sample_id")
         else:
-            seen.add(sample_id)
+            seen.add(normalized_sample_id)
         terminal_state = row.get("terminal_state")
         if not isinstance(terminal_state, str) or terminal_state not in ALLOWED_STATES:
             errors.append(f"row {index} has an unsupported terminal_state")
@@ -164,10 +175,168 @@ def _distribution(rows: list[dict[str, Any]], field: str) -> dict[str, Any]:
     }
 
 
-def reproduce(payload: dict[str, Any]) -> dict[str, Any]:
+def _public_artifact_path(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip() or "\0" in value or "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return not path.is_absolute() and ".." not in path.parts and path.as_posix() == value
+
+
+def _build_reproduction_command(
+    input_artifact: object,
+    data_digest: str,
+    review_artifact: object,
+    review_verdict: object,
+) -> dict[str, Any]:
+    argv = ["python3", "scripts/positioning-cost-failure-reproduction.py", "--input"]
+    if isinstance(input_artifact, str):
+        argv.append(input_artifact)
+    if review_artifact is not None:
+        argv.append("--review")
+        if isinstance(review_artifact, str):
+            argv.append(review_artifact)
+    return {
+        "schema_version": REPRODUCTION_SCHEMA,
+        "argv": argv,
+        "input_artifact": input_artifact,
+        "input_sha256": data_digest,
+        "review_artifact": review_artifact,
+        "review_sha256": _canonical_digest(review_verdict) if isinstance(review_verdict, dict) else None,
+    }
+
+
+def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    reproduction = analysis.get("reproduction_command")
+    reproduction_fields = {
+        "schema_version",
+        "argv",
+        "input_artifact",
+        "input_sha256",
+        "review_artifact",
+        "review_sha256",
+    }
+    if not isinstance(reproduction, dict):
+        errors.append("analysis requires a structured reproduction_command")
+    else:
+        if set(reproduction) != reproduction_fields:
+            errors.append("analysis reproduction_command must use the exact contract fields")
+        if reproduction.get("schema_version") != REPRODUCTION_SCHEMA:
+            errors.append("analysis reproduction_command has an unsupported schema")
+        input_artifact = reproduction.get("input_artifact")
+        review_artifact = reproduction.get("review_artifact")
+        if not _public_artifact_path(input_artifact):
+            errors.append("analysis reproduction_command requires a public-safe input artifact path")
+        if reproduction.get("input_sha256") != analysis.get("data_digest"):
+            errors.append("analysis reproduction_command input digest does not bind the analyzed data")
+        expected_argv = [
+            "python3",
+            "scripts/positioning-cost-failure-reproduction.py",
+            "--input",
+            input_artifact,
+        ]
+        if review_artifact is not None:
+            if not _public_artifact_path(review_artifact):
+                errors.append("analysis reproduction_command requires a public-safe review artifact path")
+            expected_argv.extend(["--review", review_artifact])
+        if reproduction.get("argv") != expected_argv:
+            errors.append("analysis reproduction_command argv does not exactly replay the bound artifacts")
+
+    verdict = analysis.get("review_verdict")
+    verdict_fields = {
+        "schema_version",
+        "reviewer_class",
+        "reviewer_identity",
+        "observed_at",
+        "data_digest",
+        "verdict",
+        "limitations",
+    }
+    if not isinstance(verdict, dict):
+        errors.append("analysis requires a structured independent review_verdict")
+        return errors
+    if set(verdict) != verdict_fields:
+        errors.append("analysis review_verdict must use the exact contract fields")
+    if verdict.get("schema_version") != REVIEW_SCHEMA:
+        errors.append("analysis review_verdict has an unsupported schema")
+    if verdict.get("reviewer_class") not in INDEPENDENT_REVIEWER_CLASSES:
+        errors.append("analysis review_verdict requires an independent reviewer class")
+    reviewer_identity = verdict.get("reviewer_identity")
+    if not isinstance(reviewer_identity, str) or not reviewer_identity.strip() or "\0" in reviewer_identity:
+        errors.append("analysis review_verdict requires a nonblank reviewer identity")
+    observed_at = verdict.get("observed_at")
+    try:
+        reviewed_at = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if reviewed_at.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError):
+        errors.append("analysis review_verdict observed_at must be RFC3339 with a timezone")
+    if verdict.get("data_digest") != analysis.get("data_digest"):
+        errors.append("analysis review_verdict does not bind the analyzed data digest")
+    if verdict.get("verdict") not in REVIEW_VERDICTS:
+        errors.append("analysis review_verdict must explicitly publish or withhold")
+    limitations = verdict.get("limitations")
+    if not (
+        isinstance(limitations, list)
+        and bool(limitations)
+        and all(isinstance(value, str) and bool(value.strip()) and "\0" not in value for value in limitations)
+    ):
+        errors.append("analysis review_verdict requires nonblank public-safe limitations")
+    if analysis.get("provenance") == "synthetic" and verdict.get("verdict") == "publishable_public_safe":
+        errors.append("synthetic cost samples cannot receive a publishable review verdict")
+    if isinstance(reproduction, dict):
+        review_artifact = reproduction.get("review_artifact")
+        if not _public_artifact_path(review_artifact):
+            errors.append("analysis requires the exact public-safe review artifact")
+        if reproduction.get("review_sha256") != _canonical_digest(verdict):
+            errors.append("analysis reproduction_command review digest does not bind the review verdict")
+    return errors
+
+
+def _finalize_analysis(analysis: dict[str, Any], *, data_complete: bool) -> dict[str, Any]:
+    required_errors = _validate_required_receipt_fields(analysis)
+    errors = [*analysis.get("errors", []), *required_errors]
+    verdict = analysis.get("review_verdict")
+    verdict_passed = isinstance(verdict, dict) and verdict.get("verdict") == "publishable_public_safe"
+    publication_eligible = (
+        data_complete
+        and analysis.get("provenance") == "public_safe_observed"
+        and verdict_passed
+        and not errors
+    )
+    analysis["errors"] = errors
+    analysis["publication_eligible"] = publication_eligible
+    analysis["status"] = "regenerated" if publication_eligible else "withheld"
+    return analysis
+
+
+def reproduce(
+    payload: dict[str, Any],
+    *,
+    input_artifact: object = None,
+    review_artifact: object = None,
+    review_verdict: object = None,
+) -> dict[str, Any]:
+    data_digest = _canonical_digest(payload)
+    reproduction_command = _build_reproduction_command(
+        input_artifact,
+        data_digest,
+        review_artifact,
+        review_verdict,
+    )
     errors = validate_sample(payload)
     if errors:
-        return {"status": "withheld", "errors": errors, "publication_eligible": False}
+        return _finalize_analysis(
+            {
+                "schema_version": "limen.positioning_cost_failure_analysis.v1",
+                "provenance": payload.get("provenance"),
+                "reproduction_command": reproduction_command,
+                "review_verdict": review_verdict,
+                "data_digest": data_digest,
+                "errors": errors,
+            },
+            data_complete=False,
+        )
     rows = payload["rows"]
     terminal_counts = {state: sum(row["terminal_state"] == state for row in rows) for state in sorted(ALLOWED_STATES)}
     failure_taxonomy: dict[str, int] = {}
@@ -186,11 +355,12 @@ def reproduce(payload: dict[str, Any]) -> dict[str, Any]:
         "verification_cost_usd": _distribution(rows, "verification_cost_usd"),
     }
     missingness = {field: dimensions[field]["unknown"] for field in dimensions}
-    publication_eligible = all(value == 0 for value in missingness.values()) and model_basis["unknown"] == 0
-    return {
+    data_complete = all(value == 0 for value in missingness.values()) and model_basis["unknown"] == 0
+    analysis = {
         "schema_version": "limen.positioning_cost_failure_analysis.v1",
-        "status": "regenerated" if publication_eligible else "withheld",
-        "publication_eligible": publication_eligible,
+        "provenance": payload["provenance"],
+        "reproduction_command": reproduction_command,
+        "review_verdict": review_verdict,
         "window": {"start": payload["window_start"], "end": payload["window_end"]},
         "denominator": len(rows),
         "terminal_states": terminal_counts,
@@ -198,7 +368,7 @@ def reproduce(payload: dict[str, Any]) -> dict[str, Any]:
         "model_cost_basis": model_basis,
         "dimensions": dimensions,
         "missingness": missingness,
-        "data_digest": _canonical_digest(payload),
+        "data_digest": data_digest,
         "caveats": [
             "Human time remains minutes and is not converted to currency without a separately approved rate basis.",
             "Estimated model cost is distinguished from actual spend.",
@@ -206,17 +376,27 @@ def reproduce(payload: dict[str, Any]) -> dict[str, Any]:
         ],
         "errors": [],
     }
+    return _finalize_analysis(analysis, data_complete=data_complete)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--review", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     payload = json.loads(args.input.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("input root must be an object")
-    result = reproduce(payload)
+    review_verdict: object = None
+    if args.review is not None:
+        review_verdict = json.loads(args.review.read_text(encoding="utf-8"))
+    result = reproduce(
+        payload,
+        input_artifact=args.input.as_posix(),
+        review_artifact=args.review.as_posix() if args.review is not None else None,
+        review_verdict=review_verdict,
+    )
     serialized = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(serialized, encoding="utf-8")

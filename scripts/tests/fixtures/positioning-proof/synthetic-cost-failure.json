@@ -1,6 +1,6 @@
 {
   "schema_version": "limen.positioning_cost_failure_sample.v1",
-  "synthetic_or_public_safe": true,
+  "provenance": "synthetic",
   "window_start": "2026-08-01",
   "window_end": "2026-08-07",
   "rows": [
