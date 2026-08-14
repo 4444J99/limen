@@ -1,8 +1,89 @@
 # Limen
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/organvm/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/organvm/limen/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
 Limen is a cross-agent, cross-repo, budget-capped task intake system. Every AI agent reads a single `tasks.yaml` to discover work. TABVLARIVS is the deterministic state authority and lease keeper. The CLI + SaaS dashboard provide unified visibility, budget management, and lifecycle control across your entire agent fleet.
+
+## Proof destination
+
+### Problem
+
+Multi-agent delivery breaks down when assignment, authority, budget, verification, and failure
+state live in separate tools. Limen gives those concerns one governed lifecycle without treating a
+chat transcript, a branch, or a green-looking log as completion evidence.
+
+### Status
+
+Limen is an active, internally operated governance and orchestration system. Its public surface
+exposes aggregate operating state at
+[`public-status.json`](https://limen-dashboard.pages.dev/public-status.json); protected task and
+client details remain credential-gated. Internal operation is not evidence of customer adoption.
+
+### Architecture
+
+The system separates the deterministic TABVLARIVS keeper from its disposable clients: the CLI,
+dashboard, runtime adapters, and native agent lanes. Work enters as bounded packets, receives an
+exclusive lease and authority envelope, runs an executable predicate, and returns a durable
+receipt. The [`peer conductor protocol`](docs/architecture/peer-conductor-protocol.md) defines the
+portable contract.
+
+### Decisions and tradeoffs
+
+- `tasks.yaml` is a read-only projection; lifecycle mutations belong to the keeper.
+- Claims fail closed when the authenticated broker is unavailable, trading convenience for
+  non-duplicated authority and budget accounting.
+- Exact-head predicates and receipts cost more than prose status updates, but keep failures,
+  retries, and rollback independently inspectable.
+- Public views stay aggregate and redacted; operational detail remains behind persona boundaries.
+
+### Verification
+
+- [Required PR gate](https://github.com/organvm/limen/actions/workflows/pr-gate.yml) runs the
+  repository's governed checks on every proposed change; the broader
+  [path-scoped CI workflow](https://github.com/organvm/limen/actions/workflows/ci.yml) runs when its
+  declared paths are implicated.
+- The [successful exact-head PR Gate run](https://github.com/organvm/limen/actions/runs/31820844953)
+  is bound to `b39e40774a3a1a8b34565b4312cfecf3b437b006` and was observed on 2026-08-14.
+- [`scripts/verify-scoped.sh`](scripts/verify-scoped.sh) resolves checks from the exact diff before
+  a push; [`scripts/verify-whole.sh`](scripts/verify-whole.sh) is the whole-repository predicate.
+- The [public status endpoint](https://limen-dashboard.pages.dev/public-status.json) is the
+  reproducible public operating anchor; its values are dated snapshots, not reliability rates.
+- [Release history](https://github.com/organvm/limen/releases) is the repository-owned record of
+  published versions; this page does not infer a release from unreleased source.
+
+### Status and authorship disclosure
+
+**Authorship class:** Agent-directed. Architected and directed by one person through a governed,
+multi-agent production system. Machine assistance is disclosed in commit, review, and receipt
+trails rather than presented as unassisted authorship.
+
+### Limitations
+
+- Owner-environment operation does not establish customer adoption, revenue, or market leadership.
+- Public task aggregates change after observation and do not by themselves establish reliability,
+  throughput superiority, or outcome quality.
+- Protected workflows require broker and persona credentials; the public endpoint cannot reproduce
+  private operations.
+
+### What this proves
+
+The public source demonstrates governed multi-agent delivery with inspectable operating, failure,
+and verification contracts. It does not prove zero-maintenance autonomy or commercial outcomes.
+
+### Doors
+
+**[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
+
+> Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
+
+**[Hiring someone who ships at this level? — Work with the builder](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20hire%5D%20%E2%80%94%20inbound) →**
+
+> Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence.
+
+Before relying on a capability claim, read the
+[peer conductor protocol](docs/architecture/peer-conductor-protocol.md), inspect the
+[public operating snapshot](https://limen-dashboard.pages.dev/public-status.json), and reproduce
+the relevant predicate.
 
 ## Usage
 
@@ -129,15 +210,13 @@ contract and GitHub Contents storage; it can be checked locally with
 branch. Mutation requests return a typed, retryable `409` owned by TABVLARIVS;
 inline/disposable adapters remain writable for local contract tests.
 
-The live dashboard is the Cloudflare Pages deploy at `https://limen-dashboard.pages.dev`
-(auto-deployed on merge to `main`), backed by the Cloudflare Worker runtime:
+The live dashboard is the
+[Cloudflare Pages deploy](https://limen-dashboard.pages.dev/) (auto-deployed on merge to `main`),
+backed by a Cloudflare Worker with a public
+[health endpoint](https://limen-runtime.ivixivi.workers.dev/health).
 
-```text
-https://limen-runtime.ivixivi.workers.dev
-```
-
-The Firebase mirror at `https://device-streaming-067d747a.web.app` still serves its last
-deploy, but its rail is dormant (no GCP credential exists in CI). Both static hosts ship
+The [Firebase mirror](https://device-streaming-067d747a.web.app/) still serves its last deploy,
+but its rail is dormant (no GCP credential exists in CI). Both static hosts ship
 public-safe shells and public contracts only. Internal, QA, client, readiness, and task-board data load from the runtime after the appropriate bearer token is supplied. The dashboard deploy workflow reads `NEXT_PUBLIC_API_URL` from the repository variable `LIMEN_API_URL`.
 
 Published surfaces:
