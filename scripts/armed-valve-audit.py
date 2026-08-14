@@ -120,6 +120,33 @@ def discover_sensor_valves(path, prefix="LIMEN_"):
                     "expected": str(condition.get("equals", "1")),
                     "what": str(sensor.get("title") or "registry-declared conditional behavior"),
                 }
+            # A whole step may be the valve rather than an argument on one: `when_env` runs the step
+            # only when that env is truthy. Read it for the same reason args_when is read — the valve
+            # is a capability, not a shape. Missing this made a step-level valve invisible here while
+            # check-sensors.py accepted it, which is the worst pairing: declared, schema-valid, and
+            # unaudited. It arises whenever a flag pair is mutually exclusive so the destructive verb
+            # cannot ride the detecting command's argv (branch-reap 0g9b: reap-branches.py --check
+            # returns before --apply is ever consulted).
+            #
+            # `armed_valve_type` is REQUIRED here, and that requirement is the whole discrimination:
+            # `when_env` alone does not make a step a valve. Two live counter-examples — fable-balance
+            # gates on LIMEN_LATEST_SESSION_JSONL, which is a transcript PATH the command interpolates
+            # (absent path, nothing to audit), and link-heal's LIMEN_LINK_HEAL is a plain on/off with
+            # no destructive class. Auditing either as an armed valve reports a safety decision where
+            # none was made, and a registry of invented findings is how a real one gets skimmed past.
+            step_env = step.get("when_env")
+            if (
+                isinstance(step_env, str)
+                and step_env.startswith(prefix)
+                and step.get("armed_valve_type")
+                and step_env not in valves
+            ):
+                valves[step_env] = {
+                    "type": step.get("armed_valve_type"),
+                    "default": str(step.get("when_default", step.get("default", "0"))),
+                    "expected": "1",
+                    "what": str(sensor.get("title") or "registry-declared conditional step"),
+                }
     return valves
 
 
