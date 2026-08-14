@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -39,6 +40,25 @@ SHIP = "scripts/ship-docs.sh"
 # `content_sha256` is computed over clock-driven fields, so it moves on every run and cannot
 # answer "did anything but the clock move?".
 VOLATILE_KEYS = frozenset({"generated_at", "content_sha256"})
+
+
+def _write_private_json(path: Path, value: object) -> None:
+    """Atomically replace a private local receipt with owner-only permissions."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            json.dump(value, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            temporary = Path(handle.name)
+        temporary.chmod(0o600)
+        temporary.replace(path)
+        path.chmod(0o600)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 def _int(name: str, default: int) -> int:
@@ -147,8 +167,7 @@ def record(*, workers: int, dry_run: bool) -> int:
     report = full["source_report"]
     SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)
     SOURCE_REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-    PRIVATE_FACTS.parent.mkdir(parents=True, exist_ok=True)
-    PRIVATE_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+    _write_private_json(PRIVATE_FACTS, full)
     TRACKED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
     TRACKED_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
     summary = tracked["summary"]
@@ -417,6 +436,11 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="exit 1 unless every cursor is exhaustive")
+    parser.add_argument(
+        "--check-repositories",
+        action="store_true",
+        help="exit 1 unless the paginated repository denominator is exhaustive",
+    )
     parser.add_argument("--json", action="store_true", help="print the redacted report summary")
     parser.add_argument("--write", action="store_true", help="write owner, source, and tracked receipts")
     parser.add_argument("--workers", type=int, default=8, help="bounded concurrent repository packets (1-32)")
@@ -434,8 +458,7 @@ def main() -> int:
     if args.write:
         SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)
         SOURCE_REPORT.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
-        PRIVATE_FACTS.parent.mkdir(parents=True, exist_ok=True)
-        PRIVATE_FACTS.write_text(json.dumps(full, indent=2, sort_keys=True) + "\n")
+        _write_private_json(PRIVATE_FACTS, full)
         TRACKED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
         TRACKED_LEDGER.write_text(json.dumps(tracked, indent=2, sort_keys=True) + "\n")
     if args.json:
@@ -447,7 +470,17 @@ def main() -> int:
             f"known_leaves={tracked['summary']['known_leaf_count']} "
             f"exhaustive={str(report['exhaustive']).lower()} failures={tracked['summary']['failure_count']}"
         )
-    return 1 if args.check and not report["exhaustive"] else 0
+    repository_cursor = report["cursor"]["repository"]
+    repository_census_complete = (
+        repository_cursor["exhaustive"]
+        and repository_cursor["expected_total"] is not None
+        and repository_cursor["known_count"] == repository_cursor["expected_total"]
+    )
+    if args.check and not report["exhaustive"]:
+        return 1
+    if args.check_repositories and not repository_census_complete:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

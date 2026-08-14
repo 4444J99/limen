@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import paths
-from .agents import AGENTS, SERVER_NAME, AgentTarget
+from .agents import AGENTS, SERVER_NAME, AgentTarget, _config_path
 
 BEARER_ENV = "IANVA_BEARER_TOKEN"
 
@@ -85,14 +85,15 @@ def _render_codex(ep: Endpoint) -> Entry:
     if ep.bearer:
         body += f'bearer_token_env_var = "{BEARER_ENV}"\n'
     body += "# startup_timeout_sec = 30\n"
+    target = _config_path(".codex/config.toml", "CODEX_HOME", "config.toml")
     return Entry(
         key="codex",
         label="Codex (OpenAI)",
-        path=str((Path.home() / ".codex" / "config.toml")),
+        path=str(target),
         fmt="toml_codex",
         transport="http",
         rendered=body,
-        install="Append this [mcp_servers.ianva] table to ~/.codex/config.toml.",
+        install=f"Append this [mcp_servers.ianva] table to {target}.",
         payload=None,
         filename="codex.config.toml.snippet",
     )
@@ -146,14 +147,18 @@ def _render_claude(ep: Endpoint) -> Entry:
     cmd = f"claude mcp add --transport http --scope user {SERVER_NAME} {ep.url()}"
     if ep.bearer:
         cmd += f' --header "Authorization: Bearer {ep.bearer}"'
+    # `claude mcp add` resolves its own config root, so the command is correct either way — but the
+    # path and the prose are read by humans deciding where to look, and naming `~/.claude.json` on a
+    # host that exports CLAUDE_CONFIG_DIR sends them to the file the CLI stopped reading.
+    target = _config_path(".claude.json", "CLAUDE_CONFIG_DIR", ".claude.json")
     return Entry(
         key="claude",
         label="Claude Code",
-        path=str((Path.home() / ".claude.json")),
+        path=str(target),
         fmt="claude_cli",
         transport="http",
         rendered=cmd,
-        install="Run this command (writes the user-scope mcpServers entry into ~/.claude.json).",
+        install=f"Run this command (writes the user-scope mcpServers entry into {target}).",
         payload=None,
         filename="claude.add.sh",
     )

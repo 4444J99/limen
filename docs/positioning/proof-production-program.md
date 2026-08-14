@@ -7,6 +7,71 @@ credibility-per-effort. Corrections and proof precede ornamentation.
 Each object: claim supported → data required → visibility → effort → credibility → dependency →
 acceptance criterion.
 
+## W03 flagship proof-set verdict
+
+PSP-P02-W03 uses the scored public matrix in
+[`flagship-proof-set.yaml`](flagship-proof-set.yaml). The matrix covers every plausible public
+candidate derived from the W02 `front_door_proof` class and current public profile/portfolio entry
+points. It names no private repository; private material remains in sanctioned custody and may
+appear only in a later encrypted diligence addendum.
+
+The denominator is an executable source projection, not a self-reported row count: 15 repositories
+derive from the current W02 policy and metadata, and seven explicit public additions produce 22
+rows. Reconciliation against W02 made four source-safe corrections: the public profile carrier and
+Padavano entered the W02 set; the peer-audited Styx implementation remains a claims-ledger
+addition rather than W02 proof; and the archived root landing remains a legacy-entry-point
+addition rather than W02 proof. The registered static gate binds those rows to the redacted W01
+public-identity projection and W02 policy digest. It reports only counts when an identity is not in
+the public projection, so a malformed matrix cannot turn validation output into a private-name
+oracle.
+
+The rubric weights technical depth and reproducible evidence most heavily, then distinct claim
+role and system leverage, then current maturity, public visibility, and buyer relevance. Repository
+count, stars, recent activity, and aesthetic preference cannot independently qualify a flagship.
+The hard gates override the numeric score: a selection must have one unique story role, a current
+workflow anchor and one candidate-bound public endpoint, no private-only dependency, a structured
+bounded/non-circular claim, and no stale or archived proof surface. Repository maturity comes from
+the W02 taxonomy and current GitHub metadata; a stale proof endpoint is recorded separately from an
+otherwise active repository. Workflow receipts pin the workflow id, file, name, display URL,
+default branch, and observed head. External flagships must remain on the current default-branch
+head. Limen uses a dated successful default-branch snapshot because requiring a same-repository
+matrix commit to equal moving `main` would make every corrective commit invalidate its own proof;
+freshness and intended-workflow identity remain fail-closed.
+
+### Selected formal set
+
+| Flagship | Distinct story role | Score | Live reproducible anchors | Claim boundary |
+| --- | --- | ---: | --- | --- |
+| **Limen** | Governed agent delivery | 100 | Exact-head CI plus the public operating-status endpoint | Internal operation is evidenced publicly; no customer, adoption, or zero-maintenance claim |
+| **UCC Public-Records Intelligence Platform** | Public-record decision pipeline | 95 | Exact-head gate plus public deployment | Four implemented collectors on a broader architecture; no fifty-state deployment or adoption claim |
+| **AI Chat Exporter** | Privacy-first data portability | 86 | Exact-head CI plus public install surface | Client-side export implementation; no daily-usage or adoption claim |
+
+This triad is deliberately small. Limen carries the method, the UCC platform carries buyer-facing
+data engineering, and AI Chat Exporter carries user-facing product and privacy architecture. None
+needs a private repository to make its selected claim inspectable.
+
+### Named alternates
+
+| Alternate | Why it is not selected now | Promotion condition |
+| --- | --- | --- |
+| **Universal Mail Automation** | Green source checks, but its advertised public homepage returned 404 | Restore or remove the stale endpoint and attach a fresh evidence packet |
+| **Styx Peer-Audited Behavioral Market** | Deep public implementation, but live-stack completion is unverified and current governance checks are red | Attach a live-stack receipt and clear or adjudicate the current default-head failures |
+| **a-i--skills** | High-leverage public library, but its public page contradicts itself on skill count and the front-door fork count has drifted | Regenerate one consistent evidence basis and re-run public validation |
+| **MONETA** | Live endpoint, but HTTP 200 alone does not reproduce the implementation or rule out private-only technical evidence | Publish a public-safe implementation and custody evidence packet |
+
+The matrix retains explicit reasons for every other exclusion, including duplicate story roles,
+supporting satellites, circular proof carriers, stale surfaces, specification-only maturity, and
+weak buyer relevance. Exclusion removes a project from the front-door set; it does not delete its
+evidence or diminish its availability for diligence.
+
+W02 is accepted at main head `35134b95650a26185a58eb3b3a82632e5b80b5b2`; its
+[marked receipt](https://github.com/organvm/limen/issues/2174#issuecomment-5247059070)
+passed the W02 completion predicate. This formally admits the W03 integration,
+but does not itself complete W03: after sanctioned merge, W03 still requires a
+marked receipt and a passing
+`python3 scripts/positioning-program.py --verify-work PSP-P02-W03` before #2175
+may close. No live profile generator is changed from this document alone.
+
 ## P1 — Limen engineering report (flagship proof object)
 
 - **Claim:** the governed multi-agent delivery system is real, operating, and measured.
@@ -24,7 +89,7 @@ acceptance criterion.
 
 - **Claim:** every published number is current, sourced, and dated.
 - **Data:** the claims ledger; census; live URL tests.
-- **Visibility:** public. **Effort:** small (this branch + the publish atoms). **Credibility:**
+- **Visibility:** public. **Effort:** small (the truth branch + the publish atoms). **Credibility:**
   foundational — one discovered stale/false claim poisons every true one.
 - **Dependency:** owner publish approval (README regeneration, blog field, org README).
 - **Acceptance:** `scripts/profile-link-integrity.py` exits 0; profile counts match census basis
@@ -41,14 +106,18 @@ acceptance criterion.
 - **Dependency:** P1 framing. **Acceptance:** a named cost metric with method, date range, and
   distribution (not a single average).
 
-## P4 — Test-reproduction receipts for flagship repos
+## P4 — Exact-head reproduction receipts for flagship claims
 
-- **Claim:** repo-asserted test counts (3,399 / ~170 / 1,107 / 400+) are real CI output.
-- **Data:** fresh CI runs on each flagship, linked run URLs.
-- **Visibility:** public. **Effort:** small per repo. **Credibility:** converts every
-  "repository-asserted" ledger row to "verified."
-- **Dependency:** none. **Acceptance:** each flagship README's test claim links a dated passing
-  run; ledger rows flipped.
+- **Claim:** each selected system's bounded public claim is supported by current source and a
+  passing exact-head check, not by a README assertion or a test-count headline.
+- **Data:** the W03 anchors, followed by the complete W04 evidence packet for each selected
+  flagship. Test counts may be added only after their commands and outputs are reproduced.
+- **Visibility:** public. **Effort:** small per repo. **Credibility:** converts a selected system
+  from repository assertion into inspectable proof.
+- **Dependency:** W03 selection, then W04 evidence packets.
+- **Acceptance:** each selected flagship links a dated passing run, exact head, public source,
+  claim boundary, limitations, and a non-private reproduction path. Alternate test-count claims
+  remain labeled or withheld until their promotion conditions pass.
 
 ## P5 — Public-safe architecture demonstration
 

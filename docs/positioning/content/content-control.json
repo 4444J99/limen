@@ -1,0 +1,95 @@
+{
+  "schema": "psp-c08-content-control/v1",
+  "state": "private-staging-only",
+  "reference_date": "2026-08-12",
+  "assets": [
+    {
+      "id": "PSP-P09-W01-calendar",
+      "work_id": "PSP-P09-W01",
+      "kind": "editorial-calendar",
+      "audience_problem": "Which proof is relevant to a governed-delivery conversation?",
+      "source_ids": ["CLM-LIMEN-OPERATING", "CLM-PROOF-METHOD", "CLM-CAPTURE-DOORS"],
+      "door_tags": ["deploy", "hire"],
+      "review_by": "2026-09-11",
+      "draft": "A 90-day staged calendar connects each asset to one admitted proof source, one buyer question, one door tag, and one stop rule. [^CLM-LIMEN-OPERATING] [^CLM-PROOF-METHOD] [^CLM-CAPTURE-DOORS]"
+    },
+    {
+      "id": "PSP-P09-W02-flagship",
+      "work_id": "PSP-P09-W02",
+      "kind": "flagship-report",
+      "audience_problem": "Is the governed delivery system real and inspectable?",
+      "source_ids": ["CLM-LIMEN-OPERATING", "CLM-AUTHORSHIP", "CLM-PROOF-METHOD"],
+      "door_tags": ["deploy", "hire"],
+      "review_by": "2026-09-11",
+      "external_gate": "HG-PUBLIC-IDENTITY",
+      "draft": "This private report draft describes an internally operated orchestration and governance system and its disclosed machine-assisted method. [^CLM-LIMEN-OPERATING] [^CLM-AUTHORSHIP] [^CLM-PROOF-METHOD]"
+    },
+    {
+      "id": "PSP-P09-W03-failure-modes",
+      "work_id": "PSP-P09-W03",
+      "kind": "technical-essay",
+      "audience_problem": "How is a consequential multi-agent action made attributable and reversible?",
+      "source_ids": ["CLM-PROOF-METHOD"],
+      "door_tags": ["deploy"],
+      "review_by": "2026-09-11",
+      "draft": "A failure-mode is framed as a missing authority, predicate, receipt, or rollback path, not as a claim about customer losses or market prevalence. [^CLM-PROOF-METHOD]"
+    },
+    {
+      "id": "PSP-P09-W04-economics",
+      "work_id": "PSP-P09-W04",
+      "kind": "technical-essay",
+      "audience_problem": "What makes a delivery metric reproducible rather than theatrical?",
+      "source_ids": ["CLM-PROOF-METHOD"],
+      "door_tags": ["deploy"],
+      "review_by": "2026-09-11",
+      "draft": "A metric must disclose its method, date range, source, calculation, and limitations before it is used as evidence. [^CLM-PROOF-METHOD]"
+    },
+    {
+      "id": "PSP-P09-W05-walkthrough",
+      "work_id": "PSP-P09-W05",
+      "kind": "architecture-walkthrough",
+      "audience_problem": "How do authority and verification compose in practice?",
+      "source_ids": ["CLM-PROOF-METHOD", "CLM-AUTHORSHIP"],
+      "door_tags": ["deploy"],
+      "review_by": "2026-09-11",
+      "draft": "The walkthrough uses a synthetic change only: bounded authority, native execution, a predicate, and either a receipt or a rollback path, with machine assistance disclosed as part of the method. [^CLM-PROOF-METHOD] [^CLM-AUTHORSHIP]"
+    },
+    {
+      "id": "PSP-P09-W06-correction",
+      "work_id": "PSP-P09-W06",
+      "kind": "incident-case-study",
+      "audience_problem": "How does a system acknowledge a correction without manufacturing an incident?",
+      "source_ids": ["WITHHELD-INCIDENT"],
+      "door_tags": ["deploy"],
+      "review_by": "2026-09-11",
+      "draft": "The correction narrative is a synthetic drill until a separately verified and sanitized source is admitted. [^WITHHELD-INCIDENT]"
+    },
+    {
+      "id": "PSP-P09-W07-pointers",
+      "work_id": "PSP-P09-W07",
+      "kind": "channel-derivatives",
+      "audience_problem": "Where is the canonical proof and which conversation door does it serve?",
+      "source_ids": ["CLM-PROOF-METHOD", "CLM-CAPTURE-DOORS"],
+      "door_tags": ["deploy", "hire"],
+      "review_by": "2026-09-11",
+      "draft": "Channel transformations are compact, expiring pointers to an owner-approved canonical source; no pointer is distributed while that source is withheld. [^CLM-PROOF-METHOD] [^CLM-CAPTURE-DOORS]"
+    },
+    {
+      "id": "PSP-P09-W08-distribution",
+      "work_id": "PSP-P09-W08",
+      "kind": "distribution-run-sheet",
+      "audience_problem": "Can an approved source be measured without inventing demand?",
+      "source_ids": ["CLM-CAPTURE-DOORS"],
+      "door_tags": ["deploy", "hire"],
+      "review_by": "2026-09-11",
+      "external_gate": "HG-PUBLICATION-SEND",
+      "draft": "This run sheet is dry-run-only: it defines attribution fields and stop rules but contains no send, schedule, observed outcome, or engagement claim. [^CLM-CAPTURE-DOORS]"
+    }
+  ],
+  "channel_transformations": [
+    {"channel": "technical-thread", "max_words": 55, "allowed_work_ids": ["PSP-P09-W03", "PSP-P09-W05", "PSP-P09-W07"], "requires": ["canonical_source", "door_tag", "expiry"]},
+    {"channel": "newsletter-blurb", "max_words": 75, "allowed_work_ids": ["PSP-P09-W03", "PSP-P09-W04", "PSP-P09-W07"], "requires": ["canonical_source", "door_tag", "expiry"]},
+    {"channel": "community-post", "max_words": 80, "allowed_work_ids": ["PSP-P09-W05", "PSP-P09-W06", "PSP-P09-W07"], "requires": ["canonical_source", "door_tag", "expiry"]},
+    {"channel": "recruiter-pointer", "max_words": 50, "allowed_work_ids": ["PSP-P09-W02", "PSP-P09-W07"], "requires": ["canonical_source", "door_tag", "expiry"]}
+  ]
+}

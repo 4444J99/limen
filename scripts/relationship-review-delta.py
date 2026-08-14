@@ -42,8 +42,19 @@ import yaml
 
 HOME = Path.home()
 # Canonical host paths (facts on this machine, not tunable config — kept out of the parameter panel).
-RP_ROOT = HOME / "Workspace" / "4444J99" / "relationship-pipeline"
+# The pipeline root is RESOLVED, never pinned: it was hardcoded to ~/Workspace/4444J99/relationship-pipeline,
+# the repo moved to a worktree mirror, and this sensor then fail-opened on every beat for weeks — a 27-day
+# review gap went undetected because "no pipeline" and "no review owed" printed the same way. Order is
+# env override → legacy location → worktree mirror; the whole list is reported when NONE resolves.
+RP_ROOT_CANDIDATES = [
+    HOME / "Workspace" / "4444J99" / "relationship-pipeline",
+    HOME / "Workspace" / ".limen-worktrees" / "m1_repos" / "relationship-pipeline",
+]
 PEOPLE_PRIVATE = HOME / "Workspace" / "_people-private" / "people"
+# The canonical private handle roster (`PII lives ONLY here`, per its own header) — the same file
+# scripts/capture-threads.py reads. The pipeline's people.json is a legacy second source kept as a
+# fallback; two PII homes is how one of them silently went missing.
+ROSTER = PEOPLE_PRIVATE / "roster.json"
 CHAT_DB = HOME / "Library" / "Messages" / "chat.db"
 REVIEW_LOG = PEOPLE_PRIVATE.parent / "review-due.jsonl"  # sealed with the _people-private estate
 # New inbound messages since last review at or above this count ⇒ a delta review is worth running.
@@ -56,19 +67,61 @@ def _log_clean(msg: str) -> None:
     print(f"relationship-review-delta: {msg}")
 
 
-def _slugs_and_handles() -> list[tuple[str, list[str]]]:
-    """(slug, [handles]) from people.json. Handles are PII — returned for querying, never logged."""
-    people = json.loads((RP_ROOT / "people.json").read_text(encoding="utf-8")).get("people", [])
-    out: list[tuple[str, list[str]]] = []
-    for person in people:
-        slug = person.get("slug")
-        if not slug:
-            continue
-        handles: list[str] = []
-        for h in person.get("handles", []) or []:
-            handles.append(h if isinstance(h, str) else (h.get("handle") or h.get("id") or ""))
-        out.append((slug, [h for h in handles if h]))
-    return out
+def _pipeline_root() -> Path | None:
+    """The relationship-pipeline checkout, resolved at run time. None ⇒ absent everywhere (say so loudly)."""
+    env = os.environ.get("LIMEN_RELATIONSHIP_PIPELINE_ROOT")
+    if env:
+        p = Path(env).expanduser()
+        return p if (p / "people.json").exists() else None
+    for cand in RP_ROOT_CANDIDATES:
+        if (cand / "people.json").exists():
+            return cand
+    return None
+
+
+def _slugs_and_handles() -> tuple[list[tuple[str, list[str]]], list[str]]:
+    """((slug, [handles])…, [sources read]). Handles are PII — returned for querying, NEVER logged.
+
+    Reads the canonical private roster first, then merges the legacy pipeline people.json. Returning the
+    source list is the point: an empty subject list must be reportable as "read nothing" rather than
+    indistinguishable from "nothing owed".
+    """
+    merged: dict[str, list[str]] = {}
+    sources: list[str] = []
+
+    if ROSTER.exists():
+        try:
+            roster = json.loads(ROSTER.read_text(encoding="utf-8")).get("people", {}) or {}
+            for slug, row in roster.items():
+                handles = [h for h in (row or {}).get("imessage", []) or [] if h]
+                if slug and handles:
+                    merged.setdefault(slug, []).extend(handles)
+            sources.append("roster.json")
+        except (OSError, ValueError, AttributeError):
+            sources.append("roster.json:UNREADABLE")
+
+    rp_root = _pipeline_root()
+    if rp_root is not None:
+        try:
+            people = json.loads((rp_root / "people.json").read_text(encoding="utf-8")).get("people", [])
+            for person in people:
+                slug = person.get("slug")
+                if not slug:
+                    continue
+                handles = [
+                    h if isinstance(h, str) else (h.get("handle") or h.get("id") or "")
+                    for h in person.get("handles", []) or []
+                ]
+                for h in [x for x in handles if x]:
+                    if h not in merged.setdefault(slug, []):
+                        merged[slug].append(h)
+            sources.append("people.json")
+        except (OSError, ValueError, AttributeError):
+            sources.append("people.json:UNREADABLE")
+    else:
+        sources.append(f"people.json:ABSENT({len(RP_ROOT_CANDIDATES)} candidates)")
+
+    return [(slug, handles) for slug, handles in merged.items()], sources
 
 
 def _last_review_cursor(slug: str) -> str | None:
@@ -115,10 +168,19 @@ def main(argv: list[str] | None = None) -> int:
             _log_clean("chat.db not present — skipping (nothing to detect)")
             return 0
 
+        subjects, sources = _slugs_and_handles()
+        if not subjects:
+            # LOUD: "read nothing" is not "nothing owed". A silent empty sweep here is exactly what let a
+            # 27-day review gap pass unnoticed, so this states the sources it tried and names itself dead.
+            _log_clean(f"NO TRACKED SUBJECTS — cadence is NOT running (sources tried: {', '.join(sources)})")
+            return 0
+
         results: list[dict] = []
-        for slug, handles in _slugs_and_handles():
+        no_register: list[str] = []
+        for slug, handles in subjects:
             cursor = _last_review_cursor(slug)
             if not cursor or not handles:
+                no_register.append(slug)
                 continue  # only track people who have a durable register and a handle
             try:
                 new_inbound = _count_new_inbound(handles, _apple_ns_since(cursor))
@@ -126,8 +188,14 @@ def main(argv: list[str] | None = None) -> int:
                 # Almost always Full Disk Access denied to this interpreter — fail-open, note it once.
                 _log_clean("chat.db unreadable (Full Disk Access for the beat interpreter?) — skipping")
                 return 0
-            results.append({"slug": slug, "last_review": cursor, "new_inbound": new_inbound,
-                            "review_due": new_inbound >= THRESHOLD})
+            results.append(
+                {
+                    "slug": slug,
+                    "last_review": cursor,
+                    "new_inbound": new_inbound,
+                    "review_due": new_inbound >= THRESHOLD,
+                }
+            )
 
         due = [r for r in results if r["review_due"]]
         if args.notify and due:
@@ -135,9 +203,25 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.json:
             # Count-only: slugs are internal identifiers, not handles; still, summarize rather than dump.
-            print(json.dumps({"checked": len(results), "review_due": len(due), "threshold": THRESHOLD}))
+            print(
+                json.dumps(
+                    {
+                        "subjects": len(subjects),
+                        "checked": len(results),
+                        "no_register": len(no_register),
+                        "review_due": len(due),
+                        "threshold": THRESHOLD,
+                        "sources": sources,
+                    }
+                )
+            )
         else:
-            _log_clean(f"{len(due)}/{len(results)} people review-due (>= {THRESHOLD} new inbound since last review)")
+            _log_clean(
+                f"{len(due)}/{len(results)} people review-due (>= {THRESHOLD} new inbound since last review) "
+                f"[subjects={len(subjects)} sources={','.join(sources)}"
+                + (f" no-register={len(no_register)}" if no_register else "")
+                + "]"
+            )
         return 0
     except Exception as exc:  # noqa: BLE001 — beat safety: never propagate, never leak the message verbatim
         _log_clean(f"skipped on error ({type(exc).__name__})")

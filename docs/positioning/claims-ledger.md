@@ -5,8 +5,8 @@ positioning. Before any claim appears on a public surface (README, portfolio, bi
 essay, application), it must have a row here with a status that permits that surface.
 
 Maintained beside `positioning-seeds.json` (the judgment layer) and
-`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-09 against live
-authenticated evidence.
+`docs/github-estate-census.json` (the count authority). Reconciled 2026-08-10 against the stable
+two-pass W01 receipt and live authenticated evidence.
 
 ## Evidence-authority ladder
 
@@ -45,21 +45,21 @@ preserve the disagreement explicitly.
 
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
-| 313 repositories total (235 public, 78 private) | `verified` (census 2026-08-08T19:14Z) | Exhaustive authenticated census, `docs/github-estate-census.json` | "As of August 2026, the GitHub estate contains 313 repositories — 235 public and 78 private — across a personal account and ten organizations." | L1 (dated) |
-| Live count 2026-08-09: 309 repos (235 public, 74 private) | `verified` (live API sweep) | Authenticated per-org `gh api` listing, deduped | Use the dated census number with its date; note drift in L3 only | L3 |
+| 314 repositories total (235 public, 79 private) | `verified` (stable two-pass census 2026-08-10T21:20:04Z) | `docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json`; both authenticated passes share the same repository identity/visibility digest | "As of August 2026, the GitHub estate contains 314 repositories — 235 public and 79 private — across a personal account and ten organizations." | L1 (dated) |
+| Live count 2026-08-09: 309 repos (235 public, 74 private) | `superseded` by the newer exhaustive two-pass census | Historical authenticated per-org `gh api` listing, deduped | never use as the current estate count; retain only as historical drift evidence | L3 historical |
 | 1 personal account + 10 organizations | `verified` | Census + live org listing | as-is | L1 |
 | "~280 repositories" (voice memo) | `superseded` | Census supersedes | never use | nowhere |
 | 307/308 repository counts (older records) | `superseded` | Census supersedes | never use | nowhere |
 | Profile repository counts | `derived` on a distinct live-profile basis | `scripts/profile-visuals.py` writes `public-repos.json` from the live GitHub API; `scripts/sync-readme.py` renders its dated manifest. This is not the exhaustive census basis. | Label as live profile/API counts with the generation date; never present them as the estate census or use them to revise the dated census row above | L1 when dated and basis-labeled |
 | Org README shows "215 repositories" | `superseded` (stale generation 2026-07-30) | Org profile README vs census | regenerate from census | fix, then L1 |
-| Repository count ≠ product count | `verified` (classification) | `docs/positioning/estate-classification.md` | "A 313-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
+| Repository count ≠ product count | `verified` (classification over the W01 denominator) | `docs/positioning/estate-classification.md`; W01 two-pass receipt | "A 314-repository software and creative-systems estate containing numerous product experiments and several substantial operating systems." | L1 |
 
 ## 2. Product claims
 
 | Claim | Status | Evidence / method | Public-safe wording | Tier |
 |---|---|---|---|---|
 | "~100 products" / "100 functioning products" / "shipped ~100 products" | `unverified` | No classification supports it; estate contains products, prototypes, specs, infra, forks, archives | never substitute "shipped products" for "repositories" | nowhere |
-| Limen operates live in owner's environment | `verified` | Public dashboard `limen-dashboard.pages.dev` (public-status.json: 3,111 tasks, 1,357 done, since 2026-05-31, observed 2026-08-09); worker `/health` 200 | "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026." "Production" = operational internally; not customer deployment | L1/L2 |
+| Limen operates live in owner's environment | `verified` | Public dashboard `limen-dashboard.pages.dev` (public-status.json: 3,111 tasks and 1,357 completed, observed 2026-08-10); current workflow and endpoint anchors are in `docs/positioning/evidence/flagship-evidence.yaml` | "Limen is a live orchestration and governance system, operating continuously in production in its owner's environment since May 2026." "Production" = operational internally; not customer deployment | L1/L2 |
 | Public-record system: 50-state coverage | `conflicted` → `repository-asserted` | Repo docs support 4 implemented state collectors (CA/TX/FL/NY) + a 50-state architecture/roadmap | "Four implemented state collectors on a fifty-state architecture" | L2 |
 | AI chat exporter: ~170 tests, 5 formats, 9 locales, working ChatGPT support | `repository-asserted` | Repo README; not reproduced in this pass | "repository-reported" phrasing until CI receipt exists | L2 with label |
 | AI chat exporter: "thousands of people install and use daily" | `unverified` | README assertion; no analytics inspected | remove or replace with verifiable install metric | nowhere until proven |
@@ -108,9 +108,59 @@ preserve the disagreement explicitly.
 
 | Metric | Status | Evidence |
 |---|---|---|
-| 3,111 tasks total, 1,357 done, 459 archived, 829 open, 356 failed_blocked, 109 needs_human (since 2026-05-31) | `verified` (observed 2026-08-09) | `limen-dashboard.pages.dev` public-status.json |
+| 3,111 tasks total, 1,357 done, 459 archived, 829 open, 356 failed_blocked, 109 needs_human (since 2026-05-31) | `superseded` as a composite snapshot | The current packet refreshes only total and completed. Withhold the other status counts until they are regenerated together from a dated public snapshot. |
 | Multi-agent lanes (agy, claude, codex, copilot, gemini, jules, opencode, oz, warp, github_actions) | `verified` | `AGENTS.md`, dispatch code, dashboard |
 | Cost/reliability/verification metrics | not yet published | Requires the Limen engineering report (proof program object P1) |
+
+## 8. PSP-P02 selected-flagship packet claims
+
+The rows in this section are the public-safe, machine-reproducible subset prepared by the
+PSP-P02-W04/W05 evidence cohort. W03 and W04 are accepted, and W05 is formally admitted for
+sanctioned integration. This ledger is not the W05 completion receipt, does not close its issue,
+and does not authorize a new public surface by itself. The verifier is
+`python3 scripts/flagship-evidence.py --verify-live --json`; its exact snapshot comparisons require
+a dated packet refresh when a live source changes.
+
+The first four rows below are a managed projection of every indexed packet metric. The verifier
+requires the metric identifier, status, observed value, and public-safe wording to match exactly,
+so a packet refresh or removal cannot leave a stale section-8 claim behind.
+
+| Packet metric | Status | Observed value | Public-safe wording | Tier |
+|---|---|---|---|---|
+| `limen/public_tasks_total` | `verified` | `3111` | The public dashboard reported 3,111 total tasks on 2026-08-10. | L2 (dated) |
+| `limen/public_tasks_completed` | `verified` | `1357` | The public dashboard reported 1,357 completed tasks on 2026-08-10. | L2 (dated) |
+| `public_records/implemented_collectors` | `repository_asserted_with_public_anchor` | `4` | Four implemented state collectors (CA, TX, FL, and NY) sit on a broader architecture. | L2 |
+| `ai_chat_exporter/export_formats` | `verified` | `5` | The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text. | L2 |
+
+Selected-flagship usage, installs, customers, adoption, revenue, rankings, and private
+implementation remain `unverified` and deliberately withheld. No current public primary source in
+the W04/W05 packet set supports them; do not publish them.
+
+## 9. Research-criticism import
+
+W05 imports the 13-claim W08 adjudication from immutable source head
+`96d0ac9e8755c1b7ed9ecf49a82b54b501f7a4aa` ([PR #2314](https://github.com/organvm/limen/pull/2314)).
+The complete per-layer citation sets remain normative in
+`docs/positioning/program/research-adjudication.json` at that head. The machine-checked W05
+projection in `docs/positioning/evidence/flagship-evidence.yaml` preserves every layer disposition,
+publishable status, public wording, and required receipt. A verified measurement must never be
+promoted into an unsupported inference or implication.
+
+| Claim ID | Measurement | Inference | Implication | Prominence | Publishable status |
+|---|---|---|---|---|---|
+| `profile-production-systems-headline` | `verified` | `bounded` | `not_established` | `retain_l1` | `provisional_verified_wording` |
+| `profile-portfolio-link` | `contradicted` | `supported` | `contradicted` | `correct_immediately` | `broken_link_with_live_successor` |
+| `profile-has-no-proof` | `partially_verified` | `contradicted` | `bounded` | `narrow` | `partially_reproducible` |
+| `profile-public-repository-counts` | `verified` | `bounded` | `not_established` | `supporting_only` | `verified_dated_profile_basis` |
+| `profile-contributions-last-year` | `verified` | `bounded` | `not_established` | `supporting_only` | `verified_when_dated_and_context_labeled` |
+| `profile-federation-coverage` | `partially_verified` | `bounded` | `not_established` | `retain_l2` | `verified_public_nonempty_org_coverage` |
+| `profile-daily-regeneration` | `verified` | `supported` | `bounded` | `retain_l2` | `verified_observation_window` |
+| `profile-universal-production-claim` | `partially_verified` | `unsupported` | `not_established` | `narrow` | `mixed_featured_system_evidence` |
+| `profile-limen-operating-proof` | `verified` | `bounded` | `not_established` | `retain_l2` | `verified_owner_environment_operation` |
+| `profile-zero-manual-upkeep` | `unverified` | `unsupported` | `contradicted` | `withhold` | `withheld` |
+| `lavrea-top-01-throughput` | `partially_verified` | `unsupported` | `not_established` | `withhold` | `withheld_as_ranking` |
+| `lavrea-top-1-python-full-stack` | `partially_verified` | `unsupported` | `not_established` | `withhold` | `withheld_as_ranking` |
+| `profile-one-creator-authorship` | `verified` | `bounded` | `contradicted` | `narrow` | `publishable_with_disclosure` |
 
 ## Never-publish list
 

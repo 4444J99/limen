@@ -1,94 +1,146 @@
-# Estate Classification — Method and Strategic Summary
+# Estate classification
 
-Repository-level classification of the GitHub estate, per the reconciliation mandate: automated
-inventory first, deep inspection of the highest-signal candidates, explicit confidence and
-coverage. Companion to `docs/positioning/claims-ledger.md`.
+This is the public-safe classification contract for PSP-P02-W02. It makes the
+whole controlled GitHub estate legible without using repository volume as a
+quality claim and without turning a public document into an inventory of
+private work.
 
-Census baseline: 313 repositories (235 public / 78 private) at 2026-08-08T19:14Z
-(`docs/github-estate-census.json`). Live sweep 2026-08-09: 309 repositories (235 public / 74
-private) — drift of 4 private repos between observations, recorded here rather than averaged.
-Private repositories are counted analytically only; their names and contents are never disclosed
-on public surfaces.
+The denominator is the stable two-pass W01 census receipt:
+10 controlled organizations and 314 accessible repositories (235 public, 79
+private). The receipt records identical repository keys across both passes;
+the verifier recomputes that repository identity/visibility digest and also
+matches the authenticated owner and organization roster. This classification
+is a reversible preflight over that denominator, not a completion receipt for
+W02.
 
-## Method
+## Four dimensions
 
-Two orthogonal axes, applied per-repository.
+Every live census record receives these dimensions during verification.
 
-**Authorship classes:**
-1. Original (manual).
-2. Agent-generated under the owner's architecture and direction.
-3. Substantially transformed fork.
-4. Light fork.
-5. Human collaboration.
-6. Mirror / archive / template / infrastructure.
+| Dimension | Values | Evidence |
+| --- | --- | --- |
+| Primary role | infrastructure, proof, experiments, products, archives, private operations, partner work | Estate governance class, product ledger, archive fact, and access grant posture |
+| Maturity | active, maintained, dormant, archived, unvalidated | GitHub `archived` and `pushed_at` facts; exact elapsed-time comparisons at the inclusive 90- and 365-day policy boundaries |
+| Visibility disposition | public evidence, public partner, private internal, private partner | GitHub `private` fact plus the access-grant registry |
+| Public relevance | technical diligence, front-door proof, public reference, product diligence, historical reference, private only, partner scoped | Primary role plus visibility disposition; private-internal records are always private only and partner records are always partner scoped |
 
-**Product states:**
-1. Live with demonstrated use.
-2. Deployed but adoption unvalidated.
-3. Working prototype.
-4. Code-complete but undeployed.
-5. Specification or pilot package.
-6. Design or concept.
-7. Internal infrastructure.
-8. Archived / abandoned / superseded.
+The ordered role policy lives in
+[`institutio/github/estate.yaml`](../../institutio/github/estate.yaml). It is
+intentionally first-match-wins: a partner product is partner work first, a
+portal product is proof first, and a private product remains a product. This
+prevents the same repository being counted in two primary classes.
 
-The automated pass classifies by API metadata (fork flag, archived flag, template flag, size,
-homepage, language, name patterns). Metadata cannot distinguish original-manual from
-agent-directed authorship (that distinction requires commit forensics), nor "deployed" from
-"actually serving" (three Pages sites report `built` yet serve 404 — see ledger §3). Those
-distinctions are made only for deep-inspected repositories.
+## Current preflight coverage
 
-## Automated inventory (309 live estate repos, 2026-08-09)
+The live verifier observed this public-safe aggregate on 2026-08-10:
 
-| Bucket | Count | Notes |
-|---|---:|---|
-| Forks (light or transformed — per-repo diff needed to split) | 29 | 9.4% of estate |
-| Archived | 71 | 23% — honest archive tier, already suppressed |
-| Templates / infrastructure-patterned | ~20 | `.github`, registries, profile repos, meta-* |
-| Homepage-bearing (deploy *intended*; liveness unvalidated) | ~115 | Overlaps other buckets; 3 known-404 |
-| Small (<100KB, spec/concept-class) | ~30 | |
-| Working-code, state needs inspection | ~71 | The long tail |
-| Top languages | Python 112, TypeScript 48, HTML 24, JS 17, Shell 15 | |
+| Primary role | Repositories |
+| --- | ---: |
+| Archives | 71 |
+| Experiments | 118 |
+| Infrastructure | 1 |
+| Partner work | 4 |
+| Private operations | 56 |
+| Products | 49 |
+| Proof | 15 |
+| **Total** | **314** |
 
-**Strategic picture:** roughly a quarter of the estate is already honestly archived; under 10% is
-forked; the productive core is ~200 original/agent-directed repositories of which a small number
-carry nearly all external signal (stars/forks concentrate in 3 repos) and an even smaller number
-are verifiably operating.
+| Visibility disposition | Repositories |
+| --- | ---: |
+| Public evidence | 234 |
+| Public partner | 1 |
+| Private internal | 76 |
+| Private partner | 3 |
+| **Total** | **314** |
 
-## Deep-inspected set (high-signal candidates)
+Maturity is 238 active, 5 maintained, and 71 archived; no live record lacked
+a usable `pushed_at` fact. These values are evidence snapshots, not public
+performance claims.
 
-| Repository | Authorship | Product state | Evidence anchor |
-|---|---|---|---|
-| `organvm/limen` | Agent-directed under owner architecture (3,678 owner commits + bot lanes) | **Live with demonstrated use** (internal): public dashboard receipts — 3,111 tasks / 1,357 done since 2026-05-31 | dashboard + worker `/health`, observed 2026-08-09 |
-| `organvm-iv-taxis/a-i--skills` | Original/agent-directed | Deployed; **highest external signal** (15★/7F, external stargazers verified) | live repo |
-| `organvm-iii-ergon/public-record-data-scrapper` | Agent-directed | Working prototype; deployment unvalidated; 4 implemented state collectors (CA/TX/FL/NY), 50-state architecture; 3,399 asserted tests; 7★/6 external forks incl. one company | repo + fork graph |
-| `organvm-iii-ergon/a-i-chat--exporter` | Agent-directed | Deployed (install page 200); ~170 tests / 5 formats / 9 locales repo-asserted; usage claim unverified | ledger §2 |
-| `organvm-iii-ergon/agentic-titan` | Agent-directed | Working prototype; 5★/2F | repo |
-| `moneta` (in `organvm/limen`) | Agent-directed | **Live** (`mint.4444j99.dev` 200); revenue capability, no verified sales | live HTTP |
-| `styx` | Agent-directed | Code-complete; 1,107 asserted tests; no adoption evidence | repo assertion |
-| `universal-mail--automation` | Agent-directed | Working prototype; 400+ asserted tests | repo assertion |
-| `your-fit-tailored` | Agent-directed | **Specification/pilot package** (no runtime) | repo inspection |
-| `organvm-vii-kerygma/portfolio` | Agent-directed | Deployed + live (200 at kerygma URL + Netlify mirror) | live HTTP |
-| `4444J99/peer-audited--behavioral-blockchain` | Agent-directed | Working prototype (large TS codebase) | repo |
+## W03 flagship candidate projection
 
-## Confidence and coverage
+The accepted W02 classification feeds a bounded W03 public candidate set; it
+does not create another estate inventory. The live projection contains all 15
+repositories currently classed as `front_door_proof` plus seven typed public
+additions required by the manifest, public profile/portfolio routing, or a
+live product endpoint. That produces 22 public candidates, each reconciled to
+the current W02 identity and maturity projection.
 
-- Automated metadata pass: **100% of 309 live repos** (fork/archived/template/size/homepage).
-- Deep inspection (authorship + true product state): **11 repositories** — the entire top of the
-  external-signal and operational-evidence rankings, plus every repository named in positioning
-  seeds. Confidence in flagship selections: high.
-- Remaining ~200 productive-core repos: classified by metadata only; authorship split
-  (original-manual vs agent-directed) not yet performed per-repo. Confidence: medium for
-  bucket-level counts, low for any per-repo claim. This is sufficient for the strategic picture;
-  a full per-repo authorship ledger is proof-program work (see
-  `docs/positioning/proof-production-program.md`), not a blocker for positioning.
+The scored matrix and reviewer verdict live in
+[`flagship-proof-set.yaml`](flagship-proof-set.yaml). They ratify three
+non-overlapping flagships:
 
-## Classification rules going forward
+| Story role | Flagship | Public evidence boundary |
+| --- | --- | --- |
+| Governed agent delivery | Limen | Public source, dated exact-head CI, and public operating-status endpoint |
+| Public-record decision pipeline | UCC Public-Records Intelligence Platform | Public source, current exact-head gate, and public deployment |
+| Privacy-first data portability | AI Chat Exporter | Public source, current exact-head CI, and public install surface |
 
-- A repository claims "live with demonstrated use" only with a dated liveness receipt (HTTP 200 /
-  health endpoint / dashboard metric) — the Pages "built" API status is not liveness (three
-  counter-examples on record).
-- "Deployed" without usage evidence is stated as "deployed; adoption unvalidated."
-- Authorship is described per the terminology policy
-  (`docs/positioning/authorship-disclosure-policy.md`); "solo-built" is never used.
-- Archived repositories stay archived — they are the honest Level-3 archive tier, not debt.
+Universal Mail, Styx, a-i--skills, and MONETA remain named alternates with
+specific promotion conditions. The other 15 candidates retain explicit
+exclusion reasons. Selection is not a repository-count, stars,
+activity-volume, or aesthetic ranking; hard evidence gates override the
+numeric score. No selected flagship relies on private-only evidence.
+
+## Public/private rule
+
+The public registry stores the policy, the W01 aggregate receipt, and this
+aggregate report. It does not add private repository names, descriptions,
+topics, or timestamps. Verification may inspect those facts directly through
+the native owner's authenticated GitHub API credential, loads the sanctioned
+private override overlay when it is hydrated, keeps private facts in process,
+and checks the reviewed diff against both full private identities and
+unambiguous standalone bare private slugs that do not collide with any public
+slug. Any newly added private repository name in public content, a newly added
+path, or a rename destination is a hard failure. Failure messages remain
+aggregate and never echo the private identity.
+
+Sensitive rationale remains in the existing arca-sealed
+`institutio/github/estate.private.yaml` overlay, which can deepen a repository
+judgment but cannot alter public class policy. A private repository becomes
+public only through the existing visibility sweep and its release gate; this
+classification never authorizes a visibility change.
+
+## Finite uncertainty queue
+
+The queue is deliberately evidence-shaped rather than a name list. Private
+record identities stay in sanctioned private custody; the verifier emits only
+aggregate queue counts.
+
+| Question | Current count | Evidence needed to resolve | Owner |
+| --- | ---: | --- | --- |
+| Is a fallback experiment a product, proof object, or durable experiment? | 118 | Repository purpose or explicit product-ledger / proof-selection decision | PSP-P02-W02 → PSP-P02-W03 where proof selection is involved |
+| Does the one public partner surface need a distinct public-collaboration disposition? | 1 | Collaboration posture or private-twin decision in the access registry | Partner-access owner |
+| Is ownership ambiguous? | 0 | A newer W01 two-pass census showing a changed owner/org/repository key | PSP-P02-W01 |
+| Is maturity ambiguous? | 0 | A usable `pushed_at` fact or an explicit archive decision | Repository owner |
+
+An unresolved item still has one safe primary class. The queue is a decision
+backlog, not permission to guess, publish, or weaken the private default.
+
+## Validation
+
+Run the focused live predicate with the non-HEAD base of the exact reviewed
+diff:
+
+```bash
+python3 scripts/estate-classification.py --verify --json --base <review-base>
+```
+
+It fails unless the policy taxonomy is complete, every live census record has
+exactly one primary class and all four dimensions, every selector key and value
+is recognized, the live owner/organization roster and repository
+identity/visibility digest still match W01, the denominator counts still
+match, the effective public-plus-private-override estate is used for governance
+classification, and the public diff contains no newly added private repository
+name in content or path metadata. The unit companion is:
+
+```bash
+python3 scripts/tests/estate-classification.test.py
+```
+
+W02 is formally accepted at main head
+`35134b95650a26185a58eb3b3a82632e5b80b5b2` with its
+[marked receipt](https://github.com/organvm/limen/issues/2174#issuecomment-5247059070).
+That receipt passed
+`python3 scripts/positioning-program.py --verify-work PSP-P02-W02`, admitting
+W03 integration while leaving W03's own marked receipt and closure pending.

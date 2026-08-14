@@ -23,4 +23,67 @@
 
 schema_version: 1
 
-judgments: {}
+judgments:
+  docs/positioning/commercial-contract.md:
+    - judged_at: "2026-08-10T19:31:15Z"
+      content_sha256: "78ea5f093c282e50f93c2dd973395f19f511e3a212b754e8153f9e6e75c5e5ee"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 4}
+      defects:
+        - "The diligence contract is intentionally dense and should not become the front-door page unchanged."
+        - "Provisional proof labels interrupt the reading flow until PSP-C02 supplies final anchors."
+      suggested_fix: "After PSP-C02 closes, derive a shorter L1/L2 public surface from this contract and retain the full document for diligence."
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "97f9de8c7e552b60d3f5fb00da0f03130c25f8c7999d36ff1613edcceed3beb6"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 5}
+      defects:
+        - "The full contract remains too dense for a front-door page, but its first paragraph now states the live reader gate and exact effect boundary plainly."
+      suggested_fix: "Keep this as the diligence source and generate shorter audience pages from it after the reader gate closes."
+  docs/positioning/offers/agentic-delivery-audit.md:
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "01fbb141b9f7801bf368b7f101026cf45f1b09b85634a8c5a2ba285f8ccb908b"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 5, credibility: 4}
+      defects:
+        - "The repository staging notice is operationally necessary but should not lead the eventual buyer-facing page."
+      suggested_fix: "On publication, keep the decision promise and entry criteria above the fold and move lifecycle metadata to the diligence layer."
+  docs/positioning/offers/governance-install.md:
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "67426ac9686791e82172208b032354a1154eae9fed5f0d011702ee822a5e968e"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 5, credibility: 4}
+      defects:
+        - "The control vocabulary is precise but assumes the reader already understands the Audit-to-Install progression."
+      suggested_fix: "When surfaced publicly, precede this detail with one sentence linking the install to an accepted Audit baseline."
+  docs/positioning/offers/bounded-delivery-governance-retainer.md:
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "e629909a7180c0e46ba986661cc5ba8f3cd0549fec60cbf714b6c2c08c0b9b66"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 4}
+      defects:
+        - "The offer is intentionally bounded, but the formal name is longer than the plain-language promise."
+      suggested_fix: "Lead any public card with finite senior review without outsourced ownership; retain the formal title in diligence."
+  docs/positioning/offers/qualification-and-routing.md:
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "72cc34350b5d868bfe771828d65e48c76f8f1a5083cfa0e6f27849afc2f68ffa"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 5}
+      defects:
+        - "The deterministic matrix is excellent diligence evidence but too technical to function as acquisition copy by itself."
+      suggested_fix: "Use a short fit and not-fit summary publicly, with this exact routing matrix behind progressive disclosure."
+  docs/positioning/offers/product-operating-partnership-review.md:
+    - judged_at: "2026-08-13T01:14:49Z"
+      content_sha256: "cab2a0b936a27d1c4c9acae8b79c0bf1faf3a33b530cf08bc362eff758123afd"
+      model: "gpt-5.6-sol"
+      verdict: pass
+      scores: {tone: 4, brand_voice: 5, clarity: 4, credibility: 5}
+      defects:
+        - "The repeated non-offer boundaries make the page dense, but they correctly prevent a secondary venture path from distracting the front door."
+      suggested_fix: "Keep this at L3 only and preserve the explicit no-public-CTA boundary in every derived surface."

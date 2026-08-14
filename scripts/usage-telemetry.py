@@ -50,6 +50,25 @@ except Exception:  # pragma: no cover - installed fleet may briefly precede this
     _provider_health_policy = None
     _provider_outcome_ledger_path = None
 
+try:
+    from limen.provider_health import provider_for_model as _provider_for_model
+except Exception:  # pragma: no cover - optional API may trail the compatible health core
+    _provider_for_model = None
+
+try:
+    from limen.provider_selection import (
+        catalog_hash as _catalog_hash,
+        discover_opencode_models as _discover_opencode_models,
+    )
+except Exception:  # pragma: no cover - installed fleet may briefly precede live discovery
+    _catalog_hash = None
+    _discover_opencode_models = None
+
+try:
+    from limen.provider_health import PROVIDER_TERMINALS as _PROVIDER_TERMINALS
+except Exception:  # pragma: no cover - optional export may trail the compatible core APIs
+    _PROVIDER_TERMINALS = frozenset({"auth_failure", "rate_limit"})
+
 HOME = Path.home()
 NOW = datetime.datetime.now(datetime.timezone.utc)
 W5H = NOW - datetime.timedelta(hours=5)
@@ -564,14 +583,20 @@ def _provider_outcome_projection() -> dict:
     ):
         return {}
     try:
+        outcomes = _load_provider_outcomes(_provider_outcome_ledger_path())
+        policy = _provider_health_policy()
         snapshot = _project_provider_health(
-            _load_provider_outcomes(_provider_outcome_ledger_path()),
-            _provider_health_policy(),
+            outcomes,
+            policy,
             now=NOW,
         )
     except Exception:
         return {}
+    provider_entries = list(snapshot.providers.items())
+    model_entries = list(snapshot.models.items())
     entries = [*snapshot.providers.values(), *snapshot.models.values()]
+    blocked_provider_entries = [(name, entry) for name, entry in provider_entries if entry.blocked(NOW)]
+    blocked_model_entries = [(name, entry) for name, entry in model_entries if entry.blocked(NOW)]
     last_success = max((entry.last_success for entry in entries if entry.last_success), default=None)
     last_failure = max(
         (entry.last_terminal_failure for entry in entries if entry.last_terminal_failure),
@@ -579,13 +604,152 @@ def _provider_outcome_projection() -> dict:
     )
     cooldown_expiry = max((entry.cooldown_until for entry in entries if entry.cooldown_until), default=None)
     blocked = [entry for entry in entries if entry.blocked(NOW)]
+    # A ledger contains only providers that have produced an outcome. That is not a live
+    # denominator: if the current catalog has providers A and B, failures from A alone cannot
+    # bench B. Provider auth/rate-limit health is provider-scoped, so fold every outcome from
+    # the current catalog across execution profiles; a later-profile success must recover an
+    # older-profile failure. Missing discovery or mismatched evidence fails open.
+    catalog_fingerprint = None
+    catalog_provider_count = 0
+    matching_profile_hash = None
+    matching_outcome_count = 0
+    live_blocked_provider_count = 0
+    all_providers_blocked = False
+    live_providers: list[str] = []
+    matching_profile_outcomes = []
+    matching_profile_snapshot = None
+    discover_models = _discover_opencode_models
+    hash_catalog = _catalog_hash
+    provider_for_model = _provider_for_model
+    if (
+        blocked_provider_entries
+        and discover_models is not None
+        and hash_catalog is not None
+        and provider_for_model is not None
+    ):
+        try:
+            timeout = max(
+                1,
+                int(_number_or_default(os.environ.get("LIMEN_OPENCODE_CATALOG_TIMEOUT", "30"), 30)),
+            )
+            models = discover_models(
+                os.environ.get("LIMEN_OPENCODE_BIN", "opencode"),
+                timeout=timeout,
+            )
+            catalog_fingerprint = hash_catalog(models)
+            live_providers = sorted(
+                {
+                    provider_for_model(str(model.model_id))
+                    for model in models
+                    if bool(getattr(model, "active", True)) and str(getattr(model, "model_id", ""))
+                }
+            )
+            catalog_provider_count = len(live_providers)
+            matching_profile_outcomes = [
+                outcome for outcome in outcomes if getattr(outcome, "catalog_hash", None) == catalog_fingerprint
+            ]
+            profile_hashes = {
+                str(getattr(outcome, "execution_profile_hash", ""))
+                for outcome in matching_profile_outcomes
+                if str(getattr(outcome, "execution_profile_hash", ""))
+            }
+            matching_profile_hash = next(iter(profile_hashes)) if len(profile_hashes) == 1 else None
+            matching_outcome_count = len(matching_profile_outcomes)
+            matching_profile_snapshot = _project_provider_health(
+                matching_profile_outcomes,
+                policy,
+                now=NOW,
+            )
+            blocked_names = [
+                provider
+                for provider in live_providers
+                if ((entry := matching_profile_snapshot.providers.get(provider)) is not None and entry.blocked(NOW))
+            ]
+            live_blocked_provider_count = len(blocked_names)
+            all_providers_blocked = bool(live_providers) and live_blocked_provider_count == len(live_providers)
+        except Exception:
+            catalog_fingerprint = None
+            catalog_provider_count = 0
+            matching_profile_hash = None
+            matching_outcome_count = 0
+            live_blocked_provider_count = 0
+            all_providers_blocked = False
+            live_providers = []
+            matching_profile_outcomes = []
+            matching_profile_snapshot = None
+    latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
+    if matching_profile_snapshot is not None:
+        for outcome in matching_profile_outcomes:
+            provider = str(getattr(outcome, "provider", "") or "")
+            terminal = str(getattr(outcome, "terminal_class", "") or "")
+            finished = getattr(outcome, "finished_at", None)
+            entry = matching_profile_snapshot.providers.get(provider)
+            if (
+                provider not in live_providers
+                or terminal not in _PROVIDER_TERMINALS
+                or not isinstance(finished, datetime.datetime)
+                or entry is None
+                or not entry.blocked(NOW)
+                or entry.last_terminal_failure is None
+                or finished.astimezone(datetime.timezone.utc)
+                != entry.last_terminal_failure.astimezone(datetime.timezone.utc)
+            ):
+                continue
+            previous = latest_provider_failure.get(provider)
+            if previous is None or finished > previous[0]:
+                latest_provider_failure[provider] = (finished, terminal)
+    observed_latest_provider_failure: dict[str, tuple[datetime.datetime, str]] = {}
+    for outcome in outcomes:
+        provider = str(getattr(outcome, "provider", "") or "")
+        terminal = str(getattr(outcome, "terminal_class", "") or "")
+        finished = getattr(outcome, "finished_at", None)
+        if not provider or terminal not in _PROVIDER_TERMINALS or not isinstance(finished, datetime.datetime):
+            continue
+        previous = observed_latest_provider_failure.get(provider)
+        if previous is None or finished > previous[0]:
+            observed_latest_provider_failure[provider] = (finished, terminal)
+    provider_failure_classes = {
+        provider: terminal for provider, (_finished, terminal) in latest_provider_failure.items()
+    }
+    latest_terminal_class = (
+        max(latest_provider_failure.values(), key=lambda row: row[0])[1] if latest_provider_failure else None
+    )
+    observed_provider_failure_classes = {
+        provider: terminal for provider, (_finished, terminal) in observed_latest_provider_failure.items()
+    }
+    observed_latest_terminal_class = (
+        max(observed_latest_provider_failure.values(), key=lambda row: row[0])[1]
+        if observed_latest_provider_failure
+        else None
+    )
     return {
         "provider_outcome_health": "degraded" if blocked else "ok",
         "provider_cooldown_count": len(blocked),
         "provider_last_success": last_success.isoformat() if last_success else None,
         "provider_last_terminal_failure": last_failure.isoformat() if last_failure else None,
+        # Dispatch needs the terminal class, not only its timestamp, to distinguish an auth
+        # cooldown from a capacity/transport failure.
+        "provider_last_terminal_failure_class": provider_failure_classes.get("opencode", latest_terminal_class),
+        "provider_terminal_failure_classes": provider_failure_classes,
+        "provider_outcome_observed_last_terminal_failure_class": observed_provider_failure_classes.get(
+            "opencode",
+            observed_latest_terminal_class,
+        ),
+        "provider_outcome_observed_terminal_failure_classes": observed_provider_failure_classes,
         "provider_cooldown_expiry": cooldown_expiry.isoformat() if cooldown_expiry else None,
         "provider_health_snapshot_hash": snapshot.snapshot_hash(),
+        # Dispatch benches OpenCode only when every provider in the current live catalog
+        # is blocked after cross-profile recovery; model cooldowns remain selector-owned.
+        "provider_outcome_all_blocked": all_providers_blocked,
+        "provider_outcome_provider_count": catalog_provider_count,
+        "provider_outcome_blocked_provider_count": live_blocked_provider_count,
+        "provider_outcome_observed_provider_count": len(provider_entries),
+        "provider_outcome_observed_blocked_provider_count": len(blocked_provider_entries),
+        "provider_outcome_catalog_hash": catalog_fingerprint,
+        "provider_outcome_execution_profile_hash": matching_profile_hash,
+        "provider_outcome_matching_outcome_count": matching_outcome_count,
+        "provider_outcome_model_count": len(model_entries),
+        "provider_outcome_blocked_model_count": len(blocked_model_entries),
     }
 
 

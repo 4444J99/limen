@@ -1,0 +1,14 @@
+{
+  "schema": "psp-c08-review-gates/v1",
+  "state": "review-pending",
+  "required_reviews": [
+    {"id": "source-coverage", "scope": "all staged assets", "status": "pending", "prohibits": ["release"]},
+    {"id": "claim-citation", "scope": "all staged assets", "status": "pending", "prohibits": ["release"]},
+    {"id": "privacy-redaction", "scope": "all staged assets and fixtures", "status": "pending", "prohibits": ["release"]},
+    {"id": "accessibility-links", "scope": "future canonical report", "status": "not-applicable-until-owner-approved", "prohibits": ["publication"]}
+  ],
+  "external_approvals": [
+    {"id": "HG-PUBLIC-IDENTITY", "work_id": "PSP-P09-W02", "status": "unapproved", "prohibits": ["publish", "deploy", "claim_live_url"]},
+    {"id": "HG-PUBLICATION-SEND", "work_id": "PSP-P09-W08", "status": "unapproved", "prohibits": ["schedule", "send", "claim_channel_outcome"]}
+  ]
+}
