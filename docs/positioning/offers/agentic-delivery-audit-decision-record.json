@@ -1,0 +1,175 @@
+{
+  "schema_version": "limen.positioning.audit_decision_record.v1",
+  "status": "internal_review_contract",
+  "work_item": "PSP-P04-W01",
+  "reviewed_offer": "agentic-delivery-audit.md",
+  "leased_evidence_baseline": "58b0d4764ef2bf1d3b01ae8ebc1ac1137cae2930",
+  "buyable_decision": {
+    "buyer": "A CTO, VP Engineering, Head of Platform, or equivalent leader who owns one stalled delivery decision.",
+    "trigger": "A material AI or software initiative is active, but its value, risk, cost, or path to verified delivery remains unclear.",
+    "unit_of_work": "One bounded initiative, workflow, or delivery system with one named sponsor and decision owner.",
+    "scope": "Read-only diagnosis of agreed evidence and current delivery controls. Adjacent teams, repositories, vendors, and initiatives are excluded unless a new scope is approved.",
+    "promise": "A written, evidence-linked keep, kill, narrow, or govern verdict and the minimum authority and verification gates needed next.",
+    "timeline": "Two to three weeks from complete intake and agreed access.",
+    "commercial_form": "One fixed-scope decision fee referenced only through RANGE-AUDIT and PRICE-AUDIT. The numeric amount remains private and requires HG-PRICE-ANCHORS."
+  },
+  "required_inputs": [
+    {
+      "id": "sponsor_and_decision",
+      "contract": "A named sponsor, a named decision owner, and the decision the audit must enable."
+    },
+    {
+      "id": "bounded_scope",
+      "contract": "One initiative, workflow, or delivery system, including what is explicitly inside and outside scope."
+    },
+    {
+      "id": "read_only_evidence_register",
+      "contract": "The agreed documents, delivery records, architecture materials, test evidence, failure evidence, and system views needed for diagnosis."
+    },
+    {
+      "id": "current_owner_access",
+      "contract": "Availability of the people who own the system, decisions, and operational constraints for bounded interviews or written clarification."
+    },
+    {
+      "id": "custody_instructions",
+      "contract": "Data classification, permitted transfer method, retention period, access-return or deletion rule, and prohibited inputs."
+    },
+    {
+      "id": "known_constraints",
+      "contract": "Security, privacy, legal, regulatory, vendor, deadline, budget, and organizational constraints that could change the verdict."
+    }
+  ],
+  "missing_evidence_rule": "Missing evidence never grants wider authority. It produces an explicit uncertainty, narrower scope, pause, or decline.",
+  "outputs": [
+    "current-state system and decision map",
+    "failure, risk, and evidence register",
+    "keep, kill, narrow, or govern verdict",
+    "verification and authority gate specification",
+    "sequenced implementation options with owner and dependency notes",
+    "recorded walkthrough and handoff package"
+  ],
+  "delivery_sequence": [
+    {
+      "stage": "intake_checkpoint",
+      "contract": "Confirm the sponsor, decision, scope, evidence register, custody rules, and exclusions before the delivery clock starts."
+    },
+    {
+      "stage": "week_one",
+      "contract": "Map the current system, decisions, owners, evidence, failure modes, and declared uncertainties."
+    },
+    {
+      "stage": "week_two",
+      "contract": "Test material findings with current owners and draft the evidence-linked verdict."
+    },
+    {
+      "stage": "week_two_to_three",
+      "contract": "Finalize the verdict, minimum gate specification, bounded implementation options, and decision-owner walkthrough."
+    },
+    {
+      "stage": "closeout",
+      "contract": "Record acceptance or bounded defects, hand off every artifact, and return, expire, or delete access under the agreed instructions."
+    }
+  ],
+  "exclusions": [
+    "production mutation, deployment, or operational command",
+    "outbound messages, account changes, procurement, or vendor commitments",
+    "organization redesign, team surveillance, management takeover, or executive substitution",
+    "penetration testing, legal opinion, compliance certification, or financial audit",
+    "unlimited repository, team, vendor, evidence, meeting, or revision scope",
+    "on-call response, implementation delivery, or guaranteed business outcome"
+  ],
+  "success_criteria": [
+    "The named decision owner can make the stated keep, kill, narrow, or govern decision.",
+    "Every material recommendation resolves to evidence or an explicit uncertainty.",
+    "The final artifact set stays within the agreed initiative, access, custody, and authority boundaries.",
+    "Current owners can see, challenge, and correct findings before the verdict is finalized.",
+    "The sponsor and named internal owner receive the evidence register, verdict, gate specification, options, and walkthrough.",
+    "Access is returned, expired, or deleted under the agreed instructions, with no hidden follow-on work."
+  ],
+  "pricing": {
+    "model": "fixed_scope_decision_fee",
+    "range_id": "RANGE-AUDIT",
+    "anchor_id": "PRICE-AUDIT",
+    "approval_gate": "HG-PRICE-ANCHORS",
+    "public_numeric_amount": false,
+    "price_when": [
+      "the evidence is accessible",
+      "the decision is bounded",
+      "the decision owner will participate"
+    ],
+    "capacity_rule": "Reserve one named diagnostic window for one bounded initiative and one accountable audit lead.",
+    "scope_trade_rule": "If delivery risk or evidence volume exceeds the anchor assumptions, narrow scope or issue a separately reviewed scope trade.",
+    "discount_rule": "A discount removes scope, evidence depth, artifact depth, or delivery burden; it never preserves the same risk and scope for less."
+  },
+  "decline_or_pause_when": [
+    "no sponsor or decision owner will own the verdict",
+    "the request contains multiple unbounded initiatives or no decision window",
+    "diagnosis requires production write access, unsolicited outreach, covert monitoring, or account control",
+    "required evidence is unavailable, unlawfully sourced, unsafe to transfer, or outside agreed custody",
+    "the expected role is executive substitution, territorial control, team takeover, or an outcome guarantee",
+    "a material security, privacy, legal, regulatory, or contractual question lacks an authorized owner",
+    "the requested timeline cannot support an evidence-linked verdict"
+  ],
+  "escalation": {
+    "implementation": "Route to a separately scoped Governance Install only after the audit verdict and prerequisites support it.",
+    "price_exceptions": "HG-PRICE-ANCHORS",
+    "terms_liability_privacy_payment_or_service": "HG-CONTRACT"
+  },
+  "authority_and_handoff": {
+    "mode": "read_only",
+    "additive_leverage": true,
+    "sponsor_granted_scope": true,
+    "current_owner_visibility": true,
+    "current_owners_retain_operational_authority": true,
+    "prohibited_effects": [
+      "mutate production",
+      "send messages",
+      "change accounts",
+      "expand access",
+      "replace an executive",
+      "take over a team",
+      "silently become implementation authority"
+    ],
+    "handoff_artifacts": [
+      "evidence register",
+      "verdict",
+      "gate specification",
+      "decision log",
+      "bounded options"
+    ],
+    "continuing_control": false
+  },
+  "review_verdict": {
+    "price": "PASS",
+    "scope": "PASS",
+    "deliver": "PASS",
+    "decline": "PASS",
+    "overall": "PASS",
+    "oral_exceptions_required": false,
+    "basis": "The fixed-scope unit, inputs, delivery sequence, outputs, exclusions, success criteria, price boundary, authority boundary, handoff, and deterministic decline conditions are explicit."
+  },
+  "effect_boundary": {
+    "publishes_offer": false,
+    "approves_numeric_price": false,
+    "creates_proposal_or_sow": false,
+    "authorizes_outbound_send": false,
+    "binds_either_party": false,
+    "authorizes_delivery_start": false,
+    "human_gates_not_satisfied": [
+      "HG-PRICE-ANCHORS",
+      "HG-CONTRACT",
+      "HG-OPERATOR-TERMS",
+      "HG-PUBLICATION-SEND",
+      "PSP-P03-W07"
+    ],
+    "completion_condition": "This becomes W01 completion evidence only after the exact-head predicate, marked receipt, and registry verifier pass."
+  },
+  "evidence_links": {
+    "commercial_contract": "../commercial-contract.md",
+    "accepted_psp_p02_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170",
+    "work_owner": "https://github.com/organvm/limen/issues/2190",
+    "integration_lane": "https://github.com/organvm/limen/pull/2422",
+    "generated_offer": "agentic-delivery-audit.md"
+  },
+  "rollback": "Keep the offer and decision record internal. If scope, evidence, custody, authority, economics, or acceptance becomes ambiguous, set the overall verdict to HOLD and return the ambiguity to this record without widening access, inventing evidence, exposing a price, or adding an oral exception."
+}

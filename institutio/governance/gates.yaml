@@ -486,6 +486,18 @@ gates:
     paths: ["scripts/claim-policy.py", "scripts/claim-surface-quarantine.py", "scripts/claim-quarantine-drill.py", "scripts/tests/test_claim_policy.py", "scripts/tests/fixtures/positioning-claim-drill/**", "docs/positioning/program/CLAIM-CORRECTION-PROTOCOL.md", "institutio/governance/gates.yaml"]
     owner: positioning-program
     note: "PSP-P02-W06/W07 stay fail-closed and source-safe: a public claim export is rejected for unsupported, stale, future-dated, malformed-timestamp, non-public-source, forbidden, withdrawn, invalid-window, or source-changed rows; the quarantine validates the complete accepted-plus-rejected policy universe and removes unknown surface claims with public-safe reasons; claim/report aliases, source-nested output, and per-surface marker/manifest drift fail before any write; neither command publishes or modifies the source tree."
+  agentic-delivery-audit-decision-test:
+    command: "python3 docs/positioning/offers/verify_agentic_delivery_audit_decision.py && bash scripts/run-pytest-hermetic.sh scripts/tests/test_agentic_delivery_audit_decision.py -q"
+    paths:
+      - "docs/positioning/offers/agentic-delivery-audit.md"
+      - "docs/positioning/offers/agentic-delivery-audit-decision-record.json"
+      - "docs/positioning/offers/verify_agentic_delivery_audit_decision.py"
+      - "institutio/positioning/commercial-contract.yaml"
+      - "scripts/positioning-offer-artifacts.py"
+      - "scripts/tests/test_agentic_delivery_audit_decision.py"
+      - "institutio/governance/gates.yaml"
+    owner: positioning-program
+    note: "PSP-P04-W01 stays exactly bound to the canonical generated Audit, complete decision-record contract, numeric-price boundary, shared private-source detector, and focused same-length/scalar/leak regressions."
   research-adjudication-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py scripts/tests/test_positioning_research_adjudication.py -q && python3 scripts/positioning-research-adjudication.py --verify-live"
     paths: [".github/workflows/pr-gate.yml", "cli/tests/test_positioning_program.py", "docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "institutio/positioning/program.yaml", "scripts/positioning-program.py", "scripts/positioning-research-adjudication.py", "scripts/tests/test_positioning_research_adjudication.py", "institutio/governance/gates.yaml"]
