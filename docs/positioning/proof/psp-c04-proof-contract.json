@@ -257,6 +257,7 @@
     {"id": "ai_chat_exporter_public_surface", "kind": "public_endpoint", "observed_at": "2026-08-10", "status": "refresh_required", "max_age_days": 7}
   ],
   "surface_audit_model": {
+    "claim_inventory_source": "p02_claims_ledger",
     "surfaces": ["portfolio_front_door", "portfolio_flagship", "resume", "personal_profile", "organization_profile", "flagship_repository"],
     "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action"],
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
@@ -268,6 +269,7 @@
     "input_schema": "limen.positioning_cost_failure_sample.v1",
     "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "human-time sampling method", "published price basis or explicit unknown"],
     "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
+    "public_failure_classes": ["dependency_failure", "external_gate", "human_gate", "policy_failure", "predicate_failure", "resource_limit", "verification_failure"],
     "required_outputs": ["date window", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict"],
     "forbidden_shortcuts": ["single average without distribution", "treating failed or blocked work as zero cost", "converting list price to actual spend", "publishing private spend without approval"],
     "publication_rule": "Withhold the analysis when attribution, sampling, privacy, or denominator checks fail."
@@ -275,6 +277,8 @@
   "exact_head_receipt_plan": {
     "runner": "python3 scripts/positioning-flagship-receipt.py --request <request.json>",
     "request_schema": "limen.positioning_flagship_receipt_request.v1",
+    "default_output_limit_bytes": 1048576,
+    "predicate_contract": ["argv", "timeout_seconds", "max_output_bytes"],
     "required_fields": ["repository", "default_branch", "exact_head", "predicate", "environment", "started_at", "finished_at", "exit_code", "result", "artifact_digest", "limitations"],
     "outcomes": ["current_pass", "current_fail", "not_current", "blocked_external"],
     "rule": "Every selected flagship receives one fresh exact-head receipt or an explicit not-current outcome; a README assertion or endpoint 200 is insufficient."
@@ -293,6 +297,7 @@
     "status": "rubric_only_no_outreach",
     "human_gate": "HG-PUBLICATION-SEND",
     "acceptable_objects": ["independent reproduction", "dated technical review", "consented collaborator outcome", "accepted talk or publication with review provenance"],
+    "minimum_object_count": 2,
     "minimum_fields": ["validator identity class", "independence disclosure", "object URL or receipt", "date", "claim scope", "method", "limitations", "consent status", "withdrawal route"],
     "score_dimensions": ["independence", "reproducibility", "specificity", "recency", "claim relevance", "consent and privacy"],
     "send_rule": "No request, outreach, upload, or publication occurs from this preflight."

@@ -1,5 +1,8 @@
 import importlib.util
+import hashlib
 import json
+import subprocess
+import sys
 import unittest
 from datetime import date
 from pathlib import Path
@@ -118,9 +121,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertFalse(partnership["public_front_door"])
 
     def test_surface_audit_has_an_explicit_denominator(self) -> None:
+        claims = MODULE.discover_material_claims(self.contract)
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         surface_count = len(self.contract["surface_audit_model"]["surfaces"])
-        self.assertEqual(surface_count * len(self.contract["flagships"]), len(rows))
+        self.assertGreater(len(claims), len(self.contract["flagships"]))
+        self.assertEqual(surface_count * len(claims), len(rows))
+        self.assertTrue(any("Top 1% Python committer" in claim["candidate_claim"] for claim in claims))
+        self.assertTrue(any("314 repositories total" in claim["candidate_claim"] for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
@@ -141,12 +148,58 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", failed["status"])
         self.assertIn("missing surface cells: 1", failed["errors"])
 
+    def test_present_surface_claim_requires_evidence_disclosure_and_action(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = manifest_rows[0]
+        present.update(
+            {
+                "presence": "present",
+                "canonical_or_drift": "canonical",
+                "status": "verified",
+            }
+        )
+        present.pop("source_ids")
+        present.pop("disclosure_level")
+        present.pop("action")
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("present claim missing required evidence fields" in error for error in result["errors"]))
+
     def test_synthetic_architecture_fixture_passes_and_private_keys_fail(self) -> None:
         fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
         self.assertEqual("pass", MODULE.validate_demo_fixture(self.contract, fixture)["status"])
         fixture["records"][0]["secret"] = "not-allowed"
         self.assertEqual("fail", MODULE.validate_demo_fixture(self.contract, fixture)["status"])
+
+    def test_nested_demo_private_key_fails_closed(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        fixture["records"][0]["payload"] = {"nested": [{"apiToken": "not-allowed"}]}
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("apiToken" in error for error in result["errors"]))
+
+    def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
+        empty = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": []},
+        )
+        self.assertEqual("fail", empty["status"])
+        required = self.contract["external_validation"]["minimum_fields"]
+        placeholders = {
+            "outreach_performed": False,
+            "objects": [
+                {field: None for field in required},
+                {field: None for field in required},
+            ],
+        }
+        for row in placeholders["objects"]:
+            row["consent status"] = "public_consented"
+        result = MODULE.validate_external_objects(self.contract, placeholders)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("empty fields" in error for error in result["errors"]))
 
     def test_formalization_reports_only_the_genuine_dependency(self) -> None:
         result = MODULE.formalization_readiness(self.contract)
@@ -156,6 +209,44 @@ class PositioningProofPreflightTest(unittest.TestCase):
             result["residual_gates"],
         )
         self.assertEqual([], result["errors"])
+
+    def test_formalization_cli_exits_nonzero_until_ready(self) -> None:
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPT), "--mode", "formalization", "--json"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(1, completed.returncode)
+        self.assertEqual("fail", json.loads(completed.stdout)["status"])
+
+    def test_formalization_rejects_fabricated_w07_strings(self) -> None:
+        closure = {
+            "chunk_id": "PSP-C03",
+            "status": "pass",
+            "exact_head": MODULE.C03_CURRENT_HEAD,
+            "phase_predicates": {"PSP-P03": "pass", "PSP-P04": "pass"},
+            "w07_receipt": {
+                "work_id": "PSP-P03-W07",
+                "issue_url": "https://github.com/organvm/limen/issues/2188",
+                "url": "fabricated",
+                "sha256": "fabricated",
+                "receipt": {},
+            },
+        }
+        result = MODULE.formalization_readiness(
+            self.contract,
+            closure,
+            w07_verification={
+                "status": "pass",
+                "work_id": "PSP-P03-W07",
+                "receipt_url": "https://github.com/organvm/limen/issues/2188#issuecomment-1",
+                "receipt_sha256": hashlib.sha256(b"receipt").hexdigest(),
+            },
+        )
+        self.assertFalse(result["ready"])
+        self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
 
     def test_program_binding_covers_all_p05_leaves(self) -> None:
         self.assertEqual(

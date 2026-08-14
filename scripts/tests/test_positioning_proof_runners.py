@@ -44,10 +44,48 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
 
+    def test_cost_failure_rows_must_fall_inside_an_ordered_window(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["rows"][0].pop("observed_at")
+        payload["rows"][1]["observed_at"] = "2026-08-09T12:00:00Z"
+        payload["window_start"] = "2026-08-07"
+        payload["window_end"] = "2026-08-01"
+        errors = COST.validate_sample(payload)
+        self.assertIn("sample date window must be ordered", errors)
+        self.assertIn("row 0 requires observed_at", errors)
+        self.assertTrue(any("outside the declared window" in error for error in errors))
+
+    def test_non_done_zero_cost_or_private_failure_class_is_withheld(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        failed = payload["rows"][1]
+        for field in (
+            "model_cost_usd",
+            "human_minutes",
+            "retry_count",
+            "retry_cost_usd",
+            "verification_cost_usd",
+        ):
+            failed[field] = 0
+        failed["failure_class"] = "customer@example.invalid"
+        result = COST.reproduce(payload)
+        self.assertEqual("withheld", result["status"])
+        self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
+        self.assertTrue(any("positive measured cost/time" in error for error in result["errors"]))
+
+    def test_non_done_explicit_unknown_withholds_publication(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        failed = payload["rows"][1]
+        failed["model_cost_usd"] = None
+        failed["model_cost_basis"] = "unknown"
+        failed["human_minutes"] = None
+        result = COST.reproduce(payload)
+        self.assertEqual("withheld", result["status"])
+        self.assertFalse(result["publication_eligible"])
+
     def test_exact_head_runner_passes_and_hashes_output(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)
-            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
             (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
@@ -74,6 +112,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 "predicate": {
                     "argv": [sys.executable, "-c", "print('synthetic pass')"],
                     "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
                 },
                 "limitations": ["Synthetic fixture only."],
             }
@@ -88,11 +127,134 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "flagship_id": "synthetic",
             "repository": "example/synthetic",
             "repository_path": str(ROOT),
+            "default_branch": "main",
             "expected_head": "0" * 40,
-            "predicate": {"argv": [sys.executable, "-c", "raise SystemExit(0)"], "timeout_seconds": 10},
+            "predicate": {
+                "argv": [sys.executable, "-c", "raise SystemExit(0)"],
+                "timeout_seconds": 10,
+                "max_output_bytes": 4096,
+            },
             "limitations": ["Synthetic fixture only."],
         }
         self.assertEqual("not_current", RECEIPT.run_request(request)["result"])
+
+    def test_exact_head_runner_rejects_dirty_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            (repository / "fixture.txt").write_text("dirty\n", encoding="utf-8")
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "raise SystemExit(0)"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("not_current", result["result"])
+            self.assertIn("tracked or untracked changes", result["errors"][0])
+
+    def test_exact_head_runner_requires_default_branch_tip(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "missing-default",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "raise SystemExit(0)"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("not_current", result["result"])
+            self.assertIn("default-branch tip", result["errors"][0])
+
+    def test_exact_head_runner_bounds_output_and_records_spawn_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            base_request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "limitations": ["Synthetic fixture only."],
+            }
+            verbose = {
+                **base_request,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "import sys; sys.stdout.write('x' * 10000)"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 1024,
+                },
+            }
+            bounded = RECEIPT.run_request(verbose)
+            self.assertEqual("current_fail", bounded["result"])
+            self.assertEqual(1024, bounded["output_bytes"])
+            self.assertIn("bounded output budget", bounded["errors"][0])
+            missing = {
+                **base_request,
+                "predicate": {
+                    "argv": ["/definitely/missing-positioning-predicate"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 1024,
+                },
+            }
+            blocked = RECEIPT.run_request(missing)
+            self.assertEqual("blocked_external", blocked["result"])
+            self.assertIn("predicate could not start", blocked["errors"][0])
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -16,6 +17,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -109,6 +112,15 @@ FORBIDDEN_DEMO_KEYS = {
     "secret",
     "tasks_yaml_body",
     "token",
+}
+PUBLIC_FAILURE_CLASSES = {
+    "dependency_failure",
+    "external_gate",
+    "human_gate",
+    "policy_failure",
+    "predicate_failure",
+    "resource_limit",
+    "verification_failure",
 }
 
 
@@ -371,10 +383,23 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("cost/failure reproduction must be executable with synthetic fixtures only")
     if not reproduction.get("runner") or not reproduction.get("fixture"):
         errors.append("cost/failure reproduction requires runner and fixture")
+    if set(reproduction.get("public_failure_classes", [])) != PUBLIC_FAILURE_CLASSES:
+        errors.append("cost/failure reproduction must declare the reviewed public failure vocabulary")
 
     receipt_plan = contract.get("exact_head_receipt_plan", {})
     if not receipt_plan.get("runner") or not receipt_plan.get("request_schema"):
         errors.append("exact-head receipt plan requires an executable runner and request schema")
+    output_limit = receipt_plan.get("default_output_limit_bytes")
+    if (
+        not isinstance(output_limit, int)
+        or isinstance(output_limit, bool)
+        or not 1024 <= output_limit <= 10 * 1024 * 1024
+    ):
+        errors.append("exact-head receipt plan requires a bounded output budget")
+
+    surface_model = contract.get("surface_audit_model", {})
+    if surface_model.get("claim_inventory_source") != "p02_claims_ledger":
+        errors.append("surface audit must discover material claims from the accepted claims ledger")
 
     demo = contract.get("synthetic_architecture_demo", {})
     if demo.get("status") != "contract_only_no_ui" or not demo.get("prohibited_inputs"):
@@ -387,6 +412,9 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("external validation must remain rubric-only/no-outreach")
     if validation.get("human_gate") != "HG-PUBLICATION-SEND":
         errors.append("external validation must retain HG-PUBLICATION-SEND")
+    minimum_objects = validation.get("minimum_object_count")
+    if not isinstance(minimum_objects, int) or isinstance(minimum_objects, bool) or minimum_objects < 2:
+        errors.append("external validation must require at least two substantive objects")
     return errors
 
 
@@ -639,13 +667,14 @@ def resolve_claims(
 def build_surface_audit_skeleton(contract: dict[str, Any]) -> list[dict[str, Any]]:
     """Create the complete surface-by-claim denominator without touching public copy."""
     rows: list[dict[str, Any]] = []
-    claims = resolve_claims(contract)
+    claims = discover_material_claims(contract)
     for surface in contract.get("surface_audit_model", {}).get("surfaces", []):
         for claim in claims:
             rows.append(
                 {
                     "surface": surface,
                     "claim_id": claim["claim_id"],
+                    "claim_text": claim["candidate_claim"],
                     "presence": "not_audited",
                     "source_ids": claim["source_ids"],
                     "observed_at": claim["observation_dates"],
@@ -659,8 +688,90 @@ def build_surface_audit_skeleton(contract: dict[str, Any]) -> list[dict[str, Any
     return rows
 
 
+def _markdown_cells(line: str) -> list[str]:
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def _ledger_action(status: str, public_safe_wording: str, tier: str) -> str:
+    boundary = f"{status} {public_safe_wording} {tier}".lower()
+    unsafe_markers = (
+        "conflicted",
+        "never use",
+        "nowhere",
+        "remove",
+        "superseded",
+        "unverified",
+        "withhold",
+    )
+    return "withhold_or_remove" if any(marker in boundary for marker in unsafe_markers) else "audit_canonical_wording"
+
+
+def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]]:
+    reconciled = re.search(r"Reconciled (\d{4}-\d{2}-\d{2})", content)
+    observed_at = [reconciled.group(1)] if reconciled else []
+    in_claim_section = False
+    claims: list[dict[str, Any]] = []
+    seen_text: set[str] = set()
+    for line in content.splitlines():
+        if re.match(r"^## [1-9]\.", line):
+            in_claim_section = True
+            continue
+        if line.startswith("## "):
+            in_claim_section = False
+        if not in_claim_section or not line.startswith("|"):
+            continue
+        cells = _markdown_cells(line)
+        if len(cells) < 3 or cells[1].lower() == "status" or set(cells[0]) <= {"-", ":"}:
+            continue
+        claim_text = cells[0]
+        if not claim_text or claim_text in seen_text:
+            continue
+        seen_text.add(claim_text)
+        status = cells[1]
+        public_safe_wording = cells[-2] if len(cells) >= 5 else claim_text
+        tier = cells[-1] if len(cells) >= 5 else "ledger_only"
+        claim_id = f"LEDGER-{hashlib.sha256(claim_text.encode()).hexdigest()[:16].upper()}"
+        claims.append(
+            {
+                "claim_id": claim_id,
+                "flagship_id": None,
+                "candidate_claim": claim_text,
+                "source_ids": [source_id],
+                "observation_dates": observed_at,
+                "status": status,
+                "max_disclosure": tier,
+                "limitations": [public_safe_wording],
+                "publishable": _ledger_action(status, public_safe_wording, tier) == "audit_canonical_wording",
+                "reason_codes": ["accepted_claims_ledger_inventory"],
+                "action": _ledger_action(status, public_safe_wording, tier),
+            }
+        )
+    return claims
+
+
+def discover_material_claims(contract: dict[str, Any], repository: Path = ROOT) -> list[dict[str, Any]]:
+    """Discover the accepted ledger denominator, then retain the selected flagship proof cells."""
+    dependencies = {row.get("id"): row for row in contract.get("dependency_sources", []) if isinstance(row, dict)}
+    source_id = str(contract.get("surface_audit_model", {}).get("claim_inventory_source", ""))
+    dependency = dependencies.get(source_id, {})
+    content, blob = _read_git_object(
+        repository,
+        str(dependency.get("exact_head", "")),
+        str(dependency.get("required_path", "")),
+    )
+    if content is None or blob != dependency.get("expected_blob"):
+        raise ValueError("accepted claims-ledger inventory is unavailable or stale")
+    claims = _ledger_material_claims(content, source_id)
+    claims.extend(resolve_claims(contract))
+    if not claims:
+        raise ValueError("material public-claim inventory is empty")
+    return sorted(claims, key=lambda row: str(row["claim_id"]))
+
+
 def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
-    expected = {(row["surface"], row["claim_id"]) for row in build_surface_audit_skeleton(contract)}
+    skeleton = build_surface_audit_skeleton(contract)
+    expected_rows = {(row["surface"], row["claim_id"]): row for row in skeleton}
+    expected = set(expected_rows)
     supplied_rows = manifest.get("rows") if isinstance(manifest, dict) else None
     errors: list[str] = []
     if not isinstance(supplied_rows, list):
@@ -679,6 +790,31 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
         if row.get("presence") not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")
         if row.get("presence") == "present":
+            required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
+            missing_required = sorted(
+                field
+                for field in required_cells
+                if field not in row or row.get(field) is None or row.get(field) == "" or row.get(field) == []
+            )
+            if missing_required:
+                errors.append(
+                    f"present claim missing required evidence fields: {key[0]} / {key[1]}: {', '.join(missing_required)}"
+                )
+            source_ids = row.get("source_ids")
+            valid_source_ids = (
+                isinstance(source_ids, list)
+                and bool(source_ids)
+                and all(isinstance(source_id, str) and source_id for source_id in source_ids)
+            )
+            if not valid_source_ids:
+                errors.append(f"source_ids must be a non-empty string list: {key[0]} / {key[1]}")
+            expected_sources = set(expected_rows.get(key, {}).get("source_ids", []))
+            if valid_source_ids and not expected_sources.issubset(set(source_ids)):
+                errors.append(f"canonical sources missing: {key[0]} / {key[1]}")
+            if not isinstance(row.get("disclosure_level"), str) or not row.get("disclosure_level"):
+                errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
+            if not isinstance(row.get("action"), str) or not row.get("action"):
+                errors.append(f"claim action missing: {key[0]} / {key[1]}")
             if row.get("canonical_or_drift") not in {"canonical", "drift"}:
                 errors.append(f"drift verdict missing: {key[0]} / {key[1]}")
             if not row.get("observed_at"):
@@ -719,12 +855,38 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
         if not isinstance(record, dict):
             errors.append(f"demo record {index} must be an object")
             continue
-        forbidden = sorted(FORBIDDEN_DEMO_KEYS & set(record))
+        forbidden = sorted(_find_forbidden_demo_keys(record))
         if forbidden:
             errors.append(f"demo record {index} contains forbidden keys: {', '.join(forbidden)}")
         if record.get("synthetic") is not True:
             errors.append(f"demo record {index} must be marked synthetic")
     return {"status": "pass" if not errors else "fail", "errors": errors, "record_count": len(records)}
+
+
+def _normalized_demo_key(value: object) -> str:
+    text = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", str(value))
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+
+
+def _find_forbidden_demo_keys(value: object, path: str = "$") -> set[str]:
+    forbidden: set[str] = set()
+    forbidden_compact = {key.replace("_", "") for key in FORBIDDEN_DEMO_KEYS}
+    forbidden_segments = {"credential", "customer", "email", "secret", "token"}
+    if isinstance(value, dict):
+        for key, child in value.items():
+            normalized = _normalized_demo_key(key)
+            compact = normalized.replace("_", "")
+            if (
+                normalized in FORBIDDEN_DEMO_KEYS
+                or compact in forbidden_compact
+                or forbidden_segments.intersection(normalized.split("_"))
+            ):
+                forbidden.add(f"{path}.{key}")
+            forbidden.update(_find_forbidden_demo_keys(child, f"{path}.{key}"))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            forbidden.update(_find_forbidden_demo_keys(child, f"{path}[{index}]"))
+    return forbidden
 
 
 def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -734,7 +896,12 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
     objects = payload.get("objects")
     if not isinstance(objects, list):
         return {"status": "fail", "errors": [*errors, "external validation objects must be a list"]}
-    required = set(contract.get("external_validation", {}).get("minimum_fields", []))
+    validation = contract.get("external_validation", {})
+    required = set(validation.get("minimum_fields", []))
+    minimum_count = int(validation.get("minimum_object_count", 0))
+    if len(objects) < minimum_count:
+        errors.append(f"external validation requires at least {minimum_count} substantive objects")
+    provenance: set[str] = set()
     for index, row in enumerate(objects):
         if not isinstance(row, dict):
             errors.append(f"validation object {index} must be an object")
@@ -742,15 +909,127 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         missing = sorted(field for field in required if field not in row)
         if missing:
             errors.append(f"validation object {index} missing: {', '.join(missing)}")
+        empty = sorted(
+            field
+            for field in required
+            if field in row
+            and (row.get(field) is None or row.get(field) == "" or row.get(field) == [] or row.get(field) == {})
+        )
+        if empty:
+            errors.append(f"validation object {index} has empty fields: {', '.join(empty)}")
+        independence = str(row.get("independence disclosure") or "").strip().lower()
+        if independence in {"", "none", "unknown", "not disclosed"}:
+            errors.append(f"validation object {index} lacks a substantive independence disclosure")
+        object_receipt = row.get("object URL or receipt")
+        if isinstance(object_receipt, str) and object_receipt:
+            if object_receipt in provenance:
+                errors.append(f"validation object {index} duplicates an existing object receipt")
+            provenance.add(object_receipt)
+        observed_at = row.get("date")
+        try:
+            if not isinstance(observed_at, str):
+                raise ValueError
+            _parse_date(observed_at)
+        except ValueError:
+            errors.append(f"validation object {index} date must be ISO-8601")
         if row.get("consent status") not in {"public_consented", "withdrawn"}:
             errors.append(f"validation object {index} has no public consent disposition")
     return {"status": "pass" if not errors else "fail", "errors": errors, "object_count": len(objects)}
+
+
+def _live_w07_verification(repository: Path) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-work", "PSP-P03-W07"],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise ValueError(f"live PSP-P03-W07 verifier did not pass: {detail}")
+    value = json.loads(completed.stdout)
+    if not isinstance(value, dict):
+        raise ValueError("live PSP-P03-W07 verifier returned a non-object")
+    return value
+
+
+def _validate_w07_receipt_binding(
+    value: object,
+    repository: Path,
+    live_verification: dict[str, Any] | None = None,
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(value, dict):
+        return ["closure receipt requires a structured W07 receipt binding"]
+    if value.get("work_id") != "PSP-P03-W07":
+        errors.append("W07 receipt work_id must be PSP-P03-W07")
+    if value.get("issue_url") != "https://github.com/organvm/limen/issues/2188":
+        errors.append("W07 receipt must bind the canonical issue")
+    url = value.get("url")
+    if not isinstance(url, str) or not W07_RECEIPT_URL.fullmatch(url):
+        errors.append("W07 receipt URL must be an immutable #2188 issue comment")
+    digest = value.get("sha256")
+    if not isinstance(digest, str) or not SHA256.fullmatch(digest):
+        errors.append("W07 receipt digest must be a lowercase SHA-256")
+    receipt = value.get("receipt")
+    if not isinstance(receipt, dict):
+        errors.append("W07 binding must embed the canonical marked receipt")
+    elif isinstance(digest, str) and SHA256.fullmatch(digest):
+        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+        if hashlib.sha256(canonical).hexdigest() != digest:
+            errors.append("W07 receipt digest does not bind the embedded canonical receipt")
+        if receipt.get("work_id") != "PSP-P03-W07" or receipt.get("outcome") != "succeeded":
+            errors.append("embedded W07 receipt must record a successful PSP-P03-W07 outcome")
+        predicate = receipt.get("predicate")
+        if not isinstance(predicate, dict) or "validate_p03_w07_blinded_reader.py" not in str(
+            predicate.get("command") or ""
+        ):
+            errors.append("embedded W07 receipt must bind the non-circular blinded-reader validator")
+        evidence = receipt.get("reader_evidence")
+        if not isinstance(evidence, dict):
+            errors.append("embedded W07 receipt must include the public-safe reader evidence summary")
+        else:
+            exact_counts = {
+                "reader_count": 5,
+                "independent_reader_count": 5,
+                "synthetic_or_model_reader_count": 0,
+                "unresolved_authority_objections": 0,
+            }
+            for field, expected in exact_counts.items():
+                if evidence.get(field) != expected:
+                    errors.append(f"W07 reader evidence {field} must be {expected}")
+            for field in ("total_score", "role_matches", "buyer_matches", "cta_matches"):
+                measured = evidence.get(field)
+                minimum = 20 if field == "total_score" else 4
+                maximum = 25 if field == "total_score" else 5
+                if not isinstance(measured, int) or isinstance(measured, bool) or not minimum <= measured <= maximum:
+                    errors.append(f"W07 reader evidence {field} must be between {minimum} and {maximum}")
+            for field in ("response_set_sha256", "decision_memo_sha256"):
+                measured = evidence.get(field)
+                if not isinstance(measured, str) or not SHA256.fullmatch(measured):
+                    errors.append(f"W07 reader evidence {field} must be a lowercase SHA-256")
+    if errors:
+        return errors
+    try:
+        observed = live_verification if live_verification is not None else _live_w07_verification(repository)
+    except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        return [str(exc)]
+    if observed.get("status") != "pass" or observed.get("work_id") != "PSP-P03-W07":
+        errors.append("live PSP-P03-W07 verification did not return pass")
+    if observed.get("receipt_url") != url:
+        errors.append("W07 receipt URL differs from the latest marked live receipt")
+    if observed.get("receipt_sha256") != digest:
+        errors.append("W07 receipt digest differs from the latest marked live receipt")
+    return errors
 
 
 def formalization_readiness(
     contract: dict[str, Any],
     closure_receipt: dict[str, Any] | None = None,
     repository: Path = ROOT,
+    w07_verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("exact_head")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
@@ -775,9 +1054,13 @@ def formalization_readiness(
         phases = closure_receipt.get("phase_predicates")
         if not isinstance(phases, dict) or any(phases.get(phase) != "pass" for phase in ("PSP-P03", "PSP-P04")):
             receipt_errors.append("PSP-P03 and PSP-P04 phase predicates must both pass")
-        w07 = closure_receipt.get("w07_receipt")
-        if not isinstance(w07, dict) or not w07.get("url") or not w07.get("sha256"):
-            receipt_errors.append("closure receipt requires the W07 URL and digest")
+        receipt_errors.extend(
+            _validate_w07_receipt_binding(
+                closure_receipt.get("w07_receipt"),
+                repository,
+                live_verification=w07_verification,
+            )
+        )
         if not receipt_errors:
             residual = []
     dependency_rows = resolve_dependency_sources(contract, repository)
@@ -888,6 +1171,8 @@ def main() -> int:
         elif args.mode == "formalization":
             payload = _load_optional_json(args.input)
             result["formalization"] = formalization_readiness(contract, payload)
+            result["status"] = "pass" if result["formalization"]["ready"] else "fail"
+            result["errors"].extend(result["formalization"]["errors"])
     print(json.dumps(result, indent=2) if args.json else result["status"].upper())
     return 1 if result["status"] == "fail" else 0
 
