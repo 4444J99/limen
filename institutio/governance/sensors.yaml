@@ -1634,6 +1634,32 @@ sensors:
         severity: advisory
         escalation: "cross-vendor health evaluation failed — packet staleness, store resets, and retention pruning go unwatched until it lands"
 
+  lesson-harvest-backlog:
+    section: "0z0a"
+    title: "lesson-harvest backlog — how many chat sessions have never been processed into durable lessons (censor/lesson-harvest.jsonl is the cursor; the /lesson-harvest skill is the drain)"
+    gate: LIMEN_LESSON_HARVEST_BACKLOG
+    default: "1"
+    source: [metabolize]
+    owner: censor
+    # The operator's law (memory feedback-codify-every-session-lesson, made mechanical
+    # 2026-08-14 on his correction "why would i waste time having these discussions if we
+    # arent going to process them?"): every discussion carries lessons; a discussion not
+    # processed into a durable owner was wasted. Before this sensor the backlog lived in
+    # nobody's view — 97 claude sessions had never been walked. Count-only output (session
+    # ids + totals, PII-clean); the reasoning drain is the /lesson-harvest skill, which
+    # routes lessons ONLY to existing termini (precedents/levers/memory/board). Exit 1 =
+    # backlog remains (advisory pressure, not failure); exit 2 = store unreachable.
+    cadence:
+      env: LIMEN_BEAT_LESSON_HARVEST
+      default: 24
+    timeout:
+      env: LIMEN_LESSON_HARVEST_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/lesson-harvest.py --check"
+        severity: advisory
+        escalation: "unprocessed chat sessions are accumulating (or the session store became unreachable) — run the /lesson-harvest skill to drain a tranche; the cursor is censor/lesson-harvest.jsonl"
+
   jules-quota:
     section: "0z1"
     title: "Jules daily quota — used-vs-target gauge, orphaned completions, recovery states"
