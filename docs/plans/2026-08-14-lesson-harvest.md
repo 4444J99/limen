@@ -1,7 +1,7 @@
 # Lesson-harvest: process every chat into its durable owner
 
 Issue: #2394
-PR: (pending)
+PR: #2398
 
 ## Context
 
