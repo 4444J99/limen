@@ -3,6 +3,20 @@
   "provenance": "synthetic",
   "window_start": "2026-08-01",
   "window_end": "2026-08-07",
+  "population": {
+    "schema_version": "limen.positioning_cost_failure_population.v1",
+    "source_id": "synthetic-public-safe-terminal-receipts",
+    "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "window_start": "2026-08-01",
+    "window_end": "2026-08-07",
+    "population_count": 3,
+    "eligible_count": 3,
+    "selected_count": 3,
+    "selection_method": "census",
+    "selection_rule": "all public-safe terminal records in the observed window",
+    "selection_seed_sha256": null,
+    "exclusion_counts": {}
+  },
   "rows": [
     {
       "sample_id": "synthetic-001",

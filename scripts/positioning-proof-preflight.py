@@ -12,9 +12,10 @@ import re
 import subprocess
 import sys
 import tempfile
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 from datetime import date, datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
@@ -37,6 +38,7 @@ W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-r
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
+SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
 DEMO_RECORD_FIELDS = {
@@ -482,6 +484,31 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("surface audit must discover material claims from the accepted claims ledger")
     if surface_model.get("surface_levels") != EXPECTED_SURFACE_LEVELS:
         errors.append("surface audit must bind every public surface to its canonical disclosure level")
+    surfaces = surface_model.get("surfaces")
+    surface_sources = surface_model.get("surface_sources")
+    if not isinstance(surfaces, list) or not isinstance(surface_sources, dict) or set(surface_sources) != set(surfaces):
+        errors.append("surface audit must bind exactly one canonical source to every public surface")
+    else:
+        identities: set[str] = set()
+        for surface in surfaces:
+            binding = surface_sources.get(surface)
+            if not isinstance(binding, dict) or set(binding) != {"source_kind", "source_locator", "receipt_path"}:
+                errors.append(f"surface source binding has an invalid exact schema: {surface}")
+                continue
+            identity = json.dumps(binding, sort_keys=True, separators=(",", ":"))
+            if identity in identities:
+                errors.append(f"surface source binding is reused across canonical surfaces: {surface}")
+            identities.add(identity)
+            if binding.get("source_kind") == "tracked_blob":
+                if not _safe_relative_path(binding.get("source_locator")) or binding.get("receipt_path") is not None:
+                    errors.append(f"tracked surface source binding is invalid: {surface}")
+            elif binding.get("source_kind") == "live_receipt":
+                if not _credential_free_https_url(binding.get("source_locator")) or not _safe_relative_path(
+                    binding.get("receipt_path")
+                ):
+                    errors.append(f"live surface source binding is invalid: {surface}")
+            else:
+                errors.append(f"surface source binding kind is unsupported: {surface}")
 
     demo = contract.get("synthetic_architecture_demo", {})
     if demo.get("status") != "contract_only_no_ui" or not demo.get("prohibited_inputs"):
@@ -535,8 +562,10 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
         completed = subprocess.run(
             ["git", "show", source_spec],
             cwd=repository,
+            env=_sanitized_git_environment(),
             check=False,
             capture_output=True,
+            timeout=30,
         )
         if completed.returncode:
             rows.append(
@@ -553,9 +582,11 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
         blob = subprocess.run(
             ["git", "rev-parse", source_spec],
             cwd=repository,
+            env=_sanitized_git_environment(),
             check=False,
             capture_output=True,
             text=True,
+            timeout=30,
         )
         actual_blob = blob.stdout.strip() if blob.returncode == 0 else None
         blob_match = actual_blob == dependency["expected_blob"]
@@ -581,16 +612,44 @@ def _read_git_object(repository: Path, head: str, path: str) -> tuple[str | None
     content = subprocess.run(
         ["git", "show", source_spec],
         cwd=repository,
+        env=_sanitized_git_environment(),
         check=False,
         capture_output=True,
         text=True,
+        timeout=30,
     )
     blob = subprocess.run(
         ["git", "rev-parse", source_spec],
         cwd=repository,
+        env=_sanitized_git_environment(),
         check=False,
         capture_output=True,
         text=True,
+        timeout=30,
+    )
+    if content.returncode or blob.returncode:
+        return None, None
+    return content.stdout, blob.stdout.strip()
+
+
+def _read_git_object_bytes(repository: Path, head: str, path: str) -> tuple[bytes | None, str | None]:
+    source_spec = f"{head}:{path}"
+    content = subprocess.run(
+        ["git", "show", source_spec],
+        cwd=repository,
+        env=_sanitized_git_environment(),
+        check=False,
+        capture_output=True,
+        timeout=30,
+    )
+    blob = subprocess.run(
+        ["git", "rev-parse", source_spec],
+        cwd=repository,
+        env=_sanitized_git_environment(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     if content.returncode or blob.returncode:
         return None, None
@@ -799,7 +858,12 @@ def _is_markdown_separator(cells: list[str]) -> bool:
     return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
 
 
-def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]]:
+def _ledger_material_claims(
+    content: str,
+    source_id: str,
+    *,
+    formalization_pending: bool,
+) -> list[dict[str, Any]]:
     reconciled = re.search(r"Reconciled (\d{4}-\d{2}-\d{2})", content)
     observed_at = [reconciled.group(1)] if reconciled else []
     in_claim_section = False
@@ -833,6 +897,10 @@ def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]
         public_safe_wording = cells[-2] if len(cells) >= 5 else claim_text
         tier = cells[-1] if len(cells) >= 5 else "ledger_only"
         action = _ledger_action(*cells[1:])
+        publishable = action == "audit_canonical_wording" and not formalization_pending
+        reason_codes = ["accepted_claims_ledger_inventory"]
+        if formalization_pending:
+            reason_codes.append("c04_formalization_pending")
         claim_id = f"LEDGER-{hashlib.sha256(claim_text.encode()).hexdigest()[:16].upper()}"
         claims.append(
             {
@@ -844,9 +912,11 @@ def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]
                 "status": status,
                 "max_disclosure": tier,
                 "limitations": [public_safe_wording],
-                "publishable": action == "audit_canonical_wording",
-                "reason_codes": ["accepted_claims_ledger_inventory"],
-                "action": action,
+                "publishable": publishable,
+                "reason_codes": reason_codes,
+                "action": action
+                if publishable or action != "audit_canonical_wording"
+                else "withhold_until_refresh_and_formalization",
             }
         )
     return claims
@@ -864,7 +934,11 @@ def discover_material_claims(contract: dict[str, Any], repository: Path = ROOT) 
     )
     if content is None or blob != dependency.get("expected_blob"):
         raise ValueError("accepted claims-ledger inventory is unavailable or stale")
-    claims = _ledger_material_claims(content, source_id)
+    claims = _ledger_material_claims(
+        content,
+        source_id,
+        formalization_pending=contract.get("status") == "PREPARED/PREFLIGHT",
+    )
     claims.extend(resolve_claims(contract))
     if not claims:
         raise ValueError("material public-claim inventory is empty")
@@ -878,15 +952,218 @@ def _disclosure_floor(value: object) -> int | None:
     return min(levels) if levels else None
 
 
-def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
+def _safe_relative_path(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip() or "\0" in value or "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return not path.is_absolute() and ".." not in path.parts and path.as_posix() == value
+
+
+def _credential_free_https_url(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip() or "\0" in value:
+        return False
+    parsed = urlsplit(value)
+    return (
+        parsed.scheme == "https"
+        and bool(parsed.hostname)
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def _surface_inspection_errors(
+    contract: dict[str, Any],
+    inspections: object,
+    expected_rows: dict[tuple[str, str], dict[str, Any]],
+    repository: Path,
+) -> tuple[list[str], dict[str, dict[str, Any]]]:
+    errors: list[str] = []
+    expected_surfaces = contract.get("surface_audit_model", {}).get("surfaces", [])
+    if not isinstance(inspections, dict) or set(inspections) != set(expected_surfaces):
+        return ["surface_inspections must bind exactly one inspection per canonical surface"], {}
+    source_bindings = contract.get("surface_audit_model", {}).get("surface_sources")
+    if not isinstance(source_bindings, dict) or set(source_bindings) != set(expected_surfaces):
+        return ["surface source registry must bind exactly every canonical surface"], {}
+    binding_fields = {"source_kind", "source_locator", "receipt_path"}
+    binding_identities: set[str] = set()
+    for surface in expected_surfaces:
+        binding = source_bindings.get(surface)
+        if not isinstance(binding, dict) or set(binding) != binding_fields:
+            errors.append(f"surface source binding has an invalid exact schema: {surface}")
+            continue
+        identity = json.dumps(
+            {field: binding.get(field) for field in sorted(binding_fields)},
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        if identity in binding_identities:
+            errors.append(f"surface source binding is reused across canonical surfaces: {surface}")
+        binding_identities.add(identity)
+        if binding.get("source_kind") == "tracked_blob":
+            if not _safe_relative_path(binding.get("source_locator")) or binding.get("receipt_path") is not None:
+                errors.append(f"tracked surface source binding is invalid: {surface}")
+        elif binding.get("source_kind") == "live_receipt":
+            if not _credential_free_https_url(binding.get("source_locator")) or not _safe_relative_path(
+                binding.get("receipt_path")
+            ):
+                errors.append(f"live surface source binding is invalid: {surface}")
+        else:
+            errors.append(f"surface source binding kind is unsupported: {surface}")
+    exact_fields = {
+        "schema_version",
+        "inspection_id",
+        "surface",
+        "source_kind",
+        "source_locator",
+        "receipt_path",
+        "observed_at",
+        "exact_head",
+        "blob_sha1",
+        "response_sha256",
+        "scanner",
+        "scanner_version",
+        "matched_claim_ids",
+    }
+    resolved: dict[str, dict[str, Any]] = {}
+    seen_ids: set[str] = set()
+    for surface in expected_surfaces:
+        inspection = inspections.get(surface)
+        if not isinstance(inspection, dict) or set(inspection) != exact_fields:
+            errors.append(f"surface inspection has an invalid exact schema: {surface}")
+            continue
+        if inspection.get("schema_version") != SURFACE_INSPECTION_SCHEMA:
+            errors.append(f"surface inspection has an unsupported schema: {surface}")
+        inspection_id = inspection.get("inspection_id")
+        if not isinstance(inspection_id, str) or not inspection_id.strip() or "\0" in inspection_id:
+            errors.append(f"surface inspection requires a nonblank inspection_id: {surface}")
+        elif inspection_id in seen_ids:
+            errors.append(f"surface inspection_id is duplicated: {inspection_id}")
+        else:
+            seen_ids.add(inspection_id)
+        if inspection.get("surface") != surface:
+            errors.append(f"surface inspection identity differs from its canonical surface: {surface}")
+        observed_at = inspection.get("observed_at")
+        try:
+            observed = datetime.fromisoformat(str(observed_at).replace("Z", "+00:00"))
+            if not isinstance(observed_at, str) or observed.tzinfo is None:
+                raise ValueError
+        except ValueError:
+            errors.append(f"surface inspection observed_at must be RFC3339 with a timezone: {surface}")
+        else:
+            if observed > datetime.now(timezone.utc):
+                errors.append(f"surface inspection cannot be future-dated: {surface}")
+        if inspection.get("scanner") != "literal_claim_text" or inspection.get("scanner_version") != "1":
+            errors.append(f"surface inspection requires the canonical scanner and version: {surface}")
+        exact_head = inspection.get("exact_head")
+        blob_sha1 = inspection.get("blob_sha1")
+        if not isinstance(exact_head, str) or not FULL_HEAD.fullmatch(exact_head):
+            errors.append(f"surface inspection requires a full exact head: {surface}")
+        if not isinstance(blob_sha1, str) or not FULL_HEAD.fullmatch(blob_sha1):
+            errors.append(f"surface inspection requires a full blob identity: {surface}")
+
+        source_kind = inspection.get("source_kind")
+        source_locator = inspection.get("source_locator")
+        receipt_path = inspection.get("receipt_path")
+        response_sha256 = inspection.get("response_sha256")
+        binding = source_bindings.get(surface)
+        if isinstance(binding, dict) and any(
+            inspection.get(field) != binding.get(field) for field in ("source_kind", "source_locator", "receipt_path")
+        ):
+            errors.append(f"surface inspection differs from the contract-owned source binding: {surface}")
+        object_path: object = None
+        if source_kind == "tracked_blob":
+            if not _safe_relative_path(source_locator):
+                errors.append(f"tracked surface inspection requires a safe repository path: {surface}")
+            if receipt_path is not None or response_sha256 is not None:
+                errors.append(f"tracked surface inspection must not declare live-receipt fields: {surface}")
+            object_path = source_locator
+        elif source_kind == "live_receipt":
+            if not _credential_free_https_url(source_locator):
+                errors.append(f"live surface inspection requires a credential-free HTTPS URL: {surface}")
+            if not _safe_relative_path(receipt_path):
+                errors.append(f"live surface inspection requires an immutable tracked receipt path: {surface}")
+            if not isinstance(response_sha256, str) or not SHA256.fullmatch(response_sha256):
+                errors.append(f"live surface inspection requires a bounded response SHA-256: {surface}")
+            object_path = receipt_path
+        else:
+            errors.append(f"surface inspection source_kind is unsupported: {surface}")
+
+        content: bytes | None = None
+        actual_blob: str | None = None
+        if (
+            isinstance(exact_head, str)
+            and FULL_HEAD.fullmatch(exact_head)
+            and isinstance(object_path, str)
+            and _safe_relative_path(object_path)
+        ):
+            content, actual_blob = _read_git_object_bytes(repository, exact_head, object_path)
+        if content is None or actual_blob != blob_sha1:
+            errors.append(f"surface inspection source blob is unavailable or drifted: {surface}")
+            content = b""
+        if len(content) > 1_048_576:
+            errors.append(f"surface inspection source exceeds the bounded response size: {surface}")
+        if source_kind == "live_receipt" and isinstance(response_sha256, str):
+            if hashlib.sha256(content).hexdigest() != response_sha256:
+                errors.append(f"surface inspection response digest is unavailable or drifted: {surface}")
+        try:
+            inspected_text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            errors.append(f"surface inspection source is not UTF-8 text: {surface}")
+            inspected_text = ""
+
+        expected_claim_ids = {claim_id for row_surface, claim_id in expected_rows if row_surface == surface}
+        matched_claim_ids = inspection.get("matched_claim_ids")
+        valid_matches = (
+            isinstance(matched_claim_ids, list)
+            and all(isinstance(claim_id, str) and claim_id in expected_claim_ids for claim_id in matched_claim_ids)
+            and len(matched_claim_ids) == len(set(matched_claim_ids))
+        )
+        if not valid_matches:
+            errors.append(f"surface inspection matched_claim_ids are invalid: {surface}")
+            matched_claim_ids = []
+        recomputed_matches = sorted(
+            claim_id
+            for (row_surface, claim_id), row in expected_rows.items()
+            if row_surface == surface
+            and isinstance(row.get("claim_text"), str)
+            and bool(row["claim_text"])
+            and row["claim_text"] in inspected_text
+        )
+        if sorted(matched_claim_ids) != recomputed_matches:
+            errors.append(f"surface inspection matched claims differ from the bound source: {surface}")
+        if isinstance(inspection_id, str):
+            resolved[surface] = {
+                "inspection_id": inspection_id,
+                "matched_claim_ids": set(matched_claim_ids),
+            }
+    return errors, resolved
+
+
+def audit_surface_manifest(
+    contract: dict[str, Any],
+    manifest: dict[str, Any],
+    repository: Path = ROOT,
+) -> dict[str, Any]:
     skeleton = build_surface_audit_skeleton(contract)
     expected_rows = {(row["surface"], row["claim_id"]): row for row in skeleton}
     expected = set(expected_rows)
     supplied_rows = manifest.get("rows") if isinstance(manifest, dict) else None
     errors: list[str] = []
+    if not isinstance(manifest, dict) or set(manifest) != {"rows", "surface_inspections"}:
+        errors.append("surface manifest must use exactly rows and surface_inspections")
+    inspection_errors, resolved_inspections = _surface_inspection_errors(
+        contract,
+        manifest.get("surface_inspections") if isinstance(manifest, dict) else None,
+        expected_rows,
+        repository,
+    )
+    errors.extend(inspection_errors)
     if not isinstance(supplied_rows, list):
-        return {"status": "fail", "errors": ["surface manifest rows must be a list"], "coverage": {}}
+        return {"status": "fail", "errors": [*errors, "surface manifest rows must be a list"], "coverage": {}}
     supplied: set[tuple[str, str]] = set()
+    present_by_surface: dict[str, set[str]] = {surface: set() for surface in resolved_inspections}
     surface_levels = contract.get("surface_audit_model", {}).get("surface_levels", {})
     for row in supplied_rows:
         if not isinstance(row, dict):
@@ -902,6 +1179,7 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
         if not isinstance(presence, str) or presence not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")
         if presence == "present":
+            present_by_surface.setdefault(key[0], set()).add(key[1])
             canonical = expected_rows.get(key, {})
             required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
             missing_required = sorted(
@@ -963,12 +1241,18 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                 errors.append(f"observation dates differ from canonical evidence: {key[0]} / {key[1]}")
             if row.get("status") != canonical.get("status"):
                 errors.append(f"claim status differs from canonical inventory: {key[0]} / {key[1]}")
+        inspection = resolved_inspections.get(key[0])
+        if not isinstance(inspection, dict) or row.get("inspection_id") != inspection.get("inspection_id"):
+            errors.append(f"surface row does not bind its canonical inspection: {key[0]} / {key[1]}")
     missing = sorted(expected - supplied)
     unexpected = sorted(supplied - expected)
     if missing:
         errors.append(f"missing surface cells: {len(missing)}")
     if unexpected:
         errors.append(f"unexpected surface cells: {len(unexpected)}")
+    for surface, inspection in resolved_inspections.items():
+        if present_by_surface.get(surface, set()) != inspection.get("matched_claim_ids"):
+            errors.append(f"surface row presence differs from the bound inspection: {surface}")
     return {
         "status": "pass" if not errors else "fail",
         "errors": errors,
@@ -1016,9 +1300,7 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
                 missing_fields = sorted(expected_fields - set(record))
                 unexpected_fields = sorted(set(record) - expected_fields)
                 if missing_fields:
-                    errors.append(
-                        f"demo record {index} missing {record_type} fields: {', '.join(missing_fields)}"
-                    )
+                    errors.append(f"demo record {index} missing {record_type} fields: {', '.join(missing_fields)}")
                 if unexpected_fields:
                     errors.append(
                         f"demo record {index} has unknown {record_type} fields: {', '.join(unexpected_fields)}"
@@ -1059,9 +1341,7 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
                 continue
             target = records_by_id.get(record.get(field))
             if target is None or target.get("type") != target_type:
-                errors.append(
-                    f"demo {source_type} {record.get('id')} must link {field} to a {target_type} record"
-                )
+                errors.append(f"demo {source_type} {record.get('id')} must link {field} to a {target_type} record")
     packet = next((record for record in records_by_id.values() if record.get("type") == "packet"), None)
     if packet is not None and packet.get("authority") != "bounded":
         errors.append("demo packet authority must be bounded")
@@ -1126,8 +1406,10 @@ def validate_external_objects(
     validation = contract.get("external_validation", {})
     required = set(validation.get("minimum_fields", []))
     acceptable_rows = validation.get("acceptable_objects")
-    if not isinstance(acceptable_rows, list) or not acceptable_rows or not all(
-        isinstance(value, str) and value.strip() for value in acceptable_rows
+    if (
+        not isinstance(acceptable_rows, list)
+        or not acceptable_rows
+        or not all(isinstance(value, str) and value.strip() for value in acceptable_rows)
     ):
         errors.append("external validation must declare approved object classes")
         acceptable_objects: set[str] = set()
@@ -1273,25 +1555,58 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     return value
 
 
-def _canonical_limen_remote_head() -> tuple[str, str]:
+def _sanitized_git_environment() -> dict[str, str]:
     environment = dict(os.environ)
     for key in tuple(environment):
-        if key in {"GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS"} or key.startswith(
-            "GIT_CONFIG_KEY_"
-        ) or key.startswith("GIT_CONFIG_VALUE_"):
+        if (
+            key
+            in {
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_COMMON_DIR",
+                "GIT_CONFIG",
+                "GIT_CONFIG_COUNT",
+                "GIT_CONFIG_PARAMETERS",
+                "GIT_DIR",
+                "GIT_INDEX_FILE",
+                "GIT_NAMESPACE",
+                "GIT_OBJECT_DIRECTORY",
+                "GIT_SHALLOW_FILE",
+                "GIT_WORK_TREE",
+            }
+            or key.startswith("GIT_CONFIG_KEY_")
+            or key.startswith("GIT_CONFIG_VALUE_")
+        ):
             environment.pop(key, None)
     environment.update(
         {
             "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_GLOBAL": os.devnull,
             "GIT_CONFIG_COUNT": "0",
+            "GIT_GRAFT_FILE": os.devnull,
+            "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_TERMINAL_PROMPT": "0",
         }
     )
+    return environment
+
+
+def _sanitized_ancestry(repository: Path, ancestor: str, descendant: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repository,
+        env=_sanitized_git_environment(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _canonical_limen_remote_head() -> tuple[str, str]:
     completed = subprocess.run(
         ["git", "ls-remote", "--symref", "https://github.com/organvm/limen.git", "HEAD"],
         cwd=Path("/"),
-        env=environment,
+        env=_sanitized_git_environment(),
         check=False,
         capture_output=True,
         text=True,
@@ -1318,17 +1633,7 @@ def _live_authoritative_closure_verification(repository: Path, closure_head: str
     if not FULL_HEAD.fullmatch(closure_head):
         raise ValueError("authoritative closure verification requires a full exact head")
     default_branch, default_head = _canonical_limen_remote_head()
-    ancestry_environment = dict(os.environ)
-    ancestry_environment.update({"GIT_NO_REPLACE_OBJECTS": "1", "GIT_GRAFT_FILE": "/dev/null"})
-    ancestry = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", closure_head, default_head],
-        cwd=repository,
-        env=ancestry_environment,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
+    ancestry = _sanitized_ancestry(repository, closure_head, default_head)
     if ancestry.returncode != 0:
         raise ValueError("claimed C03 closure head is not contained by the authoritative default branch")
     value = {
@@ -1417,13 +1722,7 @@ def _validate_phase_receipt_bindings(
             errors.append(f"live {phase_id} receipt observed head is not a full Git head")
             continue
         if valid_closure_head:
-            ancestry = subprocess.run(
-                ["git", "merge-base", "--is-ancestor", observed_head, closure_head],
-                cwd=repository,
-                check=False,
-                capture_output=True,
-                timeout=30,
-            )
+            ancestry = _sanitized_ancestry(repository, observed_head, closure_head)
             if ancestry.returncode != 0:
                 errors.append(f"live {phase_id} receipt observed head is not an ancestor of the closure head")
     return errors
@@ -1433,6 +1732,7 @@ def _git_blob(repository: Path, head: str, path: str) -> bytes:
     completed = subprocess.run(
         ["git", "show", f"{head}:{path}"],
         cwd=repository,
+        env=_sanitized_git_environment(),
         check=False,
         capture_output=True,
         timeout=30,
@@ -1475,13 +1775,7 @@ def _verify_w07_response_blob(
     decision_memo_sha256: str,
     evidence: dict[str, Any],
 ) -> None:
-    ancestry = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", observed_head, closure_head],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        timeout=30,
-    )
+    ancestry = _sanitized_ancestry(repository, observed_head, closure_head)
     if ancestry.returncode != 0:
         raise ValueError("W07 observed head is not contained by the claimed C03 closure head")
 
@@ -1674,12 +1968,7 @@ def formalization_readiness(
                 receipt_errors.extend(_validate_authoritative_closure_verification(authoritative, final_head))
             except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
                 receipt_errors.append(str(exc))
-            ancestry = subprocess.run(
-                ["git", "merge-base", "--is-ancestor", str(accepted_head), final_head],
-                cwd=repository,
-                check=False,
-                capture_output=True,
-            )
+            ancestry = _sanitized_ancestry(repository, str(accepted_head), final_head)
             if ancestry.returncode:
                 receipt_errors.append("final C03 head is not a locally proven descendant of the accepted head")
         if "phase_predicates" in closure_receipt:
@@ -1757,65 +2046,69 @@ def main() -> int:
     parser.add_argument("--input", type=Path)
     parser.add_argument("--as-of", type=date.fromisoformat)
     args = parser.parse_args()
-    contract = load_contract(args.contract)
-    errors = validate(contract)
-    result: dict[str, Any] = {
-        "contract": str(args.contract),
-        "status": "pass" if not errors else "fail",
-        "errors": errors,
-    }
-    if not errors:
-        as_of = args.as_of or datetime.now(timezone.utc).date()
-        if args.mode == "validate":
-            result["sources"] = resolve_dependency_sources(contract)
-            result["upstream_bindings"] = verify_upstream_bindings(contract)
-            unresolved = [row["source_id"] for row in result["sources"] if not row["resolved"]]
-            if unresolved:
-                result["errors"].append(f"unresolved pinned sources: {', '.join(unresolved)}")
-            result["errors"].extend(result["upstream_bindings"]["errors"])
-            if result["errors"]:
-                result["status"] = "fail"
-        elif args.mode == "dependency-sources":
-            result["sources"] = resolve_dependency_sources(contract)
-            if not all(row["resolved"] for row in result["sources"]):
-                result["status"] = "fail"
-        elif args.mode == "upstream-bindings":
-            result["upstream_bindings"] = verify_upstream_bindings(contract)
-            result["status"] = result["upstream_bindings"]["status"]
-        elif args.mode == "freshness":
-            result["sources"] = source_freshness(contract, as_of)
-        elif args.mode == "resolve":
-            dependency_rows = resolve_dependency_sources(contract)
-            result["dependency_sources"] = dependency_rows
-            result["claims"] = resolve_claims(contract, as_of=as_of, dependency_rows=dependency_rows)
-        elif args.mode == "surface-audit":
-            try:
+    try:
+        contract = load_contract(args.contract)
+        errors = validate(contract)
+        result: dict[str, Any] = {
+            "contract": str(args.contract),
+            "status": "pass" if not errors else "fail",
+            "errors": errors,
+        }
+        if not errors:
+            as_of = args.as_of or datetime.now(timezone.utc).date()
+            if args.mode == "validate":
+                result["sources"] = resolve_dependency_sources(contract)
+                result["upstream_bindings"] = verify_upstream_bindings(contract)
+                unresolved = [row["source_id"] for row in result["sources"] if not row["resolved"]]
+                if unresolved:
+                    result["errors"].append(f"unresolved pinned sources: {', '.join(unresolved)}")
+                result["errors"].extend(result["upstream_bindings"]["errors"])
+                if result["errors"]:
+                    result["status"] = "fail"
+            elif args.mode == "dependency-sources":
+                result["sources"] = resolve_dependency_sources(contract)
+                if not all(row["resolved"] for row in result["sources"]):
+                    result["status"] = "fail"
+            elif args.mode == "upstream-bindings":
+                result["upstream_bindings"] = verify_upstream_bindings(contract)
+                result["status"] = result["upstream_bindings"]["status"]
+            elif args.mode == "freshness":
+                result["sources"] = source_freshness(contract, as_of)
+            elif args.mode == "resolve":
+                dependency_rows = resolve_dependency_sources(contract)
+                result["dependency_sources"] = dependency_rows
+                result["claims"] = resolve_claims(contract, as_of=as_of, dependency_rows=dependency_rows)
+            elif args.mode == "surface-audit":
                 payload = _load_optional_json(args.input)
                 if payload is None:
                     result["rows"] = build_surface_audit_skeleton(contract)
                 else:
                     result["audit"] = audit_surface_manifest(contract, payload)
                     result["status"] = result["audit"]["status"]
-            except ValueError as exc:
-                result["status"] = "fail"
-                result["errors"].append(f"surface audit failed: {exc}")
-        elif args.mode == "demo":
-            payload = _load_optional_json(args.input)
-            if payload is None:
-                raise ValueError("--mode demo requires --input")
-            result["demo"] = validate_demo_fixture(contract, payload)
-            result["status"] = result["demo"]["status"]
-        elif args.mode == "external-validation":
-            payload = _load_optional_json(args.input)
-            if payload is None:
-                raise ValueError("--mode external-validation requires --input")
-            result["validation"] = validate_external_objects(contract, payload, as_of=as_of)
-            result["status"] = result["validation"]["status"]
-        elif args.mode == "formalization":
-            payload = _load_optional_json(args.input)
-            result["formalization"] = formalization_readiness(contract, payload)
-            result["status"] = "pass" if result["formalization"]["ready"] else "fail"
-            result["errors"].extend(result["formalization"]["errors"])
+            elif args.mode == "demo":
+                payload = _load_optional_json(args.input)
+                if payload is None:
+                    raise ValueError("--mode demo requires --input")
+                result["demo"] = validate_demo_fixture(contract, payload)
+                result["status"] = result["demo"]["status"]
+            elif args.mode == "external-validation":
+                payload = _load_optional_json(args.input)
+                if payload is None:
+                    raise ValueError("--mode external-validation requires --input")
+                result["validation"] = validate_external_objects(contract, payload, as_of=as_of)
+                result["status"] = result["validation"]["status"]
+            elif args.mode == "formalization":
+                payload = _load_optional_json(args.input)
+                result["formalization"] = formalization_readiness(contract, payload)
+                result["status"] = "pass" if result["formalization"]["ready"] else "fail"
+                result["errors"].extend(result["formalization"]["errors"])
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        failure_label = args.mode.replace("-", " ")
+        result = {
+            "contract": str(args.contract),
+            "status": "fail",
+            "errors": [f"{failure_label} failed: {exc}"],
+        }
     print(json.dumps(result, indent=2) if args.json else result["status"].upper())
     return 1 if result["status"] == "fail" else 0
 

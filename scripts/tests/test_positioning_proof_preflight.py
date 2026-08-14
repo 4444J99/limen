@@ -23,7 +23,72 @@ SPEC.loader.exec_module(MODULE)
 
 class PositioningProofPreflightTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
+        self.production_contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
+        self.contract = copy.deepcopy(self.production_contract)
+        paths = (
+            ".gitignore",
+            ".env.example",
+            ".env.template",
+            ".coderabbit.yaml",
+            ".ruff.toml",
+            "mise.toml",
+        )
+        surfaces = self.contract["surface_audit_model"]["surfaces"]
+        self.contract["surface_audit_model"]["surface_sources"] = {
+            surface: {
+                "source_kind": "tracked_blob",
+                "source_locator": path,
+                "receipt_path": None,
+            }
+            for surface, path in zip(surfaces, paths, strict=True)
+        }
+
+    def _empty_surface_manifest(self, rows: list[dict[str, object]]) -> dict[str, object]:
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        inspections: dict[str, object] = {}
+        manifest_rows: list[dict[str, object]] = []
+        for surface in self.contract["surface_audit_model"]["surfaces"]:
+            inspection_id = f"inspection-{surface}"
+            binding = self.contract["surface_audit_model"]["surface_sources"][surface]
+            source_locator = binding["source_locator"]
+            blob = subprocess.run(
+                ["git", "rev-parse", f"{head}:{source_locator}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            inspections[surface] = {
+                "schema_version": MODULE.SURFACE_INSPECTION_SCHEMA,
+                "inspection_id": inspection_id,
+                "surface": surface,
+                "source_kind": binding["source_kind"],
+                "source_locator": source_locator,
+                "receipt_path": binding["receipt_path"],
+                "observed_at": "2026-08-14T00:00:00Z",
+                "exact_head": head,
+                "blob_sha1": blob,
+                "response_sha256": None,
+                "scanner": "literal_claim_text",
+                "scanner_version": "1",
+                "matched_claim_ids": [],
+            }
+        for row in rows:
+            manifest_rows.append(
+                {
+                    **row,
+                    "presence": "absent",
+                    "contains_private_material": False,
+                    "inspection_id": f"inspection-{row['surface']}",
+                }
+            )
+        return {"rows": manifest_rows, "surface_inspections": inspections}
 
     def _valid_phase_bindings(self) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
         bindings: dict[str, object] = {}
@@ -186,7 +251,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         return binding, live
 
     def test_tracked_contract_is_valid(self) -> None:
+        self.assertEqual([], MODULE.validate(self.production_contract))
         self.assertEqual([], MODULE.validate(self.contract))
+
+    def test_surface_source_registry_rejects_reused_contract_identity(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        sources = changed["surface_audit_model"]["surface_sources"]
+        surfaces = changed["surface_audit_model"]["surfaces"]
+        sources[surfaces[1]] = copy.deepcopy(sources[surfaces[0]])
+        errors = MODULE.validate(changed)
+        self.assertTrue(any("reused across canonical surfaces" in error for error in errors))
 
     def test_missing_observation_date_fails_closed(self) -> None:
         changed = json.loads(json.dumps(self.contract))
@@ -306,6 +380,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
+    def test_preflight_ledger_claims_are_not_publishable(self) -> None:
+        claims = MODULE.discover_material_claims(self.contract)
+        ledger_claims = [claim for claim in claims if "accepted_claims_ledger_inventory" in claim["reason_codes"]]
+        self.assertTrue(ledger_claims)
+        self.assertTrue(all(not claim["publishable"] for claim in ledger_claims))
+        self.assertTrue(all("c04_formalization_pending" in claim["reason_codes"] for claim in ledger_claims))
+        self.assertTrue(all(claim["action"] != "audit_canonical_wording" for claim in ledger_claims))
+
     def test_surface_audit_main_reports_unavailable_claim_inventory_without_traceback(self) -> None:
         stdout = io.StringIO()
         message = "accepted claims-ledger inventory is unavailable or stale"
@@ -321,35 +403,104 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertEqual([f"surface audit failed: {message}"], result["errors"])
 
+    def test_all_input_modes_report_malformed_json_without_tracebacks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            malformed = Path(directory) / "malformed.json"
+            malformed.write_text("{not-json", encoding="utf-8")
+            for mode in ("surface-audit", "demo", "external-validation", "formalization"):
+                with self.subTest(mode=mode):
+                    stdout = io.StringIO()
+                    argv = [str(SCRIPT), "--mode", mode, "--input", str(malformed), "--json"]
+                    with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(stdout):
+                        exit_code = MODULE.main()
+                    result = json.loads(stdout.getvalue())
+                    self.assertEqual(1, exit_code)
+                    self.assertEqual("fail", result["status"])
+                    self.assertTrue(any("failed:" in error for error in result["errors"]))
+
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = []
-        for row in rows:
-            manifest_rows.append(
-                {
-                    **row,
-                    "presence": "absent",
-                    "contains_private_material": False,
-                }
-            )
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("pass", result["status"])
         manifest_rows.pop()
-        failed = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        failed = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", failed["status"])
         self.assertIn("missing surface cells: 1", failed["errors"])
 
+    def test_surface_audit_derives_presence_from_bound_inspection_content(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        inspections = manifest["surface_inspections"]
+        assert isinstance(manifest_rows, list)
+        assert isinstance(inspections, dict)
+        manifest_rows[0]["presence"] = "present"
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("row presence differs from the bound inspection" in error for error in result["errors"]))
+        surface = manifest_rows[0]["surface"]
+        inspection = inspections[surface]
+        assert isinstance(inspection, dict)
+        inspection["matched_claim_ids"] = [manifest_rows[0]["claim_id"]]
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertTrue(any("matched claims differ from the bound source" in error for error in result["errors"]))
+
+    def test_surface_audit_rejects_wrong_source_path_kind_and_reuse(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        for mutation in ("path", "kind", "reuse"):
+            with self.subTest(mutation=mutation):
+                manifest = self._empty_surface_manifest(rows)
+                inspections = manifest["surface_inspections"]
+                assert isinstance(inspections, dict)
+                surfaces = list(inspections)
+                target = inspections[surfaces[1]]
+                assert isinstance(target, dict)
+                if mutation == "path":
+                    target["source_locator"] = ".gitignore"
+                elif mutation == "kind":
+                    target["source_kind"] = "live_receipt"
+                else:
+                    first = inspections[surfaces[0]]
+                    assert isinstance(first, dict)
+                    for field in ("source_kind", "source_locator", "receipt_path"):
+                        target[field] = first[field]
+                result = MODULE.audit_surface_manifest(self.contract, manifest)
+                self.assertEqual("fail", result["status"])
+                self.assertTrue(
+                    any("contract-owned source binding" in error for error in result["errors"]),
+                    result["errors"],
+                )
+
+    def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        inspections = manifest["surface_inspections"]
+        assert isinstance(inspections, dict)
+        inspection = next(iter(inspections.values()))
+        assert isinstance(inspection, dict)
+        inspection["matched_claim_ids"] = [{"claim": "untrusted"}]
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("matched_claim_ids are invalid" in error for error in result["errors"]))
+
     def test_surface_audit_rejects_unhashable_presence_without_crashing(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
         manifest_rows[0]["presence"] = {"state": "present"}
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("surface presence unresolved" in error for error in result["errors"]))
 
     def test_present_surface_claim_requires_evidence_disclosure_and_action(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
         present = manifest_rows[0]
         present.update(
             {
@@ -360,23 +511,27 @@ class PositioningProofPreflightTest(unittest.TestCase):
         present.pop("source_ids")
         present.pop("disclosure_level")
         present.pop("action")
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("present claim missing required evidence fields" in error for error in result["errors"]))
 
     def test_present_surface_claim_rejects_drifted_wording(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
-        present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
+        present = manifest_rows[0]
         present.update({"presence": "present", "canonical_or_drift": "drift"})
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("differs from canonical wording" in error for error in result["errors"]))
 
     def test_present_surface_claim_binds_the_exact_canonical_text(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
-        present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
+        present = manifest_rows[0]
         present.update(
             {
                 "presence": "present",
@@ -384,18 +539,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "claim_text": f"{present['claim_text']} with an inflated implication",
             }
         )
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("claim text differs from canonical inventory" in error for error in result["errors"]))
 
     def test_present_surface_claim_requires_exact_unique_canonical_sources(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         for suffix in (["unreviewed-extra"], [rows[0]["source_ids"][0]]):
-            manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
-            present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+            manifest = self._empty_surface_manifest(rows)
+            manifest_rows = manifest["rows"]
+            assert isinstance(manifest_rows, list)
+            present = manifest_rows[0]
             present.update({"presence": "present", "canonical_or_drift": "canonical"})
             present["source_ids"] = [*present["source_ids"], *suffix]
-            result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+            result = MODULE.audit_surface_manifest(self.contract, manifest)
             self.assertEqual("fail", result["status"])
             self.assertTrue(
                 any(
@@ -407,8 +564,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def test_present_surface_claim_binds_exact_iso_observation_dates(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         for invalid in (True, ["not-a-date"], ["2099-01-01"]):
-            manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
-            present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+            manifest = self._empty_surface_manifest(rows)
+            manifest_rows = manifest["rows"]
+            assert isinstance(manifest_rows, list)
+            present = manifest_rows[0]
             present.update(
                 {
                     "presence": "present",
@@ -416,38 +575,44 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     "observed_at": invalid,
                 }
             )
-            result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+            result = MODULE.audit_surface_manifest(self.contract, manifest)
             self.assertEqual("fail", result["status"])
             self.assertTrue(any("observation dates differ" in error for error in result["errors"]))
 
     def test_withheld_canonical_claim_cannot_be_marked_present(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
         present = next(row for row in manifest_rows if row["action"] == "withhold_or_remove")
         present.update({"presence": "present", "canonical_or_drift": "canonical"})
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("not eligible for public presence" in error for error in result["errors"]))
 
     def test_surface_disclosure_tier_authorizes_placement(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
         present = next(
             row
             for row in manifest_rows
             if row["surface"] == "portfolio_front_door" and MODULE._disclosure_floor(row["disclosure_level"]) == 3
         )
         present.update({"presence": "present", "canonical_or_drift": "canonical"})
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("disclosure tier does not authorize" in error for error in result["errors"]))
 
     def test_present_surface_claim_cannot_promote_canonical_status(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
-        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
         present = next(row for row in manifest_rows if row["status"] != "verified")
         present.update({"presence": "present", "canonical_or_drift": "canonical", "status": "verified"})
-        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("status differs from canonical inventory" in error for error in result["errors"]))
 
@@ -780,7 +945,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         with mock.patch.object(MODULE, "_live_authoritative_closure_verification", return_value=remote):
             result = MODULE.formalization_readiness(self.contract, closure)
         self.assertFalse(result["ready"])
-        self.assertFalse(any("final C03 head is not a locally proven descendant" in error for error in result["errors"]))
+        self.assertFalse(
+            any("final C03 head is not a locally proven descendant" in error for error in result["errors"])
+        )
 
     def test_formalization_rejects_a_closure_head_outside_the_authoritative_default_branch(self) -> None:
         errors = MODULE._validate_authoritative_closure_verification(
@@ -812,7 +979,19 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
     def test_live_closure_ancestry_disables_replacement_and_graft_overrides(self) -> None:
         completed = subprocess.CompletedProcess([], 0, "", "")
+        injected = {
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
+            "GIT_COMMON_DIR": "/tmp/common",
+            "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
+            "GIT_DIR": "/tmp/untrusted.git",
+            "GIT_INDEX_FILE": "/tmp/index",
+            "GIT_NAMESPACE": "untrusted",
+            "GIT_OBJECT_DIRECTORY": "/tmp/objects",
+            "GIT_SHALLOW_FILE": "/tmp/shallow",
+            "GIT_WORK_TREE": "/tmp/tree",
+        }
         with (
+            mock.patch.dict(MODULE.os.environ, injected, clear=False),
             mock.patch.object(
                 MODULE,
                 "_canonical_limen_remote_head",
@@ -824,7 +1003,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(result["contained"])
         environment = run.call_args.kwargs["env"]
         self.assertEqual("1", environment["GIT_NO_REPLACE_OBJECTS"])
-        self.assertEqual("/dev/null", environment["GIT_GRAFT_FILE"])
+        self.assertEqual(MODULE.os.devnull, environment["GIT_GRAFT_FILE"])
+        for key in injected:
+            self.assertNotIn(key, environment)
+
+    def test_evidence_git_object_reads_use_the_sanitized_bounded_environment(self) -> None:
+        injected = {
+            "GIT_DIR": "/tmp/untrusted.git",
+            "GIT_OBJECT_DIRECTORY": "/tmp/objects",
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
+            "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
+        }
+        results = [
+            subprocess.CompletedProcess([], 0, "text", ""),
+            subprocess.CompletedProcess([], 0, "a" * 40 + "\n", ""),
+            subprocess.CompletedProcess([], 0, b"bytes", b""),
+            subprocess.CompletedProcess([], 0, "b" * 40 + "\n", ""),
+            subprocess.CompletedProcess([], 0, b"receipt", b""),
+        ]
+        with (
+            mock.patch.dict(MODULE.os.environ, injected, clear=False),
+            mock.patch.object(MODULE.subprocess, "run", side_effect=results) as run,
+        ):
+            MODULE._read_git_object(ROOT, "a" * 40, ".gitignore")
+            MODULE._read_git_object_bytes(ROOT, "a" * 40, ".gitignore")
+            MODULE._git_blob(ROOT, "a" * 40, ".gitignore")
+        self.assertEqual(5, run.call_count)
+        for call in run.call_args_list:
+            self.assertEqual(30, call.kwargs["timeout"])
+            environment = call.kwargs["env"]
+            self.assertEqual("1", environment["GIT_NO_REPLACE_OBJECTS"])
+            for key in injected:
+                self.assertNotIn(key, environment)
 
     def test_live_closure_verification_rejects_an_unpushed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

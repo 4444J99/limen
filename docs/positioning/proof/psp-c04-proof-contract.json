@@ -267,7 +267,17 @@
       "organization_profile": "L1",
       "flagship_repository": "L2"
     },
-    "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action"],
+    "surface_sources": {
+      "portfolio_front_door": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-front-door.txt"},
+      "portfolio_flagship": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/directory/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-flagship.txt"},
+      "resume": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/resume/", "receipt_path": "docs/receipts/positioning/surface-inspections/resume.txt"},
+      "personal_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/4444J99", "receipt_path": "docs/receipts/positioning/surface-inspections/personal-profile.txt"},
+      "organization_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm", "receipt_path": "docs/receipts/positioning/surface-inspections/organization-profile.txt"},
+      "flagship_repository": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm/limen", "receipt_path": "docs/receipts/positioning/surface-inspections/flagship-repositories.txt"}
+    },
+    "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action", "inspection_id"],
+    "inspection_schema": "limen.positioning_surface_inspection.v1",
+    "inspection_rule": "Every canonical surface binds one exact-head tracked blob or immutable tracked live-response receipt; the canonical literal scanner recomputes matched claim IDs, and row presence must equal that set.",
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
   },
   "cost_failure_reproduction": {
@@ -277,10 +287,10 @@
     "input_schema": "limen.positioning_cost_failure_sample.v1",
     "review_schema": "limen.positioning_cost_failure_review.v1",
     "independent_reviewer_classes": ["independent_human", "independent_model", "consented_collaborator"],
-    "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "human-time sampling method", "published price basis or explicit unknown"],
+    "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "exact source-population digest and counts", "deterministic sampling rule and seed or census", "human-time sampling method", "published price basis or explicit unknown"],
     "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
     "public_failure_classes": ["dependency_failure", "external_gate", "human_gate", "policy_failure", "predicate_failure", "resource_limit", "verification_failure"],
-    "required_outputs": ["date window", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict"],
+    "required_outputs": ["date window", "source population and selection contract", "population digest", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict bound to both digests"],
     "forbidden_shortcuts": ["single average without distribution", "treating failed or blocked work as zero cost", "converting list price to actual spend", "publishing private spend without approval"],
     "publication_rule": "Withhold the analysis when attribution, sampling, privacy, or denominator checks fail."
   },

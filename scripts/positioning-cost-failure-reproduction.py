@@ -7,7 +7,7 @@ import argparse
 import hashlib
 import json
 import math
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -25,10 +25,26 @@ ALLOWED_FAILURE_CLASSES = {
 }
 REPRODUCTION_SCHEMA = "limen.positioning_cost_failure_reproduction.v1"
 REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
+POPULATION_SCHEMA = "limen.positioning_cost_failure_population.v1"
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
 ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
-ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window_end", "rows"}
+ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window_end", "population", "rows"}
+POPULATION_FIELDS = {
+    "schema_version",
+    "source_id",
+    "source_sha256",
+    "window_start",
+    "window_end",
+    "population_count",
+    "eligible_count",
+    "selected_count",
+    "selection_method",
+    "selection_rule",
+    "selection_seed_sha256",
+    "exclusion_counts",
+}
+SELECTION_METHODS = {"census", "deterministic_hash_sample"}
 ALLOWED_FIELDS = {
     "sample_id",
     "observed_at",
@@ -74,6 +90,77 @@ def _parse_observed_at(value: object, index: int, errors: list[str]) -> datetime
     return parsed
 
 
+def _validate_population(payload: dict[str, Any], rows: list[object], errors: list[str]) -> dict[str, Any] | None:
+    population = payload.get("population")
+    if not isinstance(population, dict):
+        errors.append("sample requires an exact source population block")
+        return None
+    if set(population) != POPULATION_FIELDS:
+        errors.append("sample population must use the exact contract fields")
+    if population.get("schema_version") != POPULATION_SCHEMA:
+        errors.append("sample population has an unsupported schema")
+    source_id = population.get("source_id")
+    if not isinstance(source_id, str) or not source_id.strip() or "\0" in source_id:
+        errors.append("sample population requires a nonblank public-safe source_id")
+    source_sha256 = population.get("source_sha256")
+    if (
+        not isinstance(source_sha256, str)
+        or len(source_sha256) != 64
+        or any(character not in "0123456789abcdef" for character in source_sha256)
+    ):
+        errors.append("sample population requires a lowercase source SHA-256")
+    if population.get("window_start") != payload.get("window_start") or population.get("window_end") != payload.get(
+        "window_end"
+    ):
+        errors.append("sample population window must exactly match the observed sample window")
+
+    counts: dict[str, int] = {}
+    for field in ("population_count", "eligible_count", "selected_count"):
+        value = population.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            errors.append(f"sample population {field} must be a nonnegative integer")
+        else:
+            counts[field] = value
+    if counts.get("selected_count") != len(rows):
+        errors.append("sample population selected_count must equal the exact row denominator")
+    if {"population_count", "eligible_count", "selected_count"} <= set(counts):
+        if counts["eligible_count"] > counts["population_count"] or counts["selected_count"] > counts["eligible_count"]:
+            errors.append("sample population counts must satisfy selected <= eligible <= population")
+
+    method = population.get("selection_method")
+    if not isinstance(method, str) or method not in SELECTION_METHODS:
+        errors.append("sample population requires a supported selection_method")
+    rule = population.get("selection_rule")
+    if not isinstance(rule, str) or not rule.strip() or "\0" in rule:
+        errors.append("sample population requires a nonblank deterministic selection_rule")
+    seed = population.get("selection_seed_sha256")
+    if method == "census":
+        if seed is not None:
+            errors.append("census selection must not declare a selection seed")
+        if counts and len(set(counts.values())) != 1:
+            errors.append("census selection requires selected == eligible == population")
+    elif not isinstance(seed, str) or len(seed) != 64 or any(character not in "0123456789abcdef" for character in seed):
+        errors.append("deterministic sampling requires a lowercase selection seed SHA-256")
+
+    exclusion_counts = population.get("exclusion_counts")
+    valid_exclusions = isinstance(exclusion_counts, dict) and all(
+        isinstance(reason, str)
+        and bool(reason.strip())
+        and "\0" not in reason
+        and isinstance(count, int)
+        and not isinstance(count, bool)
+        and count >= 0
+        for reason, count in exclusion_counts.items()
+    )
+    if not valid_exclusions:
+        errors.append("sample population exclusion_counts must map public-safe reasons to nonnegative integers")
+    elif {"population_count", "eligible_count"} <= set(counts) and sum(exclusion_counts.values()) != (
+        counts["population_count"] - counts["eligible_count"]
+    ):
+        errors.append("sample population exclusions must reconcile population_count to eligible_count")
+    return population
+
+
 def validate_sample(payload: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     unexpected_sample_fields = sorted(set(payload) - ALLOWED_SAMPLE_FIELDS)
@@ -91,6 +178,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
         return [*errors, "sample rows must be a non-empty list"]
+    _validate_population(payload, rows, errors)
     seen: set[str] = set()
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
@@ -119,12 +207,17 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
             and not window_start <= observed_at.date() <= window_end
         ):
             errors.append(f"row {index} observed_at falls outside the declared window")
-        for field in ("model_cost_usd", "human_minutes", "retry_count", "retry_cost_usd", "verification_cost_usd"):
+        for field in ("model_cost_usd", "human_minutes", "retry_cost_usd", "verification_cost_usd"):
             value = row.get(field)
             if value is not None and (
                 isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0
             ):
                 errors.append(f"row {index} field {field} must be null or non-negative")
+        retry_count = row.get("retry_count")
+        if retry_count is not None and (
+            not isinstance(retry_count, int) or isinstance(retry_count, bool) or retry_count < 0
+        ):
+            errors.append(f"row {index} field retry_count must be null or a non-negative integer")
         failure_class = row.get("failure_class")
         if terminal_state == "done":
             if failure_class is not None:
@@ -207,6 +300,9 @@ def _build_reproduction_command(
 
 def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    population = analysis.get("population")
+    if not isinstance(population, dict) or analysis.get("population_digest") != _canonical_digest(population):
+        errors.append("analysis population digest does not bind the exact source population contract")
     reproduction = analysis.get("reproduction_command")
     reproduction_fields = {
         "schema_version",
@@ -249,6 +345,7 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         "reviewer_identity",
         "observed_at",
         "data_digest",
+        "population_digest",
         "verdict",
         "limitations",
     }
@@ -271,8 +368,13 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
             raise ValueError
     except (AttributeError, ValueError):
         errors.append("analysis review_verdict observed_at must be RFC3339 with a timezone")
+    else:
+        if reviewed_at > datetime.now(timezone.utc):
+            errors.append("analysis review_verdict cannot be dated in the future")
     if verdict.get("data_digest") != analysis.get("data_digest"):
         errors.append("analysis review_verdict does not bind the analyzed data digest")
+    if verdict.get("population_digest") != analysis.get("population_digest"):
+        errors.append("analysis review_verdict does not bind the source population digest")
     if verdict.get("verdict") not in REVIEW_VERDICTS:
         errors.append("analysis review_verdict must explicitly publish or withhold")
     limitations = verdict.get("limitations")
@@ -299,10 +401,7 @@ def _finalize_analysis(analysis: dict[str, Any], *, data_complete: bool) -> dict
     verdict = analysis.get("review_verdict")
     verdict_passed = isinstance(verdict, dict) and verdict.get("verdict") == "publishable_public_safe"
     publication_eligible = (
-        data_complete
-        and analysis.get("provenance") == "public_safe_observed"
-        and verdict_passed
-        and not errors
+        data_complete and analysis.get("provenance") == "public_safe_observed" and verdict_passed and not errors
     )
     analysis["errors"] = errors
     analysis["publication_eligible"] = publication_eligible
@@ -318,6 +417,8 @@ def reproduce(
     review_verdict: object = None,
 ) -> dict[str, Any]:
     data_digest = _canonical_digest(payload)
+    population = payload.get("population")
+    population_digest = _canonical_digest(population) if isinstance(population, dict) else None
     reproduction_command = _build_reproduction_command(
         input_artifact,
         data_digest,
@@ -332,6 +433,8 @@ def reproduce(
                 "provenance": payload.get("provenance"),
                 "reproduction_command": reproduction_command,
                 "review_verdict": review_verdict,
+                "population": population,
+                "population_digest": population_digest,
                 "data_digest": data_digest,
                 "errors": errors,
             },
@@ -361,6 +464,8 @@ def reproduce(
         "provenance": payload["provenance"],
         "reproduction_command": reproduction_command,
         "review_verdict": review_verdict,
+        "population": population,
+        "population_digest": population_digest,
         "window": {"start": payload["window_start"], "end": payload["window_end"]},
         "denominator": len(rows),
         "terminal_states": terminal_counts,
@@ -385,18 +490,34 @@ def main() -> int:
     parser.add_argument("--review", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    payload = json.loads(args.input.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError("input root must be an object")
-    review_verdict: object = None
-    if args.review is not None:
-        review_verdict = json.loads(args.review.read_text(encoding="utf-8"))
-    result = reproduce(
-        payload,
-        input_artifact=args.input.as_posix(),
-        review_artifact=args.review.as_posix() if args.review is not None else None,
-        review_verdict=review_verdict,
-    )
+    try:
+        payload = json.loads(args.input.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("input root must be an object")
+        review_verdict: object = None
+        if args.review is not None:
+            review_verdict = json.loads(args.review.read_text(encoding="utf-8"))
+            if not isinstance(review_verdict, dict):
+                raise ValueError("review root must be an object")
+        result = reproduce(
+            payload,
+            input_artifact=args.input.as_posix(),
+            review_artifact=args.review.as_posix() if args.review is not None else None,
+            review_verdict=review_verdict,
+        )
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        result = {
+            "schema_version": "limen.positioning_cost_failure_analysis.v1",
+            "provenance": None,
+            "reproduction_command": None,
+            "review_verdict": None,
+            "population": None,
+            "population_digest": None,
+            "data_digest": None,
+            "errors": [f"cost/failure input failed closed: {exc}"],
+            "publication_eligible": False,
+            "status": "withheld",
+        }
     serialized = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(serialized, encoding="utf-8")

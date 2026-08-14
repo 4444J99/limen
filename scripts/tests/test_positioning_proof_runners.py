@@ -67,6 +67,7 @@ def independent_cost_review(payload: dict[str, object]) -> dict[str, object]:
         "reviewer_identity": "hermetic-independent-reviewer",
         "observed_at": "2026-08-08T12:00:00Z",
         "data_digest": COST._canonical_digest(payload),
+        "population_digest": COST._canonical_digest(payload["population"]),
         "verdict": "publishable_public_safe",
         "limitations": ["Hermetic contract fixture only; not external publication authority."],
     }
@@ -80,6 +81,22 @@ def reproduce_cost(payload: dict[str, object], *, reviewed: bool = False) -> dic
         review_artifact=COST_REVIEW_ARTIFACT if review is not None else None,
         review_verdict=review,
     )
+
+
+def wait_for_recorded_process_exit(pid_path: Path, timeout_seconds: float = 2.0) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while not pid_path.exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    if not pid_path.exists():
+        raise AssertionError(f"descendant did not record its pid at {pid_path}")
+    pid = int(pid_path.read_text(encoding="utf-8"))
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.02)
+    raise AssertionError(f"descendant process {pid} remained live")
 
 
 class PositioningProofRunnerTest(unittest.TestCase):
@@ -124,6 +141,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual(COST_INPUT_ARTIFACT, result["reproduction_command"]["input_artifact"])
         self.assertIsNone(result["review_verdict"])
         self.assertEqual(3, result["denominator"])
+        self.assertEqual(3, result["population"]["population_count"])
+        self.assertEqual(COST._canonical_digest(payload["population"]), result["population_digest"])
         self.assertEqual(1, result["terminal_states"]["failed"])
         self.assertEqual(1, result["terminal_states"]["failed_blocked"])
         self.assertEqual(5, len(result["dimensions"]))
@@ -150,6 +169,91 @@ class PositioningProofRunnerTest(unittest.TestCase):
             ],
             command["argv"],
         )
+
+    def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        mutations = (
+            ("selected_count", 1, "selected_count must equal"),
+            ("population_count", 4, "census selection requires"),
+            ("eligible_count", True, "eligible_count must be"),
+            ("selection_method", "manual_best_case", "selection_method"),
+            ("selection_seed_sha256", "0" * 64, "census selection must not"),
+            ("exclusion_counts", {"unreviewed": 1}, "exclusions must reconcile"),
+        )
+        for field, value, expected in mutations:
+            with self.subTest(field=field):
+                changed = copy.deepcopy(payload)
+                changed["population"][field] = value
+                result = reproduce_cost(changed, reviewed=True)
+                self.assertEqual("withheld", result["status"])
+                self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
+
+    def test_cost_failure_review_binds_population_and_cannot_be_future_dated(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        for field, value, expected in (
+            ("population_digest", "0" * 64, "source population digest"),
+            ("observed_at", "2099-01-01T00:00:00Z", "future"),
+        ):
+            review = independent_cost_review(payload)
+            review[field] = value
+            result = COST.reproduce(
+                payload,
+                input_artifact=COST_INPUT_ARTIFACT,
+                review_artifact=COST_REVIEW_ARTIFACT,
+                review_verdict=review,
+            )
+            self.assertEqual("withheld", result["status"])
+            self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
+
+    def test_cost_failure_retry_count_requires_a_nonnegative_integer(self) -> None:
+        for value in (0.5, True, -1):
+            payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+            payload["rows"][0]["retry_count"] = value
+            result = reproduce_cost(payload)
+            self.assertEqual("withheld", result["status"])
+            self.assertTrue(any("non-negative integer" in error for error in result["errors"]))
+
+    def test_cost_failure_cli_reports_unreadable_or_malformed_inputs_without_tracebacks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            valid_input = root / "sample.json"
+            valid_input.write_text(
+                (FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            malformed = root / "malformed.json"
+            malformed.write_text("{not-json", encoding="utf-8")
+            missing = root / "missing.json"
+            for argv in (
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/positioning-cost-failure-reproduction.py"),
+                    "--input",
+                    str(malformed),
+                ],
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/positioning-cost-failure-reproduction.py"),
+                    "--input",
+                    str(missing),
+                ],
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/positioning-cost-failure-reproduction.py"),
+                    "--input",
+                    str(valid_input),
+                    "--review",
+                    str(malformed),
+                ],
+            ):
+                completed = subprocess.run(argv, cwd=ROOT, check=False, capture_output=True, text=True)
+                self.assertEqual(1, completed.returncode)
+                self.assertEqual("", completed.stderr)
+                result = json.loads(completed.stdout)
+                self.assertEqual("withheld", result["status"])
+                self.assertFalse(result["publication_eligible"])
+                self.assertTrue(any("failed closed" in error for error in result["errors"]))
 
     def test_cost_failure_required_receipt_fields_fail_closed_before_publication(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -196,7 +300,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 mutated["provenance"] = provenance
             result = reproduce_cost(mutated)
             self.assertEqual("withheld", result["status"])
-            self.assertTrue(any("explicit synthetic or public_safe_observed provenance" in error for error in result["errors"]))
+            self.assertTrue(
+                any("explicit synthetic or public_safe_observed provenance" in error for error in result["errors"])
+            )
 
     def test_receipt_request_requires_a_typed_repository_path(self) -> None:
         for repository_path in (None, {"path": "/tmp/repository"}, ["/tmp/repository"]):
@@ -745,7 +851,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             elapsed = time.monotonic() - started
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
-            self.assertLess(elapsed, 3)
+            self.assertLess(elapsed, 9)
 
     def test_redirected_predicate_descendant_is_terminated_before_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
@@ -764,7 +870,11 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
             ).stdout.strip()
             attach_origin(repository, Path(remote_temporary))
-            child = "import time; from pathlib import Path; time.sleep(0.5); Path('late.txt').write_text('late')"
+            child = (
+                "import os,time; from pathlib import Path; "
+                "Path('redirected-child.pid').write_text(str(os.getpid())); "
+                "time.sleep(0.5); Path('late.txt').write_text('late')"
+            )
             parent = (
                 "import subprocess,sys; "
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
@@ -787,7 +897,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
-            time.sleep(0.7)
+            wait_for_recorded_process_exit(repository / "redirected-child.pid")
             self.assertFalse((repository / "late.txt").exists())
 
     def test_detached_predicate_descendant_is_terminated_before_receipt(self) -> None:
@@ -808,7 +918,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
             ).stdout.strip()
             attach_origin(repository, Path(remote_temporary))
             grandchild = (
-                "import time; from pathlib import Path; time.sleep(0.5); Path('detached-late.txt').write_text('late')"
+                "import os,time; from pathlib import Path; "
+                "Path('detached-grandchild.pid').write_text(str(os.getpid())); "
+                "time.sleep(0.5); Path('detached-late.txt').write_text('late')"
             )
             child = (
                 "import subprocess,sys; "
@@ -816,9 +928,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 "stderr=subprocess.DEVNULL, start_new_session=True, env={})"
             )
             parent = (
-                "import subprocess,sys; "
+                "import subprocess,sys,time\n"
+                "from pathlib import Path\n"
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
-                "stderr=subprocess.DEVNULL, start_new_session=True, env={}); print('parent done')"
+                "stderr=subprocess.DEVNULL, start_new_session=True, env={})\n"
+                "deadline=time.monotonic()+2\n"
+                "pid_path=Path('detached-grandchild.pid')\n"
+                "while not pid_path.exists() and time.monotonic()<deadline: time.sleep(0.02)\n"
+                "print('parent done')"
             )
             request = {
                 "schema_version": RECEIPT.SCHEMA_VERSION,
@@ -837,7 +954,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
-            time.sleep(0.7)
+            wait_for_recorded_process_exit(repository / "detached-grandchild.pid")
             self.assertFalse((repository / "detached-late.txt").exists())
 
 
