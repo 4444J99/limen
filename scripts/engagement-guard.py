@@ -32,6 +32,11 @@ WHAT IT HOLDS (offline, text-only — a gate that needs network is a gate that g
                          instrument. Scope creeping into an unpriced category while the
                          original scope is unpaid opens a second front on the first one's
                          terms, and makes walking away from either one costlier.
+ 11. MUTUALLY-BINDING  — some instrument in the set is signed by BOTH parties, and no
+                         instrument is non-binding BY CONSTRUCTION: an e-sign envelope
+                         that never routed the counterparty as a signer can never produce
+                         a countersignature — waiting for one is not patience. Reads the
+                         optional ``instruments:`` list; falls back to ``instrument:``.
 
 WHAT IT DOES NOT DO. It does not read contracts, judge enforceability, or give legal advice.
 It reads a small hand-written YAML describing an engagement and holds it to conditions that
@@ -312,6 +317,68 @@ def evaluate(cfg: dict[str, Any], today: dt.date) -> list[Finding]:
         )
     else:
         out.append(Finding("SCOPE-PRICED", PASS, "All assigned scope is priced in an instrument.", ""))
+
+    # 11. MUTUALLY-BINDING -------------------------------------------------------------
+    # COUNTERSIGNED (check 1) reads ONE instrument's self-reported dates and cannot
+    # distinguish "hasn't signed yet" (chase it) from "was never routed as a signer"
+    # (waiting is structurally futile). This check reads the full instrument SET plus
+    # the routing facts. Precedent (2026-08-14): an e-sign completion notice said
+    # "all parties have completed" while the output's counterparty blocks stayed blank —
+    # reconcilable only because the envelope had routed exactly one signer. Check the
+    # completion certificate's recipient routing, never the emailed copy.
+    instruments = cfg.get("instruments")
+    if instruments is None and inst:
+        instruments = [inst]
+    instruments = [e for e in (instruments or []) if isinstance(e, dict)]
+    bound = False
+    for entry in instruments:
+        e_mine = _date(entry.get("signed_by_me"))
+        e_theirs = _date(entry.get("signed_by_them"))
+        e_name = entry.get("name", "unnamed instrument")
+        if e_mine and e_theirs:
+            bound = True
+        elif e_mine and not e_theirs and entry.get("routed_them") is False:
+            out.append(
+                Finding(
+                    "MUTUALLY-BINDING",
+                    FAIL,
+                    f"'{e_name}' is non-binding BY CONSTRUCTION: you signed, and the e-sign "
+                    "envelope never routed the counterparty — no countersignature can ever arrive.",
+                    "Stop waiting for it. A mutual instrument must be re-executed with both "
+                    "parties routed; verify against the completion certificate, not the emailed copy.",
+                )
+            )
+        elif e_theirs and not e_mine and entry.get("routed_me") is False:
+            out.append(
+                Finding(
+                    "MUTUALLY-BINDING",
+                    FAIL,
+                    f"'{e_name}' cannot bind both parties as delivered: they signed, and you "
+                    "were never given a signing path.",
+                    "Treat it as a proposal, not an instrument, until a mutual execution path exists.",
+                )
+            )
+    if bound:
+        out.append(Finding("MUTUALLY-BINDING", PASS, "At least one instrument is signed by both parties.", ""))
+    elif instruments:
+        sides = "; ".join(
+            "'{}' ({} only)".format(
+                e.get("name", "?"),
+                "you"
+                if _date(e.get("signed_by_me"))
+                else ("counterparty" if _date(e.get("signed_by_them")) else "nobody"),
+            )
+            for e in instruments
+        )
+        out.append(
+            Finding(
+                "MUTUALLY-BINDING",
+                FAIL,
+                f"No instrument in the set binds both parties: {sides}.",
+                "Two half-signed documents are not one contract. Nothing governs until one "
+                "instrument carries both signatures.",
+            )
+        )
 
     return out
 
