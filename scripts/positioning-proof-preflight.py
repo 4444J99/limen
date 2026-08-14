@@ -21,7 +21,8 @@ FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
-W07_RESPONSE_PATH = re.compile(r"^docs/positioning/program/[A-Za-z0-9._/-]+\.json$")
+W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
+W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -867,10 +868,22 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                 errors.append(f"disclosure level differs from canonical inventory: {key[0]} / {key[1]}")
             if canonical.get("action") != "audit_canonical_wording":
                 errors.append(f"canonical claim is not eligible for public presence: {key[0]} / {key[1]}")
-            if row.get("canonical_or_drift") not in {"canonical", "drift"}:
-                errors.append(f"drift verdict missing: {key[0]} / {key[1]}")
-            if not row.get("observed_at"):
-                errors.append(f"observation date missing: {key[0]} / {key[1]}")
+            if row.get("canonical_or_drift") != "canonical":
+                errors.append(f"present claim differs from canonical wording: {key[0]} / {key[1]}")
+            observed_at = row.get("observed_at")
+            valid_observations = (
+                isinstance(observed_at, list)
+                and bool(observed_at)
+                and all(isinstance(value, str) and bool(value) for value in observed_at)
+            )
+            if valid_observations:
+                try:
+                    for value in observed_at:
+                        _parse_date(value)
+                except ValueError:
+                    valid_observations = False
+            if not valid_observations or observed_at != canonical.get("observed_at"):
+                errors.append(f"observation dates differ from canonical evidence: {key[0]} / {key[1]}")
             if row.get("status") in {"unsupported", "contradictory", "private", "stale"}:
                 errors.append(f"unsafe material claim: {key[0]} / {key[1]}")
     missing = sorted(expected - supplied)
@@ -983,7 +996,8 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         independence = str(row.get("independence disclosure") or "").strip().lower()
         if independence not in INDEPENDENCE_DISPOSITIONS:
             errors.append(f"validation object {index} lacks an affirmative independence disposition")
-        object_receipt = row.get("object URL or receipt")
+        raw_object_receipt = row.get("object URL or receipt")
+        object_receipt = raw_object_receipt.strip() if isinstance(raw_object_receipt, str) else raw_object_receipt
         duplicate_receipt = False
         if isinstance(object_receipt, str) and object_receipt:
             if object_receipt in provenance:
@@ -1057,25 +1071,23 @@ def _git_blob(repository: Path, head: str, path: str) -> bytes:
 def _verify_w07_response_blob(
     repository: Path,
     observed_head: str,
+    closure_head: str,
     response_path: str,
     response_sha256: str,
+    decision_memo_path: str,
+    decision_memo_sha256: str,
     evidence: dict[str, Any],
 ) -> None:
     ancestry = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", observed_head, "HEAD"],
+        ["git", "merge-base", "--is-ancestor", observed_head, closure_head],
         cwd=repository,
         check=False,
         capture_output=True,
         timeout=30,
     )
     if ancestry.returncode != 0:
-        raise ValueError("W07 observed head is not in the current accepted repository history")
+        raise ValueError("W07 observed head is not contained by the claimed C03 closure head")
 
-    support_paths = (
-        W07_VALIDATOR_PATH,
-        "docs/positioning/program/w07_blinded_reader_response_schema.json",
-        "docs/positioning/w07-blinded-reader-protocol.md",
-    )
     response_blob = _git_blob(repository, observed_head, response_path)
     try:
         response_payload = json.loads(response_blob.decode("utf-8"))
@@ -1085,15 +1097,16 @@ def _verify_w07_response_blob(
     if hashlib.sha256(canonical).hexdigest() != response_sha256:
         raise ValueError("W07 response-set digest does not bind the exact tracked response blob")
 
+    decision_memo_blob = _git_blob(repository, observed_head, decision_memo_path)
+    if hashlib.sha256(decision_memo_blob).hexdigest() != decision_memo_sha256:
+        raise ValueError("W07 decision-memo digest does not bind the exact tracked memo blob")
+
     with tempfile.TemporaryDirectory() as directory:
-        checkout = Path(directory)
-        for path in (*support_paths, response_path):
-            target = checkout / path
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(response_blob if path == response_path else _git_blob(repository, observed_head, path))
+        response_target = Path(directory) / "w07-reader-responses.json"
+        response_target.write_bytes(response_blob)
         completed = subprocess.run(
-            [sys.executable, str(checkout / W07_VALIDATOR_PATH), str(checkout / response_path)],
-            cwd=checkout,
+            [sys.executable, str(ROOT / W07_VALIDATOR_PATH), str(response_target)],
+            cwd=ROOT,
             check=False,
             capture_output=True,
             text=True,
@@ -1101,7 +1114,7 @@ def _verify_w07_response_blob(
         )
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
-        raise ValueError(f"exact-head W07 blinded-reader predicate did not pass: {detail}")
+        raise ValueError(f"trusted W07 blinded-reader predicate did not pass: {detail}")
     match = re.search(
         r"SCORE: total=(\d+)/25 role=(\d+)/5 buyer=(\d+)/5 cta=(\d+)/5",
         completed.stdout,
@@ -1118,6 +1131,7 @@ def _validate_w07_receipt_binding(
     value: object,
     repository: Path,
     live_verification: dict[str, Any] | None = None,
+    closure_head: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if not isinstance(value, dict):
@@ -1143,6 +1157,7 @@ def _validate_w07_receipt_binding(
             errors.append("embedded W07 receipt must record a successful PSP-P03-W07 outcome")
         evidence = receipt.get("reader_evidence")
         response_path: str | None = None
+        memo_path: str | None = None
         observed_head: str | None = None
         if not isinstance(evidence, dict):
             errors.append("embedded W07 receipt must include the public-safe reader evidence summary")
@@ -1175,17 +1190,29 @@ def _validate_w07_receipt_binding(
                 errors.append("W07 reader evidence must bind a safe tracked response_set_path")
             else:
                 response_path = candidate_path
-                changed_paths = receipt.get("changed_paths")
-                if not isinstance(changed_paths, list) or response_path not in changed_paths:
-                    errors.append("W07 response_set_path must be present in the receipt changed_paths")
-                observed_heads = receipt.get("observed_heads")
-                observed_head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
-                evidence_urls = receipt.get("evidence_urls")
-                expected_url = f"https://github.com/organvm/limen/blob/{observed_head}/{response_path}"
-                if not FULL_HEAD.fullmatch(str(observed_head or "")) or (
-                    not isinstance(evidence_urls, list) or expected_url not in evidence_urls
-                ):
-                    errors.append("W07 response_set_path must bind an immutable exact-head evidence URL")
+            candidate_memo_path = evidence.get("decision_memo_path")
+            if (
+                not isinstance(candidate_memo_path, str)
+                or not W07_MEMO_PATH.fullmatch(candidate_memo_path)
+                or ".." in Path(candidate_memo_path).parts
+            ):
+                errors.append("W07 reader evidence must bind the canonical tracked decision_memo_path")
+            else:
+                memo_path = candidate_memo_path
+            changed_paths = receipt.get("changed_paths")
+            for label, path in (("response_set_path", response_path), ("decision_memo_path", memo_path)):
+                if path is not None and (not isinstance(changed_paths, list) or path not in changed_paths):
+                    errors.append(f"W07 {label} must be present in the receipt changed_paths")
+            observed_heads = receipt.get("observed_heads")
+            observed_head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
+            evidence_urls = receipt.get("evidence_urls")
+            if not FULL_HEAD.fullmatch(str(observed_head or "")):
+                errors.append("W07 evidence must bind a full exact observed head")
+            else:
+                for label, path in (("response_set_path", response_path), ("decision_memo_path", memo_path)):
+                    expected_url = f"https://github.com/organvm/limen/blob/{observed_head}/{path}"
+                    if path is not None and (not isinstance(evidence_urls, list) or expected_url not in evidence_urls):
+                        errors.append(f"W07 {label} must bind an immutable exact-head evidence URL")
         predicate = receipt.get("predicate")
         expected_command = f"python3 {W07_VALIDATOR_PATH} {response_path}" if response_path is not None else None
         if not isinstance(predicate, dict) or predicate.get("command") != expected_command:
@@ -1196,12 +1223,16 @@ def _validate_w07_receipt_binding(
     assert isinstance(evidence, dict)
     assert isinstance(observed_head, str)
     assert isinstance(response_path, str)
+    assert isinstance(memo_path, str)
     try:
         _verify_w07_response_blob(
             repository,
             observed_head,
+            closure_head or "HEAD",
             response_path,
             evidence["response_set_sha256"],
+            memo_path,
+            evidence["decision_memo_sha256"],
             evidence,
         )
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
@@ -1228,6 +1259,7 @@ def formalization_readiness(
     accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("exact_head")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
     receipt_errors: list[str] = []
+    final_head: str | None = None
     if closure_receipt is not None:
         if closure_receipt.get("chunk_id") != "PSP-C03":
             receipt_errors.append("closure receipt chunk must be PSP-C03")
@@ -1253,6 +1285,7 @@ def formalization_readiness(
                 closure_receipt.get("w07_receipt"),
                 repository,
                 live_verification=w07_verification,
+                closure_head=final_head,
             )
         )
         if not receipt_errors:

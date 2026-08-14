@@ -89,7 +89,7 @@ def test_import_injects_immutable_stimulus_and_applies_schema() -> None:
 def test_model_author_coached_or_synthetic_records_never_count(field: str) -> None:
     raw = raw_import(passing_payload())
     raw["readers"][0]["protocol_integrity"][field] = False
-    with pytest.raises(V.EvidenceError):
+    with pytest.raises(W.V.EvidenceError):
         W.import_response_set(raw)
 
 
@@ -109,7 +109,7 @@ def test_model_author_coached_or_synthetic_records_never_count(field: str) -> No
 def test_strict_pii_patterns_are_rejected(value: str) -> None:
     raw = raw_import(passing_payload())
     raw["readers"][0]["verbatim_notes"] = value
-    with pytest.raises(V.EvidenceError, match="prohibited"):
+    with pytest.raises(W.V.EvidenceError, match="prohibited"):
         W.import_response_set(raw)
 
 
@@ -173,6 +173,20 @@ def test_receipt_candidate_is_bound_to_stimulus_head_and_exact_output_hash() -> 
     assert receipt["predicate"]["output_sha256"] == hashlib.sha256(expected_output.encode("utf-8")).hexdigest()
     assert V.STIMULUS["issue_comment"] in receipt["evidence_urls"]
     assert all(observed_head in url for url in receipt["evidence_urls"][-2:])
+    assert receipt["reader_evidence"] == {
+        "reader_count": 5,
+        "independent_reader_count": 5,
+        "synthetic_or_model_reader_count": 0,
+        "unresolved_authority_objections": 0,
+        "total_score": 25,
+        "role_matches": 5,
+        "buyer_matches": 5,
+        "cta_matches": 5,
+        "response_set_path": response_path,
+        "response_set_sha256": W.response_sha256(payload),
+        "decision_memo_path": memo_path,
+        "decision_memo_sha256": hashlib.sha256(W.decision_memo(payload, verdict).encode("utf-8")).hexdigest(),
+    }
 
 
 def test_receipt_candidate_refuses_below_threshold_evidence() -> None:

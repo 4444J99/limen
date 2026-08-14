@@ -53,7 +53,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         return payload
 
     def _w07_repository(self, repository: Path, payload: dict[str, object]) -> tuple[str, str]:
-        response_path = "docs/positioning/program/w07_blinded_reader_responses.json"
+        response_path = "docs/receipts/positioning/psp-p03-w07-reader-responses.json"
+        memo_path = "docs/receipts/positioning/psp-p03-w07-decision-memo.md"
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+        subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+        subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+        subprocess.run(
+            ["git", "-c", "commit.gpgsign=false", "commit", "-q", "--allow-empty", "-m", "synthetic closure"],
+            cwd=repository,
+            check=True,
+        )
         tracked = (
             MODULE.W07_VALIDATOR_PATH,
             "docs/positioning/program/w07_blinded_reader_response_schema.json",
@@ -66,9 +75,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response = repository / response_path
         response.parent.mkdir(parents=True, exist_ok=True)
         response.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
-        subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
-        subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+        memo = repository / memo_path
+        memo.parent.mkdir(parents=True, exist_ok=True)
+        memo.write_text("synthetic aggregate decision memo\n", encoding="utf-8")
         subprocess.run(["git", "add", "."], cwd=repository, check=True)
         subprocess.run(
             ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic W07 fixture"],
@@ -94,12 +103,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response_digest = hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
         ).hexdigest()
+        memo_path = "docs/receipts/positioning/psp-p03-w07-decision-memo.md"
+        memo_digest = hashlib.sha256(
+            subprocess.run(
+                ["git", "show", f"{head}:{memo_path}"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+            ).stdout
+        ).hexdigest()
         receipt = {
             "work_id": "PSP-P03-W07",
             "outcome": "succeeded",
             "observed_heads": {"organvm/limen": head},
-            "changed_paths": [response_path],
-            "evidence_urls": [f"https://github.com/organvm/limen/blob/{head}/{response_path}"],
+            "changed_paths": [response_path, memo_path],
+            "evidence_urls": [
+                f"https://github.com/organvm/limen/blob/{head}/{response_path}",
+                f"https://github.com/organvm/limen/blob/{head}/{memo_path}",
+            ],
             "predicate": {
                 "command": f"python3 {MODULE.W07_VALIDATOR_PATH} {response_path}",
                 "exit_code": 0,
@@ -115,7 +136,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "cta_matches": 5,
                 "response_set_path": response_path,
                 "response_set_sha256": response_digest,
-                "decision_memo_sha256": "c" * 64,
+                "decision_memo_path": memo_path,
+                "decision_memo_sha256": memo_digest,
             },
         }
         digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -286,6 +308,32 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("present claim missing required evidence fields" in error for error in result["errors"]))
 
+    def test_present_surface_claim_rejects_drifted_wording(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+        present.update({"presence": "present", "canonical_or_drift": "drift", "status": "verified"})
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("differs from canonical wording" in error for error in result["errors"]))
+
+    def test_present_surface_claim_binds_exact_iso_observation_dates(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        for invalid in (True, ["not-a-date"], ["2099-01-01"]):
+            manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+            present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
+            present.update(
+                {
+                    "presence": "present",
+                    "canonical_or_drift": "canonical",
+                    "status": "verified",
+                    "observed_at": invalid,
+                }
+            )
+            result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(any("observation dates differ" in error for error in result["errors"]))
+
     def test_withheld_canonical_claim_cannot_be_marked_present(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
@@ -402,6 +450,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("substantive public-consented objects" in error for error in result["errors"]))
 
+    def test_external_validation_normalizes_receipts_before_deduplication(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index, receipt in enumerate(("https://example.invalid/review", " https://example.invalid/review ")):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = receipt
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(1, result["substantive_public_count"])
+        self.assertTrue(any("duplicates an existing object receipt" in error for error in result["errors"]))
+
     def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
         for value in (None, [{"unhashable": True}]):
             changed = copy.deepcopy(self.contract)
@@ -497,15 +563,56 @@ class PositioningProofPreflightTest(unittest.TestCase):
             evidence["response_set_sha256"] = hashlib.sha256(
                 json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
             ).hexdigest()
-            observed_heads = receipt["observed_heads"]
-            assert isinstance(observed_heads, dict)
-            observed_heads["organvm/limen"] = "a" * 40
-            receipt["evidence_urls"] = [f"https://github.com/organvm/limen/blob/{'a' * 40}/{response_path}"]
+            evidence["decision_memo_sha256"] = "d" * 64
             digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
             binding["sha256"] = digest
             live["receipt_sha256"] = digest
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
-            self.assertTrue(any("accepted repository history" in error for error in errors))
+            self.assertTrue(any("exact tracked memo blob" in error for error in errors))
+
+            memo_path = evidence["decision_memo_path"]
+            assert isinstance(memo_path, str)
+            evidence["decision_memo_sha256"] = hashlib.sha256(
+                subprocess.run(
+                    ["git", "show", f"{head}:{memo_path}"],
+                    cwd=repository,
+                    check=True,
+                    capture_output=True,
+                ).stdout
+            ).hexdigest()
+            observed_heads = receipt["observed_heads"]
+            assert isinstance(observed_heads, dict)
+            observed_heads["organvm/limen"] = "a" * 40
+            receipt["evidence_urls"] = [
+                f"https://github.com/organvm/limen/blob/{'a' * 40}/{response_path}",
+                f"https://github.com/organvm/limen/blob/{'a' * 40}/{memo_path}",
+            ]
+            digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            binding["sha256"] = digest
+            live["receipt_sha256"] = digest
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("claimed C03 closure head" in error for error in errors))
+
+    def test_w07_observed_head_must_be_contained_by_the_closure_head(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            closure_head = subprocess.run(
+                ["git", "rev-parse", f"{head}^"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            errors = MODULE._validate_w07_receipt_binding(
+                binding,
+                repository,
+                live,
+                closure_head=closure_head,
+            )
+            self.assertTrue(any("claimed C03 closure head" in error for error in errors))
 
     def test_w07_receipt_reexecutes_the_exact_head_validator(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -519,7 +626,45 @@ class PositioningProofPreflightTest(unittest.TestCase):
             head, response_path = self._w07_repository(repository, payload)
             binding, live = self._valid_w07_binding(repository, head, response_path, payload)
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
-            self.assertTrue(any("exact-head W07 blinded-reader predicate did not pass" in error for error in errors))
+            self.assertTrue(any("trusted W07 blinded-reader predicate did not pass" in error for error in errors))
+
+    def test_w07_receipt_does_not_trust_a_validator_from_the_observed_head(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            readers = payload["readers"]
+            assert isinstance(readers, list)
+            integrity = readers[0]["protocol_integrity"]
+            assert isinstance(integrity, dict)
+            integrity["genuine_human_response"] = False
+            _, response_path = self._w07_repository(repository, payload)
+            validator = repository / MODULE.W07_VALIDATOR_PATH
+            validator.write_text(
+                "#!/usr/bin/env python3\nprint('PASS: forged observed-head validator')\n"
+                "print('SCORE: total=25/25 role=5/5 buyer=5/5 cta=5/5')\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "add", MODULE.W07_VALIDATOR_PATH], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "forge observed validator"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            errors = MODULE._validate_w07_receipt_binding(
+                binding,
+                repository,
+                live,
+                closure_head=head,
+            )
+            self.assertTrue(any("trusted W07 blinded-reader predicate did not pass" in error for error in errors))
 
     def test_program_binding_covers_all_p05_leaves(self) -> None:
         self.assertEqual(

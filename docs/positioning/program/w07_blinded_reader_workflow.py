@@ -279,6 +279,10 @@ def build_receipt_comment(
         raise WorkflowError("acceptance_sha256 must be a lowercase SHA-256 digest")
     predicate_command = "python3 docs/positioning/program/validate_p03_w07_blinded_reader.py " + response_path
     predicate_output = V.render_verdict(verdict) + "\n"
+    totals = score_totals(payload)
+    _, unresolved_authority_objections = objection_summary(payload)
+    memo_content = decision_memo(payload, verdict)
+    readers = payload["readers"]
     base_url = f"https://github.com/organvm/limen/blob/{observed_head}/"
     receipt = {
         "schema_version": "limen.positioning_work_receipt.v1",
@@ -304,6 +308,24 @@ def build_receipt_comment(
             "exit_code": 0,
             "observed_at": observed_at,
             "output_sha256": hashlib.sha256(predicate_output.encode("utf-8")).hexdigest(),
+        },
+        "reader_evidence": {
+            "reader_count": len(readers),
+            "independent_reader_count": sum(
+                reader["protocol_integrity"]["independent_target_like_reader"] is True for reader in readers
+            ),
+            "synthetic_or_model_reader_count": sum(
+                reader["protocol_integrity"]["not_model_or_synthetic"] is not True for reader in readers
+            ),
+            "unresolved_authority_objections": unresolved_authority_objections,
+            "total_score": sum(totals.values()),
+            "role_matches": totals["role"],
+            "buyer_matches": totals["buyer"],
+            "cta_matches": totals["cta"],
+            "response_set_path": response_path,
+            "response_set_sha256": response_sha256(payload),
+            "decision_memo_path": memo_path,
+            "decision_memo_sha256": hashlib.sha256(memo_content.encode("utf-8")).hexdigest(),
         },
         "rollback": {
             "invoked": False,
