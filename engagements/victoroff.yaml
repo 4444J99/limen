@@ -4,9 +4,13 @@
 # `engagement-guard.py --config engagements/victoroff.yaml` pass has broken the guard, not
 # fixed the engagement.
 #
-# Deliberately free of personal detail: no message content, no personal history, no third
-# parties. The confidential record lives in a separate private repository. What is kept here
-# is only the shape of the failure, because the shape is what generalises.
+# Publication discipline (corrected 2026-08-14, ethics precedent G-010): counterparty
+# message text is PARAPHRASED here, never quoted — an earlier revision quoted four chat
+# messages verbatim while this header claimed otherwise; published history retains them,
+# the working copy does not. The engagement name and figures remain because they are what
+# make the regression test real. The confidential record lives in a separate private
+# repository. What is kept here is the shape of the failure, because the shape is what
+# generalises.
 
 engagement: victoroff
 counterparty: "client (pre-revenue LLC, successor entity undesignated)"
@@ -14,12 +18,32 @@ max_unpaid_days: 14
 
 work:
   started: 2026-07-21 # eight days before any instrument existed
-  description: "full-stack build; 98.1% of lines added, 183 of 220 commits"
+  description: "full-stack build; 98.1% of lines added, 183 of 220 commits (keystroke custody — the direction record is three-channel and lives in the private repo)"
 
+# The full instrument set — what MUTUALLY-BINDING reads. Two instruments, each signed by
+# exactly one party, pointing in opposite directions; the second's integration clause
+# supersedes the first. No instrument binds both parties.
+instruments:
+  - name: "V-CON-004 (Engagement & Conditional Incentive Package)"
+    signed_by_me: 2026-07-29
+    signed_by_them: null
+    routed_me: true
+    routed_them: false # ← the e-sign envelope COMPLETED with one routed signer; the
+      # completion notice said "all parties" while the counterparty's blocks stayed
+      # blank. Non-binding by construction: no countersignature can ever arrive.
+    integration_clause: true
+  - name: "Work-for-Hire Agreement (effective 2026-08-12)"
+    signed_by_me: null
+    signed_by_them: 2026-08-12
+    routed_me: true # sent to me to sign; signature withheld
+    routed_them: true
+    integration_clause: true # entire-agreement clause supersedes the prior instrument
+
+# The single-instrument block the older checks read (checks 1-4); instruments[0] above.
 instrument:
   name: "V-CON-004 (Engagement & Conditional Incentive Package)"
   signed_by_me: 2026-07-29
-  signed_by_them: null # ← never countersigned; DocuSign envelope still "Pending"
+  signed_by_them: null # ← never countersigned — and never routed to sign (see instruments)
   blank_fields_at_signature: true # ← compensation set AFTER signature
   compensation:
     fixed_amount: 11844.44
@@ -41,11 +65,12 @@ counsel:
   me: false
   them: true
 
+# Paraphrased, deliberately — the substance is the check's input; the verbatim text is not.
 promises_not_in_instrument:
-  - "more than 3%" # made in chat 2026-07-29; withdrawn in chat 2026-08-03
-  - "you won't need a job after today"
-  - "its ur direct deposit on the line"
-  - "this agreement is in addition to the last one" # ← stated in chat 2026-08-12;
+  - "a promise of a larger revenue percentage than the instrument's figure (made in chat 2026-07-29; withdrawn in chat 2026-08-03)"
+  - "an assurance that the engagement would end the contractor's need for outside employment"
+  - "an assurance framing payment as imminent and already in motion"
+  - "a statement that the second instrument ADDS TO rather than supersedes the first" # ←
     # the instrument's own entire-agreement clause says the opposite. THE canonical case
     # for this check: a statement of intent that is worth something until signature and
     # nothing after it, because an integration clause exists to exclude exactly that.
@@ -58,10 +83,15 @@ notes: |
   A second instrument (Work-for-Hire, 2026-08-12) was signed by the counterparty but not by me.
   As drafted its entire-agreement clause supersedes the above — removing the fixed amount and
   the equity path in exchange for a percentage of licensing revenue from an entity with no
-  recorded revenue. Neither instrument is binding on both parties.
+  recorded revenue. Neither instrument is binding on both parties — now a structured fact in
+  `instruments:` above, enforced by MUTUALLY-BINDING, not prose.
+
+  2026-08-14: the first instrument's e-sign envelope was confirmed COMPLETED (2026-07-29) with
+  exactly one routed signer — the countersignature is missing by construction, not by delay.
+  The completion certificate, not the emailed copy, is what settles routing; that is doc rule 13.
 
   2026-08-12 afternoon. Asked in writing whether the new instrument was in addition to the
-  first, the counterparty answered yes; the document says the opposite, and on execution the
+  first, the counterparty said yes; the document says the opposite, and on execution the
   document governs. On the same afternoon two further categories of work were assigned at no
   rate under either instrument, while the first remained unpaid — which is the shape
   SCOPE-PRICED exists to catch.
