@@ -268,6 +268,45 @@ class PositioningFoundryPreflightTest(unittest.TestCase):
             self.assertEqual(1, result)
             self.assertFalse(output.exists())
 
+    def test_live_snapshot_write_rejects_drill_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "must-not-exist.json"
+            argv = [str(SCRIPT), "--live", "--drills", "--write-snapshot", str(output), "--json"]
+            with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
+
+    def test_live_snapshot_write_still_validates_the_tracked_verification_input(self) -> None:
+        invalid_tracked = copy.deepcopy(self.snapshot)
+        invalid_tracked["status"] = "invalid"
+        generated = copy.deepcopy(self.snapshot)
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot_path = Path(directory) / "invalid-tracked.json"
+            output = Path(directory) / "must-not-exist.json"
+            snapshot_path.write_text(json.dumps(invalid_tracked), encoding="utf-8")
+            argv = [
+                str(SCRIPT),
+                "--live",
+                "--verify-live-snapshot",
+                "--snapshot",
+                str(snapshot_path),
+                "--write-snapshot",
+                str(output),
+                "--json",
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                mock.patch.object(MODULE, "collect_live_repositories", return_value=([], [])),
+                mock.patch.object(MODULE, "build_snapshot", return_value=generated),
+                contextlib.redirect_stdout(stdout),
+            ):
+                result = MODULE.main()
+            self.assertEqual(1, result)
+            self.assertFalse(output.exists())
+            self.assertIn("snapshot status must remain PREPARED/PREFLIGHT", json.loads(stdout.getvalue())["errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1030,10 +1030,12 @@ def main() -> int:
         contract = load_json(args.contract)
         errors = validate_contract(contract)
         snapshot = load_json(args.snapshot) if args.snapshot.is_file() else None
-        if snapshot is not None and args.write_snapshot is None:
+        if snapshot is not None and (args.write_snapshot is None or args.verify_live_snapshot):
             errors.extend(validate_snapshot(snapshot, contract))
         if args.write_snapshot is not None and not args.live:
             errors.append("--write-snapshot requires --live")
+        if args.write_snapshot is not None and args.drills:
+            errors.append("--write-snapshot cannot be combined with --drills")
         if args.drills:
             result = run_synthetic_drills(contract)
             if errors:
