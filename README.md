@@ -38,8 +38,10 @@ portable contract.
 
 ### Verification
 
-- [Required CI](https://github.com/organvm/limen/actions/workflows/ci.yml) runs the repository's
-  governed checks on proposed changes.
+- [Required PR gate](https://github.com/organvm/limen/actions/workflows/pr-gate.yml) runs the
+  repository's governed checks on every proposed change; the broader
+  [path-scoped CI workflow](https://github.com/organvm/limen/actions/workflows/ci.yml) runs when its
+  declared paths are implicated.
 - [`scripts/verify-scoped.sh`](scripts/verify-scoped.sh) resolves checks from the exact diff before
   a push; [`scripts/verify-whole.sh`](scripts/verify-whole.sh) is the whole-repository predicate.
 - The [public status endpoint](https://limen-dashboard.pages.dev/public-status.json) is the
@@ -49,8 +51,9 @@ portable contract.
 
 ### Status and authorship disclosure
 
-Architected and directed through a governed multi-agent production system. Machine assistance is
-disclosed in commit, review, and receipt trails rather than presented as unassisted authorship.
+**Authorship class:** Agent-directed. Architected and directed by one person through a governed,
+multi-agent production system. Machine assistance is disclosed in commit, review, and receipt
+trails rather than presented as unassisted authorship.
 
 ### Limitations
 
@@ -65,11 +68,20 @@ disclosed in commit, review, and receipt trails rather than presented as unassis
 The public source demonstrates governed multi-agent delivery with inspectable operating, failure,
 and verification contracts. It does not prove zero-maintenance autonomy or commercial outcomes.
 
-### Next action
+### Doors
 
-Read the [peer conductor protocol](docs/architecture/peer-conductor-protocol.md), inspect the
+**[Have a problem one of these solves? — Deploy it for your shop](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20deploy%5D%20%E2%80%94%20inbound) →**
+
+> Pick the depth that fits. We feed you the output, run it under your brand, build it for your exact world, or become your engine.
+
+**[Hiring someone who ships at this level? — Work with the builder](mailto:contact@4444j99.dev?subject=%5Bfront%20door%20%C2%B7%20hire%5D%20%E2%80%94%20inbound) →**
+
+> Everything here is the portfolio. If you need a senior builder who owns systems end-to-end — data, infra, AI, deploy — this is the evidence.
+
+Before relying on a capability claim, read the
+[peer conductor protocol](docs/architecture/peer-conductor-protocol.md), inspect the
 [public operating snapshot](https://limen-dashboard.pages.dev/public-status.json), and reproduce
-the relevant predicate before relying on a capability claim.
+the relevant predicate.
 
 ## Usage
 

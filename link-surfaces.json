@@ -30,6 +30,13 @@
       "why": "top identity surface; every visitor the discoverability pass pulls lands here first"
     },
     {
+      "id": "limen-proof-readme",
+      "type": "github_readme",
+      "ref": "organvm/limen",
+      "label": "Limen flagship proof README",
+      "why": "selected Level-2 flagship proof destination; its public evidence anchors and doors must remain live"
+    },
+    {
       "id": "portfolio",
       "type": "url",
       "ref": "https://organvm-vii-kerygma.github.io/portfolio/",
