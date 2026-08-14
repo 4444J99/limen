@@ -37,7 +37,7 @@ flowchart LR
   PSP-C11 --> PSP-C12
 ```
 
-C04 (proof/experience) and C05 (service delivery) may run in parallel after C03. They rejoin before commercial validation. C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, eliminating the former P10↔P12 phase-gating deadlock.
+Chunk arrows govern aggregate proof and closeout order, not leaf admission. The live ready-work output uses each leaf's exact dependencies, so a human gate on one leaf cannot idle unrelated reversible work. C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, eliminating the former P10↔P12 phase-gating deadlock.
 
 ## Chunk index
 
@@ -59,9 +59,9 @@ C04 (proof/experience) and C05 (service delivery) may run in parallel after C03.
 
 ## How to use the prompts
 
-1. Start with C00. Do not launch a chunk until every named predecessor has a durable completion receipt.
-2. C04 and C05 are the only intended parallel branch. Run them in isolated worktrees and broker leases.
-3. Paste one prompt below into a fresh conductor session using its assigned model/effort.
+1. Start from the live `--ready --json` output. A ready leaf may run even while an upstream aggregate phase or chunk remains open.
+2. Run every concurrent leaf in its own isolated worktree and broker lease.
+3. Use the prompt for the chunk whose resolved scope contains the ready leaf and preserve its assigned model and effort.
 4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk rather than skipping ahead.
 5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.
 
@@ -82,7 +82,7 @@ Scope
 - Resolved leaf count: 7
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: none
+- Aggregate predecessor chunks: none
 - Objective: Land the existing program PR, close the seven control-plane leaves with receipts, prove remote parity, and route ready strategy work into fresh Codex tasks.
 - Exit gate: P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and registry-derived Codex task routing are green.
 
@@ -90,11 +90,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C00` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -116,7 +116,7 @@ Scope
 - Resolved leaf count: 5
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C00
+- Aggregate predecessor chunks: PSP-C00
 - Objective: Land the upstream truth and private-custody foundations, reconcile generators, and freeze the post-merge baseline.
 - Exit gate: P01 is closed and PRs 2136 and 2141 have terminal durable owners with a frozen baseline receipt.
 
@@ -124,11 +124,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C01` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -150,7 +150,7 @@ Scope
 - Resolved leaf count: 8
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C01
+- Aggregate predecessor chunks: PSP-C01
 - Objective: Discover the full owned estate, select flagships, build reproducible evidence packets, and adjudicate contested claims.
 - Exit gate: P02 is closed; every selected flagship and material claim has current, reproducible, privacy-reviewed evidence.
 
@@ -158,11 +158,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C02` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -184,7 +184,7 @@ Scope
 - Resolved leaf count: 14
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C02
+- Aggregate predecessor chunks: PSP-C02
 - Objective: Ratify the production-systems identity, audience narratives, offer ladder, qualification rules, economics, and commercial templates.
 - Exit gate: P03 and P04 are closed; target readers understand the offer and each commercial path has bounded scope and economics.
 
@@ -192,11 +192,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C03` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -218,7 +218,7 @@ Scope
 - Resolved leaf count: 13
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C03
+- Aggregate predecessor chunks: PSP-C03
 - Objective: Produce the flagship proof classes and turn them into a tested, accessible progressive-disclosure experience.
 - Exit gate: P05 and P06 are closed; public-safe proof exists and the approved experience passes visual, comprehension, accessibility, and performance gates.
 
@@ -226,11 +226,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C04` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -252,7 +252,7 @@ Scope
 - Resolved leaf count: 8
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C03
+- Aggregate predecessor chunks: PSP-C03
 - Objective: Build and prove the audit, install, retainer, client workspace, QA, handoff, and consent operating system.
 - Exit gate: P11 is closed and a synthetic engagement traverses the complete delivery lifecycle under declared security boundaries.
 
@@ -260,11 +260,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C05` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -286,7 +286,7 @@ Scope
 - Resolved leaf count: 9
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C04
+- Aggregate predecessor chunks: PSP-C04
 - Objective: Implement the profile, organization map, portfolio, resume, repositories, identity package, domains, and analytics.
 - Exit gate: P07 is closed and every tracked public surface is coherent, live, linked, measurable, and rollback-safe.
 
@@ -294,11 +294,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C06` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -320,7 +320,7 @@ Scope
 - Resolved leaf count: 7
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C06
+- Aggregate predecessor chunks: PSP-C06
 - Objective: Build tagged intake, normalization, scoring, routing, drafting, and the private opportunity ledger with no-send enforced.
 - Exit gate: P08 is closed and synthetic client and recruiter leads traverse the complete private funnel while the send valve remains closed.
 
@@ -328,11 +328,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C07` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -354,7 +354,7 @@ Scope
 - Resolved leaf count: 8
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C07
+- Aggregate predecessor chunks: PSP-C07
 - Objective: Build the editorial program, stage the flagship report and derivatives, and record owner-approved distribution outcomes.
 - Exit gate: P09 is closed; the proof-led series is staged or owner-published where approved, measured, and connected to qualified capture.
 
@@ -362,11 +362,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C08` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -388,7 +388,7 @@ Scope
 - Resolved leaf count: 7
 - Excluded leaves: PSP-P10-W08
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C05, PSP-C08
+- Aggregate predecessor chunks: PSP-C05, PSP-C08
 - Objective: Complete P10-W01 through P10-W07 so client and recruiter conversations, proposals, decisions, and objections are operational before validation.
 - Exit gate: P10-W01 through P10-W07 are closed with receipts; only the post-pilot 90-day experiment adjudication remains open in P10.
 
@@ -396,11 +396,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C09` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -422,7 +422,7 @@ Scope
 - Resolved leaf count: 7
 - Excluded leaves: none
 - Extra cross-phase leaves: PSP-P10-W08
-- Required predecessor chunks: PSP-C05, PSP-C09
+- Aggregate predecessor chunks: PSP-C05, PSP-C09
 - Objective: Recruit and deliver a bounded pilot, gather external proof, refresh claims, and adjudicate the 90-day demand experiment.
 - Exit gate: P10 and P12 are closed with either commercial proof or an evidence-backed wedge invalidation and revision receipt.
 
@@ -430,11 +430,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C10` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -456,7 +456,7 @@ Scope
 - Resolved leaf count: 9
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C10
+- Aggregate predecessor chunks: PSP-C10
 - Objective: Inventory and score the product estate, define operator and transfer contracts, and run one bounded handoff pilot.
 - Exit gate: P13 is closed and one product reaches observed operator transfer or an evidence-backed no-go decision.
 
@@ -464,11 +464,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C11` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```
@@ -490,7 +490,7 @@ Scope
 - Resolved leaf count: 9
 - Excluded leaves: none
 - Extra cross-phase leaves: none
-- Required predecessor chunks: PSP-C11
+- Aggregate predecessor chunks: PSP-C11
 - Objective: Operate measurement and review loops, automate correction and rollback, feed outcomes upstream, and prove two unchanged passes.
 - Exit gate: P14 and the root program are closed after two unchanged remote checks satisfy the terminal Omega predicate.
 
@@ -498,11 +498,11 @@ Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
 2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk PSP-C12` and `--ready --json`.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete.
 ```

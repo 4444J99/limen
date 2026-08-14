@@ -591,6 +591,42 @@ def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(m
         MODULE.phase_proof("PSP-P00", graph, mapping)
 
 
+def test_phase_proof_requires_closed_valid_upstream_phase(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        **_phase_remote_snapshot(graph, mapping, "PSP-P00"),
+        **_phase_remote_snapshot(graph, mapping, "PSP-P01"),
+    }
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 upstream phase PSP-P00 is not closed"):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+    remote["PSP-P00"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(MODULE.ProgramError("stale upstream receipt")),
+    )
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 upstream phase PSP-P00 is invalid.*stale upstream receipt"):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+    assert MODULE.phase_proof("PSP-P01", graph, mapping)["status"] == "pass"
+
+
 def test_phase_proof_recovers_only_missing_phase_objects(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
@@ -906,7 +942,7 @@ def test_omega_pass_cli_contract_and_record_schema(capsys) -> None:
     assert MODULE.validate_omega_pass(record, 2, "f" * 64) == record
 
 
-def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> None:
+def test_ready_work_uses_exact_leaf_dependencies_without_global_phase_stall(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = {
         object_id: {
@@ -933,6 +969,21 @@ def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> 
     after_first = {row["id"] for row in MODULE.ready_work(graph, mapping)}
     assert {"PSP-P00-W02", "PSP-P00-W04"}.issubset(after_first)
     assert "PSP-P01-W01" not in after_first
+
+    for phase_id in ("PSP-P00", "PSP-P01", "PSP-P02"):
+        for packet in graph["phase_by_id"][phase_id]["work"]:
+            remote[packet["id"]]["state"] = "closed"
+    for index in range(1, 7):
+        remote[f"PSP-P03-W{index:02d}"]["state"] = "closed"
+
+    ready_rows = {row["id"]: row for row in MODULE.ready_work(graph, mapping)}
+    assert "PSP-P03-W07" in ready_rows
+    assert "PSP-P04-W01" in ready_rows
+    assert ready_rows["PSP-P04-W01"]["chunk_id"] == "PSP-C03"
+    assert ready_rows["PSP-P04-W01"]["phase_close_blocked_by"] == ["PSP-P03"]
+    assert "PSP-P05-W04" in ready_rows
+    assert ready_rows["PSP-P05-W04"]["chunk_id"] == "PSP-C04"
+    assert ready_rows["PSP-P05-W04"]["phase_close_blocked_by"] == ["PSP-P02", "PSP-P03", "PSP-P04"]
 
 
 def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None:
@@ -983,6 +1034,45 @@ def test_closed_phase_cannot_hide_open_children() -> None:
     remote["PSP-P00"]["state"] = "closed"
 
     with pytest.raises(MODULE.ProgramError, match="closed before child issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_closed_work_cannot_precede_its_exact_dependencies(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    remote["PSP-P00-W02"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P00-W02 is closed before dependency issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_closed_phase_cannot_precede_upstream_phase(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    for phase_id in ("PSP-P00", "PSP-P01"):
+        for packet in graph["phase_by_id"][phase_id]["work"]:
+            remote[packet["id"]]["state"] = "closed"
+    remote["PSP-P01"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 is closed before upstream phase issues.*PSP-P00"):
         MODULE.closure_integrity(graph, mapping, remote)
 
 
@@ -1151,10 +1241,13 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     assert "Continue draft PR #2156" in bootstrap["launch_prompt"]
     assert "Start from current `main` only after C00 is closed" in packet["launch_prompt"]
     assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
+    assert "An open upstream phase or chunk may block aggregate closeout" in packet["launch_prompt"]
+    assert "A blocker local to one leaf is not a global stop" in packet["launch_prompt"]
     assert MODULE.render_execution_chunks(graph, mapping, first) == MODULE.render_execution_chunks(
         graph, mapping, second
     )
     assert first.read_bytes() == second.read_bytes()
     rendered = first.read_text()
-    assert "C04 (proof/experience) and C05 (service delivery) may run in parallel" in rendered
+    assert "Chunk arrows govern aggregate proof and closeout order, not leaf admission" in rendered
+    assert "a human gate on one leaf cannot idle unrelated reversible work" in rendered
     assert "former P10↔P12 phase-gating deadlock" in rendered
