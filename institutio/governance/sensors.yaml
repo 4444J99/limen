@@ -1085,9 +1085,18 @@ sensors:
     default: "1"
     source: [metabolize]
     owner: tabularius
-    cadence:
-      env: LIMEN_BEAT_BRANCH_REAP
-      default: 4
+    # NO cadence — deliberately every metabolize pass, and the reason is a coupling, not a taste.
+    # reap-branches --check only calls a landed branch "lingering" once it is older than
+    # LIMEN_BRANCH_REAP_GRACE_MIN (60 min); younger ones read as "digesting". That grace exists so a
+    # continuously-merging fleet does not redden every closeout (reap-branches.py:634). It therefore
+    # only works if the REAPER visits at least as often as the grace lapses. Shipped at cadence 4,
+    # this sensor visited roughly every fourth pass — several times slower than the grace — so every
+    # branch that landed had a guaranteed window of being past-grace with no reaper due, and
+    # no-tasks-on-me.sh went red in it. Measured immediately: the pass cleared 15 lingering branches,
+    # and by the next predicate run worktree-hospes-full-done-plan had landed, aged out, and reddened
+    # it again. A closeout gate that is red on a timer is the same unreadable gate as one that is
+    # always red. Cadence and grace are one parameter pair — raising this cadence without raising
+    # LIMEN_BRANCH_REAP_GRACE_MIN to match reopens the window.
     timeout:
       env: LIMEN_BRANCH_REAP_TIMEOUT
       default: 120
