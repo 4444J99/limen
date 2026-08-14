@@ -10,6 +10,7 @@ import os
 import platform
 import re
 import selectors
+import signal
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -123,17 +124,23 @@ def _run_git(repository_path: Path, argv: list[str]) -> subprocess.CompletedProc
         cwd=repository_path,
         check=False,
         capture_output=True,
+        timeout=60,
+        env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
     )
 
 
 def _stop_process(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+    except ProcessLookupError:
         return
-    process.terminate()
     try:
         process.wait(timeout=1)
     except subprocess.TimeoutExpired:
-        process.kill()
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
         process.wait(timeout=1)
 
 
@@ -145,7 +152,13 @@ def _run_bounded_predicate(
     max_output_bytes: int,
 ) -> tuple[int | None, bytes, str | None]:
     """Run a predicate without allowing stdout/stderr to grow beyond the declared memory budget."""
-    process = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    process = subprocess.Popen(
+        argv,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
     assert process.stdout is not None
     descriptor = process.stdout.fileno()
     os.set_blocking(descriptor, False)
@@ -154,6 +167,7 @@ def _run_bounded_predicate(
     output = bytearray()
     deadline = time.monotonic() + timeout_seconds
     failure: str | None = None
+    eof = False
     try:
         while True:
             remaining = deadline - time.monotonic()
@@ -164,9 +178,14 @@ def _run_bounded_predicate(
             events = selector.select(timeout=min(0.1, remaining))
             for _key, _mask in events:
                 budget = max_output_bytes - len(output)
-                chunk = os.read(descriptor, min(65536, max(1, budget + 1)))
-                if not chunk:
+                try:
+                    chunk = os.read(descriptor, min(65536, max(1, budget + 1)))
+                except BlockingIOError:
                     continue
+                if not chunk:
+                    eof = True
+                    selector.unregister(descriptor)
+                    break
                 if len(chunk) > budget:
                     output.extend(chunk[: max(0, budget)])
                     failure = "predicate exceeded its bounded output budget"
@@ -176,17 +195,7 @@ def _run_bounded_predicate(
             if failure is not None:
                 break
             return_code = process.poll()
-            if return_code is not None:
-                while len(output) <= max_output_bytes:
-                    budget = max_output_bytes - len(output)
-                    chunk = os.read(descriptor, min(65536, max(1, budget + 1)))
-                    if not chunk:
-                        break
-                    if len(chunk) > budget:
-                        output.extend(chunk[: max(0, budget)])
-                        failure = "predicate exceeded its bounded output budget"
-                        break
-                    output.extend(chunk)
+            if return_code is not None and eof:
                 return return_code, bytes(output), failure
         return process.returncode, bytes(output), failure
     finally:
@@ -225,7 +234,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
 
     try:
         observed = _run_git(repository_path, ["rev-parse", "HEAD"])
-    except OSError as exc:
+    except (OSError, subprocess.TimeoutExpired) as exc:
         return _blocked_receipt(request, started_at, f"git inspection could not start: {exc}")
     observed_head = observed.stdout.decode(errors="replace").strip() if observed.returncode == 0 else None
     if observed_head != request["expected_head"]:
@@ -242,7 +251,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             repository_path,
             ["rev-parse", "--verify", f"refs/heads/{request['default_branch']}^{{commit}}"],
         )
-    except OSError as exc:
+    except (OSError, subprocess.TimeoutExpired) as exc:
         return _blocked_receipt(
             request, started_at, f"git inspection could not start: {exc}", observed_head=observed_head
         )
@@ -266,6 +275,40 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             observed_head=observed_head,
             default_branch_head=default_branch_head,
         )
+    try:
+        remote_tip = _run_git(
+            repository_path,
+            ["ls-remote", "--exit-code", "origin", f"refs/heads/{request['default_branch']}"],
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return _blocked_receipt(
+            request,
+            started_at,
+            f"remote default-branch inspection could not start: {exc}",
+            observed_head=observed_head,
+        )
+    remote_default_branch_head = (
+        remote_tip.stdout.decode(errors="replace").split()[0]
+        if remote_tip.returncode == 0 and remote_tip.stdout
+        else None
+    )
+    if not remote_default_branch_head or not FULL_HEAD.fullmatch(remote_default_branch_head):
+        return _blocked_receipt(
+            request,
+            started_at,
+            "remote default-branch tip could not be inspected",
+            observed_head=observed_head,
+        )
+    if remote_default_branch_head != observed_head:
+        receipt = _not_current_receipt(
+            request,
+            started_at,
+            "tested head is not the current remote default-branch tip",
+            observed_head=observed_head,
+            default_branch_head=default_branch_head,
+        )
+        receipt["remote_default_branch_head"] = remote_default_branch_head
+        return receipt
 
     predicate = request["predicate"]
     try:
@@ -283,12 +326,51 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
         result = "blocked_external"
         errors = [f"predicate could not start: {exc}"]
 
+    if exit_code is not None:
+        try:
+            post_head = _run_git(repository_path, ["rev-parse", "HEAD"])
+            post_status = _run_git(repository_path, ["status", "--porcelain=v1", "-z", "--untracked-files=all"])
+            post_branch = _run_git(
+                repository_path,
+                ["rev-parse", "--verify", f"refs/heads/{request['default_branch']}^{{commit}}"],
+            )
+            post_remote = _run_git(
+                repository_path,
+                ["ls-remote", "--exit-code", "origin", f"refs/heads/{request['default_branch']}"],
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            result = "blocked_external"
+            errors.append(f"post-predicate Git inspection could not complete: {exc}")
+        else:
+            final_head = post_head.stdout.decode(errors="replace").strip() if post_head.returncode == 0 else None
+            final_branch_head = (
+                post_branch.stdout.decode(errors="replace").strip() if post_branch.returncode == 0 else None
+            )
+            final_remote_head = (
+                post_remote.stdout.decode(errors="replace").split()[0]
+                if post_remote.returncode == 0 and post_remote.stdout
+                else None
+            )
+            invariant_errors = []
+            if final_head != observed_head:
+                invariant_errors.append("checked-out head changed while the predicate ran")
+            if post_status.returncode != 0 or post_status.stdout:
+                invariant_errors.append("worktree changed while the predicate ran")
+            if final_branch_head != observed_head:
+                invariant_errors.append("local default-branch tip changed while the predicate ran")
+            if final_remote_head != observed_head:
+                invariant_errors.append("remote default-branch tip changed while the predicate ran")
+            if invariant_errors:
+                result = "not_current"
+                errors.extend(invariant_errors)
+
     return {
         "schema_version": "limen.positioning_flagship_receipt.v1",
         "flagship_id": request["flagship_id"],
         "repository": request["repository"],
         "default_branch": request.get("default_branch"),
         "exact_head": observed_head,
+        "remote_default_branch_head": remote_default_branch_head,
         "predicate": predicate,
         "environment": {
             "platform": platform.platform(),

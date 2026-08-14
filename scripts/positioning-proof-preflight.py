@@ -122,6 +122,18 @@ PUBLIC_FAILURE_CLASSES = {
     "resource_limit",
     "verification_failure",
 }
+INDEPENDENCE_DISPOSITIONS = {
+    "independent_peer_review",
+    "independent_public_source",
+    "independent_third_party",
+}
+FORBIDDEN_DEMO_VALUE_PATTERNS = (
+    re.compile(r"(?i)\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b"),
+    re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{8,}\b"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{8,}\b"),
+    re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}\b"),
+    re.compile(r"(?i)https?://[^\s/:@]+:[^\s/@]+@"),
+)
 
 
 def load_contract(path: Path) -> dict[str, Any]:
@@ -383,7 +395,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("cost/failure reproduction must be executable with synthetic fixtures only")
     if not reproduction.get("runner") or not reproduction.get("fixture"):
         errors.append("cost/failure reproduction requires runner and fixture")
-    if set(reproduction.get("public_failure_classes", [])) != PUBLIC_FAILURE_CLASSES:
+    public_failure_classes = reproduction.get("public_failure_classes")
+    if (
+        not isinstance(public_failure_classes, list)
+        or not all(isinstance(value, str) for value in public_failure_classes)
+        or set(public_failure_classes) != PUBLIC_FAILURE_CLASSES
+    ):
         errors.append("cost/failure reproduction must declare the reviewed public failure vocabulary")
 
     receipt_plan = contract.get("exact_head_receipt_plan", {})
@@ -706,13 +723,18 @@ def _ledger_action(status: str, public_safe_wording: str, tier: str) -> str:
     return "withhold_or_remove" if any(marker in boundary for marker in unsafe_markers) else "audit_canonical_wording"
 
 
+def _is_markdown_separator(cells: list[str]) -> bool:
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
+
+
 def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]]:
     reconciled = re.search(r"Reconciled (\d{4}-\d{2}-\d{2})", content)
     observed_at = [reconciled.group(1)] if reconciled else []
     in_claim_section = False
     claims: list[dict[str, Any]] = []
     seen_text: set[str] = set()
-    for line in content.splitlines():
+    lines = content.splitlines()
+    for index, line in enumerate(lines):
         if re.match(r"^## [1-9]\.", line):
             in_claim_section = True
             continue
@@ -721,7 +743,15 @@ def _ledger_material_claims(content: str, source_id: str) -> list[dict[str, Any]
         if not in_claim_section or not line.startswith("|"):
             continue
         cells = _markdown_cells(line)
-        if len(cells) < 3 or cells[1].lower() == "status" or set(cells[0]) <= {"-", ":"}:
+        next_cells = (
+            _markdown_cells(lines[index + 1]) if index + 1 < len(lines) and lines[index + 1].startswith("|") else []
+        )
+        if (
+            len(cells) < 3
+            or _is_markdown_separator(cells)
+            or _is_markdown_separator(next_cells)
+            or cells[1].lower() == "status"
+        ):
             continue
         claim_text = cells[0]
         if not claim_text or claim_text in seen_text:
@@ -790,6 +820,7 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
         if row.get("presence") not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")
         if row.get("presence") == "present":
+            canonical = expected_rows.get(key, {})
             required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
             missing_required = sorted(
                 field
@@ -815,6 +846,12 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                 errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
             if not isinstance(row.get("action"), str) or not row.get("action"):
                 errors.append(f"claim action missing: {key[0]} / {key[1]}")
+            if row.get("action") != canonical.get("action"):
+                errors.append(f"claim action differs from canonical inventory: {key[0]} / {key[1]}")
+            if row.get("disclosure_level") != canonical.get("disclosure_level"):
+                errors.append(f"disclosure level differs from canonical inventory: {key[0]} / {key[1]}")
+            if canonical.get("action") != "audit_canonical_wording":
+                errors.append(f"canonical claim is not eligible for public presence: {key[0]} / {key[1]}")
             if row.get("canonical_or_drift") not in {"canonical", "drift"}:
                 errors.append(f"drift verdict missing: {key[0]} / {key[1]}")
             if not row.get("observed_at"):
@@ -855,9 +892,9 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
         if not isinstance(record, dict):
             errors.append(f"demo record {index} must be an object")
             continue
-        forbidden = sorted(_find_forbidden_demo_keys(record))
+        forbidden = sorted(_find_forbidden_demo_material(record))
         if forbidden:
-            errors.append(f"demo record {index} contains forbidden keys: {', '.join(forbidden)}")
+            errors.append(f"demo record {index} contains forbidden material: {', '.join(forbidden)}")
         if record.get("synthetic") is not True:
             errors.append(f"demo record {index} must be marked synthetic")
     return {"status": "pass" if not errors else "fail", "errors": errors, "record_count": len(records)}
@@ -868,7 +905,7 @@ def _normalized_demo_key(value: object) -> str:
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
 
 
-def _find_forbidden_demo_keys(value: object, path: str = "$") -> set[str]:
+def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     forbidden: set[str] = set()
     forbidden_compact = {key.replace("_", "") for key in FORBIDDEN_DEMO_KEYS}
     forbidden_segments = {"credential", "customer", "email", "secret", "token"}
@@ -882,10 +919,12 @@ def _find_forbidden_demo_keys(value: object, path: str = "$") -> set[str]:
                 or forbidden_segments.intersection(normalized.split("_"))
             ):
                 forbidden.add(f"{path}.{key}")
-            forbidden.update(_find_forbidden_demo_keys(child, f"{path}.{key}"))
+            forbidden.update(_find_forbidden_demo_material(child, f"{path}.{key}"))
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            forbidden.update(_find_forbidden_demo_keys(child, f"{path}[{index}]"))
+            forbidden.update(_find_forbidden_demo_material(child, f"{path}[{index}]"))
+    elif isinstance(value, str) and any(pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS):
+        forbidden.add(path)
     return forbidden
 
 
@@ -918,8 +957,8 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         if empty:
             errors.append(f"validation object {index} has empty fields: {', '.join(empty)}")
         independence = str(row.get("independence disclosure") or "").strip().lower()
-        if independence in {"", "none", "unknown", "not disclosed"}:
-            errors.append(f"validation object {index} lacks a substantive independence disclosure")
+        if independence not in INDEPENDENCE_DISPOSITIONS:
+            errors.append(f"validation object {index} lacks an affirmative independence disposition")
         object_receipt = row.get("object URL or receipt")
         if isinstance(object_receipt, str) and object_receipt:
             if object_receipt in provenance:

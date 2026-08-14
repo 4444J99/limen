@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import hashlib
 import json
@@ -128,6 +129,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(surface_count * len(claims), len(rows))
         self.assertTrue(any("Top 1% Python committer" in claim["candidate_claim"] for claim in claims))
         self.assertTrue(any("314 repositories total" in claim["candidate_claim"] for claim in claims))
+        self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
@@ -166,6 +168,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("present claim missing required evidence fields" in error for error in result["errors"]))
 
+    def test_withheld_canonical_claim_cannot_be_marked_present(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = next(row for row in manifest_rows if row["action"] == "withhold_or_remove")
+        present.update({"presence": "present", "canonical_or_drift": "canonical", "status": "verified"})
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("not eligible for public presence" in error for error in result["errors"]))
+
     def test_synthetic_architecture_fixture_passes_and_private_keys_fail(self) -> None:
         fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
         fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
@@ -180,6 +191,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         result = MODULE.validate_demo_fixture(self.contract, fixture)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("apiToken" in error for error in result["errors"]))
+
+    def test_demo_private_values_fail_closed_under_innocent_keys(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        for value in ("customer@example.com", "ghp_abcdefghijklmnopqrstuvwxyz"):
+            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+            fixture["records"][0]["notes"] = value
+            result = MODULE.validate_demo_fixture(self.contract, fixture)
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(any("$.notes" in error for error in result["errors"]))
 
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
@@ -200,6 +220,33 @@ class PositioningProofPreflightTest(unittest.TestCase):
         result = MODULE.validate_external_objects(self.contract, placeholders)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("empty fields" in error for error in result["errors"]))
+
+    def test_external_validation_rejects_explicit_non_independence(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["independence disclosure"] = "not independent - authored by the subject"
+            row["object URL or receipt"] = f"https://example.invalid/object-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("affirmative independence" in error for error in result["errors"]))
+
+    def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
+        for value in (None, [{"unhashable": True}]):
+            changed = copy.deepcopy(self.contract)
+            changed["cost_failure_reproduction"]["public_failure_classes"] = value
+            errors = MODULE.validate(changed)
+            self.assertIn(
+                "cost/failure reproduction must declare the reviewed public failure vocabulary",
+                errors,
+            )
 
     def test_formalization_reports_only_the_genuine_dependency(self) -> None:
         result = MODULE.formalization_readiness(self.contract)
