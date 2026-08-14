@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import re
 import subprocess
@@ -30,6 +31,7 @@ PHASE_RECEIPT_BLOCK = re.compile(
     re.DOTALL,
 )
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
+W07_WORKFLOW_PATH = "docs/positioning/program/w07_blinded_reader_workflow.py"
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
@@ -37,6 +39,7 @@ C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
 C03_ACCEPTED_P03_ANCESTOR = "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec"
 CANONICAL_PORTFOLIO = {"slug": "organvm-vii-kerygma/portfolio", "repository_id": 1155412125}
+_W07_WORKFLOW: Any | None = None
 EXPECTED_FLAGSHIPS = {
     "limen": {
         "claim_id": "C02-PROOF-LIMEN",
@@ -861,9 +864,10 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
         supplied.add(key)
         if row.get("contains_private_material") is not False:
             errors.append(f"private material not disproven: {key[0]} / {key[1]}")
-        if row.get("presence") not in {"present", "absent"}:
+        presence = row.get("presence")
+        if not isinstance(presence, str) or presence not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")
-        if row.get("presence") == "present":
+        if presence == "present":
             canonical = expected_rows.get(key, {})
             required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
             missing_required = sorted(
@@ -948,7 +952,15 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
     records = fixture.get("records")
     if not isinstance(records, list):
         return {"status": "fail", "errors": [*errors, "demo records must be a list"]}
-    record_types = {record.get("type") for record in records if isinstance(record, dict)}
+    record_types: set[str] = set()
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            continue
+        record_type = record.get("type")
+        if not isinstance(record_type, str) or not record_type.strip():
+            errors.append(f"demo record {index} requires a nonblank text type")
+        else:
+            record_types.add(record_type)
     required = set(contract.get("synthetic_architecture_demo", {}).get("required_record_types", []))
     missing = sorted(required - record_types)
     if missing:
@@ -1019,6 +1031,14 @@ def validate_external_objects(
         return {"status": "fail", "errors": [*errors, "external validation objects must be a list"]}
     validation = contract.get("external_validation", {})
     required = set(validation.get("minimum_fields", []))
+    acceptable_rows = validation.get("acceptable_objects")
+    if not isinstance(acceptable_rows, list) or not acceptable_rows or not all(
+        isinstance(value, str) and value.strip() for value in acceptable_rows
+    ):
+        errors.append("external validation must declare approved object classes")
+        acceptable_objects: set[str] = set()
+    else:
+        acceptable_objects = set(acceptable_rows)
     minimum_count = int(validation.get("minimum_object_count", 0))
     provenance: set[str] = set()
     substantive_public_count = 0
@@ -1036,6 +1056,9 @@ def validate_external_objects(
         )
         if invalid_text:
             errors.append(f"validation object {index} fields must be nonblank text: {', '.join(invalid_text)}")
+        object_class = row.get("object class")
+        if not isinstance(object_class, str) or object_class not in acceptable_objects:
+            errors.append(f"validation object {index} requires an approved object class")
         independence = str(row.get("independence disclosure") or "").strip().lower()
         if independence not in INDEPENDENCE_DISPOSITIONS:
             errors.append(f"validation object {index} lacks an affirmative independence disposition")
@@ -1059,12 +1082,14 @@ def validate_external_objects(
         except ValueError:
             errors.append(f"validation object {index} date must be ISO-8601")
             valid_date = False
-        if row.get("consent status") not in {"public_consented", "withdrawn"}:
+        consent_status = row.get("consent status")
+        if not isinstance(consent_status, str) or consent_status not in {"public_consented", "withdrawn"}:
             errors.append(f"validation object {index} has no public consent disposition")
         if (
-            row.get("consent status") == "public_consented"
+            consent_status == "public_consented"
             and not missing
             and not invalid_text
+            and object_class in acceptable_objects
             and independence in INDEPENDENCE_DISPOSITIONS
             and isinstance(object_receipt, str)
             and bool(object_receipt)
@@ -1226,6 +1251,28 @@ def _git_blob(repository: Path, head: str, path: str) -> bytes:
     return completed.stdout
 
 
+def _trusted_w07_workflow() -> Any:
+    global _W07_WORKFLOW
+    if _W07_WORKFLOW is None:
+        path = ROOT / W07_WORKFLOW_PATH
+        spec = importlib.util.spec_from_file_location("psp_c04_w07_workflow", path)
+        if spec is None or spec.loader is None:
+            raise ValueError(f"trusted W07 workflow is unavailable: {path}")
+        workflow = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = workflow
+        spec.loader.exec_module(workflow)
+        _W07_WORKFLOW = workflow
+    return _W07_WORKFLOW
+
+
+def _canonical_w07_decision_memo(response_payload: dict[str, Any]) -> bytes:
+    workflow = _trusted_w07_workflow()
+    verdict = workflow.V.validate(response_payload)
+    if verdict.state != "pass":
+        raise ValueError("trusted W07 workflow did not accept the exact tracked response set")
+    return workflow.decision_memo(response_payload, verdict).encode("utf-8")
+
+
 def _verify_w07_response_blob(
     repository: Path,
     observed_head: str,
@@ -1273,6 +1320,8 @@ def _verify_w07_response_blob(
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise ValueError(f"trusted W07 blinded-reader predicate did not pass: {detail}")
+    if decision_memo_blob != _canonical_w07_decision_memo(response_payload):
+        raise ValueError("W07 decision memo differs from the canonical aggregate of the exact response set")
     match = re.search(
         r"SCORE: total=(\d+)/25 role=(\d+)/5 buyer=(\d+)/5 cta=(\d+)/5",
         completed.stdout,

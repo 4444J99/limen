@@ -90,12 +90,15 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
         if unexpected:
             errors.append(f"row {index} has prohibited or unknown fields: {', '.join(unexpected)}")
         sample_id = row.get("sample_id")
-        if not sample_id or sample_id in seen:
+        if not isinstance(sample_id, str) or not sample_id.strip() or sample_id in seen:
             errors.append(f"row {index} requires a unique public-safe sample_id")
-        seen.add(str(sample_id))
-        if row.get("terminal_state") not in ALLOWED_STATES:
+        else:
+            seen.add(sample_id)
+        terminal_state = row.get("terminal_state")
+        if not isinstance(terminal_state, str) or terminal_state not in ALLOWED_STATES:
             errors.append(f"row {index} has an unsupported terminal_state")
-        if row.get("model_cost_basis") not in {"actual", "estimated", "unknown"}:
+        model_cost_basis = row.get("model_cost_basis")
+        if not isinstance(model_cost_basis, str) or model_cost_basis not in {"actual", "estimated", "unknown"}:
             errors.append(f"row {index} requires an explicit model_cost_basis")
         observed_at = _parse_observed_at(row.get("observed_at"), index, errors)
         if (
@@ -112,12 +115,12 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
             ):
                 errors.append(f"row {index} field {field} must be null or non-negative")
         failure_class = row.get("failure_class")
-        if row.get("terminal_state") == "done":
+        if terminal_state == "done":
             if failure_class is not None:
                 errors.append(f"row {index} done work must not carry failure_class")
         elif not isinstance(failure_class, str) or failure_class not in ALLOWED_FAILURE_CLASSES:
             errors.append(f"row {index} requires a reviewed public failure_class for non-done work")
-        if row.get("terminal_state") != "done":
+        if terminal_state != "done":
             measured = [
                 row.get(field)
                 for field in (

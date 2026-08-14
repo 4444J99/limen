@@ -102,7 +102,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         memo = repository / memo_path
         memo.parent.mkdir(parents=True, exist_ok=True)
-        memo.write_text("synthetic aggregate decision memo\n", encoding="utf-8")
+        try:
+            memo_content = MODULE._canonical_w07_decision_memo(payload)
+        except ValueError:
+            memo_content = b"synthetic invalid-reader decision memo\n"
+        memo.write_bytes(memo_content)
         subprocess.run(["git", "add", "."], cwd=repository, check=True)
         subprocess.run(
             ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic W07 fixture"],
@@ -335,6 +339,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", failed["status"])
         self.assertIn("missing surface cells: 1", failed["errors"])
 
+    def test_surface_audit_rejects_unhashable_presence_without_crashing(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        manifest_rows[0]["presence"] = {"state": "present"}
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("surface presence unresolved" in error for error in result["errors"]))
+
     def test_present_surface_claim_requires_evidence_disclosure_and_action(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
@@ -457,6 +469,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertEqual("fail", result["status"])
             self.assertTrue(any(f"$.{key}" in error for error in result["errors"]))
 
+    def test_demo_unhashable_record_type_fails_closed(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        fixture["records"][0]["type"] = {"kind": "run"}
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("nonblank text type" in error for error in result["errors"]))
+
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
             self.contract,
@@ -482,6 +502,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         objects = []
         for index in range(2):
             row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
             row["independence disclosure"] = "independent_third_party"
             row["object URL or receipt"] = f"https://example.invalid/object-{index}"
             row["date"] = "2026-08-14"
@@ -501,6 +522,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         objects = []
         for index in range(2):
             row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
             row["independence disclosure"] = "not independent - authored by the subject"
             row["object URL or receipt"] = f"https://example.invalid/object-{index}"
             row["date"] = "2026-08-14"
@@ -518,6 +540,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         objects = []
         for index in range(2):
             row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
             row["independence disclosure"] = "independent_third_party"
             row["object URL or receipt"] = f"https://example.invalid/object-{index}"
             row["date"] = "2026-08-14"
@@ -536,6 +559,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         objects = []
         for index, receipt in enumerate(("https://example.invalid/review", " https://example.invalid/review ")):
             row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
             row["independence disclosure"] = "independent_third_party"
             row["object URL or receipt"] = receipt
             row["date"] = "2026-08-14"
@@ -554,6 +578,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         objects = []
         for index in range(2):
             row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
             row["independence disclosure"] = "independent_third_party"
             row["object URL or receipt"] = f"https://example.invalid/future-{index}"
             row["date"] = "2099-01-01"
@@ -567,6 +592,45 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("date cannot be in the future" in error for error in result["errors"]))
+
+    def test_external_validation_requires_contract_approved_object_classes(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = "arbitrary placeholder"
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/placeholder-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(0, result["substantive_public_count"])
+        self.assertTrue(any("approved object class" in error for error in result["errors"]))
+
+    def test_external_validation_rejects_unhashable_consent_without_crashing(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/consent-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        objects[0]["consent status"] = {"state": "public_consented"}
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(1, result["substantive_public_count"])
+        self.assertTrue(any("public consent disposition" in error for error in result["errors"]))
 
     def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
         for value in (None, [{"unhashable": True}]):
@@ -713,6 +777,30 @@ class PositioningProofPreflightTest(unittest.TestCase):
             live["receipt_sha256"] = digest
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
             self.assertTrue(any("claimed C03 closure head" in error for error in errors))
+
+    def test_w07_receipt_recomputes_the_canonical_decision_memo(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            _head, response_path = self._w07_repository(repository, payload)
+            memo_path = repository / "docs/receipts/positioning/psp-p03-w07-decision-memo.md"
+            memo_path.write_text("synthetic aggregate decision memo\n", encoding="utf-8")
+            subprocess.run(["git", "add", str(memo_path)], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "tamper memo"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("canonical aggregate" in error for error in errors))
 
     def test_w07_observed_head_must_be_contained_by_the_closure_head(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

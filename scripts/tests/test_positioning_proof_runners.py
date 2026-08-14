@@ -101,6 +101,56 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual(5, len(result["dimensions"]))
         self.assertEqual(64, len(result["data_digest"]))
 
+    def test_receipt_request_requires_a_typed_repository_path(self) -> None:
+        for repository_path in (None, {"path": "/tmp/repository"}, ["/tmp/repository"]):
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": repository_path,
+                "default_branch": "main",
+                "expected_head": "a" * 40,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "print('pass')"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("blocked_external", result["result"])
+            self.assertTrue(any("nonblank path string" in error for error in result["errors"]))
+
+    def test_receipt_request_rejects_malformed_public_fields_before_execution(self) -> None:
+        mutations = (
+            ("flagship_id", {"id": "synthetic"}, "flagship_id"),
+            ("limitations", [{"note": "synthetic"}], "limitations"),
+            ("limitations", [""], "limitations"),
+            ("timeout_seconds", True, "timeout"),
+            ("argv", [sys.executable, "bad\0argument"], "NUL-free"),
+        )
+        for field, value, expected_error in mutations:
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": "/tmp/synthetic",
+                "default_branch": "main",
+                "expected_head": "a" * 40,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "print('pass')"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            target = request["predicate"] if field in {"timeout_seconds", "argv"} else request
+            assert isinstance(target, dict)
+            target[field] = value
+            result = RECEIPT.run_request(request)
+            self.assertEqual("blocked_external", result["result"])
+            self.assertTrue(any(expected_error in error for error in result["errors"]))
+
     def test_cost_failure_private_or_unknown_fields_fail_closed(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["rows"][0]["customer"] = "private"
@@ -115,6 +165,22 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = COST.reproduce(payload)
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
+
+    def test_cost_failure_unhashable_identity_and_state_fields_fail_closed(self) -> None:
+        cases = (
+            ("sample_id", {"id": "synthetic"}, "sample_id"),
+            ("sample_id", ["synthetic"], "sample_id"),
+            ("terminal_state", {"state": "failed"}, "terminal_state"),
+            ("terminal_state", ["failed"], "terminal_state"),
+            ("model_cost_basis", {"basis": "actual"}, "model_cost_basis"),
+            ("model_cost_basis", ["actual"], "model_cost_basis"),
+        )
+        for field, value, expected_error in cases:
+            payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+            payload["rows"][1][field] = value
+            result = COST.reproduce(payload)
+            self.assertEqual("withheld", result["status"])
+            self.assertTrue(any(expected_error in error for error in result["errors"]))
 
     def test_cost_failure_rows_must_fall_inside_an_ordered_window(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -572,14 +638,17 @@ class PositioningProofRunnerTest(unittest.TestCase):
                         "-c",
                         "import subprocess,sys; subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)'], start_new_session=True); print('parent done')",
                     ],
-                    "timeout_seconds": 1,
+                    "timeout_seconds": 10,
                     "max_output_bytes": 4096,
                 },
                 "limitations": ["Synthetic fixture only."],
             }
+            started = time.monotonic()
             result = run_request(request)
+            elapsed = time.monotonic() - started
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
+            self.assertLess(elapsed, 3)
 
     def test_redirected_predicate_descendant_is_terminated_before_receipt(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:

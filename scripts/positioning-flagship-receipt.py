@@ -128,15 +128,23 @@ def validate_request(request: dict[str, Any]) -> list[str]:
     repository = request.get("repository")
     if not isinstance(repository, str) or not REPOSITORY_NAME.fullmatch(repository):
         errors.append("repository must be a canonical owner/name slug")
+    repository_path = request.get("repository_path")
+    if not isinstance(repository_path, str) or not repository_path.strip():
+        errors.append("repository_path must be a nonblank path string")
+    flagship_id = request.get("flagship_id")
+    if not isinstance(flagship_id, str) or not flagship_id.strip():
+        errors.append("flagship_id must be nonblank text")
     predicate = request.get("predicate")
     if not isinstance(predicate, dict):
         errors.append("predicate must be an object")
     else:
         argv = predicate.get("argv")
-        if not isinstance(argv, list) or not argv or not all(isinstance(item, str) and item for item in argv):
-            errors.append("predicate.argv must be a non-empty string array")
+        if not isinstance(argv, list) or not argv or not all(
+            isinstance(item, str) and item and "\0" not in item for item in argv
+        ):
+            errors.append("predicate.argv must be a non-empty NUL-free string array")
         timeout = predicate.get("timeout_seconds")
-        if not isinstance(timeout, int) or not 1 <= timeout <= 1800:
+        if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 1800:
             errors.append("predicate timeout must be between 1 and 1800 seconds")
         output_limit = predicate.get("max_output_bytes")
         if (
@@ -145,7 +153,12 @@ def validate_request(request: dict[str, Any]) -> list[str]:
             or not 1024 <= output_limit <= MAX_OUTPUT_BYTES
         ):
             errors.append(f"predicate max_output_bytes must be between 1024 and {MAX_OUTPUT_BYTES}")
-    if not isinstance(request.get("limitations"), list) or not request.get("limitations"):
+    limitations = request.get("limitations")
+    if (
+        not isinstance(limitations, list)
+        or not limitations
+        or not all(isinstance(value, str) and value.strip() for value in limitations)
+    ):
         errors.append("receipt request requires explicit limitations")
     return errors
 
@@ -814,21 +827,19 @@ def _run_bounded_predicate(
                 output.extend(chunk)
             if failure is not None:
                 break
-            _descendants_now, tracking_error = _scope_process_ids(scope, process.pid)
+            descendants, tracking_error = _scope_process_ids(scope, process.pid)
             if tracking_error is not None:
                 failure = tracking_error
                 _stop_run_scope(process, scope)
                 break
             return_code = process.poll()
-            if return_code is not None and eof:
-                descendants, tracking_error = _scope_process_ids(scope, process.pid)
-                if tracking_error is not None:
-                    _stop_run_scope(process, scope)
-                    failure = tracking_error
-                elif _process_group_alive(process.pid) or descendants:
+            if return_code is not None:
+                if _process_group_alive(process.pid) or descendants:
                     _stop_run_scope(process, scope)
                     failure = "predicate left a live descendant process"
-                return return_code, bytes(output), failure
+                    return return_code, bytes(output), failure
+                if eof:
+                    return return_code, bytes(output), failure
         return process.returncode, bytes(output), failure
     finally:
         if process is not None:
@@ -979,7 +990,7 @@ def run_request(
         )
         result = "current_pass" if exit_code == 0 and bounded_failure is None else "current_fail"
         errors = [bounded_failure] if bounded_failure else []
-    except OSError as exc:
+    except (OSError, ValueError) as exc:
         output = b""
         exit_code = None
         result = "blocked_external"
