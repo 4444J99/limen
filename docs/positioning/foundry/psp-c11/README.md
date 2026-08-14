@@ -1,8 +1,10 @@
 # PSP-C11 governed-foundry handoff preflight
 
-Status: **PREPARED/PREFLIGHT**. This package is reversible, public-safe, and deliberately unable to
-close PSP-P13 or any W01-W09 leaf. It does not select or contact an operator, choose binding terms,
-grant access, move custody, sign anything, spend, or claim an observed pilot.
+Status: **PREPARED / NO TRANSFER**. This package is reversible and public-safe. PSP-P13-W01 has an
+accepted candidate denominator, and the W03 technical-readiness audit records conservative
+acceptance evidence without making any candidate transferable. It does not select or contact an
+operator, choose binding terms, grant access, move custody, sign anything, spend, or claim an
+observed pilot.
 
 Reconciled 2026-08-13 against the runtime provider catalog contract. The registry pins capability,
 reasoning, effect, and effort requirements while provider/model selection remains live and fails
@@ -93,13 +95,30 @@ a finite experiment and is parked after two bounded failures rather than kept al
 
 ## W03 — Technical readiness, custody, and maintenance risk
 
-The current screen proves only repository ownership and metadata facts. It never upgrades metadata
-into a build, test, deploy, security, data, IP, observability, return, or maintenance receipt.
+[`technical-readiness-audit.json`](technical-readiness-audit.json) is locked to the accepted W01
+receipt, accepted head, acceptance digest, and candidate identity digest. Its denominator is
+exactly 62 candidates: 54 public rows and eight opaque private rows. Every public row records the
+currently observed 40-hex repository head and an exact-schema result for build, test, deploy,
+documentation, security, data custody, IP custody, observability/return, and maintenance. Every
+private row exposes only its accepted opaque identifier, a restricted state, a generic accountable
+owner role, score zero, and `transfer_eligible: false`.
+
+[`verify_technical_readiness.py`](verify_technical_readiness.py) derives its weights from
+`foundry-preflight-contract.json` and its candidate set from
+`product-candidate-snapshot.json`. It rejects duplicate JSON members, candidate or source-lock
+drift, unpinned evidence, metadata promoted to build/test/deploy proof, score or summary tampering,
+unowned blockers, private detail, private-name leakage, and transfer eligibility with any hard
+blocker. Live mode re-queries all public repository heads and scans the tracked public C11 package
+against private full names and unique private bare tokens held only in memory.
+
+Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
+homepage, default branch, recent push, or repository metadata never becomes build, test, runtime,
+security, custody, or maintenance proof. The current accepted evidence is therefore conservative:
+all 62 candidates remain non-transferable.
 
 | Screen result | Candidates |
 | --- | ---: |
-| Public diligence required | 53 |
-| Public parked because archived | 1 |
+| Public blocked pending exact-head diligence | 54 |
 | Private evidence withheld | 8 |
 | Fully transferable | 0 |
 
@@ -232,8 +251,11 @@ python3 -B scripts/positioning-foundry-handoff.py --json
 python3 -B scripts/positioning-foundry-handoff.py --records --json
 python3 -B scripts/positioning-foundry-handoff.py --drills --json
 python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight scripts.tests.test_positioning_foundry_handoff
+python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py
+python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json
 ```
 
-Formal leaf predicates remain intentionally deferred. After predecessors close, a fresh correctly
-assigned Codex leaf must obtain broker authority, refresh exact heads, prove its non-circular
-underlying predicate, attach a structured receipt, and only then run `--verify-work` for that leaf.
+The bare W03 live command above is the non-circular PSP-P13-W03 acceptance predicate. It remains
+read-only and reports `external_effects: []`. Only after sanctioned merge and a marked #2267
+receipt may the conductor run `python3 scripts/positioning-program.py --verify-work PSP-P13-W03`;
+no other leaf or phase closes from this package.
