@@ -1,6 +1,8 @@
 import copy
+import contextlib
 import importlib.util
 import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -8,6 +10,7 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -293,6 +296,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("withhold_or_remove", unpublished["action"])
         self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
+
+    def test_surface_audit_main_reports_unavailable_claim_inventory_without_traceback(self) -> None:
+        stdout = io.StringIO()
+        message = "accepted claims-ledger inventory is unavailable or stale"
+        argv = [str(SCRIPT), "--mode", "surface-audit", "--json"]
+        with (
+            mock.patch.object(MODULE, "build_surface_audit_skeleton", side_effect=ValueError(message)),
+            mock.patch.object(sys, "argv", argv),
+            contextlib.redirect_stdout(stdout),
+        ):
+            exit_code = MODULE.main()
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(1, exit_code)
+        self.assertEqual("fail", result["status"])
+        self.assertEqual([f"surface audit failed: {message}"], result["errors"])
 
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)

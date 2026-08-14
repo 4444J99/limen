@@ -1542,12 +1542,16 @@ def main() -> int:
             result["dependency_sources"] = dependency_rows
             result["claims"] = resolve_claims(contract, as_of=as_of, dependency_rows=dependency_rows)
         elif args.mode == "surface-audit":
-            payload = _load_optional_json(args.input)
-            if payload is None:
-                result["rows"] = build_surface_audit_skeleton(contract)
-            else:
-                result["audit"] = audit_surface_manifest(contract, payload)
-                result["status"] = result["audit"]["status"]
+            try:
+                payload = _load_optional_json(args.input)
+                if payload is None:
+                    result["rows"] = build_surface_audit_skeleton(contract)
+                else:
+                    result["audit"] = audit_surface_manifest(contract, payload)
+                    result["status"] = result["audit"]["status"]
+            except ValueError as exc:
+                result["status"] = "fail"
+                result["errors"].append(f"surface audit failed: {exc}")
         elif args.mode == "demo":
             payload = _load_optional_json(args.input)
             if payload is None:
