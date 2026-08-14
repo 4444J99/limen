@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 
+ROOT = Path(__file__).resolve().parents[1]
+PROOF_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 BRANCH_NAME = re.compile(r"^(?!/)(?!.*(?:\.\.|//|@\{|\\))[A-Za-z0-9][A-Za-z0-9._/-]*$")
 REPOSITORY_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -30,6 +32,17 @@ GITHUB_ORIGIN_PATTERNS = (
     re.compile(r"^ssh://git@github\.com/(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?$"),
 )
 SCHEMA_VERSION = "limen.positioning_flagship_receipt_request.v1"
+REQUEST_FIELDS = {
+    "schema_version",
+    "flagship_id",
+    "repository",
+    "repository_path",
+    "default_branch",
+    "expected_head",
+    "predicate",
+    "limitations",
+}
+PREDICATE_FIELDS = {"argv", "timeout_seconds", "max_output_bytes"}
 MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 DARWIN_PAUSED_EXEC = r"""
 import json
@@ -105,8 +118,28 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
+    payload = json.loads(PROOF_CONTRACT.read_text(encoding="utf-8"))
+    receipt_plan = payload.get("exact_head_receipt_plan") if isinstance(payload, dict) else None
+    contracts = receipt_plan.get("flagship_predicates") if isinstance(receipt_plan, dict) else None
+    if not isinstance(contracts, dict):
+        raise ValueError("proof contract has no exact flagship predicate registry")
+    contract = contracts.get(flagship_id)
+    if contract is None:
+        return None
+    if not isinstance(contract, dict) or set(contract) != {"repository", "default_branch", "predicate"}:
+        raise ValueError("proof contract flagship predicate has an invalid exact schema")
+    predicate = contract.get("predicate")
+    if not isinstance(predicate, dict) or set(predicate) != PREDICATE_FIELDS:
+        raise ValueError("proof contract flagship predicate command has an invalid exact schema")
+    return contract
+
+
 def validate_request(request: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    unexpected = sorted(set(request) - REQUEST_FIELDS)
+    if unexpected:
+        errors.append(f"request has prohibited or unknown fields: {', '.join(unexpected)}")
     if request.get("schema_version") != SCHEMA_VERSION:
         errors.append("unsupported request schema")
     for field in (
@@ -132,15 +165,25 @@ def validate_request(request: dict[str, Any]) -> list[str]:
     if not isinstance(repository_path, str) or not repository_path.strip():
         errors.append("repository_path must be a nonblank path string")
     flagship_id = request.get("flagship_id")
-    if not isinstance(flagship_id, str) or not flagship_id.strip():
+    if (
+        not isinstance(flagship_id, str)
+        or not flagship_id.strip()
+        or flagship_id != flagship_id.strip()
+        or "\0" in flagship_id
+    ):
         errors.append("flagship_id must be nonblank text")
     predicate = request.get("predicate")
     if not isinstance(predicate, dict):
         errors.append("predicate must be an object")
     else:
+        unexpected_predicate = sorted(set(predicate) - PREDICATE_FIELDS)
+        if unexpected_predicate:
+            errors.append(f"predicate has prohibited or unknown fields: {', '.join(unexpected_predicate)}")
         argv = predicate.get("argv")
-        if not isinstance(argv, list) or not argv or not all(
-            isinstance(item, str) and item and "\0" not in item for item in argv
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or not all(isinstance(item, str) and item and "\0" not in item for item in argv)
         ):
             errors.append("predicate.argv must be a non-empty NUL-free string array")
         timeout = predicate.get("timeout_seconds")
@@ -160,6 +203,21 @@ def validate_request(request: dict[str, Any]) -> list[str]:
         or not all(isinstance(value, str) and value.strip() for value in limitations)
     ):
         errors.append("receipt request requires explicit limitations")
+    if isinstance(flagship_id, str) and flagship_id.strip() == flagship_id and "\0" not in flagship_id:
+        try:
+            contract = _flagship_contract(flagship_id)
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"flagship predicate contract is unavailable: {exc}")
+        else:
+            if contract is None:
+                errors.append("flagship_id is not selected by the proof contract")
+            else:
+                if repository != contract.get("repository"):
+                    errors.append("repository differs from the contract-owned flagship repository")
+                if default_branch != contract.get("default_branch"):
+                    errors.append("default_branch differs from the contract-owned flagship branch")
+                if predicate != contract.get("predicate"):
+                    errors.append("predicate differs from the contract-owned flagship command")
     return errors
 
 

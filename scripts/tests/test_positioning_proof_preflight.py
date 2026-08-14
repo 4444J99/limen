@@ -556,6 +556,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["SHORT-CLAIM"], drifted)
 
+        ranked_expected = {(surface, "RANKED-CLAIM"): {"claim_text": "Top 1% Python committer"}}
+        matched, drifted = MODULE._surface_claim_scan(
+            "Top 2% Python committer",
+            ranked_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["RANKED-CLAIM"], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
@@ -883,6 +892,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("field packet_id must be nonblank text" in error for error in result["errors"]))
 
+    def test_demo_failure_branch_requires_a_failed_or_blocked_predicate(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+        predicate = next(row for row in fixture["records"] if row["type"] == "predicate")
+        predicate["result"] = "pass"
+        result = MODULE.validate_demo_fixture(self.contract, fixture)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("failed or blocked predicate" in error for error in result["errors"]))
+
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
             self.contract,
@@ -920,7 +938,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             {"outreach_performed": False, "objects": objects},
         )
         self.assertEqual("fail", result["status"])
-        self.assertEqual(1, result["substantive_public_count"])
+        self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("method" in error and "nonblank text" in error for error in result["errors"]))
 
     def test_external_validation_rejects_explicit_non_independence(self) -> None:
@@ -976,7 +994,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             {"outreach_performed": False, "objects": objects},
         )
         self.assertEqual("fail", result["status"])
-        self.assertEqual(1, result["substantive_public_count"])
+        self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("duplicates an existing object receipt" in error for error in result["errors"]))
 
     def test_future_dated_external_objects_do_not_satisfy_the_minimum(self) -> None:
@@ -1035,8 +1053,68 @@ class PositioningProofPreflightTest(unittest.TestCase):
             {"outreach_performed": False, "objects": objects},
         )
         self.assertEqual("fail", result["status"])
-        self.assertEqual(1, result["substantive_public_count"])
+        self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("public consent disposition" in error for error in result["errors"]))
+
+    def test_external_validation_authenticates_and_binds_each_independent_review(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        comments = {}
+        for index in range(2):
+            receipt_url = f"https://github.com/organvm/limen/issues/2201#issuecomment-{index + 1}"
+            row = {field: f"value-{index}-{field}" for field in required}
+            row.update(
+                {
+                    "object class": self.contract["external_validation"]["acceptable_objects"][index],
+                    "independence disclosure": "independent_third_party",
+                    "object URL or receipt": receipt_url,
+                    "date": "2026-08-14",
+                    "consent status": "public_consented",
+                }
+            )
+            actor = f"independent-reviewer-{index}"
+            receipt = {
+                "schema_version": MODULE.EXTERNAL_VALIDATION_RECEIPT_SCHEMA,
+                "evidence_kind": "external_validation",
+                "subject_sha256": MODULE._canonical_external_validation_subject(row),
+                "actor_identity": actor,
+                "observed_at": "2026-08-14T12:00:00Z",
+                "limitations": ["Hermetic independent-review fixture only."],
+            }
+            comments[receipt_url] = {
+                "html_url": receipt_url,
+                "user": {"login": actor},
+                "author_association": "NONE",
+                "body": "<!-- positioning-external-validation-receipt -->\n```json\n" + json.dumps(receipt) + "\n```",
+            }
+            objects.append(row)
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            result = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("pass", result["status"])
+        self.assertEqual(2, result["substantive_public_count"])
+
+        objects[0]["method"] = "drifted method"
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            drifted = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", drifted["status"])
+        self.assertEqual(1, drifted["substantive_public_count"])
+        self.assertTrue(any("exact asserted review" in error for error in drifted["errors"]))
 
     def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
         for value in (None, [{"unhashable": True}]):

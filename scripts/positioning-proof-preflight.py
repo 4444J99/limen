@@ -25,6 +25,20 @@ DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
+EXTERNAL_VALIDATION_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2201#issuecomment-[0-9]+$")
+EXTERNAL_VALIDATION_RECEIPT_SCHEMA = "limen.positioning_external_validation_receipt.v1"
+EXTERNAL_VALIDATION_RECEIPT_BLOCK = re.compile(
+    r"<!--\s*positioning-external-validation-receipt\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
+EXTERNAL_VALIDATION_RECEIPT_FIELDS = {
+    "schema_version",
+    "evidence_kind",
+    "subject_sha256",
+    "actor_identity",
+    "observed_at",
+    "limitations",
+}
 PHASE_RECEIPT_URLS = {
     "PSP-P03": re.compile(r"^https://github\.com/organvm/limen/issues/2181#issuecomment-[0-9]+$"),
     "PSP-P04": re.compile(r"^https://github\.com/organvm/limen/issues/2189#issuecomment-[0-9]+$"),
@@ -91,6 +105,11 @@ EXPECTED_FLAGSHIPS = {
         "evidence_wording": "The public product surface presents five export formats: Markdown, HTML, JSON, PNG, and text.",
         "accepted_source_status": "verified",
     },
+}
+EXPECTED_FLAGSHIP_REPOSITORIES = {
+    "limen": "organvm/limen",
+    "public_records": "organvm-iii-ergon/public-record-data-scrapper",
+    "ai_chat_exporter": "organvm-iii-ergon/a-i-chat--exporter",
 }
 EXPECTED_DEPENDENCY_BINDINGS = {
     "p02_live_registry": (
@@ -483,6 +502,39 @@ def validate(contract: dict[str, Any]) -> list[str]:
         or not 1024 <= output_limit <= 10 * 1024 * 1024
     ):
         errors.append("exact-head receipt plan requires a bounded output budget")
+    flagship_predicates = receipt_plan.get("flagship_predicates")
+    if not isinstance(flagship_predicates, dict) or set(flagship_predicates) != set(EXPECTED_FLAGSHIPS):
+        errors.append("exact-head receipt plan must bind every selected flagship predicate")
+    else:
+        for flagship_id, binding in flagship_predicates.items():
+            if not isinstance(binding, dict) or set(binding) != {"repository", "default_branch", "predicate"}:
+                errors.append(f"exact-head receipt predicate has an invalid schema: {flagship_id}")
+                continue
+            if binding.get("repository") != EXPECTED_FLAGSHIP_REPOSITORIES.get(flagship_id):
+                errors.append(f"exact-head receipt predicate has the wrong repository: {flagship_id}")
+            if not isinstance(binding.get("default_branch"), str) or not binding["default_branch"].strip():
+                errors.append(f"exact-head receipt predicate requires a default branch: {flagship_id}")
+            predicate = binding.get("predicate")
+            if not isinstance(predicate, dict) or set(predicate) != {"argv", "timeout_seconds", "max_output_bytes"}:
+                errors.append(f"exact-head receipt predicate command has an invalid schema: {flagship_id}")
+                continue
+            argv = predicate.get("argv")
+            if (
+                not isinstance(argv, list)
+                or not argv
+                or not all(isinstance(value, str) and value and "\0" not in value for value in argv)
+            ):
+                errors.append(f"exact-head receipt predicate command requires safe argv: {flagship_id}")
+            timeout = predicate.get("timeout_seconds")
+            if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 1800:
+                errors.append(f"exact-head receipt predicate command requires a bounded timeout: {flagship_id}")
+            bound_output = predicate.get("max_output_bytes")
+            if (
+                not isinstance(bound_output, int)
+                or isinstance(bound_output, bool)
+                or not 1024 <= bound_output <= 10 * 1024 * 1024
+            ):
+                errors.append(f"exact-head receipt predicate command requires bounded output: {flagship_id}")
 
     surface_model = contract.get("surface_audit_model", {})
     if surface_model.get("claim_inventory_source") != "p02_claims_ledger":
@@ -1089,7 +1141,7 @@ def _surface_claim_scan(
                 for index in range(min(2, len(canonical_sequence) - anchor_size + 1))
             }
         else:
-            anchor_size = 3 if len(canonical_sequence) >= 4 else 2
+            anchor_size = 2
             canonical_anchors = {
                 " ".join(canonical_sequence[index : index + anchor_size])
                 for index in range(len(canonical_sequence) - anchor_size + 1)
@@ -1573,6 +1625,19 @@ def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> 
     predicate = next((record for record in records_by_id.values() if record.get("type") == "predicate"), None)
     if predicate is not None and predicate.get("result") not in {"pass", "fail", "blocked"}:
         errors.append("demo predicate result must be pass, fail, or blocked")
+    for failure in (record for record in records_by_id.values() if record.get("type") == "failure"):
+        predicate_reference = failure.get("predicate_id")
+        linked = records_by_id.get(predicate_reference) if isinstance(predicate_reference, str) else None
+        if (
+            isinstance(linked, dict)
+            and linked.get("type") == "predicate"
+            and linked.get("result")
+            not in {
+                "fail",
+                "blocked",
+            }
+        ):
+            errors.append(f"demo failure {failure.get('id')} must link to a failed or blocked predicate")
     return {"status": "pass" if not errors else "fail", "errors": errors, "record_count": len(records)}
 
 
@@ -1615,6 +1680,59 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     return forbidden
 
 
+def _canonical_external_validation_subject(row: dict[str, Any]) -> str:
+    subject = {key: value for key, value in row.items() if key != "object URL or receipt"}
+    raw = json.dumps(subject, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _authenticate_external_validation_object(row: dict[str, Any]) -> str:
+    receipt_url = row.get("object URL or receipt")
+    if not isinstance(receipt_url, str) or not EXTERNAL_VALIDATION_RECEIPT_URL.fullmatch(receipt_url):
+        raise ValueError("external validation receipt must be an immutable PSP-P05-W04 issue comment")
+    comment = _fetch_github_issue_comment(receipt_url, "external validation")
+    author = comment.get("user")
+    login = author.get("login") if isinstance(author, dict) else None
+    if not isinstance(login, str) or not login.strip():
+        raise ValueError("external validation receipt has no authenticated actor")
+    body = comment.get("body")
+    matches = EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
+    if len(matches) != 1:
+        raise ValueError("external validation comment must contain exactly one marked receipt")
+    receipt = json.loads(matches[0])
+    if not isinstance(receipt, dict) or set(receipt) != EXTERNAL_VALIDATION_RECEIPT_FIELDS:
+        raise ValueError("external validation receipt has an invalid exact schema")
+    if receipt.get("schema_version") != EXTERNAL_VALIDATION_RECEIPT_SCHEMA:
+        raise ValueError("external validation receipt has an unsupported schema")
+    if receipt.get("evidence_kind") != "external_validation":
+        raise ValueError("external validation receipt has the wrong evidence kind")
+    if receipt.get("subject_sha256") != _canonical_external_validation_subject(row):
+        raise ValueError("external validation receipt does not bind the exact asserted review")
+    if receipt.get("actor_identity") != login:
+        raise ValueError("external validation receipt actor differs from the authenticated comment actor")
+    observed_at = receipt.get("observed_at")
+    try:
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if observed.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError) as exc:
+        raise ValueError("external validation receipt observed_at must be RFC3339 with a timezone") from exc
+    if observed > datetime.now(timezone.utc):
+        raise ValueError("external validation receipt cannot be future-dated")
+    if observed.date().isoformat() != row.get("date"):
+        raise ValueError("external validation receipt date differs from the asserted review date")
+    limitations = receipt.get("limitations")
+    if not (
+        isinstance(limitations, list)
+        and limitations
+        and all(isinstance(value, str) and value.strip() and "\0" not in value for value in limitations)
+    ):
+        raise ValueError("external validation receipt limitations must be public-safe text")
+    if login.casefold() == "4444j99":
+        raise ValueError("external validation actor must be independent from the subject owner")
+    return login
+
+
 def validate_external_objects(
     contract: dict[str, Any],
     payload: dict[str, Any],
@@ -1642,6 +1760,7 @@ def validate_external_objects(
         acceptable_objects = set(acceptable_rows)
     minimum_count = int(validation.get("minimum_object_count", 0))
     provenance: set[str] = set()
+    authenticated_actors: set[str] = set()
     substantive_public_count = 0
     for index, row in enumerate(objects):
         if not isinstance(row, dict):
@@ -1686,6 +1805,19 @@ def validate_external_objects(
         consent_status = row.get("consent status")
         if not isinstance(consent_status, str) or consent_status not in {"public_consented", "withdrawn"}:
             errors.append(f"validation object {index} has no public consent disposition")
+        authenticated_actor: str | None = None
+        if consent_status == "public_consented" and isinstance(object_receipt, str) and object_receipt:
+            try:
+                authenticated_actor = _authenticate_external_validation_object(row)
+            except (OSError, ValueError, json.JSONDecodeError) as exc:
+                errors.append(f"validation object {index} authority failed closed: {exc}")
+            else:
+                normalized_actor = authenticated_actor.casefold()
+                if normalized_actor in authenticated_actors:
+                    errors.append(f"validation object {index} duplicates an authenticated validator actor")
+                    authenticated_actor = None
+                else:
+                    authenticated_actors.add(normalized_actor)
         if (
             consent_status == "public_consented"
             and not missing
@@ -1696,6 +1828,7 @@ def validate_external_objects(
             and bool(object_receipt)
             and not duplicate_receipt
             and valid_date
+            and authenticated_actor is not None
         ):
             substantive_public_count += 1
     if substantive_public_count < minimum_count:

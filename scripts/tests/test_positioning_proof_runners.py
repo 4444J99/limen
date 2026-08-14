@@ -51,13 +51,19 @@ def attach_origin(repository: Path, remote_root: Path) -> Path:
 
 def run_request(request: dict[str, object]) -> dict[str, object]:
     repository = Path(str(request["repository_path"]))
-    return RECEIPT.run_request(
-        request,
-        canonical_remote_lookup=lambda _repository: RECEIPT._run_git(
-            repository,
-            ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
-        ),
-    )
+    hermetic_contract = {
+        "repository": request["repository"],
+        "default_branch": request["default_branch"],
+        "predicate": request["predicate"],
+    }
+    with mock.patch.object(RECEIPT, "_flagship_contract", return_value=hermetic_contract):
+        return RECEIPT.run_request(
+            request,
+            canonical_remote_lookup=lambda _repository: RECEIPT._run_git(
+                repository,
+                ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
+            ),
+        )
 
 
 def independent_cost_review(payload: dict[str, object]) -> dict[str, object]:
@@ -271,6 +277,12 @@ class PositioningProofRunnerTest(unittest.TestCase):
         errors = COST.validate_sample(payload)
         self.assertTrue(any("model rate source provenance" in error for error in errors), errors)
 
+    def test_cost_artifacts_must_match_committed_head_bytes(self) -> None:
+        artifact = "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json"
+        drifted = subprocess.CompletedProcess(["git", "show"], 0, b"drifted-worktree-bytes", b"")
+        with mock.patch.object(COST.subprocess, "run", return_value=drifted):
+            self.assertIsNone(COST._safe_tracked_artifact(artifact))
+
     def test_cost_authority_receipt_is_bound_to_an_authenticated_comment_actor(self) -> None:
         subject_sha256 = "c" * 64
         receipt = {
@@ -354,6 +366,28 @@ class PositioningProofRunnerTest(unittest.TestCase):
             review_verdict=self_review,
         )
         self.assertTrue(any("differ from every sample author" in error for error in result["errors"]))
+
+        case_variant = independent_cost_review(payload)
+        case_variant["reviewer_identity"] = payload["population"]["source_manifest"]["records"][0][
+            "author_identity"
+        ].swapcase()
+        result = COST.reproduce(
+            payload,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=case_variant,
+        )
+        self.assertTrue(any("differ from every sample author" in error for error in result["errors"]))
+
+        spaced_identity = independent_cost_review(payload)
+        spaced_identity["reviewer_identity"] = f" {spaced_identity['reviewer_identity']} "
+        result = COST.reproduce(
+            payload,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=spaced_identity,
+        )
+        self.assertTrue(any("nonblank reviewer identity" in error for error in result["errors"]))
 
     def test_cost_failure_rejects_future_observations_and_predating_reviews(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -523,6 +557,31 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = RECEIPT.run_request(request)
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any(expected_error in error for error in result["errors"]))
+
+    def test_receipt_request_binds_selected_flagships_to_contract_owned_predicates(self) -> None:
+        contract = RECEIPT._flagship_contract("limen")
+        assert contract is not None
+        request = {
+            "schema_version": RECEIPT.SCHEMA_VERSION,
+            "flagship_id": "limen",
+            "repository": contract["repository"],
+            "repository_path": "/tmp/limen-flagship",
+            "default_branch": contract["default_branch"],
+            "expected_head": "a" * 40,
+            "predicate": copy.deepcopy(contract["predicate"]),
+            "limitations": ["Validation-only fixture."],
+        }
+        self.assertEqual([], RECEIPT.validate_request(request))
+
+        drifted = copy.deepcopy(request)
+        drifted["predicate"]["argv"] = [sys.executable, "-c", "print('pass')"]
+        errors = RECEIPT.validate_request(drifted)
+        self.assertTrue(any("contract-owned flagship command" in error for error in errors), errors)
+
+        unknown = copy.deepcopy(request)
+        unknown["flagship_id"] = "arbitrary"
+        errors = RECEIPT.validate_request(unknown)
+        self.assertTrue(any("not selected by the proof contract" in error for error in errors), errors)
 
     def test_cost_failure_private_or_unknown_fields_fail_closed(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

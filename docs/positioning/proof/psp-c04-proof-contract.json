@@ -300,6 +300,35 @@
     "request_schema": "limen.positioning_flagship_receipt_request.v1",
     "default_output_limit_bytes": 1048576,
     "predicate_contract": ["argv", "timeout_seconds", "max_output_bytes"],
+    "flagship_predicates": {
+      "limen": {
+        "repository": "organvm/limen",
+        "default_branch": "main",
+        "predicate": {
+          "argv": ["python3", "scripts/positioning-proof-preflight.py", "--mode", "validate", "--json"],
+          "timeout_seconds": 1800,
+          "max_output_bytes": 1048576
+        }
+      },
+      "public_records": {
+        "repository": "organvm-iii-ergon/public-record-data-scrapper",
+        "default_branch": "main",
+        "predicate": {
+          "argv": ["npm", "test"],
+          "timeout_seconds": 1800,
+          "max_output_bytes": 1048576
+        }
+      },
+      "ai_chat_exporter": {
+        "repository": "organvm-iii-ergon/a-i-chat--exporter",
+        "default_branch": "master",
+        "predicate": {
+          "argv": ["pnpm", "test"],
+          "timeout_seconds": 1800,
+          "max_output_bytes": 1048576
+        }
+      }
+    },
     "required_fields": ["repository", "default_branch", "exact_head", "predicate", "environment", "started_at", "finished_at", "exit_code", "result", "artifact_digest", "limitations"],
     "outcomes": ["current_pass", "current_fail", "not_current", "blocked_external"],
     "rule": "Every selected flagship receives one fresh exact-head receipt or an explicit not-current outcome; a README assertion or endpoint 200 is insufficient."

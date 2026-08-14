@@ -7,7 +7,9 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
+import subprocess
 from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
@@ -219,7 +221,7 @@ def _verify_authority_receipt(
     association = comment.get("author_association")
     if not isinstance(login, str) or not login:
         raise ValueError("authority receipt comment has no authenticated actor")
-    if expected_actor is not None and login != expected_actor:
+    if expected_actor is not None and login.casefold() != expected_actor.casefold():
         raise ValueError("authority receipt actor differs from the bound reviewer identity")
     if require_trusted_association and association not in AUTHORITY_ASSOCIATIONS:
         raise ValueError("authority receipt actor is not an authorized repository actor")
@@ -258,7 +260,7 @@ def _verify_authority_receipt(
 
 
 def _safe_tracked_artifact(value: object) -> Path | None:
-    if not isinstance(value, str) or not value.strip() or value != value.strip() or "\0" in value:
+    if not isinstance(value, str) or not value.strip() or value != value.strip() or "\0" in value or ":" in value:
         return None
     pure = PurePosixPath(value)
     if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
@@ -268,7 +270,54 @@ def _safe_tracked_artifact(value: object) -> Path | None:
         candidate.relative_to(ROOT.resolve())
     except (OSError, ValueError):
         return None
-    return candidate if candidate.is_file() else None
+    if not candidate.is_file():
+        return None
+    environment = dict(os.environ)
+    for key in tuple(environment):
+        if (
+            key
+            in {
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_COMMON_DIR",
+                "GIT_CONFIG",
+                "GIT_CONFIG_COUNT",
+                "GIT_CONFIG_PARAMETERS",
+                "GIT_DIR",
+                "GIT_INDEX_FILE",
+                "GIT_NAMESPACE",
+                "GIT_OBJECT_DIRECTORY",
+                "GIT_SHALLOW_FILE",
+                "GIT_WORK_TREE",
+            }
+            or key.startswith("GIT_CONFIG_KEY_")
+            or key.startswith("GIT_CONFIG_VALUE_")
+        ):
+            environment.pop(key, None)
+    environment.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_COUNT": "0",
+            "GIT_GRAFT_FILE": os.devnull,
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    try:
+        committed = subprocess.run(
+            ["git", "show", f"HEAD:{pure.as_posix()}"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            timeout=30,
+            env=environment,
+        )
+        worktree_bytes = candidate.read_bytes()
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if committed.returncode != 0 or committed.stdout != worktree_bytes:
+        return None
+    return candidate
 
 
 def _model_rate_source_record(
@@ -423,7 +472,12 @@ def _validate_population_source(
             continue
         seen.add(normalized)
         author_identity = record.get("author_identity")
-        if not isinstance(author_identity, str) or not author_identity.strip() or "\0" in author_identity:
+        if (
+            not isinstance(author_identity, str)
+            or not author_identity.strip()
+            or author_identity != author_identity.strip()
+            or "\0" in author_identity
+        ):
             errors.append(f"sample population source record {index} requires a public-safe author identity")
         eligible = record.get("eligible")
         reason = record.get("exclusion_reason")
@@ -841,20 +895,25 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     if verdict.get("reviewer_class") not in INDEPENDENT_REVIEWER_CLASSES:
         errors.append("analysis review_verdict requires an independent reviewer class")
     reviewer_identity = verdict.get("reviewer_identity")
-    if not isinstance(reviewer_identity, str) or not reviewer_identity.strip() or "\0" in reviewer_identity:
+    if (
+        not isinstance(reviewer_identity, str)
+        or not reviewer_identity.strip()
+        or reviewer_identity != reviewer_identity.strip()
+        or "\0" in reviewer_identity
+    ):
         errors.append("analysis review_verdict requires a nonblank reviewer identity")
     source_manifest = population.get("source_manifest") if isinstance(population, dict) else None
     source_records = source_manifest.get("records") if isinstance(source_manifest, dict) else None
     author_identities = (
         {
-            record.get("author_identity")
+            record.get("author_identity").casefold()
             for record in source_records
             if isinstance(record, dict) and isinstance(record.get("author_identity"), str)
         }
         if isinstance(source_records, list)
         else set()
     )
-    if reviewer_identity in author_identities:
+    if isinstance(reviewer_identity, str) and reviewer_identity.casefold() in author_identities:
         errors.append("analysis review_verdict reviewer must differ from every sample author")
     observed_at = verdict.get("observed_at")
     reviewed_at: datetime | None = None
@@ -910,7 +969,7 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
             errors.append(f"analysis independent review authority failed closed: {exc}")
         else:
             if verdict.get("reviewer_class") == "independent_model":
-                if authenticated_login not in TRUSTED_MODEL_REVIEWERS:
+                if authenticated_login.casefold() not in {value.casefold() for value in TRUSTED_MODEL_REVIEWERS}:
                     errors.append("analysis independent model review is not owned by a trusted model reviewer")
             elif authenticated_association not in AUTHORITY_ASSOCIATIONS:
                 errors.append("analysis independent human review is not owned by an authorized collaborator")
