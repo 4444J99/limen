@@ -1689,22 +1689,109 @@ def _validate_phase_projection(
         raise ProgramError(f"{phase_id} phase projection failed:\n- " + "\n- ".join(failures))
 
 
+def _dependency_closure(root_ids: Iterable[str], node_by_id: dict[str, dict[str, Any]]) -> set[str]:
+    """Return every transitive dependency reachable from the supplied roots."""
+    seen: set[str] = set()
+    pending = list(root_ids)
+    while pending:
+        node_id = pending.pop()
+        if node_id in seen:
+            continue
+        node = node_by_id.get(node_id)
+        if node is None:
+            raise ProgramError(f"dependency graph references unknown object {node_id}")
+        seen.add(node_id)
+        pending.extend(node.get("depends_on") or [])
+    return seen
+
+
 def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
     if phase_id not in graph["phase_by_id"]:
         raise ProgramError(f"unknown phase id: {phase_id}")
     phase_proof_command(phase_id, graph)
     validate_map(mapping, graph, complete=True)
     initial_remote = fetch_program_issues(graph)
+    phase = graph["phase_by_id"][phase_id]
+    current_work_ids = {packet["id"] for packet in phase["work"]}
+    phase_dependency_set = _dependency_closure(phase.get("depends_on") or [], graph["phase_by_id"])
+    owning_chunk_ids = chunks_for_object(phase_id, graph)
+    direct_chunk_dependencies = {
+        dependency
+        for chunk_id in owning_chunk_ids
+        for dependency in graph["chunk_by_id"][chunk_id].get("depends_on") or []
+    }
+    chunk_dependency_set = _dependency_closure(direct_chunk_dependencies, graph["chunk_by_id"])
+    predecessor_work_set = {
+        work_id
+        for chunk_id in chunk_dependency_set
+        for work_id in graph["chunk_work"][chunk_id]
+    }
+    predecessor_phase_set = {
+        candidate["id"]
+        for candidate in graph["phases"]
+        if candidate["id"] != phase_id
+        and {packet["id"] for packet in candidate["work"]}.issubset(predecessor_work_set)
+    }
+    required_phase_set = phase_dependency_set | predecessor_phase_set
+    required_phase_ids = [
+        candidate["id"] for candidate in graph["phases"] if candidate["id"] in required_phase_set
+    ]
+    required_chunk_ids = [
+        chunk["id"] for chunk in graph["chunks"] if chunk["id"] in chunk_dependency_set
+    ]
+    predecessor_work_ids = [
+        work_id for chunk_id in required_chunk_ids for work_id in graph["chunk_work"][chunk_id]
+    ]
     phase_object_ids = [
         phase_id,
-        *(packet["id"] for packet in graph["phase_by_id"][phase_id]["work"]),
+        *(packet["id"] for packet in phase["work"]),
     ]
+    for dependency in required_phase_ids:
+        dependency_phase = graph["phase_by_id"][dependency]
+        phase_object_ids.extend(
+            [dependency, *(packet["id"] for packet in dependency_phase["work"])]
+        )
+    phase_object_ids.extend(predecessor_work_ids)
     remote = recover_mapped_issues(graph, mapping, initial_remote, object_ids=phase_object_ids)
     _validate_phase_projection(phase_id, graph, mapping, remote)
-    phase = graph["phase_by_id"][phase_id]
     child_receipts: dict[str, dict[str, Any]] = {}
     child_evidence: dict[str, str] = {}
     failures: list[str] = []
+    for dependency in required_phase_ids:
+        try:
+            _validate_phase_projection(dependency, graph, mapping, remote)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} upstream phase {dependency} projection is invalid: {exc}")
+            continue
+        if str(remote.get(dependency, {}).get("state") or "").lower() != "closed":
+            failures.append(f"{phase_id} upstream phase {dependency} is not closed")
+            continue
+        try:
+            fetch_phase_receipt(dependency, graph, mapping, remote=remote)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} upstream phase {dependency} is invalid: {exc}")
+    phase_covered_work_ids = {
+        packet["id"]
+        for dependency in required_phase_ids
+        for packet in graph["phase_by_id"][dependency]["work"]
+    }
+    partial_predecessor_work = [
+        work_id
+        for work_id in predecessor_work_ids
+        if work_id not in phase_covered_work_ids and work_id not in current_work_ids
+    ]
+    for work_id in dict.fromkeys(partial_predecessor_work):
+        row = remote.get(work_id)
+        if not isinstance(row, dict):
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is missing")
+            continue
+        if str(row.get("state") or "").lower() != "closed":
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is not closed")
+            continue
+        try:
+            fetch_work_receipt(work_id, graph, mapping)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is invalid: {exc}")
     for packet in phase["work"]:
         work_id = packet["id"]
         if str(remote[work_id].get("state") or "").lower() != "closed":
@@ -1803,6 +1890,13 @@ def closure_integrity(
     failures: list[str] = []
     receipt_urls: dict[str, str] = {}
     for work_id in sorted((closed & set(graph["work_by_id"])) - excluded_work_ids):
+        missing_dependencies = [
+            dependency
+            for dependency in graph["work_by_id"][work_id].get("depends_on") or []
+            if dependency not in closed
+        ]
+        if missing_dependencies:
+            failures.append(f"{work_id} is closed before dependency issues {missing_dependencies}")
         try:
             _receipt, receipt_urls[work_id] = fetch_work_receipt(work_id, graph, mapping)
         except ProgramError as exc:
@@ -1810,6 +1904,9 @@ def closure_integrity(
     for phase_id, phase in graph["phase_by_id"].items():
         if phase_id not in closed or phase_id in excluded_phase_ids:
             continue
+        missing_dependencies = [dependency for dependency in phase.get("depends_on") or [] if dependency not in closed]
+        if missing_dependencies:
+            failures.append(f"{phase_id} is closed before upstream phase issues {missing_dependencies}")
         missing_children = [packet["id"] for packet in phase["work"] if packet["id"] not in closed]
         if missing_children:
             failures.append(f"{phase_id} is closed before child issues {missing_children}")
@@ -1995,11 +2092,10 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
     ready: list[dict[str, Any]] = []
     for phase in graph["phases"]:
         phase_dependencies = set(phase.get("depends_on") or [])
-        phase_ready = phase_dependencies.issubset(closed)
         for packet in phase["work"]:
             work_id = packet["id"]
             dependencies = set(packet.get("depends_on") or [])
-            if work_id in closed or not phase_ready or not dependencies.issubset(closed):
+            if work_id in closed or not dependencies.issubset(closed):
                 continue
             row = mapping["issues"][work_id]
             repository_identity = repository_identity_for(packet["target_repo"], graph)
@@ -2021,6 +2117,9 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "effect": packet["effect"],
                     "predicate": packet["predicate"],
                     "human_gates": packet["human_gates"],
+                    "phase_id": phase["id"],
+                    "phase_close_blocked_by": sorted(phase_dependencies - closed),
+                    "chunk_id": graph["work_chunk"][work_id],
                 }
             )
     return ready
@@ -2101,19 +2200,19 @@ Scope
 - Resolved leaf count: {len(work_ids)}
 - Excluded leaves: {excluded}
 - Extra cross-phase leaves: {extras}
-- Required predecessor chunks: {dependency_scope}
+- Aggregate predecessor chunks: {dependency_scope}
 - Objective: {chunk["objective"]}
 - Exit gate: {chunk["exit_gate"]}
 
 Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
-2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json`.
+2. Run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json` to orient from the live registry.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. After changing files, preview governed scope with `python3 scripts/verify.py --explain <changed-path>...`, run `bash scripts/verify-scoped.sh`, and then run the leaf predicate as the receipt condition. A leaf closes only after that predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase and chunk, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete."""
 
@@ -2171,9 +2270,10 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
     lines += [
         "```",
         "",
-        "C04 (proof/experience) and C05 (service delivery) may run in parallel after C03. They rejoin before "
-        "commercial validation. C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, "
-        "eliminating the former P10↔P12 phase-gating deadlock.",
+        "Chunk arrows govern aggregate proof and closeout order, not leaf admission. The live ready-work output "
+        "uses each leaf's exact dependencies, so a human gate on one leaf cannot idle unrelated reversible work. "
+        "C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, eliminating the former "
+        "P10↔P12 phase-gating deadlock.",
         "",
         "## Chunk index",
         "",
@@ -2197,9 +2297,11 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
         "",
         "## How to use the prompts",
         "",
-        "1. Start with C00. Do not launch a chunk until every named predecessor has a durable completion receipt.",
-        "2. C04 and C05 are the only intended parallel branch. Run them in isolated worktrees and broker leases.",
-        "3. Paste one prompt below into a fresh conductor session using its assigned model/effort.",
+        "1. Start from the live `--ready --json` output. A ready leaf may run even while an upstream aggregate "
+        "phase or chunk remains open.",
+        "2. Run every concurrent leaf in its own isolated worktree and broker lease.",
+        "3. Use the prompt for the chunk whose resolved scope contains the ready leaf and preserve its assigned "
+        "model and effort.",
         "4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk "
         "rather than skipping ahead.",
         "5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.",

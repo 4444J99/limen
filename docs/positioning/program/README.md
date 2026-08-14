@@ -99,10 +99,11 @@ a stable HTML marker, repairs drift idempotently, and never edits `tasks.yaml`.
 
 ## Execution order
 
-Issue numbers are identifiers, not execution order. The canonical 13-chunk order is generated in
-`EXECUTION-CHUNKS.md`, including one intended parallel branch: proof/experience (C04) and the
-service-delivery operating system (C05) may run concurrently after identity/offers (C03). They
-rejoin before commercial validation.
+Issue numbers are identifiers, not execution order. The canonical 13 chunks are generated in
+`EXECUTION-CHUNKS.md`, but chunk and phase arrows govern aggregate proof and closeout rather than
+leaf admission. Each leaf's explicit `depends_on` list is the executable readiness contract. This
+allows every independent reversible leaf to proceed while a human-gated sibling remains open,
+without allowing a phase, chunk, or Omega to close out of order.
 
 P10 and P12 deliberately interleave. Build P10-W01 through P10-W07 first; then P12-W01 and W02
 unlock P10-W08 while the remaining P12 evidence work proceeds. P12 therefore depends on P09 and
@@ -172,10 +173,11 @@ build. Routine agents can perform the majority of the program from the explicit 
 
 1. Read this file and `AGENT-RUNBOOK.md`.
 2. Run `python3 scripts/positioning-program.py --check`.
-3. Read `EXECUTION-CHUNKS.md`, select the earliest incomplete chunk whose predecessors are closed,
-   and run `python3 scripts/positioning-program.py --chunk <CHUNK-ID>`.
-4. Run `python3 scripts/positioning-program.py --ready --json` and select only a leaf that is both
-   ready and in that chunk’s resolved scope.
+3. Run `python3 scripts/positioning-program.py --ready --json`; this is the authoritative leaf-level
+   admission result.
+4. Read `EXECUTION-CHUNKS.md`, select the conductor whose resolved scope contains a ready leaf, and
+   run `python3 scripts/positioning-program.py --chunk <CHUNK-ID>`. Multiple ready chunks may run in
+   isolated lanes even while their aggregate predecessor phases remain open.
 5. Register and claim through the Limen conduct broker. Do not begin mutation if the broker cannot
    issue the required lease.
 6. Work in an isolated worktree, meet the acceptance condition, and run a task-specific executable
