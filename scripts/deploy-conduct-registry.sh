@@ -10,7 +10,9 @@
 # live). Lever: L-CONDUCT-REGISTRY-DEPLOY.
 #
 # Additive merge: the currently-working legacy bearer (LIMEN_CONDUCT_TOKEN) is retained as
-# principal codex-direct-legacy, so no live lane loses auth when the new registry lands.
+# principal codex-direct-legacy, so no live lane loses auth when the new registry lands. The legacy
+# owner bearer is also the deliberately narrow compatibility principal: it may bootstrap the private
+# canonical board and project task transitions, but it is not an executor credential.
 # Idempotent: re-running puts the same merged document. Secrets are read from env and piped
 # to wrangler; nothing is printed or written to disk.
 set -euo pipefail
@@ -21,26 +23,7 @@ set -a
 . ~/.limen.env
 set +a
 
-merged=$(python3 - <<'EOF'
-import json
-import os
-
-registry = json.loads(os.environ["LIMEN_CONDUCT_PRINCIPAL_REGISTRY"])
-legacy = os.environ.get("LIMEN_CONDUCT_TOKEN", "")
-bearers = {p["bearer"] for p in registry["principals"]}
-if legacy and legacy not in bearers:
-    registry["principals"].append(
-        {
-            "agent": "codex",
-            "bearer": legacy,
-            "principal_id": "codex-direct-legacy",
-            "roles": ["observer", "conductor"],
-            "surface": "direct",
-        }
-    )
-print(json.dumps(registry, separators=(",", ":")))
-EOF
-)
+merged=$(python3 scripts/merge-conduct-principal-registry.py)
 [ -n "$merged" ] || { echo "deploy-conduct-registry: FAILED to build merged registry" >&2; exit 1; }
 
 printf '%s' "$merged" | npx --prefix web/worker wrangler secret put LIMEN_CONDUCT_PRINCIPAL_REGISTRY --config web/worker/wrangler.toml
