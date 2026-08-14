@@ -42,6 +42,8 @@ portable contract.
   repository's governed checks on every proposed change; the broader
   [path-scoped CI workflow](https://github.com/organvm/limen/actions/workflows/ci.yml) runs when its
   declared paths are implicated.
+- The [successful exact-head PR Gate run](https://github.com/organvm/limen/actions/runs/31820844953)
+  is bound to `b39e40774a3a1a8b34565b4312cfecf3b437b006` and was observed on 2026-08-14.
 - [`scripts/verify-scoped.sh`](scripts/verify-scoped.sh) resolves checks from the exact diff before
   a push; [`scripts/verify-whole.sh`](scripts/verify-whole.sh) is the whole-repository predicate.
 - The [public status endpoint](https://limen-dashboard.pages.dev/public-status.json) is the
