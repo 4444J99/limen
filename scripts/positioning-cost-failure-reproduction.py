@@ -7,10 +7,12 @@ import argparse
 import hashlib
 import json
 import math
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,6 +33,22 @@ POPULATION_SCHEMA = "limen.positioning_cost_failure_population.v1"
 POPULATION_SOURCE_SCHEMA = "limen.positioning_cost_failure_population_source.v1"
 MODEL_RATE_SCHEMA = "limen.positioning_model_cost_rate_basis.v1"
 MODEL_RATE_SOURCE_SCHEMA = "limen.positioning_model_rate_source.v1"
+AUTHORITY_RECEIPT_SCHEMA = "limen.positioning_cost_authority_receipt.v1"
+AUTHORITY_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2200#issuecomment-[0-9]+$")
+AUTHORITY_RECEIPT_BLOCK = re.compile(
+    r"<!--\s*positioning-cost-authority-receipt\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
+AUTHORITY_RECEIPT_FIELDS = {
+    "schema_version",
+    "evidence_kind",
+    "subject_sha256",
+    "actor_identity",
+    "observed_at",
+    "limitations",
+}
+AUTHORITY_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
+TRUSTED_MODEL_REVIEWERS = {"chatgpt-codex-connector", "coderabbitai"}
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
 ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
@@ -38,7 +56,10 @@ ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window
 POPULATION_FIELDS = {
     "schema_version",
     "source_id",
+    "source_artifact",
     "source_sha256",
+    "source_receipt_url",
+    "source_receipt_sha256",
     "source_manifest",
     "window_start",
     "window_end",
@@ -50,8 +71,8 @@ POPULATION_FIELDS = {
     "selection_seed_sha256",
     "exclusion_counts",
 }
-POPULATION_SOURCE_FIELDS = {"schema_version", "source_id", "window_start", "window_end", "records"}
-POPULATION_SOURCE_RECORD_FIELDS = {"sample_id", "eligible", "exclusion_reason"}
+POPULATION_SOURCE_FIELDS = {"schema_version", "provenance", "source_id", "window_start", "window_end", "records"}
+POPULATION_SOURCE_RECORD_FIELDS = {"sample_id", "author_identity", "eligible", "exclusion_reason"}
 SELECTION_METHODS = {"census", "deterministic_hash_sample"}
 SELECTION_RULES = {
     "census": "census of every eligible public-safe sample_id",
@@ -74,6 +95,8 @@ MODEL_RATE_FIELDS = {
     "schema_version",
     "source_artifact",
     "source_sha256",
+    "source_receipt_url",
+    "source_receipt_sha256",
     "source_record_id",
     "model_id",
     "model_tier",
@@ -85,7 +108,7 @@ MODEL_RATE_FIELDS = {
     "formula",
     "calculated_cost_usd",
 }
-MODEL_RATE_SOURCE_FIELDS = {"schema_version", "source_id", "source_url", "observed_at", "records"}
+MODEL_RATE_SOURCE_FIELDS = {"schema_version", "provenance", "source_id", "source_url", "observed_at", "records"}
 MODEL_RATE_SOURCE_RECORD_FIELDS = {
     "record_id",
     "model_id",
@@ -96,6 +119,18 @@ MODEL_RATE_SOURCE_RECORD_FIELDS = {
 MODEL_RATE_FORMULA = (
     "((input_units * input_rate_usd_per_million) + (output_units * output_rate_usd_per_million)) / 1000000"
 )
+REVIEW_FIELDS = {
+    "schema_version",
+    "reviewer_class",
+    "reviewer_identity",
+    "observed_at",
+    "data_digest",
+    "population_digest",
+    "verdict",
+    "limitations",
+    "authority_receipt_url",
+    "authority_receipt_sha256",
+}
 
 
 def _canonical_digest(payload: dict[str, Any]) -> str:
@@ -147,6 +182,80 @@ def _credential_free_https_url(value: object) -> bool:
     )
 
 
+def _verify_authority_receipt(
+    receipt_url: object,
+    receipt_sha256: object,
+    *,
+    evidence_kind: str,
+    subject_sha256: object,
+    expected_actor: str | None = None,
+    require_trusted_association: bool = False,
+) -> tuple[str, str]:
+    if not isinstance(receipt_url, str) or not AUTHORITY_RECEIPT_URL.fullmatch(receipt_url):
+        raise ValueError("authority receipt URL must be an immutable PSP-P05-W03 issue comment")
+    if not _lower_sha256(receipt_sha256):
+        raise ValueError("authority receipt requires a lowercase SHA-256")
+    if not _lower_sha256(subject_sha256):
+        raise ValueError("authority receipt subject requires a lowercase SHA-256")
+    comment_id = receipt_url.rsplit("#issuecomment-", 1)[1]
+    request = Request(
+        f"https://api.github.com/repos/organvm/limen/issues/comments/{comment_id}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "limen-positioning-cost-failure-reproduction",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urlopen(request, timeout=30) as response:
+        raw_comment = response.read(1_048_577)
+    if len(raw_comment) > 1_048_576:
+        raise ValueError("authority receipt comment exceeds the bounded response size")
+    comment = json.loads(raw_comment)
+    if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
+        raise ValueError("authority receipt comment identity differs from its immutable URL")
+    author = comment.get("user")
+    login = author.get("login") if isinstance(author, dict) else None
+    association = comment.get("author_association")
+    if not isinstance(login, str) or not login:
+        raise ValueError("authority receipt comment has no authenticated actor")
+    if expected_actor is not None and login != expected_actor:
+        raise ValueError("authority receipt actor differs from the bound reviewer identity")
+    if require_trusted_association and association not in AUTHORITY_ASSOCIATIONS:
+        raise ValueError("authority receipt actor is not an authorized repository actor")
+    body = comment.get("body")
+    matches = AUTHORITY_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
+    if len(matches) != 1:
+        raise ValueError("authority comment must contain exactly one marked receipt")
+    receipt = json.loads(matches[0])
+    if not isinstance(receipt, dict) or set(receipt) != AUTHORITY_RECEIPT_FIELDS:
+        raise ValueError("authority receipt has an invalid exact schema")
+    if receipt.get("schema_version") != AUTHORITY_RECEIPT_SCHEMA:
+        raise ValueError("authority receipt has an unsupported schema")
+    if receipt.get("evidence_kind") != evidence_kind or receipt.get("subject_sha256") != subject_sha256:
+        raise ValueError("authority receipt does not bind the exact evidence subject")
+    if receipt.get("actor_identity") != login:
+        raise ValueError("authority receipt actor differs from the authenticated comment actor")
+    observed_at = receipt.get("observed_at")
+    try:
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if observed.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError) as exc:
+        raise ValueError("authority receipt observed_at must be RFC3339 with a timezone") from exc
+    if observed > datetime.now(timezone.utc):
+        raise ValueError("authority receipt cannot be future-dated")
+    limitations = receipt.get("limitations")
+    if not (
+        isinstance(limitations, list)
+        and bool(limitations)
+        and all(isinstance(value, str) and value.strip() and "\0" not in value for value in limitations)
+    ):
+        raise ValueError("authority receipt limitations must be public-safe text")
+    if _canonical_digest(receipt) != receipt_sha256:
+        raise ValueError("authority receipt digest differs from the marked receipt")
+    return login, str(association)
+
+
 def _safe_tracked_artifact(value: object) -> Path | None:
     if not isinstance(value, str) or not value.strip() or value != value.strip() or "\0" in value:
         return None
@@ -161,7 +270,12 @@ def _safe_tracked_artifact(value: object) -> Path | None:
     return candidate if candidate.is_file() else None
 
 
-def _model_rate_source_record(detail: dict[str, Any], index: int, errors: list[str]) -> dict[str, Any] | None:
+def _model_rate_source_record(
+    detail: dict[str, Any],
+    index: int,
+    errors: list[str],
+    provenance: object,
+) -> dict[str, Any] | None:
     artifact = _safe_tracked_artifact(detail.get("source_artifact"))
     if artifact is None:
         errors.append(f"row {index} model rate basis requires a safe tracked rate artifact")
@@ -188,10 +302,25 @@ def _model_rate_source_record(detail: dict[str, Any], index: int, errors: list[s
         return None
     if source.get("schema_version") != MODEL_RATE_SOURCE_SCHEMA:
         errors.append(f"row {index} model rate source artifact has an unsupported schema")
+    if source.get("provenance") != provenance:
+        errors.append(f"row {index} model rate source provenance differs from the sample provenance")
     if not isinstance(source.get("source_id"), str) or not source["source_id"].strip() or "\0" in source["source_id"]:
         errors.append(f"row {index} model rate source artifact requires a public-safe source_id")
     if not _credential_free_https_url(source.get("source_url")):
         errors.append(f"row {index} model rate source artifact requires a credential-free HTTPS source")
+    if provenance == "public_safe_observed":
+        try:
+            _verify_authority_receipt(
+                detail.get("source_receipt_url"),
+                detail.get("source_receipt_sha256"),
+                evidence_kind="model_rate_source",
+                subject_sha256=detail.get("source_sha256"),
+                require_trusted_association=True,
+            )
+        except (OSError, ValueError) as exc:
+            errors.append(f"row {index} model rate source authority failed closed: {exc}")
+    elif detail.get("source_receipt_url") is not None or detail.get("source_receipt_sha256") is not None:
+        errors.append(f"row {index} synthetic model rate source must not declare an authority receipt")
     observed_at = source.get("observed_at")
     try:
         observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
@@ -234,13 +363,41 @@ def _model_rate_source_record(detail: dict[str, Any], index: int, errors: list[s
     return selected
 
 
-def _validate_population_source(population: dict[str, Any], errors: list[str]) -> tuple[list[str], dict[str, int]]:
+def _validate_population_source(
+    population: dict[str, Any],
+    provenance: object,
+    errors: list[str],
+) -> tuple[list[str], dict[str, int]]:
     source = population.get("source_manifest")
     if not isinstance(source, dict) or set(source) != POPULATION_SOURCE_FIELDS:
         errors.append("sample population requires an exact public-safe source manifest")
         return [], {}
+    artifact = _safe_tracked_artifact(population.get("source_artifact"))
+    artifact_source: object = None
+    if artifact is None:
+        errors.append("sample population requires a safe tracked authoritative source artifact")
+    else:
+        try:
+            raw = artifact.read_bytes()
+        except OSError as exc:
+            errors.append(f"sample population source artifact is unreadable: {exc}")
+        else:
+            if len(raw) > 1_048_576:
+                errors.append("sample population source artifact exceeds the bounded size")
+            if not _lower_sha256(population.get("source_sha256")):
+                errors.append("sample population requires a lowercase source SHA-256")
+            elif hashlib.sha256(raw).hexdigest() != population.get("source_sha256"):
+                errors.append("sample population source SHA-256 differs from its tracked artifact")
+            try:
+                artifact_source = json.loads(raw)
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                errors.append(f"sample population source artifact is invalid JSON: {exc}")
+    if artifact_source != source:
+        errors.append("sample population source manifest differs from its tracked authoritative artifact")
     if source.get("schema_version") != POPULATION_SOURCE_SCHEMA:
         errors.append("sample population source manifest has an unsupported schema")
+    if source.get("provenance") != provenance:
+        errors.append("sample population source provenance differs from the sample provenance")
     if source.get("source_id") != population.get("source_id"):
         errors.append("sample population source manifest identity differs from source_id")
     if source.get("window_start") != population.get("window_start") or source.get("window_end") != population.get(
@@ -264,6 +421,9 @@ def _validate_population_source(population: dict[str, Any], errors: list[str]) -
             errors.append(f"sample population source record {index} requires a unique normalized sample_id")
             continue
         seen.add(normalized)
+        author_identity = record.get("author_identity")
+        if not isinstance(author_identity, str) or not author_identity.strip() or "\0" in author_identity:
+            errors.append(f"sample population source record {index} requires a public-safe author identity")
         eligible = record.get("eligible")
         reason = record.get("exclusion_reason")
         if not isinstance(eligible, bool):
@@ -276,8 +436,19 @@ def _validate_population_source(population: dict[str, Any], errors: list[str]) -
             errors.append(f"ineligible source record {index} requires a public-safe exclusion reason")
         else:
             exclusion_counts[reason] = exclusion_counts.get(reason, 0) + 1
-    if _lower_sha256(population.get("source_sha256")) and population.get("source_sha256") != _canonical_digest(source):
-        errors.append("sample population source SHA-256 does not bind the exact source manifest")
+    if provenance == "public_safe_observed":
+        try:
+            _verify_authority_receipt(
+                population.get("source_receipt_url"),
+                population.get("source_receipt_sha256"),
+                evidence_kind="population_manifest",
+                subject_sha256=population.get("source_sha256"),
+                require_trusted_association=True,
+            )
+        except (OSError, ValueError) as exc:
+            errors.append(f"sample population source authority failed closed: {exc}")
+    elif population.get("source_receipt_url") is not None or population.get("source_receipt_sha256") is not None:
+        errors.append("synthetic population source must not declare an authority receipt")
     return eligible_ids, exclusion_counts
 
 
@@ -301,7 +472,7 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     ):
         errors.append("sample population window must exactly match the observed sample window")
 
-    eligible_ids, derived_exclusions = _validate_population_source(population, errors)
+    eligible_ids, derived_exclusions = _validate_population_source(population, payload.get("provenance"), errors)
     counts: dict[str, int] = {}
     for field in ("population_count", "eligible_count", "selected_count"):
         value = population.get(field)
@@ -373,7 +544,7 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     return population
 
 
-def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str]) -> None:
+def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str], provenance: object) -> None:
     basis = row.get("model_cost_basis")
     detail = row.get("model_cost_rate_basis")
     model_cost = row.get("model_cost_usd")
@@ -396,7 +567,7 @@ def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str
         value = detail.get(field)
         if not isinstance(value, str) or not value.strip() or "\0" in value:
             errors.append(f"row {index} model rate basis requires a nonblank {field}")
-    source_record = _model_rate_source_record(detail, index, errors)
+    source_record = _model_rate_source_record(detail, index, errors, provenance)
     rate_observed_at = detail.get("rate_observed_at")
     try:
         parsed_rate = datetime.fromisoformat(rate_observed_at.replace("Z", "+00:00"))
@@ -537,7 +708,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
             not isinstance(retry_count, int) or isinstance(retry_count, bool) or retry_count < 0
         ):
             errors.append(f"row {index} field retry_count must be null or a non-negative integer")
-        _validate_model_rate_basis(row, index, errors)
+        _validate_model_rate_basis(row, index, errors, provenance)
         failure_class = row.get("failure_class")
         if terminal_state == "done":
             if failure_class is not None:
@@ -659,20 +830,10 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
             errors.append("analysis reproduction_command argv does not exactly replay the bound artifacts")
 
     verdict = analysis.get("review_verdict")
-    verdict_fields = {
-        "schema_version",
-        "reviewer_class",
-        "reviewer_identity",
-        "observed_at",
-        "data_digest",
-        "population_digest",
-        "verdict",
-        "limitations",
-    }
     if not isinstance(verdict, dict):
         errors.append("analysis requires a structured independent review_verdict")
         return errors
-    if set(verdict) != verdict_fields:
+    if set(verdict) != REVIEW_FIELDS:
         errors.append("analysis review_verdict must use the exact contract fields")
     if verdict.get("schema_version") != REVIEW_SCHEMA:
         errors.append("analysis review_verdict has an unsupported schema")
@@ -681,6 +842,19 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     reviewer_identity = verdict.get("reviewer_identity")
     if not isinstance(reviewer_identity, str) or not reviewer_identity.strip() or "\0" in reviewer_identity:
         errors.append("analysis review_verdict requires a nonblank reviewer identity")
+    source_manifest = population.get("source_manifest") if isinstance(population, dict) else None
+    source_records = source_manifest.get("records") if isinstance(source_manifest, dict) else None
+    author_identities = (
+        {
+            record.get("author_identity")
+            for record in source_records
+            if isinstance(record, dict) and isinstance(record.get("author_identity"), str)
+        }
+        if isinstance(source_records, list)
+        else set()
+    )
+    if reviewer_identity in author_identities:
+        errors.append("analysis review_verdict reviewer must differ from every sample author")
     observed_at = verdict.get("observed_at")
     reviewed_at: datetime | None = None
     try:
@@ -717,6 +891,28 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         errors.append("analysis review_verdict requires nonblank public-safe limitations")
     if analysis.get("provenance") == "synthetic" and verdict.get("verdict") == "publishable_public_safe":
         errors.append("synthetic cost samples cannot receive a publishable review verdict")
+    if analysis.get("provenance") == "public_safe_observed":
+        review_subject = {
+            key: value
+            for key, value in verdict.items()
+            if key not in {"authority_receipt_url", "authority_receipt_sha256"}
+        }
+        try:
+            authenticated_login, authenticated_association = _verify_authority_receipt(
+                verdict.get("authority_receipt_url"),
+                verdict.get("authority_receipt_sha256"),
+                evidence_kind="independent_review",
+                subject_sha256=_canonical_digest(review_subject),
+                expected_actor=reviewer_identity if isinstance(reviewer_identity, str) else None,
+            )
+        except (OSError, ValueError) as exc:
+            errors.append(f"analysis independent review authority failed closed: {exc}")
+        else:
+            if verdict.get("reviewer_class") == "independent_model":
+                if authenticated_login not in TRUSTED_MODEL_REVIEWERS:
+                    errors.append("analysis independent model review is not owned by a trusted model reviewer")
+            elif authenticated_association not in AUTHORITY_ASSOCIATIONS:
+                errors.append("analysis independent human review is not owned by an authorized collaborator")
     if isinstance(reproduction, dict):
         review_artifact = reproduction.get("review_artifact")
         if not _public_artifact_path(review_artifact):

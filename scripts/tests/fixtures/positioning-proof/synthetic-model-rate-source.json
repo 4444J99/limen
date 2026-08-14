@@ -1,5 +1,6 @@
 {
   "schema_version": "limen.positioning_model_rate_source.v1",
+  "provenance": "synthetic",
   "source_id": "synthetic-public-safe-model-rate-source",
   "source_url": "https://example.com/synthetic-public-safe-model-rate-receipt",
   "observed_at": "2026-07-31T12:00:00Z",

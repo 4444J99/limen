@@ -64,12 +64,14 @@ def independent_cost_review(payload: dict[str, object]) -> dict[str, object]:
     return {
         "schema_version": COST.REVIEW_SCHEMA,
         "reviewer_class": "independent_model",
-        "reviewer_identity": "hermetic-independent-reviewer",
+        "reviewer_identity": "chatgpt-codex-connector",
         "observed_at": "2026-08-08T12:00:00Z",
         "data_digest": COST._canonical_digest(payload),
         "population_digest": COST._canonical_digest(payload["population"]),
         "verdict": "publishable_public_safe",
         "limitations": ["Hermetic contract fixture only; not external publication authority."],
+        "authority_receipt_url": None,
+        "authority_receipt_sha256": None,
     }
 
 
@@ -151,7 +153,38 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_public_safe_observed_cost_sample_can_be_regenerated(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["provenance"] = "public_safe_observed"
-        result = reproduce_cost(payload, reviewed=True)
+        payload["population"]["source_manifest"]["provenance"] = "public_safe_observed"
+        payload["population"]["source_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+        payload["population"]["source_receipt_sha256"] = "b" * 64
+        for row in payload["rows"]:
+            row["model_cost_basis"] = "actual"
+            row.pop("model_cost_rate_basis")
+        with tempfile.TemporaryDirectory() as directory:
+            population_artifact = Path(directory) / "population.json"
+            population_raw = json.dumps(
+                payload["population"]["source_manifest"], sort_keys=True, separators=(",", ":")
+            ).encode()
+            population_artifact.write_bytes(population_raw)
+            payload["population"]["source_sha256"] = COST.hashlib.sha256(population_raw).hexdigest()
+            with mock.patch.object(COST, "_safe_tracked_artifact", return_value=population_artifact):
+                with mock.patch.object(
+                    COST,
+                    "_verify_authority_receipt",
+                    side_effect=lambda *_args, **kwargs: (
+                        ("chatgpt-codex-connector", "NONE")
+                        if kwargs["evidence_kind"] == "independent_review"
+                        else ("4444J99", "MEMBER")
+                    ),
+                ):
+                    review = independent_cost_review(payload)
+                    review["authority_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+                    review["authority_receipt_sha256"] = "a" * 64
+                    result = COST.reproduce(
+                        payload,
+                        input_artifact=COST_INPUT_ARTIFACT,
+                        review_artifact=COST_REVIEW_ARTIFACT,
+                        review_verdict=review,
+                    )
         self.assertEqual("regenerated", result["status"])
         self.assertTrue(result["publication_eligible"])
         self.assertEqual("publishable_public_safe", result["review_verdict"]["verdict"])
@@ -210,7 +243,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["population"]["source_manifest"]["records"][0]["sample_id"] = "unbound-id"
         errors = COST.validate_sample(payload)
-        self.assertTrue(any("source SHA-256" in error for error in errors), errors)
+        self.assertTrue(any("tracked authoritative artifact" in error for error in errors), errors)
 
     def test_estimated_model_cost_requires_a_reproducible_rate_basis(self) -> None:
         for mutation, expected in (
@@ -232,6 +265,54 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 errors = COST.validate_sample(payload)
                 self.assertTrue(any(expected in error for error in errors), errors)
 
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("model rate source provenance" in error for error in errors), errors)
+
+    def test_cost_authority_receipt_is_bound_to_an_authenticated_comment_actor(self) -> None:
+        subject_sha256 = "c" * 64
+        receipt = {
+            "schema_version": COST.AUTHORITY_RECEIPT_SCHEMA,
+            "evidence_kind": "population_manifest",
+            "subject_sha256": subject_sha256,
+            "actor_identity": "4444J99",
+            "observed_at": "2026-08-08T12:00:00Z",
+            "limitations": ["Hermetic authentication fixture only."],
+        }
+        receipt_sha256 = COST._canonical_digest(receipt)
+        receipt_url = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+        comment = {
+            "html_url": receipt_url,
+            "user": {"login": "4444J99"},
+            "author_association": "MEMBER",
+            "body": "<!-- positioning-cost-authority-receipt -->\n```json\n" + json.dumps(receipt) + "\n```",
+        }
+        response = mock.MagicMock()
+        response.read.return_value = json.dumps(comment).encode()
+        response.__enter__.return_value = response
+        with mock.patch.object(COST, "urlopen", return_value=response):
+            actor, association = COST._verify_authority_receipt(
+                receipt_url,
+                receipt_sha256,
+                evidence_kind="population_manifest",
+                subject_sha256=subject_sha256,
+                require_trusted_association=True,
+            )
+        self.assertEqual(("4444J99", "MEMBER"), (actor, association))
+
+        comment["author_association"] = "NONE"
+        response.read.return_value = json.dumps(comment).encode()
+        with mock.patch.object(COST, "urlopen", return_value=response):
+            with self.assertRaisesRegex(ValueError, "authorized repository actor"):
+                COST._verify_authority_receipt(
+                    receipt_url,
+                    receipt_sha256,
+                    evidence_kind="population_manifest",
+                    subject_sha256=subject_sha256,
+                    require_trusted_association=True,
+                )
+
     def test_cost_failure_review_binds_population_and_cannot_be_future_dated(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["provenance"] = "public_safe_observed"
@@ -250,6 +331,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
 
+        self_review = independent_cost_review(payload)
+        self_review["reviewer_identity"] = payload["population"]["source_manifest"]["records"][0]["author_identity"]
+        result = COST.reproduce(
+            payload,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=self_review,
+        )
+        self.assertTrue(any("differ from every sample author" in error for error in result["errors"]))
+
     def test_cost_failure_rejects_future_observations_and_predating_reviews(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["provenance"] = "public_safe_observed"
@@ -266,7 +357,6 @@ class PositioningProofRunnerTest(unittest.TestCase):
         payload["window_end"] = "2099-01-01"
         payload["population"]["window_end"] = "2099-01-01"
         payload["population"]["source_manifest"]["window_end"] = "2099-01-01"
-        payload["population"]["source_sha256"] = COST._canonical_digest(payload["population"]["source_manifest"])
         payload["rows"][0]["observed_at"] = "2099-01-01T00:00:00Z"
         errors = COST.validate_sample(payload)
         self.assertTrue(any("cannot end in the future" in error for error in errors), errors)

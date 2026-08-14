@@ -1,0 +1,27 @@
+{
+  "schema_version": "limen.positioning_cost_failure_population_source.v1",
+  "provenance": "synthetic",
+  "source_id": "synthetic-public-safe-terminal-receipts",
+  "window_start": "2026-08-01",
+  "window_end": "2026-08-07",
+  "records": [
+    {
+      "sample_id": "synthetic-001",
+      "author_identity": "synthetic-author-alpha",
+      "eligible": true,
+      "exclusion_reason": null
+    },
+    {
+      "sample_id": "synthetic-002",
+      "author_identity": "synthetic-author-beta",
+      "eligible": true,
+      "exclusion_reason": null
+    },
+    {
+      "sample_id": "synthetic-003",
+      "author_identity": "synthetic-author-gamma",
+      "eligible": true,
+      "exclusion_reason": null
+    }
+  ]
+}

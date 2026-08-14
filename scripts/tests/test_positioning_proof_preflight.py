@@ -532,6 +532,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([claim_id], matched)
         self.assertEqual([], drifted)
 
+        short_expected = {(surface, "SHORT-CLAIM"): {"claim_text": "Zero external human contributors"}}
+        matched, drifted = MODULE._surface_claim_scan(
+            "One hundred external human contributors",
+            short_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["SHORT-CLAIM"], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
@@ -541,6 +550,57 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v1")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
+
+    def test_live_surface_inspection_binds_the_exact_raw_response_digest(self) -> None:
+        surface = "portfolio_front_door"
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        receipt_content = b"Bounded proof claim\n"
+        live_content = b"<html><body>Bounded proof claim</body></html>"
+        self.contract["surface_audit_model"]["surfaces"] = [surface]
+        self.contract["surface_audit_model"]["surface_sources"] = {
+            surface: {
+                "source_kind": "live_receipt",
+                "source_locator": "https://example.com/public-proof",
+                "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
+                "extractor": "visible_text_v1",
+            }
+        }
+        inspection = {
+            "schema_version": MODULE.SURFACE_INSPECTION_SCHEMA,
+            "inspection_id": "inspection-public-proof",
+            "surface": surface,
+            "source_kind": "live_receipt",
+            "source_locator": "https://example.com/public-proof",
+            "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
+            "extractor": "visible_text_v1",
+            "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "exact_head": head,
+            "blob_sha1": "a" * 40,
+            "raw_response_sha256": "0" * 64,
+            "extracted_text_sha256": hashlib.sha256(receipt_content).hexdigest(),
+            "scanner": MODULE.SURFACE_SCANNER,
+            "scanner_version": MODULE.SURFACE_SCANNER_VERSION,
+            "matched_claim_ids": [],
+        }
+        with mock.patch.object(
+            MODULE,
+            "_read_git_object_bytes",
+            return_value=(receipt_content, "a" * 40),
+        ):
+            with mock.patch.object(MODULE, "_fetch_bounded_public_surface", return_value=live_content):
+                errors, _resolved = MODULE._surface_inspection_errors(
+                    self.contract,
+                    {surface: inspection},
+                    {},
+                    ROOT,
+                )
+        self.assertTrue(any("raw response differs" in error for error in errors), errors)
 
     def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
         self.assertTrue(
@@ -553,6 +613,30 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ):
             with self.subTest(comment=comment):
                 self.assertFalse(MODULE._phase_comment_authorized(comment))
+
+    def test_live_w07_verifier_authenticates_the_receipt_comment_actor(self) -> None:
+        receipt_url = "https://github.com/organvm/limen/issues/2188#issuecomment-1"
+        completed = subprocess.CompletedProcess(
+            [],
+            0,
+            json.dumps(
+                {
+                    "status": "pass",
+                    "work_id": "PSP-P03-W07",
+                    "receipt_url": receipt_url,
+                    "receipt_sha256": "a" * 64,
+                }
+            ),
+            "",
+        )
+        with mock.patch.object(MODULE.subprocess, "run", return_value=completed):
+            with mock.patch.object(
+                MODULE,
+                "_fetch_github_issue_comment",
+                return_value={"user": {"login": "outside-user"}, "author_association": "NONE"},
+            ):
+                with self.assertRaisesRegex(ValueError, "authorized repository actor"):
+                    MODULE._live_w07_verification(ROOT)
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)

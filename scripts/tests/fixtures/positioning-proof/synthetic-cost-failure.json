@@ -6,16 +6,35 @@
   "population": {
     "schema_version": "limen.positioning_cost_failure_population.v1",
     "source_id": "synthetic-public-safe-terminal-receipts",
-    "source_sha256": "fffb5f4a4c6b0e4cdde97579707a3dee64a9912d4897f0b5b18667bbf7aac480",
+    "source_artifact": "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure-population-source.json",
+    "source_sha256": "85ab764fa4d2cc82f8f8314285b6be9f032361eb226fc042620d9a2537cccbd7",
+    "source_receipt_url": null,
+    "source_receipt_sha256": null,
     "source_manifest": {
       "schema_version": "limen.positioning_cost_failure_population_source.v1",
+      "provenance": "synthetic",
       "source_id": "synthetic-public-safe-terminal-receipts",
       "window_start": "2026-08-01",
       "window_end": "2026-08-07",
       "records": [
-        {"sample_id": "synthetic-001", "eligible": true, "exclusion_reason": null},
-        {"sample_id": "synthetic-002", "eligible": true, "exclusion_reason": null},
-        {"sample_id": "synthetic-003", "eligible": true, "exclusion_reason": null}
+        {
+          "sample_id": "synthetic-001",
+          "author_identity": "synthetic-author-alpha",
+          "eligible": true,
+          "exclusion_reason": null
+        },
+        {
+          "sample_id": "synthetic-002",
+          "author_identity": "synthetic-author-beta",
+          "eligible": true,
+          "exclusion_reason": null
+        },
+        {
+          "sample_id": "synthetic-003",
+          "author_identity": "synthetic-author-gamma",
+          "eligible": true,
+          "exclusion_reason": null
+        }
       ]
     },
     "window_start": "2026-08-01",
@@ -38,7 +57,9 @@
       "model_cost_rate_basis": {
         "schema_version": "limen.positioning_model_cost_rate_basis.v1",
         "source_artifact": "scripts/tests/fixtures/positioning-proof/synthetic-model-rate-source.json",
-        "source_sha256": "5a619a2869839f39cf62abe98ad7b7063be6317a55cf23e334d47ea3324d4f1e",
+        "source_sha256": "504aeb9c9c257c253627a1724dfe30ebfa0fc277c1a2b6b38e66301bc0246719",
+        "source_receipt_url": null,
+        "source_receipt_sha256": null,
         "source_record_id": "synthetic-model-standard",
         "model_id": "synthetic-model",
         "model_tier": "standard",
@@ -65,7 +86,9 @@
       "model_cost_rate_basis": {
         "schema_version": "limen.positioning_model_cost_rate_basis.v1",
         "source_artifact": "scripts/tests/fixtures/positioning-proof/synthetic-model-rate-source.json",
-        "source_sha256": "5a619a2869839f39cf62abe98ad7b7063be6317a55cf23e334d47ea3324d4f1e",
+        "source_sha256": "504aeb9c9c257c253627a1724dfe30ebfa0fc277c1a2b6b38e66301bc0246719",
+        "source_receipt_url": null,
+        "source_receipt_sha256": null,
         "source_record_id": "synthetic-model-standard",
         "model_id": "synthetic-model",
         "model_tier": "standard",
@@ -92,7 +115,9 @@
       "model_cost_rate_basis": {
         "schema_version": "limen.positioning_model_cost_rate_basis.v1",
         "source_artifact": "scripts/tests/fixtures/positioning-proof/synthetic-model-rate-source.json",
-        "source_sha256": "5a619a2869839f39cf62abe98ad7b7063be6317a55cf23e334d47ea3324d4f1e",
+        "source_sha256": "504aeb9c9c257c253627a1724dfe30ebfa0fc277c1a2b6b38e66301bc0246719",
+        "source_receipt_url": null,
+        "source_receipt_sha256": null,
         "source_record_id": "synthetic-model-standard",
         "model_id": "synthetic-model",
         "model_tier": "standard",

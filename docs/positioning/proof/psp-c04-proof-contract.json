@@ -278,7 +278,7 @@
     "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action", "inspection_id"],
     "inspection_schema": "limen.positioning_surface_inspection.v1",
     "inspection_max_age_hours": 24,
-    "inspection_rule": "Every canonical surface binds the current authoritative Limen default head and one exact tracked blob or canonical visible-text receipt; live observations bind both raw-response and extracted-text digests, reproduce current visible claims through the contract-owned extractor, reject material claim variants with scanner v2, and make row presence equal the exact canonical matches.",
+    "inspection_rule": "Every canonical surface binds the current authoritative Limen default head and one exact tracked blob or canonical visible-text receipt; live observations bind both raw-response and extracted-text digests, reproduce current visible claims through the contract-owned extractor, reject material claim variants with scanner v3, and make row presence equal the exact canonical matches.",
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
   },
   "cost_failure_reproduction": {
@@ -288,12 +288,12 @@
     "input_schema": "limen.positioning_cost_failure_sample.v1",
     "review_schema": "limen.positioning_cost_failure_review.v1",
     "independent_reviewer_classes": ["independent_human", "independent_model", "consented_collaborator"],
-    "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "exact source manifest with every public-safe population identity and eligibility disposition", "contract-owned deterministic hash selection and seed or complete census", "human-time sampling method", "tracked immutable rate artifact with exact model and tier, token quantities, exact estimation formula, or explicit unknown"],
+    "inputs": ["broker task and run receipts", "model-tier selection receipts", "retry and terminal-state events", "exact tracked source manifest with every public-safe population identity, author identity, and eligibility disposition plus an authenticated immutable #2200 authority receipt for public observations", "contract-owned deterministic hash selection and seed or complete census", "human-time sampling method", "tracked rate artifact with exact public or synthetic provenance, exact model and tier, token quantities, exact estimation formula, and an authenticated immutable #2200 authority receipt for public observations, or explicit unknown"],
     "required_dimensions": ["model cost", "human time", "retry cost", "failed work", "blocked work", "verification cost"],
     "public_failure_classes": ["dependency_failure", "external_gate", "human_gate", "policy_failure", "predicate_failure", "resource_limit", "verification_failure"],
-    "required_outputs": ["date window", "source population and selection contract", "source-manifest digest and reproduced deterministic membership", "reproducible estimated-model-rate basis", "population digest", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "review verdict bound to both digests"],
+    "required_outputs": ["date window", "source population and selection contract", "authoritative tracked source-manifest digest and reproduced deterministic membership", "authenticated reproducible estimated-model-rate basis", "population digest", "denominator", "distribution", "failure taxonomy", "missingness", "data digest", "reproduction command", "authenticated independent review verdict bound to both digests and a reviewer identity distinct from every sample author"],
     "forbidden_shortcuts": ["single average without distribution", "treating failed or blocked work as zero cost", "converting list price to actual spend", "publishing private spend without approval"],
-    "publication_rule": "Withhold the analysis when attribution, sampling, privacy, or denominator checks fail."
+    "publication_rule": "Withhold the analysis when attribution, authenticated authority, reviewer independence, sampling, privacy, or denominator checks fail."
   },
   "exact_head_receipt_plan": {
     "runner": "python3 scripts/positioning-flagship-receipt.py --request <request.json>",

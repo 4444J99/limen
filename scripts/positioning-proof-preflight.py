@@ -43,7 +43,7 @@ ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
 SURFACE_SCANNER = "canonical_claim_drift"
-SURFACE_SCANNER_VERSION = "2"
+SURFACE_SCANNER_VERSION = "3"
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
 DEMO_RECORD_FIELDS = {
@@ -1080,17 +1080,27 @@ def _surface_claim_scan(
             if token not in _CLAIM_STOPWORDS and (len(token) >= 3 or token.isdigit())
         }
         canonical_sequence = canonical.split()
-        if len(canonical_tokens) < 5 or len(canonical_sequence) < 4:
+        if len(canonical_tokens) < 2 or len(canonical_sequence) < 3:
             continue
-        opening_trigrams = {
-            " ".join(canonical_sequence[index : index + 3]) for index in range(min(2, len(canonical_sequence) - 2))
-        }
+        if len(canonical_tokens) >= 5:
+            anchor_size = 3
+            canonical_anchors = {
+                " ".join(canonical_sequence[index : index + anchor_size])
+                for index in range(min(2, len(canonical_sequence) - anchor_size + 1))
+            }
+        else:
+            anchor_size = 3 if len(canonical_sequence) >= 4 else 2
+            canonical_anchors = {
+                " ".join(canonical_sequence[index : index + anchor_size])
+                for index in range(len(canonical_sequence) - anchor_size + 1)
+            }
         for segment in segments:
             segment_tokens = set(segment.split())
             overlap = canonical_tokens & segment_tokens
             coverage = len(overlap) / len(canonical_tokens)
-            anchored_variant = any(f" {trigram} " in f" {segment} " for trigram in opening_trigrams)
-            if len(overlap) >= 3 and coverage >= 0.5 and anchored_variant:
+            anchored_variant = any(f" {anchor} " in f" {segment} " for anchor in canonical_anchors)
+            minimum_overlap = min(3, len(canonical_tokens))
+            if len(overlap) >= minimum_overlap and coverage >= 0.5 and anchored_variant:
                 drifted.append(claim_id)
                 break
     return sorted(matched), sorted(set(drifted))
@@ -1311,6 +1321,12 @@ def _surface_inspection_errors(
                     except ValueError as exc:
                         errors.append(f"live surface canonical extraction failed: {surface}: {exc}")
                     else:
+                        if (
+                            isinstance(raw_response_sha256, str)
+                            and SHA256.fullmatch(raw_response_sha256)
+                            and hashlib.sha256(live_content).hexdigest() != raw_response_sha256
+                        ):
+                            errors.append(f"live surface raw response differs from the bound response: {surface}")
                         if (
                             isinstance(extracted_text_sha256, str)
                             and SHA256.fullmatch(extracted_text_sha256)
@@ -1706,6 +1722,12 @@ def _live_w07_verification(repository: Path) -> dict[str, Any]:
     value = json.loads(completed.stdout)
     if not isinstance(value, dict):
         raise ValueError("live PSP-P03-W07 verifier returned a non-object")
+    receipt_url = value.get("receipt_url")
+    if not isinstance(receipt_url, str) or not W07_RECEIPT_URL.fullmatch(receipt_url):
+        raise ValueError("live PSP-P03-W07 receipt URL is not an immutable canonical issue comment")
+    comment = _fetch_github_issue_comment(receipt_url, "PSP-P03-W07")
+    if not _phase_comment_authorized(comment):
+        raise ValueError("live PSP-P03-W07 receipt comment is not owned by an authorized repository actor")
     return value
 
 
@@ -1715,6 +1737,28 @@ def _phase_comment_authorized(comment: object) -> bool:
     author = comment.get("user")
     author_login = author.get("login") if isinstance(author, dict) else None
     return author_login in PHASE_RECEIPT_AUTHORS and comment.get("author_association") in PHASE_RECEIPT_ASSOCIATIONS
+
+
+def _fetch_github_issue_comment(receipt_url: str, label: str) -> dict[str, Any]:
+    comment_match = re.search(r"#issuecomment-([0-9]+)$", receipt_url)
+    if comment_match is None:
+        raise ValueError(f"live {label} receipt URL has no immutable comment identifier")
+    request = Request(
+        f"https://api.github.com/repos/organvm/limen/issues/comments/{comment_match.group(1)}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "limen-positioning-proof-preflight",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urlopen(request, timeout=30) as response:
+        raw_comment = response.read(1_048_577)
+    if len(raw_comment) > 1_048_576:
+        raise ValueError(f"live {label} receipt comment exceeds the bounded response size")
+    comment = json.loads(raw_comment)
+    if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
+        raise ValueError(f"live {label} receipt comment identity differs from the verifier result")
+    return comment
 
 
 def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
@@ -1735,24 +1779,7 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     receipt_url = value.get("receipt_url")
     if not isinstance(receipt_url, str) or not PHASE_RECEIPT_URLS[phase_id].fullmatch(receipt_url):
         raise ValueError(f"live {phase_id} receipt URL is not an immutable canonical issue comment")
-    comment_match = re.search(r"#issuecomment-([0-9]+)$", receipt_url)
-    if comment_match is None:
-        raise ValueError(f"live {phase_id} receipt URL has no immutable comment identifier")
-    request = Request(
-        f"https://api.github.com/repos/organvm/limen/issues/comments/{comment_match.group(1)}",
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "limen-positioning-proof-preflight",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-    )
-    with urlopen(request, timeout=30) as response:
-        raw_comment = response.read(1_048_577)
-    if len(raw_comment) > 1_048_576:
-        raise ValueError(f"live {phase_id} receipt comment exceeds the bounded response size")
-    comment = json.loads(raw_comment)
-    if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
-        raise ValueError(f"live {phase_id} receipt comment identity differs from the verifier result")
+    comment = _fetch_github_issue_comment(receipt_url, phase_id)
     if not _phase_comment_authorized(comment):
         raise ValueError(f"live {phase_id} receipt comment is not owned by an authorized repository actor")
     body = comment.get("body")
