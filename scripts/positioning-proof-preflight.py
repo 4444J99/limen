@@ -20,6 +20,10 @@ DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
+PHASE_RECEIPT_URLS = {
+    "PSP-P03": re.compile(r"^https://github\.com/organvm/limen/issues/2181#issuecomment-[0-9]+$"),
+    "PSP-P04": re.compile(r"^https://github\.com/organvm/limen/issues/2189#issuecomment-[0-9]+$"),
+}
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
@@ -106,6 +110,14 @@ EXPECTED_OFFER_BINDINGS = {
         "9240e1fc1142eca6ca58d792f09581e1b514e046",
         ["L3"],
     ),
+}
+EXPECTED_SURFACE_LEVELS = {
+    "portfolio_front_door": "L1",
+    "portfolio_flagship": "L2",
+    "resume": "L1",
+    "personal_profile": "L1",
+    "organization_profile": "L1",
+    "flagship_repository": "L2",
 }
 FORBIDDEN_DEMO_KEYS = {
     "credential",
@@ -426,6 +438,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
     surface_model = contract.get("surface_audit_model", {})
     if surface_model.get("claim_inventory_source") != "p02_claims_ledger":
         errors.append("surface audit must discover material claims from the accepted claims ledger")
+    if surface_model.get("surface_levels") != EXPECTED_SURFACE_LEVELS:
+        errors.append("surface audit must bind every public surface to its canonical disclosure level")
 
     demo = contract.get("synthetic_architecture_demo", {})
     if demo.get("status") != "contract_only_no_ui" or not demo.get("prohibited_inputs"):
@@ -704,7 +718,7 @@ def build_surface_audit_skeleton(contract: dict[str, Any]) -> list[dict[str, Any
                     "presence": "not_audited",
                     "source_ids": claim["source_ids"],
                     "observed_at": claim["observation_dates"],
-                    "status": "preflight_pending",
+                    "status": claim["status"],
                     "disclosure_level": claim["max_disclosure"],
                     "canonical_or_drift": "not_audited",
                     "contains_private_material": None,
@@ -814,6 +828,13 @@ def discover_material_claims(contract: dict[str, Any], repository: Path = ROOT) 
     return sorted(claims, key=lambda row: str(row["claim_id"]))
 
 
+def _disclosure_floor(value: object) -> int | None:
+    if not isinstance(value, str):
+        return None
+    levels = [int(match) for match in re.findall(r"\bL([123])\b", value.upper())]
+    return min(levels) if levels else None
+
+
 def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
     skeleton = build_surface_audit_skeleton(contract)
     expected_rows = {(row["surface"], row["claim_id"]): row for row in skeleton}
@@ -823,6 +844,7 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
     if not isinstance(supplied_rows, list):
         return {"status": "fail", "errors": ["surface manifest rows must be a list"], "coverage": {}}
     supplied: set[tuple[str, str]] = set()
+    surface_levels = contract.get("surface_audit_model", {}).get("surface_levels", {})
     for row in supplied_rows:
         if not isinstance(row, dict):
             errors.append("surface row must be an object")
@@ -866,6 +888,10 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                 errors.append(f"claim action differs from canonical inventory: {key[0]} / {key[1]}")
             if row.get("disclosure_level") != canonical.get("disclosure_level"):
                 errors.append(f"disclosure level differs from canonical inventory: {key[0]} / {key[1]}")
+            claim_floor = _disclosure_floor(canonical.get("disclosure_level"))
+            surface_floor = _disclosure_floor(surface_levels.get(key[0]) if isinstance(surface_levels, dict) else None)
+            if claim_floor is None or surface_floor is None or claim_floor > surface_floor:
+                errors.append(f"claim disclosure tier does not authorize this surface: {key[0]} / {key[1]}")
             if canonical.get("action") != "audit_canonical_wording":
                 errors.append(f"canonical claim is not eligible for public presence: {key[0]} / {key[1]}")
             if row.get("canonical_or_drift") != "canonical":
@@ -884,8 +910,8 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
                     valid_observations = False
             if not valid_observations or observed_at != canonical.get("observed_at"):
                 errors.append(f"observation dates differ from canonical evidence: {key[0]} / {key[1]}")
-            if row.get("status") in {"unsupported", "contradictory", "private", "stale"}:
-                errors.append(f"unsafe material claim: {key[0]} / {key[1]}")
+            if row.get("status") != canonical.get("status"):
+                errors.append(f"claim status differs from canonical inventory: {key[0]} / {key[1]}")
     missing = sorted(expected - supplied)
     unexpected = sorted(supplied - expected)
     if missing:
@@ -967,7 +993,13 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     return forbidden
 
 
-def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+def validate_external_objects(
+    contract: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    as_of: date | None = None,
+) -> dict[str, Any]:
+    as_of = as_of or datetime.now(timezone.utc).date()
     errors: list[str] = []
     if payload.get("outreach_performed") is not False:
         errors.append("preflight payload must prove no outreach")
@@ -1009,7 +1041,10 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         try:
             if not isinstance(observed_at, str):
                 raise ValueError
-            _parse_date(observed_at)
+            parsed_date = _parse_date(observed_at)
+            if parsed_date > as_of:
+                errors.append(f"validation object {index} date cannot be in the future")
+                valid_date = False
         except ValueError:
             errors.append(f"validation object {index} date must be ISO-8601")
             valid_date = False
@@ -1052,6 +1087,60 @@ def _live_w07_verification(repository: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("live PSP-P03-W07 verifier returned a non-object")
     return value
+
+
+def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-phase", phase_id],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise ValueError(f"live {phase_id} verifier did not pass: {detail}")
+    value = json.loads(completed.stdout)
+    if not isinstance(value, dict):
+        raise ValueError(f"live {phase_id} verifier returned a non-object")
+    return value
+
+
+def _validate_phase_receipt_bindings(
+    value: object,
+    repository: Path,
+    live_verifications: dict[str, dict[str, Any]] | None = None,
+) -> list[str]:
+    phases = tuple(PHASE_RECEIPT_URLS)
+    if not isinstance(value, dict) or set(value) != set(phases):
+        return ["closure receipt must bind exactly the PSP-P03 and PSP-P04 marked phase receipts"]
+    if live_verifications is None:
+        try:
+            live_verifications = {phase_id: _live_phase_verification(repository, phase_id) for phase_id in phases}
+        except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
+            return [str(exc)]
+    errors: list[str] = []
+    for phase_id in phases:
+        binding = value.get(phase_id)
+        observed = live_verifications.get(phase_id) if isinstance(live_verifications, dict) else None
+        if not isinstance(binding, dict) or set(binding) != {"receipt_url", "receipt_sha256"}:
+            errors.append(f"{phase_id} must bind exactly receipt_url and receipt_sha256")
+            continue
+        if not isinstance(observed, dict) or observed.get("status") != "pass" or observed.get("phase_id") != phase_id:
+            errors.append(f"live {phase_id} verification did not return pass")
+            continue
+        receipt_url = observed.get("receipt_url")
+        receipt_sha256 = observed.get("receipt_sha256")
+        if not isinstance(receipt_url, str) or not PHASE_RECEIPT_URLS[phase_id].fullmatch(receipt_url):
+            errors.append(f"live {phase_id} receipt URL is not an immutable canonical issue comment")
+        if not isinstance(receipt_sha256, str) or not SHA256.fullmatch(receipt_sha256):
+            errors.append(f"live {phase_id} receipt digest is not a lowercase SHA-256")
+        if binding.get("receipt_url") != receipt_url:
+            errors.append(f"{phase_id} receipt URL differs from the latest marked live phase receipt")
+        if binding.get("receipt_sha256") != receipt_sha256:
+            errors.append(f"{phase_id} receipt digest differs from the latest marked live phase receipt")
+    return errors
 
 
 def _git_blob(repository: Path, head: str, path: str) -> bytes:
@@ -1255,6 +1344,7 @@ def formalization_readiness(
     closure_receipt: dict[str, Any] | None = None,
     repository: Path = ROOT,
     w07_verification: dict[str, Any] | None = None,
+    phase_verifications: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("exact_head")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
@@ -1277,9 +1367,15 @@ def formalization_readiness(
             )
             if ancestry.returncode:
                 receipt_errors.append("final C03 head is not a locally proven descendant of the accepted head")
-        phases = closure_receipt.get("phase_predicates")
-        if not isinstance(phases, dict) or any(phases.get(phase) != "pass" for phase in ("PSP-P03", "PSP-P04")):
-            receipt_errors.append("PSP-P03 and PSP-P04 phase predicates must both pass")
+        if "phase_predicates" in closure_receipt:
+            receipt_errors.append("self-declared phase_predicates are not accepted as phase evidence")
+        receipt_errors.extend(
+            _validate_phase_receipt_bindings(
+                closure_receipt.get("phase_receipts"),
+                repository,
+                live_verifications=phase_verifications,
+            )
+        )
         receipt_errors.extend(
             _validate_w07_receipt_binding(
                 closure_receipt.get("w07_receipt"),
@@ -1393,7 +1489,7 @@ def main() -> int:
             payload = _load_optional_json(args.input)
             if payload is None:
                 raise ValueError("--mode external-validation requires --input")
-            result["validation"] = validate_external_objects(contract, payload)
+            result["validation"] = validate_external_objects(contract, payload, as_of=as_of)
             result["status"] = result["validation"]["status"]
         elif args.mode == "formalization":
             payload = _load_optional_json(args.input)

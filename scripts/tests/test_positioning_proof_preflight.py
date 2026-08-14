@@ -22,6 +22,27 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def setUp(self) -> None:
         self.contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
 
+    def _valid_phase_bindings(self) -> tuple[dict[str, object], dict[str, dict[str, object]]]:
+        bindings: dict[str, object] = {}
+        live: dict[str, dict[str, object]] = {}
+        for phase_id, issue_number, digest_character in (
+            ("PSP-P03", 2181, "a"),
+            ("PSP-P04", 2189, "b"),
+        ):
+            receipt_url = f"https://github.com/organvm/limen/issues/{issue_number}#issuecomment-1"
+            receipt_sha256 = digest_character * 64
+            bindings[phase_id] = {
+                "receipt_url": receipt_url,
+                "receipt_sha256": receipt_sha256,
+            }
+            live[phase_id] = {
+                "status": "pass",
+                "phase_id": phase_id,
+                "receipt_url": receipt_url,
+                "receipt_sha256": receipt_sha256,
+            }
+        return bindings, live
+
     def _passing_w07_payload(self) -> dict[str, object]:
         path = ROOT / "docs/positioning/program/w07_blinded_reader_response_template.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -298,7 +319,6 @@ class PositioningProofPreflightTest(unittest.TestCase):
             {
                 "presence": "present",
                 "canonical_or_drift": "canonical",
-                "status": "verified",
             }
         )
         present.pop("source_ids")
@@ -312,7 +332,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
         present = next(row for row in manifest_rows if row["action"] == "audit_canonical_wording")
-        present.update({"presence": "present", "canonical_or_drift": "drift", "status": "verified"})
+        present.update({"presence": "present", "canonical_or_drift": "drift"})
         result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("differs from canonical wording" in error for error in result["errors"]))
@@ -326,7 +346,6 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 {
                     "presence": "present",
                     "canonical_or_drift": "canonical",
-                    "status": "verified",
                     "observed_at": invalid,
                 }
             )
@@ -338,10 +357,32 @@ class PositioningProofPreflightTest(unittest.TestCase):
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
         present = next(row for row in manifest_rows if row["action"] == "withhold_or_remove")
-        present.update({"presence": "present", "canonical_or_drift": "canonical", "status": "verified"})
+        present.update({"presence": "present", "canonical_or_drift": "canonical"})
         result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("not eligible for public presence" in error for error in result["errors"]))
+
+    def test_surface_disclosure_tier_authorizes_placement(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = next(
+            row
+            for row in manifest_rows
+            if row["surface"] == "portfolio_front_door" and MODULE._disclosure_floor(row["disclosure_level"]) == 3
+        )
+        present.update({"presence": "present", "canonical_or_drift": "canonical"})
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("disclosure tier does not authorize" in error for error in result["errors"]))
+
+    def test_present_surface_claim_cannot_promote_canonical_status(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest_rows = [{**row, "presence": "absent", "contains_private_material": False} for row in rows]
+        present = next(row for row in manifest_rows if row["status"] != "verified")
+        present.update({"presence": "present", "canonical_or_drift": "canonical", "status": "verified"})
+        result = MODULE.audit_surface_manifest(self.contract, {"rows": manifest_rows})
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("status differs from canonical inventory" in error for error in result["errors"]))
 
     def test_synthetic_architecture_fixture_passes_and_private_keys_fail(self) -> None:
         fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
@@ -468,6 +509,25 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(1, result["substantive_public_count"])
         self.assertTrue(any("duplicates an existing object receipt" in error for error in result["errors"]))
 
+    def test_future_dated_external_objects_do_not_satisfy_the_minimum(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/future-{index}"
+            row["date"] = "2099-01-01"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+            as_of=date(2026, 8, 14),
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(0, result["substantive_public_count"])
+        self.assertTrue(any("date cannot be in the future" in error for error in result["errors"]))
+
     def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
         for value in (None, [{"unhashable": True}]):
             changed = copy.deepcopy(self.contract)
@@ -499,11 +559,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", json.loads(completed.stdout)["status"])
 
     def test_formalization_rejects_fabricated_w07_strings(self) -> None:
+        phase_receipts, phase_verifications = self._valid_phase_bindings()
         closure = {
             "chunk_id": "PSP-C03",
             "status": "pass",
             "exact_head": MODULE.C03_CURRENT_HEAD,
             "phase_predicates": {"PSP-P03": "pass", "PSP-P04": "pass"},
+            "phase_receipts": phase_receipts,
             "w07_receipt": {
                 "work_id": "PSP-P03-W07",
                 "issue_url": "https://github.com/organvm/limen/issues/2188",
@@ -521,9 +583,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "receipt_url": "https://github.com/organvm/limen/issues/2188#issuecomment-1",
                 "receipt_sha256": hashlib.sha256(b"receipt").hexdigest(),
             },
+            phase_verifications=phase_verifications,
         )
         self.assertFalse(result["ready"])
         self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
+        self.assertTrue(any("self-declared phase_predicates" in error for error in result["errors"]))
+
+    def test_phase_receipts_bind_exact_live_marked_receipts(self) -> None:
+        bindings, live = self._valid_phase_bindings()
+        self.assertEqual([], MODULE._validate_phase_receipt_bindings(bindings, ROOT, live))
+        phase = bindings["PSP-P04"]
+        assert isinstance(phase, dict)
+        phase["receipt_sha256"] = "c" * 64
+        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, live)
+        self.assertTrue(any("differs from the latest marked live phase receipt" in error for error in errors))
 
     def test_w07_receipt_requires_the_exact_tracked_predicate_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

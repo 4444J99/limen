@@ -259,6 +259,14 @@
   "surface_audit_model": {
     "claim_inventory_source": "p02_claims_ledger",
     "surfaces": ["portfolio_front_door", "portfolio_flagship", "resume", "personal_profile", "organization_profile", "flagship_repository"],
+    "surface_levels": {
+      "portfolio_front_door": "L1",
+      "portfolio_flagship": "L2",
+      "resume": "L1",
+      "personal_profile": "L1",
+      "organization_profile": "L1",
+      "flagship_repository": "L2"
+    },
     "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action"],
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
   },

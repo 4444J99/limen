@@ -28,11 +28,19 @@ COST = load_module(
 
 
 def attach_origin(repository: Path, remote_root: Path) -> Path:
-    remote = remote_root / "synthetic.git"
+    remote = remote_root / "example" / "synthetic.git"
+    remote.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
     subprocess.run(["git", "symbolic-ref", "HEAD", "refs/heads/main"], cwd=remote, check=True)
     subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repository, check=True)
     subprocess.run(["git", "push", "-q", "-u", "origin", "main"], cwd=repository, check=True)
+    canonical = "https://github.com/example/synthetic.git"
+    subprocess.run(
+        ["git", "config", f"url.{remote.as_uri()}.insteadOf", canonical],
+        cwd=repository,
+        check=True,
+    )
+    subprocess.run(["git", "remote", "set-url", "origin", canonical], cwd=repository, check=True)
     return remote
 
 
@@ -131,7 +139,50 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("current_pass", result["result"])
             self.assertEqual(head, result["exact_head"])
             self.assertEqual(head, result["remote_default_branch_head"])
+            self.assertEqual("example/synthetic", result["origin_repository"])
             self.assertEqual(64, len(result["artifact_digest"]))
+
+    def test_exact_head_runner_binds_origin_to_requested_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            attach_origin(repository, Path(remote_temporary))
+            subprocess.run(
+                ["git", "remote", "set-url", "origin", "https://github.com/example/stale-mirror.git"],
+                cwd=repository,
+                check=True,
+            )
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "from pathlib import Path; Path('ran.txt').touch()"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("not_current", result["result"])
+            self.assertEqual("example/stale-mirror", result["origin_repository"])
+            self.assertTrue(any("origin does not identify" in error for error in result["errors"]))
+            self.assertFalse((repository / "ran.txt").exists())
 
     def test_exact_head_mismatch_is_not_current(self) -> None:
         request = {
@@ -518,6 +569,51 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
             time.sleep(0.7)
             self.assertFalse((repository / "late.txt").exists())
+
+    def test_detached_predicate_descendant_is_terminated_before_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            attach_origin(repository, Path(remote_temporary))
+            child = (
+                "import time; from pathlib import Path; time.sleep(0.5); Path('detached-late.txt').write_text('late')"
+            )
+            parent = (
+                "import subprocess,sys; "
+                f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
+                "stderr=subprocess.DEVNULL, start_new_session=True); print('parent done')"
+            )
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", parent],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("current_fail", result["result"])
+            self.assertTrue(any("live descendant" in error for error in result["errors"]))
+            time.sleep(0.7)
+            self.assertFalse((repository / "detached-late.txt").exists())
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import re
+import secrets
 import selectors
 import signal
 import subprocess
@@ -20,6 +21,13 @@ from typing import Any
 
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 BRANCH_NAME = re.compile(r"^(?!/)(?!.*(?:\.\.|//|@\{|\\))[A-Za-z0-9][A-Za-z0-9._/-]*$")
+REPOSITORY_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+GITHUB_ORIGIN_PATTERNS = (
+    re.compile(r"^https://github\.com/(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?$"),
+    re.compile(r"^git@github\.com:(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?$"),
+    re.compile(r"^ssh://git@github\.com/(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?$"),
+)
+RUN_TOKEN_ENV = "FLAGSHIP_RECEIPT_RUN_TOKEN"
 SCHEMA_VERSION = "limen.positioning_flagship_receipt_request.v1"
 MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 
@@ -48,6 +56,9 @@ def validate_request(request: dict[str, Any]) -> list[str]:
         errors.append("default_branch must be a safe branch name")
     if not FULL_HEAD.fullmatch(str(request.get("expected_head", ""))):
         errors.append("expected_head must be a full lowercase Git head")
+    repository = request.get("repository")
+    if not isinstance(repository, str) or not REPOSITORY_NAME.fullmatch(repository):
+        errors.append("repository must be a canonical owner/name slug")
     predicate = request.get("predicate")
     if not isinstance(predicate, dict):
         errors.append("predicate must be an object")
@@ -145,6 +156,59 @@ def _remote_default(result: subprocess.CompletedProcess[bytes]) -> tuple[str | N
     return branch, head
 
 
+def _github_repository_from_origin(result: subprocess.CompletedProcess[bytes]) -> str | None:
+    if result.returncode != 0:
+        return None
+    value = result.stdout.decode(errors="replace").strip()
+    for pattern in GITHUB_ORIGIN_PATTERNS:
+        match = pattern.fullmatch(value)
+        if match is not None:
+            return match.group("repository").lower()
+    return None
+
+
+def _tagged_process_ids(run_token: str) -> set[int]:
+    marker = f"{RUN_TOKEN_ENV}={run_token}".encode()
+    proc_root = Path("/proc")
+    tagged: set[int] = set()
+    if proc_root.is_dir():
+        for entry in proc_root.iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                environment = (entry / "environ").read_bytes()
+            except OSError:
+                continue
+            if marker in environment.split(b"\0"):
+                tagged.add(int(entry.name))
+        return tagged
+    try:
+        completed = subprocess.run(
+            ["ps", "eww", "-axo", "pid=,command="],
+            check=False,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return tagged
+    if completed.returncode != 0:
+        return tagged
+    marker_text = marker.decode()
+    for raw_line in completed.stdout.decode(errors="replace").splitlines():
+        fields = raw_line.strip().split(maxsplit=1)
+        if len(fields) == 2 and fields[0].isdigit() and marker_text in fields[1]:
+            tagged.add(int(fields[0]))
+    return tagged
+
+
+def _signal_processes(process_ids: set[int], sig: signal.Signals) -> None:
+    for process_id in process_ids:
+        try:
+            os.kill(process_id, sig)
+        except (ProcessLookupError, PermissionError):
+            continue
+
+
 def _process_group_alive(process_group: int) -> bool:
     try:
         os.killpg(process_group, 0)
@@ -172,6 +236,27 @@ def _stop_process(process: subprocess.Popen[bytes]) -> None:
         pass
 
 
+def _stop_run_scope(process: subprocess.Popen[bytes], run_token: str) -> bool:
+    tagged = _tagged_process_ids(run_token)
+    observed_descendant = bool(tagged - {process.pid}) or _process_group_alive(process.pid)
+    _stop_process(process)
+    tagged = _tagged_process_ids(run_token)
+    if tagged:
+        observed_descendant = observed_descendant or bool(tagged - {process.pid})
+        _signal_processes(tagged, signal.SIGTERM)
+        deadline = time.monotonic() + 1
+        while tagged and time.monotonic() < deadline:
+            time.sleep(0.02)
+            tagged = _tagged_process_ids(run_token)
+        if tagged:
+            _signal_processes(tagged, signal.SIGKILL)
+            deadline = time.monotonic() + 1
+            while tagged and time.monotonic() < deadline:
+                time.sleep(0.02)
+                tagged = _tagged_process_ids(run_token)
+    return observed_descendant
+
+
 def _run_bounded_predicate(
     argv: list[str],
     *,
@@ -180,12 +265,14 @@ def _run_bounded_predicate(
     max_output_bytes: int,
 ) -> tuple[int | None, bytes, str | None]:
     """Run a predicate without allowing stdout/stderr to grow beyond the declared memory budget."""
+    run_token = secrets.token_hex(24)
     process = subprocess.Popen(
         argv,
         cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         start_new_session=True,
+        env={**os.environ, RUN_TOKEN_ENV: run_token},
     )
     assert process.stdout is not None
     descriptor = process.stdout.fileno()
@@ -201,7 +288,7 @@ def _run_bounded_predicate(
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 failure = "predicate exceeded its bounded timeout"
-                _stop_process(process)
+                _stop_run_scope(process, run_token)
                 break
             events = selector.select(timeout=min(0.1, remaining))
             for _key, _mask in events:
@@ -217,19 +304,20 @@ def _run_bounded_predicate(
                 if len(chunk) > budget:
                     output.extend(chunk[: max(0, budget)])
                     failure = "predicate exceeded its bounded output budget"
-                    _stop_process(process)
+                    _stop_run_scope(process, run_token)
                     break
                 output.extend(chunk)
             if failure is not None:
                 break
             return_code = process.poll()
             if return_code is not None and eof:
-                if _process_group_alive(process.pid):
-                    _stop_process(process)
+                if _process_group_alive(process.pid) or _tagged_process_ids(run_token):
+                    _stop_run_scope(process, run_token)
                     failure = "predicate left a live descendant process"
                 return return_code, bytes(output), failure
         return process.returncode, bytes(output), failure
     finally:
+        _stop_run_scope(process, run_token)
         selector.close()
         process.stdout.close()
 
@@ -282,6 +370,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             repository_path,
             ["rev-parse", "--verify", f"refs/heads/{request['default_branch']}^{{commit}}"],
         )
+        origin = _run_git(repository_path, ["config", "--get", "remote.origin.url"])
     except (OSError, subprocess.TimeoutExpired) as exc:
         return _blocked_receipt(
             request, started_at, f"git inspection could not start: {exc}", observed_head=observed_head
@@ -306,6 +395,17 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             observed_head=observed_head,
             default_branch_head=default_branch_head,
         )
+    origin_repository = _github_repository_from_origin(origin)
+    if origin_repository != request["repository"].lower():
+        receipt = _not_current_receipt(
+            request,
+            started_at,
+            "origin does not identify the requested GitHub repository",
+            observed_head=observed_head,
+            default_branch_head=default_branch_head,
+        )
+        receipt["origin_repository"] = origin_repository
+        return receipt
     try:
         remote_tip = _run_git(
             repository_path,
@@ -372,6 +472,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
                 repository_path,
                 ["rev-parse", "--verify", f"refs/heads/{request['default_branch']}^{{commit}}"],
             )
+            post_origin = _run_git(repository_path, ["config", "--get", "remote.origin.url"])
             post_remote = _run_git(
                 repository_path,
                 ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
@@ -392,6 +493,8 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
                 invariant_errors.append("worktree changed while the predicate ran")
             if final_branch_head != observed_head:
                 invariant_errors.append("local default-branch tip changed while the predicate ran")
+            if _github_repository_from_origin(post_origin) != origin_repository:
+                invariant_errors.append("origin repository identity changed while the predicate ran")
             if invariant_errors:
                 result = "not_current"
                 errors.extend(invariant_errors)
@@ -409,6 +512,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
         "schema_version": "limen.positioning_flagship_receipt.v1",
         "flagship_id": request["flagship_id"],
         "repository": request["repository"],
+        "origin_repository": origin_repository,
         "default_branch": request.get("default_branch"),
         "remote_default_branch": remote_default_branch,
         "exact_head": observed_head,
