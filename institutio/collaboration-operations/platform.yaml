@@ -78,8 +78,10 @@ lanes:
     owner: persona:ari
     project: project:podcast-suite
     repository: organvm/hospes
-    state: vault_split_required
+    state: custody_transfer_pending
     platform_role: external_reference_source
     content_class: vault_private
     mutation_authority: external_owner_lane_only
-    custody_gate: transcript_vault_split_before_movement
+    custody_gate: satisfied_by_receipt
+    custody_gate_receipt: docs/receipts/hospes-transcript-eviction-scan-20260814.json
+    movement_lever: L-HOSPES-CUSTODY-TRANSFER

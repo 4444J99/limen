@@ -442,7 +442,8 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
 
     offer_by_id = _offer_map(data)
     audit_blob = " ".join(_strings(offer_by_id.get("audit", {}))).lower()
-    install_blob = " ".join(_strings(offer_by_id.get("install", {}))).lower()
+    install = offer_by_id.get("install", {})
+    install_blob = " ".join(_strings(install)).lower()
     retainer_blob = " ".join(_strings(offer_by_id.get("retainer", {}))).lower()
     partnership_blob = " ".join(_strings(offer_by_id.get("partnership_review", {}))).lower()
     _require(
@@ -454,6 +455,37 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         errors,
         "one named sponsor, internal owner, team, and pipeline" in install_blob,
         "Install must remain bounded to one named team or pipeline",
+    )
+    install_entry_criteria = {str(value) for value in _sequence(install.get("entry_criteria"))}
+    _require(
+        errors,
+        "one named sponsor, internal owner, team, and pipeline" in install_entry_criteria,
+        "Install requires one named sponsor, internal owner, team, and pipeline",
+    )
+    _require(
+        errors,
+        "acceptance tests and a handoff owner agreed before work starts" in install_entry_criteria,
+        "Install requires acceptance tests and a handoff owner before work starts",
+    )
+    install_evidence = _mapping(install.get("evidence"))
+    install_acceptance = str(install_evidence.get("acceptance", "")).lower()
+    install_artifacts = {str(value).lower() for value in _sequence(install_evidence.get("artifacts"))}
+    install_handoff = str(install.get("handoff", "")).lower()
+    _require(
+        errors,
+        install.get("timeline") == "Four to eight weeks for one team or pipeline after prerequisites are met."
+        and {"tests", "acceptance receipt"}.issubset(install_artifacts)
+        and "durable receipt" in install_acceptance
+        and "named internal owner" in install_acceptance
+        and "train the internal owner" in install_handoff
+        and "transfer the runbook and evidence" in install_handoff
+        and "test rollback" in install_handoff,
+        "Install requires finite acceptance evidence and a named internal-owner handoff",
+    )
+    _require(
+        errors,
+        "enterprise-wide platform rewrite" in {str(value) for value in _sequence(install.get("exclusions"))},
+        "Install must explicitly exclude an enterprise-wide platform rewrite",
     )
     _require(
         errors,
