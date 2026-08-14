@@ -555,6 +555,14 @@ def _phase_remote_snapshot(graph, mapping, phase_id: str) -> dict[str, dict[str,
     }
 
 
+def _closed_program_snapshot(graph, mapping, phase_ids: list[str]) -> dict[str, dict[str, object]]:
+    remote: dict[str, dict[str, object]] = {}
+    for phase_id in phase_ids:
+        remote.update(_phase_remote_snapshot(graph, mapping, phase_id))
+        remote[phase_id]["state"] = "closed"
+    return remote
+
+
 def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
@@ -625,6 +633,114 @@ def test_phase_proof_requires_closed_valid_upstream_phase(monkeypatch) -> None:
         ),
     )
     assert MODULE.phase_proof("PSP-P01", graph, mapping)["status"] == "pass"
+
+
+def test_phase_proof_reports_missing_upstream_projection_neutrally(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        **_phase_remote_snapshot(graph, mapping, "PSP-P00"),
+        **_phase_remote_snapshot(graph, mapping, "PSP-P01"),
+    }
+    remote.pop("PSP-P00")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_api", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(
+        MODULE.ProgramError,
+        match=r"(?s)PSP-P01 upstream phase PSP-P00 projection is invalid.*missing remote object PSP-P00",
+    ):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+
+def test_phase_proof_requires_full_transitive_upstream_chain(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _closed_program_snapshot(graph, mapping, ["PSP-P00", "PSP-P01", "PSP-P02"])
+    remote["PSP-P00"]["state"] = "open"
+    remote["PSP-P02"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P02 upstream phase PSP-P00 is not closed"):
+        MODULE.phase_proof("PSP-P02", graph, mapping)
+
+
+def test_phase_proof_enforces_transitive_chunk_predecessors(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    phase_ids = [phase["id"] for phase in graph["phases"] if phase["id"] <= "PSP-P13"]
+    remote = _closed_program_snapshot(graph, mapping, phase_ids)
+    remote["PSP-P10"]["state"] = "open"
+    remote["PSP-P13"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P13 upstream phase PSP-P10 is not closed"):
+        MODULE.phase_proof("PSP-P13", graph, mapping)
+
+
+def test_phase_proof_enforces_partial_predecessor_chunk_work(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    phase_ids = [phase["id"] for phase in graph["phases"] if phase["id"] <= "PSP-P12"]
+    remote = _closed_program_snapshot(graph, mapping, phase_ids)
+    remote["PSP-P10"]["state"] = "open"
+    remote["PSP-P10-W07"]["state"] = "open"
+    remote["PSP-P12"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(
+        MODULE.ProgramError,
+        match="PSP-P12 predecessor chunk work PSP-P10-W07 is not closed",
+    ):
+        MODULE.phase_proof("PSP-P12", graph, mapping)
 
 
 def test_phase_proof_recovers_only_missing_phase_objects(monkeypatch) -> None:
@@ -1243,6 +1359,9 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
     assert "An open upstream phase or chunk may block aggregate closeout" in packet["launch_prompt"]
     assert "A blocker local to one leaf is not a global stop" in packet["launch_prompt"]
+    assert "python3 scripts/verify.py --explain <changed-path>..." in packet["launch_prompt"]
+    assert "bash scripts/verify-scoped.sh" in packet["launch_prompt"]
+    assert "--verify-remote" not in packet["launch_prompt"]
     assert MODULE.render_execution_chunks(graph, mapping, first) == MODULE.render_execution_chunks(
         graph, mapping, second
     )

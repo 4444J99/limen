@@ -1689,6 +1689,22 @@ def _validate_phase_projection(
         raise ProgramError(f"{phase_id} phase projection failed:\n- " + "\n- ".join(failures))
 
 
+def _dependency_closure(root_ids: Iterable[str], node_by_id: dict[str, dict[str, Any]]) -> set[str]:
+    """Return every transitive dependency reachable from the supplied roots."""
+    seen: set[str] = set()
+    pending = list(root_ids)
+    while pending:
+        node_id = pending.pop()
+        if node_id in seen:
+            continue
+        node = node_by_id.get(node_id)
+        if node is None:
+            raise ProgramError(f"dependency graph references unknown object {node_id}")
+        seen.add(node_id)
+        pending.extend(node.get("depends_on") or [])
+    return seen
+
+
 def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
     if phase_id not in graph["phase_by_id"]:
         raise ProgramError(f"unknown phase id: {phase_id}")
@@ -1696,29 +1712,86 @@ def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -
     validate_map(mapping, graph, complete=True)
     initial_remote = fetch_program_issues(graph)
     phase = graph["phase_by_id"][phase_id]
-    phase_dependencies = list(phase.get("depends_on") or [])
+    current_work_ids = {packet["id"] for packet in phase["work"]}
+    phase_dependency_set = _dependency_closure(phase.get("depends_on") or [], graph["phase_by_id"])
+    owning_chunk_ids = chunks_for_object(phase_id, graph)
+    direct_chunk_dependencies = {
+        dependency
+        for chunk_id in owning_chunk_ids
+        for dependency in graph["chunk_by_id"][chunk_id].get("depends_on") or []
+    }
+    chunk_dependency_set = _dependency_closure(direct_chunk_dependencies, graph["chunk_by_id"])
+    predecessor_work_set = {
+        work_id
+        for chunk_id in chunk_dependency_set
+        for work_id in graph["chunk_work"][chunk_id]
+    }
+    predecessor_phase_set = {
+        candidate["id"]
+        for candidate in graph["phases"]
+        if candidate["id"] != phase_id
+        and {packet["id"] for packet in candidate["work"]}.issubset(predecessor_work_set)
+    }
+    required_phase_set = phase_dependency_set | predecessor_phase_set
+    required_phase_ids = [
+        candidate["id"] for candidate in graph["phases"] if candidate["id"] in required_phase_set
+    ]
+    required_chunk_ids = [
+        chunk["id"] for chunk in graph["chunks"] if chunk["id"] in chunk_dependency_set
+    ]
+    predecessor_work_ids = [
+        work_id for chunk_id in required_chunk_ids for work_id in graph["chunk_work"][chunk_id]
+    ]
     phase_object_ids = [
         phase_id,
         *(packet["id"] for packet in phase["work"]),
     ]
-    for dependency in phase_dependencies:
+    for dependency in required_phase_ids:
         dependency_phase = graph["phase_by_id"][dependency]
         phase_object_ids.extend(
             [dependency, *(packet["id"] for packet in dependency_phase["work"])]
         )
+    phase_object_ids.extend(predecessor_work_ids)
     remote = recover_mapped_issues(graph, mapping, initial_remote, object_ids=phase_object_ids)
     _validate_phase_projection(phase_id, graph, mapping, remote)
     child_receipts: dict[str, dict[str, Any]] = {}
     child_evidence: dict[str, str] = {}
     failures: list[str] = []
-    for dependency in phase_dependencies:
-        if str(remote[dependency].get("state") or "").lower() != "closed":
+    for dependency in required_phase_ids:
+        try:
+            _validate_phase_projection(dependency, graph, mapping, remote)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} upstream phase {dependency} projection is invalid: {exc}")
+            continue
+        if str(remote.get(dependency, {}).get("state") or "").lower() != "closed":
             failures.append(f"{phase_id} upstream phase {dependency} is not closed")
             continue
         try:
             fetch_phase_receipt(dependency, graph, mapping, remote=remote)
         except ProgramError as exc:
             failures.append(f"{phase_id} upstream phase {dependency} is invalid: {exc}")
+    phase_covered_work_ids = {
+        packet["id"]
+        for dependency in required_phase_ids
+        for packet in graph["phase_by_id"][dependency]["work"]
+    }
+    partial_predecessor_work = [
+        work_id
+        for work_id in predecessor_work_ids
+        if work_id not in phase_covered_work_ids and work_id not in current_work_ids
+    ]
+    for work_id in dict.fromkeys(partial_predecessor_work):
+        row = remote.get(work_id)
+        if not isinstance(row, dict):
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is missing")
+            continue
+        if str(row.get("state") or "").lower() != "closed":
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is not closed")
+            continue
+        try:
+            fetch_work_receipt(work_id, graph, mapping)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is invalid: {exc}")
     for packet in phase["work"]:
         work_id = packet["id"]
         if str(remote[work_id].get("state") or "").lower() != "closed":
@@ -2133,10 +2206,10 @@ Scope
 
 Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
-2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json`.
+2. Run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json` to orient from the live registry.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
 4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+5. After changing files, preview governed scope with `python3 scripts/verify.py --explain <changed-path>...`, run `bash scripts/verify-scoped.sh`, and then run the leaf predicate as the receipt condition. A leaf closes only after that predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase and chunk, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
 8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
