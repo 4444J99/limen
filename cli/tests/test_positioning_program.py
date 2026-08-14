@@ -44,6 +44,18 @@ def graph_and_map():
     return graph, mapping
 
 
+def live_portfolio_repository() -> dict[str, object]:
+    return {
+        "id": 1155412125,
+        "full_name": "organvm-vii-kerygma/portfolio",
+        "visibility": "public",
+        "private": False,
+        "default_branch": "main",
+        "archived": False,
+        "html_url": "https://github.com/organvm-vii-kerygma/portfolio",
+    }
+
+
 def test_real_manifest_is_complete_and_acyclic() -> None:
     graph, mapping = graph_and_map()
 
@@ -115,6 +127,145 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "Assigned effort: `max`" in work
     assert "**Execution chunk:** `PSP-C02`" in work
     assert "`PSP-C00` — Land the program control plane" in root
+
+
+def test_portfolio_targets_resolve_from_stable_repository_identity(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    expected_work_ids = {
+        "PSP-P06-W01",
+        "PSP-P06-W02",
+        "PSP-P06-W03",
+        "PSP-P06-W04",
+        "PSP-P06-W05",
+        "PSP-P06-W06",
+        "PSP-P06-W07",
+        "PSP-P07-W03",
+        "PSP-P07-W04",
+        "PSP-P07-W08",
+        "PSP-P08-W02",
+        "PSP-P09-W02",
+        "PSP-P09-W03",
+        "PSP-P09-W04",
+        "PSP-P09-W05",
+        "PSP-P09-W06",
+        "PSP-P10-W04",
+        "PSP-P12-W04",
+    }
+    actual_work_ids = {
+        work_id
+        for work_id, packet in graph["work_by_id"].items()
+        if packet["target_repo"] == "organvm-vii-kerygma/portfolio"
+    }
+
+    assert actual_work_ids == expected_work_ids
+    identity = graph["repository_identity_by_slug"]["organvm-vii-kerygma/portfolio"]
+    assert identity["github_repository_id"] == 1155412125
+    assert "organvm/portfolio" in graph["retired_repository_slugs"]
+    body = MODULE.body_for("PSP-P06-W01", graph, mapping)
+    assert "`organvm-vii-kerygma/portfolio`" in body
+    assert "stable GitHub repository ID `1155412125`" in body
+    calls: list[list[str]] = []
+
+    def resolve(args, **_kwargs):
+        calls.append(args)
+        return live_portfolio_repository()
+
+    monkeypatch.setattr(MODULE, "_gh", resolve)
+    seed = MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    seed_identity = seed["execution_requirements"]["target_repository_identity"]
+    assert seed["not_a_lease"] is True
+    assert seed_identity["github_repository_id"] == 1155412125
+    assert seed_identity["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+    assert seed_identity["resolution"] == "verified_live_by_immutable_repository_id_before_seed"
+    assert MODULE.RFC3339_RE.fullmatch(seed_identity["resolved_at"])
+    assert calls == [["api", "repositories/1155412125"]]
+
+    calls.clear()
+    result = MODULE.verify_repository_identities(graph)
+
+    assert result["status"] == "ok"
+    assert calls == [["api", "repositories/1155412125"]]
+    assert result["repositories"][0]["resolved_full_name"] == "organvm-vii-kerygma/portfolio"
+
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: moved)
+    with pytest.raises(MODULE.ProgramError, match="seed repository identity validation failed"):
+        MODULE.packet_seed("PSP-P06-W01", graph, mapping)
+    with pytest.raises(MODULE.ProgramError, match="full_name drift"):
+        MODULE.verify_repository_identities(graph)
+
+    stale = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    psp_p06 = next(phase for phase in stale["phases"] if phase["id"] == "PSP-P06")
+    psp_p06["work"][0]["target_repo"] = "organvm/portfolio"
+    with pytest.raises(MODULE.ProgramError, match="retired repository slug"):
+        MODULE.index_program(stale)
+
+
+def test_repository_identity_sources_and_slug_history_are_collision_safe() -> None:
+    never_renamed = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = never_renamed["repository_identities"]["repositories"]["portfolio"]
+    portfolio["previous_slugs"] = []
+    graph = MODULE.index_program(never_renamed)
+    assert graph["retired_repository_slugs"] == {}
+
+    mismatched_source = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    portfolio = mismatched_source["repository_identities"]["repositories"]["portfolio"]
+    portfolio["source"] = "https://api.github.com/repositories/999"
+    with pytest.raises(MODULE.ProgramError, match="must exactly bind github_repository_id"):
+        MODULE.index_program(mismatched_source)
+
+    retired_collides_with_canonical = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = retired_collides_with_canonical["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "example/second",
+        "previous_slugs": ["organvm-vii-kerygma/portfolio"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="contains canonical repository slug"):
+        MODULE.index_program(retired_collides_with_canonical)
+
+    canonical_collides_with_retired = copy.deepcopy(MODULE.load_manifest(MANIFEST))
+    identities = canonical_collides_with_retired["repository_identities"]["repositories"]
+    identities["second"] = {
+        **copy.deepcopy(identities["portfolio"]),
+        "github_repository_id": 1155412126,
+        "canonical_slug": "organvm/portfolio",
+        "previous_slugs": ["example/retired-second"],
+        "source": "https://api.github.com/repositories/1155412126",
+    }
+    with pytest.raises(MODULE.ProgramError, match="already declared as a retired repository slug"):
+        MODULE.index_program(canonical_collides_with_retired)
+
+
+def test_sync_apply_rejects_identity_drift_before_any_write(monkeypatch, tmp_path) -> None:
+    graph, mapping = graph_and_map()
+    moved = live_portfolio_repository()
+    moved["full_name"] = "future-owner/portfolio"
+
+    for live_payload in (moved, [moved]):
+        writes = []
+        monkeypatch.setattr(MODULE, "_gh", lambda *_args, value=live_payload, **_kwargs: value)
+        monkeypatch.setattr(MODULE, "_pages", lambda *_args, **_kwargs: [])
+        monkeypatch.setattr(
+            MODULE,
+            "_api",
+            lambda *args, **kwargs: writes.append((args, kwargs)),
+        )
+
+        with pytest.raises(MODULE.ProgramError, match="repository identity validation failed"):
+            MODULE.sync(
+                graph,
+                mapping,
+                apply=True,
+                map_path=tmp_path / "github-map.json",
+                index_path=tmp_path / "ISSUE-INDEX.md",
+                chunks_path=tmp_path / "EXECUTION-CHUNKS.md",
+            )
+
+        assert writes == []
 
 
 def test_p00_w07_routes_fresh_codex_tasks_without_provider_gate() -> None:
@@ -229,6 +380,20 @@ def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> No
     assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
     assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
     assert seed["receipt_target"] == "github:organvm/limen:issue:11"
+
+
+def test_w08_packet_seed_owns_summary_machine_artifact_and_dated_receipt() -> None:
+    graph, mapping = graph_and_map()
+
+    seed = MODULE.packet_seed("PSP-P02-W08", graph, mapping)
+
+    assert seed["execution_requirements"]["path_prefixes"] == [
+        "docs/positioning/program/RESEARCH-ADJUDICATION.md",
+        "docs/positioning/program/research-adjudication.json",
+        "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json",
+        "docs/positioning/claims-ledger.md",
+        "scripts",
+    ]
 
 
 def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate() -> None:
@@ -390,6 +555,14 @@ def _phase_remote_snapshot(graph, mapping, phase_id: str) -> dict[str, dict[str,
     }
 
 
+def _closed_program_snapshot(graph, mapping, phase_ids: list[str]) -> dict[str, dict[str, object]]:
+    remote: dict[str, dict[str, object]] = {}
+    for phase_id in phase_ids:
+        remote.update(_phase_remote_snapshot(graph, mapping, phase_id))
+        remote[phase_id]["state"] = "closed"
+    return remote
+
+
 def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = _phase_remote_snapshot(graph, mapping, "PSP-P00")
@@ -424,6 +597,150 @@ def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(m
     remote["PSP-P00-W01"]["body"] = "drifted body"
     with pytest.raises(MODULE.ProgramError, match="body drift"):
         MODULE.phase_proof("PSP-P00", graph, mapping)
+
+
+def test_phase_proof_requires_closed_valid_upstream_phase(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        **_phase_remote_snapshot(graph, mapping, "PSP-P00"),
+        **_phase_remote_snapshot(graph, mapping, "PSP-P01"),
+    }
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 upstream phase PSP-P00 is not closed"):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+    remote["PSP-P00"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(MODULE.ProgramError("stale upstream receipt")),
+    )
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 upstream phase PSP-P00 is invalid.*stale upstream receipt"):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+    assert MODULE.phase_proof("PSP-P01", graph, mapping)["status"] == "pass"
+
+
+def test_phase_proof_reports_missing_upstream_projection_neutrally(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        **_phase_remote_snapshot(graph, mapping, "PSP-P00"),
+        **_phase_remote_snapshot(graph, mapping, "PSP-P01"),
+    }
+    remote.pop("PSP-P00")
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_api", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(
+        MODULE.ProgramError,
+        match=r"(?s)PSP-P01 upstream phase PSP-P00 projection is invalid.*missing remote object PSP-P00",
+    ):
+        MODULE.phase_proof("PSP-P01", graph, mapping)
+
+
+def test_phase_proof_requires_full_transitive_upstream_chain(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = _closed_program_snapshot(graph, mapping, ["PSP-P00", "PSP-P01", "PSP-P02"])
+    remote["PSP-P00"]["state"] = "open"
+    remote["PSP-P02"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P02 upstream phase PSP-P00 is not closed"):
+        MODULE.phase_proof("PSP-P02", graph, mapping)
+
+
+def test_phase_proof_enforces_transitive_chunk_predecessors(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    phase_ids = [phase["id"] for phase in graph["phases"] if phase["id"] <= "PSP-P13"]
+    remote = _closed_program_snapshot(graph, mapping, phase_ids)
+    remote["PSP-P10"]["state"] = "open"
+    remote["PSP-P13"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P13 upstream phase PSP-P10 is not closed"):
+        MODULE.phase_proof("PSP-P13", graph, mapping)
+
+
+def test_phase_proof_enforces_partial_predecessor_chunk_work(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    phase_ids = [phase["id"] for phase in graph["phases"] if phase["id"] <= "PSP-P12"]
+    remote = _closed_program_snapshot(graph, mapping, phase_ids)
+    remote["PSP-P10"]["state"] = "open"
+    remote["PSP-P10-W07"]["state"] = "open"
+    remote["PSP-P12"]["state"] = "open"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(
+        MODULE.ProgramError,
+        match="PSP-P12 predecessor chunk work PSP-P10-W07 is not closed",
+    ):
+        MODULE.phase_proof("PSP-P12", graph, mapping)
 
 
 def test_phase_proof_recovers_only_missing_phase_objects(monkeypatch) -> None:
@@ -741,7 +1058,7 @@ def test_omega_pass_cli_contract_and_record_schema(capsys) -> None:
     assert MODULE.validate_omega_pass(record, 2, "f" * 64) == record
 
 
-def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> None:
+def test_ready_work_uses_exact_leaf_dependencies_without_global_phase_stall(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = {
         object_id: {
@@ -768,6 +1085,21 @@ def test_ready_work_requires_closed_phase_and_work_dependencies(monkeypatch) -> 
     after_first = {row["id"] for row in MODULE.ready_work(graph, mapping)}
     assert {"PSP-P00-W02", "PSP-P00-W04"}.issubset(after_first)
     assert "PSP-P01-W01" not in after_first
+
+    for phase_id in ("PSP-P00", "PSP-P01", "PSP-P02"):
+        for packet in graph["phase_by_id"][phase_id]["work"]:
+            remote[packet["id"]]["state"] = "closed"
+    for index in range(1, 7):
+        remote[f"PSP-P03-W{index:02d}"]["state"] = "closed"
+
+    ready_rows = {row["id"]: row for row in MODULE.ready_work(graph, mapping)}
+    assert "PSP-P03-W07" in ready_rows
+    assert "PSP-P04-W01" in ready_rows
+    assert ready_rows["PSP-P04-W01"]["chunk_id"] == "PSP-C03"
+    assert ready_rows["PSP-P04-W01"]["phase_close_blocked_by"] == ["PSP-P03"]
+    assert "PSP-P05-W04" in ready_rows
+    assert ready_rows["PSP-P05-W04"]["chunk_id"] == "PSP-C04"
+    assert ready_rows["PSP-P05-W04"]["phase_close_blocked_by"] == ["PSP-P02", "PSP-P03", "PSP-P04"]
 
 
 def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None:
@@ -818,6 +1150,45 @@ def test_closed_phase_cannot_hide_open_children() -> None:
     remote["PSP-P00"]["state"] = "closed"
 
     with pytest.raises(MODULE.ProgramError, match="closed before child issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_closed_work_cannot_precede_its_exact_dependencies(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    remote["PSP-P00-W02"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P00-W02 is closed before dependency issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
+def test_closed_phase_cannot_precede_upstream_phase(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {object_id: {"state": "open"} for object_id in graph["ordered_ids"]}
+    for phase_id in ("PSP-P00", "PSP-P01"):
+        for packet in graph["phase_by_id"][phase_id]["work"]:
+            remote[packet["id"]]["state"] = "closed"
+    remote["PSP-P01"]["state"] = "closed"
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_work_receipt",
+        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+    )
+    monkeypatch.setattr(
+        MODULE,
+        "fetch_phase_receipt",
+        lambda phase_id, _graph, _mapping, **_kwargs: (
+            {"phase_id": phase_id, "status": "pass"},
+            "https://example.test/phase",
+        ),
+    )
+
+    with pytest.raises(MODULE.ProgramError, match="PSP-P01 is closed before upstream phase issues.*PSP-P00"):
         MODULE.closure_integrity(graph, mapping, remote)
 
 
@@ -952,6 +1323,7 @@ def test_remote_parity_includes_milestone_assignment(monkeypatch) -> None:
         for object_id in graph["ordered_ids"]
     }
     monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_gh", lambda *_args, **_kwargs: live_portfolio_repository())
 
     assert MODULE.remote_parity(graph, mapping)["ok"] is True
 
@@ -985,10 +1357,16 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     assert "Continue draft PR #2156" in bootstrap["launch_prompt"]
     assert "Start from current `main` only after C00 is closed" in packet["launch_prompt"]
     assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
+    assert "An open upstream phase or chunk may block aggregate closeout" in packet["launch_prompt"]
+    assert "A blocker local to one leaf is not a global stop" in packet["launch_prompt"]
+    assert "python3 scripts/verify.py --explain <changed-path>..." in packet["launch_prompt"]
+    assert "bash scripts/verify-scoped.sh" in packet["launch_prompt"]
+    assert "--verify-remote" not in packet["launch_prompt"]
     assert MODULE.render_execution_chunks(graph, mapping, first) == MODULE.render_execution_chunks(
         graph, mapping, second
     )
     assert first.read_bytes() == second.read_bytes()
     rendered = first.read_text()
-    assert "C04 (proof/experience) and C05 (service delivery) may run in parallel" in rendered
+    assert "Chunk arrows govern aggregate proof and closeout order, not leaf admission" in rendered
+    assert "a human gate on one leaf cannot idle unrelated reversible work" in rendered
     assert "former P10↔P12 phase-gating deadlock" in rendered

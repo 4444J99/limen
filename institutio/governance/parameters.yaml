@@ -413,6 +413,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_CONDUCTING_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_CONDUCTING_REFRESH_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Finite subprocess deadline in seconds for conducting-report.py to refresh keeper-owned handoff admission before pairing it with current usage telemetry. Timeout withholds the daily delivery and records a bounded public-safe finish receipt."
   LIMEN_WATCH_RSS_MB:
     default: 512
     env: LIMEN_WATCH_RSS_MB
@@ -511,6 +517,12 @@ parameters:
     self_update: none
     owner: integrity
     note: "Explicit stable-host executable override for local Limen dispatch. The Darwin lane expands user-relative paths and fails closed unless status --json proves the fixed bundle, stable path, signature, and signing requirement."
+  LIMEN_AGENT_RUNTIME_ROOT:
+    default: "$LIMEN_ROOT/.agent-runtime"
+    env: LIMEN_AGENT_RUNTIME_ROOT
+    self_update: none
+    owner: integrity
+    note: "Where the relocated per-vendor agent CLI runtimes live (claude/, codex/, gemini/). Exported by the operator's shell profile alongside CLAUDE_CONFIG_DIR, CODEX_HOME and GEMINI_CLI_HOME, which are VENDOR variables this panel does not own. Read by scripts/agent_config_paths.py to enumerate the non-active candidate roots a config could still be sitting in; the ACTIVE path always comes from the vendor variable, never from this. Accepted alongside the older $LIMEN_ROOT/.agent-runtime derivation so a host exporting only one spelling still resolves."
   LIMEN_TCC_DB:
     default: "~/Library/Application Support/com.apple.TCC/TCC.db"
     env: LIMEN_TCC_DB
@@ -1329,6 +1341,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for the corpus-feed outer process so prompt ingestion cannot wedge the beat."
+  LIMEN_TAPE_TZ:
+    default: ""                # SAFE CODE DEFAULT — blank renders the DEVICE's own zone, i.e. what Messages.app shows
+    env: LIMEN_TAPE_TZ
+    self_update: none
+    owner: continuity
+    note: "IANA zone name for the local-time rendering in scripts/capture-threads.py tapes (`ts.local` in the .jsonl, the `[timestamp]` column in the .md). Blank — the default — renders THIS DEVICE's zone, so a tape always agrees with the operator's own screen. Set it only to read deliberately in a known other party's zone; the chosen zone is then recorded in `ts.tz` on every row and in the tape's Clock frame header, so no reader has to infer it. Founded on a measured defect: the script hardcoded America/New_York on a device set to America/Sao_Paulo, so every rendered time sat 1h off Messages.app; a later review saw that gap, explained it with a plausible DST story, and 'corrected' four documents in the wrong direction. UTC (`ts.utc`) is canonical and unaffected by this setting."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
@@ -2439,6 +2457,12 @@ parameters:
     self_update: none
     owner: heal
     note: "How many PRs the factory classifies per beat (a rotating window over the full fleet), so each beat does a bounded slice rather than the whole backlog at once."
+  LIMEN_SELF_HEAL_STALE:
+    default: "1"
+    env: LIMEN_SELF_HEAL_STALE
+    self_update: none
+    owner: heal
+    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/state-freshness.py --field mtime fails (advisory) when logs/self-heal.log hasn't been refreshed within ~6h (~2 windows of the C_HEAL=6-beat rung's worst-case tempo). Sibling of host-pressure-stale — watches the PR-repair FACTORY's writer so the 2026-08-09 ~26h-silent death (quota wall exits self-heal.py before its success-path write) can't recur unseen; a frozen writer fires one onset-deduped notification (scripts/_notify.py). Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0) doesn't alarm on a log stale by design. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   LIMEN_HEAL_RECONCILE_SCAN_MAX:
     default: 1000               # ceiling on self-heal.py's full-fleet enumeration (--reconcile-scan-max)
     env: LIMEN_HEAL_RECONCILE_SCAN_MAX
@@ -3546,6 +3570,24 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Max branches reap-branches.py deletes per run; the remainder is logged (never silently dropped) and reaped on the next hygiene beat."
+  LIMEN_BRANCH_REAP_CHECK:
+    default: '1'
+    env: LIMEN_BRANCH_REAP_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the branch-reap sensor (scripts/reap-branches.py --check, sensors.yaml 0g9b). The reap was wired into nothing — no sensor, no rung, never once in logs/beat-rungs.jsonl — so it ran only when a session ran it by hand and landed branches accumulated (87 reapable when this was added). The cost was paid by scripts/no-tasks-on-me.sh, a CLOSEOUT gate, which flipped exit 0 -> exit 1 inside forty minutes on 2026-08-14 because a branch landed mid-session: a session could no longer tell 'I left something hanging' from 'the fleet's backlog grew'. Read-only; stays red until the reap runs. Set 0 to silence."
+  LIMEN_BEAT_BRANCH_REAP:
+    default: 4
+    env: LIMEN_BEAT_BRANCH_REAP
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the branch-reap sensor. 4 follows the orphan-watcher precedent; unlike that local ps scan this pass goes online (PR state per branch, ~25 s measured), and branches land a few times a day, so every ~4 beats catches drift well inside the window where it matters."
+  LIMEN_BRANCH_REAP_TIMEOUT:
+    default: 120
+    env: LIMEN_BRANCH_REAP_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the branch-reap sensor pass. Measured 25 s wall-clock against 623 refs with live PR lookups; 120 leaves headroom for a slow GitHub without letting a hung pass stall the beat."
   LIMEN_BRANCH_REAP_EVERY_MIN:
     default: 30
     env: LIMEN_BRANCH_REAP_EVERY_MIN
@@ -5519,6 +5561,12 @@ parameters:
     self_update: none
     owner: tabularius
     note: "How many NEW inbound messages since a person's last review make a delta dice-up worth running (relationship-review-delta.py). Default 20 — a meaningful wave, not a single text. Raise to reduce noise, lower to trigger sooner."
+  LIMEN_RELATIONSHIP_PIPELINE_ROOT:
+    default: ""
+    env: LIMEN_RELATIONSHIP_PIPELINE_ROOT
+    self_update: none
+    owner: tabularius
+    note: "Override for the relationship-pipeline checkout that relationship-review-delta.py reads people.json from. Empty (default) = resolve at run time across known locations (~/Workspace/4444J99/relationship-pipeline, then the ~/Workspace/.limen-worktrees/m1_repos mirror). Exists because the root was HARDCODED to the first path, the repo moved, and the sensor then fail-opened on every beat for weeks — a 27-day review gap went undetected because 'no pipeline' and 'no review owed' printed identically. The canonical handle source is now _people-private/people/roster.json; people.json is a legacy fallback and its absence is reported explicitly rather than silently."
 
   LIMEN_OPPORTUNITY_PIPELINE:
     default: "1"
@@ -5870,6 +5918,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_NOTIFY_HELPER:
+    default: "<calling checkout>/scripts/_notify.py"
+    env: LIMEN_NOTIFY_HELPER
+    self_update: none
+    owner: diurnal
+    note: "Path to the one permitted macOS notification effector. Shell callers such as netmode derive their sibling scripts/_notify.py when unset; tests and relocated runtime trees may override the path without reintroducing a direct osascript call."
   LIMEN_NOTIFY_GATE:
     default: "1"
     env: LIMEN_NOTIFY_GATE

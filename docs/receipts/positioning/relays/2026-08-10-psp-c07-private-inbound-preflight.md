@@ -1,0 +1,153 @@
+---
+type: prompt-relay-envelope
+version: 1.0
+date: 2026-08-10
+last_reconciled: 2026-08-13
+from: codex desktop direct-session preflight
+to: next healthy Codex session assigned from the live PSP registry
+scope: /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/8f85/limen
+phase: PROVE
+compression_level: medium
+---
+
+# Relay — PSP-C07 private-inbound preflight
+
+## Routing
+
+- Program chunk: `PSP-C07` — Build private inbound operations
+- Phase issue: `PSP-P08` / [#2222](https://github.com/organvm/limen/issues/2222)
+- Leaf scope: `PSP-P08-W01` through `PSP-P08-W07`
+- Target repository: `organvm/limen` for this chunk-owned preflight package only
+- Branch/worktree: `codex/psp-c07-private-inbound-preflight` in the absolute scope above
+- Draft PR: [#2318](https://github.com/organvm/limen/pull/2318)
+- Exact implementation commit: `82a5f8bc4499b252fcd357dcb1b358e0dee34056`
+- Conduct receipt: none claimed; the authenticated broker was not configured in this direct desktop
+  environment, so no leaf execution or hidden fanout occurred
+
+## Verified current state
+
+| Item | Live state |
+|---|---|
+| C00/P00 correction | closed; merged [PR #2300](https://github.com/organvm/limen/pull/2300) at `fbab1543a863ba2a86546de1eb31bdb9f0f50388`; the old non-Codex/Agy canary is superseded |
+| P02 | closed with its accepted phase receipt |
+| C03 / P03 | W01-W06 accepted at `c94bc3748fcf2d1dc802a4bae972df23d9a9fbec`; source `b6af8086c9050634313f519c29a6dfcb922c3721` is integrated at `8f89ad16ca1df84b00cb8227c88f368d0d64631a`; W07 remains genuinely five-reader blocked |
+| W06 receipt | [marked receipt](https://github.com/organvm/limen/issues/2187#issuecomment-5271254820), SHA-256 `260081dfbffc75d55824c0e6ed7d7718a7e397763afb689c94d2230963d79617` |
+| W07 / P04 | W07 #2188 remains open for five genuine independent target-like readers; synthetic/model responses are forbidden; P04 is open and blocked on P03 |
+| Formal predecessor | `PSP-C06` / `PSP-P07` is open; [phase #2212](https://github.com/organvm/limen/issues/2212) has no closure receipt |
+| C06 prepared evidence | portfolio [PR #221](https://github.com/organvm-vii-kerygma/portfolio/pull/221) source `7c150fc81184df1715824be28b32472baadbb3b6`, integrated `797cda3fb903b07d4152e5bbde9f468beeeab3e0`; Limen relay [PR #2317](https://github.com/organvm/limen/pull/2317) source `854b6385de6b340485baaf59b1be55bd4d243a4d`, integrated `690617fc2aeea79acfe5604799e6413d70b6e4dd` |
+| C06 durable visual artifacts | the portfolio head tracks the manifest and exactly three source-grounded PNG mockups; all remain explicitly unselected |
+| C06 unresolved selection and link health | exactly three grounded visual directions await operator selection; visual implementation/deploy unauthorized; 11 legacy `organvm.github.io/portfolio` links dead while canonical `organvm-vii-kerygma/portfolio` paths resolve |
+| Initial private-inbound implementation commit | `82a5f8bc4499b252fcd357dcb1b358e0dee34056` |
+| Dependency-binding baseline | `bbd0f0135858f7cf5e5de68b45c7c5c94ee2d9a7`; superseded only by this durable C06-head refresh |
+| Final draft-PR head | recorded after push in the #2318 body and exact-head receipt comment; this tracked file does not self-name its containing commit |
+| Acceptance condition | `counts_as_closure: false`; preflight prepared; every W01-W07 and P08 completion predicate remains unmet and open |
+| External effects | branch push and draft PR only; no form, alias, CTA, mail, publish, deploy, DNS, spend, signature, merge, account, board, or send effect |
+| Private evidence | none consumed or emitted; tracked fixtures use reserved `.invalid` data and synthetic owner partitions only |
+
+## Runtime assignment requirements
+
+The registry supplies capability, reasoning, effect, and effort requirements. Dispatch resolves an
+eligible provider from the live runtime catalog and fails blocked if none is available; no provider
+slug is frozen in this preflight. This conductor package does not substitute for leaf execution.
+
+| Work ID | Reasoning | Effect | Effort |
+|---|---|---|---|
+| `PSP-P08-W01` | routine | external | high |
+| `PSP-P08-W02` | deep | write | xhigh |
+| `PSP-P08-W03` | deep | write | xhigh |
+| `PSP-P08-W04` | deep | write | high |
+| `PSP-P08-W05` | routine | write | medium |
+| `PSP-P08-W06` | deep | write | xhigh |
+| `PSP-P08-W07` | deep | read | xhigh |
+
+## Completed reversible preparation
+
+- Added unwired client/recruiter CTA-to-intake mappings and a capture-surface-neutral contract for
+  tagged mail and form submissions.
+- Added an exact minimum-data schema, bounded provenance and content fields, recursive sensitive-field
+  denial, strict allowlists, privacy copy, and tagged-mail fallback.
+- Added idempotent normalization, private dedupe, deterministic scoring thresholds, confidence
+  margins, and a mandatory manual-review ambiguity route.
+- Added seven declarative response-template families with no transport capability, absent send
+  authority, and a hard-closed send valve.
+- Added a seal/open/delete private-custody adapter boundary that requires encryption and external key
+  management while deliberately implementing neither cryptography nor key material in this package.
+- Added an owner-partitioned private ledger, partition-scoped non-contact operator view, aggregate
+  dashboard, category retention defaults, immediate-delete triggers, and identifier-free deletion
+  receipts over the synthetic harness.
+- Added wholly synthetic client, recruiter, operator, spam, ambiguous, and duplicate fixtures.
+- Added labeled traversal evaluation and privacy, overcollection, source-tag injection, field-bound,
+  cross-owner, sealed-custody, retention, projection, content-injection, redaction, dedupe, ordered-gate,
+  and zero-send tests.
+- Added the public-safe threat model and integration boundary for the later selected C06 surface.
+- Recorded every W01-W07 reversible component as implemented in preflight while retaining every
+  formal leaf state as open and dependency-gated.
+
+## Predicate receipts
+
+All passing commands below were run bare on the implementation exact tree:
+
+| Predicate | Result |
+|---|---|
+| `python3 scripts/positioning-program.py --check` | pass; 15 phases, 111 work packets, 127 mapped/projected objects |
+| `python3 scripts/positioning-program.py --verify-model-assignments` | pass; 127 objects and 13 chunk assignments |
+| `python3 scripts/positioning-program.py --verify-remote` | pass; 127 observed, zero drift, missing, or orphan objects |
+| `python3 scripts/positioning-private-inbound-preflight.py --mode validate --json` | pass; contract and synthetic fixtures valid |
+| `python3 scripts/positioning-private-inbound-preflight.py --mode traverse --json` | pass; five private-shaped records, two owner partitions, 5/5 labeled category-and-route results, zero external sends |
+| `python3 -m unittest discover -s scripts/tests -p 'test_positioning_private_inbound_preflight.py'` | pass; 27 tests |
+| `scripts/verify-scoped.sh` | pass; seven implicated cheap gates |
+| `python3 scripts/positioning-private-inbound-preflight.py --mode live-gate --json` | expected fail-closed exit `2`: W07 five-reader predicate receipt absent; reported order is W07, P04, P07, selected C06 surface, separate P08 leaf authority |
+
+The last row is the intended dependency valve. It is not evidence that C07 is ready or complete.
+
+## Decisions and rationale
+
+| Decision | Evidence and rationale |
+|---|---|
+| Do not revive the Agy/non-Codex gate | PR #2300 and closed P00 encode the authoritative correction; the live runbook says provider diversity is not a PSP acceptance gate. |
+| Do not wire a public form or alias | C06/P07 is open and no selected capture surface exists. The preflight adapter boundary permits later binding without premature publication. |
+| Do not promote C06 preflight to closure | PRs #221/#2317 are merged prepared packages only. Operator selection, visual implementation authority, legacy-link repair, and the P07 phase predicate remain unsatisfied. |
+| Keep fixtures synthetic and receipts aggregate-safe | Private lead evidence cannot enter public artifacts. `.invalid` fixtures exercise behavior without creating real-world proof. |
+| Keep leaf issues open | No broker lease, target-repository implementation, real provider integration, deliverability receipt, or phase proof exists. Synthetic traversal is preparation only. |
+
+## Next actions
+
+1. Collect and validate five genuine W07 reader responses; then close P03 and P04 only through their
+   predicate-backed receipt rails. Synthetic/model responses cannot substitute.
+2. Preserve the upstream operator gate over exactly three grounded visual directions. No C06 visual
+   implementation or deployment proceeds before the operator selection receipt and separate effect
+   authority; retain the 11-dead-legacy-link finding until repaired and reverified.
+3. Re-query `PSP-C06` / `PSP-P07` and proceed only when its phase predicate receipt is durable and
+   the selected capture surface is explicit.
+4. Run `python3 scripts/positioning-program.py --ready --json`; when `PSP-P08-W01` is actually ready,
+   seed it and obtain a fresh broker lease using its runtime-derived routine/external/high requirements.
+5. Bind the selected surface to one contract adapter, preserving the live gate and separate
+   `HG-PUBLICATION-SEND` boundary; then dispatch downstream leaves only as the registry makes them
+   ready.
+6. Implement authenticated access, real encryption/key rotation, storage, retention, deletion, and
+   live identifier behavior only inside their private repository owners, with private exact-head
+   predicates and public aggregate receipts. Never commit real lead rows or key material.
+
+## Risks and prohibitions
+
+- Human gates recorded once: the upstream C06 operator selection among exactly three grounded
+  directions; `HG-PUBLIC-IDENTITY` ([issue #267](https://github.com/organvm/limen/issues/267))
+  owns public capture activation; `HG-PUBLICATION-SEND` ([issue #533](https://github.com/organvm/limen/issues/533))
+  owns every outbound reply.
+- Sensitive/private boundary: real contact identity, messages, consent, scores, drafts, opportunity
+  stages, objections, outcomes, and record identifiers stay in their private owners and never in this
+  relay, PR, public logs, or public receipts.
+- Files not to touch during integration: `tasks.yaml`, shared generated PSP indexes, and sibling
+  chunk paths.
+- Rollback: revert the chunk-owned preflight commits; later live rollback remains the manifest-owned
+  alias/form disable, plain-text CTA regeneration, manual-review fallback, draft-family disable, and
+  private-ledger export/disable path.
+
+The fresh-agent injection phrase is:
+
+```text
+Continue from relay at /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/8f85/limen/docs/receipts/positioning/relays/2026-08-10-psp-c07-private-inbound-preflight.md. mid-task — see Next Actions for current step.
+```
+
+This relay transfers context only. It does not transfer identity, lease, approval, permission, or
+account authority.

@@ -1,0 +1,573 @@
+#!/usr/bin/env python3
+"""Verify PSP-P02-W02 estate classification from live GitHub metadata.
+
+The public policy is ``institutio/github/estate.yaml``.  It names taxonomy and
+rule precedence but does not become a second public inventory.  This verifier
+retrieves the current owner/org repository denominator, classifies every record
+in memory, emits only aggregate counts, and guards the reviewed diff against
+newly added private repository names.
+"""
+
+from __future__ import annotations
+
+import argparse
+import collections
+import datetime as dt
+import hashlib
+import importlib.util
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ESTATE = ROOT / "institutio/github/estate.yaml"
+ACCESS = ROOT / "institutio/github/access.yaml"
+CENSUS_RECEIPT = ROOT / "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json"
+TAXONOMY = {
+    "infrastructure",
+    "proof",
+    "experiments",
+    "products",
+    "archives",
+    "private_operations",
+    "partner_work",
+}
+MATURITY = {"active", "maintained", "dormant", "archived", "unvalidated"}
+DISPOSITIONS = {"public_evidence", "public_partner", "private_internal", "private_partner"}
+SELECTOR_KEYS = {"fallback", "audience", "archived", "visibility", "product_ledger", "governance_classes"}
+AUDIENCES = {"world", "collab", "self"}
+VISIBILITIES = {"public", "private"}
+
+
+class ClassificationError(RuntimeError):
+    pass
+
+
+def load_yaml(path: Path) -> dict[str, Any]:
+    try:
+        value = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError) as exc:
+        raise ClassificationError("cannot load required YAML policy") from exc
+    if not isinstance(value, dict):
+        raise ClassificationError("required YAML policy must be a mapping")
+    return value
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ClassificationError(f"cannot load {path}") from exc
+    if not isinstance(value, dict):
+        raise ClassificationError(f"{path} must be a mapping")
+    return value
+
+
+def load_gitvs() -> Any:
+    path = ROOT / "scripts/gitvs.py"
+    spec = importlib.util.spec_from_file_location("estate_classification_gitvs", path)
+    if spec is None or spec.loader is None:
+        raise ClassificationError("cannot load scripts/gitvs.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_effective_estate() -> dict[str, Any]:
+    try:
+        value = load_gitvs().load_estate()
+    except Exception as exc:
+        raise ClassificationError("cannot load effective GitHub estate policy") from exc
+    if not isinstance(value, dict) or not value:
+        raise ClassificationError("effective GitHub estate policy must be a non-empty mapping")
+    return value
+
+
+def command_json(args: list[str], *, timeout: int = 60) -> Any:
+    result = load_gitvs()._gh_user(args, timeout=timeout)
+    if result.returncode != 0:
+        raise ClassificationError("native-owner GitHub query failed")
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise ClassificationError("GitHub query returned invalid JSON") from exc
+
+
+def paginated_objects(endpoint: str, *, kind: str) -> list[dict[str, Any]]:
+    pages = command_json(["api", "--paginate", "--slurp", endpoint], timeout=180)
+    if not isinstance(pages, list):
+        raise ClassificationError(f"GitHub {kind} pages were not a list")
+    rows: list[dict[str, Any]] = []
+    for page in pages:
+        if not isinstance(page, list):
+            raise ClassificationError(f"GitHub {kind} page was not a list")
+        if any(not isinstance(row, dict) for row in page):
+            raise ClassificationError(f"GitHub {kind} page contained a non-object record")
+        rows.extend(page)
+    return rows
+
+
+def paginated_repositories(endpoint: str) -> list[dict[str, Any]]:
+    return paginated_objects(endpoint, kind="repository")
+
+
+def collect_live_estate() -> tuple[list[dict[str, Any]], dict[str, Any], list[str]]:
+    owner = command_json(["api", "/user"])
+    if not isinstance(owner, dict):
+        raise ClassificationError("GitHub owner query was not an object")
+    owner_login = str(owner.get("login") or "").strip()
+    owner_user_id = owner.get("id")
+    if not owner_login or not isinstance(owner_user_id, int) or isinstance(owner_user_id, bool):
+        raise ClassificationError("GitHub owner query lacked a stable identity")
+    orgs = paginated_objects("/user/orgs?per_page=100", kind="organization")
+    organization_roster: list[str] = []
+    pages = [paginated_repositories("/user/repos?affiliation=owner&per_page=100")]
+    for org in orgs:
+        login = str((org or {}).get("login") or "").strip()
+        if not login:
+            raise ClassificationError("GitHub organization record lacked a login")
+        organization_roster.append(login)
+        pages.append(paginated_repositories(f"/orgs/{login}/repos?type=all&per_page=100"))
+    repositories: dict[str, dict[str, Any]] = {}
+    for page in pages:
+        for row in page:
+            name = str(row.get("full_name") or "").strip()
+            if not name:
+                raise ClassificationError("repository without full_name")
+            if name in repositories:
+                raise ClassificationError("duplicate repository returned by census")
+            repositories[name] = row
+    return (
+        [repositories[key] for key in sorted(repositories)],
+        {"login": owner_login, "id": owner_user_id},
+        sorted(organization_roster),
+    )
+
+
+def collect_live_repositories() -> list[dict[str, Any]]:
+    rows, _, _ = collect_live_estate()
+    return rows
+
+
+def repository_identity_digest(rows: list[dict[str, Any]]) -> str:
+    pairs: list[tuple[str, bool]] = []
+    seen: set[str] = set()
+    for row in rows:
+        name = str(row.get("full_name") or "").strip()
+        if not name:
+            raise ClassificationError("repository record lacked a stable identity")
+        if name in seen:
+            raise ClassificationError("duplicate repository returned by census")
+        seen.add(name)
+        pairs.append((name, bool(row.get("private"))))
+    canonical = json.dumps(sorted(pairs), separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def verify_census_identity(
+    rows: list[dict[str, Any]],
+    owner: dict[str, Any],
+    organization_roster: list[str],
+    receipt: dict[str, Any],
+) -> None:
+    passes = receipt.get("live_passes") or {}
+    first = passes.get("pass_1_stable_digest")
+    second = passes.get("pass_2_stable_digest")
+    if not isinstance(first, str) or len(first) != 64 or first != second:
+        raise ClassificationError("W01 receipt lacks one stable two-pass repository digest")
+    if repository_identity_digest(rows) != first:
+        raise ClassificationError("live repository identity/visibility digest does not match W01")
+    if owner != {"login": receipt.get("owner_login"), "id": receipt.get("owner_user_id")}:
+        raise ClassificationError("live owner identity does not match W01")
+    expected_organizations = receipt.get("organization_roster")
+    if (
+        not isinstance(expected_organizations, list)
+        or any(not isinstance(value, str) or not value for value in expected_organizations)
+        or sorted(expected_organizations) != sorted(organization_roster)
+    ):
+        raise ClassificationError("live organization roster does not match W01")
+
+
+def private_repository_tokens(rows: list[dict[str, Any]]) -> tuple[set[str], set[str]]:
+    public_slugs = {
+        str(row.get("name") or str(row.get("full_name") or "").rsplit("/", 1)[-1]).strip().casefold()
+        for row in rows
+        if not bool(row.get("private"))
+    }
+    full_names: set[str] = set()
+    bare_slugs: set[str] = set()
+    for row in rows:
+        if not bool(row.get("private")):
+            continue
+        full_name = str(row.get("full_name") or "").strip()
+        slug = str(row.get("name") or full_name.rsplit("/", 1)[-1]).strip()
+        if full_name:
+            full_names.add(full_name)
+        if slug and slug.casefold() not in public_slugs:
+            bare_slugs.add(slug)
+    return full_names, bare_slugs
+
+
+def audience_for(repo: str, private: bool, access: dict[str, Any]) -> str:
+    grants = access.get("grants") or {}
+    if not private:
+        return "collab" if repo in grants else "world"
+    return "collab" if repo in grants else "self"
+
+
+def parse_timestamp(value: object) -> dt.datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def maturity_cutoffs(policy: dict[str, Any]) -> tuple[int, int]:
+    maturity = policy.get("maturity")
+    if not isinstance(maturity, dict):
+        raise ClassificationError("maturity policy must be a mapping")
+    active = maturity.get("active_within_days")
+    maintained = maturity.get("maintained_within_days")
+    if isinstance(active, bool) or not isinstance(active, int) or active < 0:
+        raise ClassificationError("maturity.active_within_days must be a non-negative integer")
+    if isinstance(maintained, bool) or not isinstance(maintained, int) or maintained < 0:
+        raise ClassificationError("maturity.maintained_within_days must be a non-negative integer")
+    if maintained < active:
+        raise ClassificationError(
+            "maturity.maintained_within_days must not precede maturity.active_within_days"
+        )
+    return active, maintained
+
+
+def maturity_for(row: dict[str, Any], policy: dict[str, Any], now: dt.datetime) -> str:
+    if bool(row.get("archived")):
+        return "archived"
+    pushed = parse_timestamp(row.get("pushed_at"))
+    if pushed is None:
+        return "unvalidated"
+    age = now - pushed.astimezone(dt.UTC)
+    active_within_days, maintained_within_days = maturity_cutoffs(policy)
+    if age <= dt.timedelta(days=active_within_days):
+        return "active"
+    if age <= dt.timedelta(days=maintained_within_days):
+        return "maintained"
+    return "dormant"
+
+
+def selector_errors(selector: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    unknown = sorted(set(selector) - SELECTOR_KEYS)
+    if unknown:
+        errors.append(f"unsupported selector key(s): {', '.join(unknown)}")
+    if not selector:
+        errors.append("selector must not be empty")
+    if "fallback" in selector and (selector["fallback"] is not True or len(selector) != 1):
+        errors.append("fallback selector must be true and stand alone")
+    if "audience" in selector and selector["audience"] not in AUDIENCES:
+        errors.append("audience selector has an invalid value")
+    if "archived" in selector and not isinstance(selector["archived"], bool):
+        errors.append("archived selector must be boolean")
+    if "visibility" in selector and selector["visibility"] not in VISIBILITIES:
+        errors.append("visibility selector has an invalid value")
+    if "product_ledger" in selector and not isinstance(selector["product_ledger"], bool):
+        errors.append("product_ledger selector must be boolean")
+    if "governance_classes" in selector:
+        values = selector["governance_classes"]
+        if not isinstance(values, list) or not values or any(not isinstance(value, str) or not value for value in values):
+            errors.append("governance_classes selector must be a non-empty string list")
+    return errors
+
+
+def selector_matches(
+    selector: dict[str, Any], *, governance_class: str, audience: str, product: bool, row: dict[str, Any]
+) -> bool:
+    errors = selector_errors(selector)
+    if errors:
+        raise ClassificationError(f"invalid primary-class selector: {'; '.join(errors)}")
+    if selector.get("fallback") is True:
+        return True
+    if "audience" in selector and selector["audience"] != audience:
+        return False
+    if "archived" in selector and bool(selector["archived"]) != bool(row.get("archived")):
+        return False
+    if "visibility" in selector:
+        observed = "private" if bool(row.get("private")) else "public"
+        if selector["visibility"] != observed:
+            return False
+    if "product_ledger" in selector and bool(selector["product_ledger"]) != product:
+        return False
+    if "governance_classes" in selector and governance_class not in set(selector["governance_classes"] or []):
+        return False
+    return True
+
+
+def public_relevance_for(primary: str, disposition: str, policy: dict[str, Any]) -> str:
+    if disposition == "private_internal":
+        return "private_only"
+    if disposition in {"public_partner", "private_partner"}:
+        return "partner_scoped"
+    return str((policy.get("public_relevance") or {}).get(primary) or "")
+
+
+def classify(rows: list[dict[str, Any]], estate: dict[str, Any], access: dict[str, Any], now: dt.datetime) -> list[dict[str, str]]:
+    policy = estate.get("positioning_estate_classification") or {}
+    product_names = {str(name) for name in ((estate.get("product_ledger") or {}).get("repos") or [])}
+    gitvs = load_gitvs()
+    result: list[dict[str, str]] = []
+    for row in rows:
+        repo = str(row.get("full_name") or "").strip()
+        if not repo:
+            raise ClassificationError("repository record lacked a stable identity")
+        try:
+            governance_class = gitvs.classify_repo(repo, estate, facts={
+                "private": bool(row.get("private")),
+                "archived": bool(row.get("archived")),
+                "fork": bool(row.get("fork")),
+            })
+        except Exception as exc:
+            raise ClassificationError("repository governance classification failed") from exc
+        if not governance_class:
+            raise ClassificationError("repository record has no governance class")
+        audience = audience_for(repo, bool(row.get("private")), access)
+        matches = [
+            str(rule.get("class"))
+            for rule in policy.get("primary_order") or []
+            if isinstance(rule, dict)
+            and isinstance(rule.get("when"), dict)
+            and selector_matches(
+                rule["when"], governance_class=governance_class, audience=audience,
+                product=repo.rsplit("/", 1)[-1] in product_names, row=row
+            )
+        ]
+        # The taxonomy deliberately has overlaps (a partner product can also be
+        # private, a portal product can also be in the product ledger).  The
+        # registry's ordered policy resolves those overlaps; this output stores
+        # only its first matching class, therefore exactly one primary class.
+        if not matches:
+            raise ClassificationError("repository record matched no primary-class rule")
+        primary = matches[0]
+        if primary not in TAXONOMY:
+            raise ClassificationError(f"invalid primary class {primary}")
+        private = bool(row.get("private"))
+        if private:
+            disposition = "private_partner" if audience == "collab" else "private_internal"
+        else:
+            disposition = "public_partner" if audience == "collab" else "public_evidence"
+        maturity = maturity_for(row, policy, now)
+        relevance = public_relevance_for(primary, disposition, policy)
+        if disposition not in DISPOSITIONS or maturity not in MATURITY or not relevance:
+            raise ClassificationError("repository record has incomplete classification dimensions")
+        uncertainty: list[str] = []
+        if primary == "experiments":
+            uncertainty.append("role")
+        if maturity == "unvalidated":
+            uncertainty.append("maturity")
+        if disposition == "public_partner":
+            uncertainty.append("public_relevance")
+        result.append({
+            "primary_class": primary,
+            "maturity": maturity,
+            "visibility_disposition": disposition,
+            "public_relevance": relevance,
+            "governance_class": governance_class,
+            "uncertainty": uncertainty,
+        })
+    return result
+
+
+def verify_policy(estate: dict[str, Any]) -> list[str]:
+    policy = estate.get("positioning_estate_classification")
+    if not isinstance(policy, dict):
+        return ["missing positioning_estate_classification policy"]
+    errors: list[str] = []
+    if set(policy.get("primary_classes") or []) != TAXONOMY:
+        errors.append("primary_classes must contain the seven PSP-P02-W02 classes exactly")
+    rules = policy.get("primary_order") or []
+    if not isinstance(rules, list) or len(rules) != len(TAXONOMY):
+        errors.append("primary_order must contain one rule per primary class")
+    elif {str(rule.get("class")) for rule in rules if isinstance(rule, dict)} != TAXONOMY:
+        errors.append("primary_order must name each primary class exactly once")
+    if isinstance(rules, list):
+        for index, rule in enumerate(rules):
+            if not isinstance(rule, dict) or not isinstance(rule.get("when"), dict):
+                errors.append(f"primary_order rule {index + 1} must have a selector mapping")
+                continue
+            errors.extend(
+                f"primary_order rule {index + 1}: {error}"
+                for error in selector_errors(rule["when"])
+            )
+    maturity = policy.get("maturity")
+    if isinstance(maturity, dict):
+        try:
+            maturity_cutoffs(policy)
+        except ClassificationError as exc:
+            errors.append(str(exc))
+        maturity_values = maturity.get("values")
+    else:
+        errors.append("maturity policy must be a mapping")
+        maturity_values = None
+    if (
+        not isinstance(maturity_values, list)
+        or any(not isinstance(value, str) for value in maturity_values)
+        or set(maturity_values) != MATURITY
+    ):
+        errors.append("maturity.values must contain the allowed maturity values exactly")
+    if set(policy.get("visibility_dispositions") or []) != DISPOSITIONS:
+        errors.append("visibility_dispositions must contain the allowed dispositions exactly")
+    if set((policy.get("public_relevance") or {})) != TAXONOMY:
+        errors.append("public_relevance must map each primary class")
+    return errors
+
+
+def private_leaks_added(
+    base: str,
+    private_names: set[str],
+    private_slugs: set[str] | None = None,
+) -> list[str]:
+    try:
+        content_result = subprocess.run(
+            ["git", "diff", "--unified=0", f"{base}...HEAD"],
+            cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ClassificationError("timed out inspecting reviewed diff") from exc
+    if content_result.returncode != 0:
+        raise ClassificationError("cannot inspect reviewed diff")
+    try:
+        path_result = subprocess.run(
+            ["git", "diff", "--name-only", "-z", "--diff-filter=A", "--no-renames", f"{base}...HEAD"],
+            cwd=ROOT, text=True, capture_output=True, check=False, timeout=60,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ClassificationError("timed out inspecting added paths") from exc
+    if path_result.returncode != 0:
+        raise ClassificationError("cannot inspect added paths")
+    added_content: list[str] = []
+    in_hunk = False
+    for line in content_result.stdout.splitlines():
+        if line.startswith("diff --git "):
+            in_hunk = False
+            continue
+        if line.startswith("@@"):
+            in_hunk = True
+            continue
+        if not in_hunk and (line.startswith("--- ") or line.startswith("+++ ")):
+            continue
+        if line.startswith("+"):
+            added_content.append(line[1:])
+    added_paths = [path for path in path_result.stdout.split("\0") if path]
+    repository_character = r"A-Za-z0-9_.-"
+    leaked_full_names = {
+        name
+        for name in private_names
+        if (
+            any(
+                re.search(
+                    rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])",
+                    line,
+                    flags=re.IGNORECASE,
+                )
+                for line in added_content
+            )
+            or any(
+                re.search(rf"(?:^|/){re.escape(name)}(?:$|/|\.)", path, flags=re.IGNORECASE)
+                for path in added_paths
+            )
+        )
+    }
+    leaked_bare_slugs = {
+        slug
+        for slug in (private_slugs or set())
+        if (
+            any(
+                re.fullmatch(
+                    rf"\s*(?:[-*]\s+)?[\x60'\"]?{re.escape(slug)}[\x60'\"]?\s*",
+                    line,
+                    flags=re.IGNORECASE,
+                )
+                for line in added_content
+            )
+            or any(
+                re.search(rf"(?:^|/){re.escape(slug)}(?:$|/|\.)", path, flags=re.IGNORECASE)
+                for path in added_paths
+            )
+        )
+    }
+    return sorted(leaked_full_names | leaked_bare_slugs)
+
+
+def summary(rows: list[dict[str, Any]], classifications: list[dict[str, str]]) -> dict[str, Any]:
+    return {
+        "repository_count": len(rows),
+        "visibility": dict(sorted(collections.Counter("private" if bool(row.get("private")) else "public" for row in rows).items())),
+        "primary_classes": dict(sorted(collections.Counter(row["primary_class"] for row in classifications).items())),
+        "maturity": dict(sorted(collections.Counter(row["maturity"] for row in classifications).items())),
+        "visibility_dispositions": dict(sorted(collections.Counter(row["visibility_disposition"] for row in classifications).items())),
+        "public_relevance": dict(sorted(collections.Counter(row["public_relevance"] for row in classifications).items())),
+        "uncertainty_queue": dict(
+            sorted(collections.Counter(kind for row in classifications for kind in row["uncertainty"]).items())
+        ),
+    }
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--verify", action="store_true", help="fail unless policy, live coverage, and private-diff guard pass")
+    parser.add_argument("--json", action="store_true", help="print public-safe aggregate counts")
+    parser.add_argument("--base", default="origin/main", help="review base used by the new-private-name diff guard")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    try:
+        estate = load_effective_estate()
+        access = load_yaml(ACCESS)
+        census_receipt: dict[str, Any] | None = None
+        if args.verify:
+            errors = verify_policy(estate)
+            if errors:
+                raise ClassificationError("; ".join(errors))
+            census_receipt = load_json(CENSUS_RECEIPT)
+        rows, owner, organization_roster = collect_live_estate()
+        classifications = classify(rows, estate, access, dt.datetime.now(dt.UTC))
+        counts = summary(rows, classifications)
+        if args.verify:
+            assert census_receipt is not None
+            verify_census_identity(rows, owner, organization_roster, census_receipt)
+            expected = (estate["positioning_estate_classification"].get("expected_denominator") or {})
+            if counts["repository_count"] != expected.get("repositories"):
+                raise ClassificationError(
+                    f"census denominator mismatch: {counts['repository_count']} != {expected.get('repositories')}"
+                )
+            if counts["visibility"] != {"private": expected.get("private"), "public": expected.get("public")}:
+                raise ClassificationError("census visibility counts do not match the W01 receipt")
+            private_names, private_slugs = private_repository_tokens(rows)
+            leaks = private_leaks_added(args.base, private_names, private_slugs)
+            if leaks:
+                raise ClassificationError(f"new private repository name(s) in public diff: {len(leaks)}")
+        if args.json:
+            print(json.dumps(counts, indent=2, sort_keys=True))
+        else:
+            print(f"estate-classification: {counts['repository_count']} repositories, exactly one primary class each")
+            print(f"estate-classification: uncertainty queue={sum(counts['uncertainty_queue'].values())}")
+        return 0
+    except ClassificationError as exc:
+        print(f"estate-classification: FAIL: {exc}", file=sys.stderr)
+        return 1
+    except Exception:
+        print("estate-classification: FAIL: unexpected classifier failure", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

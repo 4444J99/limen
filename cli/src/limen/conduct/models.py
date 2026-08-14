@@ -18,6 +18,8 @@ _RESOURCE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@*+-]{0,1023}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _GIT_OBJECT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 
+ConductRole = Literal["observer", "conductor", "executor", "compatibility"]
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -67,7 +69,7 @@ class ConductPrincipalV1(ProtocolModel):
     principal_id: str
     agent: str
     surface: str
-    roles: frozenset[Literal["observer", "conductor", "executor", "compatibility"]]
+    roles: frozenset[ConductRole]
 
     @field_validator("principal_id", "agent", "surface")
     @classmethod

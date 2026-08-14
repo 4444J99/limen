@@ -35,4 +35,3 @@ surfaces and is not a dispatch source.
 The Durable Object manifest/chunk namespace is separate from conduct state and uses the
 same crash-safe manifest-switching primitive. Restore requires a private board backup or a
 new authenticated bootstrap; no public repository branch is a restore source.
-

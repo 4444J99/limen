@@ -1,0 +1,71 @@
+# Engagement: Dustin — the independent-musician niche instance
+# Created 2026-08-12 from the T3 protocol gate (full conversation review, 2023-08-20..2026-08-12).
+#
+# PUBLIC-SAFE. First-name slug only. The demand evidence, compensation figures, transcripts and
+# interaction policy live in the ARCA-sealed private store and are referenced, never restated.
+# Private backing: _people-private/people/dustin/ (open-asks.yaml, decisions/demand-review.md).
+
+member:
+  name: "{{MEMBER_NAME}}"
+  context: >
+    Cohort peer of the requesting principal. Holds the rare pairing the post-DSP platform spec
+    calls for — working musician AND practising UI/UX designer — and is himself the buyer persona
+    for the AI-remediation practice, being an in-house design practitioner at a firm shipping AI
+    under stakeholder pressure. Profession, employer, and act detail live in the private dossier
+    (_people-private/people/dustin/), referenced never restated.
+
+mandate:
+  description: >
+    Convert an inbound, self-initiated request to run the social presence for his music into a
+    scoped paid retainer, delivered as the independent-musician instance of the existing content
+    yield engine (4444J99/content-engine--asset-amplifier) rather than as a bespoke build. Hold
+    the two co-originated ventures — the post-DSP music platform and the AI-remediation practice —
+    at dossier while their open design and offer questions are settled.
+  outcome: >
+    A one-page offer he can accept or decline: retainer shape, what is produced each cycle, what
+    is required from him, and the first release it is applied to. Plus two consolidated venture
+    scopes ready to resume the moment their gating questions are answered.
+
+standing:
+  current: "DISCOVERY"
+next_standing: "PROPOSAL"
+
+human_gates:
+  - "Member confirms scope and consents to this engagement record"
+  - "Principal sets the retainer figure — the member asked the price question directly and it is unanswered"
+  - "Principal decides between cash retainer and the standing counter-proposal to redirect that spend into venture runway"
+  - "Any artifact published under the member's artist identity is reviewed by him before release"
+  - "No posting under any account of his until credentials and approval flow are agreed in writing"
+
+standard:
+  quality_bar: >
+    No generative volume-filler. The member set this constraint himself: value comes from
+    fragmenting and distributing assets he has already made — hero video, album, studio process —
+    never from synthesising filler to hit a posting cadence.
+  evidence: >
+    Demand is inbound and self-initiated (2026-08-06), the only inbound commercial approach in a
+    3,201-message record spanning three years; he had independently considered hiring for it and
+    had already tried and rejected self-automation. The delivery asset already exists and is in
+    active development (content-engine--asset-amplifier, pushed 2026-08-09). He has run one
+    self-managed short-form campaign by hand, which is the measurable baseline to beat.
+
+governance:
+  authority: "Engagement Partner (human) — the member's participation is his to confirm"
+  ethics: "Friendship precedes the lane; a commercial thread must never become the only reason contact occurs"
+  reversibility: "All external actions staged and surfaced for human action; no autonomous outbound"
+
+scope:
+  boundary: >
+    Social-presence delivery for the artist project: content strategy, asset fragmentation,
+    scheduling, distribution, and yield reporting, driven by the content yield engine.
+  exclusions:
+    - "No autonomous posting or messaging in the member's name"
+    - "No spend commitments on his behalf"
+    - "No bundling of the paid social lane with the two unfunded ventures in a single offer"
+    - "No music, mixing, or release decisions — those are his"
+  changes:
+    - date: "2026-08-12"
+      description: >
+        Engagement record created at DISCOVERY from the T3 conversation-review gate; supersedes the
+        prior no-engagement state in which two idea-stage ventures sat unowned for 4.5 months.
+      approved_by: "Anthony (requesting principal)"

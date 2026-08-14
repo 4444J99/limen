@@ -1,0 +1,15 @@
+{
+  "schema_version": "limen.positioning.public-surface-manifest.v1",
+  "surfaces": [
+    {
+      "id": "frontdoor",
+      "path": "frontdoor.md",
+      "claim_ids": ["claim.synthetic.false"]
+    },
+    {
+      "id": "profile",
+      "path": "profile.md",
+      "claim_ids": ["claim.synthetic.false"]
+    }
+  ]
+}

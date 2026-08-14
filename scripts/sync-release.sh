@@ -27,6 +27,27 @@ export HOME="${HOME:-/Users/4jp}"
 ROOT="${LIMEN_ROOT:-$HOME/Workspace/limen}"
 BRANCH="${LIMEN_RELEASE_BRANCH:-main}"
 
+# THE ORGAN'S OWN REPOSITORY ROOT — where THIS script lives, which is not necessarily the tree it
+# operates on. Normally they are the same directory and nothing below behaves differently.
+#
+# They diverge in exactly one situation, and it is the one that matters: BOOTSTRAPPING A WEDGED
+# TREE. This organ is the only thing that advances $ROOT, so when a fix to the organ itself is
+# needed to unwedge $ROOT, that fix cannot arrive by the usual route — the tree that needs the new
+# code is the tree the new code exists to update. The escape is to run a CURRENT copy of the organ
+# (from a worktree at origin/main) against the stale $ROOT. That already worked for the organ's own
+# logic, because bash reads this file from where it was invoked. It did NOT work for the organ's
+# HELPERS: they were resolved from "$ROOT", so a current organ still asked the STALE tree's probe
+# for its verdict and got the stale answer back — which is precisely the two-rail confusion the
+# repo's verify recipe warns about, appearing inside a single script.
+#
+# Measured 2026-08-12: a current organ, run against a live checkout 29 commits behind, correctly
+# proved the divergence loss-free and then declined anyway, because $ROOT's OLD occupancy classifier
+# reported a ChatGPT.app stdio server as an interactive session. The organ's fix and the probe's fix
+# were both already merged and green; neither could be reached. A tool must use ITS OWN libraries
+# and only take the TARGET from its argument.
+SELF_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd -P)" || SELF_ROOT="$ROOT"
+[ -n "$SELF_ROOT" ] || SELF_ROOT="$ROOT"
+
 # Regenerable daemon bookkeeping — receipt files the beat REWRITES every cycle. A commit touching ONLY
 # these is "unique" by patch-id yet carries NO genuine work: it is loss-free to re-converge past. This
 # is the exact commit that otherwise strands the live checkout — a receipt committed while in sync, then
@@ -52,6 +73,39 @@ _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a re
     done
     [ "$matched" = 1 ] || return 1
   done
+  [ "$any" = 1 ]
+}
+
+# _paths_identical_upstream <base> <local> <remote>
+# exit 0 ⟺ every path the local-only commits touch resolves to the SAME blob at <local> and
+# <remote> (or is absent from both) — i.e. the bytes are ALREADY upstream, so `reset --hard
+# <remote>` provably discards no committed content.
+#
+# Why this exists beside the patch-id valve: patch-id hashes a commit's WHOLE diff, so it only
+# recognises the content as upstream when the upstream commit changed exactly the same set of
+# files. The common real case is the same content landing upstream bundled inside a LARGER
+# commit — measured 2026-08-12, a 2-file local commit (docs/ci-red-disposition-*, +141) against
+# the byte-identical files inside a 24-file release commit (+1684/-594) hashed differently, so
+# valve 1 declared "genuinely unique work" and the organ fail-opened protecting content origin
+# already had. Nothing about those two facts ever changes, so that wedge is PERMANENT: the live
+# checkout sat 29 behind while every beat re-printed the same loud notice, and the fleet executed
+# stale code — including merged fixes whose gates were all green.
+#
+# Content identity is the question the reset actually poses ("would this lose anything?"), and it
+# is decided per PATH, not per commit. Strictly narrower than it looks: a local commit that
+# deletes a file origin still has, or adds one origin lacks, compares unequal and still fails
+# open. An empty changed-path set returns 1 — absence of paths is not evidence of safety.
+_paths_identical_upstream() {
+  local base="$1" lref="$2" rref="$3" f a b any=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    any=1
+    a="$(git rev-parse --quiet --verify "$lref:$f" 2>/dev/null || echo absent)"
+    b="$(git rev-parse --quiet --verify "$rref:$f" 2>/dev/null || echo absent)"
+    [ "$a" = "$b" ] || return 1
+  done <<EOF
+$(git diff --name-only "$base..$lref" 2>/dev/null)
+EOF
   [ "$any" = 1 ]
 }
 
@@ -253,7 +307,11 @@ if [ "${LIMEN_SESSION_CONTENTION_GUARD:-1}" = "1" ]; then
   # — so it shipped inert and every gate stayed green. A defensive `||` became an eraser.
   # `|| true` absorbs the intended non-zero; the sed then reads a variable, where no exit status
   # of the probe's can reach it. The TEXT is the verdict here, never the status.
-  _probe_out="$(python3 "$ROOT/scripts/session-contention.py" probe --root "$ROOT" 2>/dev/null || true)"
+  # SELF_ROOT for the helper, $ROOT for the TARGET (see SELF_ROOT above). LIMEN_ROOT is passed
+  # explicitly because session-contention.py resolves its own `limen` package from it — without
+  # that, the current script would still import the stale tree's classifier and get its verdict.
+  _probe_out="$(LIMEN_ROOT="$SELF_ROOT" python3 "$SELF_ROOT/scripts/session-contention.py" \
+    probe --root "$ROOT" 2>/dev/null || true)"
   OCCUPANT="$(printf '%s\n' "$_probe_out" | sed -n 's/.*OCCUPIED by pid \([0-9][0-9]*\).*/\1/p')"
   # A BLIND PROBE MUST NOT BE A QUIET ONE. The capture above swallows the probe's stdout, so on a
   # host where the probe cannot run — package unimportable, lsof missing — the guard disarms and
@@ -423,6 +481,15 @@ EOF
      && git diff --name-only "$BASE..$LOCAL" 2>/dev/null | _only_receipts; then
     unique=0
     reconcile_reason="local commit(s) touch ONLY regenerable receipts"
+  fi
+  # Third loss-free valve: every path the unique local commits touch is already byte-identical at
+  # origin. Catches the content-landed-inside-a-larger-upstream-commit wedge that patch-id misses
+  # (see _paths_identical_upstream). Same --is-ancestor guard: never on a rewound remote.
+  if [ "$unique" = 1 ] && [ -n "$BASE" ] \
+     && git merge-base --is-ancestor "$BASE" "$REMOTE" 2>/dev/null \
+     && _paths_identical_upstream "$BASE" "$LOCAL" "$REMOTE"; then
+    unique=0
+    reconcile_reason="every path in the local commit(s) is already byte-identical at origin"
   fi
   CUR="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo)"
   if [ "$unique" = 0 ] && [ "$CUR" = "$BRANCH" ] && ! _contended "skipped-reset-hard"; then

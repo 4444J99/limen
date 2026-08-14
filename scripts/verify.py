@@ -6,8 +6,8 @@ this resolver derives behavior from it. Scoped verification and the whole matrix
 being two scripts and become two selections over the same data:
 
   verify.py --changed [--base REF]   the scoped push gate: compute the changed set
-                                     (merge-base vs origin/main + staged + unstaged +
-                                     untracked), run exactly the implicated gates —
+                                     (every commit after the merge-base + staged +
+                                     unstaged + untracked), run exactly the implicated gates —
                                      each independent cheap/heavy tier runs as one
                                      parallel wave, then the explicitly serialized tail
                                      runs under the machine-wide flock verify-whole.sh
@@ -72,6 +72,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "institutio" / "governance" / "gates.yaml"
+PRIVATE_CUSTODY_ROOTS = (".limen-private", ".agent-runtime", ".limen-workstream")
+PUBLIC_CUSTODY_HISTORY_ROOT = "eeaaa85b7e7270e1b9e9140b78f7ff2360e2524f"
+_GRAFT_PATH: Path | None = None
 
 
 class HostAdmissionFailure(RuntimeError):
@@ -131,8 +134,38 @@ def load_registry() -> dict:
     return yaml.safe_load(REGISTRY.read_text())
 
 
+def _reject_legacy_grafts() -> None:
+    global _GRAFT_PATH
+    if _GRAFT_PATH is None:
+        probe = subprocess.run(
+            ["git", "--no-replace-objects", "rev-parse", "--git-path", "info/grafts"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            errors="surrogateescape",
+            check=True,
+        )
+        candidate = Path(probe.stdout.strip())
+        _GRAFT_PATH = candidate if candidate.is_absolute() else ROOT / candidate
+    if os.path.lexists(_GRAFT_PATH):
+        raise RuntimeError("refusing to verify rewritten Git history")
+
+
 def git(*args: str) -> str:
-    return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    _reject_legacy_grafts()
+    return subprocess.run(
+        ["git", "--no-replace-objects", *args],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        errors="surrogateescape",
+        check=True,
+    ).stdout
+
+
+def git_paths(*args: str) -> list[str]:
+    """Return a NUL-delimited Git path list without core.quotePath rewriting."""
+    return [path for path in git(*args).split("\0") if path]
 
 
 def resolve_merge_base(base: str | None) -> str:
@@ -166,17 +199,129 @@ def integration_base(base: str | None) -> str:
     return supplied
 
 
+def committed_path_changes(merge_base: str) -> list[tuple[str, str]]:
+    """Return PR-side non-merge status/path pairs after ``merge_base``.
+
+    Endpoint diffs omit a path added in one PR commit and deleted in another. The
+    non-merge inventory keeps those paths visible to gate selection, while the
+    endpoint diff covers merge results. Merge commits are not expanded against
+    every parent because that misclassifies base-only paths as PR changes. Rename
+    detection stays disabled so both custody source and destination remain present.
+    """
+    if not merge_base:
+        return []
+    fields = [
+        field
+        for field in git(
+            "log",
+            "--no-merges",
+            "--format=",
+            "--name-status",
+            "--no-renames",
+            "-z",
+            f"{merge_base}..HEAD",
+        ).split("\0")
+        if field
+    ]
+    if len(fields) % 2:
+        raise RuntimeError("git returned a malformed committed path inventory")
+    changes = list(zip(fields[::2], fields[1::2], strict=True))
+    for revision in git("rev-list", "--merges", f"{merge_base}..HEAD").splitlines():
+        merge_fields = [
+            field
+            for field in git(
+                "diff-tree",
+                "--cc",
+                "--no-commit-id",
+                "--name-status",
+                "--no-renames",
+                "-r",
+                "-z",
+                revision,
+            ).split("\0")
+            if field
+        ]
+        if len(merge_fields) % 2:
+            raise RuntimeError("git returned a malformed merge-resolution path inventory")
+        for status, path in zip(merge_fields[::2], merge_fields[1::2], strict=True):
+            changes.append(("D" if status and set(status) == {"D"} else "M", path))
+    return changes
+
+
+def private_history_leak(base: str | None) -> bool:
+    """Detect transient committed private-namespace content without naming it."""
+    merge_base = resolve_merge_base(base)
+    if not merge_base:
+        return False
+    tracked = set(git_paths("ls-files", "-z"))
+    return any(
+        status != "D"
+        and path not in tracked
+        and any(path == root or path.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS)
+        for status, path in committed_path_changes(merge_base)
+    )
+
+
+def _is_public_custody_path(path: str) -> bool:
+    return path == "docs/keys/anthony-padavano-gpg.asc" or path.startswith("institutio/vault/")
+
+
+def public_custody_history_start(base: str | None) -> str:
+    """Use the neutralization boundary when reachable, otherwise the PR base."""
+    merge_base = resolve_merge_base(base)
+    safe_root = resolve_commit(PUBLIC_CUSTODY_HISTORY_ROOT)
+    if safe_root:
+        try:
+            git("merge-base", "--is-ancestor", safe_root, "HEAD")
+        except subprocess.CalledProcessError:
+            pass
+        else:
+            return safe_root
+    return merge_base
+
+
+def transient_custody_reversion(base: str | None) -> bool:
+    """Detect deleted, reverted, or superseded unvalidated custody versions."""
+    merge_base = resolve_merge_base(base)
+    if not merge_base:
+        return False
+    endpoint = set(git_paths("diff", "--name-only", "--no-renames", "-z", merge_base, "HEAD"))
+    versions: dict[str, int] = {}
+    for status, path in committed_path_changes(public_custody_history_start(base)):
+        if status != "D" and _is_public_custody_path(path):
+            versions[path] = versions.get(path, 0) + 1
+    return any(path not in endpoint or count > 1 for path, count in versions.items())
+
+
 def changed_set(base: str | None) -> list[str]:
-    """Branch diff vs merge-base + staged + unstaged + untracked, existing-or-tracked only."""
+    """Per-commit branch paths plus staged, unstaged, and untracked paths.
+
+    Per-commit paths keep add-then-delete changes visible. Deleted paths stay in
+    the set so removing every file matched by a custody or security gate still
+    selects that gate in PR and merge-group verification.
+    """
     paths: set[str] = set()
     merge_base = resolve_merge_base(base)
     if merge_base:
-        paths.update(git("diff", "--name-only", merge_base, "HEAD").splitlines())
-    paths.update(git("diff", "--name-only").splitlines())
-    paths.update(git("diff", "--name-only", "--cached").splitlines())
-    paths.update(git("ls-files", "--others", "--exclude-standard").splitlines())
-    tracked = set(git("ls-files").splitlines())
-    return sorted(p for p in paths if p and ((ROOT / p).exists() or p in tracked))
+        paths.update(path for _status, path in committed_path_changes(merge_base))
+    paths.update(endpoint_changed_set(base))
+    return sorted(p for p in paths if p)
+
+
+def endpoint_changed_set(base: str | None) -> list[str]:
+    """Return only paths visible in the final branch diff or local checkout.
+
+    Historical-only paths are intentionally excluded from display because a
+    transient private filename must not be copied into public CI logs.
+    """
+    paths: set[str] = set()
+    merge_base = resolve_merge_base(base)
+    if merge_base:
+        paths.update(git_paths("diff", "--name-only", "--no-renames", "-z", merge_base, "HEAD"))
+    paths.update(git_paths("diff", "--name-only", "--no-renames", "-z"))
+    paths.update(git_paths("diff", "--name-only", "--no-renames", "-z", "--cached"))
+    paths.update(git_paths("ls-files", "--others", "--exclude-standard", "-z"))
+    return sorted(p for p in paths if p)
 
 
 def gate_paths(gate_id: str, gate: dict, file_sets: dict) -> list[str]:
@@ -246,7 +391,7 @@ def deploy_hits(registry: dict, changed: list[str]) -> list[str]:
 
 def expand_file_set(registry: dict, name: str) -> list[str]:
     spec = (registry.get("file_sets") or {})[name]
-    tracked = git("ls-files").splitlines()
+    tracked = git_paths("ls-files", "-z")
     excluded = {e.get("path") if isinstance(e, dict) else e for e in spec.get("exclude") or []}
     files: list[str] = []
     for pattern in spec.get("include") or []:
@@ -318,6 +463,18 @@ def process_group_alive(process: subprocess.Popen[bytes]) -> bool:
     except (OSError, subprocess.TimeoutExpired):
         return True
     states = [line.strip() for line in observed.stdout.splitlines() if line.strip()]
+    if observed.returncode != 0 or not states:
+        # The process group can disappear after killpg(0) succeeds but before ps
+        # snapshots it. Re-check existence so that normal child teardown is not
+        # misreported as a lingering-process failure. A genuinely unavailable ps
+        # remains fail-closed while the group still exists.
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
     return not (observed.returncode == 0 and states and all(state.startswith("Z") for state in states))
 
 
@@ -652,6 +809,20 @@ def cmd_changed(
             file=sys.stderr,
         )
         return 1
+    if private_history_leak(base):
+        print(
+            "private-history: a committed private namespace entry is absent from HEAD; "
+            "refusing to expose or certify transient private content.",
+            file=sys.stderr,
+        )
+        return 1
+    if transient_custody_reversion(base):
+        print(
+            "custody-history: a public custody path has an unvalidated intermediate version; "
+            "refusing to certify an unvalidated intermediate version.",
+            file=sys.stderr,
+        )
+        return 1
     changed = changed_set(base)
     if not changed:
         if require_base:
@@ -663,9 +834,13 @@ def cmd_changed(
             return 1
         print("No changes vs the base and no local modifications — nothing to verify.")
         return 0
-    print(f"Changed paths ({len(changed)}):")
-    for p in changed:
+    display_paths = endpoint_changed_set(base)
+    hidden_history_count = len(set(changed) - set(display_paths))
+    print(f"Changed paths ({len(display_paths)}):")
+    for p in display_paths:
         print(f"  {p}")
+    if hidden_history_count:
+        print(f"Historical-only paths ({hidden_history_count}): [redacted; retained internally for gate selection]")
 
     if require_base and not integration and deploy_hits(registry, changed):
         if os.environ.get("LIMEN_VERIFY_NO_DEPLOY_ESCALATION") == "1":

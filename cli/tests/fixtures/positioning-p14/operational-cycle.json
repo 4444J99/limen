@@ -1,0 +1,185 @@
+{
+  "schema_version": "limen.positioning_p14_operational_fixture.v1",
+  "scope": "synthetic",
+  "observed_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "event_bundle": {
+    "schema_version": "limen.positioning_p14_event_bundle.v1",
+    "scope": "synthetic",
+    "events": [
+      {"event_id": "op-evt-001", "type": "claim.material", "scope": "synthetic", "entity_id": "claim-fixture-1", "occurred_at": "2026-01-01T00:00:00Z"},
+      {"event_id": "op-evt-002", "type": "claim.current", "scope": "synthetic", "entity_id": "claim-fixture-1", "occurred_at": "2026-01-01T00:00:01Z"},
+      {"event_id": "op-evt-003", "type": "surface.tracked", "scope": "synthetic", "entity_id": "surface-fixture-1", "occurred_at": "2026-01-01T00:00:02Z"},
+      {"event_id": "op-evt-004", "type": "surface.healthy", "scope": "synthetic", "entity_id": "surface-fixture-1", "occurred_at": "2026-01-01T00:00:03Z"},
+      {"event_id": "op-evt-005", "type": "inbound.eligible", "scope": "synthetic", "entity_id": "demand-fixture-1", "occurred_at": "2026-01-01T00:00:04Z"},
+      {"event_id": "op-evt-006", "type": "inbound.eligible", "scope": "synthetic", "entity_id": "demand-fixture-2", "occurred_at": "2026-01-01T00:00:05Z"},
+      {"event_id": "op-evt-007", "type": "inbound.qualified", "scope": "synthetic", "entity_id": "demand-fixture-1", "occurred_at": "2026-01-01T00:00:06Z"},
+      {"event_id": "op-evt-008", "type": "offer.decision", "scope": "synthetic", "entity_id": "offer-fixture-1", "occurred_at": "2026-01-01T00:00:07Z"},
+      {"event_id": "op-evt-009", "type": "offer.accepted", "scope": "synthetic", "entity_id": "offer-fixture-1", "occurred_at": "2026-01-01T00:00:08Z"},
+      {"event_id": "op-evt-010", "type": "delivery.closed", "scope": "synthetic", "entity_id": "delivery-fixture-1", "occurred_at": "2026-01-01T00:00:09Z"},
+      {"event_id": "op-evt-011", "type": "delivery.outcome_recorded", "scope": "synthetic", "entity_id": "delivery-fixture-1", "occurred_at": "2026-01-01T00:00:10Z"},
+      {"event_id": "op-evt-012", "type": "operator.outcome_observed", "scope": "synthetic", "entity_id": "operator-fixture-1", "occurred_at": "2026-01-01T00:00:11Z"},
+      {"event_id": "op-evt-013", "type": "operator.outcome_classified", "scope": "synthetic", "entity_id": "operator-fixture-1", "occurred_at": "2026-01-01T00:00:12Z"},
+      {"event_id": "op-evt-014", "type": "claim_incident.closed", "scope": "synthetic", "entity_id": "incident-fixture-1", "occurred_at": "2026-01-01T00:00:13Z"},
+      {"event_id": "op-evt-015", "type": "claim_incident.corrected", "scope": "synthetic", "entity_id": "incident-fixture-1", "occurred_at": "2026-01-01T00:00:14Z"},
+      {"event_id": "op-evt-016", "type": "release.rollback_attempted", "scope": "synthetic", "entity_id": "release-fixture-1", "occurred_at": "2026-01-01T00:00:15Z"},
+      {"event_id": "op-evt-017", "type": "release.recovered", "scope": "synthetic", "entity_id": "release-fixture-1", "occurred_at": "2026-01-01T00:00:16Z"},
+      {"event_id": "op-evt-018", "type": "portfolio.eligible", "scope": "synthetic", "entity_id": "product-fixture-1", "occurred_at": "2026-01-01T00:00:17Z"},
+      {"event_id": "op-evt-019", "type": "portfolio.evidence_classified", "scope": "synthetic", "entity_id": "product-fixture-1", "occurred_at": "2026-01-01T00:00:18Z"}
+    ]
+  },
+  "weekly_review": {
+    "schema_version": "limen.positioning_p14_weekly_review.v1",
+    "scope": "synthetic",
+    "period_start": "2026-01-05",
+    "period_end": "2026-01-11",
+    "ready_work": [
+      {"work_id": "PSP-P14-W01", "issue_url": "https://example.test/issues/w01", "owner": "fixture-owner", "next_predicate": "fixture metric predicate"}
+    ],
+    "closed_work_ids": ["PSP-P00-W07"],
+    "blockers": [
+      {"blocker_id": "fixture-reader-gate", "owner": "fixture-owner", "next_predicate": "fixture reader predicate"}
+    ],
+    "qualified_demand_count": 0,
+    "delivery_risks": ["fixture-risk"],
+    "evidence_changes": ["fixture-evidence-version-2"],
+    "decision": {"action": "route", "owner": "fixture-owner", "next_predicate": "fixture metric predicate", "routed_packet_ids": ["fixture-packet-1"]}
+  },
+  "monthly_audit": {
+    "schema_version": "limen.positioning_p14_monthly_audit.v1",
+    "scope": "synthetic",
+    "period_start": "2026-01-01",
+    "findings": {
+      "truth": [
+        {"finding_id": "truth-fixture-1", "status": "pass", "owner": "fixture-owner", "next_predicate": "fixture truth predicate"}
+      ],
+      "links": [
+        {"finding_id": "link-fixture-1", "status": "broken", "owner": "fixture-owner", "next_predicate": "fixture link repair"}
+      ],
+      "privacy": [
+        {"finding_id": "privacy-fixture-1", "status": "pass", "owner": "fixture-owner", "next_predicate": "fixture privacy predicate"}
+      ],
+      "parity": [
+        {"finding_id": "parity-fixture-1", "status": "drift", "owner": "fixture-owner", "next_predicate": "fixture parity repair"}
+      ]
+    },
+    "correction_packets": [
+      {"finding_id": "link-fixture-1", "owner": "fixture-owner", "next_predicate": "fixture link repair"},
+      {"finding_id": "parity-fixture-1", "owner": "fixture-owner", "next_predicate": "fixture parity repair"}
+    ]
+  },
+  "quarterly_decision": {
+    "schema_version": "limen.positioning_p14_quarterly_decision.v1",
+    "scope": "synthetic",
+    "period_start": "2026-01-01",
+    "evidence": {
+      "conversation": ["conversation-fixture-1"],
+      "funnel": ["funnel-fixture-1"],
+      "delivery": ["delivery-fixture-1"],
+      "claim": ["claim-fixture-1"]
+    },
+    "decision": "narrow",
+    "truth_finding": "The fixture claim remains bounded by its evidence.",
+    "prominence_finding": "The fixture does not justify greater prominence.",
+    "next_experiment": "Collect one additional synthetic objection class.",
+    "owner": "fixture-owner",
+    "prior_strategy_version": "strategy-fixture-v1",
+    "proposed_strategy_version": "strategy-fixture-v2"
+  },
+  "claim_incident": {
+    "schema_version": "limen.positioning_p14_claim_incident.v1",
+    "scope": "synthetic",
+    "claim": {"claim_id": "claim-fixture-1", "version": "evidence-v1", "status": "verified"},
+    "surfaces": [
+      {"surface_id": "surface-profile-fixture", "published_claim_ids": ["claim-fixture-1"]},
+      {"surface_id": "surface-portfolio-fixture", "published_claim_ids": ["claim-fixture-1", "claim-fixture-2"]},
+      {"surface_id": "surface-unaffected-fixture", "published_claim_ids": ["claim-fixture-2"]}
+    ],
+    "correction": {"version": "evidence-v2", "status": "verified", "evidence_id": "evidence-fixture-corrected"},
+    "restore_surfaces": ["surface-profile-fixture", "surface-portfolio-fixture"]
+  },
+  "release_recovery": {
+    "schema_version": "limen.positioning_p14_release_recovery.v1",
+    "scope": "synthetic",
+    "repositories": [
+      {
+        "repository_id": "repository-fixture-portfolio",
+        "before_release_id": "portfolio-release-good",
+        "bad_release_id": "portfolio-release-bad",
+        "restored_release_id": "portfolio-release-good",
+        "health_checks": {"surface": "healthy", "capture-route": "healthy"},
+        "capture_owner_before": "capture-owner-fixture",
+        "capture_owner_after": "capture-owner-fixture"
+      },
+      {
+        "repository_id": "repository-fixture-profile",
+        "before_release_id": "profile-release-good",
+        "bad_release_id": "profile-release-bad",
+        "restored_release_id": "profile-release-good",
+        "health_checks": {"surface": "healthy", "capture-route": "healthy"},
+        "capture_owner_before": "capture-owner-fixture",
+        "capture_owner_after": "capture-owner-fixture"
+      }
+    ]
+  },
+  "private_ledgers": {
+    "demand": {
+      "schema_version": "limen.positioning_p14_demand_private_ledger.v1",
+      "scope": "synthetic",
+      "records": [
+        {"outcome_id": "demand-fixture-1", "observed_at": "2026-01-01T02:00:00Z", "eligibility": "eligible", "qualification": "qualified", "disposition": "accepted", "offer_version": "offer-fixture-v1", "objection_code": "scope", "private_identity_ref": "identity-fixture-1"},
+        {"outcome_id": "demand-fixture-2", "observed_at": "2026-01-01T02:01:00Z", "eligibility": "eligible", "qualification": "qualified", "disposition": "documented_no", "offer_version": "offer-fixture-v1", "objection_code": "proof", "private_identity_ref": "identity-fixture-2"}
+      ]
+    },
+    "delivery": {
+      "schema_version": "limen.positioning_p14_delivery_private_ledger.v1",
+      "scope": "synthetic",
+      "records": [
+        {"outcome_id": "delivery-fixture-1", "engagement_id": "engagement-fixture-1", "observed_at": "2026-01-01T03:00:00Z", "result": "neutral", "claim_impact": "narrow reliability claim", "classification_impact": "retain working prototype", "proof_impact": "add bounded recovery evidence", "private_evidence_ref": "evidence-private-fixture-1"}
+      ]
+    },
+    "operator": {
+      "schema_version": "limen.positioning_p14_operator_private_ledger.v1",
+      "scope": "synthetic",
+      "records": [
+        {"outcome_id": "operator-fixture-1", "product_id": "product-fixture-1", "observed_at": "2026-01-01T04:00:00Z", "result": "no_go", "claim_impact": "none", "classification_impact": "park transfer candidate", "proof_impact": "record evidence-backed no-go", "private_operator_ref": "operator-private-fixture-1"}
+      ]
+    }
+  },
+  "demand_decision": {
+    "status": "decided",
+    "scope": "synthetic",
+    "outcome_ids": ["demand-fixture-1", "demand-fixture-2"],
+    "decision": "narrow",
+    "before_offer_version": "offer-fixture-v1",
+    "after_offer_version": "offer-fixture-v2",
+    "evidence_url": "https://example.test/synthetic/demand-decision"
+  },
+  "commercial_outcome": {
+    "status": "validated",
+    "scope": "synthetic",
+    "mode": "documented_no",
+    "outcome_ids": ["demand-fixture-2"],
+    "evidence_url": "https://example.test/synthetic/commercial-outcome"
+  },
+  "portfolio_impacts": [
+    {"outcome_id": "delivery-fixture-1", "scope": "synthetic", "before_class": "working prototype", "after_class": "working prototype", "reason": "Synthetic evidence cannot raise maturity.", "evidence_url": "https://example.test/synthetic/delivery-impact"},
+    {"outcome_id": "operator-fixture-1", "scope": "synthetic", "before_class": "transfer candidate", "after_class": "parked candidate", "reason": "Synthetic no-go exercises the return route only.", "evidence_url": "https://example.test/synthetic/operator-impact"}
+  ],
+  "human_gates": {"HG-PRICE-ANCHORS": {"status": "pending"}},
+  "omega_observations": [
+    {
+      "schema_version": "limen.positioning_p14_omega_observation.v1",
+      "scope": "synthetic",
+      "observed_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence_url": "https://example.test/synthetic/omega-pass-1",
+      "program_pass": {"schema_version": "limen.positioning_omega_pass.v1", "status": "pass", "pass": 1, "state_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "observed_at": "2026-01-01T05:00:00Z"}
+    },
+    {
+      "schema_version": "limen.positioning_p14_omega_observation.v1",
+      "scope": "synthetic",
+      "observed_head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence_url": "https://example.test/synthetic/omega-pass-2",
+      "program_pass": {"schema_version": "limen.positioning_omega_pass.v1", "status": "pass", "pass": 2, "state_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "observed_at": "2026-01-01T05:05:00Z"}
+    }
+  ]
+}

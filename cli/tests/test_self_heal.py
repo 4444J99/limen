@@ -69,10 +69,10 @@ _VIEW = {
 
 
 class _R:
-    def __init__(self, out):
-        self.returncode = 0
+    def __init__(self, out, returncode=0, stderr=""):
+        self.returncode = returncode
         self.stdout = out
-        self.stderr = ""
+        self.stderr = stderr
 
 
 def _fake_gh(args, timeout=60):
@@ -116,6 +116,54 @@ def test_dry_run_makes_zero_writes(tmp_path, monkeypatch):
     assert rc == 0
     assert p.read_text() == before, "dry-run must not mutate tasks.yaml"
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "dry-run must not touch the queue lock"
+
+
+def test_empty_live_pass_refreshes_the_monitored_writer_heartbeat(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", lambda *_args, **_kwargs: _R("[]"))
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert heartbeat.is_file()
+    assert "confirmed complete empty" in heartbeat.read_text(encoding="utf-8")
+
+
+def test_locked_live_pass_records_busy_without_refreshing_source_freshness(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "acquire_lock", lambda: False)
+
+    assert _run(m, monkeypatch, p) == 0
+    heartbeat = tmp_path / "logs" / "self-heal.log"
+    assert not heartbeat.exists()
+    liveness = tmp_path / "logs" / "self-heal-liveness.jsonl"
+    assert '"event": "busy"' in liveness.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    ("response", "detail"),
+    [
+        (_R("", returncode=1, stderr="authentication failed"), "authentication failed"),
+        (_R("not-json"), "malformed GitHub output"),
+        (_R('{"unexpected": true}'), "expected a list"),
+    ],
+)
+def test_failed_enumeration_records_error_without_refreshing_source_freshness(tmp_path, monkeypatch, response, detail):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    monkeypatch.setattr(m, "gh", lambda *_args, **_kwargs: response)
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == m.EX_TEMPFAIL
+    assert not (tmp_path / "logs" / "self-heal.log").exists()
+    liveness = (tmp_path / "logs" / "self-heal-liveness.jsonl").read_text(encoding="utf-8")
+    assert '"event": "error"' in liveness
+    assert detail in liveness
 
 
 def test_malformed_numeric_env_falls_back(tmp_path, monkeypatch):
