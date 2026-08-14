@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import html
 import hashlib
 import importlib.util
 import json
@@ -14,7 +15,7 @@ import sys
 import tempfile
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -28,6 +29,8 @@ PHASE_RECEIPT_URLS = {
     "PSP-P03": re.compile(r"^https://github\.com/organvm/limen/issues/2181#issuecomment-[0-9]+$"),
     "PSP-P04": re.compile(r"^https://github\.com/organvm/limen/issues/2189#issuecomment-[0-9]+$"),
 }
+PHASE_RECEIPT_AUTHORS = {"4444J99"}
+PHASE_RECEIPT_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
 PHASE_RECEIPT_BLOCK = re.compile(
     r"<!--\s*positioning-phase-receipt:(PSP-P\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
     re.DOTALL,
@@ -39,6 +42,8 @@ W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-mem
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
+SURFACE_SCANNER = "canonical_claim_drift"
+SURFACE_SCANNER_VERSION = "2"
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
 DEMO_RECORD_FIELDS = {
@@ -484,6 +489,15 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("surface audit must discover material claims from the accepted claims ledger")
     if surface_model.get("surface_levels") != EXPECTED_SURFACE_LEVELS:
         errors.append("surface audit must bind every public surface to its canonical disclosure level")
+    if surface_model.get("inspection_schema") != SURFACE_INSPECTION_SCHEMA:
+        errors.append("surface audit must bind the canonical inspection schema")
+    inspection_max_age_hours = surface_model.get("inspection_max_age_hours")
+    if (
+        not isinstance(inspection_max_age_hours, int)
+        or isinstance(inspection_max_age_hours, bool)
+        or not 1 <= inspection_max_age_hours <= 168
+    ):
+        errors.append("surface audit must declare a bounded inspection freshness budget")
     surfaces = surface_model.get("surfaces")
     surface_sources = surface_model.get("surface_sources")
     if not isinstance(surfaces, list) or not isinstance(surface_sources, dict) or set(surface_sources) != set(surfaces):
@@ -492,7 +506,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         identities: set[str] = set()
         for surface in surfaces:
             binding = surface_sources.get(surface)
-            if not isinstance(binding, dict) or set(binding) != {"source_kind", "source_locator", "receipt_path"}:
+            if not isinstance(binding, dict) or set(binding) != {
+                "source_kind",
+                "source_locator",
+                "receipt_path",
+                "extractor",
+            }:
                 errors.append(f"surface source binding has an invalid exact schema: {surface}")
                 continue
             identity = json.dumps(binding, sort_keys=True, separators=(",", ":"))
@@ -500,11 +519,17 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 errors.append(f"surface source binding is reused across canonical surfaces: {surface}")
             identities.add(identity)
             if binding.get("source_kind") == "tracked_blob":
-                if not _safe_relative_path(binding.get("source_locator")) or binding.get("receipt_path") is not None:
+                if (
+                    not _safe_relative_path(binding.get("source_locator"))
+                    or binding.get("receipt_path") is not None
+                    or binding.get("extractor") != "raw_text_v1"
+                ):
                     errors.append(f"tracked surface source binding is invalid: {surface}")
             elif binding.get("source_kind") == "live_receipt":
-                if not _credential_free_https_url(binding.get("source_locator")) or not _safe_relative_path(
-                    binding.get("receipt_path")
+                if (
+                    not _credential_free_https_url(binding.get("source_locator"))
+                    or not _safe_relative_path(binding.get("receipt_path"))
+                    or binding.get("extractor") != "visible_text_v1"
                 ):
                     errors.append(f"live surface source binding is invalid: {surface}")
             else:
@@ -973,6 +998,118 @@ def _credential_free_https_url(value: object) -> bool:
     )
 
 
+_CLAIM_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "by",
+    "for",
+    "from",
+    "has",
+    "in",
+    "is",
+    "it",
+    "of",
+    "on",
+    "or",
+    "that",
+    "the",
+    "this",
+    "to",
+    "was",
+    "with",
+}
+
+
+def _normalized_surface_text(value: str) -> str:
+    without_markup = re.sub(r"<[^>]+>", " ", html.unescape(value))
+    return " ".join(re.findall(r"[a-z0-9]+", without_markup.lower()))
+
+
+def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("surface response is not UTF-8 text") from exc
+    if extractor == "visible_text_v1":
+        text = re.sub(
+            r"(?is)<(script|style|template|noscript|svg)\b[^>]*>.*?</\1\s*>",
+            " ",
+            text,
+        )
+        text = re.sub(r"(?s)<!--.*?-->", " ", text)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = html.unescape(text)
+    elif extractor == "raw_text_v1":
+        text = html.unescape(text)
+    else:
+        raise ValueError("surface source uses an unsupported canonical extractor")
+    normalized = " ".join(text.split())
+    return (normalized + "\n").encode("utf-8")
+
+
+def _surface_claim_scan(
+    inspected_text: str,
+    expected_rows: dict[tuple[str, str], dict[str, Any]],
+    surface: str,
+) -> tuple[list[str], list[str]]:
+    normalized_full = _normalized_surface_text(inspected_text)
+    segments = [
+        normalized
+        for raw in re.split(r"[\n\r.!?]+", html.unescape(inspected_text))
+        if (normalized := _normalized_surface_text(raw))
+    ]
+    matched: list[str] = []
+    drifted: list[str] = []
+    for (row_surface, claim_id), row in expected_rows.items():
+        if row_surface != surface or not isinstance(row.get("claim_text"), str):
+            continue
+        canonical = _normalized_surface_text(row["claim_text"])
+        if not canonical:
+            continue
+        if f" {canonical} " in f" {normalized_full} ":
+            matched.append(claim_id)
+            continue
+        canonical_tokens = {
+            token
+            for token in canonical.split()
+            if token not in _CLAIM_STOPWORDS and (len(token) >= 3 or token.isdigit())
+        }
+        canonical_sequence = canonical.split()
+        if len(canonical_tokens) < 5 or len(canonical_sequence) < 4:
+            continue
+        opening_trigrams = {
+            " ".join(canonical_sequence[index : index + 3]) for index in range(min(2, len(canonical_sequence) - 2))
+        }
+        for segment in segments:
+            segment_tokens = set(segment.split())
+            overlap = canonical_tokens & segment_tokens
+            coverage = len(overlap) / len(canonical_tokens)
+            anchored_variant = any(f" {trigram} " in f" {segment} " for trigram in opening_trigrams)
+            if len(overlap) >= 3 and coverage >= 0.5 and anchored_variant:
+                drifted.append(claim_id)
+                break
+    return sorted(matched), sorted(set(drifted))
+
+
+def _fetch_bounded_public_surface(source_url: str) -> bytes:
+    request = Request(
+        source_url,
+        headers={"Accept": "text/html,text/plain", "User-Agent": "limen-positioning-proof-preflight"},
+    )
+    with urlopen(request, timeout=30) as response:
+        if response.geturl() != source_url:
+            raise ValueError("live surface redirected away from its contract-owned URL")
+        content = response.read(1_048_577)
+    if len(content) > 1_048_576:
+        raise ValueError("live surface exceeds the bounded response size")
+    return content
+
+
 def _surface_inspection_errors(
     contract: dict[str, Any],
     inspections: object,
@@ -986,7 +1123,17 @@ def _surface_inspection_errors(
     source_bindings = contract.get("surface_audit_model", {}).get("surface_sources")
     if not isinstance(source_bindings, dict) or set(source_bindings) != set(expected_surfaces):
         return ["surface source registry must bind exactly every canonical surface"], {}
-    binding_fields = {"source_kind", "source_locator", "receipt_path"}
+    surface_model = contract.get("surface_audit_model", {})
+    max_age_hours = surface_model.get("inspection_max_age_hours")
+    if not isinstance(max_age_hours, int) or isinstance(max_age_hours, bool) or not 1 <= max_age_hours <= 168:
+        errors.append("surface inspection freshness budget must be a bounded integer hour count")
+        max_age_hours = 0
+    try:
+        _default_branch, authoritative_head = _canonical_limen_remote_head()
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        errors.append(f"canonical surface inspection authority is unavailable: {exc}")
+        authoritative_head = None
+    binding_fields = {"source_kind", "source_locator", "receipt_path", "extractor"}
     binding_identities: set[str] = set()
     for surface in expected_surfaces:
         binding = source_bindings.get(surface)
@@ -1002,11 +1149,17 @@ def _surface_inspection_errors(
             errors.append(f"surface source binding is reused across canonical surfaces: {surface}")
         binding_identities.add(identity)
         if binding.get("source_kind") == "tracked_blob":
-            if not _safe_relative_path(binding.get("source_locator")) or binding.get("receipt_path") is not None:
+            if (
+                not _safe_relative_path(binding.get("source_locator"))
+                or binding.get("receipt_path") is not None
+                or binding.get("extractor") != "raw_text_v1"
+            ):
                 errors.append(f"tracked surface source binding is invalid: {surface}")
         elif binding.get("source_kind") == "live_receipt":
-            if not _credential_free_https_url(binding.get("source_locator")) or not _safe_relative_path(
-                binding.get("receipt_path")
+            if (
+                not _credential_free_https_url(binding.get("source_locator"))
+                or not _safe_relative_path(binding.get("receipt_path"))
+                or binding.get("extractor") != "visible_text_v1"
             ):
                 errors.append(f"live surface source binding is invalid: {surface}")
         else:
@@ -1018,10 +1171,12 @@ def _surface_inspection_errors(
         "source_kind",
         "source_locator",
         "receipt_path",
+        "extractor",
         "observed_at",
         "exact_head",
         "blob_sha1",
-        "response_sha256",
+        "raw_response_sha256",
+        "extracted_text_sha256",
         "scanner",
         "scanner_version",
         "matched_claim_ids",
@@ -1052,40 +1207,54 @@ def _surface_inspection_errors(
         except ValueError:
             errors.append(f"surface inspection observed_at must be RFC3339 with a timezone: {surface}")
         else:
-            if observed > datetime.now(timezone.utc):
+            now = datetime.now(timezone.utc)
+            if observed > now:
                 errors.append(f"surface inspection cannot be future-dated: {surface}")
-        if inspection.get("scanner") != "literal_claim_text" or inspection.get("scanner_version") != "1":
+            elif max_age_hours and observed < now - timedelta(hours=max_age_hours):
+                errors.append(f"surface inspection is older than the contract-owned freshness budget: {surface}")
+        if inspection.get("scanner") != SURFACE_SCANNER or inspection.get("scanner_version") != SURFACE_SCANNER_VERSION:
             errors.append(f"surface inspection requires the canonical scanner and version: {surface}")
         exact_head = inspection.get("exact_head")
         blob_sha1 = inspection.get("blob_sha1")
         if not isinstance(exact_head, str) or not FULL_HEAD.fullmatch(exact_head):
             errors.append(f"surface inspection requires a full exact head: {surface}")
+        elif authoritative_head is not None and exact_head != authoritative_head:
+            errors.append(f"surface inspection head is not the authoritative remote default head: {surface}")
         if not isinstance(blob_sha1, str) or not FULL_HEAD.fullmatch(blob_sha1):
             errors.append(f"surface inspection requires a full blob identity: {surface}")
 
         source_kind = inspection.get("source_kind")
         source_locator = inspection.get("source_locator")
         receipt_path = inspection.get("receipt_path")
-        response_sha256 = inspection.get("response_sha256")
+        extractor = inspection.get("extractor")
+        raw_response_sha256 = inspection.get("raw_response_sha256")
+        extracted_text_sha256 = inspection.get("extracted_text_sha256")
         binding = source_bindings.get(surface)
         if isinstance(binding, dict) and any(
-            inspection.get(field) != binding.get(field) for field in ("source_kind", "source_locator", "receipt_path")
+            inspection.get(field) != binding.get(field)
+            for field in ("source_kind", "source_locator", "receipt_path", "extractor")
         ):
             errors.append(f"surface inspection differs from the contract-owned source binding: {surface}")
         object_path: object = None
         if source_kind == "tracked_blob":
             if not _safe_relative_path(source_locator):
                 errors.append(f"tracked surface inspection requires a safe repository path: {surface}")
-            if receipt_path is not None or response_sha256 is not None:
+            if receipt_path is not None or raw_response_sha256 is not None or extractor != "raw_text_v1":
                 errors.append(f"tracked surface inspection must not declare live-receipt fields: {surface}")
+            if not isinstance(extracted_text_sha256, str) or not SHA256.fullmatch(extracted_text_sha256):
+                errors.append(f"tracked surface inspection requires a canonical extraction SHA-256: {surface}")
             object_path = source_locator
         elif source_kind == "live_receipt":
             if not _credential_free_https_url(source_locator):
                 errors.append(f"live surface inspection requires a credential-free HTTPS URL: {surface}")
             if not _safe_relative_path(receipt_path):
                 errors.append(f"live surface inspection requires an immutable tracked receipt path: {surface}")
-            if not isinstance(response_sha256, str) or not SHA256.fullmatch(response_sha256):
-                errors.append(f"live surface inspection requires a bounded response SHA-256: {surface}")
+            if extractor != "visible_text_v1":
+                errors.append(f"live surface inspection requires the contract-owned visible-text extractor: {surface}")
+            if not isinstance(raw_response_sha256, str) or not SHA256.fullmatch(raw_response_sha256):
+                errors.append(f"live surface inspection requires a bounded raw-response SHA-256: {surface}")
+            if not isinstance(extracted_text_sha256, str) or not SHA256.fullmatch(extracted_text_sha256):
+                errors.append(f"live surface inspection requires a canonical extraction SHA-256: {surface}")
             object_path = receipt_path
         else:
             errors.append(f"surface inspection source_kind is unsupported: {surface}")
@@ -1104,11 +1273,52 @@ def _surface_inspection_errors(
             content = b""
         if len(content) > 1_048_576:
             errors.append(f"surface inspection source exceeds the bounded response size: {surface}")
-        if source_kind == "live_receipt" and isinstance(response_sha256, str):
-            if hashlib.sha256(content).hexdigest() != response_sha256:
-                errors.append(f"surface inspection response digest is unavailable or drifted: {surface}")
+        inspected_content = b""
+        if source_kind == "tracked_blob" and extractor == "raw_text_v1":
+            try:
+                inspected_content = _canonical_surface_extraction(content, extractor)
+            except ValueError as exc:
+                errors.append(f"tracked surface extraction failed: {surface}: {exc}")
+            if (
+                isinstance(extracted_text_sha256, str)
+                and SHA256.fullmatch(extracted_text_sha256)
+                and hashlib.sha256(inspected_content).hexdigest() != extracted_text_sha256
+            ):
+                errors.append(f"tracked surface canonical extraction digest differs from the bound source: {surface}")
+        if source_kind == "live_receipt" and extractor == "visible_text_v1":
+            inspected_content = content
+            if (
+                isinstance(extracted_text_sha256, str)
+                and SHA256.fullmatch(extracted_text_sha256)
+                and hashlib.sha256(content).hexdigest() != extracted_text_sha256
+            ):
+                errors.append(f"surface inspection extraction receipt digest is unavailable or drifted: {surface}")
+            try:
+                canonical_receipt = _canonical_surface_extraction(content, "raw_text_v1")
+            except ValueError as exc:
+                errors.append(f"surface inspection extraction receipt is invalid: {surface}: {exc}")
+            else:
+                if canonical_receipt != content:
+                    errors.append(f"surface inspection extraction receipt is not canonical text: {surface}")
+            if isinstance(source_locator, str) and _credential_free_https_url(source_locator):
+                try:
+                    live_content = _fetch_bounded_public_surface(source_locator)
+                except (OSError, ValueError) as exc:
+                    errors.append(f"live surface inspection could not reproduce the current response: {surface}: {exc}")
+                else:
+                    try:
+                        live_extraction = _canonical_surface_extraction(live_content, extractor)
+                    except ValueError as exc:
+                        errors.append(f"live surface canonical extraction failed: {surface}: {exc}")
+                    else:
+                        if (
+                            isinstance(extracted_text_sha256, str)
+                            and SHA256.fullmatch(extracted_text_sha256)
+                            and hashlib.sha256(live_extraction).hexdigest() != extracted_text_sha256
+                        ):
+                            errors.append(f"live surface visible claims differ from the tracked extraction: {surface}")
         try:
-            inspected_text = content.decode("utf-8")
+            inspected_text = inspected_content.decode("utf-8")
         except UnicodeDecodeError:
             errors.append(f"surface inspection source is not UTF-8 text: {surface}")
             inspected_text = ""
@@ -1123,14 +1333,12 @@ def _surface_inspection_errors(
         if not valid_matches:
             errors.append(f"surface inspection matched_claim_ids are invalid: {surface}")
             matched_claim_ids = []
-        recomputed_matches = sorted(
-            claim_id
-            for (row_surface, claim_id), row in expected_rows.items()
-            if row_surface == surface
-            and isinstance(row.get("claim_text"), str)
-            and bool(row["claim_text"])
-            and row["claim_text"] in inspected_text
-        )
+        recomputed_matches, drifted_claim_ids = _surface_claim_scan(inspected_text, expected_rows, surface)
+        if drifted_claim_ids:
+            errors.append(
+                f"surface inspection found noncanonical material claim variants: {surface}: "
+                + ", ".join(drifted_claim_ids)
+            )
         if sorted(matched_claim_ids) != recomputed_matches:
             errors.append(f"surface inspection matched claims differ from the bound source: {surface}")
         if isinstance(inspection_id, str):
@@ -1501,6 +1709,14 @@ def _live_w07_verification(repository: Path) -> dict[str, Any]:
     return value
 
 
+def _phase_comment_authorized(comment: object) -> bool:
+    if not isinstance(comment, dict):
+        return False
+    author = comment.get("user")
+    author_login = author.get("login") if isinstance(author, dict) else None
+    return author_login in PHASE_RECEIPT_AUTHORS and comment.get("author_association") in PHASE_RECEIPT_ASSOCIATIONS
+
+
 def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     completed = subprocess.run(
         [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-phase", phase_id],
@@ -1537,6 +1753,8 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     comment = json.loads(raw_comment)
     if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
         raise ValueError(f"live {phase_id} receipt comment identity differs from the verifier result")
+    if not _phase_comment_authorized(comment):
+        raise ValueError(f"live {phase_id} receipt comment is not owned by an authorized repository actor")
     body = comment.get("body")
     matches = PHASE_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
     matches = [receipt for candidate_phase, receipt in matches if candidate_phase == phase_id]

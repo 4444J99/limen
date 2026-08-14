@@ -8,7 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -25,6 +25,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def setUp(self) -> None:
         self.production_contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
         self.contract = copy.deepcopy(self.production_contract)
+        authoritative_head = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True
+        ).stdout.strip()
+        authority_patch = mock.patch.object(
+            MODULE,
+            "_canonical_limen_remote_head",
+            return_value=("main", authoritative_head),
+        )
+        authority_patch.start()
+        self.addCleanup(authority_patch.stop)
         paths = (
             ".gitignore",
             ".env.example",
@@ -39,6 +49,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "source_kind": "tracked_blob",
                 "source_locator": path,
                 "receipt_path": None,
+                "extractor": "raw_text_v1",
             }
             for surface, path in zip(surfaces, paths, strict=True)
         }
@@ -64,6 +75,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
             ).stdout.strip()
+            content = subprocess.run(
+                ["git", "show", f"{head}:{source_locator}"],
+                cwd=ROOT,
+                check=True,
+                capture_output=True,
+            ).stdout
+            extracted = MODULE._canonical_surface_extraction(content, binding["extractor"])
             inspections[surface] = {
                 "schema_version": MODULE.SURFACE_INSPECTION_SCHEMA,
                 "inspection_id": inspection_id,
@@ -71,12 +89,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "source_kind": binding["source_kind"],
                 "source_locator": source_locator,
                 "receipt_path": binding["receipt_path"],
-                "observed_at": "2026-08-14T00:00:00Z",
+                "extractor": binding["extractor"],
+                "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "exact_head": head,
                 "blob_sha1": blob,
-                "response_sha256": None,
-                "scanner": "literal_claim_text",
-                "scanner_version": "1",
+                "raw_response_sha256": None,
+                "extracted_text_sha256": hashlib.sha256(extracted).hexdigest(),
+                "scanner": MODULE.SURFACE_SCANNER,
+                "scanner_version": MODULE.SURFACE_SCANNER_VERSION,
                 "matched_claim_ids": [],
             }
         for row in rows:
@@ -465,7 +485,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 else:
                     first = inspections[surfaces[0]]
                     assert isinstance(first, dict)
-                    for field in ("source_kind", "source_locator", "receipt_path"):
+                    for field in ("source_kind", "source_locator", "receipt_path", "extractor"):
                         target[field] = first[field]
                 result = MODULE.audit_surface_manifest(self.contract, manifest)
                 self.assertEqual("fail", result["status"])
@@ -473,6 +493,66 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     any("contract-owned source binding" in error for error in result["errors"]),
                     result["errors"],
                 )
+
+    def test_surface_audit_requires_current_authoritative_head_and_fresh_observation(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        inspections = manifest["surface_inspections"]
+        assert isinstance(inspections, dict)
+        inspection = next(iter(inspections.values()))
+        assert isinstance(inspection, dict)
+        inspection["exact_head"] = "f" * 40
+        inspection["observed_at"] = "2000-01-01T00:00:00Z"
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("authoritative remote default head" in error for error in result["errors"]))
+        self.assertTrue(any("freshness budget" in error for error in result["errors"]))
+
+    def test_surface_scanner_rejects_shortened_inflated_and_contradictory_variants(self) -> None:
+        surface = "portfolio_front_door"
+        claim_id = "SYNTHETIC-CLAIM"
+        canonical = "Four implemented state collectors CA TX FL and NY sit on a broader architecture"
+        expected = {(surface, claim_id): {"claim_text": canonical}}
+        variants = (
+            "Four implemented state collectors CA TX FL and NY establish nationwide completeness",
+            "Implemented state collectors CA TX FL NY on a broader architecture",
+            "Four implemented state collectors CA TX FL and NY do not sit on a broader architecture",
+        )
+        for variant in variants:
+            with self.subTest(variant=variant):
+                matched, drifted = MODULE._surface_claim_scan(variant, expected, surface)
+                self.assertEqual([], matched)
+                self.assertEqual([claim_id], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            f"The evidence states that {canonical}, with limits documented elsewhere.",
+            expected,
+            surface,
+        )
+        self.assertEqual([claim_id], matched)
+        self.assertEqual([], drifted)
+
+    def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
+        first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
+        second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
+        changed = b"<html><body><h1>Inflated proof claim</h1><script>nonce='three'</script></body></html>"
+        first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v1")
+        second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v1")
+        changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v1")
+        self.assertEqual(first_extraction, second_extraction)
+        self.assertNotEqual(first_extraction, changed_extraction)
+
+    def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
+        self.assertTrue(
+            MODULE._phase_comment_authorized({"user": {"login": "4444J99"}, "author_association": "MEMBER"})
+        )
+        for comment in (
+            {"user": {"login": "outside-user"}, "author_association": "NONE"},
+            {"user": {"login": "4444J99"}, "author_association": "NONE"},
+            {"author_association": "MEMBER"},
+        ):
+            with self.subTest(comment=comment):
+                self.assertFalse(MODULE._phase_comment_authorized(comment))
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)

@@ -188,6 +188,50 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 self.assertEqual("withheld", result["status"])
                 self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
 
+    def test_cost_failure_population_manifest_and_hash_selection_are_reproduced(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        population = payload["population"]
+        seed = "c" * 64
+        population["selection_method"] = "deterministic_hash_sample"
+        population["selection_rule"] = COST.SELECTION_RULES["deterministic_hash_sample"]
+        population["selection_seed_sha256"] = seed
+        eligible_ids = [record["sample_id"] for record in population["source_manifest"]["records"]]
+        expected_ids = sorted(
+            eligible_ids,
+            key=lambda sample_id: (COST.hashlib.sha256(f"{seed}:{sample_id}".encode()).hexdigest(), sample_id),
+        )
+        rows_by_id = {row["sample_id"]: row for row in payload["rows"]}
+        payload["rows"] = [rows_by_id[sample_id] for sample_id in expected_ids]
+        self.assertEqual([], COST.validate_sample(payload))
+        payload["rows"].reverse()
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("contract-owned hash selection" in error for error in errors), errors)
+
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["population"]["source_manifest"]["records"][0]["sample_id"] = "unbound-id"
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("source SHA-256" in error for error in errors), errors)
+
+    def test_estimated_model_cost_requires_a_reproducible_rate_basis(self) -> None:
+        for mutation, expected in (
+            (("remove", None), "exact public-safe rate basis"),
+            (("formula", "model_cost_usd = arbitrary"), "contract-owned formula"),
+            (("calculated_cost_usd", 9.9), "exact formula"),
+            (("model_id", "unbound-model"), "model_id differs from its tracked source record"),
+            (("model_tier", "unbound-tier"), "model_tier differs from its tracked source record"),
+            (("source_sha256", "0" * 64), "source SHA-256 differs from its tracked artifact"),
+            (("source_artifact", "../../private-rate.json"), "safe tracked rate artifact"),
+        ):
+            with self.subTest(mutation=mutation):
+                payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+                field, value = mutation
+                if field == "remove":
+                    payload["rows"][0].pop("model_cost_rate_basis")
+                else:
+                    payload["rows"][0]["model_cost_rate_basis"][field] = value
+                errors = COST.validate_sample(payload)
+                self.assertTrue(any(expected in error for error in errors), errors)
+
     def test_cost_failure_review_binds_population_and_cannot_be_future_dated(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["provenance"] = "public_safe_observed"
@@ -205,6 +249,28 @@ class PositioningProofRunnerTest(unittest.TestCase):
             )
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
+
+    def test_cost_failure_rejects_future_observations_and_predating_reviews(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        review = independent_cost_review(payload)
+        review["observed_at"] = "2026-08-04T00:00:00Z"
+        result = COST.reproduce(
+            payload,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=review,
+        )
+        self.assertTrue(any("follow the complete observation window" in error for error in result["errors"]))
+
+        payload["window_end"] = "2099-01-01"
+        payload["population"]["window_end"] = "2099-01-01"
+        payload["population"]["source_manifest"]["window_end"] = "2099-01-01"
+        payload["population"]["source_sha256"] = COST._canonical_digest(payload["population"]["source_manifest"])
+        payload["rows"][0]["observed_at"] = "2099-01-01T00:00:00Z"
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("cannot end in the future" in error for error in errors), errors)
+        self.assertTrue(any("cannot be in the future" in error for error in errors), errors)
 
     def test_cost_failure_retry_count_requires_a_nonnegative_integer(self) -> None:
         for value in (0.5, True, -1):

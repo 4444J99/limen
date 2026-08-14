@@ -10,8 +10,10 @@ import math
 from datetime import date, datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import urlsplit
 
 
+ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_VERSION = "limen.positioning_cost_failure_sample.v1"
 ALLOWED_STATES = {"done", "failed", "failed_blocked", "needs_human"}
 ALLOWED_FAILURE_CLASSES = {
@@ -26,6 +28,9 @@ ALLOWED_FAILURE_CLASSES = {
 REPRODUCTION_SCHEMA = "limen.positioning_cost_failure_reproduction.v1"
 REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 POPULATION_SCHEMA = "limen.positioning_cost_failure_population.v1"
+POPULATION_SOURCE_SCHEMA = "limen.positioning_cost_failure_population_source.v1"
+MODEL_RATE_SCHEMA = "limen.positioning_model_cost_rate_basis.v1"
+MODEL_RATE_SOURCE_SCHEMA = "limen.positioning_model_rate_source.v1"
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
 ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
@@ -34,6 +39,7 @@ POPULATION_FIELDS = {
     "schema_version",
     "source_id",
     "source_sha256",
+    "source_manifest",
     "window_start",
     "window_end",
     "population_count",
@@ -44,19 +50,52 @@ POPULATION_FIELDS = {
     "selection_seed_sha256",
     "exclusion_counts",
 }
+POPULATION_SOURCE_FIELDS = {"schema_version", "source_id", "window_start", "window_end", "records"}
+POPULATION_SOURCE_RECORD_FIELDS = {"sample_id", "eligible", "exclusion_reason"}
 SELECTION_METHODS = {"census", "deterministic_hash_sample"}
+SELECTION_RULES = {
+    "census": "census of every eligible public-safe sample_id",
+    "deterministic_hash_sample": "sha256(seed_sha256 + ':' + sample_id) ascending; take selected_count",
+}
 ALLOWED_FIELDS = {
     "sample_id",
     "observed_at",
     "terminal_state",
     "model_cost_usd",
     "model_cost_basis",
+    "model_cost_rate_basis",
     "human_minutes",
     "retry_count",
     "retry_cost_usd",
     "verification_cost_usd",
     "failure_class",
 }
+MODEL_RATE_FIELDS = {
+    "schema_version",
+    "source_artifact",
+    "source_sha256",
+    "source_record_id",
+    "model_id",
+    "model_tier",
+    "rate_observed_at",
+    "input_units",
+    "output_units",
+    "input_rate_usd_per_million",
+    "output_rate_usd_per_million",
+    "formula",
+    "calculated_cost_usd",
+}
+MODEL_RATE_SOURCE_FIELDS = {"schema_version", "source_id", "source_url", "observed_at", "records"}
+MODEL_RATE_SOURCE_RECORD_FIELDS = {
+    "record_id",
+    "model_id",
+    "model_tier",
+    "input_rate_usd_per_million",
+    "output_rate_usd_per_million",
+}
+MODEL_RATE_FORMULA = (
+    "((input_units * input_rate_usd_per_million) + (output_units * output_rate_usd_per_million)) / 1000000"
+)
 
 
 def _canonical_digest(payload: dict[str, Any]) -> str:
@@ -90,6 +129,158 @@ def _parse_observed_at(value: object, index: int, errors: list[str]) -> datetime
     return parsed
 
 
+def _lower_sha256(value: object) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(character in "0123456789abcdef" for character in value)
+
+
+def _credential_free_https_url(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip() or "\0" in value:
+        return False
+    parsed = urlsplit(value)
+    return (
+        parsed.scheme == "https"
+        and bool(parsed.hostname)
+        and parsed.username is None
+        and parsed.password is None
+        and not parsed.query
+        and not parsed.fragment
+    )
+
+
+def _safe_tracked_artifact(value: object) -> Path | None:
+    if not isinstance(value, str) or not value.strip() or value != value.strip() or "\0" in value:
+        return None
+    pure = PurePosixPath(value)
+    if pure.is_absolute() or any(part in {"", ".", ".."} for part in pure.parts):
+        return None
+    try:
+        candidate = (ROOT / pure).resolve(strict=True)
+        candidate.relative_to(ROOT.resolve())
+    except (OSError, ValueError):
+        return None
+    return candidate if candidate.is_file() else None
+
+
+def _model_rate_source_record(detail: dict[str, Any], index: int, errors: list[str]) -> dict[str, Any] | None:
+    artifact = _safe_tracked_artifact(detail.get("source_artifact"))
+    if artifact is None:
+        errors.append(f"row {index} model rate basis requires a safe tracked rate artifact")
+        return None
+    try:
+        raw = artifact.read_bytes()
+    except OSError as exc:
+        errors.append(f"row {index} model rate source artifact is unreadable: {exc}")
+        return None
+    if len(raw) > 65_536:
+        errors.append(f"row {index} model rate source artifact exceeds the bounded size")
+        return None
+    if not _lower_sha256(detail.get("source_sha256")):
+        errors.append(f"row {index} model rate basis requires a lowercase source SHA-256")
+    elif hashlib.sha256(raw).hexdigest() != detail.get("source_sha256"):
+        errors.append(f"row {index} model rate basis source SHA-256 differs from its tracked artifact")
+    try:
+        source = json.loads(raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        errors.append(f"row {index} model rate source artifact is invalid JSON: {exc}")
+        return None
+    if not isinstance(source, dict) or set(source) != MODEL_RATE_SOURCE_FIELDS:
+        errors.append(f"row {index} model rate source artifact has an invalid exact schema")
+        return None
+    if source.get("schema_version") != MODEL_RATE_SOURCE_SCHEMA:
+        errors.append(f"row {index} model rate source artifact has an unsupported schema")
+    if not isinstance(source.get("source_id"), str) or not source["source_id"].strip() or "\0" in source["source_id"]:
+        errors.append(f"row {index} model rate source artifact requires a public-safe source_id")
+    if not _credential_free_https_url(source.get("source_url")):
+        errors.append(f"row {index} model rate source artifact requires a credential-free HTTPS source")
+    observed_at = source.get("observed_at")
+    try:
+        observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+        if not isinstance(observed_at, str) or observed.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError):
+        errors.append(f"row {index} model rate source observed_at must be RFC3339 with a timezone")
+    else:
+        if observed > datetime.now(timezone.utc):
+            errors.append(f"row {index} model rate source cannot be future-dated")
+        if detail.get("rate_observed_at") != observed_at:
+            errors.append(f"row {index} model rate basis observed_at differs from its tracked source")
+    records = source.get("records")
+    if not isinstance(records, list) or not records:
+        errors.append(f"row {index} model rate source requires a non-empty records list")
+        return None
+    selected: dict[str, Any] | None = None
+    seen: set[str] = set()
+    for record_index, record in enumerate(records):
+        if not isinstance(record, dict) or set(record) != MODEL_RATE_SOURCE_RECORD_FIELDS:
+            errors.append(f"row {index} model rate source record {record_index} has an invalid exact schema")
+            continue
+        record_id = record.get("record_id")
+        if not isinstance(record_id, str) or not record_id.strip() or "\0" in record_id or record_id in seen:
+            errors.append(f"row {index} model rate source record {record_index} requires a unique record_id")
+            continue
+        seen.add(record_id)
+        for field in ("model_id", "model_tier"):
+            value = record.get(field)
+            if not isinstance(value, str) or not value.strip() or "\0" in value:
+                errors.append(f"row {index} model rate source record {record_index} requires {field}")
+        for field in ("input_rate_usd_per_million", "output_rate_usd_per_million"):
+            value = record.get(field)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+                errors.append(f"row {index} model rate source record {record_index} requires a valid {field}")
+        if record_id == detail.get("source_record_id"):
+            selected = record
+    if selected is None:
+        errors.append(f"row {index} model rate basis source_record_id is absent from its tracked source")
+    return selected
+
+
+def _validate_population_source(population: dict[str, Any], errors: list[str]) -> tuple[list[str], dict[str, int]]:
+    source = population.get("source_manifest")
+    if not isinstance(source, dict) or set(source) != POPULATION_SOURCE_FIELDS:
+        errors.append("sample population requires an exact public-safe source manifest")
+        return [], {}
+    if source.get("schema_version") != POPULATION_SOURCE_SCHEMA:
+        errors.append("sample population source manifest has an unsupported schema")
+    if source.get("source_id") != population.get("source_id"):
+        errors.append("sample population source manifest identity differs from source_id")
+    if source.get("window_start") != population.get("window_start") or source.get("window_end") != population.get(
+        "window_end"
+    ):
+        errors.append("sample population source manifest window differs from the population window")
+    records = source.get("records")
+    if not isinstance(records, list) or not records:
+        errors.append("sample population source manifest requires a non-empty records list")
+        return [], {}
+    eligible_ids: list[str] = []
+    exclusion_counts: dict[str, int] = {}
+    seen: set[str] = set()
+    for index, record in enumerate(records):
+        if not isinstance(record, dict) or set(record) != POPULATION_SOURCE_RECORD_FIELDS:
+            errors.append(f"sample population source record {index} has an invalid exact schema")
+            continue
+        sample_id = record.get("sample_id")
+        normalized = sample_id.strip() if isinstance(sample_id, str) else ""
+        if not normalized or normalized != sample_id or "\0" in normalized or normalized in seen:
+            errors.append(f"sample population source record {index} requires a unique normalized sample_id")
+            continue
+        seen.add(normalized)
+        eligible = record.get("eligible")
+        reason = record.get("exclusion_reason")
+        if not isinstance(eligible, bool):
+            errors.append(f"sample population source record {index} requires a boolean eligible disposition")
+        elif eligible:
+            if reason is not None:
+                errors.append(f"eligible source record {index} must not declare an exclusion reason")
+            eligible_ids.append(normalized)
+        elif not isinstance(reason, str) or not reason.strip() or "\0" in reason:
+            errors.append(f"ineligible source record {index} requires a public-safe exclusion reason")
+        else:
+            exclusion_counts[reason] = exclusion_counts.get(reason, 0) + 1
+    if _lower_sha256(population.get("source_sha256")) and population.get("source_sha256") != _canonical_digest(source):
+        errors.append("sample population source SHA-256 does not bind the exact source manifest")
+    return eligible_ids, exclusion_counts
+
+
 def _validate_population(payload: dict[str, Any], rows: list[object], errors: list[str]) -> dict[str, Any] | None:
     population = payload.get("population")
     if not isinstance(population, dict):
@@ -103,17 +294,14 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     if not isinstance(source_id, str) or not source_id.strip() or "\0" in source_id:
         errors.append("sample population requires a nonblank public-safe source_id")
     source_sha256 = population.get("source_sha256")
-    if (
-        not isinstance(source_sha256, str)
-        or len(source_sha256) != 64
-        or any(character not in "0123456789abcdef" for character in source_sha256)
-    ):
+    if not _lower_sha256(source_sha256):
         errors.append("sample population requires a lowercase source SHA-256")
     if population.get("window_start") != payload.get("window_start") or population.get("window_end") != payload.get(
         "window_end"
     ):
         errors.append("sample population window must exactly match the observed sample window")
 
+    eligible_ids, derived_exclusions = _validate_population_source(population, errors)
     counts: dict[str, int] = {}
     for field in ("population_count", "eligible_count", "selected_count"):
         value = population.get(field)
@@ -126,20 +314,26 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     if {"population_count", "eligible_count", "selected_count"} <= set(counts):
         if counts["eligible_count"] > counts["population_count"] or counts["selected_count"] > counts["eligible_count"]:
             errors.append("sample population counts must satisfy selected <= eligible <= population")
+        source = population.get("source_manifest")
+        source_records = source.get("records") if isinstance(source, dict) else None
+        if isinstance(source_records, list) and counts["population_count"] != len(source_records):
+            errors.append("sample population_count must equal the source manifest denominator")
+        if counts["eligible_count"] != len(eligible_ids):
+            errors.append("sample eligible_count must equal the source manifest eligible set")
 
     method = population.get("selection_method")
     if not isinstance(method, str) or method not in SELECTION_METHODS:
         errors.append("sample population requires a supported selection_method")
     rule = population.get("selection_rule")
-    if not isinstance(rule, str) or not rule.strip() or "\0" in rule:
-        errors.append("sample population requires a nonblank deterministic selection_rule")
+    if not isinstance(rule, str) or method not in SELECTION_RULES or rule != SELECTION_RULES[method]:
+        errors.append("sample population requires the exact contract-owned selection_rule")
     seed = population.get("selection_seed_sha256")
     if method == "census":
         if seed is not None:
             errors.append("census selection must not declare a selection seed")
         if counts and len(set(counts.values())) != 1:
             errors.append("census selection requires selected == eligible == population")
-    elif not isinstance(seed, str) or len(seed) != 64 or any(character not in "0123456789abcdef" for character in seed):
+    elif not _lower_sha256(seed):
         errors.append("deterministic sampling requires a lowercase selection seed SHA-256")
 
     exclusion_counts = population.get("exclusion_counts")
@@ -154,11 +348,132 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     )
     if not valid_exclusions:
         errors.append("sample population exclusion_counts must map public-safe reasons to nonnegative integers")
-    elif {"population_count", "eligible_count"} <= set(counts) and sum(exclusion_counts.values()) != (
-        counts["population_count"] - counts["eligible_count"]
-    ):
-        errors.append("sample population exclusions must reconcile population_count to eligible_count")
+    else:
+        if exclusion_counts != derived_exclusions:
+            errors.append("sample population exclusions differ from the source manifest dispositions")
+        if {"population_count", "eligible_count"} <= set(counts) and sum(exclusion_counts.values()) != (
+            counts["population_count"] - counts["eligible_count"]
+        ):
+            errors.append("sample population exclusions must reconcile population_count to eligible_count")
+
+    selected_ids = [
+        row.get("sample_id").strip()
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("sample_id"), str) and row.get("sample_id").strip()
+    ]
+    if len(selected_ids) == len(rows) and method == "census" and selected_ids != eligible_ids:
+        errors.append("census selection must contain every eligible source sample_id in manifest order")
+    if len(selected_ids) == len(rows) and method == "deterministic_hash_sample" and _lower_sha256(seed):
+        expected_ids = sorted(
+            eligible_ids,
+            key=lambda sample_id: (hashlib.sha256(f"{seed}:{sample_id}".encode()).hexdigest(), sample_id),
+        )[: counts.get("selected_count", 0)]
+        if selected_ids != expected_ids:
+            errors.append("deterministic sample membership differs from the contract-owned hash selection")
     return population
+
+
+def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str]) -> None:
+    basis = row.get("model_cost_basis")
+    detail = row.get("model_cost_rate_basis")
+    model_cost = row.get("model_cost_usd")
+    if basis == "actual":
+        if detail is not None:
+            errors.append(f"row {index} actual model cost must not declare an estimated rate basis")
+        return
+    if basis == "unknown":
+        if detail is not None or model_cost is not None:
+            errors.append(f"row {index} unknown model cost must have null cost and rate basis")
+        return
+    if basis != "estimated":
+        return
+    if not isinstance(detail, dict) or set(detail) != MODEL_RATE_FIELDS:
+        errors.append(f"row {index} estimated model cost requires an exact public-safe rate basis")
+        return
+    if detail.get("schema_version") != MODEL_RATE_SCHEMA:
+        errors.append(f"row {index} model rate basis has an unsupported schema")
+    for field in ("source_record_id", "model_id", "model_tier"):
+        value = detail.get(field)
+        if not isinstance(value, str) or not value.strip() or "\0" in value:
+            errors.append(f"row {index} model rate basis requires a nonblank {field}")
+    source_record = _model_rate_source_record(detail, index, errors)
+    rate_observed_at = detail.get("rate_observed_at")
+    try:
+        parsed_rate = datetime.fromisoformat(rate_observed_at.replace("Z", "+00:00"))
+        if parsed_rate.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError):
+        errors.append(f"row {index} model rate basis observed_at must be RFC3339 with a timezone")
+    else:
+        if parsed_rate > datetime.now(timezone.utc):
+            errors.append(f"row {index} model rate basis cannot be future-dated")
+    units: dict[str, int] = {}
+    for field in ("input_units", "output_units"):
+        value = detail.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            errors.append(f"row {index} model rate basis {field} must be a nonnegative integer")
+        else:
+            units[field] = value
+    rates: dict[str, float] = {}
+    for field in ("input_rate_usd_per_million", "output_rate_usd_per_million", "calculated_cost_usd"):
+        value = detail.get(field)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+            errors.append(f"row {index} model rate basis {field} must be a nonnegative finite number")
+        else:
+            rates[field] = float(value)
+    if detail.get("formula") != MODEL_RATE_FORMULA:
+        errors.append(f"row {index} model rate basis must use the contract-owned formula")
+    if isinstance(source_record, dict):
+        for field in (
+            "model_id",
+            "model_tier",
+            "input_rate_usd_per_million",
+            "output_rate_usd_per_million",
+        ):
+            if detail.get(field) != source_record.get(field):
+                errors.append(f"row {index} model rate basis {field} differs from its tracked source record")
+    if {"input_units", "output_units"} <= set(units) and {
+        "input_rate_usd_per_million",
+        "output_rate_usd_per_million",
+        "calculated_cost_usd",
+    } <= set(rates):
+        calculated = (
+            units["input_units"] * rates["input_rate_usd_per_million"]
+            + units["output_units"] * rates["output_rate_usd_per_million"]
+        ) / 1_000_000
+        if not math.isclose(calculated, rates["calculated_cost_usd"], rel_tol=0, abs_tol=1e-9):
+            errors.append(f"row {index} model rate basis calculated cost differs from the exact formula")
+        if (
+            isinstance(model_cost, bool)
+            or not isinstance(model_cost, (int, float))
+            or not math.isclose(float(model_cost), rates["calculated_cost_usd"], rel_tol=0, abs_tol=1e-9)
+        ):
+            errors.append(f"row {index} estimated model cost differs from its reproducible rate basis")
+
+
+def _observation_cutoff(payload: dict[str, Any]) -> datetime | None:
+    candidates: list[datetime] = []
+    window_end = payload.get("window_end")
+    if isinstance(window_end, str):
+        try:
+            parsed_end = date.fromisoformat(window_end)
+        except ValueError:
+            pass
+        else:
+            candidates.append(datetime.combine(parsed_end, datetime.max.time(), tzinfo=timezone.utc))
+    rows = payload.get("rows")
+    if isinstance(rows, list):
+        for row in rows:
+            observed_at = row.get("observed_at") if isinstance(row, dict) else None
+            if not isinstance(observed_at, str):
+                continue
+            try:
+                observed = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if observed.tzinfo is not None:
+                candidates.append(observed)
+    return max(candidates) if candidates else None
 
 
 def validate_sample(payload: dict[str, Any]) -> list[str]:
@@ -175,6 +490,8 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
     window_end = _parse_window_date(payload.get("window_end"), "window_end", errors)
     if window_start is not None and window_end is not None and window_start > window_end:
         errors.append("sample date window must be ordered")
+    if window_end is not None and window_end > datetime.now(timezone.utc).date():
+        errors.append("sample date window cannot end in the future")
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
         return [*errors, "sample rows must be a non-empty list"]
@@ -200,6 +517,8 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
         if not isinstance(model_cost_basis, str) or model_cost_basis not in {"actual", "estimated", "unknown"}:
             errors.append(f"row {index} requires an explicit model_cost_basis")
         observed_at = _parse_observed_at(row.get("observed_at"), index, errors)
+        if observed_at is not None and observed_at > datetime.now(timezone.utc):
+            errors.append(f"row {index} observed_at cannot be in the future")
         if (
             observed_at is not None
             and window_start is not None
@@ -218,6 +537,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
             not isinstance(retry_count, int) or isinstance(retry_count, bool) or retry_count < 0
         ):
             errors.append(f"row {index} field retry_count must be null or a non-negative integer")
+        _validate_model_rate_basis(row, index, errors)
         failure_class = row.get("failure_class")
         if terminal_state == "done":
             if failure_class is not None:
@@ -362,6 +682,7 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     if not isinstance(reviewer_identity, str) or not reviewer_identity.strip() or "\0" in reviewer_identity:
         errors.append("analysis review_verdict requires a nonblank reviewer identity")
     observed_at = verdict.get("observed_at")
+    reviewed_at: datetime | None = None
     try:
         reviewed_at = datetime.fromisoformat(observed_at.replace("Z", "+00:00"))
         if reviewed_at.tzinfo is None:
@@ -371,6 +692,16 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     else:
         if reviewed_at > datetime.now(timezone.utc):
             errors.append("analysis review_verdict cannot be dated in the future")
+    cutoff_value = analysis.get("observation_cutoff")
+    try:
+        cutoff = datetime.fromisoformat(cutoff_value.replace("Z", "+00:00"))
+        if cutoff.tzinfo is None:
+            raise ValueError
+    except (AttributeError, ValueError):
+        errors.append("analysis requires an exact observation cutoff")
+    else:
+        if reviewed_at is not None and reviewed_at < cutoff:
+            errors.append("analysis review_verdict must follow the complete observation window")
     if verdict.get("data_digest") != analysis.get("data_digest"):
         errors.append("analysis review_verdict does not bind the analyzed data digest")
     if verdict.get("population_digest") != analysis.get("population_digest"):
@@ -419,6 +750,12 @@ def reproduce(
     data_digest = _canonical_digest(payload)
     population = payload.get("population")
     population_digest = _canonical_digest(population) if isinstance(population, dict) else None
+    observation_cutoff = _observation_cutoff(payload)
+    observation_cutoff_value = (
+        observation_cutoff.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        if observation_cutoff is not None
+        else None
+    )
     reproduction_command = _build_reproduction_command(
         input_artifact,
         data_digest,
@@ -435,6 +772,7 @@ def reproduce(
                 "review_verdict": review_verdict,
                 "population": population,
                 "population_digest": population_digest,
+                "observation_cutoff": observation_cutoff_value,
                 "data_digest": data_digest,
                 "errors": errors,
             },
@@ -466,6 +804,7 @@ def reproduce(
         "review_verdict": review_verdict,
         "population": population,
         "population_digest": population_digest,
+        "observation_cutoff": observation_cutoff_value,
         "window": {"start": payload["window_start"], "end": payload["window_end"]},
         "denominator": len(rows),
         "terminal_states": terminal_counts,
@@ -513,6 +852,7 @@ def main() -> int:
             "review_verdict": None,
             "population": None,
             "population_digest": None,
+            "observation_cutoff": None,
             "data_digest": None,
             "errors": [f"cost/failure input failed closed: {exc}"],
             "publication_eligible": False,
