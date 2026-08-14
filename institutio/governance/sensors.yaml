@@ -1078,6 +1078,37 @@ sensors:
         severity: advisory
         escalation: "foreign-agent session litter in the live checkout above — excavate any handoffs owed to another repo, then reap (arm LIMEN_FOREIGN_LITTER_REAP=1 or run scripts/check-foreign-litter.py --reap once)"
 
+  branch-reap:
+    section: "0g9b"
+    title: "spent branches — no provably-landed local branch lingers after its work merged"
+    gate: LIMEN_BRANCH_REAP_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_BRANCH_REAP
+      default: 4
+    timeout:
+      env: LIMEN_BRANCH_REAP_TIMEOUT
+      default: 120
+    # scripts/reap-branches.py was wired into NOTHING — not this registry, not metabolize.sh, and it
+    # had never once written to logs/beat-rungs.jsonl. So the reap only ran when a session ran it by
+    # hand, and every branch that landed added one lingering ref. Measured 2026-08-14: 87 reapable,
+    # and scripts/no-tasks-on-me.sh — a CLOSEOUT gate — went from exit 0 to exit 1 inside forty
+    # minutes with no work done in between, because a branch landed underneath the session. That is
+    # the one thing a closeout gate must never do: it made "I left something hanging" and "a branch
+    # landed while I worked" indistinguishable. LIMEN_BRANCH_REAP_MAX's own note already promised the
+    # remainder is "reaped on the next hygiene beat" — this is that beat, finally wired.
+    #
+    # DETECTION ONLY, and not by the foreign-litter/orphan-watcher `args_when` idiom: --check returns
+    # early (reap-branches.py:637), so `--check --apply` would take the check branch and never apply.
+    # An armed valve here has to be its own step running a BARE --apply, never an arg appended to
+    # this one — otherwise the env var reads as armed and silently does nothing.
+    steps:
+      - command: "python3 scripts/reap-branches.py --check"
+        severity: advisory
+        escalation: "spent branch(es) above are provably landed and still lingering — run scripts/reap-branches.py --apply (branches marked 'authorized' need no new ledger event; only 'needs-acceptance' ones do)"
+
   dispatch-continuity:
     section: "0h"
     title: "dispatch continuity — detect a silent lane while queue + budget exist"

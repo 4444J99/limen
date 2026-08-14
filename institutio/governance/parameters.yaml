@@ -3570,6 +3570,24 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Max branches reap-branches.py deletes per run; the remainder is logged (never silently dropped) and reaped on the next hygiene beat."
+  LIMEN_BRANCH_REAP_CHECK:
+    default: '1'
+    env: LIMEN_BRANCH_REAP_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the branch-reap sensor (scripts/reap-branches.py --check, sensors.yaml 0g9b). The reap was wired into nothing — no sensor, no rung, never once in logs/beat-rungs.jsonl — so it ran only when a session ran it by hand and landed branches accumulated (87 reapable when this was added). The cost was paid by scripts/no-tasks-on-me.sh, a CLOSEOUT gate, which flipped exit 0 -> exit 1 inside forty minutes on 2026-08-14 because a branch landed mid-session: a session could no longer tell 'I left something hanging' from 'the fleet's backlog grew'. Read-only; stays red until the reap runs. Set 0 to silence."
+  LIMEN_BEAT_BRANCH_REAP:
+    default: 4
+    env: LIMEN_BEAT_BRANCH_REAP
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the branch-reap sensor. 4 follows the orphan-watcher precedent; unlike that local ps scan this pass goes online (PR state per branch, ~25 s measured), and branches land a few times a day, so every ~4 beats catches drift well inside the window where it matters."
+  LIMEN_BRANCH_REAP_TIMEOUT:
+    default: 120
+    env: LIMEN_BRANCH_REAP_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the branch-reap sensor pass. Measured 25 s wall-clock against 623 refs with live PR lookups; 120 leaves headroom for a slow GitHub without letting a hung pass stall the beat."
   LIMEN_BRANCH_REAP_EVERY_MIN:
     default: 30
     env: LIMEN_BRANCH_REAP_EVERY_MIN
