@@ -498,6 +498,17 @@ gates:
       - "institutio/governance/gates.yaml"
     owner: positioning-program
     note: "PSP-P04-W01 stays exactly bound to the canonical generated Audit, complete decision-record contract, numeric-price boundary, shared private-source detector, and focused same-length/scalar/leak regressions."
+  governance-install-offer-test:
+    command: "python3 scripts/positioning-offer-artifacts.py --check && bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_offer_artifacts.py -q"
+    paths:
+      - "docs/positioning/offers/governance-install.md"
+      - "institutio/positioning/commercial-contract.yaml"
+      - "scripts/positioning-offer-artifacts.py"
+      - "scripts/tests/positioning-offer-artifacts.test.py"
+      - "scripts/tests/test_positioning_offer_artifacts.py"
+      - "institutio/governance/gates.yaml"
+    owner: positioning-program
+    note: "PSP-P04-W02 stays bounded to one named team/pipeline, requires pre-start acceptance tests and handoff ownership, finite receipt-backed acceptance and rollback, and an explicit no-platform-rewrite exclusion."
   research-adjudication-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py scripts/tests/test_positioning_research_adjudication.py -q && python3 scripts/positioning-research-adjudication.py --verify-live"
     paths: [".github/workflows/pr-gate.yml", "cli/tests/test_positioning_program.py", "docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "institutio/positioning/program.yaml", "scripts/positioning-program.py", "scripts/positioning-research-adjudication.py", "scripts/tests/test_positioning_research_adjudication.py", "institutio/governance/gates.yaml"]

@@ -91,6 +91,32 @@ class OfferArtifactTests(unittest.TestCase):
         errors = MODULE.validate_artifact_directory(self.contract, output_dir)
         self.assertTrue(any("numeric price leaked" in error for error in errors), errors)
 
+    def test_install_requires_named_sponsor_owner_team_and_pipeline(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        install = next(item for item in changed["offer_ladder"]["items"] if item["id"] == "install")
+        install["entry_criteria"].remove("one named sponsor, internal owner, team, and pipeline")
+        self.assert_contract_error(changed, "requires one named sponsor, internal owner, team, and pipeline")
+
+    def test_install_requires_acceptance_tests_and_handoff_owner_before_start(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        install = next(item for item in changed["offer_ladder"]["items"] if item["id"] == "install")
+        install["entry_criteria"].remove("acceptance tests and a handoff owner agreed before work starts")
+        self.assert_contract_error(changed, "requires acceptance tests and a handoff owner before work starts")
+
+    def test_install_requires_finite_acceptance_and_internal_owner_handoff(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        install = next(item for item in changed["offer_ladder"]["items"] if item["id"] == "install")
+        install["timeline"] = "Continue until the platform is complete."
+        install["evidence"]["acceptance"] = "The provider declares the implementation complete."
+        install["handoff"] = "Provide a summary when convenient."
+        self.assert_contract_error(changed, "requires finite acceptance evidence and a named internal-owner handoff")
+
+    def test_install_explicitly_excludes_enterprise_platform_rewrite(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        install = next(item for item in changed["offer_ladder"]["items"] if item["id"] == "install")
+        install["exclusions"].remove("enterprise-wide platform rewrite")
+        self.assert_contract_error(changed, "explicitly exclude an enterprise-wide platform rewrite")
+
     def test_bare_numeric_economics_source_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["offer_ladder"]["items"][0]["economics"]["capacity_rule"] = "Start at 25000."
