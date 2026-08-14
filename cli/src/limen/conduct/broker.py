@@ -19,6 +19,7 @@ from limen.conduct.models import (
     CampaignReceiptV1,
     ConductorSessionV1,
     ConductPrincipalV1,
+    ConductRole,
     LeaseV1,
     ExecutorAttemptV1,
     ResourceClaimV1,
@@ -1701,7 +1702,7 @@ class ConductBroker:
         }
 
     @staticmethod
-    def _require_role(principal: ConductPrincipalV1, *roles: str) -> None:
+    def _require_role(principal: ConductPrincipalV1, *roles: ConductRole) -> None:
         if principal.roles.isdisjoint(roles):
             raise ConductConflict(f"authenticated principal lacks required {'/'.join(roles)} role")
 

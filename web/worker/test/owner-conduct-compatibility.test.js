@@ -11,11 +11,33 @@ class FakeStorage {
   }
 
   async get(key) {
+    if (Array.isArray(key)) {
+      return new Map(
+        key
+          .filter((candidate) => this.values.has(candidate))
+          .map((candidate) => [candidate, structuredClone(this.values.get(candidate))]),
+      );
+    }
     return structuredClone(this.values.get(key));
   }
 
   async put(key, value) {
     this.values.set(key, structuredClone(value));
+  }
+
+  async delete(key) {
+    const candidates = Array.isArray(key) ? key : [key];
+    let removed = 0;
+    for (const candidate of candidates) removed += Number(this.values.delete(candidate));
+    return Array.isArray(key) ? removed : Boolean(removed);
+  }
+
+  async list({ prefix } = {}) {
+    return new Map(
+      [...this.values]
+        .filter(([key]) => !prefix || key.startsWith(prefix))
+        .map(([key, value]) => [key, structuredClone(value)]),
+    );
   }
 }
 

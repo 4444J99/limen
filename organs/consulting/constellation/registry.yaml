@@ -143,23 +143,74 @@ people:
         dossier: null
         notes: transcripts are vault-class; public face is a split, never a flip
 
+  # T3 protocol gate CLEARED 2026-08-12 by full conversation review (2023-08-20..2026-08-12,
+  # 3,201 rows). Promoted T3 -> T2: the review found an inbound, self-initiated PAID request for
+  # the social lane — the only inbound commercial approach in the record — so this is no longer
+  # protocol-first backlog. Demand evidence: _people-private/people/dustin/decisions/demand-review.md
   - slug: dustin
-    tier: T3
-    engagement_ref: null
+    tier: T2
+    engagement_ref: organs/consulting/engagements/dustin.yaml
     funnel_instance_ref: null
     projects:
+      # Both ventures were HIS ideas (2026-03-24) and he ratified both specs within four days.
+      # Supply, not demand, is the constraint: 4.5 months produced no artifact from his side.
+      #
+      # Promoted dossier -> building 2026-08-12 after an audit found both repos held a README and
+      # zero code. The re-read that produced the promotion: each venture's open questions gate a
+      # NARROWER slice than "the project". DSP's ten questions are all about the consumer shell,
+      # while its own stage 1 is an unblocked substrate; the Consulate's offer was already reduced
+      # in its own README and only the PRICE was open. Neither gate moved — the buildable surface
+      # in front of each one was simply never measured. Both are now unfunded-but-real.
       - name: dsp-platform
-        repo: null
+        repo: 4444J99/post-dsp-platform
         keywords: [dsp, music platform, post-dsp, streaming alternative]
-        stage: idea
+        stage: building
         public_face_state: none
-        dossier: null
+        dossier: organs/consulting/constellation/dossiers/dustin-dsp-platform.md
+        notes: >-
+          consumer shell still gated on ten design questions sent 2026-03-28 and never answered;
+          he is the correct respondent (working musician + practising UI/UX). Stage-1 coordination
+          substrate built 2026-08-12 — split sheets, settlement (pro-rata vs user-centric with the
+          delta computed), provenance attestation, delivery validation; 59 tests, no network, no
+          persistence. Research corpus was Drive-only until 2026-08-13, now mirrored into the
+          repo's docs/research/. Alpha→omega roadmap issued 2026-08-13: 11 phases as GitHub
+          milestones + issues, ladder at roadmap/ladder.json, consumer-shell phases planned-not-
+          started behind L-DSP-TEN-QUESTIONS.
       - name: ai-consultation
-        repo: null
-        keywords: [ai audit, ai consultation, ai consulting]
-        stage: idea
+        repo: 4444J99/the-consulate
+        keywords: [ai audit, ai consultation, ai consulting, consulate, ai remediation, ai governance]
+        stage: building
         public_face_state: none
-        dossier: null
+        dossier: organs/consulting/constellation/dossiers/dustin-ai-consultation.md
+        notes: >-
+          entry point and segment were already chosen in the repo's own README (AI Estate Audit,
+          higher education, fixed scope); only PRICE is open, and it does not gate the instrument.
+          Audit instrument built 2026-08-12 — estate schema, legibility rubric where every lost
+          point names a missing artifact, derived risk register, capped first wave; 66 tests. His
+          enterprise-UX vantage is the credibility asset, not delivery capacity. Alpha→omega
+          roadmap issued 2026-08-13: 10 phases as GitHub milestones + issues, ladder at
+          roadmap/ladder.json; only the commercial-packaging phase waits on L-CONS-PRICE.
+      # The lane the review surfaced. His ask, in his words, in a voice memo — which is why it
+      # appears in no text corpus. Not a greenfield build: the delivery asset already exists.
+      - name: social-presence
+        # The dedicated instance repo, cut 2026-08-12. Delivery runs ON the content yield engine,
+        # but that engine repo is SCOTT's lane (see his content-cannibalizer row) and naming it
+        # here would attach one repo to two partner lanes — Rule #7 would then happily validate a
+        # grant showing one partner the other's lane. This row names the INSTANCE instead, which
+        # is the resolution the null placeholder was holding open.
+        repo: 4444J99/new-ancients-social
+        keywords: [social presence, new ancients, ghastly occurrences, shorts campaign, music promotion, release cycle]
+        stage: building
+        public_face_state: none
+        dossier: organs/consulting/constellation/dossiers/dustin-social-presence.md
+        notes: >-
+          independent-musician instance of the content yield engine; inbound PAID request
+          2026-08-06, unanswered. Hard scope constraint set by him: no generative filler —
+          now enforced in code by the instance repo's caption guard, not by prose. First
+          working code landed 2026-08-12 (release-cycle planner, 38 tests); nothing in it
+          posts, and terms remain unagreed. Alpha→omega roadmap issued 2026-08-13: 10 phases
+          as GitHub milestones + issues, ladder at roadmap/ladder.json; offer and posting
+          phases planned-not-started behind L-NAS-TERMS / L-NAS-CREDENTIALS.
 
   - slug: david
     tier: T3

@@ -179,7 +179,7 @@
         "Validate the price anchors — the bands are my proposals; the number is yours. Read docs/positioning/*.internal.md (gitignored) and adjust the internal_anchor values in positioning-seeds.json. They never reach a public page either way.",
         "Arm the autonomic lane — LIMEN_POSITIONING=1 in ~/.limen.env. Surfaces self-refresh every 12 beats; organ-health.py already shows POSITIONING:gated until armed.",
         "Publish the front door — paste docs/positioning/_frontdoor.md onto a public profile README (4444J99/4444J99 or organvm/.github). Outward-facing to your identity.",
-        "Fix the profile's dead links — the live 4444J99/4444J99 README links 4444j99.github.io/portfolio + /resume, both 404; the live Pages is organvm.github.io/portfolio (200). The two hand-maintained links are a one-paste fix, staged and ready — say 'fix it' and I publish. Pure demand-hygiene (dead links repel the visitors the front door pulls). Detail: docs/positioning/_his-hand.md row 4b.",
+        "Fix the profile's dead links — the portfolio repo was transferred organvm → organvm-vii-kerygma, and GitHub Pages URLs do not follow transfers, so every organvm.github.io/portfolio link (README, profile blog field, org README footer) is now 404; the live Pages face is organvm-vii-kerygma.github.io/portfolio (verified 200). Repo-side references are repointed; the outward publishes (README regeneration via sync-readme, profile blog field) are your call — say 'fix it' and I publish. Durable fix: attach the 4444j99.dev custom domain (L-URL-HIERARCHY-SIGNOFF) so the front door survives future repo moves. Detail: docs/positioning/_his-hand.md row 4b.",
         "Apply discoverability — run the copy-paste gh commands in docs/positioning/_discoverability.md (one block per repo). Mutates public repo topics/descriptions. APPLIED & LIVE 2026-07-01: a-i-chat--exporter (12 topics), public-record-data-scrapper (10), universal-mail--automation (8), limen, portfolio — all with buyer-facing descriptions.",
         "Publish the 3 verified-but-private repos — mirror-mirror, the-invisible-ledger, domus-genoma are seeded with awaiting_publish:true (banked + tested, kept off every public surface; a private repo's link 404s). Make a repo public, then delete its awaiting_publish line — it renders next pass.",
         "Decide styx — value-repos key organvm/styx 404s; the real public product is organvm/peer-audited--behavioral-blockchain, which is pre-revenue (deck live, API undeployed). Tell me to deploy it or reframe the door to admit built-but-not-live systems, and I'll seed it.",
@@ -328,7 +328,7 @@
       "label": "Arm the three AGENT-CURABLE dialog effectors so the recurring macOS dialog estate self-heals on the beat, unattended, without a per-incident approval. The effectors already ship (heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh) and run every hygiene cadence as the registry-derived `dialogs-silenced` sensor (sensors.yaml 0g8b) — but DRY-RUN until armed. Arming flips them from detect-and-report to cure.",
       "owner": "yours",
       "cost": "one paste into ~/.limen.env (~20s), then the agent-curable dialog estate self-heals forever",
-      "unlocks": "the beat auto-cures the three agent-curable dialog classes the moment they recur — a drifted PreToolUse trust hook (1b), a duplicate Homebrew claude-code cask (4), and a malformed ClaudeCode.app lsregister stub (4b, the 'damaged, move to Trash' loop) — with no dialog, no click, and no chat task",
+      "unlocks": "the beat auto-cures a drifted PreToolUse trust hook (1b) and a duplicate Homebrew claude-code cask (4) the moment they recur, with no dialog, no click, and no chat task. For 4b it keeps the ClaudeCode.app LaunchServices registration at zero — which is worth having, but does NOT stop the 'damaged, move to Trash' alert: measurement on 2026-08-12 refuted registration as that alert's mechanism (see L-CLAUDE-GATEKEEPER-ALLOW).",
       "gate": "writing LIMEN_*=1 into the persistence env (~/.limen.env) is classifier-blocked for the agent (the self-arming boundary; see memory persistence-arming-env-is-classifier-gated) — the one-time paste is yours; every branch, sensor, verify, and merge around it is automated",
       "steps": [
         "Append three lines to ~/.limen.env:  LIMEN_HOOK_DRIFT_HEAL=1   and   LIMEN_CASK_DUPLICATE_HEAL=1   and   LIMEN_CLAUDE_LSREGISTER_HEAL=1",
@@ -343,18 +343,36 @@
       "id": "L-CLAUDE-DEEPLINK-REGISTRATION",
       "label": "Decide whether Claude Code should register its claude-cli:// protocol handler with macOS. The handler bundle (~/Applications/Claude Code URL Handler.app) wraps a bare-signed Mach-O in a hand-written Info.plist, so Gatekeeper can never assess it — and it sits in ~/Applications, a LaunchServices-SCANNED domain, so unregistration does not hold there. The vendor ships the only convergent off-switch.",
       "owner": "yours",
-      "cost": "one key in ~/.claude/settings.json (~15s), or an explicit decision to keep deep links and accept the finding",
+      "cost": "one key in the ACTIVE claude settings file (~15s; resolve it with scripts/agent_config_paths.py claude-settings), or an explicit decision to keep deep links and accept the finding",
       "unlocks": "IF-GATEKEEPER-INERT reaches at-ideal across every scanned domain, not just the Claude store — the last registered-but-unassessable vendor bundle on the host goes away",
       "gate": "Writing ~/.claude/settings.json is classifier-blocked for the agent (the self-modification boundary, same as L-AGENT-BASH-PROMPT). This is ALSO a genuine feature trade, not merely a permission: disabling registration turns off claude-cli:// deep links, so it is a product decision the registry must not make for you.",
       "steps": [
         "Decide: do you use claude-cli:// deep links (IDE/desktop 'open in Claude Code' handoffs)? If unsure, leave this lever open — the finding is advisory and costs nothing but a non-green --strict.",
-        "If NOT: add to ~/.claude/settings.json  ->  \"disableDeepLinkRegistration\": \"disable\"",
+        "If NOT: add \"disableDeepLinkRegistration\": \"disable\" to the settings file the CLI ACTUALLY reads — derive it, do not assume ~/.claude/settings.json: python3 scripts/agent_config_paths.py claude-settings  (this host relocates CLAUDE_CONFIG_DIR into .agent-runtime/claude, so the ~/.claude copy is abandoned and editing it does nothing)",
         "Remove the now-unmanaged bundle if you wish: rm -rf ~/Applications/'Claude Code URL Handler.app'  (safe — nothing else links it, and the vendor will not recreate it once the setting is set)",
         "Verify: python3 scripts/claude-identity-bundle.py --strict exits 0, and its instances[] shows ls_registered=false for the handler."
       ],
       "source_task": "IF-GATEKEEPER-INERT · the second instance of the vendor-bundle class, surfaced by the keeper's class enumeration (scripts/claude-identity-bundle.py)",
       "note": "Measured by the keeper, never applied by it — the deliberate split between what this organ can observe and what it has authority to change, same shape as concurrent_version_race_risk. The setting key is the vendor's own: 'Prevent claude-cli:// protocol handler registration with the OS'. Do NOT 'fix' this bundle by re-linking or re-signing it: its symlink already tracks the launcher correctly, and signing it would rewrite the live CLI's Developer ID signature in place. See docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.",
       "issue": 1851
+    },
+    {
+      "id": "L-CLAUDE-GATEKEEPER-ALLOW",
+      "status": "open",
+      "label": "Decide whether to add a Gatekeeper allow-rule for the vendor-materialized ClaudeCode.app, the only local action that could stop the recurring \"ClaudeCode.app is damaged and can't be opened\" alert. The bundle is unsealed BY CONSTRUCTION (a bare-signed Mach-O in a hand-written .app), so every macOS assessment of it fails; the alert fires whenever Claude Code execs or opens it, which is every auto-update.",
+      "owner": "yours",
+      "cost": "one sudo command (~15s) IF it is still supported on this OS build — otherwise the residual is upstream-only and this lever closes as won't-fix",
+      "unlocks": "class 4b stops surfacing to the operator at all, instead of being cured after the fact by an effector that cannot prevent it",
+      "gate": "`spctl --add` mutates the SYSTEM SECURITY POLICY database and requires sudo — outside any agent's authority, and the classifier blocks it before execution. It is also a genuine security trade: it whitelists one malformed bundle path from Gatekeeper assessment.",
+      "steps": [
+        "Decide whether whitelisting this one path from Gatekeeper assessment is acceptable. It is Anthropic's own signed CLI wrapped in Anthropic's own hand-built bundle — but the bundle genuinely cannot be verified, which is exactly the property Gatekeeper exists to flag.",
+        "If yes: sudo spctl --add --label 'ClaudeCodeInert' ~/.local/share/claude/ClaudeCode.app",
+        "Verify by REPRODUCING, not by asserting: open a new remote-control session (the surface that raises it) and confirm no alert; then /usr/bin/log show --last 15m --predicate 'eventMessage CONTAINS[c] \"ClaudeCode\"' --style compact shows no new AppleSystemPolicy denial.",
+        "If `spctl --add` errors as unsupported on this OS build, record that on the issue and close this lever — the residual is then upstream-only."
+      ],
+      "source_task": "class 4b root-cause correction 2026-08-12 · the dialog recurred ~30 min after a session declared it cured; the unified log showed the real producers",
+      "note": "SIXTH cure attempt in this lineage. The first five and the 2026-08-12 attempt all targeted LaunchServices REGISTRATION; measurement refuted that as the mechanism — registrations occurred 3 times in 4 days while the alert tracked the 3 CLI auto-updates of 2026-08-12 alone. Two real producers: an AppleSystemPolicy denial on execve of the bundled path, and a full bundle assessment on LSOpenApplication (the 'Verifying ClaudeCode.app…' sheet). Unregistration is cleanup after the fact and prevents neither. NOT reachable: re-signing (rewrites the live CLI's Developer ID signature in place — the bundle executable is a HARDLINK), deletion (vendor recreates every start, and destroys the stable TCC identity 0g8d keeps), and quarantine-stripping (measured: no com.apple.quarantine on any node of the bundle). The genuine fix is upstream — the vendor should seal the bundle or stop exec'ing an unsealed one. Corrected root + both producers + the reproduction probe: docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md.",
+      "issue": 2336
     },
     {
       "id": "L-TCC-RECORDER",
@@ -1090,19 +1108,19 @@
     },
     {
       "id": "L-CLOUDFLARE-DO-QUOTA",
-      "label": "DISCHARGED 2026-08-10 without spend: the free-tier daily quota reset restored the conduct keeper write path. Authenticated capabilities, human-protected registration, root and child reservations, claims, heartbeats, and accepted run receipts all completed against schema-valid broker responses during PSP-C00.",
-      "owner": "yours",
-      "cost": "no spend; the free-tier daily quota reset restored service",
-      "unlocks": "every relay WRITE path at once — `_register_relay_session` is on all of them. Concretely: the canonical-heal rung lands its twelve regressed needs-human atoms, dispatch receipts commit, board publication resumes, and the throughput governor can leave `dispatched: 0` / bootstrap cap 25 and climb toward the requested 100/day.",
+      "label": "Retired as a human lever on 2026-08-10: a transient reset briefly restored the conduct keeper, but recurrence proved the active defect is Limen's unbounded heartbeat persistence and full-state write amplification, owned by fleet issue #2054.",
+      "owner": "fleet via issue #2054",
+      "cost": "none for the operator",
+      "unlocks": "none by human action; issue #2054 owns the internal broker repair, after which PSP-P00-W07 reruns the required native Agy canary",
       "source_task": "/verify finding 2026-08-07 (limen PR #2050 lineage): driving the #2014 canonical-heal rung with the beat's own environment produced a 61-line traceback ending in ConductError 500 'Exceeded allowed rows written in Durable Objects free tier', raised from cli/src/limen/tabularius.py:1198 _register_relay_session -> POST /api/conduct/sessions. Invisible until then because the rung was piped through `2>&1 | tail -1`, which reduced it to a bare `}` (fixed by the beat_run rung runner + check-beat-diagnostics gate). Last successful keeper write 2026-08-07T12:55:47-04:00, immediately after #2016's merge — unblocking the write path is what consumed the day's remaining allowance.",
-      "gate": "discharged by live no-cost recovery evidence; any future paid plan remains a separate recurring-spend human gate and is not implied by this discharge",
-      "status": "discharged",
+      "gate": "none; no Cloudflare email, support case, billing or plan change, credential mint, or other operator action is required",
+      "status": "retired",
       "steps": [
-        "Completed: re-ran the authenticated canonical capabilities command after the free-tier daily reset and received the schema-valid conduct capability document.",
-        "Completed: proved the recovered write path with human-protected session registration, root and child reservations, claims, heartbeats, and accepted receipts.",
-        "Retain the existing structured quota-wall classification so a future exhaustion remains visible and heals automatically after recovery; open a separate human lever only if a paid plan is actually proposed."
+        "Correction recorded: the Agy-specific principal credential is present and passed the broker authorization boundary; credentials are not the W07 blocker.",
+        "Fleet repairs the bounded-persistence defect under issue #2054 and lands it through the sanctioned merge rail.",
+        "After the fix lands, PSP-P00-W07 reruns capabilities, registration, no-op/read claim, and schema-valid receipt with native Agy identity."
       ],
-      "note": "Recovery evidence: authenticated `/opt/homebrew/bin/limen conduct capabilities` returned `limen.conduct_capabilities.v1` at 2026-08-10T00:38:12Z; subsequent PSP-C00 broker mutations and accepted receipts proved the write path. No Cloudflare plan, DNS, account, or billing setting changed. Follow-on the fleet OWNS (not yours): the keeper should answer a future quota wall with a structured, machine-readable code instead of an undifferentiated 500. cli/src/limen/conduct/client.py currently classifies this condition on the rejection prose as a compatibility fallback.",
+      "note": "Historical evidence is retained: authenticated `/opt/homebrew/bin/limen conduct capabilities` returned `limen.conduct_capabilities.v1` at 2026-08-10T00:38:12Z and later mutations briefly succeeded. That was transient recovery, not completion. On recurrence, a request using the Agy principal again passed authorization before the keeper returned the storage error. Repository diagnosis shows every heartbeat appends an in-state event and causes the entire growing chunked state generation to be written while the previous generation is deleted. The external error string is a symptom; issue #2054 owns the internal repair.",
       "issue": 2054
     },
     {
@@ -1116,6 +1134,83 @@
       "status": "open",
       "issue": 1981,
       "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh."
+    },
+    {
+      "id": "L-MADDIE-CUSTODY-TRANSFER",
+      "label": "Transfer hosting custody of the maddie/spiral client lane out of your personal Cloudflare account, and add a deploy workflow to 4444J99/sovereign-systems--elevate-align so the client is not dependent on your laptop. Verified live 2026-08-12: stopdrinkingacid.com and eaucohub.com are SERVING from your Cloudflare (A 162.159.140.166, NS still at GoDaddy) and the spiral runs on your own sovereign-systems-spiral.ivixivi.workers.dev, while the client repo has ci.yml only and NO deploy workflow. The client already holds repo admin, which does NOT let them run any of it, so handover means a custody transfer, not repo access. Order matters: enumerate what you control, get the client a Cloudflare account, re-deploy into it and re-point the custom domains, ADD THE DEPLOY WORKFLOW, verify externally, and only THEN decommission your copies. Do not decommission before external verification: two live client sites would go dark visibly to their customers. When it closes, re-tier maddie in organs/consulting/constellation/registry.yaml and rerun derive-streams.py --write, which is the only thing that removes the domain from the session launcher.",
+      "owner": "yours",
+      "cost": "~1-2 h once, reversible until the final decommission step",
+      "status": "open",
+      "gate": "Cloudflare account custody (only you hold the account) + the client creating their own account",
+      "unlocks": "ends open-ended hosting of a third party's production estate on a personal account, removes you as the single point of failure for their live funnels, and makes the lane re-tierable so it leaves the session launcher",
+      "note": "Provenance: Surfaced by the 2026-08-12 lane review; had no owner because neither party ever raised it (a standing condition, not an ask). elevatealign.com itself is still PARKED at GoDaddy (client-side nameserver change never made) and its registry expiry is 2026-09-10T19:30Z - the only hard external clock on this lane. Commercial terms and correspondence are deliberately NOT here: this file publishes. They live in the ARCA-sealed private register (_people-private/people/maddie/ - open-asks.yaml MAD-020 + handover-packet-2026-08-12.md).",
+      "source_task": "maddie/spiral delta review 2026-08-12",
+      "issue": 2339
+    },
+    {
+      "id": "L-DUSTIN-GH-PROFILE",
+      "label": "Ask the partner (dustin lane) to create a GitHub profile so the three venture repos can be shared with him. Ask DUS-003, open since 2026-03-26. As of 2026-08-13 all three venture repos (post-dsp-platform, the-consulate, new-ancients-social) carry full alpha-to-omega roadmaps as milestones+issues he cannot see. Highest-leverage lever in the dustin set: every review, answer, and collaboration path runs through repo visibility.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "one conversational ask in-channel; his account creation",
+      "cost": "~1 message + his ~5 minutes",
+      "unlocks": "repo invites for all three ventures; the ten-questions and terms conversations gain a durable surface",
+      "note": "Ask registry: _people-private/people/dustin/open-asks.yaml DUS-003. Delivery constraints per the dialogue persona record: one ask per message, never bundled.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2367
+    },
+    {
+      "id": "L-DSP-TEN-QUESTIONS",
+      "label": "The ten post-DSP consumer-shell design questions (sent 2026-03-28, unanswered — DUS-004). Gate for post-dsp-platform phases P09 (v0.9.0 decision record) and P10 (v0.10.0 consumer shell); phases P02-P08 are deliberately independent of them. The questions live product-side in 4444J99/post-dsp-platform docs/research/QUESTIONS.md; deliver a few at a time in-channel, never as another long document (both prior ~4,000-word sends drew one-line praise and zero answers).",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "the partner answers, in any channel, a few at a time",
+      "cost": "conversation over weeks, zero build cost",
+      "unlocks": "post-dsp-platform P09/P10 (consumer shell); v1.0.0 omega is NOT gated on this (deferral path recorded in the repo ladder)",
+      "note": "Ask registry: DUS-004. Roadmap: 4444J99/post-dsp-platform roadmap/ladder.json levers block.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2368
+    },
+    {
+      "id": "L-CONS-PRICE",
+      "label": "Set the AI Estate Audit price. The one open commercial variable for the-consulate; gates ONLY phase P07 (v0.7.0 pricing/SOW/contracts) — the instrument, intake, deliverable, benchmarks and rehearsal phases are price-independent. Decision inputs already researched product-side (docs/research/landscape-2026.md): the ~$10k-$25k higher-ed micro-purchase band lets a single budget-holder buy without an RFP cycle; four dollar-banded tiers from the concept-thread research are recorded as atoms.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "operator decision (a number), optionally after the partner conversation",
+      "cost": "one decision",
+      "unlocks": "the-consulate P07 (pricing ladder, SOW, contract templates)",
+      "note": "Also referenced by engagement human-gates (organs/consulting/engagements/dustin.yaml). The partner's own price question (DUS-001, 2026-08-06) belongs to the social lane; this lever is the consulting practice's own price.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2369
+    },
+    {
+      "id": "L-NAS-TERMS",
+      "label": "Agree written terms for the social-presence lane: answer the partner's inbound paid request of 2026-08-06 (DUS-001) and resolve it against the standing runway counter-proposal (DUS-002). Gates new-ancients-social phases P08 (v0.8.0 offer instrument) and, jointly with credentials, P09 (posting adapters). All build phases P02-P07 proceed without it; nothing posts regardless.",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "principal names a number in-channel; partner accepts or the counter-proposal resolves",
+      "cost": "one message each way",
+      "unlocks": "new-ancients-social P08; jointly with L-NAS-CREDENTIALS, P09",
+      "note": "Ask registry: DUS-001/DUS-002. Engagement record holds the no-bundling exclusion: never fold the two unfunded ventures into this offer.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2370
+    },
+    {
+      "id": "L-NAS-CREDENTIALS",
+      "label": "Written posting authorization + credential/approval flow for the partner's social accounts. Gates new-ancients-social P09 (v0.9.0 posting adapters) only. Engagement record (organs/consulting/engagements/dustin.yaml) already binds: no posting under any account of his until credentials and approval flow are agreed in writing; the P09 design enforces it in code (authorization receipt hash-match, per-post named human approver, no force flag).",
+      "status": "open",
+      "added": "2026-08-13",
+      "gate": "written agreement + credential handover through the credential organ (never chat)",
+      "cost": "one written agreement; credential atoms go to the credential organ + Wall #320",
+      "unlocks": "new-ancients-social P09 posting adapters",
+      "note": "Terms (L-NAS-TERMS) come first; this lever is deliberately separate so terms can close without any credential exposure.",
+      "owner": "yours",
+      "source_task": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
+      "issue": 2371
     }
   ]
 }

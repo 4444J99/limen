@@ -82,6 +82,15 @@ GREEN, RED, SKIP, INFO = "GREEN", "RED", "SKIP", "INFO"
 # rather than "I am broken" — see efficacy_rung() for why that distinction must not be RED.
 EX_TEMPFAIL = 75
 
+# This audit's OWN label in heartbeat-loop.sh's beat_run call. Its exit code is a pure function of
+# this report — `--check` exits non-zero whenever ANY rung is RED — so a self-failure carries no
+# independent signal about this rung's health. Reporting it RED latches the gate permanently: the
+# beat records that exit into logs/beat-rungs.jsonl, which is the very ledger this rung reads, so
+# one red beat guarantees the next one, and the audit can never return to green no matter how many
+# real defects are repaired. See efficacy_rung(); scripts/tests/enactment-audit.test.sh pins both
+# the un-latching and the drift between this constant and the loop's literal.
+SELF_RUNG = "enactment-audit-check"
+
 
 # --------------------------------------------------------------------------- wiring
 def heartbeat_default(var: str, heartbeat: Path) -> str | None:
@@ -452,6 +461,26 @@ def efficacy_rung() -> list[dict]:
     streaks = failing_streaks(outcomes)
     rows: list[dict] = []
     for rung, (streak, last_exit) in sorted(streaks.items(), key=lambda kv: (-kv[1][0], kv[0])):
+        if rung == SELF_RUNG:
+            # DERIVED, never an independent defect — see SELF_RUNG. Reported for the same reason
+            # EX_TEMPFAIL is: visible and named, but it does not fail the audit, because a
+            # permanently-red gate is an ignored gate. Repair the reds below and this clears itself
+            # on the next beat that records a zero.
+            rows.append(
+                {
+                    "rung": "efficacy",
+                    "name": rung,
+                    "status": INFO,
+                    "detail": (
+                        f"failing {streak} consecutive beat(s) (last exit {last_exit}) — this "
+                        f"audit's OWN rung. `--check` exits non-zero whenever any rung is RED and "
+                        f"the beat writes that exit to the ledger this rung reads, so a self-streak "
+                        f"is derived from the other findings, not evidence of a defect here. It "
+                        f"clears when they do."
+                    ),
+                }
+            )
+            continue
         if last_exit == EX_TEMPFAIL:
             rows.append(
                 {

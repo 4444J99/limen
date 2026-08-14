@@ -4,8 +4,13 @@
   "remap": [
     {
       "from_host": "4444j99.github.io",
-      "to_host": "organvm.github.io",
-      "why": "the working GitHub Pages org is `organvm`; the bare `4444j99.github.io` user site has no Pages build and 404s on every path. Swap the host, keep the path — the target then resolves 200."
+      "to_host": "organvm-vii-kerygma.github.io",
+      "why": "the portfolio repository moved twice; map the original portfolio host directly to the current verified-live Pages host instead of chaining through the now-dead organvm host."
+    },
+    {
+      "from_host": "organvm.github.io",
+      "to_host": "organvm-vii-kerygma.github.io",
+      "why": "the portfolio repository transferred from organvm to organvm-vii-kerygma and GitHub Pages URLs do not follow transfers; keep the path and repair directly to the current host after the healer verifies the target."
     }
   ],
   "ignore_hosts": [
@@ -27,13 +32,13 @@
     {
       "id": "portfolio",
       "type": "url",
-      "ref": "https://organvm.github.io/portfolio/",
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/",
       "label": "Portfolio site (GitHub Pages)"
     },
     {
       "id": "resume",
       "type": "url",
-      "ref": "https://organvm.github.io/portfolio/resume/",
+      "ref": "https://organvm-vii-kerygma.github.io/portfolio/resume/",
       "label": "Resume (portfolio subpage)"
     }
   ]

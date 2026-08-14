@@ -1,0 +1,56 @@
+{
+  "schema": "psp-c08-staging-manifest/v1",
+  "state": "private-preflight",
+  "work": [
+    {
+      "id": "PSP-P09-W01",
+      "state": "staged-not-complete",
+      "artifact": "editorial-calendar.md",
+      "source_ids": ["CLM-LIMEN-OPERATING", "CLM-PROOF-METHOD", "CLM-CAPTURE-DOORS"]
+    },
+    {
+      "id": "PSP-P09-W02",
+      "state": "human-gated-not-complete",
+      "artifact": "flagship-engineering-report.md",
+      "source_ids": ["CLM-LIMEN-OPERATING", "CLM-AUTHORSHIP", "CLM-PROOF-METHOD"],
+      "gate": "HG-PUBLIC-IDENTITY"
+    },
+    {
+      "id": "PSP-P09-W03",
+      "state": "staged-not-complete",
+      "artifact": "derivative-assets.md#W03",
+      "source_ids": ["CLM-PROOF-METHOD"]
+    },
+    {
+      "id": "PSP-P09-W04",
+      "state": "staged-not-complete",
+      "artifact": "derivative-assets.md#W04",
+      "source_ids": ["CLM-PROOF-METHOD"]
+    },
+    {
+      "id": "PSP-P09-W05",
+      "state": "staged-not-complete",
+      "artifact": "derivative-assets.md#W05 and assets/delivery-gates-flow.svg",
+      "source_ids": ["CLM-PROOF-METHOD", "CLM-AUTHORSHIP"]
+    },
+    {
+      "id": "PSP-P09-W06",
+      "state": "withheld-until-sanitized-source",
+      "artifact": "derivative-assets.md#W06 and correction-withdrawal-contract.md",
+      "source_ids": ["WITHHELD-INCIDENT"]
+    },
+    {
+      "id": "PSP-P09-W07",
+      "state": "staged-not-complete",
+      "artifact": "derivative-assets.md#W07",
+      "source_ids": ["CLM-CAPTURE-DOORS", "CLM-PROOF-METHOD"]
+    },
+    {
+      "id": "PSP-P09-W08",
+      "state": "human-gated-not-complete",
+      "artifact": "measurement-contract.json",
+      "source_ids": ["CLM-CAPTURE-DOORS"],
+      "gate": "HG-PUBLICATION-SEND"
+    }
+  ]
+}

@@ -1,0 +1,1099 @@
+{
+  "schema_version": "limen.positioning_p14_dependency_ledger.v3",
+  "observed_at": "2026-08-13T05:01:32Z",
+  "authoritative_registry": "institutio/positioning/program.yaml",
+  "program_repository": "organvm/limen",
+  "counts_as_closure": false,
+  "closed_baseline": {
+    "chunk_id": "PSP-C02",
+    "phase_id": "PSP-P02",
+    "closure_state": "closed",
+    "accepted_main_head": "8faa5fb9899231ebf5f87e78bb171544c11b79d7",
+    "issue": "https://github.com/organvm/limen/issues/2172",
+    "marked_receipt": "https://github.com/organvm/limen/issues/2172#issuecomment-5270095170"
+  },
+  "phase_ownership": {
+    "PSP-C03": [
+      "PSP-P03",
+      "PSP-P04"
+    ],
+    "PSP-C04": [
+      "PSP-P05",
+      "PSP-P06"
+    ],
+    "PSP-C05": [
+      "PSP-P11"
+    ],
+    "PSP-C06": [
+      "PSP-P07"
+    ],
+    "PSP-C07": [
+      "PSP-P08"
+    ],
+    "PSP-C08": [
+      "PSP-P09"
+    ],
+    "PSP-C09": [
+      "PSP-P10"
+    ],
+    "PSP-C10": [
+      "PSP-P12"
+    ],
+    "PSP-C11": [
+      "PSP-P13"
+    ],
+    "PSP-C12": [
+      "PSP-P14"
+    ]
+  },
+  "predecessor_chunks": [
+    {
+      "chunk_id": "PSP-C03",
+      "depends_on": [
+        "PSP-C02"
+      ],
+      "phase_ids": [
+        "PSP-P03",
+        "PSP-P04"
+      ],
+      "closure_state": "partial",
+      "preflight_state": "accepted_through_w06_reader_gate_open_offer_integrated",
+      "counts_as_closure": false,
+      "accepted_checkpoint": "c94bc3748fcf2d1dc802a4bae972df23d9a9fbec",
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2312,
+          "source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+          "integrated_main_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
+        }
+      ],
+      "frontier_work": [
+        {
+          "work_id": "PSP-P03-W07",
+          "issue": "https://github.com/organvm/limen/issues/2188",
+          "state": "open",
+          "acceptance_boundary": "Five genuine independent target-like readers; model, author, coached, or fabricated responses do not count.",
+          "assignment_requirement": {
+            "selection": "runtime_catalog",
+            "reasoning": "routine",
+            "effect": "read",
+            "effort": "low",
+            "capabilities": [
+              "research",
+              "qualitative_analysis"
+            ]
+          }
+        }
+      ],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "max",
+        "capabilities": [
+          "audience_research",
+          "behavioral_messaging",
+          "business_writing",
+          "career_strategy",
+          "editorial",
+          "financial_modeling",
+          "information_architecture",
+          "legal_issue_spotting",
+          "offer_design",
+          "operations",
+          "partnership_strategy",
+          "positioning",
+          "qualitative_analysis",
+          "research",
+          "risk_analysis",
+          "sales_strategy",
+          "service_design",
+          "service_operations",
+          "systems_architecture",
+          "technical_delivery",
+          "venture_design"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C04",
+      "depends_on": [
+        "PSP-C03"
+      ],
+      "phase_ids": [
+        "PSP-P05",
+        "PSP-P06"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2313,
+          "source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+          "integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be"
+        },
+        {
+          "target": "portfolio",
+          "pull_request": 220,
+          "source_head": "8974543ba9675ed0504141895812476efef5dd80",
+          "integrated_main_head": "a01b6d85f78d2d744c0c994f7220081bb54a85c5"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "xhigh",
+        "capabilities": [
+          "accessibility",
+          "architecture",
+          "content_audit",
+          "content_modeling",
+          "css",
+          "data_analysis",
+          "design_systems",
+          "evidence_collection",
+          "evidence_curation",
+          "frontend",
+          "frontend_architecture",
+          "frontend_testing",
+          "github_actions",
+          "information_architecture",
+          "interaction_design",
+          "partner_coordination",
+          "performance",
+          "product_design",
+          "prototyping",
+          "reliability_engineering",
+          "research",
+          "search",
+          "security_review",
+          "technical_writing",
+          "testing",
+          "user_research",
+          "verification",
+          "visual_design",
+          "visual_direction",
+          "visual_qa",
+          "visualization"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C05",
+      "depends_on": [
+        "PSP-C03"
+      ],
+      "phase_ids": [
+        "PSP-P11"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2315,
+          "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+          "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd"
+        },
+        {
+          "target": "private_custody",
+          "pull_request": 135,
+          "source_head": "432c31ea6bcaf2c175b0fde08b6e1733fe4c2926",
+          "integrated_main_head": "9172619633bb9a09ea3a05eae9f48e987f2b3e7d"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "max",
+        "capabilities": [
+          "case_study",
+          "closeout",
+          "collaboration_operations",
+          "data_modeling",
+          "executive_writing",
+          "governance",
+          "implementation_planning",
+          "legal_issue_spotting",
+          "operations",
+          "privacy",
+          "quality_assurance",
+          "reliability",
+          "security",
+          "service_delivery",
+          "systems_architecture",
+          "technical_audit"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C06",
+      "depends_on": [
+        "PSP-C04"
+      ],
+      "phase_ids": [
+        "PSP-P07"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2317,
+          "source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+          "integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd"
+        },
+        {
+          "target": "portfolio",
+          "pull_request": 221,
+          "source_head": "7c150fc81184df1715824be28b32472baadbb3b6",
+          "integrated_main_head": "797cda3fb903b07d4152e5bbde9f468beeeab3e0"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "high",
+        "capabilities": [
+          "analytics",
+          "browser",
+          "browser_testing",
+          "career_writing",
+          "cloudflare",
+          "deployment",
+          "dns",
+          "document_generation",
+          "editorial",
+          "frontend",
+          "github_profile",
+          "github_write",
+          "information_architecture",
+          "platform_copy",
+          "privacy",
+          "qa",
+          "repository_analysis",
+          "svg",
+          "technical_writing",
+          "verification"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C07",
+      "depends_on": [
+        "PSP-C06"
+      ],
+      "phase_ids": [
+        "PSP-P08"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2318,
+          "source_head": "9d81552a65cab1a8785e74251853881ac1957925",
+          "integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "xhigh",
+        "capabilities": [
+          "browser",
+          "business_writing",
+          "classification",
+          "configuration",
+          "crm_design",
+          "data_modeling",
+          "email",
+          "email_automation",
+          "email_routing",
+          "form_design",
+          "frontend",
+          "integration_testing",
+          "privacy",
+          "python",
+          "sales_operations"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C08",
+      "depends_on": [
+        "PSP-C07"
+      ],
+      "phase_ids": [
+        "PSP-P09"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2316,
+          "source_head": "4e55e76b672b296f246bb18f96eccb4de10a8fb4",
+          "integrated_main_head": "26dba96c74d18ead1244bee8dbbd18c630942b2f"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "high",
+        "capabilities": [
+          "analytics",
+          "content_repurposing",
+          "data_storytelling",
+          "design",
+          "distribution_operations",
+          "editorial_strategy",
+          "frontend",
+          "incident_analysis",
+          "publishing",
+          "reliability",
+          "sales_strategy",
+          "technical_editing",
+          "technical_writing",
+          "visualization"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C09",
+      "depends_on": [
+        "PSP-C05",
+        "PSP-C08"
+      ],
+      "phase_ids": [
+        "PSP-P10"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2322,
+          "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+          "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3"
+        },
+        {
+          "target": "private_custody",
+          "pull_request": 136,
+          "source_head": "cd92697d596f674c9ddfc56edc919317ffb463e2",
+          "integrated_main_head": "53784482af1a5b213dd21df7ab5bc2bd38f90f18"
+        },
+        {
+          "target": "portfolio",
+          "pull_request": 222,
+          "source_head": "c44bab44dca190ec115dd498ff252f57e2441a58",
+          "integrated_main_head": "77c27d16a777af5fc0da8d6a0da503ae17f0d29f"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "xhigh",
+        "capabilities": [
+          "automation",
+          "career_strategy",
+          "conversion_design",
+          "data_modeling",
+          "form_design",
+          "frontend",
+          "interview_preparation",
+          "market_research",
+          "privacy",
+          "sales_analysis",
+          "sales_conversation",
+          "sales_copy",
+          "sales_operations",
+          "sales_strategy",
+          "technical_discovery"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C10",
+      "depends_on": [
+        "PSP-C05",
+        "PSP-C09"
+      ],
+      "phase_ids": [
+        "PSP-P12"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2321,
+          "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+          "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "max",
+        "capabilities": [
+          "case_study",
+          "claim_adjudication",
+          "client_delivery",
+          "data_analysis",
+          "decision_review",
+          "delivery",
+          "editorial",
+          "evidence_curation",
+          "implementation",
+          "partner_coordination",
+          "partner_strategy",
+          "privacy",
+          "sales",
+          "sales_analysis",
+          "sales_operations",
+          "strategy",
+          "systems_architecture",
+          "technical_audit"
+        ]
+      }
+    },
+    {
+      "chunk_id": "PSP-C11",
+      "depends_on": [
+        "PSP-C10"
+      ],
+      "phase_ids": [
+        "PSP-P13"
+      ],
+      "closure_state": "open",
+      "preflight_state": "integrated_preflight",
+      "counts_as_closure": false,
+      "evidence": [
+        {
+          "target": "limen",
+          "pull_request": 2319,
+          "source_head": "96b1371e7c62e149d8a20ad9426c4955ebb87800",
+          "integrated_main_head": "a16e269bec766f2ffed335f9010dababce5b6f35"
+        }
+      ],
+      "frontier_work": [],
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "role": "chunk_conductor",
+        "effort": "max",
+        "capabilities": [
+          "automation",
+          "classification",
+          "data_modeling",
+          "due_diligence",
+          "finance",
+          "financial_modeling",
+          "github_read",
+          "governance",
+          "legal_issue_spotting",
+          "market_analysis",
+          "operations",
+          "operator_assessment",
+          "partnership_delivery",
+          "partnership_design",
+          "partnership_operations",
+          "partnership_strategy",
+          "portfolio_operations",
+          "portfolio_strategy",
+          "privacy",
+          "product_inventory",
+          "product_operations",
+          "product_strategy",
+          "security",
+          "technical_due_diligence"
+        ]
+      }
+    }
+  ],
+  "preparation_owners": [
+    {
+      "chunk_id": "PSP-C04",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c04-proof-experience-preflight",
+      "pull_request": 2313,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2313",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "proof contract validation",
+        "synthetic source and claim fixtures",
+        "rollback tests"
+      ],
+      "counts_as_closure": false,
+      "source_head": "1bb0ceca162129f6c90ae47958712bb19cd99cbb",
+      "integrated_main_head": "3f2269dd38865244f826aaff4818912a636167be"
+    },
+    {
+      "chunk_id": "PSP-C05",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c05-delivery-os-preflight-relay",
+      "pull_request": 2315,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2315",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "delivery templates",
+        "synthetic intake and closeout fixtures",
+        "bounded validators"
+      ],
+      "counts_as_closure": false,
+      "source_head": "d31ce37a85adf5d2e448dab8273a61e388f1e589",
+      "integrated_main_head": "7a0682722185d17095a0b44de17d4bd5cf3284dd"
+    },
+    {
+      "chunk_id": "PSP-C06",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c06-public-surfaces-relay",
+      "pull_request": 2317,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2317",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "surface contracts",
+        "three unselected visual direction records",
+        "offline parity checks"
+      ],
+      "counts_as_closure": false,
+      "source_head": "854b6385de6b340485baaf59b1be55bd4d243a4d",
+      "integrated_main_head": "690617fc2aeea79acfe5604799e6413d70b6e4dd"
+    },
+    {
+      "chunk_id": "PSP-C07",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c07-private-inbound-preflight",
+      "pull_request": 2318,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2318",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "private inbound schemas",
+        "synthetic routing fixtures",
+        "hard-closed send valves"
+      ],
+      "counts_as_closure": false,
+      "source_head": "9d81552a65cab1a8785e74251853881ac1957925",
+      "integrated_main_head": "799c4bbe80634bb870e379061d03d08a74ea5405"
+    },
+    {
+      "chunk_id": "PSP-C08",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c08-proof-led-content-preflight",
+      "pull_request": 2316,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2316",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "proof-led content contracts",
+        "synthetic measurement fixtures",
+        "correction and withdrawal tests"
+      ],
+      "counts_as_closure": false,
+      "source_head": "4e55e76b672b296f246bb18f96eccb4de10a8fb4",
+      "integrated_main_head": "26dba96c74d18ead1244bee8dbbd18c630942b2f"
+    },
+    {
+      "chunk_id": "PSP-C09",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c09-qualification-conversion-relay",
+      "pull_request": 2322,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2322",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "qualification contracts",
+        "synthetic conversion fixtures",
+        "no-send validation"
+      ],
+      "counts_as_closure": false,
+      "source_head": "63f82f3cd9ee225cd4baeb84fef36305c7ee4593",
+      "integrated_main_head": "d1861e3c9b493ecd735f1360d3eacb4daf811ad3"
+    },
+    {
+      "chunk_id": "PSP-C10",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c10-readiness-preflight",
+      "pull_request": 2321,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2321",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "commercial readiness schemas",
+        "synthetic outcome fixtures",
+        "receipt validators"
+      ],
+      "counts_as_closure": false,
+      "source_head": "71a6046c2186b4d4ead5136920b82b412ff5d540",
+      "integrated_main_head": "f45fa5f5952a9ae4a5806a5ac4b3f562ace262e2"
+    },
+    {
+      "chunk_id": "PSP-C11",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c11-governed-foundry-preflight",
+      "pull_request": 2319,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2319",
+      "state": "merged",
+      "draft": false,
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "foundry candidate schemas",
+        "synthetic operator and return drills",
+        "private-boundary validation"
+      ],
+      "counts_as_closure": false,
+      "source_head": "96b1371e7c62e149d8a20ad9426c4955ebb87800",
+      "integrated_main_head": "a16e269bec766f2ffed335f9010dababce5b6f35"
+    },
+    {
+      "chunk_id": "PSP-C12",
+      "repository": "organvm/limen",
+      "branch": "codex/psp-c12-control-plane-preflight",
+      "pull_request": 2320,
+      "pull_request_url": "https://github.com/organvm/limen/pull/2320",
+      "state": "open",
+      "draft": true,
+      "head_binding": "runtime_exact_head",
+      "effect_scope": "repository_reversible",
+      "reversible_actions": [
+        "P14 operational runners",
+        "typed schemas and synthetic fixtures",
+        "fail-closed frontier and Omega validators"
+      ],
+      "counts_as_closure": false
+    }
+  ],
+  "p14_stages": [
+    {
+      "work_id": "PSP-P14-W01",
+      "issue": "https://github.com/organvm/limen/issues/2275",
+      "depends_on": [
+        "PSP-P07-W08",
+        "PSP-P08-W06",
+        "PSP-P11-W07",
+        "PSP-P13-W09"
+      ],
+      "closure_state": "open",
+      "preflight_state": "collector_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "write",
+        "effort": "high",
+        "capabilities": [
+          "analytics",
+          "kpi_design",
+          "governance"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W02",
+      "issue": "https://github.com/organvm/limen/issues/2276",
+      "depends_on": [
+        "PSP-P14-W01",
+        "PSP-P00-W07"
+      ],
+      "closure_state": "open",
+      "preflight_state": "weekly_runner_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "routine",
+        "effect": "write",
+        "effort": "medium",
+        "capabilities": [
+          "program_management",
+          "analytics"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W03",
+      "issue": "https://github.com/organvm/limen/issues/2277",
+      "depends_on": [
+        "PSP-P02-W06",
+        "PSP-P02-W07",
+        "PSP-P07-W09"
+      ],
+      "closure_state": "open",
+      "preflight_state": "monthly_audit_runner_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "write",
+        "effort": "xhigh",
+        "capabilities": [
+          "audit",
+          "privacy",
+          "link_check",
+          "claim_adjudication"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W04",
+      "issue": "https://github.com/organvm/limen/issues/2278",
+      "depends_on": [
+        "PSP-P10-W08",
+        "PSP-P12-W06",
+        "PSP-P14-W01"
+      ],
+      "closure_state": "open",
+      "preflight_state": "quarterly_decision_runner_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "frontier_review",
+        "effect": "write",
+        "effort": "max",
+        "capabilities": [
+          "strategy",
+          "claim_adjudication",
+          "sales_analysis"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W05",
+      "issue": "https://github.com/organvm/limen/issues/2279",
+      "depends_on": [
+        "PSP-P02-W07",
+        "PSP-P07-W09"
+      ],
+      "closure_state": "open",
+      "preflight_state": "quarantine_drill_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "write",
+        "effort": "high",
+        "capabilities": [
+          "python",
+          "incident_response",
+          "content_generation"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W06",
+      "issue": "https://github.com/organvm/limen/issues/2280",
+      "depends_on": [
+        "PSP-P07-W09",
+        "PSP-P08-W07"
+      ],
+      "closure_state": "open",
+      "preflight_state": "multi_repo_recovery_drill_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "external",
+        "effort": "xhigh",
+        "capabilities": [
+          "deployment",
+          "incident_response",
+          "browser_testing"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W07",
+      "issue": "https://github.com/organvm/limen/issues/2281",
+      "depends_on": [
+        "PSP-P10-W07",
+        "PSP-P10-W08"
+      ],
+      "closure_state": "open",
+      "preflight_state": "private_demand_projection_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "write",
+        "effort": "high",
+        "capabilities": [
+          "sales_analysis",
+          "offer_design"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W08",
+      "issue": "https://github.com/organvm/limen/issues/2282",
+      "depends_on": [
+        "PSP-P12-W06",
+        "PSP-P13-W08",
+        "PSP-P13-W09"
+      ],
+      "closure_state": "open",
+      "preflight_state": "private_outcome_projection_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "deep",
+        "effect": "write",
+        "effort": "high",
+        "capabilities": [
+          "product_analysis",
+          "claim_adjudication",
+          "portfolio_strategy"
+        ]
+      }
+    },
+    {
+      "work_id": "PSP-P14-W09",
+      "issue": "https://github.com/organvm/limen/issues/2283",
+      "depends_on": [
+        "PSP-P14-W02",
+        "PSP-P14-W03",
+        "PSP-P14-W04",
+        "PSP-P14-W05",
+        "PSP-P14-W06",
+        "PSP-P14-W07",
+        "PSP-P14-W08"
+      ],
+      "closure_state": "open",
+      "preflight_state": "observation_and_pair_tooling_ready",
+      "counts_as_closure": false,
+      "assignment_requirement": {
+        "selection": "runtime_catalog",
+        "reasoning": "frontier_review",
+        "effect": "read",
+        "effort": "ultra",
+        "capabilities": [
+          "verification",
+          "github_read",
+          "governance",
+          "closeout"
+        ]
+      }
+    }
+  ],
+  "terminal_nodes": [
+    {
+      "code": "W01_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W01",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W02_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W02",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W03_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W03",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W04_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W04",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W05_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W05",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W06_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W06",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W07_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W07",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W08_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W08",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "W09_DURABLE_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W09",
+      "kind": "work_receipt",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "WEEKLY_LIVE_CYCLES_MISSING",
+      "work_id": "PSP-P14-W02",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "MONTHLY_LIVE_CYCLES_MISSING",
+      "work_id": "PSP-P14-W03",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "QUARTERLY_LIVE_REVIEW_MISSING",
+      "work_id": "PSP-P14-W04",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "CLAIM_INCIDENT_DRILL_MISSING",
+      "work_id": "PSP-P14-W05",
+      "kind": "status_record",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "RELEASE_RECOVERY_DRILL_MISSING",
+      "work_id": "PSP-P14-W06",
+      "kind": "status_record",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "REAL_DEMAND_OUTCOMES_MISSING",
+      "work_id": "PSP-P14-W07",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "DEMAND_DECISION_MISSING",
+      "work_id": "PSP-P14-W07",
+      "kind": "status_record",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "COMMERCIAL_SUCCESS_OUTCOME_MISSING",
+      "work_id": "PSP-P14-W07",
+      "kind": "status_record",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "PRICE_ANCHOR_HUMAN_GATE_MISSING",
+      "work_id": "PSP-P14-W07",
+      "kind": "human_gate",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "REAL_DELIVERY_OUTCOME_MISSING",
+      "work_id": "PSP-P14-W08",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "REAL_OPERATOR_OUTCOME_MISSING",
+      "work_id": "PSP-P14-W08",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "PORTFOLIO_IMPACT_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W08",
+      "kind": "minimum_records",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "TWO_LIVE_OMEGA_PASSES_MISSING",
+      "work_id": "PSP-P14-W09",
+      "kind": "omega_pair",
+      "closure_state": "open",
+      "counts_as_closure": false
+    },
+    {
+      "code": "PROGRAM_OMEGA_RECEIPT_MISSING",
+      "work_id": "PSP-P14-W09",
+      "kind": "status_record",
+      "closure_state": "open",
+      "counts_as_closure": false
+    }
+  ],
+  "assignment_policy": {
+    "selection": "runtime_catalog",
+    "registry": "institutio/positioning/program.yaml",
+    "catalog_predicate": "python3 scripts/positioning-program.py --verify-model-assignments",
+    "unavailable_action": "fail_blocked_no_silent_substitution"
+  },
+  "p14_assignment_requirement": {
+    "selection": "runtime_catalog",
+    "role": "chunk_conductor",
+    "effort": "ultra",
+    "capabilities": [
+      "analytics",
+      "audit",
+      "browser_testing",
+      "claim_adjudication",
+      "closeout",
+      "content_generation",
+      "deployment",
+      "github_read",
+      "governance",
+      "incident_response",
+      "kpi_design",
+      "link_check",
+      "offer_design",
+      "portfolio_strategy",
+      "privacy",
+      "product_analysis",
+      "program_management",
+      "python",
+      "sales_analysis",
+      "strategy",
+      "verification"
+    ]
+  }
+}

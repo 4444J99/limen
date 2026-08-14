@@ -1,0 +1,3310 @@
+{
+  "candidate_denominator": {
+    "count": 62,
+    "identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
+    "private_identity_rule": "Opaque per-snapshot IDs; private names and owner-specific row identities are not persisted.",
+    "visibility": {
+      "private": 8,
+      "public": 54
+    }
+  },
+  "candidates": [
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/hokage-chess",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/hokage-chess",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/micro-tato-play",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/micro-tato-play",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/peer-audited--behavioral-blockchain",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_forks:1"
+        ],
+        "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E2"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/peer-audited--behavioral-blockchain",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/styx-behavioral-art",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/styx-behavioral-art",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/styx-behavioral-economics-theory",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/styx-behavioral-economics-theory",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "4444J99/your-fit-tailored",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "4444J99/your-fit-tailored",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/a-i-chat--exporter",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/a-i-chat--exporter",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/a-i-council--coliseum",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/a-i-council--coliseum",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/agent--claude-smith",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/agent--claude-smith",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/agent-runtime",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/agent-runtime",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/agentic-titan",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:5",
+          "public_forks:2"
+        ],
+        "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
+        "score": 20,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E2"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "experiment",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/agentic-titan",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/anon-hookup-now",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/anon-hookup-now",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/atomic-substrata",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/atomic-substrata",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/bountyscope",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/bountyscope",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/card-trade-social",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/card-trade-social",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/carrier-wave--zeitgeist-thesis",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/carrier-wave--zeitgeist-thesis",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/classroom-rpg-aetheria",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/classroom-rpg-aetheria",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/cve-watch",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_365_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 23,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/cve-watch",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/edgarflash",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/edgarflash",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/enterprise-plugin",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/enterprise-plugin",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/fetch-familiar-friends",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/fetch-familiar-friends",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/gens",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/gens",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/glyph-cascade",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/glyph-cascade",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/growth-auditor",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/growth-auditor",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/life-my--midst--in",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/materia-collider",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/materia-collider",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/mesh",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/mesh",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/multi-camera--livestream--framework",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/multi-camera--livestream--framework",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/my-block-warfare",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/my-block-warfare",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/object-lessons",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/object-lessons",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/palimpsest",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/palimpsest",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/prima",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/prima",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/promptscope",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/promptscope",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/public-record-data-scrapper",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:7",
+          "public_forks:6"
+        ],
+        "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
+        "score": 25,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E2"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "experiment",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/search-local--happy-hour",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/search-local--happy-hour",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/select-or-left-or-right-or",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/select-or-left-or-right-or",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/shared-remembrance-gateway",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/shared-remembrance-gateway",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/sign-signal--voice-synth",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/sign-signal--voice-synth",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/sovereign-ecosystem--real-estate-luxury",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/sovereign-ecosystem--real-estate-luxury",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/sovereign-systems--layer-above-hokage",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/sovereign-systems--layer-above-hokage",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/speech-score-engine",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/speech-score-engine",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/tab-bookmark-manager",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1",
+          "public_forks:1"
+        ],
+        "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
+        "score": 10,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E2"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/tab-bookmark-manager",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/the-actual-news",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/the-actual-news",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/trade-perpetual-future",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_forks:1"
+        ],
+        "next_experiment": "Instrument activation and retention, then obtain consented user evidence.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E2"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/trade-perpetual-future",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/trendpulse",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/trendpulse",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/universal-waveform-explorer",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "public_stars:1"
+        ],
+        "next_experiment": "Identify the problem behind public attention through consented interviews.",
+        "score": 5,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E1"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 30,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/universal-waveform-explorer",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/vox",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/vox",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/vox--publica",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/vox--publica",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/vulnpulse",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/vulnpulse",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm-iii-ergon/writelens",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm-iii-ergon/writelens",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "current_state": "archived",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "park_archived",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "default_branch_present",
+          "pushed_within_365_days"
+        ],
+        "metadata_screen_score": 13,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "organvm/hokage-chess--4444j99",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "zero_observed_public_demand_signal"
+        ],
+        "next_experiment": "Run a bounded problem interview or instrumented landing-page experiment after the send gate.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "medium_until_ip_data_review",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "public_license_metadata_present"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": "organvm/hokage-chess--4444j99",
+      "transfer_eligible": false,
+      "visibility": "public"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-001",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-002",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-003",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-004",
+      "current_state": "archived",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "park_archived",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "default_branch_present",
+          "pushed_within_365_days",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 18,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-005",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-006",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-007",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days",
+          "homepage_present_deploy_intent_only"
+        ],
+        "metadata_screen_score": 25,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    },
+    {
+      "blocking_evidence": [
+        "no_E3_or_stronger_primary_demand_receipt",
+        "no_full_technical_readiness_receipt",
+        "no_operator_selected_or_scored",
+        "human_terms_and_contract_gates_unpulled",
+        "no_observed_pilot"
+      ],
+      "candidate_id": "private-candidate-008",
+      "current_state": "active_repository",
+      "demand": {
+        "evidence": [
+          "no_approved_public_demand_evidence"
+        ],
+        "next_experiment": "Owner-approved, consented problem interview or instrumented private test; no send from this preflight.",
+        "score": 0,
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "tier": "E0"
+      },
+      "economics": {
+        "hypothesis": "Value, cost, and incentive units must be sourced privately before transfer consideration.",
+        "runway": "not_approved",
+        "status": "unpriced_public_preflight",
+        "stop_condition": "Park after two bounded experiments produce no approved E3-or-stronger evidence.",
+        "transfer_trigger": "Demand, readiness, operator, custody, economics, terms, and return floors all pass."
+      },
+      "preflight_disposition": "park",
+      "readiness": {
+        "band": "diligence_required",
+        "custody_risk": "restricted_review_required",
+        "evidence": [
+          "resolved_in_live_owned_estate",
+          "not_archived",
+          "default_branch_present",
+          "pushed_within_90_days"
+        ],
+        "metadata_screen_score": 20,
+        "unverified_dimensions": [
+          "exact_head_build_test",
+          "runtime_liveness",
+          "security",
+          "data_privacy",
+          "ip_contributor_custody",
+          "observability_return",
+          "maintenance_owner_and_estimate"
+        ]
+      },
+      "repository": null,
+      "transfer_eligible": false,
+      "visibility": "private"
+    }
+  ],
+  "census": {
+    "organization_count": 10,
+    "organization_roster": [
+      "a-organvm",
+      "meta-organvm",
+      "organvm",
+      "organvm-i-theoria",
+      "organvm-ii-poiesis",
+      "organvm-iii-ergon",
+      "organvm-iv-taxis",
+      "organvm-v-logos",
+      "organvm-vi-koinonia",
+      "organvm-vii-kerygma"
+    ],
+    "repository_count": 319,
+    "repository_identity_sha256": "a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8",
+    "repository_owner_counts": {
+      "4444J99": 17,
+      "a-organvm": 0,
+      "meta-organvm": 10,
+      "organvm": 173,
+      "organvm-i-theoria": 12,
+      "organvm-ii-poiesis": 18,
+      "organvm-iii-ergon": 52,
+      "organvm-iv-taxis": 18,
+      "organvm-v-logos": 3,
+      "organvm-vi-koinonia": 11,
+      "organvm-vii-kerygma": 5
+    }
+  },
+  "observed_at": "2026-08-13T04:52:53.725120Z",
+  "schema_version": "limen.psp_c11_product_candidate_snapshot.v1",
+  "score_distribution": {
+    "demand_tiers": {
+      "E0": 48,
+      "E1": 9,
+      "E2": 5
+    },
+    "preflight_dispositions": {
+      "experiment": 2,
+      "park": 60
+    },
+    "readiness_bands": {
+      "diligence_required": 60,
+      "park_archived": 2
+    },
+    "transfer_eligible": 0
+  },
+  "sources": [
+    "https://github.com/organvm/limen/pull/2305",
+    "https://github.com/organvm/limen/pull/2307"
+  ],
+  "status": "PREPARED/PREFLIGHT",
+  "two_pass_receipt": {
+    "new_candidate_keys": 0,
+    "new_organization_keys": 0,
+    "new_repository_keys": 0,
+    "pass_1_repository_identity_sha256": "a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8",
+    "pass_2_repository_identity_sha256": "a002b3f02d0455168dece9f767a2042e2c7d34510e3d700c98e2bfcbe46c22c8"
+  }
+}

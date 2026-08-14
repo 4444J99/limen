@@ -1,0 +1,28 @@
+{
+  "schema": "psp-c08-campaign-analytics/v1",
+  "mode": "dry-run-only",
+  "campaign_record": {
+    "required": ["campaign_id", "asset_id", "channel", "canonical_source", "door_tag", "approval_ref", "is_synthetic"],
+    "constraints": {
+      "canonical_source": "must be owner-approved before a real record exists",
+      "approval_ref": "must name the applicable human gate for a real record",
+      "is_synthetic": "true for every record in this repository package"
+    }
+  },
+  "event_record": {
+    "required": ["event_id", "occurred_at", "campaign_id", "event_type", "evidence_ref", "is_synthetic"],
+    "event_types": ["source_open", "door_initiated", "qualified_inbound", "correction_requested", "withdrawal_completed"],
+    "outcome_rule": "An observed outcome is outside this package and requires is_synthetic=false plus a durable receiving-system evidence_ref."
+  },
+  "fixtures": [
+    {
+      "campaign_id": "fixture-c08-deploy",
+      "asset_id": "PSP-P09-W07-pointers",
+      "channel": "fixture",
+      "canonical_source": "https://example.invalid/withheld-canonical-report",
+      "door_tag": "deploy",
+      "approval_ref": "none",
+      "is_synthetic": true
+    }
+  ]
+}

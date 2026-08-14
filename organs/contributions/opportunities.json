@@ -3,27 +3,43 @@
   "derived_from": "workspace dependency manifests (the inward gaze)",
   "pool": [
     {
+      "dependency": "pytest",
+      "used_in_repos": 9
+    },
+    {
       "dependency": "pyyaml",
-      "used_in_repos": 6
+      "used_in_repos": 7
     },
     {
       "dependency": "playwright",
-      "used_in_repos": 5
+      "used_in_repos": 6
+    },
+    {
+      "dependency": "pytest-cov",
+      "used_in_repos": 6
     },
     {
       "dependency": "typescript",
-      "used_in_repos": 5
+      "used_in_repos": 6
+    },
+    {
+      "dependency": "beautifulsoup4",
+      "used_in_repos": 4
     },
     {
       "dependency": "node",
       "used_in_repos": 4
     },
     {
-      "dependency": "pytest",
+      "dependency": "ruff",
       "used_in_repos": 4
     },
     {
-      "dependency": "ruff",
+      "dependency": "test",
+      "used_in_repos": 4
+    },
+    {
+      "dependency": "tsx",
       "used_in_repos": 4
     },
     {
@@ -32,22 +48,6 @@
     },
     {
       "dependency": "cryptography",
-      "used_in_repos": 3
-    },
-    {
-      "dependency": "jsonschema",
-      "used_in_repos": 3
-    },
-    {
-      "dependency": "pydantic",
-      "used_in_repos": 3
-    },
-    {
-      "dependency": "test",
-      "used_in_repos": 3
-    },
-    {
-      "dependency": "tsx",
       "used_in_repos": 3
     }
   ]

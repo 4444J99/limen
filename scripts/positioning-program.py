@@ -38,7 +38,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import yaml
 
@@ -56,6 +56,7 @@ PHASE_RECEIPT_SCHEMA = "limen.positioning_phase_receipt.v1"
 OMEGA_PASS_SCHEMA = "limen.positioning_omega_pass.v1"
 MODEL_ASSIGNMENT_SCHEMA = "limen.positioning_model_assignments.v1"
 EXECUTION_CHUNKS_SCHEMA = "limen.positioning_execution_chunks.v1"
+REPOSITORY_IDENTITIES_SCHEMA = "limen.positioning_repository_identities.v1"
 MARKER_RE = re.compile(r"<!--\s*positioning-program:(PSP-(?:ROOT|P\d{2}(?:-W\d{2})?))\s*-->")
 RECEIPT_MARKER_RE = re.compile(r"<!--\s*positioning-receipt:(PSP-P\d{2}-W\d{2})\s*-->")
 RECEIPT_BLOCK_RE = re.compile(
@@ -171,6 +172,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     gates = data.get("human_gates")
     assignments = data.get("model_assignments")
     execution_chunks = data.get("execution_chunks")
+    repository_identities = data.get("repository_identities")
     if not isinstance(program, dict):
         failures.append("program must be a mapping")
         program = {}
@@ -189,6 +191,9 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(execution_chunks, dict):
         failures.append("execution_chunks must be a mapping")
         execution_chunks = {}
+    if not isinstance(repository_identities, dict):
+        failures.append("repository_identities must be a mapping")
+        repository_identities = {}
     if program.get("id") != "PSP-ROOT":
         failures.append("program.id must be PSP-ROOT")
     for key in ("title", "repository", "outcome", "terminal_predicate"):
@@ -199,6 +204,78 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         _is_nonempty_text(projection.get(key)) for key in ("milestone", "program_label", "phase_label", "work_label")
     ):
         failures.append("program.issue_projection is incomplete")
+
+    if repository_identities.get("schema_version") != REPOSITORY_IDENTITIES_SCHEMA:
+        failures.append(f"repository_identities.schema_version must be {REPOSITORY_IDENTITIES_SCHEMA}")
+    identity_observed_at = repository_identities.get("observed_at")
+    if not isinstance(identity_observed_at, str) or not RFC3339_RE.fullmatch(identity_observed_at):
+        failures.append("repository_identities.observed_at must be RFC3339")
+    identity_rows = repository_identities.get("repositories")
+    if not isinstance(identity_rows, dict) or not identity_rows:
+        failures.append("repository_identities.repositories must be a non-empty mapping")
+        identity_rows = {}
+    repository_identity_by_slug: dict[str, dict[str, Any]] = {}
+    retired_repository_slugs: dict[str, str] = {}
+    repository_ids: dict[int, str] = {}
+    for identity_name, value in identity_rows.items():
+        label = f"repository_identities.repositories.{identity_name}"
+        if not isinstance(value, dict):
+            failures.append(f"{label} must be a mapping")
+            continue
+        repository_id = value.get("github_repository_id")
+        canonical_slug = value.get("canonical_slug")
+        previous_slugs = value.get("previous_slugs")
+        if not isinstance(repository_id, int) or isinstance(repository_id, bool) or repository_id <= 0:
+            failures.append(f"{label}.github_repository_id must be a positive integer")
+        elif repository_id in repository_ids:
+            failures.append(
+                f"{label}.github_repository_id duplicates {repository_ids[repository_id]!r}"
+            )
+        else:
+            repository_ids[repository_id] = str(identity_name)
+        if not isinstance(canonical_slug, str) or not REPOSITORY_RE.fullmatch(canonical_slug):
+            failures.append(f"{label}.canonical_slug must be an owner/repository slug")
+            continue
+        if canonical_slug in repository_identity_by_slug:
+            failures.append(f"duplicate canonical repository identity slug: {canonical_slug}")
+            continue
+        if value.get("visibility") not in {"public", "private", "internal"}:
+            failures.append(f"{label}.visibility must be public, private, or internal")
+        if not _is_nonempty_text(value.get("default_branch")):
+            failures.append(f"{label}.default_branch must be non-empty text")
+        if not isinstance(value.get("archived"), bool):
+            failures.append(f"{label}.archived must be boolean")
+        expected_source = f"https://api.github.com/repositories/{repository_id}"
+        if value.get("source") != expected_source:
+            failures.append(
+                f"{label}.source must exactly bind github_repository_id to {expected_source!r}"
+            )
+        if not _is_nonempty_text(value.get("resolution_rule")):
+            failures.append(f"{label}.resolution_rule must be non-empty text")
+        if not _is_text_list(previous_slugs):
+            failures.append(f"{label}.previous_slugs must be a text list")
+            previous_slugs = []
+        if canonical_slug in previous_slugs:
+            failures.append(f"{label}.previous_slugs cannot contain the canonical slug")
+        if canonical_slug in retired_repository_slugs:
+            failures.append(
+                f"{label}.canonical_slug is already declared as a retired repository slug"
+            )
+        normalized = {**value, "identity": str(identity_name), "observed_at": identity_observed_at}
+        repository_identity_by_slug[canonical_slug] = normalized
+        for previous_slug in previous_slugs:
+            if not REPOSITORY_RE.fullmatch(previous_slug):
+                failures.append(f"{label}.previous_slugs contains invalid slug {previous_slug!r}")
+                continue
+            if previous_slug in retired_repository_slugs:
+                failures.append(f"retired repository slug is declared more than once: {previous_slug}")
+                continue
+            if previous_slug in repository_identity_by_slug:
+                failures.append(
+                    f"{label}.previous_slugs contains canonical repository slug {previous_slug!r}"
+                )
+                continue
+            retired_repository_slugs[previous_slug] = canonical_slug
 
     for trail, _value in _walk_keys(data):
         if trail and trail[-1] in FORBIDDEN_ROUTING_KEYS:
@@ -259,6 +336,12 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             for key in ("title", "outcome", "target_repo", "acceptance", "predicate", "rollback"):
                 if not _is_nonempty_text(packet.get(key)):
                     failures.append(f"{work_id}.{key} must be non-empty text")
+            target_repo = str(packet.get("target_repo") or "")
+            if target_repo in retired_repository_slugs:
+                failures.append(
+                    f"{work_id}.target_repo uses retired repository slug {target_repo!r}; "
+                    f"use {retired_repository_slugs[target_repo]!r}"
+                )
             for key in (
                 "target_paths",
                 "capabilities",
@@ -504,6 +587,9 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         "external": external,
         "gates": gates,
         "model_assignments": assignments,
+        "repository_identities": repository_identities,
+        "repository_identity_by_slug": repository_identity_by_slug,
+        "retired_repository_slugs": retired_repository_slugs,
         "execution_chunks": execution_chunks,
         "chunks": chunk_rows,
         "chunk_by_id": chunk_by_id,
@@ -551,6 +637,58 @@ def validate_map(mapping: dict[str, Any], graph: dict[str, Any], *, complete: bo
 
 def marker(object_id: str) -> str:
     return f"<!-- positioning-program:{object_id} -->"
+
+
+def repository_identity_for(repository: str, graph: dict[str, Any]) -> dict[str, Any] | None:
+    identity = graph["repository_identity_by_slug"].get(repository)
+    return identity if isinstance(identity, dict) else None
+
+
+def public_repository_identity(identity: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "identity": identity["identity"],
+        "github_repository_id": identity["github_repository_id"],
+        "canonical_slug": identity["canonical_slug"],
+        "visibility": identity["visibility"],
+        "default_branch": identity["default_branch"],
+        "archived": identity["archived"],
+        "source": identity["source"],
+        "observed_at": identity.get("observed_at"),
+    }
+
+
+def resolve_repository_identity_for_seed(
+    identity: dict[str, Any],
+    fetch: Callable[[list[str]], Any] | None = None,
+) -> dict[str, Any]:
+    """Resolve a stable repository ID immediately before emitting repository scope."""
+
+    resolver = fetch or _gh
+    repository_id = int(identity["github_repository_id"])
+    value = resolver(["api", f"repositories/{repository_id}"])
+    if not isinstance(value, dict):
+        raise ProgramError(f"repository ID {repository_id} returned a non-object during seed resolution")
+    live_visibility = str(value.get("visibility") or ("private" if value.get("private") else "public"))
+    checks = {
+        "id": (value.get("id"), repository_id),
+        "full_name": (value.get("full_name"), identity["canonical_slug"]),
+        "visibility": (live_visibility, identity["visibility"]),
+        "default_branch": (value.get("default_branch"), identity["default_branch"]),
+        "archived": (value.get("archived"), identity["archived"]),
+    }
+    failures = [
+        f"repository ID {repository_id} {field} drift: expected {expected!r}, observed {actual!r}"
+        for field, (actual, expected) in checks.items()
+        if actual != expected
+    ]
+    if failures:
+        raise ProgramError("seed repository identity validation failed:\n- " + "\n- ".join(failures))
+    return {
+        **public_repository_identity(identity),
+        "resolved_full_name": value["full_name"],
+        "resolved_at": datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z"),
+        "resolution": "verified_live_by_immutable_repository_id_before_seed",
+    }
 
 
 def receipt_marker(work_id: str) -> str:
@@ -839,12 +977,27 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
     dependencies = packet.get("depends_on") or []
     externals = packet.get("external_dependencies") or []
     gates = packet.get("human_gates") or []
+    repository_identity = repository_identity_for(packet["target_repo"], graph)
+    target_line = f"**Target:** `{packet['target_repo']}` · " + ", ".join(
+        f"`{path}`" for path in packet["target_paths"]
+    )
+    if repository_identity is not None:
+        target_line += (
+            f" · stable GitHub repository ID `{repository_identity['github_repository_id']}` "
+            f"(resolved `{repository_identity['observed_at']}`)"
+        )
+    authority_line = (
+        "- This corrected leaf runs in a fresh human-protected Codex task; "
+        "direct human session authority is valid, and no non-Codex canary is required."
+        if object_id == "PSP-P00-W07"
+        else "- GitHub issue is not a lease; a registered native lane must obtain current broker authority before mutation."
+    )
     lines = [
         f"# {object_id} — {packet['title']}",
         "",
         f"**Parent:** {_link(mapping, phase_id)}",
         f"**Execution chunk:** `{chunk_id}` — {chunk['title']}",
-        f"**Target:** `{packet['target_repo']}` · " + ", ".join(f"`{path}`" for path in packet["target_paths"]),
+        target_line,
         "",
         "## Outcome",
         "",
@@ -873,7 +1026,7 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         f"- Catalog observed: `{assignment['catalog_validated_at']}`",
         f"- If unavailable: {assignment['unavailable_action']}",
         f"- Required capabilities: {', '.join(f'`{item}`' for item in packet['capabilities'])}",
-        "- GitHub issue is not a lease; a registered native lane must obtain current broker authority before mutation.",
+        authority_line,
     ]
     if gates:
         lines += [
@@ -963,6 +1116,41 @@ def _api(
     if payload is not None:
         args += ["--input", "-"]
     return _gh(args, input_value=payload, allow_failure=allow_failure)
+
+
+def verify_repository_identities(graph: dict[str, Any]) -> dict[str, Any]:
+    failures: list[str] = []
+    resolved: list[dict[str, Any]] = []
+    identities = graph["repository_identity_by_slug"]
+    for canonical_slug, identity in sorted(identities.items()):
+        repository_id = int(identity["github_repository_id"])
+        value = _gh(["api", f"repositories/{repository_id}"])
+        if not isinstance(value, dict):
+            failures.append(f"repository ID {repository_id} returned a non-object")
+            continue
+        live_visibility = str(value.get("visibility") or ("private" if value.get("private") else "public"))
+        checks = {
+            "id": (value.get("id"), repository_id),
+            "full_name": (value.get("full_name"), canonical_slug),
+            "visibility": (live_visibility, identity["visibility"]),
+            "default_branch": (value.get("default_branch"), identity["default_branch"]),
+            "archived": (value.get("archived"), identity["archived"]),
+        }
+        for field, (actual, expected) in checks.items():
+            if actual != expected:
+                failures.append(
+                    f"repository ID {repository_id} {field} drift: expected {expected!r}, observed {actual!r}"
+                )
+        resolved.append(
+            {
+                **public_repository_identity(identity),
+                "html_url": value.get("html_url"),
+                "resolved_full_name": value.get("full_name"),
+            }
+        )
+    if failures:
+        raise ProgramError("repository identity validation failed:\n- " + "\n- ".join(failures))
+    return {"status": "ok", "repositories": resolved}
 
 
 def _pages(repository: str, path: str) -> list[dict[str, Any]]:
@@ -1501,22 +1689,109 @@ def _validate_phase_projection(
         raise ProgramError(f"{phase_id} phase projection failed:\n- " + "\n- ".join(failures))
 
 
+def _dependency_closure(root_ids: Iterable[str], node_by_id: dict[str, dict[str, Any]]) -> set[str]:
+    """Return every transitive dependency reachable from the supplied roots."""
+    seen: set[str] = set()
+    pending = list(root_ids)
+    while pending:
+        node_id = pending.pop()
+        if node_id in seen:
+            continue
+        node = node_by_id.get(node_id)
+        if node is None:
+            raise ProgramError(f"dependency graph references unknown object {node_id}")
+        seen.add(node_id)
+        pending.extend(node.get("depends_on") or [])
+    return seen
+
+
 def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
     if phase_id not in graph["phase_by_id"]:
         raise ProgramError(f"unknown phase id: {phase_id}")
     phase_proof_command(phase_id, graph)
     validate_map(mapping, graph, complete=True)
     initial_remote = fetch_program_issues(graph)
+    phase = graph["phase_by_id"][phase_id]
+    current_work_ids = {packet["id"] for packet in phase["work"]}
+    phase_dependency_set = _dependency_closure(phase.get("depends_on") or [], graph["phase_by_id"])
+    owning_chunk_ids = chunks_for_object(phase_id, graph)
+    direct_chunk_dependencies = {
+        dependency
+        for chunk_id in owning_chunk_ids
+        for dependency in graph["chunk_by_id"][chunk_id].get("depends_on") or []
+    }
+    chunk_dependency_set = _dependency_closure(direct_chunk_dependencies, graph["chunk_by_id"])
+    predecessor_work_set = {
+        work_id
+        for chunk_id in chunk_dependency_set
+        for work_id in graph["chunk_work"][chunk_id]
+    }
+    predecessor_phase_set = {
+        candidate["id"]
+        for candidate in graph["phases"]
+        if candidate["id"] != phase_id
+        and {packet["id"] for packet in candidate["work"]}.issubset(predecessor_work_set)
+    }
+    required_phase_set = phase_dependency_set | predecessor_phase_set
+    required_phase_ids = [
+        candidate["id"] for candidate in graph["phases"] if candidate["id"] in required_phase_set
+    ]
+    required_chunk_ids = [
+        chunk["id"] for chunk in graph["chunks"] if chunk["id"] in chunk_dependency_set
+    ]
+    predecessor_work_ids = [
+        work_id for chunk_id in required_chunk_ids for work_id in graph["chunk_work"][chunk_id]
+    ]
     phase_object_ids = [
         phase_id,
-        *(packet["id"] for packet in graph["phase_by_id"][phase_id]["work"]),
+        *(packet["id"] for packet in phase["work"]),
     ]
+    for dependency in required_phase_ids:
+        dependency_phase = graph["phase_by_id"][dependency]
+        phase_object_ids.extend(
+            [dependency, *(packet["id"] for packet in dependency_phase["work"])]
+        )
+    phase_object_ids.extend(predecessor_work_ids)
     remote = recover_mapped_issues(graph, mapping, initial_remote, object_ids=phase_object_ids)
     _validate_phase_projection(phase_id, graph, mapping, remote)
-    phase = graph["phase_by_id"][phase_id]
     child_receipts: dict[str, dict[str, Any]] = {}
     child_evidence: dict[str, str] = {}
     failures: list[str] = []
+    for dependency in required_phase_ids:
+        try:
+            _validate_phase_projection(dependency, graph, mapping, remote)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} upstream phase {dependency} projection is invalid: {exc}")
+            continue
+        if str(remote.get(dependency, {}).get("state") or "").lower() != "closed":
+            failures.append(f"{phase_id} upstream phase {dependency} is not closed")
+            continue
+        try:
+            fetch_phase_receipt(dependency, graph, mapping, remote=remote)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} upstream phase {dependency} is invalid: {exc}")
+    phase_covered_work_ids = {
+        packet["id"]
+        for dependency in required_phase_ids
+        for packet in graph["phase_by_id"][dependency]["work"]
+    }
+    partial_predecessor_work = [
+        work_id
+        for work_id in predecessor_work_ids
+        if work_id not in phase_covered_work_ids and work_id not in current_work_ids
+    ]
+    for work_id in dict.fromkeys(partial_predecessor_work):
+        row = remote.get(work_id)
+        if not isinstance(row, dict):
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is missing")
+            continue
+        if str(row.get("state") or "").lower() != "closed":
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is not closed")
+            continue
+        try:
+            fetch_work_receipt(work_id, graph, mapping)
+        except ProgramError as exc:
+            failures.append(f"{phase_id} predecessor chunk work {work_id} is invalid: {exc}")
     for packet in phase["work"]:
         work_id = packet["id"]
         if str(remote[work_id].get("state") or "").lower() != "closed":
@@ -1615,6 +1890,13 @@ def closure_integrity(
     failures: list[str] = []
     receipt_urls: dict[str, str] = {}
     for work_id in sorted((closed & set(graph["work_by_id"])) - excluded_work_ids):
+        missing_dependencies = [
+            dependency
+            for dependency in graph["work_by_id"][work_id].get("depends_on") or []
+            if dependency not in closed
+        ]
+        if missing_dependencies:
+            failures.append(f"{work_id} is closed before dependency issues {missing_dependencies}")
         try:
             _receipt, receipt_urls[work_id] = fetch_work_receipt(work_id, graph, mapping)
         except ProgramError as exc:
@@ -1622,6 +1904,9 @@ def closure_integrity(
     for phase_id, phase in graph["phase_by_id"].items():
         if phase_id not in closed or phase_id in excluded_phase_ids:
             continue
+        missing_dependencies = [dependency for dependency in phase.get("depends_on") or [] if dependency not in closed]
+        if missing_dependencies:
+            failures.append(f"{phase_id} is closed before upstream phase issues {missing_dependencies}")
         missing_children = [packet["id"] for packet in phase["work"] if packet["id"] not in closed]
         if missing_children:
             failures.append(f"{phase_id} is closed before child issues {missing_children}")
@@ -1673,6 +1958,10 @@ def sync(
     chunks_path: Path = DEFAULT_CHUNKS,
 ) -> dict[str, Any]:
     repository = graph["program"]["repository"]
+    if apply:
+        # No label, milestone, issue, or generated projection write may begin until every
+        # identity-managed target resolves live from its immutable repository ID.
+        verify_repository_identities(graph)
     missing_labels = _ensure_labels(graph, apply=apply)
     milestone = _ensure_milestone(graph, apply=apply)
     if not apply and (missing_labels or milestone is None):
@@ -1745,6 +2034,7 @@ def remote_parity(
     remote: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     validate_map(mapping, graph, complete=True)
+    repository_identities = verify_repository_identities(graph)
     if remote is None:
         remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     expected_ids = set(graph["ordered_ids"])
@@ -1784,6 +2074,7 @@ def remote_parity(
         "missing": missing,
         "orphan": orphan,
         "drift": drift,
+        "repository_identities": repository_identities,
         "ok": not missing and not orphan and not drift,
     }
     if not result["ok"]:
@@ -1801,19 +2092,24 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
     ready: list[dict[str, Any]] = []
     for phase in graph["phases"]:
         phase_dependencies = set(phase.get("depends_on") or [])
-        phase_ready = phase_dependencies.issubset(closed)
         for packet in phase["work"]:
             work_id = packet["id"]
             dependencies = set(packet.get("depends_on") or [])
-            if work_id in closed or not phase_ready or not dependencies.issubset(closed):
+            if work_id in closed or not dependencies.issubset(closed):
                 continue
             row = mapping["issues"][work_id]
+            repository_identity = repository_identity_for(packet["target_repo"], graph)
             ready.append(
                 {
                     "id": work_id,
                     "title": packet["title"],
                     "issue": row,
                     "target_repo": packet["target_repo"],
+                    "target_repository_identity": (
+                        public_repository_identity(repository_identity)
+                        if repository_identity is not None
+                        else None
+                    ),
                     "target_paths": packet["target_paths"],
                     "capabilities": packet["capabilities"],
                     "reasoning": packet["reasoning"],
@@ -1821,6 +2117,9 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "effect": packet["effect"],
                     "predicate": packet["predicate"],
                     "human_gates": packet["human_gates"],
+                    "phase_id": phase["id"],
+                    "phase_close_blocked_by": sorted(phase_dependencies - closed),
+                    "chunk_id": graph["work_chunk"][work_id],
                 }
             )
     return ready
@@ -1832,6 +2131,22 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
     validate_map(mapping, graph, complete=True)
     packet = graph["work_by_id"][work_id]
     issue = mapping["issues"][work_id]
+    repository_identity = repository_identity_for(packet["target_repo"], graph)
+    execution_requirements: dict[str, Any] = {
+        "target_repository": packet["target_repo"],
+        "path_prefixes": packet["target_paths"],
+        "required_capabilities": packet["capabilities"],
+        "reasoning_class": packet["reasoning"],
+        "model_override": model_assignment_for(work_id, graph),
+        "effect": packet["effect"],
+        "human_gates": packet["human_gates"],
+        "dependencies": packet["depends_on"],
+        "live_references": packet["external_dependencies"],
+    }
+    if repository_identity is not None:
+        execution_requirements["target_repository_identity"] = resolve_repository_identity_for_seed(
+            repository_identity
+        )
     return {
         "schema_version": SEED_SCHEMA,
         "work_id": work_id,
@@ -1843,17 +2158,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
             "program_phase": graph["work_phase"][work_id],
             "github_issue": issue,
         },
-        "execution_requirements": {
-            "target_repository": packet["target_repo"],
-            "path_prefixes": packet["target_paths"],
-            "required_capabilities": packet["capabilities"],
-            "reasoning_class": packet["reasoning"],
-            "model_override": model_assignment_for(work_id, graph),
-            "effect": packet["effect"],
-            "human_gates": packet["human_gates"],
-            "dependencies": packet["depends_on"],
-            "live_references": packet["external_dependencies"],
-        },
+        "execution_requirements": execution_requirements,
         "predicate": packet["predicate"],
         "receipt_target": f"github:{graph['program']['repository']}:issue:{issue['number']}",
         "rollback": packet["rollback"],
@@ -1895,19 +2200,19 @@ Scope
 - Resolved leaf count: {len(work_ids)}
 - Excluded leaves: {excluded}
 - Extra cross-phase leaves: {extras}
-- Required predecessor chunks: {dependency_scope}
+- Aggregate predecessor chunks: {dependency_scope}
 - Objective: {chunk["objective"]}
 - Exit gate: {chunk["exit_gate"]}
 
 Execution contract
 1. Start from live remote state. Read `AGENTS.md`, `institutio/positioning/program.yaml`, `docs/positioning/program/AGENT-RUNBOOK.md`, `docs/positioning/program/EXECUTION-CHUNKS.md`, and the root/phase/leaf GitHub issues. Do not trust this prompt over newer tracked state.
-2. Run `python3 scripts/positioning-program.py --check`, `--verify-remote`, and `--verify-model-assignments`. Then run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json`.
+2. Run `python3 scripts/positioning-program.py --chunk {chunk_id}` and `--ready --json` to orient from the live registry.
 3. Work only on leaves that are both in this chunk's resolved scope and currently ready. For each leaf, run `--seed <WORK-ID>`, obtain a conduct-broker lease before mutation, preserve native agent identity, and honor its exact repository/path/effect/authority boundary.
-4. Drive dependencies to the chunk exit gate. Independent ready leaves may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
-5. A leaf closes only after its executable predicate passes and a structured durable receipt is attached. A phase closes only after every child and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
+4. Leaf admission is controlled by each leaf's explicit dependencies in the live ready output. An open upstream phase or chunk may block aggregate closeout, but it must not idle an otherwise ready leaf. Independent ready leaves across chunks may run in parallel only after separate broker reservations. Do not redo a green exact-head predicate or overwrite sibling work.
+5. After changing files, preview governed scope with `python3 scripts/verify.py --explain <changed-path>...`, run `bash scripts/verify-scoped.sh`, and then run the leaf predicate as the receipt condition. A leaf closes only after that predicate passes and a structured durable receipt is attached. A phase closes only after every child, every upstream phase and chunk, and its phase exit gate pass. GitHub prose, an open branch, or an unmerged draft is not completion.
 6. Do not send, publish, change DNS, spend, sign, merge, expose private evidence, or mutate an account unless live authority explicitly permits that exact act. Stage reversible work, record the named human gate once, and continue every other safe lane.
 7. If the session ends before the chunk closes, create a new dated envelope from `docs/positioning/program/RELAY-TEMPLATE.md` under `docs/receipts/positioning/relays/`, commit and push it, and attach it to the owning issue/PR. Then create the target agent's local pickup pointer when supported. Return the canonical phrase: `Continue from relay at <absolute-pointer-path>. mid-task — see Next Actions for current step.` The relay transfers context, never lease or approval.
-8. Stop only when the chunk exit gate is verified or an irreducible external blocker has a durable owner.
+8. A blocker local to one leaf is not a global stop. Continue every other ready leaf; stop only when no ready reversible work remains and each irreducible external blocker has a durable owner.
 
 Return exactly: chunk status; closed and open work IDs; commits/PRs/issue receipts; predicate results; human gates; next ready IDs; and the relay pointer when incomplete."""
 
@@ -1965,9 +2270,10 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
     lines += [
         "```",
         "",
-        "C04 (proof/experience) and C05 (service delivery) may run in parallel after C03. They rejoin before "
-        "commercial validation. C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, "
-        "eliminating the former P10↔P12 phase-gating deadlock.",
+        "Chunk arrows govern aggregate proof and closeout order, not leaf admission. The live ready-work output "
+        "uses each leaf's exact dependencies, so a human gate on one leaf cannot idle unrelated reversible work. "
+        "C10 intentionally interleaves P12 with P10-W08: P12-W02 unlocks P10-W08, eliminating the former "
+        "P10↔P12 phase-gating deadlock.",
         "",
         "## Chunk index",
         "",
@@ -1991,9 +2297,11 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
         "",
         "## How to use the prompts",
         "",
-        "1. Start with C00. Do not launch a chunk until every named predecessor has a durable completion receipt.",
-        "2. C04 and C05 are the only intended parallel branch. Run them in isolated worktrees and broker leases.",
-        "3. Paste one prompt below into a fresh conductor session using its assigned model/effort.",
+        "1. Start from the live `--ready --json` output. A ready leaf may run even while an upstream aggregate "
+        "phase or chunk remains open.",
+        "2. Run every concurrent leaf in its own isolated worktree and broker lease.",
+        "3. Use the prompt for the chunk whose resolved scope contains the ready leaf and preserve its assigned "
+        "model and effort.",
         "4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk "
         "rather than skipping ahead.",
         "5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.",
@@ -2279,6 +2587,7 @@ def main(argv: list[str] | None = None) -> int:
                 "status": "ok",
                 "phases": len(graph["phase_by_id"]),
                 "execution_chunks": len(graph["chunks"]),
+                "repository_identities": len(graph["repository_identity_by_slug"]),
                 "work_packets": len(graph["work_by_id"]),
                 "projected_objects": len(graph["ordered_ids"]),
                 "mapped_objects": len(mapping.get("issues") or {}),

@@ -1,0 +1,12 @@
+{
+  "schema": "psp-c08-freshness-withdrawal/v1",
+  "reference_date": "2026-08-12",
+  "default_review_days": 30,
+  "states": {
+    "current": {"action": "retain in private staging", "external_effect": false},
+    "review_due": {"action": "hold from release and request source review", "external_effect": false},
+    "expired": {"action": "quarantine draft and attach withdrawal reason", "external_effect": false},
+    "claim_drift": {"action": "quarantine draft and correct or withdraw", "external_effect": false}
+  },
+  "withdrawal_receipt_rule": "A real withdrawal receipt exists only after an owner-approved external action. Dry-run fixtures can request quarantine but cannot claim withdrawal completion."
+}

@@ -23,6 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _profile as P  # noqa: E402
+from positioning_claims import assert_public_claims  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 BIG_NUM = re.compile(r"\b\d{1,3}(?:,\d{3})+\b|\b\d{4,}\b")
@@ -67,7 +68,12 @@ def _is_placeholder(seed: dict) -> bool:
 
 
 def render_readme(
-    manifest: dict, seeds: dict, digest: dict | None, value_order: list[str], public_set: set[str]
+    manifest: dict,
+    seeds: dict,
+    digest: dict | None,
+    value_order: list[str],
+    public_set: set[str],
+    positioning,
 ) -> str:
     fd = seeds.get("frontdoor", {})
     repos = seeds.get("repos", {})
@@ -105,6 +111,9 @@ def render_readme(
         attribution += f" On GitHub since {since}."
     L.append(attribution)
     L.append("")
+    if fd.get("authorship"):
+        L.append(str(fd["authorship"]).strip())
+        L.append("")
     # verified stats + language mix, side by side (borderless — they read as sections, not boxes)
     L.append(
         '<img src="./assets/stats-card.svg" alt="Verified GitHub statistics" width="48%" />'
@@ -140,40 +149,37 @@ def render_readme(
     L.append("## The systems")
     L.append("")
     L.append(
-        "Each is a working production system — source, tests, and live deploy. The numbers are "
-        "the repository's own CI output, not adjectives."
+        "Each entry states its current maturity and shows only evidence verified for this Level-1 "
+        "surface. Repository-reported metrics remain on the linked Level-2 pages with their labels."
     )
     L.append("")
-    # list a system only if its repo is verifiably PUBLIC (link won't 404) and its seed is complete
+    # List the curated flagship set. A repository target must be verifiably public when the live
+    # public index is available; an explicit URL target is a separately verified product surface.
     candidates = [r for r in value_order if r in repos] or list(repos.keys())
-    ordered = [r for r in candidates if (not public_set or r in public_set) and not _is_placeholder(repos[r])]
-    for repo in ordered:
-        seed = repos[repo]
+    seeded = [(r, repos[r]) for r in candidates if not _is_placeholder(repos[r])]
+    ordered = positioning._frontdoor_systems(seeded, fd)
+    for repo, seed in ordered:
+        is_url_target = repo.startswith(("http://", "https://"))
+        if public_set and not is_url_target and repo not in public_set:
+            continue
         name = seed.get("display_name", repo.split("/")[-1])
-        what = str(seed.get("what_it_is", "")).strip()
-        solves = str(seed.get("expensive_problem", "")).strip()
-        signals = [str(s) for s in seed.get("proof_signals", [])]
-        L.append(f"### [{name}](https://github.com/{repo})")
+        what = str(seed.get("frontdoor_summary", "")).strip()
+        product_state = positioning._product_state(seed)
+        proof = [item for item in positioning._proof_items(seed) if item[1] == "verified"]
+        signals = [f"{status}: {claim}" for claim, status in proof]
+        L.append(f"### [{name}]({positioning._target_url(repo, seed)})")
         if what:
             L.append(what)
             L.append("")
-        if solves:
-            # the buyer-recognition line — owned copy from the seed, not invented
-            L.append(f"**Solves —** {solves}")
-            L.append("")
+        L.append(f"**Current state:** {product_state}")
+        L.append("")
         if signals:
             L.append(" · ".join(f"`{s}`" for s in signals))
             L.append("")
-        # per-system doors (the contextual CTA each system had before the provability pass dropped it)
-        ctas = []
-        if seed.get("cta_client"):
-            ctas.append(_door_link(str(seed["cta_client"]).strip(), contact, f"deploy:{repo}"))
-        if seed.get("cta_recruiter"):
-            ctas.append(_door_link(str(seed["cta_recruiter"]).strip(), contact, f"hire:{repo}"))
-        if ctas:
-            L.append("→ " + " &nbsp;·&nbsp; ".join(ctas))
-            L.append("")
-        _register_repo_numbers(what + " " + solves + " " + " ".join(signals), repo, manifest)
+        L.append(f"→ [Inspect the documented current state]({positioning._details_url(repo, seed)})")
+        L.append("")
+        if not is_url_target:
+            _register_repo_numbers(what + " " + " ".join(signals), repo, manifest)
 
     # --- adapted from the builders I follow ---
     if digest and digest.get("techniques"):
@@ -270,7 +276,8 @@ def main(argv: list[str] | None = None) -> int:
     if public_index.exists():
         public_set = set(json.loads(public_index.read_text(encoding="utf-8")).get("public_repos", []))
 
-    readme = render_readme(manifest, seeds, digest, value_order, public_set)
+    readme = render_readme(manifest, seeds, digest, value_order, public_set, gp)
+    assert_public_claims(readme, "PROFILE README")
     (out / "README.md").write_text(readme, encoding="utf-8")
     # rewrite the manifest with the repo-attested numbers we just emitted
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")

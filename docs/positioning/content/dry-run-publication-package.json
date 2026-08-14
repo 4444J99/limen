@@ -1,0 +1,19 @@
+{
+  "schema": "psp-c08-dry-run-publication/v1",
+  "mode": "dry-run-only",
+  "network_calls": [],
+  "send_count": 0,
+  "publish_count": 0,
+  "approval_refs": [],
+  "canonical_source": "withheld-until-owner-approved",
+  "assets": [
+    {"asset_id": "PSP-P09-W01-calendar", "disposition": "held-private"},
+    {"asset_id": "PSP-P09-W02-flagship", "disposition": "held-HG-PUBLIC-IDENTITY"},
+    {"asset_id": "PSP-P09-W03-failure-modes", "disposition": "held-private"},
+    {"asset_id": "PSP-P09-W04-economics", "disposition": "held-private"},
+    {"asset_id": "PSP-P09-W05-walkthrough", "disposition": "held-private"},
+    {"asset_id": "PSP-P09-W06-correction", "disposition": "held-private"},
+    {"asset_id": "PSP-P09-W07-pointers", "disposition": "held-canonical-source"},
+    {"asset_id": "PSP-P09-W08-distribution", "disposition": "held-HG-PUBLICATION-SEND"}
+  ]
+}

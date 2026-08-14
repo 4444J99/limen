@@ -27,12 +27,13 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
 from _pr_scan import (  # noqa: E402
-    enumerate_open_prs,
+    enumerate_open_prs_result,
     merge_queue_capability,
     rotating_window,
     stale_base_verdict,
@@ -44,6 +45,7 @@ OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").s
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
 POLICY = ROOT / "scripts" / "merge-policy.sh"
+CI_RED_LEDGER = ROOT / "logs" / "merge-drain-ci-red-ledger.json"
 LIFECYCLE_LABELS = frozenset(
     {
         "lifecycle:delivery",
@@ -97,12 +99,156 @@ def _is_trivial(repo, num):
 
 
 def lifecycle_disposition(labels) -> str | None:
-    names = {
-        str(label.get("name") if isinstance(label, dict) else label).strip().lower()
-        for label in (labels or [])
-    }
+    names = {str(label.get("name") if isinstance(label, dict) else label).strip().lower() for label in (labels or [])}
     matches = names & LIFECYCLE_LABELS
     return next(iter(matches)) if len(matches) == 1 else None
+
+
+def _failing_required_checks(repo: str, num: int) -> tuple[str, ...] | None:
+    result = gh(
+        [
+            "pr",
+            "checks",
+            str(num),
+            "-R",
+            repo,
+            "--required",
+            "--json",
+            "name,bucket,state",
+        ],
+        timeout=40,
+    )
+    try:
+        rows = json.loads(result.stdout)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(rows, list):
+        return None
+    return tuple(
+        sorted(
+            str(row.get("name"))
+            for row in rows
+            if isinstance(row, dict)
+            and str(row.get("bucket") or row.get("state") or "").lower()
+            in {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
+            and row.get("name")
+        )
+    )
+
+
+def _load_ci_red_ledger() -> dict[str, dict[str, object]] | None:
+    try:
+        value = json.loads(CI_RED_LEDGER.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, TypeError, ValueError) as exc:
+        print(f"[merge-drain] ci-red ledger unavailable: {exc}", file=sys.stderr)
+        return None
+    subjects = value.get("subjects") if isinstance(value, dict) else None
+    if (
+        not isinstance(value, dict)
+        or value.get("schema_version") != "limen.ci_red_subjects.v1"
+        or not isinstance(subjects, dict)
+    ):
+        print("[merge-drain] ci-red ledger unavailable: invalid schema", file=sys.stderr)
+        return None
+    if any(
+        not isinstance(identity, str)
+        or not isinstance(subject, dict)
+        or not isinstance(subject.get("head"), str)
+        or not isinstance(subject.get("checks"), list)
+        for identity, subject in subjects.items()
+    ):
+        print("[merge-drain] ci-red ledger unavailable: invalid subject", file=sys.stderr)
+        return None
+    return subjects
+
+
+def _save_ci_red_ledger(subjects: dict[str, dict[str, object]]) -> bool:
+    temporary = CI_RED_LEDGER.with_suffix(".tmp")
+    try:
+        CI_RED_LEDGER.parent.mkdir(parents=True, exist_ok=True)
+        temporary.write_text(
+            json.dumps(
+                {"schema_version": "limen.ci_red_subjects.v1", "subjects": subjects},
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, CI_RED_LEDGER)
+        return True
+    except OSError as exc:
+        print(f"[merge-drain] ci-red ledger persistence failed: {exc}", file=sys.stderr)
+        try:
+            temporary.unlink()
+        except OSError:
+            pass
+        return False
+
+
+def reconcile_ci_red_subjects(
+    rows: list[tuple],
+    enumerated: list[tuple[str, int]],
+    *,
+    enumeration_complete: bool,
+    persist: bool = True,
+    reserve_notification: Callable[[dict[str, object]], bool] | None = None,
+) -> list[dict[str, object]]:
+    """Track exact red heads; rotating-window omission is never recovery evidence."""
+    subjects = _load_ci_red_ledger()
+    if subjects is None:
+        # A damaged source ledger is not a first-run absence. Withhold both onset
+        # reservations and clears until custody is restored, preserving prior truth.
+        return []
+    newly_red: list[dict[str, object]] = []
+    green_statuses = {"READY", "BLOCKED", "STALE-CORE", "STALE-BASE", "TRIVIAL"}
+    for row in rows:
+        repo, num, status = str(row[0]), int(row[1]), str(row[2])
+        identity = f"{repo}#{num}"
+        if status == "CI-RED":
+            head = str(row[3]) if len(row) > 3 else ""
+            checks = list(row[4]) if len(row) > 4 else []
+            previous = subjects.get(identity)
+            current = {"head": head, "checks": checks}
+            if not isinstance(previous, dict) or previous.get("head") != head:
+                subject = {"identity": identity, **current}
+                if reserve_notification is not None and not reserve_notification(subject):
+                    # Do not consume the source onset until the event ledger owns it.
+                    # Keeping the previous head (or absence) makes the next beat retry.
+                    continue
+                newly_red.append(subject)
+            subjects[identity] = current
+        elif status in green_statuses:
+            subjects.pop(identity, None)
+    if enumeration_complete:
+        open_identities = {f"{repo}#{num}" for repo, num in enumerated}
+        for identity in list(subjects):
+            if identity not in open_identities:
+                subjects.pop(identity, None)
+    if persist:
+        _save_ci_red_ledger(subjects)
+    return newly_red
+
+
+def _reserve_ci_red_notification(subject: dict[str, object]) -> bool:
+    identity = str(subject["identity"])
+    head = str(subject["head"])
+    checks_value = subject.get("checks")
+    checks_list = list(checks_value) if isinstance(checks_value, (list, tuple)) else []
+    checks = ", ".join(str(name) for name in checks_list) or "required check names unavailable"
+    result = _notify.notify_event(
+        ROOT,
+        source="merge-drain",
+        event="ci-red",
+        stable_id=f"{identity}@{head}",
+        payload={"checks": checks_list, "head": head, "identity": identity},
+        message=f"{identity}@{head[:12]} is CI-RED; failing required checks: {checks}",
+        title="LIMEN merge drain",
+    )
+    return result.reserved or result.status == "duplicate"
 
 
 def assess(rn):
@@ -116,10 +262,7 @@ def assess(rn):
                 "-R",
                 repo,
                 "--json",
-                (
-                    "mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,"
-                    "baseRefName,headRefOid,labels"
-                ),
+                ("mergeable,mergeStateStatus,state,statusCheckRollup,isDraft,files,baseRefName,headRefOid,labels"),
             ],
             timeout=40,
         )
@@ -137,7 +280,14 @@ def assess(rn):
             return (repo, num, "CONFLICT")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            return (repo, num, "CI-RED")
+            failing_required = _failing_required_checks(repo, num)
+            if failing_required is None:
+                return (repo, num, "ERR")
+            if failing_required:
+                head = str(d.get("headRefOid") or "")
+                return (repo, num, "CI-RED", head, failing_required)
+            # Optional check failures stay visible in GitHub, but do not create
+            # an operator-facing CI-red onset or block the required-check rail.
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":
@@ -287,9 +437,13 @@ def main():
     # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
     # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
     # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
-    allprs = enumerate_open_prs(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    enumeration = enumerate_open_prs_result(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    allprs = list(enumeration.rows)
+    enumeration_complete = bool(enumeration.success and enumeration.complete)
     if not allprs:
-        print("[merge-drain] no open PRs (or gh unavailable)")
+        if enumeration_complete and not a.dry_run:
+            reconcile_ci_red_subjects([], [], enumeration_complete=True)
+        print("[merge-drain] no open PRs" if enumeration.success else "[merge-drain] PR enumeration unavailable")
         return
     prs = rotating_window(allprs, a.scan, str(ROOT / "logs" / ".pr-scan-cursor.merge"), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
@@ -316,18 +470,13 @@ def main():
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
     print(summary)
-    # LOUD trunk state (IF-HOST-PRESSURE form-4 sibling): a green-blocked PR skipped as CI-RED was a
-    # silent log line only — announce the condition once per onset, clear when the window shows none,
-    # so a fleet-wide CI jam (e.g. the 2026-07-17 billing outage) is felt without reading beat logs.
-    if b["CI-RED"]:
-        _notify.notify_once(
-            ROOT,
-            "merge-drain-ci-red",
-            f"{b['CI-RED']} open PR(s) skipped green-blocked (CI-RED) this drain beat",
-            title="LIMEN merge drain",
-        )
-    else:
-        _notify.clear_condition(ROOT, "merge-drain-ci-red")
+    reconcile_ci_red_subjects(
+        rows,
+        allprs,
+        enumeration_complete=enumeration_complete,
+        persist=not a.dry_run,
+        reserve_notification=_reserve_ci_red_notification if not a.dry_run else None,
+    )
     try:
         with open(LOG, "a") as f:
             effects = merged + [f"QUEUED:{item}" for item in queued]

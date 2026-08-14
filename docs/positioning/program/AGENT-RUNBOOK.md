@@ -19,14 +19,25 @@ python3 scripts/positioning-program.py --ready --json
 python3 scripts/positioning-program.py --seed <WORK-ID>
 ```
 
-Select the earliest incomplete chunk in `EXECUTION-CHUNKS.md` whose named predecessors have durable
-completion receipts. A leaf is actionable only when it appears in both the chunk’s resolved scope
-and live ready-work output. C04 and C05 are the only planned parallel branch; isolate their
-worktrees and leases. C10 interleaves P12 with P10-W08 and must follow its prompt exactly.
+The live ready-work output is authoritative for leaf admission. A leaf is actionable when its own
+explicit `depends_on` work packets are closed with valid receipts; an open upstream phase does not
+idle an otherwise independent leaf. Phase and chunk dependencies still govern aggregate proof and
+closeout order, so a phase cannot close before its upstream phases and a chunk cannot claim its exit
+gate while a predecessor remains incomplete. Multiple ready leaves and chunks may run concurrently
+in isolated worktrees and leases. This distinction keeps genuine human gates local instead of
+turning one blocked leaf into a program-wide stop.
+
+Use `EXECUTION-CHUNKS.md` to select the conductor whose resolved scope contains the ready leaf.
+C10 still interleaves P12 with P10-W08 and must follow its prompt exactly.
 
 The seed is not a lease. It is cross-agent input carrying the human model override, from which a
 registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource
 claims, spend, retry, and authority.
+
+PSP strategy execution runs in fresh Codex tasks using the exact registry-derived model, effort,
+dependencies, repository, and scope. Generic cross-agent or broker support is reusable substrate,
+not a program acceptance gate: a non-Codex canary must never block ready expert-positioning work
+unless a newer explicit human requirement adds that exact condition.
 
 ## 2. Claim before mutation
 
