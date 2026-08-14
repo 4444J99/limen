@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
@@ -21,9 +22,78 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def setUp(self) -> None:
         self.contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
 
-    def _valid_w07_binding(self) -> tuple[dict[str, object], dict[str, object]]:
-        head = "a" * 40
+    def _passing_w07_payload(self) -> dict[str, object]:
+        path = ROOT / "docs/positioning/program/w07_blinded_reader_response_template.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["status"] = "complete"
+        payload["collected_at"] = "2026-08-14T16:00:00Z"
+        for reader in payload["readers"]:
+            reader.update(
+                {
+                    "role_identified": "A senior production-systems architect with bounded authority.",
+                    "buyer_identified": "A named technical or executive sponsor with an active mandate.",
+                    "problem_identified": "Delivery lacks decision rights, verification, cost bounds, and handoff.",
+                    "proof_identified": "An inspectable governed-delivery system with operating evidence.",
+                    "cta_identified": "Discuss the bounded audit or a named senior systems mandate.",
+                    "confidence_1_to_5": 5,
+                    "element_scores": {"role": True, "buyer": True, "problem": True, "proof": True, "cta": True},
+                    "protocol_integrity": {
+                        "independent_target_like_reader": True,
+                        "genuine_human_response": True,
+                        "not_model_or_synthetic": True,
+                        "not_author_or_implementation_agent": True,
+                        "not_coached": True,
+                        "read_once_unprompted": True,
+                        "no_facilitator_explanation": True,
+                        "no_project_search": True,
+                        "contains_no_names_companies_or_contact_data": True,
+                    },
+                }
+            )
+        return payload
+
+    def _w07_repository(self, repository: Path, payload: dict[str, object]) -> tuple[str, str]:
         response_path = "docs/positioning/program/w07_blinded_reader_responses.json"
+        tracked = (
+            MODULE.W07_VALIDATOR_PATH,
+            "docs/positioning/program/w07_blinded_reader_response_schema.json",
+            "docs/positioning/w07-blinded-reader-protocol.md",
+        )
+        for path in tracked:
+            target = repository / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((ROOT / path).read_bytes())
+        response = repository / response_path
+        response.parent.mkdir(parents=True, exist_ok=True)
+        response.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+        subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+        subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+        subprocess.run(["git", "add", "."], cwd=repository, check=True)
+        subprocess.run(
+            ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic W07 fixture"],
+            cwd=repository,
+            check=True,
+        )
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        return head, response_path
+
+    def _valid_w07_binding(
+        self,
+        repository: Path,
+        head: str,
+        response_path: str,
+        payload: dict[str, object],
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        response_digest = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest()
         receipt = {
             "work_id": "PSP-P03-W07",
             "outcome": "succeeded",
@@ -39,12 +109,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "independent_reader_count": 5,
                 "synthetic_or_model_reader_count": 0,
                 "unresolved_authority_objections": 0,
-                "total_score": 20,
-                "role_matches": 4,
-                "buyer_matches": 4,
-                "cta_matches": 4,
+                "total_score": 25,
+                "role_matches": 5,
+                "buyer_matches": 5,
+                "cta_matches": 5,
                 "response_set_path": response_path,
-                "response_set_sha256": "b" * 64,
+                "response_set_sha256": response_digest,
                 "decision_memo_sha256": "c" * 64,
             },
         }
@@ -276,7 +346,26 @@ class PositioningProofPreflightTest(unittest.TestCase):
             row["consent status"] = "public_consented"
         result = MODULE.validate_external_objects(self.contract, placeholders)
         self.assertEqual("fail", result["status"])
-        self.assertTrue(any("empty fields" in error for error in result["errors"]))
+        self.assertTrue(any("nonblank text" in error for error in result["errors"]))
+
+    def test_external_validation_requires_nonblank_text_fields(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/object-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        objects[0]["method"] = True
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(1, result["substantive_public_count"])
+        self.assertTrue(any("method" in error and "nonblank text" in error for error in result["errors"]))
 
     def test_external_validation_rejects_explicit_non_independence(self) -> None:
         required = self.contract["external_validation"]["minimum_fields"]
@@ -371,18 +460,66 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
 
     def test_w07_receipt_requires_the_exact_tracked_predicate_command(self) -> None:
-        binding, live = self._valid_w07_binding()
-        self.assertEqual([], MODULE._validate_w07_receipt_binding(binding, ROOT, live))
-        receipt = binding["receipt"]
-        assert isinstance(receipt, dict)
-        predicate = receipt["predicate"]
-        assert isinstance(predicate, dict)
-        predicate["command"] = "echo validate_p03_w07_blinded_reader.py"
-        digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        binding["sha256"] = digest
-        live["receipt_sha256"] = digest
-        errors = MODULE._validate_w07_receipt_binding(binding, ROOT, live)
-        self.assertTrue(any("exact manifest-owned" in error for error in errors))
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            self.assertEqual([], MODULE._validate_w07_receipt_binding(binding, repository, live))
+            receipt = binding["receipt"]
+            assert isinstance(receipt, dict)
+            predicate = receipt["predicate"]
+            assert isinstance(predicate, dict)
+            predicate["command"] = "echo validate_p03_w07_blinded_reader.py"
+            digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            binding["sha256"] = digest
+            live["receipt_sha256"] = digest
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("exact manifest-owned" in error for error in errors))
+
+    def test_w07_receipt_must_bind_and_revalidate_the_exact_response_blob(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            receipt = binding["receipt"]
+            assert isinstance(receipt, dict)
+            evidence = receipt["reader_evidence"]
+            assert isinstance(evidence, dict)
+            evidence["response_set_sha256"] = "b" * 64
+            digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            binding["sha256"] = digest
+            live["receipt_sha256"] = digest
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("exact tracked response blob" in error for error in errors))
+
+            evidence["response_set_sha256"] = hashlib.sha256(
+                json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+            ).hexdigest()
+            observed_heads = receipt["observed_heads"]
+            assert isinstance(observed_heads, dict)
+            observed_heads["organvm/limen"] = "a" * 40
+            receipt["evidence_urls"] = [f"https://github.com/organvm/limen/blob/{'a' * 40}/{response_path}"]
+            digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            binding["sha256"] = digest
+            live["receipt_sha256"] = digest
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("accepted repository history" in error for error in errors))
+
+    def test_w07_receipt_reexecutes_the_exact_head_validator(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            readers = payload["readers"]
+            assert isinstance(readers, list)
+            integrity = readers[0]["protocol_integrity"]
+            assert isinstance(integrity, dict)
+            integrity["genuine_human_response"] = False
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+            self.assertTrue(any("exact-head W07 blinded-reader predicate did not pass" in error for error in errors))
 
     def test_program_binding_covers_all_p05_leaves(self) -> None:
         self.assertEqual(

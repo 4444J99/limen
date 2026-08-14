@@ -145,19 +145,31 @@ def _remote_default(result: subprocess.CompletedProcess[bytes]) -> tuple[str | N
     return branch, head
 
 
+def _process_group_alive(process_group: int) -> bool:
+    try:
+        os.killpg(process_group, 0)
+    except (ProcessLookupError, PermissionError):
+        return False
+    return True
+
+
 def _stop_process(process: subprocess.Popen[bytes]) -> None:
     try:
         os.killpg(process.pid, signal.SIGTERM)
-    except ProcessLookupError:
+    except (ProcessLookupError, PermissionError):
         return
+    deadline = time.monotonic() + 1
+    while _process_group_alive(process.pid) and time.monotonic() < deadline:
+        time.sleep(0.02)
+    if _process_group_alive(process.pid):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
     try:
         process.wait(timeout=1)
     except subprocess.TimeoutExpired:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        process.wait(timeout=1)
+        pass
 
 
 def _run_bounded_predicate(
@@ -212,6 +224,9 @@ def _run_bounded_predicate(
                 break
             return_code = process.poll()
             if return_code is not None and eof:
+                if _process_group_alive(process.pid):
+                    _stop_process(process)
+                    failure = "predicate left a live descendant process"
                 return return_code, bytes(output), failure
         return process.returncode, bytes(output), failure
     finally:

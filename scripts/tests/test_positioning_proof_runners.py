@@ -3,6 +3,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -253,7 +254,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
             }
             bounded = RECEIPT.run_request(verbose)
-            self.assertEqual("current_fail", bounded["result"])
+            self.assertEqual("current_fail", bounded["result"], bounded)
             self.assertEqual(1024, bounded["output_bytes"])
             self.assertIn("bounded output budget", bounded["errors"][0])
             missing = {
@@ -474,6 +475,49 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = RECEIPT.run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("bounded timeout" in error for error in result["errors"]))
+
+    def test_redirected_predicate_descendant_is_terminated_before_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            attach_origin(repository, Path(remote_temporary))
+            child = "import time; from pathlib import Path; time.sleep(0.5); Path('late.txt').write_text('late')"
+            parent = (
+                "import subprocess,sys; "
+                f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
+                "stderr=subprocess.DEVNULL); print('parent done')"
+            )
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", parent],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("current_fail", result["result"])
+            self.assertTrue(any("live descendant" in error for error in result["errors"]))
+            time.sleep(0.7)
+            self.assertFalse((repository / "late.txt").exists())
 
 
 if __name__ == "__main__":

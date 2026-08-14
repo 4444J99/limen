@@ -9,6 +9,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -972,14 +973,13 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         missing = sorted(field for field in required if field not in row)
         if missing:
             errors.append(f"validation object {index} missing: {', '.join(missing)}")
-        empty = sorted(
+        invalid_text = sorted(
             field
             for field in required
-            if field in row
-            and (row.get(field) is None or row.get(field) == "" or row.get(field) == [] or row.get(field) == {})
+            if field in row and (not isinstance(row.get(field), str) or not row.get(field).strip())
         )
-        if empty:
-            errors.append(f"validation object {index} has empty fields: {', '.join(empty)}")
+        if invalid_text:
+            errors.append(f"validation object {index} fields must be nonblank text: {', '.join(invalid_text)}")
         independence = str(row.get("independence disclosure") or "").strip().lower()
         if independence not in INDEPENDENCE_DISPOSITIONS:
             errors.append(f"validation object {index} lacks an affirmative independence disposition")
@@ -1004,7 +1004,7 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         if (
             row.get("consent status") == "public_consented"
             and not missing
-            and not empty
+            and not invalid_text
             and independence in INDEPENDENCE_DISPOSITIONS
             and isinstance(object_receipt, str)
             and bool(object_receipt)
@@ -1040,6 +1040,80 @@ def _live_w07_verification(repository: Path) -> dict[str, Any]:
     return value
 
 
+def _git_blob(repository: Path, head: str, path: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "show", f"{head}:{path}"],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        timeout=30,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode(errors="replace").strip()
+        raise ValueError(f"W07 evidence blob is unavailable at {head}:{path}: {detail}")
+    return completed.stdout
+
+
+def _verify_w07_response_blob(
+    repository: Path,
+    observed_head: str,
+    response_path: str,
+    response_sha256: str,
+    evidence: dict[str, Any],
+) -> None:
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", observed_head, "HEAD"],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        timeout=30,
+    )
+    if ancestry.returncode != 0:
+        raise ValueError("W07 observed head is not in the current accepted repository history")
+
+    support_paths = (
+        W07_VALIDATOR_PATH,
+        "docs/positioning/program/w07_blinded_reader_response_schema.json",
+        "docs/positioning/w07-blinded-reader-protocol.md",
+    )
+    response_blob = _git_blob(repository, observed_head, response_path)
+    try:
+        response_payload = json.loads(response_blob.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"W07 response-set blob is not valid UTF-8 JSON: {exc}") from exc
+    canonical = json.dumps(response_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    if hashlib.sha256(canonical).hexdigest() != response_sha256:
+        raise ValueError("W07 response-set digest does not bind the exact tracked response blob")
+
+    with tempfile.TemporaryDirectory() as directory:
+        checkout = Path(directory)
+        for path in (*support_paths, response_path):
+            target = checkout / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(response_blob if path == response_path else _git_blob(repository, observed_head, path))
+        completed = subprocess.run(
+            [sys.executable, str(checkout / W07_VALIDATOR_PATH), str(checkout / response_path)],
+            cwd=checkout,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise ValueError(f"exact-head W07 blinded-reader predicate did not pass: {detail}")
+    match = re.search(
+        r"SCORE: total=(\d+)/25 role=(\d+)/5 buyer=(\d+)/5 cta=(\d+)/5",
+        completed.stdout,
+    )
+    if match is None:
+        raise ValueError("exact-head W07 blinded-reader predicate omitted its score receipt")
+    measured = tuple(int(value) for value in match.groups())
+    expected = tuple(evidence[field] for field in ("total_score", "role_matches", "buyer_matches", "cta_matches"))
+    if measured != expected:
+        raise ValueError("W07 reader evidence counts differ from the exact-head predicate output")
+
+
 def _validate_w07_receipt_binding(
     value: object,
     repository: Path,
@@ -1069,6 +1143,7 @@ def _validate_w07_receipt_binding(
             errors.append("embedded W07 receipt must record a successful PSP-P03-W07 outcome")
         evidence = receipt.get("reader_evidence")
         response_path: str | None = None
+        observed_head: str | None = None
         if not isinstance(evidence, dict):
             errors.append("embedded W07 receipt must include the public-safe reader evidence summary")
         else:
@@ -1117,6 +1192,20 @@ def _validate_w07_receipt_binding(
             errors.append("embedded W07 receipt must bind the exact manifest-owned blinded-reader predicate command")
     if errors:
         return errors
+    assert isinstance(receipt, dict)
+    assert isinstance(evidence, dict)
+    assert isinstance(observed_head, str)
+    assert isinstance(response_path, str)
+    try:
+        _verify_w07_response_blob(
+            repository,
+            observed_head,
+            response_path,
+            evidence["response_set_sha256"],
+            evidence,
+        )
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        return [str(exc)]
     try:
         observed = live_verification if live_verification is not None else _live_w07_verification(repository)
     except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
