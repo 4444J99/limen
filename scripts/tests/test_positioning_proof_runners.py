@@ -29,6 +29,7 @@ COST = load_module(
 def attach_origin(repository: Path, remote_root: Path) -> Path:
     remote = remote_root / "synthetic.git"
     subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+    subprocess.run(["git", "symbolic-ref", "HEAD", "refs/heads/main"], cwd=remote, check=True)
     subprocess.run(["git", "remote", "add", "origin", str(remote)], cwd=repository, check=True)
     subprocess.run(["git", "push", "-q", "-u", "origin", "main"], cwd=repository, check=True)
     return remote
@@ -317,6 +318,84 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = RECEIPT.run_request(request)
             self.assertEqual("not_current", result["result"])
             self.assertIn("remote default-branch tip", result["errors"][0])
+
+    def test_requested_branch_must_be_the_authoritative_remote_default(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            attach_origin(repository, Path(remote_temporary))
+            subprocess.run(["git", "branch", "feature"], cwd=repository, check=True)
+            subprocess.run(["git", "push", "-q", "origin", "feature"], cwd=repository, check=True)
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "feature",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "raise SystemExit(0)"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("not_current", result["result"])
+            self.assertIn("authoritative remote default branch", result["errors"][0])
+            self.assertEqual("main", result["remote_default_branch"])
+
+    def test_post_predicate_remote_outage_is_blocked_external(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / "fixture.txt").write_text("synthetic\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            remote = attach_origin(repository, Path(remote_temporary))
+            offline = remote.with_name("synthetic-offline.git")
+            request = {
+                "schema_version": RECEIPT.SCHEMA_VERSION,
+                "flagship_id": "synthetic",
+                "repository": "example/synthetic",
+                "repository_path": str(repository),
+                "default_branch": "main",
+                "expected_head": head,
+                "predicate": {
+                    "argv": [
+                        sys.executable,
+                        "-c",
+                        f"import os; os.rename({str(remote)!r}, {str(offline)!r})",
+                    ],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 4096,
+                },
+                "limitations": ["Synthetic fixture only."],
+            }
+            result = RECEIPT.run_request(request)
+            self.assertEqual("blocked_external", result["result"])
+            self.assertTrue(any("post-predicate remote default-branch tip" in error for error in result["errors"]))
 
     def test_post_predicate_mutation_is_not_current(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:

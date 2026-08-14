@@ -19,6 +19,8 @@ DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
+W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
+W07_RESPONSE_PATH = re.compile(r"^docs/positioning/program/[A-Za-z0-9._/-]+\.json$")
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -107,6 +109,11 @@ FORBIDDEN_DEMO_KEYS = {
     "credential",
     "customer",
     "email",
+    "passcode",
+    "passphrase",
+    "passwd",
+    "password",
+    "pwd",
     "private_path",
     "private_repository",
     "secret",
@@ -713,12 +720,19 @@ def _ledger_action(status: str, public_safe_wording: str, tier: str) -> str:
     boundary = f"{status} {public_safe_wording} {tier}".lower()
     unsafe_markers = (
         "conflicted",
+        "contradicted",
+        "do not publish",
+        "ignored",
         "never use",
+        "not yet published",
+        "not_established",
         "nowhere",
         "remove",
         "superseded",
+        "unsupported",
         "unverified",
         "withhold",
+        "withheld",
     )
     return "withhold_or_remove" if any(marker in boundary for marker in unsafe_markers) else "audit_canonical_wording"
 
@@ -908,7 +922,18 @@ def _normalized_demo_key(value: object) -> str:
 def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     forbidden: set[str] = set()
     forbidden_compact = {key.replace("_", "") for key in FORBIDDEN_DEMO_KEYS}
-    forbidden_segments = {"credential", "customer", "email", "secret", "token"}
+    forbidden_segments = {
+        "credential",
+        "customer",
+        "email",
+        "passcode",
+        "passphrase",
+        "passwd",
+        "password",
+        "pwd",
+        "secret",
+        "token",
+    }
     if isinstance(value, dict):
         for key, child in value.items():
             normalized = _normalized_demo_key(key)
@@ -938,9 +963,8 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
     validation = contract.get("external_validation", {})
     required = set(validation.get("minimum_fields", []))
     minimum_count = int(validation.get("minimum_object_count", 0))
-    if len(objects) < minimum_count:
-        errors.append(f"external validation requires at least {minimum_count} substantive objects")
     provenance: set[str] = set()
+    substantive_public_count = 0
     for index, row in enumerate(objects):
         if not isinstance(row, dict):
             errors.append(f"validation object {index} must be an object")
@@ -960,20 +984,42 @@ def validate_external_objects(contract: dict[str, Any], payload: dict[str, Any])
         if independence not in INDEPENDENCE_DISPOSITIONS:
             errors.append(f"validation object {index} lacks an affirmative independence disposition")
         object_receipt = row.get("object URL or receipt")
+        duplicate_receipt = False
         if isinstance(object_receipt, str) and object_receipt:
             if object_receipt in provenance:
                 errors.append(f"validation object {index} duplicates an existing object receipt")
+                duplicate_receipt = True
             provenance.add(object_receipt)
         observed_at = row.get("date")
+        valid_date = True
         try:
             if not isinstance(observed_at, str):
                 raise ValueError
             _parse_date(observed_at)
         except ValueError:
             errors.append(f"validation object {index} date must be ISO-8601")
+            valid_date = False
         if row.get("consent status") not in {"public_consented", "withdrawn"}:
             errors.append(f"validation object {index} has no public consent disposition")
-    return {"status": "pass" if not errors else "fail", "errors": errors, "object_count": len(objects)}
+        if (
+            row.get("consent status") == "public_consented"
+            and not missing
+            and not empty
+            and independence in INDEPENDENCE_DISPOSITIONS
+            and isinstance(object_receipt, str)
+            and bool(object_receipt)
+            and not duplicate_receipt
+            and valid_date
+        ):
+            substantive_public_count += 1
+    if substantive_public_count < minimum_count:
+        errors.append(f"external validation requires at least {minimum_count} substantive public-consented objects")
+    return {
+        "status": "pass" if not errors else "fail",
+        "errors": errors,
+        "object_count": len(objects),
+        "substantive_public_count": substantive_public_count,
+    }
 
 
 def _live_w07_verification(repository: Path) -> dict[str, Any]:
@@ -1021,12 +1067,8 @@ def _validate_w07_receipt_binding(
             errors.append("W07 receipt digest does not bind the embedded canonical receipt")
         if receipt.get("work_id") != "PSP-P03-W07" or receipt.get("outcome") != "succeeded":
             errors.append("embedded W07 receipt must record a successful PSP-P03-W07 outcome")
-        predicate = receipt.get("predicate")
-        if not isinstance(predicate, dict) or "validate_p03_w07_blinded_reader.py" not in str(
-            predicate.get("command") or ""
-        ):
-            errors.append("embedded W07 receipt must bind the non-circular blinded-reader validator")
         evidence = receipt.get("reader_evidence")
+        response_path: str | None = None
         if not isinstance(evidence, dict):
             errors.append("embedded W07 receipt must include the public-safe reader evidence summary")
         else:
@@ -1049,6 +1091,30 @@ def _validate_w07_receipt_binding(
                 measured = evidence.get(field)
                 if not isinstance(measured, str) or not SHA256.fullmatch(measured):
                     errors.append(f"W07 reader evidence {field} must be a lowercase SHA-256")
+            candidate_path = evidence.get("response_set_path")
+            if (
+                not isinstance(candidate_path, str)
+                or not W07_RESPONSE_PATH.fullmatch(candidate_path)
+                or ".." in Path(candidate_path).parts
+            ):
+                errors.append("W07 reader evidence must bind a safe tracked response_set_path")
+            else:
+                response_path = candidate_path
+                changed_paths = receipt.get("changed_paths")
+                if not isinstance(changed_paths, list) or response_path not in changed_paths:
+                    errors.append("W07 response_set_path must be present in the receipt changed_paths")
+                observed_heads = receipt.get("observed_heads")
+                observed_head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
+                evidence_urls = receipt.get("evidence_urls")
+                expected_url = f"https://github.com/organvm/limen/blob/{observed_head}/{response_path}"
+                if not FULL_HEAD.fullmatch(str(observed_head or "")) or (
+                    not isinstance(evidence_urls, list) or expected_url not in evidence_urls
+                ):
+                    errors.append("W07 response_set_path must bind an immutable exact-head evidence URL")
+        predicate = receipt.get("predicate")
+        expected_command = f"python3 {W07_VALIDATOR_PATH} {response_path}" if response_path is not None else None
+        if not isinstance(predicate, dict) or predicate.get("command") != expected_command:
+            errors.append("embedded W07 receipt must bind the exact manifest-owned blinded-reader predicate command")
     if errors:
         return errors
     try:

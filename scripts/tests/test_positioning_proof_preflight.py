@@ -21,6 +21,49 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def setUp(self) -> None:
         self.contract = MODULE.load_contract(MODULE.DEFAULT_CONTRACT)
 
+    def _valid_w07_binding(self) -> tuple[dict[str, object], dict[str, object]]:
+        head = "a" * 40
+        response_path = "docs/positioning/program/w07_blinded_reader_responses.json"
+        receipt = {
+            "work_id": "PSP-P03-W07",
+            "outcome": "succeeded",
+            "observed_heads": {"organvm/limen": head},
+            "changed_paths": [response_path],
+            "evidence_urls": [f"https://github.com/organvm/limen/blob/{head}/{response_path}"],
+            "predicate": {
+                "command": f"python3 {MODULE.W07_VALIDATOR_PATH} {response_path}",
+                "exit_code": 0,
+            },
+            "reader_evidence": {
+                "reader_count": 5,
+                "independent_reader_count": 5,
+                "synthetic_or_model_reader_count": 0,
+                "unresolved_authority_objections": 0,
+                "total_score": 20,
+                "role_matches": 4,
+                "buyer_matches": 4,
+                "cta_matches": 4,
+                "response_set_path": response_path,
+                "response_set_sha256": "b" * 64,
+                "decision_memo_sha256": "c" * 64,
+            },
+        }
+        digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        binding = {
+            "work_id": "PSP-P03-W07",
+            "issue_url": "https://github.com/organvm/limen/issues/2188",
+            "url": "https://github.com/organvm/limen/issues/2188#issuecomment-1",
+            "sha256": digest,
+            "receipt": receipt,
+        }
+        live = {
+            "status": "pass",
+            "work_id": "PSP-P03-W07",
+            "receipt_url": binding["url"],
+            "receipt_sha256": digest,
+        }
+        return binding, live
+
     def test_tracked_contract_is_valid(self) -> None:
         self.assertEqual([], MODULE.validate(self.contract))
 
@@ -129,6 +172,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(surface_count * len(claims), len(rows))
         self.assertTrue(any("Top 1% Python committer" in claim["candidate_claim"] for claim in claims))
         self.assertTrue(any("314 repositories total" in claim["candidate_claim"] for claim in claims))
+        unpublished = next(
+            claim for claim in claims if claim["candidate_claim"] == "Cost/reliability/verification metrics"
+        )
+        self.assertFalse(unpublished["publishable"])
+        self.assertEqual("withhold_or_remove", unpublished["action"])
         self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
@@ -201,6 +249,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertEqual("fail", result["status"])
             self.assertTrue(any("$.notes" in error for error in result["errors"]))
 
+    def test_demo_password_keys_fail_closed(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        for key in ("password", "passphrase", "pwd"):
+            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+            fixture["records"][0][key] = "synthetic-but-still-forbidden"
+            result = MODULE.validate_demo_fixture(self.contract, fixture)
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(any(f"$.{key}" in error for error in result["errors"]))
+
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
             self.contract,
@@ -237,6 +294,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("affirmative independence" in error for error in result["errors"]))
+
+    def test_withdrawn_external_objects_do_not_satisfy_the_minimum(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/object-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "withdrawn"
+            objects.append(row)
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(0, result["substantive_public_count"])
+        self.assertTrue(any("substantive public-consented objects" in error for error in result["errors"]))
 
     def test_malformed_public_failure_vocabulary_returns_validation_error(self) -> None:
         for value in (None, [{"unhashable": True}]):
@@ -294,6 +369,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         self.assertFalse(result["ready"])
         self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
+
+    def test_w07_receipt_requires_the_exact_tracked_predicate_command(self) -> None:
+        binding, live = self._valid_w07_binding()
+        self.assertEqual([], MODULE._validate_w07_receipt_binding(binding, ROOT, live))
+        receipt = binding["receipt"]
+        assert isinstance(receipt, dict)
+        predicate = receipt["predicate"]
+        assert isinstance(predicate, dict)
+        predicate["command"] = "echo validate_p03_w07_blinded_reader.py"
+        digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        binding["sha256"] = digest
+        live["receipt_sha256"] = digest
+        errors = MODULE._validate_w07_receipt_binding(binding, ROOT, live)
+        self.assertTrue(any("exact manifest-owned" in error for error in errors))
 
     def test_program_binding_covers_all_p05_leaves(self) -> None:
         self.assertEqual(

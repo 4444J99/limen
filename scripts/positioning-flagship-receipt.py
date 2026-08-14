@@ -129,6 +129,22 @@ def _run_git(repository_path: Path, argv: list[str]) -> subprocess.CompletedProc
     )
 
 
+def _remote_default(result: subprocess.CompletedProcess[bytes]) -> tuple[str | None, str | None]:
+    """Parse the authoritative branch name and head from git ls-remote --symref origin HEAD."""
+    if result.returncode != 0:
+        return None, None
+    branch: str | None = None
+    head: str | None = None
+    for raw_line in result.stdout.decode(errors="replace").splitlines():
+        fields = raw_line.split()
+        if len(fields) == 3 and fields[0] == "ref:" and fields[2] == "HEAD":
+            prefix = "refs/heads/"
+            branch = fields[1][len(prefix) :] if fields[1].startswith(prefix) else None
+        elif len(fields) == 2 and fields[1] == "HEAD" and FULL_HEAD.fullmatch(fields[0]):
+            head = fields[0]
+    return branch, head
+
+
 def _stop_process(process: subprocess.Popen[bytes]) -> None:
     try:
         os.killpg(process.pid, signal.SIGTERM)
@@ -278,7 +294,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
     try:
         remote_tip = _run_git(
             repository_path,
-            ["ls-remote", "--exit-code", "origin", f"refs/heads/{request['default_branch']}"],
+            ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return _blocked_receipt(
@@ -287,18 +303,25 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             f"remote default-branch inspection could not start: {exc}",
             observed_head=observed_head,
         )
-    remote_default_branch_head = (
-        remote_tip.stdout.decode(errors="replace").split()[0]
-        if remote_tip.returncode == 0 and remote_tip.stdout
-        else None
-    )
-    if not remote_default_branch_head or not FULL_HEAD.fullmatch(remote_default_branch_head):
+    remote_default_branch, remote_default_branch_head = _remote_default(remote_tip)
+    if remote_default_branch is None or remote_default_branch_head is None:
         return _blocked_receipt(
             request,
             started_at,
             "remote default-branch tip could not be inspected",
             observed_head=observed_head,
         )
+    if remote_default_branch != request["default_branch"]:
+        receipt = _not_current_receipt(
+            request,
+            started_at,
+            "requested branch is not the authoritative remote default branch",
+            observed_head=observed_head,
+            default_branch_head=default_branch_head,
+        )
+        receipt["remote_default_branch"] = remote_default_branch
+        receipt["remote_default_branch_head"] = remote_default_branch_head
+        return receipt
     if remote_default_branch_head != observed_head:
         receipt = _not_current_receipt(
             request,
@@ -336,7 +359,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             )
             post_remote = _run_git(
                 repository_path,
-                ["ls-remote", "--exit-code", "origin", f"refs/heads/{request['default_branch']}"],
+                ["ls-remote", "--symref", "--exit-code", "origin", "HEAD"],
             )
         except (OSError, subprocess.TimeoutExpired) as exc:
             result = "blocked_external"
@@ -346,11 +369,7 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
             final_branch_head = (
                 post_branch.stdout.decode(errors="replace").strip() if post_branch.returncode == 0 else None
             )
-            final_remote_head = (
-                post_remote.stdout.decode(errors="replace").split()[0]
-                if post_remote.returncode == 0 and post_remote.stdout
-                else None
-            )
+            final_remote_branch, final_remote_head = _remote_default(post_remote)
             invariant_errors = []
             if final_head != observed_head:
                 invariant_errors.append("checked-out head changed while the predicate ran")
@@ -358,17 +377,25 @@ def run_request(request: dict[str, Any], *, base: Path | None = None) -> dict[st
                 invariant_errors.append("worktree changed while the predicate ran")
             if final_branch_head != observed_head:
                 invariant_errors.append("local default-branch tip changed while the predicate ran")
-            if final_remote_head != observed_head:
-                invariant_errors.append("remote default-branch tip changed while the predicate ran")
             if invariant_errors:
                 result = "not_current"
                 errors.extend(invariant_errors)
+            elif final_remote_branch is None or final_remote_head is None:
+                result = "blocked_external"
+                errors.append("post-predicate remote default-branch tip could not be inspected")
+            elif final_remote_branch != remote_default_branch:
+                result = "not_current"
+                errors.append("authoritative remote default branch changed while the predicate ran")
+            elif final_remote_head != observed_head:
+                result = "not_current"
+                errors.append("remote default-branch tip changed while the predicate ran")
 
     return {
         "schema_version": "limen.positioning_flagship_receipt.v1",
         "flagship_id": request["flagship_id"],
         "repository": request["repository"],
         "default_branch": request.get("default_branch"),
+        "remote_default_branch": remote_default_branch,
         "exact_head": observed_head,
         "remote_default_branch_head": remote_default_branch_head,
         "predicate": predicate,
