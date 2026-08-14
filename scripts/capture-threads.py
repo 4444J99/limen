@@ -47,10 +47,35 @@ from datetime import datetime, timezone
 
 try:
     from zoneinfo import ZoneInfo
-
-    ET = ZoneInfo("America/New_York")
 except Exception:  # pragma: no cover
-    ET = None
+    ZoneInfo = None
+
+
+def _resolve_tape_zone():
+    """The zone the tape renders alongside canonical UTC.
+
+    Defaults to THIS DEVICE's zone — exactly what Messages.app shows — because a tape that
+    renders a fixed remote zone silently asserts a location fact no channel establishes, and
+    reads as authoritative to whoever opens it next. This hardcoded `America/New_York` for a
+    device on `America/Sao_Paulo`, so every rendered time sat 1h off the operator's own screen;
+    a later review "explained" that gap with a plausible DST story and corrected four documents
+    in the wrong direction. Set LIMEN_TAPE_TZ (an IANA name) to read in a known other party's
+    zone — deliberately, and it is then recorded in the `tz` field of every row.
+    """
+    name = os.environ.get("LIMEN_TAPE_TZ", "").strip()
+    if not name:
+        return None  # None => astimezone() renders in the device's own zone
+    if ZoneInfo is None:
+        print("warn: LIMEN_TAPE_TZ set but zoneinfo is unavailable; using device local", file=sys.stderr)
+        return None
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        print(f"warn: LIMEN_TAPE_TZ={name!r} is not a known zone; using device local", file=sys.stderr)
+        return None
+
+
+TAPE_TZ = _resolve_tape_zone()
 
 APPLE_EPOCH = 978307200  # seconds from 1970-01-01 to 2001-01-01 (UTC)
 
@@ -106,10 +131,19 @@ def _dt_utc(seconds: float | None) -> datetime | None:
 
 
 def stamp(dt: datetime | None) -> dict:
+    """UTC is canonical; `local` carries the rendered zone in the value AND names it in `tz`.
+
+    The key is `local`, never `et`: a field named for one zone but holding another is the
+    mislabeling this function exists to prevent.
+    """
     if dt is None:
-        return {"utc": None, "et": None}
-    et = dt.astimezone(ET) if ET else dt
-    return {"utc": dt.strftime("%Y-%m-%d %H:%M:%S"), "et": et.strftime("%Y-%m-%d %H:%M:%S %Z")}
+        return {"utc": None, "local": None, "tz": None}
+    loc = dt.astimezone(TAPE_TZ) if TAPE_TZ else dt.astimezone()
+    return {
+        "utc": dt.strftime("%Y-%m-%d %H:%M:%S"),
+        "local": loc.strftime("%Y-%m-%d %H:%M:%S %z"),
+        "tz": str(loc.tzinfo),
+    }
 
 
 def decode_attributed_body(blob: bytes | None) -> str | None:
@@ -436,10 +470,20 @@ def write_checkpoint(out_root: str, slug: str, channel: str, rows: list[dict], a
 
 def write_md(path: str, rows: list[dict], title: str, source: str, name: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    now = datetime.now(ET) if ET else datetime.now()
-    lines = [f"# {title}", f"Captured {now.strftime('%Y-%m-%d %H:%M %Z')} · source `{source}` · {len(rows)} rows", ""]
+    now = datetime.now(TAPE_TZ) if TAPE_TZ else datetime.now().astimezone()
+    zone = str(now.tzinfo)
+    lines = [
+        f"# {title}",
+        f"Captured {now.strftime('%Y-%m-%d %H:%M %z')} · source `{source}` · {len(rows)} rows",
+        "",
+        # The frame is stated on the artifact, not left for a reader to infer. A bare wall-clock
+        # time in a tape gets compared against Messages.app and other artifacts months later.
+        f"**Clock frame:** every `[timestamp]` below is **{zone}** (offset shown). UTC is in the "
+        f"`.jsonl` beside this file, under `ts.utc`; `ts.tz` names this zone on every row.",
+        "",
+    ]
     for r in rows:
-        et = r["ts"]["et"] or "?"
+        et = r["ts"]["local"] or "?"
         if r["direction"] == "sent":
             who = "→ (sent)"
         else:

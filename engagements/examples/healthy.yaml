@@ -12,6 +12,16 @@ work:
   started: 2026-09-01 # AFTER the instrument was executed, not before
   description: "bounded discovery phase, defined in the SOW"
 
+# The instrument set MUTUALLY-BINDING reads: at least one entry signed by both, and every
+# e-sign execution routed BOTH parties (verify against the completion certificate).
+instruments:
+  - name: "MSA + SOW-01"
+    signed_by_me: 2026-08-28
+    signed_by_them: 2026-08-29
+    routed_me: true
+    routed_them: true # both parties were recipients of the signing envelope
+    integration_clause: true
+
 instrument:
   name: "MSA + SOW-01"
   signed_by_me: 2026-08-28

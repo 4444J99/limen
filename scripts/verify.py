@@ -463,6 +463,18 @@ def process_group_alive(process: subprocess.Popen[bytes]) -> bool:
     except (OSError, subprocess.TimeoutExpired):
         return True
     states = [line.strip() for line in observed.stdout.splitlines() if line.strip()]
+    if observed.returncode != 0 or not states:
+        # The process group can disappear after killpg(0) succeeds but before ps
+        # snapshots it. Re-check existence so that normal child teardown is not
+        # misreported as a lingering-process failure. A genuinely unavailable ps
+        # remains fail-closed while the group still exists.
+        try:
+            os.killpg(process.pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
     return not (observed.returncode == 0 and states and all(state.startswith("Z") for state in states))
 
 

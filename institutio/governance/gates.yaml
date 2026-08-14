@@ -492,6 +492,11 @@ gates:
     timeout_seconds: 300
     owner: positioning-program
     note: "PSP-P02-W08 keeps all 13 criticisms separated across measurement, inference, implication, and prominence; exactly matches W05's accepted publishable projection and claims-ledger blob; runs the static contract before bounded live checks of the latest marked W01/W05 receipts, immutable repository/source identities, #1245 state, and exact profile metadata; fixes all eight LAVREA axes; and remains projection_pending until post-merge sync and verify-remote parity."
+  positioning-p14-control-plane-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_p14_control_plane.py -q"
+    paths: ["scripts/positioning-p14-control-plane.py", "cli/tests/test_positioning_p14_control_plane.py", "cli/tests/fixtures/positioning-p14/**", "institutio/positioning/p14/**", "docs/positioning/p14/**", "docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md", "institutio/governance/gates.yaml"]
+    owner: positioning-program
+    note: "PSP-P14 reversible operations stay executable, deterministic, privacy-safe, and fail-closed: formal lifecycle readiness cannot suppress independent C04-C12 repository-only preparation; owner branches, draft PRs, CI, and synthetic output never count as closure; live terminal truth still requires exact durable receipts and two unchanged observations."
   operator-gates:
     command: "python3 scripts/check-operator-gates.py --check"
     paths: ["tasks.yaml", "his-hand-levers.json", "scripts/check-operator-gates.py", "scripts/pause.py", "institutio/governance/operator-gate-baseline.txt"]
@@ -507,6 +512,11 @@ gates:
     paths: ["docs/plans/**", "scripts/check-session-phase.py", "scripts/session-plan.py", "institutio/governance/session-plan-baseline.txt"]
     owner: docs
     note: "The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py."
+  engagement-guard:
+    command: "python3 scripts/engagement-guard.py --config engagements/examples/healthy.yaml --today 2026-09-10 && ! python3 scripts/engagement-guard.py --config engagements/victoroff.yaml --today 2026-09-10"
+    paths: ["scripts/engagement-guard.py", "engagements/**", "docs/engagement-intake-standard.md"]
+    owner: docs
+    note: "The engagement guard's regression contract, made real (it was prose-only from #2332 to 2026-08-14 — victoroff.yaml called itself 'the guard's REGRESSION TEST' and nothing ran it): healthy.yaml must exit 0 and victoroff.yaml must exit non-zero, both at a pinned --today so UNPAID-CEILING is deterministic. A refactor that turns the guard green on Victoroff — or red on the healthy example — is a broken guard, not a fixed engagement. Standard: docs/engagement-intake-standard.md (13 rules; MUTUALLY-BINDING added 2026-08-14 from the single-signer-envelope precedent)."
   ledger-custody:
     command: "python3 scripts/check-ledger-custody.py"
     paths: ["docs/github-pr-debt-ledger.json", "scripts/pr-debt-trend.py", "scripts/gitvs.py", "scripts/diurnal.py", "scripts/check-ledger-custody.py", "institutio/governance/ledger-custody.yaml", "institutio/governance/ledger-custody-baseline.txt"]

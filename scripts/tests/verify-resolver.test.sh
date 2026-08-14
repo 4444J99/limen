@@ -212,6 +212,7 @@ flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
 research-adjudication-test
+positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 

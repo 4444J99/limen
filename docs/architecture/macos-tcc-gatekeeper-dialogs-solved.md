@@ -14,6 +14,13 @@ propagated. If you are reading this because you are about to "fix the ClaudeCode
 Ideal form: `IF-GATEKEEPER-INERT` (`docs/IDEAL-FORMS-LEDGER.md`). Probe:
 `python3 scripts/claude-identity-bundle.py --strict`.
 
+> **The filename says `solved`. Class 4b is NOT solved.** Corrected again 2026-08-12, after the
+> dialog recurred within 30 minutes of a session declaring it cured. §1–§4 below hold and are
+> reproduced. **The cure section did not** — see
+> [CORRECTION 2026-08-12](#correction-2026-08-12--unregistration-is-not-the-dominant-mechanism).
+> Class 4b's residual is upstream and human-gated; the estate's job here is to stop re-deriving a
+> wrong root, not to keep shipping cures. Read the correction before touching any of it.
+
 ---
 
 ## Class 4b — "ClaudeCode.app is damaged and can't be opened"
@@ -62,10 +69,10 @@ itself "instant heal"; no amount of tuning closes a race whose loser is fixed. W
 **destroys the stable TCC identity** that sensor `0g8d` (`scripts/claude-identity-bundle.py`) exists
 to keep — the two organs held opposite invariants over one file and both shipped green.
 
-### The convergent cure
+### The partial cure — unregister; never remove
 
-**Unregister; never remove.** `execve` does not consult LaunchServices — only the *dialog* does. So
-the reachable fixed point is:
+**Unregister; never remove.** `execve` does not consult LaunchServices, so the reachable fixed point
+for the *registration* surface is:
 
 > the bundle is **present and inode-correct** (the vendor's invariant, and `0g8d`'s) **and carries
 > zero LaunchServices registrations** (`heal-claude-lsregister.sh`'s invariant).
@@ -73,6 +80,93 @@ the reachable fixed point is:
 Those are two non-overlapping predicates over one file, so both organs are green simultaneously.
 The `~/.Trash` sweep still **removes**, because a trashed copy is genuine garbage and removing it
 destroys no identity — the live bundle stays in place.
+
+**This is necessary and it is not sufficient.** See the next section: it addresses a surface that
+is, on this host, almost never the one firing.
+
+### CORRECTION 2026-08-12 — unregistration is not the dominant mechanism
+
+The sentence this section carried until 2026-08-12 — *"`execve` does not consult LaunchServices —
+only the **dialog** does"* — is **half true and it misdirected the sixth cure.** The first clause is
+right. The inference drawn from it (therefore zero registrations ⟹ no dialog) is wrong, because it
+never asked the inverse question: **can the dialog fire with no registration?** It can, and on this
+host that is the overwhelmingly common case.
+
+**The dialog has two producers, and unregistration prevents neither.**
+
+**Producer A — Gatekeeper assessment of an `execve` on the bundled path.** No LaunchServices
+involvement at all. Measured from the unified log, 2026-08-12:
+
+```
+21:01:07Z  syspolicyd   GK evaluateScanResult: 2 … MacOS error: -67062      (unsealed bundle root)
+21:01:13Z  2.1.229 lands; _jb() relinks Contents/MacOS/claude to the new inode
+21:02:50Z  kernel (AppleSystemPolicy) ASP: Security policy would not allow process: 41337,
+           /Users/4jp/.local/share/claude/ClaudeCode.app/Contents/MacOS/claude   (×3)
+21:03:44Z  … process: 41877
+```
+
+**Who execs it: the vendor itself.** `_jb()` does not merely *create* the bundle — Claude Code
+re-execs helper processes (`--bg-pty-host`) through `ClaudeCode.app/Contents/MacOS/claude` so they
+inherit the stable `com.anthropic.claude-code` identity. Every auto-update rewrites the bundle
+around a new inode, Gatekeeper rescans it, fails it (§1), and the next exec is assessed and
+dialogged. **The trigger is the update, and the surface is exec — not registration.**
+
+**Producer B — an `open` / `LSOpenApplication` on the bundle.** Captured on screen 2026-08-12: the
+"damaged" alert appears *beside a `Verifying "ClaudeCode.app"…` progress sheet*. That sheet is
+emitted only by a LaunchServices launch performing a full bundle assessment — never by a bare
+`execve`. The launching surface visible behind the alert is Claude Code's own remote-control
+session launcher. Two screenshots, **v2.1.226 and v2.1.228**, same alert: the recurrence tracks
+version churn, not host state.
+
+**This is why unregistration ever appeared to work, and why it could never hold.** An `open`
+*re-registers* the bundle and re-verifies it as a precondition of launching. `heal-claude-lsregister.sh`
+therefore removes a registration that the next `open` immediately recreates — it is cleanup after
+the fact, never prevention. Its three successes in four days are timing, not cure.
+
+**There is no quarantine flag to strip.** The alert's "This file was downloaded on an unknown date"
+invites the obvious `xattr -d com.apple.quarantine` fix; it does not apply. Measured `xattr -lr`
+over the whole bundle: `com.apple.provenance` and `com.apple.macl` only, **no `com.apple.quarantine`
+on any node**. That string is macOS's fallback text when an assessment fails with no quarantine
+timestamp to report. Do not spend another session on it.
+
+The two surfaces are near-independent, which is what let the wrong one look cured:
+
+| surface | frequency, 2026-08-09 → 08-12 | source |
+|---|---|---|
+| LaunchServices registration | **3 events** (08-09 15:24Z, 08-10 15:54Z, 08-12 06:57Z) | `heal-claude-lsregister.sh` receipts |
+| every other heal run | `inert (0 unassessable … registrations)` | same |
+| ASP exec denial | fires per update; **3 updates on 08-12 alone** (226 → 228 → 229) | `log show`, predicate below |
+
+The 08-12 heal at **19:42Z reported `inert`** while the dialog fired at **21:02Z** — the receipt was
+honest about its own predicate and silent about the one that mattered.
+
+**Nothing is broken by the denial.** Verified 2026-08-12: `ClaudeCode.app/Contents/MacOS/claude
+--version` prints `2.1.229 (Claude Code)`. The exec is *assessed* and dialogged, then proceeds.
+That is why six weeks of this never broke a session, and why the recurrence looked random.
+
+**The probe.** `log` is shadowed by a shell function in the sourced profile — call it by absolute
+path, or an empty result exits 0 and reads exactly like "no events":
+
+```bash
+/usr/bin/log show --last 30h --predicate 'eventMessage CONTAINS[c] "ClaudeCode"' --style compact
+```
+
+**What would actually silence it.** Not reachable from inside this estate:
+
+1. **Upstream.** The vendor seals the bundle, or stops exec'ing through an unsealed one. This is a
+   Claude Code defect, not a limen or a macOS one.
+2. **A Gatekeeper allow-rule** — `sudo spctl --add --label … <bundle>` — a mutation of the system
+   security policy database. Human-gated: lever `L-CLAUDE-GATEKEEPER-ALLOW`. **Untested here**: the
+   command was blocked before execution (correctly — it rewrites system security policy), so whether
+   `spctl --add` still accepts a malformed bundle on this OS build is *unverified*. Do not record it
+   as a known-good cure until someone runs it and re-opens the app.
+
+**Do not "fix" this again without first reproducing a dialog.** Both producers are observable
+(`/usr/bin/log`, above; the `Verifying …` sheet on screen). A cure that cannot be shown to stop one
+of them is the seventh iteration of this loop, not the end of it.
+
+Re-signing remains **disqualified** (§3) and deletion remains a **duty cycle** (§4). Neither is
+reopened by this correction.
 
 ### Two traps
 

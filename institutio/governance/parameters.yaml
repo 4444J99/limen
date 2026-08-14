@@ -413,6 +413,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_CONDUCTING_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_CONDUCTING_REFRESH_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Finite subprocess deadline in seconds for conducting-report.py to refresh keeper-owned handoff admission before pairing it with current usage telemetry. Timeout withholds the daily delivery and records a bounded public-safe finish receipt."
   LIMEN_WATCH_RSS_MB:
     default: 512
     env: LIMEN_WATCH_RSS_MB
@@ -1335,6 +1341,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Heartbeat timeout in seconds for the corpus-feed outer process so prompt ingestion cannot wedge the beat."
+  LIMEN_TAPE_TZ:
+    default: ""                # SAFE CODE DEFAULT — blank renders the DEVICE's own zone, i.e. what Messages.app shows
+    env: LIMEN_TAPE_TZ
+    self_update: none
+    owner: continuity
+    note: "IANA zone name for the local-time rendering in scripts/capture-threads.py tapes (`ts.local` in the .jsonl, the `[timestamp]` column in the .md). Blank — the default — renders THIS DEVICE's zone, so a tape always agrees with the operator's own screen. Set it only to read deliberately in a known other party's zone; the chosen zone is then recorded in `ts.tz` on every row and in the tape's Clock frame header, so no reader has to infer it. Founded on a measured defect: the script hardcoded America/New_York on a device set to America/Sao_Paulo, so every rendered time sat 1h off Messages.app; a later review saw that gap, explained it with a plausible DST story, and 'corrected' four documents in the wrong direction. UTC (`ts.utc`) is canonical and unaffected by this setting."
   LIMEN_CAPABILITY_ROOTS:
     default: ""
     env: LIMEN_CAPABILITY_ROOTS
@@ -2845,12 +2857,6 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
-  LIMEN_MERGE_CI_RED_COOLDOWN:
-    default: "14400"
-    env: LIMEN_MERGE_CI_RED_COOLDOWN
-    self_update: none
-    owner: arms-agents
-    note: "Hysteresis cooldown in seconds before a CI-RED PR can be re-notified after clearing (notify-hysteresis): a rotating window must not re-page on the same cycle; 4h default matches the drain beat periodicity."
   LIMEN_LANE_THROUGHPUT:
     default: "1"
     env: LIMEN_LANE_THROUGHPUT
@@ -3564,6 +3570,24 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Max branches reap-branches.py deletes per run; the remainder is logged (never silently dropped) and reaped on the next hygiene beat."
+  LIMEN_BRANCH_REAP_CHECK:
+    default: '1'
+    env: LIMEN_BRANCH_REAP_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the branch-reap sensor (scripts/reap-branches.py --check, sensors.yaml 0g9b). The reap was wired into nothing — no sensor, no rung, never once in logs/beat-rungs.jsonl — so it ran only when a session ran it by hand and landed branches accumulated (87 reapable when this was added). The cost was paid by scripts/no-tasks-on-me.sh, a CLOSEOUT gate, which flipped exit 0 -> exit 1 inside forty minutes on 2026-08-14 because a branch landed mid-session: a session could no longer tell 'I left something hanging' from 'the fleet's backlog grew'. Read-only; stays red until the reap runs. Set 0 to silence."
+  LIMEN_BEAT_BRANCH_REAP:
+    default: 4
+    env: LIMEN_BEAT_BRANCH_REAP
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the branch-reap sensor. 4 follows the orphan-watcher precedent; unlike that local ps scan this pass goes online (PR state per branch, ~25 s measured), and branches land a few times a day, so every ~4 beats catches drift well inside the window where it matters."
+  LIMEN_BRANCH_REAP_TIMEOUT:
+    default: 120
+    env: LIMEN_BRANCH_REAP_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) for the branch-reap sensor pass. Measured 25 s wall-clock against 623 refs with live PR lookups; 120 leaves headroom for a slow GitHub without letting a hung pass stall the beat."
   LIMEN_BRANCH_REAP_EVERY_MIN:
     default: 30
     env: LIMEN_BRANCH_REAP_EVERY_MIN
@@ -5235,6 +5259,30 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Beat gate for ARCA (scripts/arca.sh backup, step 5c): every ~/Workspace/_*-private store, AES-256-encrypted with a key that lives only in the macOS Keychain, roundtrip-verified, pushed as ciphertext to the CURRENT generation repo — organvm/arca, then organvm/arca-g2, then organvm/arca-g3 (POTESTAS 0.3, #2089). 1=seal each beat (no-op in seconds when unchanged); 0=off. Fails soft (locked Keychain / offline). Vaults are shallow-cloned (depth 1); when the pack outgrows ARCA_MAX_MB (default 512), `rotate` cuts an orphan-root generation so the new vault never inherits prior growth and the old repo stays byte-identical as a cold archive. The local vault manifest owns `_generation.current/repo`, so the fleet follows each rotation with zero env changes. Script-level knobs are ARCA_WORKSPACE / ARCA_REPO / ARCA_VAULT_DIR / ARCA_KEY_SERVICE / ARCA_MAX_MB / ARCA_CLONE_URL_BASE."
+  LIMEN_LESSON_HARVEST_BACKLOG:
+    default: "1"               # ON — surface the unprocessed-session count each day (sensor 0z0a)
+    env: LIMEN_LESSON_HARVEST_BACKLOG
+    self_update: none
+    owner: censor
+    note: "Gate for the lesson-harvest-backlog beat sensor (institutio/governance/sensors.yaml section 0z0a). scripts/lesson-harvest.py --check prints per-vendor unprocessed/processed counts against the censor/lesson-harvest.jsonl cursor — count-only, PII-clean, read-only over session stores. The drain is the /lesson-harvest skill (model-in-the-loop), which routes lessons to existing termini only. 0 disables."
+  LIMEN_BEAT_LESSON_HARVEST:
+    default: "24"
+    env: LIMEN_BEAT_LESSON_HARVEST
+    self_update: none
+    owner: censor
+    note: "Beat-modulo cadence for the lesson-harvest-backlog sensor (0z0a). Default 24 — the backlog is a slow-moving pressure gauge; once a day keeps it visible without a per-beat directory walk."
+  LIMEN_LESSON_HARVEST_TIMEOUT:
+    default: "120"
+    env: LIMEN_LESSON_HARVEST_TIMEOUT
+    self_update: none
+    owner: censor
+    note: "Timeout (seconds) for the lesson-harvest-backlog sensor step. The check is a metadata-only walk of the session stores plus one cursor read; 120s is generous headroom."
+  LIMEN_LESSON_HARVEST_CURSOR:
+    default: ""
+    env: LIMEN_LESSON_HARVEST_CURSOR
+    self_update: none
+    owner: censor
+    note: "Override path for the lesson-harvest cursor ledger (default censor/lesson-harvest.jsonl under LIMEN_ROOT). Used by tests to point at a sandbox cursor; empty = default."
   LIMEN_ARCA_FRESHNESS:
     default: "1"               # ON — assert the vault is actually ADVANCING (sensor 5c1)
     env: LIMEN_ARCA_FRESHNESS
@@ -5894,6 +5942,12 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Per-run timeout (seconds) for the DIVRNAL sensor, and for each section `refresh:` command it shells out to. 240s covers the two refreshes that re-derive rather than trust a cache (scripts/organ-health.py, scripts/check-ideal-forms.py --measure)."
+  LIMEN_NOTIFY_HELPER:
+    default: "<calling checkout>/scripts/_notify.py"
+    env: LIMEN_NOTIFY_HELPER
+    self_update: none
+    owner: diurnal
+    note: "Path to the one permitted macOS notification effector. Shell callers such as netmode derive their sibling scripts/_notify.py when unset; tests and relocated runtime trees may override the path without reintroducing a direct osascript call."
   LIMEN_NOTIFY_GATE:
     default: "1"
     env: LIMEN_NOTIFY_GATE
