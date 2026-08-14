@@ -477,6 +477,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("nonblank text type" in error for error in result["errors"]))
 
+    def test_demo_requires_the_exact_supported_schema(self) -> None:
+        fixture_path = ROOT / "scripts/tests/fixtures/positioning-proof/synthetic-architecture-demo.json"
+        for schema_version in (None, "other.v99"):
+            fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+            fixture["schema_version"] = schema_version
+            result = MODULE.validate_demo_fixture(self.contract, fixture)
+            self.assertEqual("fail", result["status"])
+            self.assertTrue(any("schema_version" in error for error in result["errors"]))
+
     def test_external_validation_requires_two_substantive_independent_objects(self) -> None:
         empty = MODULE.validate_external_objects(
             self.contract,
@@ -688,10 +697,63 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "receipt_sha256": hashlib.sha256(b"receipt").hexdigest(),
             },
             phase_verifications=phase_verifications,
+            closure_remote_verification={
+                "status": "pass",
+                "repository": "organvm/limen",
+                "closure_head": MODULE.C03_CURRENT_HEAD,
+                "default_branch": "main",
+                "default_head": MODULE.C03_CURRENT_HEAD,
+                "contained": True,
+            },
         )
         self.assertFalse(result["ready"])
         self.assertTrue(any("immutable #2188 issue comment" in error for error in result["errors"]))
         self.assertTrue(any("self-declared phase_predicates" in error for error in result["errors"]))
+
+    def test_formalization_rejects_a_closure_head_outside_the_authoritative_default_branch(self) -> None:
+        errors = MODULE._validate_authoritative_closure_verification(
+            {
+                "status": "pass",
+                "repository": "organvm/limen",
+                "closure_head": MODULE.C03_CURRENT_HEAD,
+                "default_branch": "main",
+                "default_head": "f" * 40,
+                "contained": False,
+            },
+            MODULE.C03_CURRENT_HEAD,
+        )
+        self.assertTrue(any("authoritative default branch" in error for error in errors))
+
+    def test_live_closure_verification_rejects_an_unpushed_descendant(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            fixture = repository / "fixture.txt"
+            fixture.write_text("published\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "published"],
+                cwd=repository,
+                check=True,
+            )
+            published_head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            fixture.write_text("unpublished\n", encoding="utf-8")
+            subprocess.run(["git", "add", "fixture.txt"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "unpublished"],
+                cwd=repository,
+                check=True,
+            )
+            unpublished_head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            with mock.patch.object(MODULE, "_canonical_limen_remote_head", return_value=("main", published_head)):
+                with self.assertRaisesRegex(ValueError, "authoritative default branch"):
+                    MODULE._live_authoritative_closure_verification(repository, unpublished_head)
 
     def test_phase_receipts_bind_exact_live_marked_receipts(self) -> None:
         bindings, live = self._valid_phase_bindings()

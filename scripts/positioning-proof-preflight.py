@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -34,6 +35,7 @@ W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.p
 W07_WORKFLOW_PATH = "docs/positioning/program/w07_blinded_reader_workflow.py"
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
+ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 P02_ACCEPTED_HEAD = "8faa5fb9899231ebf5f87e78bb171544c11b79d7"
 C03_CURRENT_HEAD = "b6af8086c9050634313f519c29a6dfcb922c3721"
 C03_MERGE_COMMIT = "8f89ad16ca1df84b00cb8227c88f368d0d64631a"
@@ -947,6 +949,8 @@ def audit_surface_manifest(contract: dict[str, Any], manifest: dict[str, Any]) -
 
 def validate_demo_fixture(contract: dict[str, Any], fixture: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
+    if fixture.get("schema_version") != ARCHITECTURE_DEMO_SCHEMA:
+        errors.append(f"demo fixture schema_version must be {ARCHITECTURE_DEMO_SCHEMA}")
     if fixture.get("synthetic_only") is not True:
         errors.append("demo fixture must declare synthetic_only true")
     records = fixture.get("records")
@@ -1177,6 +1181,101 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
         raise ValueError(f"live {phase_id} marked receipt has no observed_heads binding")
     value["observed_heads"] = observed_heads
     return value
+
+
+def _canonical_limen_remote_head() -> tuple[str, str]:
+    environment = dict(os.environ)
+    for key in tuple(environment):
+        if key in {"GIT_DIR", "GIT_WORK_TREE", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS"} or key.startswith(
+            "GIT_CONFIG_KEY_"
+        ) or key.startswith("GIT_CONFIG_VALUE_"):
+            environment.pop(key, None)
+    environment.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_COUNT": "0",
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+    )
+    completed = subprocess.run(
+        ["git", "ls-remote", "--symref", "https://github.com/organvm/limen.git", "HEAD"],
+        cwd=Path("/"),
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if completed.returncode != 0:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise ValueError(f"canonical organvm/limen remote inspection failed: {detail}")
+    default_branch: str | None = None
+    default_head: str | None = None
+    for line in completed.stdout.splitlines():
+        if line.startswith("ref: refs/heads/") and line.endswith("\tHEAD"):
+            default_branch = line.removeprefix("ref: refs/heads/").removesuffix("\tHEAD")
+        elif line.endswith("\tHEAD"):
+            candidate = line.removesuffix("\tHEAD")
+            if FULL_HEAD.fullmatch(candidate):
+                default_head = candidate
+    if not isinstance(default_branch, str) or not default_branch.strip() or default_head is None:
+        raise ValueError("canonical organvm/limen remote returned no exact default-branch head")
+    return default_branch, default_head
+
+
+def _live_authoritative_closure_verification(repository: Path, closure_head: str) -> dict[str, Any]:
+    if not FULL_HEAD.fullmatch(closure_head):
+        raise ValueError("authoritative closure verification requires a full exact head")
+    default_branch, default_head = _canonical_limen_remote_head()
+    ancestry = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", closure_head, default_head],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if ancestry.returncode != 0:
+        raise ValueError("claimed C03 closure head is not contained by the authoritative default branch")
+    value = {
+        "status": "pass",
+        "repository": "organvm/limen",
+        "closure_head": closure_head,
+        "default_branch": default_branch,
+        "default_head": default_head,
+        "contained": True,
+    }
+    errors = _validate_authoritative_closure_verification(value, closure_head)
+    if errors:
+        raise ValueError("; ".join(errors))
+    return value
+
+
+def _validate_authoritative_closure_verification(value: object, closure_head: str) -> list[str]:
+    expected = {
+        "status",
+        "repository",
+        "closure_head",
+        "default_branch",
+        "default_head",
+        "contained",
+    }
+    if not isinstance(value, dict) or set(value) != expected:
+        return ["authoritative closure verification has an invalid exact schema"]
+    errors: list[str] = []
+    if value.get("status") != "pass" or value.get("repository") != "organvm/limen":
+        errors.append("authoritative closure verification did not pass for organvm/limen")
+    if value.get("closure_head") != closure_head:
+        errors.append("authoritative closure verification does not bind the claimed exact head")
+    default_branch = value.get("default_branch")
+    if not isinstance(default_branch, str) or not default_branch.strip():
+        errors.append("authoritative closure verification has no default branch")
+    if not FULL_HEAD.fullmatch(str(value.get("default_head") or "")):
+        errors.append("authoritative closure verification has no full default-branch head")
+    if value.get("contained") is not True:
+        errors.append("claimed C03 closure head is not contained by the authoritative default branch")
+    return errors
 
 
 def _validate_phase_receipt_bindings(
@@ -1463,6 +1562,7 @@ def formalization_readiness(
     repository: Path = ROOT,
     w07_verification: dict[str, Any] | None = None,
     phase_verifications: dict[str, dict[str, Any]] | None = None,
+    closure_remote_verification: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("exact_head")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
@@ -1477,6 +1577,15 @@ def formalization_readiness(
         if not isinstance(final_head, str) or not FULL_HEAD.fullmatch(final_head):
             receipt_errors.append("closure receipt requires a full exact head")
         else:
+            try:
+                authoritative = (
+                    closure_remote_verification
+                    if closure_remote_verification is not None
+                    else _live_authoritative_closure_verification(repository, final_head)
+                )
+                receipt_errors.extend(_validate_authoritative_closure_verification(authoritative, final_head))
+            except (json.JSONDecodeError, OSError, ValueError) as exc:
+                receipt_errors.append(str(exc))
             ancestry = subprocess.run(
                 ["git", "merge-base", "--is-ancestor", str(accepted_head), final_head],
                 cwd=repository,
