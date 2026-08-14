@@ -855,7 +855,7 @@ repo_overrides:
   organvm/glyph-cascade-tapes: {class: vault_private, why: "session recordings corpus — private data"}
   organvm-iii-ergon/growth-auditor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/hokage-chess--4444j99: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/hospes: {class: operation_private, why: "guest-ops engine; transcripts are vault-class", split: {into: ["organvm/arca"], why: "extract transcripts to the vault; engine stays private"}}
+  organvm/hospes: {class: operation_private, why: "guest-ops engine; transcripts are vault-class BY ARCHITECTURE (off-repo runtime custody + salon-archive/media-ark adapters hold the bytes; repo stores opaque references). The declared transcript eviction (split: into organvm/arca) retired 2026-08-14 as vacuously satisfied — full-history scan proved no vault-class plaintext was ever committed: docs/receipts/hospes-transcript-eviction-scan-20260814.json. Custody movement now waits only on L-HOSPES-CUSTODY-TRANSFER."}
   organvm/in-my-head: {class: vault_private, why: "personal notes — private data"}
   organvm/knowledge-corpus: {class: vault_private, why: "distilled corpus — internal strategy"}
   organvm/manumissio: {class: operation_private, why: "sovereign inference operation — private by design"}
