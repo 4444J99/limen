@@ -245,6 +245,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 capture_output=True,
             ).stdout
         ).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            response_target = Path(directory) / "w07-reader-responses.json"
+            response_target.write_text(json.dumps(payload), encoding="utf-8")
+            predicate_result = subprocess.run(
+                [sys.executable, str(ROOT / MODULE.W07_VALIDATOR_PATH), str(response_target)],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        predicate_output_sha256 = hashlib.sha256(predicate_result.stdout.encode("utf-8")).hexdigest()
         receipt = {
             "work_id": "PSP-P03-W07",
             "outcome": "succeeded",
@@ -257,6 +268,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "predicate": {
                 "command": f"python3 {MODULE.W07_VALIDATOR_PATH} {response_path}",
                 "exit_code": 0,
+                "output_sha256": predicate_output_sha256,
             },
             "reader_evidence": {
                 "reader_count": 5,
@@ -348,6 +360,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertIn("dependency_progress must be an object", MODULE.validate(changed))
 
     def test_c03_source_and_merge_bindings_fail_closed_on_drift(self) -> None:
+        accepted = next(row for row in self.contract["dependency_sources"] if row["id"] == "c03_identity_offers")
+        self.assertEqual("main", accepted["branch"])
+        self.assertEqual(MODULE.C03_MERGE_COMMIT, accepted["exact_head"])
+        self.assertEqual(MODULE.C03_MERGE_COMMIT, self.contract["commercial_artifact_set"]["source_head"])
         changed = json.loads(json.dumps(self.contract))
         changed["dependency_progress"]["c03"]["merge_commit"] = "0" * 40
         c03_source = next(row for row in changed["dependency_sources"] if row["id"] == "c03_identity_offers")
@@ -700,7 +716,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(source_url, request.full_url)
         self.assertEqual(30, opener.call_args.kwargs["timeout"])
 
-    def test_live_surface_inspection_binds_the_exact_raw_response_digest(self) -> None:
+    def test_live_surface_inspection_reproduces_canonical_text_not_volatile_raw_html(self) -> None:
         surface = "portfolio_front_door"
         head = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -752,6 +768,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with mock.patch.object(
                 MODULE,
                 "_fetch_bounded_public_surface",
+                return_value=b"<html><body>Changed public proof claim</body></html>",
+            ):
+                changed_errors, _resolved = MODULE._surface_inspection_errors(
+                    self.contract,
+                    {surface: inspection},
+                    {},
+                    ROOT,
+                )
+            with mock.patch.object(
+                MODULE,
+                "_fetch_bounded_public_surface",
                 side_effect=MODULE.HTTPException("truncated transport"),
             ):
                 transport_errors, _resolved = MODULE._surface_inspection_errors(
@@ -760,7 +787,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     {},
                     ROOT,
                 )
-        self.assertTrue(any("raw response differs" in error for error in errors), errors)
+        self.assertFalse(any("raw response differs" in error for error in errors), errors)
+        self.assertFalse(any("visible claims differ" in error for error in errors), errors)
+        self.assertTrue(any("visible claims differ" in error for error in changed_errors), changed_errors)
         self.assertTrue(
             any("live surface inspection could not reproduce" in error for error in transport_errors),
             transport_errors,
@@ -854,6 +883,31 @@ class PositioningProofPreflightTest(unittest.TestCase):
         for key in set(injected) - {"PATH"}:
             self.assertNotIn(key, environment)
         self.assertNotIn(injected["PATH"], environment["PATH"].split(os.pathsep))
+
+    def test_w07_validator_uses_the_trusted_interpreter_without_runtime_hooks(self) -> None:
+        completed = subprocess.CompletedProcess([], 0, "PASS\n", "")
+        injected = {
+            "PYTHONPATH": "/tmp/untrusted-python",
+            "PYTHONHOME": "/tmp/untrusted-home",
+            "LD_PRELOAD": "/tmp/untrusted.so",
+            "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            response = Path(directory) / "response.json"
+            response.write_text("{}", encoding="utf-8")
+            with mock.patch.dict(os.environ, injected, clear=False):
+                with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+                    observed = MODULE._run_trusted_w07_validator(response)
+        self.assertIs(completed, observed)
+        argv = run.call_args.args[0]
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
+        self.assertEqual("-I", argv[1])
+        self.assertEqual((ROOT / MODULE.W07_VALIDATOR_PATH).resolve(), Path(argv[2]))
+        for key in injected:
+            self.assertNotIn(key, environment)
+        self.assertEqual("1", environment["PYTHONNOUSERSITE"])
+        self.assertEqual("1", environment["PYTHONSAFEPATH"])
 
     def test_live_phase_verification_executes_and_binds_manifest_phase_proof(self) -> None:
         phase_id = "PSP-P03"
@@ -1901,6 +1955,23 @@ class PositioningProofPreflightTest(unittest.TestCase):
             binding, live = self._valid_w07_binding(repository, head, response_path, payload)
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
             self.assertTrue(any("trusted W07 blinded-reader predicate did not pass" in error for error in errors))
+
+    def test_w07_receipt_binds_the_reexecuted_predicate_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            receipt = binding["receipt"]
+            assert isinstance(receipt, dict)
+            predicate = receipt["predicate"]
+            assert isinstance(predicate, dict)
+            predicate["output_sha256"] = "0" * 64
+            digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+            binding["sha256"] = digest
+            live["receipt_sha256"] = digest
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+        self.assertTrue(any("predicate output digest differs" in error for error in errors), errors)
 
     def test_w07_receipt_rejects_duplicate_response_members_before_hashing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

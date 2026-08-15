@@ -252,7 +252,8 @@ def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
     elif isinstance(value, str):
         if PUBLIC_EMAIL.search(value) or PUBLIC_SECRET_VALUE.search(value):
             findings.add(path)
-        field_name = re.sub(r"[^a-z0-9]", "", path.rsplit(".", 1)[-1].casefold())
+        last_segment = re.sub(r"(?:\[\d+\])+$", "", path.rsplit(".", 1)[-1])
+        field_name = re.sub(r"[^a-z0-9]", "", last_segment.casefold())
         if (field_name.endswith("id") or field_name.endswith("identity")) and PRIVATE_IDENTIFIER.search(value):
             findings.add(path)
     return findings
@@ -1167,7 +1168,8 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
             errors.append(
                 "analysis review_verdict contains private or credential material: " + ", ".join(private_paths)
             )
-    if verdict.get("reviewer_class") not in INDEPENDENT_REVIEWER_CLASSES:
+    reviewer_class = verdict.get("reviewer_class")
+    if not isinstance(reviewer_class, str) or reviewer_class not in INDEPENDENT_REVIEWER_CLASSES:
         errors.append("analysis review_verdict requires an independent reviewer class")
     reviewer_identity = verdict.get("reviewer_identity")
     if not _public_authenticated_identity(reviewer_identity):
@@ -1213,7 +1215,8 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         errors.append("analysis review_verdict does not bind the analyzed data digest")
     if verdict.get("population_digest") != analysis.get("population_digest"):
         errors.append("analysis review_verdict does not bind the source population digest")
-    if verdict.get("verdict") not in REVIEW_VERDICTS:
+    review_disposition = verdict.get("verdict")
+    if not isinstance(review_disposition, str) or review_disposition not in REVIEW_VERDICTS:
         errors.append("analysis review_verdict must explicitly publish or withhold")
     limitations = verdict.get("limitations")
     if not (

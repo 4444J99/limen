@@ -1308,7 +1308,7 @@ def run_request(
     started_at = _timestamp()
     try:
         contract_payload, contract_environment = _proof_contract_snapshot()
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.TimeoutExpired) as exc:
         return _blocked_receipt(request, started_at, f"proof contract is unavailable: {exc}")
     errors = validate_request(request, contract_payload=contract_payload)
     if errors:
@@ -1449,7 +1449,7 @@ def run_request(
         result = isolated["classification"]
         errors = list(isolated["errors"])
         predicate_runtime = dict(isolated["runtime"])
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
         output = b""
         exit_code = None
         result = "blocked_external"

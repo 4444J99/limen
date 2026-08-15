@@ -164,8 +164,8 @@
     },
     {
       "id": "c03_identity_offers",
-      "branch": "codex/psp-c03-identity-offers-preflight",
-      "exact_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+      "branch": "main",
+      "exact_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "merge_commit": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
       "registry_alignment_commit": "986ebb41778cf082e01ede0cb6d268cebf54a106",
       "required_path": "institutio/positioning/commercial-contract.yaml",
@@ -175,7 +175,7 @@
     }
   ],
   "commercial_artifact_set": {
-    "source_head": "b6af8086c9050634313f519c29a6dfcb922c3721",
+    "source_head": "8f89ad16ca1df84b00cb8227c88f368d0d64631a",
     "status": "source_bound_preflight_not_public",
     "artifacts": [
       {"id": "agentic_delivery_audit", "path": "docs/positioning/offers/agentic-delivery-audit.md", "expected_blob": "34bd10760afe6e8e8b778e0f6ad59c8aa1766097", "levels": ["L2", "L3"]},

@@ -52,13 +52,14 @@ def attach_origin(repository: Path, remote_root: Path) -> Path:
 
 def run_request(request: dict[str, object]) -> dict[str, object]:
     repository = Path(str(request["repository_path"]))
+    flagship_key = request["flagship_id"] if isinstance(request.get("flagship_id"), str) else "synthetic"
     hermetic_contract = {
         "repository": request["repository"],
         "default_branch": request["default_branch"],
         "predicate": request["predicate"],
         "runtime_setup": {"mode": "none"},
     }
-    hermetic_payload = {"exact_head_receipt_plan": {"flagship_predicates": {request["flagship_id"]: hermetic_contract}}}
+    hermetic_payload = {"exact_head_receipt_plan": {"flagship_predicates": {flagship_key: hermetic_contract}}}
     contract_environment = {
         "proof_contract_head": "a" * 40,
         "proof_contract_blob": "b" * 40,
@@ -397,6 +398,10 @@ class PositioningProofRunnerTest(unittest.TestCase):
             any("review contains private or credential material" in error for error in result["errors"]),
             result["errors"],
         )
+
+    def test_public_safe_scan_checks_identifier_values_inside_lists(self) -> None:
+        findings = COST._find_forbidden_public_material({"record_id": ["private-123"]})
+        self.assertEqual({"$.record_id[0]"}, findings)
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -821,7 +826,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 "limitations": ["Synthetic fixture only."],
             }
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any("nonblank path string" in error for error in result["errors"]))
 
@@ -851,7 +856,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             target = request["predicate"] if field in {"timeout_seconds", "argv"} else request
             assert isinstance(target, dict)
             target[field] = value
-            result = RECEIPT.run_request(request)
+            result = run_request(request)
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any(expected_error in error for error in result["errors"]))
 
@@ -891,8 +896,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     self.assertTrue(receipt["errors"])
                     self.assertEqual(result.stdout, output_path.read_text(encoding="utf-8"))
 
+    def test_receipt_request_blocks_when_contract_git_inspection_times_out(self) -> None:
+        timeout = subprocess.TimeoutExpired(["git", "show"], 60)
+        with mock.patch.object(RECEIPT, "_proof_contract_snapshot", side_effect=timeout):
+            result = RECEIPT.run_request({})
+        self.assertEqual("blocked_external", result["result"])
+        self.assertTrue(any("proof contract is unavailable" in error for error in result["errors"]))
+
     def test_receipt_request_binds_selected_flagships_to_contract_owned_predicates(self) -> None:
-        contract = RECEIPT._flagship_contract("limen")
+        payload = json.loads(RECEIPT.PROOF_CONTRACT.read_text(encoding="utf-8"))
+        contract = RECEIPT._flagship_contract_from_payload(payload, "limen")
         assert contract is not None
         request = {
             "schema_version": RECEIPT.SCHEMA_VERSION,
@@ -904,16 +917,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "predicate": copy.deepcopy(contract["predicate"]),
             "limitations": ["Validation-only fixture."],
         }
-        self.assertEqual([], RECEIPT.validate_request(request))
+        self.assertEqual([], RECEIPT.validate_request(request, contract_payload=payload))
 
         drifted = copy.deepcopy(request)
         drifted["predicate"]["argv"] = [sys.executable, "-c", "print('pass')"]
-        errors = RECEIPT.validate_request(drifted)
+        errors = RECEIPT.validate_request(drifted, contract_payload=payload)
         self.assertTrue(any("contract-owned flagship command" in error for error in errors), errors)
 
         unknown = copy.deepcopy(request)
         unknown["flagship_id"] = "arbitrary"
-        errors = RECEIPT.validate_request(unknown)
+        errors = RECEIPT.validate_request(unknown, contract_payload=payload)
         self.assertTrue(any("not selected by the proof contract" in error for error in errors), errors)
 
     def test_cost_failure_private_or_unknown_fields_fail_closed(self) -> None:
@@ -1014,6 +1027,24 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = reproduce_cost(payload)
             self.assertEqual("withheld", result["status"])
             self.assertTrue(any("reviewed public failure_class" in error for error in result["errors"]))
+
+    def test_cost_failure_unhashable_review_enums_fail_closed(self) -> None:
+        for field, value, expected in (
+            ("reviewer_class", {"class": "independent_model"}, "independent reviewer class"),
+            ("verdict", ["publishable_public_safe"], "explicitly publish or withhold"),
+        ):
+            with self.subTest(field=field):
+                payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+                review = independent_cost_review(payload)
+                review[field] = value
+                result = COST.reproduce(
+                    payload,
+                    input_artifact=COST_INPUT_ARTIFACT,
+                    review_artifact=COST_REVIEW_ARTIFACT,
+                    review_verdict=review,
+                )
+                self.assertEqual("withheld", result["status"])
+                self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
 
     def test_cost_failure_unhashable_identity_and_state_fields_fail_closed(self) -> None:
         cases = (
@@ -1398,6 +1429,23 @@ class PositioningProofRunnerTest(unittest.TestCase):
             blocked = run_request(missing)
             self.assertEqual("blocked_external", blocked["result"])
             self.assertIn("predicate could not start", blocked["errors"][0])
+
+            timed = {
+                **base_request,
+                "predicate": {
+                    "argv": [sys.executable, "-c", "print('pass')"],
+                    "timeout_seconds": 10,
+                    "max_output_bytes": 1024,
+                },
+            }
+            with mock.patch.object(
+                RECEIPT,
+                "_run_isolated_exact_head_predicate",
+                side_effect=subprocess.TimeoutExpired([sys.executable], 10),
+            ):
+                timed_out = run_request(timed)
+            self.assertEqual("blocked_external", timed_out["result"])
+            self.assertIn("predicate could not start", timed_out["errors"][0])
 
     def test_remote_default_branch_advance_is_not_current(self) -> None:
         with (

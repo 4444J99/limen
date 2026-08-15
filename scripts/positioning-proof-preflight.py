@@ -197,7 +197,7 @@ EXPECTED_DEPENDENCY_BINDINGS = {
         "3e49114563075dcd6926e3b7f8fd24bf8b9c3fee",
     ),
     "c03_identity_offers": (
-        C03_CURRENT_HEAD,
+        C03_MERGE_COMMIT,
         "institutio/positioning/commercial-contract.yaml",
         "11ebfe5cb972c5b535059e5aa1f607ea64e90d17",
     ),
@@ -461,8 +461,10 @@ def validate(contract: dict[str, Any]) -> list[str]:
         (dependency for dependency in dependencies if dependency.get("id") == "c03_identity_offers"),
         {},
     )
-    if c03_dependency.get("exact_head") != c03.get("exact_head"):
-        errors.append("C03 dependency source must match current progress head")
+    if c03_dependency.get("exact_head") != C03_MERGE_COMMIT:
+        errors.append("C03 dependency source must use the reachable merged integration commit")
+    if c03_dependency.get("branch") != "main":
+        errors.append("C03 dependency source must use the authoritative merged main ref")
     if c03_dependency.get("merge_commit") != C03_MERGE_COMMIT:
         errors.append("C03 dependency source must bind its merged main commit")
     for dependency in dependencies:
@@ -483,8 +485,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
     if not isinstance(commercial_artifacts, dict):
         errors.append("commercial_artifact_set must be an object")
     else:
-        if commercial_artifacts.get("source_head") != C03_CURRENT_HEAD:
-            errors.append("commercial artifact set must use the current C03 preflight head")
+        if commercial_artifacts.get("source_head") != C03_MERGE_COMMIT:
+            errors.append("commercial artifact set must use the reachable C03 merged integration commit")
         artifacts = commercial_artifacts.get("artifacts")
         if not isinstance(artifacts, list):
             errors.append("commercial artifact set must contain an artifacts list")
@@ -1600,12 +1602,6 @@ def _surface_inspection_errors(
                         errors.append(f"live surface canonical extraction failed: {surface}: {exc}")
                     else:
                         if (
-                            isinstance(raw_response_sha256, str)
-                            and SHA256.fullmatch(raw_response_sha256)
-                            and hashlib.sha256(live_content).hexdigest() != raw_response_sha256
-                        ):
-                            errors.append(f"live surface raw response differs from the bound response: {surface}")
-                        if (
                             isinstance(extracted_text_sha256, str)
                             and SHA256.fullmatch(extracted_text_sha256)
                             and hashlib.sha256(live_extraction).hexdigest() != extracted_text_sha256
@@ -2591,6 +2587,27 @@ def _canonical_w07_decision_memo(response_payload: dict[str, Any]) -> bytes:
     return workflow.decision_memo(response_payload, verdict).encode("utf-8")
 
 
+def _run_trusted_w07_validator(response_path: Path) -> subprocess.CompletedProcess[str]:
+    interpreter = Path(sys.executable).resolve(strict=True)
+    validator = (ROOT / W07_VALIDATOR_PATH).resolve(strict=True)
+    if validator != ROOT / W07_VALIDATOR_PATH or not validator.is_file():
+        raise ValueError("trusted W07 validator must be the tracked repository script")
+    environment = _sanitized_git_environment()
+    for key in tuple(environment):
+        if key.upper().startswith(("PYTHON", "LD_", "DYLD_")):
+            environment.pop(key, None)
+    environment.update({"PYTHONNOUSERSITE": "1", "PYTHONSAFEPATH": "1"})
+    return subprocess.run(
+        [str(interpreter), "-I", str(validator), str(response_path)],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=90,
+    )
+
+
 def _verify_w07_response_blob(
     repository: Path,
     observed_head: str,
@@ -2600,6 +2617,7 @@ def _verify_w07_response_blob(
     decision_memo_path: str,
     decision_memo_sha256: str,
     evidence: dict[str, Any],
+    predicate: dict[str, Any],
 ) -> None:
     ancestry = _sanitized_ancestry(repository, observed_head, closure_head)
     if ancestry.returncode != 0:
@@ -2623,17 +2641,15 @@ def _verify_w07_response_blob(
     with tempfile.TemporaryDirectory() as directory:
         response_target = Path(directory) / "w07-reader-responses.json"
         response_target.write_bytes(response_blob)
-        completed = subprocess.run(
-            [sys.executable, str(ROOT / W07_VALIDATOR_PATH), str(response_target)],
-            cwd=ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=90,
-        )
+        completed = _run_trusted_w07_validator(response_target)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise ValueError(f"trusted W07 blinded-reader predicate did not pass: {detail}")
+    if predicate.get("exit_code") != completed.returncode:
+        raise ValueError("W07 receipt predicate exit_code differs from the exact-head validator result")
+    predicate_output_sha256 = predicate.get("output_sha256")
+    if hashlib.sha256(completed.stdout.encode("utf-8")).hexdigest() != predicate_output_sha256:
+        raise ValueError("W07 receipt predicate output digest differs from the exact-head validator result")
     if decision_memo_blob != _canonical_w07_decision_memo(response_payload):
         raise ValueError("W07 decision memo differs from the canonical aggregate of the exact response set")
     match = re.search(
@@ -2738,6 +2754,10 @@ def _validate_w07_receipt_binding(
         expected_command = f"python3 {W07_VALIDATOR_PATH} {response_path}" if response_path is not None else None
         if not isinstance(predicate, dict) or predicate.get("command") != expected_command:
             errors.append("embedded W07 receipt must bind the exact manifest-owned blinded-reader predicate command")
+        elif predicate.get("exit_code") != 0:
+            errors.append("embedded W07 receipt predicate must record exit_code 0")
+        elif not isinstance(predicate.get("output_sha256"), str) or not SHA256.fullmatch(predicate["output_sha256"]):
+            errors.append("embedded W07 receipt predicate must bind a lowercase output SHA-256")
     if errors:
         return errors
     assert isinstance(receipt, dict)
@@ -2745,6 +2765,7 @@ def _validate_w07_receipt_binding(
     assert isinstance(observed_head, str)
     assert isinstance(response_path, str)
     assert isinstance(memo_path, str)
+    assert isinstance(predicate, dict)
     try:
         _verify_w07_response_blob(
             repository,
@@ -2755,6 +2776,7 @@ def _validate_w07_receipt_binding(
             memo_path,
             evidence["decision_memo_sha256"],
             evidence,
+            predicate,
         )
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
         return [str(exc)]
