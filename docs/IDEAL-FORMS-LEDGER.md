@@ -236,7 +236,51 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Status:** DONE (2026-07-30).
 - **Owner:** Claude (`limen.harness_paths` + `harness-root-probe` sensor).
 - **Next form:** the same shape for the remaining vendor roots (`~/.codex`, `~/.copilot`,
-  `~/.gemini`, opencode's sqlite) — each is undeclared today and is the same bug waiting.
+  `~/.gemini`, opencode's sqlite). **Half-closed 2026-08-15:** all 15 vendor roots are now
+  *declared* in one place (`insight-cross-vendor-ingest.VENDOR_REGISTRY`, "every vendor must appear
+  here; silence is not allowed") and sensed at beat cadence by `insight-cross-vendor`. Declaration
+  was the easy half. The open half is *legibility* — a declared root you cannot read anything out of
+  is still a blind spot — and it is now its own row, [`IF-FLEET-LEGIBLE`](#if-fleet-legible--every-lanes-tier-spend-and-claims-are-answerable-and-a-blind-lane-says-so).
+
+### IF-FLEET-LEGIBLE — every lane's tier, spend, and claims are answerable, and a blind lane says so
+
+- **Ideal form:** every agent lane is legible to the estate's own governance — what tier it ran,
+  what it spent, what it claimed — from a declared registry rather than from one vendor's transcript
+  schema. A rule that binds the fleet is **enforced over the fleet**; otherwise the lanes it was
+  never written for are exempt by accident. A lane whose store cannot answer reports **BLIND**, never
+  clean.
+- **Distance:** DERIVED — `python3 scripts/check-ideal-forms.py --measure`.
+- **Evidence (2026-08-15):** a five-lane insights sweep (Claude `/insights` plus `vendor-insights`
+  over codex/copilot/opencode/antigravity) found copilot running `claude-fable-5` in 3 of its 5
+  substantive sessions. `docs/fable-allotment.md` declares Fable reserved **estate-wide**, and
+  nothing fired — because enforcement was Claude-lane-only on *both* axes:
+  `fable-allotment.py::_fable_weekly_tokens()` sums spend from Claude transcripts alone, and
+  `claude-workflow-guard.py` cannot resolve a non-Claude transcript path at all. `AGENTS.md`'s five
+  vendor subsections mentioned Fable **zero** times. Nothing was wrong with the copilot lane; the
+  rule had only ever been written for one lane's store. `scripts/check-reserved-tier.py` (#2468) now
+  audits every lane from the vendor indexes the beat already refreshes; its first run reported **24
+  unaccepted reserved-tier runs (21 claude, 3 copilot) against 1 acceptance receipt on disk**, over a
+  stated denominator of 132 sessions read of 263 in window.
+- **Why it partitions rather than counts:** four lanes record no model identity at all, so a plain
+  violation count would report them **clean**. They are carried as residual through
+  `limen.bucket_partition` and recorded in a shrink-only baseline; being listed is *not* permission,
+  and a lane that regains model identity fails the stale line.
+- **Scope, stated rather than assumed:** this row covers the *tier* axis. The *claims* axis is not
+  yet measurable — `reconcile-closeouts.py --check` exits `0` today having examined **0 claims**,
+  because `logs/session-claims.jsonl` is fed only by Claude's SessionEnd breadcrumb and the
+  `closeout-reconcile` sensor ships `default: "0"`. A probe that reports at-ideal over an empty
+  population is `PREC-2026-08-08-degenerate-population-covers-one-input`, so completion-honesty
+  deliberately does **not** get a row here until its population is real. The *spend* axis is
+  likewise Claude-only and unmeasured elsewhere; this row asserts acceptance, not magnitude.
+- **Status:** PARTIAL — the audit is shipped, gated (`reserved-tier-test`), and beat-wired
+  (`reserved-tier-audit`, advisory by construction: it opens with a 24-run backlog, and the estate's
+  observe-before-enforce doctrine says a new predicate surfaces its backlog before it blocks). Four
+  lanes remain blind and the backlog is unaccepted.
+- **Owner:** Claude (`scripts/check-reserved-tier.py` · `cli/src/limen/bucket_partition.py` ·
+  `institutio/governance/reserved-tier-blind-baseline.txt`).
+- **Next form:** the claims axis — cross-vendor session-claim capture so
+  `reconcile-closeouts.py` reconciles over a real population instead of an empty one, at which point
+  completion honesty earns its own row.
 
 ### IF-SENSOR-REGISTRY — the beat sensors are declared data, all consumers derive
 - **Ideal form:** the beat's continuous-runtime sensors live in one registry
