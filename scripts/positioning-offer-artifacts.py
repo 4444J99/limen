@@ -45,6 +45,7 @@ EXPECTED_ROUTE_PRIORITY = [
     "install",
     "audit",
 ]
+QUALIFICATION_ROUTES = frozenset(EXPECTED_ROUTE_PRIORITY)
 EXPECTED_OFFER_CONTRACT = {
     "audit": {
         "stage": "diagnose",
@@ -351,6 +352,14 @@ def _is_nonblank_text_list(value: Any) -> bool:
     )
 
 
+def _is_unique_text_list(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and all(isinstance(item, str) and bool(item.strip()) for item in value)
+        and len(value) == len(set(value))
+    )
+
+
 def _numeric_leaf_paths(value: Any, prefix: str = "") -> Iterable[str]:
     if isinstance(value, bool):
         return
@@ -363,7 +372,6 @@ def _numeric_leaf_paths(value: Any, prefix: str = "") -> Iterable[str]:
     elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         for index, item in enumerate(value):
             yield from _numeric_leaf_paths(item, f"{prefix}[{index}]")
-
 
 def _offer_map(data: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     ladder = _mapping(data.get("offer_ladder"))
@@ -399,6 +407,30 @@ def _rule_matches(rule: Mapping[str, Any], facts: Mapping[str, Any]) -> bool:
         and (not any_terms or any(facts.get(str(term), False) is True for term in any_terms))
         and not any(facts.get(str(term), False) is True for term in none_terms)
     )
+
+
+def _is_evaluable_qualification_rule(rule: Mapping[str, Any]) -> bool:
+    return (
+        isinstance(rule.get("id"), str)
+        and bool(rule["id"].strip())
+        and isinstance(rule.get("route"), str)
+        and rule["route"] in QUALIFICATION_ROUTES
+        and isinstance(rule.get("priority"), int)
+        and not isinstance(rule["priority"], bool)
+        and all(_is_unique_text_list(rule.get(condition)) for condition in ("any", "all", "none"))
+    )
+
+
+def evaluate_qualification_route(
+    rules: Sequence[Mapping[str, Any]],
+    facts: Mapping[str, bool],
+    default_route: str,
+) -> str:
+    """Return the first priority-ordered matching route, or the explicit default."""
+    for rule in sorted(rules, key=_priority_value):
+        if _is_evaluable_qualification_rule(rule) and _rule_matches(rule, facts):
+            return str(rule["route"])
+    return default_route
 
 
 def _priority_value(rule: Mapping[str, Any]) -> int:
@@ -1026,22 +1058,44 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
     qualification = _require_fields(
         errors,
         data.get("qualification"),
-        {"routing_priority", "rules", "scenarios", "decline_language", "review_language"},
+        {"default_route", "routing_priority", "rules", "scenarios", "decline_language", "review_language"},
         "qualification",
     )
-    rules = [_mapping(rule) for rule in _sequence(qualification.get("rules"))]
-    route_priority = list(_sequence(qualification.get("routing_priority")))
+    default_route = qualification.get("default_route")
+    _require(
+        errors,
+        isinstance(default_route, str) and default_route == "human_review",
+        "qualification.default_route must be human_review",
+    )
+    raw_rules = qualification.get("rules")
+    _require(errors, isinstance(raw_rules, list), "qualification.rules must be a list")
+    rules = [_mapping(rule) for rule in _sequence(raw_rules)]
+    raw_route_priority = qualification.get("routing_priority")
+    _require(errors, isinstance(raw_route_priority, list), "qualification.routing_priority must be a list")
+    route_priority = list(_sequence(raw_route_priority))
     _require(
         errors,
         route_priority == EXPECTED_ROUTE_PRIORITY,
         f"routing priority drifted: expected {EXPECTED_ROUTE_PRIORITY}",
     )
-    rule_ids = [str(rule.get("id")) for rule in rules]
-    priorities = [rule.get("priority") if isinstance(rule.get("priority"), int) else None for rule in rules]
-    _require(errors, len(rule_ids) == len(set(rule_ids)), "qualification rule IDs must be unique")
     _require(
         errors,
-        len(priorities) == len(set(priorities)),
+        _is_unique_text_list(raw_route_priority),
+        "qualification.routing_priority must contain unique non-blank route strings",
+    )
+    rule_ids = [rule.get("id") for rule in rules]
+    priorities = [rule.get("priority") for rule in rules]
+    integer_priorities = [
+        priority for priority in priorities if isinstance(priority, int) and not isinstance(priority, bool)
+    ]
+    _require(
+        errors,
+        _is_unique_text_list(rule_ids),
+        "qualification rule IDs must be unique non-blank strings",
+    )
+    _require(
+        errors,
+        len(integer_priorities) == len(priorities) and len(integer_priorities) == len(set(integer_priorities)),
         "qualification priorities must be unique",
     )
     for rule in rules:
@@ -1054,15 +1108,26 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         )
         _require(
             errors,
-            isinstance(rule.get("priority"), int),
+            isinstance(rule.get("route"), str) and rule.get("route") in QUALIFICATION_ROUTES,
+            f"qualification rule {rule_id}.route must be a supported route string",
+        )
+        _require(
+            errors,
+            isinstance(rule.get("priority"), int) and not isinstance(rule.get("priority"), bool),
             f"qualification rule {rule_id}.priority must be an integer",
         )
         for condition in ("any", "all", "none"):
             _require(
                 errors,
-                isinstance(rule.get(condition), list),
-                f"qualification rule {rule_id}.{condition} must be a list",
+                _is_unique_text_list(rule.get(condition)),
+                f"qualification rule {rule_id}.{condition} must be a list of unique non-blank strings",
             )
+    rule_routes = {rule.get("route") for rule in rules if isinstance(rule.get("route"), str)}
+    _require(
+        errors,
+        rule_routes == QUALIFICATION_ROUTES,
+        f"qualification rules must cover exactly {sorted(QUALIFICATION_ROUTES)}",
+    )
     sorted_routes = [rule.get("route") for rule in sorted(rules, key=_priority_value)]
     _require(
         errors,
@@ -1076,38 +1141,63 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         "partnership routing must explicitly exclude the public front door",
     )
 
-    for raw_scenario in _sequence(qualification.get("scenarios")):
+    raw_scenarios = qualification.get("scenarios")
+    _require(
+        errors,
+        isinstance(raw_scenarios, list) and bool(raw_scenarios),
+        "qualification scenario matrix must be a non-empty list",
+    )
+    scenarios = [_mapping(scenario) for scenario in _sequence(raw_scenarios)]
+    scenario_ids = [scenario.get("id") for scenario in scenarios]
+    _require(
+        errors,
+        _is_unique_text_list(scenario_ids),
+        "qualification scenario IDs must be unique non-blank strings",
+    )
+    scenario_routes: set[str] = set()
+    for scenario in scenarios:
         scenario = _require_fields(
             errors,
-            raw_scenario,
+            scenario,
             {"id", "facts", "expected_route"},
             "qualification scenario",
         )
         scenario_id = str(scenario.get("id", "unknown"))
-        facts = _mapping(scenario.get("facts"))
+        raw_facts = scenario.get("facts")
+        facts = _mapping(raw_facts)
         _require(
             errors,
-            bool(facts) and all(isinstance(value, bool) for value in facts.values()),
-            f"scenario {scenario_id} facts must be non-empty booleans",
+            bool(facts)
+            and isinstance(raw_facts, Mapping)
+            and all(isinstance(key, str) and bool(key.strip()) and isinstance(value, bool) for key, value in facts.items()),
+            f"scenario {scenario_id} facts must be a non-empty mapping of non-blank boolean inputs",
         )
-        matches = sorted(
-            (rule for rule in rules if _rule_matches(rule, facts)),
-            key=_priority_value,
+        expected_route = scenario.get("expected_route")
+        _require(
+            errors,
+            isinstance(expected_route, str) and expected_route in QUALIFICATION_ROUTES,
+            f"scenario {scenario_id}.expected_route must be a supported route string",
         )
-        _require(errors, bool(matches), f"scenario {scenario_id} has no route")
-        if matches:
-            _require(
-                errors,
-                matches[0].get("route") == scenario.get("expected_route"),
-                f"scenario {scenario_id} expected {scenario.get('expected_route')} "
-                f"but routed to {matches[0].get('route')}",
-            )
+        if isinstance(expected_route, str):
+            scenario_routes.add(expected_route)
+        route = evaluate_qualification_route(rules, facts, default_route if isinstance(default_route, str) else "")
+        _require(
+            errors,
+            route == expected_route,
+            f"scenario {scenario_id} expected {expected_route} but routed to {route}",
+        )
+        matches = sorted((rule for rule in rules if _rule_matches(rule, facts)), key=_priority_value)
         commercial_matches = {str(rule.get("route")) for rule in matches if rule.get("route") in COMMERCIAL_ROUTES}
         _require(
             errors,
             len(commercial_matches) <= 1,
             f"offer overlap in scenario {scenario_id}: {sorted(commercial_matches)}",
         )
+    _require(
+        errors,
+        scenario_routes == QUALIFICATION_ROUTES,
+        f"qualification scenario matrix must cover exactly {sorted(QUALIFICATION_ROUTES)}",
+    )
 
     public_payload = {
         "contract": {
@@ -1477,6 +1567,8 @@ def render_qualification_page(data: Mapping[str, Any]) -> str:
     lines.extend(
         [
             "",
+            f"**Default route:** `{qualification['default_route']}`. Unmatched or insufficient-evidence requests remain in human review.",
+            "",
             "Rules are evaluated in this priority order; the first match is the route.",
             "",
             "## Routing rules",
@@ -1634,6 +1726,7 @@ def validate_qualification_page_coverage(data: Mapping[str, Any], text: str, lab
     required_values: list[tuple[str, str]] = [
         ("decline_language", str(qualification["decline_language"])),
         ("review_language", str(qualification["review_language"])),
+        ("default_route", f"**Default route:** `{qualification['default_route']}`"),
     ]
     audiences = _audience_map(data)
     required_values.extend(

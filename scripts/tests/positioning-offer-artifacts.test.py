@@ -318,6 +318,112 @@ class OfferArtifactTests(unittest.TestCase):
         install_rule["none"] = []
         self.assert_contract_error(changed, "offer overlap in scenario")
 
+    def test_qualification_scenario_matrix_must_not_be_empty(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["scenarios"] = []
+        self.assert_contract_error(changed, "qualification scenario matrix must be a non-empty list")
+
+    def test_qualification_scenario_ids_must_be_unique_and_non_blank(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        scenarios = changed["qualification"]["scenarios"]
+        scenarios[1]["id"] = scenarios[0]["id"]
+        self.assert_contract_error(changed, "qualification scenario IDs must be unique non-blank strings")
+
+    def test_qualification_scenario_matrix_must_cover_every_route(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["scenarios"] = [
+            scenario for scenario in changed["qualification"]["scenarios"] if scenario["expected_route"] != "decline"
+        ]
+        self.assert_contract_error(changed, "qualification scenario matrix must cover exactly")
+
+    def test_qualification_rules_reject_malformed_priority_and_inputs(self) -> None:
+        priority = copy.deepcopy(self.contract)
+        priority["qualification"]["rules"][0]["priority"] = True
+        self.assert_contract_error(priority, "qualification rule guarded_exception.priority must be an integer")
+
+        inputs = copy.deepcopy(self.contract)
+        inputs["qualification"]["rules"][0]["any"] = ["pricing_exception", True]
+        self.assert_contract_error(
+            inputs,
+            "qualification rule guarded_exception.any must be a list of unique non-blank strings",
+        )
+
+    def test_qualification_invalid_rule_accumulates_errors_without_raising(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["rules"][0].pop("route")
+        errors = MODULE.validate_contract(changed)
+        self.assertTrue(
+            any("qualification rule guarded_exception missing required field: route" in error for error in errors),
+            errors,
+        )
+        self.assertTrue(
+            any("qualification rule guarded_exception.route must be a supported route string" in error for error in errors),
+            errors,
+        )
+
+        non_mapping = copy.deepcopy(self.contract)
+        non_mapping["qualification"]["rules"][0] = None
+        errors = MODULE.validate_contract(non_mapping)
+        self.assertTrue(
+            any("qualification rule unknown must be a non-empty mapping" in error for error in errors),
+            errors,
+        )
+
+    def test_insufficient_evidence_overrides_otherwise_matching_commercial_route(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertIn("insufficient_evidence", qualification["rules"][0]["any"])
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                qualification["rules"],
+                {
+                    "insufficient_evidence": True,
+                    "diagnosis_needed": True,
+                    "read_access": True,
+                    "sponsor_authority": True,
+                    "bounded_initiative": True,
+                },
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_unmatched_facts_fall_back_to_human_review(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                qualification["rules"],
+                {"insufficient_evidence": True},
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_first_match_precedence_uses_priority(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                list(reversed(qualification["rules"])),
+                {
+                    "partnership_interest": True,
+                    "product_readiness_evidence": True,
+                    "qualified_operator": True,
+                    "legal_terms": True,
+                },
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_page_binds_the_default_route(self) -> None:
+        rendered = MODULE.render_artifacts(self.contract)[MODULE.QUALIFICATION_FILE]
+        changed = rendered.replace("**Default route:** `human_review`", "**Default route:** `audit`", 1)
+        errors = MODULE.validate_qualification_page_coverage(
+            self.contract,
+            changed,
+            MODULE.QUALIFICATION_FILE,
+        )
+        self.assertTrue(any("missing canonical default_route value" in error for error in errors), errors)
+
     def test_public_partnership_promotion_in_source_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["offer_ladder"]["secondary"]["public_cta"] = True
