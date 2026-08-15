@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -403,6 +404,25 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             live_heads=heads,
         )
         self.assertTrue(any("observed_head drifted live" in error for error in errors))
+        public_rows = sorted(
+            (row for row in self.audit["candidates"] if row["visibility"] == "public"),
+            key=lambda value: value["repository"],
+        )
+        response = {
+            "data": {
+                f"r{index}": {"isPrivate": False, "object": {"oid": value["observed_head"]}}
+                for index, value in enumerate(public_rows)
+            }
+        }
+        collection = MODULE.LiveCollection(call_limit=1)
+        with mock.patch.object(MODULE, "_run_json", return_value=response):
+            self.assertEqual(heads | {first_repository: self.public_row()["observed_head"]}, MODULE.collect_public_head_observations(self.audit, collection))
+        response["data"]["r0"]["object"]["oid"] = "0" * 40
+        with (
+            mock.patch.object(MODULE, "_run_json", return_value=response),
+            self.assertRaisesRegex(MODULE.AuditError, "immutable public head observation failed"),
+        ):
+            MODULE.collect_public_head_observations(self.audit)
 
     def test_verified_results_require_immutable_receipt_evidence(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -469,7 +489,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         output = b"build:pass:output\n"
         artifact = b"build:pass:artifact\n"
         resolved = self.resolved_evidence(receipt)
-        with mock.patch.object(
+        with mock.patch.object(MODULE, "_prefetch_live_evidence"), mock.patch.object(
             MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")
         ), mock.patch.object(
             MODULE, "_fetch_repository_blob", side_effect=[output, artifact]
@@ -524,6 +544,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         technical = self.resolved_evidence(technical_receipt)
         funding = self.resolved_funding(funding_receipt)
         with (
+            mock.patch.object(MODULE, "_prefetch_live_evidence"),
             mock.patch.object(
                 MODULE,
                 "_fetch_exact_head_blob",
@@ -557,6 +578,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(funding, resolved["funding"])
         self.assertNotEqual(row["maintenance"]["evidence_url"], row["maintenance"]["funding_evidence_url"])
         with (
+            mock.patch.object(MODULE, "_prefetch_live_evidence"),
             mock.patch.object(
                 MODULE,
                 "_fetch_exact_head_blob",
@@ -586,6 +608,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         receipt["artifact_sha256"] = MODULE.hashlib.sha256(artifact).hexdigest()
         provenance = self.resolved_evidence(receipt)["provenance"]
         with (
+            mock.patch.object(MODULE, "_prefetch_live_evidence"),
             mock.patch.object(MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode()),
             mock.patch.object(
                 MODULE,
@@ -818,6 +841,53 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         expired = MODULE.LiveCollection(deadline_seconds=10, call_limit=2, clock=lambda: next(ticks))
         with self.assertRaisesRegex(MODULE.AuditError, "collection budget exhausted"):
             MODULE._run_json(["gh", "api", "expired"], collection=expired)
+
+        barrier = threading.Barrier(2)
+        batched = MODULE.LiveCollection(deadline_seconds=10, call_limit=2, clock=lambda: 0)
+
+        def fetch(args: list[str], timeout: int = 240) -> dict:
+            barrier.wait(timeout=2)
+            return {"request": args[-1], "timeout": timeout}
+
+        requests = [["gh", "api", "first"], ["gh", "api", "second"]]
+        with mock.patch.object(MODULE, "_run_json", side_effect=fetch) as run:
+            values = batched.run_json_batch(requests)
+            cached = batched.run_json_batch(requests)
+        self.assertEqual(values, cached)
+        self.assertEqual(2, run.call_count)
+        self.assertEqual({"first", "second"}, {value["request"] for value in values.values()})
+
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["maintenance"] = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
+            "blocker": None,
+        }
+        technical_receipt = self.evidence_receipt(row, "maintenance")
+        funding_receipt = self.funding_receipt(row)
+        technical_location = MODULE._exact_head_blob_location(row["maintenance"]["evidence_url"])
+        funding_location = MODULE._exact_head_blob_location(row["maintenance"]["funding_evidence_url"])
+        receipt_blobs = {
+            technical_location: json.dumps(technical_receipt).encode("utf-8"),
+            funding_location: json.dumps(funding_receipt).encode("utf-8"),
+        }
+        collection = mock.Mock()
+        collection.run_json_batch.return_value = {}
+        with mock.patch.object(
+            MODULE,
+            "_fetch_repository_blobs_batch",
+            side_effect=[receipt_blobs, {}],
+        ) as fetch_batch:
+            MODULE._prefetch_live_evidence(changed, collection)
+        self.assertEqual(2, fetch_batch.call_count)
+        self.assertEqual({technical_location, funding_location}, set(fetch_batch.call_args_list[0].args[0]))
+        self.assertEqual(3, len(set(fetch_batch.call_args_list[1].args[0])))
+        self.assertEqual(2, len(collection.run_json_batch.call_args.args[0]))
 
     def test_large_repository_blob_uses_exact_bounded_git_blob_fallback(self) -> None:
         content = b"x" * (MODULE.GITHUB_CONTENTS_INLINE_MAX_BYTES + 1)
@@ -1636,12 +1706,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertIn('if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]', whole)
         self.assertIn(live["command"], whole)
 
-    def test_public_live_mode_never_collects_private_operator_context(self) -> None:
+    def test_public_live_authenticates_all_public_heads_without_private_operator_context(self) -> None:
         argv = [str(SCRIPT), "--public-live", "--json"]
         stdout = io.StringIO()
+        heads = {
+            row["repository"]: row["observed_head"]
+            for row in self.audit["candidates"]
+            if row["visibility"] == "public"
+        }
         with (
             mock.patch.object(sys, "argv", argv),
-            mock.patch.object(MODULE, "collect_public_heads") as collect_public_heads,
+            mock.patch.object(
+                MODULE,
+                "collect_public_head_observations",
+                return_value=heads,
+            ) as collect_public_head_observations,
             mock.patch.object(MODULE, "verify_w01_live_receipt") as verify_w01,
             mock.patch.object(
                 MODULE,
@@ -1658,7 +1737,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             contextlib.redirect_stdout(stdout),
         ):
             result = MODULE.main()
-        collect_public_heads.assert_not_called()
+        collect_public_head_observations.assert_called_once()
+        self.assertEqual(self.audit, collect_public_head_observations.call_args.args[0])
+        self.assertIs(collect_public_head_observations.call_args.args[1], verify_w01.call_args.args[0])
         self.assertIs(verify_w01.call_args.args[0], collect_receipts.call_args.args[1])
         self.assertIs(accepted_projection.call_args.args[0], collect_receipts.call_args.args[1])
         self.assertEqual(MODULE.LIVE_COLLECTION_BASE_CALLS, verify_w01.call_args.args[0]._call_limit)

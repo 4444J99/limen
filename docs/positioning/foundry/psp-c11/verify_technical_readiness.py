@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import base64
 import collections
+import concurrent.futures
 import copy
 import datetime as dt
 import functools
@@ -218,9 +219,10 @@ PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 LIVE_COLLECTION_DEADLINE_SECONDS = 270
 GITHUB_CONTENTS_INLINE_MAX_BYTES = 1024 * 1024
 GITHUB_BLOB_MAX_BYTES = 100 * 1024 * 1024
-LIVE_COLLECTION_BASE_CALLS = 4
+LIVE_COLLECTION_BASE_CALLS = 5
 LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT = 7
 LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT = 5
+LIVE_COLLECTION_BATCH_WORKERS = 8
 LIVE_COLLECTION_MAX_CALL_LIMIT = LIVE_COLLECTION_BASE_CALLS + SOURCE_LOCK["visibility"]["public"] * (
     len(DIMENSION_RECEIPT_TOKENS) * LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT
     + LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT
@@ -264,16 +266,48 @@ class LiveCollection:
         self._json_cache: dict[tuple[str, ...], dict[str, Any]] = {}
 
     def run_json(self, args: list[str], timeout: int) -> dict[str, Any]:
-        key = tuple(args)
-        if key in self._json_cache:
-            return copy.deepcopy(self._json_cache[key])
+        return self.run_json_batch([args], timeout)[tuple(args)]
+
+    def run_json_batch(
+        self,
+        requests: list[list[str]],
+        timeout: int = 240,
+    ) -> dict[tuple[str, ...], dict[str, Any]]:
+        keys = list(dict.fromkeys(tuple(request) for request in requests))
+        if not keys:
+            return {}
+        values = {
+            key: copy.deepcopy(self._json_cache[key])
+            for key in keys
+            if key in self._json_cache
+        }
+        missing = [key for key in keys if key not in self._json_cache]
         remaining = self._deadline - self._clock()
-        if self.calls >= self._call_limit or remaining <= 0:
+        if self.calls + len(missing) > self._call_limit or remaining <= 0:
             raise AuditError("live evidence collection budget exhausted")
-        self.calls += 1
-        value = _run_json(args, timeout=max(1, min(timeout, math.ceil(remaining))))
-        self._json_cache[key] = copy.deepcopy(value)
-        return value
+        self.calls += len(missing)
+
+        def fetch(key: tuple[str, ...]) -> dict[str, Any]:
+            request_remaining = self._deadline - self._clock()
+            if request_remaining <= 0:
+                raise AuditError("live evidence collection budget exhausted")
+            return _run_json(
+                list(key),
+                timeout=max(1, min(timeout, math.ceil(request_remaining))),
+            )
+
+        if len(missing) == 1:
+            values[missing[0]] = fetch(missing[0])
+        elif missing:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(LIVE_COLLECTION_BATCH_WORKERS, len(missing))
+            ) as executor:
+                pending = {executor.submit(fetch, key): key for key in missing}
+                for future in concurrent.futures.as_completed(pending):
+                    values[pending[future]] = future.result()
+        for key in missing:
+            self._json_cache[key] = copy.deepcopy(values[key])
+        return {key: copy.deepcopy(values[key]) for key in keys}
 
 
 def live_collection_call_limit(audit: dict[str, Any] | None) -> int:
@@ -640,7 +674,10 @@ def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def _graphql_heads(repositories: list[str]) -> dict[str, str]:
+def _graphql_heads(
+    repositories: list[str],
+    collection: LiveCollection | None = None,
+) -> dict[str, str]:
     selections: list[str] = []
     for index, repository in enumerate(repositories):
         owner, name = repository.split("/", 1)
@@ -648,7 +685,10 @@ def _graphql_heads(repositories: list[str]) -> dict[str, str]:
             f"r{index}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})"
             "{isPrivate defaultBranchRef{target{... on Commit{oid}}}}"
         )
-    response = _run_json(["gh", "api", "graphql", "-f", "query=query{" + "".join(selections) + "}"])
+    response = _run_json(
+        ["gh", "api", "graphql", "-f", "query=query{" + "".join(selections) + "}"],
+        collection=collection,
+    )
     data = response.get("data")
     if not isinstance(data, dict):
         raise AuditError("live GitHub head response is missing data")
@@ -668,15 +708,47 @@ def _graphql_heads(repositories: list[str]) -> dict[str, str]:
     return heads
 
 
-def collect_public_heads(snapshot: dict[str, Any]) -> dict[str, str]:
-    repositories = sorted(
-        row["repository"]
-        for row in snapshot.get("candidates", [])
-        if isinstance(row, dict) and row.get("visibility") == "public" and _is_nonblank_text(row.get("repository"))
+def collect_public_head_observations(
+    audit: dict[str, Any],
+    collection: LiveCollection | None = None,
+) -> dict[str, str]:
+    rows = sorted(
+        (
+            (row.get("repository"), row.get("observed_head"))
+            for row in audit.get("candidates", [])
+            if isinstance(row, dict) and row.get("visibility") == "public"
+        ),
+        key=lambda item: str(item[0]),
     )
-    if len(repositories) != SOURCE_LOCK["visibility"]["public"] or len(repositories) != len(set(repositories)):
-        raise AuditError("accepted public candidate repository set drifted")
-    return _graphql_heads(repositories)
+    repositories = [repository for repository, _ in rows]
+    if (
+        len(rows) != SOURCE_LOCK["visibility"]["public"]
+        or len(repositories) != len(set(repositories))
+        or any(not _is_nonblank_text(repository) or not isinstance(head, str) or not SHA40.fullmatch(head) for repository, head in rows)
+    ):
+        raise AuditError("accepted public candidate head observation set drifted")
+    selections: list[str] = []
+    for index, (repository, head) in enumerate(rows):
+        owner, name = repository.split("/", 1)
+        selections.append(
+            f"r{index}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})"
+            f"{{isPrivate object(expression:{json.dumps(head)}){{... on Commit{{oid}}}}}}"
+        )
+    response = _run_json(
+        ["gh", "api", "graphql", "-f", "query=query{" + "".join(selections) + "}"],
+        collection=collection,
+    )
+    data = response.get("data")
+    if not isinstance(data, dict):
+        raise AuditError("immutable public head observation response is missing data")
+    observations: dict[str, str] = {}
+    for index, (repository, head) in enumerate(rows):
+        value = data.get(f"r{index}")
+        observed = (value.get("object") or {}).get("oid") if isinstance(value, dict) else None
+        if not isinstance(value, dict) or value.get("isPrivate") is not False or observed != head:
+            raise AuditError(f"immutable public head observation failed for {repository}")
+        observations[repository] = head
+    return observations
 
 
 @functools.cache
@@ -963,6 +1035,78 @@ def _fetch_repository_blob(
     return decoded
 
 
+def _fetch_repository_blobs_batch(
+    locations: list[tuple[str, str, str]],
+    collection: LiveCollection,
+) -> dict[tuple[str, str, str], bytes]:
+    unique = list(dict.fromkeys(locations))
+    requests: dict[tuple[str, str, str], list[str]] = {}
+    for repository, commit, path in unique:
+        if not SHA40.fullmatch(commit) or not _safe_relative_path(path):
+            raise AuditError("technical evidence blob location is invalid")
+        requests[(repository, commit, path)] = [
+            "gh",
+            "api",
+            f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}",
+        ]
+    responses = collection.run_json_batch(list(requests.values()))
+    resolved: dict[tuple[str, str, str], bytes] = {}
+    fallbacks: dict[tuple[str, str, str], tuple[str, int, list[str]]] = {}
+    for location, args in requests.items():
+        response = responses[tuple(args)]
+        size = response.get("size")
+        if not _is_nonnegative_int(size) or size > GITHUB_BLOB_MAX_BYTES or response.get("type") != "file":
+            raise AuditError("live technical evidence blob metadata is invalid or exceeds GitHub maximums")
+        if response.get("encoding") == "base64":
+            decoded = _decode_github_base64(
+                response.get("content"),
+                GITHUB_CONTENTS_INLINE_MAX_BYTES,
+                "live technical evidence blob",
+            )
+            if len(decoded) != size:
+                raise AuditError("live technical evidence blob size drift")
+            resolved[location] = decoded
+            continue
+        blob_sha = response.get("sha")
+        if (
+            response.get("encoding") != "none"
+            or size <= GITHUB_CONTENTS_INLINE_MAX_BYTES
+            or not isinstance(blob_sha, str)
+            or not SHA40.fullmatch(blob_sha)
+        ):
+            raise AuditError("live technical evidence blob is not decodable")
+        repository = location[0]
+        fallbacks[location] = (
+            blob_sha,
+            size,
+            ["gh", "api", f"repos/{repository}/git/blobs/{blob_sha}"],
+        )
+    fallback_responses = collection.run_json_batch(
+        [args for _, _, args in fallbacks.values()]
+    )
+    for location, (blob_sha, size, args) in fallbacks.items():
+        blob = fallback_responses[tuple(args)]
+        if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
+            raise AuditError("live technical evidence blob fallback binding drift")
+        decoded = _decode_github_base64(
+            blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob"
+        )
+        git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
+        if len(decoded) != size or git_digest != blob_sha:
+            raise AuditError("live technical evidence blob fallback digest drift")
+        resolved[location] = decoded
+    return resolved
+
+
+def _exact_head_blob_location(value: Any) -> tuple[str, str, str]:
+    if not isinstance(value, str) or not _valid_https_url(value):
+        raise AuditError("technical evidence artifact URL is invalid")
+    parsed = urlparse(value)
+    if parsed.netloc.casefold() != "github.com":
+        raise AuditError("technical evidence artifact URL is not a GitHub blob")
+    return _evidence_location(value)
+
+
 def _candidate_projection_from_bytes(content: bytes) -> str:
     try:
         snapshot = json.loads(content, object_pairs_hook=_object_without_duplicate_keys)
@@ -1008,12 +1152,7 @@ def _fetch_exact_head_blob(
     commit: str,
     collection: LiveCollection | None = None,
 ) -> bytes:
-    if not isinstance(value, str) or not _valid_https_url(value):
-        raise AuditError("technical evidence artifact URL is invalid")
-    parsed = urlparse(value)
-    if parsed.netloc.casefold() != "github.com":
-        raise AuditError("technical evidence artifact URL is not a GitHub blob")
-    resolved_repository, resolved_commit, path = _evidence_location(value)
+    resolved_repository, resolved_commit, path = _exact_head_blob_location(value)
     if resolved_repository.casefold() != repository.casefold() or resolved_commit != commit:
         raise AuditError("technical evidence artifact is not bound to the candidate exact head")
     return _fetch_repository_blob(resolved_repository, resolved_commit, path, collection)
@@ -1064,11 +1203,85 @@ def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list
     )
 
 
+def _parse_live_json_blob(content: bytes, label: str) -> dict[str, Any]:
+    try:
+        value = json.loads(content, object_pairs_hook=_object_without_duplicate_keys)
+    except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
+        raise AuditError(f"{label} is invalid") from exc
+    if not isinstance(value, dict):
+        raise AuditError(f"{label} is not an object")
+    return value
+
+
+def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -> None:
+    technical_plans: list[tuple[dict[str, Any], str, dict[str, Any], tuple[str, str, str]]] = []
+    funding_plans: list[tuple[dict[str, Any], tuple[str, str, str]]] = []
+    for row in audit.get("candidates", []):
+        if not isinstance(row, dict) or row.get("visibility") != "public":
+            continue
+        candidate_id = row.get("candidate_id")
+        for dimension in DIMENSION_RECEIPT_TOKENS:
+            value = row.get(dimension)
+            if not isinstance(value, dict) or value.get("state") not in {"verified_pass", "verified_fail"}:
+                continue
+            evidence_url = value.get("evidence_url")
+            if not isinstance(candidate_id, str) or not isinstance(evidence_url, str):
+                continue
+            technical_plans.append((row, dimension, value, _exact_head_blob_location(evidence_url)))
+            if dimension == "maintenance" and value.get("state") == "verified_pass":
+                funding_url = value.get("funding_evidence_url")
+                if not isinstance(funding_url, str):
+                    raise AuditError("live maintenance funding evidence URL is invalid")
+                funding_plans.append((row, _exact_head_blob_location(funding_url)))
+    receipt_locations = [plan[3] for plan in technical_plans] + [plan[1] for plan in funding_plans]
+    if not receipt_locations:
+        return
+    receipt_blobs = _fetch_repository_blobs_batch(receipt_locations, collection)
+    payload_locations: list[tuple[str, str, str]] = []
+    provenance_requests: list[list[str]] = []
+    for row, _, _, location in technical_plans:
+        receipt = _parse_live_json_blob(receipt_blobs[location], "live technical evidence receipt")
+        payload_locations.extend(
+            [
+                (location[0], location[1], receipt.get("output_path")),
+                (location[0], location[1], receipt.get("artifact_path")),
+            ]
+        )
+        run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
+        run_attempt = receipt.get("run_attempt")
+        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
+            raise AuditError("live technical evidence provenance URL is invalid")
+        provenance_requests.append(
+            [
+                "gh",
+                "api",
+                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+            ]
+        )
+    for row, location in funding_plans:
+        receipt = _parse_live_json_blob(receipt_blobs[location], "live maintenance funding receipt")
+        payload_locations.append((location[0], location[1], receipt.get("artifact_path")))
+        run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
+        run_attempt = receipt.get("run_attempt")
+        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
+            raise AuditError("live maintenance funding provenance URL is invalid")
+        provenance_requests.append(
+            [
+                "gh",
+                "api",
+                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+            ]
+        )
+    _fetch_repository_blobs_batch(payload_locations, collection)
+    collection.run_json_batch(provenance_requests)
+
+
 def collect_live_evidence_receipts(
     audit: dict[str, Any],
     collection: LiveCollection | None = None,
 ) -> dict[tuple[str, str], dict[str, Any]]:
     collection = collection or LiveCollection(call_limit=live_collection_call_limit(audit))
+    _prefetch_live_evidence(audit, collection)
     receipts: dict[tuple[str, str], dict[str, Any]] = {}
     for row in audit.get("candidates", []):
         if not isinstance(row, dict) or row.get("visibility") != "public":
@@ -2133,6 +2346,9 @@ def main() -> int:
             verify_w01_live_receipt(live_collection)
             accepted_projection_digest = accepted_w01_candidate_projection_digest(live_collection)
         elif args.public_live:
+            if audit is None:
+                raise AuditError("public-live audit is unavailable")
+            heads = collect_public_head_observations(audit, live_collection)
             verify_w01_live_receipt(live_collection)
             accepted_projection_digest = accepted_w01_candidate_projection_digest(live_collection)
         if write_path is not None:

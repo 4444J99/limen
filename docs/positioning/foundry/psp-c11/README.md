@@ -158,10 +158,13 @@ the candidate's bounded maintenance estimate; the technical receipt, an owner, a
 self-attest funding. Technical readiness alone never grants transfer eligibility: accepted E3+ demand,
 a canonical receipt-backed operator score meeting the contract minimum, approved terms, downside-tested
 economics, funded maintenance, and tested return must all clear their governed floors. A live
-collection shares one 270-second deadline, an immutable-response cache, and a call ceiling derived
-from the exact verified-receipt surface, capped by the accepted 54-public-candidate denominator and
-worst-case Contents-to-Git-blob fallbacks across W01 verification, receipt blobs, output and
-artifact blobs, and Actions provenance, so repeated lookups cannot restart the 300-second gate clock.
+collection shares one 270-second deadline, an immutable-response cache, and bounded concurrent
+waves for immutable receipt/payload blobs and attempt-specific Actions provenance. One batched
+GraphQL observation independently resolves each recorded public head as an immutable commit in its
+own repository, including blocked rows, without turning PR acceptance into a moving-branch gate.
+The call ceiling is derived from the exact verified-receipt surface, capped by the
+accepted 54-public-candidate denominator and worst-case Contents-to-Git-blob fallbacks, so repeated
+lookups cannot restart the gate clock.
 Contents API evidence above 1 MiB resolves through its exact Git blob SHA with a 100 MiB fail-closed
 ceiling; size and Git-object digest must match before receipt SHA-256 validation.
 A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
@@ -188,8 +191,9 @@ The `positioning-foundry-technical-readiness-test` gate in
 `institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
 accepted W01 inputs as a deterministic scoped acceptance surface, including the foundry-handoff
 regression suite. The scoped `positioning-foundry-technical-readiness-public-live` predicate resolves
-immutable public evidence blobs and run provenance plus the canonical W01 marked receipt without
-comparing mutable repository heads or enumerating private repositories. Its owning PR workflow
+immutable public evidence blobs and run provenance plus the canonical W01 marked receipt, then
+authenticates every recorded public head as an immutable repository commit without enumerating private
+repositories. Its owning PR workflow
 grants only `actions: read`, `contents: read`, and `issues: read`; no write permission is introduced.
 The whole-only
 `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
