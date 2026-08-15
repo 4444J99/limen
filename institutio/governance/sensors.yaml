@@ -657,8 +657,11 @@ sensors:
         quiet_output: true
         severity: silent
         escalation: "fable balance meter skipped — see logs"
-      - command: 'python3 scripts/claude-workflow-guard.py audit-transcript "${LIMEN_LATEST_SESSION_JSONL}"'
-        when_env: LIMEN_LATEST_SESSION_JSONL
+      # Derives its own target. Until 2026-08-15 this step interpolated
+      # ${LIMEN_LATEST_SESSION_JSONL} behind `when_env: LIMEN_LATEST_SESSION_JSONL`
+      # — a parameter EXPORTED BY NOTHING, so the guard had never run once on the
+      # beat. The guard now resolves the most recently modified transcript itself.
+      - command: "python3 scripts/claude-workflow-guard.py audit-transcript"
         quiet_output: true
         severity: advisory
         escalation: "unaccepted / over-budget Fable run above — accept it (scripts/fable-allotment.py accept …) or drop off Fable (docs/fable-allotment.md)"
