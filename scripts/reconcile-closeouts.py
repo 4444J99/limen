@@ -44,6 +44,9 @@ from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
+from _board_custody import board_path  # noqa: E402
+
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 
 # --- reuse the GitHub state probe from verify-dispatch (single source) ---------------------------
@@ -117,8 +120,10 @@ def _gh_pr_title(owner: str, repo: str, num: str) -> str:
 def _refs(claim: dict) -> list[tuple[str, str, str]]:
     """Every (owner, repo, num) PR reference in the claim: full github URLs, plus #NNN paired with
     the claim's own repo (owner/repo)."""
-    blob = " ".join(str(claim.get(k, "")) for k in ("text", "subject")) + " " + " ".join(
-        str(r) for r in claim.get("receipts", []) or []
+    blob = (
+        " ".join(str(claim.get(k, "")) for k in ("text", "subject"))
+        + " "
+        + " ".join(str(r) for r in claim.get("receipts", []) or [])
     )
     refs: list[tuple[str, str, str]] = []
     seen: set[tuple[str, str, str]] = set()
@@ -151,12 +156,20 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
     artifact = claim.get("repo_artifact")
     external = claim.get("external_home")
     if artifact and external and not (ROOT / str(artifact)).exists():
-        return {"id": claim.get("id"), "verdict": "HOMED_ELSEWHERE", "refs": refs,
-                "detail": f"in-repo artifact {artifact!r} absent; durable home is external: {external}"}
+        return {
+            "id": claim.get("id"),
+            "verdict": "HOMED_ELSEWHERE",
+            "refs": refs,
+            "detail": f"in-repo artifact {artifact!r} absent; durable home is external: {external}",
+        }
 
     if not refs:
-        return {"id": claim.get("id"), "verdict": "UNRECEIPTED", "refs": [],
-                "detail": "done claim cites no PR / receipt — cannot confirm"}
+        return {
+            "id": claim.get("id"),
+            "verdict": "UNRECEIPTED",
+            "refs": [],
+            "detail": "done claim cites no PR / receipt — cannot confirm",
+        }
 
     merged, unmerged, missing, miscited = [], [], [], []
     subj_tokens = _tokens(f"{claim.get('subject', '')} {claim.get('text', '')}")
@@ -192,13 +205,25 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
     # actionable signal (a real open PR to land) → then a wrong/missing number → then a merged-but-
     # off-subject citation with nothing backing the claim.
     if unmerged:
-        return {"id": claim.get("id"), "verdict": "DONE_UNVERIFIED", "refs": refs,
-                "detail": f"claims done but PR(s) not merged: {', '.join(unmerged)}"}
+        return {
+            "id": claim.get("id"),
+            "verdict": "DONE_UNVERIFIED",
+            "refs": refs,
+            "detail": f"claims done but PR(s) not merged: {', '.join(unmerged)}",
+        }
     if missing:
-        return {"id": claim.get("id"), "verdict": "PR_MISSING", "refs": refs,
-                "detail": f"cited PR(s) do not exist: {', '.join(missing)}"}
-    return {"id": claim.get("id"), "verdict": "MISCITED", "refs": refs,
-            "detail": f"cited MERGED PR unrelated to subject: {', '.join(miscited)}"}
+        return {
+            "id": claim.get("id"),
+            "verdict": "PR_MISSING",
+            "refs": refs,
+            "detail": f"cited PR(s) do not exist: {', '.join(missing)}",
+        }
+    return {
+        "id": claim.get("id"),
+        "verdict": "MISCITED",
+        "refs": refs,
+        "detail": f"cited MERGED PR unrelated to subject: {', '.join(miscited)}",
+    }
 
 
 HARD = {"DONE_UNVERIFIED", "PR_MISSING"}  # verdicts that fail --check (concrete false-closeouts)
@@ -207,7 +232,7 @@ HARD = {"DONE_UNVERIFIED", "PR_MISSING"}  # verdicts that fail --check (concrete
 def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
     """Closeout claims from the live board: each done task's done dispatch_log entries, within the
     window and citing a PR (only PR-citing claims are cheap to reconcile against GitHub)."""
-    data = yaml.safe_load((ROOT / "tasks.yaml").read_text()) or {}
+    data = yaml.safe_load(board_path(ROOT / "tasks.yaml").read_text()) or {}
     now = datetime.now(timezone.utc)
     claims: list[dict] = []
     for t in data.get("tasks", []):
@@ -222,8 +247,7 @@ def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
             text = f"{e.get('session_id', '')} {e.get('output', '')}"
             if not (PR_RE.search(text) or HASH_RE.search(text)):
                 continue
-            claims.append({"id": t.get("id"), "subject": t.get("title", ""), "text": text,
-                           "repo": t.get("repo", "")})
+            claims.append({"id": t.get("id"), "subject": t.get("title", ""), "text": text, "repo": t.get("repo", "")})
     if limit:
         claims = claims[:limit]
     return claims
@@ -258,8 +282,11 @@ def _session_claims(since_hours: int, limit: int | None) -> list[dict]:
         if not (PR_RE.search(blob) or HASH_RE.search(blob)):
             continue
         latest[rec.get("id")] = {
-            "id": rec.get("id"), "subject": rec.get("subject", ""), "text": rec.get("text", ""),
-            "repo": rec.get("repo", ""), "receipts": receipts,
+            "id": rec.get("id"),
+            "subject": rec.get("subject", ""),
+            "text": rec.get("text", ""),
+            "repo": rec.get("repo", ""),
+            "receipts": receipts,
         }
     claims = list(latest.values())
     if limit:
@@ -272,8 +299,7 @@ def _run(claims: list[dict], state_fn=gh_pr_state, title_fn=_gh_pr_title) -> dic
     counts: dict[str, int] = {}
     for f in findings:
         counts[f["verdict"]] = counts.get(f["verdict"], 0) + 1
-    return {"counts": counts, "findings": findings,
-            "failing": [f for f in findings if f["verdict"] in HARD]}
+    return {"counts": counts, "findings": findings, "failing": [f for f in findings if f["verdict"] in HARD]}
 
 
 def _emit(report: dict) -> None:
@@ -284,10 +310,10 @@ def _emit(report: dict) -> None:
 def _doctor() -> int:
     """Network-free proof that every classification branch is correct."""
     fake = {
-        ("o", "r", "1"): (True, "OPEN"),      # claimed done, still open  → DONE_UNVERIFIED
-        ("o", "r", "2"): (True, "MERGED"),    # merged, subject-consistent → VERIFIED
-        ("o", "r", "3"): (False, None),       # missing                    → PR_MISSING
-        ("o", "r", "4"): (True, "MERGED"),    # merged but unrelated title → MISCITED
+        ("o", "r", "1"): (True, "OPEN"),  # claimed done, still open  → DONE_UNVERIFIED
+        ("o", "r", "2"): (True, "MERGED"),  # merged, subject-consistent → VERIFIED
+        ("o", "r", "3"): (False, None),  # missing                    → PR_MISSING
+        ("o", "r", "4"): (True, "MERGED"),  # merged but unrelated title → MISCITED
     }
     titles = {("o", "r", "2"): "harden the widget parser", ("o", "r", "4"): "arca vault ciphertext chunk"}
     cases = [
@@ -295,13 +321,29 @@ def _doctor() -> int:
         ({"id": "c2", "subject": "harden widget parser", "repo": "o/r", "text": "done #2"}, "VERIFIED"),
         ({"id": "c3", "subject": "x", "repo": "o/r", "text": "done #3"}, "PR_MISSING"),
         ({"id": "c4", "subject": "court hearing record", "repo": "o/r", "text": "done #4"}, "MISCITED"),
-        ({"id": "c5", "subject": "record court grant", "repo": "o/r", "text": "homed in matter.json",
-          "repo_artifact": "no/such/matter.json", "external_home": "private calendar"}, "HOMED_ELSEWHERE"),
+        (
+            {
+                "id": "c5",
+                "subject": "record court grant",
+                "repo": "o/r",
+                "text": "homed in matter.json",
+                "repo_artifact": "no/such/matter.json",
+                "external_home": "private calendar",
+            },
+            "HOMED_ELSEWHERE",
+        ),
         ({"id": "c6", "subject": "misc", "repo": "o/r", "text": "all good, fixed point"}, "UNRECEIPTED"),
         # 2026-07-18 field shapes — a subject-matching merged receipt wins over noisy co-refs.
         # (c7) heal-task: merged fix #2 + still-open target #1 → VERIFIED (was phantom DONE_UNVERIFIED).
-        ({"id": "c7", "subject": "harden widget parser", "repo": "o/r",
-          "text": "fix #2 landed, target #1 still open"}, "VERIFIED"),
+        (
+            {
+                "id": "c7",
+                "subject": "harden widget parser",
+                "repo": "o/r",
+                "text": "fix #2 landed, target #1 still open",
+            },
+            "VERIFIED",
+        ),
         # (c8) multi-ref: merged receipt #2 + missing co-ref #3 → VERIFIED (was phantom PR_MISSING).
         ({"id": "c8", "subject": "harden widget parser", "repo": "o/r", "text": "done #2 (see also #3)"}, "VERIFIED"),
         # (c9) genuine over-claim: open #1 + missing #3, NONE merged → still fires DONE_UNVERIFIED.
@@ -309,8 +351,9 @@ def _doctor() -> int:
     ]
     ok = True
     for claim, expected in cases:
-        got = classify_claim(claim, lambda o, r, n: fake.get((o, r, n), (False, None)),
-                             lambda o, r, n: titles.get((o, r, n), ""))["verdict"]
+        got = classify_claim(
+            claim, lambda o, r, n: fake.get((o, r, n), (False, None)), lambda o, r, n: titles.get((o, r, n), "")
+        )["verdict"]
         flag = "ok" if got == expected else "FAIL"
         if got != expected:
             ok = False

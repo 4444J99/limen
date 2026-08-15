@@ -335,8 +335,11 @@ def _window_hours(window: str) -> float:
 def load_tasks_data():
     path = ROOT / "tasks.yaml"
     try:
-        text = path.read_text()
-    except OSError:
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        text = operational_board_path(path).read_text()
+    except Exception:  # noqa: BLE001 — telemetry fails open; it never crashes the beat
         return {}
     if yaml is not None:
         return yaml.safe_load(text) or {}

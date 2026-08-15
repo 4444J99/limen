@@ -1030,7 +1030,10 @@ def attach_worktree_slugs(sessions: list[dict[str, Any]], worktrees: list[dict[s
 def load_task_snapshot(worktree_slugs: list[str]) -> dict[str, Any]:
     if not TASKS_PATH.is_file():
         return {"present": False}
-    text = TASKS_PATH.read_text(encoding="utf-8", errors="replace")
+    sys.path.insert(0, str(ROOT / "cli" / "src"))
+    from limen.private_board import operational_board_path
+
+    text = operational_board_path(TASKS_PATH).read_text(encoding="utf-8", errors="replace")
     data = yaml.safe_load(text) or {}
     tasks = data.get("tasks") or []
     status_counts = Counter(str(task.get("status", "missing")) for task in tasks if isinstance(task, dict))

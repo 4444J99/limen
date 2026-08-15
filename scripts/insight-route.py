@@ -19,6 +19,7 @@ Gated behind LIMEN_INSIGHT_ROUTE_APPLY=1 (dry-run prints otherwise). New board
 tasks are capped per pass (LIMEN_INSIGHT_ROUTE_MAX, default 5); the overflow is
 counted in the summary line and self-corrects next beat.
 """
+
 import os
 import json
 import re
@@ -33,6 +34,7 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_pr_contract  # noqa: E402
 from limen.models import Task  # noqa: E402
+from limen.private_board import operational_board_path  # noqa: E402
 from limen.tabularius import pending_task_ids, submit_task_upsert  # noqa: E402
 
 HIS_HAND_FILE = ROOT / "his-hand-levers.json"
@@ -40,6 +42,7 @@ TASKS_YAML = ROOT / "tasks.yaml"
 LOGS_DIR = ROOT / "logs"
 
 TIERS = ("hourly", "daily", "weekly", "monthly")
+
 
 def load_json(path, default=None):
     if not path.exists():
@@ -49,11 +52,14 @@ def load_json(path, default=None):
     except Exception:
         return default if default is not None else {}
 
+
 def save_json(path, data):
     path.write_text(json.dumps(data, indent=2))
 
+
 def task_id_from_insight(insight_id):
     return f"TASK-{insight_id}"
+
 
 def latest_reports(cadence_dir):
     """The latest report per tier — never the whole history (old reports are an
@@ -71,6 +77,7 @@ def latest_reports(cadence_dir):
         if tier not in latest or key > latest[tier][0]:
             latest[tier] = (key, p)
     return [p for _, p in sorted(latest.values())]
+
 
 def _task_for(insight, tid, repo):
     contract = contract_fields(github_pr_contract(repo, tid))
@@ -91,6 +98,7 @@ def _task_for(insight, tid, repo):
         created=date.today(),
         **contract,
     )
+
 
 def route_repo_insight(insight, apply, stats=None):
     repo = insight["owner"]
@@ -113,7 +121,7 @@ def route_repo_insight(insight, apply, stats=None):
     # TABVLARIVS producer path: read-only dedup, then hand the keeper an upsert ticket — never a
     # direct board write. Pending tickets count as existing so repeated beats before a drain do not
     # submit duplicates.
-    limen_file = load_limen_file(TASKS_YAML)
+    limen_file = load_limen_file(operational_board_path(TASKS_YAML))
     if any(t.id == tid for t in limen_file.tasks) or tid in pending_task_ids(TASKS_YAML):
         return
     submit_task_upsert(
@@ -126,6 +134,7 @@ def route_repo_insight(insight, apply, stats=None):
         stats["cap_left"] -= 1
         stats["created"] += 1
     print(f"Submitted upsert ticket {tid} for {repo} (keeper folds next beat)")
+
 
 def route_organ_insight(insight, apply):
     organ = insight["owner"]
@@ -167,6 +176,7 @@ def route_organ_insight(insight, apply):
     save_json(residual_file, data)
     print(f"Routed insight {insight['id']} to {organ} residual")
 
+
 def route_anthony_insight(insight, apply):
     if not apply:
         print(f"Would route to his-hand-levers for anthony: {insight['id']}")
@@ -187,7 +197,7 @@ def route_anthony_insight(insight, apply):
         "cost": "evaluate and heal",
         "unlocks": insight.get("suggested_action", ""),
         "source_task": f"insight-cadence ({insight.get('source', 'unknown')})",
-        "gate": "insight-route"
+        "gate": "insight-route",
     }
     levers.append(new_lever)
     data["levers"] = levers
@@ -196,6 +206,7 @@ def route_anthony_insight(insight, apply):
 
     # Sync his-hand issues
     subprocess.run([sys.executable, str(ROOT / "scripts" / "sync-hishand-issues.py"), "--apply"], check=False)
+
 
 def process_report(report_path, apply, stats=None):
     try:
@@ -213,6 +224,7 @@ def process_report(report_path, apply, stats=None):
             route_repo_insight(insight, apply, stats)
         elif owner:
             route_organ_insight(insight, apply)
+
 
 def main():
     apply = os.environ.get("LIMEN_INSIGHT_ROUTE_APPLY", "0") == "1"
@@ -236,6 +248,7 @@ def main():
         f"(cap {cap}/pass){'' if apply else ' [dry-run]'}"
     )
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

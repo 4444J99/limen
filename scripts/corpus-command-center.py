@@ -349,7 +349,10 @@ def build_session_units(
 
 def load_tasks() -> dict[str, Any]:
     try:
-        data = yaml.safe_load(TASKS_PATH.read_text(encoding="utf-8")) or {}
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        data = yaml.safe_load(operational_board_path(TASKS_PATH).read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError):
         return {"tasks": []}
     return data if isinstance(data, dict) else {"tasks": []}

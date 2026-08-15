@@ -23,6 +23,7 @@ we refuse. Run it on demand / as VOX-META's re-assertion:
   python3 scripts/vox-verify.py            # exit 0 ⟺ all gates pass
   python3 scripts/vox-verify.py --verbose  # also print each gate's basis
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -39,8 +40,13 @@ RECEIPT = ROOT / "spec" / "vox-program-verification.md"
 PROGRAM_NAMES = ["vox", "in-my-head"]
 # Files the VOX program introduced/touched in limen — the proportionate scope for the "no committed
 # secret" mechanical floor (fleet-wide secret cleanliness is publication-policy.py's standing job).
-VOX_TOUCHED = ["scripts/creds-hydrate.py", "scripts/credential-wall.py", "scripts/vox-verify.py",
-               "spec/vox-program.md", "spec/vox-program-verification.md"]
+VOX_TOUCHED = [
+    "scripts/creds-hydrate.py",
+    "scripts/credential-wall.py",
+    "scripts/vox-verify.py",
+    "spec/vox-program.md",
+    "spec/vox-program-verification.md",
+]
 # ElevenLabs key shapes on top of the canonical _SECRET_RX firewall.
 _ELEVEN_RX = (re.compile(r"sk_[A-Za-z0-9]{24,}"), re.compile(r"""xi-api-key["'`]?\s*[:=]\s*["'`][^"'`]+"""))
 
@@ -90,6 +96,7 @@ def parse_receipt() -> dict[str, str]:
 
 # ---- mechanical re-checks (drift-guards) ----------------------------------------------------------
 
+
 def check_gate3_lane() -> bool:
     """The ElevenLabs credential is registered in DEFAULT_MAP routed to ELEVEN_API_KEY, credential-wall
     --check passes, and no secret literal appears in the VOX-touched files."""
@@ -98,8 +105,9 @@ def check_gate3_lane() -> bool:
     if not any("ELEVEN_API_KEY" in (e.get("env") or []) for e in dm):
         fail("gate3_credential_protocol", "no DEFAULT_MAP lane routes to ELEVEN_API_KEY")
         ok = False
-    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "credential-wall.py"), "--check"],
-                       capture_output=True, text=True)
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "credential-wall.py"), "--check"], capture_output=True, text=True
+    )
     if r.returncode != 0:
         fail("gate3_credential_protocol", "credential-wall.py --check is red (a secret lacks a home)")
         ok = False
@@ -123,8 +131,9 @@ def check_gate4_naming() -> bool:
     """Each minted program name carries no hard (forbidden) nota — nomenclator.py --check exits 0."""
     ok = True
     for name in PROGRAM_NAMES:
-        r = subprocess.run([sys.executable, str(ROOT / "scripts" / "nomenclator.py"), "--check", name],
-                           capture_output=True, text=True)
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "nomenclator.py"), "--check", name], capture_output=True, text=True
+        )
         if r.returncode == 1:
             fail("gate4_naming", f"name '{name}' fails NAMING (hard nota): {r.stdout.strip()[:80]}")
             ok = False
@@ -141,11 +150,12 @@ def check_gate1_floor() -> bool:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
         import yaml
         from limen.models import VALID_STATUSES
+        from limen.private_board import operational_board_path
     except Exception as e:  # noqa: BLE001 — reuse unavailable → defer to receipt, don't false-fail
         _notes.append(f"gate1: could not import VALID_STATUSES ({e}); floor deferred to receipt")
         return True
     try:
-        data = yaml.safe_load(board.read_text()) or {}
+        data = yaml.safe_load(operational_board_path(board).read_text()) or {}
     except Exception as e:  # noqa: BLE001
         _notes.append(f"gate1: tasks.yaml unparseable here ({e}); floor deferred to receipt")
         return True
@@ -202,8 +212,10 @@ def main() -> int:
         for f in _failures:
             print(f"   - {f}")
         return 1
-    print(f"✓ vox-verify: all {len(DRIFT_GUARDS)} VOX-program gates pass "
-          f"(mechanical gates re-checked; receipt {RECEIPT.name} in agreement)")
+    print(
+        f"✓ vox-verify: all {len(DRIFT_GUARDS)} VOX-program gates pass "
+        f"(mechanical gates re-checked; receipt {RECEIPT.name} in agreement)"
+    )
     return 0
 
 

@@ -27,6 +27,7 @@ import yaml
 # projection. The auto-scale workflow runs scripts/tabularius-organ.py after this producer.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.intake import contract_fields, github_issue_contract
+from limen.private_board import operational_board_path
 from limen.tabularius import pending_task_ids, pending_upsert_patches, submit_task_upsert
 
 TASKS_FILE = Path(__file__).resolve().parent.parent / "tasks.yaml"
@@ -39,7 +40,9 @@ MAX_PAGES_PER_ORG = 10
 
 
 def _load_board() -> dict:
-    return yaml.safe_load(TASKS_FILE.read_text()) or {}
+    # operational_board_path(): the public projection pre-cutover, hydrated private
+    # custody after — so a counts-only aggregate is never read as an empty board.
+    return yaml.safe_load(operational_board_path(TASKS_FILE).read_text()) or {}
 
 
 def _tasks(data: dict) -> list[dict]:
@@ -165,7 +168,9 @@ def main() -> int:
     pending_ids = pending_task_ids(TASKS_FILE)
     remaining = max(0, _depth(data) - len(tasks) - len(pending_ids))
     if remaining <= 0:
-        print(f"Task depth {len(tasks)} plus {len(pending_ids)} pending already at or above {_depth(data)} after refresh.")
+        print(
+            f"Task depth {len(tasks)} plus {len(pending_ids)} pending already at or above {_depth(data)} after refresh."
+        )
         return 0
     existing_urls = _existing_urls(tasks) | _pending_urls()
     next_num = _next_task_num(tasks)
@@ -203,7 +208,9 @@ def main() -> int:
     session_id = os.environ.get("LIMEN_SESSION_ID", "auto-scale")
     for task in new_tasks:
         submit_task_upsert(TASKS_FILE, task, agent="auto-scale", session_id=session_id)
-    print(f"Submitted {len(new_tasks)} task upsert ticket(s). Total after keeper fold: {len(tasks) + len(pending_ids) + len(new_tasks)}")
+    print(
+        f"Submitted {len(new_tasks)} task upsert ticket(s). Total after keeper fold: {len(tasks) + len(pending_ids) + len(new_tasks)}"
+    )
     return 0
 
 

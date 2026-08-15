@@ -6,6 +6,7 @@ This consumes the redacted/private full-stack queue produced by
 then summarizes task-state, budget, and dispatch-log anomalies. Raw prompts and
 task output bodies stay in the ignored private corpus.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,6 +16,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from collections import Counter, defaultdict
 from functools import lru_cache
 from pathlib import Path
@@ -24,9 +26,7 @@ import yaml
 
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 PRIVATE_QUEUE = PRIVATE_ROOT / "full-stack-review" / "agent-code-review-queue.json"
 PRIVATE_REVIEW = PRIVATE_ROOT / "full-stack-review" / "agent-board-log-review.json"
 DOC_PATH = ROOT / "docs" / "agent-board-log-review.md"
@@ -133,7 +133,7 @@ def tasks_by_id(board: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def budget_spent(board: dict[str, Any]) -> tuple[int | float | None, dict[str, int | float]]:
-    track = (((board.get("portal") or {}).get("budget") or {}).get("track") or {})
+    track = ((board.get("portal") or {}).get("budget") or {}).get("track") or {}
     per_agent = track.get("per_agent") or {}
     return track.get("spent"), {str(k): v for k, v in per_agent.items() if isinstance(v, (int, float))}
 
@@ -175,7 +175,9 @@ def transition(before: dict[str, Any] | None, after: dict[str, Any] | None) -> s
     return f"{left}->{right}"
 
 
-def changed_tasks(before: dict[str, Any], after: dict[str, Any]) -> list[tuple[str, dict[str, Any] | None, dict[str, Any] | None]]:
+def changed_tasks(
+    before: dict[str, Any], after: dict[str, Any]
+) -> list[tuple[str, dict[str, Any] | None, dict[str, Any] | None]]:
     left = tasks_by_id(before)
     right = tasks_by_id(after)
     out = []
@@ -188,7 +190,9 @@ def changed_tasks(before: dict[str, Any], after: dict[str, Any]) -> list[tuple[s
 
 
 def status_counts(board: dict[str, Any]) -> Counter[str]:
-    return Counter(str(task.get("status") or "<missing>") for task in board.get("tasks") or [] if isinstance(task, dict))
+    return Counter(
+        str(task.get("status") or "<missing>") for task in board.get("tasks") or [] if isinstance(task, dict)
+    )
 
 
 def analyze_commit(commit: str, valid_statuses: set[str]) -> dict[str, Any]:
@@ -279,14 +283,18 @@ def analyze_commit(commit: str, valid_statuses: set[str]) -> dict[str, Any]:
     }
 
 
-def session_commit_matches(rows: list[dict[str, Any]], window_minutes: int) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
+def session_commit_matches(
+    rows: list[dict[str, Any]], window_minutes: int
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]]]:
     matches: dict[str, list[dict[str, Any]]] = defaultdict(list)
     unmatched: list[dict[str, Any]] = []
     for rank, row in enumerate(rows, 1):
         first = parse_iso(str(row.get("first_ts") or ""))
         last = parse_iso(str(row.get("last_ts") or ""))
         if not first or not last:
-            unmatched.append({"rank": rank, "agent": row.get("agent"), "session_id": row.get("session_id"), "reason": "missing-time"})
+            unmatched.append(
+                {"rank": rank, "agent": row.get("agent"), "session_id": row.get("session_id"), "reason": "missing-time"}
+            )
             continue
         since = (first - dt.timedelta(minutes=window_minutes)).isoformat()
         until = (last + dt.timedelta(minutes=window_minutes)).isoformat()
@@ -346,9 +354,15 @@ def build_review(window_minutes: int, analyze_commit_limit: int) -> dict[str, An
         if not analysis:
             continue
         analysis["matched_session_count"] = len(sessions)
-        analysis["matched_agents"] = dict(Counter(str(item.get("agent") or "unknown") for item in sessions).most_common())
-        analysis["matched_session_ranks"] = [int(item["rank"]) for item in sorted(sessions, key=lambda item: int(item["rank"]))]
-        analysis["matched_session_ids"] = [str(item.get("session_id")) for item in sorted(sessions, key=lambda item: int(item["rank"]))]
+        analysis["matched_agents"] = dict(
+            Counter(str(item.get("agent") or "unknown") for item in sessions).most_common()
+        )
+        analysis["matched_session_ranks"] = [
+            int(item["rank"]) for item in sorted(sessions, key=lambda item: int(item["rank"]))
+        ]
+        analysis["matched_session_ids"] = [
+            str(item.get("session_id")) for item in sorted(sessions, key=lambda item: int(item["rank"]))
+        ]
         gap_counts = Counter(gap for item in sessions for gap in item.get("ideal_gaps") or [])
         analysis["matched_gap_counts"] = dict(gap_counts.most_common())
         commits.append(analysis)
@@ -386,7 +400,10 @@ def build_review(window_minutes: int, analyze_commit_limit: int) -> dict[str, An
 
 def current_board_summary(valid_statuses: set[str]) -> dict[str, Any]:
     try:
-        data = yaml.safe_load(TASKS_PATH.read_text(encoding="utf-8")) or {}
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        data = yaml.safe_load(operational_board_path(TASKS_PATH).read_text(encoding="utf-8")) or {}
     except (OSError, yaml.YAMLError):
         return {"present": False}
     counts = status_counts(data)
@@ -508,7 +525,9 @@ def render_doc(review: dict[str, Any], *, commit_limit: int) -> str:
         if item.get("log_shrink_ids"):
             lines.append(f"  Dispatch logs shrank for: {compact_id_list(item['log_shrink_ids'])}.")
         if item.get("direct_done_without_log_ids"):
-            lines.append(f"  Done transitions without a new log entry: {compact_id_list(item['direct_done_without_log_ids'])}.")
+            lines.append(
+                f"  Done transitions without a new log entry: {compact_id_list(item['direct_done_without_log_ids'])}."
+            )
         if item.get("reopened_after_done_ids"):
             lines.append(f"  Reopened after done: {compact_id_list(item['reopened_after_done_ids'])}.")
 

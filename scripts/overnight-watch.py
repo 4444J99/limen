@@ -46,6 +46,7 @@ from limen.dispatch import agent_can_run_task  # noqa: E402
 from limen.execution_contract import execution_contract_hash, execution_contract_payload  # noqa: E402
 from limen.intake import validate_intake_contract  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
+from limen.private_board import operational_board_path  # noqa: E402
 from limen.models import Task, dispatch_session_id  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     INTENT_UPSERT,
@@ -771,7 +772,7 @@ def _targeted_recovery_command(task: Task, reservation_id: str | None = None) ->
 
 def _current_async_reservation_id(task_id: str) -> str | None:
     try:
-        board = load_limen_file(TASKS_PATH)
+        board = load_limen_file(operational_board_path(TASKS_PATH))
     except Exception:
         return None
     current = next((task for task in board.tasks if task.id == task_id), None)
@@ -930,7 +931,7 @@ def _owner_contract_reconcile_ticket(task: Task) -> dict[str, Any]:
     """
 
     try:
-        board = load_limen_file(TASKS_PATH)
+        board = load_limen_file(operational_board_path(TASKS_PATH))
     except Exception as exc:
         return {"status": "unavailable", "reason": f"board unreadable: {exc}"[:300]}
     current = next((row for row in board.tasks if row.id == task.id), None)
@@ -1078,7 +1079,7 @@ def _drain_and_dispatch_one_owner_task(
         current_state = canonical_task.status
     else:
         try:
-            board = load_limen_file(TASKS_PATH)
+            board = load_limen_file(operational_board_path(TASKS_PATH))
             pending_ids = {
                 str(patch.get("id"))
                 for patch in pending_upsert_patches(TASKS_PATH)
@@ -1224,7 +1225,7 @@ def _submit_one_owner_task(task: Task) -> dict[str, Any]:
     LANE_SWITCH_LOCK.parent.mkdir(parents=True, exist_ok=True)
     with LANE_SWITCH_LOCK.open("a+", encoding="utf-8") as lock:
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
-        board = load_limen_file(TASKS_PATH)
+        board = load_limen_file(operational_board_path(TASKS_PATH))
         pending_ids = {
             str(patch.get("id"))
             for patch in pending_upsert_patches(TASKS_PATH)
@@ -1306,7 +1307,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
         )
         return base
     try:
-        board = load_limen_file(TASKS_PATH)
+        board = load_limen_file(operational_board_path(TASKS_PATH))
         pending_ids = {
             str(patch.get("id"))
             for patch in pending_upsert_patches(TASKS_PATH)
