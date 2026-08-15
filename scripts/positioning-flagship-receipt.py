@@ -1899,13 +1899,16 @@ def main() -> int:
     args = parser.parse_args()
     started_at = _timestamp()
     try:
-        request = json.loads(args.request.read_text(encoding="utf-8"))
+        request = json.loads(
+            args.request.read_text(encoding="utf-8"),
+            object_pairs_hook=_reject_duplicate_json_members,
+        )
     except OSError:
         receipt = _blocked_receipt({}, started_at, "request file is unavailable or unreadable")
     except UnicodeDecodeError:
         receipt = _blocked_receipt({}, started_at, "request file must be valid UTF-8")
-    except json.JSONDecodeError:
-        receipt = _blocked_receipt({}, started_at, "request file must be valid JSON")
+    except (json.JSONDecodeError, ValueError):
+        receipt = _blocked_receipt({}, started_at, "request file must be valid duplicate-free JSON")
     else:
         if not isinstance(request, dict):
             receipt = _blocked_receipt({}, started_at, "request root must be an object")

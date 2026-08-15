@@ -1282,6 +1282,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "missing": None,
             "invalid-utf8": b"\xff\xfe",
             "malformed-json": b'{"schema_version":',
+            "duplicate-json": (
+                b'{"limitations":["password: hunter2alpha"],"limitations":["Synthetic fixture only."]}'  # allow-secret: synthetic adversarial fixture
+            ),
             "non-object": b"[]",
         }
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -1312,6 +1315,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     self.assertEqual("blocked_external", receipt["result"])
                     self.assertTrue(receipt["errors"])
                     self.assertEqual(result.stdout, output_path.read_text(encoding="utf-8"))
+                    if name == "duplicate-json":
+                        self.assertNotIn("hunter2alpha", result.stdout)
+                        self.assertTrue(any("duplicate-free JSON" in error for error in receipt["errors"]))
 
     def test_receipt_request_blocks_when_contract_git_inspection_times_out(self) -> None:
         timeout = subprocess.TimeoutExpired(["git", "show"], 60)
@@ -1696,6 +1702,12 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertIn("sample date window must be ordered", errors)
         self.assertIn("row 0 requires observed_at", errors)
         self.assertTrue(any("outside the declared window" in error for error in errors))
+
+    def test_cost_failure_observation_window_uses_the_utc_instant(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["rows"][0]["observed_at"] = "2026-08-01T00:30:00+14:00"
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("row 0 observed_at falls outside the declared window" in error for error in errors))
 
     def test_non_done_zero_cost_or_private_failure_class_is_withheld(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

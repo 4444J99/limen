@@ -1412,7 +1412,7 @@ def validate_sample(
             observed_at is not None
             and window_start is not None
             and window_end is not None
-            and not window_start <= observed_at.date() <= window_end
+            and not window_start <= observed_at.astimezone(timezone.utc).date() <= window_end
         ):
             errors.append(f"row {index} observed_at falls outside the declared window")
         for field in ("model_cost_usd", "human_minutes", "retry_cost_usd", "verification_cost_usd"):

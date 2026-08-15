@@ -904,7 +904,11 @@ def validate(contract: dict[str, Any]) -> list[str]:
         if not dependency.get("required_path"):
             errors.append(f"dependency {dependency_id} requires a source path")
     c03_dependency = next(
-        (dependency for dependency in dependencies if dependency.get("id") == "c03_identity_offers"),
+        (
+            dependency
+            for dependency in dependencies
+            if isinstance(dependency, dict) and dependency.get("id") == "c03_identity_offers"
+        ),
         {},
     )
     if c03_dependency.get("exact_head") != C03_MERGE_COMMIT:
@@ -914,6 +918,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
     if c03_dependency.get("merge_commit") != C03_MERGE_COMMIT:
         errors.append("C03 dependency source must bind its merged main commit")
     for dependency in dependencies:
+        if not isinstance(dependency, dict):
+            continue
         dependency_id = dependency.get("id", "<unknown>")
         expected_binding = EXPECTED_DEPENDENCY_BINDINGS.get(dependency_id)
         if (
@@ -1756,6 +1762,7 @@ class _VisibleSurfaceParser(HTMLParser):
     }
     _UNSUPPORTED_LEGACY_BLOCK_TAGS = {"listing", "marquee", "plaintext", "xmp"}
     _UNSUPPORTED_BIDI_TAGS = {"bdi", "bdo"}
+    _UNSUPPORTED_PRESENTATION_ATTRIBUTES = {"alink", "bgcolor", "color", "link", "text", "vlink"}
     _HEAD_ALLOWED_TAGS = {"base", "link", "meta", "noscript", "script", "style", "template", "title"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
@@ -1879,6 +1886,8 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized: dict[str, str | None] = {}
         for name, value in attrs:
             key = name.casefold()
+            if key in cls._UNSUPPORTED_PRESENTATION_ATTRIBUTES:
+                raise ValueError("surface visibility requires legacy presentation-attribute evaluation")
             if key.startswith("on") and len(key) > 2:
                 raise ValueError("surface visibility requires executable event-handler evaluation")
             if (
@@ -2187,7 +2196,7 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
             ):
                 negated = True
             occurrence_results.append(negated)
-    return bool(occurrence_results) and all(occurrence_results)
+    return any(occurrence_results)
 
 
 def _contains_private_telephone(value: str) -> bool:
@@ -2354,6 +2363,9 @@ def _surface_inspection_errors(
         if not isinstance(inspection, dict) or set(inspection) != exact_fields:
             errors.append(f"surface inspection has an invalid exact schema: {surface}")
             continue
+        private_paths = sorted(_find_forbidden_demo_material(inspection, "surface inspection"))
+        if private_paths:
+            errors.append("surface inspection contains private material: " + ", ".join(private_paths))
         if inspection.get("schema_version") != SURFACE_INSPECTION_SCHEMA:
             errors.append(f"surface inspection has an unsupported schema: {surface}")
         inspection_id = inspection.get("inspection_id")
@@ -2877,8 +2889,10 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
             forbidden.update(_find_forbidden_demo_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
         public_value = _strip_default_ignorable(value)
-        if _demo_url_contains_forbidden_material(public_value) or any(
-            pattern.search(public_value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS
+        if (
+            _demo_url_contains_forbidden_material(public_value)
+            or _contains_private_telephone(public_value)
+            or any(pattern.search(public_value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS)
         ):
             forbidden.add(path)
     return forbidden
@@ -4698,10 +4712,13 @@ def main() -> int:
                 result["errors"].extend(result["formalization"]["errors"])
     except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired, ValueError) as exc:
         failure_label = args.mode.replace("-", " ")
+        detail = str(exc)
+        if _find_forbidden_demo_material(detail):
+            detail = "input rejected by public-safety validation"
         result = {
             "contract": str(args.contract),
             "status": "fail",
-            "errors": [f"{failure_label} failed: {exc}"],
+            "errors": [f"{failure_label} failed: {detail}"],
         }
     print(json.dumps(result, indent=2) if args.json else result["status"].upper())
     return 1 if result["status"] == "fail" else 0

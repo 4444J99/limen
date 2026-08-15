@@ -469,6 +469,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed["dependency_progress"] = "not-an-object"
         self.assertIn("dependency_progress must be an object", MODULE.validate(changed))
 
+    def test_non_mapping_dependency_source_fails_closed_without_crashing(self) -> None:
+        changed = json.loads(json.dumps(self.contract))
+        changed["dependency_sources"].append(None)
+        self.assertIn("dependency source must be an object", MODULE.validate(changed))
+
     def test_c03_source_and_merge_bindings_fail_closed_on_drift(self) -> None:
         accepted = next(row for row in self.contract["dependency_sources"] if row["id"] == "c03_identity_offers")
         self.assertEqual("main", accepted["branch"])
@@ -655,6 +660,26 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     self.assertEqual(1, exit_code)
                     self.assertEqual("fail", result["status"])
                     self.assertTrue(any("duplicate JSON member: reason" in error for error in result["errors"]))
+
+            unsafe_duplicate = Path(directory) / "unsafe-duplicate.json"
+            unsafe_value = "password: hunter2alpha"  # allow-secret: synthetic adversarial fixture
+            unsafe_duplicate.write_text(
+                json.dumps({unsafe_value: "first"})[:-1] + f',{json.dumps(unsafe_value)}:"second"}}',
+                encoding="utf-8",
+            )
+            stdout = io.StringIO()
+            argv = [str(SCRIPT), "--mode", "demo", "--input", str(unsafe_duplicate), "--json"]
+            with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(stdout):
+                exit_code = MODULE.main()
+            serialized = stdout.getvalue()
+            result = json.loads(serialized)
+            self.assertEqual(1, exit_code)
+            self.assertEqual("fail", result["status"])
+            self.assertNotIn("hunter2alpha", serialized)
+            self.assertEqual(
+                ["demo failed: input rejected by public-safety validation"],
+                result["errors"],
+            )
 
     def test_surface_audit_requires_every_cell_and_private_disproof(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
@@ -993,8 +1018,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             long_expected,
             surface,
         )
-        self.assertEqual(["LONG-CLAIM"], matched)
-        self.assertEqual([], drifted)
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
 
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html data-nonce='one'><body><h1>Bounded proof claim</h1></body></html>"
@@ -1181,6 +1206,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with self.subTest(bidi_markup=bidi_markup):
                 with self.assertRaisesRegex(ValueError, "bidirectional rendering evaluation"):
                     MODULE._canonical_surface_extraction(bidi_markup.encode(), "visible_text_v3")
+        for legacy_presentation in (
+            '<body bgcolor="white"><font color="white">Canonical claim</font></body>',
+            '<FONT COLOR="white">Canonical claim</FONT>',
+        ):
+            with self.subTest(legacy_presentation=legacy_presentation):
+                with self.assertRaisesRegex(ValueError, "legacy presentation-attribute evaluation"):
+                    MODULE._canonical_surface_extraction(legacy_presentation.encode(), "visible_text_v3")
         for math_markup in (
             "<math><semantics><mi>x</mi><annotation>Canonical claim</annotation></semantics></math>",
             "<MATH/>",
@@ -1975,6 +2007,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("unexpected exact-schema fields: password" in error for error in result["errors"]))
+        self.assertTrue(any("surface row contains private material" in error for error in result["errors"]))
+
+    def test_surface_audit_privacy_scans_inspection_identifiers_with_telephone_rules(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        inspections = manifest["surface_inspections"]
+        assert isinstance(inspections, dict)
+        surface = next(iter(inspections))
+        private_inspection_id = "phone: 2125551234"
+        inspections[surface]["inspection_id"] = private_inspection_id
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
+        for row in manifest_rows:
+            if row["surface"] == surface:
+                row["inspection_id"] = private_inspection_id
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("surface inspection contains private material" in error for error in result["errors"]))
         self.assertTrue(any("surface row contains private material" in error for error in result["errors"]))
 
     def test_present_surface_claim_requires_evidence_disclosure_and_action(self) -> None:
