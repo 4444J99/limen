@@ -113,7 +113,7 @@ measurement refuted it, and the second cure with it. Both are now guarded by
 | Cure | Idea | Measured result |
 |---|---|---|
 | **Enclosure** | Move the store to `ClaudeCode.app/Contents/MacOS/versions`, symlink the old path, so every exec is bundle-enclosed | **REFUTED** — CoreFoundation resolves a binary nested one level below `Contents/MacOS` to its immediate **parent directory**, exactly as it resolves a loose binary. Bundle identity attaches only to the declared `CFBundleExecutable`. |
-| **Symlink** | Point `versions/<v>` at the bundle's main executable so the kernel resolves onto it | **REFUTED** — the kernel records the path used at exec (the **symlink's own path**); only the underlying vnode (`lsof … -d txt`) shows the target. |
+| **Symlink** | Point `versions/<v>` at the bundle's main executable so the kernel resolves onto it | ~~REFUTED~~ **WITHDRAWN 2026-08-15** — that verdict measured `ps comm`, the accounting string, not code identity. See the amendment below. |
 
 PR #2450 was held in draft and closed unmerged; nothing placebo-shaped landed. The probe is a
 **ratchet on a negative result** — exit 0 while both refutations hold, exit 1 if macOS
@@ -125,3 +125,101 @@ entry is refusing to repeat.
 Standing conclusion, now measured rather than argued: **the fix is upstream**
 (anthropics/claude-code#86706, #74068). Locally, only `autoUpdates: false` changes the
 operator's experience, by choosing the cadence of the bursts rather than preventing them.
+
+## 2026-08-15 amendment — the symlink refutation measured the wrong quantity
+
+The section above is amended, not replaced. Its **enclosure** refutation is independently
+**confirmed**: a second probe reproduced it exactly — a binary nested one level below
+`Contents/MacOS` resolves to its parent directory, never to the `.app`. Cure A is dead.
+
+Its **symlink** refutation is **withdrawn**. `scripts/tcc-identity-attribution-probe.py`
+measures with `ps -p <pid> -o comm=`, which returns the kernel's *accounting string*
+(`p_comm`) — the path used at exec. That measurement is correct about that quantity. It is
+not the quantity a TCC client identity derives from. Four reads, three layers:
+
+| Measure | Layer | A symlink exec reports |
+|---|---|---|
+| `ps -o comm=` | accounting string (`p_comm`) | the **symlink's own path** |
+| `proc_pidpath` | vnode path | the **target** |
+| `lsof -a -d txt` | vnode | the **target** (their own probe: `/bin/sleep`) |
+| launch-constraint evaluation | kernel code identity (AMFI) | the **target** — decisive |
+
+The last row is decisive because its outcome is binary and externally visible rather than a
+string to interpret. `/bin/sleep` is a platform binary constrained to its canonical path:
+
+```text
+cp    /bin/sleep $T/copy && $T/copy 0.3   ->  exit 137  (SIGKILL — constraint VIOLATED)
+ln -s /bin/sleep $T/link && $T/link 0.3   ->  exit 0    (constraint SATISFIED)
+```
+
+A **copy** at the temp path is killed; a **symlink** at that same temp path runs. The
+constraint can only be satisfied if the kernel evaluated it against `/bin/sleep` — that is,
+it resolved the symlink *before* deciding code identity. The attribution probe's own output
+already contains this evidence and reads past it: its symlink child ran to completion,
+returning a `comm` and an `lsof` entry instead of `<defunct>`, which is possible only if the
+constraint was satisfied through the link.
+
+**Status of cure B: not refuted — unresolved, with the evidence leaning viable.** Two things
+are still required before anything ships, and neither is done:
+
+1. **The end-to-end test.** Every measurement so far is a proxy. The decisive experiment is
+   to trigger a TCC-protected access from a symlinked binary and read the resulting `client`
+   column in the TCC db. Until that runs, "the code-identity layer resolves symlinks" is a
+   strong *necessary* condition, not proof that TCC attributes the target.
+2. **An effector on a cadence.** The vendor re-materializes the version store on start, so a
+   hand-laid symlink is overwritten. A one-time `ln -s` cures nothing.
+
+**Consequence for the ratchet.** `tcc-identity-attribution-probe.py` computes cure B's
+verdict as `recorded == str(link)` against `p_comm`. That comparison will hold forever
+regardless of what the code-identity layer does, so the ratchet cannot detect the change it
+exists to watch for — it certifies a negative that was never measured on the deciding layer.
+The probe's cure-B arm should either measure code identity or be marked unresolved; its
+cure-A arm is sound and worth keeping exactly as it is.
+
+**Registry correction.** Lineage prose (and the agent memory `tcc-prompts-upstream-blocked`)
+cited `scripts/heal-claude-versions-enclosure.sh`, a `sensors.yaml` class-5 sensor, and a
+valve `LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL`. **None of the three exist** — `git ls-files
+scripts/` lists only `heal-claude-cask.sh`, `heal-claude-lsregister.sh` and
+`heal-claude-update-marker.sh`, and `VERSIONS_ENCLOSURE` appears nowhere in
+`institutio/governance/sensors.yaml`. Consistent with PR #2450 having been closed unmerged.
+Do not cite the enclosure healer as an armed capability.
+
+### The fixture trap — why this took three crashed runs to measure
+
+A separate probe in this lineage built its fixtures from copies of `/bin/sleep` and
+`/bin/echo`. Those are Apple **platform binaries** (`codesign -dv` → `Platform identifier=26`)
+carrying a launch constraint pinning them to their canonical path, so the kernel SIGKILLed
+every copy at exec:
+
+```text
+Exception Type:      EXC_CRASH (SIGKILL (Code Signature Invalid))
+Termination Reason:  Namespace CODESIGNING, Code 4, Launch Constraint Violation
+```
+
+Three crash reports (`~/Library/Logs/DiagnosticReports/tool-2026-08-15-115647.000.ips`,
+`-115822.000.ips`, `-120019.ips`) correspond one-to-one with three re-runs. Each read the
+dead child's path as `None`/`<defunct>` and **misattributed it to `ctypes`/`proc_pidpath` not
+binding**. The measuring API was never the problem; the fixture was. `/bin/sleep` reached by
+**symlink** survives — which is exactly why it works as the discriminator above — but any
+**copy** of it is a corpse before the first measurement.
+
+A second fixture defect followed: linking every arm to one inode. `proc_pidpath` resolves a
+vnode through the name cache, so a multiply-linked inode reports an *arbitrary* alias — all
+arms, including the bundle's own executable, reported the hardlink's name. Isolating each arm
+in its own root with its own inode reads clean.
+
+Both defects fail identically: **a broken fixture that reads as a measurement.** Hence
+`scripts/probe-exec-identity.py` asserts every child is alive before reading anything and
+raises `FixtureError` otherwise — a dead child must never return a datum. Its arms:
+
+| Arm | Layout | Exec'd via | `proc_pidpath` records |
+|---|---|---|---|
+| A | bundle only | bundle exec | `Test.app/Contents/MacOS/tool` |
+| B | bundle + hardlink outside (**today**) | bundle exec | `Test.app/Contents/MacOS/tool` |
+| C | bundle + hardlink outside (**today**) | the hardlink | `versions/2.1.233` |
+| D | bundle + symlink outside (**proposed**) | the symlink | `Test.app/Contents/MacOS/tool` |
+| E | platform binary, copy vs symlink | both | copy **killed**, symlink **runs** |
+
+Arm C reproduces today's defect: the vendor materializes `versions/<v>` as a hardlink of the
+bundle executable's inode, and exec'ing that name records the *versions* path — the rotating
+client the operator sees as an app named "2.1.233". Arm E is the discriminator above.
