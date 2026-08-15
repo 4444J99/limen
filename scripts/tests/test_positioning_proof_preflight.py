@@ -567,6 +567,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", failed["status"])
         self.assertIn("missing surface cells: 1", failed["errors"])
 
+    def test_surface_audit_rejects_an_empty_self_consistent_denominator(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["surface_audit_model"]["surfaces"] = []
+        changed["surface_audit_model"]["surface_sources"] = {}
+        changed["surface_audit_model"]["surface_levels"] = {}
+        validation_errors = MODULE.validate(changed)
+        self.assertTrue(any("canonical surface denominator" in error for error in validation_errors))
+        result = MODULE.audit_surface_manifest(
+            changed,
+            {"rows": [], "surface_inspections": {}},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("canonical surface denominator" in error for error in result["errors"]))
+
     def test_surface_audit_derives_presence_from_bound_inspection_content(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest = self._empty_surface_manifest(rows)
@@ -605,10 +619,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
         private_content = b"support contact: customer@example.com\n"
         extraction = MODULE._canonical_surface_extraction(private_content, "raw_text_v1")
         inspection["extracted_text_sha256"] = hashlib.sha256(extraction).hexdigest()
-        with mock.patch.object(
-            MODULE,
-            "_read_git_object_bytes",
-            return_value=(private_content, inspection["blob_sha1"]),
+        with (
+            mock.patch.object(
+                MODULE,
+                "EXPECTED_SURFACE_LEVELS",
+                {surface: self.contract["surface_audit_model"]["surface_levels"][surface]},
+            ),
+            mock.patch.object(
+                MODULE,
+                "_read_git_object_bytes",
+                return_value=(private_content, inspection["blob_sha1"]),
+            ),
         ):
             result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
@@ -920,10 +941,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "scanner_version": MODULE.SURFACE_SCANNER_VERSION,
             "matched_claim_ids": [],
         }
-        with mock.patch.object(
-            MODULE,
-            "_read_git_object_bytes",
-            return_value=(receipt_content, "a" * 40),
+        with (
+            mock.patch.object(
+                MODULE,
+                "EXPECTED_SURFACE_LEVELS",
+                {surface: self.contract["surface_audit_model"]["surface_levels"][surface]},
+            ),
+            mock.patch.object(
+                MODULE,
+                "_read_git_object_bytes",
+                return_value=(receipt_content, "a" * 40),
+            ),
         ):
             with mock.patch.object(MODULE, "_fetch_bounded_public_surface", return_value=live_content):
                 errors, _resolved = MODULE._surface_inspection_errors(
@@ -981,12 +1009,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         legacy_inspection = copy.deepcopy(inspection)
         legacy_inspection["raw_response_sha256"] = "0" * 64
-        legacy_errors, _resolved = MODULE._surface_inspection_errors(
-            self.contract,
-            {surface: legacy_inspection},
-            {},
-            ROOT,
-        )
+        with mock.patch.object(
+            MODULE,
+            "EXPECTED_SURFACE_LEVELS",
+            {surface: self.contract["surface_audit_model"]["surface_levels"][surface]},
+        ):
+            legacy_errors, _resolved = MODULE._surface_inspection_errors(
+                self.contract,
+                {surface: legacy_inspection},
+                {},
+                ROOT,
+            )
         self.assertTrue(any("invalid exact schema" in error for error in legacy_errors), legacy_errors)
 
     def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
@@ -2088,10 +2121,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "default_head": MODULE.C03_CURRENT_HEAD,
             "contained": True,
         }
-        with mock.patch.object(
-            MODULE,
-            "_live_authoritative_closure_verification",
-            return_value=authoritative,
+        with (
+            mock.patch.object(
+                MODULE,
+                "_live_authoritative_closure_verification",
+                return_value=authoritative,
+            ),
+            mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=True),
         ):
             result = MODULE.formalization_readiness(
                 self.contract,
@@ -2124,11 +2160,48 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "default_head": MODULE.C03_MERGE_COMMIT,
             "contained": True,
         }
-        with mock.patch.object(MODULE, "_live_authoritative_closure_verification", return_value=remote):
+        with (
+            mock.patch.object(MODULE, "_live_authoritative_closure_verification", return_value=remote),
+            mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=True),
+        ):
             result = MODULE.formalization_readiness(self.contract, closure)
         self.assertFalse(result["ready"])
         self.assertFalse(
-            any("final C03 head is not a locally proven descendant" in error for error in result["errors"])
+            any("final C03 head is not an isolated-canonical descendant" in error for error in result["errors"])
+        )
+
+    def test_formalization_proves_the_accepted_floor_in_the_isolated_canonical_store(self) -> None:
+        closure = {
+            "chunk_id": "PSP-C03",
+            "status": "pass",
+            "exact_head": MODULE.C03_CURRENT_HEAD,
+            "phase_receipts": {},
+            "w07_receipt": {},
+        }
+        remote = {
+            "status": "pass",
+            "repository": "organvm/limen",
+            "closure_head": MODULE.C03_CURRENT_HEAD,
+            "default_branch": "main",
+            "default_head": MODULE.C03_CURRENT_HEAD,
+            "contained": True,
+        }
+        with (
+            mock.patch.object(MODULE, "_live_authoritative_closure_verification", return_value=remote),
+            mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=True) as ancestry,
+            mock.patch.object(
+                MODULE,
+                "_sanitized_ancestry",
+                side_effect=AssertionError("caller object store must not decide formalization ancestry"),
+            ),
+        ):
+            result = MODULE.formalization_readiness(self.contract, closure)
+        self.assertFalse(result["ready"])
+        ancestry.assert_called_once_with(
+            "main",
+            MODULE.C03_CURRENT_HEAD,
+            MODULE.C03_MERGE_COMMIT,
+            MODULE.C03_CURRENT_HEAD,
         )
 
     def test_formalization_rejects_a_closure_head_outside_the_authoritative_default_branch(self) -> None:
@@ -2194,6 +2267,35 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertIn("--git-dir", ancestry.args[0])
         self.assertEqual("1", ancestry.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"])
         self.assertEqual(MODULE.os.devnull, ancestry.kwargs["env"]["GIT_GRAFT_FILE"])
+
+    def test_canonical_formalization_ancestry_fetches_both_exact_heads_before_proving_containment(self) -> None:
+        accepted_head = "a" * 40
+        closure_head = "b" * 40
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        fetched = subprocess.CompletedProcess([], 0, MODULE.C03_CURRENT_HEAD + "\n", "")
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=(completed, completed, fetched, completed, completed, completed),
+        ) as run:
+            self.assertTrue(
+                MODULE._canonical_limen_contains_head(
+                    "main",
+                    MODULE.C03_CURRENT_HEAD,
+                    accepted_head,
+                    closure_head,
+                )
+            )
+        fetch = run.call_args_list[1]
+        self.assertIn(f"{MODULE.C03_CURRENT_HEAD}:refs/canonical/main", fetch.args[0])
+        accepted_lookup = run.call_args_list[3]
+        closure_lookup = run.call_args_list[4]
+        self.assertIn(f"{accepted_head}^{{commit}}", accepted_lookup.args[0])
+        self.assertIn(f"{closure_head}^{{commit}}", closure_lookup.args[0])
+        ancestry = run.call_args_list[5]
+        self.assertEqual(accepted_head, ancestry.args[0][-2])
+        self.assertEqual(closure_head, ancestry.args[0][-1])
+        self.assertIn("--git-dir", ancestry.args[0])
 
     def test_surface_authority_fetches_exact_main_before_reading_receipt_blobs(self) -> None:
         completed = subprocess.CompletedProcess([], 0, b"", b"")

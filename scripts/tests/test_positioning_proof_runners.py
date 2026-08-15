@@ -538,6 +538,27 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result["errors"],
         )
 
+    def test_synthetic_cost_artifacts_are_privacy_scanned_and_redacted_before_return(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        private_identity = "customer@example.invalid"
+        private_limitation = "The password is hunter2alpha."
+        payload["population"]["source_manifest"]["records"][0]["author_identity"] = private_identity
+        review = independent_cost_review(payload)
+        review["limitations"] = [private_limitation]
+        result = COST.reproduce(
+            payload,
+            input_artifact=COST_INPUT_ARTIFACT,
+            review_artifact=COST_REVIEW_ARTIFACT,
+            review_verdict=review,
+            **exact_cost_kwargs(payload, review),
+        )
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertEqual("withheld", result["status"])
+        self.assertIsNone(result["population"])
+        self.assertIsNone(result["review_verdict"])
+        self.assertNotIn(private_identity, serialized)
+        self.assertNotIn(private_limitation, serialized)
+
     def test_public_safe_scan_checks_identifier_values_inside_lists(self) -> None:
         findings = COST._find_forbidden_public_material({"record_id": ["private-123"]})
         self.assertEqual({"$.record_id[0]"}, findings)

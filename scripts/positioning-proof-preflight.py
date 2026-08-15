@@ -967,6 +967,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("surface audit must declare a bounded inspection freshness budget")
     surfaces = surface_model.get("surfaces")
     surface_sources = surface_model.get("surface_sources")
+    if surfaces != list(EXPECTED_SURFACE_LEVELS):
+        errors.append("surface audit must bind the exact nonempty canonical surface denominator")
     if not isinstance(surfaces, list) or not isinstance(surface_sources, dict) or set(surface_sources) != set(surfaces):
         errors.append("surface audit must bind exactly one canonical source to every public surface")
     else:
@@ -1783,6 +1785,8 @@ def _surface_inspection_errors(
 ) -> tuple[list[str], dict[str, dict[str, Any]]]:
     errors: list[str] = []
     expected_surfaces = contract.get("surface_audit_model", {}).get("surfaces", [])
+    if expected_surfaces != list(EXPECTED_SURFACE_LEVELS):
+        return ["surface audit requires the exact nonempty canonical surface denominator"], {}
     if not isinstance(inspections, dict) or set(inspections) != set(expected_surfaces):
         return ["surface_inspections must bind exactly one inspection per canonical surface"], {}
     source_bindings = contract.get("surface_audit_model", {}).get("surface_sources")
@@ -3162,14 +3166,20 @@ def _fetch_canonical_limen_objects(
         return objects
 
 
-def _canonical_limen_contains_head(default_branch: str, default_head: str, candidate_head: str) -> bool:
-    """Fetch the advertised Limen head into an isolated store before proving ancestry."""
+def _canonical_limen_contains_head(
+    default_branch: str,
+    default_head: str,
+    candidate_head: str,
+    descendant_head: str | None = None,
+) -> bool:
+    """Fetch canonical history into an isolated store before proving ancestry."""
     if (
         not isinstance(default_branch, str)
         or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", default_branch)
         or any(token in default_branch for token in ("..", "//", "@{", "\\"))
         or not FULL_HEAD.fullmatch(default_head)
         or not FULL_HEAD.fullmatch(candidate_head)
+        or (descendant_head is not None and not FULL_HEAD.fullmatch(descendant_head))
     ):
         raise ValueError("canonical organvm/limen ancestry request is invalid")
     trusted_git = str(_trusted_named_executable("git"))
@@ -3214,16 +3224,20 @@ def _canonical_limen_contains_head(default_branch: str, default_head: str, candi
         )
         if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
             raise ValueError("fetched canonical organvm/limen head differs from the advertised head")
-        candidate = subprocess.run(
-            [trusted_git, "--git-dir", str(object_store), "cat-file", "-e", f"{candidate_head}^{{commit}}"],
-            cwd=anchor,
-            env=environment,
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        if candidate.returncode != 0:
-            return False
+        for head in dict.fromkeys((candidate_head, descendant_head)):
+            if head is None:
+                continue
+            candidate = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "cat-file", "-e", f"{head}^{{commit}}"],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            if candidate.returncode != 0:
+                return False
+        descendant = descendant_head or canonical_ref
         ancestry = subprocess.run(
             [
                 trusted_git,
@@ -3232,7 +3246,7 @@ def _canonical_limen_contains_head(default_branch: str, default_head: str, candi
                 "merge-base",
                 "--is-ancestor",
                 candidate_head,
-                canonical_ref,
+                descendant,
             ],
             cwd=anchor,
             env=environment,
@@ -3734,14 +3748,21 @@ def formalization_readiness(
         if not isinstance(final_head, str) or not FULL_HEAD.fullmatch(final_head):
             receipt_errors.append("closure receipt requires a full exact head")
         else:
+            authoritative: dict[str, Any] | None = None
             try:
                 authoritative = _live_authoritative_closure_verification(repository, final_head)
                 receipt_errors.extend(_validate_authoritative_closure_verification(authoritative, final_head))
             except (HTTPException, json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
                 receipt_errors.append(str(exc))
-            ancestry = _sanitized_ancestry(repository, str(accepted_head), final_head)
-            if ancestry.returncode:
-                receipt_errors.append("final C03 head is not a locally proven descendant of the accepted head")
+            if not FULL_HEAD.fullmatch(str(accepted_head or "")):
+                receipt_errors.append("accepted C03 ancestry floor must be a full exact head")
+            elif isinstance(authoritative, dict) and not _canonical_limen_contains_head(
+                str(authoritative.get("default_branch")),
+                str(authoritative.get("default_head")),
+                str(accepted_head),
+                final_head,
+            ):
+                receipt_errors.append("final C03 head is not an isolated-canonical descendant of the accepted head")
         if "phase_predicates" in closure_receipt:
             receipt_errors.append("self-declared phase_predicates are not accepted as phase evidence")
         receipt_errors.extend(

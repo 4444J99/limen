@@ -1124,12 +1124,10 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
     provenance = payload.get("provenance")
     if not isinstance(provenance, str) or provenance not in ALLOWED_PROVENANCE:
         errors.append("sample requires explicit synthetic or public_safe_observed provenance")
-    elif provenance == "public_safe_observed":
+    else:
         private_paths = sorted(_find_forbidden_public_material(payload))
         if private_paths:
-            errors.append(
-                "public-safe observed sample contains private or credential material: " + ", ".join(private_paths)
-            )
+            errors.append("sample contains private or credential material: " + ", ".join(private_paths))
     window_start = _parse_window_date(payload.get("window_start"), "window_start", errors)
     window_end = _parse_window_date(payload.get("window_end"), "window_end", errors)
     if window_start is not None and window_end is not None and window_start > window_end:
@@ -1397,7 +1395,7 @@ def _validate_required_receipt_fields(
                     "data_digest"
                 ):
                     errors.append("analysis reproduction input differs from its committed HEAD artifact")
-                elif analysis.get("provenance") == "public_safe_observed":
+                else:
                     private_paths = sorted(_find_forbidden_public_material(committed_input))
                     if private_paths:
                         errors.append(
@@ -1424,7 +1422,7 @@ def _validate_required_receipt_fields(
                 else:
                     if not isinstance(committed_review, dict) or committed_review != analysis.get("review_verdict"):
                         errors.append("analysis reproduction review differs from its committed HEAD artifact")
-                    elif analysis.get("provenance") == "public_safe_observed":
+                    else:
                         private_paths = sorted(_find_forbidden_public_material(committed_review))
                         if private_paths:
                             errors.append(
@@ -1453,12 +1451,9 @@ def _validate_required_receipt_fields(
         errors.append("analysis review_verdict must use the exact contract fields")
     if verdict.get("schema_version") != REVIEW_SCHEMA:
         errors.append("analysis review_verdict has an unsupported schema")
-    if analysis.get("provenance") == "public_safe_observed":
-        private_paths = sorted(_find_forbidden_public_material(verdict))
-        if private_paths:
-            errors.append(
-                "analysis review_verdict contains private or credential material: " + ", ".join(private_paths)
-            )
+    private_paths = sorted(_find_forbidden_public_material(verdict))
+    if private_paths:
+        errors.append("analysis review_verdict contains private or credential material: " + ", ".join(private_paths))
     reviewer_class = verdict.get("reviewer_class")
     if not isinstance(reviewer_class, str) or reviewer_class not in INDEPENDENT_REVIEWER_CLASSES:
         errors.append("analysis review_verdict requires an independent reviewer class")
@@ -1564,6 +1559,9 @@ def _finalize_analysis(
     publication_eligible = (
         data_complete and analysis.get("provenance") == "public_safe_observed" and verdict_passed and not errors
     )
+    for field in ("population", "review_verdict"):
+        if _find_forbidden_public_material(analysis.get(field)):
+            analysis[field] = None
     analysis["errors"] = errors
     analysis["publication_eligible"] = publication_eligible
     analysis["status"] = "regenerated" if publication_eligible else "withheld"
