@@ -99,6 +99,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "dimension": dimension,
             "status": status,
             "exit_code": 0 if status == "pass" else 1,
+            "run_attempt": 1,
             "provenance_url": f"https://github.com/{row['repository']}/actions/runs/1234",
             "predicate_path": f".github/workflows/{dimension}-technical-readiness.yml",
             "output_path": f"docs/receipts/technical-readiness/{dimension}-output.txt",
@@ -121,6 +122,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "tested_commit": row["observed_head"],
             "status": "funded",
             "capacity_hours_per_month": capacity,
+            "run_attempt": 1,
             "provenance_url": f"https://github.com/{row['repository']}/actions/runs/5678",
             "predicate_path": ".github/workflows/maintenance-funding.yml",
             "artifact_path": "docs/receipts/technical-readiness/maintenance-funding-artifact.json",
@@ -143,6 +145,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "provenance": {
                 "html_url": receipt["provenance_url"],
                 "head_sha": receipt["tested_commit"],
+                "run_attempt": receipt["run_attempt"],
                 "status": "completed",
                 "conclusion": "success" if status == "pass" else "failure",
                 "path": receipt["predicate_path"],
@@ -165,6 +168,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "provenance": {
                 "html_url": receipt["provenance_url"],
                 "head_sha": receipt["tested_commit"],
+                "run_attempt": receipt["run_attempt"],
                 "status": "completed",
                 "conclusion": "success",
                 "path": receipt["predicate_path"],
@@ -240,12 +244,25 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
 
     def test_candidate_projection_digest_binds_lifecycle_fields(self) -> None:
+        expected_digest = MODULE.candidate_projection_digest(self.snapshot)
         changed_snapshot = copy.deepcopy(self.snapshot)
         row = next(candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public")
         row["current_state"] = "archived"
         row["preflight_disposition"] = "experiment"
         with self.assertRaisesRegex(MODULE.AuditError, "accepted public candidate lifecycle binding is invalid"):
             MODULE.candidate_projection_digest(changed_snapshot)
+        for mutate in (
+            lambda value: value["demand"].__setitem__("score", value["demand"]["score"] + 1),
+            lambda value: value["economics"].__setitem__("status", "transfer_floor_passed"),
+            lambda value: value["blocking_evidence"].pop(),
+            lambda value: value.__setitem__("transfer_eligible", not value["transfer_eligible"]),
+        ):
+            changed_snapshot = copy.deepcopy(self.snapshot)
+            row = next(
+                candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public"
+            )
+            mutate(row)
+            self.assertNotEqual(expected_digest, MODULE.candidate_projection_digest(changed_snapshot))
 
     def test_w01_acceptance_is_recomputed_and_live_receipt_is_bound(self) -> None:
         self.assertEqual(MODULE.SOURCE_LOCK["w01_acceptance_sha256"], MODULE.accepted_w01_acceptance_digest())
@@ -264,15 +281,26 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "html_url": MODULE.SOURCE_LOCK["w01_receipt"],
             "body": "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```",
         }
-        with mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]):
-            MODULE.verify_w01_live_receipt()
-        receipt["acceptance_sha256"] = "0" * 64
-        comment["body"] = "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```"
-        with (
-            mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]),
-            self.assertRaisesRegex(MODULE.AuditError, "binding drifted"),
+        with mock.patch.dict(
+            MODULE.SOURCE_LOCK,
+            {"w01_receipt_sha256": verification["receipt_sha256"]},
         ):
-            MODULE.verify_w01_live_receipt()
+            with mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]):
+                MODULE.verify_w01_live_receipt()
+            wrong_digest = copy.deepcopy(verification)
+            wrong_digest["receipt_sha256"] = "0" * 64
+            with (
+                mock.patch.object(MODULE, "_run_json", return_value=wrong_digest),
+                self.assertRaisesRegex(MODULE.AuditError, "verification drifted"),
+            ):
+                MODULE.verify_w01_live_receipt()
+            receipt["acceptance_sha256"] = "0" * 64
+            comment["body"] = "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```"
+            with (
+                mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]),
+                self.assertRaisesRegex(MODULE.AuditError, "binding drifted"),
+            ):
+                MODULE.verify_w01_live_receipt()
 
     def test_public_head_and_live_head_are_exact(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -361,9 +389,13 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")
         ), mock.patch.object(
             MODULE, "_fetch_repository_blob", side_effect=[output, artifact]
-        ), mock.patch.object(MODULE, "_run_json", return_value=resolved["provenance"]):
+        ), mock.patch.object(MODULE, "_run_json", return_value=resolved["provenance"]) as run:
             receipts = MODULE.collect_live_evidence_receipts(changed)
         self.assertEqual(resolved, receipts[(row["candidate_id"], "build")])
+        self.assertEqual(
+            ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
+            run.call_args.args[0],
+        )
         broken = self.evidence_receipt(row, "build")
         broken["exit_code"] = 1
         self.assertIn(
@@ -426,11 +458,18 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 MODULE,
                 "_run_json",
                 side_effect=[technical["provenance"], funding["provenance"]],
-            ),
+            ) as run,
         ):
             receipts = MODULE.collect_live_evidence_receipts(changed)
         resolved = receipts[(row["candidate_id"], "maintenance")]
         self.assertEqual(2, fetch_receipt.call_count)
+        self.assertEqual(
+            [
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/attempts/1"],
+            ],
+            [call.args[0] for call in run.call_args_list],
+        )
         self.assertEqual(funding, resolved["funding"])
         self.assertNotEqual(row["maintenance"]["evidence_url"], row["maintenance"]["funding_evidence_url"])
 
@@ -491,6 +530,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 )
             )
         )
+        resolved = self.resolved_evidence(self.evidence_receipt(row, "build"))
+        resolved["provenance"]["run_attempt"] = 2
+        self.assertTrue(
+            any(
+                "trusted result semantics drift" in error
+                for error in MODULE._evidence_receipt_errors(
+                    resolved,
+                    row["repository"],
+                    row["observed_head"],
+                    "build",
+                    "verified_pass",
+                    "candidate.build",
+                )
+            )
+        )
         receipt = self.evidence_receipt(row, "build")
         receipt["artifact_path"] = receipt["output_path"]
         receipt["artifact_sha256"] = receipt["output_sha256"]
@@ -519,6 +573,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 technical,
                 "candidate.maintenance.funding",
             ),
+        )
+        attempt_drift = self.resolved_funding(self.funding_receipt(row))
+        attempt_drift["provenance"]["run_attempt"] = 2
+        self.assertTrue(
+            any(
+                "trusted result semantics drift" in error
+                for error in MODULE._maintenance_funding_errors(
+                    attempt_drift,
+                    row["repository"],
+                    row["observed_head"],
+                    1,
+                    technical,
+                    "candidate.maintenance.funding",
+                )
+            )
         )
         funding["receipt"]["capacity_hours_per_month"] = 0
         self.assertTrue(

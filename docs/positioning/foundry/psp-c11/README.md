@@ -96,10 +96,12 @@ a finite experiment and is parked after two bounded failures rather than kept al
 ## W03 — Technical readiness, custody, and maintenance risk
 
 [`technical-readiness-audit.json`](technical-readiness-audit.json) is locked to the accepted W01
-receipt, accepted head, acceptance digest, and private-inclusive candidate identity digest. The
+receipt URL, its canonical issue-comment receipt digest, accepted head, acceptance digest, and
+private-inclusive candidate identity digest. The
 validator recomputes that identity digest from the live accepted W01 candidate identities and also
-recomputes the public snapshot projection digest from each candidate ID, visibility, and accepted
-public repository binding; neither self-declared digest is trusted. Its denominator is exactly 62
+recomputes the snapshot projection digest from identity, visibility, repository, lifecycle, fork,
+demand, economics, blocker, and source transfer-eligibility fields; neither self-declared digest is
+trusted. Its denominator is exactly 62
 candidates: 54 public rows and eight opaque private
 rows. Every public row records the currently observed 40-hex repository head and an exact-schema
 result for build, test, deploy, documentation, security, data custody, IP custody,
@@ -123,9 +125,10 @@ verified dimension requires a dimension-specific immutable receipt in the candid
 the trusted Limen receipt surface. The receipt may live at a later commit, avoiding a Git fixed
 point, but its `tested_commit` must equal the candidate's observed head. Its relative output and
 artifact paths resolve at the receipt commit, must be distinct, and must match independently fetched
-SHA-256 digests. Trusted live validation also resolves a dimension-specific completed GitHub Actions
-run whose head, conclusion, predicate path, and completion time bind the tested commit, pass/fail
-semantics, and non-future receipt chronology. Self-authored commands or hashes, reused blobs,
+SHA-256 digests. Trusted live validation also resolves the receipt's exact GitHub Actions
+`run_attempt` through the attempt-specific endpoint; its head, attempt, conclusion, predicate path,
+and completion time bind the tested commit, pass/fail semantics, and non-future receipt chronology.
+The separate maintenance-funding provenance uses the same attempt-specific rule. Self-authored commands or hashes, reused blobs,
 invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
 zero, while a verified failure requires a non-boolean nonzero integer plus an executed `failure` or
 `timed_out` workflow conclusion; skipped, cancelled, neutral, and other non-executed runs are not

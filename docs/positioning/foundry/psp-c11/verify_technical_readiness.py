@@ -38,10 +38,11 @@ PREFLIGHT = ROOT / "scripts/positioning-foundry-preflight.py"
 
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
+    "w01_receipt_sha256": "18b9348da9f1819f43d2c11b9065cb927966482309b0c304e21bf8c03e5ca7ce",
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
-    "candidate_projection_sha256": "f7492467314b0af5ea46a2158172ea863aec4c0d90fc776f1b3bab4ea8f52d55",
+    "candidate_projection_sha256": "53db24ccc3cc2cfd2498e7e58bd4c94a6279343b775bae95ec3d5cd8ec52d3c9",
     "candidate_count": 62,
     "visibility": {"public": 54, "private": 8},
 }
@@ -136,6 +137,7 @@ EVIDENCE_RECEIPT_KEYS = {
     "dimension",
     "status",
     "exit_code",
+    "run_attempt",
     "provenance_url",
     "predicate_path",
     "output_path",
@@ -170,6 +172,7 @@ FUNDING_RECEIPT_KEYS = {
     "tested_commit",
     "status",
     "capacity_hours_per_month",
+    "run_attempt",
     "provenance_url",
     "predicate_path",
     "artifact_path",
@@ -575,7 +578,7 @@ def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
         verification.get("status") != "pass"
         or verification.get("work_id") != "PSP-P13-W01"
         or verification.get("receipt_url") != SOURCE_LOCK["w01_receipt"]
-        or not SHA64.fullmatch(str(verification.get("receipt_sha256") or ""))
+        or verification.get("receipt_sha256") != SOURCE_LOCK["w01_receipt_sha256"]
     ):
         raise AuditError("accepted W01 marked receipt verification drifted")
     comment = _run_json(
@@ -601,7 +604,7 @@ def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
         not isinstance(receipt, dict)
         or receipt.get("acceptance_sha256") != SOURCE_LOCK["w01_acceptance_sha256"]
         or (receipt.get("observed_heads") or {}).get("organvm/limen") != SOURCE_LOCK["w01_accepted_head"]
-        or hashlib.sha256(canonical).hexdigest() != verification["receipt_sha256"]
+        or hashlib.sha256(canonical).hexdigest() != SOURCE_LOCK["w01_receipt_sha256"]
     ):
         raise AuditError("accepted W01 marked receipt binding drifted")
 
@@ -713,7 +716,7 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
     if not isinstance(candidates, list):
         raise AuditError("accepted candidate snapshot candidates are missing")
     identities: list[str] = []
-    bindings: list[dict[str, str]] = []
+    bindings: list[dict[str, Any]] = []
     for row in candidates:
         candidate_id = row.get("candidate_id") if isinstance(row, dict) else None
         if not _is_nonblank_text(candidate_id):
@@ -727,6 +730,18 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
             raise AuditError("accepted private candidate binding is not opaque")
         if visibility not in {"public", "private"}:
             raise AuditError("accepted candidate visibility is invalid")
+        demand = row.get("demand")
+        economics = row.get("economics")
+        blocking_evidence = row.get("blocking_evidence")
+        transfer_eligible = row.get("transfer_eligible")
+        if (
+            not isinstance(demand, dict)
+            or not isinstance(economics, dict)
+            or not isinstance(blocking_evidence, list)
+            or not all(_is_nonblank_text(value) for value in blocking_evidence)
+            or not isinstance(transfer_eligible, bool)
+        ):
+            raise AuditError("accepted candidate nontechnical decision basis is invalid")
         current_state = row.get("current_state")
         preflight_disposition = row.get("preflight_disposition")
         if visibility == "public" and (current_state, preflight_disposition) not in {
@@ -742,6 +757,11 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
                 "visibility": visibility,
                 "current_state": current_state if isinstance(current_state, str) else "",
                 "preflight_disposition": preflight_disposition if isinstance(preflight_disposition, str) else "",
+                "fork": row.get("fork") if isinstance(row.get("fork"), bool) else None,
+                "demand": demand,
+                "economics": economics,
+                "blocking_evidence": blocking_evidence,
+                "transfer_eligible": transfer_eligible,
             }
         )
     if len(identities) != len(set(identities)):
@@ -883,10 +903,15 @@ def collect_live_evidence_receipts(
                 collection,
             )
             run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
-            if run_id is None:
+            run_attempt = receipt.get("run_attempt")
+            if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
                 raise AuditError("live technical evidence provenance URL is invalid")
             provenance = _run_json(
-                ["gh", "api", f"repos/{row['repository']}/actions/runs/{run_id}"],
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+                ],
                 collection=collection,
             )
             resolved: dict[str, Any] = {
@@ -938,10 +963,19 @@ def collect_live_evidence_receipts(
                     funding_receipt.get("provenance_url"),
                     str(row.get("repository") or ""),
                 )
-                if funding_run_id is None:
+                funding_run_attempt = funding_receipt.get("run_attempt")
+                if (
+                    funding_run_id is None
+                    or not _is_nonnegative_int(funding_run_attempt)
+                    or funding_run_attempt < 1
+                ):
                     raise AuditError("live maintenance funding provenance URL is invalid")
                 funding_provenance = _run_json(
-                    ["gh", "api", f"repos/{row['repository']}/actions/runs/{funding_run_id}"],
+                    [
+                        "gh",
+                        "api",
+                        f"repos/{row['repository']}/actions/runs/{funding_run_id}/attempts/{funding_run_attempt}",
+                    ],
                     collection=collection,
                 )
                 resolved["funding"] = {
@@ -1160,15 +1194,22 @@ def _evidence_receipt_errors(
         errors.append(f"{label} live receipt must bind independently distinct output and artifact evidence")
     provenance = resolved_evidence.get("provenance")
     run_id = _actions_run_id(receipt.get("provenance_url"), repository)
+    run_attempt = receipt.get("run_attempt")
     expected_conclusion = "success" if state == "verified_pass" else None
     predicate_path = receipt.get("predicate_path")
-    if not isinstance(provenance, dict) or run_id is None:
+    if (
+        not isinstance(provenance, dict)
+        or run_id is None
+        or not _is_nonnegative_int(run_attempt)
+        or run_attempt < 1
+    ):
         errors.append(f"{label} live receipt must resolve trusted execution provenance")
     else:
         conclusion = provenance.get("conclusion")
         if (
             provenance.get("html_url") != receipt.get("provenance_url")
             or provenance.get("head_sha") != observed_head
+            or provenance.get("run_attempt") != receipt.get("run_attempt")
             or provenance.get("status") != "completed"
             or (state == "verified_pass" and conclusion != expected_conclusion)
             or (state == "verified_fail" and conclusion not in EXECUTED_FAILURE_CONCLUSIONS)
@@ -1258,13 +1299,20 @@ def _maintenance_funding_errors(
         errors.append(f"{label} must bind an independently distinct funding artifact")
     provenance = resolved_funding.get("provenance")
     run_id = _actions_run_id(receipt.get("provenance_url"), repository)
+    run_attempt = receipt.get("run_attempt")
     predicate_path = receipt.get("predicate_path")
-    if not isinstance(provenance, dict) or run_id is None:
+    if (
+        not isinstance(provenance, dict)
+        or run_id is None
+        or not _is_nonnegative_int(run_attempt)
+        or run_attempt < 1
+    ):
         errors.append(f"{label} must resolve trusted execution provenance")
     else:
         if (
             provenance.get("html_url") != receipt.get("provenance_url")
             or provenance.get("head_sha") != observed_head
+            or provenance.get("run_attempt") != receipt.get("run_attempt")
             or provenance.get("status") != "completed"
             or provenance.get("conclusion") != "success"
         ):
