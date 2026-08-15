@@ -98,3 +98,30 @@ audit to green; no local action can discharge it. The one local dial that change
 operator's experience meanwhile is `autoUpdates: false` (prompt bursts on a chosen update
 cadence instead of the vendor's ~daily one) — an operator trade of freshness for quiet,
 never an agent default.
+
+## 2026-08-15 measurement — the two obvious local cures are REFUTED, with a predicate
+
+"Upstream-blocked" above was challenged the same day: reading the vendor binary showed that
+non-spare pty-hosts re-exec into the stable bundle (`Vsm()`) while **spare pty-hosts skip that
+re-exec** (`if(!r) await Vsm()`), so background sessions claimed from pre-warmed spares carry
+the `versions/<v>` identity. That is a true and useful refinement of the mechanism — and it
+suggested two filesystem-level cures that reach where the vendor's argv cannot. A healer for
+the first was written, wired, and opened as PR #2450 **before** its premise was measured. The
+measurement refuted it, and the second cure with it. Both are now guarded by
+`scripts/tcc-identity-attribution-probe.py`:
+
+| Cure | Idea | Measured result |
+|---|---|---|
+| **Enclosure** | Move the store to `ClaudeCode.app/Contents/MacOS/versions`, symlink the old path, so every exec is bundle-enclosed | **REFUTED** — CoreFoundation resolves a binary nested one level below `Contents/MacOS` to its immediate **parent directory**, exactly as it resolves a loose binary. Bundle identity attaches only to the declared `CFBundleExecutable`. |
+| **Symlink** | Point `versions/<v>` at the bundle's main executable so the kernel resolves onto it | **REFUTED** — the kernel records the path used at exec (the **symlink's own path**); only the underlying vnode (`lsof … -d txt`) shows the target. |
+
+PR #2450 was held in draft and closed unmerged; nothing placebo-shaped landed. The probe is a
+**ratchet on a negative result** — exit 0 while both refutations hold, exit 1 if macOS
+behavior changes and the cures deserve a fresh look. It exists because an unrecorded negative
+result decays into folklore and gets re-derived at full cost: this estate has already shipped
+five cures against one false premise (IF-GATEKEEPER-INERT), which is the same failure this
+entry is refusing to repeat.
+
+Standing conclusion, now measured rather than argued: **the fix is upstream**
+(anthropics/claude-code#86706, #74068). Locally, only `autoUpdates: false` changes the
+operator's experience, by choosing the cadence of the bursts rather than preventing them.
