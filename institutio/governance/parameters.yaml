@@ -2730,6 +2730,42 @@ parameters:
     self_update: none
     owner: censor
     note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: eleven adapters over multi-GiB sqlite/jsonl stores with a 30-day window, PLUS the index --all and --health steps added 2026-08-06 (three ordered steps share this envelope). 900 covers the observed manual-run envelope with headroom; if the rung SIGKILLs (124), shrink --window-days rather than growing this. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_RESERVED_TIER:
+    default: "1"
+    env: LIMEN_RESERVED_TIER
+    self_update: none
+    owner: censor
+    note: "Gate for the reserved-tier-audit sensor (scripts/check-reserved-tier.py): does any lane run a reserved tier without a covering acceptance receipt. Armed by default because the rule it enforces (docs/fable-allotment.md) is already estate-wide in prose and was enforced Claude-lane-only in code — the sensor's severity is advisory, so arming it surfaces the backlog without blocking a beat."
+  LIMEN_BEAT_RESERVED_TIER:
+    default: 24
+    env: LIMEN_BEAT_RESERVED_TIER
+    self_update: none
+    owner: censor
+    note: "Beat cadence (hours) for reserved-tier-audit. Matched to LIMEN_BEAT_CROSS_VENDOR because this sensor reads the indexes that one refreshes — auditing more often than the input changes would burn the host for identical verdicts."
+  LIMEN_RESERVED_TIER_TIMEOUT:
+    default: 60
+    env: LIMEN_RESERVED_TIER_TIMEOUT
+    self_update: none
+    owner: censor
+    note: "Per-run timeout (seconds) for reserved-tier-audit. It reads already-materialized JSON indexes and never opens a vendor store, so 60 is generous; an overrun means the index tree grew pathological, not that the audit is slow."
+  LIMEN_RESERVED_TIERS:
+    default: "claude-fable-5"
+    env: LIMEN_RESERVED_TIERS
+    self_update: none
+    owner: censor
+    note: "Comma-separated model identities that require a written acceptance receipt before a run starts. Fable is the only reserved tier today (docs/fable-allotment.md); this is a list rather than a constant so a future reserved tier is one parameter edit, not a code change."
+  LIMEN_RESERVED_TIER_COVER_DAYS:
+    default: 7
+    env: LIMEN_RESERVED_TIER_COVER_DAYS
+    self_update: none
+    owner: censor
+    note: "How many days an acceptance receipt covers runs that START after it. 7 matches the ISO-week the Fable allotment ledger is reckoned in — a cover window wider than the ledger's period would let one receipt authorize two weeks of spend."
+  LIMEN_FABLE_RECEIPTS_DIR:
+    default: ""
+    env: LIMEN_FABLE_RECEIPTS_DIR
+    self_update: none
+    owner: censor
+    note: "Optional override for the Fable acceptance-receipt directory read by check-reserved-tier.py. Blank means logs/fable-acceptance/ (where fable-allotment.py accept writes). Set only by tests, which must never read the host's real receipts."
   LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS:
     default: 3
     env: LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS

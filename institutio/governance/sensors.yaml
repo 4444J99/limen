@@ -1722,6 +1722,34 @@ sensors:
         severity: advisory
         escalation: "cross-vendor health evaluation failed — packet staleness, store resets, and retention pruning go unwatched until it lands"
 
+  reserved-tier-audit:
+    section: "0z0"
+    title: "reserved-tier accounting across EVERY lane — a Fable run with no acceptance receipt, in any vendor"
+    gate: LIMEN_RESERVED_TIER
+    default: "1"
+    source: [metabolize]
+    owner: censor
+    # docs/fable-allotment.md declares Fable reserved estate-wide; the enforcement was
+    # Claude-lane-only on BOTH axes (measured 2026-08-15): fable-allotment.py sums spend
+    # from Claude transcripts alone, and claude-workflow-guard.py cannot resolve a
+    # non-Claude transcript path at all. The same sweep found copilot on claude-fable-5 in
+    # 3 of 5 substantive sessions, contributing 0 to spent_pct and tripping nothing.
+    # This reads only the vendor-insights indexes the sensor above already refreshes — no
+    # vendor store is opened here (insight-cross-vendor-ingest.VENDOR_REGISTRY owns paths).
+    # ADVISORY by construction: it opens with a real 24-session backlog, and the estate's
+    # observe-before-enforce doctrine (closeout-reconcile, plan D6) says a new predicate
+    # surfaces its backlog before it blocks anything.
+    cadence:
+      env: LIMEN_BEAT_RESERVED_TIER
+      default: 24
+    timeout:
+      env: LIMEN_RESERVED_TIER_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/check-reserved-tier.py"
+        severity: advisory
+        escalation: "a reserved tier ran with no covering acceptance receipt, or a lane went blind to model identity — accept it (scripts/fable-allotment.py accept …), drop off the tier (docs/fable-allotment.md), or teach the ingest adapter to read models"
+
   lesson-harvest-backlog:
     section: "0z0a"
     title: "lesson-harvest backlog — how many chat sessions have never been processed into durable lessons (censor/lesson-harvest.jsonl is the cursor; the /lesson-harvest skill is the drain)"
