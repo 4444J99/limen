@@ -2126,12 +2126,10 @@ def validate_external_objects(
 
 
 def _live_w07_verification(repository: Path) -> dict[str, Any]:
-    completed = subprocess.run(
-        [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-work", "PSP-P03-W07"],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        text=True,
+    completed = _run_trusted_positioning_program(
+        repository,
+        "--verify-work",
+        "PSP-P03-W07",
         timeout=90,
     )
     if completed.returncode != 0:
@@ -2609,9 +2607,11 @@ def _verify_w07_response_blob(
 
     response_blob = _git_blob(repository, observed_head, response_path)
     try:
-        response_payload = json.loads(response_blob.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError(f"W07 response-set blob is not valid UTF-8 JSON: {exc}") from exc
+        response_payload = _loads_preflight_artifact(response_blob.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"W07 response-set blob is not strict UTF-8 JSON: {exc}") from exc
+    if not isinstance(response_payload, dict):
+        raise ValueError("W07 response-set blob root must be an object")
     canonical = json.dumps(response_payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
     if hashlib.sha256(canonical).hexdigest() != response_sha256:
         raise ValueError("W07 response-set digest does not bind the exact tracked response blob")

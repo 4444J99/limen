@@ -23,6 +23,7 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[1]
 PROOF_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
+PROOF_CONTRACT_PATH = "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 BRANCH_NAME = re.compile(r"^(?!/)(?!.*(?:\.\.|//|@\{|\\))[A-Za-z0-9][A-Za-z0-9._/-]*$")
 REPOSITORY_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -126,8 +127,47 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
-    payload = json.loads(PROOF_CONTRACT.read_text(encoding="utf-8"))
+def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, child in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON member: {key}")
+        value[key] = child
+    return value
+
+
+def _proof_contract_snapshot() -> tuple[dict[str, Any], dict[str, str]]:
+    """Load the exact committed proof contract and reject local contract substitution."""
+    head = _run_git(ROOT, ["rev-parse", "HEAD"])
+    blob = _run_git(ROOT, ["rev-parse", f"HEAD:{PROOF_CONTRACT_PATH}"])
+    committed = _run_git(ROOT, ["show", f"HEAD:{PROOF_CONTRACT_PATH}"])
+    head_value = head.stdout.decode(errors="replace").strip() if head.returncode == 0 else ""
+    blob_value = blob.stdout.decode(errors="replace").strip() if blob.returncode == 0 else ""
+    if not FULL_HEAD.fullmatch(head_value) or not FULL_HEAD.fullmatch(blob_value) or committed.returncode != 0:
+        raise ValueError("proof contract is unavailable from the committed runner head")
+    try:
+        worktree_bytes = PROOF_CONTRACT.read_bytes()
+    except OSError as exc:
+        raise ValueError("proof contract worktree file is unavailable") from exc
+    if worktree_bytes != committed.stdout:
+        raise ValueError("proof contract worktree bytes differ from the committed runner blob")
+    try:
+        payload = json.loads(
+            committed.stdout.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_json_members,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"committed proof contract is not strict UTF-8 JSON: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("committed proof contract root must be an object")
+    return payload, {
+        "proof_contract_head": head_value,
+        "proof_contract_blob": blob_value,
+        "proof_contract_sha256": hashlib.sha256(committed.stdout).hexdigest(),
+    }
+
+
+def _flagship_contract_from_payload(payload: dict[str, Any], flagship_id: str) -> dict[str, Any] | None:
     receipt_plan = payload.get("exact_head_receipt_plan") if isinstance(payload, dict) else None
     contracts = receipt_plan.get("flagship_predicates") if isinstance(receipt_plan, dict) else None
     if not isinstance(contracts, dict):
@@ -182,7 +222,12 @@ def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
     return contract
 
 
-def validate_request(request: dict[str, Any]) -> list[str]:
+def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
+    payload, _metadata = _proof_contract_snapshot()
+    return _flagship_contract_from_payload(payload, flagship_id)
+
+
+def validate_request(request: dict[str, Any], *, contract_payload: dict[str, Any] | None = None) -> list[str]:
     errors: list[str] = []
     unexpected = sorted(set(request) - REQUEST_FIELDS)
     if unexpected:
@@ -252,7 +297,11 @@ def validate_request(request: dict[str, Any]) -> list[str]:
         errors.append("receipt request requires explicit limitations")
     if isinstance(flagship_id, str) and flagship_id.strip() == flagship_id and "\0" not in flagship_id:
         try:
-            contract = _flagship_contract(flagship_id)
+            contract = (
+                _flagship_contract(flagship_id)
+                if contract_payload is None
+                else _flagship_contract_from_payload(contract_payload, flagship_id)
+            )
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             errors.append(f"flagship predicate contract is unavailable: {exc}")
         else:
@@ -1256,8 +1305,12 @@ def run_request(
     base: Path | None = None,
     canonical_remote_lookup: Callable[[str], subprocess.CompletedProcess[bytes]] | None = None,
 ) -> dict[str, Any]:
-    errors = validate_request(request)
     started_at = _timestamp()
+    try:
+        contract_payload, contract_environment = _proof_contract_snapshot()
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return _blocked_receipt(request, started_at, f"proof contract is unavailable: {exc}")
+    errors = validate_request(request, contract_payload=contract_payload)
     if errors:
         return {
             "schema_version": "limen.positioning_flagship_receipt.v1",
@@ -1382,7 +1435,7 @@ def run_request(
     predicate = request["predicate"]
     predicate_runtime: dict[str, Any] = {}
     try:
-        contract = _flagship_contract(request["flagship_id"])
+        contract = _flagship_contract_from_payload(contract_payload, request["flagship_id"])
         if contract is None:
             raise ValueError("flagship runtime contract is unavailable")
         isolated = _run_isolated_exact_head_predicate(
@@ -1456,6 +1509,7 @@ def run_request(
         "environment": {
             "platform": platform.platform(),
             "python": platform.python_version(),
+            **contract_environment,
             **predicate_runtime,
         },
         "started_at": started_at,

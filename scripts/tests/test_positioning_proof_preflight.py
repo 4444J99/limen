@@ -831,14 +831,29 @@ class PositioningProofPreflightTest(unittest.TestCase):
             ),
             "",
         )
-        with mock.patch.object(MODULE.subprocess, "run", return_value=completed):
-            with mock.patch.object(
-                MODULE,
-                "_fetch_github_issue_comment",
-                return_value={"user": {"login": "outside-user"}, "author_association": "NONE"},
-            ):
-                with self.assertRaisesRegex(ValueError, "authorized repository actor"):
-                    MODULE._live_w07_verification(ROOT)
+        injected = {
+            "PATH": "/tmp/untrusted-bin",
+            "PYTHONPATH": "/tmp/untrusted-python",
+            "PYTHONHOME": "/tmp/untrusted-home",
+            "LD_PRELOAD": "/tmp/untrusted.so",
+            "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+        }
+        with mock.patch.dict(os.environ, injected, clear=False):
+            with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+                with mock.patch.object(
+                    MODULE,
+                    "_fetch_github_issue_comment",
+                    return_value={"user": {"login": "outside-user"}, "author_association": "NONE"},
+                ):
+                    with self.assertRaisesRegex(ValueError, "authorized repository actor"):
+                        MODULE._live_w07_verification(ROOT)
+        argv = run.call_args.args[0]
+        environment = run.call_args.kwargs["env"]
+        self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
+        self.assertEqual(["--verify-work", "PSP-P03-W07"], argv[-2:])
+        for key in set(injected) - {"PATH"}:
+            self.assertNotIn(key, environment)
+        self.assertNotIn(injected["PATH"], environment["PATH"].split(os.pathsep))
 
     def test_live_phase_verification_executes_and_binds_manifest_phase_proof(self) -> None:
         phase_id = "PSP-P03"
@@ -1886,6 +1901,34 @@ class PositioningProofPreflightTest(unittest.TestCase):
             binding, live = self._valid_w07_binding(repository, head, response_path, payload)
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
             self.assertTrue(any("trusted W07 blinded-reader predicate did not pass" in error for error in errors))
+
+    def test_w07_receipt_rejects_duplicate_response_members_before_hashing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            response = repository / response_path
+            raw = response.read_text(encoding="utf-8")
+            marker = '"verbatim_notes": '
+            self.assertIn(marker, raw)
+            raw = raw.replace(marker, '"verbatim_notes": "private-reader@example.invalid",\n      ' + marker, 1)
+            response.write_text(raw, encoding="utf-8")
+            subprocess.run(["git", "add", response_path], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "duplicate response member"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
+        self.assertTrue(any("duplicate JSON member: verbatim_notes" in error for error in errors), errors)
 
     def test_w07_receipt_does_not_trust_a_validator_from_the_observed_head(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

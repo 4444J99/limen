@@ -58,7 +58,17 @@ def run_request(request: dict[str, object]) -> dict[str, object]:
         "predicate": request["predicate"],
         "runtime_setup": {"mode": "none"},
     }
-    with mock.patch.object(RECEIPT, "_flagship_contract", return_value=hermetic_contract):
+    hermetic_payload = {"exact_head_receipt_plan": {"flagship_predicates": {request["flagship_id"]: hermetic_contract}}}
+    contract_environment = {
+        "proof_contract_head": "a" * 40,
+        "proof_contract_blob": "b" * 40,
+        "proof_contract_sha256": "c" * 64,
+    }
+    with mock.patch.object(
+        RECEIPT,
+        "_proof_contract_snapshot",
+        return_value=(hermetic_payload, contract_environment),
+    ):
         return RECEIPT.run_request(
             request,
             canonical_remote_lookup=lambda _repository: RECEIPT._run_git(
@@ -321,6 +331,71 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 COST_REVIEW_ARTIFACT,
             ],
             command["argv"],
+        )
+
+    def test_public_safe_observed_cost_artifacts_reject_private_and_credential_material(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        payload["population"]["source_manifest"]["provenance"] = "public_safe_observed"
+        payload["population"]["source_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+        payload["population"]["source_receipt_sha256"] = "b" * 64
+        payload["rows"][0]["sample_id"] = "private-reader@example.invalid"
+        payload["population"]["source_manifest"]["records"][0]["sample_id"] = "private-reader@example.invalid"
+        with mock.patch.object(COST, "_verify_authority_receipt", return_value=("4444J99", "MEMBER")):
+            errors = COST.validate_sample(payload)
+        self.assertTrue(
+            any("sample contains private or credential material" in error for error in errors),
+            errors,
+        )
+
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        payload["provenance"] = "public_safe_observed"
+        payload["population"]["source_manifest"]["provenance"] = "public_safe_observed"
+        payload["population"]["source_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+        payload["population"]["source_receipt_sha256"] = "b" * 64
+        for row in payload["rows"]:
+            row["model_cost_basis"] = "actual"
+            row.pop("model_cost_rate_basis")
+        with tempfile.TemporaryDirectory() as directory:
+            population_artifact = Path(directory) / "population.json"
+            input_artifact = Path(directory) / "input.json"
+            review_artifact = Path(directory) / "review.json"
+            population_raw = json.dumps(
+                payload["population"]["source_manifest"], sort_keys=True, separators=(",", ":")
+            ).encode()
+            population_artifact.write_bytes(population_raw)
+            payload["population"]["source_sha256"] = COST.hashlib.sha256(population_raw).hexdigest()
+            review = independent_cost_review(payload)
+            review["limitations"] = [
+                {
+                    "note": "Nested credential-shaped metadata must fail closed.",
+                    "api_token": "ghp_123456789012345678901234567890",
+                }
+            ]
+            review["authority_receipt_url"] = "https://github.com/organvm/limen/issues/2200#issuecomment-1"
+            review["authority_receipt_sha256"] = "a" * 64
+            input_artifact.write_text(json.dumps(payload), encoding="utf-8")
+            review_artifact.write_text(json.dumps(review), encoding="utf-8")
+            tracked = {
+                payload["population"]["source_artifact"]: population_artifact,
+                COST_INPUT_ARTIFACT: input_artifact,
+                COST_REVIEW_ARTIFACT: review_artifact,
+            }
+            with (
+                mock.patch.object(COST, "_safe_tracked_artifact", side_effect=tracked.get),
+                mock.patch.object(COST, "_verify_authority_receipt", return_value=("4444J99", "MEMBER")),
+            ):
+                result = COST.reproduce(
+                    payload,
+                    input_artifact=COST_INPUT_ARTIFACT,
+                    review_artifact=COST_REVIEW_ARTIFACT,
+                    review_verdict=review,
+                )
+        self.assertEqual("withheld", result["status"])
+        self.assertFalse(result["publication_eligible"])
+        self.assertTrue(
+            any("review contains private or credential material" in error for error in result["errors"]),
+            result["errors"],
         )
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
@@ -1035,6 +1110,41 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual(head, result["remote_default_branch_head"])
             self.assertEqual("example/synthetic", result["origin_repository"])
             self.assertEqual(64, len(result["artifact_digest"]))
+            self.assertEqual("a" * 40, result["environment"]["proof_contract_head"])
+            self.assertEqual("b" * 40, result["environment"]["proof_contract_blob"])
+            self.assertEqual("c" * 64, result["environment"]["proof_contract_sha256"])
+
+    def test_flagship_contract_must_match_the_committed_runner_blob(self) -> None:
+        committed = json.dumps(
+            {"exact_head_receipt_plan": {"flagship_predicates": {}}},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+        completed = (
+            subprocess.CompletedProcess([], 0, ("a" * 40 + "\n").encode(), b""),
+            subprocess.CompletedProcess([], 0, ("b" * 40 + "\n").encode(), b""),
+            subprocess.CompletedProcess([], 0, committed, b""),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            contract = Path(directory) / "contract.json"
+            contract.write_bytes(committed)
+            with (
+                mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+            ):
+                payload, metadata = RECEIPT._proof_contract_snapshot()
+            self.assertEqual({}, payload["exact_head_receipt_plan"]["flagship_predicates"])
+            self.assertEqual("a" * 40, metadata["proof_contract_head"])
+            self.assertEqual("b" * 40, metadata["proof_contract_blob"])
+            self.assertEqual(RECEIPT.hashlib.sha256(committed).hexdigest(), metadata["proof_contract_sha256"])
+
+            contract.write_bytes(b'{"exact_head_receipt_plan":{"flagship_predicates":{"limen":{}}}}')
+            with (
+                mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+                self.assertRaisesRegex(ValueError, "differ from the committed runner blob"),
+            ):
+                RECEIPT._proof_contract_snapshot()
 
     def test_exact_head_runner_binds_origin_to_requested_repository(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:

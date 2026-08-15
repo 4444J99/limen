@@ -72,6 +72,47 @@ REVIEW_VERDICTS = {"publishable_public_safe", "withheld"}
 ALLOWED_PROVENANCE = {"public_safe_observed", "synthetic"}
 MAX_PUBLIC_NUMBER = 2**53 - 1
 AUTHENTICATED_IDENTITY = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$")
+PUBLIC_EMAIL = re.compile(r"(?i)(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![A-Za-z0-9.-])")
+PUBLIC_SECRET_VALUE = re.compile(
+    r"(?i)(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|"
+    r"sk-[A-Za-z0-9_-]{16,}|bearer\s+[A-Za-z0-9._~+/-]{12,}=*|"
+    r"-----BEGIN [A-Z ]*PRIVATE KEY-----)"
+)
+PRIVATE_IDENTIFIER = re.compile(
+    r"(?i)(?:^|[-_:/])(?:customer|client|lead|contact|private|person|email|account)(?:[-_:/]|[0-9]|$)"
+)
+FORBIDDEN_PUBLIC_KEYS = {
+    "email",
+    "emailaddress",
+    "customerid",
+    "clientid",
+    "leadid",
+    "contactid",
+    "privateid",
+    "credential",
+    "credentials",
+    "password",
+    "secret",
+    "apikey",
+    "accesstoken",
+    "refreshtoken",
+    "idtoken",
+    "authorization",
+    "sessioncookie",
+    "privatekey",
+    "recoverycode",
+}
+FORBIDDEN_PUBLIC_KEY_SUFFIXES = {
+    "authorization",
+    "credential",
+    "credentials",
+    "password",
+    "secret",
+    "token",
+    "cookie",
+    "privatekey",
+    "recoverycode",
+}
 ALLOWED_SAMPLE_FIELDS = {"schema_version", "provenance", "window_start", "window_end", "population", "rows"}
 POPULATION_FIELDS = {
     "schema_version",
@@ -190,6 +231,31 @@ def _contract_https_open(request: Request, *, timeout: int):
 
 def _public_authenticated_identity(value: object) -> bool:
     return isinstance(value, str) and bool(AUTHENTICATED_IDENTITY.fullmatch(value))
+
+
+def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
+    """Find private identifiers and credential material before a public artifact can pass."""
+    findings: set[str] = set()
+    if isinstance(value, dict):
+        for key, child in value.items():
+            key_text = key if isinstance(key, str) else repr(key)
+            child_path = f"{path}.{key_text}"
+            normalized_key = re.sub(r"[^a-z0-9]", "", key_text.casefold())
+            if normalized_key in FORBIDDEN_PUBLIC_KEYS or any(
+                normalized_key.endswith(suffix) for suffix in FORBIDDEN_PUBLIC_KEY_SUFFIXES
+            ):
+                findings.add(child_path)
+            findings.update(_find_forbidden_public_material(child, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            findings.update(_find_forbidden_public_material(child, f"{path}[{index}]"))
+    elif isinstance(value, str):
+        if PUBLIC_EMAIL.search(value) or PUBLIC_SECRET_VALUE.search(value):
+            findings.add(path)
+        field_name = re.sub(r"[^a-z0-9]", "", path.rsplit(".", 1)[-1].casefold())
+        if (field_name.endswith("id") or field_name.endswith("identity")) and PRIVATE_IDENTIFIER.search(value):
+            findings.add(path)
+    return findings
 
 
 def _bounded_nonnegative_number(value: object) -> bool:
@@ -881,6 +947,12 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
     provenance = payload.get("provenance")
     if not isinstance(provenance, str) or provenance not in ALLOWED_PROVENANCE:
         errors.append("sample requires explicit synthetic or public_safe_observed provenance")
+    elif provenance == "public_safe_observed":
+        private_paths = sorted(_find_forbidden_public_material(payload))
+        if private_paths:
+            errors.append(
+                "public-safe observed sample contains private or credential material: " + ", ".join(private_paths)
+            )
     window_start = _parse_window_date(payload.get("window_start"), "window_start", errors)
     window_end = _parse_window_date(payload.get("window_end"), "window_end", errors)
     if window_start is not None and window_end is not None and window_start > window_end:
@@ -1044,6 +1116,13 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                     "data_digest"
                 ):
                     errors.append("analysis reproduction input differs from its committed HEAD artifact")
+                elif analysis.get("provenance") == "public_safe_observed":
+                    private_paths = sorted(_find_forbidden_public_material(committed_input))
+                    if private_paths:
+                        errors.append(
+                            "analysis reproduction input contains private or credential material: "
+                            + ", ".join(private_paths)
+                        )
         if reproduction.get("input_sha256") != analysis.get("data_digest"):
             errors.append("analysis reproduction_command input digest does not bind the analyzed data")
         expected_argv = [
@@ -1063,6 +1142,13 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                 else:
                     if not isinstance(committed_review, dict) or committed_review != analysis.get("review_verdict"):
                         errors.append("analysis reproduction review differs from its committed HEAD artifact")
+                    elif analysis.get("provenance") == "public_safe_observed":
+                        private_paths = sorted(_find_forbidden_public_material(committed_review))
+                        if private_paths:
+                            errors.append(
+                                "analysis reproduction review contains private or credential material: "
+                                + ", ".join(private_paths)
+                            )
             expected_argv.extend(["--review", review_artifact])
         if reproduction.get("argv") != expected_argv:
             errors.append("analysis reproduction_command argv does not exactly replay the bound artifacts")
@@ -1075,6 +1161,12 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         errors.append("analysis review_verdict must use the exact contract fields")
     if verdict.get("schema_version") != REVIEW_SCHEMA:
         errors.append("analysis review_verdict has an unsupported schema")
+    if analysis.get("provenance") == "public_safe_observed":
+        private_paths = sorted(_find_forbidden_public_material(verdict))
+        if private_paths:
+            errors.append(
+                "analysis review_verdict contains private or credential material: " + ", ".join(private_paths)
+            )
     if verdict.get("reviewer_class") not in INDEPENDENT_REVIEWER_CLASSES:
         errors.append("analysis review_verdict requires an independent reviewer class")
     reviewer_identity = verdict.get("reviewer_identity")
