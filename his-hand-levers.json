@@ -1253,16 +1253,28 @@
     },
     {
       "id": "L-BOARD-PARTITION-DECISION",
-      "label": "Decide the board-partition fork recorded in docs/plans/2026-08-07-board-partition-public-leak.md (limen #2069): A — build the private board projection (dispatch unions a second, unpublished store; the ideal form, an architecture build) or B — accept the disclosures (scripts/check-board-partition.py --update --accept-new-disclosures; one command that permanently publishes the partner-lane attributions, now grown from 8 findings to include the 21 GH-organvm-hospes rows). Until decided, publication PR #2001 stays red, main's tasks.yaml mirror stays frozen (canonical carries 23 hospes rows, the mirror 2), the beat's release-stale rung fails every cycle against the stale mirror, and HEAL-cifix-organvm-hospes-8 reads false-open on the mirror while canonical has it done.",
+      "label": "Decide the board-partition fork recorded in docs/plans/2026-08-07-board-partition-public-leak.md (limen #2069): A — finish the private board projection cutover (the worker half shipped in #2299: canonical lives in the authenticated Durable Object and the projection branch publishes a counts-only aggregate; remaining: local private custody via LIMEN_PRIVATE_TASKS hydration, the validate gate accepting the aggregate shape, then merging publication PR #2001 so main's public tasks.yaml stops carrying full rows) or B — accept the disclosures (scripts/check-board-partition.py --update --accept-new-disclosures; one command that permanently publishes the partner-lane attributions, now 17 hospes rows on canonical). CORRECTED 2026-08-15: the three red beat rungs formerly cited here were real defects, not this lever's designed consequence — fixed independently in #2447/#2448/#2449/#2453 + worker deploy, and no arm of this decision was consumed doing it.",
       "status": "open",
       "added": "2026-08-14",
       "gate": "the plan states 'Not done unilaterally' — B is flagged in-code as a human decision and A changes the board architecture",
-      "cost": "one decision; B is one command, A is a scoped build the fleet executes on request",
-      "unlocks": "PR #2001 publication, mirror refresh, release-stale rung green, dispatch visibility of the hospes roadmap rows",
-      "note": "The gate being red is the gate working as designed — this lever is the decision, not a defect. The hospes campaign proceeds regardless: the GitHub issues + hospes/resources/spec/completion-registry.yaml are the durable work registry for the build.",
+      "cost": "one decision; B is one command, A's remaining half is a scoped build the fleet executes on request",
+      "unlocks": "PR #2001 publication, mirror refresh of the hospes roadmap rows into local dispatch visibility",
+      "note": "The hospes campaign proceeds regardless: the GitHub issues + hospes/resources/spec/completion-registry.yaml are the durable work registry for the build. The hospes roadmap rows (GH-organvm-hospes-70..83) landed on canonical 2026-08-15 when the write path healed; they stay off the public surface until this decision.",
       "owner": "yours",
       "source_task": "board-partition plan (limen #2069) + HOSPES full completion campaign (limen #2401)",
       "issue": 2408
+    },
+    {
+      "id": "L-FRICTION-FEDERATION-SOURCE",
+      "label": "Decide the friction-federation data source: the cloud routine 2.AUDIT.4 (friction-federation-cloud) analyzes federated session-transcript data under session-meta/data/, but no pipeline has fed that store since ~2026-06-03 (73+ days at 2026-08-15) — it reports '0 sessions ingested (stores absent from container)' daily. A — build the local→session-meta transcript-federation exporter (a privacy call: session transcripts leave this machine into a GitHub repo, even sanitized), B — repoint the routine at data it can reach, or C — retire the cloud routine and run friction analysis locally where the stores live.",
+      "status": "open",
+      "added": "2026-08-15",
+      "gate": "A publishes (sanitized) transcript-derived data off-machine — a disclosure decision; C retires a fleet contract surface",
+      "cost": "one decision; A is a scoped exporter build, C is one routine update",
+      "unlocks": "friction-federation-cloud produces real cross-agent friction findings instead of a daily absence report",
+      "note": "The routine itself is healthy and loudly self-reporting on its rolling issue (session-meta 'Friction federation — rolling'); the starvation is upstream. Filed 2026-08-15 while triaging the notification wall.",
+      "owner": "yours",
+      "source_task": "notification-wall triage 2026-08-15 (2.AUDIT.4 friction-federation)"
     }
   ]
 }
