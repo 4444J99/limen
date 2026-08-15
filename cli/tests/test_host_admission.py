@@ -492,7 +492,14 @@ service = AdmissionController(
         "sensor_errors": [],
     },
 )
-ready.write_text(owner, encoding="utf-8")
+# Publish the rendezvous marker ATOMICALLY. The parent waits on `ready.is_file()` and then
+# reads the owner name out of it, so a plain write_text — which creates the file at zero bytes
+# before the content lands — lets the parent observe an empty marker and compare {"", "root-a"}
+# against {"root-a", "root-b"}. os.replace() is atomic within a directory, so the path only
+# becomes visible once it already carries the name.
+staged = ready.with_name(ready.name + ".partial")
+staged.write_text(owner, encoding="utf-8")
+os.replace(staged, ready)
 while not start.exists():
     time.sleep(0.01)
 decision = service.acquire("execution", owner=owner, surface="turn", pid=os.getpid())
