@@ -1274,7 +1274,8 @@
       "unlocks": "friction-federation-cloud produces real cross-agent friction findings instead of a daily absence report",
       "note": "The routine itself is healthy and loudly self-reporting on its rolling issue (session-meta 'Friction federation — rolling'); the starvation is upstream. Filed 2026-08-15 while triaging the notification wall.",
       "owner": "yours",
-      "source_task": "notification-wall triage 2026-08-15 (2.AUDIT.4 friction-federation)"
+      "source_task": "notification-wall triage 2026-08-15 (2.AUDIT.4 friction-federation)",
+      "issue": 2473
     }
   ]
 }
