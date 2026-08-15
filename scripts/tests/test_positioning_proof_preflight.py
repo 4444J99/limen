@@ -334,11 +334,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def test_tracked_contract_is_valid(self) -> None:
         self.assertEqual([], MODULE.validate(self.production_contract))
 
-    def test_formalization_contract_exact_binds_the_complete_pyyaml_tree(self) -> None:
+    def test_formalization_contract_exact_binds_complete_python_dependency_trees(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["formalization_gate"]["trusted_python_dependencies"]["pyyaml"]["python_source_tree_sha256"] = "0" * 64
         self.assertIn(
-            "formalization must exact-bind the complete trusted PyYAML source tree",
+            "formalization must exact-bind the complete trusted Python dependency trees",
+            MODULE.validate(changed),
+        )
+        changed = copy.deepcopy(self.contract)
+        changed["formalization_gate"]["trusted_python_dependencies"]["w07_jsonschema"]["source_tree_sha256"] = "0" * 64
+        self.assertIn(
+            "formalization must exact-bind the complete trusted Python dependency trees",
             MODULE.validate(changed),
         )
         self.assertEqual([], MODULE.validate(self.contract))
@@ -1080,8 +1086,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
         argv = run.call_args.args[0]
         environment = run.call_args.kwargs["env"]
         self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
-        self.assertEqual("-I", argv[1])
-        self.assertEqual((ROOT / MODULE.W07_VALIDATOR_PATH).resolve(), Path(argv[2]))
+        self.assertEqual(["-I", "-S", "-B", "-c"], argv[1:5])
+        self.assertEqual(MODULE.W07_REPLAY_BOOTSTRAP, argv[5])
+        self.assertEqual("script", argv[-3])
+        self.assertEqual((ROOT / MODULE.W07_VALIDATOR_PATH).resolve(), Path(argv[-2]))
         for key in injected:
             self.assertNotIn(key, environment)
         self.assertEqual("1", environment["PYTHONNOUSERSITE"])
@@ -1106,7 +1114,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "raise SystemExit('untrusted current workflow')\n",
                 encoding="utf-8",
             )
-            completed, memo = MODULE._run_observed_w07_replay(repository, head, response_blob)
+            with tempfile.TemporaryDirectory() as poisoned_directory:
+                poison = Path(poisoned_directory)
+                (poison / "sitecustomize.py").write_text("raise SystemExit('ambient site hook executed')\n")
+                injected = {
+                    "PYTHONPATH": str(poison),
+                    "LD_PRELOAD": "/tmp/untrusted.so",
+                    "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+                }
+                with mock.patch.dict(os.environ, injected, clear=False):
+                    completed, memo = MODULE._run_observed_w07_replay(repository, head, response_blob)
         self.assertEqual(0, completed.returncode, completed.stderr or completed.stdout)
         self.assertIn(b"# PSP-P03-W07 blinded-reader decision memo", memo)
 
@@ -1282,6 +1299,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     )
             self.assertEqual(0, completed.returncode)
 
+    def test_w07_dependency_rejects_a_sibling_source_mutation(self) -> None:
+        sources = MODULE._trusted_w07_jsonschema_sources()
+        with tempfile.TemporaryDirectory() as directory:
+            site_root = Path(directory) / "site-packages"
+            site_root.mkdir()
+            for relative, data in sources:
+                destination = site_root.joinpath(*relative.parts)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(data)
+            validator = site_root / "jsonschema/validators.py"
+            validator.write_bytes(validator.read_bytes() + b"\n# untrusted sibling mutation\n")
+            with mock.patch.object(MODULE.sys, "path", [str(site_root)]):
+                with self.assertRaisesRegex(OSError, "complete contract-owned W07 jsonschema dependency tree"):
+                    MODULE._trusted_w07_jsonschema_sources()
+
+    def test_w07_dependency_materializes_only_authenticated_sources(self) -> None:
+        sources = MODULE._trusted_w07_jsonschema_sources()
+        with tempfile.TemporaryDirectory() as directory:
+            dependency_root = Path(directory) / "dependencies"
+            MODULE._write_w07_jsonschema_dependency(dependency_root, sources)
+            expected = {
+                *MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["package_roots"],
+                "rpds",
+                *MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["single_files"],
+            }
+            self.assertEqual(expected, {path.name for path in dependency_root.iterdir()})
+            self.assertFalse((dependency_root / "sitecustomize.py").exists())
+            self.assertEqual(
+                MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
+                hashlib.sha256((dependency_root / "rpds/__init__.py").read_bytes()).hexdigest(),
+            )
+
     def test_live_phase_verification_cannot_accept_receipt_without_current_phase_proof(self) -> None:
         failed = subprocess.CompletedProcess([], 2, "", "phase proof failed")
         with mock.patch.object(MODULE.subprocess, "run", return_value=failed) as run:
@@ -1300,6 +1349,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 {"evidence_urls": ["https://example.com/proof?access_token=plainvalue"]}
             ),
         )
+        for credential_key in (
+            "api%5Fkey",
+            "private%5Fkey",
+            "recovery%5Fcode",
+            "authorization",
+            "session%5Fcookie",
+        ):
+            self.assertEqual(
+                {"$.evidence_urls[0]"},
+                MODULE._find_forbidden_demo_material(
+                    {"evidence_urls": [f"https://example.com/proof?{credential_key}=plainvalue"]}
+                ),
+                credential_key,
+            )
         self.assertEqual(
             set(),
             MODULE._find_forbidden_demo_material({"evidence_urls": ["https://example.com/proof?claim_id=CLM-1"]}),

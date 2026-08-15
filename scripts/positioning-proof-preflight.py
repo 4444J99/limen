@@ -145,6 +145,125 @@ TRUSTED_PYYAML_DEPENDENCY = {
     "python_source_file_count": 17,
     "python_source_tree_sha256": "fca0d26205a35539a5e123116d2756f3ff33dc1fc4058686cef1268840815eb6",
 }
+W07_RPDS_COMPAT_SOURCE = """from collections.abc import Mapping, Sequence, Set as AbstractSet
+
+
+class HashTrieMap(Mapping):
+    @classmethod
+    def __class_getitem__(cls, item):
+        return cls
+
+    def __init__(self, value=()):
+        self._data = dict(value)
+
+    @classmethod
+    def convert(cls, value):
+        return value if isinstance(value, cls) else cls(value)
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def items(self):
+        return self._data.items()
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def insert(self, key, value):
+        updated = dict(self._data)
+        updated[key] = value
+        return type(self)(updated)
+
+    def remove(self, key):
+        updated = dict(self._data)
+        del updated[key]
+        return type(self)(updated)
+
+    def update(self, *values):
+        updated = dict(self._data)
+        for value in values:
+            updated.update(value)
+        return type(self)(updated)
+
+
+class HashTrieSet(AbstractSet):
+    @classmethod
+    def __class_getitem__(cls, item):
+        return cls
+
+    def __init__(self, value=()):
+        self._data = frozenset(value)
+
+    def __contains__(self, item):
+        return item in self._data
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+    def insert(self, item):
+        return type(self)((*self._data, item))
+
+    def discard(self, item):
+        return type(self)(value for value in self._data if value != item)
+
+    def remove(self, item):
+        if item not in self._data:
+            raise KeyError(item)
+        return self.discard(item)
+
+    def update(self, *values):
+        updated = set(self._data)
+        for value in values:
+            updated.update(value)
+        return type(self)(updated)
+
+
+class List(Sequence):
+    @classmethod
+    def __class_getitem__(cls, item):
+        return cls
+
+    def __init__(self, value=()):
+        self._data = tuple(value)
+
+    def __getitem__(self, index):
+        return self._data[index]
+
+    def __len__(self):
+        return len(self._data)
+
+    def push_front(self, item):
+        return type(self)((item, *self._data))
+"""
+TRUSTED_W07_JSONSCHEMA_DEPENDENCY = {
+    "distributions": {
+        "attrs": "26.1.0",
+        "jsonschema": "4.26.0",
+        "jsonschema-specifications": "2025.9.1",
+        "referencing": "0.37.0",
+        "typing-extensions": "4.15.0",
+    },
+    "package_roots": ["attr", "attrs", "jsonschema", "jsonschema_specifications", "referencing"],
+    "single_files": ["typing_extensions.py"],
+    "source_file_count": 75,
+    "source_tree_sha256": "f94058ced7bc81593410dcf711e37320fc8f760420f01edb9acb5950c94077eb",
+    "rpds_compat_sha256": "339c93ba3307278b36036fa61205fa7a9c2feb6fe440df999771655868216f8d",
+}
 EXTERNAL_RECEIPT_TIME_RULE = (
     "The structured review receipt is authored in the authenticated GitHub comment version and its "
     "observed_at must equal that comment version's updated_at exactly."
@@ -177,13 +296,46 @@ sys.path.insert(0, dependency_root)
 sys.argv = [program, *arguments]
 runpy.run_path(program, run_name="__main__")
 """
-W07_MEMO_BOOTSTRAP = """
+W07_REPLAY_BOOTSTRAP = """
+import hashlib
 import importlib.util
 import pathlib
+import runpy
 import sys
 
-workflow_path = pathlib.Path(sys.argv[1]).resolve(strict=True)
-response_path = pathlib.Path(sys.argv[2]).resolve(strict=True)
+dependency_root, dependency_sha256, dependency_file_count, rpds_sha256, mode, program, *arguments = sys.argv[1:]
+root = pathlib.Path(dependency_root).resolve(strict=True)
+all_files = sorted(path for path in root.rglob("*") if path.is_file())
+if len(all_files) != int(dependency_file_count) + 1:
+    raise SystemExit("trusted W07 jsonschema dependency file count changed")
+digest = hashlib.sha256()
+for source_file in all_files:
+    relative = source_file.relative_to(root)
+    if source_file.is_symlink() or root not in source_file.resolve(strict=True).parents:
+        raise SystemExit("trusted W07 jsonschema dependency escaped its root")
+    data = source_file.read_bytes()
+    if relative.as_posix() == "rpds/__init__.py":
+        if hashlib.sha256(data).hexdigest() != rpds_sha256:
+            raise SystemExit("trusted W07 rpds compatibility source changed")
+        continue
+    relative_bytes = relative.as_posix().encode("utf-8")
+    digest.update(relative_bytes)
+    digest.update(b"\\0")
+    digest.update(str(len(data)).encode("ascii"))
+    digest.update(b"\\0")
+    digest.update(data)
+if digest.hexdigest() != dependency_sha256:
+    raise SystemExit("trusted W07 jsonschema dependency tree changed")
+sys.path.insert(0, str(root))
+program_path = pathlib.Path(program).resolve(strict=True)
+if mode == "script":
+    sys.argv = [str(program_path), *arguments]
+    runpy.run_path(str(program_path), run_name="__main__")
+    raise SystemExit(0)
+elif mode != "memo" or len(arguments) != 1:
+    raise SystemExit("unknown W07 replay mode")
+response_path = pathlib.Path(arguments[0]).resolve(strict=True)
+workflow_path = program_path
 spec = importlib.util.spec_from_file_location("psp_c04_observed_w07_workflow", workflow_path)
 if spec is None or spec.loader is None:
     raise SystemExit("observed W07 workflow is unavailable")
@@ -334,17 +486,25 @@ EXPECTED_SURFACE_LEVELS = {
     "flagship_repository": "L2",
 }
 FORBIDDEN_DEMO_KEYS = {
+    "access_token",
+    "api_key",
+    "authorization",
     "credential",
     "customer",
     "email",
+    "id_token",
     "passcode",
     "passphrase",
     "passwd",
     "password",
     "pwd",
     "private_path",
+    "private_key",
     "private_repository",
+    "recovery_code",
+    "refresh_token",
     "secret",
+    "session_cookie",
     "tasks_yaml_body",
     "token",
 }
@@ -492,8 +652,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
     else:
         if formalization.get("required_chunks") != ["PSP-C03"]:
             errors.append("formalization must require only PSP-C03 after PSP-P02 closure")
-        if formalization.get("trusted_python_dependencies") != {"pyyaml": TRUSTED_PYYAML_DEPENDENCY}:
-            errors.append("formalization must exact-bind the complete trusted PyYAML source tree")
+        expected_dependencies = {
+            "pyyaml": TRUSTED_PYYAML_DEPENDENCY,
+            "w07_jsonschema": TRUSTED_W07_JSONSCHEMA_DEPENDENCY,
+        }
+        if formalization.get("trusted_python_dependencies") != expected_dependencies:
+            errors.append("formalization must exact-bind the complete trusted Python dependency trees")
 
     progress = contract.get("dependency_progress")
     if not isinstance(progress, dict):
@@ -2621,6 +2785,118 @@ def _python_source_tree(package_root: Path) -> tuple[str, list[tuple[PurePosixPa
     return digest.hexdigest(), sources
 
 
+def _w07_jsonschema_source_tree(site_root: Path) -> tuple[str, list[tuple[PurePosixPath, bytes]]]:
+    """Read the exact pure-Python jsonschema closure used by the isolated W07 replay."""
+    site_root = site_root.resolve(strict=True)
+    sources: list[tuple[PurePosixPath, bytes]] = []
+    excluded_parts = {"__pycache__", "benchmarks", "tests"}
+    for package in TRUSTED_W07_JSONSCHEMA_DEPENDENCY["package_roots"]:
+        raw_package_root = site_root / package
+        if raw_package_root.is_symlink():
+            raise ValueError("trusted W07 dependency package root must not be a symlink")
+        package_root = raw_package_root.resolve(strict=True)
+        if package_root.parent != site_root or not package_root.is_dir():
+            raise ValueError("trusted W07 dependency escaped the site-packages root")
+        for source_file in sorted(package_root.rglob("*")):
+            if not source_file.is_file() or excluded_parts.intersection(source_file.parts):
+                continue
+            if source_file.is_symlink():
+                raise ValueError("trusted W07 dependency must not contain source symlinks")
+            resolved = source_file.resolve(strict=True)
+            if package_root not in resolved.parents:
+                raise ValueError("trusted W07 dependency escaped its package root")
+            sources.append((PurePosixPath(source_file.relative_to(site_root).as_posix()), source_file.read_bytes()))
+    for filename in TRUSTED_W07_JSONSCHEMA_DEPENDENCY["single_files"]:
+        source_file = site_root / filename
+        resolved = source_file.resolve(strict=True)
+        if not source_file.is_file() or not resolved.is_file():
+            raise ValueError("trusted W07 dependency single file is unavailable")
+        sources.append((PurePosixPath(filename), resolved.read_bytes()))
+    sources.sort(key=lambda row: row[0].as_posix())
+    digest = hashlib.sha256()
+    for relative, data in sources:
+        relative_bytes = relative.as_posix().encode("utf-8")
+        digest.update(relative_bytes)
+        digest.update(b"\0")
+        digest.update(str(len(data)).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(data)
+    return digest.hexdigest(), sources
+
+
+def _trusted_w07_jsonschema_sources() -> list[tuple[PurePosixPath, bytes]]:
+    ambient_python_paths = {
+        Path(raw_path).expanduser().resolve()
+        for raw_path in os.environ.get("PYTHONPATH", "").split(os.pathsep)
+        if raw_path
+    }
+    for raw_path in sys.path:
+        if not raw_path:
+            continue
+        try:
+            candidate_root = Path(raw_path).expanduser().resolve(strict=True)
+        except OSError:
+            continue
+        if (
+            candidate_root in ambient_python_paths
+            or candidate_root.name not in {"site-packages", "dist-packages"}
+            or candidate_root == ROOT
+            or ROOT in candidate_root.parents
+        ):
+            continue
+        try:
+            tree_sha256, sources = _w07_jsonschema_source_tree(candidate_root)
+        except (OSError, ValueError):
+            continue
+        if (
+            len(sources) == TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]
+            and tree_sha256 == TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"]
+        ):
+            return sources
+    raise OSError("complete contract-owned W07 jsonschema dependency tree is unavailable")
+
+
+def _write_w07_jsonschema_dependency(
+    dependency_root: Path,
+    sources: list[tuple[PurePosixPath, bytes]],
+) -> None:
+    dependency_root.mkdir()
+    for relative, data in sources:
+        destination = dependency_root.joinpath(*relative.parts)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(data)
+    rpds_root = dependency_root / "rpds"
+    rpds_root.mkdir()
+    rpds_source = W07_RPDS_COMPAT_SOURCE.encode("utf-8")
+    if hashlib.sha256(rpds_source).hexdigest() != TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"]:
+        raise ValueError("contract-owned W07 rpds compatibility source digest changed")
+    (rpds_root / "__init__.py").write_bytes(rpds_source)
+
+
+def _w07_replay_environment(interpreter: Path) -> dict[str, str]:
+    environment = _sanitized_git_environment()
+    for key in tuple(environment):
+        upper = key.upper()
+        if key == "PATH" or upper.startswith(("PYTHON", "LD_", "DYLD_")):
+            environment.pop(key, None)
+    trusted_path = (
+        interpreter.parent,
+        Path("/opt/homebrew/bin"),
+        Path("/usr/local/bin"),
+        Path("/usr/bin"),
+        Path("/bin"),
+    )
+    environment.update(
+        {
+            "PATH": os.pathsep.join(str(path) for path in dict.fromkeys(trusted_path)),
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONSAFEPATH": "1",
+        }
+    )
+    return environment
+
+
 def _run_trusted_positioning_program(
     repository: Path,
     *arguments: str,
@@ -3118,20 +3394,34 @@ def _run_trusted_w07_validator(response_path: Path) -> subprocess.CompletedProce
     validator = (ROOT / W07_VALIDATOR_PATH).resolve(strict=True)
     if validator != ROOT / W07_VALIDATOR_PATH or not validator.is_file():
         raise ValueError("trusted W07 validator must be the tracked repository script")
-    environment = _sanitized_git_environment()
-    for key in tuple(environment):
-        if key.upper().startswith(("PYTHON", "LD_", "DYLD_")):
-            environment.pop(key, None)
-    environment.update({"PYTHONNOUSERSITE": "1", "PYTHONSAFEPATH": "1"})
-    return subprocess.run(
-        [str(interpreter), "-I", str(validator), str(response_path)],
-        cwd=ROOT,
-        env=environment,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=90,
-    )
+    sources = _trusted_w07_jsonschema_sources()
+    environment = _w07_replay_environment(interpreter)
+    with tempfile.TemporaryDirectory(prefix="limen-c04-w07-dependency-") as directory:
+        dependency_root = Path(directory) / "dependencies"
+        _write_w07_jsonschema_dependency(dependency_root, sources)
+        return subprocess.run(
+            [
+                str(interpreter),
+                "-I",
+                "-S",
+                "-B",
+                "-c",
+                W07_REPLAY_BOOTSTRAP,
+                str(dependency_root),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
+                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
+                "script",
+                str(validator),
+                str(response_path),
+            ],
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
 
 
 def _run_observed_w07_replay(
@@ -3141,13 +3431,12 @@ def _run_observed_w07_replay(
 ) -> tuple[subprocess.CompletedProcess[str], bytes]:
     """Execute the W07 validator and memo workflow from the receipt's exact observed head."""
     interpreter = Path(sys.executable).resolve(strict=True)
-    environment = _sanitized_git_environment()
-    for key in tuple(environment):
-        if key.upper().startswith(("PYTHON", "LD_", "DYLD_")):
-            environment.pop(key, None)
-    environment.update({"PYTHONNOUSERSITE": "1", "PYTHONSAFEPATH": "1"})
+    sources = _trusted_w07_jsonschema_sources()
+    environment = _w07_replay_environment(interpreter)
     with tempfile.TemporaryDirectory(prefix="limen-c04-w07-replay-") as directory:
         replay_root = Path(directory)
+        dependency_root = replay_root / "dependencies"
+        _write_w07_jsonschema_dependency(dependency_root, sources)
         for relative in W07_REPLAY_PATHS:
             target = replay_root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -3157,7 +3446,21 @@ def _run_observed_w07_replay(
         validator = replay_root / W07_VALIDATOR_PATH
         workflow = replay_root / W07_WORKFLOW_PATH
         completed = subprocess.run(
-            [str(interpreter), "-I", str(validator), str(response_target)],
+            [
+                str(interpreter),
+                "-I",
+                "-S",
+                "-B",
+                "-c",
+                W07_REPLAY_BOOTSTRAP,
+                str(dependency_root),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
+                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
+                "script",
+                str(validator),
+                str(response_target),
+            ],
             cwd=replay_root,
             env=environment,
             check=False,
@@ -3171,9 +3474,15 @@ def _run_observed_w07_replay(
             [
                 str(interpreter),
                 "-I",
+                "-S",
                 "-B",
                 "-c",
-                W07_MEMO_BOOTSTRAP,
+                W07_REPLAY_BOOTSTRAP,
+                str(dependency_root),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
+                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
+                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
+                "memo",
                 str(workflow),
                 str(response_target),
             ],

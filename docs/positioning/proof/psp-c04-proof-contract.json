@@ -72,6 +72,20 @@
         "package": "yaml",
         "python_source_file_count": 17,
         "python_source_tree_sha256": "fca0d26205a35539a5e123116d2756f3ff33dc1fc4058686cef1268840815eb6"
+      },
+      "w07_jsonschema": {
+        "distributions": {
+          "attrs": "26.1.0",
+          "jsonschema": "4.26.0",
+          "jsonschema-specifications": "2025.9.1",
+          "referencing": "0.37.0",
+          "typing-extensions": "4.15.0"
+        },
+        "package_roots": ["attr", "attrs", "jsonschema", "jsonschema_specifications", "referencing"],
+        "single_files": ["typing_extensions.py"],
+        "source_file_count": 75,
+        "source_tree_sha256": "f94058ced7bc81593410dcf711e37320fc8f760420f01edb9acb5950c94077eb",
+        "rpds_compat_sha256": "339c93ba3307278b36036fa61205fa7a9c2feb6fe440df999771655868216f8d"
       }
     },
     "rule": "PSP-P02 is formally closed. This contract may formalize only after PSP-C03 closes with predicate-backed receipts; PSP-P03-W07 is its sole unsatisfied leaf.",
