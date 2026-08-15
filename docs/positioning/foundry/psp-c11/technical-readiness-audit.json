@@ -312,7 +312,7 @@
         "evidence_url": null,
         "state": "blocked_unverified"
       },
-      "observed_head": "8a378a226cf58a552a3b87ae143a0bfc5698f46e",
+      "observed_head": "cbde785f8c8ad499caa1fbf9f29d51a7f0891e8e",
       "readiness_score": 0,
       "repository": "4444J99/peer-audited--behavioral-blockchain",
       "security": {
@@ -6000,7 +6000,7 @@
     }
   ],
   "external_effects": [],
-  "observed_at": "2026-08-14T23:40:18Z",
+  "observed_at": "2026-08-15T09:28:04Z",
   "owner_custody_unchanged": true,
   "schema_version": "limen.psp_p13_w03_technical_readiness.v1",
   "source_lock": {
