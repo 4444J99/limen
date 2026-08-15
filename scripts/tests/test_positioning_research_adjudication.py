@@ -1469,7 +1469,7 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     assert "scripts/positioning-research-adjudication.py" in live_gate["paths"]
     assert "institutio/governance/gates.yaml" not in live_gate["paths"]
     assert "institutio/positioning/program.yaml" not in live_gate["paths"]
-    assert workflow["permissions"] == {"contents": "read", "issues": "read"}
+    assert workflow["permissions"] == {"actions": "read", "contents": "read", "issues": "read"}
     verification_steps = {
         step["name"]: step
         for step in workflow["jobs"]["pr-gate"]["steps"]

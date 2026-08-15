@@ -141,7 +141,9 @@ maintenance proof. Blockers may be empty only after every hard
 floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
-unclassified additions as hard transfer blockers. An unresolved nested maintenance blocker must equal
+unclassified additions as hard transfer blockers. `--require-cleared` accepts only the governed
+dimension blocker codes or the private-clearance code and rejects unknown codes before testing
+absence. An unresolved nested maintenance blocker must equal
 its canonical top-level blocker. Maintenance points require a named owner, a positive estimate no
 higher than the contract's 40-hour monthly maximum, and a response window no longer than the
 contract's 168-hour maximum; the response window must equal the value in the independently resolved
@@ -157,6 +159,8 @@ economics, funded maintenance, and tested return must all clear their governed f
 collection shares one 270-second deadline,
 a 96-call ceiling, and an immutable-response cache across W01 verification, receipt blobs, output and
 artifact blobs, and Actions provenance, so repeated lookups cannot restart the 300-second gate clock.
+Contents API evidence above 1 MiB resolves through its exact Git blob SHA with a 100 MiB fail-closed
+ceiling; size and Git-object digest must match before receipt SHA-256 validation.
 A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
 head resets that row to unresolved instead of erasing unrelated candidate evidence. A proposed
 private clearance is tracked only as `clearance_pending_live`, with an opaque digest, its blocker,
@@ -182,7 +186,9 @@ The `positioning-foundry-technical-readiness-test` gate in
 accepted W01 inputs as a deterministic scoped acceptance surface, including the foundry-handoff
 regression suite. The scoped `positioning-foundry-technical-readiness-public-live` predicate resolves
 immutable public evidence blobs and run provenance plus the canonical W01 marked receipt without
-comparing mutable repository heads or enumerating private repositories. The whole-only
+comparing mutable repository heads or enumerating private repositories. Its owning PR workflow
+grants only `actions: read`, `contents: read`, and `issues: read`; no write permission is introduced.
+The whole-only
 `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed
 `LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator

@@ -232,6 +232,17 @@ check-gates
 check-runner-coverage
 check-note-links' .github/workflows/ci.yml
 
+expect foundry-pr-gate-permission-change 'syntax-changed
+diff-hygiene
+merge-queue-contract-test
+direct-main-writer-contract
+positioning-foundry-technical-readiness-public-live
+research-adjudication-test
+workflow-yaml
+check-gates
+check-runner-coverage
+check-note-links' .github/workflows/pr-gate.yml
+
 expect dashboard-change 'syntax-changed
 diff-hygiene
 check-params

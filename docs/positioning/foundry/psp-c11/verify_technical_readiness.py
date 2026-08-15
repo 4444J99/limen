@@ -197,11 +197,17 @@ PRIVATE_CLEARANCE_SCHEMA = "limen.psp_p13_w03_private_clearances.v1"
 PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 LIVE_COLLECTION_DEADLINE_SECONDS = 270
 LIVE_COLLECTION_CALL_LIMIT = 96
+GITHUB_CONTENTS_INLINE_MAX_BYTES = 1024 * 1024
+GITHUB_BLOB_MAX_BYTES = 100 * 1024 * 1024
 GOVERNED_TRANSFER_BLOCKERS = {
     "no_E3_or_stronger_primary_demand_receipt",
     "no_operator_selected_or_scored",
     "human_terms_and_contract_gates_unpulled",
     "no_observed_pilot",
+}
+PRIVATE_CLEARANCE_BLOCKER_CODE = "restricted_private_evidence"
+GOVERNED_CLEARANCE_BLOCKER_CODES = set(DIMENSION_BLOCKER_CODES.values()) | {
+    PRIVATE_CLEARANCE_BLOCKER_CODE
 }
 
 
@@ -783,6 +789,21 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _decode_github_base64(value: Any, maximum_bytes: int, label: str) -> bytes:
+    if not isinstance(value, str):
+        raise AuditError(f"{label} is not decodable")
+    compact = "".join(value.split())
+    if len(compact) > 4 * math.ceil(maximum_bytes / 3):
+        raise AuditError(f"{label} exceeds the GitHub blob maximum")
+    try:
+        decoded = base64.b64decode(compact, validate=True)
+    except ValueError as exc:
+        raise AuditError(f"{label} is invalid") from exc
+    if len(decoded) > maximum_bytes:
+        raise AuditError(f"{label} exceeds the GitHub blob maximum")
+    return decoded
+
+
 def _fetch_repository_blob(
     repository: str,
     commit: str,
@@ -795,13 +816,34 @@ def _fetch_repository_blob(
         ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"],
         collection=collection,
     )
+    size = response.get("size")
+    if not _is_nonnegative_int(size) or size > GITHUB_BLOB_MAX_BYTES or response.get("type") != "file":
+        raise AuditError("live technical evidence blob metadata is invalid or exceeds GitHub maximums")
     encoded = response.get("content")
-    if response.get("encoding") != "base64" or not isinstance(encoded, str):
+    if response.get("encoding") == "base64":
+        decoded = _decode_github_base64(encoded, GITHUB_CONTENTS_INLINE_MAX_BYTES, "live technical evidence blob")
+        if len(decoded) != size:
+            raise AuditError("live technical evidence blob size drift")
+        return decoded
+    blob_sha = response.get("sha")
+    if (
+        response.get("encoding") != "none"
+        or size <= GITHUB_CONTENTS_INLINE_MAX_BYTES
+        or not isinstance(blob_sha, str)
+        or not SHA40.fullmatch(blob_sha)
+    ):
         raise AuditError("live technical evidence blob is not decodable")
-    try:
-        return base64.b64decode("".join(encoded.split()), validate=True)
-    except ValueError as exc:
-        raise AuditError("live technical evidence blob is invalid") from exc
+    blob = _run_json(
+        ["gh", "api", f"repos/{repository}/git/blobs/{blob_sha}"],
+        collection=collection,
+    )
+    if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
+        raise AuditError("live technical evidence blob fallback binding drift")
+    decoded = _decode_github_base64(blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob")
+    git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
+    if len(decoded) != size or git_digest != blob_sha:
+        raise AuditError("live technical evidence blob fallback digest drift")
+    return decoded
 
 
 def _fetch_exact_head_blob(
@@ -1808,6 +1850,8 @@ def required_blocker_errors(audit: dict[str, Any], requirement: str | None) -> l
     candidate_id, separator, code = requirement.partition(":")
     if not separator or not _is_nonblank_text(candidate_id) or not _is_nonblank_text(code):
         return ["--require-cleared must be CANDIDATE_ID:BLOCKER_CODE"]
+    if code not in GOVERNED_CLEARANCE_BLOCKER_CODES:
+        return ["--require-cleared blocker code is not governed"]
     row = next(
         (
             item
@@ -1818,6 +1862,14 @@ def required_blocker_errors(audit: dict[str, Any], requirement: str | None) -> l
     )
     if row is None:
         return ["--require-cleared candidate is not in the accepted denominator"]
+    if (
+        row.get("visibility") == "private"
+        and code != PRIVATE_CLEARANCE_BLOCKER_CODE
+    ) or (
+        row.get("visibility") == "public"
+        and code == PRIVATE_CLEARANCE_BLOCKER_CODE
+    ):
+        return ["--require-cleared blocker code is invalid for candidate visibility"]
     blockers: list[Any] = []
     if row.get("visibility") == "private":
         blockers.append(row.get("blocker"))

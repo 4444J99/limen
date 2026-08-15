@@ -492,6 +492,7 @@ gates:
   positioning-foundry-technical-readiness-public-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --public-live --json"
     paths:
+      - ".github/workflows/pr-gate.yml"
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"

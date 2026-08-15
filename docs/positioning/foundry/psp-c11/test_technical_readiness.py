@@ -662,6 +662,60 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.AuditError, "collection budget exhausted"):
             MODULE._run_json(["gh", "api", "expired"], collection=expired)
 
+    def test_large_repository_blob_uses_exact_bounded_git_blob_fallback(self) -> None:
+        content = b"x" * (MODULE.GITHUB_CONTENTS_INLINE_MAX_BYTES + 1)
+        blob_sha = MODULE.hashlib.sha1(
+            f"blob {len(content)}\0".encode("ascii") + content
+        ).hexdigest()
+        contents = {
+            "type": "file",
+            "size": len(content),
+            "sha": blob_sha,
+            "encoding": "none",
+            "content": "",
+        }
+        blob = {
+            "sha": blob_sha,
+            "size": len(content),
+            "encoding": "base64",
+            "content": MODULE.base64.b64encode(content).decode("ascii"),
+        }
+        collection = MODULE.LiveCollection()
+        with mock.patch.object(MODULE, "_run_json", side_effect=[contents, blob]) as run:
+            self.assertEqual(
+                content,
+                MODULE._fetch_repository_blob(
+                    "organvm/limen",
+                    "f" * 40,
+                    "docs/evidence.bin",
+                    collection,
+                ),
+            )
+        self.assertEqual(2, run.call_count)
+        self.assertIs(collection, run.call_args_list[0].kwargs["collection"])
+        self.assertIs(collection, run.call_args_list[1].kwargs["collection"])
+        self.assertEqual(
+            ["gh", "api", f"repos/organvm/limen/git/blobs/{blob_sha}"],
+            run.call_args_list[1].args[0],
+        )
+
+        drifted = copy.deepcopy(blob)
+        drifted["content"] = MODULE.base64.b64encode(content[:-1] + b"y").decode("ascii")
+        with (
+            mock.patch.object(MODULE, "_run_json", side_effect=[contents, drifted]),
+            self.assertRaisesRegex(MODULE.AuditError, "fallback digest drift"),
+        ):
+            MODULE._fetch_repository_blob("organvm/limen", "f" * 40, "docs/evidence.bin")
+
+        oversized = copy.deepcopy(contents)
+        oversized["size"] = MODULE.GITHUB_BLOB_MAX_BYTES + 1
+        with (
+            mock.patch.object(MODULE, "_run_json", return_value=oversized) as run,
+            self.assertRaisesRegex(MODULE.AuditError, "exceeds GitHub maximums"),
+        ):
+            MODULE._fetch_repository_blob("organvm/limen", "f" * 40, "docs/evidence.bin")
+        self.assertEqual(1, run.call_count)
+
     def test_live_receipt_rejects_future_chronology_and_allows_later_receipt_commit(self) -> None:
         row = self.public_row()
         receipt = self.evidence_receipt(row, "deploy")
@@ -898,6 +952,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(
             ["required blocker remains uncleared"],
             MODULE.required_blocker_errors(changed, f"{row['candidate_id']}:{blocker['code']}"),
+        )
+        self.assertEqual(
+            ["--require-cleared blocker code is not governed"],
+            MODULE.required_blocker_errors(changed, f"{row['candidate_id']}:mistyped_blocker"),
+        )
+        self.assertEqual(
+            ["--require-cleared blocker code is not governed"],
+            MODULE.required_blocker_errors(changed, "unknown-candidate:mistyped_blocker"),
+        )
+        self.assertEqual(
+            ["--require-cleared blocker code is invalid for candidate visibility"],
+            MODULE.required_blocker_errors(
+                changed,
+                f"{row['candidate_id']}:{MODULE.PRIVATE_CLEARANCE_BLOCKER_CODE}",
+            ),
         )
         blocker["predicate"] = "true"
         self.assertTrue(any("exact trusted live clearance command" in error for error in self.errors(changed)))
@@ -1341,6 +1410,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         static = registry["gates"]["positioning-foundry-technical-readiness-test"]
         public_live = registry["gates"]["positioning-foundry-technical-readiness-public-live"]
         live = registry["gates"]["positioning-foundry-technical-readiness-live"]
+        workflow = yaml.safe_load((ROOT / ".github/workflows/pr-gate.yml").read_text(encoding="utf-8"))
         owning_paths = {
             "docs/positioning/foundry/psp-c11/technical-readiness-audit.json",
             "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
@@ -1355,6 +1425,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "scripts/tests/test_positioning_foundry_handoff.py",
         }
         self.assertTrue(public_paths <= set(public_live["paths"]))
+        self.assertIn(".github/workflows/pr-gate.yml", public_live["paths"])
+        self.assertEqual(
+            {"actions": "read", "contents": "read", "issues": "read"},
+            workflow["permissions"],
+        )
         self.assertTrue(
             owning_paths
             - {
