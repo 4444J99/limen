@@ -70,6 +70,61 @@ def test_enumerate_fails_open_on_gh_error():
     assert m.enumerate_open_prs(["organvm"], lambda a, timeout=60: _R("not-json")) == []
 
 
+_MERGED_PRS = [
+    {"number": 20, "repository": {"nameWithOwner": "organvm/limen"}},
+    {"number": 5, "repository": {"nameWithOwner": "organvm/limen"}},
+    {"number": 1, "repository": {"nameWithOwner": "organvm/styx"}},
+]
+
+
+def test_enumerate_merged_full_set_stable_sort():
+    m = _load()
+    got = m.enumerate_merged_prs_result(["organvm"], lambda a: _R(json.dumps(_MERGED_PRS)), "2026-08-14T00:00:00Z")
+    assert got.success and got.complete and got.error is None
+    assert got.rows == (("organvm/limen", 5), ("organvm/limen", 20), ("organvm/styx", 1))
+
+
+def test_enumerate_merged_uses_merged_at_filter_and_owners():
+    m = _load()
+    calls = []
+
+    def capture(argv):
+        calls.append(argv)
+        return _R("[]")
+
+    m.enumerate_merged_prs_result(["organvm", "4444J99"], capture, "2026-08-14T00:00:00Z")
+    argv = calls[0]
+    assert argv[:3] == ["search", "prs", "--merged"]
+    assert argv[argv.index("--merged-at") + 1] == ">=2026-08-14T00:00:00Z"
+    assert argv.count("--owner") == 2
+    assert "--author" not in argv, "merged-PR census is fleet-wide, not scoped to one author"
+
+
+def test_enumerate_merged_want_url_false_by_default():
+    m = _load()
+    got = m.enumerate_merged_prs_result(["organvm"], lambda a: _R(json.dumps(_MERGED_PRS)), "2026-08-14T00:00:00Z")
+    assert all(len(row) == 2 for row in got.rows)
+
+
+def test_enumerate_merged_fails_open_on_gh_error():
+    m = _load()
+    err = m.enumerate_merged_prs_result(["organvm"], lambda a: _R("", rc=1), "2026-08-14T00:00:00Z")
+    assert err.success is False and err.rows == ()
+    bad_json = m.enumerate_merged_prs_result(["organvm"], lambda a: _R("not-json"), "2026-08-14T00:00:00Z")
+    assert bad_json.success is False and bad_json.rows == ()
+
+
+def test_enumerate_merged_ceiling_clamp_marks_incomplete():
+    m = _load()
+    # exactly at the ceiling with a full page → cannot prove nothing was truncated
+    rows = [{"number": i, "repository": {"nameWithOwner": "o/r"}} for i in range(m.SEARCH_RESULT_CEILING)]
+    got = m.enumerate_merged_prs_result(
+        ["organvm"], lambda a: _R(json.dumps(rows)), "2026-08-14T00:00:00Z", max_total=m.SEARCH_RESULT_CEILING
+    )
+    assert got.complete is False
+    assert got.error == "enumeration reached its result ceiling"
+
+
 def test_rotating_window_advances_wraps_and_covers_all(tmp_path):
     m = _load()
     items = list(range(5))
