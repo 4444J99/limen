@@ -102,6 +102,7 @@ SUMMARY_KEYS = {
 }
 STATES = {"verified_pass", "verified_fail", "not_applicable", "blocked_unverified"}
 SECURITY_CLASSES = {"unassessed", "low", "moderate", "high", "critical"}
+PASSABLE_SECURITY_CLASSES = {"low", "moderate"}
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 SHA64 = re.compile(r"^[0-9a-f]{64}$")
 OPAQUE_PRIVATE_ID = re.compile(r"^private-candidate-[0-9]{3}$")
@@ -339,6 +340,13 @@ def readiness_transfer_threshold(contract: dict[str, Any]) -> int:
     if not _is_nonnegative_int(value) or value > 100:
         raise AuditError("technical readiness transfer threshold is invalid")
     return value
+
+
+def readiness_maintenance_maximum(contract: dict[str, Any]) -> float:
+    value = contract.get("readiness_model", {}).get("maintenance_estimate_hours_per_month_maximum")
+    if not _is_finite_number(value) or not 0 < float(value) <= 168:
+        raise AuditError("maintenance estimate maximum is invalid")
+    return float(value)
 
 
 def readiness_score(dimension_states: dict[str, Any], weights: dict[str, int]) -> int:
@@ -962,6 +970,7 @@ def _public_candidate_errors(
     weights: dict[str, int],
     hard_floors: set[str],
     transfer_threshold: int,
+    maintenance_maximum: float,
     live_receipts: dict[tuple[str, str], dict[str, Any]] | None,
 ) -> list[str]:
     candidate_id = str(expected.get("candidate_id") or "unknown")
@@ -1008,11 +1017,14 @@ def _public_candidate_errors(
         )
     )
     if isinstance(security, dict):
-        if not isinstance(security.get("class"), str) or security.get("class") not in SECURITY_CLASSES:
+        security_class = security.get("class")
+        security_state = security.get("state")
+        if not isinstance(security_class, str) or security_class not in SECURITY_CLASSES:
             errors.append(f"{label}.security.class is invalid")
-        if security.get("state") == "verified_pass" and security.get("class") == "unassessed":
-            errors.append(f"{label}.security cannot pass while unassessed")
-        dimension_states["security"] = security.get("state")
+        if security_state == "verified_pass" and security_class not in PASSABLE_SECURITY_CLASSES:
+            errors.append(f"{label}.security verified_pass requires a low or moderate class")
+            security_state = "blocked_unverified"
+        dimension_states["security"] = security_state
     maintenance = row.get("maintenance")
     errors.extend(
         _evidence_errors(
@@ -1028,18 +1040,20 @@ def _public_candidate_errors(
     )
     if isinstance(maintenance, dict):
         state = maintenance.get("state")
-        dimension_states["maintenance"] = state
         if state == "verified_pass":
             estimate = maintenance.get("estimate_hours_per_month")
-            if (
-                not _is_nonblank_text(maintenance.get("owner"))
-                or not _is_finite_number(estimate)
-                or float(estimate) <= 0
-            ):
+            valid_estimate = _is_finite_number(estimate) and 0 < float(estimate) <= maintenance_maximum
+            valid_pass = _is_nonblank_text(maintenance.get("owner")) and valid_estimate
+            if not valid_pass:
                 errors.append(f"{label}.maintenance pass requires an owner and bounded positive estimate")
+            if _is_finite_number(estimate) and float(estimate) > maintenance_maximum:
+                errors.append(f"{label}.maintenance estimate exceeds the contract maximum")
             if maintenance.get("blocker") is not None:
                 errors.append(f"{label}.maintenance pass cannot retain a blocker")
+                valid_pass = False
+            dimension_states["maintenance"] = state if valid_pass else "blocked_unverified"
         else:
+            dimension_states["maintenance"] = state
             if maintenance.get("owner") is not None or maintenance.get("estimate_hours_per_month") is not None:
                 errors.append(f"{label}.maintenance unresolved state must not claim owner or estimate")
             errors.extend(_blocker_errors(maintenance.get("blocker"), f"{label}.maintenance.blocker", candidate_id))
@@ -1201,8 +1215,9 @@ def validate_audit(
         errors.append("audit schema_version drift")
     if audit.get("work_id") != "PSP-P13-W03" or audit.get("status") != "ACCEPTANCE_EVIDENCE":
         errors.append("audit work_id or status drift")
-    if not _valid_timestamp(audit.get("observed_at")):
-        errors.append("audit observed_at must be an RFC3339 UTC timestamp")
+    observed_at = _parse_timestamp(audit.get("observed_at"))
+    if observed_at is None or observed_at > dt.datetime.now(dt.UTC):
+        errors.append("audit observed_at must be a non-future RFC3339 UTC timestamp")
     if audit.get("source_lock") != SOURCE_LOCK:
         errors.append("audit source_lock drift")
     try:
@@ -1248,6 +1263,7 @@ def validate_audit(
     weights = readiness_weights(contract)
     hard_floors = readiness_hard_floors(contract)
     transfer_threshold = readiness_transfer_threshold(contract)
+    maintenance_maximum = readiness_maintenance_maximum(contract)
     for index, expected in enumerate(expected_candidates):
         if index >= len(candidates) or not isinstance(expected, dict):
             continue
@@ -1257,7 +1273,15 @@ def validate_audit(
             continue
         if expected.get("visibility") == "public":
             errors.extend(
-                _public_candidate_errors(row, expected, weights, hard_floors, transfer_threshold, live_receipts)
+                _public_candidate_errors(
+                    row,
+                    expected,
+                    weights,
+                    hard_floors,
+                    transfer_threshold,
+                    maintenance_maximum,
+                    live_receipts,
+                )
             )
             if live_heads is not None:
                 repository = expected.get("repository")
@@ -1350,7 +1374,6 @@ def main() -> int:
             private_clearance_receipts = load_private_clearance_receipts()
             verify_w01_live_receipt()
         elif args.public_live:
-            heads = collect_public_heads(snapshot)
             verify_w01_live_receipt()
         if write_path is not None:
             if not args.live or heads is None:

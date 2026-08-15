@@ -472,7 +472,7 @@ gates:
     owner: positioning-program
     note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
   positioning-foundry-technical-readiness-test:
-    command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json"
+    command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B scripts/tests/test_positioning_foundry_handoff.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json"
     paths:
       - "docs/positioning/foundry/psp-c11/README.md"
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
@@ -484,6 +484,7 @@ gates:
       - "institutio/governance/gates.yaml"
       - "scripts/positioning-program.py"
       - "scripts/positioning-foundry-preflight.py"
+      - "scripts/tests/test_positioning_foundry_handoff.py"
       - "scripts/verify-whole.sh"
     timeout_seconds: 300
     owner: positioning-program
@@ -499,10 +500,9 @@ gates:
       - "institutio/positioning/github-map.json"
       - "institutio/positioning/program.yaml"
       - "scripts/positioning-program.py"
-    scoped: false
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 explicitly armed public-live validation uses the ordinary operator token only for current public heads, immutable public evidence blobs, trusted run provenance, and canonical W01 marked-receipt verification; mutable remote state never gates ordinary scoped PR CI and this rung never enumerates the private estate."
+    note: "PSP-P13-W03 scoped public-evidence validation resolves immutable public receipt blobs, trusted run provenance, and the canonical W01 marked receipt without comparing mutable repository heads or enumerating the private estate; private-inclusive census and custody remain operator-only."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:

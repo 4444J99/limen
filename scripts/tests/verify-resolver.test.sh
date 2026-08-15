@@ -57,11 +57,12 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
-# W03 changes select the deterministic owner gate. Both mutable live rails remain
-# explicitly armed and are never ordinary scoped PR gates.
+# W03 changes select the deterministic owner gate and immutable public-evidence
+# validation; the private-inclusive census and custody rail remains operator-only.
 expect foundry-readiness-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
 check-docs-exports
 check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
 
@@ -217,6 +218,7 @@ verify-parallel-test
 agent-docs
 github-estate-census-custody-test
 positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
@@ -227,8 +229,8 @@ positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
-# The W03 collector is a static-gate input. Its public-only current-head predicate
-# is scoped, while its private-inclusive operator predicate remains whole-only.
+# The W03 collector is a static-gate input. The scoped public-evidence rail does
+# not invoke that census; the private-inclusive operator predicate remains whole-only.
 expect foundry-preflight-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract

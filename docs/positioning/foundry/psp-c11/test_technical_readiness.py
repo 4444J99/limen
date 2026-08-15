@@ -130,6 +130,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         changed["source_lock"]["candidate_count"] = 61
         self.assertIn("audit source_lock drift", self.errors(changed))
 
+    def test_top_level_observation_cannot_be_future_dated(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        changed["observed_at"] = "9999-12-31T23:59:59Z"
+        self.assertIn(
+            "audit observed_at must be a non-future RFC3339 UTC timestamp",
+            self.errors(changed),
+        )
+
     def test_candidate_denominator_and_identity_are_exact(self) -> None:
         changed = copy.deepcopy(self.audit)
         changed["candidates"].pop()
@@ -424,6 +432,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         with self.assertRaisesRegex(MODULE.AuditError, "transfer threshold is invalid"):
             MODULE.readiness_transfer_threshold(changed)
 
+    def test_maintenance_maximum_is_contract_derived_and_bounded(self) -> None:
+        self.assertEqual(40, MODULE.readiness_maintenance_maximum(self.contract))
+        changed = copy.deepcopy(self.contract)
+        changed["readiness_model"]["maintenance_estimate_hours_per_month_maximum"] = 12
+        self.assertEqual(12, MODULE.readiness_maintenance_maximum(changed))
+        changed["readiness_model"]["maintenance_estimate_hours_per_month_maximum"] = 1_000
+        with self.assertRaisesRegex(MODULE.AuditError, "maintenance estimate maximum is invalid"):
+            MODULE.readiness_maintenance_maximum(changed)
+
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.experiment_row(changed)
@@ -536,6 +553,25 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertTrue(any("data_custody must use the exact" in error for error in errors))
         self.assertTrue(any("ip_custody.state is invalid" in error for error in errors))
 
+    def test_unsafe_security_classes_cannot_pass_or_satisfy_the_hard_floor(self) -> None:
+        for security_class in ("high", "critical"):
+            changed = copy.deepcopy(self.audit)
+            row = self.public_row(changed)
+            row["security"] = {
+                "class": security_class,
+                "state": "verified_pass",
+                "evidence_url": self.receipt_url(row, "security"),
+            }
+            row["readiness_score"] = 15
+            row["blockers"] = [
+                blocker for blocker in row["blockers"] if blocker["code"] != "security_evidence_missing"
+            ]
+            changed["summary"] = MODULE.compute_summary(changed["candidates"])
+            errors = self.errors(changed)
+            self.assertTrue(any("verified_pass requires a low or moderate class" in error for error in errors))
+            self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
+            self.assertTrue(any("readiness_score drift" in error for error in errors))
+
     def test_maintenance_requires_owner_or_owned_blocker(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.public_row(changed)
@@ -551,6 +587,26 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "blocker": None,
         }
         self.assertTrue(any("owner and bounded positive estimate" in error for error in self.errors(changed)))
+
+    def test_maintenance_points_require_an_estimate_within_the_contract_maximum(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["maintenance"] = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 41,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "blocker": None,
+        }
+        row["readiness_score"] = 5
+        row["blockers"] = [
+            blocker for blocker in row["blockers"] if blocker["code"] != "maintenance_evidence_missing"
+        ]
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        errors = self.errors(changed)
+        self.assertTrue(any("estimate exceeds the contract maximum" in error for error in errors))
+        self.assertTrue(any("readiness_score drift" in error for error in errors))
+        self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
 
     def test_unresolved_maintenance_blocker_must_equal_canonical_copy(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -804,7 +860,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             with self.assertRaisesRegex(MODULE.AuditError, "path listing timed out"):
                 MODULE._private_identity_leaks(set(), set())
 
-    def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
+    def test_pr_gate_runs_static_handoff_and_public_evidence_while_private_live_is_operator_only(self) -> None:
         registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
         static = registry["gates"]["positioning-foundry-technical-readiness-test"]
         public_live = registry["gates"]["positioning-foundry-technical-readiness-public-live"]
@@ -814,22 +870,30 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
             "docs/positioning/foundry/psp-c11/verify_technical_readiness.py",
             "scripts/positioning-foundry-preflight.py",
+            "scripts/tests/test_positioning_foundry_handoff.py",
         }
         self.assertTrue(owning_paths.issubset(static["paths"]))
         public_paths = owning_paths - {
             "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
             "scripts/positioning-foundry-preflight.py",
+            "scripts/tests/test_positioning_foundry_handoff.py",
         }
         self.assertTrue(public_paths <= set(public_live["paths"]))
         self.assertTrue(
-            owning_paths - {"docs/positioning/foundry/psp-c11/test_technical_readiness.py"} <= set(live["paths"])
+            owning_paths
+            - {
+                "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
+                "scripts/tests/test_positioning_foundry_handoff.py",
+            }
+            <= set(live["paths"])
         )
         self.assertNotIn("--live", static["command"])
         self.assertIn("test_technical_readiness.py", static["command"])
+        self.assertIn("test_positioning_foundry_handoff.py", static["command"])
         self.assertIn("verify_technical_readiness.py", static["command"])
         self.assertIn("--public-live", public_live["command"].split())
         self.assertNotIn("--live", public_live["command"].split())
-        self.assertIs(public_live["scoped"], False)
+        self.assertIsNot(public_live.get("scoped"), False)
         self.assertIs(live["scoped"], False)
         self.assertIn("--live", live["command"].split())
         self.assertNotIn("ci_job", live)
@@ -838,14 +902,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertIn(live["command"], whole)
 
     def test_public_live_mode_never_collects_private_operator_context(self) -> None:
-        heads = {
-            row["repository"]: row["observed_head"] for row in self.audit["candidates"] if row["visibility"] == "public"
-        }
         argv = [str(SCRIPT), "--public-live", "--json"]
         stdout = io.StringIO()
         with (
             mock.patch.object(sys, "argv", argv),
-            mock.patch.object(MODULE, "collect_public_heads", return_value=heads),
+            mock.patch.object(MODULE, "collect_public_heads") as collect_public_heads,
             mock.patch.object(MODULE, "verify_w01_live_receipt"),
             mock.patch.object(MODULE, "collect_live_evidence_receipts", return_value={}),
             mock.patch.object(MODULE, "collect_live_context", side_effect=AssertionError("private census invoked")),
@@ -857,6 +918,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             contextlib.redirect_stdout(stdout),
         ):
             result = MODULE.main()
+        collect_public_heads.assert_not_called()
         self.assertEqual(0, result)
         self.assertEqual("pass", json.loads(stdout.getvalue())["status"])
 

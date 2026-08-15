@@ -195,6 +195,7 @@
   "readiness_model": {
     "score_range": [0, 100],
     "metadata_screen_cap": 30,
+    "maintenance_estimate_hours_per_month_maximum": 40,
     "dimensions": [
       {"id": "build_test", "weight": 20, "required_proof": "Exact-head build and test receipt."},
       {"id": "deploy_runtime", "weight": 15, "required_proof": "Dated deployment or runtime receipt; homepage presence is intent only."},

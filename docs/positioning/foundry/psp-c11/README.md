@@ -127,14 +127,17 @@ SHA-256 digests. Trusted live validation also resolves a dimension-specific comp
 run whose head, conclusion, predicate path, and completion time bind the tested commit, pass/fail
 semantics, and non-future receipt chronology. Self-authored commands or hashes, reused blobs,
 invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
-zero, while a verified failure requires a non-boolean nonzero integer. A homepage, default branch,
+zero, while a verified failure requires a non-boolean nonzero integer. The top-level audit time and
+receipt chronology cannot be future-dated. A `high` or `critical` security class cannot be promoted
+to `verified_pass` or satisfy the security hard floor. A homepage, default branch,
 recent push, or repository metadata never becomes build, test, runtime, security, custody, or
 maintenance proof. Blockers may be empty only after every hard
 floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
 unclassified additions as hard transfer blockers. An unresolved nested maintenance blocker must equal
-its canonical top-level blocker. The unique readiness dimensions must total exactly 100 points, and
+its canonical top-level blocker. Maintenance points require a named owner and a positive estimate no
+higher than the contract's 40-hour monthly maximum. The unique readiness dimensions must total exactly 100 points, and
 the transfer threshold is derived from the contract's governed technical-readiness minimum. The
 contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
 archived or parked candidate remains technically non-transferable regardless of evidence. A live
@@ -160,11 +163,11 @@ economics, and custody detail behind an opaque per-snapshot identifier.
 
 The `positioning-foundry-technical-readiness-test` gate in
 `institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
-accepted W01 inputs as a deterministic scoped acceptance surface. The separate
-`positioning-foundry-technical-readiness-public-live` predicate is explicitly armed (`scoped:
-false`) and verifies current public heads, immutable public evidence blobs and run provenance, and
-the canonical W01 marked receipt with an operator token; mutable remote state never gates ordinary
-PR CI. The whole-only `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
+accepted W01 inputs as a deterministic scoped acceptance surface, including the foundry-handoff
+regression suite. The scoped `positioning-foundry-technical-readiness-public-live` predicate resolves
+immutable public evidence blobs and run provenance plus the canonical W01 marked receipt without
+comparing mutable repository heads or enumerating private repositories. The whole-only
+`positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed
 `LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator
 evidence for the private estate.
