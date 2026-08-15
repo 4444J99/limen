@@ -83,6 +83,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "observed_at": "2026-08-15T00:00:00Z",
             "external_effects": [],
         }
+        if dimension == "maintenance" and status == "pass":
+            receipt["maintenance_funded"] = True
         return receipt
 
     @staticmethod
@@ -258,6 +260,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
             "evidence_url": generic,
+            "funding_evidence_url": generic,
             "blocker": None,
         }
         errors = self.errors(changed)
@@ -357,6 +360,37 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
         self.assertTrue(any("distinct safe output and artifact paths" in error for error in errors))
         self.assertTrue(any("independently distinct output and artifact evidence" in error for error in errors))
+
+        receipt = self.evidence_receipt(row, "maintenance")
+        receipt["maintenance_funded"] = False
+        self.assertIn(
+            "candidate.maintenance live receipt must prove funded maintenance",
+            MODULE._evidence_receipt_errors(
+                self.resolved_evidence(receipt),
+                row["repository"],
+                row["observed_head"],
+                "maintenance",
+                "verified_pass",
+                "candidate.maintenance",
+            ),
+        )
+
+    def test_live_collection_has_one_deadline_call_budget_and_response_cache(self) -> None:
+        response = mock.Mock(returncode=0, stdout='{"status":"pass"}')
+        collection = MODULE.LiveCollection(deadline_seconds=10, call_limit=1, clock=lambda: 0)
+        with mock.patch.object(MODULE.subprocess, "run", return_value=response) as run:
+            first = MODULE._run_json(["gh", "api", "immutable"], collection=collection)
+            second = MODULE._run_json(["gh", "api", "immutable"], collection=collection)
+            self.assertEqual(first, second)
+            self.assertEqual(1, run.call_count)
+            self.assertEqual(10, run.call_args.kwargs["timeout"])
+            with self.assertRaisesRegex(MODULE.AuditError, "collection budget exhausted"):
+                MODULE._run_json(["gh", "api", "another"], collection=collection)
+
+        ticks = iter((0, 11))
+        expired = MODULE.LiveCollection(deadline_seconds=10, call_limit=2, clock=lambda: next(ticks))
+        with self.assertRaisesRegex(MODULE.AuditError, "collection budget exhausted"):
+            MODULE._run_json(["gh", "api", "expired"], collection=expired)
 
     def test_live_receipt_rejects_future_chronology_and_allows_later_receipt_commit(self) -> None:
         row = self.public_row()
@@ -467,6 +501,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
             "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
         row["readiness_score"] = 100
@@ -474,6 +509,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["transfer_eligible"] = True
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
         self.assertEqual([], self.errors(changed))
+
+        row["maintenance"].pop("funding_evidence_url")
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        errors = self.errors(changed)
+        self.assertTrue(any("maintenance must use the exact dimension schema" in error for error in errors))
+        self.assertTrue(any("transfer_eligible drift" in error for error in errors))
 
     def test_contract_hard_floors_allow_75_with_owned_nonhard_gaps(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -493,6 +534,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
             "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
         row["readiness_score"] = 75
@@ -584,6 +626,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": None,
             "estimate_hours_per_month": None,
             "evidence_url": f"https://github.com/{row['repository']}/commit/{row['observed_head']}",
+            "funding_evidence_url": f"https://github.com/{row['repository']}/commit/{row['observed_head']}",
             "blocker": None,
         }
         self.assertTrue(any("owner and bounded positive estimate" in error for error in self.errors(changed)))
@@ -596,6 +639,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": "maintainer",
             "estimate_hours_per_month": 41,
             "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
         row["readiness_score"] = 5
@@ -678,6 +722,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
             "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
         row["readiness_score"] = 100
@@ -727,6 +772,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "owner": "maintainer",
                 "estimate_hours_per_month": 1,
                 "evidence_url": self.receipt_url(row, "maintenance"),
+                "funding_evidence_url": self.receipt_url(row, "maintenance"),
                 "blocker": None,
             }
             row["readiness_score"] = 100
@@ -827,16 +873,20 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             path_leak.parent.mkdir()
             path_leak.write_text("safe body", encoding="utf-8")
             content_leak = package / "safe.md"
-            content_leak.write_text("OwNeR/SeCrEtRePo", encoding="utf-8")
+            content_leak.write_text(
+                "git clone https://github.com/OwNeR/SeCrEtRePo.git\n"
+                "git clone git@github.com:OwNeR/SeCrEtRePo.git\n",
+                encoding="utf-8",
+            )
             tracked_file = package / "tracked.md"
             tracked_file.write_text("owner/secretrepo", encoding="utf-8")
             with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
                 MODULE.subprocess,
                 "run",
-                return_value=mock.Mock(returncode=0, stdout="tracked.md\n"),
+                return_value=mock.Mock(returncode=0, stdout="safe.md\ntracked.md\n"),
             ):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
-            self.assertEqual(["tracked.md"], leaks)
+            self.assertEqual(["safe.md", "tracked.md"], leaks)
 
     def test_generic_private_bare_name_in_prose_is_not_an_identity_leak(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -907,8 +957,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         with (
             mock.patch.object(sys, "argv", argv),
             mock.patch.object(MODULE, "collect_public_heads") as collect_public_heads,
-            mock.patch.object(MODULE, "verify_w01_live_receipt"),
-            mock.patch.object(MODULE, "collect_live_evidence_receipts", return_value={}),
+            mock.patch.object(MODULE, "verify_w01_live_receipt") as verify_w01,
+            mock.patch.object(MODULE, "collect_live_evidence_receipts", return_value={}) as collect_receipts,
             mock.patch.object(MODULE, "collect_live_context", side_effect=AssertionError("private census invoked")),
             mock.patch.object(
                 MODULE,
@@ -919,6 +969,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         ):
             result = MODULE.main()
         collect_public_heads.assert_not_called()
+        self.assertIs(verify_w01.call_args.args[0], collect_receipts.call_args.args[1])
         self.assertEqual(0, result)
         self.assertEqual("pass", json.loads(stdout.getvalue())["status"])
 

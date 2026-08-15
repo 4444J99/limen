@@ -22,6 +22,7 @@ import re
 import runpy
 import subprocess
 import sys
+import time
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
@@ -91,6 +92,7 @@ MAINTENANCE_KEYS = {
     "evidence_url",
     "blocker",
 }
+MAINTENANCE_PASS_KEYS = MAINTENANCE_KEYS | {"funding_evidence_url"}
 BLOCKER_KEYS = {"code", "owner", "next_action", "predicate"}
 SUMMARY_KEYS = {
     "candidate_count",
@@ -142,6 +144,7 @@ EVIDENCE_RECEIPT_KEYS = {
     "observed_at",
     "external_effects",
 }
+MAINTENANCE_EVIDENCE_RECEIPT_KEYS = EVIDENCE_RECEIPT_KEYS | {"maintenance_funded"}
 RESOLVED_EVIDENCE_KEYS = {
     "receipt",
     "receipt_repository",
@@ -158,10 +161,47 @@ DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimens
 GENERIC_PRIVATE_OWNER = "portfolio_owner"
 PRIVATE_CLEARANCE_SCHEMA = "limen.psp_p13_w03_private_clearances.v1"
 PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
+LIVE_COLLECTION_DEADLINE_SECONDS = 270
+LIVE_COLLECTION_CALL_LIMIT = 96
 
 
 class AuditError(RuntimeError):
     """A public-safe validation or live-observation failure."""
+
+
+class LiveCollection:
+    """One fail-closed deadline, call budget, and immutable-response cache per live gate."""
+
+    def __init__(
+        self,
+        deadline_seconds: float = LIVE_COLLECTION_DEADLINE_SECONDS,
+        call_limit: int = LIVE_COLLECTION_CALL_LIMIT,
+        clock: Any = time.monotonic,
+    ) -> None:
+        if (
+            not _is_finite_number(deadline_seconds)
+            or deadline_seconds <= 0
+            or not _is_nonnegative_int(call_limit)
+            or call_limit <= 0
+        ):
+            raise AuditError("live evidence collection budget is invalid")
+        self._clock = clock
+        self._deadline = clock() + float(deadline_seconds)
+        self._call_limit = call_limit
+        self.calls = 0
+        self._json_cache: dict[tuple[str, ...], dict[str, Any]] = {}
+
+    def run_json(self, args: list[str], timeout: int) -> dict[str, Any]:
+        key = tuple(args)
+        if key in self._json_cache:
+            return copy.deepcopy(self._json_cache[key])
+        remaining = self._deadline - self._clock()
+        if self.calls >= self._call_limit or remaining <= 0:
+            raise AuditError("live evidence collection budget exhausted")
+        self.calls += 1
+        value = _run_json(args, timeout=max(1, min(timeout, math.ceil(remaining))))
+        self._json_cache[key] = copy.deepcopy(value)
+        return value
 
 
 def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -360,7 +400,13 @@ def readiness_score(dimension_states: dict[str, Any], weights: dict[str, int]) -
     return score
 
 
-def _run_json(args: list[str], timeout: int = 240) -> dict[str, Any]:
+def _run_json(
+    args: list[str],
+    timeout: int = 240,
+    collection: LiveCollection | None = None,
+) -> dict[str, Any]:
+    if collection is not None:
+        return collection.run_json(args, timeout)
     try:
         result = subprocess.run(
             args,
@@ -437,8 +483,11 @@ def accepted_w01_acceptance_digest() -> str:
         raise AuditError("accepted W01 acceptance digest cannot be recomputed") from exc
 
 
-def verify_w01_live_receipt() -> None:
-    verification = _run_json(["python3", "scripts/positioning-program.py", "--verify-work", "PSP-P13-W01", "--json"])
+def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
+    verification = _run_json(
+        ["python3", "scripts/positioning-program.py", "--verify-work", "PSP-P13-W01", "--json"],
+        collection=collection,
+    )
     if (
         verification.get("status") != "pass"
         or verification.get("work_id") != "PSP-P13-W01"
@@ -446,7 +495,10 @@ def verify_w01_live_receipt() -> None:
         or not SHA64.fullmatch(str(verification.get("receipt_sha256") or ""))
     ):
         raise AuditError("accepted W01 marked receipt verification drifted")
-    comment = _run_json(["gh", "api", "repos/organvm/limen/issues/comments/5295999920"])
+    comment = _run_json(
+        ["gh", "api", "repos/organvm/limen/issues/comments/5295999920"],
+        collection=collection,
+    )
     body = comment.get("body")
     if comment.get("html_url") != SOURCE_LOCK["w01_receipt"] or not isinstance(body, str):
         raise AuditError("accepted W01 marked receipt resolution drifted")
@@ -526,11 +578,11 @@ def _private_identity_leaks(private_names: set[str], private_bare_names: set[str
         except UnicodeDecodeError:
             pass
         for name in full_names:
-            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])"
+            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?:\.git)?(?![{repository_character}])"
             if re.search(pattern, content) or any(re.search(pattern, haystack) for haystack in path_haystacks):
                 leaks.add(display_path(path))
         for name in bare_names:
-            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])"
+            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?:\.git)?(?![{repository_character}])"
             if any(re.search(pattern, haystack) for haystack in path_haystacks):
                 leaks.add(display_path(path))
     return sorted(leaks)
@@ -585,11 +637,17 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def _fetch_repository_blob(repository: str, commit: str, path: str) -> bytes:
+def _fetch_repository_blob(
+    repository: str,
+    commit: str,
+    path: str,
+    collection: LiveCollection | None = None,
+) -> bytes:
     if not SHA40.fullmatch(commit) or not _safe_relative_path(path):
         raise AuditError("technical evidence blob location is invalid")
     response = _run_json(
-        ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
+        ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"],
+        collection=collection,
     )
     encoded = response.get("content")
     if response.get("encoding") != "base64" or not isinstance(encoded, str):
@@ -600,7 +658,12 @@ def _fetch_repository_blob(repository: str, commit: str, path: str) -> bytes:
         raise AuditError("live technical evidence blob is invalid") from exc
 
 
-def _fetch_exact_head_blob(value: Any, repository: str, commit: str) -> bytes:
+def _fetch_exact_head_blob(
+    value: Any,
+    repository: str,
+    commit: str,
+    collection: LiveCollection | None = None,
+) -> bytes:
     if not isinstance(value, str) or not _valid_https_url(value):
         raise AuditError("technical evidence artifact URL is invalid")
     parsed = urlparse(value)
@@ -609,7 +672,7 @@ def _fetch_exact_head_blob(value: Any, repository: str, commit: str) -> bytes:
     resolved_repository, resolved_commit, path = _evidence_location(value)
     if resolved_repository.casefold() != repository.casefold() or resolved_commit != commit:
         raise AuditError("technical evidence artifact is not bound to the candidate exact head")
-    return _fetch_repository_blob(resolved_repository, resolved_commit, path)
+    return _fetch_repository_blob(resolved_repository, resolved_commit, path, collection)
 
 
 def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[dict[str, Any]]) -> str:
@@ -657,7 +720,11 @@ def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list
     )
 
 
-def collect_live_evidence_receipts(audit: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+def collect_live_evidence_receipts(
+    audit: dict[str, Any],
+    collection: LiveCollection | None = None,
+) -> dict[tuple[str, str], dict[str, Any]]:
+    collection = collection or LiveCollection()
     receipts: dict[tuple[str, str], dict[str, Any]] = {}
     for row in audit.get("candidates", []):
         if not isinstance(row, dict) or row.get("visibility") != "public":
@@ -672,18 +739,36 @@ def collect_live_evidence_receipts(audit: dict[str, Any]) -> dict[tuple[str, str
                 continue
             receipt_repository, receipt_commit, _ = _evidence_location(evidence_url)
             try:
-                decoded = _fetch_exact_head_blob(evidence_url, receipt_repository, receipt_commit).decode("utf-8")
+                decoded = _fetch_exact_head_blob(
+                    evidence_url,
+                    receipt_repository,
+                    receipt_commit,
+                    collection,
+                ).decode("utf-8")
                 receipt = json.loads(decoded, object_pairs_hook=_object_without_duplicate_keys)
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
                 raise AuditError("live technical evidence receipt is invalid") from exc
             if not isinstance(receipt, dict):
                 raise AuditError("live technical evidence receipt is not an object")
-            output = _fetch_repository_blob(receipt_repository, receipt_commit, receipt.get("output_path"))
-            artifact = _fetch_repository_blob(receipt_repository, receipt_commit, receipt.get("artifact_path"))
+            output = _fetch_repository_blob(
+                receipt_repository,
+                receipt_commit,
+                receipt.get("output_path"),
+                collection,
+            )
+            artifact = _fetch_repository_blob(
+                receipt_repository,
+                receipt_commit,
+                receipt.get("artifact_path"),
+                collection,
+            )
             run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
             if run_id is None:
                 raise AuditError("live technical evidence provenance URL is invalid")
-            provenance = _run_json(["gh", "api", f"repos/{row['repository']}/actions/runs/{run_id}"])
+            provenance = _run_json(
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/{run_id}"],
+                collection=collection,
+            )
             receipts[(candidate_id, dimension)] = {
                 "receipt": receipt,
                 "receipt_repository": receipt_repository,
@@ -854,7 +939,12 @@ def _evidence_receipt_errors(
     if not _exact_keys(resolved_evidence, RESOLVED_EVIDENCE_KEYS):
         return [f"{label} live receipt must resolve immutable output and artifact evidence"]
     receipt = resolved_evidence.get("receipt")
-    if not _exact_keys(receipt, EVIDENCE_RECEIPT_KEYS):
+    expected_receipt_keys = (
+        MAINTENANCE_EVIDENCE_RECEIPT_KEYS
+        if dimension == "maintenance" and state == "verified_pass"
+        else EVIDENCE_RECEIPT_KEYS
+    )
+    if not _exact_keys(receipt, expected_receipt_keys):
         return [f"{label} live receipt must use the exact evidence schema"]
     errors: list[str] = []
     expected_status = "pass" if state == "verified_pass" else "fail"
@@ -916,6 +1006,8 @@ def _evidence_receipt_errors(
             errors.append(f"{label} live receipt chronology drift")
     if receipt.get("external_effects") != []:
         errors.append(f"{label} live receipt must record zero external effects")
+    if dimension == "maintenance" and state == "verified_pass" and receipt.get("maintenance_funded") is not True:
+        errors.append(f"{label} live receipt must prove funded maintenance")
     return errors
 
 
@@ -1026,6 +1118,11 @@ def _public_candidate_errors(
             security_state = "blocked_unverified"
         dimension_states["security"] = security_state
     maintenance = row.get("maintenance")
+    maintenance_keys = (
+        MAINTENANCE_PASS_KEYS
+        if isinstance(maintenance, dict) and maintenance.get("state") == "verified_pass"
+        else MAINTENANCE_KEYS
+    )
     errors.extend(
         _evidence_errors(
             maintenance,
@@ -1033,11 +1130,12 @@ def _public_candidate_errors(
             repository,
             "maintenance",
             f"{label}.maintenance",
-            MAINTENANCE_KEYS,
+            maintenance_keys,
             (live_receipts or {}).get((candidate_id, "maintenance")),
             live_receipts is not None,
         )
     )
+    funded_maintenance = False
     if isinstance(maintenance, dict):
         state = maintenance.get("state")
         if state == "verified_pass":
@@ -1051,6 +1149,13 @@ def _public_candidate_errors(
             if maintenance.get("blocker") is not None:
                 errors.append(f"{label}.maintenance pass cannot retain a blocker")
                 valid_pass = False
+            funding_evidence_url = maintenance.get("funding_evidence_url")
+            funded_maintenance = (
+                funding_evidence_url == maintenance.get("evidence_url")
+                and _url_proves_dimension(funding_evidence_url, head, repository, "maintenance")
+            )
+            if not funded_maintenance:
+                errors.append(f"{label}.maintenance pass requires immutable funded-maintenance evidence")
             dimension_states["maintenance"] = state if valid_pass else "blocked_unverified"
         else:
             dimension_states["maintenance"] = state
@@ -1103,7 +1208,12 @@ def _public_candidate_errors(
         not all_hard_floors_pass or bool(observed_blocker_codes & hard_blocker_codes) or bool(unclassified_blockers)
     )
     accepted_lifecycle = expected.get("current_state") != "archived" and expected.get("preflight_disposition") != "park"
-    expected_transfer = expected_score >= transfer_threshold and not hard_unresolved and accepted_lifecycle
+    expected_transfer = (
+        expected_score >= transfer_threshold
+        and not hard_unresolved
+        and accepted_lifecycle
+        and funded_maintenance
+    )
     if row.get("transfer_eligible") is not expected_transfer:
         errors.append(f"{label}.transfer_eligible drift")
     if row.get("transfer_eligible") is True and hard_unresolved:
@@ -1367,14 +1477,15 @@ def main() -> int:
         live_identity_digest: str | None = None
         live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None
         private_clearance_receipts: dict[str, str] | None = None
+        live_collection = LiveCollection() if args.live or args.public_live else None
         if args.require_cleared and not args.live:
             raise AuditError("--require-cleared requires --live")
         if args.live:
             heads, leaks, live_identity_digest = collect_live_context(snapshot)
             private_clearance_receipts = load_private_clearance_receipts()
-            verify_w01_live_receipt()
+            verify_w01_live_receipt(live_collection)
         elif args.public_live:
-            verify_w01_live_receipt()
+            verify_w01_live_receipt(live_collection)
         if write_path is not None:
             if not args.live or heads is None:
                 raise AuditError("--write requires --live")
@@ -1386,7 +1497,7 @@ def main() -> int:
                 dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
                 previous,
             )
-            live_receipts = collect_live_evidence_receipts(generated)
+            live_receipts = collect_live_evidence_receipts(generated, live_collection)
             errors = validate_audit(
                 generated,
                 snapshot,
@@ -1408,7 +1519,7 @@ def main() -> int:
             return 0
         audit = load_json(audit_path)
         if args.live or args.public_live:
-            live_receipts = collect_live_evidence_receipts(audit)
+            live_receipts = collect_live_evidence_receipts(audit, live_collection)
         errors = validate_audit(
             audit,
             snapshot,

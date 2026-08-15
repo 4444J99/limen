@@ -140,8 +140,12 @@ its canonical top-level blocker. Maintenance points require a named owner and a 
 higher than the contract's 40-hour monthly maximum. The unique readiness dimensions must total exactly 100 points, and
 the transfer threshold is derived from the contract's governed technical-readiness minimum. The
 contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
-archived or parked candidate remains technically non-transferable regardless of evidence. A live
-refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
+archived or parked candidate remains technically non-transferable regardless of evidence. A
+maintenance pass must use the same immutable receipt to prove that its bounded estimate is funded;
+an owner and estimate alone never permit transfer. A live collection shares one 270-second deadline,
+a 96-call ceiling, and an immutable-response cache across W01 verification, receipt blobs, output and
+artifact blobs, and Actions provenance, so repeated lookups cannot restart the 300-second gate clock.
+A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
 head resets that row to unresolved instead of erasing unrelated candidate evidence. A proposed
 private clearance is tracked only as `clearance_pending_live`, with an opaque digest, its blocker,
 score zero, and `transfer_eligible: false`. Deterministic scoped CI can validate that explicit
@@ -170,7 +174,9 @@ comparing mutable repository heads or enumerating private repositories. The whol
 `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed
 `LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator
-evidence for the private estate.
+evidence for the private estate. The tracked privacy scan includes case-insensitive HTTPS and SSH
+clone identities with or without the optional `.git` suffix, but still enumerates only Git-tracked
+public C11 paths.
 
 ## W04 — Domain-operator profile
 

@@ -204,7 +204,7 @@
       {"id": "data_privacy", "weight": 15, "required_proof": "Data classes, retention, deletion, and processing boundary."},
       {"id": "ip_custody", "weight": 10, "required_proof": "Ownership, license, contributor, and repository-custody chain."},
       {"id": "observability_return", "weight": 10, "required_proof": "Telemetry plus tested rollback, revocation, and restore route."},
-      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, and bounded maintenance estimate."}
+      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, bounded maintenance estimate, and immutable proof of funded maintenance before transfer."}
     ],
     "metadata_screen": [
       "live owned repository resolution",
