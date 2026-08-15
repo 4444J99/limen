@@ -21,8 +21,16 @@ obvious, and BOTH were measured false on 2026-08-15 before either shipped:
      decide is a platform binary's launch constraint: a COPY of /bin/sleep at another path is
      SIGKILLed, while a SYMLINK at that same path RUNS — which is possible only if the kernel
      resolved the link to /bin/sleep before judging it. So code identity follows the target.
-     Still required before anything ships: an end-to-end test that triggers a protected access
-     from a symlinked binary and reads the resulting `client` column in the TCC db.
+     RESOLVED 2026-08-15 — the required end-to-end evidence was found already standing in the
+     live TCC db, so no synthetic prompt had to be provoked. Homebrew execs ruby through
+     `vendor/portable-ruby/current/bin/ruby` (hardcoded at utils/ruby.sh:118, where
+     `vendor_ruby_root="${vendor_dir}/portable-ruby/current"`), and `current` is a symlink to
+     `4.0.6`. The `client` column for that process reads
+     `/opt/homebrew/Library/Homebrew/vendor/portable-ruby/4.0.6/bin/ruby` — the RESOLVED target,
+     never the symlink. Corroborated by python3.14, tmux, bash and op, all invoked through the
+     /opt/homebrew/bin symlink farm and all recorded by their real Cellar paths. Code identity
+     follows the target, so cure B works and is shipped as
+     `scripts/claude-bundle-identity-heal.py`.
 
 This probe re-measures both, each on its deciding layer. Exit 0 means the enclosure refutation
 still holds AND code identity still resolves symlinks; exit 1 means macOS behavior CHANGED and

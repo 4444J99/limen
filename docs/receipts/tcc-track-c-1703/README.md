@@ -234,3 +234,47 @@ raises `FixtureError` otherwise — a dead child must never return a datum. Its 
 Arm C reproduces today's defect: the vendor materializes `versions/<v>` as a hardlink of the
 bundle executable's inode, and exec'ing that name records the *versions* path — the rotating
 client the operator sees as an app named "2.1.233". Arm E is the discriminator above.
+
+## 2026-08-15 resolution — cure B is confirmed by the live TCC db, and the heal ships
+
+Arm D above is *proposed*, not measured. It never needed to be provoked: the end-to-end evidence
+was already standing in the operator's own `TCC.db`, which is stronger than a synthetic fixture
+because it is the deciding subsystem answering about itself.
+
+**Homebrew is the natural experiment.** `utils/ruby.sh:118` sets
+`vendor_ruby_root="${vendor_dir}/portable-ruby/current"`, so brew *always* execs ruby through the
+`current` **symlink**, never the versioned path. The resulting TCC client column reads
+`/opt/homebrew/Library/Homebrew/vendor/portable-ruby/4.0.6/bin/ruby` — the **resolved target**.
+Corroborated four times over by `python3.14`, `tmux`, `bash` and `op`, each invoked through the
+`/opt/homebrew/bin` symlink farm and each recorded by its real Cellar path. **TCC code identity
+follows the symlink target.** (Homebrew has the identical disease for the same reason: `python@3.14`
+holds three separate grant rows — 3.14.2, 3.14.4, 3.14.5.)
+
+Two further facts make the heal safe and sufficient:
+
+| Fact | Measurement |
+|---|---|
+| A new build satisfies the existing grant | **One** distinct `csreq` blob across all 61 rows spanning 2.1.144 → 2.1.233. No per-version cdhash: only the *lookup* misses today, never the validation. |
+| The vendor already ships the stable identity | `ClaudeCode.app/Contents/Info.plist` declares `CFBundleIdentifier = com.anthropic.claude-code` with AppleEvents/LocalNetwork/Microphone usage strings, and `Contents/MacOS/claude` is the **same inode** as the live `versions/<v>` (`st_nlink == 2`). Sessions simply do not exec it. |
+
+So the heal is `ln -s`, not a TCC write: **`scripts/claude-bundle-identity-heal.py`** replaces the
+live `versions/<v>` hardlink with a symlink to the bundle executable. Same bytes, second name;
+nothing copied, nothing deleted. Sessions then resolve to a path that never changes, and the grant
+survives updates the way a normal app's does.
+
+Safety is carried by inode identity: only an entry sharing the bundle executable's inode is ever
+touched — by construction the live build, where unlinking one of two names for a file destroys
+nothing. A stale version is a distinct inode holding its own rollback bytes and is left alone.
+Dry-run is the default, the healed path is exec-verified immediately and rolled back automatically
+if it fails to run, and `--revert` restores the hardlink exactly.
+
+This does **not** discharge upstream: anthropics/claude-code#86706 remains the correct fix, because
+the vendor rematerializes `versions/<new>` as a real file on every update, so the heal must re-run
+per update. It does mean the operator's dialog burst is a local, reversible, filesystem-level
+problem rather than a wait on a vendor release.
+
+**Superseded here:** the "no local ingress fix exists" conclusion of the earlier correction above,
+and the enclosure/symlink refutation table. Enclosure stays refuted. Symlink was refuted on a
+proc_pidpath measurement generalized to a subsystem that does not use it — a green predicate that
+was wrong, which is the sharper form of the IF-GATEKEEPER-INERT lesson: a predicate is only worth
+the subsystem it measures.
