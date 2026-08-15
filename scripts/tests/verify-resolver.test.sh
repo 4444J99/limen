@@ -219,6 +219,16 @@ positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
+# The W03 live collector is a static-gate input, but its private-inclusive live
+# predicate is whole-only and must never be selected under the PR Actions token.
+expect foundry-preflight-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+positioning-foundry-technical-readiness-test
+check-params
+check-note-links
+check-effectors' scripts/positioning-foundry-preflight.py
+
 expect resolver-change 'syntax-changed
 diff-hygiene
 merge-queue-contract-test

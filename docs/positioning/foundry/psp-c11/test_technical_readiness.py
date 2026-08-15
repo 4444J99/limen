@@ -14,6 +14,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[4]
 SCRIPT = ROOT / "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
@@ -281,6 +283,30 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             with mock.patch.object(MODULE, "PACKAGE", package):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
             self.assertEqual(2, len(leaks))
+
+    def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
+        registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
+        static = registry["gates"]["positioning-foundry-technical-readiness-test"]
+        live = registry["gates"]["positioning-foundry-technical-readiness-live"]
+        owning_paths = {
+            "docs/positioning/foundry/psp-c11/technical-readiness-audit.json",
+            "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
+            "docs/positioning/foundry/psp-c11/verify_technical_readiness.py",
+            "scripts/positioning-foundry-preflight.py",
+        }
+        self.assertTrue(owning_paths.issubset(static["paths"]))
+        self.assertTrue(
+            owning_paths - {"docs/positioning/foundry/psp-c11/test_technical_readiness.py"} <= set(live["paths"])
+        )
+        self.assertNotIn("--live", static["command"])
+        self.assertIn("test_technical_readiness.py", static["command"])
+        self.assertIn("verify_technical_readiness.py", static["command"])
+        self.assertIs(live["scoped"], False)
+        self.assertIn("--live", live["command"])
+        self.assertNotIn("ci_job", live)
+        whole = (ROOT / "scripts/verify-whole.sh").read_text(encoding="utf-8")
+        self.assertIn('if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]', whole)
+        self.assertIn(live["command"], whole)
 
     def test_invalid_generated_live_audit_is_not_written(self) -> None:
         invalid = copy.deepcopy(self.audit)

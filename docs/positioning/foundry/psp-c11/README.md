@@ -136,8 +136,11 @@ blocker. The public snapshot withholds every private candidate's state, fork, de
 economics, and custody detail behind an opaque per-snapshot identifier.
 
 The `positioning-foundry-technical-readiness-test` gate in
-`institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, accepted
-W01 inputs, and live exact-head/private-leak predicate as one scoped acceptance surface.
+`institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
+accepted W01 inputs as a deterministic scoped acceptance surface. The separately registered
+`positioning-foundry-technical-readiness-live` predicate retains the private-inclusive identity,
+exact-head, and private-leak checks under explicitly armed `LIMEN_VERIFY_LIVE=1` whole verification.
+A repository-scoped Actions token is not accepted as operator evidence for the private estate.
 
 ## W04 — Domain-operator profile
 

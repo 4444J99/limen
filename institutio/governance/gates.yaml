@@ -472,7 +472,7 @@ gates:
     owner: positioning-program
     note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
   positioning-foundry-technical-readiness-test:
-    command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
+    command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json"
     paths:
       - "docs/positioning/foundry/psp-c11/README.md"
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
@@ -481,9 +481,25 @@ gates:
       - "docs/positioning/foundry/psp-c11/test_technical_readiness.py"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
+      - "scripts/positioning-foundry-preflight.py"
+      - "scripts/verify-whole.sh"
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 recomputes the accepted W01 public projection plus live private-inclusive identity digest, requires dimension-specific exact-head technical receipts, keeps case-insensitive private identities out of contents and tracked paths, and permits blocker-free transfer readiness only after every hard floor passes."
+    note: "PSP-P13-W03 deterministic PR acceptance recomputes the accepted W01 public projection, requires dimension-specific exact-head technical receipts, keeps adversarial privacy and custody contracts green, and permits blocker-free transfer readiness only after every hard floor passes; repo-scoped Actions credentials are never treated as private-inclusive operator evidence."
+  positioning-foundry-technical-readiness-live:
+    command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
+    paths:
+      - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
+      - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
+      - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
+      - "institutio/governance/gates.yaml"
+      - "scripts/positioning-foundry-preflight.py"
+      - "scripts/verify-whole.sh"
+    scoped: false
+    timeout_seconds: 300
+    owner: positioning-program
+    note: "PSP-P13-W03 trusted-operator live acceptance recomputes the private-inclusive W01 identity digest and current public heads without serializing private identities; it runs only on explicitly armed LIMEN_VERIFY_LIVE=1 whole verification, never under the ordinary PR Actions token."
   flagship-proof-set-test:
     command: "python3 scripts/tests/flagship-proof-set.test.py"
     paths: ["docs/github-estate-census.json", "docs/positioning/flagship-proof-set.yaml", "docs/positioning/estate-classification.md", "docs/positioning/proof-production-program.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md", "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md", "institutio/github/estate.yaml", "institutio/governance/gates.yaml", "scripts/flagship-proof-set.py", "scripts/tests/flagship-proof-set.test.py"]
