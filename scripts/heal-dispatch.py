@@ -28,6 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _human_signals
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
+from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
 from limen.intake import contract_fields, github_issue_owner_contract  # noqa: E402
@@ -39,6 +40,10 @@ from _human_signals import is_human_gated, lever_ids  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
+# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable
+# home instead of reciting the atom at the operator. Matches heal-board.py and self-heal.py.
+QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 PR_RE = re.compile(r"github\.com/[^/]+/[^/]+/pull/\d+")
 CASCADE_TOP = "codex"
 # Active states where a HEAL singleton is already being worked — do not duplicate.
@@ -359,7 +364,19 @@ def main():
         for i in rehomed:
             print(f"    rehome: {i}")
         if args.apply:
-            apply_limen_file_sync(path, lf, agent="heal-dispatch", session_id="heal")
+            try:
+                apply_limen_file_sync(path, lf, agent="heal-dispatch", session_id="heal")
+            except BrokerQuotaExhausted as exc:
+                # A spent keeper storage plan is an owner decision this rung cannot make, not a
+                # heal-dispatch defect. Same idiom as heal-board.py and self-heal.py: one legible
+                # line naming the registry owner, then EX_TEMPFAIL — non-zero so the beat ledger
+                # records a real outcome, but distinguishable from the exit 1 that means "broken".
+                print(f"heal-dispatch: BLOCKED — keeper storage quota exhausted, reconcile deferred ({exc})"[:400])
+                print(
+                    "heal-dispatch: the write path is spent, not broken — owner: lever "
+                    f"{QUOTA_LEVER} in his-hand-levers.json"
+                )
+                return EX_TEMPFAIL
             print("  APPLIED -> tasks.yaml")
         else:
             print("  dry-run (pass --apply)")
