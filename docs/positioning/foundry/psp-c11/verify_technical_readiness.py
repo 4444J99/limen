@@ -645,12 +645,18 @@ def load_private_clearance_receipts() -> dict[str, str]:
                 raise AuditError("private clearance custody receipt is not in an untracked private-safe path")
         flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
         descriptor = os.open(path, flags)
-        after = os.fstat(descriptor)
-        if (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino):
-            os.close(descriptor)
-            raise AuditError("private clearance custody receipt changed during validation")
-        with os.fdopen(descriptor, encoding="utf-8") as handle:
-            payload = json.load(handle, object_pairs_hook=_object_without_duplicate_keys)
+        try:
+            after = os.fstat(descriptor)
+            if (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino):
+                raise AuditError("private clearance custody receipt changed during validation")
+            handle = os.fdopen(descriptor, encoding="utf-8")
+            descriptor = -1
+            with handle:
+                payload = json.load(handle, object_pairs_hook=_object_without_duplicate_keys)
+        except BaseException:
+            if descriptor >= 0:
+                os.close(descriptor)
+            raise
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, subprocess.TimeoutExpired, AuditError) as exc:
         raise AuditError("private clearance custody receipt cannot be loaded") from exc
     if not isinstance(payload, dict):

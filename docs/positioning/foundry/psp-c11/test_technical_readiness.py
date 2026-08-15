@@ -1178,6 +1178,27 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ):
                 MODULE.load_private_clearance_receipts()
 
+    def test_private_clearance_descriptor_closes_when_fstat_or_fdopen_fails(self) -> None:
+        payload = {
+            "schema_version": MODULE.PRIVATE_CLEARANCE_SCHEMA,
+            "receipts": {"private-candidate-001": "a" * 64},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            receipt = Path(directory) / "clearances.json"
+            receipt.write_text(json.dumps(payload), encoding="utf-8")
+            receipt.chmod(0o600)
+            real_close = os.close
+            for failing_call in ("fstat", "fdopen"):
+                with (
+                    self.subTest(failing_call=failing_call),
+                    mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(receipt)}),
+                    mock.patch.object(MODULE.os, failing_call, side_effect=OSError("injected descriptor failure")),
+                    mock.patch.object(MODULE.os, "close", side_effect=real_close) as close,
+                    self.assertRaisesRegex(MODULE.AuditError, "cannot be loaded"),
+                ):
+                    MODULE.load_private_clearance_receipts()
+                close.assert_called_once()
+
     def test_private_clearance_file_inside_checkout_must_be_untracked_and_ignored(self) -> None:
         payload = {
             "schema_version": MODULE.PRIVATE_CLEARANCE_SCHEMA,
