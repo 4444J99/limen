@@ -164,12 +164,21 @@ are still required before anything ships, and neither is done. **Owner: organvm/
 this paragraph is a description, not a home, and the work is not tracked by its being written
 here:
 
-1. **The end-to-end test.** Every measurement so far is a proxy. The decisive experiment is
-   to trigger a TCC-protected access from a symlinked binary and read the resulting `client`
-   column in the TCC db. Until that runs, "the code-identity layer resolves symlinks" is a
-   strong *necessary* condition, not proof that TCC attributes the target.
-2. **An effector on a cadence.** The vendor re-materializes the version store on start, so a
-   hand-laid symlink is overwritten. A one-time `ln -s` cures nothing.
+1. ~~**The end-to-end test.**~~ **DONE (#2467).** Every measurement to that point was a proxy;
+   the decisive experiment was to read the `client` column in the TCC db after a protected
+   access from a symlinked binary. It was found already standing rather than provoked:
+   Homebrew execs ruby through the `vendor/portable-ruby/current` symlink and the `client`
+   column records the **resolved** `.../4.0.6/bin/ruby`, corroborated by python3.14, tmux,
+   bash and op. TCC code identity follows the target.
+2. ~~**An effector on a cadence.**~~ **DONE (#2467 shipped it, #2470 gave it the cadence).**
+   `scripts/claude-bundle-identity-heal.py` relinks the live `versions/<v>` hardlink to the
+   bundle executable, and runs as a step of sensor `0g8b` behind valve
+   `LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL` (default `0`, cited by lever `L-DIALOGS-HEAL`). The
+   "one-time `ln -s` cures nothing" objection is exactly why it is beat-wired: the updater
+   rematerializes `versions/<new>` every time.
+
+Owner issue organvm/limen#2465 is closed on those two. What remains is upstream
+(anthropics/claude-code#86706) plus the operator's one-time arming paste.
 
 **Consequence for the ratchet — found, then fixed.** As first written,
 `tcc-identity-attribution-probe.py` computed cure B's verdict as `recorded == str(link)`
