@@ -119,18 +119,22 @@ case-insensitive and covers tracked path names and components as well as file co
 Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
 verified dimension requires a candidate-repository URL pinned to the observed exact head and a
 dimension-specific tracked receipt or evidence path. Trusted live validation resolves that blob and
-checks its exact receipt schema and pass/fail result; an invented path or generic commit URL does not
-prove every dimension. A homepage, default branch, recent push, or repository metadata never becomes
-build, test, runtime, security, custody, or maintenance proof. Blockers may be empty only after every
-hard floor named by the readiness contract is a verified pass, and every tracked blocker carries its
+checks its exact receipt schema and pass/fail result. The receipt names separate output and artifact
+blobs at the same repository exact head, and their fetched bytes must match the recorded SHA-256
+digests; self-derived receipt hashes, invented paths, and generic commit URLs do not prove a
+dimension. A pass requires integer exit code zero, while a verified failure requires a non-boolean
+nonzero integer. A homepage, default branch, recent push, or repository metadata never becomes build,
+test, runtime, security, custody, or maintenance proof. Blockers may be empty only after every hard
+floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
-unclassified additions as hard transfer blockers. The contract's joint 20-point build/test dimension
-scores only when both receipts pass; and an accepted archived or parked candidate remains technically
-non-transferable regardless of evidence. A live refresh preserves an accepted row only while its
-repository and exact head are unchanged; a moved head resets that row to unresolved instead of
-erasing unrelated candidate evidence. Private clearance is represented only by an opaque digest and
-becomes live-valid only
+unclassified additions as hard transfer blockers. An unresolved nested maintenance blocker must equal
+its canonical top-level blocker. The unique readiness dimensions must total exactly 100 points; the
+contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
+archived or parked candidate remains technically non-transferable regardless of evidence. A live
+refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
+head resets that row to unresolved instead of erasing unrelated candidate evidence. Private clearance
+is represented only by an opaque digest and becomes live-valid only
 when the trusted operator supplies the matching owner-controlled custody receipt. The current
 accepted evidence is therefore conservative: all 62 candidates remain non-transferable.
 

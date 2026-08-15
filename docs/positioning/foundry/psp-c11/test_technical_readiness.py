@@ -65,6 +65,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     @staticmethod
     def evidence_receipt(row: dict, dimension: str, status: str = "pass") -> dict:
+        base = f"https://github.com/{row['repository']}/blob/{row['observed_head']}/docs/receipts/technical-readiness"
+        output = f"{dimension}:{status}:output\n".encode("utf-8")
+        artifact = f"{dimension}:{status}:artifact\n".encode("utf-8")
         receipt = {
             "schema_version": "limen.psp_p13_w03_technical_evidence.v1",
             "repository": row["repository"],
@@ -72,13 +75,27 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "dimension": dimension,
             "status": status,
             "exit_code": 0 if status == "pass" else 1,
+            "output_url": f"{base}/{dimension}-output.txt",
+            "output_sha256": MODULE.hashlib.sha256(output).hexdigest(),
+            "artifact_url": f"{base}/{dimension}-artifact.json",
+            "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
             "observed_at": "2026-08-15T00:00:00Z",
             "command": f"verify-{dimension}",
             "external_effects": [],
         }
-        receipt["output_sha256"] = MODULE.receipt_output_digest(receipt)
-        receipt["artifact_sha256"] = MODULE.receipt_artifact_digest(receipt)
         return receipt
+
+    @staticmethod
+    def resolved_evidence(receipt: dict) -> dict:
+        dimension = receipt["dimension"]
+        status = receipt["status"]
+        return {
+            "receipt": receipt,
+            "output_sha256": MODULE.hashlib.sha256(f"{dimension}:{status}:output\n".encode("utf-8")).hexdigest(),
+            "artifact_sha256": MODULE.hashlib.sha256(
+                f"{dimension}:{status}:artifact\n".encode("utf-8")
+            ).hexdigest(),
+        }
 
     def test_tracked_audit_is_valid_and_has_zero_effects(self) -> None:
         self.assertEqual([], self.errors())
@@ -238,11 +255,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "evidence_url": self.receipt_url(row, "build"),
         }
         errors = MODULE.validate_audit(changed, self.snapshot, self.contract, live_receipts={})
-        self.assertTrue(any("live receipt must use the exact evidence schema" in error for error in errors))
+        self.assertTrue(any("must resolve immutable output and artifact evidence" in error for error in errors))
         self.assertEqual(
             [],
             MODULE._evidence_receipt_errors(
-                self.evidence_receipt(row, "build"),
+                self.resolved_evidence(self.evidence_receipt(row, "build")),
                 row["repository"],
                 row["observed_head"],
                 "build",
@@ -250,18 +267,22 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "candidate.build",
             ),
         )
-        encoded = MODULE.base64.b64encode(json.dumps(self.evidence_receipt(row, "build")).encode("utf-8")).decode(
-            "ascii"
-        )
-        with mock.patch.object(MODULE, "_run_json", return_value={"encoding": "base64", "content": encoded}):
+        receipt = self.evidence_receipt(row, "build")
+        output = b"build:pass:output\n"
+        artifact = b"build:pass:artifact\n"
+        with mock.patch.object(
+            MODULE,
+            "_fetch_exact_head_blob",
+            side_effect=[json.dumps(receipt).encode("utf-8"), output, artifact],
+        ):
             receipts = MODULE.collect_live_evidence_receipts(changed)
-        self.assertEqual(self.evidence_receipt(row, "build"), receipts[(row["candidate_id"], "build")])
+        self.assertEqual(self.resolved_evidence(receipt), receipts[(row["candidate_id"], "build")])
         broken = self.evidence_receipt(row, "build")
         broken["exit_code"] = 1
         self.assertIn(
             "candidate.build live receipt exit_code drift",
             MODULE._evidence_receipt_errors(
-                broken,
+                self.resolved_evidence(broken),
                 row["repository"],
                 row["observed_head"],
                 "build",
@@ -274,7 +295,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertIn(
             "candidate.build live receipt must bind immutable output and artifact evidence",
             MODULE._evidence_receipt_errors(
-                broken,
+                self.resolved_evidence(broken),
                 row["repository"],
                 row["observed_head"],
                 "build",
@@ -282,6 +303,50 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "candidate.build",
             ),
         )
+
+    def test_live_receipt_exit_semantics_reject_bools_and_accept_any_nonzero_failure(self) -> None:
+        row = self.public_row()
+        failed = self.evidence_receipt(row, "test", "fail")
+        failed["exit_code"] = 124
+        self.assertEqual(
+            [],
+            MODULE._evidence_receipt_errors(
+                self.resolved_evidence(failed),
+                row["repository"],
+                row["observed_head"],
+                "test",
+                "verified_fail",
+                "candidate.test",
+            ),
+        )
+        for state, status, exit_code in (("verified_pass", "pass", False), ("verified_fail", "fail", True)):
+            receipt = self.evidence_receipt(row, "test", status)
+            receipt["exit_code"] = exit_code
+            self.assertIn(
+                "candidate.test live receipt exit_code drift",
+                MODULE._evidence_receipt_errors(
+                    self.resolved_evidence(receipt),
+                    row["repository"],
+                    row["observed_head"],
+                    "test",
+                    state,
+                    "candidate.test",
+                ),
+            )
+
+    def test_readiness_model_requires_unique_dimensions_and_exactly_100_points(self) -> None:
+        duplicate = copy.deepcopy(self.contract)
+        duplicate["readiness_model"]["dimensions"].append(
+            copy.deepcopy(duplicate["readiness_model"]["dimensions"][0])
+        )
+        with self.assertRaisesRegex(MODULE.AuditError, "duplicate dimensions"):
+            MODULE.readiness_weights(duplicate)
+        underweight = copy.deepcopy(self.contract)
+        next(
+            row for row in underweight["readiness_model"]["dimensions"] if row["id"] == "deploy_runtime"
+        )["weight"] = 0
+        with self.assertRaisesRegex(MODULE.AuditError, "dimension set or build/test allocation drifted"):
+            MODULE.readiness_weights(underweight)
 
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -402,6 +467,13 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "blocker": None,
         }
         self.assertTrue(any("owner and bounded positive estimate" in error for error in self.errors(changed)))
+
+    def test_unresolved_maintenance_blocker_must_equal_canonical_copy(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["maintenance"]["blocker"]["owner"] = "contradictory-owner"
+        errors = self.errors(changed)
+        self.assertTrue(any("must equal the canonical top-level maintenance blocker" in error for error in errors))
 
     def test_summary_and_blocker_distribution_are_recomputed(self) -> None:
         changed = copy.deepcopy(self.audit)

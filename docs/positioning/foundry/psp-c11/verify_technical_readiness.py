@@ -132,12 +132,15 @@ EVIDENCE_RECEIPT_KEYS = {
     "dimension",
     "status",
     "exit_code",
+    "output_url",
     "output_sha256",
+    "artifact_url",
     "artifact_sha256",
     "observed_at",
     "command",
     "external_effects",
 }
+RESOLVED_EVIDENCE_KEYS = {"receipt", "output_sha256", "artifact_sha256"}
 HARD_FLOOR_RULE = "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
 HARD_FLOOR_DIMENSIONS = {"security", "data_custody", "ip_custody", "observability_return"}
 DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimension in DIMENSION_RECEIPT_TOKENS}
@@ -257,6 +260,8 @@ def readiness_weights(contract: dict[str, Any]) -> dict[str, int]:
     for row in dimensions:
         if not isinstance(row, dict) or not _is_nonblank_text(row.get("id")):
             raise AuditError("readiness model contains an invalid dimension")
+        if row["id"] in by_id:
+            raise AuditError("readiness model contains duplicate dimensions")
         weight = row.get("weight")
         if not _is_nonnegative_int(weight):
             raise AuditError("readiness model contains an invalid weight")
@@ -271,7 +276,7 @@ def readiness_weights(contract: dict[str, Any]) -> dict[str, int]:
         "observability_return",
         "maintenance",
     }
-    if set(by_id) != required or by_id["build_test"] % 2:
+    if set(by_id) != required or by_id["build_test"] % 2 or sum(by_id.values()) != 100:
         raise AuditError("readiness model dimension set or build/test allocation drifted")
     return {
         "build": by_id["build_test"] // 2,
@@ -519,26 +524,25 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-def receipt_output_digest(receipt: dict[str, Any]) -> str:
-    payload = {
-        "command": receipt.get("command"),
-        "commit": receipt.get("commit"),
-        "dimension": receipt.get("dimension"),
-        "external_effects": receipt.get("external_effects"),
-        "repository": receipt.get("repository"),
-        "status": receipt.get("status"),
-    }
-    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
-
-
-def receipt_artifact_digest(receipt: dict[str, Any]) -> str:
-    payload = {
-        "commit": receipt.get("commit"),
-        "dimension": receipt.get("dimension"),
-        "repository": receipt.get("repository"),
-        "status": receipt.get("status"),
-    }
-    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+def _fetch_exact_head_blob(value: Any, repository: str, commit: str) -> bytes:
+    if not isinstance(value, str) or not _valid_https_url(value):
+        raise AuditError("technical evidence artifact URL is invalid")
+    parsed = urlparse(value)
+    if parsed.netloc.casefold() != "github.com":
+        raise AuditError("technical evidence artifact URL is not a GitHub blob")
+    resolved_repository, resolved_commit, path = _evidence_location(value)
+    if resolved_repository.casefold() != repository.casefold() or resolved_commit != commit:
+        raise AuditError("technical evidence artifact is not bound to the candidate exact head")
+    response = _run_json(
+        ["gh", "api", f"repos/{resolved_repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
+    )
+    encoded = response.get("content")
+    if response.get("encoding") != "base64" or not isinstance(encoded, str):
+        raise AuditError("live technical evidence blob is not decodable")
+    try:
+        return base64.b64decode("".join(encoded.split()), validate=True)
+    except ValueError as exc:
+        raise AuditError("live technical evidence blob is invalid") from exc
 
 
 def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[dict[str, Any]]) -> str:
@@ -600,20 +604,20 @@ def collect_live_evidence_receipts(audit: dict[str, Any]) -> dict[tuple[str, str
             if not isinstance(candidate_id, str) or not isinstance(evidence_url, str):
                 continue
             repository, commit, path = _evidence_location(evidence_url)
-            response = _run_json(
-                ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
-            )
-            encoded = response.get("content")
-            if response.get("encoding") != "base64" or not isinstance(encoded, str):
-                raise AuditError("live technical evidence blob is not decodable")
             try:
-                decoded = base64.b64decode("".join(encoded.split()), validate=True).decode("utf-8")
+                decoded = _fetch_exact_head_blob(evidence_url, repository, commit).decode("utf-8")
                 receipt = json.loads(decoded, object_pairs_hook=_object_without_duplicate_keys)
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
                 raise AuditError("live technical evidence receipt is invalid") from exc
             if not isinstance(receipt, dict):
                 raise AuditError("live technical evidence receipt is not an object")
-            receipts[(candidate_id, dimension)] = receipt
+            output = _fetch_exact_head_blob(receipt.get("output_url"), repository, commit)
+            artifact = _fetch_exact_head_blob(receipt.get("artifact_url"), repository, commit)
+            receipts[(candidate_id, dimension)] = {
+                "receipt": receipt,
+                "output_sha256": hashlib.sha256(output).hexdigest(),
+                "artifact_sha256": hashlib.sha256(artifact).hexdigest(),
+            }
     return receipts
 
 
@@ -766,13 +770,16 @@ def build_audit(
 
 
 def _evidence_receipt_errors(
-    receipt: Any,
+    resolved_evidence: Any,
     repository: str,
     observed_head: str,
     dimension: str,
     state: str,
     label: str,
 ) -> list[str]:
+    if not _exact_keys(resolved_evidence, RESOLVED_EVIDENCE_KEYS):
+        return [f"{label} live receipt must resolve immutable output and artifact evidence"]
+    receipt = resolved_evidence.get("receipt")
     if not _exact_keys(receipt, EVIDENCE_RECEIPT_KEYS):
         return [f"{label} live receipt must use the exact evidence schema"]
     errors: list[str] = []
@@ -783,11 +790,13 @@ def _evidence_receipt_errors(
         errors.append(f"{label} live receipt repository or commit drift")
     if receipt.get("dimension") != dimension or receipt.get("status") != expected_status:
         errors.append(f"{label} live receipt dimension or result drift")
-    expected_exit = 0 if state == "verified_pass" else 1
-    if receipt.get("exit_code") != expected_exit:
+    exit_code = receipt.get("exit_code")
+    valid_exit = isinstance(exit_code, int) and not isinstance(exit_code, bool)
+    if not valid_exit or (state == "verified_pass" and exit_code != 0) or (state == "verified_fail" and exit_code == 0):
         errors.append(f"{label} live receipt exit_code drift")
-    if receipt.get("output_sha256") != receipt_output_digest(receipt) or receipt.get("artifact_sha256") != receipt_artifact_digest(
-        receipt
+    if (
+        receipt.get("output_sha256") != resolved_evidence.get("output_sha256")
+        or receipt.get("artifact_sha256") != resolved_evidence.get("artifact_sha256")
     ):
         errors.append(f"{label} live receipt must bind immutable output and artifact evidence")
     if not _valid_timestamp(receipt.get("observed_at")) or not _is_nonblank_text(receipt.get("command")):
@@ -941,6 +950,17 @@ def _public_candidate_errors(
             blocker_codes.append(blocker["code"])
     if len(blocker_codes) != len(set(blocker_codes)):
         errors.append(f"{label}.blocker codes must be unique")
+    if isinstance(maintenance, dict) and maintenance.get("state") != "verified_pass":
+        canonical_maintenance_blocker = next(
+            (
+                blocker
+                for blocker in blockers
+                if isinstance(blocker, dict) and blocker.get("code") == DIMENSION_BLOCKER_CODES["maintenance"]
+            ),
+            None,
+        )
+        if maintenance.get("blocker") != canonical_maintenance_blocker:
+            errors.append(f"{label}.maintenance.blocker must equal the canonical top-level maintenance blocker")
     unresolved_dimensions = {
         dimension
         for dimension, state in dimension_states.items()
