@@ -1065,6 +1065,19 @@ sensors:
             armed_valve_type: deliverable
         severity: advisory
         escalation: "unassessable ClaudeCode.app registered with LaunchServices (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat UNREGISTERS it (never removes it: the bundle is vendor-materialized every start and deleting it destroys the stable TCC identity sensor 0g8d keeps). Ideal form IF-GATEKEEPER-INERT; corrected root in docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md"
+      # The cure #2467 measured and shipped. It MUST re-run per vendor update — the updater
+      # rematerializes versions/<new> as a fresh hardlink every time — so a one-shot heals
+      # exactly one version and then silently lapses. Wired here for the same reason the probe
+      # below it is: an effector nothing runs is as inert as a finding nothing checks.
+      - command: "python3 scripts/claude-bundle-identity-heal.py"
+        args_when:
+          - env: LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → perform the relink (dry-run otherwise); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "the live versions/<v> is still a hardlink, so the next vendor update mints another TCC client and re-asks the whole grant set — arm LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL=1 so the beat relinks it to the stable bundle executable (same inode, second name; --revert undoes it exactly)"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
         escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"

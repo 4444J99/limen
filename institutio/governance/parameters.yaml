@@ -4609,6 +4609,13 @@ parameters:
     owner: tabularius
     note: "The effector for the launch-agent liveness invariant (scripts/launch-agent-liveness.py --apply, sensor section 0g4, gated by when_env). When 1, the beat re-bootstraps + kickstarts any critical organ in spec/critical-launch-agents.json that is down — restoring a plist from ~/Library/LaunchAgents.disabled/ if a quiesce quarantined it. This is the SINGLE durable human grant that closes the sensor-without-effector defect: arm once and the daemon keeps the mint / tunnel / credential organ alive across quiesce + reboot forever, without a per-incident approval. OFF by default because it re-enables persistent launchd services (an authorization, not a default). Owner arms it in the daemon env (~/.limen.env)."
 
+  LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL:
+    default: "0"               # OFF — the effector. Arm once so the grant survives every vendor update.
+    env: LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL
+    self_update: none
+    owner: tabularius
+    note: "The effector that stops Claude Code minting a new TCC client on every update (scripts/claude-bundle-identity-heal.py, sensor section 0g8b beside the other agent-curable dialog healers). TCC keys a grant on the client PATH for a non-bundled binary and the vendor names each build after its version, so 19 identities since 2026-05-19 (a bump every ~4.7 days) each re-asked up to 9 dialogs; TCC code identity follows a symlink to its target (measured live: Homebrew execs ruby via vendor/portable-ruby/current and the TCC client column records the RESOLVED path, corroborated by python3.14, tmux, bash, op). The heal is therefore `ln -s`, never a TCC database write: replace the live versions/<v> hardlink with a symlink to ClaudeCode.app/Contents/MacOS/claude — same inode, second name — so sessions resolve to a path that never changes. Dry-run by default. Safety rides on inode identity: only an entry sharing the bundle executable's inode is touched (by construction the live build, where unlinking one of two names destroys nothing); stale versions are distinct inodes holding rollback bytes and are left alone. Exec-verified with automatic rollback; --revert restores the hardlink exactly. Must run per update — the vendor rematerializes versions/<new> every time — which is why it is beat-wired rather than a one-shot. Does NOT discharge anthropics/claude-code#86706. Arm once in ~/.limen.env (lever L-DIALOGS-HEAL). Set 0 to silence."
+
   LIMEN_CLAUDE_LSREGISTER_HEAL:
     default: "0"               # OFF — the effector. Arm once to auto-clear the malformed ClaudeCode.app stub.
     env: LIMEN_CLAUDE_LSREGISTER_HEAL

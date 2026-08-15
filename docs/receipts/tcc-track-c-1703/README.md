@@ -278,3 +278,28 @@ and the enclosure/symlink refutation table. Enclosure stays refuted. Symlink was
 proc_pidpath measurement generalized to a subsystem that does not use it — a green predicate that
 was wrong, which is the sharper form of the IF-GATEKEEPER-INERT lesson: a predicate is only worth
 the subsystem it measures.
+
+### The cure has a cadence, a valve, and a lever
+
+A heal that "must re-run per update" and that nothing schedules cures exactly one version and then
+lapses silently — the effector-side twin of the predicate defect this lineage keeps re-learning. So
+`claude-bundle-identity-heal.py` is wired as a step of sensor **`0g8b`**, on the same hygiene beat
+as the other three agent-curable healers, in the identical shape: **dry-run by default**, `--apply`
+injected only when its valve is armed.
+
+| Piece | Where |
+|---|---|
+| Effector | `scripts/claude-bundle-identity-heal.py` (dry-run default, exec-verified, `--revert`) |
+| Cadence | `institutio/governance/sensors.yaml` → `0g8b`, advisory |
+| Valve | `LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL`, declared in `parameters.yaml`, default `0` |
+| Human grant | lever **L-DIALOGS-HEAL** (now four effectors, not three) |
+
+Default OFF because arming authorizes an unattended host mutation — relinking the live `claude`
+binary. Unarmed it still detects and reports. `armed-valve-audit.py --check` reads it **PARKED**
+(cited by a lever), never SILENT-OFF; it read SILENT-OFF until the lever cited it, which is that
+guard working as designed.
+
+**Residual status.** Both items previously owed by organvm/limen#2465 are discharged: the
+end-to-end TCC-db evidence (the `client` column recording resolved targets) and the effector
+itself both arrived with the work above. What remains is the one thing no local change can reach —
+anthropics/claude-code#86706 — plus the operator's one-time arming paste.

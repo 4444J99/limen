@@ -14,7 +14,7 @@ obvious, and BOTH were measured false on 2026-08-15 before either shipped:
 
   B. SYMLINK — replace versions/<v> with a symlink to the bundle's main executable, hoping the
      system attributes the resolved target.
-     UNRESOLVED (amended 2026-08-15; this arm previously read REFUTED). The original verdict
+     CONFIRMED (amended twice on 2026-08-15: REFUTED -> unresolved -> confirmed). The first verdict
      compared `ps -o comm=` against the link's path. That is the kernel's ACCOUNTING STRING
      (p_comm), not the code identity a TCC client derives from — and it holds regardless of
      the deciding layer, so it could never have detected a change. The discriminator that does
@@ -180,8 +180,10 @@ def measure_symlink(tmp: Path) -> dict:
     ACCOUNTING STRING — and `p_comm` is not what a TCC client identity derives from. It will
     also hold forever regardless of the deciding layer, so as a ratchet it could never detect
     the change it existed to watch for. The code-identity discriminator below is what decides,
-    and it currently shows the symlink RESOLVING to its target: cure B is not refuted, it is
-    unresolved pending an end-to-end TCC-db test.
+    and it shows the symlink RESOLVING to its target. The end-to-end TCC-db evidence then
+    confirmed it (live `client` columns record resolved targets, not symlinks — see the module
+    docstring), so cure B is CONFIRMED and shipped as scripts/claude-bundle-identity-heal.py.
+    This arm now guards that positive result rather than a negative one.
     """
     link = tmp / "version-shaped-symlink"
     link.symlink_to("/bin/sleep")
@@ -218,7 +220,7 @@ def measure_symlink(tmp: Path) -> dict:
         # NOT refuted while code identity resolves the target. Kept as an explicit key so a
         # reader never has to infer the verdict from the accounting string again.
         "refuted": resolves is False,
-        "status": "unresolved — pending an end-to-end TCC-db attribution test",
+        "status": "confirmed — end-to-end TCC-db evidence; shipped as scripts/claude-bundle-identity-heal.py",
         "inconclusive": recorded is None or resolves is None,
     }
 
@@ -227,9 +229,11 @@ def _ratchet_holds(findings: list[dict]) -> bool:
     """The ratchet watches each cure on the layer that actually decides it.
 
     Enclosure: stays refuted (CoreFoundation attribution).
-    Symlink:   stays unresolved WITH code identity resolving the target. If macOS ever stops
-               resolving, the cure becomes genuinely refuted — and that is a change worth
-               failing on, because the receipt would then be wrong in the other direction.
+    Symlink:   code identity keeps resolving the target. This arm now guards a POSITIVE result
+               and a shipped effector: if macOS ever stops resolving, cure B becomes genuinely
+               refuted, scripts/claude-bundle-identity-heal.py silently stops curing anything,
+               and the grant starts rotating again with nothing saying so. That is the change
+               worth failing on.
     """
     by_cure = {f["cure"]: f for f in findings}
     return by_cure["enclosure"]["refuted"] and by_cure["symlink"]["code_identity_resolves_target"] is True
@@ -278,14 +282,17 @@ def main() -> int:
     )
 
     if _ratchet_holds(findings):
-        print("OK — enclosure stays REFUTED; symlink stays UNRESOLVED with code identity")
-        print("     resolving the target. Terminal fix remains upstream (anthropics/claude-code#86706).")
+        print("OK — enclosure stays REFUTED; code identity still resolves a symlink to its")
+        print("     target, so the shipped cure (claude-bundle-identity-heal.py) still cures.")
+        print("     Terminal fix remains upstream (anthropics/claude-code#86706).")
         return 0
 
     if not enclosure["refuted"]:
         print("CHANGED — macOS no longer refutes the ENCLOSURE cure. Re-open it and re-measure.")
     if symlink["code_identity_resolves_target"] is not True:
         print("CHANGED — code identity no longer resolves a symlink to its target.")
+        print("          scripts/claude-bundle-identity-heal.py is now curing NOTHING — the")
+        print("          grant will rotate again on the next update. Re-measure before trusting it.")
         print("          The symlink cure becomes genuinely refuted; record that and stop.")
     return 1
 
