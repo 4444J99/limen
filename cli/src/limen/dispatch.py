@@ -6647,14 +6647,24 @@ def release_stale_tasks(
                 )
                 released.append(task.id)
                 print(f"  RELEASE: {task.id} remote={remote_status} — {task.title}")
+            first_sync = None
             if released or restored_done:
-                apply_limen_file_sync(
+                first_sync = apply_limen_file_sync(
                     tasks_path,
                     fresh,
                     agent="release-stale",
                     session_id="release-stale",
                 )
             if relist_ids:
+                # The relist pass must CAS against the keeper's answer, not our local
+                # guess: the keeper stamps its own timestamps on the failure commit, so
+                # a precondition derived from the locally-mutated board is already stale
+                # ('exact revision moved'). Substitute the canonical projections first.
+                projected = getattr(first_sync, "projected_tasks", None) or {}
+                for index, task in enumerate(fresh.tasks):
+                    canonical = projected.get(task.id)
+                    if canonical and task.id in relist_ids:
+                        fresh.tasks[index] = Task.model_validate(canonical)
                 relist_before = fresh.model_copy(deep=True)
                 relist_set = set(relist_ids)
                 relist_now = datetime.now(timezone.utc)
