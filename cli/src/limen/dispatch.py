@@ -55,6 +55,7 @@ from limen.models import (
     dispatch_session_id,
     has_jules_landing_hold,
 )
+from limen.conduct.client import client_from_env
 from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import apply_limen_file_sync
 from limen.runtime_requirements import task_execution_ready
@@ -6559,8 +6560,71 @@ def release_stale_tasks(
                 }
             fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
             candidates = stale_tasks(fresh, hours=hours, agent=agent)
+            # The hot local projection can lag the keeper (nothing refreshes it in HTTP
+            # mode between publications), so a candidate's canonical status may already
+            # have moved. Pre-read canonical once and reconcile: a canonical `failed`
+            # candidate is an interrupted two-step release to resume at the relist
+            # step; any other divergence is skipped loudly rather than 409ing the rung.
+            canonical_rows: dict[str, dict[str, Any]] = {}
+            if candidates:
+                try:
+                    payload = client_from_env().private_board()
+                    board_payload = payload.get("board") if isinstance(payload.get("board"), dict) else payload
+                    canonical_rows = {
+                        str(row.get("id")): row
+                        for row in (board_payload.get("tasks") or [])
+                        if isinstance(row, dict) and row.get("id")
+                    }
+                except Exception as exc:
+                    print(f"── release-stale: canonical pre-read unavailable ({exc}); using the local projection")
+            first_before = fresh.model_copy(deep=True)
             for task in candidates:
                 original_status = task.status
+                canonical = canonical_rows.get(task.id)
+                canonical_status = str(canonical.get("status") or "") if isinstance(canonical, dict) else ""
+                if canonical_status and canonical_status != task.status:
+                    if canonical_status == "failed":
+                        # Phase 1 (in_progress -> failed) already landed on the keeper;
+                        # substitute the canonical state on BOTH boards so the first
+                        # sync sees no delta, then finish the release in the relist pass.
+                        canonical_task = Task.model_validate(canonical)
+                        for board in (fresh, first_before):
+                            for index, row in enumerate(board.tasks):
+                                if row.id == task.id:
+                                    board.tasks[index] = canonical_task.model_copy(deep=True)
+                        relist_ids.append(task.id)
+                        released.append(task.id)
+                        candidate_rows.append(
+                            {
+                                "id": task.id,
+                                "title": task.title,
+                                "repo": task.repo,
+                                "target_agent": task.target_agent,
+                                "status": original_status,
+                                "action": "release",
+                                "remote_status": "resume_relist",
+                            }
+                        )
+                        print(
+                            f"  RESUME relist: {task.id} — canonical already failed; completing the interrupted release"
+                        )
+                        continue
+                    candidate_rows.append(
+                        {
+                            "id": task.id,
+                            "title": task.title,
+                            "repo": task.repo,
+                            "target_agent": task.target_agent,
+                            "status": original_status,
+                            "action": "skip",
+                            "remote_status": f"canonical_{canonical_status}",
+                        }
+                    )
+                    print(
+                        f"  RECONCILE-SKIP: {task.id} canonical={canonical_status} local={task.status}"
+                        " — projection lag; not releasing"
+                    )
+                    continue
                 if has_jules_landing_hold(task):
                     action, remote_status = "hold", "jules_landing_held"
                     held.append(task.id)
@@ -6654,6 +6718,7 @@ def release_stale_tasks(
                     fresh,
                     agent="release-stale",
                     session_id="release-stale",
+                    before=first_before,
                 )
             if relist_ids:
                 # The relist pass must CAS against the keeper's answer, not our local
