@@ -19,6 +19,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
+from urllib.parse import parse_qsl, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,12 +50,67 @@ PREDICATE_FIELDS = {"argv", "timeout_seconds", "max_output_bytes"}
 LOCKED_RUNTIME_SETUP_FIELDS = {"mode", "lockfile", "argv", "timeout_seconds", "max_output_bytes"}
 MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES = (
-    Path(sys.executable).resolve().parent,
-    Path("/opt/homebrew/bin"),
-    Path("/usr/local/bin"),
     Path("/usr/bin"),
     Path("/bin"),
 )
+IMMUTABLE_SYSTEM_EXECUTABLES = {
+    "git": Path("/usr/bin/git"),
+    "python3": Path("/usr/bin/python3"),
+}
+# These user-managed package-manager chains are authenticated transitively by the
+# canonical exact runner blob.  Both the Node interpreter and the CLI payload are
+# pinned so an ambient wrapper, shebang lookup, or sibling executable is never used.
+PINNED_NODE_TOOL_CHAINS = {
+    ("Darwin", "arm64"): {
+        "npm": {
+            "interpreter": "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+            "interpreter_sha256": "1ef99ea25fe70c9b67e7efe768ef8ee22148d3cabc703db6131b57aeb617d040",
+            "script": "/opt/homebrew/lib/node_modules/npm/bin/npm-cli.js",
+            "script_sha256": "8e5f6f3429f8cdbe693cdc29904e9d5a7b127a494bd15c804bd54c7403bfcbe7",
+        },
+        "pnpm": {
+            "interpreter": "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+            "interpreter_sha256": "1ef99ea25fe70c9b67e7efe768ef8ee22148d3cabc703db6131b57aeb617d040",
+            "script": "/opt/homebrew/lib/node_modules/pnpm/bin/pnpm.cjs",
+            "script_sha256": "b276da51dc8ca5b0d3ee3371695b50fc8b3244b281b091c63a3f082a88dadeb9",
+        },
+    }
+}
+PUBLIC_EMAIL = re.compile(r"(?i)(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?![A-Za-z0-9.-])")
+PUBLIC_SECRET_VALUE = re.compile(
+    r"(?i)(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|"
+    r"sk-[A-Za-z0-9_-]{16,}|bearer\s+[A-Za-z0-9._~+/-]{12,}=*|"
+    r"-----BEGIN [A-Z ]*PRIVATE KEY-----)"
+)
+PUBLIC_PRIVATE_IDENTIFIER_VALUE = re.compile(
+    r"(?i)(?<![A-Za-z0-9])(?:customer|client|lead|contact|person|account|private)"
+    r"(?:[-_:/]+(?:id[-_:/]+)?)(?=[A-Za-z0-9._:/-]*\d)[A-Za-z0-9][A-Za-z0-9._:/-]*"
+)
+PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
+    r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
+    r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
+    r"private[-_ ]?key|recovery[-_ ]?code)"
+    r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
+    r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
+)
+FORBIDDEN_PUBLIC_URL_KEYS = {
+    "apikey",
+    "accesstoken",
+    "refreshtoken",
+    "idtoken",
+    "authorization",
+    "credential",
+    "credentials",
+    "password",
+    "passphrase",
+    "passwd",
+    "pwd",
+    "secret",
+    "sessioncookie",
+    "privatekey",
+    "recoverycode",
+    "token",
+}
 DARWIN_PAUSED_EXEC = r"""
 import json
 import os
@@ -237,6 +293,64 @@ def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
     return _flagship_contract_from_payload(payload, flagship_id)
 
 
+def _normalized_public_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.casefold())
+
+
+def _public_text_contains_forbidden_material(value: str) -> bool:
+    if "\0" in value:
+        return True
+    try:
+        parsed = urlsplit(value)
+    except ValueError:
+        return True
+    if parsed.scheme.casefold() in {"http", "https"}:
+        if parsed.username is not None or parsed.password is not None:
+            return True
+        for encoded_parameters in (parsed.query, parsed.fragment):
+            for key, _parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
+                if _normalized_public_key(key) in FORBIDDEN_PUBLIC_URL_KEYS:
+                    return True
+    return bool(
+        PUBLIC_EMAIL.search(value)
+        or PUBLIC_SECRET_VALUE.search(value)
+        or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
+        or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)
+    )
+
+
+def _public_safe_limitations(value: object) -> bool:
+    return bool(
+        isinstance(value, list)
+        and value
+        and all(
+            isinstance(item, str) and bool(item.strip()) and not _public_text_contains_forbidden_material(item)
+            for item in value
+        )
+    )
+
+
+def _safe_blocked_receipt_envelope(request: dict[str, Any]) -> dict[str, Any]:
+    envelope: dict[str, Any] = {}
+    flagship_id = request.get("flagship_id")
+    if (
+        isinstance(flagship_id, str)
+        and flagship_id == flagship_id.strip()
+        and re.fullmatch(r"[A-Za-z0-9_.-]+", flagship_id)
+    ):
+        envelope["flagship_id"] = flagship_id
+    repository = request.get("repository")
+    if isinstance(repository, str) and REPOSITORY_NAME.fullmatch(repository):
+        envelope["repository"] = repository
+    default_branch = request.get("default_branch")
+    if isinstance(default_branch, str) and BRANCH_NAME.fullmatch(default_branch):
+        envelope["default_branch"] = default_branch
+    expected_head = request.get("expected_head")
+    if isinstance(expected_head, str) and FULL_HEAD.fullmatch(expected_head):
+        envelope["expected_head"] = expected_head
+    return envelope
+
+
 def validate_request(request: dict[str, Any], *, contract_payload: dict[str, Any] | None = None) -> list[str]:
     errors: list[str] = []
     unexpected = sorted(set(request) - REQUEST_FIELDS)
@@ -299,12 +413,8 @@ def validate_request(request: dict[str, Any], *, contract_payload: dict[str, Any
         ):
             errors.append(f"predicate max_output_bytes must be between 1024 and {MAX_OUTPUT_BYTES}")
     limitations = request.get("limitations")
-    if (
-        not isinstance(limitations, list)
-        or not limitations
-        or not all(isinstance(value, str) and value.strip() for value in limitations)
-    ):
-        errors.append("receipt request requires explicit limitations")
+    if not _public_safe_limitations(limitations):
+        errors.append("receipt request limitations must be nonblank public-safe text")
     if isinstance(flagship_id, str) and flagship_id.strip() == flagship_id and "\0" not in flagship_id:
         try:
             contract = (
@@ -336,15 +446,12 @@ def _blocked_receipt(
 ) -> dict[str, Any]:
     receipt: dict[str, Any] = {
         "schema_version": "limen.positioning_flagship_receipt.v1",
-        "flagship_id": request.get("flagship_id"),
-        "repository": request.get("repository"),
-        "default_branch": request.get("default_branch"),
-        "expected_head": request.get("expected_head"),
+        **_safe_blocked_receipt_envelope(request),
         "result": "blocked_external",
         "started_at": started_at,
         "finished_at": _timestamp(),
         "errors": [error],
-        "limitations": request.get("limitations", []),
+        "limitations": request.get("limitations", []) if _public_safe_limitations(request.get("limitations")) else [],
     }
     if observed_head is not None:
         receipt["observed_head"] = observed_head
@@ -442,17 +549,11 @@ def _sanitized_git_environment() -> dict[str, str]:
 
 
 def _trusted_named_executable(name: str) -> Path:
-    """Resolve a host executable without consulting ambient PATH."""
+    """Resolve a root-owned system executable without consulting ambient PATH."""
     if not name or Path(name).name != name or "/" in name or "\\" in name:
         raise ValueError("trusted executable name must be one path-free component")
-    candidate = next(
-        (
-            directory / name
-            for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
-            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
-        ),
-        None,
-    )
+    canonical_name = "python3" if re.fullmatch(r"python(?:3(?:\.\d+)*)?", name.casefold()) else name
+    candidate = IMMUTABLE_SYSTEM_EXECUTABLES.get(canonical_name)
     if candidate is None:
         raise OSError(f"trusted executable is unavailable: {name}")
     try:
@@ -461,7 +562,43 @@ def _trusted_named_executable(name: str) -> Path:
         raise OSError(f"trusted executable is unavailable: {name}") from exc
     if not resolved.is_file() or not os.access(resolved, os.X_OK):
         raise OSError(f"trusted executable is not executable: {resolved}")
+    for component in (resolved, *resolved.parents):
+        status = component.stat()
+        if status.st_uid != 0 or status.st_mode & 0o022:
+            raise OSError(f"trusted executable ancestry is mutable: {component}")
+        if component.parent == component:
+            break
     return resolved
+
+
+def _pinned_node_tool(name: str) -> tuple[Path, Path, dict[str, str]]:
+    platform_bindings = PINNED_NODE_TOOL_CHAINS.get((platform.system(), platform.machine()), {})
+    binding = platform_bindings.get(name)
+    if not isinstance(binding, dict):
+        raise OSError(f"proof-contract executable identity is unavailable: {name}")
+    interpreter = Path(str(binding.get("interpreter", "")))
+    script = Path(str(binding.get("script", "")))
+    try:
+        interpreter = interpreter.resolve(strict=True)
+        script = script.resolve(strict=True)
+    except OSError as exc:
+        raise OSError(f"proof-contract executable identity is unavailable: {name}") from exc
+    if not interpreter.is_file() or not os.access(interpreter, os.X_OK) or not script.is_file():
+        raise OSError(f"proof-contract executable identity is unavailable: {name}")
+    interpreter_sha256 = hashlib.sha256(interpreter.read_bytes()).hexdigest()
+    script_sha256 = hashlib.sha256(script.read_bytes()).hexdigest()
+    if interpreter_sha256 != binding.get("interpreter_sha256") or script_sha256 != binding.get("script_sha256"):
+        raise OSError(f"proof-contract executable identity differs from the pinned {name} chain")
+    return (
+        interpreter,
+        script,
+        {
+            "resolved_executable": str(script),
+            "resolved_executable_sha256": script_sha256,
+            "resolved_interpreter": str(interpreter),
+            "resolved_interpreter_sha256": interpreter_sha256,
+        },
+    )
 
 
 def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str, str], dict[str, str]]:
@@ -469,21 +606,24 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
     if not argv or not isinstance(argv[0], str) or not argv[0]:
         raise ValueError("predicate executable must be nonblank text")
     executable = Path(argv[0])
-    if executable.is_absolute():
-        candidate = executable
+    pinned_metadata: dict[str, str] | None = None
+    pinned_interpreter: Path | None = None
+    if not executable.is_absolute() and argv[0] in {"npm", "pnpm"}:
+        pinned_interpreter, resolved, pinned_metadata = _pinned_node_tool(argv[0])
     else:
-        if executable.name != argv[0] or "/" in argv[0] or "\\" in argv[0]:
-            raise ValueError("predicate executable must be an absolute path or a trusted executable name")
+        if executable.is_absolute():
+            executable_name = executable.name
+            if not re.fullmatch(r"python(?:3(?:\.\d+)*)?", executable_name.casefold()):
+                raise ValueError("absolute predicate executables must be the trusted Python interpreter")
+            executable_name = "python3"
+        else:
+            if executable.name != argv[0] or "/" in argv[0] or "\\" in argv[0]:
+                raise ValueError("predicate executable must be a trusted executable name")
+            executable_name = argv[0]
         try:
-            candidate = _trusted_named_executable(argv[0])
+            resolved = _trusted_named_executable(executable_name)
         except OSError as exc:
             raise OSError(f"trusted predicate executable is unavailable: {argv[0]}") from exc
-    try:
-        resolved = candidate.resolve(strict=True)
-    except OSError as exc:
-        raise OSError(f"trusted predicate executable is unavailable: {argv[0]}") from exc
-    if not resolved.is_file() or not os.access(resolved, os.X_OK):
-        raise OSError(f"trusted predicate executable is not executable: {resolved}")
 
     environment = _sanitized_git_environment()
     for key in tuple(environment):
@@ -500,18 +640,21 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
                 str(directory) for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
             ),
             "PYTHONNOUSERSITE": "1",
-            "NPM_CONFIG_USERCONFIG": os.devnull,
-            "NPM_CONFIG_GLOBALCONFIG": os.devnull,
+            "NPM_CONFIG_USERCONFIG": "/etc/limen-empty-npm-userconfig",
+            "NPM_CONFIG_GLOBALCONFIG": "/etc/limen-empty-npm-globalconfig",
         }
     )
     executable_sha256 = hashlib.sha256(resolved.read_bytes()).hexdigest()
     invocation = [str(resolved), *argv[1:]]
-    if re.fullmatch(r"python(?:\d+(?:\.\d+)*)?", resolved.name.casefold()) and argv[1:3] != ["-I", "-S"]:
+    if pinned_interpreter is not None:
+        invocation = [str(pinned_interpreter), str(resolved), *argv[1:]]
+    elif re.fullmatch(r"python(?:\d+(?:\.\d+)*)?", resolved.name.casefold()) and argv[1:3] != ["-I", "-S"]:
         invocation = [str(resolved), "-I", "-S", *argv[1:]]
     return (
         invocation,
         environment,
-        {
+        pinned_metadata
+        or {
             "resolved_executable": str(resolved),
             "resolved_executable_sha256": executable_sha256,
         },
@@ -1429,6 +1572,12 @@ def run_request(
     canonical_remote_lookup: Callable[[str], subprocess.CompletedProcess[bytes]] | None = None,
 ) -> dict[str, Any]:
     started_at = _timestamp()
+    if not _public_safe_limitations(request.get("limitations")):
+        return _blocked_receipt(
+            request,
+            started_at,
+            "receipt request limitations must be nonblank public-safe text",
+        )
     try:
         contract_payload, contract_environment = _proof_contract_snapshot()
     except (OSError, ValueError, json.JSONDecodeError, subprocess.TimeoutExpired) as exc:

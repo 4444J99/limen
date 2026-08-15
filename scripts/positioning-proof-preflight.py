@@ -1529,7 +1529,9 @@ class _VisibleSurfaceParser(HTMLParser):
         "blockquote",
         "br",
         "dd",
+        "details",
         "div",
+        "dialog",
         "dl",
         "dt",
         "footer",
@@ -1571,7 +1573,7 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized: dict[str, str | None] = {}
         for name, value in attrs:
             key = name.casefold()
-            if key in {"hidden", "aria-hidden", "style", "rel"} and key in normalized:
+            if key in {"hidden", "aria-hidden", "style", "rel", "open", "popover"} and key in normalized:
                 raise ValueError("surface response duplicates a visibility or stylesheet-control attribute")
             normalized[key] = value
         if "hidden" in normalized:
@@ -1598,7 +1600,11 @@ class _VisibleSurfaceParser(HTMLParser):
         attributes_hidden = self._attributes_hide_element(attrs)
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
-        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
+        attribute_names = {name.casefold() for name, _value in attrs}
+        user_agent_hidden = (
+            normalized in {"dialog", "details"} and "open" not in attribute_names
+        ) or "popover" in attribute_names
+        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden or user_agent_hidden
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
         elif not hidden:

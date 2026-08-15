@@ -17,7 +17,7 @@ from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 
@@ -250,6 +250,27 @@ def _public_authenticated_identity(value: object) -> bool:
     return isinstance(value, str) and bool(AUTHENTICATED_IDENTITY.fullmatch(value))
 
 
+def _public_url_has_forbidden_parameters(value: str, *, nested: bool = False) -> bool:
+    for match in re.finditer(r"https?://[^\s<>\"']+", value, re.IGNORECASE):
+        candidate = match.group(0).rstrip(".,);]")
+        try:
+            parsed = urlsplit(candidate)
+        except ValueError:
+            return True
+        if parsed.username is not None or parsed.password is not None:
+            return True
+        for encoded_parameters in (parsed.query, parsed.fragment):
+            for key, parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
+                normalized_key = re.sub(r"[^a-z0-9]", "", key.casefold())
+                if normalized_key in FORBIDDEN_PUBLIC_KEYS or any(
+                    normalized_key.endswith(suffix) for suffix in FORBIDDEN_PUBLIC_KEY_SUFFIXES
+                ):
+                    return True
+                if not nested and _public_url_has_forbidden_parameters(parameter_value, nested=True):
+                    return True
+    return False
+
+
 def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
     """Find private identifiers and credential material before a public artifact can pass."""
     findings: set[str] = set()
@@ -272,6 +293,7 @@ def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
             or PUBLIC_SECRET_VALUE.search(value)
             or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
             or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)
+            or _public_url_has_forbidden_parameters(value)
         ):
             findings.add(path)
         last_segment = re.sub(r"(?:\[\d+\])+$", "", path.rsplit(".", 1)[-1])

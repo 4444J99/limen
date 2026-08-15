@@ -826,6 +826,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<section aria-hidden='true'>hidden@example.invalid</section>",
             "<aside style='display: none !important'>hidden@example.invalid</aside>",
             "<p style='visibility:hidden'>hidden@example.invalid</p>",
+            "<dialog>hidden@example.invalid</dialog>",
+            "<details>hidden@example.invalid</details>",
+            "<div popover>hidden@example.invalid</div>",
         ):
             with self.subTest(hidden_markup=hidden_markup):
                 extraction = MODULE._canonical_surface_extraction(
@@ -833,12 +836,19 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     "visible_text_v3",
                 )
                 self.assertEqual(b"Visible proof\n", extraction)
+        open_dialog = MODULE._canonical_surface_extraction(
+            b"<dialog open='false'>Visible dialog proof</dialog><details open>Visible details proof</details>",
+            "visible_text_v3",
+        )
+        self.assertEqual(b"Visible dialog proof\nVisible details proof\n", open_dialog)
         for malformed in (
             "<div style='display:block' style='display:none'>hidden</div>",
             "<div style='display/**/:none'>hidden</div>",
             r"<div style='d\69splay:none'>hidden</div>",
             "<link rel='stylesheet' rel='alternate' href='/dynamic.css'>",
             "<link REL='alternate' rel='stylesheet' href='/dynamic.css'>",
+            "<dialog open open>ambiguous dialog proof</dialog>",
+            "<div popover popover>ambiguous popover proof</div>",
         ):
             with self.subTest(malformed=malformed):
                 with self.assertRaisesRegex(ValueError, "visibility"):

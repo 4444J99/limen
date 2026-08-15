@@ -228,6 +228,10 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertIn("merge-base", calls[4])
 
     def test_predicate_runner_ignores_ambient_path_and_runtime_injection(self) -> None:
+        self.assertNotIn(
+            Path(sys.executable).resolve().parent,
+            RECEIPT.TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES,
+        )
         with tempfile.TemporaryDirectory() as directory:
             fake_python = Path(directory) / "python3"
             fake_python.write_text("#!/bin/sh\nprintf 'ambient fake\\n'\nexit 0\n", encoding="utf-8")
@@ -289,6 +293,29 @@ class PositioningProofRunnerTest(unittest.TestCase):
         )
         self.assertEqual(0, completed.returncode, completed.stderr)
         self.assertEqual(b"False\n", completed.stdout)
+
+    def test_user_managed_node_tool_requires_the_pinned_interpreter_and_cli_digests(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            interpreter = root / "node"
+            script = root / "npm-cli.js"
+            interpreter.write_bytes(b"#!/bin/sh\nexit 0\n")
+            interpreter.chmod(0o755)
+            script.write_bytes(b"console.log('synthetic');\n")
+            binding = {
+                "interpreter": str(interpreter),
+                "interpreter_sha256": RECEIPT.hashlib.sha256(interpreter.read_bytes()).hexdigest(),
+                "script": str(script),
+                "script_sha256": RECEIPT.hashlib.sha256(script.read_bytes()).hexdigest(),
+            }
+            identities = {(RECEIPT.platform.system(), RECEIPT.platform.machine()): {"npm": binding}}
+            with mock.patch.object(RECEIPT, "PINNED_NODE_TOOL_CHAINS", identities):
+                argv, _environment, metadata = RECEIPT._prepare_predicate_invocation(["npm", "test"])
+                self.assertEqual([str(interpreter.resolve()), str(script.resolve()), "test"], argv)
+                self.assertEqual(str(interpreter.resolve()), metadata["resolved_interpreter"])
+                script.write_bytes(b"console.log('substituted');\n")
+                with self.assertRaisesRegex(OSError, "differs from the pinned npm chain"):
+                    RECEIPT._prepare_predicate_invocation(["npm", "test"])
 
     def test_darwin_supervisor_uses_isolated_python_and_a_sanitized_environment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -529,6 +556,24 @@ class PositioningProofRunnerTest(unittest.TestCase):
         for value in ("The API key is not collected.", 'The API key is "not collected".'):
             with self.subTest(value=value):
                 self.assertEqual(set(), COST._find_forbidden_public_material({"limitations": [value]}))
+
+    def test_public_safe_scan_decodes_credential_url_parameter_names(self) -> None:
+        for value in (
+            "https://example.com/proof?api%5Fkey=plainvalue",
+            "See https://example.com/proof#access%2Dtoken=plainvalue for the replay.",
+            "https://example.com/proof?apiKey=",
+            "https://user:password@example.com/proof",
+            "https://example.com/proof?next=https%3A%2F%2Fother.example%2Fproof%3Fapi_key%3Dplainvalue",
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    {"$.limitations[0]"},
+                    COST._find_forbidden_public_material({"limitations": [value]}),
+                )
+        self.assertEqual(
+            set(),
+            COST._find_forbidden_public_material({"limitations": ["https://example.com/proof?claim_id=CLM-1"]}),
+        )
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -1038,6 +1083,39 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any(expected_error in error for error in result["errors"]))
 
+    def test_receipt_request_never_copies_unsafe_limitations_into_a_receipt(self) -> None:
+        unsafe_limitations = (
+            "Contact customer@example.invalid for the evidence.",
+            "The password is hunter2alpha.",
+            "Private record customer-123 is excluded.",
+            "https://example.com/proof?api%5Fkey=plainvalue",
+        )
+        for limitation in unsafe_limitations:
+            with self.subTest(limitation=limitation):
+                request = {
+                    "schema_version": RECEIPT.SCHEMA_VERSION,
+                    "flagship_id": "synthetic",
+                    "repository": "example/synthetic",
+                    "repository_path": "/tmp/synthetic",
+                    "default_branch": "main",
+                    "expected_head": "a" * 40,
+                    "predicate": {
+                        "argv": ["python3", "-c", "print('pass')"],
+                        "timeout_seconds": 10,
+                        "max_output_bytes": 4096,
+                    },
+                    "limitations": [limitation],
+                }
+                with mock.patch.object(
+                    RECEIPT,
+                    "_proof_contract_snapshot",
+                    side_effect=AssertionError("unsafe limitations must fail before contract inspection"),
+                ):
+                    result = RECEIPT.run_request(request)
+                self.assertEqual("blocked_external", result["result"])
+                self.assertEqual([], result["limitations"])
+                self.assertNotIn(limitation, json.dumps(result, sort_keys=True))
+
     def test_receipt_cli_emits_blocked_receipt_for_unreadable_or_malformed_request(self) -> None:
         cases = {
             "missing": None,
@@ -1077,7 +1155,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_receipt_request_blocks_when_contract_git_inspection_times_out(self) -> None:
         timeout = subprocess.TimeoutExpired(["git", "show"], 60)
         with mock.patch.object(RECEIPT, "_proof_contract_snapshot", side_effect=timeout):
-            result = RECEIPT.run_request({})
+            result = RECEIPT.run_request({"limitations": ["Synthetic fixture only."]})
         self.assertEqual("blocked_external", result["result"])
         self.assertTrue(any("proof contract is unavailable" in error for error in result["errors"]))
 
