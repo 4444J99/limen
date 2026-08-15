@@ -81,6 +81,12 @@ positioning-offer-contract-test
 check-docs-exports
 check-note-links' docs/positioning/offers/product-operating-partnership-review.md
 
+expect unmanaged-offer-artifact-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/obsolete.json
+
 expect positioning-program-offer-input-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test

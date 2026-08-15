@@ -649,6 +649,29 @@ def validate_p04_matrix(text: str, data: dict[str, Any]) -> list[str]:
     return errors
 
 
+def validate_p04_matrix_dependencies(text: str, program: dict[str, Any]) -> list[str]:
+    """Require every P04 row to expose exactly its canonical leaf dependencies."""
+    errors: list[str] = []
+    phases = [phase for phase in program.get("phases", []) if phase.get("id") == "PSP-P04"]
+    if len(phases) != 1:
+        return ["program must contain exactly one PSP-P04 phase for matrix dependency binding"]
+    for work in phases[0].get("work", []):
+        work_id = work.get("id")
+        rows = [line for line in text.splitlines() if f"| {work_id} |" in line]
+        if len(rows) != 1:
+            errors.append(f"{work_id} must appear in exactly one P04 dependency row")
+            continue
+        matches = re.findall(r"Dependencies: `\[([^\]]*)\]`", rows[0])
+        if len(matches) != 1:
+            errors.append(f"{work_id} must declare exactly one dependency marker")
+            continue
+        observed = [] if not matches[0].strip() else [item.strip() for item in matches[0].split(",")]
+        expected = work.get("depends_on") or []
+        if observed != expected:
+            errors.append(f"{work_id} dependency drift: expected {expected}, found {observed}")
+    return errors
+
+
 def validate_artifact_text(label: str, text: str) -> list[str]:
     errors: list[str] = []
     for marker in PRIVATE_MARKERS:
@@ -731,6 +754,8 @@ def validate_repository(data: dict[str, Any]) -> list[str]:
                 errors.append(f"successor relay omits preserved downstream head: {downstream_head}")
     if PROGRAM_PATH.exists():
         program = yaml.safe_load(PROGRAM_PATH.read_text())
+        if P04_MATRIX_PATH in artifacts:
+            errors.extend(validate_p04_matrix_dependencies(artifacts[P04_MATRIX_PATH], program))
         registered_gates = set(program.get("human_gates", {}))
         referenced_gates = set(data.get("economics_contract", {}).get("gates", []))
         referenced_gates.update(_gate_ids(data.get("commercial_templates", {}).get("required_gates", [])))

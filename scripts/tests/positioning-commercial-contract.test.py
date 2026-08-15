@@ -159,6 +159,18 @@ class CommercialContractTests(unittest.TestCase):
         errors = MODULE.validate_p04_matrix(changed, self.contract)
         self.assertTrue(any("stale phase-wide leaf block" in error for error in errors), errors)
 
+    def test_p04_matrix_rows_exactly_bind_canonical_leaf_dependencies(self) -> None:
+        matrix = MODULE.P04_MATRIX_PATH.read_text()
+        program = MODULE.yaml.safe_load(MODULE.PROGRAM_PATH.read_text())
+        self.assertEqual([], MODULE.validate_p04_matrix_dependencies(matrix, program))
+        changed = matrix.replace(
+            "Dependencies: `[PSP-P04-W01, PSP-P04-W02, PSP-P04-W03]`. Owner must also approve",
+            "Dependencies: `[PSP-P04-W01]`. Owner must also approve",
+            1,
+        )
+        errors = MODULE.validate_p04_matrix_dependencies(changed, program)
+        self.assertTrue(any("PSP-P04-W05 dependency drift" in error for error in errors), errors)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -502,6 +502,7 @@ gates:
     command: "python3 scripts/positioning-commercial-contract.py --check && python3 scripts/positioning-offer-artifacts.py --check && bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_commercial_contract.py scripts/tests/test_positioning_offer_artifacts.py -q"
     paths:
       - "docs/positioning/commercial-contract.md"
+      - "docs/positioning/offers/**"
       - "docs/positioning/offers/agentic-delivery-audit.md"
       - "docs/positioning/offers/bounded-delivery-governance-retainer-capacity.json"
       - "docs/positioning/offers/bounded-delivery-governance-retainer.md"
