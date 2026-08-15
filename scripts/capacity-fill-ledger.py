@@ -34,13 +34,14 @@ RATE_LIMIT_TAIL_LINES = 400
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 from limen.capacity import capacity_census  # noqa: E402
+from limen.private_board import operational_board_path  # noqa: E402
 from limen.dispatch import _down_lanes, _reset_budget_if_needed, _weak_proxy_exhaustion  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 
 
 def load_tasks_board() -> dict[str, Any]:
     try:
-        lf = load_limen_file(TASKS_PATH)
+        lf = load_limen_file(operational_board_path(TASKS_PATH))
         _reset_budget_if_needed(lf, dt.datetime.now(dt.timezone.utc))
         return lf.model_dump(mode="json", exclude_none=True)
     except Exception:

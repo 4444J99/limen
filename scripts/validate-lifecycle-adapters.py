@@ -14,6 +14,7 @@ if str(CLI_SRC) not in sys.path:
 
 from limen.doctor import qa_report  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
+from limen.private_board import operational_board_path  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -45,7 +46,7 @@ def parse_generated_at(value: object) -> datetime | None:
 
 
 def main() -> None:
-    tasks_path = ROOT / "tasks.yaml"
+    tasks_path = operational_board_path(ROOT / "tasks.yaml")
     static_qa = read_json(ROOT / "web" / "app" / ".generated" / "surfaces" / "qa-status.json")
     static_generated_at = parse_generated_at(static_qa.get("generated_at"))
     cli_qa = qa_report(

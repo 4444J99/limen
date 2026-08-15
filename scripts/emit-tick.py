@@ -5,12 +5,17 @@ the autonomic loop becomes chartable in the portal (instead of free-text logs)."
 import datetime
 import json
 import os
+import sys
 from pathlib import Path
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
+from _board_custody import board_path  # noqa: E402
+
 root = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
-d = yaml.safe_load((root / "tasks.yaml").read_text()) or {}
+# board_path(): the public projection pre-cutover, hydrated private custody after.
+d = yaml.safe_load(board_path(root / "tasks.yaml").read_text()) or {}
 tasks = d.get("tasks", [])
 budget = (d.get("portal") or {}).get("budget") or {}
 caps = budget.get("per_agent", {}) or {}

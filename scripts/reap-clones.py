@@ -454,7 +454,9 @@ def active_task_slugs(tasks_path: Path) -> set[str]:
     try:
         import yaml
 
-        data = yaml.safe_load(tasks_path.read_text()) or {}
+        from limen.private_board import operational_board_path
+
+        data = yaml.safe_load(operational_board_path(tasks_path).read_text()) or {}
     except Exception:
         return set()
     live = {"open", "dispatched", "in_progress"}
@@ -525,8 +527,10 @@ def main() -> int:
     free_gib = disk_free_gib(WORKSPACE)
     # Pressure waives only the idle age, never a preservation predicate. Percent
     # remains display-only; the live envelope is the sole storage authority.
-    pressure = args.pressure if args.pressure is not None else (
-        required_free is None or free_gib is None or free_gib < required_free
+    pressure = (
+        args.pressure
+        if args.pressure is not None
+        else (required_free is None or free_gib is None or free_gib < required_free)
     )
     active = active_task_slugs(LIMEN_ROOT / "tasks.yaml")
     now = time.time()
