@@ -51,6 +51,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             f"/docs/receipts/technical-readiness/{receipt_slug}-receipt.json"
         )
 
+    @staticmethod
+    def evidence_receipt(row: dict, dimension: str, status: str = "pass") -> dict:
+        return {
+            "schema_version": "limen.psp_p13_w03_technical_evidence.v1",
+            "repository": row["repository"],
+            "commit": row["observed_head"],
+            "dimension": dimension,
+            "status": status,
+            "observed_at": "2026-08-15T00:00:00Z",
+            "command": f"verify-{dimension}",
+            "external_effects": [],
+        }
+
     def test_tracked_audit_is_valid_and_has_zero_effects(self) -> None:
         self.assertEqual([], self.errors())
         self.assertEqual([], self.audit["external_effects"])
@@ -98,6 +111,16 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             live_candidate_identity_sha256="0" * 64,
         )
         self.assertIn("live accepted candidate identity digest drift", errors)
+        changed_snapshot = copy.deepcopy(self.snapshot)
+        first_public = next(row for row in changed_snapshot["candidates"] if row["visibility"] == "public")
+        second_public = next(
+            row for row in changed_snapshot["candidates"] if row["visibility"] == "public" and row is not first_public
+        )
+        first_public["repository"] = second_public["repository"]
+        errors = MODULE.validate_audit(self.audit, changed_snapshot, self.contract)
+        self.assertTrue(
+            any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
+        )
 
     def test_public_head_and_live_head_are_exact(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -156,14 +179,39 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             len(MODULE.DIMENSION_RECEIPT_TOKENS),
         )
 
+    def test_live_verified_evidence_requires_resolved_receipt_contents(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["build"] = {
+            "state": "verified_pass",
+            "evidence_url": self.receipt_url(row, "build"),
+        }
+        errors = MODULE.validate_audit(changed, self.snapshot, self.contract, live_receipts={})
+        self.assertTrue(any("live receipt must use the exact evidence schema" in error for error in errors))
+        self.assertEqual(
+            [],
+            MODULE._evidence_receipt_errors(
+                self.evidence_receipt(row, "build"),
+                row["repository"],
+                row["observed_head"],
+                "build",
+                "verified_pass",
+                "candidate.build",
+            ),
+        )
+        encoded = MODULE.base64.b64encode(json.dumps(self.evidence_receipt(row, "build")).encode("utf-8")).decode(
+            "ascii"
+        )
+        with mock.patch.object(MODULE, "_run_json", return_value={"encoding": "base64", "content": encoded}):
+            receipts = MODULE.collect_live_evidence_receipts(changed)
+        self.assertEqual(self.evidence_receipt(row, "build"), receipts[(row["candidate_id"], "build")])
+
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.public_row(changed)
         for dimension in (
             "build",
             "test",
-            "deploy",
-            "documentation",
             "data_custody",
             "ip_custody",
             "observability_return",
@@ -184,11 +232,23 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
-        row["readiness_score"] = 100
+        row["readiness_score"] = 75
         row["blockers"] = []
         row["transfer_eligible"] = True
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
         self.assertEqual([], self.errors(changed))
+
+    def test_blocker_predicate_is_executable_and_candidate_bound(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        blocker = row["blockers"][0]
+        self.assertIn(f"--require-cleared {row['candidate_id']}:{blocker['code']}", blocker["predicate"])
+        self.assertEqual(
+            ["required blocker remains uncleared"],
+            MODULE.required_blocker_errors(changed, f"{row['candidate_id']}:{blocker['code']}"),
+        )
+        blocker["predicate"] = "true"
+        self.assertTrue(any("exact trusted live clearance command" in error for error in self.errors(changed)))
 
     def test_unproved_state_promotion_and_score_tamper_fail(self) -> None:
         changed = copy.deepcopy(self.audit)
