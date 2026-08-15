@@ -71,6 +71,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "commit": row["observed_head"],
             "dimension": dimension,
             "status": status,
+            "exit_code": 0,
+            "output_sha256": "0" * 64,
+            "artifact_sha256": "1" * 64,
             "observed_at": "2026-08-15T00:00:00Z",
             "command": f"verify-{dimension}",
             "external_effects": [],
@@ -133,6 +136,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertTrue(
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
+
+    def test_candidate_projection_digest_binds_lifecycle_fields(self) -> None:
+        changed_snapshot = copy.deepcopy(self.snapshot)
+        row = next(candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public")
+        row["current_state"] = "archived" if row["current_state"] != "archived" else "active_repository"
+        row["preflight_disposition"] = "park" if row["preflight_disposition"] != "park" else "experiment"
+        with self.assertRaisesRegex(MODULE.AuditError, "accepted public candidate lifecycle binding is invalid"):
+            MODULE.candidate_projection_digest(changed_snapshot)
 
     def test_w01_acceptance_is_recomputed_and_live_receipt_is_bound(self) -> None:
         self.assertEqual(MODULE.SOURCE_LOCK["w01_acceptance_sha256"], MODULE.accepted_w01_acceptance_digest())
@@ -244,6 +255,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         with mock.patch.object(MODULE, "_run_json", return_value={"encoding": "base64", "content": encoded}):
             receipts = MODULE.collect_live_evidence_receipts(changed)
         self.assertEqual(self.evidence_receipt(row, "build"), receipts[(row["candidate_id"], "build")])
+        broken = self.evidence_receipt(row, "build")
+        broken["exit_code"] = 1
+        self.assertIn(
+            "candidate.build live receipt must record exit_code 0",
+            MODULE._evidence_receipt_errors(
+                broken,
+                row["repository"],
+                row["observed_head"],
+                "build",
+                "verified_pass",
+                "candidate.build",
+            ),
+        )
 
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)

@@ -6006,7 +6006,7 @@
   "source_lock": {
     "candidate_count": 62,
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
-    "candidate_projection_sha256": "2f673c993c2334b234e97e622c361d6431042d3a11abbc9fad809e696840722b",
+    "candidate_projection_sha256": "f7492467314b0af5ea46a2158172ea863aec4c0d90fc776f1b3bab4ea8f52d55",
     "visibility": {
       "private": 8,
       "public": 54

@@ -39,7 +39,7 @@ SOURCE_LOCK = {
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
-    "candidate_projection_sha256": "2f673c993c2334b234e97e622c361d6431042d3a11abbc9fad809e696840722b",
+    "candidate_projection_sha256": "f7492467314b0af5ea46a2158172ea863aec4c0d90fc776f1b3bab4ea8f52d55",
     "candidate_count": 62,
     "visibility": {"public": 54, "private": 8},
 }
@@ -131,6 +131,9 @@ EVIDENCE_RECEIPT_KEYS = {
     "commit",
     "dimension",
     "status",
+    "exit_code",
+    "output_sha256",
+    "artifact_sha256",
     "observed_at",
     "command",
     "external_effects",
@@ -470,11 +473,21 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
             raise AuditError("accepted private candidate binding is not opaque")
         if visibility not in {"public", "private"}:
             raise AuditError("accepted candidate visibility is invalid")
+        current_state = row.get("current_state")
+        preflight_disposition = row.get("preflight_disposition")
+        if visibility == "public" and (current_state, preflight_disposition) not in {
+            ("active_repository", "park"),
+            ("active_repository", "experiment"),
+            ("archived", "park"),
+        }:
+            raise AuditError("accepted public candidate lifecycle binding is invalid")
         bindings.append(
             {
                 "candidate_id": candidate_id,
                 "repository": repository if isinstance(repository, str) else "",
                 "visibility": visibility,
+                "current_state": current_state if isinstance(current_state, str) else "",
+                "preflight_disposition": preflight_disposition if isinstance(preflight_disposition, str) else "",
             }
         )
     if len(identities) != len(set(identities)):
@@ -732,6 +745,12 @@ def _evidence_receipt_errors(
         errors.append(f"{label} live receipt repository or commit drift")
     if receipt.get("dimension") != dimension or receipt.get("status") != expected_status:
         errors.append(f"{label} live receipt dimension or result drift")
+    if receipt.get("exit_code") != 0:
+        errors.append(f"{label} live receipt must record exit_code 0")
+    if not SHA64.fullmatch(str(receipt.get("output_sha256") or "")) or not SHA64.fullmatch(
+        str(receipt.get("artifact_sha256") or "")
+    ):
+        errors.append(f"{label} live receipt must bind output and artifact digests")
     if not _valid_timestamp(receipt.get("observed_at")) or not _is_nonblank_text(receipt.get("command")):
         errors.append(f"{label} live receipt needs a timestamp and executable command")
     if receipt.get("external_effects") != []:
