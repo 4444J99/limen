@@ -35,10 +35,13 @@ from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
 
-# The registry owner of a spent keeper storage plan, named so a rung cites a durable home
-# instead of reciting the atom at the operator (CLAUDE.md → Closeout Definition). Matches
-# scripts/heal-board.py and scripts/self-heal.py.
-QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
 EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 
 
@@ -358,7 +361,7 @@ def release_stale(hours, agent, dry_run, json_output, report_file):
         # release-stale failure and sent readers hunting a defect that did not exist.
         click.echo(f"release-stale: BLOCKED — keeper storage quota exhausted, release deferred ({exc})"[:400], err=True)
         click.echo(
-            f"release-stale: the write path is spent, not broken — owner: lever {QUOTA_LEVER} in his-hand-levers.json",
+            f"release-stale: the write path is spent, not broken — owner: {QUOTA_OWNER}",
             err=True,
         )
         raise SystemExit(EX_TEMPFAIL) from exc

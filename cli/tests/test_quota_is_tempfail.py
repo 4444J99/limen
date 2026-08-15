@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from limen.cli import EX_TEMPFAIL, QUOTA_LEVER, main
+from limen.cli import EX_TEMPFAIL, QUOTA_OWNER, main
 from limen.conduct.client import BrokerQuotaExhausted
 
 BOARD = """version: '1.0'
@@ -59,17 +59,24 @@ def test_release_stale_reports_quota_as_tempfail_naming_the_lever(tmp_path: Path
 
     assert result.exit_code == EX_TEMPFAIL, result.output
     assert result.exit_code != 1, "quota exhaustion must not read as a rung defect"
-    assert QUOTA_LEVER in result.stderr
+    assert QUOTA_OWNER in result.stderr
     assert "spent, not broken" in result.stderr
 
 
-def test_quota_lever_id_matches_the_sibling_organs() -> None:
-    """One id, three organs. A drifted spelling would send readers to a lever that isn't there."""
+def test_quota_owner_matches_the_sibling_organs() -> None:
+    """One owner, four surfaces — and it must not be the RETIRED lever.
+
+    L-CLOUDFLARE-DO-QUOTA was retired 2026-08-10: the recurrence proved the defect is
+    Limen's own write amplification (issue #2054), and that issue states in terms that no
+    Cloudflare support case, billing change, plan change or operator action is required.
+    Citing the lever would send a reader to a human action its owner explicitly ruled out.
+    """
 
     root = Path(__file__).resolve().parents[2]
     for organ in ("scripts/heal-board.py", "scripts/self-heal.py", "scripts/heal-dispatch.py"):
         text = (root / organ).read_text(encoding="utf-8")
-        assert f'QUOTA_LEVER = "{QUOTA_LEVER}"' in text, organ
+        assert f'QUOTA_OWNER = "{QUOTA_OWNER}"' in text, organ
+        assert "L-CLOUDFLARE-DO-QUOTA was" in text, f"{organ} must record WHY the lever is not the owner"
 
 
 @pytest.mark.parametrize("organ", ["scripts/heal-dispatch.py"])

@@ -40,9 +40,13 @@ from _human_signals import is_human_gated, lever_ids  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
-# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable
-# home instead of reciting the atom at the operator. Matches heal-board.py and self-heal.py.
-QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
 EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 PR_RE = re.compile(r"github\.com/[^/]+/[^/]+/pull/\d+")
 CASCADE_TOP = "codex"
@@ -372,10 +376,7 @@ def main():
                 # line naming the registry owner, then EX_TEMPFAIL — non-zero so the beat ledger
                 # records a real outcome, but distinguishable from the exit 1 that means "broken".
                 print(f"heal-dispatch: BLOCKED — keeper storage quota exhausted, reconcile deferred ({exc})"[:400])
-                print(
-                    "heal-dispatch: the write path is spent, not broken — owner: lever "
-                    f"{QUOTA_LEVER} in his-hand-levers.json"
-                )
+                print(f"heal-dispatch: the write path is spent, not broken — owner: {QUOTA_OWNER}")
                 return EX_TEMPFAIL
             print("  APPLIED -> tasks.yaml")
         else:
