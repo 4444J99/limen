@@ -487,9 +487,12 @@ def main():
         scan_complete = False
         scan_error = "explicit PR selection is not a complete estate scan"
     else:
+        # The full-fleet enumeration pages ~10 search requests once the estate holds
+        # hundreds of open PRs; the generic 60s gh timeout started expiring on it
+        # (37 consecutive beat failures to 2026-08-15). It gets its own, longer cap.
         scan_result = enumerate_open_prs_result(
             OWNERS,
-            gh,
+            lambda cmd: gh(cmd, timeout=env_int("LIMEN_PR_SCAN_TIMEOUT", 120)),
             max_total=a.reconcile_scan_max,
             want_url=True,
             author=None,

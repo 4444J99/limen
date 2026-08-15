@@ -792,7 +792,7 @@ while true; do
                       # lock, like heal-dispatch) and skips cleanly when the daemon holds it; network → timeout-wrapped,
                       # fail-open. Redirects existing budgeted dispatch from receipt-churn to real PR repair; off with
                       # LIMEN_SELF_HEAL=0.
-                      [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && beat_run self-heal-scan timeout "${LIMEN_SELF_HEAL_TIMEOUT:-150}" python3 "$LIMEN_ROOT/scripts/self-heal.py" --scan "${LIMEN_SELF_HEAL_SCAN:-30}" || true; }
+                      [ "${LIMEN_SELF_HEAL:-1}" = "1" ] && beat_run self-heal-scan timeout "${LIMEN_SELF_HEAL_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/self-heal.py" --scan "${LIMEN_SELF_HEAL_SCAN:-30}" || true; }
   due_voice heal "$C_HEAL"    && stamp heal
   # Scheduled registry sensors (cadence/timeout/argv/gate all from sensors.yaml, no sensor names in
   # the runner) were HOISTED above the observe/dispatch split — see the block right before

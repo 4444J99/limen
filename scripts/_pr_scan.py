@@ -67,7 +67,12 @@ def enumerate_open_prs_result(owners, gh_fn, max_total=500, want_url=True, autho
     if author:
         cmd.extend(["--author", str(author)])
     cmd.extend([*sum([["--owner", o] for o in owners], []), "--json", fields])
-    r = gh_fn(cmd)
+    try:
+        r = gh_fn(cmd)
+    except subprocess.TimeoutExpired as exc:
+        # Fail-open like every other transport failure here: a slow search API must
+        # surface as a loud failed enumeration, never as a traceback that kills the beat.
+        return PREnumerationResult((), False, False, f"GitHub enumeration timed out: {exc}"[:400])
     if getattr(r, "returncode", 1) != 0:
         detail = str(getattr(r, "stderr", "") or "GitHub enumeration failed").strip()
         return PREnumerationResult((), False, False, detail[:400])
