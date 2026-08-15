@@ -31,7 +31,7 @@
     "pr": "https://github.com/organvm/limen/pull/2481",
     "branch": "codex/psp-receipt-corruption-recovery",
     "source_head": "984b1121083b4ab2453c3671ad20d11586cf6713",
-    "latest_correction_head": "20b6b697655cbcb54ffe0c27be2e8452cf574945",
+    "latest_correction_head": "d6a8010abbc64e22c6ffbc7e5368ea11f9998365",
     "accepted_main_head": null,
     "merge_status": "held by required pr-gate",
     "merge_blocker": "positioning-foundry-technical-readiness-public-live failed closed with live GitHub observation failed closed; one rerun produced the same failure. No bypass or direct-main write used."
