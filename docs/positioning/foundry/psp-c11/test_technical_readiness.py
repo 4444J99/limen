@@ -192,6 +192,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 MODULE.load_json(path)
 
     def test_root_and_source_lock_are_exact(self) -> None:
+        self.assertEqual(MODULE.SOURCE_LOCK, self.audit["source_lock"])
+        self.assertNotIn("candidate_projection_sha256", MODULE.SOURCE_LOCK)
+        self.assertEqual(MODULE.W01_SNAPSHOT_PATH, MODULE.SOURCE_LOCK["w01_candidate_snapshot_path"])
         changed = copy.deepcopy(self.audit)
         changed["extra"] = "credential-like-surplus"
         self.assertEqual(["audit must use the exact root schema"], self.errors(changed))
@@ -219,6 +222,10 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertTrue(any("identity set or order drift" in error for error in self.errors(changed)))
 
     def test_candidate_projection_and_live_identity_digests_are_recomputed(self) -> None:
+        self.assertEqual(
+            MODULE.candidate_projection_digest(self.snapshot),
+            MODULE.accepted_w01_candidate_projection_digest(),
+        )
         changed_snapshot = copy.deepcopy(self.snapshot)
         changed_audit = copy.deepcopy(self.audit)
         changed_snapshot["candidates"][0]["candidate_id"] = "invented-candidate"
@@ -241,6 +248,46 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         errors = MODULE.validate_audit(self.audit, changed_snapshot, self.contract)
         self.assertTrue(
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
+        )
+
+    def test_candidate_projection_is_resolved_from_the_immutable_w01_revision(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        expected = MODULE.candidate_projection_digest(self.snapshot)
+        MODULE._accepted_w01_candidate_projection_local.cache_clear()
+        try:
+            with mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout=content),
+            ) as run:
+                self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest())
+            self.assertEqual(
+                ["git", "show", f"{MODULE.SOURCE_LOCK['w01_accepted_head']}:{MODULE.W01_SNAPSHOT_PATH}"],
+                run.call_args.args[0],
+            )
+        finally:
+            MODULE._accepted_w01_candidate_projection_local.cache_clear()
+
+        collection = MODULE.LiveCollection()
+        with mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content) as fetch:
+            self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest(collection))
+        fetch.assert_called_once_with(
+            "organvm/limen",
+            MODULE.SOURCE_LOCK["w01_accepted_head"],
+            MODULE.W01_SNAPSHOT_PATH,
+            collection,
+        )
+
+        changed_snapshot = copy.deepcopy(self.snapshot)
+        changed_snapshot["candidates"][0]["demand"]["score"] += 1
+        self.assertIn(
+            "accepted candidate projection digest drift",
+            MODULE.validate_audit(
+                self.audit,
+                changed_snapshot,
+                self.contract,
+                accepted_candidate_projection_sha256=expected,
+            ),
         )
 
     def test_candidate_projection_digest_binds_lifecycle_fields(self) -> None:
@@ -1448,6 +1495,16 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertIs(live["scoped"], False)
         self.assertIn("--live", live["command"].split())
         self.assertNotIn("ci_job", live)
+        verification_steps = {
+            step["name"]: step
+            for step in workflow["jobs"]["pr-gate"]["steps"]
+            if isinstance(step, dict) and "name" in step
+        }
+        fallback = verification_steps["Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)"]
+        self.assertEqual("${{ github.token }}", fallback["env"]["GH_TOKEN"])
+        self.assertIn(static["command"], fallback["run"].splitlines())
+        self.assertIn(public_live["command"], fallback["run"].splitlines())
+        self.assertNotIn("GH_TOKEN", workflow["jobs"]["pr-gate"]["env"])
         whole = (ROOT / "scripts/verify-whole.sh").read_text(encoding="utf-8")
         self.assertIn('if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]', whole)
         self.assertIn(live["command"], whole)
@@ -1459,6 +1516,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             mock.patch.object(sys, "argv", argv),
             mock.patch.object(MODULE, "collect_public_heads") as collect_public_heads,
             mock.patch.object(MODULE, "verify_w01_live_receipt") as verify_w01,
+            mock.patch.object(
+                MODULE,
+                "accepted_w01_candidate_projection_digest",
+                return_value=MODULE.candidate_projection_digest(self.snapshot),
+            ) as accepted_projection,
             mock.patch.object(MODULE, "collect_live_evidence_receipts", return_value={}) as collect_receipts,
             mock.patch.object(MODULE, "collect_live_context", side_effect=AssertionError("private census invoked")),
             mock.patch.object(
@@ -1471,6 +1533,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             result = MODULE.main()
         collect_public_heads.assert_not_called()
         self.assertIs(verify_w01.call_args.args[0], collect_receipts.call_args.args[1])
+        self.assertIs(accepted_projection.call_args.args[0], collect_receipts.call_args.args[1])
         self.assertEqual(0, result)
         self.assertEqual("pass", json.loads(stdout.getvalue())["status"])
 
@@ -1490,6 +1553,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                     MODULE,
                     "collect_live_context",
                     return_value=(heads, [], MODULE.SOURCE_LOCK["candidate_identity_sha256"]),
+                ),
+                mock.patch.object(MODULE, "verify_w01_live_receipt"),
+                mock.patch.object(
+                    MODULE,
+                    "accepted_w01_candidate_projection_digest",
+                    return_value=MODULE.candidate_projection_digest(self.snapshot),
                 ),
                 mock.patch.object(MODULE, "build_audit", return_value=invalid),
                 contextlib.redirect_stdout(stdout),

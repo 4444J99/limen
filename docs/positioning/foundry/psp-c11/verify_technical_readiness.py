@@ -35,6 +35,7 @@ AUDIT = PACKAGE / "technical-readiness-audit.json"
 SNAPSHOT = PACKAGE / "product-candidate-snapshot.json"
 CONTRACT = PACKAGE / "foundry-preflight-contract.json"
 PREFLIGHT = ROOT / "scripts/positioning-foundry-preflight.py"
+W01_SNAPSHOT_PATH = "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
 
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
@@ -42,7 +43,7 @@ SOURCE_LOCK = {
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
-    "candidate_projection_sha256": "53db24ccc3cc2cfd2498e7e58bd4c94a6279343b775bae95ec3d5cd8ec52d3c9",
+    "w01_candidate_snapshot_path": W01_SNAPSHOT_PATH,
     "candidate_count": 62,
     "visibility": {"public": 54, "private": 8},
 }
@@ -844,6 +845,45 @@ def _fetch_repository_blob(
     if len(decoded) != size or git_digest != blob_sha:
         raise AuditError("live technical evidence blob fallback digest drift")
     return decoded
+
+
+def _candidate_projection_from_bytes(content: bytes) -> str:
+    try:
+        snapshot = json.loads(content, object_pairs_hook=_object_without_duplicate_keys)
+    except (UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
+        raise AuditError("accepted W01 candidate snapshot is invalid") from exc
+    if not isinstance(snapshot, dict):
+        raise AuditError("accepted W01 candidate snapshot must contain an object")
+    return candidate_projection_digest(snapshot)
+
+
+@functools.cache
+def _accepted_w01_candidate_projection_local() -> str:
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{SOURCE_LOCK['w01_accepted_head']}:{W01_SNAPSHOT_PATH}"],
+            cwd=ROOT,
+            capture_output=True,
+            check=False,
+            timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git") from exc
+    if result.returncode != 0:
+        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git")
+    return _candidate_projection_from_bytes(result.stdout)
+
+
+def accepted_w01_candidate_projection_digest(collection: LiveCollection | None = None) -> str:
+    if collection is None:
+        return _accepted_w01_candidate_projection_local()
+    content = _fetch_repository_blob(
+        "organvm/limen",
+        SOURCE_LOCK["w01_accepted_head"],
+        W01_SNAPSHOT_PATH,
+        collection,
+    )
+    return _candidate_projection_from_bytes(content)
 
 
 def _fetch_exact_head_blob(
@@ -1745,6 +1785,7 @@ def validate_audit(
     live_candidate_identity_sha256: str | None = None,
     live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None,
     private_clearance_receipts: dict[str, str] | None = None,
+    accepted_candidate_projection_sha256: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if set(audit) != ROOT_KEYS:
@@ -1777,10 +1818,15 @@ def validate_audit(
             errors.append("accepted candidate identity digest drift")
     try:
         projection_digest = candidate_projection_digest(snapshot)
+        accepted_projection_digest = (
+            accepted_candidate_projection_sha256
+            if accepted_candidate_projection_sha256 is not None
+            else accepted_w01_candidate_projection_digest()
+        )
     except AuditError as exc:
         errors.append(str(exc))
     else:
-        if projection_digest != SOURCE_LOCK["candidate_projection_sha256"]:
+        if not SHA64.fullmatch(accepted_projection_digest) or projection_digest != accepted_projection_digest:
             errors.append("accepted candidate projection digest drift")
     if (
         live_candidate_identity_sha256 is not None
@@ -1918,6 +1964,7 @@ def main() -> int:
         live_identity_digest: str | None = None
         live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None
         private_clearance_receipts: dict[str, str] | None = None
+        accepted_projection_digest: str | None = None
         live_collection = LiveCollection() if args.live or args.public_live else None
         if args.require_cleared and not args.live:
             raise AuditError("--require-cleared requires --live")
@@ -1925,8 +1972,10 @@ def main() -> int:
             heads, leaks, live_identity_digest = collect_live_context(snapshot)
             private_clearance_receipts = load_private_clearance_receipts()
             verify_w01_live_receipt(live_collection)
+            accepted_projection_digest = accepted_w01_candidate_projection_digest(live_collection)
         elif args.public_live:
             verify_w01_live_receipt(live_collection)
+            accepted_projection_digest = accepted_w01_candidate_projection_digest(live_collection)
         if write_path is not None:
             if not args.live or heads is None:
                 raise AuditError("--write requires --live")
@@ -1948,6 +1997,7 @@ def main() -> int:
                 live_candidate_identity_sha256=live_identity_digest,
                 live_receipts=live_receipts,
                 private_clearance_receipts=private_clearance_receipts,
+                accepted_candidate_projection_sha256=accepted_projection_digest,
             )
             errors.extend(required_blocker_errors(generated, args.require_cleared))
             if errors:
@@ -1970,6 +2020,7 @@ def main() -> int:
             live_candidate_identity_sha256=live_identity_digest,
             live_receipts=live_receipts,
             private_clearance_receipts=private_clearance_receipts,
+            accepted_candidate_projection_sha256=accepted_projection_digest,
         )
         errors.extend(required_blocker_errors(audit, args.require_cleared))
         payload = _result(audit_path, errors, audit)

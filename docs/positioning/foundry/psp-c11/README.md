@@ -99,9 +99,10 @@ a finite experiment and is parked after two bounded failures rather than kept al
 receipt URL, its canonical issue-comment receipt digest, accepted head, acceptance digest, and
 private-inclusive candidate identity digest. The
 validator recomputes that identity digest from the live accepted W01 candidate identities and also
-recomputes the snapshot projection digest from identity, visibility, repository, lifecycle, fork,
-demand, economics, blocker, and source transfer-eligibility fields; neither self-declared digest is
-trusted. Its denominator is exactly 62
+derives the complete accepted candidate projection from the immutable snapshot at the recorded W01
+accepted revision. It compares that revision-bound projection with the working snapshot across
+identity, visibility, repository, lifecycle, fork, demand, economics, blocker, and source
+transfer-eligibility fields; no working-tree projection digest is trusted. Its denominator is exactly 62
 candidates: 54 public rows and eight opaque private
 rows. Every public row records the currently observed 40-hex repository head and an exact-schema
 result for build, test, deploy, documentation, security, data custody, IP custody,
