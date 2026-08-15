@@ -6525,6 +6525,7 @@ def release_stale_tasks(
     mode = "DRY-RUN" if dry_run else "APPLY"
     print(f"── limen release-stale ({mode}) — hours={hours} candidates={len(candidates)}")
     released: list[str] = []
+    relist_ids: list[str] = []
     restored_done: list[str] = []
     held: list[str] = []
     harvest_ready: list[str] = []
@@ -6621,14 +6622,22 @@ def release_stale_tasks(
                     recover_ready.append(task.id)
                     print(f"  ROUTE recover: {task.id} remote={remote_status} — {task.title}")
                     continue
-                task.status = "open"
+                # The canonical transition table has no in_progress -> open edge, so a
+                # stale in_progress lease exits through the legal pair: in_progress ->
+                # failed here, then failed -> open in the relist pass below. dispatched
+                # releases stay single-step: dispatched -> open carries the budget refund.
+                if original_status == "in_progress":
+                    task.status = "failed"
+                    relist_ids.append(task.id)
+                else:
+                    task.status = "open"
                 task.updated = now
                 task.dispatch_log.append(
                     DispatchLogEntry(
                         timestamp=now,
                         agent="limen",
                         session_id=session_id(),
-                        status="open",
+                        status=task.status,
                         output=(
                             f"Released stale claim after {hours}h; remote status {remote_status}"
                             if task.target_agent == "jules"
@@ -6644,6 +6653,31 @@ def release_stale_tasks(
                     fresh,
                     agent="release-stale",
                     session_id="release-stale",
+                )
+            if relist_ids:
+                relist_before = fresh.model_copy(deep=True)
+                relist_set = set(relist_ids)
+                relist_now = datetime.now(timezone.utc)
+                for task in fresh.tasks:
+                    if task.id not in relist_set:
+                        continue
+                    task.status = "open"
+                    task.updated = relist_now
+                    task.dispatch_log.append(
+                        DispatchLogEntry(
+                            timestamp=relist_now,
+                            agent="limen",
+                            session_id=session_id(),
+                            status="open",
+                            output="Relisted after stale-lease failure (release-stale second step)",
+                        )
+                    )
+                apply_limen_file_sync(
+                    tasks_path,
+                    fresh,
+                    agent="release-stale",
+                    session_id="release-stale",
+                    before=relist_before,
                 )
     else:
         for task in candidates:

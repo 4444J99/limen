@@ -944,7 +944,26 @@ async function route(request, env) {
     const released = [];
     if (!dryRun) {
       for (const candidate of candidates) {
-        const current = findTask(doc.data, candidate.id);
+        let current = findTask(doc.data, candidate.id);
+        // The canonical transition table has no in_progress -> open edge; a stale
+        // in_progress lease is released through the legal pair in_progress -> failed,
+        // then failed -> open. dispatched -> open stays single-step (budget refund).
+        if (current.status === "in_progress") {
+          const failure = await submitTaskMutation(env, {
+            kind: "task.status",
+            task_id: current.id,
+            expected_status: current.status,
+            patch: { status: "failed" },
+            log: {
+              agent: "api",
+              session_id: "release-stale",
+              status: "failed",
+              output: `Released stale claim older than ${hours} hours (lease expired; relisting)`,
+            },
+          }, current);
+          brokerReceipts.push(failure.broker_receipt);
+          current = { ...current, status: "failed" };
+        }
         const mutation = await submitTaskMutation(env, {
           kind: "task.status",
           task_id: current.id,

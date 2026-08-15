@@ -874,7 +874,7 @@ export function renderTaskBoardProjection(yamlText, before, after, taskId) {
   return rendered;
 }
 
-async function githubGet(env, fetchImpl, taskId) {
+async function githubGet(env, fetchImpl, taskId, { parseBoard = true } = {}) {
   const refResponse = await fetchImpl(githubRefUrl(env), {
     method: "GET",
     headers: githubHeaders(env),
@@ -934,7 +934,10 @@ async function githubGet(env, fetchImpl, taskId) {
     }
   }
   return {
-    board: minimalBoardFromSource(yamlText, taskId),
+    // The aggregate publication path (parseBoard: false) reads this file only for
+    // its CAS anchors; once published it holds the counts-only public projection,
+    // which is not a task board and must never be parsed as one.
+    board: parseBoard ? minimalBoardFromSource(yamlText, taskId) : { portal: {}, tasks: [] },
     headSha,
     treeSha,
     yamlText,
@@ -1035,7 +1038,7 @@ export async function publishPublicBoard(env, board, { fetchImpl = fetch, maxAtt
   let lastConflict = "";
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     await reconcileProjectionBranch(env, fetchImpl);
-    const document = await githubGet(env, fetchImpl, "aggregate");
+    const document = await githubGet(env, fetchImpl, "aggregate", { parseBoard: false });
     const written = await githubPut(env, fetchImpl, yamlText, document, privateBoardEvent());
     if (written.ok) return { status: "committed", mode: "public-aggregate", sha: written.sha };
     if (written.status === 409

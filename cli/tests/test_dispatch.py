@@ -3777,6 +3777,59 @@ def test_release_stale_apply_reopens_task(tmp_path: Path, monkeypatch) -> None:
     assert report["restored_done"] == []
 
 
+def test_release_stale_in_progress_releases_through_failed(tmp_path: Path, monkeypatch) -> None:
+    """A stale in_progress lease exits via the legal pair in_progress -> failed -> open.
+
+    The canonical transition table has no in_progress -> open edge, so the single-step
+    release the rung used to submit was terminally 409'd by the conduct keeper.
+    """
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-STEP-1",
+                "title": "Stale in-progress task",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            },
+            {
+                "id": "LIMEN-STEP-2",
+                "title": "Stale dispatched task",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "dispatched",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            },
+        ],
+    )
+    projections = capture_canonical_deltas(monkeypatch)
+
+    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
+
+    assert report["released"] == ["LIMEN-STEP-1", "LIMEN-STEP-2"]
+    assert len(projections) == 2
+    first_by_id = {task.id: task for task in projections[0].tasks}
+    # First sync: the in_progress lease fails legally; dispatched releases straight to open.
+    assert first_by_id["LIMEN-STEP-1"].status == "failed"
+    assert first_by_id["LIMEN-STEP-1"].dispatch_log[-1].status == "failed"
+    assert first_by_id["LIMEN-STEP-2"].status == "open"
+    # Second sync: the failed lease is relisted.
+    second_by_id = {task.id: task for task in projections[1].tasks}
+    assert second_by_id["LIMEN-STEP-1"].status == "open"
+    assert second_by_id["LIMEN-STEP-1"].dispatch_log[-1].status == "open"
+    assert second_by_id["LIMEN-STEP-1"].dispatch_log[-2].status == "failed"
+
+
 def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path, monkeypatch) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
