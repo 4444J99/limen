@@ -498,18 +498,19 @@ checks.
 
 ## Agent-Specific Notes
 
+**Reserved tiers bind every lane, not just Claude** (`LIMEN_RESERVED_TIERS`): a written
+`fable-allotment.py accept …` receipt before the run starts, audited by
+`scripts/check-reserved-tier.py`.
+
 ### Claude
-- You are Claude. Read this file as part of your startup instructions. Support Limen as a native
-  peer: use the conduct CLI/MCP surface and preserve Claude identity in every session, packet,
-  and receipt.
+- You are Claude. Read this file at startup. Support Limen as a native peer: use the conduct
+  CLI/MCP surface and preserve Claude identity in every session, packet, and receipt.
 - **Fleet launches never wait on permissions** — non-interactive dispatch uses
-  `--permission-mode dontAsk` plus an explicit allowlist, validated before launch by
-  `dispatch.py` (`ClaudeLaunchContractError`); never `acceptEdits`/`auto` (can prompt) or
-  `bypassPermissions` (unsafe). Interactive/operator sessions are untouched. Doctrine:
+  `--permission-mode dontAsk`, never `acceptEdits`/`auto` (can prompt) or `bypassPermissions`
+  (unsafe), validated before launch by `dispatch.py` (`ClaudeLaunchContractError`). Doctrine:
   CLAUDE.md → Session Phase Entry.
 - **Tier subagent fan-out by job** (authority: `cli/src/limen/model_selection.py`; CLAUDE.md →
-  Parallel Exploration & Fan-Out). **Fable plans, cheaper tiers build** — plan-only,
-  acceptance-gated, runtime-capped; full doctrine + caps: `docs/fable-allotment.md`.
+  Parallel Exploration & Fan-Out). Fable plans, cheaper tiers build: `docs/fable-allotment.md`.
 
 ### Gemini
 - You are Gemini CLI (live-verify the version; pins decay). Inspect the projection and register

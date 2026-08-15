@@ -1,0 +1,17 @@
+# reserved-tier-blind-baseline.txt — lanes whose session store records NO model identity.
+#
+# Held OUT of scripts/check-reserved-tier.py. Same shrink-only ratchet the estate already
+# uses for note links, root manifest, effectors and runners: history is recorded, never
+# rewritten, and every NEW blind lane is held.
+#
+# A line leaves this file exactly one way: by the lane's store gaining model identity (or
+# the ingest adapter learning to read it). A stale line — the lane now reports models —
+# FAILS, so the baseline can only shrink. Never add a line to silence a lane that used to
+# report and stopped: that is a regression, and this ratchet exists to catch it.
+#
+# Being on this list is NOT permission. It means a reserved-tier run in that lane cannot
+# currently be detected at all, which is strictly worse than a violation you can see.
+antigravity
+chatgpt-desktop
+claude-desktop
+opencode
