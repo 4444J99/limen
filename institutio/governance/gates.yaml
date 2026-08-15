@@ -846,6 +846,17 @@ gates:
     owner: gitvs
     note: "BOARD-PARTITION: tasks.yaml is 5.8MB, tracked, and in a PUBLIC repo — the largest published artifact in the estate and, until this gate, a consumer of no publication policy, while publication-policy.py's own doctrine already said named third parties stay off a public head. A partner lane is DERIVED (constellation register attaches a person AND estate classes it private), never a fourth list. Three finding classes: `row` (a task attributed to a partner lane), `content` (a row elsewhere naming one), and `slug` — the root cause, where the board still spells a lane with the owner it had before its 2026-07 transfer, so estate.yaml's private override misses and the organvm/** glob classes it governed_public. One repository, two names, opposite verdicts; estate.yaml:750 had written that hazard down in prose a month before it fired. Findings are baselined because agents never write the board (TABVLARIVS is its only logical writer) — the gate cannot fix what it finds, so it pins the known leak and fails on anything new. The baseline may only shrink."
 
+  check-board-consumers:
+    command: "python3 scripts/check-board-consumers.py"
+    # Any board reader can introduce the defect, so the scan is estate-wide over the two
+    # roots that hold them — the same `dir/*.py` + `dir/**/*.py` pairing check-effectors
+    # documents (this glob dialect's `**` needs an intervening segment, so the direct
+    # children need their own entry).
+    paths: ["scripts/check-board-consumers.py", "cli/src/limen/private_board.py", "scripts/_board_custody.py", "scripts/*.py", "cli/src/limen/*.py", "cli/src/limen/**/*.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: gitvs
+    note: "BOARD-CONSUMER ROUTING: the partition's quietest failure. After cutover the public tasks.yaml is the keeper's counts-only aggregate, so a reader that parses it directly does not crash — it gets `tasks: []` and reports ZERO work, and nothing anywhere turns red. Measured 2026-08-15 before the sweep: of 121 python files naming tasks.yaml, 62 honored LIMEN_TASKS (the beat points that at custody), 35 only mentioned it in prose, and 24 resolved a path and parsed it — 19 of those with raw yaml.safe_load, so no shared loader could have fixed them. Each of the 24 now reads through limen.private_board.operational_board_path (or _board_custody.board_path where cli/src is not already on sys.path), which returns the same path pre-cutover and hydrated private custody after. Four readers are baselined IN the predicate with their reason: the supply-registry loader (false positive), tabularius (takes board_path from its caller), check-operator-gates (must read the PUBLISHED ref to judge authorship), and validate-task-board (must parse exactly the file it is handed, and is shape-aware). That baseline is shrink-only: a stale entry fails, so it cannot accumulate permission. Companion to PrivateCustodyUnavailable inheriting BaseException — one declaration that a broad `except Exception` cannot absorb, instead of auditing every reader's handler."
+
   check-effectors:
     command: "python3 scripts/check-effectors.py"
     # Both `dir/*.py` AND `dir/**/*.py` for every scanned root: in this glob dialect `**` requires

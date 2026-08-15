@@ -129,6 +129,7 @@ research-adjudication-test
 research-adjudication-live-test
 check-params
 check-note-links
+check-board-consumers
 check-effectors' scripts/positioning-research-adjudication.py
 
 expect research-adjudication-live-input-change 'syntax-changed
@@ -150,6 +151,7 @@ direct-main-writer-contract
 tasks-parse
 check-params
 check-note-links
+check-board-consumers
 check-effectors
 ruff-lint
 ruff-format
@@ -192,6 +194,7 @@ direct-main-writer-contract
 enactment-test
 check-params
 check-note-links
+check-board-consumers
 check-effectors' scripts/enactment-audit.py
 
 expect board-change 'syntax-changed
@@ -312,6 +315,7 @@ direct-main-writer-contract
 positioning-foundry-technical-readiness-test
 check-params
 check-note-links
+check-board-consumers
 check-effectors' scripts/positioning-foundry-preflight.py
 
 expect resolver-change 'syntax-changed
@@ -324,6 +328,7 @@ verify-ci-hardening-test
 check-params
 check-gates
 check-note-links
+check-board-consumers
 check-effectors' scripts/verify.py
 
 expect parallel-verifier-change 'syntax-changed
@@ -340,6 +345,7 @@ direct-main-writer-contract
 tasks-parse
 check-params
 check-note-links
+check-board-consumers
 check-effectors
 ruff-lint
 ruff-format

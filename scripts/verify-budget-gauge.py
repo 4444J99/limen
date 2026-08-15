@@ -31,6 +31,7 @@ trust ∈ {measured, proxy, calibrated, estimate, unmodeled, unknown}. That sing
 what a controller should steer on; trust decides how conservatively to read it. (`calibrated`
 = a real windowed numerator over a cap anchored to a one-time /status observation.)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -77,9 +78,7 @@ def _window_label_from_minutes(value: object) -> str | None:
 def _load_default_limits() -> dict:
     """The tracked source of truth: _DEFAULT_LIMITS in usage-telemetry.py (loaded without
     importing the package, since the filename has a hyphen)."""
-    spec = importlib.util.spec_from_file_location(
-        "usage_telemetry", str(ROOT / "scripts" / "usage-telemetry.py")
-    )
+    spec = importlib.util.spec_from_file_location("usage_telemetry", str(ROOT / "scripts" / "usage-telemetry.py"))
     if not spec or not spec.loader:  # pragma: no cover - environment guard
         return {}
     mod = importlib.util.module_from_spec(spec)
@@ -108,10 +107,13 @@ def _load_board_caps() -> dict:
     except ModuleNotFoundError:
         return {}
     try:
-        data = yaml.safe_load(path.read_text()) or {}
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        data = yaml.safe_load(operational_board_path(path).read_text()) or {}
     except Exception:
         return {}
-    budget = (((data.get("portal") or {}).get("budget")) or {})
+    budget = ((data.get("portal") or {}).get("budget")) or {}
     return dict(budget.get("per_agent") or {})
 
 
@@ -135,6 +137,7 @@ def codex_live_rate_limits() -> dict:
     newest session's last such event. This is a real, self-updating, two-window fuel gauge — no
     fictional cap, no /status paste, never stale. Returns {} if none found (fail-open)."""
     import glob
+
     base = os.path.expanduser("~/.codex/sessions")
     files = glob.glob(f"{base}/**/rollout-*.jsonl", recursive=True)
     if not files:
@@ -224,44 +227,67 @@ def audit() -> dict:
         trust = _trust_of(e)
         plane = e.get("plane", "fleet" if e else "?")
         pool = e.get("pool")
-        rows.append({
-            "lane": lane, "unit": unit, "cap": cap, "window": window,
-            "trust": trust, "plane": plane, "pool": pool,
-            "board_cap": board.get(lane),
-            "used_percent": e.get("used_percent"),
-            "weekly_used_percent": e.get("weekly_used_percent"),
-        })
+        rows.append(
+            {
+                "lane": lane,
+                "unit": unit,
+                "cap": cap,
+                "window": window,
+                "trust": trust,
+                "plane": plane,
+                "pool": pool,
+                "board_cap": board.get(lane),
+                "used_percent": e.get("used_percent"),
+                "weekly_used_percent": e.get("weekly_used_percent"),
+            }
+        )
 
         # --- FICTIONAL-CAP: a token lane whose cap the controller reads as infinite ---
         if unit == "tokens" and isinstance(cap, (int, float)) and cap >= _FICTIONAL_TOKEN_CAP:
             sev = "warn" if trust in ("estimate", "unmodeled") else "error"
-            finding(sev, "FICTIONAL-CAP", lane,
-                    f"token lane steered by a {cap:,}-token cap (trust={trust}); a runway "
-                    f"controller reads this as ~infinite headroom and never sheds early",
-                    {"cap": cap, "trust": trust, "window": window})
+            finding(
+                sev,
+                "FICTIONAL-CAP",
+                lane,
+                f"token lane steered by a {cap:,}-token cap (trust={trust}); a runway "
+                f"controller reads this as ~infinite headroom and never sheds early",
+                {"cap": cap, "trust": trust, "window": window},
+            )
 
         # --- UNTRUSTED-CAP: any binding gate on an untrusted number ---
         if trust in ("estimate", "unknown", "unmodeled") and cap is not None:
-            finding("warn" if trust != "unknown" else "error", "UNTRUSTED-CAP", lane,
-                    f"cap {cap} is trust={trust}; an untrusted cap must bind PESSIMISTICALLY "
-                    f"(shed earlier), and its untrustedness must be machine-readable",
-                    {"cap": cap, "trust": trust, "source": e.get("source")})
+            finding(
+                "warn" if trust != "unknown" else "error",
+                "UNTRUSTED-CAP",
+                lane,
+                f"cap {cap} is trust={trust}; an untrusted cap must bind PESSIMISTICALLY "
+                f"(shed earlier), and its untrustedness must be machine-readable",
+                {"cap": cap, "trust": trust, "source": e.get("source")},
+            )
 
         # --- WEEKLY-BLIND: window the reset engine cannot parse ---
         if window and not _PARSEABLE_WINDOW.search(str(window)):
-            finding("error", "WEEKLY-BLIND", lane,
-                    f"window {window!r} is not parseable by _window_hours() → silently "
-                    f"treated as 24h", {"window": window})
+            finding(
+                "error",
+                "WEEKLY-BLIND",
+                lane,
+                f"window {window!r} is not parseable by _window_hours() → silently treated as 24h",
+                {"window": window},
+            )
 
     # --- DRIFT: same lane, two different run caps in board vs gauge ---
     for lane in lanes:
         e, bc = gauge.get(lane, {}), board.get(lane)
         gc = e.get("limit")
         if bc is not None and gc is not None and e.get("unit") == "runs" and bc != gc:
-            finding("warn", "DRIFT", lane,
-                    f"board per_agent cap={bc} but gauge cap={gc} (both 'runs'); reconcile the "
-                    f"semantics (per-beat board cap vs vendor per-window cap) or the numbers lie",
-                    {"board_cap": bc, "gauge_cap": gc})
+            finding(
+                "warn",
+                "DRIFT",
+                lane,
+                f"board per_agent cap={bc} but gauge cap={gc} (both 'runs'); reconcile the "
+                f"semantics (per-beat board cap vs vendor per-window cap) or the numbers lie",
+                {"board_cap": bc, "gauge_cap": gc},
+            )
 
     # --- SHARED-POOL: pools with >1 member and no pool-level cap ---
     pools: dict[str, list[str]] = {}
@@ -275,31 +301,49 @@ def audit() -> dict:
         # A pool with a token lane is shared with the app tier AND interactive use (unmetered
         # here) — so it needs a real pool_cap even when only one FLEET lane sits in it.
         if pool_cap is None and (has_token or len(members) > 1):
-            finding("error", "SHARED-POOL", pool,
-                    f"lanes {members} draw on one subscription pool (also shared with the app "
-                    f"tier + interactive use) but there is no pool_cap; the pool overruns while "
-                    f"each lane reads 'fine'", {"members": members})
+            finding(
+                "error",
+                "SHARED-POOL",
+                pool,
+                f"lanes {members} draw on one subscription pool (also shared with the app "
+                f"tier + interactive use) but there is no pool_cap; the pool overruns while "
+                f"each lane reads 'fine'",
+                {"members": members},
+            )
     # The two account-level pools that MUST exist (defensible from auth: same subscription).
     for pool, expect in {"claude-plan": "claude", "openai-plan": "codex"}.items():
         if not any(gauge.get(l, {}).get("pool") == pool for l in lanes):
-            finding("warn", "SHARED-POOL-MISSING", pool,
-                    f"no lane declares pool={pool!r}; {expect}-cli, its app tier, and interactive "
-                    f"use share ONE subscription window but nothing links them",
-                    {})
+            finding(
+                "warn",
+                "SHARED-POOL-MISSING",
+                pool,
+                f"no lane declares pool={pool!r}; {expect}-cli, its app tier, and interactive "
+                f"use share ONE subscription window but nothing links them",
+                {},
+            )
 
     # --- APP-PLANE: the $200/mo app allotments as a distinct class ---
     if not any(r["plane"] == "app" for r in rows):
-        finding("warn", "APP-PLANE", "-",
-                "no lane has plane='app'; deep-research / scheduled-task allotments on the "
-                "ChatGPT-Pro and Claude-Max subscriptions are unmodeled → invisible spend", {})
+        finding(
+            "warn",
+            "APP-PLANE",
+            "-",
+            "no lane has plane='app'; deep-research / scheduled-task allotments on the "
+            "ChatGPT-Pro and Claude-Max subscriptions are unmodeled → invisible spend",
+            {},
+        )
 
     errors = [f for f in findings if f["severity"] == "error"]
     warns = [f for f in findings if f["severity"] == "warn"]
     status = "true" if not findings else ("silent-debt" if errors else "declared-debt")
     exit_code = 0 if not findings else (2 if errors else 1)
     return {
-        "status": status, "exit_code": exit_code, "rows": rows,
-        "findings": findings, "errors": len(errors), "warnings": len(warns),
+        "status": status,
+        "exit_code": exit_code,
+        "rows": rows,
+        "findings": findings,
+        "errors": len(errors),
+        "warnings": len(warns),
     }
 
 
@@ -314,8 +358,10 @@ def _print_human(report: dict) -> None:
         else:
             cap = f"{r['cap']:,}" if isinstance(r["cap"], (int, float)) else str(r["cap"])
         bc = "" if r["board_cap"] is None else str(r["board_cap"])
-        print(f"{r['lane']:<12}{str(r['plane']):<8}{str(r['unit']):<8}{cap:>16}  "
-              f"{str(r['window']):<12}{r['trust']:<10}{str(r['pool'] or ''):<12}{bc:>7}")
+        print(
+            f"{r['lane']:<12}{str(r['plane']):<8}{str(r['unit']):<8}{cap:>16}  "
+            f"{str(r['window']):<12}{r['trust']:<10}{str(r['pool'] or ''):<12}{bc:>7}"
+        )
     print(f"\n=== FINDINGS ({report['errors']} error · {report['warnings']} warn) ===")
     order = {"error": 0, "warn": 1}
     for f in sorted(report["findings"], key=lambda x: order.get(x["severity"], 9)):

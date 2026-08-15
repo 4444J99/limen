@@ -9,6 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 from limen.intake import contract_fields, github_issue_contract
+from limen.private_board import operational_board_path
 from limen.tabularius import pending_task_ids, submit_task_upsert
 
 TASKS_YAML = Path(__file__).resolve().parent.parent / "tasks.yaml"
@@ -320,7 +321,9 @@ def next_id(tasks, pending_ids=None):
 
 
 def main():
-    with open(TASKS_YAML) as f:
+    # Read through the resolver: post-partition the public projection is a counts-only
+    # aggregate, and seeding ids off an empty board would collide with live work.
+    with open(operational_board_path(TASKS_YAML)) as f:
         data = yaml.safe_load(f)
 
     tasks = data.setdefault("tasks", [])

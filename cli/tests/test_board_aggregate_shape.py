@@ -101,6 +101,36 @@ def test_validator_can_pin_an_expected_shape(tmp_path: Path) -> None:
     assert "expected the aggregate board shape" in result.stderr
 
 
+def test_custody_error_survives_a_readers_broad_except(tmp_path: Path) -> None:
+    """A generic `except Exception` must not turn missing custody into "0 tasks".
+
+    Board readers across the estate wrap their parse in a broad handler that degrades to
+    an empty result. That is sane for a transiently unreadable file and catastrophic for
+    an aggregate with no custody: degrading reports zero work as truth. Measured against
+    the simulated cutover on 2026-08-15, omni-view.py printed `board 0 tasks` with exit 0
+    while PrivateCustodyUnavailable was still a RuntimeError.
+    """
+
+    board = tmp_path / "tasks.yaml"
+    board.write_text(AGGREGATE_DOC, encoding="utf-8")
+    reader = tmp_path / "reader.py"
+    reader.write_text(
+        "import sys\n"
+        f"sys.path.insert(0, {str(ROOT / 'cli' / 'src')!r})\n"
+        "from limen.private_board import operational_board_path\n"
+        "try:\n"
+        f"    operational_board_path({str(board)!r})\n"
+        "except Exception:\n"
+        "    print('SWALLOWED: reported an empty board')\n",
+        encoding="utf-8",
+    )
+
+    result = _run([str(reader)], {"LIMEN_PRIVATE_ROOT": str(tmp_path / ".limen-private")})
+    assert "SWALLOWED" not in result.stdout, "a broad except must not absorb missing custody"
+    assert result.returncode != 0
+    assert "limen board hydrate" in result.stderr
+
+
 def test_heal_board_treats_the_aggregate_as_lawful_not_collapsed(tmp_path: Path) -> None:
     """Without this arm heal-board 'restores' the partition away from git HEAD every beat."""
 
