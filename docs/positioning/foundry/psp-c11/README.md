@@ -1,8 +1,10 @@
 # PSP-C11 governed-foundry handoff preflight
 
-Status: **PREPARED/PREFLIGHT**. This package is reversible, public-safe, and deliberately unable to
-close PSP-P13 or any W01-W09 leaf. It does not select or contact an operator, choose binding terms,
-grant access, move custody, sign anything, spend, or claim an observed pilot.
+Status: **PREPARED / NO TRANSFER**. This package is reversible and public-safe. PSP-P13-W01 has an
+accepted candidate denominator, and the W03 technical-readiness audit records conservative
+acceptance evidence without making any candidate transferable. It does not select or contact an
+operator, choose binding terms, grant access, move custody, sign anything, spend, or claim an
+observed pilot.
 
 Reconciled 2026-08-13 against the runtime provider catalog contract. The registry pins capability,
 reasoning, effect, and effort requirements while provider/model selection remains live and fails
@@ -93,13 +95,100 @@ a finite experiment and is parked after two bounded failures rather than kept al
 
 ## W03 — Technical readiness, custody, and maintenance risk
 
-The current screen proves only repository ownership and metadata facts. It never upgrades metadata
-into a build, test, deploy, security, data, IP, observability, return, or maintenance receipt.
+[`technical-readiness-audit.json`](technical-readiness-audit.json) is locked to the accepted W01
+receipt URL, its canonical issue-comment receipt digest, accepted head, acceptance digest, and
+private-inclusive candidate identity digest. The
+validator recomputes that identity digest from the live accepted W01 candidate identities and also
+derives the complete accepted candidate projection from the immutable snapshot at the recorded W01
+accepted revision. It compares that revision-bound projection with the working snapshot across
+identity, visibility, repository, lifecycle, fork, demand, economics, blocker, and source
+transfer-eligibility fields; no working-tree projection digest is trusted. Its denominator is exactly 62
+candidates: 54 public rows and eight opaque private
+rows. Every public row records the currently observed 40-hex repository head and an exact-schema
+result for build, test, deploy, documentation, security, data custody, IP custody,
+observability/return, and maintenance. Every private row exposes only its accepted opaque
+identifier, a restricted state, a generic accountable owner role, score zero, and
+`transfer_eligible: false`.
+
+[`verify_technical_readiness.py`](verify_technical_readiness.py) derives its weights from
+`foundry-preflight-contract.json` and its candidate set from
+`product-candidate-snapshot.json`. It rejects duplicate JSON members, candidate or source-lock
+drift, unpinned evidence, metadata promoted to build/test/deploy proof, score or summary tampering,
+unowned blockers, private detail, private-name leakage, and transfer eligibility with any hard
+blocker. Live mode re-queries all public repository heads and scans the tracked public C11 package
+against private full names and unique private bare tokens held only in memory. That scan is
+case-insensitive and fail-closed on any non-UTF-8 tracked file: full `owner/repository` identities are checked in tracked file content and paths,
+while ambiguous bare names are checked only in tracked path names and components so ordinary prose
+cannot become a false identity disclosure.
+
+Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
+verified dimension requires a dimension-specific immutable receipt in the candidate repository or
+the trusted Limen receipt surface. The receipt may live at a later commit, avoiding a Git fixed
+point, but its `tested_commit` must equal the candidate's observed head. Its relative output and
+artifact paths resolve at the receipt commit, must be distinct, and must match independently fetched
+SHA-256 digests. Trusted live validation also resolves the receipt's exact GitHub Actions
+`run_attempt` through the attempt-specific endpoint; its head, attempt, conclusion, predicate path,
+and completion time bind the tested commit, pass/fail semantics, and non-future receipt chronology.
+The same attempt must expose exactly one non-expired Actions evidence artifact whose repository-bound
+metadata, platform digest, creation window, and exact name bind the attempt-available output and
+artifact digests to that attempt. The later immutable receipt separately records the completion time
+and those independently resolved digests; its completion-time bytes are intentionally not part of the
+artifact name. Artifact discovery is fully paginated under a bounded ten-page ceiling in groups of
+at most eight listings and response batches of at most sixteen pages. Full pages bypass the shared
+JSON cache; each completed scan retains only total/scanned counts and at most two exact-name matches.
+The separate maintenance-funding provenance uses the same attempt-specific artifact rule.
+Self-authored commands or hashes, reused blobs,
+invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
+zero, while a verified failure requires a non-boolean nonzero integer plus an executed `failure` or
+`timed_out` workflow conclusion; skipped, cancelled, neutral, and other non-executed runs are not
+failure evidence. The top-level audit time and receipt chronology cannot be future-dated. A `high`
+or `critical` security class cannot be promoted to `verified_pass` or satisfy the security hard
+floor, and every recorded class must equal the classification in the independently fetched,
+exact-head assessment artifact. A homepage, default branch,
+recent push, or repository metadata never becomes build, test, runtime, security, custody, or
+maintenance proof. Blockers may be empty only after every hard
+floor named by the readiness contract is a verified pass, and every tracked blocker carries its
+candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
+dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
+unclassified additions as hard transfer blockers. `--require-cleared` accepts only the governed
+dimension blocker codes or the private-clearance code and rejects unknown codes before testing
+absence. An unresolved nested maintenance blocker must equal
+its canonical top-level blocker. Maintenance points require a named owner, a positive estimate no
+higher than the contract's 40-hour monthly maximum, and a response window no longer than the
+contract's 168-hour maximum; the response window must equal the value in the independently resolved
+technical receipt. The unique readiness dimensions must total exactly 100 points, and
+the transfer threshold is derived from the contract's governed technical-readiness minimum. The
+contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
+archived or parked candidate remains technically non-transferable regardless of evidence. A
+maintenance pass must independently resolve a distinct immutable funding receipt, funding artifact,
+and successful execution provenance. The parsed artifact must bind the receipt's funded capacity and
+the candidate's bounded maintenance estimate; the technical receipt, an owner, and an estimate cannot
+self-attest funding. Technical readiness alone never grants transfer eligibility: accepted E3+ demand,
+a canonical receipt-backed operator score meeting the contract minimum, approved terms, downside-tested
+economics, funded maintenance, and tested return must all clear their governed floors. A live
+collection shares one 270-second deadline, an immutable-response cache, and bounded concurrent
+waves for immutable receipt/payload blobs and compact, fully paginated attempt-specific Actions provenance. One batched
+GraphQL observation independently resolves each recorded public head as an immutable commit in its
+own repository, including blocked rows, without turning PR acceptance into a moving-branch gate.
+The call ceiling is derived from the exact verified-receipt surface, capped by the
+accepted 54-public-candidate denominator and worst-case Contents-to-Git-blob fallbacks, so repeated
+lookups cannot restart the gate clock. Blob responses are processed in bounded non-cached chunks;
+decoded evidence lives in one immutable blob cache with a complete 64 MiB aggregate ceiling.
+Contents API evidence above 1 MiB resolves through its exact Git blob SHA with a 100 MiB fail-closed
+ceiling; size and Git-object digest must match before receipt SHA-256 validation.
+A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
+head resets that row to unresolved instead of erasing unrelated candidate evidence. A proposed
+private clearance is tracked only as `clearance_pending_live`, with an opaque digest, its blocker,
+score zero, and `transfer_eligible: false`. Deterministic scoped CI can validate that explicit
+deferral but cannot self-attest `cleared`; trusted private-inclusive live validation must confirm the
+matching owner-controlled custody receipt. Once confirmed, the candidate-bound `--require-cleared`
+predicate truthfully passes for that one private evidence gate while the tracked public-safe row remains
+deferred and non-transferable. The current accepted evidence is therefore conservative:
+all 62 candidates remain non-transferable.
 
 | Screen result | Candidates |
 | --- | ---: |
-| Public diligence required | 53 |
-| Public parked because archived | 1 |
+| Public blocked pending exact-head diligence | 54 |
 | Private evidence withheld | 8 |
 | Fully transferable | 0 |
 
@@ -108,6 +197,22 @@ data/privacy, IP/custody, observability/return, and maintenance. Missing evidenc
 unresolved IP, contributor, data, credential, ownership, or rollback boundary is a hard transfer
 blocker. The public snapshot withholds every private candidate's state, fork, demand, readiness,
 economics, and custody detail behind an opaque per-snapshot identifier.
+
+The `positioning-foundry-technical-readiness-test` gate in
+`institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
+accepted W01 inputs as a deterministic scoped acceptance surface, including the foundry-handoff
+regression suite. The scoped `positioning-foundry-technical-readiness-public-live` predicate resolves
+immutable public evidence blobs and run provenance plus the canonical W01 marked receipt, then
+authenticates every recorded public head as an immutable repository commit without enumerating private
+repositories. Its owning PR workflow
+grants only `actions: read`, `contents: read`, and `issues: read`; no write permission is introduced.
+The whole-only
+`positioning-foundry-technical-readiness-live` predicate retains private-inclusive
+identity, private-clearance custody, and private-leak checks under explicitly armed
+`LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator
+evidence for the private estate. The tracked privacy scan includes case-insensitive HTTPS and SSH
+clone identities with or without the optional `.git` suffix, but still enumerates only Git-tracked
+public C11 paths.
 
 ## W04 — Domain-operator profile
 
@@ -232,8 +337,11 @@ python3 -B scripts/positioning-foundry-handoff.py --json
 python3 -B scripts/positioning-foundry-handoff.py --records --json
 python3 -B scripts/positioning-foundry-handoff.py --drills --json
 python3 -B -m unittest scripts.tests.test_positioning_foundry_preflight scripts.tests.test_positioning_foundry_handoff
+python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py
+python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json
 ```
 
-Formal leaf predicates remain intentionally deferred. After predecessors close, a fresh correctly
-assigned Codex leaf must obtain broker authority, refresh exact heads, prove its non-circular
-underlying predicate, attach a structured receipt, and only then run `--verify-work` for that leaf.
+The bare W03 live command above is the non-circular PSP-P13-W03 acceptance predicate. It remains
+read-only and reports `external_effects: []`. Only after sanctioned merge and a marked #2267
+receipt may the conductor run `python3 scripts/positioning-program.py --verify-work PSP-P13-W03`;
+no other leaf or phase closes from this package.

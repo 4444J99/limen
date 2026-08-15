@@ -8,11 +8,17 @@ from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/positioning-foundry-handoff.py"
+VERIFY_SCRIPT = ROOT / "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
 SPEC = importlib.util.spec_from_file_location("psp_c11_handoff", SCRIPT)
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
+VERIFY_SPEC = importlib.util.spec_from_file_location("psp_c11_verify", VERIFY_SCRIPT)
+assert VERIFY_SPEC and VERIFY_SPEC.loader
+VERIFY = importlib.util.module_from_spec(VERIFY_SPEC)
+sys.modules[VERIFY_SPEC.name] = VERIFY
+VERIFY_SPEC.loader.exec_module(VERIFY)
 
 
 class HandoffTest(unittest.TestCase):
@@ -69,6 +75,14 @@ class HandoffTest(unittest.TestCase):
             self.assertEqual([], row["external_effects"])
             self.assertEqual("owner_custody_unchanged", row["authority_state"])
 
+    def test_public_lifecycle_fields_are_source_locked(self):
+        changed = copy.deepcopy(self.snapshot)
+        row = next(candidate for candidate in changed["candidates"] if candidate["visibility"] == "public")
+        row["current_state"] = "archived"
+        row["preflight_disposition"] = "experiment"
+        with self.assertRaisesRegex(VERIFY.AuditError, "accepted public candidate lifecycle binding is invalid"):
+            VERIFY.candidate_projection_digest(changed)
+
     def test_c02_comparison_and_private_withholding(self):
         rows = self.package["classification"]["records"]
         public = [item for item in rows if item["visibility"] == "public"]
@@ -120,6 +134,22 @@ class HandoffTest(unittest.TestCase):
         with mock.patch.object(MODULE.GITVS, "classify_repo", return_value="portal_public") as classify_repo:
             MODULE.classify(row, self.contract, {}, {"grants": {}})
         self.assertIs(classify_repo.call_args.args[2]["fork"], True)
+
+    def test_public_candidate_current_state_and_preflight_disposition_affect_decision_basis(self):
+        row = {
+            "candidate_id": "candidate-x",
+            "visibility": "public",
+            "repository": "owner/example",
+            "current_state": "archived",
+            "preflight_disposition": "park",
+            "fork": False,
+            "demand": {"tier": "E3", "score": 60, "evidence": ["x"], "next_experiment": "n", "stop_condition": "s"},
+            "readiness": {"band": "diligence_required", "metadata_screen_score": 40, "custody_risk": "r"},
+            "economics": {"status": "ok"},
+        }
+        classification = {"comparison": "aligned_product"}
+        decision = MODULE.decision(row, classification, self.contract)
+        self.assertEqual("park", decision["decision"])
 
     def test_decision_tamper(self):
         value = copy.deepcopy(self.package)

@@ -195,6 +195,8 @@
   "readiness_model": {
     "score_range": [0, 100],
     "metadata_screen_cap": 30,
+    "maintenance_estimate_hours_per_month_maximum": 40,
+    "maintenance_response_window_hours_maximum": 168,
     "dimensions": [
       {"id": "build_test", "weight": 20, "required_proof": "Exact-head build and test receipt."},
       {"id": "deploy_runtime", "weight": 15, "required_proof": "Dated deployment or runtime receipt; homepage presence is intent only."},
@@ -203,7 +205,7 @@
       {"id": "data_privacy", "weight": 15, "required_proof": "Data classes, retention, deletion, and processing boundary."},
       {"id": "ip_custody", "weight": 10, "required_proof": "Ownership, license, contributor, and repository-custody chain."},
       {"id": "observability_return", "weight": 10, "required_proof": "Telemetry plus tested rollback, revocation, and restore route."},
-      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, and bounded maintenance estimate."}
+      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, bounded maintenance estimate, and independently resolved immutable funding receipt, artifact, and successful execution provenance before transfer."}
     ],
     "metadata_screen": [
       "live owned repository resolution",
@@ -216,6 +218,8 @@
     "rules": [
       "Missing evidence scores zero; absence is never upgraded by inference.",
       "The metadata screen is discovery evidence and cannot claim reproducible build, test, deploy, security, or custody readiness.",
+      "A later evidence receipt counts only when a complete, bounded, fully paginated run-artifact scan contains exactly one non-expired Actions artifact created within the recorded run attempt whose repository-bound metadata and name bind the attempt-available output and artifact digests; full listing pages cannot enter the long-lived cache, only completeness counts and bounded exact matches, and completion-time receipt bytes cannot be an artifact-name dependency.",
+      "Live evidence collection fails closed above one shared 64 MiB aggregate decoded-blob budget and never retains large base64 fallback responses in the immutable JSON cache.",
       "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
     ]
   },
