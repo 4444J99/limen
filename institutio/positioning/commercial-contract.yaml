@@ -653,6 +653,7 @@ offer_ladder:
     claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
 
 qualification:
+  default_route: human_review
   routing_priority: [human_review, decline, recruiter, partnership_review, retainer, install, audit]
   rules:
     - id: guarded_exception
@@ -722,6 +723,9 @@ qualification:
     - id: emergency_takeover_request
       facts: {implementation_needed: true, organization_takeover: true, emergency_on_call: true}
       expected_route: decline
+    - id: insufficient_evidence_requires_review
+      facts: {insufficient_evidence: true}
+      expected_route: human_review
   decline_language: >-
     This request needs broader authority or a different operating model than the bounded work offered
     here. I will not imply a safe scope where the sponsor, evidence, ownership, or handoff conditions

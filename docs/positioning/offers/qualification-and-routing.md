@@ -29,6 +29,8 @@
 6. `install`
 7. `audit`
 
+**Default route:** `human_review`. Unmatched or insufficient-evidence requests remain in human review.
+
 Rules are evaluated in this priority order; the first match is the route.
 
 ## Routing rules
@@ -55,6 +57,7 @@ Rules are evaluated in this priority order; the first match is the route.
 | `operator_terms_requested_early` | `partnership_interest=true`, `product_readiness_evidence=true`, `qualified_operator=true`, `legal_terms=true` | `human_review` |
 | `rescue_without_sponsor` | `diagnosis_needed=true`, `read_access=true`, `bounded_initiative=true`, `no_sponsor=true` | `decline` |
 | `emergency_takeover_request` | `implementation_needed=true`, `organization_takeover=true`, `emergency_on_call=true` | `decline` |
+| `insufficient_evidence_requires_review` | `insufficient_evidence=true` | `human_review` |
 
 ## Decline boundary
 

@@ -427,6 +427,8 @@ def validate_contract(data: dict[str, Any]) -> list[str]:
 
     qualification = data.get("qualification", {})
     rules = qualification.get("rules", [])
+    default_route = qualification.get("default_route")
+    _require(errors, default_route == "human_review", "qualification default route must be human_review")
     priorities = [rule.get("priority") for rule in rules]
     _require(errors, len(priorities) == len(set(priorities)), "qualification priorities must be unique")
     for scenario in qualification.get("scenarios", []):
@@ -434,13 +436,12 @@ def validate_contract(data: dict[str, Any]) -> list[str]:
             (rule for rule in rules if _rule_matches(rule, scenario.get("facts", {}))),
             key=lambda rule: rule["priority"],
         )
-        _require(errors, bool(matches), f"scenario {scenario.get('id')} has no qualification route")
-        if matches:
-            _require(
-                errors,
-                matches[0].get("route") == scenario.get("expected_route"),
-                f"scenario {scenario.get('id')} expected {scenario.get('expected_route')} but routed to {matches[0].get('route')}",
-            )
+        route = matches[0].get("route") if matches else default_route
+        _require(
+            errors,
+            route == scenario.get("expected_route"),
+            f"scenario {scenario.get('id')} expected {scenario.get('expected_route')} but routed to {route}",
+        )
         commercial_matches = [rule["route"] for rule in matches if rule.get("route") in PRIMARY_ROUTES]
         _require(
             errors,
