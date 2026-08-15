@@ -126,8 +126,11 @@ hard floor named by the readiness contract is a verified pass, and every tracked
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension; the contract's joint 20-point build/test dimension scores only when both receipts pass;
 and an accepted archived or parked candidate remains technically non-transferable regardless of
-evidence. The current accepted evidence is therefore conservative: all 62 candidates remain
-non-transferable.
+evidence. A live refresh preserves an accepted row only while its repository and exact head are
+unchanged; a moved head resets that row to unresolved instead of erasing evidence for unrelated
+candidates. Private clearance is represented only by an opaque digest and becomes live-valid only
+when the trusted operator supplies the matching owner-controlled custody receipt. The current
+accepted evidence is therefore conservative: all 62 candidates remain non-transferable.
 
 | Screen result | Candidates |
 | --- | ---: |
@@ -143,10 +146,13 @@ economics, and custody detail behind an opaque per-snapshot identifier.
 
 The `positioning-foundry-technical-readiness-test` gate in
 `institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
-accepted W01 inputs as a deterministic scoped acceptance surface. The separately registered
-`positioning-foundry-technical-readiness-live` predicate retains the private-inclusive identity,
-exact-head, and private-leak checks under explicitly armed `LIMEN_VERIFY_LIVE=1` whole verification.
-A repository-scoped Actions token is not accepted as operator evidence for the private estate.
+accepted W01 inputs as a deterministic scoped acceptance surface. The separately scoped
+`positioning-foundry-technical-readiness-public-live` predicate verifies current public heads,
+public evidence blobs, and the canonical W01 marked receipt with the ordinary PR token. The
+whole-only `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
+identity, private-clearance custody, and private-leak checks under explicitly armed
+`LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator
+evidence for the private estate.
 
 ## W04 — Domain-operator profile
 

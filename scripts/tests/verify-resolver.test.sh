@@ -57,6 +57,15 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
+# W03 changes always select both the deterministic owner gate and its public-only
+# current-head/blob rail; the private-inclusive live predicate remains whole-only.
+expect foundry-readiness-change 'syntax-changed
+diff-hygiene
+positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
+check-docs-exports
+check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
+
 expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
@@ -209,6 +218,7 @@ verify-parallel-test
 agent-docs
 github-estate-census-custody-test
 positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
@@ -219,8 +229,8 @@ positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
 
-# The W03 live collector is a static-gate input, but its private-inclusive live
-# predicate is whole-only and must never be selected under the PR Actions token.
+# The W03 collector is a static-gate input. Its public-only current-head predicate
+# is scoped, while its private-inclusive operator predicate remains whole-only.
 expect foundry-preflight-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract

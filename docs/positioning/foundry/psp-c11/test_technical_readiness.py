@@ -134,6 +134,33 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
 
+    def test_w01_acceptance_is_recomputed_and_live_receipt_is_bound(self) -> None:
+        self.assertEqual(MODULE.SOURCE_LOCK["w01_acceptance_sha256"], MODULE.accepted_w01_acceptance_digest())
+        receipt = {
+            "acceptance_sha256": MODULE.SOURCE_LOCK["w01_acceptance_sha256"],
+            "observed_heads": {"organvm/limen": MODULE.SOURCE_LOCK["w01_accepted_head"]},
+        }
+        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        verification = {
+            "status": "pass",
+            "work_id": "PSP-P13-W01",
+            "receipt_url": MODULE.SOURCE_LOCK["w01_receipt"],
+            "receipt_sha256": MODULE.hashlib.sha256(canonical).hexdigest(),
+        }
+        comment = {
+            "html_url": MODULE.SOURCE_LOCK["w01_receipt"],
+            "body": "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```",
+        }
+        with mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]):
+            MODULE.verify_w01_live_receipt()
+        receipt["acceptance_sha256"] = "0" * 64
+        comment["body"] = "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```"
+        with (
+            mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]),
+            self.assertRaisesRegex(MODULE.AuditError, "binding drifted"),
+        ):
+            MODULE.verify_w01_live_receipt()
+
     def test_public_head_and_live_head_are_exact(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.public_row(changed)
@@ -427,6 +454,53 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blocker"]["owner"] = "named-person"
         self.assertTrue(any("generic accountable owner role" in error for error in self.errors(changed)))
 
+    def test_private_clearance_requires_owner_controlled_opaque_receipt(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.private_row(changed)
+        candidate_id = row["candidate_id"]
+        digest = "a" * 64
+        row["readiness_status"] = "cleared"
+        row["blocker"] = None
+        row["clearance_receipt_sha256"] = digest
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        self.assertEqual([], self.errors(changed))
+        self.assertEqual([], MODULE.required_blocker_errors(changed, f"{candidate_id}:restricted_private_evidence"))
+        errors = MODULE.validate_audit(
+            changed,
+            self.snapshot,
+            self.contract,
+            private_clearance_receipts={},
+        )
+        self.assertTrue(any("owner-controlled custody" in error for error in errors))
+        self.assertEqual(
+            [],
+            MODULE.validate_audit(
+                changed,
+                self.snapshot,
+                self.contract,
+                private_clearance_receipts={candidate_id: digest},
+            ),
+        )
+
+    def test_live_refresh_preserves_only_unchanged_head_evidence(self) -> None:
+        previous = copy.deepcopy(self.audit)
+        row = self.public_row(previous)
+        row["build"] = {"state": "verified_pass", "evidence_url": self.receipt_url(row, "build")}
+        row["blockers"] = [blocker for blocker in row["blockers"] if blocker["code"] != "build_evidence_missing"]
+        previous["summary"] = MODULE.compute_summary(previous["candidates"])
+        heads = {
+            candidate["repository"]: candidate["observed_head"]
+            for candidate in self.audit["candidates"]
+            if candidate["visibility"] == "public"
+        }
+        refreshed = MODULE.build_audit(self.snapshot, heads, "2026-08-15T00:00:00Z", previous)
+        self.assertEqual("verified_pass", self.public_row(refreshed, row["candidate_id"])["build"]["state"])
+        heads[row["repository"]] = "0" * 40
+        refreshed = MODULE.build_audit(self.snapshot, heads, "2026-08-15T00:00:01Z", previous)
+        reset = self.public_row(refreshed, row["candidate_id"])
+        self.assertEqual("blocked_unverified", reset["build"]["state"])
+        self.assertTrue(any(blocker["code"] == "build_evidence_missing" for blocker in reset["blockers"]))
+
     def test_private_identity_leak_is_fail_closed_without_disclosure(self) -> None:
         errors = MODULE.validate_audit(
             self.audit,
@@ -451,6 +525,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
         registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
         static = registry["gates"]["positioning-foundry-technical-readiness-test"]
+        public_live = registry["gates"]["positioning-foundry-technical-readiness-public-live"]
         live = registry["gates"]["positioning-foundry-technical-readiness-live"]
         owning_paths = {
             "docs/positioning/foundry/psp-c11/technical-readiness-audit.json",
@@ -459,18 +534,49 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "scripts/positioning-foundry-preflight.py",
         }
         self.assertTrue(owning_paths.issubset(static["paths"]))
+        public_paths = owning_paths - {
+            "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
+            "scripts/positioning-foundry-preflight.py",
+        }
+        self.assertTrue(public_paths <= set(public_live["paths"]))
         self.assertTrue(
             owning_paths - {"docs/positioning/foundry/psp-c11/test_technical_readiness.py"} <= set(live["paths"])
         )
         self.assertNotIn("--live", static["command"])
         self.assertIn("test_technical_readiness.py", static["command"])
         self.assertIn("verify_technical_readiness.py", static["command"])
+        self.assertIn("--public-live", public_live["command"].split())
+        self.assertNotIn("--live", public_live["command"].split())
+        self.assertIsNot(public_live.get("scoped"), False)
         self.assertIs(live["scoped"], False)
-        self.assertIn("--live", live["command"])
+        self.assertIn("--live", live["command"].split())
         self.assertNotIn("ci_job", live)
         whole = (ROOT / "scripts/verify-whole.sh").read_text(encoding="utf-8")
         self.assertIn('if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]', whole)
         self.assertIn(live["command"], whole)
+
+    def test_public_live_mode_never_collects_private_operator_context(self) -> None:
+        heads = {
+            row["repository"]: row["observed_head"] for row in self.audit["candidates"] if row["visibility"] == "public"
+        }
+        argv = [str(SCRIPT), "--public-live", "--json"]
+        stdout = io.StringIO()
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(MODULE, "collect_public_heads", return_value=heads),
+            mock.patch.object(MODULE, "verify_w01_live_receipt"),
+            mock.patch.object(MODULE, "collect_live_evidence_receipts", return_value={}),
+            mock.patch.object(MODULE, "collect_live_context", side_effect=AssertionError("private census invoked")),
+            mock.patch.object(
+                MODULE,
+                "load_private_clearance_receipts",
+                side_effect=AssertionError("private custody invoked"),
+            ),
+            contextlib.redirect_stdout(stdout),
+        ):
+            result = MODULE.main()
+        self.assertEqual(0, result)
+        self.assertEqual("pass", json.loads(stdout.getvalue())["status"])
 
     def test_invalid_generated_live_audit_is_not_written(self) -> None:
         invalid = copy.deepcopy(self.audit)

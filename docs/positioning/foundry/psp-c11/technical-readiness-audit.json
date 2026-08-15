@@ -5894,6 +5894,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-001:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-001",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5907,6 +5908,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-002:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-002",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5920,6 +5922,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-003:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-003",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5933,6 +5936,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-004:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-004",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5946,6 +5950,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-005:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-005",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5959,6 +5964,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-006:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-006",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5972,6 +5978,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-007:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-007",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,
@@ -5985,6 +5992,7 @@
         "predicate": "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --require-cleared private-candidate-008:restricted_private_evidence --json"
       },
       "candidate_id": "private-candidate-008",
+      "clearance_receipt_sha256": null,
       "readiness_score": 0,
       "readiness_status": "restricted",
       "transfer_eligible": false,

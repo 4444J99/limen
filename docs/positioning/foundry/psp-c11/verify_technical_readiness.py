@@ -11,10 +11,13 @@ from __future__ import annotations
 import argparse
 import base64
 import collections
+import copy
 import datetime as dt
+import functools
 import hashlib
 import json
 import math
+import os
 import re
 import runpy
 import subprocess
@@ -75,6 +78,7 @@ PRIVATE_KEYS = {
     "visibility",
     "readiness_status",
     "blocker",
+    "clearance_receipt_sha256",
     "readiness_score",
     "transfer_eligible",
 }
@@ -134,6 +138,8 @@ HARD_FLOOR_RULE = "Any unresolved IP, data, credential, or rollback boundary mak
 HARD_FLOOR_DIMENSIONS = {"security", "data_custody", "ip_custody", "observability_return"}
 DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimension in DIMENSION_RECEIPT_TOKENS}
 GENERIC_PRIVATE_OWNER = "portfolio_owner"
+PRIVATE_CLEARANCE_SCHEMA = "limen.psp_p13_w03_private_clearances.v1"
+PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 
 
 class AuditError(RuntimeError):
@@ -345,6 +351,82 @@ def _graphql_heads(repositories: list[str]) -> dict[str, str]:
     return heads
 
 
+def collect_public_heads(snapshot: dict[str, Any]) -> dict[str, str]:
+    repositories = sorted(
+        row["repository"]
+        for row in snapshot.get("candidates", [])
+        if isinstance(row, dict) and row.get("visibility") == "public" and _is_nonblank_text(row.get("repository"))
+    )
+    if len(repositories) != SOURCE_LOCK["visibility"]["public"] or len(repositories) != len(set(repositories)):
+        raise AuditError("accepted public candidate repository set drifted")
+    return _graphql_heads(repositories)
+
+
+@functools.cache
+def accepted_w01_acceptance_digest() -> str:
+    try:
+        module = runpy.run_path(str(ROOT / "scripts/positioning-program.py"))
+        graph = module["index_program"](module["load_manifest"]())
+        packet = graph["work_by_id"]["PSP-P13-W01"]
+        return module["acceptance_digest"](packet)
+    except Exception as exc:
+        raise AuditError("accepted W01 acceptance digest cannot be recomputed") from exc
+
+
+def verify_w01_live_receipt() -> None:
+    verification = _run_json(["python3", "scripts/positioning-program.py", "--verify-work", "PSP-P13-W01", "--json"])
+    if (
+        verification.get("status") != "pass"
+        or verification.get("work_id") != "PSP-P13-W01"
+        or verification.get("receipt_url") != SOURCE_LOCK["w01_receipt"]
+        or not SHA64.fullmatch(str(verification.get("receipt_sha256") or ""))
+    ):
+        raise AuditError("accepted W01 marked receipt verification drifted")
+    comment = _run_json(["gh", "api", "repos/organvm/limen/issues/comments/5295999920"])
+    body = comment.get("body")
+    if comment.get("html_url") != SOURCE_LOCK["w01_receipt"] or not isinstance(body, str):
+        raise AuditError("accepted W01 marked receipt resolution drifted")
+    match = re.search(
+        r"<!--\s*positioning-receipt:PSP-P13-W01\s*-->\s*```json\s*(\{.*?\})\s*```",
+        body,
+        re.DOTALL,
+    )
+    if match is None:
+        raise AuditError("accepted W01 marked receipt block is missing")
+    try:
+        receipt = json.loads(match.group(1), object_pairs_hook=_object_without_duplicate_keys)
+    except (json.JSONDecodeError, AuditError) as exc:
+        raise AuditError("accepted W01 marked receipt block is invalid") from exc
+    canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if (
+        not isinstance(receipt, dict)
+        or receipt.get("acceptance_sha256") != SOURCE_LOCK["w01_acceptance_sha256"]
+        or (receipt.get("observed_heads") or {}).get("organvm/limen") != SOURCE_LOCK["w01_accepted_head"]
+        or hashlib.sha256(canonical).hexdigest() != verification["receipt_sha256"]
+    ):
+        raise AuditError("accepted W01 marked receipt binding drifted")
+
+
+def load_private_clearance_receipts() -> dict[str, str]:
+    configured = os.environ.get(PRIVATE_CLEARANCE_ENV)
+    if not configured:
+        return {}
+    path = Path(configured).expanduser()
+    try:
+        payload = load_json(path)
+    except AuditError as exc:
+        raise AuditError("private clearance custody receipt cannot be loaded") from exc
+    if set(payload) != {"schema_version", "receipts"} or payload.get("schema_version") != PRIVATE_CLEARANCE_SCHEMA:
+        raise AuditError("private clearance custody receipt schema drifted")
+    receipts = payload.get("receipts")
+    if not isinstance(receipts, dict) or any(
+        not OPAQUE_PRIVATE_ID.fullmatch(str(candidate_id)) or not SHA64.fullmatch(str(digest))
+        for candidate_id, digest in receipts.items()
+    ):
+        raise AuditError("private clearance custody receipt bindings are invalid")
+    return {str(candidate_id): str(digest) for candidate_id, digest in receipts.items()}
+
+
 def _private_identity_leaks(private_names: set[str], private_bare_names: set[str]) -> list[str]:
     names = {name.casefold() for name in private_names | private_bare_names if name}
     repository_character = r"A-Za-z0-9_.-"
@@ -496,7 +578,17 @@ def _blocked_dimension() -> dict[str, Any]:
     return {"state": "blocked_unverified", "evidence_url": None}
 
 
-def build_audit(snapshot: dict[str, Any], heads: dict[str, str], observed_at: str) -> dict[str, Any]:
+def build_audit(
+    snapshot: dict[str, Any],
+    heads: dict[str, str],
+    observed_at: str,
+    previous: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    previous_rows = {
+        row.get("candidate_id"): row
+        for row in (previous or {}).get("candidates", [])
+        if isinstance(row, dict) and _is_nonblank_text(row.get("candidate_id"))
+    }
     candidates: list[dict[str, Any]] = []
     for source in snapshot.get("candidates", []):
         if not isinstance(source, dict):
@@ -506,20 +598,25 @@ def build_audit(snapshot: dict[str, Any], heads: dict[str, str], observed_at: st
         if not _is_nonblank_text(candidate_id):
             raise AuditError("accepted candidate snapshot contains an invalid identity")
         if visibility == "private":
-            candidates.append(
-                {
-                    "candidate_id": candidate_id,
-                    "visibility": "private",
-                    "readiness_status": "restricted",
-                    "blocker": _blocker(
-                        candidate_id,
-                        "restricted_private_evidence",
-                        "Complete the restricted technical audit under owner-controlled custody.",
-                    ),
-                    "readiness_score": 0,
-                    "transfer_eligible": False,
-                }
-            )
+            previous_row = previous_rows.get(candidate_id)
+            if isinstance(previous_row, dict) and previous_row.get("visibility") == "private":
+                candidates.append(copy.deepcopy(previous_row))
+            else:
+                candidates.append(
+                    {
+                        "candidate_id": candidate_id,
+                        "visibility": "private",
+                        "readiness_status": "restricted",
+                        "blocker": _blocker(
+                            candidate_id,
+                            "restricted_private_evidence",
+                            "Complete the restricted technical audit under owner-controlled custody.",
+                        ),
+                        "clearance_receipt_sha256": None,
+                        "readiness_score": 0,
+                        "transfer_eligible": False,
+                    }
+                )
             continue
         repository = source.get("repository")
         if not _is_nonblank_text(repository) or repository not in heads:
@@ -567,32 +664,40 @@ def build_audit(snapshot: dict[str, Any], heads: dict[str, str], observed_at: st
                 "Name a maintainer and record a bounded maintenance estimate.",
             ),
         ]
-        candidates.append(
-            {
-                "candidate_id": candidate_id,
-                "visibility": "public",
-                "repository": repository,
-                "observed_head": heads[repository],
-                "build": _blocked_dimension(),
-                "test": _blocked_dimension(),
-                "deploy": _blocked_dimension(),
-                "documentation": _blocked_dimension(),
-                "security": {"class": "unassessed", **_blocked_dimension()},
-                "data_custody": _blocked_dimension(),
-                "ip_custody": _blocked_dimension(),
-                "observability_return": _blocked_dimension(),
-                "maintenance": {
-                    "state": "blocked_unverified",
-                    "owner": None,
-                    "estimate_hours_per_month": None,
-                    "evidence_url": None,
-                    "blocker": blockers[-1],
-                },
-                "readiness_score": 0,
-                "blockers": blockers,
-                "transfer_eligible": False,
-            }
-        )
+        fresh = {
+            "candidate_id": candidate_id,
+            "visibility": "public",
+            "repository": repository,
+            "observed_head": heads[repository],
+            "build": _blocked_dimension(),
+            "test": _blocked_dimension(),
+            "deploy": _blocked_dimension(),
+            "documentation": _blocked_dimension(),
+            "security": {"class": "unassessed", **_blocked_dimension()},
+            "data_custody": _blocked_dimension(),
+            "ip_custody": _blocked_dimension(),
+            "observability_return": _blocked_dimension(),
+            "maintenance": {
+                "state": "blocked_unverified",
+                "owner": None,
+                "estimate_hours_per_month": None,
+                "evidence_url": None,
+                "blocker": blockers[-1],
+            },
+            "readiness_score": 0,
+            "blockers": blockers,
+            "transfer_eligible": False,
+        }
+        previous_row = previous_rows.get(candidate_id)
+        if (
+            isinstance(previous_row, dict)
+            and previous_row.get("visibility") == "public"
+            and previous_row.get("repository") == repository
+            and previous_row.get("observed_head") == heads[repository]
+        ):
+            candidates.append(copy.deepcopy(previous_row))
+        else:
+            candidates.append(fresh)
     result = {
         "schema_version": "limen.psp_p13_w03_technical_readiness.v1",
         "work_id": "PSP-P13-W03",
@@ -806,7 +911,11 @@ def _public_candidate_errors(
     return errors
 
 
-def _private_candidate_errors(row: dict[str, Any], expected: dict[str, Any]) -> list[str]:
+def _private_candidate_errors(
+    row: dict[str, Any],
+    expected: dict[str, Any],
+    private_clearance_receipts: dict[str, str] | None,
+) -> list[str]:
     candidate_id = str(expected.get("candidate_id") or "unknown")
     label = f"candidate {candidate_id}"
     if set(row) != PRIVATE_KEYS:
@@ -814,12 +923,22 @@ def _private_candidate_errors(row: dict[str, Any], expected: dict[str, Any]) -> 
     errors: list[str] = []
     if row.get("candidate_id") != candidate_id or not OPAQUE_PRIVATE_ID.fullmatch(candidate_id):
         errors.append(f"{label} must retain its opaque accepted identity")
-    if row.get("visibility") != "private" or row.get("readiness_status") != "restricted":
+    status = row.get("readiness_status")
+    if row.get("visibility") != "private" or status not in {"restricted", "cleared"}:
         errors.append(f"{label} private status drift")
-    errors.extend(_blocker_errors(row.get("blocker"), f"{label}.blocker", candidate_id))
     blocker = row.get("blocker")
-    if isinstance(blocker, dict) and blocker.get("owner") != GENERIC_PRIVATE_OWNER:
-        errors.append(f"{label} must expose only the generic accountable owner role")
+    clearance_digest = row.get("clearance_receipt_sha256")
+    if status == "restricted":
+        errors.extend(_blocker_errors(blocker, f"{label}.blocker", candidate_id))
+        if isinstance(blocker, dict) and blocker.get("owner") != GENERIC_PRIVATE_OWNER:
+            errors.append(f"{label} must expose only the generic accountable owner role")
+        if clearance_digest is not None:
+            errors.append(f"{label} restricted status cannot claim a clearance receipt")
+    elif status == "cleared":
+        if blocker is not None or not SHA64.fullmatch(str(clearance_digest or "")):
+            errors.append(f"{label} cleared status requires only an opaque clearance receipt digest")
+        if private_clearance_receipts is not None and private_clearance_receipts.get(candidate_id) != clearance_digest:
+            errors.append(f"{label} clearance receipt is not confirmed in owner-controlled custody")
     if row.get("readiness_score") != 0 or row.get("transfer_eligible") is not False:
         errors.append(f"{label} private readiness must remain zero and non-transferable")
     return errors
@@ -833,7 +952,7 @@ def compute_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
     )
     status_counts = collections.Counter(
         (
-            "restricted"
+            str(row.get("readiness_status") or "restricted")
             if row.get("visibility") == "private"
             else "transfer_ready"
             if row.get("transfer_eligible") is True
@@ -878,6 +997,7 @@ def validate_audit(
     private_leaks: list[str] | None = None,
     live_candidate_identity_sha256: str | None = None,
     live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None,
+    private_clearance_receipts: dict[str, str] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if set(audit) != ROOT_KEYS:
@@ -890,6 +1010,13 @@ def validate_audit(
         errors.append("audit observed_at must be an RFC3339 UTC timestamp")
     if audit.get("source_lock") != SOURCE_LOCK:
         errors.append("audit source_lock drift")
+    try:
+        w01_acceptance_digest = accepted_w01_acceptance_digest()
+    except AuditError as exc:
+        errors.append(str(exc))
+    else:
+        if w01_acceptance_digest != SOURCE_LOCK["w01_acceptance_sha256"]:
+            errors.append("accepted W01 acceptance digest drift")
     denominator = snapshot.get("candidate_denominator")
     if not isinstance(denominator, dict):
         errors.append("accepted candidate denominator is missing")
@@ -939,7 +1066,7 @@ def validate_audit(
                 if live_heads.get(repository) != row.get("observed_head"):
                     errors.append(f"candidate {expected.get('candidate_id')} observed_head drifted live")
         elif expected.get("visibility") == "private":
-            errors.extend(_private_candidate_errors(row, expected))
+            errors.extend(_private_candidate_errors(row, expected, private_clearance_receipts))
         else:
             errors.append(f"candidate {expected.get('candidate_id')} has invalid accepted visibility")
     summary = audit.get("summary")
@@ -997,7 +1124,9 @@ def _result(audit_path: Path, errors: list[str], audit: dict[str, Any] | None) -
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit", type=Path, default=AUDIT)
-    parser.add_argument("--live", action="store_true")
+    live_mode = parser.add_mutually_exclusive_group()
+    live_mode.add_argument("--live", action="store_true")
+    live_mode.add_argument("--public-live", action="store_true")
     parser.add_argument("--write", type=Path)
     parser.add_argument("--require-cleared")
     parser.add_argument("--json", action="store_true")
@@ -1015,17 +1144,26 @@ def main() -> int:
         leaks: list[str] | None = None
         live_identity_digest: str | None = None
         live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None
+        private_clearance_receipts: dict[str, str] | None = None
         if args.require_cleared and not args.live:
             raise AuditError("--require-cleared requires --live")
         if args.live:
             heads, leaks, live_identity_digest = collect_live_context(snapshot)
+            private_clearance_receipts = load_private_clearance_receipts()
+            verify_w01_live_receipt()
+        elif args.public_live:
+            heads = collect_public_heads(snapshot)
+            verify_w01_live_receipt()
         if write_path is not None:
             if not args.live or heads is None:
                 raise AuditError("--write requires --live")
+            previous_path = write_path if write_path.exists() else audit_path
+            previous = load_json(previous_path) if previous_path.exists() else None
             generated = build_audit(
                 snapshot,
                 heads,
                 dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+                previous,
             )
             live_receipts = collect_live_evidence_receipts(generated)
             errors = validate_audit(
@@ -1036,6 +1174,7 @@ def main() -> int:
                 private_leaks=leaks,
                 live_candidate_identity_sha256=live_identity_digest,
                 live_receipts=live_receipts,
+                private_clearance_receipts=private_clearance_receipts,
             )
             errors.extend(required_blocker_errors(generated, args.require_cleared))
             if errors:
@@ -1047,7 +1186,7 @@ def main() -> int:
             print(json.dumps(payload, sort_keys=True) if args.json else "technical-readiness: PASS")
             return 0
         audit = load_json(audit_path)
-        if args.live:
+        if args.live or args.public_live:
             live_receipts = collect_live_evidence_receipts(audit)
         errors = validate_audit(
             audit,
@@ -1057,6 +1196,7 @@ def main() -> int:
             private_leaks=leaks,
             live_candidate_identity_sha256=live_identity_digest,
             live_receipts=live_receipts,
+            private_clearance_receipts=private_clearance_receipts,
         )
         errors.extend(required_blocker_errors(audit, args.require_cleared))
         payload = _result(audit_path, errors, audit)
