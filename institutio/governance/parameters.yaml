@@ -3120,7 +3120,13 @@ parameters:
     env: LIMEN_PRIVATE_TASKS
     self_update: none
     owner: vigilia
-    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty reads the configured public projection; never point this at public tasks.yaml."
+    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty no longer means 'read the public file unconditionally': limen.private_board.operational_board_path() DERIVES custody from the public projection's shape, so an aggregate public board resolves to $LIMEN_PRIVATE_ROOT/board/canonical.yaml (and raises PrivateCustodyUnavailable when that has never been hydrated). This variable is the explicit override that outranks the derivation; never point it at public tasks.yaml."
+  LIMEN_BOARD_PRIVATE_HYDRATE:
+    default: "1"
+    env: LIMEN_BOARD_PRIVATE_HYDRATE
+    self_update: none
+    owner: vigilia
+    note: "Gate for the beat's hydrate-private-board rung (scripts/hydrate-private-board.sh), which refreshes off-repo private board custody from the authenticated keeper BEFORE any board reader runs. Self-arming: pre-cutover, while public tasks.yaml is still the full board, the rung exits 0 after one cheap shape probe (no network, no writes); it starts hydrating on the beat the partition cutover lands. Ordering matters — stale custody produces stale CAS preconditions and the keeper answers those with 'exact revision moved' (the 2026-08-15 release-stale wedge). Fail-open on keeper outages when custody already exists, fail-loud when the public board is an aggregate and custody has never been hydrated. 0 disables the rung."
   LIMEN_ISOLATION_PROMPT_GUARD:
     default: "1"
     env: LIMEN_ISOLATION_PROMPT_GUARD
