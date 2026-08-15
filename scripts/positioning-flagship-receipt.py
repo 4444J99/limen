@@ -44,6 +44,13 @@ REQUEST_FIELDS = {
 }
 PREDICATE_FIELDS = {"argv", "timeout_seconds", "max_output_bytes"}
 MAX_OUTPUT_BYTES = 10 * 1024 * 1024
+TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES = (
+    Path(sys.executable).resolve().parent,
+    Path("/opt/homebrew/bin"),
+    Path("/usr/local/bin"),
+    Path("/usr/bin"),
+    Path("/bin"),
+)
 DARWIN_PAUSED_EXEC = r"""
 import json
 import os
@@ -328,6 +335,59 @@ def _sanitized_git_environment() -> dict[str, str]:
         }
     )
     return environment
+
+
+def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str, str], dict[str, str]]:
+    """Resolve the contract command without consulting ambient PATH and remove runtime injection hooks."""
+    if not argv or not isinstance(argv[0], str) or not argv[0]:
+        raise ValueError("predicate executable must be nonblank text")
+    executable = Path(argv[0])
+    if executable.is_absolute():
+        candidate = executable
+    else:
+        if executable.name != argv[0] or "/" in argv[0] or "\\" in argv[0]:
+            raise ValueError("predicate executable must be an absolute path or a trusted executable name")
+        candidate = next(
+            (
+                directory / argv[0]
+                for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
+                if (directory / argv[0]).is_file() and os.access(directory / argv[0], os.X_OK)
+            ),
+            None,
+        )
+        if candidate is None:
+            raise OSError(f"trusted predicate executable is unavailable: {argv[0]}")
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise OSError(f"trusted predicate executable is unavailable: {argv[0]}") from exc
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise OSError(f"trusted predicate executable is not executable: {resolved}")
+
+    environment = _sanitized_git_environment()
+    for key in tuple(environment):
+        upper = key.upper()
+        if key == "PATH" or upper.startswith(("PYTHON", "NODE_", "NPM_", "PNPM_", "COREPACK_")):
+            environment.pop(key, None)
+    environment.update(
+        {
+            "PATH": os.pathsep.join(
+                str(directory) for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
+            ),
+            "PYTHONNOUSERSITE": "1",
+            "NPM_CONFIG_USERCONFIG": os.devnull,
+            "NPM_CONFIG_GLOBALCONFIG": os.devnull,
+        }
+    )
+    executable_sha256 = hashlib.sha256(resolved.read_bytes()).hexdigest()
+    return (
+        [str(resolved), *argv[1:]],
+        environment,
+        {
+            "resolved_executable": str(resolved),
+            "resolved_executable_sha256": executable_sha256,
+        },
+    )
 
 
 def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]:
@@ -674,6 +734,7 @@ def _run_darwin_bounded_predicate(
     cwd: Path,
     timeout_seconds: int,
     max_output_bytes: int,
+    environment: dict[str, str],
 ) -> tuple[int | None, bytes, str | None]:
     """Run a predicate in a unique launchd resource coalition and reap every member."""
     label = f"local.limen.flagship.{os.getpid()}.{time.monotonic_ns()}"
@@ -694,7 +755,7 @@ def _run_darwin_bounded_predicate(
         error_path = private_root / "spawn-error.json"
         output_path = private_root / "output.pipe"
         environment_path.write_text(
-            json.dumps(dict(os.environ), sort_keys=True, separators=(",", ":")),
+            json.dumps(environment, sort_keys=True, separators=(",", ":")),
             encoding="utf-8",
         )
         environment_path.chmod(0o600)
@@ -869,14 +930,18 @@ def _run_bounded_predicate(
     cwd: Path,
     timeout_seconds: int,
     max_output_bytes: int,
+    environment: dict[str, str] | None = None,
 ) -> tuple[int | None, bytes, str | None]:
     """Run a predicate without allowing stdout/stderr to grow beyond the declared memory budget."""
+    if environment is None:
+        argv, environment, _metadata = _prepare_predicate_invocation(argv)
     if platform.system() == "Darwin":
         return _run_darwin_bounded_predicate(
             argv,
             cwd=cwd,
             timeout_seconds=timeout_seconds,
             max_output_bytes=max_output_bytes,
+            environment=environment,
         )
     scope = _prepare_process_scope()
     process: subprocess.Popen[bytes] | None = None
@@ -889,6 +954,7 @@ def _run_bounded_predicate(
         process = subprocess.Popen(
             argv,
             cwd=cwd,
+            env=environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             start_new_session=True,
@@ -1077,12 +1143,15 @@ def run_request(
         return receipt
 
     predicate = request["predicate"]
+    predicate_runtime: dict[str, str] = {}
     try:
+        trusted_argv, predicate_environment, predicate_runtime = _prepare_predicate_invocation(predicate["argv"])
         exit_code, output, bounded_failure = _run_bounded_predicate(
-            predicate["argv"],
+            trusted_argv,
             cwd=repository_path,
             timeout_seconds=predicate["timeout_seconds"],
             max_output_bytes=predicate["max_output_bytes"],
+            environment=predicate_environment,
         )
         result = "current_pass" if exit_code == 0 and bounded_failure is None else "current_fail"
         errors = [bounded_failure] if bounded_failure else []
@@ -1146,6 +1215,7 @@ def run_request(
         "environment": {
             "platform": platform.platform(),
             "python": platform.python_version(),
+            **predicate_runtime,
         },
         "started_at": started_at,
         "finished_at": _timestamp(),

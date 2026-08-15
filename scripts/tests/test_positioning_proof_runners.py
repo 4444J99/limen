@@ -152,6 +152,68 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn("https_proxy", options["env"])
         self.assertNotIn("SSL_CERT_FILE", options["env"])
 
+    def test_predicate_runner_ignores_ambient_path_and_runtime_injection(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            fake_python = Path(directory) / "python3"
+            fake_python.write_text("#!/bin/sh\nprintf 'ambient fake\\n'\nexit 0\n", encoding="utf-8")
+            fake_python.chmod(0o755)
+            with mock.patch.dict(
+                os.environ,
+                {"PATH": directory, "PYTHONPATH": directory, "NODE_OPTIONS": "--require=/tmp/untrusted.js"},
+                clear=False,
+            ):
+                _argv, environment, metadata = RECEIPT._prepare_predicate_invocation(["python3", "-V"])
+                with mock.patch.object(RECEIPT.platform, "system", return_value="Darwin"):
+                    with mock.patch.object(
+                        RECEIPT,
+                        "_run_darwin_bounded_predicate",
+                        return_value=(7, b"trusted executable\n", None),
+                    ) as runner:
+                        exit_code, output, failure = RECEIPT._run_bounded_predicate(
+                            ["python3", "-c", "print('trusted executable'); raise SystemExit(7)"],
+                            cwd=ROOT,
+                            timeout_seconds=10,
+                            max_output_bytes=4096,
+                        )
+        self.assertEqual((7, b"trusted executable\n", None), (exit_code, output, failure))
+        self.assertNotEqual(str(fake_python), metadata["resolved_executable"])
+        self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
+        self.assertNotIn("PYTHONPATH", environment)
+        self.assertNotIn("NODE_OPTIONS", environment)
+        invoked_argv = runner.call_args.args[0]
+        invoked_environment = runner.call_args.kwargs["environment"]
+        self.assertNotEqual(str(fake_python), invoked_argv[0])
+        self.assertNotIn(directory, invoked_environment["PATH"].split(os.pathsep))
+
+    def test_authenticated_cost_transport_ignores_ambient_proxy_and_ca_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            bundle = Path(directory) / "trusted-ca.pem"
+            bundle.write_text("test trust bundle", encoding="utf-8")
+            context = mock.MagicMock()
+            opener = mock.MagicMock()
+            expected = object()
+            opener.open.return_value = expected
+            with mock.patch.object(COST, "CONTRACT_CA_BUNDLE_CANDIDATES", (bundle,)):
+                with mock.patch.object(COST.ssl, "SSLContext", return_value=context):
+                    with mock.patch.object(COST, "build_opener", return_value=opener) as build:
+                        with mock.patch.dict(
+                            os.environ,
+                            {
+                                "HTTPS_PROXY": "http://proxy.invalid",
+                                "SSL_CERT_FILE": "/tmp/untrusted-cert.pem",
+                            },
+                            clear=False,
+                        ):
+                            result = COST._contract_https_open(COST.Request("https://api.github.com"), timeout=30)
+        self.assertIs(expected, result)
+        context.load_verify_locations.assert_called_once_with(cafile=str(bundle))
+        handlers = build.call_args.args
+        proxy = next(handler for handler in handlers if isinstance(handler, COST.ProxyHandler))
+        https = next(handler for handler in handlers if isinstance(handler, COST.HTTPSHandler))
+        self.assertEqual({}, proxy.proxies)
+        self.assertIs(context, https._context)
+        opener.open.assert_called_once_with(mock.ANY, timeout=30)
+
     def test_cost_failure_fixture_reproduces_all_dimensions(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         result = reproduce_cost(payload)
@@ -323,7 +385,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         response = mock.MagicMock()
         response.read.return_value = json.dumps(comment).encode()
         response.__enter__.return_value = response
-        with mock.patch.object(COST, "urlopen", return_value=response):
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
             actor, association = COST._verify_authority_receipt(
                 receipt_url,
                 receipt_sha256,
@@ -335,7 +397,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
 
         comment["author_association"] = "NONE"
         response.read.return_value = json.dumps(comment).encode()
-        with mock.patch.object(COST, "urlopen", return_value=response):
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
             with self.assertRaisesRegex(ValueError, "authorized repository actor"):
                 COST._verify_authority_receipt(
                     receipt_url,
@@ -612,6 +674,36 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_cost_failure_public_artifacts_reject_duplicate_json_members(self) -> None:
         with self.assertRaisesRegex(ValueError, "duplicate JSON member: sample_id"):
             COST._loads_public_artifact('{"row":{"sample_id":"private","sample_id":"public"}}')
+
+    def test_tracked_rate_and_population_artifacts_reject_duplicate_members(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "duplicate.json"
+
+            rate_source = json.loads((FIXTURES / "synthetic-model-rate-source.json").read_text(encoding="utf-8"))
+            rate_raw = json.dumps(rate_source, separators=(",", ":"))[:-1]
+            rate_raw += f',"source_id":{json.dumps(rate_source["source_id"])}' + "}"
+            artifact.write_text(rate_raw, encoding="utf-8")
+            rate_basis = copy.deepcopy(payload["rows"][0]["model_cost_rate_basis"])
+            rate_basis["source_sha256"] = COST.hashlib.sha256(rate_raw.encode()).hexdigest()
+            rate_errors: list[str] = []
+            with mock.patch.object(COST, "_safe_tracked_artifact", return_value=artifact):
+                COST._model_rate_source_record(rate_basis, 0, rate_errors, "synthetic")
+            self.assertTrue(any("duplicate JSON member: source_id" in error for error in rate_errors), rate_errors)
+
+            population = copy.deepcopy(payload["population"])
+            population_source = population["source_manifest"]
+            population_raw = json.dumps(population_source, separators=(",", ":"))[:-1]
+            population_raw += f',"source_id":{json.dumps(population_source["source_id"])}' + "}"
+            artifact.write_text(population_raw, encoding="utf-8")
+            population["source_sha256"] = COST.hashlib.sha256(population_raw.encode()).hexdigest()
+            population_errors: list[str] = []
+            with mock.patch.object(COST, "_safe_tracked_artifact", return_value=artifact):
+                COST._validate_population_source(population, "synthetic", population_errors)
+            self.assertTrue(
+                any("duplicate JSON member: source_id" in error for error in population_errors),
+                population_errors,
+            )
 
     def test_cost_failure_reproduction_requires_committed_replay_artifacts(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

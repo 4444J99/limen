@@ -4,6 +4,7 @@ import importlib.util
 import hashlib
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -119,6 +120,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ):
             receipt_url = f"https://github.com/organvm/limen/issues/{issue_number}#issuecomment-1"
             receipt_sha256 = digest_character * 64
+            phase_proof_sha256 = ("c" if phase_id == "PSP-P03" else "d") * 64
+            phase_proof = {
+                "status": "pass",
+                "phase_id": phase_id,
+                "exit_gate_sha256": "e" * 64,
+                "child_receipts_sha256": "f" * 64,
+                "child_receipt_evidence": {},
+                "remote_state_sha256": "1" * 64,
+                "parity_sha256": "2" * 64,
+            }
             bindings[phase_id] = {
                 "receipt_url": receipt_url,
                 "receipt_sha256": receipt_sha256,
@@ -129,6 +140,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "receipt_url": receipt_url,
                 "receipt_sha256": receipt_sha256,
                 "observed_heads": {"organvm/limen": MODULE.C03_CURRENT_HEAD},
+                "phase_proof": phase_proof,
+                "phase_proof_output_sha256": phase_proof_sha256,
+                "phase_proof_predicate": {
+                    "command": f"python3 scripts/positioning-program.py --phase-proof {phase_id}",
+                    "exit_code": 0,
+                    "output_sha256": phase_proof_sha256,
+                    "observed_at": "2026-08-14T12:00:00Z",
+                },
             }
         return bindings, live
 
@@ -687,7 +706,22 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     {},
                     ROOT,
                 )
+            with mock.patch.object(
+                MODULE,
+                "_fetch_bounded_public_surface",
+                side_effect=MODULE.HTTPException("truncated transport"),
+            ):
+                transport_errors, _resolved = MODULE._surface_inspection_errors(
+                    self.contract,
+                    {surface: inspection},
+                    {},
+                    ROOT,
+                )
         self.assertTrue(any("raw response differs" in error for error in errors), errors)
+        self.assertTrue(
+            any("live surface inspection could not reproduce" in error for error in transport_errors),
+            transport_errors,
+        )
 
     def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
         self.assertTrue(
@@ -700,6 +734,44 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ):
             with self.subTest(comment=comment):
                 self.assertFalse(MODULE._phase_comment_authorized(comment))
+
+    def test_w07_authority_read_ignores_ambient_proxy_and_ca_overrides(self) -> None:
+        receipt_url = "https://github.com/organvm/limen/issues/2188#issuecomment-1"
+        comment = {
+            "html_url": receipt_url,
+            "user": {"login": "4444J99"},
+            "author_association": "MEMBER",
+            "body": "synthetic transport fixture",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            bundle = Path(directory) / "trusted-ca.pem"
+            bundle.write_text("test trust bundle", encoding="utf-8")
+            context = mock.MagicMock()
+            response = mock.MagicMock()
+            response.read.return_value = json.dumps(comment).encode()
+            response.__enter__.return_value = response
+            opener = mock.MagicMock()
+            opener.open.return_value = response
+            with mock.patch.object(MODULE, "CONTRACT_CA_BUNDLE_CANDIDATES", (bundle,)):
+                with mock.patch.object(MODULE.ssl, "SSLContext", return_value=context):
+                    with mock.patch.object(MODULE, "build_opener", return_value=opener) as build:
+                        with mock.patch.dict(
+                            os.environ,
+                            {
+                                "HTTPS_PROXY": "http://proxy.invalid",
+                                "SSL_CERT_FILE": "/tmp/untrusted-cert.pem",
+                            },
+                            clear=False,
+                        ):
+                            observed = MODULE._fetch_github_issue_comment(receipt_url, "PSP-P03-W07")
+        self.assertEqual(comment, observed)
+        context.load_verify_locations.assert_called_once_with(cafile=str(bundle))
+        handlers = build.call_args.args
+        proxy = next(handler for handler in handlers if isinstance(handler, MODULE.ProxyHandler))
+        https = next(handler for handler in handlers if isinstance(handler, MODULE.HTTPSHandler))
+        self.assertEqual({}, proxy.proxies)
+        self.assertIs(context, https._context)
+        opener.open.assert_called_once_with(mock.ANY, timeout=30)
 
     def test_live_w07_verifier_authenticates_the_receipt_comment_actor(self) -> None:
         receipt_url = "https://github.com/organvm/limen/issues/2188#issuecomment-1"
@@ -724,6 +796,67 @@ class PositioningProofPreflightTest(unittest.TestCase):
             ):
                 with self.assertRaisesRegex(ValueError, "authorized repository actor"):
                     MODULE._live_w07_verification(ROOT)
+
+    def test_live_phase_verification_executes_and_binds_manifest_phase_proof(self) -> None:
+        phase_id = "PSP-P03"
+        receipt_url = "https://github.com/organvm/limen/issues/2181#issuecomment-1"
+        proof = {
+            "status": "pass",
+            "phase_id": phase_id,
+            "exit_gate_sha256": "a" * 64,
+            "child_receipts_sha256": "b" * 64,
+            "child_receipt_evidence": {},
+            "remote_state_sha256": "c" * 64,
+            "parity_sha256": "d" * 64,
+        }
+        proof_stdout = json.dumps(proof, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+        proof_sha256 = hashlib.sha256(proof_stdout.encode()).hexdigest()
+        predicate = {
+            "command": f"python3 scripts/positioning-program.py --phase-proof {phase_id}",
+            "exit_code": 0,
+            "output_sha256": proof_sha256,
+            "observed_at": "2026-08-14T12:00:00Z",
+        }
+        receipt = {
+            **proof,
+            "schema_version": "limen.positioning_phase_receipt.v1",
+            "observed_heads": {"organvm/limen": MODULE.C03_CURRENT_HEAD},
+            "predicate": predicate,
+            "evidence_urls": ["https://github.com/organvm/limen/issues/2181"],
+        }
+        receipt.pop("child_receipt_evidence")
+        receipt_sha256 = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        verification = {
+            "status": "pass",
+            "phase_id": phase_id,
+            "receipt_url": receipt_url,
+            "receipt_sha256": receipt_sha256,
+        }
+        completed = [
+            subprocess.CompletedProcess([], 0, proof_stdout, ""),
+            subprocess.CompletedProcess([], 0, json.dumps(verification), ""),
+        ]
+        comment = {
+            "html_url": receipt_url,
+            "user": {"login": "4444J99"},
+            "author_association": "MEMBER",
+            "body": (f"<!-- positioning-phase-receipt:{phase_id} -->\n```json\n" + json.dumps(receipt) + "\n```"),
+        }
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=completed) as run:
+            with mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=comment):
+                observed = MODULE._live_phase_verification(ROOT, phase_id)
+        self.assertEqual(proof, observed["phase_proof"])
+        self.assertEqual(proof_sha256, observed["phase_proof_output_sha256"])
+        self.assertEqual(predicate, observed["phase_proof_predicate"])
+        self.assertEqual("--phase-proof", run.call_args_list[0].args[0][2])
+        self.assertEqual("--verify-phase", run.call_args_list[1].args[0][2])
+
+    def test_live_phase_verification_cannot_accept_receipt_without_current_phase_proof(self) -> None:
+        failed = subprocess.CompletedProcess([], 2, "", "phase proof failed")
+        with mock.patch.object(MODULE.subprocess, "run", return_value=failed) as run:
+            with self.assertRaisesRegex(ValueError, "manifest phase proof did not pass"):
+                MODULE._live_phase_verification(ROOT, "PSP-P03")
+        self.assertEqual(1, run.call_count)
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
@@ -1185,6 +1318,29 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         self.assertEqual("pass", result["status"])
         self.assertEqual(2, result["substantive_public_count"])
+
+        first_url = objects[0]["object URL or receipt"]
+        assert isinstance(first_url, str)
+        original_body = comments[first_url]["body"]
+        marked = MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(original_body)
+        duplicate_receipt = marked[0][:-1] + ',"actor_identity":"independent-reviewer-0"}'
+        comments[first_url]["body"] = (
+            "<!-- positioning-external-validation-receipt -->\n```json\n" + duplicate_receipt + "\n```"
+        )
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            duplicate = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", duplicate["status"])
+        self.assertEqual(1, duplicate["substantive_public_count"])
+        self.assertTrue(any("duplicate JSON member: actor_identity" in error for error in duplicate["errors"]))
+        comments[first_url]["body"] = original_body
 
         objects[0]["method"] = "drifted method"
         with mock.patch.object(

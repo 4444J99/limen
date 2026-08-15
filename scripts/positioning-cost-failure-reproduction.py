@@ -9,16 +9,23 @@ import json
 import math
 import os
 import re
+import ssl
 import subprocess
 from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CONTRACT_CA_BUNDLE_CANDIDATES = (
+    Path("/etc/ssl/cert.pem"),
+    Path("/etc/ssl/certs/ca-certificates.crt"),
+    Path("/etc/pki/tls/certs/ca-bundle.crt"),
+    Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
+)
 SCHEMA_VERSION = "limen.positioning_cost_failure_sample.v1"
 ALLOWED_STATES = {"done", "failed", "failed_blocked", "needs_human"}
 ALLOWED_FAILURE_CLASSES = {
@@ -156,6 +163,23 @@ def _loads_public_artifact(raw: str) -> object:
     return json.loads(raw, object_pairs_hook=_reject_duplicate_json_members)
 
 
+def _contract_tls_context() -> ssl.SSLContext:
+    """Use a fixed OS trust-bundle allowlist instead of ambient CA variables."""
+    bundle = next((candidate for candidate in CONTRACT_CA_BUNDLE_CANDIDATES if candidate.is_file()), None)
+    if bundle is None:
+        raise OSError("contract-owned TLS trust bundle is unavailable")
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = True
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_verify_locations(cafile=str(bundle))
+    return context
+
+
+def _contract_https_open(request: Request, *, timeout: int):
+    opener = build_opener(ProxyHandler({}), HTTPSHandler(context=_contract_tls_context()))
+    return opener.open(request, timeout=timeout)
+
+
 def _public_authenticated_identity(value: object) -> bool:
     return isinstance(value, str) and bool(AUTHENTICATED_IDENTITY.fullmatch(value))
 
@@ -242,7 +266,7 @@ def _verify_authority_receipt(
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urlopen(request, timeout=30) as response:
+    with _contract_https_open(request, timeout=30) as response:
         raw_comment = response.read(1_048_577)
     if len(raw_comment) > 1_048_576:
         raise ValueError("authority receipt comment exceeds the bounded response size")
@@ -390,8 +414,8 @@ def _model_rate_source_record(
     elif hashlib.sha256(raw).hexdigest() != detail.get("source_sha256"):
         errors.append(f"row {index} model rate basis source SHA-256 differs from its tracked artifact")
     try:
-        source = json.loads(raw)
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        source = _loads_public_artifact(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         errors.append(f"row {index} model rate source artifact is invalid JSON: {exc}")
         return None
     if not isinstance(source, dict) or set(source) != MODEL_RATE_SOURCE_FIELDS:
@@ -486,8 +510,8 @@ def _validate_population_source(
             elif hashlib.sha256(raw).hexdigest() != population.get("source_sha256"):
                 errors.append("sample population source SHA-256 differs from its tracked artifact")
             try:
-                artifact_source = json.loads(raw)
-            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                artifact_source = _loads_public_artifact(raw.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
                 errors.append(f"sample population source artifact is invalid JSON: {exc}")
     if artifact_source != source:
         errors.append("sample population source manifest differs from its tracked authoritative artifact")

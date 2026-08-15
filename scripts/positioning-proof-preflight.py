@@ -10,17 +10,25 @@ import importlib.util
 import json
 import os
 import re
+import ssl
 import subprocess
 import sys
 import tempfile
+from http.client import HTTPException
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener, urlopen
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CONTRACT_CA_BUNDLE_CANDIDATES = (
+    Path("/etc/ssl/cert.pem"),
+    Path("/etc/ssl/certs/ca-certificates.crt"),
+    Path("/etc/pki/tls/certs/ca-bundle.crt"),
+    Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
+)
 DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -250,6 +258,23 @@ def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, An
 
 def _loads_preflight_artifact(raw: str) -> object:
     return json.loads(raw, object_pairs_hook=_reject_duplicate_json_members)
+
+
+def _contract_tls_context() -> ssl.SSLContext:
+    """Use a fixed OS trust-bundle allowlist instead of ambient CA variables."""
+    bundle = next((candidate for candidate in CONTRACT_CA_BUNDLE_CANDIDATES if candidate.is_file()), None)
+    if bundle is None:
+        raise OSError("contract-owned TLS trust bundle is unavailable")
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = True
+    context.verify_mode = ssl.CERT_REQUIRED
+    context.load_verify_locations(cafile=str(bundle))
+    return context
+
+
+def _contract_https_open(request: Request, *, timeout: int):
+    opener = build_opener(ProxyHandler({}), HTTPSHandler(context=_contract_tls_context()))
+    return opener.open(request, timeout=timeout)
 
 
 def load_contract(path: Path) -> dict[str, Any]:
@@ -1451,7 +1476,7 @@ def _surface_inspection_errors(
             if isinstance(source_locator, str) and _credential_free_https_url(source_locator):
                 try:
                     live_content = _fetch_bounded_public_surface(source_locator)
-                except (OSError, ValueError) as exc:
+                except (HTTPException, OSError, ValueError) as exc:
                     errors.append(f"live surface inspection could not reproduce the current response: {surface}: {exc}")
                 else:
                     try:
@@ -1815,7 +1840,7 @@ def _authenticate_external_validation_object(row: dict[str, Any]) -> str:
     matches = EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
     if len(matches) != 1:
         raise ValueError("external validation comment must contain exactly one marked receipt")
-    receipt = json.loads(matches[0])
+    receipt = _loads_preflight_artifact(matches[0])
     if not isinstance(receipt, dict) or set(receipt) != EXTERNAL_VALIDATION_RECEIPT_FIELDS:
         raise ValueError("external validation receipt has an invalid exact schema")
     if receipt.get("schema_version") != EXTERNAL_VALIDATION_RECEIPT_SCHEMA:
@@ -1925,7 +1950,7 @@ def validate_external_objects(
         if consent_status == "public_consented" and isinstance(object_receipt, str) and object_receipt:
             try:
                 authenticated_actor = _authenticate_external_validation_object(row)
-            except (OSError, ValueError, json.JSONDecodeError) as exc:
+            except (HTTPException, OSError, ValueError, json.JSONDecodeError) as exc:
                 errors.append(f"validation object {index} authority failed closed: {exc}")
             else:
                 normalized_actor = authenticated_actor.casefold()
@@ -2001,7 +2026,7 @@ def _fetch_github_issue_comment(receipt_url: str, label: str) -> dict[str, Any]:
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
-    with urlopen(request, timeout=30) as response:
+    with _contract_https_open(request, timeout=30) as response:
         raw_comment = response.read(1_048_577)
     if len(raw_comment) > 1_048_576:
         raise ValueError(f"live {label} receipt comment exceeds the bounded response size")
@@ -2012,6 +2037,26 @@ def _fetch_github_issue_comment(receipt_url: str, label: str) -> dict[str, Any]:
 
 
 def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
+    phase_proof = subprocess.run(
+        [sys.executable, str(repository / "scripts/positioning-program.py"), "--phase-proof", phase_id],
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=180,
+    )
+    if phase_proof.returncode != 0:
+        detail = (phase_proof.stderr or phase_proof.stdout).strip()
+        raise ValueError(f"live {phase_id} manifest phase proof did not pass: {detail}")
+    phase_proof_value = _loads_preflight_artifact(phase_proof.stdout)
+    if (
+        not isinstance(phase_proof_value, dict)
+        or phase_proof_value.get("status") != "pass"
+        or phase_proof_value.get("phase_id") != phase_id
+    ):
+        raise ValueError(f"live {phase_id} manifest phase proof returned an invalid result")
+    phase_proof_sha256 = hashlib.sha256(phase_proof.stdout.encode("utf-8")).hexdigest()
+
     completed = subprocess.run(
         [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-phase", phase_id],
         cwd=repository,
@@ -2037,7 +2082,7 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     matches = [receipt for candidate_phase, receipt in matches if candidate_phase == phase_id]
     if len(matches) != 1:
         raise ValueError(f"live {phase_id} comment must contain exactly one marked phase receipt")
-    receipt = json.loads(matches[0])
+    receipt = _loads_preflight_artifact(matches[0])
     if not isinstance(receipt, dict):
         raise ValueError(f"live {phase_id} marked receipt returned a non-object")
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -2046,7 +2091,22 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     observed_heads = receipt.get("observed_heads")
     if not isinstance(observed_heads, dict):
         raise ValueError(f"live {phase_id} marked receipt has no observed_heads binding")
+    predicate = receipt.get("predicate")
+    expected_command = f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
+    if (
+        not isinstance(predicate, dict)
+        or predicate.get("command") != expected_command
+        or predicate.get("exit_code") != 0
+        or predicate.get("output_sha256") != phase_proof_sha256
+    ):
+        raise ValueError(f"live {phase_id} marked receipt does not bind the executed manifest phase proof")
+    for field in ("exit_gate_sha256", "child_receipts_sha256", "remote_state_sha256", "parity_sha256"):
+        if receipt.get(field) != phase_proof_value.get(field):
+            raise ValueError(f"live {phase_id} marked receipt differs from the executed phase proof: {field}")
     value["observed_heads"] = observed_heads
+    value["phase_proof"] = phase_proof_value
+    value["phase_proof_output_sha256"] = phase_proof_sha256
+    value["phase_proof_predicate"] = predicate
     return value
 
 
@@ -2197,7 +2257,7 @@ def _validate_phase_receipt_bindings(
     if live_verifications is None:
         try:
             live_verifications = {phase_id: _live_phase_verification(repository, phase_id) for phase_id in phases}
-        except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        except (HTTPException, json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
             return [str(exc)]
     errors: list[str] = []
     valid_closure_head = isinstance(closure_head, str) and bool(FULL_HEAD.fullmatch(closure_head))
@@ -2211,6 +2271,23 @@ def _validate_phase_receipt_bindings(
             continue
         if not isinstance(observed, dict) or observed.get("status") != "pass" or observed.get("phase_id") != phase_id:
             errors.append(f"live {phase_id} verification did not return pass")
+            continue
+        phase_proof = observed.get("phase_proof")
+        phase_proof_sha256 = observed.get("phase_proof_output_sha256")
+        phase_proof_predicate = observed.get("phase_proof_predicate")
+        expected_command = f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
+        if (
+            not isinstance(phase_proof, dict)
+            or phase_proof.get("status") != "pass"
+            or phase_proof.get("phase_id") != phase_id
+            or not isinstance(phase_proof_sha256, str)
+            or not SHA256.fullmatch(phase_proof_sha256)
+            or not isinstance(phase_proof_predicate, dict)
+            or phase_proof_predicate.get("command") != expected_command
+            or phase_proof_predicate.get("exit_code") != 0
+            or phase_proof_predicate.get("output_sha256") != phase_proof_sha256
+        ):
+            errors.append(f"live {phase_id} verification does not bind an executed manifest phase proof")
             continue
         receipt_url = observed.get("receipt_url")
         receipt_sha256 = observed.get("receipt_sha256")
@@ -2441,7 +2518,7 @@ def _validate_w07_receipt_binding(
         return [str(exc)]
     try:
         observed = live_verification if live_verification is not None else _live_w07_verification(repository)
-    except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
+    except (HTTPException, json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
         return [str(exc)]
     if observed.get("status") != "pass" or observed.get("work_id") != "PSP-P03-W07":
         errors.append("live PSP-P03-W07 verification did not return pass")
@@ -2475,7 +2552,7 @@ def formalization_readiness(
             try:
                 authoritative = _live_authoritative_closure_verification(repository, final_head)
                 receipt_errors.extend(_validate_authoritative_closure_verification(authoritative, final_head))
-            except (json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
+            except (HTTPException, json.JSONDecodeError, OSError, subprocess.TimeoutExpired, ValueError) as exc:
                 receipt_errors.append(str(exc))
             ancestry = _sanitized_ancestry(repository, str(accepted_head), final_head)
             if ancestry.returncode:
