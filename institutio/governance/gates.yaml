@@ -503,7 +503,7 @@ gates:
       - "scripts/positioning-program.py"
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 scoped public-evidence validation resolves immutable public receipt blobs, funded-maintenance proof, trusted run provenance, and the canonical W01 marked receipt through one cached 270-second/96-call budget without comparing mutable repository heads or enumerating the private estate; private-inclusive census and custody remain operator-only."
+    note: "PSP-P13-W03 scoped public-evidence validation resolves immutable public receipt blobs, funded-maintenance proof, trusted run provenance, and the canonical W01 marked receipt through one cached 270-second budget whose call ceiling scales with the exact verified-receipt surface and is capped by the accepted 54-public-candidate worst case; it does not compare mutable repository heads or enumerate the private estate, and private-inclusive census and custody remain operator-only."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:

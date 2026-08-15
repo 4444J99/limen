@@ -216,9 +216,15 @@ GENERIC_PRIVATE_OWNER = "portfolio_owner"
 PRIVATE_CLEARANCE_SCHEMA = "limen.psp_p13_w03_private_clearances.v1"
 PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 LIVE_COLLECTION_DEADLINE_SECONDS = 270
-LIVE_COLLECTION_CALL_LIMIT = 96
 GITHUB_CONTENTS_INLINE_MAX_BYTES = 1024 * 1024
 GITHUB_BLOB_MAX_BYTES = 100 * 1024 * 1024
+LIVE_COLLECTION_BASE_CALLS = 4
+LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT = 7
+LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT = 5
+LIVE_COLLECTION_MAX_CALL_LIMIT = LIVE_COLLECTION_BASE_CALLS + SOURCE_LOCK["visibility"]["public"] * (
+    len(DIMENSION_RECEIPT_TOKENS) * LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT
+    + LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT
+)
 GOVERNED_TRANSFER_BLOCKERS = {
     "no_E3_or_stronger_primary_demand_receipt",
     "no_operator_selected_or_scored",
@@ -241,7 +247,7 @@ class LiveCollection:
     def __init__(
         self,
         deadline_seconds: float = LIVE_COLLECTION_DEADLINE_SECONDS,
-        call_limit: int = LIVE_COLLECTION_CALL_LIMIT,
+        call_limit: int = LIVE_COLLECTION_MAX_CALL_LIMIT,
         clock: Any = time.monotonic,
     ) -> None:
         if (
@@ -268,6 +274,46 @@ class LiveCollection:
         value = _run_json(args, timeout=max(1, min(timeout, math.ceil(remaining))))
         self._json_cache[key] = copy.deepcopy(value)
         return value
+
+
+def live_collection_call_limit(audit: dict[str, Any] | None) -> int:
+    """Bound one gate to its exact evidence surface and the accepted denominator."""
+    if audit is None:
+        return LIVE_COLLECTION_MAX_CALL_LIMIT
+    if not isinstance(audit, dict):
+        raise AuditError("live evidence call budget candidate denominator is invalid")
+    candidates = audit.get("candidates")
+    if not isinstance(candidates, list):
+        raise AuditError("live evidence call budget candidate denominator is invalid")
+    public_rows = [
+        row for row in candidates if isinstance(row, dict) and row.get("visibility") == "public"
+    ]
+    private_rows = [
+        row for row in candidates if isinstance(row, dict) and row.get("visibility") == "private"
+    ]
+    if (
+        len(candidates) != SOURCE_LOCK["candidate_count"]
+        or len(public_rows) != SOURCE_LOCK["visibility"]["public"]
+        or len(private_rows) != SOURCE_LOCK["visibility"]["private"]
+    ):
+        raise AuditError("live evidence call budget candidate denominator is invalid")
+    technical_receipts = 0
+    funding_receipts = 0
+    for row in public_rows:
+        for dimension in DIMENSION_RECEIPT_TOKENS:
+            value = row.get(dimension)
+            if isinstance(value, dict) and value.get("state") in {"verified_pass", "verified_fail"}:
+                technical_receipts += 1
+                if dimension == "maintenance" and value.get("state") == "verified_pass":
+                    funding_receipts += 1
+    limit = (
+        LIVE_COLLECTION_BASE_CALLS
+        + technical_receipts * LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT
+        + funding_receipts * LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT
+    )
+    if limit > LIVE_COLLECTION_MAX_CALL_LIMIT:
+        raise AuditError("live evidence call budget exceeds the accepted denominator ceiling")
+    return limit
 
 
 def _object_without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -1022,7 +1068,7 @@ def collect_live_evidence_receipts(
     audit: dict[str, Any],
     collection: LiveCollection | None = None,
 ) -> dict[tuple[str, str], dict[str, Any]]:
-    collection = collection or LiveCollection()
+    collection = collection or LiveCollection(call_limit=live_collection_call_limit(audit))
     receipts: dict[tuple[str, str], dict[str, Any]] = {}
     for row in audit.get("candidates", []):
         if not isinstance(row, dict) or row.get("visibility") != "public":
@@ -2065,7 +2111,20 @@ def main() -> int:
         live_receipts: dict[tuple[str, str], dict[str, Any]] | None = None
         private_clearance_receipts: dict[str, str] | None = None
         accepted_projection_digest: str | None = None
-        live_collection = LiveCollection() if args.live or args.public_live else None
+        previous: dict[str, Any] | None = None
+        audit: dict[str, Any] | None = None
+        if write_path is not None:
+            previous_path = write_path if write_path.exists() else audit_path
+            previous = load_json(previous_path) if previous_path.exists() else None
+            budget_source = previous
+        else:
+            audit = load_json(audit_path)
+            budget_source = audit
+        live_collection = (
+            LiveCollection(call_limit=live_collection_call_limit(budget_source))
+            if args.live or args.public_live
+            else None
+        )
         if args.require_cleared and not args.live:
             raise AuditError("--require-cleared requires --live")
         if args.live:
@@ -2079,8 +2138,6 @@ def main() -> int:
         if write_path is not None:
             if not args.live or heads is None:
                 raise AuditError("--write requires --live")
-            previous_path = write_path if write_path.exists() else audit_path
-            previous = load_json(previous_path) if previous_path.exists() else None
             generated = build_audit(
                 snapshot,
                 heads,
@@ -2108,7 +2165,8 @@ def main() -> int:
             payload = _result(write_path, [], generated)
             print(json.dumps(payload, sort_keys=True) if args.json else "technical-readiness: PASS")
             return 0
-        audit = load_json(audit_path)
+        if audit is None:
+            raise AuditError("technical-readiness audit is unavailable")
         if args.live or args.public_live:
             live_receipts = collect_live_evidence_receipts(audit, live_collection)
         errors = validate_audit(

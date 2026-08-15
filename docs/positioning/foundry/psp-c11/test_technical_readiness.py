@@ -775,6 +775,34 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
 
     def test_live_collection_has_one_deadline_call_budget_and_response_cache(self) -> None:
+        self.assertEqual(
+            MODULE.LIVE_COLLECTION_BASE_CALLS,
+            MODULE.live_collection_call_limit(self.audit),
+        )
+        one_mature = copy.deepcopy(self.audit)
+        first_public = self.public_row(one_mature)
+        for dimension in MODULE.DIMENSION_RECEIPT_TOKENS:
+            first_public[dimension]["state"] = "verified_pass"
+        self.assertEqual(
+            MODULE.LIVE_COLLECTION_BASE_CALLS
+            + len(MODULE.DIMENSION_RECEIPT_TOKENS) * MODULE.LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT
+            + MODULE.LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT,
+            MODULE.live_collection_call_limit(one_mature),
+        )
+        fully_mature = copy.deepcopy(self.audit)
+        for row in fully_mature["candidates"]:
+            if row["visibility"] == "public":
+                for dimension in MODULE.DIMENSION_RECEIPT_TOKENS:
+                    row[dimension]["state"] = "verified_pass"
+        self.assertEqual(
+            MODULE.LIVE_COLLECTION_MAX_CALL_LIMIT,
+            MODULE.live_collection_call_limit(fully_mature),
+        )
+        invalid_denominator = copy.deepcopy(self.audit)
+        invalid_denominator["candidates"].append(copy.deepcopy(first_public))
+        with self.assertRaisesRegex(MODULE.AuditError, "candidate denominator is invalid"):
+            MODULE.live_collection_call_limit(invalid_denominator)
+
         response = mock.Mock(returncode=0, stdout='{"status":"pass"}')
         collection = MODULE.LiveCollection(deadline_seconds=10, call_limit=1, clock=lambda: 0)
         with mock.patch.object(MODULE.subprocess, "run", return_value=response) as run:
@@ -1633,6 +1661,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         collect_public_heads.assert_not_called()
         self.assertIs(verify_w01.call_args.args[0], collect_receipts.call_args.args[1])
         self.assertIs(accepted_projection.call_args.args[0], collect_receipts.call_args.args[1])
+        self.assertEqual(MODULE.LIVE_COLLECTION_BASE_CALLS, verify_w01.call_args.args[0]._call_limit)
         self.assertEqual(0, result)
         self.assertEqual("pass", json.loads(stdout.getvalue())["status"])
 

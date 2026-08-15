@@ -158,8 +158,9 @@ the candidate's bounded maintenance estimate; the technical receipt, an owner, a
 self-attest funding. Technical readiness alone never grants transfer eligibility: accepted E3+ demand,
 a canonical receipt-backed operator score meeting the contract minimum, approved terms, downside-tested
 economics, funded maintenance, and tested return must all clear their governed floors. A live
-collection shares one 270-second deadline,
-a 96-call ceiling, and an immutable-response cache across W01 verification, receipt blobs, output and
+collection shares one 270-second deadline, an immutable-response cache, and a call ceiling derived
+from the exact verified-receipt surface, capped by the accepted 54-public-candidate denominator and
+worst-case Contents-to-Git-blob fallbacks across W01 verification, receipt blobs, output and
 artifact blobs, and Actions provenance, so repeated lookups cannot restart the 300-second gate clock.
 Contents API evidence above 1 MiB resolves through its exact Git blob SHA with a 100 MiB fail-closed
 ceiling; size and Git-object digest must match before receipt SHA-256 validation.
