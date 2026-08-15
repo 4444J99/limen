@@ -674,11 +674,14 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
         value = os.environ.get(key)
         if isinstance(value, str) and value and "\0" not in value:
             environment[key] = value
+    predicate_path = list(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
+    if pinned_interpreter is not None:
+        if pinned_interpreter.name != "node":
+            raise OSError("proof-contract Node interpreter has an unsupported executable name")
+        predicate_path.insert(0, pinned_interpreter.parent)
     environment.update(
         {
-            "PATH": os.pathsep.join(
-                str(directory) for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
-            ),
+            "PATH": os.pathsep.join(str(directory) for directory in dict.fromkeys(predicate_path)),
             "PYTHONNOUSERSITE": "1",
             "NPM_CONFIG_USERCONFIG": "/etc/limen-empty-npm-userconfig",
             "NPM_CONFIG_GLOBALCONFIG": "/etc/limen-empty-npm-globalconfig",

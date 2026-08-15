@@ -1110,6 +1110,34 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 b"<p hidden><div>Browser-visible canonical claim</div></p>",
                 "visible_text_v3",
             )
+        for paragraph_closer in ("center", "details", "figure", "search"):
+            with self.subTest(paragraph_closer=paragraph_closer):
+                with self.assertRaisesRegex(ValueError, "implied paragraph-closing rules"):
+                    MODULE._canonical_surface_extraction(
+                        f"<p hidden><{paragraph_closer}>Browser-visible canonical claim</{paragraph_closer}></p>".encode(),
+                        "visible_text_v3",
+                    )
+        for legacy_block in ("listing", "marquee", "plaintext", "xmp"):
+            with self.subTest(legacy_block=legacy_block):
+                with self.assertRaisesRegex(ValueError, "legacy block parsing"):
+                    MODULE._canonical_surface_extraction(
+                        f"<{legacy_block}>Canonical claim</{legacy_block}>".encode(),
+                        "visible_text_v3",
+                    )
+        legend_split = MODULE._canonical_surface_extraction(
+            b"<fieldset><legend>Limen demonstrates governed</legend><p>multi-agent delivery</p></fieldset>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        legend_matched, _legend_drifted = MODULE._surface_claim_scan(
+            legend_split,
+            {
+                ("portfolio_front_door", "CLAIM-LEGEND"): {
+                    "claim_text": "Limen demonstrates governed multi-agent delivery"
+                }
+            },
+            "portfolio_front_door",
+        )
+        self.assertEqual([], legend_matched)
         for math_markup in (
             "<math><semantics><mi>x</mi><annotation>Canonical claim</annotation></semantics></math>",
             "<MATH/>",
@@ -1933,8 +1961,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 self.assertEqual("fail", result["status"])
                 self.assertTrue(
                     any(
-                        "absent claim missing required evidence fields" in error
-                        or "differs from canonical" in error
+                        "absent claim missing required evidence fields" in error or "differs from canonical" in error
                         for error in result["errors"]
                     ),
                     result["errors"],

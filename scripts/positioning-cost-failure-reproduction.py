@@ -1748,16 +1748,33 @@ def _finalize_analysis(
     data_complete: bool,
     exact_artifacts: dict[str, object] | None = None,
 ) -> dict[str, Any]:
+    analysis = dict(analysis)
+    for field, value in tuple(analysis.items()):
+        if field == "errors":
+            continue
+        if _find_forbidden_public_material(value):
+            analysis[field] = None
+    supplied_errors = analysis.get("errors")
+    sanitized_errors: list[str] = []
+    if isinstance(supplied_errors, list):
+        for error in supplied_errors:
+            if not isinstance(error, str) or _find_forbidden_public_material(error):
+                error = "cost/failure input contains withheld private or credential material"
+            if error not in sanitized_errors:
+                sanitized_errors.append(error)
+    analysis["errors"] = sanitized_errors
     required_errors = _validate_required_receipt_fields(analysis, exact_artifacts=exact_artifacts)
-    errors = [*analysis.get("errors", []), *required_errors]
+    errors: list[str] = []
+    for error in [*analysis["errors"], *required_errors]:
+        if not isinstance(error, str) or _find_forbidden_public_material(error):
+            error = "cost/failure input contains withheld private or credential material"
+        if error not in errors:
+            errors.append(error)
     verdict = analysis.get("review_verdict")
     verdict_passed = isinstance(verdict, dict) and verdict.get("verdict") == "publishable_public_safe"
     publication_eligible = (
         data_complete and analysis.get("provenance") == "public_safe_observed" and verdict_passed and not errors
     )
-    for field in ("population", "review_verdict"):
-        if _find_forbidden_public_material(analysis.get(field)):
-            analysis[field] = None
     analysis["errors"] = errors
     analysis["publication_eligible"] = publication_eligible
     analysis["status"] = "regenerated" if publication_eligible else "withheld"

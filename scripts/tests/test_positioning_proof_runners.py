@@ -320,9 +320,12 @@ class PositioningProofRunnerTest(unittest.TestCase):
             }
             identities = {(RECEIPT.platform.system(), RECEIPT.platform.machine()): {"npm": binding}}
             with mock.patch.object(RECEIPT, "PINNED_NODE_TOOL_CHAINS", identities):
-                argv, _environment, metadata = RECEIPT._prepare_predicate_invocation(["npm", "test"])
+                argv, environment, metadata = RECEIPT._prepare_predicate_invocation(["npm", "test"])
                 self.assertEqual([str(interpreter.resolve()), str(script.resolve()), "test"], argv)
                 self.assertEqual(str(interpreter.resolve()), metadata["resolved_interpreter"])
+                predicate_path = environment["PATH"].split(os.pathsep)
+                self.assertEqual(str(interpreter.resolve().parent), predicate_path[0])
+                self.assertEqual(interpreter.resolve(), (Path(predicate_path[0]) / "node").resolve())
                 script.write_bytes(b"console.log('substituted');\n")
                 with self.assertRaisesRegex(OSError, "differs from the pinned npm chain"):
                     RECEIPT._prepare_predicate_invocation(["npm", "test"])
@@ -1083,6 +1086,15 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertTrue(
                 any("explicit synthetic or public_safe_observed provenance" in error for error in result["errors"])
             )
+        private_value = "pass" + "word: hunter2alpha"
+        mutated = copy.deepcopy(payload)
+        mutated["provenance"] = private_value
+        mutated[private_value] = "untrusted field"
+        result = reproduce_cost(mutated)
+        self.assertEqual("withheld", result["status"])
+        self.assertIsNone(result["provenance"])
+        self.assertNotIn(private_value, json.dumps(result, sort_keys=True))
+        self.assertEqual(set(), COST._find_forbidden_public_material(result))
 
     def test_receipt_request_requires_a_typed_repository_path(self) -> None:
         for repository_path in (None, {"path": "/tmp/repository"}, ["/tmp/repository"]):

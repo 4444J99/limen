@@ -1708,6 +1708,7 @@ class _VisibleSurfaceParser(HTMLParser):
         "textarea",
         "video",
     }
+    _UNSUPPORTED_LEGACY_BLOCK_TAGS = {"listing", "marquee", "plaintext", "xmp"}
     _HEAD_ALLOWED_TAGS = {"base", "link", "meta", "noscript", "script", "style", "template", "title"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
@@ -1758,6 +1759,7 @@ class _VisibleSurfaceParser(HTMLParser):
         "hr",
         "html",
         "li",
+        "legend",
         "main",
         "menu",
         "nav",
@@ -1776,34 +1778,20 @@ class _VisibleSurfaceParser(HTMLParser):
         "tr",
         "ul",
     }
-    _P_IMPLIED_END_START_TAGS = {
-        "address",
-        "article",
-        "aside",
-        "blockquote",
-        "div",
-        "dl",
-        "fieldset",
-        "footer",
-        "form",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "header",
-        "hgroup",
-        "hr",
-        "main",
-        "menu",
-        "nav",
-        "ol",
-        "p",
-        "pre",
-        "section",
-        "table",
-        "ul",
+    _P_IMPLIED_END_START_TAGS = _CLAUSE_BOUNDARY_TAGS - {
+        "body",
+        "br",
+        "caption",
+        "dd",
+        "dt",
+        "html",
+        "li",
+        "tbody",
+        "td",
+        "tfoot",
+        "th",
+        "thead",
+        "tr",
     }
     _TABLE_PARSING_TAGS = {
         "caption",
@@ -1885,9 +1873,7 @@ class _VisibleSurfaceParser(HTMLParser):
     @staticmethod
     def _attributes_request_refresh(attrs: list[tuple[str, str | None]]) -> bool:
         return any(
-            name.casefold() == "http-equiv"
-            and isinstance(value, str)
-            and value.strip().casefold() == "refresh"
+            name.casefold() == "http-equiv" and isinstance(value, str) and value.strip().casefold() == "refresh"
             for name, value in attrs
         )
 
@@ -1916,6 +1902,8 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        if normalized in self._UNSUPPORTED_LEGACY_BLOCK_TAGS:
+            raise ValueError("surface visibility requires unsupported legacy block parsing")
         if normalized == "template" and self._attributes_request_shadow_dom(attrs):
             raise ValueError("surface visibility requires declarative shadow DOM evaluation")
         if normalized == "details" and self._attributes_name_details(attrs):
@@ -1964,6 +1952,8 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        if normalized in self._UNSUPPORTED_LEGACY_BLOCK_TAGS:
+            raise ValueError("surface visibility requires unsupported legacy block parsing")
         if normalized == "template" and self._attributes_request_shadow_dom(attrs):
             raise ValueError("surface visibility requires declarative shadow DOM evaluation")
         if normalized == "details" and self._attributes_name_details(attrs):
@@ -2048,9 +2038,7 @@ def _surface_claim_scan(
     surface: str,
 ) -> tuple[list[str], list[str]]:
     segments = [
-        normalized
-        for raw in re.split(r"[\n\r.!?;]+", inspected_text)
-        if (normalized := _normalized_surface_text(raw))
+        normalized for raw in re.split(r"[\n\r.!?;]+", inspected_text) if (normalized := _normalized_surface_text(raw))
     ]
     matched: list[str] = []
     drifted: list[str] = []
@@ -2147,9 +2135,9 @@ def _contains_private_telephone(value: str) -> bool:
 
 
 def _surface_contains_private_material(inspected_text: str) -> bool:
-    return any(pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS) or _contains_private_telephone(
-        inspected_text
-    )
+    return any(
+        pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS
+    ) or _contains_private_telephone(inspected_text)
 
 
 def _fetch_bounded_public_surface(source_url: str) -> bytes:
@@ -2166,11 +2154,7 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
             content_dispositions = response.headers.get_all("Content-Disposition")
         except (AttributeError, TypeError, ValueError) as exc:
             raise ValueError("live surface response has no trustworthy media type") from exc
-        if (
-            not isinstance(content_types, list)
-            or len(content_types) != 1
-            or not isinstance(content_types[0], str)
-        ):
+        if not isinstance(content_types, list) or len(content_types) != 1 or not isinstance(content_types[0], str):
             raise ValueError("live surface response is not HTML")
         media_parts = [part.strip() for part in content_types[0].split(";")]
         charset_values = [
@@ -2183,8 +2167,7 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
         if media_parts[0].casefold() != "text/html" or charset_values != ["utf-8"]:
             raise ValueError("live surface response is not HTML with an authenticated UTF-8 charset")
         if isinstance(refresh_headers, list) and (
-            len(refresh_headers) > 1
-            or any(not isinstance(value, str) or value.strip() for value in refresh_headers)
+            len(refresh_headers) > 1 or any(not isinstance(value, str) or value.strip() for value in refresh_headers)
         ):
             raise ValueError("live surface response requests a client-side redirect")
         if refresh_headers is not None and not isinstance(refresh_headers, list):
@@ -2544,9 +2527,7 @@ def audit_surface_manifest(
         expected_sources = set(expected_source_ids)
         if valid_source_ids and len(source_ids) != len(set(source_ids)):
             errors.append(f"source_ids contain duplicates: {key[0]} / {key[1]}")
-        if valid_source_ids and (
-            len(source_ids) != len(expected_source_ids) or set(source_ids) != expected_sources
-        ):
+        if valid_source_ids and (len(source_ids) != len(expected_source_ids) or set(source_ids) != expected_sources):
             errors.append(f"source ids differ from canonical inventory: {key[0]} / {key[1]}")
         if not isinstance(row.get("disclosure_level"), str) or not row.get("disclosure_level"):
             errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
