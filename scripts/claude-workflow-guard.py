@@ -397,6 +397,36 @@ def _find_session_jsonl(session_or_path: str) -> Path:
     raise FileNotFoundError(f"no Claude transcript found for {session_or_path}")
 
 
+def _latest_session_jsonl() -> Path:
+    """Most recently modified transcript across every known session root.
+
+    The beat's `fable-balance` rung used to interpolate ${LIMEN_LATEST_SESSION_JSONL}
+    behind a `when_env` guard. That variable is declared in the parameter panel and
+    EXPORTED BY NOTHING (measured 2026-08-15), so the step's `when_env` was never
+    satisfied and the audit had never run once. Deriving the transcript here fixes
+    the base instead of asking every caller to supply what no producer sets.
+    """
+
+    newest: Path | None = None
+    newest_mtime = -1.0
+    for root in _session_roots():
+        if not root.is_dir():
+            continue
+        for candidate in root.glob("*/*.jsonl"):
+            try:
+                mtime = candidate.stat().st_mtime
+            except OSError:
+                continue
+            if mtime > newest_mtime:
+                newest, newest_mtime = candidate, mtime
+    if newest is None:
+        raise FileNotFoundError(
+            "no Claude transcript found in any session root — nothing to audit "
+            f"(roots searched: {', '.join(str(r) for r in _session_roots())})"
+        )
+    return newest
+
+
 def _iter_jsonl(path: Path):
     try:
         lines = path.read_text(errors="replace").splitlines()
@@ -655,7 +685,12 @@ def main(argv: list[str] | None = None) -> int:
     ases.add_argument("--out")
 
     at = sub.add_parser("audit-transcript")
-    at.add_argument("session_or_jsonl")
+    at.add_argument(
+        "session_or_jsonl",
+        nargs="?",
+        default=None,
+        help="session id or transcript path; omit to audit the most recently modified transcript",
+    )
     at.add_argument(
         "--max-billable-tokens", type=int, default=int(os.environ.get("LIMEN_MAX_CLAUDE_SESSION_TOKENS", "2000000"))
     )
@@ -712,8 +747,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if summary["ok"] else 2
 
         if args.cmd == "audit-transcript":
+            target = args.session_or_jsonl or str(_latest_session_jsonl())
             report = audit_transcript(
-                args.session_or_jsonl,
+                target,
                 max_billable_tokens=args.max_billable_tokens,
                 max_opus_billable_tokens=args.max_opus_billable_tokens,
                 max_fable_billable_tokens=args.max_fable_billable_tokens,
