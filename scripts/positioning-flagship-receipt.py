@@ -24,6 +24,8 @@ from typing import Any, Callable
 ROOT = Path(__file__).resolve().parents[1]
 PROOF_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 PROOF_CONTRACT_PATH = "docs/positioning/proof/psp-c04-proof-contract.json"
+CANONICAL_REPOSITORY = "organvm/limen"
+CANONICAL_BRANCH = "main"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 BRANCH_NAME = re.compile(r"^(?!/)(?!.*(?:\.\.|//|@\{|\\))[A-Za-z0-9][A-Za-z0-9._/-]*$")
 REPOSITORY_NAME = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -145,6 +147,13 @@ def _proof_contract_snapshot() -> tuple[dict[str, Any], dict[str, str]]:
     blob_value = blob.stdout.decode(errors="replace").strip() if blob.returncode == 0 else ""
     if not FULL_HEAD.fullmatch(head_value) or not FULL_HEAD.fullmatch(blob_value) or committed.returncode != 0:
         raise ValueError("proof contract is unavailable from the committed runner head")
+    remote = _run_canonical_remote(CANONICAL_REPOSITORY)
+    remote_branch, remote_head = _remote_default(remote)
+    if remote_branch != CANONICAL_BRANCH or not isinstance(remote_head, str):
+        raise ValueError("canonical Limen proof-contract authority is unavailable")
+    ancestry = _run_git(ROOT, ["merge-base", "--is-ancestor", head_value, remote_head])
+    if ancestry.returncode != 0:
+        raise ValueError("proof contract runner head is not contained in canonical Limen main")
     try:
         worktree_bytes = PROOF_CONTRACT.read_bytes()
     except OSError as exc:
@@ -164,6 +173,8 @@ def _proof_contract_snapshot() -> tuple[dict[str, Any], dict[str, str]]:
         "proof_contract_head": head_value,
         "proof_contract_blob": blob_value,
         "proof_contract_sha256": hashlib.sha256(committed.stdout).hexdigest(),
+        "proof_contract_canonical_branch": remote_branch,
+        "proof_contract_canonical_head": remote_head,
     }
 
 

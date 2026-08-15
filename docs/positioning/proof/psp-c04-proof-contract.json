@@ -65,6 +65,15 @@
   },
   "formalization_gate": {
     "required_chunks": ["PSP-C03"],
+    "trusted_python_dependencies": {
+      "pyyaml": {
+        "distribution": "PyYAML",
+        "version": "6.0.3",
+        "package": "yaml",
+        "python_source_file_count": 17,
+        "python_source_tree_sha256": "fca0d26205a35539a5e123116d2756f3ff33dc1fc4058686cef1268840815eb6"
+      }
+    },
     "rule": "PSP-P02 is formally closed. This contract may formalize only after PSP-C03 closes with predicate-backed receipts; PSP-P03-W07 is its sole unsatisfied leaf.",
     "automatic_after_dependencies": [
       "refresh every branch and source exact head",
@@ -268,12 +277,12 @@
       "flagship_repository": "L2"
     },
     "surface_sources": {
-      "portfolio_front_door": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-front-door.txt", "extractor": "visible_text_v1"},
-      "portfolio_flagship": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/directory/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-flagship.txt", "extractor": "visible_text_v1"},
-      "resume": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/resume/", "receipt_path": "docs/receipts/positioning/surface-inspections/resume.txt", "extractor": "visible_text_v1"},
-      "personal_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/4444J99", "receipt_path": "docs/receipts/positioning/surface-inspections/personal-profile.txt", "extractor": "visible_text_v1"},
-      "organization_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm", "receipt_path": "docs/receipts/positioning/surface-inspections/organization-profile.txt", "extractor": "visible_text_v1"},
-      "flagship_repository": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm/limen", "receipt_path": "docs/receipts/positioning/surface-inspections/flagship-repositories.txt", "extractor": "visible_text_v1"}
+      "portfolio_front_door": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-front-door.txt", "extractor": "visible_text_v2"},
+      "portfolio_flagship": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/directory/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-flagship.txt", "extractor": "visible_text_v2"},
+      "resume": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/resume/", "receipt_path": "docs/receipts/positioning/surface-inspections/resume.txt", "extractor": "visible_text_v2"},
+      "personal_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/4444J99", "receipt_path": "docs/receipts/positioning/surface-inspections/personal-profile.txt", "extractor": "visible_text_v2"},
+      "organization_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm", "receipt_path": "docs/receipts/positioning/surface-inspections/organization-profile.txt", "extractor": "visible_text_v2"},
+      "flagship_repository": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm/limen", "receipt_path": "docs/receipts/positioning/surface-inspections/flagship-repositories.txt", "extractor": "visible_text_v2"}
     },
     "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action", "inspection_id"],
     "inspection_schema": "limen.positioning_surface_inspection.v1",
@@ -367,6 +376,7 @@
     "minimum_object_count": 2,
     "minimum_fields": ["validator identity class", "independence disclosure", "object URL or receipt", "receipt SHA-256", "date", "claim scope", "method", "limitations", "consent status", "withdrawal route"],
     "score_dimensions": ["independence", "reproducibility", "specificity", "recency", "claim relevance", "consent and privacy"],
-    "send_rule": "No request, outreach, upload, or publication occurs from this preflight."
+    "send_rule": "No request, outreach, upload, or publication occurs from this preflight.",
+    "receipt_time_rule": "The structured review receipt is authored in the authenticated GitHub comment version and its observed_at must equal that comment version's updated_at exactly."
   }
 }

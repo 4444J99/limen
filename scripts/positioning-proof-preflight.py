@@ -86,16 +86,41 @@ COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
 SURFACE_SCANNER = "canonical_claim_drift"
 SURFACE_SCANNER_VERSION = "3"
+TRUSTED_PYYAML_DEPENDENCY = {
+    "distribution": "PyYAML",
+    "version": "6.0.3",
+    "package": "yaml",
+    "python_source_file_count": 17,
+    "python_source_tree_sha256": "fca0d26205a35539a5e123116d2756f3ff33dc1fc4058686cef1268840815eb6",
+}
+EXTERNAL_RECEIPT_TIME_RULE = (
+    "The structured review receipt is authored in the authenticated GitHub comment version and its "
+    "observed_at must equal that comment version's updated_at exactly."
+)
 POSITIONING_PROGRAM_BOOTSTRAP = """
 import hashlib
 import pathlib
 import runpy
 import sys
 
-dependency_root, dependency_sha256, program, *arguments = sys.argv[1:]
-yaml_init = pathlib.Path(dependency_root, "yaml", "__init__.py").resolve(strict=True)
-if hashlib.sha256(yaml_init.read_bytes()).hexdigest() != dependency_sha256:
-    raise SystemExit("trusted PyYAML dependency digest changed")
+dependency_root, dependency_sha256, dependency_file_count, program, *arguments = sys.argv[1:]
+package_root = pathlib.Path(dependency_root, "yaml").resolve(strict=True)
+source_files = sorted(package_root.rglob("*.py"))
+if len(source_files) != int(dependency_file_count):
+    raise SystemExit("trusted PyYAML dependency file count changed")
+digest = hashlib.sha256()
+for source_file in source_files:
+    if source_file.is_symlink() or package_root not in source_file.resolve(strict=True).parents:
+        raise SystemExit("trusted PyYAML dependency escaped its package root")
+    data = source_file.read_bytes()
+    relative = source_file.relative_to(package_root).as_posix().encode("utf-8")
+    digest.update(relative)
+    digest.update(b"\\0")
+    digest.update(str(len(data)).encode("ascii"))
+    digest.update(b"\\0")
+    digest.update(data)
+if digest.hexdigest() != dependency_sha256:
+    raise SystemExit("trusted PyYAML dependency tree digest changed")
 sys.path.insert(0, dependency_root)
 sys.argv = [program, *arguments]
 runpy.run_path(program, run_name="__main__")
@@ -382,8 +407,11 @@ def validate(contract: dict[str, Any]) -> list[str]:
     formalization = contract.get("formalization_gate")
     if not isinstance(formalization, dict):
         errors.append("formalization_gate must be an object")
-    elif formalization.get("required_chunks") != ["PSP-C03"]:
-        errors.append("formalization must require only PSP-C03 after PSP-P02 closure")
+    else:
+        if formalization.get("required_chunks") != ["PSP-C03"]:
+            errors.append("formalization must require only PSP-C03 after PSP-P02 closure")
+        if formalization.get("trusted_python_dependencies") != {"pyyaml": TRUSTED_PYYAML_DEPENDENCY}:
+            errors.append("formalization must exact-bind the complete trusted PyYAML source tree")
 
     progress = contract.get("dependency_progress")
     if not isinstance(progress, dict):
@@ -722,7 +750,7 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 if (
                     not _credential_free_https_url(binding.get("source_locator"))
                     or not _safe_relative_path(binding.get("receipt_path"))
-                    or binding.get("extractor") != "visible_text_v1"
+                    or binding.get("extractor") != "visible_text_v2"
                 ):
                     errors.append(f"live surface source binding is invalid: {surface}")
             else:
@@ -743,6 +771,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("external validation must remain rubric-only/no-outreach")
     if validation.get("human_gate") != "HG-PUBLICATION-SEND":
         errors.append("external validation must retain HG-PUBLICATION-SEND")
+    if validation.get("receipt_time_rule") != EXTERNAL_RECEIPT_TIME_RULE:
+        errors.append("external validation must bind receipt time to the authenticated comment version")
     minimum_objects = validation.get("minimum_object_count")
     if not isinstance(minimum_objects, int) or isinstance(minimum_objects, bool) or minimum_objects < 2:
         errors.append("external validation must require at least two substantive objects")
@@ -1231,30 +1261,78 @@ def _normalized_surface_text(value: str) -> str:
 
 class _VisibleSurfaceParser(HTMLParser):
     _HIDDEN_TAGS = {"script", "style", "template", "noscript", "svg"}
+    _VOID_TAGS = {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+    _HIDDEN_STYLE = re.compile(
+        r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse))"
+        r"(?:\s*!important)?\s*(?:;|$)",
+        re.IGNORECASE,
+    )
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self._hidden_stack: list[str] = []
         self._visible_fragments: list[str] = []
 
-    def handle_starttag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
+    @classmethod
+    def _attributes_hide_element(cls, attrs: list[tuple[str, str | None]]) -> bool:
+        normalized: dict[str, str | None] = {}
+        for name, value in attrs:
+            key = name.casefold()
+            if key in {"hidden", "aria-hidden", "style"} and key in normalized:
+                raise ValueError("surface response duplicates a visibility-control attribute")
+            normalized[key] = value
+        if "hidden" in normalized:
+            return True
+        aria_hidden = normalized.get("aria-hidden")
+        if isinstance(aria_hidden, str) and aria_hidden.strip().casefold() == "true":
+            return True
+        style = normalized.get("style")
+        if not isinstance(style, str):
+            return False
+        if "/*" in style or "\\" in style:
+            raise ValueError("surface response uses obfuscated inline visibility styling")
+        return cls._HIDDEN_STYLE.search(style) is not None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
-        if normalized in self._HIDDEN_TAGS:
+        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or self._attributes_hide_element(attrs)
+        if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
-        elif not self._hidden_stack:
+        elif not hidden:
             self._visible_fragments.append(" ")
 
-    def handle_startendtag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
-        if not self._hidden_stack and tag.casefold() not in self._HIDDEN_TAGS:
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        normalized = tag.casefold()
+        if normalized not in self._VOID_TAGS:
+            raise ValueError("surface response self-closes a non-void HTML element")
+        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or self._attributes_hide_element(attrs)
+        if not hidden:
             self._visible_fragments.append(" ")
 
     def handle_endtag(self, tag: str) -> None:
         normalized = tag.casefold()
-        if normalized in self._HIDDEN_TAGS:
-            if not self._hidden_stack or self._hidden_stack[-1] != normalized:
+        if self._hidden_stack:
+            if self._hidden_stack[-1] != normalized:
                 raise ValueError("surface response has malformed hidden HTML regions")
             self._hidden_stack.pop()
-        elif not self._hidden_stack:
+        elif normalized in self._HIDDEN_TAGS:
+            raise ValueError("surface response has malformed hidden HTML regions")
+        else:
             self._visible_fragments.append(" ")
 
     def handle_data(self, data: str) -> None:
@@ -1272,7 +1350,7 @@ def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
         text = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("surface response is not UTF-8 text") from exc
-    if extractor == "visible_text_v1":
+    if extractor == "visible_text_v2":
         parser = _VisibleSurfaceParser()
         parser.feed(text)
         parser.close()
@@ -1449,7 +1527,7 @@ def _surface_inspection_errors(
             if (
                 not _credential_free_https_url(binding.get("source_locator"))
                 or not _safe_relative_path(binding.get("receipt_path"))
-                or binding.get("extractor") != "visible_text_v1"
+                or binding.get("extractor") != "visible_text_v2"
             ):
                 errors.append(f"live surface source binding is invalid: {surface}")
         else:
@@ -1539,7 +1617,7 @@ def _surface_inspection_errors(
                 errors.append(f"live surface inspection requires a credential-free HTTPS URL: {surface}")
             if not _safe_relative_path(receipt_path):
                 errors.append(f"live surface inspection requires an immutable tracked receipt path: {surface}")
-            if extractor != "visible_text_v1":
+            if extractor != "visible_text_v2":
                 errors.append(f"live surface inspection requires the contract-owned visible-text extractor: {surface}")
             if not isinstance(raw_response_sha256, str) or not SHA256.fullmatch(raw_response_sha256):
                 errors.append(f"live surface inspection requires a bounded raw-response SHA-256: {surface}")
@@ -1575,7 +1653,7 @@ def _surface_inspection_errors(
                 and hashlib.sha256(inspected_content).hexdigest() != extracted_text_sha256
             ):
                 errors.append(f"tracked surface canonical extraction digest differs from the bound source: {surface}")
-        if source_kind == "live_receipt" and extractor == "visible_text_v1":
+        if source_kind == "live_receipt" and extractor == "visible_text_v2":
             inspected_content = content
             if (
                 isinstance(extracted_text_sha256, str)
@@ -1596,6 +1674,13 @@ def _surface_inspection_errors(
                 except (HTTPException, OSError, ValueError) as exc:
                     errors.append(f"live surface inspection could not reproduce the current response: {surface}: {exc}")
                 else:
+                    try:
+                        raw_live_text = html.unescape(live_content.decode("utf-8"))
+                    except UnicodeDecodeError:
+                        errors.append(f"live surface raw response is not UTF-8 text: {surface}")
+                    else:
+                        if _surface_contains_private_material(raw_live_text):
+                            errors.append(f"live surface raw response contains private material: {surface}")
                     try:
                         live_extraction = _canonical_surface_extraction(live_content, extractor)
                     except ValueError as exc:
@@ -1977,6 +2062,22 @@ def _authenticate_external_validation_object(row: dict[str, Any]) -> str:
         raise ValueError("external validation receipt observed_at must be RFC3339 with a timezone") from exc
     if observed > datetime.now(timezone.utc):
         raise ValueError("external validation receipt cannot be future-dated")
+    try:
+        raw_created_at = comment.get("created_at")
+        raw_updated_at = comment.get("updated_at")
+        if not isinstance(raw_created_at, str) or not isinstance(raw_updated_at, str):
+            raise ValueError
+        created_at = datetime.fromisoformat(raw_created_at.replace("Z", "+00:00"))
+        updated_at = datetime.fromisoformat(raw_updated_at.replace("Z", "+00:00"))
+        if created_at.tzinfo is None or updated_at.tzinfo is None:
+            raise ValueError
+    except ValueError as exc:
+        raise ValueError("external validation comment timestamps must be authenticated RFC3339 values") from exc
+    now = datetime.now(timezone.utc)
+    if created_at > updated_at or updated_at > now:
+        raise ValueError("external validation comment timestamps are not chronologically valid")
+    if observed != updated_at:
+        raise ValueError("external validation receipt time differs from the authenticated comment version")
     if observed.date().isoformat() != row.get("date"):
         raise ValueError("external validation receipt date differs from the asserted review date")
     limitations = receipt.get("limitations")
@@ -2304,6 +2405,29 @@ def _trusted_named_executable(name: str) -> Path:
     return resolved
 
 
+def _python_source_tree(package_root: Path) -> tuple[str, list[tuple[PurePosixPath, bytes]]]:
+    """Read one exact pure-Python package tree once and return its deterministic digest."""
+    package_root = package_root.resolve(strict=True)
+    sources: list[tuple[PurePosixPath, bytes]] = []
+    digest = hashlib.sha256()
+    for source_file in sorted(package_root.rglob("*.py")):
+        if source_file.is_symlink():
+            raise ValueError("trusted Python dependency must not contain source symlinks")
+        resolved = source_file.resolve(strict=True)
+        if package_root not in resolved.parents or not resolved.is_file():
+            raise ValueError("trusted Python dependency escaped its package root")
+        relative = PurePosixPath(source_file.relative_to(package_root).as_posix())
+        data = source_file.read_bytes()
+        relative_bytes = relative.as_posix().encode("utf-8")
+        digest.update(relative_bytes)
+        digest.update(b"\0")
+        digest.update(str(len(data)).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(data)
+        sources.append((relative, data))
+    return digest.hexdigest(), sources
+
+
 def _run_trusted_positioning_program(
     repository: Path,
     *arguments: str,
@@ -2323,7 +2447,7 @@ def _run_trusted_positioning_program(
         for raw_path in os.environ.get("PYTHONPATH", "").split(os.pathsep)
         if raw_path
     }
-    dependency: tuple[Path, str] | None = None
+    dependency_sources: list[tuple[PurePosixPath, bytes]] | None = None
     for raw_path in sys.path:
         if not raw_path:
             continue
@@ -2338,17 +2462,25 @@ def _run_trusted_positioning_program(
             or repository in candidate_root.parents
         ):
             continue
+        raw_package_root = candidate_root / TRUSTED_PYYAML_DEPENDENCY["package"]
+        if raw_package_root.is_symlink():
+            continue
         try:
-            yaml_init = (candidate_root / "yaml/__init__.py").resolve(strict=True)
-        except OSError:
+            package_root = raw_package_root.resolve(strict=True)
+            tree_sha256, candidate_sources = _python_source_tree(package_root)
+        except (OSError, ValueError):
             continue
-        if not yaml_init.is_file() or candidate_root not in yaml_init.parents:
+        if package_root.parent != candidate_root:
             continue
-        dependency = (candidate_root, hashlib.sha256(yaml_init.read_bytes()).hexdigest())
+        if (
+            len(candidate_sources) != TRUSTED_PYYAML_DEPENDENCY["python_source_file_count"]
+            or tree_sha256 != TRUSTED_PYYAML_DEPENDENCY["python_source_tree_sha256"]
+        ):
+            continue
+        dependency_sources = candidate_sources
         break
-    if dependency is None:
-        raise OSError("trusted PyYAML dependency is unavailable outside ambient PYTHONPATH")
-    dependency_root, dependency_sha256 = dependency
+    if dependency_sources is None:
+        raise OSError("complete contract-owned PyYAML source tree is unavailable outside ambient PYTHONPATH")
     environment = _sanitized_git_environment()
     for key in tuple(environment):
         upper = key.upper()
@@ -2364,29 +2496,40 @@ def _run_trusted_positioning_program(
     environment.update(
         {
             "PATH": os.pathsep.join(str(path) for path in dict.fromkeys(trusted_path)),
+            "PYTHONDONTWRITEBYTECODE": "1",
             "PYTHONNOUSERSITE": "1",
             "PYTHONSAFEPATH": "1",
         }
     )
-    return subprocess.run(
-        [
-            str(interpreter),
-            "-I",
-            "-S",
-            "-c",
-            POSITIONING_PROGRAM_BOOTSTRAP,
-            str(dependency_root),
-            dependency_sha256,
-            str(program),
-            *arguments,
-        ],
-        cwd=repository,
-        env=environment,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
+    with tempfile.TemporaryDirectory(prefix="limen-pyyaml-") as directory:
+        dependency_root = Path(directory)
+        package_root = dependency_root / TRUSTED_PYYAML_DEPENDENCY["package"]
+        package_root.mkdir()
+        for relative, data in dependency_sources:
+            destination = package_root.joinpath(*relative.parts)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(data)
+        return subprocess.run(
+            [
+                str(interpreter),
+                "-I",
+                "-S",
+                "-B",
+                "-c",
+                POSITIONING_PROGRAM_BOOTSTRAP,
+                str(dependency_root),
+                TRUSTED_PYYAML_DEPENDENCY["python_source_tree_sha256"],
+                str(TRUSTED_PYYAML_DEPENDENCY["python_source_file_count"]),
+                str(program),
+                *arguments,
+            ],
+            cwd=repository,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
 
 
 def _sanitized_ancestry(repository: Path, ancestor: str, descendant: str) -> subprocess.CompletedProcess[str]:

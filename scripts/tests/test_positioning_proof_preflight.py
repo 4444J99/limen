@@ -303,7 +303,25 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
     def test_tracked_contract_is_valid(self) -> None:
         self.assertEqual([], MODULE.validate(self.production_contract))
+
+    def test_formalization_contract_exact_binds_the_complete_pyyaml_tree(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["formalization_gate"]["trusted_python_dependencies"]["pyyaml"][
+            "python_source_tree_sha256"
+        ] = "0" * 64
+        self.assertIn(
+            "formalization must exact-bind the complete trusted PyYAML source tree",
+            MODULE.validate(changed),
+        )
         self.assertEqual([], MODULE.validate(self.contract))
+
+    def test_external_validation_contract_binds_authenticated_comment_time(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["external_validation"].pop("receipt_time_rule")
+        self.assertIn(
+            "external validation must bind receipt time to the authenticated comment version",
+            MODULE.validate(changed),
+        )
 
     def test_surface_source_registry_rejects_reused_contract_identity(self) -> None:
         changed = copy.deepcopy(self.contract)
@@ -680,9 +698,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
         changed = b"<html><body><h1>Inflated proof claim</h1><script>nonce='three'</script></body></html>"
-        first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v1")
-        second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v1")
-        changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v1")
+        first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v2")
+        second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v2")
+        changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v2")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
         for hidden_tag in ("script", "style", "template", "noscript", "svg"):
@@ -690,13 +708,37 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unterminated hidden"):
                     MODULE._canonical_surface_extraction(
                         f"<html><body>Bounded proof claim<{hidden_tag}>hidden inflated proof claim".encode(),
-                        "visible_text_v1",
+                        "visible_text_v2",
                     )
         malformed_closing = MODULE._canonical_surface_extraction(
             b"<html><body>Bounded proof claim<script>hidden inflated claim</script attr></body></html>",
-            "visible_text_v1",
+            "visible_text_v2",
         )
         self.assertNotIn(b"hidden", malformed_closing)
+        for hidden_markup in (
+            "<div hidden>hidden@example.invalid</div>",
+            "<section aria-hidden='true'>hidden@example.invalid</section>",
+            "<aside style='display: none !important'>hidden@example.invalid</aside>",
+            "<p style='visibility:hidden'>hidden@example.invalid</p>",
+        ):
+            with self.subTest(hidden_markup=hidden_markup):
+                extraction = MODULE._canonical_surface_extraction(
+                    f"<html><body>{hidden_markup}<p>Visible proof</p></body></html>".encode(),
+                    "visible_text_v2",
+                )
+                self.assertEqual(b"Visible proof\n", extraction)
+        for malformed in (
+            "<div style='display:block' style='display:none'>hidden</div>",
+            "<div style='display/**/:none'>hidden</div>",
+            r"<div style='d\69splay:none'>hidden</div>",
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaisesRegex(ValueError, "visibility"):
+                    MODULE._canonical_surface_extraction(malformed.encode(), "visible_text_v2")
+        with self.assertRaisesRegex(ValueError, "self-closes a non-void"):
+            MODULE._canonical_surface_extraction(b"<div hidden/>", "visible_text_v2")
+        with self.assertRaisesRegex(ValueError, "unsupported canonical extractor"):
+            MODULE._canonical_surface_extraction(first, "visible_text_v1")
 
     def test_live_surface_fetch_uses_contract_owned_https_transport(self) -> None:
         source_url = "https://example.com/public-proof"
@@ -733,7 +775,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "source_kind": "live_receipt",
                 "source_locator": "https://example.com/public-proof",
                 "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
-                "extractor": "visible_text_v1",
+                "extractor": "visible_text_v2",
             }
         }
         inspection = {
@@ -743,7 +785,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "source_kind": "live_receipt",
             "source_locator": "https://example.com/public-proof",
             "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
-            "extractor": "visible_text_v1",
+            "extractor": "visible_text_v2",
             "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "exact_head": head,
             "blob_sha1": "a" * 40,
@@ -787,12 +829,30 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     {},
                     ROOT,
                 )
+            with mock.patch.object(
+                MODULE,
+                "_fetch_bounded_public_surface",
+                return_value=(
+                    b"<html><body>Bounded proof claim"
+                    b"<script>window.contact='private@example.invalid'</script></body></html>"
+                ),
+            ):
+                private_raw_errors, _resolved = MODULE._surface_inspection_errors(
+                    self.contract,
+                    {surface: inspection},
+                    {},
+                    ROOT,
+                )
         self.assertFalse(any("raw response differs" in error for error in errors), errors)
         self.assertFalse(any("visible claims differ" in error for error in errors), errors)
         self.assertTrue(any("visible claims differ" in error for error in changed_errors), changed_errors)
         self.assertTrue(
             any("live surface inspection could not reproduce" in error for error in transport_errors),
             transport_errors,
+        )
+        self.assertTrue(
+            any("raw response contains private material" in error for error in private_raw_errors),
+            private_raw_errors,
         )
 
     def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
@@ -977,14 +1037,83 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
             self.assertEqual("-I", argv[1])
             self.assertEqual("-S", argv[2])
-            self.assertEqual("-c", argv[3])
-            self.assertEqual(MODULE.POSITIONING_PROGRAM_BOOTSTRAP, argv[4])
+            self.assertEqual("-B", argv[3])
+            self.assertEqual("-c", argv[4])
+            self.assertEqual(MODULE.POSITIONING_PROGRAM_BOOTSTRAP, argv[5])
             self.assertEqual((ROOT / "scripts/positioning-program.py").resolve(), Path(argv[-3]))
             for key in set(injected) - {"PATH"}:
                 self.assertNotIn(key, environment)
             self.assertNotIn(injected["PATH"], environment["PATH"].split(os.pathsep))
+            self.assertEqual("1", environment["PYTHONDONTWRITEBYTECODE"])
             self.assertEqual("1", environment["PYTHONNOUSERSITE"])
             self.assertEqual("1", environment["PYTHONSAFEPATH"])
+
+    @staticmethod
+    def _installed_pyyaml_sources() -> list[tuple[MODULE.PurePosixPath, bytes]]:
+        package_root = next(
+            candidate
+            for raw_path in sys.path
+            if raw_path
+            if (candidate := Path(raw_path).resolve() / "yaml").is_dir()
+        )
+        tree_sha256, sources = MODULE._python_source_tree(package_root)
+        if tree_sha256 != MODULE.TRUSTED_PYYAML_DEPENDENCY["python_source_tree_sha256"]:
+            raise AssertionError("test interpreter does not expose the contract-owned PyYAML tree")
+        return sources
+
+    @staticmethod
+    def _write_pyyaml_sources(
+        root: Path,
+        sources: list[tuple[MODULE.PurePosixPath, bytes]],
+    ) -> None:
+        for relative, data in sources:
+            destination = root / "yaml" / Path(*relative.parts)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(data)
+
+    def test_phase_proof_rejects_a_sibling_pyyaml_source_mutation(self) -> None:
+        sources = self._installed_pyyaml_sources()
+        with tempfile.TemporaryDirectory() as directory:
+            dependency_root = Path(directory) / "site-packages"
+            dependency_root.mkdir()
+            self._write_pyyaml_sources(dependency_root, sources)
+            constructor = dependency_root / "yaml/constructor.py"
+            constructor.write_bytes(constructor.read_bytes() + b"\n# drift\n")
+            with mock.patch.object(MODULE.sys, "path", [str(dependency_root)]):
+                with self.assertRaisesRegex(OSError, "complete contract-owned PyYAML source tree"):
+                    MODULE._run_trusted_positioning_program(
+                        ROOT,
+                        "--phase-proof",
+                        "PSP-P03",
+                        timeout=90,
+                    )
+
+    def test_phase_proof_copies_only_the_authenticated_pyyaml_sources(self) -> None:
+        sources = self._installed_pyyaml_sources()
+        with tempfile.TemporaryDirectory() as directory:
+            dependency_root = Path(directory) / "site-packages"
+            dependency_root.mkdir()
+            self._write_pyyaml_sources(dependency_root, sources)
+            (dependency_root / "sitecustomize.py").write_text("raise RuntimeError('must not be copied')\n")
+
+            def inspect_copy(argv: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+                copied_root = Path(argv[6])
+                self.assertEqual({"yaml"}, {path.name for path in copied_root.iterdir()})
+                self.assertFalse((copied_root / "sitecustomize.py").exists())
+                copied_sha256, copied_sources = MODULE._python_source_tree(copied_root / "yaml")
+                self.assertEqual(MODULE.TRUSTED_PYYAML_DEPENDENCY["python_source_tree_sha256"], copied_sha256)
+                self.assertEqual(MODULE.TRUSTED_PYYAML_DEPENDENCY["python_source_file_count"], len(copied_sources))
+                return subprocess.CompletedProcess(argv, 0, "", "")
+
+            with mock.patch.object(MODULE.sys, "path", [str(dependency_root)]):
+                with mock.patch.object(MODULE.subprocess, "run", side_effect=inspect_copy):
+                    completed = MODULE._run_trusted_positioning_program(
+                        ROOT,
+                        "--phase-proof",
+                        "PSP-P03",
+                        timeout=90,
+                    )
+            self.assertEqual(0, completed.returncode)
 
     def test_live_phase_verification_cannot_accept_receipt_without_current_phase_proof(self) -> None:
         failed = subprocess.CompletedProcess([], 2, "", "phase proof failed")
@@ -1441,6 +1570,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "html_url": receipt_url,
                 "user": {"login": actor},
                 "author_association": "NONE",
+                "created_at": "2026-08-14T11:59:00Z",
+                "updated_at": receipt["observed_at"],
                 "body": "<!-- positioning-external-validation-receipt -->\n```json\n" + json.dumps(receipt) + "\n```",
             }
             objects.append(row)
@@ -1456,6 +1587,46 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         self.assertEqual("pass", result["status"])
         self.assertEqual(2, result["substantive_public_count"])
+
+        first_comment = comments[objects[0]["object URL or receipt"]]
+        first_comment["updated_at"] = "2026-08-14T11:59:30Z"
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            timestamp_mismatch = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", timestamp_mismatch["status"])
+        self.assertEqual(1, timestamp_mismatch["substantive_public_count"])
+        self.assertTrue(any("authenticated comment version" in error for error in timestamp_mismatch["errors"]))
+        first_comment["updated_at"] = "2026-08-14T12:00:00Z"
+
+        authenticated_comment = copy.deepcopy(first_comment)
+        timestamp_cases = (
+            ({key: value for key, value in authenticated_comment.items() if key != "created_at"}, "timestamps"),
+            ({**authenticated_comment, "created_at": "2026-08-14T12:01:00Z"}, "chronologically"),
+            ({**authenticated_comment, "updated_at": "2999-08-14T12:00:00Z"}, "chronologically"),
+        )
+        for malformed_comment, expected_error in timestamp_cases:
+            with self.subTest(expected_error=expected_error):
+                comments[objects[0]["object URL or receipt"]] = malformed_comment
+                with mock.patch.object(
+                    MODULE,
+                    "_fetch_github_issue_comment",
+                    side_effect=lambda receipt_url, _label: comments[receipt_url],
+                ):
+                    malformed_time = MODULE.validate_external_objects(
+                        self.contract,
+                        {"outreach_performed": False, "objects": objects},
+                        as_of=date(2026, 8, 14),
+                    )
+                self.assertEqual("fail", malformed_time["status"])
+                self.assertTrue(any(expected_error in error for error in malformed_time["errors"]))
+        comments[objects[0]["object URL or receipt"]] = first_comment
 
         objects[0]["receipt SHA-256"] = "0" * 64
         with mock.patch.object(

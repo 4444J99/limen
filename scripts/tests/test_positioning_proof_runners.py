@@ -1155,6 +1155,13 @@ class PositioningProofRunnerTest(unittest.TestCase):
             subprocess.CompletedProcess([], 0, ("a" * 40 + "\n").encode(), b""),
             subprocess.CompletedProcess([], 0, ("b" * 40 + "\n").encode(), b""),
             subprocess.CompletedProcess([], 0, committed, b""),
+            subprocess.CompletedProcess([], 0, b"", b""),
+        )
+        remote = subprocess.CompletedProcess(
+            [],
+            0,
+            (f"ref: refs/heads/main\tHEAD\n{'d' * 40}\tHEAD\n").encode(),
+            b"",
         )
         with tempfile.TemporaryDirectory() as directory:
             contract = Path(directory) / "contract.json"
@@ -1162,18 +1169,41 @@ class PositioningProofRunnerTest(unittest.TestCase):
             with (
                 mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
                 mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+                mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
             ):
                 payload, metadata = RECEIPT._proof_contract_snapshot()
             self.assertEqual({}, payload["exact_head_receipt_plan"]["flagship_predicates"])
             self.assertEqual("a" * 40, metadata["proof_contract_head"])
             self.assertEqual("b" * 40, metadata["proof_contract_blob"])
             self.assertEqual(RECEIPT.hashlib.sha256(committed).hexdigest(), metadata["proof_contract_sha256"])
+            self.assertEqual("main", metadata["proof_contract_canonical_branch"])
+            self.assertEqual("d" * 40, metadata["proof_contract_canonical_head"])
 
             contract.write_bytes(b'{"exact_head_receipt_plan":{"flagship_predicates":{"limen":{}}}}')
             with (
                 mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
                 mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+                mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
                 self.assertRaisesRegex(ValueError, "differ from the committed runner blob"),
+            ):
+                RECEIPT._proof_contract_snapshot()
+
+            contract.write_bytes(committed)
+            uncontained = (*completed[:3], subprocess.CompletedProcess([], 1, b"", b""))
+            with (
+                mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=uncontained),
+                mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
+                self.assertRaisesRegex(ValueError, "not contained in canonical Limen main"),
+            ):
+                RECEIPT._proof_contract_snapshot()
+
+            unavailable_remote = subprocess.CompletedProcess([], 1, b"", b"canonical remote unavailable")
+            with (
+                mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+                mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=unavailable_remote),
+                self.assertRaisesRegex(ValueError, "canonical Limen proof-contract authority is unavailable"),
             ):
                 RECEIPT._proof_contract_snapshot()
 
