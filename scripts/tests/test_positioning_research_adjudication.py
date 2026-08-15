@@ -1449,6 +1449,7 @@ def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
 def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() -> None:
     gates = MODULE._load_yaml(ROOT / "institutio" / "governance" / "gates.yaml")
     gate = gates["gates"]["research-adjudication-test"]
+    live_gate = gates["gates"]["research-adjudication-live-test"]
     workflow = MODULE._load_yaml(ROOT / ".github" / "workflows" / "pr-gate.yml")
 
     assert ".github/workflows/pr-gate.yml" in gate["paths"]
@@ -1459,12 +1460,15 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     assert gate["command"] == (
         "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py "
         "scripts/tests/test_positioning_research_adjudication.py -q && "
-        "python3 scripts/positioning-research-adjudication.py --verify-live"
-    )
-    assert gate["command"].endswith(
-        "python3 scripts/positioning-research-adjudication.py --verify-live"
+        "python3 scripts/positioning-research-adjudication.py --check"
     )
     assert gate["timeout_seconds"] == 300
+    assert live_gate["command"] == "python3 scripts/positioning-research-adjudication.py --verify-live"
+    assert live_gate["timeout_seconds"] == 300
+    assert "institutio/positioning/github-map.json" in live_gate["paths"]
+    assert "scripts/positioning-research-adjudication.py" in live_gate["paths"]
+    assert "institutio/governance/gates.yaml" not in live_gate["paths"]
+    assert "institutio/positioning/program.yaml" not in live_gate["paths"]
     assert workflow["permissions"] == {"contents": "read", "issues": "read"}
     verification_steps = {
         step["name"]: step

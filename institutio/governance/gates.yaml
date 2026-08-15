@@ -498,23 +498,43 @@ gates:
       - "institutio/governance/gates.yaml"
     owner: positioning-program
     note: "PSP-P04-W01 stays exactly bound to the canonical generated Audit, complete decision-record contract, numeric-price boundary, shared private-source detector, and focused same-length/scalar/leak regressions."
-  governance-install-offer-test:
-    command: "python3 scripts/positioning-offer-artifacts.py --check && bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_offer_artifacts.py -q"
+  positioning-offer-contract-test:
+    command: "python3 scripts/positioning-commercial-contract.py --check && python3 scripts/positioning-offer-artifacts.py --check && bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_commercial_contract.py scripts/tests/test_positioning_offer_artifacts.py -q"
     paths:
+      - "docs/positioning/commercial-contract.md"
+      - "docs/positioning/offers/**"
+      - "docs/positioning/offers/agentic-delivery-audit.md"
+      - "docs/positioning/offers/bounded-delivery-governance-retainer-capacity.json"
+      - "docs/positioning/offers/bounded-delivery-governance-retainer.md"
       - "docs/positioning/offers/governance-install.md"
+      - "docs/positioning/offers/product-operating-partnership-review.md"
+      - "docs/positioning/offers/qualification-and-routing.md"
+      - "docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md"
+      - "docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md"
+      - "docs/receipts/positioning/relays/2026-08-10-psp-c03-identity-offers-preflight.md"
       - "institutio/positioning/commercial-contract.yaml"
+      - "institutio/positioning/program.yaml"
       - "scripts/positioning-offer-artifacts.py"
+      - "scripts/positioning-commercial-contract.py"
       - "scripts/tests/positioning-offer-artifacts.test.py"
+      - "scripts/tests/positioning-commercial-contract.test.py"
+      - "scripts/tests/test_positioning_commercial_contract.py"
       - "scripts/tests/test_positioning_offer_artifacts.py"
       - "institutio/governance/gates.yaml"
     owner: positioning-program
-    note: "PSP-P04-W02 stays bounded to one named team/pipeline, requires pre-start acceptance tests and handoff ownership, finite receipt-backed acceptance and rollback, and an explicit no-platform-rewrite exclusion."
+    note: "PSP-P04-W02 stays bounded to one named team/pipeline with finite acceptance and handoff; PSP-P04-W03 binds a finite declared-day capacity model, scheduled-only response targets, internal decision ownership, exact artifacts/exclusions/escalation, and explicit renewal/exit with no hidden on-call, unlimited implementation, or executive substitution."
   research-adjudication-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py scripts/tests/test_positioning_research_adjudication.py -q && python3 scripts/positioning-research-adjudication.py --verify-live"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py scripts/tests/test_positioning_research_adjudication.py -q && python3 scripts/positioning-research-adjudication.py --check"
     paths: [".github/workflows/pr-gate.yml", "cli/tests/test_positioning_program.py", "docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "institutio/positioning/program.yaml", "scripts/positioning-program.py", "scripts/positioning-research-adjudication.py", "scripts/tests/test_positioning_research_adjudication.py", "institutio/governance/gates.yaml"]
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P02-W08 keeps all 13 criticisms separated across measurement, inference, implication, and prominence; exactly matches W05's accepted publishable projection and claims-ledger blob; runs the static contract before bounded live checks of the latest marked W01/W05 receipts, immutable repository/source identities, #1245 state, and exact profile metadata; fixes all eight LAVREA axes; and remains projection_pending until post-merge sync and verify-remote parity."
+    note: "PSP-P02-W08 statically keeps all 13 criticisms separated across measurement, inference, implication, and prominence; exactly matches W05's accepted publishable projection and claims-ledger blob; validates the bounded live-gate wiring without querying mutable GitHub state; fixes all eight LAVREA axes; and remains projection_pending until post-merge sync and verify-remote parity."
+  research-adjudication-live-test:
+    command: "python3 scripts/positioning-research-adjudication.py --verify-live"
+    paths: ["docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "scripts/positioning-research-adjudication.py"]
+    timeout_seconds: 300
+    owner: positioning-program
+    note: "PSP-P02-W08's bounded live predicate verifies latest marked receipts, immutable repository/source identities, issue state, and exact profile metadata only when an owning W08 evidence or validator input changes. Shared registry and program-contract edits select the static gate instead, so unrelated leaves cannot be blocked by mutable public-profile drift."
   positioning-p14-control-plane-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_p14_control_plane.py -q"
     paths: ["scripts/positioning-p14-control-plane.py", "cli/tests/test_positioning_p14_control_plane.py", "cli/tests/fixtures/positioning-p14/**", "institutio/positioning/p14/**", "docs/positioning/p14/**", "docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md", "institutio/governance/gates.yaml"]
