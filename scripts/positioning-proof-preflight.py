@@ -18,6 +18,7 @@ from http.client import HTTPException
 from urllib.parse import urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 from datetime import date, datetime, timedelta, timezone
+from html.parser import HTMLParser
 from pathlib import Path, PurePosixPath
 from typing import Any
 
@@ -28,6 +29,13 @@ CONTRACT_CA_BUNDLE_CANDIDATES = (
     Path("/etc/ssl/certs/ca-certificates.crt"),
     Path("/etc/pki/tls/certs/ca-bundle.crt"),
     Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
+)
+TRUSTED_EXECUTABLE_DIRECTORIES = (
+    Path(sys.executable).resolve().parent,
+    Path("/opt/homebrew/bin"),
+    Path("/usr/local/bin"),
+    Path("/usr/bin"),
+    Path("/bin"),
 )
 DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
@@ -51,6 +59,7 @@ EXTERNAL_VALIDATION_MINIMUM_FIELDS = (
     "validator identity class",
     "independence disclosure",
     "object URL or receipt",
+    "receipt SHA-256",
     "date",
     "claim scope",
     "method",
@@ -593,7 +602,12 @@ def validate(contract: dict[str, Any]) -> list[str]:
         errors.append("exact-head receipt plan must bind every selected flagship predicate")
     else:
         for flagship_id, binding in flagship_predicates.items():
-            if not isinstance(binding, dict) or set(binding) != {"repository", "default_branch", "predicate"}:
+            if not isinstance(binding, dict) or set(binding) != {
+                "repository",
+                "default_branch",
+                "predicate",
+                "runtime_setup",
+            }:
                 errors.append(f"exact-head receipt predicate has an invalid schema: {flagship_id}")
                 continue
             if binding.get("repository") != EXPECTED_FLAGSHIP_REPOSITORIES.get(flagship_id):
@@ -621,6 +635,45 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 or not 1024 <= bound_output <= 10 * 1024 * 1024
             ):
                 errors.append(f"exact-head receipt predicate command requires bounded output: {flagship_id}")
+            runtime_setup = binding.get("runtime_setup")
+            if flagship_id == "limen":
+                if runtime_setup != {"mode": "none"}:
+                    errors.append("Limen exact-head receipt must use the no-dependency isolated runtime")
+                continue
+            expected_lockfile = {
+                "public_records": "package-lock.json",
+                "ai_chat_exporter": "pnpm-lock.yaml",
+            }[flagship_id]
+            expected_setup_argv = {
+                "public_records": ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"],
+                "ai_chat_exporter": ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"],
+            }[flagship_id]
+            if not isinstance(runtime_setup, dict) or set(runtime_setup) != {
+                "mode",
+                "lockfile",
+                "argv",
+                "timeout_seconds",
+                "max_output_bytes",
+            }:
+                errors.append(f"exact-head receipt runtime setup has an invalid schema: {flagship_id}")
+                continue
+            if runtime_setup.get("mode") != "locked_install" or runtime_setup.get("lockfile") != expected_lockfile:
+                errors.append(f"exact-head receipt runtime setup must bind the canonical lockfile: {flagship_id}")
+            setup_argv = runtime_setup.get("argv")
+            if setup_argv != expected_setup_argv:
+                errors.append(
+                    f"exact-head receipt runtime setup requires the contract-owned install argv: {flagship_id}"
+                )
+            setup_timeout = runtime_setup.get("timeout_seconds")
+            if not isinstance(setup_timeout, int) or isinstance(setup_timeout, bool) or not 1 <= setup_timeout <= 1800:
+                errors.append(f"exact-head receipt runtime setup requires a bounded timeout: {flagship_id}")
+            setup_output = runtime_setup.get("max_output_bytes")
+            if (
+                not isinstance(setup_output, int)
+                or isinstance(setup_output, bool)
+                or not 1024 <= setup_output <= 10 * 1024 * 1024
+            ):
+                errors.append(f"exact-head receipt runtime setup requires bounded output: {flagship_id}")
 
     surface_model = contract.get("surface_audit_model", {})
     if surface_model.get("claim_inventory_source") != "p02_claims_ledger":
@@ -691,6 +744,8 @@ def validate(contract: dict[str, Any]) -> list[str]:
     minimum_objects = validation.get("minimum_object_count")
     if not isinstance(minimum_objects, int) or isinstance(minimum_objects, bool) or minimum_objects < 2:
         errors.append("external validation must require at least two substantive objects")
+    if validation.get("minimum_fields") != list(EXTERNAL_VALIDATION_MINIMUM_FIELDS):
+        errors.append("external validation minimum fields must match the canonical exact schema")
     return errors
 
 
@@ -727,7 +782,7 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
     for dependency in contract.get("dependency_sources", []):
         source_spec = f"{dependency['exact_head']}:{dependency['required_path']}"
         completed = subprocess.run(
-            ["git", "show", source_spec],
+            [str(_trusted_named_executable("git")), "show", source_spec],
             cwd=repository,
             env=_sanitized_git_environment(),
             check=False,
@@ -747,7 +802,7 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
             )
             continue
         blob = subprocess.run(
-            ["git", "rev-parse", source_spec],
+            [str(_trusted_named_executable("git")), "rev-parse", source_spec],
             cwd=repository,
             env=_sanitized_git_environment(),
             check=False,
@@ -777,7 +832,7 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
 def _read_git_object(repository: Path, head: str, path: str) -> tuple[str | None, str | None]:
     source_spec = f"{head}:{path}"
     content = subprocess.run(
-        ["git", "show", source_spec],
+        [str(_trusted_named_executable("git")), "show", source_spec],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,
@@ -786,7 +841,7 @@ def _read_git_object(repository: Path, head: str, path: str) -> tuple[str | None
         timeout=30,
     )
     blob = subprocess.run(
-        ["git", "rev-parse", source_spec],
+        [str(_trusted_named_executable("git")), "rev-parse", source_spec],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,
@@ -802,7 +857,7 @@ def _read_git_object(repository: Path, head: str, path: str) -> tuple[str | None
 def _read_git_object_bytes(repository: Path, head: str, path: str) -> tuple[bytes | None, str | None]:
     source_spec = f"{head}:{path}"
     content = subprocess.run(
-        ["git", "show", source_spec],
+        [str(_trusted_named_executable("git")), "show", source_spec],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,
@@ -810,7 +865,7 @@ def _read_git_object_bytes(repository: Path, head: str, path: str) -> tuple[byte
         timeout=30,
     )
     blob = subprocess.run(
-        ["git", "rev-parse", source_spec],
+        [str(_trusted_named_executable("git")), "rev-parse", source_spec],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,
@@ -1172,20 +1227,54 @@ def _normalized_surface_text(value: str) -> str:
     return " ".join(re.findall(r"[a-z0-9]+", without_markup.lower()))
 
 
+class _VisibleSurfaceParser(HTMLParser):
+    _HIDDEN_TAGS = {"script", "style", "template", "noscript", "svg"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._hidden_stack: list[str] = []
+        self._visible_fragments: list[str] = []
+
+    def handle_starttag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
+        normalized = tag.casefold()
+        if normalized in self._HIDDEN_TAGS:
+            self._hidden_stack.append(normalized)
+        elif not self._hidden_stack:
+            self._visible_fragments.append(" ")
+
+    def handle_startendtag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
+        if not self._hidden_stack and tag.casefold() not in self._HIDDEN_TAGS:
+            self._visible_fragments.append(" ")
+
+    def handle_endtag(self, tag: str) -> None:
+        normalized = tag.casefold()
+        if normalized in self._HIDDEN_TAGS:
+            if not self._hidden_stack or self._hidden_stack[-1] != normalized:
+                raise ValueError("surface response has malformed hidden HTML regions")
+            self._hidden_stack.pop()
+        elif not self._hidden_stack:
+            self._visible_fragments.append(" ")
+
+    def handle_data(self, data: str) -> None:
+        if not self._hidden_stack:
+            self._visible_fragments.append(data)
+
+    def visible_text(self) -> str:
+        if self._hidden_stack:
+            raise ValueError("surface response has unterminated hidden HTML regions")
+        return " ".join(self._visible_fragments)
+
+
 def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("surface response is not UTF-8 text") from exc
     if extractor == "visible_text_v1":
-        text = re.sub(
-            r"(?is)<(script|style|template|noscript|svg)\b[^>]*>.*?</\1\s*>",
-            " ",
-            text,
-        )
-        text = re.sub(r"(?s)<!--.*?-->", " ", text)
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = html.unescape(text)
+        parser = _VisibleSurfaceParser()
+        parser.feed(text)
+        parser.close()
+        text = parser.visible_text()
     elif extractor == "raw_text_v1":
         text = html.unescape(text)
     else:
@@ -1848,7 +1937,7 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
 
 
 def _canonical_external_validation_subject(row: dict[str, Any]) -> str:
-    subject = {key: value for key, value in row.items() if key != "object URL or receipt"}
+    subject = {key: value for key, value in row.items() if key not in {"object URL or receipt", "receipt SHA-256"}}
     raw = json.dumps(subject, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(raw).hexdigest()
 
@@ -1873,6 +1962,12 @@ def _authenticate_external_validation_object(row: dict[str, Any]) -> str:
         raise ValueError("external validation receipt has an unsupported schema")
     if receipt.get("evidence_kind") != "external_validation":
         raise ValueError("external validation receipt has the wrong evidence kind")
+    canonical_receipt = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    receipt_sha256 = row.get("receipt SHA-256")
+    if not isinstance(receipt_sha256, str) or not SHA256.fullmatch(receipt_sha256):
+        raise ValueError("external validation object requires a lowercase receipt SHA-256")
+    if hashlib.sha256(canonical_receipt).hexdigest() != receipt_sha256:
+        raise ValueError("external validation receipt digest differs from the marked receipt")
     if receipt.get("subject_sha256") != _canonical_external_validation_subject(row):
         raise ValueError("external validation receipt does not bind the exact asserted review")
     if receipt.get("actor_identity") != login:
@@ -2156,6 +2251,7 @@ def _sanitized_git_environment() -> dict[str, str]:
                 "GIT_CONFIG_COUNT",
                 "GIT_CONFIG_PARAMETERS",
                 "GIT_DIR",
+                "GIT_EXEC_PATH",
                 "GIT_INDEX_FILE",
                 "GIT_NAMESPACE",
                 "GIT_OBJECT_DIRECTORY",
@@ -2177,6 +2273,7 @@ def _sanitized_git_environment() -> dict[str, str]:
             or key.startswith("GIT_CONFIG_KEY_")
             or key.startswith("GIT_CONFIG_VALUE_")
             or key.startswith("GIT_SSL_")
+            or key.upper().startswith(("LD_", "DYLD_"))
             or key.lower() in {"all_proxy", "http_proxy", "https_proxy", "no_proxy"}
         ):
             environment.pop(key, None)
@@ -2188,9 +2285,29 @@ def _sanitized_git_environment() -> dict[str, str]:
             "GIT_GRAFT_FILE": os.devnull,
             "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_TERMINAL_PROMPT": "0",
+            "PATH": os.pathsep.join(str(path) for path in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)),
         }
     )
     return environment
+
+
+def _trusted_named_executable(name: str) -> Path:
+    if not name or Path(name).name != name or "/" in name or "\\" in name:
+        raise ValueError("trusted executable name must be one path-free component")
+    candidate = next(
+        (
+            directory / name
+            for directory in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)
+            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
+        ),
+        None,
+    )
+    if candidate is None:
+        raise OSError(f"trusted executable is unavailable: {name}")
+    resolved = candidate.resolve(strict=True)
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise OSError(f"trusted executable is not executable: {resolved}")
+    return resolved
 
 
 def _run_trusted_positioning_program(
@@ -2280,7 +2397,7 @@ def _run_trusted_positioning_program(
 
 def _sanitized_ancestry(repository: Path, ancestor: str, descendant: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        [str(_trusted_named_executable("git")), "merge-base", "--is-ancestor", ancestor, descendant],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,
@@ -2292,7 +2409,13 @@ def _sanitized_ancestry(repository: Path, ancestor: str, descendant: str) -> sub
 
 def _canonical_limen_remote_head() -> tuple[str, str]:
     completed = subprocess.run(
-        ["git", "ls-remote", "--symref", "https://github.com/organvm/limen.git", "HEAD"],
+        [
+            str(_trusted_named_executable("git")),
+            "ls-remote",
+            "--symref",
+            "https://github.com/organvm/limen.git",
+            "HEAD",
+        ],
         cwd=Path("/"),
         env=_sanitized_git_environment(),
         check=False,
@@ -2435,7 +2558,7 @@ def _validate_phase_receipt_bindings(
 
 def _git_blob(repository: Path, head: str, path: str) -> bytes:
     completed = subprocess.run(
-        ["git", "show", f"{head}:{path}"],
+        [str(_trusted_named_executable("git")), "show", f"{head}:{path}"],
         cwd=repository,
         env=_sanitized_git_environment(),
         check=False,

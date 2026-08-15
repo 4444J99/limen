@@ -308,13 +308,21 @@
           "argv": ["python3", "scripts/positioning-proof-preflight.py", "--mode", "validate", "--json"],
           "timeout_seconds": 1800,
           "max_output_bytes": 1048576
-        }
+        },
+        "runtime_setup": {"mode": "none"}
       },
       "public_records": {
         "repository": "organvm-iii-ergon/public-record-data-scrapper",
         "default_branch": "main",
         "predicate": {
           "argv": ["npm", "test"],
+          "timeout_seconds": 1800,
+          "max_output_bytes": 1048576
+        },
+        "runtime_setup": {
+          "mode": "locked_install",
+          "lockfile": "package-lock.json",
+          "argv": ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"],
           "timeout_seconds": 1800,
           "max_output_bytes": 1048576
         }
@@ -324,6 +332,13 @@
         "default_branch": "master",
         "predicate": {
           "argv": ["pnpm", "test"],
+          "timeout_seconds": 1800,
+          "max_output_bytes": 1048576
+        },
+        "runtime_setup": {
+          "mode": "locked_install",
+          "lockfile": "pnpm-lock.yaml",
+          "argv": ["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"],
           "timeout_seconds": 1800,
           "max_output_bytes": 1048576
         }
@@ -350,7 +365,7 @@
     "human_gate": "HG-PUBLICATION-SEND",
     "acceptable_objects": ["independent reproduction", "dated technical review", "consented collaborator outcome", "accepted talk or publication with review provenance"],
     "minimum_object_count": 2,
-    "minimum_fields": ["validator identity class", "independence disclosure", "object URL or receipt", "date", "claim scope", "method", "limitations", "consent status", "withdrawal route"],
+    "minimum_fields": ["validator identity class", "independence disclosure", "object URL or receipt", "receipt SHA-256", "date", "claim scope", "method", "limitations", "consent status", "withdrawal route"],
     "score_dimensions": ["independence", "reproducibility", "specificity", "recency", "claim relevance", "consent and privacy"],
     "send_rule": "No request, outreach, upload, or publication occurs from this preflight."
   }

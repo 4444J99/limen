@@ -11,6 +11,7 @@ import os
 import re
 import ssl
 import subprocess
+import sys
 from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
@@ -25,6 +26,13 @@ CONTRACT_CA_BUNDLE_CANDIDATES = (
     Path("/etc/ssl/certs/ca-certificates.crt"),
     Path("/etc/pki/tls/certs/ca-bundle.crt"),
     Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
+)
+TRUSTED_EXECUTABLE_DIRECTORIES = (
+    Path(sys.executable).resolve().parent,
+    Path("/opt/homebrew/bin"),
+    Path("/usr/local/bin"),
+    Path("/usr/bin"),
+    Path("/bin"),
 )
 SCHEMA_VERSION = "limen.positioning_cost_failure_sample.v1"
 ALLOWED_STATES = {"done", "failed", "failed_blocked", "needs_human"}
@@ -228,6 +236,42 @@ def _lower_sha256(value: object) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(character in "0123456789abcdef" for character in value)
 
 
+def _derived_selection_seed(population: dict[str, Any]) -> str:
+    manifest = population.get("source_manifest")
+    source_records = manifest.get("records") if isinstance(manifest, dict) else None
+    selection_universe = (
+        [
+            {
+                "sample_id": record.get("sample_id"),
+                "eligible": record.get("eligible"),
+                "exclusion_reason": record.get("exclusion_reason"),
+            }
+            for record in source_records
+            if isinstance(record, dict)
+        ]
+        if isinstance(source_records, list)
+        else []
+    )
+    selection_universe.sort(
+        key=lambda value: (
+            value.get("sample_id") if isinstance(value.get("sample_id"), str) else "",
+            json.dumps(value, sort_keys=True, separators=(",", ":")),
+        )
+    )
+    return _canonical_digest(
+        {
+            "schema_version": "limen.positioning_cost_failure_selection_seed.v1",
+            "source_id": population.get("source_id"),
+            "window_start": population.get("window_start"),
+            "window_end": population.get("window_end"),
+            "population_count": population.get("population_count"),
+            "eligible_count": population.get("eligible_count"),
+            "selection_rule": SELECTION_RULES["deterministic_hash_sample"],
+            "selection_universe": selection_universe,
+        }
+    )
+
+
 def _credential_free_https_url(value: object) -> bool:
     if not isinstance(value, str) or not value.strip() or "\0" in value:
         return False
@@ -250,6 +294,8 @@ def _verify_authority_receipt(
     subject_sha256: object,
     expected_actor: str | None = None,
     require_trusted_association: bool = False,
+    expected_observed_at: str | None = None,
+    authoritative_not_before: datetime | None = None,
 ) -> tuple[str, str]:
     if not isinstance(receipt_url, str) or not AUTHORITY_RECEIPT_URL.fullmatch(receipt_url):
         raise ValueError("authority receipt URL must be an immutable PSP-P05-W03 issue comment")
@@ -270,7 +316,10 @@ def _verify_authority_receipt(
         raw_comment = response.read(1_048_577)
     if len(raw_comment) > 1_048_576:
         raise ValueError("authority receipt comment exceeds the bounded response size")
-    comment = json.loads(raw_comment)
+    try:
+        comment = _loads_public_artifact(raw_comment.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("authority comment response must be duplicate-free UTF-8 JSON") from exc
     if not isinstance(comment, dict) or comment.get("html_url") != receipt_url:
         raise ValueError("authority receipt comment identity differs from its immutable URL")
     author = comment.get("user")
@@ -282,11 +331,29 @@ def _verify_authority_receipt(
         raise ValueError("authority receipt actor differs from the bound reviewer identity")
     if require_trusted_association and association not in AUTHORITY_ASSOCIATIONS:
         raise ValueError("authority receipt actor is not an authorized repository actor")
+    authenticated_comment_times: dict[str, datetime] = {}
+    if expected_observed_at is not None or authoritative_not_before is not None:
+        for field in ("created_at", "updated_at"):
+            raw_timestamp = comment.get(field)
+            try:
+                timestamp = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
+                if timestamp.tzinfo is None:
+                    raise ValueError
+            except (AttributeError, ValueError) as exc:
+                raise ValueError(f"authority comment {field} must be authenticated RFC3339 metadata") from exc
+            authenticated_comment_times[field] = timestamp
+        if authenticated_comment_times["updated_at"] < authenticated_comment_times["created_at"]:
+            raise ValueError("authority comment updated_at predates created_at")
+        if authenticated_comment_times["updated_at"] > datetime.now(timezone.utc):
+            raise ValueError("authority comment timing cannot be future-dated")
     body = comment.get("body")
     matches = AUTHORITY_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
     if len(matches) != 1:
         raise ValueError("authority comment must contain exactly one marked receipt")
-    receipt = json.loads(matches[0])
+    try:
+        receipt = _loads_public_artifact(matches[0])
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise ValueError("authority receipt must be duplicate-free JSON") from exc
     if not isinstance(receipt, dict) or set(receipt) != AUTHORITY_RECEIPT_FIELDS:
         raise ValueError("authority receipt has an invalid exact schema")
     if receipt.get("schema_version") != AUTHORITY_RECEIPT_SCHEMA:
@@ -304,6 +371,19 @@ def _verify_authority_receipt(
         raise ValueError("authority receipt observed_at must be RFC3339 with a timezone") from exc
     if observed > datetime.now(timezone.utc):
         raise ValueError("authority receipt cannot be future-dated")
+    if expected_observed_at is not None:
+        try:
+            expected_observed = datetime.fromisoformat(expected_observed_at.replace("Z", "+00:00"))
+            if expected_observed.tzinfo is None:
+                raise ValueError
+        except (AttributeError, ValueError) as exc:
+            raise ValueError("bound review observed_at must be RFC3339 with a timezone") from exc
+        if observed != expected_observed:
+            raise ValueError("authority receipt observed_at differs from the bound independent review")
+        if observed != authenticated_comment_times["updated_at"]:
+            raise ValueError("independent review timing differs from authenticated comment metadata")
+    if authoritative_not_before is not None and authenticated_comment_times["updated_at"] < authoritative_not_before:
+        raise ValueError("authenticated independent review predates the complete observation window")
     limitations = receipt.get("limitations")
     if not (
         isinstance(limitations, list)
@@ -314,6 +394,65 @@ def _verify_authority_receipt(
     if _canonical_digest(receipt) != receipt_sha256:
         raise ValueError("authority receipt digest differs from the marked receipt")
     return login, str(association)
+
+
+def _trusted_named_executable(name: str) -> Path:
+    if not name or Path(name).name != name or "/" in name or "\\" in name:
+        raise ValueError("trusted executable name must be one path-free component")
+    candidate = next(
+        (
+            directory / name
+            for directory in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)
+            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
+        ),
+        None,
+    )
+    if candidate is None:
+        raise OSError(f"trusted executable is unavailable: {name}")
+    resolved = candidate.resolve(strict=True)
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise OSError(f"trusted executable is not executable: {resolved}")
+    return resolved
+
+
+def _sanitized_git_environment() -> dict[str, str]:
+    environment = dict(os.environ)
+    for key in tuple(environment):
+        if (
+            key
+            in {
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+                "GIT_COMMON_DIR",
+                "GIT_CONFIG",
+                "GIT_CONFIG_COUNT",
+                "GIT_CONFIG_PARAMETERS",
+                "GIT_DIR",
+                "GIT_EXEC_PATH",
+                "GIT_INDEX_FILE",
+                "GIT_NAMESPACE",
+                "GIT_OBJECT_DIRECTORY",
+                "GIT_SHALLOW_FILE",
+                "GIT_WORK_TREE",
+            }
+            or key.startswith("GIT_CONFIG_KEY_")
+            or key.startswith("GIT_CONFIG_VALUE_")
+            or key.startswith("GIT_SSL_")
+            or key.upper().startswith(("LD_", "DYLD_"))
+            or key.lower() in {"all_proxy", "http_proxy", "https_proxy", "no_proxy"}
+        ):
+            environment.pop(key, None)
+    environment.update(
+        {
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_COUNT": "0",
+            "GIT_GRAFT_FILE": os.devnull,
+            "GIT_NO_REPLACE_OBJECTS": "1",
+            "GIT_TERMINAL_PROMPT": "0",
+            "PATH": os.pathsep.join(str(path) for path in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)),
+        }
+    )
+    return environment
 
 
 def _safe_tracked_artifact(value: object) -> Path | None:
@@ -329,45 +468,14 @@ def _safe_tracked_artifact(value: object) -> Path | None:
         return None
     if not candidate.is_file():
         return None
-    environment = dict(os.environ)
-    for key in tuple(environment):
-        if (
-            key
-            in {
-                "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-                "GIT_COMMON_DIR",
-                "GIT_CONFIG",
-                "GIT_CONFIG_COUNT",
-                "GIT_CONFIG_PARAMETERS",
-                "GIT_DIR",
-                "GIT_INDEX_FILE",
-                "GIT_NAMESPACE",
-                "GIT_OBJECT_DIRECTORY",
-                "GIT_SHALLOW_FILE",
-                "GIT_WORK_TREE",
-            }
-            or key.startswith("GIT_CONFIG_KEY_")
-            or key.startswith("GIT_CONFIG_VALUE_")
-        ):
-            environment.pop(key, None)
-    environment.update(
-        {
-            "GIT_CONFIG_NOSYSTEM": "1",
-            "GIT_CONFIG_GLOBAL": os.devnull,
-            "GIT_CONFIG_COUNT": "0",
-            "GIT_GRAFT_FILE": os.devnull,
-            "GIT_NO_REPLACE_OBJECTS": "1",
-            "GIT_TERMINAL_PROMPT": "0",
-        }
-    )
     try:
         committed = subprocess.run(
-            ["git", "show", f"HEAD:{pure.as_posix()}"],
+            [str(_trusted_named_executable("git")), "show", f"HEAD:{pure.as_posix()}"],
             cwd=ROOT,
             check=False,
             capture_output=True,
             timeout=30,
-            env=environment,
+            env=_sanitized_git_environment(),
         )
         worktree_bytes = candidate.read_bytes()
     except (OSError, subprocess.TimeoutExpired):
@@ -627,6 +735,8 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
             errors.append("census selection requires selected == eligible == population")
     elif not _lower_sha256(seed):
         errors.append("deterministic sampling requires a lowercase selection seed SHA-256")
+    elif seed != _derived_selection_seed(population):
+        errors.append("deterministic sampling seed must derive from immutable source and window material")
 
     exclusion_counts = population.get("exclusion_counts")
     valid_exclusions = isinstance(exclusion_counts, dict) and all(
@@ -997,6 +1107,7 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
         if reviewed_at > datetime.now(timezone.utc):
             errors.append("analysis review_verdict cannot be dated in the future")
     cutoff_value = analysis.get("observation_cutoff")
+    cutoff: datetime | None = None
     try:
         cutoff = datetime.fromisoformat(cutoff_value.replace("Z", "+00:00"))
         if cutoff.tzinfo is None:
@@ -1034,6 +1145,8 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                 evidence_kind="independent_review",
                 subject_sha256=_canonical_digest(review_subject),
                 expected_actor=reviewer_identity if isinstance(reviewer_identity, str) else None,
+                expected_observed_at=observed_at if isinstance(observed_at, str) else None,
+                authoritative_not_before=cutoff,
             )
         except (HTTPException, OSError, ValueError) as exc:
             errors.append(f"analysis independent review authority failed closed: {exc}")

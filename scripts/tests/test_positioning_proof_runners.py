@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import unittest
+from datetime import datetime
 from unittest import mock
 from pathlib import Path
 
@@ -55,6 +56,7 @@ def run_request(request: dict[str, object]) -> dict[str, object]:
         "repository": request["repository"],
         "default_branch": request["default_branch"],
         "predicate": request["predicate"],
+        "runtime_setup": {"mode": "none"},
     }
     with mock.patch.object(RECEIPT, "_flagship_contract", return_value=hermetic_contract):
         return RECEIPT.run_request(
@@ -342,9 +344,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_cost_failure_population_manifest_and_hash_selection_are_reproduced(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         population = payload["population"]
-        seed = "c" * 64
         population["selection_method"] = "deterministic_hash_sample"
         population["selection_rule"] = COST.SELECTION_RULES["deterministic_hash_sample"]
+        seed = COST._derived_selection_seed(population)
         population["selection_seed_sha256"] = seed
         eligible_ids = [record["sample_id"] for record in population["source_manifest"]["records"]]
         expected_ids = sorted(
@@ -357,6 +359,23 @@ class PositioningProofRunnerTest(unittest.TestCase):
         payload["rows"].reverse()
         errors = COST.validate_sample(payload)
         self.assertTrue(any("contract-owned hash selection" in error for error in errors), errors)
+
+        payload["rows"].reverse()
+        payload["population"]["selection_seed_sha256"] = "c" * 64
+        errors = COST.validate_sample(payload)
+        self.assertTrue(any("derive from immutable source and window" in error for error in errors), errors)
+
+        payload["population"]["selection_seed_sha256"] = seed
+        original_seed = COST._derived_selection_seed(payload["population"])
+        payload["population"]["source_manifest"]["records"].reverse()
+        self.assertEqual(original_seed, COST._derived_selection_seed(payload["population"]))
+        payload["population"]["source_receipt_sha256"] = "f" * 64
+        self.assertEqual(original_seed, COST._derived_selection_seed(payload["population"]))
+        payload["population"]["source_manifest"]["records"][0]["sample_id"] = "changed-selection-identity"
+        self.assertNotEqual(original_seed, COST._derived_selection_seed(payload["population"]))
+        payload["population"]["source_manifest"]["records"][0]["sample_id"] = expected_ids[-1]
+        payload["population"]["window_end"] = "2026-08-06"
+        self.assertNotEqual(original_seed, COST._derived_selection_seed(payload["population"]))
 
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         payload["population"]["source_manifest"]["records"][0]["sample_id"] = "unbound-id"
@@ -391,8 +410,30 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_cost_artifacts_must_match_committed_head_bytes(self) -> None:
         artifact = "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json"
         drifted = subprocess.CompletedProcess(["git", "show"], 0, b"drifted-worktree-bytes", b"")
-        with mock.patch.object(COST.subprocess, "run", return_value=drifted):
-            self.assertIsNone(COST._safe_tracked_artifact(artifact))
+        with tempfile.TemporaryDirectory() as directory:
+            fake_git = Path(directory) / "git"
+            fake_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_git.chmod(0o755)
+            injected = {
+                "PATH": directory,
+                "GIT_EXEC_PATH": directory,
+                "GIT_DIR": "/tmp/untrusted.git",
+                "LD_PRELOAD": "/tmp/untrusted.so",
+                "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+            }
+            with (
+                mock.patch.dict(COST.os.environ, injected, clear=False),
+                mock.patch.object(COST.subprocess, "run", return_value=drifted) as run,
+            ):
+                self.assertIsNone(COST._safe_tracked_artifact(artifact))
+        argv = run.call_args.args[0]
+        environment = run.call_args.kwargs["env"]
+        self.assertTrue(Path(argv[0]).is_absolute())
+        self.assertNotEqual(fake_git, Path(argv[0]))
+        for key in injected:
+            if key != "PATH":
+                self.assertNotIn(key, environment)
+        self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
 
     def test_cost_authority_receipt_is_bound_to_an_authenticated_comment_actor(self) -> None:
         subject_sha256 = "c" * 64
@@ -425,6 +466,76 @@ class PositioningProofRunnerTest(unittest.TestCase):
             )
         self.assertEqual(("4444J99", "MEMBER"), (actor, association))
 
+        receipt["evidence_kind"] = "independent_review"
+        receipt_sha256 = COST._canonical_digest(receipt)
+        comment.update(
+            {
+                "created_at": "2026-08-08T11:59:00Z",
+                "updated_at": receipt["observed_at"],
+                "body": "<!-- positioning-cost-authority-receipt -->\n```json\n" + json.dumps(receipt) + "\n```",
+            }
+        )
+        response.read.return_value = json.dumps(comment).encode()
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
+            COST._verify_authority_receipt(
+                receipt_url,
+                receipt_sha256,
+                evidence_kind="independent_review",
+                subject_sha256=subject_sha256,
+                expected_observed_at=receipt["observed_at"],
+                authoritative_not_before=datetime.fromisoformat("2026-08-08T11:00:00+00:00"),
+            )
+        comment["updated_at"] = "2026-08-08T12:00:01Z"
+        response.read.return_value = json.dumps(comment).encode()
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
+            with self.assertRaisesRegex(ValueError, "authenticated comment metadata"):
+                COST._verify_authority_receipt(
+                    receipt_url,
+                    receipt_sha256,
+                    evidence_kind="independent_review",
+                    subject_sha256=subject_sha256,
+                    expected_observed_at=receipt["observed_at"],
+                    authoritative_not_before=datetime.fromisoformat("2026-08-08T11:00:00+00:00"),
+                )
+
+        receipt["observed_at"] = "2026-08-08T10:00:00Z"
+        receipt_sha256 = COST._canonical_digest(receipt)
+        comment.update(
+            {
+                "created_at": "2026-08-08T09:59:00Z",
+                "updated_at": receipt["observed_at"],
+                "body": "<!-- positioning-cost-authority-receipt -->\n```json\n" + json.dumps(receipt) + "\n```",
+            }
+        )
+        response.read.return_value = json.dumps(comment).encode()
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
+            with self.assertRaisesRegex(ValueError, "predates the complete observation window"):
+                COST._verify_authority_receipt(
+                    receipt_url,
+                    receipt_sha256,
+                    evidence_kind="independent_review",
+                    subject_sha256=subject_sha256,
+                    expected_observed_at=receipt["observed_at"],
+                    authoritative_not_before=datetime.fromisoformat("2026-08-08T11:00:00+00:00"),
+                )
+
+        comment["created_at"] = "2026-08-08T10:00:01Z"
+        response.read.return_value = json.dumps(comment).encode()
+        with mock.patch.object(COST, "_contract_https_open", return_value=response):
+            with self.assertRaisesRegex(ValueError, "predates created_at"):
+                COST._verify_authority_receipt(
+                    receipt_url,
+                    receipt_sha256,
+                    evidence_kind="independent_review",
+                    subject_sha256=subject_sha256,
+                    expected_observed_at=receipt["observed_at"],
+                    authoritative_not_before=datetime.fromisoformat("2026-08-08T09:00:00+00:00"),
+                )
+
+        receipt["evidence_kind"] = "population_manifest"
+        receipt["observed_at"] = "2026-08-08T12:00:00Z"
+        receipt_sha256 = COST._canonical_digest(receipt)
+        comment["body"] = "<!-- positioning-cost-authority-receipt -->\n```json\n" + json.dumps(receipt) + "\n```"
         comment["author_association"] = "NONE"
         response.read.return_value = json.dumps(comment).encode()
         with mock.patch.object(COST, "_contract_https_open", return_value=response):
@@ -1019,6 +1130,81 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("not_current", result["result"])
             self.assertIn("tracked or untracked changes", result["errors"][0])
 
+    def test_exact_head_runner_uses_a_fresh_clone_instead_of_ignored_source_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
+            (repository / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+            (repository / "lock.fixture").write_text("locked dependency fixture\n", encoding="utf-8")
+            subprocess.run(["git", "add", ".gitignore", "lock.fixture"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "synthetic fixture"],
+                cwd=repository,
+                check=True,
+            )
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
+            ).stdout.strip()
+            malicious = repository / "node_modules" / "dependency.txt"
+            malicious.parent.mkdir()
+            malicious.write_text("caller-controlled\n", encoding="utf-8")
+            predicate = {
+                "argv": [
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; assert Path('node_modules/dependency.txt').read_text() == 'locked\\n'",
+                ],
+                "timeout_seconds": 30,
+                "max_output_bytes": 4096,
+            }
+            runtime_setup = {
+                "mode": "locked_install",
+                "lockfile": "lock.fixture",
+                "argv": [
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; p=Path('node_modules/dependency.txt'); p.parent.mkdir(); p.write_text('locked\\n')",
+                ],
+                "timeout_seconds": 30,
+                "max_output_bytes": 4096,
+            }
+            result = RECEIPT._run_isolated_exact_head_predicate(repository, head, predicate, runtime_setup)
+            missing_lockfile = copy.deepcopy(runtime_setup)
+            missing_lockfile["lockfile"] = "missing.lock"
+            missing_result = RECEIPT._run_isolated_exact_head_predicate(
+                repository,
+                head,
+                predicate,
+                missing_lockfile,
+            )
+            marker = repository / "predicate-ran.txt"
+            blocked_predicate = {
+                **predicate,
+                "argv": [sys.executable, "-c", f"from pathlib import Path; Path({str(marker)!r}).touch()"],
+            }
+            failed_setup = {
+                **runtime_setup,
+                "argv": [sys.executable, "-c", "raise SystemExit(7)"],
+            }
+            failed_result = RECEIPT._run_isolated_exact_head_predicate(
+                repository,
+                head,
+                blocked_predicate,
+                failed_setup,
+            )
+        self.assertEqual("current_pass", result["classification"], result)
+        self.assertEqual(0, result["runtime"]["setup_exit_code"])
+        self.assertEqual("lock.fixture", result["runtime"]["lockfile"])
+        self.assertRegex(result["runtime"]["lockfile_blob"], r"^[0-9a-f]{40}$")
+        self.assertRegex(result["runtime"]["lockfile_sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual("blocked_external", missing_result["classification"])
+        self.assertTrue(any("lockfile" in error for error in missing_result["errors"]))
+        self.assertEqual("blocked_external", failed_result["classification"])
+        self.assertTrue(any("dependency setup failed" in error for error in failed_result["errors"]))
+        self.assertFalse(marker.exists())
+
     def test_exact_head_runner_requires_default_branch_tip(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)
@@ -1269,7 +1455,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             }
             result = run_request(request)
             self.assertEqual("not_current", result["result"])
-            self.assertTrue(any("worktree changed" in error for error in result["errors"]))
+            self.assertTrue(any("isolated exact-head tree changed" in error for error in result["errors"]))
 
     def test_inherited_predicate_pipe_fails_bounded_without_crashing(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
@@ -1314,8 +1500,15 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertLess(elapsed, 9)
 
     def test_redirected_predicate_descendant_is_terminated_before_receipt(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as remote_temporary,
+            tempfile.TemporaryDirectory() as observer_temporary,
+        ):
             repository = Path(temporary)
+            observer = Path(observer_temporary)
+            pid_path = observer / "redirected-child.pid"
+            late_path = observer / "late.txt"
             subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
@@ -1332,8 +1525,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             attach_origin(repository, Path(remote_temporary))
             child = (
                 "import os,time; from pathlib import Path; "
-                "Path('redirected-child.pid').write_text(str(os.getpid())); "
-                "time.sleep(0.5); Path('late.txt').write_text('late')"
+                f"Path({str(pid_path)!r}).write_text(str(os.getpid())); "
+                f"time.sleep(0.5); Path({str(late_path)!r}).write_text('late')"
             )
             parent = (
                 "import subprocess,sys; "
@@ -1357,12 +1550,19 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
-            wait_for_recorded_process_exit(repository / "redirected-child.pid")
-            self.assertFalse((repository / "late.txt").exists())
+            wait_for_recorded_process_exit(pid_path)
+            self.assertFalse(late_path.exists())
 
     def test_detached_predicate_descendant_is_terminated_before_receipt(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as remote_temporary:
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            tempfile.TemporaryDirectory() as remote_temporary,
+            tempfile.TemporaryDirectory() as observer_temporary,
+        ):
             repository = Path(temporary)
+            observer = Path(observer_temporary)
+            pid_path = observer / "detached-grandchild.pid"
+            late_path = observer / "detached-late.txt"
             subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
             subprocess.run(["git", "config", "user.name", "Synthetic Fixture"], cwd=repository, check=True)
@@ -1379,8 +1579,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             attach_origin(repository, Path(remote_temporary))
             grandchild = (
                 "import os,time; from pathlib import Path; "
-                "Path('detached-grandchild.pid').write_text(str(os.getpid())); "
-                "time.sleep(0.5); Path('detached-late.txt').write_text('late')"
+                f"Path({str(pid_path)!r}).write_text(str(os.getpid())); "
+                f"time.sleep(0.5); Path({str(late_path)!r}).write_text('late')"
             )
             child = (
                 "import subprocess,sys; "
@@ -1393,7 +1593,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
                 "stderr=subprocess.DEVNULL, start_new_session=True, env={})\n"
                 "deadline=time.monotonic()+2\n"
-                "pid_path=Path('detached-grandchild.pid')\n"
+                f"pid_path=Path({str(pid_path)!r})\n"
                 "while not pid_path.exists() and time.monotonic()<deadline: time.sleep(0.02)\n"
                 "print('parent done')"
             )
@@ -1414,8 +1614,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             result = run_request(request)
             self.assertEqual("current_fail", result["result"])
             self.assertTrue(any("live descendant" in error for error in result["errors"]))
-            wait_for_recorded_process_exit(repository / "detached-grandchild.pid")
-            self.assertFalse((repository / "detached-late.txt").exists())
+            wait_for_recorded_process_exit(pid_path)
+            self.assertFalse(late_path.exists())
 
 
 if __name__ == "__main__":

@@ -669,6 +669,18 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v1")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
+        for hidden_tag in ("script", "style", "template", "noscript", "svg"):
+            with self.subTest(hidden_tag=hidden_tag):
+                with self.assertRaisesRegex(ValueError, "unterminated hidden"):
+                    MODULE._canonical_surface_extraction(
+                        f"<html><body>Bounded proof claim<{hidden_tag}>hidden inflated proof claim".encode(),
+                        "visible_text_v1",
+                    )
+        malformed_closing = MODULE._canonical_surface_extraction(
+            b"<html><body>Bounded proof claim<script>hidden inflated claim</script attr></body></html>",
+            "visible_text_v1",
+        )
+        self.assertNotIn(b"hidden", malformed_closing)
 
     def test_live_surface_fetch_uses_contract_owned_https_transport(self) -> None:
         source_url = "https://example.com/public-proof"
@@ -1353,6 +1365,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "observed_at": "2026-08-14T12:00:00Z",
                 "limitations": ["Hermetic independent-review fixture only."],
             }
+            row["receipt SHA-256"] = hashlib.sha256(
+                json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
             comments[receipt_url] = {
                 "html_url": receipt_url,
                 "user": {"login": actor},
@@ -1372,6 +1387,51 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         self.assertEqual("pass", result["status"])
         self.assertEqual(2, result["substantive_public_count"])
+
+        objects[0]["receipt SHA-256"] = "0" * 64
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            digest_mismatch = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", digest_mismatch["status"])
+        self.assertEqual(1, digest_mismatch["substantive_public_count"])
+        self.assertTrue(any("digest differs" in error for error in digest_mismatch["errors"]))
+        objects[0]["receipt SHA-256"] = hashlib.sha256(
+            json.dumps(
+                json.loads(
+                    MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(
+                        comments[objects[0]["object URL or receipt"]]["body"]
+                    )[0]
+                ),
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        original_comment_body = comments[objects[0]["object URL or receipt"]]["body"]
+        edited_receipt = json.loads(MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(original_comment_body)[0])
+        edited_receipt["limitations"] = ["Edited after the bound digest was recorded."]
+        comments[objects[0]["object URL or receipt"]]["body"] = (
+            "<!-- positioning-external-validation-receipt -->\n```json\n" + json.dumps(edited_receipt) + "\n```"
+        )
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            edited_comment = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", edited_comment["status"])
+        self.assertEqual(1, edited_comment["substantive_public_count"])
+        comments[objects[0]["object URL or receipt"]]["body"] = original_comment_body
 
         original_method = objects[0]["method"]
         objects[0]["method"] = "reviewer@example.invalid"
@@ -1612,33 +1672,45 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertNotIn(key, environment)
 
     def test_evidence_git_object_reads_use_the_sanitized_bounded_environment(self) -> None:
-        injected = {
-            "GIT_DIR": "/tmp/untrusted.git",
-            "GIT_OBJECT_DIRECTORY": "/tmp/objects",
-            "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
-            "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
-        }
-        results = [
-            subprocess.CompletedProcess([], 0, "text", ""),
-            subprocess.CompletedProcess([], 0, "a" * 40 + "\n", ""),
-            subprocess.CompletedProcess([], 0, b"bytes", b""),
-            subprocess.CompletedProcess([], 0, "b" * 40 + "\n", ""),
-            subprocess.CompletedProcess([], 0, b"receipt", b""),
-        ]
-        with (
-            mock.patch.dict(MODULE.os.environ, injected, clear=False),
-            mock.patch.object(MODULE.subprocess, "run", side_effect=results) as run,
-        ):
-            MODULE._read_git_object(ROOT, "a" * 40, ".gitignore")
-            MODULE._read_git_object_bytes(ROOT, "a" * 40, ".gitignore")
-            MODULE._git_blob(ROOT, "a" * 40, ".gitignore")
+        with tempfile.TemporaryDirectory() as directory:
+            fake_git = Path(directory) / "git"
+            fake_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_git.chmod(0o755)
+            injected = {
+                "PATH": directory,
+                "GIT_DIR": "/tmp/untrusted.git",
+                "GIT_EXEC_PATH": directory,
+                "GIT_OBJECT_DIRECTORY": "/tmp/objects",
+                "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
+                "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
+                "LD_PRELOAD": "/tmp/untrusted.so",
+                "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+            }
+            results = [
+                subprocess.CompletedProcess([], 0, "text", ""),
+                subprocess.CompletedProcess([], 0, "a" * 40 + "\n", ""),
+                subprocess.CompletedProcess([], 0, b"bytes", b""),
+                subprocess.CompletedProcess([], 0, "b" * 40 + "\n", ""),
+                subprocess.CompletedProcess([], 0, b"receipt", b""),
+            ]
+            with (
+                mock.patch.dict(MODULE.os.environ, injected, clear=False),
+                mock.patch.object(MODULE.subprocess, "run", side_effect=results) as run,
+            ):
+                MODULE._read_git_object(ROOT, "a" * 40, ".gitignore")
+                MODULE._read_git_object_bytes(ROOT, "a" * 40, ".gitignore")
+                MODULE._git_blob(ROOT, "a" * 40, ".gitignore")
         self.assertEqual(5, run.call_count)
         for call in run.call_args_list:
+            self.assertTrue(Path(call.args[0][0]).is_absolute())
+            self.assertNotEqual(fake_git, Path(call.args[0][0]))
             self.assertEqual(30, call.kwargs["timeout"])
             environment = call.kwargs["env"]
             self.assertEqual("1", environment["GIT_NO_REPLACE_OBJECTS"])
             for key in injected:
-                self.assertNotIn(key, environment)
+                if key != "PATH":
+                    self.assertNotIn(key, environment)
+            self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
 
     def test_live_closure_verification_rejects_an_unpushed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

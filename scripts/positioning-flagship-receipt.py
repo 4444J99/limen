@@ -17,7 +17,7 @@ import sys
 import tempfile
 import time
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
 
@@ -43,6 +43,7 @@ REQUEST_FIELDS = {
     "limitations",
 }
 PREDICATE_FIELDS = {"argv", "timeout_seconds", "max_output_bytes"}
+LOCKED_RUNTIME_SETUP_FIELDS = {"mode", "lockfile", "argv", "timeout_seconds", "max_output_bytes"}
 MAX_OUTPUT_BYTES = 10 * 1024 * 1024
 TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES = (
     Path(sys.executable).resolve().parent,
@@ -134,11 +135,50 @@ def _flagship_contract(flagship_id: str) -> dict[str, Any] | None:
     contract = contracts.get(flagship_id)
     if contract is None:
         return None
-    if not isinstance(contract, dict) or set(contract) != {"repository", "default_branch", "predicate"}:
+    if not isinstance(contract, dict) or set(contract) != {
+        "repository",
+        "default_branch",
+        "predicate",
+        "runtime_setup",
+    }:
         raise ValueError("proof contract flagship predicate has an invalid exact schema")
     predicate = contract.get("predicate")
     if not isinstance(predicate, dict) or set(predicate) != PREDICATE_FIELDS:
         raise ValueError("proof contract flagship predicate command has an invalid exact schema")
+    runtime_setup = contract.get("runtime_setup")
+    if runtime_setup == {"mode": "none"}:
+        return contract
+    if not isinstance(runtime_setup, dict) or set(runtime_setup) != LOCKED_RUNTIME_SETUP_FIELDS:
+        raise ValueError("proof contract flagship runtime setup has an invalid exact schema")
+    if runtime_setup.get("mode") != "locked_install":
+        raise ValueError("proof contract flagship runtime setup has an unsupported mode")
+    lockfile = runtime_setup.get("lockfile")
+    if (
+        not isinstance(lockfile, str)
+        or not lockfile.strip()
+        or lockfile != lockfile.strip()
+        or "\0" in lockfile
+        or PurePosixPath(lockfile).is_absolute()
+        or any(part in {"", ".", ".."} for part in PurePosixPath(lockfile).parts)
+    ):
+        raise ValueError("proof contract flagship runtime setup requires a safe lockfile")
+    argv = runtime_setup.get("argv")
+    if (
+        not isinstance(argv, list)
+        or not argv
+        or not all(isinstance(value, str) and value and "\0" not in value for value in argv)
+    ):
+        raise ValueError("proof contract flagship runtime setup requires safe argv")
+    timeout = runtime_setup.get("timeout_seconds")
+    if not isinstance(timeout, int) or isinstance(timeout, bool) or not 1 <= timeout <= 1800:
+        raise ValueError("proof contract flagship runtime setup requires a bounded timeout")
+    output_limit = runtime_setup.get("max_output_bytes")
+    if (
+        not isinstance(output_limit, int)
+        or isinstance(output_limit, bool)
+        or not 1024 <= output_limit <= MAX_OUTPUT_BYTES
+    ):
+        raise ValueError("proof contract flagship runtime setup requires bounded output")
     return contract
 
 
@@ -1035,6 +1075,181 @@ def _run_bounded_predicate(
         _finish_process_scope(scope)
 
 
+def _run_isolated_exact_head_predicate(
+    repository_path: Path,
+    observed_head: str,
+    predicate: dict[str, Any],
+    runtime_setup: dict[str, Any],
+) -> dict[str, Any]:
+    runtime: dict[str, Any] = {"isolation_mode": "fresh_no_local_clone"}
+    outcome: dict[str, Any] = {
+        "classification": "blocked_external",
+        "exit_code": None,
+        "output": b"",
+        "errors": [],
+        "runtime": runtime,
+    }
+    temporary = tempfile.TemporaryDirectory(prefix="limen-flagship-receipt-")
+    try:
+        temporary_root = Path(temporary.name)
+        isolated_checkout = temporary_root / "checkout"
+        trusted_git = _trusted_named_executable("git")
+        clone_argv = [
+            str(trusted_git),
+            "clone",
+            "--no-local",
+            "--no-checkout",
+            "--",
+            str(repository_path),
+            str(isolated_checkout),
+        ]
+        clone_exit, clone_output, clone_failure = _run_bounded_predicate(
+            clone_argv,
+            cwd=temporary_root,
+            timeout_seconds=300,
+            max_output_bytes=MAX_OUTPUT_BYTES,
+            environment=_sanitized_git_environment(),
+        )
+        runtime.update(
+            {
+                "isolation_git_sha256": hashlib.sha256(trusted_git.read_bytes()).hexdigest(),
+                "clone_exit_code": clone_exit,
+                "clone_output_sha256": hashlib.sha256(clone_output).hexdigest(),
+            }
+        )
+        if clone_exit != 0 or clone_failure is not None:
+            outcome["output"] = clone_output
+            outcome["errors"] = [clone_failure or "isolated exact-head clone failed"]
+            return outcome
+
+        checkout = _run_git(isolated_checkout, ["checkout", "--detach", "--force", observed_head])
+        if checkout.returncode != 0:
+            outcome["output"] = checkout.stdout + checkout.stderr
+            outcome["errors"] = ["isolated exact-head checkout failed"]
+            return outcome
+        isolated_head = _run_git(isolated_checkout, ["rev-parse", "HEAD"])
+        initial_status = _run_git(
+            isolated_checkout,
+            ["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        )
+        initial_ignored = _run_git(
+            isolated_checkout,
+            ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignored=matching"],
+        )
+        if (
+            isolated_head.returncode != 0
+            or isolated_head.stdout.decode(errors="replace").strip() != observed_head
+            or initial_status.returncode != 0
+            or initial_status.stdout
+            or initial_ignored.returncode != 0
+            or initial_ignored.stdout
+        ):
+            outcome["errors"] = ["isolated checkout did not begin from a clean exact-head tree"]
+            return outcome
+
+        if runtime_setup.get("mode") == "locked_install":
+            lockfile = runtime_setup["lockfile"]
+            lockfile_bytes = _run_git(isolated_checkout, ["show", f"HEAD:{lockfile}"])
+            lockfile_blob = _run_git(isolated_checkout, ["rev-parse", f"HEAD:{lockfile}"])
+            lockfile_path = isolated_checkout / PurePosixPath(lockfile)
+            try:
+                checkout_lockfile = lockfile_path.read_bytes()
+            except OSError:
+                outcome["errors"] = ["contract-bound lockfile is unavailable"]
+                return outcome
+            lockfile_blob_value = lockfile_blob.stdout.decode(errors="replace").strip()
+            if (
+                lockfile_bytes.returncode != 0
+                or lockfile_blob.returncode != 0
+                or not FULL_HEAD.fullmatch(lockfile_blob_value)
+                or lockfile_bytes.stdout != checkout_lockfile
+            ):
+                outcome["errors"] = ["runtime lockfile differs from the isolated exact-head Git object"]
+                return outcome
+            setup_argv, setup_environment, setup_executable = _prepare_predicate_invocation(runtime_setup["argv"])
+            runtime_cache = temporary_root / "runtime-cache"
+            runtime_cache.mkdir(mode=0o700)
+            setup_environment.update(
+                {
+                    "COREPACK_HOME": str(runtime_cache / "corepack"),
+                    "HOME": str(runtime_cache / "home"),
+                    "XDG_CACHE_HOME": str(runtime_cache / "xdg-cache"),
+                    "XDG_CONFIG_HOME": str(runtime_cache / "xdg-config"),
+                    "npm_config_cache": str(runtime_cache / "npm"),
+                    "npm_config_store_dir": str(runtime_cache / "pnpm-store"),
+                }
+            )
+            setup_exit, setup_output, setup_failure = _run_bounded_predicate(
+                setup_argv,
+                cwd=isolated_checkout,
+                timeout_seconds=runtime_setup["timeout_seconds"],
+                max_output_bytes=runtime_setup["max_output_bytes"],
+                environment=setup_environment,
+            )
+            runtime.update(
+                {
+                    "lockfile": lockfile,
+                    "lockfile_blob": lockfile_blob_value,
+                    "lockfile_sha256": hashlib.sha256(checkout_lockfile).hexdigest(),
+                    "setup_argv": runtime_setup["argv"],
+                    "setup_resolved_executable": setup_executable["resolved_executable"],
+                    "setup_resolved_executable_sha256": setup_executable["resolved_executable_sha256"],
+                    "setup_exit_code": setup_exit,
+                    "setup_output_sha256": hashlib.sha256(setup_output).hexdigest(),
+                }
+            )
+            if setup_exit != 0 or setup_failure is not None:
+                outcome["output"] = setup_output
+                outcome["errors"] = [setup_failure or "contract-bound dependency setup failed"]
+                return outcome
+            setup_status = _run_git(
+                isolated_checkout,
+                ["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            )
+            if setup_status.returncode != 0 or setup_status.stdout:
+                outcome["errors"] = ["contract-bound dependency setup changed the exact tracked tree"]
+                return outcome
+
+        trusted_argv, predicate_environment, predicate_runtime = _prepare_predicate_invocation(predicate["argv"])
+        runtime.update(predicate_runtime)
+        exit_code, output, bounded_failure = _run_bounded_predicate(
+            trusted_argv,
+            cwd=isolated_checkout,
+            timeout_seconds=predicate["timeout_seconds"],
+            max_output_bytes=predicate["max_output_bytes"],
+            environment=predicate_environment,
+        )
+        outcome.update(
+            {
+                "classification": "current_pass" if exit_code == 0 and bounded_failure is None else "current_fail",
+                "exit_code": exit_code,
+                "output": output,
+                "errors": [bounded_failure] if bounded_failure else [],
+            }
+        )
+        post_head = _run_git(isolated_checkout, ["rev-parse", "HEAD"])
+        post_status = _run_git(
+            isolated_checkout,
+            ["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+        )
+        if (
+            post_head.returncode != 0
+            or post_head.stdout.decode(errors="replace").strip() != observed_head
+            or post_status.returncode != 0
+            or post_status.stdout
+        ):
+            outcome["classification"] = "not_current"
+            outcome["errors"].append("isolated exact-head tree changed while the predicate ran")
+        return outcome
+    finally:
+        try:
+            temporary.cleanup()
+        except OSError:
+            if outcome.get("classification") == "current_pass":
+                outcome["classification"] = "blocked_external"
+            outcome.setdefault("errors", []).append("isolated exact-head cleanup failed")
+
+
 def run_request(
     request: dict[str, Any],
     *,
@@ -1165,18 +1380,22 @@ def run_request(
         return receipt
 
     predicate = request["predicate"]
-    predicate_runtime: dict[str, str] = {}
+    predicate_runtime: dict[str, Any] = {}
     try:
-        trusted_argv, predicate_environment, predicate_runtime = _prepare_predicate_invocation(predicate["argv"])
-        exit_code, output, bounded_failure = _run_bounded_predicate(
-            trusted_argv,
-            cwd=repository_path,
-            timeout_seconds=predicate["timeout_seconds"],
-            max_output_bytes=predicate["max_output_bytes"],
-            environment=predicate_environment,
+        contract = _flagship_contract(request["flagship_id"])
+        if contract is None:
+            raise ValueError("flagship runtime contract is unavailable")
+        isolated = _run_isolated_exact_head_predicate(
+            repository_path,
+            observed_head,
+            predicate,
+            contract["runtime_setup"],
         )
-        result = "current_pass" if exit_code == 0 and bounded_failure is None else "current_fail"
-        errors = [bounded_failure] if bounded_failure else []
+        exit_code = isolated["exit_code"]
+        output = isolated["output"]
+        result = isolated["classification"]
+        errors = list(isolated["errors"])
+        predicate_runtime = dict(isolated["runtime"])
     except (OSError, ValueError) as exc:
         output = b""
         exit_code = None
