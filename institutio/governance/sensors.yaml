@@ -1085,29 +1085,67 @@ sensors:
     default: "1"
     source: [metabolize]
     owner: tabularius
-    cadence:
-      env: LIMEN_BEAT_BRANCH_REAP
-      default: 4
+    # NO cadence — deliberately every metabolize pass, and the reason is a coupling, not a taste.
+    # reap-branches --check only calls a landed branch "lingering" once it is older than
+    # LIMEN_BRANCH_REAP_GRACE_MIN (60 min); younger ones read as "digesting". That grace exists so a
+    # continuously-merging fleet does not redden every closeout (reap-branches.py:634). It therefore
+    # only works if the REAPER visits at least as often as the grace lapses. Shipped at cadence 4,
+    # this sensor visited roughly every fourth pass — several times slower than the grace — so every
+    # branch that landed had a guaranteed window of being past-grace with no reaper due, and
+    # no-tasks-on-me.sh went red in it. Measured immediately: the pass cleared 15 lingering branches,
+    # and by the next predicate run worktree-hospes-full-done-plan had landed, aged out, and reddened
+    # it again. A closeout gate that is red on a timer is the same unreadable gate as one that is
+    # always red. Cadence and grace are one parameter pair — raising this cadence without raising
+    # LIMEN_BRANCH_REAP_GRACE_MIN to match reopens the window.
     timeout:
       env: LIMEN_BRANCH_REAP_TIMEOUT
       default: 120
-    # scripts/reap-branches.py was wired into NOTHING — not this registry, not metabolize.sh, and it
-    # had never once written to logs/beat-rungs.jsonl. So the reap only ran when a session ran it by
-    # hand, and every branch that landed added one lingering ref. Measured 2026-08-14: 87 reapable,
-    # and scripts/no-tasks-on-me.sh — a CLOSEOUT gate — went from exit 0 to exit 1 inside forty
-    # minutes with no work done in between, because a branch landed underneath the session. That is
-    # the one thing a closeout gate must never do: it made "I left something hanging" and "a branch
-    # landed while I worked" indistinguishable. LIMEN_BRANCH_REAP_MAX's own note already promised the
-    # remainder is "reaped on the next hygiene beat" — this is that beat, finally wired.
+    # Spent branches accumulated unreaped — 87 reapable, 15 of them provably landed — and the cost
+    # was paid by scripts/no-tasks-on-me.sh, a CLOSEOUT gate, which went exit 0 -> exit 1 inside
+    # forty minutes on 2026-08-14 with no work done in between, because branches landed underneath
+    # the session. That is the one thing a closeout gate must never do: it made "I left something
+    # hanging" and "the fleet's backlog grew while I worked" indistinguishable, destroying the only
+    # distinction the gate exists to draw.
     #
-    # DETECTION ONLY, and not by the foreign-litter/orphan-watcher `args_when` idiom: --check returns
-    # early (reap-branches.py:637), so `--check --apply` would take the check branch and never apply.
-    # An armed valve here has to be its own step running a BARE --apply, never an arg appended to
-    # this one — otherwise the env var reads as armed and silently does nothing.
+    # The reap was NOT unowned (see the starvation note below); it was owned and never running, which
+    # looks identical from the outside and is why the first diagnosis here was wrong. Detection lives
+    # on the metabolize pass — ungated by vitals — so the finding surfaces every cadence window even
+    # when the repair path is shedding.
+    #
+    # The valve is a SEPARATE STEP, not the foreign-litter/orphan-watcher `args_when` idiom: --check
+    # returns early (reap-branches.py:637, above the apply path at :690), so `--check --apply` would
+    # take the check branch and never apply. Arming it through args_when would leave an env var that
+    # reads as armed, an armed-valve-audit.py entry that looks declared, and nothing ever deleted.
+    # Hence a bare --apply on its own step, ordered AFTER the check so one pass reports then repairs.
+    #
+    # It reuses the EXISTING LIMEN_BRANCH_REAP_APPLY (already declared, already default 1, already
+    # consumed by clone-maintenance.sh:145) rather than minting a second arming knob, so one switch
+    # disarms both paths.
+    #
+    # WHY A SECOND PATH AT ALL — the reap was never unowned, and the first version of this comment
+    # said it was. clone-maintenance.sh:145 runs `reap-branches.py --apply` armed, and
+    # heartbeat-loop.sh:829 calls clone-maintenance on the hygiene cadence. The owner exists. It is
+    # STARVED: hygiene is gated on VITALS_PRESSURE != 1, and on this 16GB jetsam-prone host vitals
+    # shed continuously. Measured in logs/heartbeat.out.log: "deferred — vitals shedding" 10x,
+    # "clone-maintenance: disk" (the ran-for-real banner) ZERO times. The beat log even names the
+    # owner as "beat-wired via clone-maintenance.sh, armed" while it never once executes.
+    #
+    # The defect is the BUNDLING. That gate exists to keep a git storm — gc/prune across every repo
+    # plus reap-clones — off a memory-critical host. Deleting a handful of local refs is not a storm
+    # (network-bound, ~25 s, negligible RSS), but it inherited the storm's gate by sharing a script.
+    # So the cheap operation starves whenever the expensive one must. This step runs it from the
+    # metabolize sensor pass, which is not vitals-gated, leaving the actual storm exactly as gated as
+    # before. Do not "simplify" this by moving it back into clone-maintenance.sh — that is the bug.
     steps:
       - command: "python3 scripts/reap-branches.py --check"
         severity: advisory
-        escalation: "spent branch(es) above are provably landed and still lingering — run scripts/reap-branches.py --apply (branches marked 'authorized' need no new ledger event; only 'needs-acceptance' ones do)"
+        escalation: "spent branch(es) above are provably landed and still lingering — the branch-reap-apply step below repairs it on this same pass (arm/disarm with LIMEN_BRANCH_REAP_APPLY)"
+      - command: "python3 scripts/reap-branches.py --apply"
+        when_env: LIMEN_BRANCH_REAP_APPLY
+        when_default: "1"
+        armed_valve_type: safety
+        severity: advisory
+        escalation: "the branch reap could not complete — spent branches remain; run scripts/reap-branches.py --apply, or set LIMEN_BRANCH_REAP_APPLY=0 to disarm and reap by hand"
 
   dispatch-continuity:
     section: "0h"

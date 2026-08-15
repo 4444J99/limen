@@ -120,10 +120,10 @@ def validate_documents(
             errors.append("David lane must remain mostly_complete_external")
         if lane.get("mutation_authority") != "external_owner_lane_only":
             errors.append("David lane must deny platform-genesis mutation authority")
-        issues = ((lane.get("source_references") or {}).get("github_issues") or [])
+        issues = (lane.get("source_references") or {}).get("github_issues") or []
         if [item.get("number") for item in issues if isinstance(item, dict)] != [2, 3, 17, 27]:
             errors.append("David lane must preserve GitHub issues #2, #3, #17, and #27 as external references")
-        series = ((lane.get("source_references") or {}).get("packet_series") or {})
+        series = (lane.get("source_references") or {}).get("packet_series") or {}
         if (series.get("first"), series.get("last"), series.get("count")) != ("RW-001", "RW-010", 10):
             errors.append("David lane must preserve external packet references RW-001 through RW-010")
 
@@ -143,10 +143,15 @@ def validate_documents(
         ari_project = project(register, "ari", "podcast-suite") or {}
         if lane.get("repository") != ari_project.get("repo"):
             errors.append("Ari lane must reference the constellation-owned HOSPES repository")
-        if lane.get("state") != "vault_split_required" or lane.get("content_class") != "vault_private":
-            errors.append("Ari transcripts must remain vault-class behind the required split")
-        if lane.get("custody_gate") != "transcript_vault_split_before_movement":
-            errors.append("Ari custody movement must remain gated on the transcript vault split")
+        if lane.get("state") != "custody_transfer_pending" or lane.get("content_class") != "vault_private":
+            errors.append("Ari lane must be custody_transfer_pending with vault-class runtime content")
+        if lane.get("custody_gate") != "satisfied_by_receipt":
+            errors.append("Ari custody gate must record satisfied_by_receipt (eviction retired 2026-08-14)")
+        receipt = str(lane.get("custody_gate_receipt") or "")
+        if not receipt or not (ROOT / receipt).is_file():
+            errors.append("Ari custody_gate_receipt must name an existing history-scan receipt file")
+        if lane.get("movement_lever") != "L-HOSPES-CUSTODY-TRANSFER":
+            errors.append("Ari custody movement must stay homed on lever L-HOSPES-CUSTODY-TRANSFER")
 
     return errors
 
