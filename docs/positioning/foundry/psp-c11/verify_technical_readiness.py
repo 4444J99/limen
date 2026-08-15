@@ -327,6 +327,10 @@ def _run_json(args: list[str], timeout: int = 240) -> dict[str, Any]:
     return value
 
 
+def _sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 def _graphql_heads(repositories: list[str]) -> dict[str, str]:
     selections: list[str] = []
     for index, repository in enumerate(repositories):
@@ -435,9 +439,21 @@ def _private_identity_leaks(private_names: set[str], private_bare_names: set[str
     names = {name.casefold() for name in private_names | private_bare_names if name}
     repository_character = r"A-Za-z0-9_.-"
     leaks: set[str] = set()
-    for path in sorted(PACKAGE.rglob("*")):
-        if not path.is_file() or "__pycache__" in path.parts:
-            continue
+    try:
+        package_path = str(PACKAGE.relative_to(ROOT))
+    except ValueError:
+        package_path = str(PACKAGE)
+    result = subprocess.run(
+        ["git", "ls-files", "--", package_path],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise AuditError("tracked public C11 path listing failed")
+    tracked = [ROOT / line for line in result.stdout.splitlines() if line.strip()]
+    for path in tracked:
         try:
             relative = path.relative_to(ROOT)
         except ValueError:
@@ -501,6 +517,28 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
         sorted(bindings, key=lambda binding: binding["candidate_id"]), sort_keys=True, separators=(",", ":")
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def receipt_output_digest(receipt: dict[str, Any]) -> str:
+    payload = {
+        "command": receipt.get("command"),
+        "commit": receipt.get("commit"),
+        "dimension": receipt.get("dimension"),
+        "external_effects": receipt.get("external_effects"),
+        "repository": receipt.get("repository"),
+        "status": receipt.get("status"),
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def receipt_artifact_digest(receipt: dict[str, Any]) -> str:
+    payload = {
+        "commit": receipt.get("commit"),
+        "dimension": receipt.get("dimension"),
+        "repository": receipt.get("repository"),
+        "status": receipt.get("status"),
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 
 
 def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[dict[str, Any]]) -> str:
@@ -745,12 +783,13 @@ def _evidence_receipt_errors(
         errors.append(f"{label} live receipt repository or commit drift")
     if receipt.get("dimension") != dimension or receipt.get("status") != expected_status:
         errors.append(f"{label} live receipt dimension or result drift")
-    if receipt.get("exit_code") != 0:
-        errors.append(f"{label} live receipt must record exit_code 0")
-    if not SHA64.fullmatch(str(receipt.get("output_sha256") or "")) or not SHA64.fullmatch(
-        str(receipt.get("artifact_sha256") or "")
+    expected_exit = 0 if state == "verified_pass" else 1
+    if receipt.get("exit_code") != expected_exit:
+        errors.append(f"{label} live receipt exit_code drift")
+    if receipt.get("output_sha256") != receipt_output_digest(receipt) or receipt.get("artifact_sha256") != receipt_artifact_digest(
+        receipt
     ):
-        errors.append(f"{label} live receipt must bind output and artifact digests")
+        errors.append(f"{label} live receipt must bind immutable output and artifact evidence")
     if not _valid_timestamp(receipt.get("observed_at")) or not _is_nonblank_text(receipt.get("command")):
         errors.append(f"{label} live receipt needs a timestamp and executable command")
     if receipt.get("external_effects") != []:
@@ -964,7 +1003,7 @@ def _private_candidate_errors(
     elif status == "cleared":
         if blocker is not None or not SHA64.fullmatch(str(clearance_digest or "")):
             errors.append(f"{label} cleared status requires only an opaque clearance receipt digest")
-        if private_clearance_receipts is not None and private_clearance_receipts.get(candidate_id) != clearance_digest:
+        if private_clearance_receipts is None or private_clearance_receipts.get(candidate_id) != clearance_digest:
             errors.append(f"{label} clearance receipt is not confirmed in owner-controlled custody")
     if row.get("readiness_score") != 0 or row.get("transfer_eligible") is not False:
         errors.append(f"{label} private readiness must remain zero and non-transferable")

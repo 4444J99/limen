@@ -65,19 +65,20 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     @staticmethod
     def evidence_receipt(row: dict, dimension: str, status: str = "pass") -> dict:
-        return {
+        receipt = {
             "schema_version": "limen.psp_p13_w03_technical_evidence.v1",
             "repository": row["repository"],
             "commit": row["observed_head"],
             "dimension": dimension,
             "status": status,
-            "exit_code": 0,
-            "output_sha256": "0" * 64,
-            "artifact_sha256": "1" * 64,
+            "exit_code": 0 if status == "pass" else 1,
             "observed_at": "2026-08-15T00:00:00Z",
             "command": f"verify-{dimension}",
             "external_effects": [],
         }
+        receipt["output_sha256"] = MODULE.receipt_output_digest(receipt)
+        receipt["artifact_sha256"] = MODULE.receipt_artifact_digest(receipt)
+        return receipt
 
     def test_tracked_audit_is_valid_and_has_zero_effects(self) -> None:
         self.assertEqual([], self.errors())
@@ -258,7 +259,20 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         broken = self.evidence_receipt(row, "build")
         broken["exit_code"] = 1
         self.assertIn(
-            "candidate.build live receipt must record exit_code 0",
+            "candidate.build live receipt exit_code drift",
+            MODULE._evidence_receipt_errors(
+                broken,
+                row["repository"],
+                row["observed_head"],
+                "build",
+                "verified_pass",
+                "candidate.build",
+            ),
+        )
+        broken = self.evidence_receipt(row, "build")
+        broken["output_sha256"] = "0" * 64
+        self.assertIn(
+            "candidate.build live receipt must bind immutable output and artifact evidence",
             MODULE._evidence_receipt_errors(
                 broken,
                 row["repository"],
@@ -538,7 +552,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blocker"] = None
         row["clearance_receipt_sha256"] = digest
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
-        self.assertEqual([], self.errors(changed))
+        self.assertTrue(any("owner-controlled custody" in error for error in self.errors(changed)))
         self.assertEqual([], MODULE.required_blocker_errors(changed, f"{candidate_id}:restricted_private_evidence"))
         errors = MODULE.validate_audit(
             changed,
@@ -555,6 +569,17 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 self.contract,
                 private_clearance_receipts={candidate_id: digest},
             ),
+        )
+        self.assertTrue(
+            any(
+                "owner-controlled custody" in error
+                for error in MODULE.validate_audit(
+                    changed,
+                    self.snapshot,
+                    self.contract,
+                    private_clearance_receipts=None,
+                )
+            )
         )
 
     def test_live_refresh_preserves_only_unchanged_head_evidence(self) -> None:
@@ -593,9 +618,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             path_leak.write_text("safe body", encoding="utf-8")
             content_leak = package / "safe.md"
             content_leak.write_text("OwNeR/SeCrEtRePo", encoding="utf-8")
-            with mock.patch.object(MODULE, "PACKAGE", package):
+            tracked_file = package / "tracked.md"
+            tracked_file.write_text("owner/secretrepo", encoding="utf-8")
+            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="tracked.md\n"),
+            ):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
-            self.assertEqual(2, len(leaks))
+            self.assertEqual(["tracked.md"], leaks)
 
     def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
         registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
