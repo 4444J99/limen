@@ -706,6 +706,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "212-555-1234",
             "+44 20 7946 0958",
             "tel:+12125551234",
+            "phone: 2125551234",
+            "telephone number is 12125551234",
+            "contact number 12125551234",
         ):
             with self.subTest(telephone=telephone):
                 self.assertTrue(MODULE._surface_contains_private_material(f"Call {telephone} for access"))
@@ -1010,6 +1013,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<p ONLOAD='this.hidden=true'>Claim</p>",
             "<a href='javascript:this.hidden=true'>Claim</a>",
             "<iframe src='/visibility.html'>Claim</iframe>",
+            "<frameset><frame src='/visibility.html'></frameset>",
+            "<FRAME src='/visibility.html'/>",
         ):
             with self.subTest(executable_markup=executable_markup):
                 with self.assertRaisesRegex(ValueError, "executable"):
@@ -1055,6 +1060,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<canvas>Canonical claim</canvas>",
             "<CANVAS>Canonical claim</CANVAS>",
             "<canvas/>",
+            "<img src='/missing' alt='Canonical claim'>",
+            "<picture><source srcset='/proof.webp'><img src='/proof.png' alt='Canonical claim'></picture>",
             "<audio>Canonical claim</audio>",
             "<video>Canonical claim</video>",
             "<meter value='1'>Canonical claim</meter>",

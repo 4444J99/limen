@@ -664,7 +664,13 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
     re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"),
 )
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
-    r"(?i)(?:\btel:\s*\+?[\d\s().-]{10,32}|\+\d[\d\s().-]{8,31}\d|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4})"
+    r"(?i)(?:"
+    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+number)?|contact\s+number)"
+    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?\d{10,15}\b"
+    r"|\btel:\s*\+?[\d\s().-]{10,32}"
+    r"|\+\d[\d\s().-]{8,31}\d"
+    r"|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4}"
+    r")"
 )
 
 
@@ -1684,12 +1690,14 @@ def _normalized_surface_text(value: str) -> str:
 
 class _VisibleSurfaceParser(HTMLParser):
     _HIDDEN_TAGS = {"datalist", "head", "script", "style", "template", "title", "noscript"}
-    _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script", "svg"}
+    _ACTIVE_CONTENT_TAGS = {"applet", "embed", "frame", "frameset", "iframe", "object", "script", "svg"}
     _UNSUPPORTED_USER_AGENT_TAGS = {
         "audio",
         "canvas",
+        "img",
         "input",
         "meter",
+        "picture",
         "progress",
         "select",
         "textarea",
