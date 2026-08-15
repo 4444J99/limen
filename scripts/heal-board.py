@@ -51,6 +51,11 @@ from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
 from limen.dispatch import _restore_done_status  # noqa: E402
 from limen.io import load_limen_file, queue_lock  # noqa: E402
 from limen.models import VALID_STATUSES, DispatchLogEntry, LimenFile, Task  # noqa: E402
+from limen.private_board import (  # noqa: E402
+    PrivateCustodyUnavailable,
+    operational_board_path,
+    path_is_public_aggregate,
+)
 from limen.tabularius import apply_limen_file_sync, restore_limen_projection_text  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
@@ -309,14 +314,18 @@ def repair_canonical(*, check: bool, dry_run: bool) -> int:
     return 0
 
 
-def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
+def repair_lifecycle(*, check: bool, dry_run: bool, board: Path | None = None) -> int:
     """Run the healthy-board lifecycle repairs (reopened-done + needs-human reconcile).
 
     Returns a process exit code. These are lifecycle repairs, not a collapse
     restore, so they run on every healthy-board beat and are idempotent.
+
+    ``board`` names the projection to repair; it defaults to the public board and is
+    the private custody path once the partition has cut over.
     """
+    target = board or BOARD
     try:
-        lf = load_limen_file(BOARD)
+        lf = load_limen_file(target)
     except Exception as exc:
         print(f"heal-board: lifecycle check skipped; board did not load: {exc}")
         return 1
@@ -326,7 +335,7 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
 
     if not reopened and not reconciled and not mismatched:
         print(
-            f"heal-board: OK — {BOARD.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})"
+            f"heal-board: OK — {target.name} healthy (total={len(lf.tasks)} active={sum(1 for t in lf.tasks if t.status in ACTIVE)})"
         )
         return 0
 
@@ -360,14 +369,14 @@ def repair_lifecycle(*, check: bool, dry_run: bool) -> int:
         print("heal-board: " + "; ".join(parts))
         return 0
 
-    with queue_lock(BOARD, timeout=20) as locked:
+    with queue_lock(target, timeout=20) as locked:
         if not locked:
             print("heal-board: queue lock held; lifecycle repair deferred")
             return 1
-        fresh = load_limen_file(BOARD)
+        fresh = load_limen_file(target)
         reopened, reconciled, mismatched = _apply_lifecycle_repairs(fresh.tasks, now)
         if reopened or reconciled or mismatched:
-            apply_limen_file_sync(BOARD, fresh, agent="heal-board", session_id="lifecycle-repair")
+            apply_limen_file_sync(target, fresh, agent="heal-board", session_id="lifecycle-repair")
     cleared = sum(_clear_async_markers(task_id) for task_id in reopened)
     parts = []
     if reopened:
@@ -400,6 +409,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.canonical:
         return repair_canonical(check=args.check, dry_run=args.dry_run)
+
+    # A counts-only public aggregate is a LAWFUL post-cutover shape, not a collapse. Without
+    # this arm the restore logic reads it as total=0 ≤ floor and "heals" the partition away
+    # from git HEAD every single beat — an organ fighting the architecture it lives in.
+    # Canonical state is the keeper's; the public file is a health surface with no rows to
+    # lose, so there is nothing here to restore. Lifecycle repair moves to private custody,
+    # which is where the actual board is.
+    if path_is_public_aggregate(BOARD):
+        try:
+            custody = operational_board_path(BOARD)
+        except PrivateCustodyUnavailable as exc:
+            print(f"heal-board: ⚠ {exc}", file=sys.stderr)
+            return 1
+        print(f"heal-board: {BOARD.name} is the public aggregate (post-partition); operating on {custody}")
+        return repair_lifecycle(check=args.check, dry_run=args.dry_run, board=custody)
 
     loadable, total, active = board_health(BOARD)
     collapsed = (not loadable) or (total <= FLOOR)
