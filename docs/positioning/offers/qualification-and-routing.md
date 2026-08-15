@@ -29,13 +29,15 @@
 6. `install`
 7. `audit`
 
+**Default route:** `human_review`. Unmatched or insufficient-evidence requests remain in human review.
+
 Rules are evaluated in this priority order; the first match is the route.
 
 ## Routing rules
 
 | Priority | Rule | Route | Any | All | None |
 | ---: | --- | --- | --- | --- | --- |
-| 10 | `guarded_exception` | `human_review` | `pricing_exception`, `legal_terms`, `regulated_data`, `account_or_custody_change`, `public_claim_exception` | — | — |
+| 10 | `guarded_exception` | `human_review` | `pricing_exception`, `legal_terms`, `regulated_data`, `account_or_custody_change`, `public_claim_exception`, `insufficient_evidence` | — | — |
 | 20 | `prohibited_scope` | `decline` | `emergency_on_call`, `organization_takeover`, `bypass_request`, `no_sponsor`, `outcome_guarantee`, `speculative_equity_only` | — | — |
 | 30 | `employment_path` | `recruiter` | — | `employment_opportunity`, `named_role_mandate` | `client_procurement` |
 | 40 | `operator_path` | `partnership_review` | — | `partnership_interest`, `product_readiness_evidence`, `qualified_operator` | `public_front_door` |
@@ -55,6 +57,7 @@ Rules are evaluated in this priority order; the first match is the route.
 | `operator_terms_requested_early` | `partnership_interest=true`, `product_readiness_evidence=true`, `qualified_operator=true`, `legal_terms=true` | `human_review` |
 | `rescue_without_sponsor` | `diagnosis_needed=true`, `read_access=true`, `bounded_initiative=true`, `no_sponsor=true` | `decline` |
 | `emergency_takeover_request` | `implementation_needed=true`, `organization_takeover=true`, `emergency_on_call=true` | `decline` |
+| `insufficient_evidence_requires_review` | `insufficient_evidence=true` | `human_review` |
 
 ## Decline boundary
 
