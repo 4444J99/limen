@@ -174,9 +174,6 @@ def main() -> int:
     if shape == "aggregate":
         return validate_aggregate(args.tasks, data)
 
-    contract = validate_full_board_contract(args.tasks, data)
-    if contract != 0:
-        return contract
     invalid: list[tuple[str, str]] = []
     seen_ids: set[str] = set()
     duplicate_ids: list[str] = []
@@ -262,6 +259,16 @@ def main() -> int:
         if len(dispatchable_human) > 50:
             print(f"  ... {len(dispatchable_human) - 50} more", file=sys.stderr)
         return 1
+
+    # Status semantics first, schema/budget contract second. The status checks are this
+    # predicate's original purpose and its callers pass deliberately minimal fixtures
+    # (a two-row board proving a duplicate id, with no version or budget); running the
+    # contract first answers every one of those with "missing version" and hides the
+    # defect actually under test. Order changes which failure surfaces, never whether
+    # the contract is enforced.
+    contract = validate_full_board_contract(args.tasks, data)
+    if contract != 0:
+        return contract
 
     print(f"Task board statuses valid ({len(data.get('tasks') or [])} tasks)")
     return 0
