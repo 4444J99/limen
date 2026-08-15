@@ -219,6 +219,100 @@ if ! python3 "$ROOT/scripts/identity.py" verify >/dev/null 2>&1; then
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# 11: the SESSION'S OWN worktree carries nothing. §1-10 prove the REGISTRY is
+#     clean; not one of them reads working-tree state (no `git status`, no
+#     `git worktree list`, no `ps`), so a closeout could pass with this
+#     session's own branch dirty or unpushed. That is the single most common
+#     premature-COMPLETE shape — measured across five agent lanes in the
+#     2026-08-15 insights sweep, where the work landed and only the proof was
+#     missing.
+#
+#     Scope is deliberately SELF, not the estate. cli/src/limen/worktree_debt.py
+#     classifies whatever root you run FROM as `self/live-checkout` (debt=false),
+#     so the aggregate report can never answer "is my own tree clean?" — it has
+#     to be asked directly. Estate-wide debt is the reaper organ's
+#     (scripts/worktree-debt.py on the heartbeat rung); folding its inherited
+#     backlog into a session gate would red every closeout for work that is not
+#     this session's — exactly the "red that is not yours" exception the
+#     closeout skill already carves out. It is REPORTED here, never failed.
+#
+#     The LIVE checkout is permanently dirty BY DESIGN (capture.sh snapshots it
+#     to a side ref) and tasks.yaml/tasks.yaml.lock are daemon-owned, so the
+#     dirty arm skips the live root and honours capture.sh's RUNTIME_GLOBS.
+#     A predicate that reds the live checkout is a failed predicate, not a
+#     finding — it would be disabled inside a week.
+# ---------------------------------------------------------------------------
+branch="$(git -C "$ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo '<detached>')"
+
+if [ -f "$ROOT/.git" ]; then
+  # `.git` is a FILE only in a linked worktree — this session's isolation root.
+  self_dirty="$(git -C "$ROOT" status --porcelain | grep -vE '^.. (tasks\.yaml|tasks\.yaml\.lock)$' || true)"
+  if [ -n "$self_dirty" ]; then
+    n="$(printf '%s\n' "$self_dirty" | wc -l | tr -d ' ')"
+    bad "this session's worktree ($branch) has $n uncommitted path(s) — commit them with an explicit \`git add <path>\` (never -A), or discard them. A closeout cannot pass over its own dirty tree."
+  else
+    ok "session worktree ($branch) is clean (daemon-owned runtime paths excluded)"
+  fi
+else
+  ok "live checkout — dirty BY DESIGN (capture.sh side-ref); self-tree cleanliness is capture.sh's invariant, not this gate's"
+fi
+
+upstream="$(git -C "$ROOT" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+if [ -n "$upstream" ]; then
+  ahead="$(git -C "$ROOT" rev-list --count "$upstream..HEAD" 2>/dev/null || echo 0)"
+  if [ "$ahead" -gt 0 ]; then
+    bad "this session's branch ($branch) is $ahead commit(s) ahead of $upstream — UNPUSHED. 'On disk' is not done: push it, then re-run."
+  else
+    ok "session branch ($branch) is fully pushed to $upstream"
+  fi
+else
+  ahead="$(git -C "$ROOT" rev-list --count origin/main..HEAD 2>/dev/null || echo 0)"
+  if [ "$ahead" -gt 0 ]; then
+    bad "this session's branch ($branch) carries $ahead commit(s) past origin/main and has NO UPSTREAM — the work exists only on this machine. Push it, then re-run."
+  else
+    ok "session branch ($branch) carries no unpushed work"
+  fi
+fi
+
+# Estate-wide lifecycle debt: reported, never failed (the reaper organ owns it).
+estate_debt="$(python3 "$ROOT/scripts/worktree-debt.py" --json 2>/dev/null \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin).get("debt","?"))' 2>/dev/null || echo '?')"
+printf 'note  %s\n' "estate worktree debt: $estate_debt (owner: scripts/worktree-debt.py on the heartbeat reaper rung — inherited fleet debt is not this session's closeout bar)"
+
+# ---------------------------------------------------------------------------
+# 12: no stray watcher outlives the session. scripts/orphan-watchers.py is
+#     beat-wired and SessionEnd-wired, but a session that ends by DECLARING
+#     closeout (rather than by the SessionEnd hook firing) never ran it — so
+#     hand-rolled pollers could survive a "CLOSEOUT COMPLETE" indefinitely.
+#     That is the 2026-07-15 endless-watcher incident's residue, and this is
+#     the arm that closes it on the interactive path.
+# ---------------------------------------------------------------------------
+if ! python3 "$ROOT/scripts/orphan-watchers.py" --check; then
+  bad "orphaned watcher process(es) survive this session — reap them (scripts/orphan-watchers.py --check --reap, armed by LIMEN_ORPHAN_WATCHER_REAP=1) before declaring closeout"
+fi
+
+# ---------------------------------------------------------------------------
+# 13: a working session leaves a durable artifact. "Zero artifacts" was
+#     explicitly corrected as a FAILURE, not a clean result — but the honest
+#     mechanization is narrow: a genuinely read-only session owes nothing, and
+#     a predicate cannot detect "did you learn something." What it CAN prove is
+#     the degenerate shape: a branch that committed work touching ONLY logs/
+#     and daemon-owned runtime paths has produced no durable artifact at all.
+# ---------------------------------------------------------------------------
+changed="$(git -C "$ROOT" diff --name-only origin/main...HEAD 2>/dev/null || true)"
+if [ -z "$changed" ]; then
+  ok "read-only session (HEAD at origin/main) — no durable artifact owed"
+else
+  durable="$(printf '%s\n' "$changed" | grep -vE '^(logs/|tasks\.yaml)' || true)"
+  if [ -z "$durable" ]; then
+    bad "this branch changed only logs/ and daemon-owned runtime paths — ZERO durable artifacts. Codify what this session learned into a tracked owner (a doc, a predicate, a registry entry) before closing out."
+  else
+    n="$(printf '%s\n' "$durable" | wc -l | tr -d ' ')"
+    ok "session produced $n durable artifact path(s) beyond logs/ and runtime state"
+  fi
+fi
+
 echo
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."

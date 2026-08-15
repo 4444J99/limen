@@ -861,6 +861,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "When 1, session-orient.py prints the digest without refreshing logs/session-orientation.md. Used by idempotence predicates; normal hooks leave it unset."
+  LIMEN_ORIENT_FETCH:
+    default: "1"
+    env: LIMEN_ORIENT_FETCH
+    self_update: none
+    owner: continuity
+    note: "When 1 (default), session-orient.py refreshes origin with a hard-bounded 3s fetch before deriving ahead/behind, so the Git line reports a fresh comparison rather than one against whatever origin/main happened to sit on disk — the mechanism behind two sessions running gates against a 19-commits-behind checkout. Set 0 (or LIMEN_OFFLINE) to skip the network entirely; the section then labels itself 'refs STALE' rather than silently reading like parity. The label, not the fetch, is the invariant: a stale read that announces itself is safe."
   LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:
     default: ""
     env: LIMEN_INSIGHT_CADENCE_VERIFY_ROOT

@@ -596,6 +596,15 @@ def default_consumer_specs() -> tuple[ConsumerSpec, ...]:
                 str(event["session_id"]),
             ),
         ),
+        # The guard's OWN argparse defaults govern — they are env-overridable
+        # (LIMEN_MAX_CLAUDE_SESSION_TOKENS / _OPUS_ / _FABLE_ / LIMEN_MAX_AGENT_CALLS),
+        # so budgets stay tunable from the parameter panel rather than pinned here.
+        # Until 2026-08-15 this spec passed 999999999 for every token budget and
+        # 999999 for agent calls, which left `--max-opus-agents 1` as the only
+        # check that could ever fire and made the Fable budget, Fable-acceptance,
+        # unbounded-goal and building-on-Fable detections unreachable on the live
+        # SessionEnd path. A neutered guard is byte-identical to a guard that ran
+        # and found nothing (spec/armed-valves.json).
         ConsumerSpec(
             "model_audit",
             30,
@@ -604,14 +613,6 @@ def default_consumer_specs() -> tuple[ConsumerSpec, ...]:
                 str(root / "scripts" / "claude-workflow-guard.py"),
                 "audit-transcript",
                 str(event["session_id"]),
-                "--max-billable-tokens",
-                "999999999",
-                "--max-opus-billable-tokens",
-                "999999999",
-                "--max-agent-calls",
-                "999999",
-                "--max-opus-agents",
-                "1",
             ),
         ),
         ConsumerSpec(
