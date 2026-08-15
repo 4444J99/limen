@@ -27,3 +27,31 @@ python3 scripts/tcc-track-c-closeout.py --finalize --write-lever   # only after 
 ```
 
 Status projection: `logs/tcc-track-c-status.json` (beat owner receipt).
+
+## 2026-08-15 finding — a normal restart does not heal the daemon leak
+
+The #1703 containment assumption ("the pre-cutover background Claude daemon cannot be
+retrofitted while live; policy preserves that active process until its normal restart") is
+**falsified by observation**:
+
+- The daemon restarted 2026-08-14 19:29:57 local and came back **unhosted again**:
+  `claude daemon run … --origin transient --spawned-by {"label":"claude agents","pid":76274}`,
+  reparented to launchd (PPID 1), self-responsible for TCC.
+- Cause: the daemon is auto-spawned by whichever interactive `claude` runs first, and **no
+  interactive ingress is hosted** — no shell wrapper, alias, or PATH shim routes `claude`
+  through `domus-agent-host ensure` (verified 2026-08-15: `~/.zshrc`/`~/.zprofile` clean,
+  `~/.local/bin/claude` is the raw Mach-O launcher). Every daemon generation therefore
+  inherits unhosted ancestry, and TCC attributes its sessions' prompts to the per-version
+  binary path — the operator sees dialogs from an "app" named `2.1.233`.
+- Observed cost at 2.1.233: a fresh grant burst for
+  `~/.local/share/claude/versions/2.1.233` — Documents (08-14 22:50), AppleEvents (23:01),
+  Desktop (23:31), then FileProvider / Removable Volumes / Downloads / **Media Library** in a
+  16-second prompt burst (08-15 12:37:21–12:37:37, all clicked Allow). This re-fires for the
+  entire grant set at **every version advance** while the ingress stays unhosted.
+- Consequence for Track C: `rotating_identity_active_grants` / `new_managed_identities`
+  cannot go green by waiting for a restart. Paths to green are (a) the daemon-spawning
+  ingress enters `DomusAgentHost` — and responsibility must be *proven* to survive the
+  daemon's self-daemonization (upstream may disclaim responsibility on spawn; unverified) —
+  or (b) upstream Claude Code gives its daemon/session processes a stable bundle identity
+  instead of the per-version path (`ClaudeCode.app` exists at
+  `~/.local/share/claude/ClaudeCode.app` but resumed sessions exec `versions/<v>` directly).
