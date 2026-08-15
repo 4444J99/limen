@@ -647,6 +647,19 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["RANKED-CLAIM"], drifted)
 
+        long_expected = {
+            (surface, "LONG-CLAIM"): {
+                "claim_text": "Limen demonstrates governed multi-agent delivery with durable exact-head receipts"
+            }
+        }
+        matched, drifted = MODULE._surface_claim_scan(
+            "Limen fabricates governed multi-agent delivery with durable exact-head receipts",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
@@ -656,6 +669,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v1")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
+
+    def test_live_surface_fetch_uses_contract_owned_https_transport(self) -> None:
+        source_url = "https://example.com/public-proof"
+        response = mock.MagicMock()
+        response.geturl.return_value = source_url
+        response.read.return_value = b"bounded public proof"
+        response.__enter__.return_value = response
+        with mock.patch.dict(
+            os.environ,
+            {"HTTPS_PROXY": "http://proxy.invalid", "SSL_CERT_FILE": "/tmp/untrusted.pem"},
+            clear=False,
+        ):
+            with mock.patch.object(MODULE, "_contract_https_open", return_value=response) as opener:
+                content = MODULE._fetch_bounded_public_surface(source_url)
+        self.assertEqual(b"bounded public proof", content)
+        request = opener.call_args.args[0]
+        self.assertEqual(source_url, request.full_url)
+        self.assertEqual(30, opener.call_args.kwargs["timeout"])
 
     def test_live_surface_inspection_binds_the_exact_raw_response_digest(self) -> None:
         surface = "portfolio_front_door"
@@ -842,14 +873,37 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "author_association": "MEMBER",
             "body": (f"<!-- positioning-phase-receipt:{phase_id} -->\n```json\n" + json.dumps(receipt) + "\n```"),
         }
-        with mock.patch.object(MODULE.subprocess, "run", side_effect=completed) as run:
-            with mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=comment):
-                observed = MODULE._live_phase_verification(ROOT, phase_id)
+        injected = {
+            "PATH": "/tmp/untrusted-bin",
+            "PYTHONPATH": "/tmp/untrusted-python",
+            "PYTHONHOME": "/tmp/untrusted-home",
+            "LD_PRELOAD": "/tmp/untrusted.so",
+            "LD_LIBRARY_PATH": "/tmp/untrusted-lib",
+            "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+        }
+        with mock.patch.dict(os.environ, injected, clear=False):
+            with mock.patch.object(MODULE.subprocess, "run", side_effect=completed) as run:
+                with mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=comment):
+                    observed = MODULE._live_phase_verification(ROOT, phase_id)
         self.assertEqual(proof, observed["phase_proof"])
         self.assertEqual(proof_sha256, observed["phase_proof_output_sha256"])
         self.assertEqual(predicate, observed["phase_proof_predicate"])
-        self.assertEqual("--phase-proof", run.call_args_list[0].args[0][2])
-        self.assertEqual("--verify-phase", run.call_args_list[1].args[0][2])
+        self.assertEqual("--phase-proof", run.call_args_list[0].args[0][-2])
+        self.assertEqual("--verify-phase", run.call_args_list[1].args[0][-2])
+        for call in run.call_args_list:
+            argv = call.args[0]
+            environment = call.kwargs["env"]
+            self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
+            self.assertEqual("-I", argv[1])
+            self.assertEqual("-S", argv[2])
+            self.assertEqual("-c", argv[3])
+            self.assertEqual(MODULE.POSITIONING_PROGRAM_BOOTSTRAP, argv[4])
+            self.assertEqual((ROOT / "scripts/positioning-program.py").resolve(), Path(argv[-3]))
+            for key in set(injected) - {"PATH"}:
+                self.assertNotIn(key, environment)
+            self.assertNotIn(injected["PATH"], environment["PATH"].split(os.pathsep))
+            self.assertEqual("1", environment["PYTHONNOUSERSITE"])
+            self.assertEqual("1", environment["PYTHONSAFEPATH"])
 
     def test_live_phase_verification_cannot_accept_receipt_without_current_phase_proof(self) -> None:
         failed = subprocess.CompletedProcess([], 2, "", "phase proof failed")
@@ -1318,6 +1372,40 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         self.assertEqual("pass", result["status"])
         self.assertEqual(2, result["substantive_public_count"])
+
+        original_method = objects[0]["method"]
+        objects[0]["method"] = "reviewer@example.invalid"
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            private_value = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", private_value["status"])
+        self.assertEqual(1, private_value["substantive_public_count"])
+        self.assertTrue(any("contains private material" in error for error in private_value["errors"]))
+        objects[0]["method"] = original_method
+
+        objects[0]["review metadata"] = {"credential": "synthetic-secret"}
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            private_extra = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", private_extra["status"])
+        self.assertEqual(1, private_extra["substantive_public_count"])
+        self.assertTrue(any("unexpected fields" in error for error in private_extra["errors"]))
+        self.assertTrue(any("contains private material" in error for error in private_extra["errors"]))
+        objects[0].pop("review metadata")
 
         first_url = objects[0]["object URL or receipt"]
         assert isinstance(first_url, str)

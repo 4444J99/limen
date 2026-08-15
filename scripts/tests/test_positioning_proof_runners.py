@@ -111,46 +111,63 @@ def wait_for_recorded_process_exit(pid_path: Path, timeout_seconds: float = 2.0)
 class PositioningProofRunnerTest(unittest.TestCase):
     def test_canonical_remote_lookup_ignores_all_git_rewrite_surfaces(self) -> None:
         completed = subprocess.CompletedProcess([], 0, b"", b"")
-        injected = {
-            "GIT_CONFIG_COUNT": "1",
-            "GIT_CONFIG_KEY_0": "url.file:///mirror.insteadOf",
-            "GIT_CONFIG_VALUE_0": "https://github.com/",
-            "GIT_DIR": "/tmp/untrusted.git",
-            "GIT_SSL_CAINFO": "/tmp/untrusted-ca.pem",
-            "GIT_SSL_NO_VERIFY": "1",
-            "GIT_WORK_TREE": "/tmp/untrusted-tree",
-            "HTTPS_PROXY": "http://proxy.invalid",
-            "https_proxy": "http://lower-proxy.invalid",
-            "SSL_CERT_FILE": "/tmp/untrusted-cert.pem",
-        }
-        with mock.patch.dict(os.environ, injected, clear=False):
-            with mock.patch.object(RECEIPT.subprocess, "run", return_value=completed) as run:
-                result = RECEIPT._run_canonical_remote("example/synthetic")
+        with tempfile.TemporaryDirectory() as directory:
+            fake_git = Path(directory) / "git"
+            fake_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_git.chmod(0o755)
+            injected = {
+                "PATH": directory,
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "url.file:///mirror.insteadOf",
+                "GIT_CONFIG_VALUE_0": "https://github.com/",
+                "GIT_DIR": "/tmp/untrusted.git",
+                "GIT_EXEC_PATH": directory,
+                "GIT_SSL_CAINFO": "/tmp/untrusted-ca.pem",
+                "GIT_SSL_NO_VERIFY": "1",
+                "GIT_WORK_TREE": "/tmp/untrusted-tree",
+                "HTTPS_PROXY": "http://proxy.invalid",
+                "https_proxy": "http://lower-proxy.invalid",
+                "SSL_CERT_FILE": "/tmp/untrusted-cert.pem",
+                "LD_PRELOAD": "/tmp/untrusted.so",
+            }
+            with mock.patch.dict(os.environ, injected, clear=False):
+                with mock.patch.object(RECEIPT.subprocess, "run", return_value=completed) as run:
+                    result = RECEIPT._run_canonical_remote("example/synthetic")
+                    local_result = RECEIPT._run_git(ROOT, ["rev-parse", "HEAD"])
         self.assertIs(result, completed)
-        argv = run.call_args.args[0]
-        options = run.call_args.kwargs
+        self.assertIs(local_result, completed)
+        remote_call, local_call = run.call_args_list
+        argv = remote_call.args[0]
+        options = remote_call.kwargs
+        trusted_git = Path(argv[0])
+        self.assertTrue(trusted_git.is_absolute())
+        self.assertNotEqual(fake_git, trusted_git)
         self.assertEqual(
             [
-                "git",
                 "ls-remote",
                 "--symref",
                 "--exit-code",
                 "https://github.com/example/synthetic.git",
                 "HEAD",
             ],
-            argv,
+            argv[1:],
         )
+        self.assertEqual(trusted_git, Path(local_call.args[0][0]))
+        self.assertEqual(["rev-parse", "HEAD"], local_call.args[0][1:])
         self.assertEqual(Path("/"), options["cwd"])
         self.assertEqual("1", options["env"]["GIT_CONFIG_NOSYSTEM"])
         self.assertEqual(os.devnull, options["env"]["GIT_CONFIG_GLOBAL"])
         self.assertEqual("0", options["env"]["GIT_CONFIG_COUNT"])
         self.assertNotIn("GIT_DIR", options["env"])
+        self.assertNotIn("GIT_EXEC_PATH", options["env"])
         self.assertNotIn("GIT_SSL_CAINFO", options["env"])
         self.assertNotIn("GIT_SSL_NO_VERIFY", options["env"])
         self.assertNotIn("GIT_WORK_TREE", options["env"])
         self.assertNotIn("HTTPS_PROXY", options["env"])
         self.assertNotIn("https_proxy", options["env"])
         self.assertNotIn("SSL_CERT_FILE", options["env"])
+        self.assertNotIn("LD_PRELOAD", options["env"])
+        self.assertNotIn(directory, options["env"]["PATH"].split(os.pathsep))
 
     def test_predicate_runner_ignores_ambient_path_and_runtime_injection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -159,7 +176,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
             fake_python.chmod(0o755)
             with mock.patch.dict(
                 os.environ,
-                {"PATH": directory, "PYTHONPATH": directory, "NODE_OPTIONS": "--require=/tmp/untrusted.js"},
+                {
+                    "PATH": directory,
+                    "PYTHONPATH": directory,
+                    "NODE_OPTIONS": "--require=/tmp/untrusted.js",
+                    "LD_PRELOAD": "/tmp/untrusted.so",
+                    "LD_LIBRARY_PATH": directory,
+                    "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+                },
                 clear=False,
             ):
                 _argv, environment, metadata = RECEIPT._prepare_predicate_invocation(["python3", "-V"])
@@ -180,10 +204,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
         self.assertNotIn("PYTHONPATH", environment)
         self.assertNotIn("NODE_OPTIONS", environment)
+        self.assertNotIn("LD_PRELOAD", environment)
+        self.assertNotIn("LD_LIBRARY_PATH", environment)
+        self.assertNotIn("DYLD_INSERT_LIBRARIES", environment)
         invoked_argv = runner.call_args.args[0]
         invoked_environment = runner.call_args.kwargs["environment"]
         self.assertNotEqual(str(fake_python), invoked_argv[0])
         self.assertNotIn(directory, invoked_environment["PATH"].split(os.pathsep))
+        self.assertNotIn("LD_PRELOAD", invoked_environment)
+        self.assertNotIn("LD_LIBRARY_PATH", invoked_environment)
+        self.assertNotIn("DYLD_INSERT_LIBRARIES", invoked_environment)
 
     def test_authenticated_cost_transport_ignores_ambient_proxy_and_ca_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

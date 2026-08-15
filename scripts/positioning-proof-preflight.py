@@ -16,7 +16,7 @@ import sys
 import tempfile
 from http.client import HTTPException
 from urllib.parse import urlsplit
-from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener, urlopen
+from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -47,6 +47,17 @@ EXTERNAL_VALIDATION_RECEIPT_FIELDS = {
     "observed_at",
     "limitations",
 }
+EXTERNAL_VALIDATION_MINIMUM_FIELDS = (
+    "validator identity class",
+    "independence disclosure",
+    "object URL or receipt",
+    "date",
+    "claim scope",
+    "method",
+    "limitations",
+    "consent status",
+    "withdrawal route",
+)
 PHASE_RECEIPT_URLS = {
     "PSP-P03": re.compile(r"^https://github\.com/organvm/limen/issues/2181#issuecomment-[0-9]+$"),
     "PSP-P04": re.compile(r"^https://github\.com/organvm/limen/issues/2189#issuecomment-[0-9]+$"),
@@ -66,6 +77,20 @@ COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
 SURFACE_SCANNER = "canonical_claim_drift"
 SURFACE_SCANNER_VERSION = "3"
+POSITIONING_PROGRAM_BOOTSTRAP = """
+import hashlib
+import pathlib
+import runpy
+import sys
+
+dependency_root, dependency_sha256, program, *arguments = sys.argv[1:]
+yaml_init = pathlib.Path(dependency_root, "yaml", "__init__.py").resolve(strict=True)
+if hashlib.sha256(yaml_init.read_bytes()).hexdigest() != dependency_sha256:
+    raise SystemExit("trusted PyYAML dependency digest changed")
+sys.path.insert(0, dependency_root)
+sys.argv = [program, *arguments]
+runpy.run_path(program, run_name="__main__")
+"""
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
 DEMO_RECORD_FIELDS = {
@@ -1206,7 +1231,7 @@ def _surface_claim_scan(
             anchor_size = 3
             canonical_anchors = {
                 " ".join(canonical_sequence[index : index + anchor_size])
-                for index in range(min(2, len(canonical_sequence) - anchor_size + 1))
+                for index in range(len(canonical_sequence) - anchor_size + 1)
             }
         else:
             anchor_size = 2
@@ -1218,7 +1243,8 @@ def _surface_claim_scan(
             segment_tokens = set(segment.split())
             overlap = canonical_tokens & segment_tokens
             coverage = len(overlap) / len(canonical_tokens)
-            anchored_variant = any(f" {anchor} " in f" {segment} " for anchor in canonical_anchors)
+            anchor_matches = sum(f" {anchor} " in f" {segment} " for anchor in canonical_anchors)
+            anchored_variant = anchor_matches >= (2 if len(canonical_tokens) >= 5 else 1)
             minimum_overlap = min(3, len(canonical_tokens))
             if len(overlap) >= minimum_overlap and coverage >= 0.5 and anchored_variant:
                 drifted.append(claim_id)
@@ -1274,7 +1300,7 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
         source_url,
         headers={"Accept": "text/html,text/plain", "User-Agent": "limen-positioning-proof-preflight"},
     )
-    with urlopen(request, timeout=30) as response:
+    with _contract_https_open(request, timeout=30) as response:
         if response.geturl() != source_url:
             raise ValueError("live surface redirected away from its contract-owned URL")
         content = response.read(1_048_577)
@@ -1888,7 +1914,12 @@ def validate_external_objects(
     if not isinstance(objects, list):
         return {"status": "fail", "errors": [*errors, "external validation objects must be a list"]}
     validation = contract.get("external_validation", {})
-    required = set(validation.get("minimum_fields", []))
+    configured_minimum_fields = validation.get("minimum_fields")
+    contract_schema_valid = configured_minimum_fields == list(EXTERNAL_VALIDATION_MINIMUM_FIELDS)
+    if not contract_schema_valid:
+        errors.append("external validation minimum fields must match the canonical exact schema")
+    required = set(EXTERNAL_VALIDATION_MINIMUM_FIELDS)
+    expected_fields = required | {"object class"}
     acceptable_rows = validation.get("acceptable_objects")
     if (
         not isinstance(acceptable_rows, list)
@@ -1910,6 +1941,15 @@ def validate_external_objects(
         missing = sorted(field for field in required if field not in row)
         if missing:
             errors.append(f"validation object {index} missing: {', '.join(missing)}")
+        unexpected = sorted((field for field in row if field not in expected_fields), key=str)
+        if unexpected:
+            errors.append(
+                f"validation object {index} has unexpected fields: {', '.join(str(field) for field in unexpected)}"
+            )
+        exact_schema = contract_schema_valid and not missing and not unexpected and set(row) == expected_fields
+        private_paths = sorted(_find_forbidden_demo_material(row, f"validation object {index}"))
+        if private_paths:
+            errors.append(f"validation object {index} contains private material: {', '.join(private_paths)}")
         invalid_text = sorted(
             field
             for field in required
@@ -1947,7 +1987,14 @@ def validate_external_objects(
         if not isinstance(consent_status, str) or consent_status not in {"public_consented", "withdrawn"}:
             errors.append(f"validation object {index} has no public consent disposition")
         authenticated_actor: str | None = None
-        if consent_status == "public_consented" and isinstance(object_receipt, str) and object_receipt:
+        if (
+            consent_status == "public_consented"
+            and exact_schema
+            and not invalid_text
+            and not private_paths
+            and isinstance(object_receipt, str)
+            and object_receipt
+        ):
             try:
                 authenticated_actor = _authenticate_external_validation_object(row)
             except (HTTPException, OSError, ValueError, json.JSONDecodeError) as exc:
@@ -1961,8 +2008,9 @@ def validate_external_objects(
                     authenticated_actors.add(normalized_actor)
         if (
             consent_status == "public_consented"
-            and not missing
+            and exact_schema
             and not invalid_text
+            and not private_paths
             and object_class in acceptable_objects
             and independence in INDEPENDENCE_DISPOSITIONS
             and isinstance(object_receipt, str)
@@ -2037,14 +2085,7 @@ def _fetch_github_issue_comment(receipt_url: str, label: str) -> dict[str, Any]:
 
 
 def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
-    phase_proof = subprocess.run(
-        [sys.executable, str(repository / "scripts/positioning-program.py"), "--phase-proof", phase_id],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=180,
-    )
+    phase_proof = _run_trusted_positioning_program(repository, "--phase-proof", phase_id, timeout=180)
     if phase_proof.returncode != 0:
         detail = (phase_proof.stderr or phase_proof.stdout).strip()
         raise ValueError(f"live {phase_id} manifest phase proof did not pass: {detail}")
@@ -2057,14 +2098,7 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
         raise ValueError(f"live {phase_id} manifest phase proof returned an invalid result")
     phase_proof_sha256 = hashlib.sha256(phase_proof.stdout.encode("utf-8")).hexdigest()
 
-    completed = subprocess.run(
-        [sys.executable, str(repository / "scripts/positioning-program.py"), "--verify-phase", phase_id],
-        cwd=repository,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=180,
-    )
+    completed = _run_trusted_positioning_program(repository, "--verify-phase", phase_id, timeout=180)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise ValueError(f"live {phase_id} verifier did not pass: {detail}")
@@ -2157,6 +2191,91 @@ def _sanitized_git_environment() -> dict[str, str]:
         }
     )
     return environment
+
+
+def _run_trusted_positioning_program(
+    repository: Path,
+    *arguments: str,
+    timeout: int,
+) -> subprocess.CompletedProcess[str]:
+    """Run the tracked program with the current trusted interpreter and no ambient runtime hooks."""
+    repository = repository.resolve(strict=True)
+    interpreter = Path(sys.executable).resolve(strict=True)
+    program = (repository / "scripts/positioning-program.py").resolve(strict=True)
+    expected_program = repository / "scripts/positioning-program.py"
+    if program != expected_program or not program.is_file():
+        raise ValueError("positioning program must be the tracked repository script")
+    if not interpreter.is_file() or not os.access(interpreter, os.X_OK):
+        raise OSError(f"trusted Python interpreter is not executable: {interpreter}")
+    ambient_python_paths = {
+        Path(raw_path).expanduser().resolve()
+        for raw_path in os.environ.get("PYTHONPATH", "").split(os.pathsep)
+        if raw_path
+    }
+    dependency: tuple[Path, str] | None = None
+    for raw_path in sys.path:
+        if not raw_path:
+            continue
+        try:
+            candidate_root = Path(raw_path).expanduser().resolve(strict=True)
+        except OSError:
+            continue
+        if (
+            candidate_root in ambient_python_paths
+            or candidate_root.name not in {"site-packages", "dist-packages"}
+            or candidate_root == repository
+            or repository in candidate_root.parents
+        ):
+            continue
+        try:
+            yaml_init = (candidate_root / "yaml/__init__.py").resolve(strict=True)
+        except OSError:
+            continue
+        if not yaml_init.is_file() or candidate_root not in yaml_init.parents:
+            continue
+        dependency = (candidate_root, hashlib.sha256(yaml_init.read_bytes()).hexdigest())
+        break
+    if dependency is None:
+        raise OSError("trusted PyYAML dependency is unavailable outside ambient PYTHONPATH")
+    dependency_root, dependency_sha256 = dependency
+    environment = _sanitized_git_environment()
+    for key in tuple(environment):
+        upper = key.upper()
+        if key == "PATH" or upper.startswith(("PYTHON", "LD_", "DYLD_")):
+            environment.pop(key, None)
+    trusted_path = (
+        interpreter.parent,
+        Path("/opt/homebrew/bin"),
+        Path("/usr/local/bin"),
+        Path("/usr/bin"),
+        Path("/bin"),
+    )
+    environment.update(
+        {
+            "PATH": os.pathsep.join(str(path) for path in dict.fromkeys(trusted_path)),
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONSAFEPATH": "1",
+        }
+    )
+    return subprocess.run(
+        [
+            str(interpreter),
+            "-I",
+            "-S",
+            "-c",
+            POSITIONING_PROGRAM_BOOTSTRAP,
+            str(dependency_root),
+            dependency_sha256,
+            str(program),
+            *arguments,
+        ],
+        cwd=repository,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
 
 
 def _sanitized_ancestry(repository: Path, ancestor: str, descendant: str) -> subprocess.CompletedProcess[str]:

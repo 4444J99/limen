@@ -278,7 +278,7 @@ def _not_current_receipt(
 
 def _run_git(repository_path: Path, argv: list[str]) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(
-        ["git", *argv],
+        [str(_trusted_named_executable("git")), *argv],
         cwd=repository_path,
         check=False,
         capture_output=True,
@@ -299,6 +299,7 @@ def _sanitized_git_environment() -> dict[str, str]:
         "GIT_CONFIG_COUNT",
         "GIT_CONFIG_PARAMETERS",
         "GIT_DIR",
+        "GIT_EXEC_PATH",
         "GIT_INDEX_FILE",
         "GIT_NAMESPACE",
         "GIT_OBJECT_DIRECTORY",
@@ -321,6 +322,7 @@ def _sanitized_git_environment() -> dict[str, str]:
             or key.startswith("GIT_CONFIG_KEY_")
             or key.startswith("GIT_CONFIG_VALUE_")
             or key.startswith("GIT_SSL_")
+            or key.upper().startswith(("LD_", "DYLD_"))
             or key.lower() in {"all_proxy", "http_proxy", "https_proxy", "no_proxy"}
         ):
             environment.pop(key, None)
@@ -332,9 +334,35 @@ def _sanitized_git_environment() -> dict[str, str]:
             "GIT_GRAFT_FILE": os.devnull,
             "GIT_NO_REPLACE_OBJECTS": "1",
             "GIT_TERMINAL_PROMPT": "0",
+            "PATH": os.pathsep.join(
+                str(directory) for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
+            ),
         }
     )
     return environment
+
+
+def _trusted_named_executable(name: str) -> Path:
+    """Resolve a host executable without consulting ambient PATH."""
+    if not name or Path(name).name != name or "/" in name or "\\" in name:
+        raise ValueError("trusted executable name must be one path-free component")
+    candidate = next(
+        (
+            directory / name
+            for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
+            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
+        ),
+        None,
+    )
+    if candidate is None:
+        raise OSError(f"trusted executable is unavailable: {name}")
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise OSError(f"trusted executable is unavailable: {name}") from exc
+    if not resolved.is_file() or not os.access(resolved, os.X_OK):
+        raise OSError(f"trusted executable is not executable: {resolved}")
+    return resolved
 
 
 def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str, str], dict[str, str]]:
@@ -347,16 +375,10 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
     else:
         if executable.name != argv[0] or "/" in argv[0] or "\\" in argv[0]:
             raise ValueError("predicate executable must be an absolute path or a trusted executable name")
-        candidate = next(
-            (
-                directory / argv[0]
-                for directory in dict.fromkeys(TRUSTED_PREDICATE_EXECUTABLE_DIRECTORIES)
-                if (directory / argv[0]).is_file() and os.access(directory / argv[0], os.X_OK)
-            ),
-            None,
-        )
-        if candidate is None:
-            raise OSError(f"trusted predicate executable is unavailable: {argv[0]}")
+        try:
+            candidate = _trusted_named_executable(argv[0])
+        except OSError as exc:
+            raise OSError(f"trusted predicate executable is unavailable: {argv[0]}") from exc
     try:
         resolved = candidate.resolve(strict=True)
     except OSError as exc:
@@ -395,7 +417,7 @@ def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]
     anchor = Path(Path.cwd().anchor or os.sep)
     return subprocess.run(
         [
-            "git",
+            str(_trusted_named_executable("git")),
             "ls-remote",
             "--symref",
             "--exit-code",
