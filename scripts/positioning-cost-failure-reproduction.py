@@ -12,6 +12,7 @@ import re
 import ssl
 import subprocess
 import sys
+import tempfile
 from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
@@ -45,7 +46,11 @@ ALLOWED_FAILURE_CLASSES = {
     "resource_limit",
     "verification_failure",
 }
-REPRODUCTION_SCHEMA = "limen.positioning_cost_failure_reproduction.v1"
+REPRODUCTION_SCHEMA = "limen.positioning_cost_failure_reproduction.v2"
+CANONICAL_REPOSITORY = "organvm/limen"
+RUNNER_ARTIFACT = "scripts/positioning-cost-failure-reproduction.py"
+FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
+GIT_BLOB = re.compile(r"^[0-9a-f]{40}$")
 REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
 POPULATION_SCHEMA = "limen.positioning_cost_failure_population.v1"
 POPULATION_SOURCE_SCHEMA = "limen.positioning_cost_failure_population_source.v1"
@@ -566,6 +571,127 @@ def _load_tracked_public_artifact(value: object) -> object:
     return _loads_public_artifact(text)
 
 
+def _git_output(argv: list[str], *, git_dir: Path | None = None, timeout: int = 30) -> bytes:
+    command = [str(_trusted_named_executable("git"))]
+    if git_dir is not None:
+        command.extend(["--git-dir", str(git_dir)])
+    completed = subprocess.run(
+        [*command, *argv],
+        cwd=ROOT if git_dir is None else Path(Path.cwd().anchor or os.sep),
+        check=False,
+        capture_output=True,
+        timeout=timeout,
+        env=_sanitized_git_environment(),
+    )
+    if completed.returncode != 0:
+        raise ValueError("exact Git object lookup failed")
+    return completed.stdout
+
+
+def _tracked_artifact_identity(value: object) -> tuple[str, str]:
+    artifact = _safe_tracked_artifact(value)
+    if artifact is None:
+        raise ValueError("artifact is not a safe Git-tracked file matching its committed HEAD blob")
+    path = str(value)
+    head = _git_output(["rev-parse", "HEAD"]).decode(errors="replace").strip()
+    blob = _git_output(["rev-parse", f"{head}:{path}"]).decode(errors="replace").strip()
+    if not FULL_HEAD.fullmatch(head) or not GIT_BLOB.fullmatch(blob):
+        raise ValueError("artifact exact Git identity is invalid")
+    if _git_output(["show", blob]) != artifact.read_bytes():
+        raise ValueError("artifact bytes differ from the exact recorded Git blob")
+    return head, blob
+
+
+def _load_exact_public_artifact(source_head: object, artifact_path: object, expected_blob: object) -> object:
+    if (
+        not isinstance(source_head, str)
+        or not FULL_HEAD.fullmatch(source_head)
+        or not _public_artifact_path(artifact_path)
+        or not isinstance(expected_blob, str)
+        or not GIT_BLOB.fullmatch(expected_blob)
+    ):
+        raise ValueError("exact artifact binding is invalid")
+    path = str(artifact_path)
+    observed_blob = _git_output(["rev-parse", f"{source_head}:{path}"]).decode(errors="replace").strip()
+    if observed_blob != expected_blob:
+        raise ValueError("exact artifact blob differs from the recorded binding")
+    raw = _git_output(["show", expected_blob])
+    if len(raw) > 1_048_576:
+        raise ValueError("artifact exceeds the bounded size")
+    try:
+        return _loads_public_artifact(raw.decode("utf-8"))
+    except UnicodeDecodeError as exc:
+        raise ValueError("artifact is not UTF-8 JSON") from exc
+
+
+def _fetch_exact_replay_artifacts(
+    source_head: str,
+    runner_blob: str,
+    artifact_blobs: dict[str, str],
+) -> dict[str, object]:
+    """Fetch and parse the exact canonical replay tree without trusting the current checkout."""
+    if not FULL_HEAD.fullmatch(source_head) or not GIT_BLOB.fullmatch(runner_blob):
+        raise ValueError("replay source identity is invalid")
+    if not artifact_blobs or any(
+        not _public_artifact_path(path) or not GIT_BLOB.fullmatch(blob) for path, blob in artifact_blobs.items()
+    ):
+        raise ValueError("replay artifact identities are invalid")
+    trusted_git = str(_trusted_named_executable("git"))
+    environment = _sanitized_git_environment()
+    anchor = Path(Path.cwd().anchor or os.sep)
+    with tempfile.TemporaryDirectory(prefix="limen-cost-replay-") as temporary:
+        object_store = Path(temporary) / "canonical.git"
+        commands = (
+            [trusted_git, "init", "--bare", "--quiet", str(object_store)],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "fetch",
+                "--no-tags",
+                "--depth=1",
+                "--force",
+                f"https://github.com/{CANONICAL_REPOSITORY}.git",
+                f"{source_head}:refs/canonical/source",
+            ],
+        )
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=anchor,
+                check=False,
+                capture_output=True,
+                timeout=120,
+                env=environment,
+            )
+            if completed.returncode != 0:
+                raise ValueError("canonical replay head could not be fetched")
+        fetched_head = _git_output(["rev-parse", "refs/canonical/source"], git_dir=object_store).decode().strip()
+        if fetched_head != source_head:
+            raise ValueError("fetched replay head differs from the recorded source head")
+        runner_identity = (
+            _git_output(["rev-parse", f"{source_head}:{RUNNER_ARTIFACT}"], git_dir=object_store).decode().strip()
+        )
+        if runner_identity != runner_blob:
+            raise ValueError("replay runner blob differs from the recorded binding")
+        runner_bytes = _git_output(["show", runner_blob], git_dir=object_store)
+        if runner_bytes != Path(__file__).resolve().read_bytes():
+            raise ValueError("executing replay runner differs from the exact recorded runner blob")
+        parsed: dict[str, object] = {}
+        for path, expected_blob in artifact_blobs.items():
+            observed_blob = _git_output(["rev-parse", f"{source_head}:{path}"], git_dir=object_store).decode().strip()
+            if observed_blob != expected_blob:
+                raise ValueError("replay artifact blob differs from the recorded binding")
+            raw = _git_output(["show", expected_blob], git_dir=object_store)
+            if len(raw) > 1_048_576:
+                raise ValueError("replay artifact exceeds the bounded size")
+            try:
+                parsed[path] = _loads_public_artifact(raw.decode("utf-8"))
+            except UnicodeDecodeError as exc:
+                raise ValueError("replay artifact is not UTF-8 JSON") from exc
+        return parsed
+
+
 def _model_rate_source_record(
     detail: dict[str, Any],
     index: int,
@@ -1053,10 +1179,39 @@ def _distribution(rows: list[dict[str, Any]], field: str) -> dict[str, Any]:
 
 
 def _public_artifact_path(value: object) -> bool:
-    if not isinstance(value, str) or not value.strip() or "\0" in value or "\\" in value:
+    if not isinstance(value, str) or not value.strip() or "\0" in value or "\\" in value or ":" in value:
         return False
     path = PurePosixPath(value)
     return not path.is_absolute() and ".." not in path.parts and path.as_posix() == value
+
+
+def _reproduction_argv(
+    *,
+    source_repository: object,
+    source_head: object,
+    runner_blob: object,
+    input_artifact: object,
+    input_blob: object,
+    review_artifact: object,
+    review_blob: object,
+) -> list[object]:
+    argv: list[object] = [
+        "python3",
+        RUNNER_ARTIFACT,
+        "--source-repository",
+        source_repository,
+        "--source-head",
+        source_head,
+        "--runner-blob",
+        runner_blob,
+        "--input",
+        input_artifact,
+        "--input-blob",
+        input_blob,
+    ]
+    if review_artifact is not None:
+        argv.extend(["--review", review_artifact, "--review-blob", review_blob])
+    return argv
 
 
 def _build_reproduction_command(
@@ -1064,25 +1219,58 @@ def _build_reproduction_command(
     data_digest: str,
     review_artifact: object,
     review_verdict: object,
+    *,
+    source_head: object = None,
+    runner_blob: object = None,
+    input_blob: object = None,
+    review_blob: object = None,
 ) -> dict[str, Any]:
-    argv = ["python3", "scripts/positioning-cost-failure-reproduction.py", "--input"]
-    if isinstance(input_artifact, str):
-        argv.append(input_artifact)
-    if review_artifact is not None:
-        argv.append("--review")
-        if isinstance(review_artifact, str):
-            argv.append(review_artifact)
+    if source_head is None and runner_blob is None and input_blob is None and review_blob is None:
+        try:
+            runner_head, runner_blob = _tracked_artifact_identity(RUNNER_ARTIFACT)
+            input_head, input_blob = _tracked_artifact_identity(input_artifact)
+            heads = {runner_head, input_head}
+            if review_artifact is not None:
+                review_head, review_blob = _tracked_artifact_identity(review_artifact)
+                heads.add(review_head)
+            if len(heads) != 1:
+                raise ValueError("replay artifacts do not share one exact repository head")
+            source_head = heads.pop()
+        except (OSError, ValueError):
+            source_head = None
+            runner_blob = None
+            input_blob = None
+            review_blob = None
+    argv = _reproduction_argv(
+        source_repository=CANONICAL_REPOSITORY,
+        source_head=source_head,
+        runner_blob=runner_blob,
+        input_artifact=input_artifact,
+        input_blob=input_blob,
+        review_artifact=review_artifact,
+        review_blob=review_blob,
+    )
     return {
         "schema_version": REPRODUCTION_SCHEMA,
         "argv": argv,
+        "source_repository": CANONICAL_REPOSITORY,
+        "source_head": source_head,
+        "runner_artifact": RUNNER_ARTIFACT,
+        "runner_blob": runner_blob,
         "input_artifact": input_artifact,
+        "input_blob": input_blob,
         "input_sha256": data_digest,
         "review_artifact": review_artifact,
+        "review_blob": review_blob,
         "review_sha256": _canonical_digest(review_verdict) if isinstance(review_verdict, dict) else None,
     }
 
 
-def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
+def _validate_required_receipt_fields(
+    analysis: dict[str, Any],
+    *,
+    exact_artifacts: dict[str, object] | None = None,
+) -> list[str]:
     errors: list[str] = []
     population = analysis.get("population")
     if not isinstance(population, dict) or analysis.get("population_digest") != _canonical_digest(population):
@@ -1091,9 +1279,15 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     reproduction_fields = {
         "schema_version",
         "argv",
+        "source_repository",
+        "source_head",
+        "runner_artifact",
+        "runner_blob",
         "input_artifact",
+        "input_blob",
         "input_sha256",
         "review_artifact",
+        "review_blob",
         "review_sha256",
     }
     if not isinstance(reproduction, dict):
@@ -1103,15 +1297,47 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
             errors.append("analysis reproduction_command must use the exact contract fields")
         if reproduction.get("schema_version") != REPRODUCTION_SCHEMA:
             errors.append("analysis reproduction_command has an unsupported schema")
+        source_repository = reproduction.get("source_repository")
+        source_head = reproduction.get("source_head")
+        runner_artifact = reproduction.get("runner_artifact")
+        runner_blob = reproduction.get("runner_blob")
+        if source_repository != CANONICAL_REPOSITORY:
+            errors.append("analysis reproduction_command must bind the canonical repository")
+        if not isinstance(source_head, str) or not FULL_HEAD.fullmatch(source_head):
+            errors.append("analysis reproduction_command requires an exact repository head")
+        if (
+            runner_artifact != RUNNER_ARTIFACT
+            or not isinstance(runner_blob, str)
+            or not GIT_BLOB.fullmatch(runner_blob)
+        ):
+            errors.append("analysis reproduction_command requires the exact runner blob")
+        elif exact_artifacts is None and isinstance(source_head, str) and FULL_HEAD.fullmatch(source_head):
+            try:
+                observed_runner_blob = _git_output(["rev-parse", f"{source_head}:{RUNNER_ARTIFACT}"]).decode().strip()
+                committed_runner = _git_output(["show", runner_blob])
+            except (OSError, ValueError) as exc:
+                errors.append(f"analysis reproduction runner is not exactly reproducible: {exc}")
+            else:
+                if observed_runner_blob != runner_blob or committed_runner != Path(__file__).resolve().read_bytes():
+                    errors.append("analysis reproduction runner differs from its exact recorded Git blob")
         input_artifact = reproduction.get("input_artifact")
+        input_blob = reproduction.get("input_blob")
         review_artifact = reproduction.get("review_artifact")
+        review_blob = reproduction.get("review_blob")
         if not _public_artifact_path(input_artifact):
             errors.append("analysis reproduction_command requires a public-safe input artifact path")
+        elif not isinstance(input_blob, str) or not GIT_BLOB.fullmatch(input_blob):
+            errors.append("analysis reproduction_command requires the exact input blob")
         else:
             try:
-                committed_input = _load_tracked_public_artifact(input_artifact)
+                if exact_artifacts is not None:
+                    if input_artifact not in exact_artifacts:
+                        raise ValueError("exact input artifact was not fetched")
+                    committed_input = exact_artifacts[input_artifact]
+                else:
+                    committed_input = _load_exact_public_artifact(source_head, input_artifact, input_blob)
             except (OSError, ValueError) as exc:
-                errors.append(f"analysis reproduction input is not committed and reproducible: {exc}")
+                errors.append(f"analysis reproduction input is not exactly committed and reproducible: {exc}")
             else:
                 if not isinstance(committed_input, dict) or _canonical_digest(committed_input) != analysis.get(
                     "data_digest"
@@ -1126,20 +1352,21 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                         )
         if reproduction.get("input_sha256") != analysis.get("data_digest"):
             errors.append("analysis reproduction_command input digest does not bind the analyzed data")
-        expected_argv = [
-            "python3",
-            "scripts/positioning-cost-failure-reproduction.py",
-            "--input",
-            input_artifact,
-        ]
         if review_artifact is not None:
             if not _public_artifact_path(review_artifact):
                 errors.append("analysis reproduction_command requires a public-safe review artifact path")
+            elif not isinstance(review_blob, str) or not GIT_BLOB.fullmatch(review_blob):
+                errors.append("analysis reproduction_command requires the exact review blob")
             else:
                 try:
-                    committed_review = _load_tracked_public_artifact(review_artifact)
+                    if exact_artifacts is not None:
+                        if review_artifact not in exact_artifacts:
+                            raise ValueError("exact review artifact was not fetched")
+                        committed_review = exact_artifacts[review_artifact]
+                    else:
+                        committed_review = _load_exact_public_artifact(source_head, review_artifact, review_blob)
                 except (OSError, ValueError) as exc:
-                    errors.append(f"analysis reproduction review is not committed and reproducible: {exc}")
+                    errors.append(f"analysis reproduction review is not exactly committed and reproducible: {exc}")
                 else:
                     if not isinstance(committed_review, dict) or committed_review != analysis.get("review_verdict"):
                         errors.append("analysis reproduction review differs from its committed HEAD artifact")
@@ -1150,7 +1377,17 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
                                 "analysis reproduction review contains private or credential material: "
                                 + ", ".join(private_paths)
                             )
-            expected_argv.extend(["--review", review_artifact])
+        elif review_blob is not None:
+            errors.append("analysis reproduction_command cannot bind a review blob without a review artifact")
+        expected_argv = _reproduction_argv(
+            source_repository=source_repository,
+            source_head=source_head,
+            runner_blob=runner_blob,
+            input_artifact=input_artifact,
+            input_blob=input_blob,
+            review_artifact=review_artifact,
+            review_blob=review_blob,
+        )
         if reproduction.get("argv") != expected_argv:
             errors.append("analysis reproduction_command argv does not exactly replay the bound artifacts")
 
@@ -1260,8 +1497,13 @@ def _validate_required_receipt_fields(analysis: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _finalize_analysis(analysis: dict[str, Any], *, data_complete: bool) -> dict[str, Any]:
-    required_errors = _validate_required_receipt_fields(analysis)
+def _finalize_analysis(
+    analysis: dict[str, Any],
+    *,
+    data_complete: bool,
+    exact_artifacts: dict[str, object] | None = None,
+) -> dict[str, Any]:
+    required_errors = _validate_required_receipt_fields(analysis, exact_artifacts=exact_artifacts)
     errors = [*analysis.get("errors", []), *required_errors]
     verdict = analysis.get("review_verdict")
     verdict_passed = isinstance(verdict, dict) and verdict.get("verdict") == "publishable_public_safe"
@@ -1280,6 +1522,11 @@ def reproduce(
     input_artifact: object = None,
     review_artifact: object = None,
     review_verdict: object = None,
+    source_head: object = None,
+    runner_blob: object = None,
+    input_blob: object = None,
+    review_blob: object = None,
+    exact_artifacts: dict[str, object] | None = None,
 ) -> dict[str, Any]:
     data_digest = _canonical_digest(payload)
     population = payload.get("population")
@@ -1295,6 +1542,10 @@ def reproduce(
         data_digest,
         review_artifact,
         review_verdict,
+        source_head=source_head,
+        runner_blob=runner_blob,
+        input_blob=input_blob,
+        review_blob=review_blob,
     )
     errors = validate_sample(payload)
     if errors:
@@ -1311,6 +1562,7 @@ def reproduce(
                 "errors": errors,
             },
             data_complete=False,
+            exact_artifacts=exact_artifacts,
         )
     rows = payload["rows"]
     terminal_counts = {state: sum(row["terminal_state"] == state for row in rows) for state in sorted(ALLOWED_STATES)}
@@ -1354,29 +1606,71 @@ def reproduce(
         ],
         "errors": [],
     }
-    return _finalize_analysis(analysis, data_complete=data_complete)
+    return _finalize_analysis(analysis, data_complete=data_complete, exact_artifacts=exact_artifacts)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--source-repository")
+    parser.add_argument("--source-head")
+    parser.add_argument("--runner-blob")
     parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--input-blob")
     parser.add_argument("--review", type=Path)
+    parser.add_argument("--review-blob")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
-        payload = _loads_public_artifact(args.input.read_text(encoding="utf-8"))
+        exact_values = (
+            args.source_repository,
+            args.source_head,
+            args.runner_blob,
+            args.input_blob,
+            args.review_blob,
+        )
+        exact_requested = any(value is not None for value in exact_values)
+        exact_artifacts: dict[str, object] | None = None
+        if exact_requested:
+            if (
+                args.source_repository != CANONICAL_REPOSITORY
+                or not isinstance(args.source_head, str)
+                or not FULL_HEAD.fullmatch(args.source_head)
+                or not isinstance(args.runner_blob, str)
+                or not GIT_BLOB.fullmatch(args.runner_blob)
+                or not isinstance(args.input_blob, str)
+                or not GIT_BLOB.fullmatch(args.input_blob)
+                or (args.review is None) != (args.review_blob is None)
+            ):
+                raise ValueError("exact replay requires one complete canonical head/blob binding")
+            artifact_blobs = {args.input.as_posix(): args.input_blob}
+            if args.review is not None and args.review_blob is not None:
+                artifact_blobs[args.review.as_posix()] = args.review_blob
+            exact_artifacts = _fetch_exact_replay_artifacts(
+                args.source_head,
+                args.runner_blob,
+                artifact_blobs,
+            )
+            payload = exact_artifacts[args.input.as_posix()]
+            review_verdict: object = exact_artifacts[args.review.as_posix()] if args.review is not None else None
+        else:
+            payload = _loads_public_artifact(args.input.read_text(encoding="utf-8"))
+            review_verdict = None
+            if args.review is not None:
+                review_verdict = _loads_public_artifact(args.review.read_text(encoding="utf-8"))
         if not isinstance(payload, dict):
             raise ValueError("input root must be an object")
-        review_verdict: object = None
-        if args.review is not None:
-            review_verdict = _loads_public_artifact(args.review.read_text(encoding="utf-8"))
-            if not isinstance(review_verdict, dict):
-                raise ValueError("review root must be an object")
+        if review_verdict is not None and not isinstance(review_verdict, dict):
+            raise ValueError("review root must be an object")
         result = reproduce(
             payload,
             input_artifact=args.input.as_posix(),
             review_artifact=args.review.as_posix() if args.review is not None else None,
             review_verdict=review_verdict,
+            source_head=args.source_head,
+            runner_blob=args.runner_blob,
+            input_blob=args.input_blob,
+            review_blob=args.review_blob,
+            exact_artifacts=exact_artifacts,
         )
     except (HTTPException, OSError, json.JSONDecodeError, ValueError) as exc:
         result = {

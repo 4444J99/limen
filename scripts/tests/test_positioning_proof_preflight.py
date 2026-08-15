@@ -257,7 +257,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         predicate_output_sha256 = hashlib.sha256(predicate_result.stdout.encode("utf-8")).hexdigest()
         receipt = {
+            "schema_version": "limen.positioning_work_receipt.v1",
             "work_id": "PSP-P03-W07",
+            "acceptance_sha256": "a" * 64,
+            "authority": {
+                "kind": "direct_human_session",
+                "session_id": "synthetic-test-session",
+                "executor": "codex",
+                "human_protected": True,
+            },
             "outcome": "succeeded",
             "observed_heads": {"organvm/limen": head},
             "changed_paths": [response_path, memo_path],
@@ -268,6 +276,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "predicate": {
                 "command": f"python3 {MODULE.W07_VALIDATOR_PATH} {response_path}",
                 "exit_code": 0,
+                "observed_at": "2026-08-08T12:00:00Z",
                 "output_sha256": predicate_output_sha256,
             },
             "reader_evidence": {
@@ -284,6 +293,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "decision_memo_path": memo_path,
                 "decision_memo_sha256": memo_digest,
             },
+            "rollback": {
+                "invoked": False,
+                "state": "not needed; accepted W03-W06 remains the return path",
+            },
         }
         digest = hashlib.sha256(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         binding = {
@@ -298,6 +311,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "work_id": "PSP-P03-W07",
             "receipt_url": binding["url"],
             "receipt_sha256": digest,
+            "authenticated_receipt": copy.deepcopy(receipt),
         }
         return binding, live
 
@@ -306,9 +320,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
     def test_formalization_contract_exact_binds_the_complete_pyyaml_tree(self) -> None:
         changed = copy.deepcopy(self.contract)
-        changed["formalization_gate"]["trusted_python_dependencies"]["pyyaml"][
-            "python_source_tree_sha256"
-        ] = "0" * 64
+        changed["formalization_gate"]["trusted_python_dependencies"]["pyyaml"]["python_source_tree_sha256"] = "0" * 64
         self.assertIn(
             "formalization must exact-bind the complete trusted PyYAML source tree",
             MODULE.validate(changed),
@@ -694,6 +706,24 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        matched, drifted = MODULE._surface_claim_scan(
+            "There is no evidence supporting the statement that Limen demonstrates governed "
+            "multi-agent delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            "There is no evidence for an unrelated adoption claim. "
+            "Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual(["LONG-CLAIM"], matched)
+        self.assertEqual([], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
@@ -737,6 +767,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     MODULE._canonical_surface_extraction(malformed.encode(), "visible_text_v2")
         with self.assertRaisesRegex(ValueError, "self-closes a non-void"):
             MODULE._canonical_surface_extraction(b"<div hidden/>", "visible_text_v2")
+        for stylesheet_markup in (
+            "<style>.proof{display:none}</style><div class='proof'>Hidden proof claim</div>",
+            "<link rel='stylesheet' href='/dynamic.css'><div>Unverified proof claim</div>",
+        ):
+            with self.subTest(stylesheet_markup=stylesheet_markup):
+                with self.assertRaisesRegex(ValueError, "stylesheet evaluation"):
+                    MODULE._canonical_surface_extraction(stylesheet_markup.encode(), "visible_text_v2")
         with self.assertRaisesRegex(ValueError, "unsupported canonical extractor"):
             MODULE._canonical_surface_extraction(first, "visible_text_v1")
 
@@ -1051,10 +1088,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
     @staticmethod
     def _installed_pyyaml_sources() -> list[tuple[MODULE.PurePosixPath, bytes]]:
         package_root = next(
-            candidate
-            for raw_path in sys.path
-            if raw_path
-            if (candidate := Path(raw_path).resolve() / "yaml").is_dir()
+            candidate for raw_path in sys.path if raw_path if (candidate := Path(raw_path).resolve() / "yaml").is_dir()
         )
         tree_sha256, sources = MODULE._python_source_tree(package_root)
         if tree_sha256 != MODULE.TRUSTED_PYYAML_DEPENDENCY["python_source_tree_sha256"]:
@@ -2017,6 +2051,70 @@ class PositioningProofPreflightTest(unittest.TestCase):
             live["receipt_sha256"] = digest
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
             self.assertTrue(any("exact manifest-owned" in error for error in errors))
+
+    def test_w07_receipt_rejects_extra_and_private_fields_at_every_contract_layer(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+
+            extra_binding = copy.deepcopy(binding)
+            extra_binding["unrecognized"] = "neutral"
+            errors = MODULE._validate_w07_receipt_binding(extra_binding, repository, live)
+            self.assertTrue(any("exact contract fields" in error for error in errors), errors)
+
+            private_receipt = copy.deepcopy(binding)
+            private_receipt["receipt"]["reader_evidence"]["customer_email"] = "reader@example.invalid"
+            private_receipt["sha256"] = hashlib.sha256(
+                json.dumps(private_receipt["receipt"], sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            errors = MODULE._validate_w07_receipt_binding(private_receipt, repository, live)
+            self.assertTrue(any("reader evidence must use the exact contract fields" in error for error in errors))
+            self.assertTrue(any("private or credential material" in error for error in errors))
+
+    def test_live_w07_receipt_reads_one_exact_authenticated_comment_block(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            binding, live = self._valid_w07_binding(repository, head, response_path, payload)
+            receipt = binding["receipt"]
+            assert isinstance(receipt, dict)
+            program_result = subprocess.CompletedProcess(
+                [],
+                0,
+                json.dumps(
+                    {
+                        "status": "pass",
+                        "work_id": "PSP-P03-W07",
+                        "receipt_url": binding["url"],
+                        "receipt_sha256": binding["sha256"],
+                    }
+                ),
+                "",
+            )
+            comment = {
+                "user": {"login": next(iter(MODULE.PHASE_RECEIPT_AUTHORS))},
+                "author_association": next(iter(MODULE.PHASE_RECEIPT_ASSOCIATIONS)),
+                "body": "<!-- positioning-receipt:PSP-P03-W07 -->\n```json\n"
+                + json.dumps(receipt, sort_keys=True)
+                + "\n```",
+            }
+            with (
+                mock.patch.object(MODULE, "_run_trusted_positioning_program", return_value=program_result),
+                mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=comment),
+            ):
+                observed = MODULE._live_w07_verification(repository)
+            self.assertEqual(live["authenticated_receipt"], observed["authenticated_receipt"])
+
+            comment["body"] += "\n" + comment["body"]
+            with (
+                mock.patch.object(MODULE, "_run_trusted_positioning_program", return_value=program_result),
+                mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=comment),
+                self.assertRaisesRegex(ValueError, "exactly one marked work receipt"),
+            ):
+                MODULE._live_w07_verification(repository)
 
     def test_w07_receipt_must_bind_and_revalidate_the_exact_response_blob(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

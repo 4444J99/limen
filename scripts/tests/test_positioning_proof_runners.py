@@ -31,6 +31,10 @@ COST = load_module(
 )
 COST_INPUT_ARTIFACT = "scripts/tests/fixtures/positioning-proof/synthetic-cost-failure.json"
 COST_REVIEW_ARTIFACT = "scripts/tests/fixtures/positioning-proof/independent-cost-failure-review.json"
+COST_SOURCE_HEAD = "a" * 40
+COST_RUNNER_BLOB = "b" * 40
+COST_INPUT_BLOB = "c" * 40
+COST_REVIEW_BLOB = "d" * 40
 
 
 def attach_origin(repository: Path, remote_root: Path) -> Path:
@@ -94,6 +98,19 @@ def independent_cost_review(payload: dict[str, object]) -> dict[str, object]:
     }
 
 
+def exact_cost_kwargs(payload: dict[str, object], review: dict[str, object] | None = None) -> dict[str, object]:
+    exact_artifacts: dict[str, object] = {COST_INPUT_ARTIFACT: payload}
+    if review is not None:
+        exact_artifacts[COST_REVIEW_ARTIFACT] = review
+    return {
+        "source_head": COST_SOURCE_HEAD,
+        "runner_blob": COST_RUNNER_BLOB,
+        "input_blob": COST_INPUT_BLOB,
+        "review_blob": COST_REVIEW_BLOB if review is not None else None,
+        "exact_artifacts": exact_artifacts,
+    }
+
+
 def reproduce_cost(payload: dict[str, object], *, reviewed: bool = False) -> dict[str, object]:
     review = independent_cost_review(payload) if reviewed else None
     return COST.reproduce(
@@ -101,6 +118,7 @@ def reproduce_cost(payload: dict[str, object], *, reviewed: bool = False) -> dic
         input_artifact=COST_INPUT_ARTIFACT,
         review_artifact=COST_REVIEW_ARTIFACT if review is not None else None,
         review_verdict=review,
+        **exact_cost_kwargs(payload, review),
     )
 
 
@@ -182,6 +200,33 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn("LD_PRELOAD", options["env"])
         self.assertNotIn(directory, options["env"]["PATH"].split(os.pathsep))
 
+    def test_canonical_ancestry_fetches_the_advertised_head_into_an_isolated_store(self) -> None:
+        remote_head = "d" * 40
+        candidate_head = "a" * 40
+        completed = [
+            subprocess.CompletedProcess([], 0, b"", b""),
+            subprocess.CompletedProcess([], 0, b"", b""),
+            subprocess.CompletedProcess([], 0, (remote_head + "\n").encode(), b""),
+            subprocess.CompletedProcess([], 0, b"", b""),
+            subprocess.CompletedProcess([], 0, b"", b""),
+        ]
+        with mock.patch.object(RECEIPT.subprocess, "run", side_effect=completed) as run:
+            contained = RECEIPT._canonical_main_contains_head(
+                "organvm/limen",
+                "main",
+                remote_head,
+                candidate_head,
+            )
+        self.assertTrue(contained)
+        calls = [call.args[0] for call in run.call_args_list]
+        self.assertEqual("init", calls[0][1])
+        self.assertIn("fetch", calls[1])
+        self.assertIn("https://github.com/organvm/limen.git", calls[1])
+        self.assertIn(f"{remote_head}:refs/canonical/main", calls[1])
+        self.assertIn("rev-parse", calls[2])
+        self.assertIn("cat-file", calls[3])
+        self.assertIn("merge-base", calls[4])
+
     def test_predicate_runner_ignores_ambient_path_and_runtime_injection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             fake_python = Path(directory) / "python3"
@@ -227,6 +272,40 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn("LD_PRELOAD", invoked_environment)
         self.assertNotIn("LD_LIBRARY_PATH", invoked_environment)
         self.assertNotIn("DYLD_INSERT_LIBRARIES", invoked_environment)
+
+    def test_darwin_supervisor_uses_isolated_python_and_a_sanitized_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            private_root = Path(directory)
+            injected = {
+                "PYTHONPATH": directory,
+                "PYTHONHOME": directory,
+                "__PYVENV_LAUNCHER__": str(Path(directory) / "python"),
+                "VIRTUAL_ENV": directory,
+                "LD_PRELOAD": "/tmp/untrusted.so",
+                "LD_LIBRARY_PATH": directory,
+                "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+            }
+            with mock.patch.dict(os.environ, injected, clear=False):
+                argv, environment = RECEIPT._darwin_supervisor_invocation(
+                    private_root / "status.json",
+                    private_root / "environment.json",
+                    private_root / "output.pipe",
+                    private_root / "process.json",
+                    private_root / "error.json",
+                    ROOT,
+                    [sys.executable, "-c", "print('predicate')"],
+                )
+        self.assertTrue(Path(argv[0]).is_absolute())
+        self.assertEqual(["-I", "-S", "-c"], argv[1:4])
+        self.assertIn(RECEIPT.DARWIN_SUPERVISOR, argv)
+        self.assertIn('[sys.executable, "-I", "-S", "-c", paused_exec', RECEIPT.DARWIN_SUPERVISOR)
+        self.assertNotIn("PYTHONPATH", environment)
+        self.assertNotIn("PYTHONHOME", environment)
+        self.assertNotIn("__PYVENV_LAUNCHER__", environment)
+        self.assertNotIn("VIRTUAL_ENV", environment)
+        self.assertNotIn("LD_PRELOAD", environment)
+        self.assertNotIn("LD_LIBRARY_PATH", environment)
+        self.assertNotIn("DYLD_INSERT_LIBRARIES", environment)
 
     def test_authenticated_cost_transport_ignores_ambient_proxy_and_ca_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -315,6 +394,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                         input_artifact=COST_INPUT_ARTIFACT,
                         review_artifact=COST_REVIEW_ARTIFACT,
                         review_verdict=review,
+                        **exact_cost_kwargs(payload, review),
                     )
         self.assertEqual("regenerated", result["status"])
         self.assertTrue(result["publication_eligible"])
@@ -326,13 +406,27 @@ class PositioningProofRunnerTest(unittest.TestCase):
             [
                 "python3",
                 "scripts/positioning-cost-failure-reproduction.py",
+                "--source-repository",
+                COST.CANONICAL_REPOSITORY,
+                "--source-head",
+                COST_SOURCE_HEAD,
+                "--runner-blob",
+                COST_RUNNER_BLOB,
                 "--input",
                 COST_INPUT_ARTIFACT,
+                "--input-blob",
+                COST_INPUT_BLOB,
                 "--review",
                 COST_REVIEW_ARTIFACT,
+                "--review-blob",
+                COST_REVIEW_BLOB,
             ],
             command["argv"],
         )
+        self.assertEqual(COST_SOURCE_HEAD, command["source_head"])
+        self.assertEqual(COST_RUNNER_BLOB, command["runner_blob"])
+        self.assertEqual(COST_INPUT_BLOB, command["input_blob"])
+        self.assertEqual(COST_REVIEW_BLOB, command["review_blob"])
 
     def test_public_safe_observed_cost_artifacts_reject_private_and_credential_material(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -391,6 +485,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     input_artifact=COST_INPUT_ARTIFACT,
                     review_artifact=COST_REVIEW_ARTIFACT,
                     review_verdict=review,
+                    **exact_cost_kwargs(payload, review),
                 )
         self.assertEqual("withheld", result["status"])
         self.assertFalse(result["publication_eligible"])
@@ -979,13 +1074,67 @@ class PositioningProofRunnerTest(unittest.TestCase):
             review_artifact="review.json",
             review_verdict=review,
         )
-        self.assertTrue(any("input is not committed" in error for error in untracked["errors"]))
-        self.assertTrue(any("review is not committed" in error for error in untracked["errors"]))
+        self.assertTrue(any("requires the exact input blob" in error for error in untracked["errors"]))
+        self.assertTrue(any("requires the exact review blob" in error for error in untracked["errors"]))
 
         mutated = copy.deepcopy(payload)
         mutated["rows"][0]["human_minutes"] += 1
-        drifted = COST.reproduce(mutated, input_artifact=COST_INPUT_ARTIFACT)
+        drifted = COST.reproduce(
+            mutated,
+            input_artifact=COST_INPUT_ARTIFACT,
+            **exact_cost_kwargs(payload),
+        )
         self.assertTrue(any("input differs from its committed HEAD artifact" in error for error in drifted["errors"]))
+
+    def test_cost_failure_exact_replay_fetches_and_reads_only_the_recorded_head_and_blobs(self) -> None:
+        payload = {"schema_version": "synthetic.input.v1", "rows": []}
+        review = {"schema_version": "synthetic.review.v1", "verdict": "withheld"}
+        input_raw = json.dumps(payload).encode()
+        review_raw = json.dumps(review).encode()
+        git_outputs = (
+            (COST_SOURCE_HEAD + "\n").encode(),
+            (COST_RUNNER_BLOB + "\n").encode(),
+            Path(COST.__file__).resolve().read_bytes(),
+            (COST_INPUT_BLOB + "\n").encode(),
+            input_raw,
+            (COST_REVIEW_BLOB + "\n").encode(),
+            review_raw,
+        )
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        with (
+            mock.patch.object(COST.subprocess, "run", side_effect=(completed, completed)) as run,
+            mock.patch.object(COST, "_git_output", side_effect=git_outputs) as git_output,
+        ):
+            observed = COST._fetch_exact_replay_artifacts(
+                COST_SOURCE_HEAD,
+                COST_RUNNER_BLOB,
+                {
+                    COST_INPUT_ARTIFACT: COST_INPUT_BLOB,
+                    COST_REVIEW_ARTIFACT: COST_REVIEW_BLOB,
+                },
+            )
+        self.assertEqual(payload, observed[COST_INPUT_ARTIFACT])
+        self.assertEqual(review, observed[COST_REVIEW_ARTIFACT])
+        fetch = run.call_args_list[1].args[0]
+        self.assertIn(f"{COST_SOURCE_HEAD}:refs/canonical/source", fetch)
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST.RUNNER_ARTIFACT}", git_output.call_args_list[1].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_INPUT_ARTIFACT}", git_output.call_args_list[3].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_REVIEW_ARTIFACT}", git_output.call_args_list[5].args[0])
+
+        wrong_blob_outputs = (
+            (COST_SOURCE_HEAD + "\n").encode(),
+            ("e" * 40 + "\n").encode(),
+        )
+        with (
+            mock.patch.object(COST.subprocess, "run", side_effect=(completed, completed)),
+            mock.patch.object(COST, "_git_output", side_effect=wrong_blob_outputs),
+            self.assertRaisesRegex(ValueError, "runner blob differs"),
+        ):
+            COST._fetch_exact_replay_artifacts(
+                COST_SOURCE_HEAD,
+                COST_RUNNER_BLOB,
+                {COST_INPUT_ARTIFACT: COST_INPUT_BLOB},
+            )
 
     def test_cost_failure_identities_reject_unicode_format_controls(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -1170,6 +1319,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
                 mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
                 mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
+                mock.patch.object(RECEIPT, "_canonical_main_contains_head", return_value=True),
             ):
                 payload, metadata = RECEIPT._proof_contract_snapshot()
             self.assertEqual({}, payload["exact_head_receipt_plan"]["flagship_predicates"])
@@ -1184,16 +1334,17 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
                 mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
                 mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
+                mock.patch.object(RECEIPT, "_canonical_main_contains_head", return_value=True),
                 self.assertRaisesRegex(ValueError, "differ from the committed runner blob"),
             ):
                 RECEIPT._proof_contract_snapshot()
 
             contract.write_bytes(committed)
-            uncontained = (*completed[:3], subprocess.CompletedProcess([], 1, b"", b""))
             with (
                 mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
-                mock.patch.object(RECEIPT, "_run_git", side_effect=uncontained),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
                 mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
+                mock.patch.object(RECEIPT, "_canonical_main_contains_head", return_value=False),
                 self.assertRaisesRegex(ValueError, "not contained in canonical Limen main"),
             ):
                 RECEIPT._proof_contract_snapshot()

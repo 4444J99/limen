@@ -41,6 +41,41 @@ DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 W07_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2188#issuecomment-[0-9]+$")
+W07_RECEIPT_BLOCK = re.compile(
+    r"<!--\s*positioning-receipt:PSP-P03-W07\s*-->\s*```json\s*(\{.*?\})\s*```",
+    re.DOTALL,
+)
+W07_BINDING_FIELDS = {"work_id", "issue_url", "url", "sha256", "receipt"}
+W07_WORK_RECEIPT_FIELDS = {
+    "schema_version",
+    "work_id",
+    "acceptance_sha256",
+    "authority",
+    "changed_paths",
+    "evidence_urls",
+    "observed_heads",
+    "outcome",
+    "predicate",
+    "reader_evidence",
+    "rollback",
+}
+W07_AUTHORITY_FIELDS = {"kind", "session_id", "executor", "human_protected"}
+W07_PREDICATE_FIELDS = {"command", "exit_code", "observed_at", "output_sha256"}
+W07_READER_EVIDENCE_FIELDS = {
+    "reader_count",
+    "independent_reader_count",
+    "synthetic_or_model_reader_count",
+    "unresolved_authority_objections",
+    "total_score",
+    "role_matches",
+    "buyer_matches",
+    "cta_matches",
+    "response_set_path",
+    "response_set_sha256",
+    "decision_memo_path",
+    "decision_memo_sha256",
+}
+W07_ROLLBACK_FIELDS = {"invoked", "state"}
 EXTERNAL_VALIDATION_RECEIPT_URL = re.compile(r"^https://github\.com/organvm/limen/issues/2201#issuecomment-[0-9]+$")
 EXTERNAL_VALIDATION_RECEIPT_SCHEMA = "limen.positioning_external_validation_receipt.v1"
 EXTERNAL_VALIDATION_RECEIPT_BLOCK = re.compile(
@@ -1287,6 +1322,7 @@ class _VisibleSurfaceParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self._hidden_stack: list[str] = []
         self._visible_fragments: list[str] = []
+        self._stylesheet_text_seen = False
 
     @classmethod
     def _attributes_hide_element(cls, attrs: list[tuple[str, str | None]]) -> bool:
@@ -1310,6 +1346,11 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        normalized_attributes = {
+            name.casefold(): value.casefold().split() if isinstance(value, str) else [] for name, value in attrs
+        }
+        if normalized == "link" and "stylesheet" in normalized_attributes.get("rel", []):
+            raise ValueError("surface visibility requires external stylesheet evaluation")
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or self._attributes_hide_element(attrs)
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
@@ -1336,12 +1377,16 @@ class _VisibleSurfaceParser(HTMLParser):
             self._visible_fragments.append(" ")
 
     def handle_data(self, data: str) -> None:
+        if self._hidden_stack and self._hidden_stack[-1] == "style" and data.strip():
+            self._stylesheet_text_seen = True
         if not self._hidden_stack:
             self._visible_fragments.append(data)
 
     def visible_text(self) -> str:
         if self._hidden_stack:
             raise ValueError("surface response has unterminated hidden HTML regions")
+        if self._stylesheet_text_seen:
+            raise ValueError("surface visibility requires stylesheet evaluation")
         return " ".join(self._visible_fragments)
 
 
@@ -1383,7 +1428,7 @@ def _surface_claim_scan(
         if not canonical:
             continue
         if f" {canonical} " in f" {normalized_full} ":
-            if _canonical_claim_is_negated(normalized_full, canonical):
+            if _canonical_claim_is_negated(inspected_text, canonical):
                 drifted.append(claim_id)
             else:
                 matched.append(claim_id)
@@ -1421,8 +1466,7 @@ def _surface_claim_scan(
     return sorted(matched), sorted(set(drifted))
 
 
-def _canonical_claim_is_negated(normalized_full: str, canonical: str) -> bool:
-    tokens = normalized_full.split()
+def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
     canonical_tokens = canonical.split()
     negations = {
         "cannot",
@@ -1450,12 +1494,11 @@ def _canonical_claim_is_negated(normalized_full: str, canonical: str) -> bool:
     }
     if not canonical_tokens:
         return False
-    width = len(canonical_tokens)
-    for index in range(len(tokens) - width + 1):
-        if tokens[index : index + width] != canonical_tokens:
+    for raw_segment in re.split(r"[\n\r.!?;]+", html.unescape(inspected_text)):
+        segment = _normalized_surface_text(raw_segment)
+        if f" {canonical} " not in f" {segment} ":
             continue
-        surrounding = tokens[max(0, index - 3) : index] + tokens[index + width : index + width + 3]
-        if negations.intersection(surrounding):
+        if negations.intersection(segment.split()):
             return True
     return False
 
@@ -2241,7 +2284,21 @@ def _live_w07_verification(repository: Path) -> dict[str, Any]:
     comment = _fetch_github_issue_comment(receipt_url, "PSP-P03-W07")
     if not _phase_comment_authorized(comment):
         raise ValueError("live PSP-P03-W07 receipt comment is not owned by an authorized repository actor")
-    return value
+    body = comment.get("body")
+    matches = W07_RECEIPT_BLOCK.findall(body) if isinstance(body, str) else []
+    if len(matches) != 1:
+        raise ValueError("live PSP-P03-W07 comment must contain exactly one marked work receipt")
+    authenticated_receipt = _loads_preflight_artifact(matches[0])
+    if not isinstance(authenticated_receipt, dict):
+        raise ValueError("live PSP-P03-W07 marked receipt must be a JSON object")
+    private_paths = sorted(_find_forbidden_demo_material(authenticated_receipt))
+    if private_paths:
+        raise ValueError(
+            "live PSP-P03-W07 marked receipt contains private or credential material: " + ", ".join(private_paths)
+        )
+    observed = dict(value)
+    observed["authenticated_receipt"] = authenticated_receipt
+    return observed
 
 
 def _phase_comment_authorized(comment: object) -> bool:
@@ -2816,6 +2873,11 @@ def _validate_w07_receipt_binding(
     errors: list[str] = []
     if not isinstance(value, dict):
         return ["closure receipt requires a structured W07 receipt binding"]
+    if set(value) != W07_BINDING_FIELDS:
+        errors.append("W07 receipt binding must use the exact contract fields")
+    private_paths = sorted(_find_forbidden_demo_material(value))
+    if private_paths:
+        errors.append("W07 receipt binding contains private or credential material: " + ", ".join(private_paths))
     if value.get("work_id") != "PSP-P03-W07":
         errors.append("W07 receipt work_id must be PSP-P03-W07")
     if value.get("issue_url") != "https://github.com/organvm/limen/issues/2188":
@@ -2830,11 +2892,21 @@ def _validate_w07_receipt_binding(
     if not isinstance(receipt, dict):
         errors.append("W07 binding must embed the canonical marked receipt")
     elif isinstance(digest, str) and SHA256.fullmatch(digest):
+        if set(receipt) != W07_WORK_RECEIPT_FIELDS:
+            errors.append("embedded W07 receipt must use the exact work-receipt fields")
         canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
         if hashlib.sha256(canonical).hexdigest() != digest:
             errors.append("W07 receipt digest does not bind the embedded canonical receipt")
         if receipt.get("work_id") != "PSP-P03-W07" or receipt.get("outcome") != "succeeded":
             errors.append("embedded W07 receipt must record a successful PSP-P03-W07 outcome")
+        if receipt.get("schema_version") != "limen.positioning_work_receipt.v1":
+            errors.append("embedded W07 receipt must use the canonical work-receipt schema")
+        authority = receipt.get("authority")
+        if not isinstance(authority, dict) or set(authority) != W07_AUTHORITY_FIELDS:
+            errors.append("embedded W07 receipt authority must use the exact contract fields")
+        rollback = receipt.get("rollback")
+        if not isinstance(rollback, dict) or set(rollback) != W07_ROLLBACK_FIELDS:
+            errors.append("embedded W07 receipt rollback must use the exact contract fields")
         evidence = receipt.get("reader_evidence")
         response_path: str | None = None
         memo_path: str | None = None
@@ -2842,6 +2914,8 @@ def _validate_w07_receipt_binding(
         if not isinstance(evidence, dict):
             errors.append("embedded W07 receipt must include the public-safe reader evidence summary")
         else:
+            if set(evidence) != W07_READER_EVIDENCE_FIELDS:
+                errors.append("W07 reader evidence must use the exact contract fields")
             exact_counts = {
                 "reader_count": 5,
                 "independent_reader_count": 5,
@@ -2895,7 +2969,9 @@ def _validate_w07_receipt_binding(
                         errors.append(f"W07 {label} must bind an immutable exact-head evidence URL")
         predicate = receipt.get("predicate")
         expected_command = f"python3 {W07_VALIDATOR_PATH} {response_path}" if response_path is not None else None
-        if not isinstance(predicate, dict) or predicate.get("command") != expected_command:
+        if not isinstance(predicate, dict) or set(predicate) != W07_PREDICATE_FIELDS:
+            errors.append("embedded W07 receipt predicate must use the exact contract fields")
+        elif predicate.get("command") != expected_command:
             errors.append("embedded W07 receipt must bind the exact manifest-owned blinded-reader predicate command")
         elif predicate.get("exit_code") != 0:
             errors.append("embedded W07 receipt predicate must record exit_code 0")
@@ -2933,6 +3009,14 @@ def _validate_w07_receipt_binding(
         errors.append("W07 receipt URL differs from the latest marked live receipt")
     if observed.get("receipt_sha256") != digest:
         errors.append("W07 receipt digest differs from the latest marked live receipt")
+    authenticated_receipt = observed.get("authenticated_receipt")
+    if authenticated_receipt != receipt:
+        errors.append("embedded W07 receipt differs from the authenticated marked comment receipt")
+    elif (
+        hashlib.sha256(json.dumps(authenticated_receipt, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        != digest
+    ):
+        errors.append("authenticated W07 marked receipt digest differs from the canonical binding")
     return errors
 
 

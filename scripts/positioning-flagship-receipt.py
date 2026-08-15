@@ -91,7 +91,7 @@ try:
     output_fd = os.open(output_path, os.O_WRONLY)
     with os.fdopen(output_fd, "wb", buffering=0) as output:
         process = subprocess.Popen(
-            [sys.executable, "-c", paused_exec, error_path, *argv],
+            [sys.executable, "-I", "-S", "-c", paused_exec, error_path, *argv],
             cwd=cwd,
             env=environment,
             stdout=output,
@@ -151,8 +151,7 @@ def _proof_contract_snapshot() -> tuple[dict[str, Any], dict[str, str]]:
     remote_branch, remote_head = _remote_default(remote)
     if remote_branch != CANONICAL_BRANCH or not isinstance(remote_head, str):
         raise ValueError("canonical Limen proof-contract authority is unavailable")
-    ancestry = _run_git(ROOT, ["merge-base", "--is-ancestor", head_value, remote_head])
-    if ancestry.returncode != 0:
+    if not _canonical_main_contains_head(CANONICAL_REPOSITORY, remote_branch, remote_head, head_value):
         raise ValueError("proof contract runner head is not contained in canonical Limen main")
     try:
         worktree_bytes = PROOF_CONTRACT.read_bytes()
@@ -489,7 +488,11 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
     environment = _sanitized_git_environment()
     for key in tuple(environment):
         upper = key.upper()
-        if key == "PATH" or upper.startswith(("PYTHON", "NODE_", "NPM_", "PNPM_", "COREPACK_")):
+        if (
+            key == "PATH"
+            or key in {"__PYVENV_LAUNCHER__", "VIRTUAL_ENV"}
+            or upper.startswith(("PYTHON", "NODE_", "NPM_", "PNPM_", "COREPACK_"))
+        ):
             environment.pop(key, None)
     environment.update(
         {
@@ -530,6 +533,82 @@ def _run_canonical_remote(repository: str) -> subprocess.CompletedProcess[bytes]
         timeout=60,
         env=_sanitized_git_environment(),
     )
+
+
+def _canonical_main_contains_head(
+    repository: str,
+    branch: str,
+    expected_remote_head: str,
+    candidate_head: str,
+) -> bool:
+    """Fetch canonical main into an isolated object store before proving ancestry."""
+    if (
+        not REPOSITORY_NAME.fullmatch(repository)
+        or not BRANCH_NAME.fullmatch(branch)
+        or not FULL_HEAD.fullmatch(expected_remote_head)
+        or not FULL_HEAD.fullmatch(candidate_head)
+    ):
+        raise ValueError("canonical ancestry request is invalid")
+    trusted_git = str(_trusted_named_executable("git"))
+    environment = _sanitized_git_environment()
+    anchor = Path(Path.cwd().anchor or os.sep)
+    with tempfile.TemporaryDirectory(prefix="limen-proof-authority-") as temporary:
+        object_store = Path(temporary) / "canonical.git"
+        commands = (
+            [trusted_git, "init", "--bare", "--quiet", str(object_store)],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "fetch",
+                "--no-tags",
+                "--filter=blob:none",
+                "--force",
+                f"https://github.com/{repository}.git",
+                f"{expected_remote_head}:refs/canonical/{branch}",
+            ],
+        )
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=anchor,
+                check=False,
+                capture_output=True,
+                timeout=120,
+                env=environment,
+            )
+            if completed.returncode != 0:
+                raise OSError("canonical Limen main could not be fetched into the isolated authority store")
+        canonical_ref = f"refs/canonical/{branch}"
+        fetched_head = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "rev-parse", "--verify", canonical_ref],
+            cwd=anchor,
+            check=False,
+            capture_output=True,
+            timeout=30,
+            env=environment,
+        )
+        if fetched_head.returncode != 0 or fetched_head.stdout.decode(errors="replace").strip() != expected_remote_head:
+            raise ValueError("fetched canonical Limen head differs from the advertised authority head")
+        candidate = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "cat-file", "-e", f"{candidate_head}^{{commit}}"],
+            cwd=anchor,
+            check=False,
+            capture_output=True,
+            timeout=30,
+            env=environment,
+        )
+        if candidate.returncode != 0:
+            return False
+        ancestry = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "merge-base", "--is-ancestor", candidate_head, canonical_ref],
+            cwd=anchor,
+            check=False,
+            capture_output=True,
+            timeout=30,
+            env=environment,
+        )
+        return ancestry.returncode == 0
 
 
 def _remote_default(result: subprocess.CompletedProcess[bytes]) -> tuple[str | None, str | None]:
@@ -850,6 +929,36 @@ def _read_darwin_status(status_path: Path) -> tuple[int | None, str | None] | No
     raise OSError("predicate supervisor status has an invalid schema")
 
 
+def _darwin_supervisor_invocation(
+    status_path: Path,
+    environment_path: Path,
+    output_path: Path,
+    process_path: Path,
+    error_path: Path,
+    cwd: Path,
+    argv: list[str],
+) -> tuple[list[str], dict[str, str]]:
+    """Build an isolated supervisor process that cannot import ambient startup hooks."""
+    supervisor_argv, supervisor_environment, _metadata = _prepare_predicate_invocation(
+        [
+            sys.executable,
+            "-I",
+            "-S",
+            "-c",
+            DARWIN_SUPERVISOR,
+            str(status_path),
+            str(environment_path),
+            str(output_path),
+            str(process_path),
+            str(error_path),
+            DARWIN_PAUSED_EXEC,
+            str(cwd),
+            *argv,
+        ]
+    )
+    return supervisor_argv, supervisor_environment
+
+
 def _run_darwin_bounded_predicate(
     argv: list[str],
     *,
@@ -886,6 +995,15 @@ def _run_darwin_bounded_predicate(
         selector = selectors.DefaultSelector()
         selector.register(descriptor, selectors.EVENT_READ)
         try:
+            supervisor_argv, supervisor_environment = _darwin_supervisor_invocation(
+                status_path,
+                environment_path,
+                output_path,
+                process_path,
+                error_path,
+                cwd,
+                argv,
+            )
             submitted = subprocess.run(
                 [
                     "/bin/launchctl",
@@ -893,20 +1011,11 @@ def _run_darwin_bounded_predicate(
                     "-l",
                     label,
                     "--",
-                    sys.executable,
-                    "-c",
-                    DARWIN_SUPERVISOR,
-                    str(status_path),
-                    str(environment_path),
-                    str(output_path),
-                    str(process_path),
-                    str(error_path),
-                    DARWIN_PAUSED_EXEC,
-                    str(cwd),
-                    *argv,
+                    *supervisor_argv,
                 ],
                 check=False,
                 capture_output=True,
+                env=supervisor_environment,
             )
             if submitted.returncode != 0:
                 detail = submitted.stderr.decode(errors="replace").strip()
