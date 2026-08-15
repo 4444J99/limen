@@ -59,6 +59,7 @@ from pathlib import Path
 
 SCHEMA = "limen.claude_bundle_identity_heal.v1"
 EXPECTED_BUNDLE_ID = "com.anthropic.claude-code"
+ARM_ENV = "LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL"
 
 DEFAULT_ROOT = Path.home() / ".local" / "share" / "claude"
 
@@ -203,12 +204,18 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="emit the receipt as JSON")
     args = parser.parse_args()
 
+    # The beat's sensor injects --apply through the args_when valve, but the healer also honors the
+    # valve directly so a bare invocation behaves identically once the operator has armed it in
+    # ~/.limen.env. Every sibling LIMEN_*_HEAL effector keeps this same contract; diverging here
+    # would make the armed state mean one thing on the beat and another by hand.
+    apply = args.apply or os.environ.get(ARM_ENV) == "1"
+
     if sys.platform != "darwin":
         print("claude-bundle-identity-heal: non-darwin — inapplicable")
         return 0
 
     try:
-        receipt = revert(args.root, args.apply) if args.revert else heal(args.root, args.apply)
+        receipt = revert(args.root, apply) if args.revert else heal(args.root, apply)
     except HealError as exc:
         print(f"claude-bundle-identity-heal: PRECONDITION FAILED — {exc}")
         return 2
@@ -239,8 +246,8 @@ def main() -> int:
     if not receipt["actions"]:
         print("OK — the live version already resolves to the stable bundle identity; nothing to do")
         return 0
-    if not args.apply:
-        print("dry-run — re-run with --apply to give sessions the stable identity")
+    if not apply:
+        print(f"dry-run — re-run with --apply (or arm {ARM_ENV}=1) to give sessions the stable identity")
         return 0
     return 0 if receipt["ok"] else 1
 
