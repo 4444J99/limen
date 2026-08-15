@@ -5916,6 +5916,36 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_SHIPS_24H_REFRESH:
+    default: "1"
+    env: LIMEN_SHIPS_24H_REFRESH
+    self_update: none
+    owner: money-view
+    note: "Master on/off for the `ships-24h-refresh` recorder sensor declared in sensors.yaml. It writes logs/ships-24h.json — a real gh-backed count of PRs merged in the last 24h across every governed owner, replacing the merge-drain.log grep that only ever saw the batch merge-drain.py daemon's own merges and stayed at 0 while self-merges (most real throughput) went uncounted. 0 disables recording, which leaves money-view.py/omni-view.py/notify-events.py reading a stale-or-absent cache (fails open to 0 ships) rather than silently serving a wrong number."
+  LIMEN_BEAT_SHIPS_24H:
+    default: 4
+    env: LIMEN_BEAT_SHIPS_24H
+    self_update: none
+    owner: money-view
+    note: "Cadence (every N beats) at which the recorder's cheap due-check runs. Not the query cadence: the beat is adaptive (120s…1800s), so the actual `gh search prs --merged` call is throttled separately by LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES, mirroring LIMEN_BEAT_PR_DEBT's two-clock shape."
+  LIMEN_SHIPS_24H_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_SHIPS_24H_REFRESH_TIMEOUT
+    self_update: none
+    owner: money-view
+    note: "Seconds the recorder rung may take. A single `gh search prs --merged` call across a handful of owners; generous but far below LIMEN_PR_DEBT_RECORD_TIMEOUT's full paginated census, since this is one bounded search, not a sweep."
+  LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES:
+    default: 20
+    env: LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES
+    self_update: none
+    owner: money-view
+    note: "Minimum wall-clock minutes between real `gh search prs --merged` calls, read by scripts/ships-24h-refresh.py's own due-check — the LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS pattern scaled down for a cheap single-search query instead of a full paginated census. Keeps the sensor's beat-count cadence (LIMEN_BEAT_SHIPS_24H) from re-querying gh faster than the count could plausibly have changed."
+  LIMEN_SHIPS_24H_STALE_MINUTES:
+    default: 40
+    env: LIMEN_SHIPS_24H_STALE_MINUTES
+    self_update: none
+    owner: money-view
+    note: "How old logs/ships-24h.json may be before scripts/_ships_24h.py's reader treats it as unknown and fails open to (0, {}, []) rather than serving a silently-stale count. Set to 2x LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES's default (20m) so one missed refresh beat still reads fresh and two in a row is what trips it."
   LIMEN_PR_AUTOTYPE:
     default: "1"
     env: LIMEN_PR_AUTOTYPE

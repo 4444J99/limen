@@ -112,6 +112,66 @@ def enumerate_open_prs(owners, gh_fn, max_total=500, want_url=True, author="@me"
     return list(result.rows) if result.success else []
 
 
+def enumerate_merged_prs_result(owners, gh_fn, since_iso, max_total=1000, want_url=False):
+    """Return every PR merged since ``since_iso`` (ISO8601) across ``owners``, plus explicit
+    transport/parse/completeness truth — the merged-PR sibling of ``enumerate_open_prs_result``.
+
+    Exists because self-merges (``merge-policy.sh`` + ``await-pr.sh --merge``) never write to
+    ``logs/merge-drain.log`` — only the batch ``merge-drain.py`` daemon's own merges land there —
+    so a "PRs merged in the last 24h" count that greps that log sees only a fraction of real
+    throughput. This queries GitHub directly instead, the same way the open-PR census does.
+    """
+    fields = "number,repository,url" if want_url else "number,repository"
+    requested = int(max_total)
+    capped = min(requested, SEARCH_RESULT_CEILING)
+    if capped < requested:
+        print(
+            f"[_pr_scan] requested --limit {requested} exceeds GitHub's "
+            f"{SEARCH_RESULT_CEILING}-result search ceiling; clamped to {capped}. "
+            "The result is not complete.",
+            file=sys.stderr,
+        )
+    cmd = [
+        "search",
+        "prs",
+        "--merged",
+        "--merged-at",
+        f">={since_iso}",
+        "--limit",
+        str(capped),
+        *sum([["--owner", o] for o in owners], []),
+        "--json",
+        fields,
+    ]
+    try:
+        r = gh_fn(cmd)
+    except subprocess.TimeoutExpired as exc:
+        return PREnumerationResult((), False, False, f"GitHub enumeration timed out: {exc}"[:400])
+    if getattr(r, "returncode", 1) != 0:
+        detail = str(getattr(r, "stderr", "") or "GitHub enumeration failed").strip()
+        return PREnumerationResult((), False, False, detail[:400])
+    try:
+        payload = json.loads(r.stdout or "[]")
+    except (TypeError, json.JSONDecodeError) as exc:
+        return PREnumerationResult((), False, False, f"malformed GitHub output: {exc}")
+    if not isinstance(payload, list):
+        return PREnumerationResult((), False, False, "malformed GitHub output: expected a list")
+    out = []
+    for p in payload:
+        try:
+            repo = p["repository"]["nameWithOwner"]
+            num = p["number"]
+            if not isinstance(repo, str) or not isinstance(num, int):
+                raise TypeError
+        except (KeyError, TypeError):
+            return PREnumerationResult((), False, False, "malformed GitHub PR row")
+        out.append((repo, num, p.get("url", "")) if want_url else (repo, num))
+    out.sort(key=lambda t: (t[0], t[1]))
+    complete = requested <= SEARCH_RESULT_CEILING and len(out) < capped
+    error = None if complete else "enumeration reached its result ceiling"
+    return PREnumerationResult(tuple(out), True, complete, error)
+
+
 def _read_cursor(path):
     try:
         return max(0, int(Path(path).read_text().strip()))
