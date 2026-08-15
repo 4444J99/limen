@@ -73,6 +73,7 @@ HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\Z")
 URL_RE = re.compile(r"https://[^\s]+\Z")
 REPOSITORY_RE = re.compile(r"[^/:\s]+/[^/:\s]+\Z")
+BROKER_ID_RE = re.compile(r"(?:run|lease)-[0-9a-f]{16,}\Z|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z")
 PHASE_RE = re.compile(r"PSP-P\d{2}\Z")
 WORK_RE = re.compile(r"PSP-P\d{2}-W\d{2}\Z")
 CHUNK_RE = re.compile(r"PSP-C\d{2}\Z")
@@ -102,6 +103,65 @@ REQUIRED_WORK_FIELDS = (
 
 class ProgramError(RuntimeError):
     pass
+
+
+# These comments are public audit evidence and must remain undeleted.  Their IDs are a
+# durable quarantine register so a later valid-looking comment cannot resurrect forged proof.
+INVALIDATED_RECEIPT_COMMENT_IDS = frozenset(
+    {
+        5302834365,
+        5302836577,
+        5302840153,
+        5302849163,
+        5302859980,
+        5302868894,
+        5302849325,
+        5302905058,
+        5302990346,
+        5303014333,
+    }
+)
+
+
+def _valid_exact_head(value: object) -> bool:
+    return isinstance(value, str) and bool(HEAD_RE.fullmatch(value)) and value != "0" * 40
+
+
+def _valid_broker_id(value: object, prefix: str) -> bool:
+    return isinstance(value, str) and bool(BROKER_ID_RE.fullmatch(value)) and value.startswith(prefix + "-")
+
+
+def _predicate_binding_failures(predicate: dict[str, Any], *, expected_command: str | None = None) -> list[str]:
+    failures: list[str] = []
+    command = predicate.get("command")
+    if not _is_nonempty_text(command):
+        failures.append("predicate.command must be non-empty")
+        return failures
+    if expected_command is not None and command != expected_command:
+        failures.append(f"predicate.command must match manifest proof contract {expected_command!r}")
+    if re.fullmatch(r"(?:echo|printf|true|false|:)\b.*", command.strip()):
+        failures.append("predicate.command must be an owning executable predicate, not a shell stub")
+    command_sha256 = predicate.get("command_sha256")
+    if not isinstance(command_sha256, str) or not DIGEST_RE.fullmatch(command_sha256):
+        failures.append("predicate.command_sha256 must be a lowercase SHA-256 digest")
+    elif command_sha256 != hashlib.sha256(command.encode("utf-8")).hexdigest():
+        failures.append("predicate.command_sha256 is not bound to predicate.command")
+    output = predicate.get("output")
+    if not isinstance(output, str):
+        failures.append("predicate.output must contain the captured predicate output")
+    output_sha256 = predicate.get("output_sha256")
+    if not isinstance(output_sha256, str) or not DIGEST_RE.fullmatch(output_sha256):
+        failures.append("predicate.output_sha256 must be a lowercase SHA-256 digest")
+    elif isinstance(output, str) and output_sha256 != hashlib.sha256(output.encode("utf-8")).hexdigest():
+        failures.append("predicate.output_sha256 is not bound to predicate.output")
+    command_output_sha256 = predicate.get("command_output_sha256")
+    if not isinstance(command_output_sha256, str) or not DIGEST_RE.fullmatch(command_output_sha256):
+        failures.append("predicate.command_output_sha256 must be a lowercase SHA-256 digest")
+    elif isinstance(output, str):
+        expected = hashlib.sha256(f"{command}\n{output}".encode("utf-8")).hexdigest()
+        if command_output_sha256 != expected:
+            failures.append("predicate output digest is not bound to the owning command")
+    return failures
 
 
 def _is_nonempty_text(value: object) -> bool:
@@ -1303,8 +1363,11 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
         "changed_paths": [],
         "predicate": {
             "command": "REPLACE_WITH_NON_CIRCULAR_EXECUTABLE_PREDICATE",
+            "command_sha256": "REPLACE_WITH_COMMAND_SHA256",
             "exit_code": 0,
+            "output": "REPLACE_WITH_EXACT_PREDICATE_OUTPUT",
             "output_sha256": "REPLACE_WITH_64_CHARACTER_SHA256",
+            "command_output_sha256": "REPLACE_WITH_COMMAND_OUTPUT_SHA256",
             "observed_at": "REPLACE_WITH_RFC3339_TIMESTAMP",
         },
         "evidence_urls": [mapping["issues"][work_id]["url"]],
@@ -1341,9 +1404,12 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
     else:
         kind = authority.get("kind")
         if kind == "broker":
-            for key in ("run_id", "lease_id", "executor"):
-                if not _is_nonempty_text(authority.get(key)):
-                    failures.append(f"broker authority.{key} must be non-empty")
+            if not _valid_broker_id(authority.get("run_id"), "run"):
+                failures.append("broker authority.run_id must be a live-shaped broker run identifier")
+            if not _valid_broker_id(authority.get("lease_id"), "lease"):
+                failures.append("broker authority.lease_id must be a live-shaped broker lease identifier")
+            if not _is_nonempty_text(authority.get("executor")):
+                failures.append("broker authority.executor must be non-empty")
         elif kind == "direct_human_session":
             for key in ("session_id", "executor"):
                 if not _is_nonempty_text(authority.get(key)):
@@ -1370,7 +1436,7 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
         failures.append(f"observed_heads must contain exactly the packet target repository {expected_repository!r}")
     if isinstance(observed_heads, dict):
         for repository, head in observed_heads.items():
-            if not _is_nonempty_text(repository) or not isinstance(head, str) or not HEAD_RE.fullmatch(head):
+            if not _is_nonempty_text(repository) or not _valid_exact_head(head):
                 failures.append(f"observed_heads has invalid exact head for {repository!r}")
 
     changed_paths = receipt.get("changed_paths")
@@ -1388,9 +1454,7 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
             failures.append("predicate.command cannot call the receipt verifier itself")
         if predicate.get("exit_code") != 0:
             failures.append("predicate.exit_code must be zero")
-        output_sha256 = predicate.get("output_sha256")
-        if not isinstance(output_sha256, str) or not DIGEST_RE.fullmatch(output_sha256):
-            failures.append("predicate.output_sha256 must be a lowercase SHA-256 digest")
+        failures.extend(_predicate_binding_failures(predicate))
         observed_at = predicate.get("observed_at")
         if not isinstance(observed_at, str) or not RFC3339_RE.fullmatch(observed_at):
             failures.append("predicate.observed_at must be RFC3339")
@@ -1410,6 +1474,17 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
         or not _is_nonempty_text(rollback.get("state"))
     ):
         failures.append("rollback must record boolean invoked and non-empty state")
+    if work_id == "PSP-P03-W07":
+        reader_evidence = receipt.get("reader_evidence")
+        if not isinstance(reader_evidence, dict):
+            failures.append("PSP-P03-W07 requires reader_evidence with five valid records and decision evidence")
+        else:
+            if reader_evidence.get("record_count") != 5:
+                failures.append("PSP-P03-W07 reader_evidence.record_count must be five")
+            if reader_evidence.get("valid_records") is not True:
+                failures.append("PSP-P03-W07 reader_evidence.valid_records must be true")
+            if not _is_text_list(reader_evidence.get("decision_evidence_urls"), nonempty=True):
+                failures.append("PSP-P03-W07 reader_evidence.decision_evidence_urls must be non-empty")
     if failures:
         raise ProgramError(f"{work_id} receipt validation failed:\n- " + "\n- ".join(failures))
     return receipt
@@ -1545,14 +1620,9 @@ def validate_phase_receipt(
         failures.append("predicate must be a mapping")
     else:
         command = predicate.get("command")
-        if not _is_nonempty_text(command):
-            failures.append("predicate.command must be non-empty")
-        elif command != expected_command:
-            failures.append(f"predicate.command must match manifest proof contract {expected_command!r}")
+        failures.extend(_predicate_binding_failures(predicate, expected_command=expected_command))
         if predicate.get("exit_code") != 0:
             failures.append("predicate.exit_code must be zero")
-        if not isinstance(predicate.get("output_sha256"), str) or not DIGEST_RE.fullmatch(predicate["output_sha256"]):
-            failures.append("predicate.output_sha256 must be a lowercase SHA-256 digest")
         if not isinstance(predicate.get("observed_at"), str) or not RFC3339_RE.fullmatch(predicate["observed_at"]):
             failures.append("predicate.observed_at must be RFC3339")
     evidence_urls = receipt.get("evidence_urls")
@@ -1564,7 +1634,7 @@ def validate_phase_receipt(
     repository = str(graph["program"]["repository"])
     if not isinstance(observed_heads, dict) or set(observed_heads) != {repository}:
         failures.append(f"observed_heads must contain exactly the program repository {repository!r}")
-    elif not HEAD_RE.fullmatch(str(observed_heads[repository])):
+    elif not _valid_exact_head(observed_heads[repository]):
         failures.append("observed_heads must record an exact 40-character head")
     for field, expected, label in (
         ("child_receipts_sha256", child_receipt_digest, "child receipt digest"),
@@ -1600,6 +1670,10 @@ def fetch_phase_receipt(
     marked = [row for row in comments if f"positioning-phase-receipt:{phase_id}" in str(row.get("body") or "")]
     if not marked:
         raise ProgramError(f"{phase_id} has no marked phase exit-gate receipt")
+    invalidated = [row for row in marked if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
+    if invalidated:
+        ids = ", ".join(str(int(row["id"])) for row in invalidated)
+        raise ProgramError(f"{phase_id} receipt chain contains invalidated comment(s): {ids}")
     latest = max(marked, key=lambda row: int(row.get("id") or 0))
     body = str(latest.get("body") or "")
     matches = [match for match in PHASE_RECEIPT_BLOCK_RE.findall(body) if match[0] == phase_id]
@@ -1833,8 +1907,11 @@ def phase_receipt_template(phase_id: str, graph: dict[str, Any], mapping: dict[s
         "parity_sha256": bindings["parity_digest"],
         "predicate": {
             "command": phase_proof_command(phase_id, graph),
+            "command_sha256": "REPLACE_WITH_COMMAND_SHA256",
             "exit_code": 0,
+            "output": "REPLACE_WITH_EXACT_PREDICATE_OUTPUT",
             "output_sha256": "REPLACE_WITH_64_CHARACTER_SHA256",
+            "command_output_sha256": "REPLACE_WITH_COMMAND_OUTPUT_SHA256",
             "observed_at": "REPLACE_WITH_RFC3339_TIMESTAMP",
         },
         "evidence_urls": [mapping["issues"][phase_id]["url"]],
@@ -1851,6 +1928,10 @@ def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, A
     marked = [row for row in comments if receipt_marker(work_id) in str(row.get("body") or "")]
     if not marked:
         raise ProgramError(f"{work_id} has no marked completion receipt")
+    invalidated = [row for row in marked if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
+    if invalidated:
+        ids = ", ".join(str(int(row["id"])) for row in invalidated)
+        raise ProgramError(f"{work_id} receipt chain contains invalidated comment(s): {ids}")
     latest = max(marked, key=lambda row: int(row.get("id") or 0))
     body = str(latest.get("body") or "")
     matches = [match for match in RECEIPT_BLOCK_RE.findall(body) if match[0] == work_id]

@@ -301,9 +301,19 @@ def build_receipt_comment(
         "outcome": "succeeded",
         "predicate": {
             "command": predicate_command,
+            "command_sha256": hashlib.sha256(predicate_command.encode("utf-8")).hexdigest(),
             "exit_code": 0,
+            "output": predicate_output,
             "observed_at": observed_at,
             "output_sha256": hashlib.sha256(predicate_output.encode("utf-8")).hexdigest(),
+            "command_output_sha256": hashlib.sha256(
+                f"{predicate_command}\n{predicate_output}".encode("utf-8")
+            ).hexdigest(),
+        },
+        "reader_evidence": {
+            "record_count": len(payload["readers"]),
+            "valid_records": True,
+            "decision_evidence_urls": [base_url + memo_path],
         },
         "rollback": {
             "invoked": False,

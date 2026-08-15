@@ -1,0 +1,36 @@
+{
+  "schema_version": "limen.psp_receipt_corruption_custody.v1",
+  "captured_at": "2026-08-15T19:16:51Z",
+  "scope": "PSP receipt-corruption recovery only",
+  "protected_shared_checkout": {
+    "path": "/Users/4jp/Workspace/limen",
+    "head": "9c8a87215962da131059ab63bd95a376f79891c2",
+    "status_entries": 79,
+    "preservation": "dirty and untracked content preserved; no reset, stash, checkout, or cleanup performed"
+  },
+  "protected_agy_surfaces": {
+    "teamwork_preview_directory_count": 18,
+    "worktree_count_at_capture": 43,
+    "enumeration": "git worktree list --porcelain at capture time",
+    "branches": "all existing refs preserved; no Agy branch or worktree deleted or rewritten"
+  },
+  "recovery_worktree": {
+    "path": "/Users/4jp/Workspace/.worktrees/psp-receipt-corruption-recovery",
+    "branch": "codex/psp-receipt-corruption-recovery",
+    "source": "origin/main",
+    "exact_source_head": "984b1121083b4ab2453c3671ad20d11586cf6713"
+  },
+  "known_invalid_comments": [
+    5302834365,
+    5302836577,
+    5302840153,
+    5302849163,
+    5302859980,
+    5302868894,
+    5302849325,
+    5302905058,
+    5302990346,
+    5303014333
+  ],
+  "custody_rule": "Retain every listed issue comment, protected checkout, Agy worktree, branch, staged file, and teamwork_preview artifact until recovery closeout has a durable receipt."
+}

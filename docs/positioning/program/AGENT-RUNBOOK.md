@@ -127,8 +127,8 @@ Post the completed `limen.positioning_phase_receipt.v1` JSON receipt after the m
 `"status": "pass"`, the current `exit_gate_sha256`, exactly the program repository and its exact
 head in `observed_heads`, `child_receipts_sha256`, phase-local `remote_state_sha256`,
 `parity_sha256`, the manifest-derived `exit_predicate` in `predicate.command`,
-`predicate.exit_code: 0`, `predicate.output_sha256`, `predicate.observed_at`, and nonempty HTTPS
-`evidence_urls`. Replace only the skeleton’s evidence placeholders with facts from the completed
+`predicate.exit_code: 0`, captured `predicate.output`, command/output/command-plus-output SHA-256
+bindings, `predicate.observed_at`, and nonempty HTTPS `evidence_urls`. Replace only the skeleton’s evidence placeholders with facts from the completed
 phase proof. Then validate it with:
 
 ```bash

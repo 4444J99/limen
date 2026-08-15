@@ -405,13 +405,23 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
         "work_id": work_id,
         "acceptance_sha256": MODULE.acceptance_digest(packet),
         "outcome": "succeeded",
-        "authority": {"kind": "broker", "run_id": "run-1", "lease_id": "lease-1", "executor": "copilot"},
+        "authority": {
+            "kind": "broker",
+            "run_id": "run-0123456789abcdef",
+            "lease_id": "lease-0123456789abcdef",
+            "executor": "copilot",
+        },
         "observed_heads": {"organvm/limen": "a" * 40},
         "changed_paths": [],
         "predicate": {
             "command": "python3 scripts/check-claim-adjudication.py",
+            "command_sha256": MODULE.hashlib.sha256("python3 scripts/check-claim-adjudication.py".encode()).hexdigest(),
             "exit_code": 0,
-            "output_sha256": "b" * 64,
+            "output": "pass\n",
+            "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
+            "command_output_sha256": MODULE.hashlib.sha256(
+                b"python3 scripts/check-claim-adjudication.py\npass\n"
+            ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
         "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
@@ -436,6 +446,95 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
         MODULE.validate_work_receipt(extra_repository, work_id, graph)
 
 
+def test_forged_receipts_fail_exact_corruption_shapes() -> None:
+    graph, _mapping = graph_and_map()
+    work_id = "PSP-P02-W08"
+    packet = graph["work_by_id"][work_id]
+    command = "python3 scripts/check-claim-adjudication.py"
+    receipt = {
+        "schema_version": MODULE.RECEIPT_SCHEMA,
+        "work_id": work_id,
+        "acceptance_sha256": MODULE.acceptance_digest(packet),
+        "outcome": "succeeded",
+        "authority": {
+            "kind": "broker",
+            "run_id": "run-0123456789abcdef",
+            "lease_id": "lease-0123456789abcdef",
+            "executor": "agy",
+        },
+        "observed_heads": {"organvm/limen": "a" * 40},
+        "changed_paths": [],
+        "predicate": {
+            "command": command,
+            "command_sha256": MODULE.hashlib.sha256(command.encode()).hexdigest(),
+            "exit_code": 0,
+            "output": "pass\n",
+            "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
+            "command_output_sha256": MODULE.hashlib.sha256(f"{command}\npass\n".encode()).hexdigest(),
+            "observed_at": "2026-08-09T12:00:00Z",
+        },
+        "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
+        "rollback": {"invoked": False, "state": "not needed"},
+    }
+    MODULE.validate_work_receipt(receipt, work_id, graph)
+    cases = [
+        ("all-zero head", lambda r: r["observed_heads"].update({"organvm/limen": "0" * 40}), "invalid exact head"),
+        ("echo stub", lambda r: r["predicate"].update({"command": "echo ok"}), "shell stub"),
+        (
+            "fabricated lease",
+            lambda r: r["authority"].update({"run_id": "run-local", "lease_id": "lease-local"}),
+            "live-shaped",
+        ),
+        (
+            "unbound output",
+            lambda r: r["predicate"].update({"command_output_sha256": "f" * 64}),
+            "bound to the owning command",
+        ),
+    ]
+    for _label, mutate, message in cases:
+        forged = copy.deepcopy(receipt)
+        mutate(forged)
+        with pytest.raises(MODULE.ProgramError, match=message):
+            MODULE.validate_work_receipt(forged, work_id, graph)
+
+
+def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> None:
+    graph, _mapping = graph_and_map()
+    work_id = "PSP-P03-W07"
+    packet = graph["work_by_id"][work_id]
+    receipt = {
+        "schema_version": MODULE.RECEIPT_SCHEMA,
+        "work_id": work_id,
+        "acceptance_sha256": MODULE.acceptance_digest(packet),
+        "outcome": "succeeded",
+        "authority": {
+            "kind": "broker",
+            "run_id": "run-0123456789abcdef",
+            "lease_id": "lease-0123456789abcdef",
+            "executor": "agy",
+        },
+        "observed_heads": {"organvm/limen": "a" * 40},
+        "changed_paths": [],
+        "predicate": {
+            "command": "python3 docs/positioning/program/validate_p03_w07_blinded_reader.py responses.json",
+            "command_sha256": MODULE.hashlib.sha256(
+                b"python3 docs/positioning/program/validate_p03_w07_blinded_reader.py responses.json"
+            ).hexdigest(),
+            "exit_code": 0,
+            "output": "pass\n",
+            "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
+            "command_output_sha256": MODULE.hashlib.sha256(
+                b"python3 docs/positioning/program/validate_p03_w07_blinded_reader.py responses.json\npass\n"
+            ).hexdigest(),
+            "observed_at": "2026-08-09T12:00:00Z",
+        },
+        "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
+        "rollback": {"invoked": False, "state": "not needed"},
+    }
+    with pytest.raises(MODULE.ProgramError, match="five valid records"):
+        MODULE.validate_work_receipt(receipt, work_id, graph)
+
+
 def test_phase_exit_gate_is_explicit_executable_and_not_circular() -> None:
     graph, _mapping = graph_and_map()
     phase_id = "PSP-P00"
@@ -451,8 +550,15 @@ def test_phase_exit_gate_is_explicit_executable_and_not_circular() -> None:
         "parity_sha256": "d" * 64,
         "predicate": {
             "command": "python3 scripts/positioning-program.py --phase-proof PSP-P00",
+            "command_sha256": MODULE.hashlib.sha256(
+                "python3 scripts/positioning-program.py --phase-proof PSP-P00".encode()
+            ).hexdigest(),
             "exit_code": 0,
-            "output_sha256": "d" * 64,
+            "output": "pass\n",
+            "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
+            "command_output_sha256": MODULE.hashlib.sha256(
+                b"python3 scripts/positioning-program.py --phase-proof PSP-P00\npass\n"
+            ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
         "evidence_urls": ["https://example.test/phase-receipt/PSP-P00"],
@@ -867,7 +973,12 @@ def test_phase_receipt_template_is_read_only_cli_output(monkeypatch, capsys) -> 
     assert output["observed_heads"][graph["program"]["repository"]].startswith("REPLACE_WITH_")
     assert output["evidence_urls"] == [mapping["issues"]["PSP-P00"]["url"]]
     output["observed_heads"][graph["program"]["repository"]] = "a" * 40
-    output["predicate"]["output_sha256"] = "b" * 64
+    output["predicate"]["output"] = "pass\n"
+    output["predicate"]["command_sha256"] = MODULE.hashlib.sha256(output["predicate"]["command"].encode()).hexdigest()
+    output["predicate"]["output_sha256"] = MODULE.hashlib.sha256(b"pass\n").hexdigest()
+    output["predicate"]["command_output_sha256"] = MODULE.hashlib.sha256(
+        f"{output['predicate']['command']}\npass\n".encode()
+    ).hexdigest()
     output["predicate"]["observed_at"] = "2026-08-09T12:00:00Z"
     bindings = MODULE._phase_binding_values("PSP-P00", graph, mapping, remote)
     assert (
@@ -1020,14 +1131,24 @@ def test_multi_repository_receipt_requires_resolved_concrete_heads() -> None:
         "work_id": work_id,
         "acceptance_sha256": MODULE.acceptance_digest(packet),
         "outcome": "succeeded",
-        "authority": {"kind": "broker", "run_id": "run-1", "lease_id": "lease-1", "executor": "codex"},
+        "authority": {
+            "kind": "broker",
+            "run_id": "run-0123456789abcdef",
+            "lease_id": "lease-0123456789abcdef",
+            "executor": "codex",
+        },
         "resolved_repositories": ["organvm/alpha", "organvm/beta"],
         "observed_heads": {"organvm/alpha": "a" * 40, "organvm/beta": "b" * 40},
         "changed_paths": [],
         "predicate": {
             "command": "python3 scripts/check-positioning-gate.py",
+            "command_sha256": MODULE.hashlib.sha256(b"python3 scripts/check-positioning-gate.py").hexdigest(),
             "exit_code": 0,
-            "output_sha256": "c" * 64,
+            "output": "pass\n",
+            "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
+            "command_output_sha256": MODULE.hashlib.sha256(
+                b"python3 scripts/check-positioning-gate.py\npass\n"
+            ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
         "evidence_urls": ["https://example.test/receipt"],
