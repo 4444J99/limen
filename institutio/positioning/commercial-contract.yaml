@@ -2,7 +2,7 @@ schema_version: limen.positioning_commercial_contract.v1
 contract:
   id: PSP-C03-COMMERCIAL-CONTRACT
   title: Production-systems identity and commercial contract
-  status: p03_reader_gate_p04_staged
+  status: p03_reader_gate_open_p04_leaf_execution
   observed_at: "2026-08-12"
   work_chunk: PSP-C03
   canonical_source: institutio/positioning/commercial-contract.yaml
@@ -11,12 +11,13 @@ contract:
     chunk_id: PSP-C03
     phase_id: PSP-P03
     work_id: PSP-P03-W07
-    state: reader_gate_open
+    state: reader_gate_open_phase_close_only
     consequence: >-
       PSP-P02 and PSP-P03-W01 through PSP-P03-W06 are accepted. PSP-P03-W07 still requires five
-      genuine independent target-like readers, so PSP-P03 cannot close and PSP-P04 remains formally
-      dependency-blocked. Reversible P04 implementation may continue, but it is not a leaf receipt,
-      phase receipt, merge authorization, or public offer.
+      genuine independent target-like readers, so PSP-P03 and PSP-P04 cannot close as phases. P04
+      leaves whose own dependencies and predicates are satisfied may be implemented, merged, and
+      receipt-closed independently; this does not authorize phase closure, outbound promotion, or a
+      customer commitment.
   accepted_state:
     p02:
       phase_id: PSP-P02
@@ -42,18 +43,18 @@ contract:
       synthetic_or_model_readers_allowed: false
     p04:
       phase_id: PSP-P04
-      state: staged_dependency_blocked
+      state: leaf_execution_open_phase_close_blocked
       dependency: PSP-P03
   allowed_preflight_effects:
-    - reversible P04 implementation in the isolated PSP-C03 branch
+    - P04 leaf implementation in an isolated PSP-C03 branch
     - focused static and live read-only validation
+    - sanctioned merge and leaf receipt after the leaf's non-circular predicate passes
     - preserving accepted P03 leaves and their exact receipt bindings
-    - maintaining the existing draft pull request without history rewriting
+    - maintaining the existing pull-request lane without history rewriting
   prohibited_preflight_effects:
-    - public-surface publication
+    - external public-surface activation or promotion
     - issue or phase closure without its non-circular predicate and marked receipt
-    - P04 leaf or phase receipt submission before PSP-P03 closes
-    - merge to main
+    - P04 phase closure before PSP-P03 closes
     - outbound sending
     - spend or account mutation
     - DNS or visibility changes
@@ -515,6 +516,7 @@ offer_ladder:
       exclusions:
         - on-call, emergency, or round-the-clock response
         - unlimited implementation, feature work, or repository coverage
+        - staff augmentation or an open-ended feature-delivery queue
         - executive substitution or ownership of daily operations
         - unrecorded access expansion or informal side projects
       timeline: One fixed review period at a time, renewable only after evidence and capacity review.
@@ -522,8 +524,73 @@ offer_ladder:
         mode: advisory_with_named_changes
         boundary: The internal owner operates the system; changes occur only through the agreed backlog, access boundary, and acceptance path.
       evidence:
-        acceptance: Each period ends with reviewed evidence, explicit changes, current owners, and a written renew, narrow, or exit decision.
-        artifacts: [review record, exception ledger, approved change receipts, updated runbook, renewal or exit memo]
+        acceptance: Each period ends with a capacity ledger proving consumed hours did not exceed included hours, reviewed evidence, explicit changes, current owners, and a dated written renew, narrow, or exit decision.
+        artifacts: [capacity ledger, review record, exception ledger, approved change receipts, updated runbook, renewal or exit memo]
+      capacity_model:
+        schema_version: limen.positioning.retainer_capacity.v1
+        offer_id: retainer
+        review_period: calendar_month
+        included_delivery_days: 6
+        hours_per_delivery_day: 6
+        included_hours: 36
+        allocation:
+          scheduled_governance_days: 3
+          approved_change_days: 1
+          scheduled_contingency_days: 1
+          uncommitted_days: 1
+        allocation_rule: Uncommitted capacity is not on-call; it is scheduled only after sponsor approval and expires at period close.
+        consumption_rule: Every meeting, review, analysis, message, postmortem, and approved change consumes the same finite capacity ledger.
+        quantity_limits:
+          active_change_items: 1
+          reviews_or_postmortems_per_period: 6
+          teams: 1
+          repositories: 3
+          included_revisions_per_change: 1
+        rollover: false
+        exhaustion_route: At exhaustion, trade off the accepted backlog, move work to the next period, or scope a separate change order or Governance Install; no standby is implied.
+        cadence:
+          evidence_reviews_per_period: 1
+          exception_reviews_per_period: 1
+          capacity_reviews_per_period: 1
+          closeouts_per_period: 1
+          change_window: scheduled against the accepted backlog
+        response_envelope:
+          channel: named shared written channel
+          timezone: sponsor-agreed named timezone recorded before the period
+          business_hours: sponsor-agreed named business hours recorded before the period
+          service_window: scheduled business days only
+          acknowledgement_target_business_days: 2
+          decision_target_business_days: 5
+          target_boundary: Planning targets only; no emergency or round-the-clock SLA.
+          clock_pause_conditions: [outside the service window, waiting on an owner decision, waiting on required access or evidence]
+          on_call: false
+          emergency_response: false
+          resolution_sla: false
+        decision_rights:
+          internal_owner: Operates the system and owns daily decisions.
+          sponsor: Approves scope, access, capacity changes, renewal, and exit.
+          provider: Advises and executes only named accepted-backlog changes within included delivery days.
+          provider_prohibited_actions: [direct staff, own daily operations, approve production effects, substitute for an executive]
+        included_artifacts: [capacity ledger, review record, exception ledger, approved change receipts, updated runbook, renewal or exit memo]
+        exclusions:
+          - on-call, emergency, or round-the-clock response
+          - unlimited implementation, feature work, or repository coverage
+          - staff augmentation or an open-ended feature-delivery queue
+          - executive substitution or ownership of daily operations
+          - unrecorded access expansion or informal side projects
+        escalation:
+          - scope new implementation as a separate install or change order
+          - pause material security, privacy, legal, or contractual exceptions for human review
+          - exit when the internal owner no longer exists or the review need is no longer finite
+        escalation_routes:
+          capacity_exhaustion: Trade off the accepted backlog, defer to the next period, or scope a separate change order or Governance Install.
+          missing_owner: Pause service and exit unless a new internal owner is named and accepts the current records.
+          authority_expansion: Stop the proposed change until the sponsor approves a named scope and acceptance path.
+          security_privacy_legal_contract: Pause the exception for the registered human review path; no provider override exists.
+        renewal_exit:
+          renewal_gate: Evidence and capacity review plus a dated written renew or narrow decision before the next period.
+          exit_trigger: The internal owner disappears, the need is no longer finite, or the sponsor chooses exit.
+          exit_steps: [return the latest records and runbook, remove access, record current internal ownership, record the next review date or stop decision]
       economics:
         model: capacity_reservation
         anchor_id: PRICE-RETAINER
@@ -586,12 +653,13 @@ offer_ladder:
     claim_refs: [C03-COMMERCIAL-BOUNDARY-001, C02-PROOF-PUBLIC-RECORDS, C02-PROOF-AI-CHAT-EXPORTER]
 
 qualification:
+  default_route: human_review
   routing_priority: [human_review, decline, recruiter, partnership_review, retainer, install, audit]
   rules:
     - id: guarded_exception
       route: human_review
       priority: 10
-      any: [pricing_exception, legal_terms, regulated_data, account_or_custody_change, public_claim_exception]
+      any: [pricing_exception, legal_terms, regulated_data, account_or_custody_change, public_claim_exception, insufficient_evidence]
       all: []
       none: []
     - id: prohibited_scope
@@ -655,6 +723,9 @@ qualification:
     - id: emergency_takeover_request
       facts: {implementation_needed: true, organization_takeover: true, emergency_on_call: true}
       expected_route: decline
+    - id: insufficient_evidence_requires_review
+      facts: {insufficient_evidence: true}
+      expected_route: human_review
   decline_language: >-
     This request needs broader authority or a different operating model than the bounded work offered
     here. I will not imply a safe scope where the sponsor, evidence, ownership, or handoff conditions

@@ -66,13 +66,77 @@ positioning-foundry-technical-readiness-public-live
 check-docs-exports
 check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
 
+expect bounded-retainer-capacity-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer-capacity.json
+
+expect bounded-retainer-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/bounded-delivery-governance-retainer.md
+
+expect offer-qualification-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/qualification-and-routing.md
+
+expect partnership-review-page-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/product-operating-partnership-review.md
+
+expect unmanaged-offer-artifact-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/positioning/offers/obsolete.json
+
+expect positioning-program-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
+positioning-offer-contract-test
+research-adjudication-test
+check-note-links' institutio/positioning/program.yaml
+
+expect p03-evidence-matrix-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p03-leaf-evidence.md
+
+expect p04-evidence-matrix-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/preflights/2026-08-10-psp-p04-leaf-evidence.md
+
+expect c03-relay-offer-input-change 'syntax-changed
+diff-hygiene
+positioning-offer-contract-test
+check-docs-exports
+check-note-links' docs/receipts/positioning/relays/2026-08-10-psp-c03-identity-offers-preflight.md
+
 expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 research-adjudication-test
+research-adjudication-live-test
 check-params
 check-note-links
 check-effectors' scripts/positioning-research-adjudication.py
+
+expect research-adjudication-live-input-change 'syntax-changed
+diff-hygiene
+positioning-foundry-technical-readiness-public-live
+research-adjudication-test
+research-adjudication-live-test
+check-note-links' institutio/positioning/github-map.json
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
@@ -223,7 +287,7 @@ flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
 agentic-delivery-audit-decision-test
-governance-install-offer-test
+positioning-offer-contract-test
 research-adjudication-test
 positioning-p14-control-plane-test
 check-gates

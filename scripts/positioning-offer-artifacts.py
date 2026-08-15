@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from collections.abc import Iterable, Mapping, Sequence
@@ -24,7 +25,9 @@ OFFER_FILES = {
     "partnership_review": "product-operating-partnership-review.md",
 }
 QUALIFICATION_FILE = "qualification-and-routing.md"
-EXPECTED_FILES = frozenset((*OFFER_FILES.values(), QUALIFICATION_FILE))
+CAPACITY_FILE = "bounded-delivery-governance-retainer-capacity.json"
+EXPECTED_FILES = frozenset((*OFFER_FILES.values(), QUALIFICATION_FILE, CAPACITY_FILE))
+KNOWN_MATERIALIZED_FILES = frozenset((*EXPECTED_FILES, "agentic-delivery-audit-decision-record.json"))
 WORK_ITEMS = {
     "audit": "PSP-P04-W01",
     "install": "PSP-P04-W02",
@@ -42,6 +45,7 @@ EXPECTED_ROUTE_PRIORITY = [
     "install",
     "audit",
 ]
+QUALIFICATION_ROUTES = frozenset(EXPECTED_ROUTE_PRIORITY)
 EXPECTED_OFFER_CONTRACT = {
     "audit": {
         "stage": "diagnose",
@@ -110,12 +114,93 @@ REQUIRED_ECONOMICS_FIELDS = frozenset(
         "discount_rule",
     }
 )
+REQUIRED_RETAINER_CAPACITY_FIELDS = frozenset(
+    {
+        "schema_version",
+        "offer_id",
+        "review_period",
+        "included_delivery_days",
+        "hours_per_delivery_day",
+        "included_hours",
+        "allocation",
+        "allocation_rule",
+        "consumption_rule",
+        "quantity_limits",
+        "rollover",
+        "exhaustion_route",
+        "cadence",
+        "response_envelope",
+        "decision_rights",
+        "included_artifacts",
+        "exclusions",
+        "escalation",
+        "escalation_routes",
+        "renewal_exit",
+    }
+)
+REQUIRED_CAPACITY_ALLOCATION_FIELDS = frozenset(
+    {
+        "scheduled_governance_days",
+        "approved_change_days",
+        "scheduled_contingency_days",
+        "uncommitted_days",
+    }
+)
+REQUIRED_CAPACITY_CADENCE_FIELDS = frozenset(
+    {
+        "evidence_reviews_per_period",
+        "exception_reviews_per_period",
+        "capacity_reviews_per_period",
+        "closeouts_per_period",
+        "change_window",
+    }
+)
+REQUIRED_CAPACITY_QUANTITY_FIELDS = frozenset(
+    {
+        "active_change_items",
+        "reviews_or_postmortems_per_period",
+        "teams",
+        "repositories",
+        "included_revisions_per_change",
+    }
+)
+REQUIRED_RESPONSE_ENVELOPE_FIELDS = frozenset(
+    {
+        "channel",
+        "timezone",
+        "business_hours",
+        "service_window",
+        "acknowledgement_target_business_days",
+        "decision_target_business_days",
+        "target_boundary",
+        "clock_pause_conditions",
+        "on_call",
+        "emergency_response",
+        "resolution_sla",
+    }
+)
+REQUIRED_DECISION_RIGHTS_FIELDS = frozenset({"internal_owner", "sponsor", "provider", "provider_prohibited_actions"})
+REQUIRED_ESCALATION_ROUTE_FIELDS = frozenset(
+    {"capacity_exhaustion", "missing_owner", "authority_expansion", "security_privacy_legal_contract"}
+)
+REQUIRED_RENEWAL_EXIT_FIELDS = frozenset({"renewal_gate", "exit_trigger", "exit_steps"})
+ALLOWED_CAPACITY_NUMERIC_PATHS = frozenset(
+    {
+        "included_delivery_days",
+        "hours_per_delivery_day",
+        "included_hours",
+        *{f"allocation.{field}" for field in REQUIRED_CAPACITY_ALLOCATION_FIELDS},
+        *{f"quantity_limits.{field}" for field in REQUIRED_CAPACITY_QUANTITY_FIELDS},
+        *{f"cadence.{field}" for field in REQUIRED_CAPACITY_CADENCE_FIELDS if field != "change_window"},
+        "response_envelope.acknowledgement_target_business_days",
+        "response_envelope.decision_target_business_days",
+    }
+)
 REQUIRED_PROHIBITED_EFFECTS = frozenset(
     {
-        "public-surface publication",
+        "external public-surface activation or promotion",
         "issue or phase closure",
-        "leaf or phase receipt submission",
-        "merge to main",
+        "P04 phase closure before PSP-P03 closes",
         "outbound sending",
         "spend or account mutation",
         "DNS or visibility changes",
@@ -124,7 +209,7 @@ REQUIRED_PROHIBITED_EFFECTS = frozenset(
 )
 
 PRIVATE_PATTERNS = (
-    re.compile(r"(?:^|[\s`(])(?:/Users/|/home/|/private/|~/|file://)", re.IGNORECASE),
+    re.compile(r"(?:^|[\s`(\"':])(?:/Users/|/home/|/private/|~/|file://)", re.IGNORECASE),
     re.compile(r"\b[A-Z]:\\Users\\", re.IGNORECASE),
     re.compile(
         r"(?:\.limen-private/|\.agent-runtime/|session-state/|archived_sessions/|"
@@ -169,6 +254,30 @@ class OfferArtifactValidationError(ValueError):
     """Raised when the canonical source cannot be loaded safely."""
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """Safe YAML loader that rejects duplicate mapping members."""
+
+
+def _construct_unique_mapping(loader: _UniqueKeyLoader, node: yaml.nodes.MappingNode, deep: bool = False) -> Any:
+    mapping: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            duplicate = key in mapping
+        except TypeError as exc:
+            raise OfferArtifactValidationError("YAML mapping keys must be hashable scalars") from exc
+        if duplicate:
+            raise OfferArtifactValidationError(f"duplicate YAML mapping key: {key}")
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
+)
+
+
 def _mapping(value: Any) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
 
@@ -211,6 +320,59 @@ def _require_fields(
     return mapping
 
 
+def _require_exact_mapping(
+    errors: list[str],
+    value: Any,
+    fields: Iterable[str],
+    label: str,
+) -> Mapping[str, Any]:
+    expected = set(fields)
+    mapping = _require_fields(errors, value, expected, label)
+    non_string_keys = [key for key in mapping if not isinstance(key, str)]
+    if non_string_keys:
+        errors.append(
+            f"{label} keys must be strings; found non-string keys {sorted(repr(key) for key in non_string_keys)}"
+        )
+        return mapping
+    if mapping and set(mapping) != expected:
+        errors.append(f"{label} fields must be exactly {sorted(expected)}; found {sorted(mapping)}")
+    return mapping
+
+
+def _is_bounded_int(value: Any, *, minimum: int, maximum: int) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and minimum <= value <= maximum
+
+
+def _is_nonblank_text_list(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and bool(value)
+        and all(isinstance(item, str) and bool(item.strip()) for item in value)
+        and len(value) == len(set(value))
+    )
+
+
+def _is_unique_text_list(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and all(isinstance(item, str) and bool(item.strip()) for item in value)
+        and len(value) == len(set(value))
+    )
+
+
+def _numeric_leaf_paths(value: Any, prefix: str = "") -> Iterable[str]:
+    if isinstance(value, bool):
+        return
+    if isinstance(value, (int, float)):
+        yield prefix
+    elif isinstance(value, Mapping):
+        for key, item in value.items():
+            path = f"{prefix}.{key}" if prefix else str(key)
+            yield from _numeric_leaf_paths(item, path)
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        for index, item in enumerate(value):
+            yield from _numeric_leaf_paths(item, f"{prefix}[{index}]")
+
 def _offer_map(data: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     ladder = _mapping(data.get("offer_ladder"))
     result: dict[str, Mapping[str, Any]] = {}
@@ -245,6 +407,30 @@ def _rule_matches(rule: Mapping[str, Any], facts: Mapping[str, Any]) -> bool:
         and (not any_terms or any(facts.get(str(term), False) is True for term in any_terms))
         and not any(facts.get(str(term), False) is True for term in none_terms)
     )
+
+
+def _is_evaluable_qualification_rule(rule: Mapping[str, Any]) -> bool:
+    return (
+        isinstance(rule.get("id"), str)
+        and bool(rule["id"].strip())
+        and isinstance(rule.get("route"), str)
+        and rule["route"] in QUALIFICATION_ROUTES
+        and isinstance(rule.get("priority"), int)
+        and not isinstance(rule["priority"], bool)
+        and all(_is_unique_text_list(rule.get(condition)) for condition in ("any", "all", "none"))
+    )
+
+
+def evaluate_qualification_route(
+    rules: Sequence[Mapping[str, Any]],
+    facts: Mapping[str, bool],
+    default_route: str,
+) -> str:
+    """Return the first priority-ordered matching route, or the explicit default."""
+    for rule in sorted(rules, key=_priority_value):
+        if _is_evaluable_qualification_rule(rule) and _rule_matches(rule, facts):
+            return str(rule["route"])
+    return default_route
 
 
 def _priority_value(rule: Mapping[str, Any]) -> int:
@@ -444,7 +630,8 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
     audit_blob = " ".join(_strings(offer_by_id.get("audit", {}))).lower()
     install = offer_by_id.get("install", {})
     install_blob = " ".join(_strings(install)).lower()
-    retainer_blob = " ".join(_strings(offer_by_id.get("retainer", {}))).lower()
+    retainer = offer_by_id.get("retainer", {})
+    retainer_blob = " ".join(_strings(retainer)).lower()
     partnership_blob = " ".join(_strings(offer_by_id.get("partnership_review", {}))).lower()
     _require(
         errors,
@@ -493,6 +680,246 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         and "on-call, emergency, or round-the-clock response" in retainer_blob
         and "unlimited implementation" in retainer_blob,
         ("Retainer must require an installed baseline and exclude on-call or unlimited implementation"),
+    )
+    capacity = _require_exact_mapping(
+        errors,
+        retainer.get("capacity_model"),
+        REQUIRED_RETAINER_CAPACITY_FIELDS,
+        "offer retainer.capacity_model",
+    )
+    numeric_paths = set(_numeric_leaf_paths(capacity))
+    _require(
+        errors,
+        numeric_paths == ALLOWED_CAPACITY_NUMERIC_PATHS,
+        "retainer capacity numeric fields must match the explicit non-monetary path allowlist",
+    )
+    _require(
+        errors,
+        capacity.get("schema_version") == "limen.positioning.retainer_capacity.v1",
+        "retainer capacity schema must be limen.positioning.retainer_capacity.v1",
+    )
+    _require(errors, capacity.get("offer_id") == "retainer", "retainer capacity offer_id must be retainer")
+    _require(
+        errors,
+        capacity.get("review_period") == "calendar_month",
+        "retainer capacity review period must remain calendar_month",
+    )
+    included_days = capacity.get("included_delivery_days")
+    hours_per_day = capacity.get("hours_per_delivery_day")
+    included_hours = capacity.get("included_hours")
+    _require(
+        errors,
+        _is_bounded_int(included_days, minimum=1, maximum=10),
+        "retainer included_delivery_days must be a non-boolean integer from 1 through 10",
+    )
+    _require(
+        errors,
+        _is_bounded_int(included_days, minimum=1, maximum=10)
+        and _is_bounded_int(hours_per_day, minimum=1, maximum=8)
+        and _is_bounded_int(included_hours, minimum=1, maximum=80)
+        and included_hours == included_days * hours_per_day,
+        "retainer included_hours must exactly equal included_delivery_days times hours_per_delivery_day",
+    )
+    allocation = _require_exact_mapping(
+        errors,
+        capacity.get("allocation"),
+        REQUIRED_CAPACITY_ALLOCATION_FIELDS,
+        "offer retainer.capacity_model.allocation",
+    )
+    allocation_values = [allocation.get(field) for field in sorted(REQUIRED_CAPACITY_ALLOCATION_FIELDS)]
+    _require(
+        errors,
+        all(_is_bounded_int(value, minimum=0, maximum=10) for value in allocation_values),
+        "retainer allocation values must be non-boolean integers from 0 through 10",
+    )
+    if _is_bounded_int(included_days, minimum=1, maximum=10) and all(
+        _is_bounded_int(value, minimum=0, maximum=10) for value in allocation_values
+    ):
+        _require(
+            errors,
+            sum(allocation_values) == included_days,
+            "retainer allocation must equal included_delivery_days exactly",
+        )
+    _require(
+        errors,
+        isinstance(capacity.get("allocation_rule"), str)
+        and capacity.get("allocation_rule", "").strip()
+        and "not on-call" in capacity.get("allocation_rule", "").lower()
+        and "expires at period close" in capacity.get("allocation_rule", "").lower(),
+        "retainer allocation rule must make uncommitted capacity scheduled, non-on-call, and expiring",
+    )
+    consumption_rule = str(capacity.get("consumption_rule", "")).lower()
+    _require(
+        errors,
+        isinstance(capacity.get("consumption_rule"), str)
+        and all(
+            term in consumption_rule
+            for term in ("meeting", "review", "analysis", "message", "postmortem", "approved change", "capacity ledger")
+        ),
+        "retainer consumption rule must debit every service activity from one finite capacity ledger",
+    )
+    quantity_limits = _require_exact_mapping(
+        errors,
+        capacity.get("quantity_limits"),
+        REQUIRED_CAPACITY_QUANTITY_FIELDS,
+        "offer retainer.capacity_model.quantity_limits",
+    )
+    _require(
+        errors,
+        all(_is_bounded_int(quantity_limits.get(field), minimum=1, maximum=10) for field in quantity_limits)
+        and quantity_limits.get("teams") == 1
+        and quantity_limits.get("active_change_items") == 1,
+        "retainer quantity limits must be finite positive integers with one team and one active change",
+    )
+    exhaustion_route = str(capacity.get("exhaustion_route", "")).lower()
+    _require(
+        errors,
+        capacity.get("rollover") is False
+        and isinstance(capacity.get("exhaustion_route"), str)
+        and all(
+            term in exhaustion_route
+            for term in ("trade off", "next period", "change order", "governance install", "no standby")
+        ),
+        "retainer capacity must not roll over or imply standby and must route exhaustion deterministically",
+    )
+
+    cadence = _require_exact_mapping(
+        errors,
+        capacity.get("cadence"),
+        REQUIRED_CAPACITY_CADENCE_FIELDS,
+        "offer retainer.capacity_model.cadence",
+    )
+    _require(
+        errors,
+        all(
+            _is_bounded_int(cadence.get(field), minimum=1, maximum=4)
+            for field in REQUIRED_CAPACITY_CADENCE_FIELDS - {"change_window"}
+        )
+        and cadence.get("change_window") == "scheduled against the accepted backlog",
+        "retainer cadence must name finite review and closeout counts plus a scheduled change window",
+    )
+    response = _require_exact_mapping(
+        errors,
+        capacity.get("response_envelope"),
+        REQUIRED_RESPONSE_ENVELOPE_FIELDS,
+        "offer retainer.capacity_model.response_envelope",
+    )
+    acknowledgement_days = response.get("acknowledgement_target_business_days")
+    decision_days = response.get("decision_target_business_days")
+    _require(
+        errors,
+        _is_bounded_int(acknowledgement_days, minimum=1, maximum=10)
+        and _is_bounded_int(decision_days, minimum=1, maximum=10)
+        and acknowledgement_days <= decision_days,
+        "retainer response targets must be ordered non-boolean business-day integers from 1 through 10",
+    )
+    _require(
+        errors,
+        response.get("channel") == "named shared written channel"
+        and response.get("timezone") == "sponsor-agreed named timezone recorded before the period"
+        and response.get("business_hours") == "sponsor-agreed named business hours recorded before the period"
+        and response.get("service_window") == "scheduled business days only"
+        and isinstance(response.get("target_boundary"), str)
+        and "no emergency or round-the-clock sla" in response.get("target_boundary", "").lower()
+        and _is_nonblank_text_list(response.get("clock_pause_conditions"))
+        and response.get("clock_pause_conditions")
+        == [
+            "outside the service window",
+            "waiting on an owner decision",
+            "waiting on required access or evidence",
+        ]
+        and response.get("on_call") is False
+        and response.get("emergency_response") is False,
+        "retainer response envelope must name channel, timezone, hours, pause conditions, and no on-call or emergency SLA",
+    )
+    _require(
+        errors,
+        response.get("resolution_sla") is False,
+        "retainer response envelope must not promise a resolution SLA",
+    )
+
+    decision_rights = _require_exact_mapping(
+        errors,
+        capacity.get("decision_rights"),
+        REQUIRED_DECISION_RIGHTS_FIELDS,
+        "offer retainer.capacity_model.decision_rights",
+    )
+    _require(
+        errors,
+        all(
+            isinstance(decision_rights.get(field), str) and decision_rights.get(field, "").strip()
+            for field in ("internal_owner", "sponsor", "provider")
+        )
+        and "owns daily decisions" in str(decision_rights.get("internal_owner", "")).lower()
+        and "only named accepted-backlog changes" in str(decision_rights.get("provider", "")).lower()
+        and decision_rights.get("provider_prohibited_actions")
+        == ["direct staff", "own daily operations", "approve production effects", "substitute for an executive"],
+        "retainer decision rights must preserve internal ownership and bounded provider authority",
+    )
+
+    retainer_evidence = _mapping(retainer.get("evidence"))
+    for field, source_values in (
+        ("included_artifacts", _sequence(retainer_evidence.get("artifacts"))),
+        ("exclusions", _sequence(retainer.get("exclusions"))),
+        ("escalation", _sequence(retainer.get("escalation"))),
+    ):
+        capacity_values = capacity.get(field)
+        _require(
+            errors,
+            _is_nonblank_text_list(capacity_values) and list(capacity_values) == list(source_values),
+            f"retainer capacity {field} must exactly match the canonical offer",
+        )
+    retainer_acceptance = str(retainer_evidence.get("acceptance", "")).lower()
+    _require(
+        errors,
+        "capacity ledger" in retainer_acceptance
+        and "consumed hours did not exceed included hours" in retainer_acceptance
+        and "dated written renew, narrow, or exit decision" in retainer_acceptance
+        and "capacity ledger" in _sequence(retainer_evidence.get("artifacts")),
+        "retainer acceptance must prove capacity consumption and a dated renewal or exit verdict",
+    )
+
+    escalation_routes = _require_exact_mapping(
+        errors,
+        capacity.get("escalation_routes"),
+        REQUIRED_ESCALATION_ROUTE_FIELDS,
+        "offer retainer.capacity_model.escalation_routes",
+    )
+    _require(
+        errors,
+        all(
+            isinstance(escalation_routes.get(field), str) and escalation_routes.get(field, "").strip()
+            for field in REQUIRED_ESCALATION_ROUTE_FIELDS
+        )
+        and "next period" in str(escalation_routes.get("capacity_exhaustion", "")).lower()
+        and "pause service and exit" in str(escalation_routes.get("missing_owner", "")).lower()
+        and "stop the proposed change" in str(escalation_routes.get("authority_expansion", "")).lower()
+        and "human review" in str(escalation_routes.get("security_privacy_legal_contract", "")).lower(),
+        "retainer escalation routes must deterministically cover capacity, owner, authority, and protected exceptions",
+    )
+
+    renewal_exit = _require_exact_mapping(
+        errors,
+        capacity.get("renewal_exit"),
+        REQUIRED_RENEWAL_EXIT_FIELDS,
+        "offer retainer.capacity_model.renewal_exit",
+    )
+    _require(
+        errors,
+        isinstance(renewal_exit.get("renewal_gate"), str)
+        and renewal_exit.get("renewal_gate", "").strip()
+        and isinstance(renewal_exit.get("exit_trigger"), str)
+        and renewal_exit.get("exit_trigger", "").strip()
+        and _is_nonblank_text_list(renewal_exit.get("exit_steps"))
+        and "dated written renew or narrow decision" in renewal_exit.get("renewal_gate", "").lower()
+        and renewal_exit.get("exit_steps")
+        == [
+            "return the latest records and runbook",
+            "remove access",
+            "record current internal ownership",
+            "record the next review date or stop decision",
+        ],
+        "retainer renewal and exit must be explicit, finite, and return ownership internally",
     )
     _require(
         errors,
@@ -631,22 +1058,44 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
     qualification = _require_fields(
         errors,
         data.get("qualification"),
-        {"routing_priority", "rules", "scenarios", "decline_language", "review_language"},
+        {"default_route", "routing_priority", "rules", "scenarios", "decline_language", "review_language"},
         "qualification",
     )
-    rules = [_mapping(rule) for rule in _sequence(qualification.get("rules"))]
-    route_priority = list(_sequence(qualification.get("routing_priority")))
+    default_route = qualification.get("default_route")
+    _require(
+        errors,
+        isinstance(default_route, str) and default_route == "human_review",
+        "qualification.default_route must be human_review",
+    )
+    raw_rules = qualification.get("rules")
+    _require(errors, isinstance(raw_rules, list), "qualification.rules must be a list")
+    rules = [_mapping(rule) for rule in _sequence(raw_rules)]
+    raw_route_priority = qualification.get("routing_priority")
+    _require(errors, isinstance(raw_route_priority, list), "qualification.routing_priority must be a list")
+    route_priority = list(_sequence(raw_route_priority))
     _require(
         errors,
         route_priority == EXPECTED_ROUTE_PRIORITY,
         f"routing priority drifted: expected {EXPECTED_ROUTE_PRIORITY}",
     )
-    rule_ids = [str(rule.get("id")) for rule in rules]
-    priorities = [rule.get("priority") if isinstance(rule.get("priority"), int) else None for rule in rules]
-    _require(errors, len(rule_ids) == len(set(rule_ids)), "qualification rule IDs must be unique")
     _require(
         errors,
-        len(priorities) == len(set(priorities)),
+        _is_unique_text_list(raw_route_priority),
+        "qualification.routing_priority must contain unique non-blank route strings",
+    )
+    rule_ids = [rule.get("id") for rule in rules]
+    priorities = [rule.get("priority") for rule in rules]
+    integer_priorities = [
+        priority for priority in priorities if isinstance(priority, int) and not isinstance(priority, bool)
+    ]
+    _require(
+        errors,
+        _is_unique_text_list(rule_ids),
+        "qualification rule IDs must be unique non-blank strings",
+    )
+    _require(
+        errors,
+        len(integer_priorities) == len(priorities) and len(integer_priorities) == len(set(integer_priorities)),
         "qualification priorities must be unique",
     )
     for rule in rules:
@@ -659,15 +1108,26 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         )
         _require(
             errors,
-            isinstance(rule.get("priority"), int),
+            isinstance(rule.get("route"), str) and rule.get("route") in QUALIFICATION_ROUTES,
+            f"qualification rule {rule_id}.route must be a supported route string",
+        )
+        _require(
+            errors,
+            isinstance(rule.get("priority"), int) and not isinstance(rule.get("priority"), bool),
             f"qualification rule {rule_id}.priority must be an integer",
         )
         for condition in ("any", "all", "none"):
             _require(
                 errors,
-                isinstance(rule.get(condition), list),
-                f"qualification rule {rule_id}.{condition} must be a list",
+                _is_unique_text_list(rule.get(condition)),
+                f"qualification rule {rule_id}.{condition} must be a list of unique non-blank strings",
             )
+    rule_routes = {rule.get("route") for rule in rules if isinstance(rule.get("route"), str)}
+    _require(
+        errors,
+        rule_routes == QUALIFICATION_ROUTES,
+        f"qualification rules must cover exactly {sorted(QUALIFICATION_ROUTES)}",
+    )
     sorted_routes = [rule.get("route") for rule in sorted(rules, key=_priority_value)]
     _require(
         errors,
@@ -681,38 +1141,63 @@ def validate_contract(data: Mapping[str, Any]) -> list[str]:
         "partnership routing must explicitly exclude the public front door",
     )
 
-    for raw_scenario in _sequence(qualification.get("scenarios")):
+    raw_scenarios = qualification.get("scenarios")
+    _require(
+        errors,
+        isinstance(raw_scenarios, list) and bool(raw_scenarios),
+        "qualification scenario matrix must be a non-empty list",
+    )
+    scenarios = [_mapping(scenario) for scenario in _sequence(raw_scenarios)]
+    scenario_ids = [scenario.get("id") for scenario in scenarios]
+    _require(
+        errors,
+        _is_unique_text_list(scenario_ids),
+        "qualification scenario IDs must be unique non-blank strings",
+    )
+    scenario_routes: set[str] = set()
+    for scenario in scenarios:
         scenario = _require_fields(
             errors,
-            raw_scenario,
+            scenario,
             {"id", "facts", "expected_route"},
             "qualification scenario",
         )
         scenario_id = str(scenario.get("id", "unknown"))
-        facts = _mapping(scenario.get("facts"))
+        raw_facts = scenario.get("facts")
+        facts = _mapping(raw_facts)
         _require(
             errors,
-            bool(facts) and all(isinstance(value, bool) for value in facts.values()),
-            f"scenario {scenario_id} facts must be non-empty booleans",
+            bool(facts)
+            and isinstance(raw_facts, Mapping)
+            and all(isinstance(key, str) and bool(key.strip()) and isinstance(value, bool) for key, value in facts.items()),
+            f"scenario {scenario_id} facts must be a non-empty mapping of non-blank boolean inputs",
         )
-        matches = sorted(
-            (rule for rule in rules if _rule_matches(rule, facts)),
-            key=_priority_value,
+        expected_route = scenario.get("expected_route")
+        _require(
+            errors,
+            isinstance(expected_route, str) and expected_route in QUALIFICATION_ROUTES,
+            f"scenario {scenario_id}.expected_route must be a supported route string",
         )
-        _require(errors, bool(matches), f"scenario {scenario_id} has no route")
-        if matches:
-            _require(
-                errors,
-                matches[0].get("route") == scenario.get("expected_route"),
-                f"scenario {scenario_id} expected {scenario.get('expected_route')} "
-                f"but routed to {matches[0].get('route')}",
-            )
+        if isinstance(expected_route, str):
+            scenario_routes.add(expected_route)
+        route = evaluate_qualification_route(rules, facts, default_route if isinstance(default_route, str) else "")
+        _require(
+            errors,
+            route == expected_route,
+            f"scenario {scenario_id} expected {expected_route} but routed to {route}",
+        )
+        matches = sorted((rule for rule in rules if _rule_matches(rule, facts)), key=_priority_value)
         commercial_matches = {str(rule.get("route")) for rule in matches if rule.get("route") in COMMERCIAL_ROUTES}
         _require(
             errors,
             len(commercial_matches) <= 1,
             f"offer overlap in scenario {scenario_id}: {sorted(commercial_matches)}",
         )
+    _require(
+        errors,
+        scenario_routes == QUALIFICATION_ROUTES,
+        f"qualification scenario matrix must cover exactly {sorted(QUALIFICATION_ROUTES)}",
+    )
 
     public_payload = {
         "contract": {
@@ -757,7 +1242,7 @@ def _preamble(data: Mapping[str, Any], title: str, work_item: str) -> list[str]:
         f"# {title}",
         "",
         (
-            f"> **Preflight status:** `{contract['status']}`; dependency "
+            f"> **Program status:** `{contract['status']}`; dependency "
             f"`{dependency['chunk_id']}` / `{dependency['phase_id']}` is "
             f"`{dependency['state']}`. {dependency['consequence']}"
         ),
@@ -802,6 +1287,125 @@ def _effect_boundary_lines(data: Mapping[str, Any]) -> list[str]:
         *_bullet_lines(effects),
         "",
     ]
+
+
+def _retainer_capacity_lines(offer: Mapping[str, Any]) -> list[str]:
+    capacity = _mapping(offer["capacity_model"])
+    allocation = _mapping(capacity["allocation"])
+    quantity_limits = _mapping(capacity["quantity_limits"])
+    cadence = _mapping(capacity["cadence"])
+    response = _mapping(capacity["response_envelope"])
+    decision_rights = _mapping(capacity["decision_rights"])
+    escalation_routes = _mapping(capacity["escalation_routes"])
+    renewal_exit = _mapping(capacity["renewal_exit"])
+    lines = [
+        "## Capacity model",
+        "",
+        f"- **Schema:** `{capacity['schema_version']}`",
+        f"- **Review period:** `{capacity['review_period']}`",
+        f"- **Included delivery days:** `{capacity['included_delivery_days']}`",
+        f"- **Hours per delivery day:** `{capacity['hours_per_delivery_day']}`",
+        f"- **Included hours:** `{capacity['included_hours']}`",
+        f"- **Allocation rule:** {capacity['allocation_rule']}",
+        f"- **Consumption rule:** {capacity['consumption_rule']}",
+        f"- **Rollover:** `{str(capacity['rollover']).lower()}`",
+        f"- **Exhaustion route:** {capacity['exhaustion_route']}",
+        "",
+        "### Declared allocation",
+        "",
+        "| Capacity class | Days |",
+        "| --- | ---: |",
+    ]
+    for field in (
+        "scheduled_governance_days",
+        "approved_change_days",
+        "scheduled_contingency_days",
+        "uncommitted_days",
+    ):
+        lines.append(f"| `{field}` | `{allocation[field]}` |")
+    lines.extend(
+        [
+            "",
+            "### Quantity limits",
+            "",
+            "| Limit | Maximum |",
+            "| --- | ---: |",
+        ]
+    )
+    for field in (
+        "active_change_items",
+        "reviews_or_postmortems_per_period",
+        "teams",
+        "repositories",
+        "included_revisions_per_change",
+    ):
+        lines.append(f"| `{field}` | `{quantity_limits[field]}` |")
+    lines.extend(
+        [
+            "",
+            "### Cadence",
+            "",
+            f"- **Evidence reviews per period:** `{cadence['evidence_reviews_per_period']}`",
+            f"- **Exception reviews per period:** `{cadence['exception_reviews_per_period']}`",
+            f"- **Capacity reviews per period:** `{cadence['capacity_reviews_per_period']}`",
+            f"- **Closeouts per period:** `{cadence['closeouts_per_period']}`",
+            f"- **Change window:** {cadence['change_window']}",
+            "",
+            "### Response envelope",
+            "",
+            f"- **Channel:** {response['channel']}",
+            f"- **Timezone:** {response['timezone']}",
+            f"- **Business hours:** {response['business_hours']}",
+            f"- **Service window:** {response['service_window']}",
+            (f"- **Acknowledgement target:** `{response['acknowledgement_target_business_days']}` business days"),
+            f"- **Decision target:** `{response['decision_target_business_days']}` business days",
+            f"- **Target boundary:** {response['target_boundary']}",
+            "- **Clock pause conditions:**",
+            *[f"  - {condition}" for condition in _sequence(response["clock_pause_conditions"])],
+            f"- **On-call:** `{str(response['on_call']).lower()}`",
+            f"- **Emergency response:** `{str(response['emergency_response']).lower()}`",
+            f"- **Resolution SLA:** `{str(response['resolution_sla']).lower()}`",
+            "",
+            "### Decision rights",
+            "",
+            f"- **Internal owner:** {decision_rights['internal_owner']}",
+            f"- **Sponsor:** {decision_rights['sponsor']}",
+            f"- **Provider:** {decision_rights['provider']}",
+            "- **Provider prohibited actions:**",
+            *[f"  - {action}" for action in _sequence(decision_rights["provider_prohibited_actions"])],
+            "",
+            "### Included artifacts",
+            "",
+            *_bullet_lines(_sequence(capacity["included_artifacts"])),
+            "",
+            "### Capacity exclusions",
+            "",
+            *_bullet_lines(_sequence(capacity["exclusions"])),
+            "",
+            "### Capacity escalation",
+            "",
+            *_bullet_lines(_sequence(capacity["escalation"])),
+            "",
+            "### Deterministic escalation routes",
+            "",
+            f"- **Capacity exhaustion:** {escalation_routes['capacity_exhaustion']}",
+            f"- **Missing owner:** {escalation_routes['missing_owner']}",
+            f"- **Authority expansion:** {escalation_routes['authority_expansion']}",
+            (
+                "- **Security, privacy, legal, or contract exception:** "
+                f"{escalation_routes['security_privacy_legal_contract']}"
+            ),
+            "",
+            "### Renewal and exit",
+            "",
+            f"- **Renewal gate:** {renewal_exit['renewal_gate']}",
+            f"- **Exit trigger:** {renewal_exit['exit_trigger']}",
+            "- **Exit steps:**",
+            *[f"  - {step}" for step in _sequence(renewal_exit["exit_steps"])],
+            "",
+        ]
+    )
+    return lines
 
 
 def render_offer_page(
@@ -867,9 +1471,31 @@ def render_offer_page(
             "",
         ]
     )
+    if offer.get("id") == "retainer":
+        lines.extend(_retainer_capacity_lines(offer))
     lines.extend(_economics_lines(data, _mapping(offer["economics"])))
     lines.extend(_effect_boundary_lines(data))
     return "\n".join(lines).rstrip() + "\n"
+
+
+def render_retainer_capacity_model(data: Mapping[str, Any]) -> str:
+    """Render the machine-readable capacity contract from the canonical offer."""
+    contract = _mapping(data["contract"])
+    retainer = _offer_map(data)["retainer"]
+    payload = {
+        "schema_version": "limen.positioning.retainer_capacity_artifact.v1",
+        "canonical_source": contract["canonical_source"],
+        "work_item": WORK_ITEMS["retainer"],
+        "offer": {
+            "id": retainer["id"],
+            "name": retainer["name"],
+            "timeline": retainer["timeline"],
+            "authority": retainer["authority"],
+            "acceptance": _mapping(retainer["evidence"])["acceptance"],
+        },
+        "capacity_model": retainer["capacity_model"],
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
 
 
 def render_partnership_page(
@@ -940,6 +1566,8 @@ def render_qualification_page(data: Mapping[str, Any]) -> str:
         lines.append(f"{index}. `{route}`")
     lines.extend(
         [
+            "",
+            f"**Default route:** `{qualification['default_route']}`. Unmatched or insufficient-evidence requests remain in human review.",
             "",
             "Rules are evaluated in this priority order; the first match is the route.",
             "",
@@ -1024,6 +1652,7 @@ def render_artifacts(data: Mapping[str, Any]) -> dict[str, str]:
         ),
         OFFER_FILES["install"]: render_offer_page(data, offer_by_id["install"], WORK_ITEMS["install"]),
         OFFER_FILES["retainer"]: render_offer_page(data, offer_by_id["retainer"], WORK_ITEMS["retainer"]),
+        CAPACITY_FILE: render_retainer_capacity_model(data),
         QUALIFICATION_FILE: render_qualification_page(data),
         OFFER_FILES["partnership_review"]: render_partnership_page(
             data,
@@ -1097,6 +1726,7 @@ def validate_qualification_page_coverage(data: Mapping[str, Any], text: str, lab
     required_values: list[tuple[str, str]] = [
         ("decline_language", str(qualification["decline_language"])),
         ("review_language", str(qualification["review_language"])),
+        ("default_route", f"**Default route:** `{qualification['default_route']}`"),
     ]
     audiences = _audience_map(data)
     required_values.extend(
@@ -1191,10 +1821,15 @@ def validate_artifact_directory(data: Mapping[str, Any], output_dir: Path = OUTP
     actual: dict[str, str] = {}
     if not output_dir.exists():
         return [f"missing offer artifact directory: {output_dir}"]
-    actual_files = {path.relative_to(output_dir).as_posix() for path in output_dir.rglob("*.md") if path.is_file()}
+    actual_files = {
+        path.relative_to(output_dir).as_posix()
+        for pattern in ("*.md", "*.json")
+        for path in output_dir.rglob(pattern)
+        if path.is_file()
+    }
     for missing in sorted(EXPECTED_FILES - actual_files):
         errors.append(f"missing generated offer artifact: {missing}")
-    for unexpected in sorted(actual_files - EXPECTED_FILES):
+    for unexpected in sorted(actual_files - KNOWN_MATERIALIZED_FILES):
         errors.append(f"unexpected unmanaged offer artifact: {unexpected}")
     for filename in sorted(actual_files):
         path = output_dir / filename
@@ -1248,7 +1883,7 @@ def write_artifacts(data: Mapping[str, Any], output_dir: Path = OUTPUT_DIR) -> t
 
 
 def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
-    loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    loaded = yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
     if not isinstance(loaded, dict):
         raise OfferArtifactValidationError("contract root must be a mapping")
     return loaded
@@ -1256,7 +1891,7 @@ def load_contract(path: Path = CONTRACT_PATH) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--render", action="store_true", help="regenerate the five offer artifacts")
+    parser.add_argument("--render", action="store_true", help="regenerate the six offer artifacts")
     parser.add_argument("--check", action="store_true", help="validate source and generated artifacts")
     args = parser.parse_args()
     if not args.render and not args.check:
@@ -1283,7 +1918,7 @@ def main() -> int:
             for error in errors:
                 print(f"FAIL: {error}", file=sys.stderr)
             return 1
-        print("PASS: 5 PSP-P04 offer artifacts match the canonical contract and public-safety boundaries")
+        print("PASS: 6 PSP-P04 offer artifacts match the canonical contract and public-safety boundaries")
     return 0
 
 

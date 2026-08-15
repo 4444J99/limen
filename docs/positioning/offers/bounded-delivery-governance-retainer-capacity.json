@@ -1,0 +1,111 @@
+{
+  "canonical_source": "institutio/positioning/commercial-contract.yaml",
+  "capacity_model": {
+    "allocation": {
+      "approved_change_days": 1,
+      "scheduled_contingency_days": 1,
+      "scheduled_governance_days": 3,
+      "uncommitted_days": 1
+    },
+    "allocation_rule": "Uncommitted capacity is not on-call; it is scheduled only after sponsor approval and expires at period close.",
+    "cadence": {
+      "capacity_reviews_per_period": 1,
+      "change_window": "scheduled against the accepted backlog",
+      "closeouts_per_period": 1,
+      "evidence_reviews_per_period": 1,
+      "exception_reviews_per_period": 1
+    },
+    "consumption_rule": "Every meeting, review, analysis, message, postmortem, and approved change consumes the same finite capacity ledger.",
+    "decision_rights": {
+      "internal_owner": "Operates the system and owns daily decisions.",
+      "provider": "Advises and executes only named accepted-backlog changes within included delivery days.",
+      "provider_prohibited_actions": [
+        "direct staff",
+        "own daily operations",
+        "approve production effects",
+        "substitute for an executive"
+      ],
+      "sponsor": "Approves scope, access, capacity changes, renewal, and exit."
+    },
+    "escalation": [
+      "scope new implementation as a separate install or change order",
+      "pause material security, privacy, legal, or contractual exceptions for human review",
+      "exit when the internal owner no longer exists or the review need is no longer finite"
+    ],
+    "escalation_routes": {
+      "authority_expansion": "Stop the proposed change until the sponsor approves a named scope and acceptance path.",
+      "capacity_exhaustion": "Trade off the accepted backlog, defer to the next period, or scope a separate change order or Governance Install.",
+      "missing_owner": "Pause service and exit unless a new internal owner is named and accepts the current records.",
+      "security_privacy_legal_contract": "Pause the exception for the registered human review path; no provider override exists."
+    },
+    "exclusions": [
+      "on-call, emergency, or round-the-clock response",
+      "unlimited implementation, feature work, or repository coverage",
+      "staff augmentation or an open-ended feature-delivery queue",
+      "executive substitution or ownership of daily operations",
+      "unrecorded access expansion or informal side projects"
+    ],
+    "exhaustion_route": "At exhaustion, trade off the accepted backlog, move work to the next period, or scope a separate change order or Governance Install; no standby is implied.",
+    "hours_per_delivery_day": 6,
+    "included_artifacts": [
+      "capacity ledger",
+      "review record",
+      "exception ledger",
+      "approved change receipts",
+      "updated runbook",
+      "renewal or exit memo"
+    ],
+    "included_delivery_days": 6,
+    "included_hours": 36,
+    "offer_id": "retainer",
+    "quantity_limits": {
+      "active_change_items": 1,
+      "included_revisions_per_change": 1,
+      "repositories": 3,
+      "reviews_or_postmortems_per_period": 6,
+      "teams": 1
+    },
+    "renewal_exit": {
+      "exit_steps": [
+        "return the latest records and runbook",
+        "remove access",
+        "record current internal ownership",
+        "record the next review date or stop decision"
+      ],
+      "exit_trigger": "The internal owner disappears, the need is no longer finite, or the sponsor chooses exit.",
+      "renewal_gate": "Evidence and capacity review plus a dated written renew or narrow decision before the next period."
+    },
+    "response_envelope": {
+      "acknowledgement_target_business_days": 2,
+      "business_hours": "sponsor-agreed named business hours recorded before the period",
+      "channel": "named shared written channel",
+      "clock_pause_conditions": [
+        "outside the service window",
+        "waiting on an owner decision",
+        "waiting on required access or evidence"
+      ],
+      "decision_target_business_days": 5,
+      "emergency_response": false,
+      "on_call": false,
+      "resolution_sla": false,
+      "service_window": "scheduled business days only",
+      "target_boundary": "Planning targets only; no emergency or round-the-clock SLA.",
+      "timezone": "sponsor-agreed named timezone recorded before the period"
+    },
+    "review_period": "calendar_month",
+    "rollover": false,
+    "schema_version": "limen.positioning.retainer_capacity.v1"
+  },
+  "offer": {
+    "acceptance": "Each period ends with a capacity ledger proving consumed hours did not exceed included hours, reviewed evidence, explicit changes, current owners, and a dated written renew, narrow, or exit decision.",
+    "authority": {
+      "boundary": "The internal owner operates the system; changes occur only through the agreed backlog, access boundary, and acceptance path.",
+      "mode": "advisory_with_named_changes"
+    },
+    "id": "retainer",
+    "name": "Bounded Delivery-Governance Retainer",
+    "timeline": "One fixed review period at a time, renewable only after evidence and capacity review."
+  },
+  "schema_version": "limen.positioning.retainer_capacity_artifact.v1",
+  "work_item": "PSP-P04-W03"
+}

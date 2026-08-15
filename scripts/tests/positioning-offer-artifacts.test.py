@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -33,6 +34,10 @@ class OfferArtifactTests(unittest.TestCase):
         MODULE.write_artifacts(self.contract, output_dir)
         return output_dir
 
+    @staticmethod
+    def retainer(contract):
+        return next(item for item in contract["offer_ladder"]["items"] if item["id"] == "retainer")
+
     def test_canonical_source_and_repository_artifacts_are_valid(self) -> None:
         self.assertEqual([], MODULE.validate_contract(self.contract))
         self.assertEqual([], MODULE.validate_repository(self.contract))
@@ -42,6 +47,173 @@ class OfferArtifactTests(unittest.TestCase):
         second = MODULE.render_artifacts(copy.deepcopy(self.contract))
         self.assertEqual(first, second)
         self.assertEqual(MODULE.EXPECTED_FILES, set(first))
+
+    def test_retainer_capacity_artifact_exactly_binds_the_canonical_model(self) -> None:
+        artifacts = MODULE.render_artifacts(self.contract)
+        payload = json.loads(artifacts[MODULE.CAPACITY_FILE])
+        retainer = self.retainer(self.contract)
+        self.assertEqual("PSP-P04-W03", payload["work_item"])
+        self.assertEqual(retainer["capacity_model"], payload["capacity_model"])
+        self.assertEqual(retainer["authority"], payload["offer"]["authority"])
+        self.assertEqual(retainer["timeline"], payload["offer"]["timeline"])
+        rendered = artifacts[MODULE.OFFER_FILES["retainer"]]
+        self.assertIn("## Capacity model", rendered)
+        self.assertIn("**Included delivery days:** `6`", rendered)
+        self.assertIn("**On-call:** `false`", rendered)
+        self.assertIn("**Emergency response:** `false`", rendered)
+
+    def test_retainer_capacity_model_requires_an_exact_mapping(self) -> None:
+        malformed = copy.deepcopy(self.contract)
+        self.retainer(malformed)["capacity_model"] = "unbounded"
+        self.assert_contract_error(malformed, "capacity_model must be a non-empty mapping")
+
+        extra = copy.deepcopy(self.contract)
+        self.retainer(extra)["capacity_model"]["hidden_capacity"] = True
+        self.assert_contract_error(extra, "capacity_model fields must be exactly")
+
+    def test_retainer_capacity_model_rejects_non_string_keys_without_crashing(self) -> None:
+        malformed = copy.deepcopy(self.contract)
+        self.retainer(malformed)["capacity_model"][1] = "hidden capacity"
+        errors = MODULE.validate_contract(malformed)
+        self.assertTrue(any("capacity_model keys must be strings" in error for error in errors), errors)
+
+    def test_duplicate_yaml_members_fail_before_semantic_validation(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        path = Path(temporary.name) / "contract.yaml"
+        source = MODULE.CONTRACT_PATH.read_text(encoding="utf-8")
+        source = source.replace(
+            "        included_delivery_days: 6\n",
+            "        included_delivery_days: 30\n        included_delivery_days: 6\n",
+            1,
+        )
+        path.write_text(source, encoding="utf-8")
+        with self.assertRaisesRegex(MODULE.OfferArtifactValidationError, "duplicate YAML mapping key"):
+            MODULE.load_contract(path)
+
+    def test_retainer_capacity_allocation_is_finite_and_exact(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        capacity = self.retainer(changed)["capacity_model"]
+        capacity["allocation"]["uncommitted_days"] = 2
+        self.assert_contract_error(changed, "allocation must equal included_delivery_days exactly")
+
+        boolean = copy.deepcopy(self.contract)
+        self.retainer(boolean)["capacity_model"]["allocation"]["approved_change_days"] = True
+        self.assert_contract_error(boolean, "allocation values must be non-boolean integers")
+
+    def test_retainer_capacity_hours_are_derived_exactly(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["included_hours"] = 35
+        self.assert_contract_error(changed, "included_hours must exactly equal")
+
+    def test_retainer_numeric_scalars_are_allowlisted_by_exact_path(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["exhaustion_route"] = 25000
+        self.assert_contract_error(changed, "numeric fields must match the explicit non-monetary path allowlist")
+
+    def test_retainer_all_service_activity_consumes_one_ledger(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["consumption_rule"] = "Only approved changes consume capacity."
+        self.assert_contract_error(changed, "every service activity from one finite capacity ledger")
+
+    def test_retainer_quantity_limits_are_finite(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["quantity_limits"]["teams"] = 2
+        self.assert_contract_error(changed, "one team and one active change")
+
+        boolean = copy.deepcopy(self.contract)
+        self.retainer(boolean)["capacity_model"]["quantity_limits"]["repositories"] = True
+        self.assert_contract_error(boolean, "quantity limits must be finite positive integers")
+
+    def test_retainer_capacity_does_not_roll_over_or_imply_standby(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["rollover"] = True
+        self.assert_contract_error(changed, "must not roll over or imply standby")
+
+    def test_retainer_response_envelope_has_no_hidden_on_call(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        response = self.retainer(changed)["capacity_model"]["response_envelope"]
+        response["on_call"] = True
+        response["emergency_response"] = True
+        self.assert_contract_error(changed, "no on-call or emergency SLA")
+
+    def test_retainer_response_envelope_names_operating_clock_and_pause_conditions(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        response = self.retainer(changed)["capacity_model"]["response_envelope"]
+        response["timezone"] = "wherever the provider happens to be"
+        response["clock_pause_conditions"] = ["any delay"]
+        self.assert_contract_error(changed, "must name channel, timezone, hours, pause conditions")
+
+        resolution = copy.deepcopy(self.contract)
+        self.retainer(resolution)["capacity_model"]["response_envelope"]["resolution_sla"] = True
+        self.assert_contract_error(resolution, "must not promise a resolution SLA")
+
+    def test_retainer_response_targets_are_bounded_and_ordered(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        response = self.retainer(changed)["capacity_model"]["response_envelope"]
+        response["acknowledgement_target_business_days"] = 6
+        response["decision_target_business_days"] = 5
+        self.assert_contract_error(changed, "response targets must be ordered")
+
+    def test_retainer_decision_rights_forbid_executive_substitution(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        rights = self.retainer(changed)["capacity_model"]["decision_rights"]
+        rights["internal_owner"] = "The provider owns daily decisions."
+        rights["provider"] = "Acts as the executive operator."
+        self.assert_contract_error(changed, "preserve internal ownership and bounded provider authority")
+
+        prohibited = copy.deepcopy(self.contract)
+        self.retainer(prohibited)["capacity_model"]["decision_rights"]["provider_prohibited_actions"].remove(
+            "approve production effects"
+        )
+        self.assert_contract_error(prohibited, "preserve internal ownership and bounded provider authority")
+
+    def test_retainer_capacity_lists_exactly_bind_the_offer(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["included_artifacts"].append("informal status call")
+        self.assert_contract_error(changed, "included_artifacts must exactly match the canonical offer")
+
+        duplicated = copy.deepcopy(self.contract)
+        capacity = self.retainer(duplicated)["capacity_model"]
+        capacity["exclusions"].append(capacity["exclusions"][0])
+        self.assert_contract_error(duplicated, "exclusions must exactly match the canonical offer")
+
+    def test_retainer_renewal_and_exit_are_explicit(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        self.retainer(changed)["capacity_model"]["renewal_exit"]["exit_steps"] = ["send a summary"]
+        self.assert_contract_error(changed, "renewal and exit must be explicit")
+
+    def test_retainer_escalation_routes_are_deterministic(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        routes = self.retainer(changed)["capacity_model"]["escalation_routes"]
+        routes["missing_owner"] = "Continue while searching for an owner."
+        self.assert_contract_error(changed, "deterministically cover capacity, owner, authority")
+
+    def test_retainer_acceptance_requires_capacity_ledger_and_dated_verdict(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        retainer = self.retainer(changed)
+        retainer["evidence"]["acceptance"] = "The sponsor says the period is complete."
+        retainer["evidence"]["artifacts"].remove("capacity ledger")
+        retainer["capacity_model"]["included_artifacts"].remove("capacity ledger")
+        self.assert_contract_error(changed, "acceptance must prove capacity consumption")
+
+    def test_materialized_capacity_model_drift_fails_closed(self) -> None:
+        output_dir = self.materialize()
+        path = output_dir / MODULE.CAPACITY_FILE
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["capacity_model"]["included_delivery_days"] = 30
+        path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        errors = MODULE.validate_artifact_directory(self.contract, output_dir)
+        self.assertTrue(any("drifted from canonical YAML" in error for error in errors), errors)
+
+    def test_every_materialized_json_file_is_manifested_and_safety_scanned(self) -> None:
+        output_dir = self.materialize()
+        extra = output_dir / "obsolete.json"
+        extra.write_text('{"source": "/Users/example/private", "fee": "25000 USD"}\n', encoding="utf-8")
+        errors = MODULE.validate_artifact_directory(self.contract, output_dir)
+        self.assertTrue(any("unexpected unmanaged offer artifact: obsolete.json" in error for error in errors), errors)
+        self.assertTrue(any("private path or source leaked" in error for error in errors), errors)
+        self.assertTrue(any("numeric price leaked" in error for error in errors), errors)
 
     def test_every_offer_page_covers_every_required_canonical_value(self) -> None:
         artifacts = MODULE.render_artifacts(self.contract)
@@ -145,6 +317,112 @@ class OfferArtifactTests(unittest.TestCase):
         install_rule = next(item for item in changed["qualification"]["rules"] if item["route"] == "install")
         install_rule["none"] = []
         self.assert_contract_error(changed, "offer overlap in scenario")
+
+    def test_qualification_scenario_matrix_must_not_be_empty(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["scenarios"] = []
+        self.assert_contract_error(changed, "qualification scenario matrix must be a non-empty list")
+
+    def test_qualification_scenario_ids_must_be_unique_and_non_blank(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        scenarios = changed["qualification"]["scenarios"]
+        scenarios[1]["id"] = scenarios[0]["id"]
+        self.assert_contract_error(changed, "qualification scenario IDs must be unique non-blank strings")
+
+    def test_qualification_scenario_matrix_must_cover_every_route(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["scenarios"] = [
+            scenario for scenario in changed["qualification"]["scenarios"] if scenario["expected_route"] != "decline"
+        ]
+        self.assert_contract_error(changed, "qualification scenario matrix must cover exactly")
+
+    def test_qualification_rules_reject_malformed_priority_and_inputs(self) -> None:
+        priority = copy.deepcopy(self.contract)
+        priority["qualification"]["rules"][0]["priority"] = True
+        self.assert_contract_error(priority, "qualification rule guarded_exception.priority must be an integer")
+
+        inputs = copy.deepcopy(self.contract)
+        inputs["qualification"]["rules"][0]["any"] = ["pricing_exception", True]
+        self.assert_contract_error(
+            inputs,
+            "qualification rule guarded_exception.any must be a list of unique non-blank strings",
+        )
+
+    def test_qualification_invalid_rule_accumulates_errors_without_raising(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["rules"][0].pop("route")
+        errors = MODULE.validate_contract(changed)
+        self.assertTrue(
+            any("qualification rule guarded_exception missing required field: route" in error for error in errors),
+            errors,
+        )
+        self.assertTrue(
+            any("qualification rule guarded_exception.route must be a supported route string" in error for error in errors),
+            errors,
+        )
+
+        non_mapping = copy.deepcopy(self.contract)
+        non_mapping["qualification"]["rules"][0] = None
+        errors = MODULE.validate_contract(non_mapping)
+        self.assertTrue(
+            any("qualification rule unknown must be a non-empty mapping" in error for error in errors),
+            errors,
+        )
+
+    def test_insufficient_evidence_overrides_otherwise_matching_commercial_route(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertIn("insufficient_evidence", qualification["rules"][0]["any"])
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                qualification["rules"],
+                {
+                    "insufficient_evidence": True,
+                    "diagnosis_needed": True,
+                    "read_access": True,
+                    "sponsor_authority": True,
+                    "bounded_initiative": True,
+                },
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_unmatched_facts_fall_back_to_human_review(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                qualification["rules"],
+                {"insufficient_evidence": True},
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_first_match_precedence_uses_priority(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                list(reversed(qualification["rules"])),
+                {
+                    "partnership_interest": True,
+                    "product_readiness_evidence": True,
+                    "qualified_operator": True,
+                    "legal_terms": True,
+                },
+                qualification["default_route"],
+            ),
+        )
+
+    def test_qualification_page_binds_the_default_route(self) -> None:
+        rendered = MODULE.render_artifacts(self.contract)[MODULE.QUALIFICATION_FILE]
+        changed = rendered.replace("**Default route:** `human_review`", "**Default route:** `audit`", 1)
+        errors = MODULE.validate_qualification_page_coverage(
+            self.contract,
+            changed,
+            MODULE.QUALIFICATION_FILE,
+        )
+        self.assertTrue(any("missing canonical default_route value" in error for error in errors), errors)
 
     def test_public_partnership_promotion_in_source_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
