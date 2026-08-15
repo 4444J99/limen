@@ -334,6 +334,14 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def test_tracked_contract_is_valid(self) -> None:
         self.assertEqual([], MODULE.validate(self.production_contract))
 
+    def test_malformed_flagship_entries_fail_as_structured_validation_errors(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["flagships"] = [None]
+        self.assertIn("flagship must be an object", MODULE.validate(changed))
+
+        changed["flagships"] = None
+        self.assertIn("flagships must be a list", MODULE.validate(changed))
+
     def test_formalization_contract_exact_binds_complete_python_dependency_trees(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["formalization_gate"]["trusted_python_dependencies"]["pyyaml"]["python_source_tree_sha256"] = "0" * 64

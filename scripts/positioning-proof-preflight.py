@@ -932,8 +932,15 @@ def validate(contract: dict[str, Any]) -> list[str]:
         if not source.get("max_age_days"):
             errors.append(f"source {source.get('id', '<unknown>')} has no freshness budget")
 
+    flagships = contract.get("flagships", [])
+    if not isinstance(flagships, list):
+        errors.append("flagships must be a list")
+        flagships = []
     flagship_ids: set[str] = set()
-    for flagship in contract.get("flagships", []):
+    for flagship in flagships:
+        if not isinstance(flagship, dict):
+            errors.append("flagship must be an object")
+            continue
         flagship_id = flagship.get("id")
         if not flagship_id:
             errors.append("flagship missing id")
