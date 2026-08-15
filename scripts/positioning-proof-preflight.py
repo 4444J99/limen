@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 from http.client import HTTPException
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
@@ -368,6 +368,13 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{8,}\b"),
     re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}\b"),
     re.compile(r"(?i)https?://[^\s/:@]+:[^\s/@]+@"),
+    re.compile(
+        r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
+        r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
+        r"private[-_ ]?key|recovery[-_ ]?code)"
+        r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
+        r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
+    ),
     re.compile(
         r"(?i)(?<![A-Za-z0-9])(?:customer|client|lead|contact|person|account|private)"
         r"(?:[-_:/]+(?:id[-_:/]+)?)(?=[A-Za-z0-9._:/-]*\d)[A-Za-z0-9][A-Za-z0-9._:/-]*"
@@ -2097,8 +2104,28 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     elif isinstance(value, list):
         for index, child in enumerate(value):
             forbidden.update(_find_forbidden_demo_material(child, f"{path}[{index}]"))
-    elif isinstance(value, str) and any(pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS):
-        forbidden.add(path)
+    elif isinstance(value, str):
+        unsafe_url_parameter = False
+        try:
+            parsed = urlsplit(value)
+        except ValueError:
+            parsed = None
+        if parsed is not None and parsed.scheme.casefold() in {"http", "https"}:
+            for encoded in (parsed.query, parsed.fragment):
+                for key, _parameter_value in parse_qsl(encoded, keep_blank_values=True):
+                    normalized = _normalized_demo_key(key)
+                    compact = normalized.replace("_", "")
+                    if (
+                        normalized in FORBIDDEN_DEMO_KEYS
+                        or compact in forbidden_compact
+                        or forbidden_segments.intersection(normalized.split("_"))
+                    ):
+                        unsafe_url_parameter = True
+                        break
+                if unsafe_url_parameter:
+                    break
+        if unsafe_url_parameter or any(pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS):
+            forbidden.add(path)
     return forbidden
 
 

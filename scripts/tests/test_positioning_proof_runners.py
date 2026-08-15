@@ -516,14 +516,19 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual({"$.record_id[0]"}, findings)
 
     def test_public_safe_scan_rejects_natural_language_credential_assignments(self) -> None:
-        for value in ("The API key is hunter2alpha", "The password is correct-horse-battery-staple"):
+        for value in (
+            "The API key is hunter2alpha",
+            "The API key is: hunter2alpha",
+            'The API key is "hunter2alpha".',
+            "The password is correct-horse-battery-staple",
+            "The password was hunter2alpha",
+        ):
             with self.subTest(value=value):
                 findings = COST._find_forbidden_public_material({"limitations": [value]})
                 self.assertEqual({"$.limitations[0]"}, findings)
-        self.assertEqual(
-            set(),
-            COST._find_forbidden_public_material({"limitations": ["The API key is not collected."]}),
-        )
+        for value in ("The API key is not collected.", 'The API key is "not collected".'):
+            with self.subTest(value=value):
+                self.assertEqual(set(), COST._find_forbidden_public_material({"limitations": [value]}))
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

@@ -95,8 +95,8 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
     r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
     r"private[-_ ]?key|recovery[-_ ]?code)"
-    r"(?:\s*[:=]\s*|\s+is\s+)"
-    r"(?!(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
+    r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
+    r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
 )
 FORBIDDEN_PUBLIC_KEYS = {
     "email",

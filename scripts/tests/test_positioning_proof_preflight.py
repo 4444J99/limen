@@ -38,11 +38,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.addCleanup(authority_patch.stop)
         paths = (
             ".gitignore",
-            ".env.example",
-            ".env.template",
-            ".coderabbit.yaml",
             ".ruff.toml",
             "mise.toml",
+            "web/worker/package.json",
+            "mcp/pyproject.toml",
+            "cli/pyproject.toml",
         )
         surfaces = self.contract["surface_audit_model"]["surfaces"]
         self.contract["surface_audit_model"]["surface_sources"] = {
@@ -1133,7 +1133,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
         for mutation, expected_error in (
             ({"customer_email": "reader@example.invalid"}, "invalid exact schema"),
-            ({"evidence_urls": ["https://reader@example.invalid/private"]}, "private or credential material"),
+            (
+                {"evidence_urls": ["https://example.com/proof?access_token=plainvalue"]},
+                "private or credential material",
+            ),
         ):
             changed_receipt = copy.deepcopy(receipt)
             changed_receipt.update(mutation)
@@ -1227,6 +1230,28 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "manifest phase proof did not pass"):
                 MODULE._live_phase_verification(ROOT, "PSP-P03")
         self.assertEqual(1, run.call_count)
+
+    def test_receipt_privacy_scan_rejects_assignments_and_credential_url_parameters(self) -> None:
+        self.assertEqual(
+            {"$.limitations[0]"},
+            MODULE._find_forbidden_demo_material({"limitations": ["The password is hunter2alpha"]}),
+        )
+        self.assertEqual(
+            {"$.evidence_urls[0]"},
+            MODULE._find_forbidden_demo_material(
+                {"evidence_urls": ["https://example.com/proof?access_token=plainvalue"]}
+            ),
+        )
+        self.assertEqual(
+            set(),
+            MODULE._find_forbidden_demo_material({"evidence_urls": ["https://example.com/proof?claim_id=CLM-1"]}),
+        )
+        self.assertEqual(
+            set(),
+            MODULE._find_forbidden_demo_material(
+                {"limitations": ["API_" + "KEY" + "=\n# intentionally blank"]}
+            ),
+        )
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
@@ -1697,7 +1722,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         first_url = objects[0]["object URL or receipt"]
         safe_body = comments[first_url]["body"]
         private_receipt = json.loads(MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(safe_body)[0])
-        private_receipt["limitations"] = ["Bound private reviewer reference customer-123."]
+        private_receipt["limitations"] = ["The password is hunter2alpha."]
         comments[first_url]["body"] = (
             "<!-- positioning-external-validation-receipt -->\n```json\n" + json.dumps(private_receipt) + "\n```"
         )
