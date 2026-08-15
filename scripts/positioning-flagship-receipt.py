@@ -1233,10 +1233,20 @@ def main() -> int:
     parser.add_argument("--request", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    request = json.loads(args.request.read_text(encoding="utf-8"))
-    if not isinstance(request, dict):
-        raise ValueError("request root must be an object")
-    receipt = run_request(request, base=args.request.parent)
+    started_at = _timestamp()
+    try:
+        request = json.loads(args.request.read_text(encoding="utf-8"))
+    except OSError:
+        receipt = _blocked_receipt({}, started_at, "request file is unavailable or unreadable")
+    except UnicodeDecodeError:
+        receipt = _blocked_receipt({}, started_at, "request file must be valid UTF-8")
+    except json.JSONDecodeError:
+        receipt = _blocked_receipt({}, started_at, "request file must be valid JSON")
+    else:
+        if not isinstance(request, dict):
+            receipt = _blocked_receipt({}, started_at, "request root must be an object")
+        else:
+            receipt = run_request(request, base=args.request.parent)
     serialized = json.dumps(receipt, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(serialized, encoding="utf-8")

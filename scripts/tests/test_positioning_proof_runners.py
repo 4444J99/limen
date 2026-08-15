@@ -639,6 +639,42 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("blocked_external", result["result"])
             self.assertTrue(any(expected_error in error for error in result["errors"]))
 
+    def test_receipt_cli_emits_blocked_receipt_for_unreadable_or_malformed_request(self) -> None:
+        cases = {
+            "missing": None,
+            "invalid-utf8": b"\xff\xfe",
+            "malformed-json": b'{"schema_version":',
+            "non-object": b"[]",
+        }
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            for name, payload in cases.items():
+                with self.subTest(name=name):
+                    request_path = root / f"{name}.json"
+                    output_path = root / f"{name}-receipt.json"
+                    if payload is not None:
+                        request_path.write_bytes(payload)
+                    result = subprocess.run(
+                        [
+                            sys.executable,
+                            str(ROOT / "scripts/positioning-flagship-receipt.py"),
+                            "--request",
+                            str(request_path),
+                            "--output",
+                            str(output_path),
+                        ],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(1, result.returncode)
+                    self.assertEqual("", result.stderr)
+                    receipt = json.loads(result.stdout)
+                    self.assertEqual("limen.positioning_flagship_receipt.v1", receipt["schema_version"])
+                    self.assertEqual("blocked_external", receipt["result"])
+                    self.assertTrue(receipt["errors"])
+                    self.assertEqual(result.stdout, output_path.read_text(encoding="utf-8"))
+
     def test_receipt_request_binds_selected_flagships_to_contract_owned_predicates(self) -> None:
         contract = RECEIPT._flagship_contract("limen")
         assert contract is not None
