@@ -649,7 +649,7 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
         r"api[-_ ]?key|access[-_ ]?token|"
         r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
         r"private[-_ ]?key|recovery[-_ ]?code)"
-        r"(?:[ \t]*[:=][ \t\r\n]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t\r\n]*)"
+        r"(?:[ \t]*[:=]\s*|[ \t]+(?:is|was)[ \t]*[:=]?\s*)"
         r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
         r"(?!\#(?:[ \t]|$))\S+"
     ),
@@ -1727,17 +1727,26 @@ class _VisibleSurfaceParser(HTMLParser):
         "wbr",
     }
     _CLAUSE_BOUNDARY_TAGS = {
+        "address",
         "article",
         "aside",
+        "body",
         "blockquote",
         "br",
+        "caption",
+        "center",
         "dd",
         "details",
+        "dir",
         "div",
         "dialog",
         "dl",
         "dt",
+        "fieldset",
+        "figcaption",
+        "figure",
         "footer",
+        "form",
         "h1",
         "h2",
         "h3",
@@ -1745,18 +1754,55 @@ class _VisibleSurfaceParser(HTMLParser):
         "h5",
         "h6",
         "header",
+        "hgroup",
         "hr",
+        "html",
         "li",
         "main",
+        "menu",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "search",
+        "section",
+        "summary",
+        "table",
+        "tbody",
+        "td",
+        "tfoot",
+        "th",
+        "thead",
+        "tr",
+        "ul",
+    }
+    _P_IMPLIED_END_START_TAGS = {
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "div",
+        "dl",
+        "fieldset",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hgroup",
+        "hr",
+        "main",
+        "menu",
         "nav",
         "ol",
         "p",
         "pre",
         "section",
         "table",
-        "td",
-        "th",
-        "tr",
         "ul",
     }
     _TABLE_PARSING_TAGS = {
@@ -1857,8 +1903,13 @@ class _VisibleSurfaceParser(HTMLParser):
         if "head" in self._element_stack and tag not in self._HEAD_ALLOWED_TAGS:
             raise ValueError("surface response requires browser head-closing rules")
 
+    def _reject_implied_paragraph_closure(self, tag: str) -> None:
+        if tag in self._P_IMPLIED_END_START_TAGS and "p" in self._element_stack:
+            raise ValueError("surface response requires implied paragraph-closing rules")
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        self._reject_implied_paragraph_closure(normalized)
         if normalized == "math":
             raise ValueError("surface visibility requires MathML rendering evaluation")
         if normalized in self._ACTIVE_CONTENT_TAGS:
@@ -1906,6 +1957,7 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        self._reject_implied_paragraph_closure(normalized)
         if normalized == "math":
             raise ValueError("surface visibility requires MathML rendering evaluation")
         if normalized in self._ACTIVE_CONTENT_TAGS:
@@ -2061,6 +2113,7 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
                 negated = True
             if re.search(
                 r"\b(?:(?:it\s+is\s+)?(?:false|untrue|incorrect)\s+that|"
+                r"(?:(?:it|this)\s+is\s+)?(?:simply\s+|actually\s+|factually\s+)?not\s+the\s+case\s+that|"
                 r"cannot\s+truthfully\s+(?:say|state|claim)\s+that|"
                 r"(?:not|isnt)\s+true\s+that)\s*$",
                 prefix_text,

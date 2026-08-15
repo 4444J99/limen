@@ -91,7 +91,7 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"api[-_ ]?key|access[-_ ]?token|"
     r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
     r"private[-_ ]?key|recovery[-_ ]?code)"
-    r"(?:[ \t]*[:=][ \t\r\n]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t\r\n]*)"
+    r"(?:[ \t]*[:=]\s*|[ \t]+(?:is|was)[ \t]*[:=]?\s*)"
     r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
     r"(?!\#(?:[ \t]|$))\S+"
 )
@@ -669,15 +669,11 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
         except OSError as exc:
             raise OSError(f"trusted predicate executable is unavailable: {argv[0]}") from exc
 
-    environment = _sanitized_git_environment()
-    for key in tuple(environment):
-        upper = key.upper()
-        if (
-            key == "PATH"
-            or key in {"__PYVENV_LAUNCHER__", "VIRTUAL_ENV"}
-            or upper.startswith(("PYTHON", "NODE_", "NPM_", "PNPM_", "COREPACK_"))
-        ):
-            environment.pop(key, None)
+    environment: dict[str, str] = {}
+    for key in ("LANG", "LC_ALL", "LC_CTYPE", "TZ"):
+        value = os.environ.get(key)
+        if isinstance(value, str) and value and "\0" not in value:
+            environment[key] = value
     environment.update(
         {
             "PATH": os.pathsep.join(

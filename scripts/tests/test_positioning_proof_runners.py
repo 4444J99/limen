@@ -246,6 +246,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
                     "LD_PRELOAD": "/tmp/untrusted.so",
                     "LD_LIBRARY_PATH": directory,
                     "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
+                    "GITHUB_TOKEN": "synthetic-github-token",
+                    "AWS_SECRET_ACCESS_KEY": "synthetic-aws-secret",
+                    "OPENAI_API_KEY": "synthetic-openai-key",
                 },
                 clear=False,
             ):
@@ -271,6 +274,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn("LD_PRELOAD", environment)
         self.assertNotIn("LD_LIBRARY_PATH", environment)
         self.assertNotIn("DYLD_INSERT_LIBRARIES", environment)
+        self.assertNotIn("GITHUB_TOKEN", environment)
+        self.assertNotIn("AWS_SECRET_ACCESS_KEY", environment)
+        self.assertNotIn("OPENAI_API_KEY", environment)
         invoked_argv = runner.call_args.args[0]
         invoked_environment = runner.call_args.kwargs["environment"]
         self.assertNotEqual(str(fake_python), invoked_argv[0])
@@ -279,6 +285,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn("LD_PRELOAD", invoked_environment)
         self.assertNotIn("LD_LIBRARY_PATH", invoked_environment)
         self.assertNotIn("DYLD_INSERT_LIBRARIES", invoked_environment)
+        self.assertNotIn("GITHUB_TOKEN", invoked_environment)
+        self.assertNotIn("AWS_SECRET_ACCESS_KEY", invoked_environment)
+        self.assertNotIn("OPENAI_API_KEY", invoked_environment)
 
     def test_python_predicate_bootstrap_does_not_import_site(self) -> None:
         argv, environment, _metadata = RECEIPT._prepare_predicate_invocation(
@@ -573,6 +582,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "The password was hunter2alpha",
             "token is hunter2alpha",
             "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2028hunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2029hunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential: hunter2alpha",
             "passphrase was hunter2alpha",
         ):
@@ -1134,6 +1145,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "The password is hunter2alpha.",
             "token is hunter2alpha",
             "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2028hunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2029hunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential was hunter2alpha",
             "passcode: hunter2alpha",
             "passphrase=hunter2alpha",  # allow-secret: synthetic adversarial fixture

@@ -907,6 +907,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        address_split = MODULE._canonical_surface_extraction(
+            b"<address>Limen demonstrates governed</address>"
+            b"<address>multi-agent delivery with durable exact-head receipts</address>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        matched, drifted = MODULE._surface_claim_scan(address_split, long_expected, surface)
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
         matched, drifted = MODULE._surface_claim_scan(
             "Limen fabricates governed distributed agent delivery using durable exact commit receipts",
             long_expected,
@@ -937,6 +946,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
         for framing in (
             "It is false that Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
+            "It is not the case that Limen demonstrates governed multi-agent delivery with durable exact-head "
+            "receipts.",
             "We cannot truthfully say that Limen demonstrates governed multi-agent delivery with durable "
             "exact-head receipts.",
         ):
@@ -1092,6 +1103,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "named-details exclusivity"):
             MODULE._canonical_surface_extraction(
                 b"<details name='proof' open><summary>One</summary>Canonical claim</details>",
+                "visible_text_v3",
+            )
+        with self.assertRaisesRegex(ValueError, "implied paragraph-closing rules"):
+            MODULE._canonical_surface_extraction(
+                b"<p hidden><div>Browser-visible canonical claim</div></p>",
                 "visible_text_v3",
             )
         for math_markup in (
@@ -1807,6 +1823,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "The password is hunter2alpha",
             "token is hunter2alpha",
             "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2028hunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "token:\u2029hunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential: hunter2alpha",
         ):
             with self.subTest(assignment=assignment):

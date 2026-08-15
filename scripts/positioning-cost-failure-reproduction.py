@@ -90,7 +90,7 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"api[-_ ]?key|access[-_ ]?token|"
     r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
     r"private[-_ ]?key|recovery[-_ ]?code)"
-    r"(?:[ \t]*[:=][ \t\r\n]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t\r\n]*)"
+    r"(?:[ \t]*[:=]\s*|[ \t]+(?:is|was)[ \t]*[:=]?\s*)"
     r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
     r"(?!\#(?:[ \t]|$))\S+"
 )
