@@ -2189,7 +2189,8 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
             ):
                 negated = True
             if re.search(
-                r"\b(?:deny|denies|denied|dispute|disputes|disputed|reject|rejects|rejected)"
+                r"\b(?:deny|denies|denied|dispute|disputes|disputed|refute|refutes|refuted|"
+                r"reject|rejects|rejected)"
                 r"(?:\s+the\s+claim)?(?:\s+that)?$",
                 prefix_text,
             ):

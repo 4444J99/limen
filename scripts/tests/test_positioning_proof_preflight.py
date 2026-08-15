@@ -1014,6 +1014,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             f"We reject the claim that {long_canonical}.",
             f"She rejects the claim that {long_canonical}.",
             f"They rejected the claim that {long_canonical}.",
+            f"We refute the claim that {long_canonical}.",
+            f"She refutes the claim that {long_canonical}.",
+            f"They refuted the claim that {long_canonical}.",
         ):
             with self.subTest(denial=denial):
                 matched, drifted = MODULE._surface_claim_scan(denial, long_expected, surface)
