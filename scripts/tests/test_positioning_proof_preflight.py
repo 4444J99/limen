@@ -631,6 +631,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("timed out" in error for error in result["errors"]))
 
+    def test_preflight_main_fails_closed_on_non_mapping_surface_model(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            contract_path = Path(directory) / "contract.json"
+            changed = copy.deepcopy(self.contract)
+            changed["surface_audit_model"] = None
+            contract_path.write_text(json.dumps(changed), encoding="utf-8")
+            stdout = io.StringIO()
+            argv = [str(SCRIPT), "--contract", str(contract_path), "--mode", "validate", "--json"]
+            with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(stdout):
+                exit_code = MODULE.main()
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(1, exit_code)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("surface audit model must be an object" in error for error in result["errors"]))
+
+    def test_preflight_main_redacts_unsafe_contract_path_from_json(self) -> None:
+        unsafe_contract = "password: hunter2alpha"  # allow-secret: synthetic adversarial fixture
+        stdout = io.StringIO()
+        argv = [str(SCRIPT), "--contract", unsafe_contract, "--json"]
+        with (
+            mock.patch.object(MODULE, "load_contract", side_effect=OSError("unavailable")),
+            mock.patch.object(sys, "argv", argv),
+            contextlib.redirect_stdout(stdout),
+        ):
+            exit_code = MODULE.main()
+        serialized = stdout.getvalue()
+        result = json.loads(serialized)
+        self.assertEqual(1, exit_code)
+        self.assertEqual("fail", result["status"])
+        self.assertNotIn("hunter2alpha", serialized)
+        self.assertEqual("public-safe contract path withheld", result["contract"])
+
     def test_all_input_modes_report_malformed_json_without_tracebacks(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             malformed = Path(directory) / "malformed.json"
@@ -737,6 +769,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "Contact No. 2125551234",
             "telephone number is 12125551234",
             "contact number 12125551234",
+            "call 2125551234",
+            "text 2125551234",
+            "fax 2125551234",
         ):
             with self.subTest(telephone=telephone):
                 self.assertTrue(MODULE._surface_contains_private_material(f"Call {telephone} for access"))
@@ -973,6 +1008,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        for denial in (
+            f"We deny that {long_canonical}.",
+            f"We dispute that {long_canonical}.",
+        ):
+            with self.subTest(denial=denial):
+                matched, drifted = MODULE._surface_claim_scan(denial, long_expected, surface)
+                self.assertEqual([], matched)
+                self.assertEqual(["LONG-CLAIM"], drifted)
+
         for framing in (
             "It is false that Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
             "It is not the case that Limen demonstrates governed multi-agent delivery with durable exact-head "
@@ -1109,6 +1153,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<noembed>Canonical claim</noembed>",
             "<noframes>Canonical claim</noframes>",
             "<ruby>x<rp>Canonical claim</rp><rt>reading</rt></ruby>",
+            "<ruby>Limen<rt>x</rt></ruby><ruby> demonstrates<rt>x</rt></ruby>",
+            "<RUBY>Limen<RT>x</RT></RUBY>",
             "<audio>Canonical claim</audio>",
             "<video>Canonical claim</video>",
             "<meter value='1'>Canonical claim</meter>",

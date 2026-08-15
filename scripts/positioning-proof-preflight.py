@@ -681,7 +681,8 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
 )
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
     r"(?i)(?:"
-    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
+    r"\b(?:(?:phone|telephone|mobile|cell|call|text|fax)(?:\s+(?:number|no\.?)|\s*#)?|"
+    r"contact\s+(?:number|no\.?|#))"
     r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?[\d(][\d\s().-]{8,31}\d"
     r"|\btel:\s*\+?[\d\s().-]{10,32}"
     r"|\+\d[\d\s().-]{8,31}\d"
@@ -1137,6 +1138,9 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 errors.append(f"exact-head receipt runtime setup requires bounded output: {flagship_id}")
 
     surface_model = contract.get("surface_audit_model", {})
+    if not isinstance(surface_model, dict):
+        errors.append("surface audit model must be an object")
+        surface_model = {}
     if surface_model.get("claim_inventory_source") != "p02_claims_ledger":
         errors.append("surface audit must discover material claims from the accepted claims ledger")
     if surface_model.get("surface_levels") != EXPECTED_SURFACE_LEVELS:
@@ -1756,6 +1760,8 @@ class _VisibleSurfaceParser(HTMLParser):
         "picture",
         "progress",
         "rp",
+        "rt",
+        "ruby",
         "select",
         "textarea",
         "video",
@@ -2179,6 +2185,11 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
                 r"(?:(?:it|this)\s+is\s+)?(?:simply\s+|actually\s+|factually\s+)?not\s+the\s+case\s+that|"
                 r"cannot\s+truthfully\s+(?:say|state|claim)\s+that|"
                 r"(?:not|isnt)\s+true\s+that)\s*$",
+                prefix_text,
+            ):
+                negated = True
+            if re.search(
+                r"\b(?:deny|denies|denied|dispute|disputes|disputed)(?:\s+the\s+claim)?(?:\s+that)?$",
                 prefix_text,
             ):
                 negated = True
@@ -4719,6 +4730,12 @@ def main() -> int:
             "contract": str(args.contract),
             "status": "fail",
             "errors": [f"{failure_label} failed: {detail}"],
+        }
+    if _find_forbidden_demo_material(result):
+        result = {
+            "contract": "public-safe contract path withheld",
+            "status": "fail",
+            "errors": ["preflight output rejected by public-safety validation"],
         }
     print(json.dumps(result, indent=2) if args.json else result["status"].upper())
     return 1 if result["status"] == "fail" else 0
