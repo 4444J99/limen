@@ -821,27 +821,57 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        matched, drifted = MODULE._surface_claim_scan(
+            "Unlike products that are not open source, Limen demonstrates governed multi-agent "
+            "delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual(["LONG-CLAIM"], matched)
+        self.assertEqual([], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            "There is no evidence supporting the statement that Limen demonstrates governed "
+            "multi-agent delivery with durable exact-head receipts. Later evidence confirms that "
+            "Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual(["LONG-CLAIM"], matched)
+        self.assertEqual([], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
-        first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
-        second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
-        changed = b"<html><body><h1>Inflated proof claim</h1><script>nonce='three'</script></body></html>"
+        first = b"<html data-nonce='one'><body><h1>Bounded proof claim</h1></body></html>"
+        second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1></body></html>"
+        changed = b"<html data-nonce='three'><body><h1>Inflated proof claim</h1></body></html>"
         first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v3")
         second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v3")
         changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v3")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
-        for hidden_tag in ("script", "style", "template", "noscript", "svg"):
+        for hidden_tag in ("style", "template", "noscript", "svg"):
             with self.subTest(hidden_tag=hidden_tag):
                 with self.assertRaisesRegex(ValueError, "unterminated hidden"):
                     MODULE._canonical_surface_extraction(
                         f"<html><body>Bounded proof claim<{hidden_tag}>hidden inflated proof claim".encode(),
                         "visible_text_v3",
                     )
-        malformed_closing = MODULE._canonical_surface_extraction(
-            b"<html><body>Bounded proof claim<script>hidden inflated claim</script attr></body></html>",
+        metadata_only = MODULE._canonical_surface_extraction(
+            b"<html><head><title>Metadata proof claim</title></head><body>Visible proof</body></html>",
             "visible_text_v3",
         )
-        self.assertNotIn(b"hidden", malformed_closing)
+        self.assertEqual(b"Visible proof\n", metadata_only)
+        for executable_markup in (
+            "<script>document.body.hidden=true</script><p>Claim</p>",
+            "<script src='/visibility.js'></script><p>Claim</p>",
+            "<p onclick='this.hidden=true'>Claim</p>",
+            "<p ONLOAD='this.hidden=true'>Claim</p>",
+            "<a href='javascript:this.hidden=true'>Claim</a>",
+            "<iframe src='/visibility.html'>Claim</iframe>",
+        ):
+            with self.subTest(executable_markup=executable_markup):
+                with self.assertRaisesRegex(ValueError, "executable"):
+                    MODULE._canonical_surface_extraction(executable_markup.encode(), "visible_text_v3")
         for hidden_markup in (
             "<div hidden>hidden@example.invalid</div>",
             "<section aria-hidden='true'>hidden@example.invalid</section>",
@@ -1492,6 +1522,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(
             set(),
             MODULE._find_forbidden_demo_material({"limitations": ["API_" + "KEY" + "=\n# intentionally blank"]}),
+        )
+        self.assertEqual(
+            {"$.limitations[0]"},
+            MODULE._find_forbidden_demo_material(
+                {"limitations": ["See https://example.com/proof?api%5Fkey=plainvalue for proof."]}
+            ),
         )
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
@@ -2318,11 +2354,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "_canonical_limen_remote_head",
                 return_value=("main", MODULE.C03_MERGE_COMMIT),
             ),
-            mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=True) as contains,
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_containment",
+                return_value={MODULE.C03_MERGE_COMMIT: True},
+            ) as contains,
         ):
             result = MODULE._live_authoritative_closure_verification(ROOT, MODULE.C03_MERGE_COMMIT)
         self.assertTrue(result["contained"])
-        contains.assert_called_once_with("main", MODULE.C03_MERGE_COMMIT, MODULE.C03_MERGE_COMMIT)
+        contains.assert_called_once_with(
+            "main",
+            MODULE.C03_MERGE_COMMIT,
+            {MODULE.C03_MERGE_COMMIT},
+            None,
+        )
 
     def test_canonical_closure_ancestry_fetches_before_using_the_isolated_object_store(self) -> None:
         completed = subprocess.CompletedProcess([], 0, b"", b"")
@@ -2491,19 +2536,62 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
     def test_phase_receipts_bind_exact_live_marked_receipts(self) -> None:
         bindings, live = self._valid_phase_bindings()
-        self.assertEqual(
-            [],
-            MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live),
+        with (
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_remote_head",
+                return_value=("main", MODULE.C03_CURRENT_HEAD),
+            ),
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_containment",
+                return_value={MODULE.C03_CURRENT_HEAD: True},
+            ) as contains,
+            mock.patch.object(
+                MODULE,
+                "_sanitized_ancestry",
+                side_effect=AssertionError("caller object store must not decide phase ancestry"),
+            ),
+        ):
+            self.assertEqual(
+                [],
+                MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live),
+            )
+        contains.assert_called_once_with(
+            "main",
+            MODULE.C03_CURRENT_HEAD,
+            {MODULE.C03_CURRENT_HEAD},
+            MODULE.C03_CURRENT_HEAD,
         )
         phase = bindings["PSP-P04"]
         assert isinstance(phase, dict)
         phase["receipt_sha256"] = "c" * 64
-        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live)
+        with (
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_remote_head",
+                return_value=("main", MODULE.C03_CURRENT_HEAD),
+            ),
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_containment",
+                return_value={MODULE.C03_CURRENT_HEAD: True},
+            ),
+        ):
+            errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, MODULE.C03_CURRENT_HEAD, live)
         self.assertTrue(any("differs from the latest marked live phase receipt" in error for error in errors))
 
     def test_phase_receipt_observed_heads_must_precede_the_closure_head(self) -> None:
         bindings, live = self._valid_phase_bindings()
-        errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, "0" * 40, live)
+        with (
+            mock.patch.object(MODULE, "_canonical_limen_remote_head", return_value=("main", "f" * 40)),
+            mock.patch.object(
+                MODULE,
+                "_canonical_limen_containment",
+                return_value={MODULE.C03_CURRENT_HEAD: False},
+            ),
+        ):
+            errors = MODULE._validate_phase_receipt_bindings(bindings, ROOT, "0" * 40, live)
         self.assertTrue(any("not an ancestor of the closure head" in error for error in errors))
 
     def test_w07_receipt_requires_the_exact_tracked_predicate_command(self) -> None:

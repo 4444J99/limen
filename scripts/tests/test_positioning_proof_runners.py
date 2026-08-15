@@ -580,12 +580,17 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 self.assertEqual(set(), COST._find_forbidden_public_material({"limitations": [value]}))
 
     def test_public_safe_scan_decodes_credential_url_parameter_names(self) -> None:
+        forbidden_key = "api" + "_key"
+        deeply_nested = f"https://target.example/proof?{forbidden_key}=plainvalue"
+        for index in range(COST.PUBLIC_URL_NESTING_LIMIT + 2):
+            deeply_nested = f"https://redirect-{index}.example/proof?next={quote(deeply_nested, safe='')}"
         for value in (
             "https://example.com/proof?api%5Fkey=plainvalue",
             "See https://example.com/proof#access%2Dtoken=plainvalue for the replay.",
             "https://example.com/proof?apiKey=",
             "https://user:password@example.com/proof",
             "https://example.com/proof?next=https%3A%2F%2Fother.example%2Fproof%3Fapi_key%3Dplainvalue",
+            deeply_nested,
         ):
             with self.subTest(value=value):
                 self.assertEqual(
@@ -595,6 +600,10 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertEqual(
             set(),
             COST._find_forbidden_public_material({"limitations": ["https://example.com/proof?claim_id=CLM-1"]}),
+        )
+        self.assertEqual(
+            set(),
+            COST._find_forbidden_public_material({"limitations": ["https://example.com/proof?next=bounded%252Dproof"]}),
         )
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
@@ -1119,6 +1128,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "See https://example.com/proof?api%5Fkey=plainvalue for proof.",
             "See https://example.com/proof?next=https%253A%252F%252Fexample.com%252F%253Faccess_token%253Dplainvalue.",
             f"See {nested_credential_url} for proof.",
+            "See https://example.com/proof?next=%2F%2Ftarget.example%2F%3Fapi_key%3Dplainvalue for proof.",
         )
         for limitation in unsafe_limitations:
             with self.subTest(limitation=limitation):
@@ -1145,6 +1155,37 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 self.assertEqual("blocked_external", result["result"])
                 self.assertEqual([], result["limitations"])
                 self.assertNotIn(limitation, json.dumps(result, sort_keys=True))
+
+    def test_validation_error_receipts_do_not_copy_unsafe_request_fields(self) -> None:
+        request = {
+            "schema_version": RECEIPT.SCHEMA_VERSION,
+            "flagship_id": "password is hunter2alpha",
+            "repository": "example/synthetic",
+            "repository_path": "/tmp/synthetic",
+            "default_branch": "main",
+            "expected_head": "a" * 40,
+            "predicate": {
+                "argv": ["python3", "-c", "print('pass')"],
+                "timeout_seconds": 10,
+                "max_output_bytes": 4096,
+            },
+            "limitations": ["Synthetic fixture only."],
+            "api_key_hunter2alpha": "rejected",
+        }
+        with mock.patch.object(RECEIPT, "_proof_contract_snapshot", return_value=({}, {})):
+            result = RECEIPT.run_request(request)
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertEqual("blocked_external", result["result"])
+        self.assertNotIn("hunter2alpha", serialized)
+        self.assertNotIn("flagship_id", result)
+        self.assertEqual(["Synthetic fixture only."], result["limitations"])
+
+        secret_exception = "contract inspection failed: password is hunter2alpha"
+        with mock.patch.object(RECEIPT, "_proof_contract_snapshot", side_effect=ValueError(secret_exception)):
+            failed = RECEIPT.run_request({"limitations": ["Synthetic fixture only."]})
+        failed_serialized = json.dumps(failed, sort_keys=True)
+        self.assertNotIn("hunter2alpha", failed_serialized)
+        self.assertNotIn(secret_exception, failed_serialized)
 
     def test_receipt_cli_emits_blocked_receipt_for_unreadable_or_malformed_request(self) -> None:
         cases = {

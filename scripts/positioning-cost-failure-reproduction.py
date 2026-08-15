@@ -17,7 +17,7 @@ from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
 from typing import Any
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 
 
@@ -250,24 +250,64 @@ def _public_authenticated_identity(value: object) -> bool:
     return isinstance(value, str) and bool(AUTHENTICATED_IDENTITY.fullmatch(value))
 
 
-def _public_url_has_forbidden_parameters(value: str, *, nested: bool = False) -> bool:
-    for match in re.finditer(r"https?://[^\s<>\"']+", value, re.IGNORECASE):
-        candidate = match.group(0).rstrip(".,);]")
-        try:
-            parsed = urlsplit(candidate)
-        except ValueError:
-            return True
-        if parsed.username is not None or parsed.password is not None:
-            return True
-        for encoded_parameters in (parsed.query, parsed.fragment):
-            for key, parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
-                normalized_key = re.sub(r"[^a-z0-9]", "", key.casefold())
-                if normalized_key in FORBIDDEN_PUBLIC_KEYS or any(
-                    normalized_key.endswith(suffix) for suffix in FORBIDDEN_PUBLIC_KEY_SUFFIXES
-                ):
-                    return True
-                if not nested and _public_url_has_forbidden_parameters(parameter_value, nested=True):
-                    return True
+PUBLIC_URL = re.compile(r"(?i)(?:https?:)?//[^\s<>\"']+")
+PUBLIC_URL_NESTING_LIMIT = 4
+PUBLIC_URL_NODE_LIMIT = 64
+
+
+def _public_url_has_forbidden_parameters(
+    value: str,
+    *,
+    depth: int = 0,
+    visited: set[str] | None = None,
+    remaining_nodes: list[int] | None = None,
+) -> bool:
+    if visited is None:
+        visited = set()
+    if remaining_nodes is None:
+        remaining_nodes = [PUBLIC_URL_NODE_LIMIT]
+    candidates = [value]
+    decoded = value
+    for _attempt in range(3):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            break
+        candidates.append(next_value)
+        decoded = next_value
+    for candidate_text in candidates:
+        for match in PUBLIC_URL.finditer(candidate_text):
+            candidate = match.group(0).rstrip(".,);]")
+            if candidate.startswith("//"):
+                candidate = f"https:{candidate}"
+            if candidate in visited:
+                continue
+            visited.add(candidate)
+            remaining_nodes[0] -= 1
+            if remaining_nodes[0] < 0:
+                return True
+            try:
+                parsed = urlsplit(candidate)
+            except ValueError:
+                return True
+            if parsed.username is not None or parsed.password is not None:
+                return True
+            for encoded_parameters in (parsed.query, parsed.fragment):
+                for key, parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
+                    normalized_key = re.sub(r"[^a-z0-9]", "", key.casefold())
+                    if normalized_key in FORBIDDEN_PUBLIC_KEYS or any(
+                        normalized_key.endswith(suffix) for suffix in FORBIDDEN_PUBLIC_KEY_SUFFIXES
+                    ):
+                        return True
+                    if PUBLIC_URL.search(unquote(parameter_value)):
+                        if depth >= PUBLIC_URL_NESTING_LIMIT:
+                            return True
+                        if _public_url_has_forbidden_parameters(
+                            parameter_value,
+                            depth=depth + 1,
+                            visited=visited,
+                            remaining_nodes=remaining_nodes,
+                        ):
+                            return True
     return False
 
 

@@ -18,7 +18,7 @@ import sys
 import tempfile
 import zipfile
 from http.client import HTTPException
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
 from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
@@ -1629,7 +1629,9 @@ def _normalized_surface_text(value: str) -> str:
 
 
 class _VisibleSurfaceParser(HTMLParser):
-    _HIDDEN_TAGS = {"script", "style", "template", "noscript", "svg"}
+    _HIDDEN_TAGS = {"head", "script", "style", "template", "title", "noscript", "svg"}
+    _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script"}
+    _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
         "area",
         "base",
@@ -1721,6 +1723,14 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized: dict[str, str | None] = {}
         for name, value in attrs:
             key = name.casefold()
+            if key.startswith("on") and len(key) > 2:
+                raise ValueError("surface visibility requires executable event-handler evaluation")
+            if (
+                key in cls._EXECUTABLE_URI_ATTRIBUTES
+                and isinstance(value, str)
+                and value.lstrip().casefold().startswith("javascript:")
+            ):
+                raise ValueError("surface visibility requires executable URI evaluation")
             if key in {"hidden", "aria-hidden", "style", "rel", "open", "popover"} and key in normalized:
                 raise ValueError("surface response duplicates a visibility or stylesheet-control attribute")
             normalized[key] = value
@@ -1753,6 +1763,8 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        if normalized in self._ACTIVE_CONTENT_TAGS:
+            raise ValueError("surface visibility requires executable active-content evaluation")
         self._reject_closed_details_table_ambiguity(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
@@ -1787,6 +1799,8 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        if normalized in self._ACTIVE_CONTENT_TAGS:
+            raise ValueError("surface visibility requires executable active-content evaluation")
         self._reject_closed_details_table_ambiguity(normalized)
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
@@ -1909,39 +1923,37 @@ def _surface_claim_scan(
 
 def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
     canonical_tokens = canonical.split()
-    negations = {
-        "cannot",
-        "cant",
-        "contradicts",
-        "denied",
-        "denies",
-        "didn",
-        "doesn",
-        "false",
-        "falsely",
-        "incorrect",
-        "incorrectly",
-        "isn",
-        "never",
-        "no",
-        "not",
-        "rejects",
-        "untrue",
-        "wasn",
-        "without",
-        "won",
-        "wrong",
-        "wrongly",
-    }
     if not canonical_tokens:
         return False
+    occurrence_results: list[bool] = []
     for raw_segment in re.split(r"[\n\r.!?;]+", html.unescape(inspected_text)):
         segment = _normalized_surface_text(raw_segment)
-        if f" {canonical} " not in f" {segment} ":
-            continue
-        if negations.intersection(segment.split()):
-            return True
-    return False
+        segment_tokens = segment.split()
+        width = len(canonical_tokens)
+        for start in range(len(segment_tokens) - width + 1):
+            if segment_tokens[start : start + width] != canonical_tokens:
+                continue
+            prefix = segment_tokens[:start]
+            suffix = segment_tokens[start + width :]
+            negated = bool(prefix[-1:] and prefix[-1] in {"cannot", "cant", "never", "no", "not", "without"})
+            prefix_text = " ".join(prefix[-12:])
+            if re.search(r"\b(?:no|without)\s+(?:credible\s+)?evidence\b(?:\s+[a-z0-9]+){0,8}$", prefix_text):
+                negated = True
+            if set(suffix[:4]).intersection(
+                {
+                    "contradicted",
+                    "contradicts",
+                    "denied",
+                    "false",
+                    "incorrect",
+                    "rejected",
+                    "untrue",
+                    "wrong",
+                }
+            ):
+                negated = True
+            occurrence_results.append(negated)
+    return bool(occurrence_results) and all(occurrence_results)
 
 
 def _surface_contains_private_material(inspected_text: str) -> bool:
@@ -2487,6 +2499,59 @@ def _normalized_demo_key(value: object) -> str:
     return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
 
 
+DEMO_URL = re.compile(r"(?i)(?:https?:)?//[^\s<>\"']+")
+DEMO_URL_NESTING_LIMIT = 4
+
+
+def _demo_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bool:
+    candidates = [value]
+    decoded = value
+    for _attempt in range(3):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            break
+        candidates.append(next_value)
+        decoded = next_value
+    forbidden_compact = {key.replace("_", "") for key in FORBIDDEN_DEMO_KEYS}
+    forbidden_segments = {
+        "credential",
+        "customer",
+        "email",
+        "passcode",
+        "passphrase",
+        "passwd",
+        "password",
+        "pwd",
+        "secret",
+        "token",
+    }
+    for candidate_text in candidates:
+        for match in DEMO_URL.finditer(candidate_text):
+            candidate = match.group(0).rstrip(".,);]")
+            try:
+                parsed = urlsplit(candidate if not candidate.startswith("//") else f"https:{candidate}")
+            except ValueError:
+                return True
+            if parsed.username is not None or parsed.password is not None:
+                return True
+            for encoded in (parsed.query, parsed.fragment):
+                for key, parameter_value in parse_qsl(encoded, keep_blank_values=True):
+                    normalized = _normalized_demo_key(key)
+                    compact = normalized.replace("_", "")
+                    if (
+                        normalized in FORBIDDEN_DEMO_KEYS
+                        or compact in forbidden_compact
+                        or forbidden_segments.intersection(normalized.split("_"))
+                    ):
+                        return True
+                    if DEMO_URL.search(unquote(parameter_value)):
+                        if depth >= DEMO_URL_NESTING_LIMIT:
+                            return True
+                        if _demo_url_contains_forbidden_material(parameter_value, depth=depth + 1):
+                            return True
+    return False
+
+
 def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
     forbidden: set[str] = set()
     forbidden_compact = {key.replace("_", "") for key in FORBIDDEN_DEMO_KEYS}
@@ -2517,26 +2582,9 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
         for index, child in enumerate(value):
             forbidden.update(_find_forbidden_demo_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
-        unsafe_url_parameter = False
-        try:
-            parsed = urlsplit(value)
-        except ValueError:
-            parsed = None
-        if parsed is not None and parsed.scheme.casefold() in {"http", "https"}:
-            for encoded in (parsed.query, parsed.fragment):
-                for key, _parameter_value in parse_qsl(encoded, keep_blank_values=True):
-                    normalized = _normalized_demo_key(key)
-                    compact = normalized.replace("_", "")
-                    if (
-                        normalized in FORBIDDEN_DEMO_KEYS
-                        or compact in forbidden_compact
-                        or forbidden_segments.intersection(normalized.split("_"))
-                    ):
-                        unsafe_url_parameter = True
-                        break
-                if unsafe_url_parameter:
-                    break
-        if unsafe_url_parameter or any(pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS):
+        if _demo_url_contains_forbidden_material(value) or any(
+            pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS
+        ):
             forbidden.add(path)
     return forbidden
 
@@ -3379,19 +3427,21 @@ def _fetch_canonical_limen_objects(
         return objects
 
 
-def _canonical_limen_contains_head(
+def _canonical_limen_containment(
     default_branch: str,
     default_head: str,
-    candidate_head: str,
+    candidate_heads: set[str],
     descendant_head: str | None = None,
-) -> bool:
-    """Fetch canonical history into an isolated store before proving ancestry."""
+) -> dict[str, bool]:
+    """Fetch canonical history once and prove every requested ancestry relation inside it."""
     if (
         not isinstance(default_branch, str)
         or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", default_branch)
         or any(token in default_branch for token in ("..", "//", "@{", "\\"))
         or not FULL_HEAD.fullmatch(default_head)
-        or not FULL_HEAD.fullmatch(candidate_head)
+        or not isinstance(candidate_heads, set)
+        or not candidate_heads
+        or any(not FULL_HEAD.fullmatch(head) for head in candidate_heads)
         or (descendant_head is not None and not FULL_HEAD.fullmatch(descendant_head))
     ):
         raise ValueError("canonical organvm/limen ancestry request is invalid")
@@ -3437,7 +3487,8 @@ def _canonical_limen_contains_head(
         )
         if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
             raise ValueError("fetched canonical organvm/limen head differs from the advertised head")
-        for head in dict.fromkeys((candidate_head, descendant_head)):
+        available: dict[str, bool] = {}
+        for head in dict.fromkeys((*sorted(candidate_heads), descendant_head)):
             if head is None:
                 continue
             candidate = subprocess.run(
@@ -3448,26 +3499,47 @@ def _canonical_limen_contains_head(
                 capture_output=True,
                 timeout=30,
             )
-            if candidate.returncode != 0:
-                return False
+            available[head] = candidate.returncode == 0
         descendant = descendant_head or canonical_ref
-        ancestry = subprocess.run(
-            [
-                trusted_git,
-                "--git-dir",
-                str(object_store),
-                "merge-base",
-                "--is-ancestor",
-                candidate_head,
-                descendant,
-            ],
-            cwd=anchor,
-            env=environment,
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        return ancestry.returncode == 0
+        if descendant_head is not None and not available.get(descendant_head, False):
+            return {head: False for head in candidate_heads}
+        containment: dict[str, bool] = {}
+        for candidate_head in sorted(candidate_heads):
+            if not available.get(candidate_head, False):
+                containment[candidate_head] = False
+                continue
+            ancestry = subprocess.run(
+                [
+                    trusted_git,
+                    "--git-dir",
+                    str(object_store),
+                    "merge-base",
+                    "--is-ancestor",
+                    candidate_head,
+                    descendant,
+                ],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            containment[candidate_head] = ancestry.returncode == 0
+        return containment
+
+
+def _canonical_limen_contains_head(
+    default_branch: str,
+    default_head: str,
+    candidate_head: str,
+    descendant_head: str | None = None,
+) -> bool:
+    return _canonical_limen_containment(
+        default_branch,
+        default_head,
+        {candidate_head},
+        descendant_head,
+    ).get(candidate_head, False)
 
 
 def _live_authoritative_closure_verification(repository: Path, closure_head: str) -> dict[str, Any]:
@@ -3532,6 +3604,7 @@ def _validate_phase_receipt_bindings(
             return [str(exc)]
     errors: list[str] = []
     valid_closure_head = isinstance(closure_head, str) and bool(FULL_HEAD.fullmatch(closure_head))
+    ancestry_candidates: dict[str, str] = {}
     if not valid_closure_head:
         errors.append("phase receipts require a full closure exact head")
     for phase_id in phases:
@@ -3578,10 +3651,22 @@ def _validate_phase_receipt_bindings(
         if not isinstance(observed_head, str) or not FULL_HEAD.fullmatch(observed_head):
             errors.append(f"live {phase_id} receipt observed head is not a full Git head")
             continue
-        if valid_closure_head:
-            ancestry = _sanitized_ancestry(repository, observed_head, closure_head)
-            if ancestry.returncode != 0:
-                errors.append(f"live {phase_id} receipt observed head is not an ancestor of the closure head")
+        ancestry_candidates[phase_id] = observed_head
+    if valid_closure_head and ancestry_candidates:
+        try:
+            default_branch, default_head = _canonical_limen_remote_head()
+            containment = _canonical_limen_containment(
+                default_branch,
+                default_head,
+                set(ancestry_candidates.values()),
+                closure_head,
+            )
+        except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+            errors.append(f"canonical phase ancestry authority is unavailable: {exc}")
+        else:
+            for phase_id, observed_head in ancestry_candidates.items():
+                if not containment.get(observed_head, False):
+                    errors.append(f"live {phase_id} receipt observed head is not an ancestor of the closure head")
     return errors
 
 

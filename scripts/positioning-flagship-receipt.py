@@ -111,6 +111,7 @@ FORBIDDEN_PUBLIC_URL_KEYS = {
     "recoverycode",
     "token",
 }
+PUBLIC_URL = re.compile(r"(?i)(?:https?:)?//[^\s<>\"']+")
 DARWIN_PAUSED_EXEC = r"""
 import json
 import os
@@ -307,8 +308,10 @@ def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bo
         candidates.append(next_value)
         decoded = next_value
     for candidate_text in candidates:
-        for match in re.finditer(r"https?://[^\s<>\"']+", candidate_text, re.IGNORECASE):
+        for match in PUBLIC_URL.finditer(candidate_text):
             candidate = match.group(0).rstrip(".,);]")
+            if candidate.startswith("//"):
+                candidate = f"https:{candidate}"
             try:
                 parsed = urlsplit(candidate)
             except ValueError:
@@ -329,7 +332,7 @@ def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bo
                             if next_parameter == decoded_parameter:
                                 break
                             decoded_parameter = next_parameter
-                        if re.search(r"https?://", decoded_parameter, re.IGNORECASE):
+                        if PUBLIC_URL.search(decoded_parameter):
                             return True
     return False
 
@@ -357,6 +360,16 @@ def _public_safe_limitations(value: object) -> bool:
     )
 
 
+def _safe_public_error_message(value: object) -> str:
+    generic = "receipt request failed closed without retaining unsafe input"
+    if not isinstance(value, str) or not value.strip() or _public_text_contains_forbidden_material(value):
+        return generic
+    normalized_tokens = {_normalized_public_key(token) for token in re.findall(r"[A-Za-z0-9_-]+", value)}
+    if normalized_tokens.intersection(FORBIDDEN_PUBLIC_URL_KEYS):
+        return generic
+    return value
+
+
 def _safe_blocked_receipt_envelope(request: dict[str, Any]) -> dict[str, Any]:
     envelope: dict[str, Any] = {}
     flagship_id = request.get("flagship_id")
@@ -382,7 +395,7 @@ def validate_request(request: dict[str, Any], *, contract_payload: dict[str, Any
     errors: list[str] = []
     unexpected = sorted(set(request) - REQUEST_FIELDS)
     if unexpected:
-        errors.append(f"request has prohibited or unknown fields: {', '.join(unexpected)}")
+        errors.append("request has prohibited or unknown fields")
     if request.get("schema_version") != SCHEMA_VERSION:
         errors.append("unsupported request schema")
     for field in (
@@ -421,7 +434,7 @@ def validate_request(request: dict[str, Any], *, contract_payload: dict[str, Any
     else:
         unexpected_predicate = sorted(set(predicate) - PREDICATE_FIELDS)
         if unexpected_predicate:
-            errors.append(f"predicate has prohibited or unknown fields: {', '.join(unexpected_predicate)}")
+            errors.append("predicate has prohibited or unknown fields")
         argv = predicate.get("argv")
         if (
             not isinstance(argv, list)
@@ -477,7 +490,7 @@ def _blocked_receipt(
         "result": "blocked_external",
         "started_at": started_at,
         "finished_at": _timestamp(),
-        "errors": [error],
+        "errors": [_safe_public_error_message(error)],
         "limitations": request.get("limitations", []) if _public_safe_limitations(request.get("limitations")) else [],
     }
     if observed_head is not None:
@@ -1613,11 +1626,14 @@ def run_request(
     if errors:
         return {
             "schema_version": "limen.positioning_flagship_receipt.v1",
-            "flagship_id": request.get("flagship_id"),
+            **_safe_blocked_receipt_envelope(request),
             "result": "blocked_external",
             "started_at": started_at,
             "finished_at": _timestamp(),
-            "errors": errors,
+            "errors": [_safe_public_error_message(error) for error in errors],
+            "limitations": (
+                request.get("limitations", []) if _public_safe_limitations(request.get("limitations")) else []
+            ),
         }
 
     repository_path = Path(request["repository_path"])
