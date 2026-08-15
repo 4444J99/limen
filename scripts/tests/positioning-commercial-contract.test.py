@@ -28,6 +28,10 @@ class CommercialContractTests(unittest.TestCase):
         errors = self.errors(contract)
         self.assertTrue(any(phrase in error for error in errors), errors)
 
+    @staticmethod
+    def retainer(contract):
+        return next(item for item in contract["offer_ladder"]["items"] if item["id"] == "retainer")
+
     def test_canonical_contract_is_semantically_valid(self) -> None:
         self.assertEqual([], self.errors())
 
@@ -70,6 +74,21 @@ class CommercialContractTests(unittest.TestCase):
         changed = copy.deepcopy(self.contract)
         changed["contract"]["accepted_state"]["active_reader_gate"]["current_valid_readers"] = 1
         self.assert_has_error(changed, "must reflect durable collected evidence")
+
+    def test_reader_gate_blocks_phase_close_but_not_eligible_leaf_execution(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["contract"]["accepted_state"]["p04"]["state"] = "staged_dependency_blocked"
+        self.assert_has_error(changed, "leaf-execution and phase-close dependency binding drifted")
+
+    def test_shared_retainer_capacity_semantics_cannot_false_green(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        capacity = self.retainer(changed)["capacity_model"]
+        capacity["included_hours"] = capacity["included_hours"] + 1
+        self.assert_has_error(changed, "included_hours must exactly equal")
+
+        unbounded = copy.deepcopy(self.contract)
+        self.retainer(unbounded)["capacity_model"]["rollover"] = True
+        self.assert_has_error(unbounded, "must not roll over or imply standby")
 
     def test_audience_confusion_fails_closed(self) -> None:
         changed = copy.deepcopy(self.contract)
@@ -128,6 +147,29 @@ class CommercialContractTests(unittest.TestCase):
         )
         errors = MODULE.validate_p03_matrix(changed)
         self.assertTrue(any("must map to interview_threat_contract" in error for error in errors), errors)
+
+    def test_p04_matrix_cannot_reintroduce_a_phase_wide_leaf_block(self) -> None:
+        matrix = MODULE.P04_MATRIX_PATH.read_text()
+        self.assertEqual([], MODULE.validate_p04_matrix(matrix, self.contract))
+        changed = matrix.replace(
+            "Independently eligible P04 leaves may merge and receipt-close after their own predicates pass",
+            "all P04 leaves remain open until PSP-P03 closes",
+            1,
+        )
+        errors = MODULE.validate_p04_matrix(changed, self.contract)
+        self.assertTrue(any("stale phase-wide leaf block" in error for error in errors), errors)
+
+    def test_p04_matrix_rows_exactly_bind_canonical_leaf_dependencies(self) -> None:
+        matrix = MODULE.P04_MATRIX_PATH.read_text()
+        program = MODULE.yaml.safe_load(MODULE.PROGRAM_PATH.read_text())
+        self.assertEqual([], MODULE.validate_p04_matrix_dependencies(matrix, program))
+        changed = matrix.replace(
+            "Dependencies: `[PSP-P04-W01, PSP-P04-W02, PSP-P04-W03]`. Owner must also approve",
+            "Dependencies: `[PSP-P04-W01]`. Owner must also approve",
+            1,
+        )
+        errors = MODULE.validate_p04_matrix_dependencies(changed, program)
+        self.assertTrue(any("PSP-P04-W05 dependency drift" in error for error in errors), errors)
 
 
 if __name__ == "__main__":
