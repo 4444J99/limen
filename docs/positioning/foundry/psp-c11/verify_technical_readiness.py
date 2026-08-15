@@ -441,7 +441,8 @@ def load_private_clearance_receipts() -> dict[str, str]:
 
 
 def _private_identity_leaks(private_names: set[str], private_bare_names: set[str]) -> list[str]:
-    names = {name.casefold() for name in private_names | private_bare_names if name}
+    full_names = {name.casefold() for name in private_names if name}
+    bare_names = {name.casefold() for name in private_bare_names if name}
     repository_character = r"A-Za-z0-9_.-"
     leaks: set[str] = set()
     try:
@@ -463,14 +464,19 @@ def _private_identity_leaks(private_names: set[str], private_bare_names: set[str
             relative = path.relative_to(ROOT)
         except ValueError:
             relative = path
-        haystacks = [relative.as_posix().casefold(), *(part.casefold() for part in relative.parts)]
+        path_haystacks = [relative.as_posix().casefold(), *(part.casefold() for part in relative.parts)]
+        content = ""
         try:
-            haystacks.append(path.read_text(encoding="utf-8").casefold())
+            content = path.read_text(encoding="utf-8").casefold()
         except UnicodeDecodeError:
             pass
-        for name in names:
+        for name in full_names:
             pattern = rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])"
-            if any(re.search(pattern, haystack) for haystack in haystacks):
+            if re.search(pattern, content) or any(re.search(pattern, haystack) for haystack in path_haystacks):
+                leaks.add(display_path(path))
+        for name in bare_names:
+            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])"
+            if any(re.search(pattern, haystack) for haystack in path_haystacks):
                 leaks.add(display_path(path))
     return sorted(leaks)
 

@@ -114,7 +114,9 @@ drift, unpinned evidence, metadata promoted to build/test/deploy proof, score or
 unowned blockers, private detail, private-name leakage, and transfer eligibility with any hard
 blocker. Live mode re-queries all public repository heads and scans the tracked public C11 package
 against private full names and unique private bare tokens held only in memory. That scan is
-case-insensitive and covers tracked path names and components as well as file content.
+case-insensitive: full `owner/repository` identities are checked in tracked file content and paths,
+while ambiguous bare names are checked only in tracked path names and components so ordinary prose
+cannot become a false identity disclosure.
 
 Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
 verified dimension requires a candidate-repository URL pinned to the observed exact head and a

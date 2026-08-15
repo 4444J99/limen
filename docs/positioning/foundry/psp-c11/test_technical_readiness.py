@@ -700,6 +700,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
             self.assertEqual(["tracked.md"], leaks)
 
+    def test_generic_private_bare_name_in_prose_is_not_an_identity_leak(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            package = Path(directory)
+            tracked = package / "tracked.md"
+            tracked.write_text("The public status remains restricted.\n", encoding="utf-8")
+            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="tracked.md\n"),
+            ):
+                leaks = MODULE._private_identity_leaks({"owner/status"}, {"status"})
+            self.assertEqual([], leaks)
+
     def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
         registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
         static = registry["gates"]["positioning-foundry-technical-readiness-test"]
