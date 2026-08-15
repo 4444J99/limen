@@ -91,8 +91,9 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"api[-_ ]?key|access[-_ ]?token|"
     r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
     r"private[-_ ]?key|recovery[-_ ]?code)"
-    r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
-    r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
+    r"(?:[ \t]*[:=][ \t\r\n]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t\r\n]*)"
+    r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
+    r"(?!\#(?:[ \t]|$))\S+"
 )
 FORBIDDEN_PUBLIC_URL_KEYS = {
     "apikey",

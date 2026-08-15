@@ -649,8 +649,9 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
         r"api[-_ ]?key|access[-_ ]?token|"
         r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
         r"private[-_ ]?key|recovery[-_ ]?code)"
-        r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
-        r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)\S+"
+        r"(?:[ \t]*[:=][ \t\r\n]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t\r\n]*)"
+        r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
+        r"(?!\#(?:[ \t]|$))\S+"
     ),
     re.compile(
         r"(?i)(?<![A-Za-z0-9])(?:customer|client|lead|contact|person|account|private)"
@@ -665,7 +666,7 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
 )
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
     r"(?i)(?:"
-    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+number)?|contact\s+number)"
+    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
     r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?\d{10,15}\b"
     r"|\btel:\s*\+?[\d\s().-]{10,32}"
     r"|\+\d[\d\s().-]{8,31}\d"
@@ -1695,10 +1696,14 @@ class _VisibleSurfaceParser(HTMLParser):
         "audio",
         "canvas",
         "img",
+        "image",
         "input",
         "meter",
+        "noembed",
+        "noframes",
         "picture",
         "progress",
+        "rp",
         "select",
         "textarea",
         "video",
@@ -2462,69 +2467,72 @@ def audit_surface_manifest(
         presence = row.get("presence")
         if not isinstance(presence, str) or presence not in {"present", "absent"}:
             errors.append(f"surface presence unresolved: {key[0]} / {key[1]}")
+        canonical = expected_rows.get(key, {})
+        required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
+        missing_required = sorted(
+            field
+            for field in required_cells
+            if field not in row or row.get(field) is None or row.get(field) == "" or row.get(field) == []
+        )
+        if missing_required:
+            errors.append(
+                f"{presence if isinstance(presence, str) else 'unresolved'} claim missing required evidence fields: "
+                f"{key[0]} / {key[1]}: {', '.join(missing_required)}"
+            )
+        source_ids = row.get("source_ids")
+        valid_source_ids = (
+            isinstance(source_ids, list)
+            and bool(source_ids)
+            and all(isinstance(source_id, str) and source_id for source_id in source_ids)
+        )
+        if not valid_source_ids:
+            errors.append(f"source_ids must be a non-empty string list: {key[0]} / {key[1]}")
+        expected_source_ids = canonical.get("source_ids", [])
+        expected_sources = set(expected_source_ids)
+        if valid_source_ids and len(source_ids) != len(set(source_ids)):
+            errors.append(f"source_ids contain duplicates: {key[0]} / {key[1]}")
+        if valid_source_ids and (
+            len(source_ids) != len(expected_source_ids) or set(source_ids) != expected_sources
+        ):
+            errors.append(f"source ids differ from canonical inventory: {key[0]} / {key[1]}")
+        if not isinstance(row.get("disclosure_level"), str) or not row.get("disclosure_level"):
+            errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
+        if not isinstance(row.get("action"), str) or not row.get("action"):
+            errors.append(f"claim action missing: {key[0]} / {key[1]}")
+        if row.get("action") != canonical.get("action"):
+            errors.append(f"claim action differs from canonical inventory: {key[0]} / {key[1]}")
+        if row.get("disclosure_level") != canonical.get("disclosure_level"):
+            errors.append(f"disclosure level differs from canonical inventory: {key[0]} / {key[1]}")
+        if row.get("claim_text") != canonical.get("claim_text"):
+            errors.append(f"claim text differs from canonical inventory: {key[0]} / {key[1]}")
+        observed_at = row.get("observed_at")
+        valid_observations = (
+            isinstance(observed_at, list)
+            and bool(observed_at)
+            and all(isinstance(value, str) and bool(value) for value in observed_at)
+        )
+        if valid_observations:
+            try:
+                for value in observed_at:
+                    _parse_date(value)
+            except ValueError:
+                valid_observations = False
+        if not valid_observations or observed_at != canonical.get("observed_at"):
+            errors.append(f"observation dates differ from canonical evidence: {key[0]} / {key[1]}")
+        if row.get("status") != canonical.get("status"):
+            errors.append(f"claim status differs from canonical inventory: {key[0]} / {key[1]}")
         if presence == "present":
             present_by_surface.setdefault(key[0], set()).add(key[1])
-            canonical = expected_rows.get(key, {})
-            required_cells = set(contract.get("surface_audit_model", {}).get("required_cells", []))
-            missing_required = sorted(
-                field
-                for field in required_cells
-                if field not in row or row.get(field) is None or row.get(field) == "" or row.get(field) == []
-            )
-            if missing_required:
-                errors.append(
-                    f"present claim missing required evidence fields: {key[0]} / {key[1]}: {', '.join(missing_required)}"
-                )
-            source_ids = row.get("source_ids")
-            valid_source_ids = (
-                isinstance(source_ids, list)
-                and bool(source_ids)
-                and all(isinstance(source_id, str) and source_id for source_id in source_ids)
-            )
-            if not valid_source_ids:
-                errors.append(f"source_ids must be a non-empty string list: {key[0]} / {key[1]}")
-            expected_source_ids = expected_rows.get(key, {}).get("source_ids", [])
-            expected_sources = set(expected_source_ids)
-            if valid_source_ids and len(source_ids) != len(set(source_ids)):
-                errors.append(f"source_ids contain duplicates: {key[0]} / {key[1]}")
-            if valid_source_ids and (
-                len(source_ids) != len(expected_source_ids) or set(source_ids) != expected_sources
-            ):
-                errors.append(f"source ids differ from canonical inventory: {key[0]} / {key[1]}")
-            if not isinstance(row.get("disclosure_level"), str) or not row.get("disclosure_level"):
-                errors.append(f"disclosure level missing: {key[0]} / {key[1]}")
-            if not isinstance(row.get("action"), str) or not row.get("action"):
-                errors.append(f"claim action missing: {key[0]} / {key[1]}")
-            if row.get("action") != canonical.get("action"):
-                errors.append(f"claim action differs from canonical inventory: {key[0]} / {key[1]}")
-            if row.get("disclosure_level") != canonical.get("disclosure_level"):
-                errors.append(f"disclosure level differs from canonical inventory: {key[0]} / {key[1]}")
             claim_floor = _disclosure_floor(canonical.get("disclosure_level"))
             surface_floor = _disclosure_floor(surface_levels.get(key[0]) if isinstance(surface_levels, dict) else None)
             if claim_floor is None or surface_floor is None or claim_floor > surface_floor:
                 errors.append(f"claim disclosure tier does not authorize this surface: {key[0]} / {key[1]}")
             if canonical.get("action") != "audit_canonical_wording":
                 errors.append(f"canonical claim is not eligible for public presence: {key[0]} / {key[1]}")
-            if row.get("claim_text") != canonical.get("claim_text"):
-                errors.append(f"claim text differs from canonical inventory: {key[0]} / {key[1]}")
             if row.get("canonical_or_drift") != "canonical":
                 errors.append(f"present claim differs from canonical wording: {key[0]} / {key[1]}")
-            observed_at = row.get("observed_at")
-            valid_observations = (
-                isinstance(observed_at, list)
-                and bool(observed_at)
-                and all(isinstance(value, str) and bool(value) for value in observed_at)
-            )
-            if valid_observations:
-                try:
-                    for value in observed_at:
-                        _parse_date(value)
-                except ValueError:
-                    valid_observations = False
-            if not valid_observations or observed_at != canonical.get("observed_at"):
-                errors.append(f"observation dates differ from canonical evidence: {key[0]} / {key[1]}")
-            if row.get("status") != canonical.get("status"):
-                errors.append(f"claim status differs from canonical inventory: {key[0]} / {key[1]}")
+        elif presence == "absent" and row.get("canonical_or_drift") != canonical.get("canonical_or_drift"):
+            errors.append(f"absent claim disposition differs from canonical inventory: {key[0]} / {key[1]}")
         inspection = resolved_inspections.get(key[0])
         if not isinstance(inspection, dict) or row.get("inspection_id") != inspection.get("inspection_id"):
             errors.append(f"surface row does not bind its canonical inspection: {key[0]} / {key[1]}")

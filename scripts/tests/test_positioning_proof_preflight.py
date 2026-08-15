@@ -707,6 +707,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "+44 20 7946 0958",
             "tel:+12125551234",
             "phone: 2125551234",
+            "Phone No: 2125551234",
+            "Mobile #: 2125551234",
+            "Contact No. 2125551234",
             "telephone number is 12125551234",
             "contact number 12125551234",
         ):
@@ -1061,7 +1064,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<CANVAS>Canonical claim</CANVAS>",
             "<canvas/>",
             "<img src='/missing' alt='Canonical claim'>",
+            "<image src='/missing' alt='Canonical claim'>",
             "<picture><source srcset='/proof.webp'><img src='/proof.png' alt='Canonical claim'></picture>",
+            "<noembed>Canonical claim</noembed>",
+            "<noframes>Canonical claim</noframes>",
+            "<ruby>x<rp>Canonical claim</rp><rt>reading</rt></ruby>",
             "<audio>Canonical claim</audio>",
             "<video>Canonical claim</video>",
             "<meter value='1'>Canonical claim</meter>",
@@ -1799,6 +1806,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         for assignment in (
             "The password is hunter2alpha",
             "token is hunter2alpha",
+            "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential: hunter2alpha",
         ):
             with self.subTest(assignment=assignment):
@@ -1887,6 +1895,49 @@ class PositioningProofPreflightTest(unittest.TestCase):
         result = MODULE.audit_surface_manifest(self.contract, manifest)
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("present claim missing required evidence fields" in error for error in result["errors"]))
+
+    def test_absent_surface_claim_requires_complete_canonical_evidence(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        for field in (
+            "source_ids",
+            "observed_at",
+            "status",
+            "disclosure_level",
+            "canonical_or_drift",
+            "action",
+        ):
+            with self.subTest(field=field):
+                manifest = self._empty_surface_manifest(rows)
+                manifest_rows = manifest["rows"]
+                assert isinstance(manifest_rows, list)
+                manifest_rows[0].pop(field)
+                result = MODULE.audit_surface_manifest(self.contract, manifest)
+                self.assertEqual("fail", result["status"])
+                self.assertTrue(
+                    any(
+                        "absent claim missing required evidence fields" in error
+                        or "differs from canonical" in error
+                        for error in result["errors"]
+                    ),
+                    result["errors"],
+                )
+
+        for field, value in (
+            ("source_ids", ["unreviewed-source"]),
+            ("observed_at", ["2099-01-01"]),
+            ("status", "verified" if rows[0]["status"] != "verified" else "withheld"),
+            ("disclosure_level", "L9"),
+            ("canonical_or_drift", "canonical"),
+            ("action", "audit_canonical_wording"),
+        ):
+            with self.subTest(field=field, value=value):
+                manifest = self._empty_surface_manifest(rows)
+                manifest_rows = manifest["rows"]
+                assert isinstance(manifest_rows, list)
+                manifest_rows[0][field] = value
+                result = MODULE.audit_surface_manifest(self.contract, manifest)
+                self.assertEqual("fail", result["status"])
+                self.assertTrue(any("differ" in error for error in result["errors"]), result["errors"])
 
     def test_present_surface_claim_rejects_drifted_wording(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)

@@ -572,6 +572,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "The password is correct-horse-battery-staple",
             "The password was hunter2alpha",
             "token is hunter2alpha",
+            "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential: hunter2alpha",
             "passphrase was hunter2alpha",
         ):
@@ -1132,6 +1133,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "Contact customer@example.invalid for the evidence.",
             "The password is hunter2alpha.",
             "token is hunter2alpha",
+            "token:\nhunter2alpha",  # allow-secret: synthetic adversarial fixture
             "credential was hunter2alpha",
             "passcode: hunter2alpha",
             "passphrase=hunter2alpha",  # allow-secret: synthetic adversarial fixture
