@@ -4589,6 +4589,13 @@ parameters:
     owner: tabularius
     note: "Beat gate for the launch-agent liveness predicate (scripts/launch-agent-liveness.py --check), sensor section 0g4 in sensors.yaml — run on its declared cadence in BOTH beat lanes (metabolize + the heartbeat scheduled derive lane, live-wired 2026-07-13). The invariant spec/critical-launch-agents.json names the launchd organs that MUST stay alive (the MONETA mint + its Cloudflare tunnel = the first-dollar revenue rail; creds-hydrate = the credential organ; ianva gateway = L-IANVA-LOCAL). A 2026-07-09 mass launchd-quiesce (fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the mint dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes). Read-only --check surfaces any down critical organ; the armed LIMEN_LAUNCHAGENT_HEAL effector restores it. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
 
+  LIMEN_BACKGROUND_ITEMS_CHECK:
+    default: "1"               # ON — classify every LaunchAgent/BTM row against the declared estate each cadence
+    env: LIMEN_BACKGROUND_ITEMS_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the background-items census (scripts/background-items-census.py --check), sensor section 0g4b in sensors.yaml. The declared registry spec/background-items.json owns which background items are expected (estate agents + Rule-55a third-party exemptions); an installed LaunchAgent matching neither is UNDECLARED drift and the check goes red-advisory. Founded 2026-08-15: the operator's Login Items pane showed 'DomusAgentHost ×4' + bare bash/python3/node/cloudflared rows and no estate surface could answer what they were — the diagnosis (BTM names legacy rows by executable basename, groups adhoc-signed binaries under 'Unknown Developer'; every row mapped to a legitimate owner) had to be hand-derived via sfltool dumpbtm, which works unprivileged. Read-only by contract — the Rule-55 plist hard-block hook is the authority; this sensor classifies and reports, never mutates. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
+
   LIMEN_LAUNCHAGENT_HEAL:
     default: "0"               # OFF — the effector. The single durable grant to auto-restore down critical organs.
     env: LIMEN_LAUNCHAGENT_HEAL
@@ -4734,6 +4741,20 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the liveness pass. Sized to the founding incident: the 2026-07-09 quiesce restore walked 4 down agents in ≈264 s with --apply armed — gitvs's 120 would kill a multi-agent restore mid-flight. The runner kills the whole command group on overrun and the beat continues fail-open."
+
+  LIMEN_BEAT_BACKGROUND_ITEMS:
+    default: 12
+    env: LIMEN_BEAT_BACKGROUND_ITEMS
+    self_update: none
+    owner: tabularius
+    note: "Cadence (every N beats) of the background-items census sensor (sensors.yaml 0g4b) in the heartbeat's scheduled derive lane. The Login Items / BTM surface changes on installs and vendor updates, not per-beat, so a daily-ish cadence is plenty; the founding gap was months of silent accumulation, not minutes. The generic scheduled runner resolves this override; heartbeat-loop.sh contains no sensor-specific cadence constant."
+
+  LIMEN_BACKGROUND_ITEMS_TIMEOUT:
+    default: 60
+    env: LIMEN_BACKGROUND_ITEMS_TIMEOUT
+    self_update: none
+    owner: tabularius
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the background-items census (a plist glob + one sfltool dumpbtm; ~2 s measured live 2026-08-15). The runner kills the command group on overrun and the beat continues fail-open."
 
   # --- foreign-litter sensor (0g9): other vendors' session state in the live checkout ---
   LIMEN_FOREIGN_LITTER:

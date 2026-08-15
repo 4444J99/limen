@@ -1,0 +1,64 @@
+{
+  "_doc": "The background-item estate, as DATA: every launchd agent installed on the host (and every Background Task Management row it generates) must map to a declared owner here or to a third-party exemption (Rule 55a / standard 18 §4) — anything else is UNDECLARED drift and scripts/background-items-census.py --check goes red. Origin: 2026-08-15, the operator's Login Items pane showed 'DomusAgentHost ×4' plus bare rows (bash/python3/node/cloudflared) and the estate had ZERO surface that could answer 'what are these' — the census had to be run by hand. Root cause of the display: macOS BTM names a legacy-agent row by its executable BASENAME, not the plist Label, and groups adhoc-signed binaries under a synthetic 'Unknown Developer' — so four legitimate agents sharing the DomusAgentHost TCC principal render as four identical unidentified rows. The rows are the registry's truth; the pane is a lossy projection. This file owns WHICH items are expected; spec/critical-launch-agents.json separately owns which of them must stay ALIVE. Adding a background item = ONE entry here, never a memory chore. PII-clean: labels, roles, basenames, repo paths only.",
+  "estate_agents": {
+    "com.limen.heartbeat": {
+      "role": "the beat daemon — heartbeat-loop.sh under the DomusAgentHost TCC principal",
+      "program_basename": "DomusAgentHost",
+      "committed_plist": "container/launchd/com.limen.heartbeat.plist"
+    },
+    "com.limen.creds-hydrate": {
+      "role": "credential organ — hydrates + verifies every secret at login and on interval",
+      "program_basename": "DomusAgentHost",
+      "committed_plist": "container/launchd/com.limen.creds-hydrate.plist"
+    },
+    "com.limen.claude-stub-heal": {
+      "role": "IF-GATEKEEPER-INERT effector — unregisters the unassessable vendor bundle on WatchPaths",
+      "program_basename": "DomusAgentHost",
+      "committed_plist": "container/launchd/com.limen.claude-stub-heal.plist"
+    },
+    "com.limen.overnight-watch": {
+      "role": "overnight watch — interval observer under the stable TCC principal",
+      "program_basename": "DomusAgentHost",
+      "committed_plist": "container/launchd/com.limen.overnight-watch.plist"
+    },
+    "com.ianva.gateway": {
+      "role": "ianva MCP doorway (lever L-IANVA-LOCAL); renders as 'bash' in Login Items",
+      "program_basename": "bash",
+      "committed_plist": null
+    },
+    "com.limen.moneta": {
+      "role": "MONETA sovereign mint origin (node/tsx :8787); renders as 'node'",
+      "program_basename": "node",
+      "committed_plist": null
+    },
+    "com.limen.moneta-tunnel": {
+      "role": "Cloudflare tunnel fronting the mint; renders as 'cloudflared'",
+      "program_basename": "cloudflared",
+      "committed_plist": null
+    },
+    "com.limen.mat-serve": {
+      "role": "private health engine (:8818, target outside this repo); renders as 'python3'",
+      "program_basename": "python3",
+      "committed_plist": null
+    }
+  },
+  "third_party_prefixes": [
+    "com.apple.",
+    "homebrew.mxcl.",
+    "com.github.domt4.",
+    "com.google.",
+    "com.microsoft.",
+    "us.zoom.",
+    "com.ollama.",
+    "com.openai.",
+    "com.spotify.",
+    "com.wiheads.",
+    "ai.perplexity.",
+    "com.1password.",
+    "com.electron.",
+    "com.anthropic.",
+    "com.tinyspeck.",
+    "org.mozilla."
+  ],
+  "_third_party_note": "Prefixes exempt under Rule 55a §4 / docs/standards/18 §4 (Apple system agents, vendor auto-updaters, Homebrew services). The standard's carve-out still applies: a misbehaving Homebrew service is treated as a Rule #55 violation and migrated to launchd-contract-wrap — the census only classifies; misbehavior belongs to launchctl status and the liveness organ."
+}
