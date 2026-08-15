@@ -244,7 +244,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 },
                 clear=False,
             ):
-                _argv, environment, metadata = RECEIPT._prepare_predicate_invocation(["python3", "-V"])
+                prepared_argv, environment, metadata = RECEIPT._prepare_predicate_invocation(["python3", "-V"])
                 with mock.patch.object(RECEIPT.platform, "system", return_value="Darwin"):
                     with mock.patch.object(
                         RECEIPT,
@@ -259,6 +259,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
                         )
         self.assertEqual((7, b"trusted executable\n", None), (exit_code, output, failure))
         self.assertNotEqual(str(fake_python), metadata["resolved_executable"])
+        self.assertEqual(["-I", "-S"], prepared_argv[1:3])
         self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
         self.assertNotIn("PYTHONPATH", environment)
         self.assertNotIn("NODE_OPTIONS", environment)
@@ -268,10 +269,26 @@ class PositioningProofRunnerTest(unittest.TestCase):
         invoked_argv = runner.call_args.args[0]
         invoked_environment = runner.call_args.kwargs["environment"]
         self.assertNotEqual(str(fake_python), invoked_argv[0])
+        self.assertEqual(["-I", "-S"], invoked_argv[1:3])
         self.assertNotIn(directory, invoked_environment["PATH"].split(os.pathsep))
         self.assertNotIn("LD_PRELOAD", invoked_environment)
         self.assertNotIn("LD_LIBRARY_PATH", invoked_environment)
         self.assertNotIn("DYLD_INSERT_LIBRARIES", invoked_environment)
+
+    def test_python_predicate_bootstrap_does_not_import_site(self) -> None:
+        argv, environment, _metadata = RECEIPT._prepare_predicate_invocation(
+            ["python3", "-c", "import sys; print('site' in sys.modules)"]
+        )
+        completed = subprocess.run(
+            argv,
+            cwd=ROOT,
+            env=environment,
+            check=False,
+            capture_output=True,
+            timeout=10,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        self.assertEqual(b"False\n", completed.stdout)
 
     def test_darwin_supervisor_uses_isolated_python_and_a_sanitized_environment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -497,6 +514,16 @@ class PositioningProofRunnerTest(unittest.TestCase):
     def test_public_safe_scan_checks_identifier_values_inside_lists(self) -> None:
         findings = COST._find_forbidden_public_material({"record_id": ["private-123"]})
         self.assertEqual({"$.record_id[0]"}, findings)
+
+    def test_public_safe_scan_rejects_natural_language_credential_assignments(self) -> None:
+        for value in ("The API key is hunter2alpha", "The password is correct-horse-battery-staple"):
+            with self.subTest(value=value):
+                findings = COST._find_forbidden_public_material({"limitations": [value]})
+                self.assertEqual({"$.limitations[0]"}, findings)
+        self.assertEqual(
+            set(),
+            COST._find_forbidden_public_material({"limitations": ["The API key is not collected."]}),
+        )
 
     def test_cost_failure_population_contract_prevents_cherry_picked_denominators(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))

@@ -1131,6 +1131,32 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertEqual("1", environment["PYTHONNOUSERSITE"])
             self.assertEqual("1", environment["PYTHONSAFEPATH"])
 
+        for mutation, expected_error in (
+            ({"customer_email": "reader@example.invalid"}, "invalid exact schema"),
+            ({"evidence_urls": ["https://reader@example.invalid/private"]}, "private or credential material"),
+        ):
+            changed_receipt = copy.deepcopy(receipt)
+            changed_receipt.update(mutation)
+            changed_digest = hashlib.sha256(
+                json.dumps(changed_receipt, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            changed_verification = {**verification, "receipt_sha256": changed_digest}
+            changed_comment = {
+                **comment,
+                "body": (
+                    f"<!-- positioning-phase-receipt:{phase_id} -->\n```json\n" + json.dumps(changed_receipt) + "\n```"
+                ),
+            }
+            with self.subTest(expected_error=expected_error):
+                changed_completed = [
+                    subprocess.CompletedProcess([], 0, proof_stdout, ""),
+                    subprocess.CompletedProcess([], 0, json.dumps(changed_verification), ""),
+                ]
+                with mock.patch.object(MODULE.subprocess, "run", side_effect=changed_completed):
+                    with mock.patch.object(MODULE, "_fetch_github_issue_comment", return_value=changed_comment):
+                        with self.assertRaisesRegex(ValueError, expected_error):
+                            MODULE._live_phase_verification(ROOT, phase_id)
+
     @staticmethod
     def _installed_pyyaml_sources() -> list[tuple[MODULE.PurePosixPath, bytes]]:
         package_root = next(
@@ -1667,6 +1693,35 @@ class PositioningProofPreflightTest(unittest.TestCase):
             )
         self.assertEqual("pass", result["status"])
         self.assertEqual(2, result["substantive_public_count"])
+
+        first_url = objects[0]["object URL or receipt"]
+        safe_body = comments[first_url]["body"]
+        private_receipt = json.loads(MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(safe_body)[0])
+        private_receipt["limitations"] = ["Bound private reviewer reference customer-123."]
+        comments[first_url]["body"] = (
+            "<!-- positioning-external-validation-receipt -->\n```json\n" + json.dumps(private_receipt) + "\n```"
+        )
+        objects[0]["receipt SHA-256"] = hashlib.sha256(
+            json.dumps(private_receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        with mock.patch.object(
+            MODULE,
+            "_fetch_github_issue_comment",
+            side_effect=lambda receipt_url, _label: comments[receipt_url],
+        ):
+            private_authority = MODULE.validate_external_objects(
+                self.contract,
+                {"outreach_performed": False, "objects": objects},
+                as_of=date(2026, 8, 14),
+            )
+        self.assertEqual("fail", private_authority["status"])
+        self.assertEqual(1, private_authority["substantive_public_count"])
+        self.assertTrue(any("private or credential material" in error for error in private_authority["errors"]))
+        comments[first_url]["body"] = safe_body
+        safe_receipt = json.loads(MODULE.EXTERNAL_VALIDATION_RECEIPT_BLOCK.findall(safe_body)[0])
+        objects[0]["receipt SHA-256"] = hashlib.sha256(
+            json.dumps(safe_receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
 
         first_comment = comments[objects[0]["object URL or receipt"]]
         first_comment["updated_at"] = "2026-08-14T11:59:30Z"

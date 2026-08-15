@@ -113,6 +113,19 @@ PHASE_RECEIPT_BLOCK = re.compile(
     r"<!--\s*positioning-phase-receipt:(PSP-P\d{2})\s*-->\s*```json\s*(\{.*?\})\s*```",
     re.DOTALL,
 )
+PHASE_RECEIPT_FIELDS = {
+    "schema_version",
+    "phase_id",
+    "status",
+    "exit_gate_sha256",
+    "observed_heads",
+    "child_receipts_sha256",
+    "remote_state_sha256",
+    "parity_sha256",
+    "predicate",
+    "evidence_urls",
+}
+PHASE_RECEIPT_PREDICATE_FIELDS = {"command", "exit_code", "output_sha256", "observed_at"}
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
 W07_WORKFLOW_PATH = "docs/positioning/program/w07_blinded_reader_workflow.py"
 W07_SCHEMA_PATH = "docs/positioning/program/w07_blinded_reader_response_schema.json"
@@ -355,6 +368,10 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{8,}\b"),
     re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}\b"),
     re.compile(r"(?i)https?://[^\s/:@]+:[^\s/@]+@"),
+    re.compile(
+        r"(?i)(?<![A-Za-z0-9])(?:customer|client|lead|contact|person|account|private)"
+        r"(?:[-_:/]+(?:id[-_:/]+)?)(?=[A-Za-z0-9._:/-]*\d)[A-Za-z0-9][A-Za-z0-9._:/-]*"
+    ),
 )
 SURFACE_PRIVATE_VALUE_PATTERNS = (
     *FORBIDDEN_DEMO_VALUE_PATTERNS,
@@ -2155,6 +2172,11 @@ def _authenticate_external_validation_object(row: dict[str, Any]) -> str:
         and all(isinstance(value, str) and value.strip() and "\0" not in value for value in limitations)
     ):
         raise ValueError("external validation receipt limitations must be public-safe text")
+    private_paths = sorted(_find_forbidden_demo_material(receipt, "authenticated external validation receipt"))
+    if private_paths:
+        raise ValueError(
+            "external validation receipt contains private or credential material: " + ", ".join(private_paths)
+        )
     if login.casefold() == "4444j99":
         raise ValueError("external validation actor must be independent from the subject owner")
     return login
@@ -2391,13 +2413,22 @@ def _live_phase_verification(repository: Path, phase_id: str) -> dict[str, Any]:
     receipt = _loads_preflight_artifact(matches[0])
     if not isinstance(receipt, dict):
         raise ValueError(f"live {phase_id} marked receipt returned a non-object")
+    if set(receipt) != PHASE_RECEIPT_FIELDS:
+        raise ValueError(f"live {phase_id} marked receipt has an invalid exact schema")
+    predicate = receipt.get("predicate")
+    if not isinstance(predicate, dict) or set(predicate) != PHASE_RECEIPT_PREDICATE_FIELDS:
+        raise ValueError(f"live {phase_id} marked receipt predicate has an invalid exact schema")
+    private_paths = sorted(_find_forbidden_demo_material(receipt, f"live {phase_id} marked receipt"))
+    if private_paths:
+        raise ValueError(
+            f"live {phase_id} marked receipt contains private or credential material: " + ", ".join(private_paths)
+        )
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
     if hashlib.sha256(canonical).hexdigest() != value.get("receipt_sha256"):
         raise ValueError(f"live {phase_id} marked receipt digest differs from the verifier result")
     observed_heads = receipt.get("observed_heads")
     if not isinstance(observed_heads, dict):
         raise ValueError(f"live {phase_id} marked receipt has no observed_heads binding")
-    predicate = receipt.get("predicate")
     expected_command = f"python3 scripts/positioning-program.py --phase-proof {phase_id}"
     if (
         not isinstance(predicate, dict)

@@ -505,8 +505,11 @@ def _prepare_predicate_invocation(argv: list[str]) -> tuple[list[str], dict[str,
         }
     )
     executable_sha256 = hashlib.sha256(resolved.read_bytes()).hexdigest()
+    invocation = [str(resolved), *argv[1:]]
+    if re.fullmatch(r"python(?:\d+(?:\.\d+)*)?", resolved.name.casefold()) and argv[1:3] != ["-I", "-S"]:
+        invocation = [str(resolved), "-I", "-S", *argv[1:]]
     return (
-        [str(resolved), *argv[1:]],
+        invocation,
         environment,
         {
             "resolved_executable": str(resolved),
