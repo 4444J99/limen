@@ -30,34 +30,12 @@ jobs:
       - name: Install validation dependencies
         run: python -m pip install pyyaml
 
-      - name: Validate tasks.yaml schema, budget, and required fields
-        run: |
-          python3 - <<'PY'
-          import yaml
-
-          with open("tasks.yaml") as fh:
-              data = yaml.safe_load(fh)
-
-          version = data.get("version")
-          if not version:
-              raise SystemExit("Missing version")
-          print(f"Schema version: {version}")
-
-          budget = data["portal"]["budget"]
-          daily = budget["daily"]
-          total = sum(budget["per_agent"].values())
-          print(f"Daily budget: {daily}, Sum of per-agent: {total}")
-          if total > daily * 2:
-              raise SystemExit("Per-agent sum exceeds 2x daily budget")
-
-          required = ("id", "title", "status", "target_agent", "priority")
-          tasks = data.get("tasks", [])
-          for task in tasks:
-              missing = [field for field in required if task.get(field) is None]
-              if missing:
-                  raise SystemExit(f"Task {task.get('id', '<no id>')} missing required fields: {missing}")
-          print(f"All {len(tasks)} tasks have required fields")
-          PY
-
-      - name: Validate canonical task statuses
+      # One predicate owns the whole board contract — schema/budget/required fields AND the
+      # canonical status vocabulary — because tasks.yaml has two lawful shapes and only the
+      # predicate knows which is in front of it. The contract used to live here as an inline
+      # heredoc that assumed the full-board shape, so the counts-only public aggregate the
+      # keeper publishes failed with "Missing version" and held publication PR #2001 red for
+      # weeks. Inline CI logic cannot be run locally, cannot be tested, and drifts; the script
+      # is all three. Do not re-inline it.
+      - name: Validate the task board (shape-aware)
         run: python3 scripts/validate-task-board.py
