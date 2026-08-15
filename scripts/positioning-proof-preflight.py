@@ -663,6 +663,9 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{10,}\b"),
 )
+PRIVATE_TELEPHONE_CANDIDATE = re.compile(
+    r"(?i)(?:\btel:\s*\+?[\d\s().-]{10,32}|\+\d[\d\s().-]{8,31}\d|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4})"
+)
 
 
 def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -1676,8 +1679,7 @@ _CLAIM_STOPWORDS = {
 
 
 def _normalized_surface_text(value: str) -> str:
-    without_markup = re.sub(r"<[^>]+>", " ", value)
-    return " ".join(re.findall(r"[a-z0-9]+", without_markup.lower()))
+    return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
 
 
 class _VisibleSurfaceParser(HTMLParser):
@@ -1690,6 +1692,7 @@ class _VisibleSurfaceParser(HTMLParser):
         "meter",
         "progress",
         "select",
+        "textarea",
         "video",
     }
     _HEAD_ALLOWED_TAGS = {"base", "link", "meta", "noscript", "script", "style", "template", "title"}
@@ -1829,16 +1832,30 @@ class _VisibleSurfaceParser(HTMLParser):
             for name, value in attrs
         )
 
+    @staticmethod
+    def _attributes_request_shadow_dom(attrs: list[tuple[str, str | None]]) -> bool:
+        return any(name.casefold().startswith("shadowroot") for name, _value in attrs)
+
+    @staticmethod
+    def _attributes_name_details(attrs: list[tuple[str, str | None]]) -> bool:
+        return any(name.casefold() == "name" for name, _value in attrs)
+
     def _reject_browser_head_reparenting(self, tag: str) -> None:
         if "head" in self._element_stack and tag not in self._HEAD_ALLOWED_TAGS:
             raise ValueError("surface response requires browser head-closing rules")
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        if normalized == "math":
+            raise ValueError("surface visibility requires MathML rendering evaluation")
         if normalized in self._ACTIVE_CONTENT_TAGS:
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        if normalized == "template" and self._attributes_request_shadow_dom(attrs):
+            raise ValueError("surface visibility requires declarative shadow DOM evaluation")
+        if normalized == "details" and self._attributes_name_details(attrs):
+            raise ValueError("surface visibility requires named-details exclusivity evaluation")
         self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
@@ -1876,10 +1893,16 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        if normalized == "math":
+            raise ValueError("surface visibility requires MathML rendering evaluation")
         if normalized in self._ACTIVE_CONTENT_TAGS:
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        if normalized == "template" and self._attributes_request_shadow_dom(attrs):
+            raise ValueError("surface visibility requires declarative shadow DOM evaluation")
+        if normalized == "details" and self._attributes_name_details(attrs):
+            raise ValueError("surface visibility requires named-details exclusivity evaluation")
         self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
         if normalized not in self._VOID_TAGS:
@@ -2047,8 +2070,20 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
     return bool(occurrence_results) and all(occurrence_results)
 
 
+def _contains_private_telephone(value: str) -> bool:
+    for match in PRIVATE_TELEPHONE_CANDIDATE.finditer(value):
+        candidate = match.group()
+        digits = [character for character in candidate if character.isdecimal()]
+        ipv4_candidate = re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", candidate.strip()) is not None
+        if 10 <= len(digits) <= 15 and not ipv4_candidate:
+            return True
+    return False
+
+
 def _surface_contains_private_material(inspected_text: str) -> bool:
-    return any(pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS)
+    return any(pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS) or _contains_private_telephone(
+        inspected_text
+    )
 
 
 def _fetch_bounded_public_surface(source_url: str) -> bytes:
@@ -2062,15 +2097,25 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
         try:
             content_types = response.headers.get_all("Content-Type")
             refresh_headers = response.headers.get_all("Refresh")
+            content_dispositions = response.headers.get_all("Content-Disposition")
         except (AttributeError, TypeError, ValueError) as exc:
             raise ValueError("live surface response has no trustworthy media type") from exc
         if (
             not isinstance(content_types, list)
             or len(content_types) != 1
             or not isinstance(content_types[0], str)
-            or content_types[0].split(";", 1)[0].strip().casefold() != "text/html"
         ):
             raise ValueError("live surface response is not HTML")
+        media_parts = [part.strip() for part in content_types[0].split(";")]
+        charset_values = [
+            value.strip().strip('"').casefold()
+            for part in media_parts[1:]
+            if "=" in part
+            for key, value in [part.split("=", 1)]
+            if key.strip().casefold() == "charset"
+        ]
+        if media_parts[0].casefold() != "text/html" or charset_values != ["utf-8"]:
+            raise ValueError("live surface response is not HTML with an authenticated UTF-8 charset")
         if isinstance(refresh_headers, list) and (
             len(refresh_headers) > 1
             or any(not isinstance(value, str) or value.strip() for value in refresh_headers)
@@ -2078,6 +2123,14 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
             raise ValueError("live surface response requests a client-side redirect")
         if refresh_headers is not None and not isinstance(refresh_headers, list):
             raise ValueError("live surface response has malformed redirect metadata")
+        if content_dispositions is not None:
+            if (
+                not isinstance(content_dispositions, list)
+                or len(content_dispositions) != 1
+                or not isinstance(content_dispositions[0], str)
+                or content_dispositions[0].split(";", 1)[0].strip().casefold() != "inline"
+            ):
+                raise ValueError("live surface response is an attachment or unsupported disposition")
         content = response.read(1_048_577)
     if len(content) > 1_048_576:
         raise ValueError("live surface exceeds the bounded response size")

@@ -701,6 +701,23 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(any("matched claims differ from the bound source" in error for error in result["errors"]))
 
     def test_surface_audit_derives_private_material_from_bound_content(self) -> None:
+        for telephone in (
+            "+1 (212) 555-1234",
+            "212-555-1234",
+            "+44 20 7946 0958",
+            "tel:+12125551234",
+        ):
+            with self.subTest(telephone=telephone):
+                self.assertTrue(MODULE._surface_contains_private_material(f"Call {telephone} for access"))
+        for public_number in (
+            "Observed 2026-08-15 with 127 objects",
+            "Python 3.13.2",
+            "address 192.168.100.100",
+            "issue 1234567890",
+            "sha256 " + "a" * 64,
+        ):
+            with self.subTest(public_number=public_number):
+                self.assertFalse(MODULE._surface_contains_private_material(public_number))
         surface = self.contract["surface_audit_model"]["surfaces"][0]
         self.contract["surface_audit_model"]["surfaces"] = [surface]
         self.contract["surface_audit_model"]["surface_sources"] = {
@@ -1045,10 +1062,31 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<input value='Canonical claim'>",
             "<input type='button' value='Canonical claim'>",
             "<input placeholder='Canonical claim'>",
+            "<textarea placeholder='Canonical claim'></textarea>",
+            "<textarea>Canonical claim</textarea>",
         ):
             with self.subTest(control_markup=control_markup):
                 with self.assertRaisesRegex(ValueError, "user-agent control"):
                     MODULE._canonical_surface_extraction(control_markup.encode(), "visible_text_v3")
+        for shadow_markup in (
+            "<div><template shadowrootmode='open'><p>Canonical claim</p></template></div>",
+            "<div><template SHADOWROOTMODE='closed'><p>Canonical claim</p></template></div>",
+        ):
+            with self.subTest(shadow_markup=shadow_markup):
+                with self.assertRaisesRegex(ValueError, "declarative shadow DOM"):
+                    MODULE._canonical_surface_extraction(shadow_markup.encode(), "visible_text_v3")
+        with self.assertRaisesRegex(ValueError, "named-details exclusivity"):
+            MODULE._canonical_surface_extraction(
+                b"<details name='proof' open><summary>One</summary>Canonical claim</details>",
+                "visible_text_v3",
+            )
+        for math_markup in (
+            "<math><semantics><mi>x</mi><annotation>Canonical claim</annotation></semantics></math>",
+            "<MATH/>",
+        ):
+            with self.subTest(math_markup=math_markup):
+                with self.assertRaisesRegex(ValueError, "MathML"):
+                    MODULE._canonical_surface_extraction(math_markup.encode(), "visible_text_v3")
         for refresh_markup in (
             "<meta http-equiv='refresh' content='0;url=/other'><p>Canonical claim</p>",
             "<meta HTTP-EQUIV=' Refresh ' content='0;url=/other'/><p>Canonical claim</p>",
@@ -1070,6 +1108,20 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "portfolio_front_door",
         )
         self.assertEqual([], matched)
+        escaped_visible = MODULE._canonical_surface_extraction(
+            b"<p>Limen &lt;unverified&gt; demonstrates governed multi-agent delivery</p>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        escaped_matched, _escaped_drifted = MODULE._surface_claim_scan(
+            escaped_visible,
+            {
+                ("portfolio_front_door", "CLAIM-ANGLE"): {
+                    "claim_text": "Limen demonstrates governed multi-agent delivery"
+                }
+            },
+            "portfolio_front_door",
+        )
+        self.assertEqual([], escaped_matched)
         closed_details = MODULE._canonical_surface_extraction(
             b"<details><summary>Visible summary proof</summary><p>Hidden body proof</p></details>",
             "visible_text_v3",
@@ -1117,7 +1169,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response.geturl.return_value = source_url
         response.read.return_value = b"bounded public proof"
         response.headers.get_all.side_effect = lambda name: (
-            ["text/html; charset=utf-8"] if name == "Content-Type" else None
+            ["text/html; charset=utf-8"]
+            if name == "Content-Type"
+            else ["inline"]
+            if name == "Content-Disposition"
+            else None
         )
         response.__enter__.return_value = response
         with mock.patch.dict(
@@ -1137,6 +1193,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             ["text/plain"],
             ["application/xhtml+xml"],
             ["text/html", "text/plain"],
+            ["text/html"],
+            ["text/html; charset=utf-16"],
+            ["text/html; charset=utf-8; charset=utf-8"],
         ):
             with self.subTest(content_types=content_types):
                 response.headers.get_all.side_effect = lambda name, values=content_types: (
@@ -1147,11 +1206,28 @@ class PositioningProofPreflightTest(unittest.TestCase):
                         MODULE._fetch_bounded_public_surface(source_url)
 
         response.headers.get_all.side_effect = lambda name: (
-            ["text/html"] if name == "Content-Type" else ["0; url=/other"]
+            ["text/html; charset=utf-8"] if name == "Content-Type" else ["0; url=/other"]
         )
         with mock.patch.object(MODULE, "_contract_https_open", return_value=response):
             with self.assertRaisesRegex(ValueError, "client-side redirect"):
                 MODULE._fetch_bounded_public_surface(source_url)
+
+        for dispositions in (
+            ["attachment; filename=proof.html"],
+            ["inline", "attachment"],
+            ["form-data"],
+        ):
+            with self.subTest(dispositions=dispositions):
+                response.headers.get_all.side_effect = lambda name, values=dispositions: (
+                    ["text/html; charset=utf-8"]
+                    if name == "Content-Type"
+                    else values
+                    if name == "Content-Disposition"
+                    else None
+                )
+                with mock.patch.object(MODULE, "_contract_https_open", return_value=response):
+                    with self.assertRaisesRegex(ValueError, "attachment"):
+                        MODULE._fetch_bounded_public_surface(source_url)
 
     def test_live_surface_inspection_reproduces_canonical_text_not_volatile_raw_html(self) -> None:
         surface = "portfolio_front_door"
@@ -1244,6 +1320,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     {},
                     ROOT,
                 )
+            with mock.patch.object(
+                MODULE,
+                "_fetch_bounded_public_surface",
+                return_value=b"<html><body data-contact='+44 20 7946 0958'>Bounded proof claim</body></html>",
+            ):
+                private_phone_errors, _resolved = MODULE._surface_inspection_errors(
+                    self.contract,
+                    {surface: inspection},
+                    {},
+                    ROOT,
+                )
         self.assertFalse(any("raw response differs" in error for error in errors), errors)
         self.assertFalse(any("visible claims differ" in error for error in errors), errors)
         self.assertTrue(any("visible claims differ" in error for error in changed_errors), changed_errors)
@@ -1254,6 +1341,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(
             any("raw response contains private material" in error for error in private_raw_errors),
             private_raw_errors,
+        )
+        self.assertTrue(
+            any("raw response contains private material" in error for error in private_phone_errors),
+            private_phone_errors,
         )
         legacy_inspection = copy.deepcopy(inspection)
         legacy_inspection["raw_response_sha256"] = "0" * 64
