@@ -218,7 +218,7 @@
     "rules": [
       "Missing evidence scores zero; absence is never upgraded by inference.",
       "The metadata screen is discovery evidence and cannot claim reproducible build, test, deploy, security, or custody readiness.",
-      "A later evidence receipt counts only when exactly one non-expired Actions artifact created within the recorded run attempt binds the exact receipt, output, and artifact digests through repository-bound platform metadata.",
+      "A later evidence receipt counts only when a complete, bounded, fully paginated run-artifact listing contains exactly one non-expired Actions artifact created within the recorded run attempt whose repository-bound metadata and name bind the attempt-available output and artifact digests; completion-time receipt bytes cannot be an artifact-name dependency.",
       "Live evidence collection fails closed above one shared 64 MiB aggregate decoded-blob budget and never retains large base64 fallback responses in the immutable JSON cache.",
       "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
     ]

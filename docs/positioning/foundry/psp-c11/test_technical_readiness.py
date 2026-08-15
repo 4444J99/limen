@@ -202,7 +202,6 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         artifact_id = 9002 if funding else 9001
         dimension = "maintenance-funding" if funding else receipt["dimension"]
         output_digest = None if funding else receipt["output_sha256"]
-        receipt_sha256 = MODULE.hashlib.sha256(json.dumps(receipt).encode("utf-8")).hexdigest()
         return {
             "total_count": 1,
             "artifacts": [
@@ -211,7 +210,6 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                     "name": MODULE._production_artifact_name(
                         dimension,
                         receipt["run_attempt"],
-                        receipt_sha256,
                         output_digest,
                         receipt["artifact_sha256"],
                     ),
@@ -541,7 +539,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(
             [
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
-                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100&page=1"],
             ],
             [call.args[0] for call in run.call_args_list],
         )
@@ -621,9 +619,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(
             [
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
-                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100&page=1"],
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/attempts/1"],
-                ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/artifacts?per_page=100"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/artifacts?per_page=100&page=1"],
             ],
             [call.args[0] for call in run.call_args_list],
         )
@@ -641,7 +639,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "_fetch_repository_blob",
                 side_effect=[b"maintenance:pass:output\n", b"maintenance:pass:artifact\n", b"not-json"],
             ),
-            mock.patch.object(MODULE, "_run_json", return_value=technical["provenance"]),
+            mock.patch.object(
+                MODULE,
+                "_run_json",
+                side_effect=[technical["provenance"], technical["production_artifact"]],
+            ),
             self.assertRaisesRegex(MODULE.AuditError, "funding artifact is invalid"),
         ):
             MODULE.collect_live_evidence_receipts(changed)
@@ -933,7 +935,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             funding_location: json.dumps(funding_receipt).encode("utf-8"),
         }
         collection = mock.Mock()
-        collection.run_json_batch.return_value = {}
+        collection.run_json_batch.side_effect = lambda requests: {
+            tuple(request): (
+                {"total_count": 0, "artifacts": []}
+                if "/artifacts?" in request[-1]
+                else {}
+            )
+            for request in requests
+        }
         with mock.patch.object(
             MODULE,
             "_fetch_repository_blobs_batch",
@@ -944,6 +953,101 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual({technical_location, funding_location}, set(fetch_batch.call_args_list[0].args[0]))
         self.assertEqual(3, len(set(fetch_batch.call_args_list[1].args[0])))
         self.assertEqual(4, len(collection.run_json_batch.call_args.args[0]))
+
+    def test_actions_artifact_listing_paginates_for_technical_and_funding_evidence(self) -> None:
+        row = self.public_row()
+        technical_receipt = self.evidence_receipt(row, "build")
+        technical = self.resolved_evidence(technical_receipt)
+        funding_receipt = self.funding_receipt(row)
+        funding = self.resolved_funding(funding_receipt)
+
+        def collect(run_id: str, expected: dict, offset: int = 0) -> dict:
+            pages = {
+                1: {
+                    "total_count": 101,
+                    "artifacts": [{"id": offset + index} for index in range(1, 101)],
+                },
+                2: {"total_count": 101, "artifacts": [expected]},
+            }
+
+            def response(args: list[str], **_: object) -> mock.Mock:
+                page = int(args[-1].rsplit("page=", 1)[-1])
+                return mock.Mock(returncode=0, stdout=json.dumps(pages[page]))
+
+            collection = MODULE.LiveCollection(call_limit=2)
+            with mock.patch.object(MODULE.subprocess, "run", side_effect=response) as run:
+                result = MODULE._collect_actions_artifacts(row["repository"], run_id, collection)
+            self.assertEqual(2, run.call_count)
+            self.assertEqual([1, 2], [int(call.args[0][-1].rsplit("page=", 1)[-1]) for call in run.call_args_list])
+            return result
+
+        technical["production_artifact"] = collect(
+            "1234",
+            technical["production_artifact"]["artifacts"][0],
+        )
+        self.assertEqual(
+            [],
+            MODULE._evidence_receipt_errors(
+                technical,
+                row["repository"],
+                row["observed_head"],
+                "build",
+                "verified_pass",
+                "candidate.build",
+            ),
+        )
+        funding["production_artifact"] = collect(
+            "5678",
+            funding["production_artifact"]["artifacts"][0],
+            1000,
+        )
+        self.assertEqual(
+            [],
+            MODULE._maintenance_funding_errors(
+                funding,
+                row["repository"],
+                row["observed_head"],
+                1,
+                technical,
+                "candidate.maintenance.funding",
+            ),
+        )
+
+        duplicate_pages = [
+            {"total_count": 101, "artifacts": [{"id": index} for index in range(1, 101)]},
+            {"total_count": 101, "artifacts": [{"id": 100}]},
+        ]
+        with (
+            mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                side_effect=[
+                    mock.Mock(returncode=0, stdout=json.dumps(page)) for page in duplicate_pages
+                ],
+            ),
+            self.assertRaisesRegex(MODULE.AuditError, "listing is incomplete"),
+        ):
+            MODULE._collect_actions_artifacts(
+                row["repository"],
+                "1234",
+                MODULE.LiveCollection(call_limit=2),
+            )
+        with (
+            mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                return_value=mock.Mock(
+                    returncode=0,
+                    stdout=json.dumps({"total_count": 1001, "artifacts": []}),
+                ),
+            ),
+            self.assertRaisesRegex(MODULE.AuditError, "bounded page budget"),
+        ):
+            MODULE._collect_actions_artifacts(
+                row["repository"],
+                "1234",
+                MODULE.LiveCollection(call_limit=1),
+            )
 
     def test_large_repository_blob_uses_exact_bounded_git_blob_fallback(self) -> None:
         content = b"x" * (MODULE.GITHUB_CONTENTS_INLINE_MAX_BYTES + 1)
@@ -1035,6 +1139,18 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def test_live_receipt_rejects_future_chronology_and_allows_later_receipt_commit(self) -> None:
         row = self.public_row()
         receipt = self.evidence_receipt(row, "deploy")
+        artifact_name = self.production_artifact(receipt)["artifacts"][0]["name"]
+        later_receipt = copy.deepcopy(receipt)
+        later_receipt["observed_at"] = "2026-08-15T00:00:01Z"
+        self.assertEqual(
+            artifact_name,
+            self.production_artifact(later_receipt)["artifacts"][0]["name"],
+        )
+        later_receipt["run_attempt"] = 2
+        self.assertNotEqual(
+            artifact_name,
+            self.production_artifact(later_receipt)["artifacts"][0]["name"],
+        )
         self.assertNotEqual(row["observed_head"], "f" * 40)
         self.assertTrue(MODULE._url_proves_dimension(self.receipt_url(row, "deploy"), row["observed_head"], row["repository"], "deploy"))
         resolved = self.resolved_evidence(receipt)
