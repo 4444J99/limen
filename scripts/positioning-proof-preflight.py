@@ -16,6 +16,7 @@ import ssl
 import subprocess
 import sys
 import tempfile
+import unicodedata
 import zipfile
 from http.client import HTTPException
 from urllib.parse import parse_qsl, unquote, urlsplit
@@ -1686,7 +1687,8 @@ _CLAIM_STOPWORDS = {
 
 
 def _normalized_surface_text(value: str) -> str:
-    return " ".join(re.findall(r"[a-z0-9]+", value.lower()))
+    browser_visible = "".join(character for character in value if unicodedata.category(character) != "Cf")
+    return " ".join(re.findall(r"[a-z0-9]+", browser_visible.lower()))
 
 
 class _VisibleSurfaceParser(HTMLParser):
@@ -1782,10 +1784,7 @@ class _VisibleSurfaceParser(HTMLParser):
         "body",
         "br",
         "caption",
-        "dd",
-        "dt",
         "html",
-        "li",
         "tbody",
         "td",
         "tfoot",
@@ -1863,6 +1862,16 @@ class _VisibleSurfaceParser(HTMLParser):
         if self._closed_details and tag in self._TABLE_PARSING_TAGS:
             raise ValueError("surface response has table parsing ambiguity inside closed details")
 
+    def _in_table_foster_parenting_scope(self) -> bool:
+        if "table" not in self._element_stack:
+            return False
+        table_index = len(self._element_stack) - 1 - self._element_stack[::-1].index("table")
+        return not any(tag in {"caption", "td", "th"} for tag in self._element_stack[table_index + 1 :])
+
+    def _reject_table_foster_parenting(self, tag: str) -> None:
+        if self._in_table_foster_parenting_scope() and tag not in self._TABLE_PARSING_TAGS:
+            raise ValueError("surface response requires browser table foster-parenting rules")
+
     @staticmethod
     def _attributes_reference_stylesheet(attrs: list[tuple[str, str | None]]) -> bool:
         for name, value in attrs:
@@ -1910,6 +1919,7 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires named-details exclusivity evaluation")
         self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
+        self._reject_table_foster_parenting(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
         if normalized == "meta" and self._attributes_request_refresh(attrs):
             raise ValueError("surface visibility requires client-side redirect evaluation")
@@ -1960,6 +1970,7 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires named-details exclusivity evaluation")
         self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
+        self._reject_table_foster_parenting(normalized)
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
         attributes_hidden = self._attributes_hide_element(attrs)
@@ -1996,6 +2007,8 @@ class _VisibleSurfaceParser(HTMLParser):
     def handle_data(self, data: str) -> None:
         if self._element_stack and self._element_stack[-1] == "head" and data.strip():
             raise ValueError("surface response requires browser head-closing rules")
+        if data.strip() and self._in_table_foster_parenting_scope():
+            raise ValueError("surface response requires browser table foster-parenting rules")
         if self._hidden_stack and self._hidden_stack[-1] == "style" and data.strip():
             self._stylesheet_text_seen = True
         if not self._hidden_stack and not self._closed_details_hide_current():
@@ -2135,6 +2148,7 @@ def _contains_private_telephone(value: str) -> bool:
 
 
 def _surface_contains_private_material(inspected_text: str) -> bool:
+    inspected_text = "".join(character for character in inspected_text if unicodedata.category(character) != "Cf")
     return any(
         pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS
     ) or _contains_private_telephone(inspected_text)

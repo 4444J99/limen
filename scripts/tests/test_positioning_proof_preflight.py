@@ -935,6 +935,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        format_obfuscated = (
+            "Li\u200dmen demo\u200dnstrates gov\u200derned multi-agent deliv\u200dery with durable exact-head receipts"
+        )
+        matched, drifted = MODULE._surface_claim_scan(format_obfuscated, long_expected, surface)
+        self.assertEqual(["LONG-CLAIM"], matched)
+        self.assertEqual([], drifted)
+
         matched, drifted = MODULE._surface_claim_scan(
             "There is no evidence supporting the statement that Limen demonstrates governed "
             "multi-agent delivery with durable exact-head receipts.",
@@ -1110,7 +1117,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 b"<p hidden><div>Browser-visible canonical claim</div></p>",
                 "visible_text_v3",
             )
-        for paragraph_closer in ("center", "details", "figure", "search"):
+        for paragraph_closer in ("center", "dd", "details", "dt", "figure", "li", "search"):
             with self.subTest(paragraph_closer=paragraph_closer):
                 with self.assertRaisesRegex(ValueError, "implied paragraph-closing rules"):
                     MODULE._canonical_surface_extraction(
@@ -1138,6 +1145,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "portfolio_front_door",
         )
         self.assertEqual([], legend_matched)
+        with self.assertRaisesRegex(ValueError, "table foster-parenting rules"):
+            MODULE._canonical_surface_extraction(
+                b"<table hidden>Browser-visible canonical claim</table>",
+                "visible_text_v3",
+            )
+        with self.assertRaisesRegex(ValueError, "table foster-parenting rules"):
+            MODULE._canonical_surface_extraction(
+                b"<table hidden><div>Browser-visible canonical claim</div></table>",
+                "visible_text_v3",
+            )
+        hidden_table_cell = MODULE._canonical_surface_extraction(
+            b"<table hidden><tbody><tr><td>Hidden canonical claim</td></tr></tbody></table>",
+            "visible_text_v3",
+        )
+        self.assertEqual(b"\n", hidden_table_cell)
         for math_markup in (
             "<math><semantics><mi>x</mi><annotation>Canonical claim</annotation></semantics></math>",
             "<MATH/>",

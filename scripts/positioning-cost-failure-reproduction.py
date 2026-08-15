@@ -12,6 +12,7 @@ import re
 import ssl
 import subprocess
 import tempfile
+import unicodedata
 from datetime import date, datetime, timezone
 from http.client import HTTPException
 from pathlib import Path, PurePosixPath
@@ -93,6 +94,15 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"(?:[ \t]*[:=]\s*|[ \t]+(?:is|was)[ \t]*[:=]?\s*)"
     r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
     r"(?!\#(?:[ \t]|$))\S+"
+)
+PRIVATE_TELEPHONE_CANDIDATE = re.compile(
+    r"(?i)(?:"
+    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
+    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?\d{10,15}\b"
+    r"|\btel:\s*\+?[\d\s().-]{10,32}"
+    r"|\+\d[\d\s().-]{8,31}\d"
+    r"|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4}"
+    r")"
 )
 FORBIDDEN_PUBLIC_KEYS = {
     "email",
@@ -318,6 +328,16 @@ def _public_url_has_forbidden_parameters(
     return False
 
 
+def _contains_private_telephone(value: str) -> bool:
+    for match in PRIVATE_TELEPHONE_CANDIDATE.finditer(value):
+        candidate = match.group()
+        digits = [character for character in candidate if character.isdecimal()]
+        ipv4_candidate = re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", candidate.strip()) is not None
+        if 10 <= len(digits) <= 15 and not ipv4_candidate:
+            return True
+    return False
+
+
 def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
     """Find private identifiers and credential material before a public artifact can pass."""
     findings: set[str] = set()
@@ -335,11 +355,13 @@ def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
         for index, child in enumerate(value):
             findings.update(_find_forbidden_public_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
+        value = "".join(character for character in value if unicodedata.category(character) != "Cf")
         if (
             PUBLIC_EMAIL.search(value)
             or PUBLIC_SECRET_VALUE.search(value)
             or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
             or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)
+            or _contains_private_telephone(value)
             or _public_url_has_forbidden_parameters(value)
         ):
             findings.add(path)
@@ -1938,6 +1960,9 @@ def main() -> int:
             exact_artifacts=exact_artifacts,
         )
     except (HTTPException, OSError, json.JSONDecodeError, subprocess.TimeoutExpired, ValueError) as exc:
+        diagnostic = f"cost/failure input failed closed: {exc}"
+        if _find_forbidden_public_material(diagnostic):
+            diagnostic = "cost/failure input failed closed: unsafe diagnostic withheld"
         result = {
             "schema_version": "limen.positioning_cost_failure_analysis.v1",
             "provenance": None,
@@ -1947,7 +1972,7 @@ def main() -> int:
             "population_digest": None,
             "observation_cutoff": None,
             "data_digest": None,
-            "errors": [f"cost/failure input failed closed: {exc}"],
+            "errors": [diagnostic],
             "publication_eligible": False,
             "status": "withheld",
         }

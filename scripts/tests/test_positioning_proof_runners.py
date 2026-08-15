@@ -572,6 +572,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn(private_identity, serialized)
         self.assertNotIn(private_limitation, serialized)
 
+        private_phone = "phone: +1 (212) " + "555-1234"
+        payload["provenance"] = private_phone
+        result = reproduce_cost(payload)
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertEqual("withheld", result["status"])
+        self.assertIsNone(result["provenance"])
+        self.assertNotIn(private_phone, serialized)
+
     def test_public_safe_scan_checks_identifier_values_inside_lists(self) -> None:
         findings = COST._find_forbidden_public_material({"record_id": ["private-123"]})
         self.assertEqual({"$.record_id[0]"}, findings)
@@ -1037,6 +1045,30 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 self.assertEqual("withheld", result["status"])
                 self.assertFalse(result["publication_eligible"])
                 self.assertTrue(any("failed closed" in error for error in result["errors"]))
+
+            private_member = "pass" + "word: hunter2alpha"
+            duplicate = root / "duplicate.json"
+            duplicate.write_text(
+                f'{{"{private_member}": "first", "{private_member}": "second"}}',
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/positioning-cost-failure-reproduction.py"),
+                    "--input",
+                    str(duplicate),
+                ],
+                cwd=ROOT,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(1, completed.returncode)
+            self.assertEqual("", completed.stderr)
+            result = json.loads(completed.stdout)
+            self.assertEqual(["cost/failure input failed closed: unsafe diagnostic withheld"], result["errors"])
+            self.assertNotIn(private_member, completed.stdout)
 
     def test_cost_failure_required_receipt_fields_fail_closed_before_publication(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
