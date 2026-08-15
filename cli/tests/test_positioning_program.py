@@ -1141,13 +1141,13 @@ def test_multi_repository_receipt_requires_resolved_concrete_heads() -> None:
         "observed_heads": {"organvm/alpha": "a" * 40, "organvm/beta": "b" * 40},
         "changed_paths": [],
         "predicate": {
-            "command": "python3 scripts/check-positioning-gate.py",
-            "command_sha256": MODULE.hashlib.sha256(b"python3 scripts/check-positioning-gate.py").hexdigest(),
+            "command": "python3 scripts/positioning-program.py --check",
+            "command_sha256": MODULE.hashlib.sha256(b"python3 scripts/positioning-program.py --check").hexdigest(),
             "exit_code": 0,
             "output": "pass\n",
             "output_sha256": MODULE.hashlib.sha256(b"pass\n").hexdigest(),
             "command_output_sha256": MODULE.hashlib.sha256(
-                b"python3 scripts/check-positioning-gate.py\npass\n"
+                b"python3 scripts/positioning-program.py --check\npass\n"
             ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },

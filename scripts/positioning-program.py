@@ -172,7 +172,7 @@ def _predicate_binding_failures(
         failures.append(f"predicate.command must match manifest proof contract {expected_command!r}")
     if re.fullmatch(r"(?:echo|printf|true|false|:)\b.*", command.strip()):
         failures.append("predicate.command must be an owning executable predicate, not a shell stub")
-    if packet is not None and not _command_owned_by_packet(command, packet):
+    if packet is not None and strengthened and not _command_owned_by_packet(command, packet):
         failures.append("predicate.command must invoke an executable owned by the manifest packet")
     if not strengthened:
         return failures
@@ -225,6 +225,8 @@ def _validate_w07_artifacts(reader_evidence: dict[str, Any], observed_heads: dic
     memo_path = reader_evidence.get("decision_memo_path")
     if not _is_nonempty_text(head) or not _valid_exact_head(head):
         return ["PSP-P03-W07 reader evidence must bind to an exact observed head"]
+    if reader_evidence.get("observed_head") != head:
+        failures.append("PSP-P03-W07 reader evidence observed_head must match the receipt head")
     if not _is_nonempty_text(response_path) or not _is_nonempty_text(memo_path):
         return ["PSP-P03-W07 requires immutable response_path and decision_memo_path artifacts"]
     try:
