@@ -23,7 +23,13 @@ from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
-from limen.private_board import private_board_path
+from limen.private_board import (
+    PrivateCustodyUnavailable,
+    default_private_custody_path,
+    operational_board_path,
+    path_is_public_aggregate,
+    private_board_path,
+)
 from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
@@ -70,8 +76,11 @@ def resolve_tasks_path(root: Path) -> Path:
         return private_board_path(root / "tasks.yaml") or (root / "tasks.yaml")
     env_path = os.environ.get("LIMEN_TASKS")
     if env_path:
-        return Path(env_path).expanduser().resolve()
-    return root / "tasks.yaml"
+        configured = Path(env_path).expanduser().resolve()
+        # An explicit LIMEN_TASKS can itself name the public aggregate (the live
+        # checkout after cutover); derive custody from its SHAPE, not from the name.
+        return operational_board_path(configured)
+    return operational_board_path(root / "tasks.yaml")
 
 
 def resolve_limen_repo_root() -> Path:
@@ -220,6 +229,29 @@ def board_hydrate(output: Path) -> None:
 
     atomic_write_text(target, yaml.safe_dump(board, sort_keys=False))
     click.echo(f"hydrated private board custody: {target}")
+
+
+@board_group.command("custody-path")
+@click.option("--public", type=click.Path(path_type=Path), default=None, help="Public projection to resolve against")
+def board_custody_path(public: Path | None) -> None:
+    """Print the custody path local operation resolves to — the beat's single source of truth.
+
+    Exits 0 with the path when the public projection is still a full board (custody
+    is that same file), 0 with the private custody path once it is the aggregate, and
+    3 when the aggregate has no hydrated custody yet — the state that must never be
+    read as "the board is empty".
+    """
+    root = resolve_root() if public is None else Path(public).expanduser().parent
+    public_path = Path(public).expanduser() if public else root / "tasks.yaml"
+    try:
+        resolved = operational_board_path(public_path)
+    except PrivateCustodyUnavailable as exc:
+        click.echo(str(exc), err=True)
+        click.echo(str(default_private_custody_path(public_path)))
+        raise SystemExit(3) from exc
+    click.echo(str(resolved))
+    if path_is_public_aggregate(public_path):
+        click.echo(f"# derived: {public_path} is the public aggregate; operating on private custody", err=True)
 
 
 @board_group.command("initialize")
