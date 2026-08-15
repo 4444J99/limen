@@ -29,6 +29,8 @@ from pathlib import Path
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
+from _board_custody import board_path  # noqa: E402
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
@@ -119,7 +121,7 @@ def main():
         if a == "--limit" and i + 1 < len(sys.argv):
             limit = int(sys.argv[i + 1])
 
-    d = yaml.safe_load((ROOT / "tasks.yaml").read_text()) or {}
+    d = yaml.safe_load(board_path(ROOT / "tasks.yaml").read_text()) or {}
     dispatched = [t for t in d.get("tasks", []) if t.get("status") == "dispatched"]
     if limit:
         dispatched = dispatched[:limit]

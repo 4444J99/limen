@@ -22,6 +22,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 try:
@@ -152,7 +153,10 @@ def section_board():
     counts = {}
     tasks_path = Path(os.environ.get("LIMEN_ORIENT_TASKS") or ROOT / "tasks.yaml")
     try:
-        text = tasks_path.read_text(encoding="utf-8", errors="replace")
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        text = operational_board_path(tasks_path).read_text(encoding="utf-8", errors="replace")
         data = yaml.load(text, Loader=_SafeLoader) if _SafeLoader else yaml.safe_load(text)
     except Exception:
         return ""

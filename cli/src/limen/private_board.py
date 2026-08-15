@@ -41,8 +41,25 @@ _AGGREGATE_MARKER = re.compile(
 )
 
 
-class PrivateCustodyUnavailable(RuntimeError):
-    """The public projection is an aggregate and no private custody answers for it."""
+class PrivateCustodyUnavailable(BaseException):
+    """The public projection is an aggregate and no private custody answers for it.
+
+    Inherits ``BaseException``, not ``Exception``, and that is the whole point.
+
+    Board readers across this estate wrap their parse in a broad ``except Exception``
+    that degrades to an empty result — a sane contract when the failure mode is "the
+    file is briefly unreadable". It is a catastrophic one here: with an aggregate public
+    projection and no custody, degrading means reporting **zero tasks** as though the
+    fleet had no work. Verified 2026-08-15 against the simulated cutover: as a
+    ``RuntimeError`` this was swallowed by ``omni-view.py`` and printed
+    ``board 0 tasks`` with exit 0.
+
+    So this joins ``KeyboardInterrupt`` and ``SystemExit`` in the category Python reserves
+    for "do not let a generic handler pretend this didn't happen". Handlers that genuinely
+    want it name it explicitly (``heal-board.py``, ``limen board custody-path``). One
+    declaration replaces auditing the ``except`` clause of every reader, and it cannot
+    rot as new readers are written.
+    """
 
 
 def private_board_path(public_path: Path) -> Path | None:
