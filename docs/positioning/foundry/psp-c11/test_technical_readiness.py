@@ -59,28 +59,28 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def receipt_url(row: dict, dimension: str) -> str:
         receipt_slug = MODULE.DIMENSION_RECEIPT_TOKENS[dimension][0]
         return (
-            f"https://github.com/{row['repository']}/blob/{row['observed_head']}"
+            f"https://github.com/{row['repository']}/blob/{'f' * 40}"
             f"/docs/receipts/technical-readiness/{receipt_slug}-receipt.json"
         )
 
     @staticmethod
     def evidence_receipt(row: dict, dimension: str, status: str = "pass") -> dict:
-        base = f"https://github.com/{row['repository']}/blob/{row['observed_head']}/docs/receipts/technical-readiness"
         output = f"{dimension}:{status}:output\n".encode("utf-8")
         artifact = f"{dimension}:{status}:artifact\n".encode("utf-8")
         receipt = {
-            "schema_version": "limen.psp_p13_w03_technical_evidence.v1",
+            "schema_version": "limen.psp_p13_w03_technical_evidence.v2",
             "repository": row["repository"],
-            "commit": row["observed_head"],
+            "tested_commit": row["observed_head"],
             "dimension": dimension,
             "status": status,
             "exit_code": 0 if status == "pass" else 1,
-            "output_url": f"{base}/{dimension}-output.txt",
+            "provenance_url": f"https://github.com/{row['repository']}/actions/runs/1234",
+            "predicate_path": f".github/workflows/{dimension}-technical-readiness.yml",
+            "output_path": f"docs/receipts/technical-readiness/{dimension}-output.txt",
             "output_sha256": MODULE.hashlib.sha256(output).hexdigest(),
-            "artifact_url": f"{base}/{dimension}-artifact.json",
+            "artifact_path": f"docs/receipts/technical-readiness/{dimension}-artifact.json",
             "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
             "observed_at": "2026-08-15T00:00:00Z",
-            "command": f"verify-{dimension}",
             "external_effects": [],
         }
         return receipt
@@ -91,10 +91,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         status = receipt["status"]
         return {
             "receipt": receipt,
+            "receipt_repository": receipt["repository"],
+            "receipt_commit": "f" * 40,
             "output_sha256": MODULE.hashlib.sha256(f"{dimension}:{status}:output\n".encode("utf-8")).hexdigest(),
             "artifact_sha256": MODULE.hashlib.sha256(
                 f"{dimension}:{status}:artifact\n".encode("utf-8")
             ).hexdigest(),
+            "provenance": {
+                "html_url": receipt["provenance_url"],
+                "head_sha": receipt["tested_commit"],
+                "status": "completed",
+                "conclusion": "success" if status == "pass" else "failure",
+                "path": receipt["predicate_path"],
+                "run_started_at": "2026-08-14T23:59:00Z",
+                "updated_at": receipt["observed_at"],
+            },
         }
 
     def test_tracked_audit_is_valid_and_has_zero_effects(self) -> None:
@@ -158,8 +169,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def test_candidate_projection_digest_binds_lifecycle_fields(self) -> None:
         changed_snapshot = copy.deepcopy(self.snapshot)
         row = next(candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public")
-        row["current_state"] = "archived" if row["current_state"] != "archived" else "active_repository"
-        row["preflight_disposition"] = "park" if row["preflight_disposition"] != "park" else "experiment"
+        row["current_state"] = "archived"
+        row["preflight_disposition"] = "experiment"
         with self.assertRaisesRegex(MODULE.AuditError, "accepted public candidate lifecycle binding is invalid"):
             MODULE.candidate_projection_digest(changed_snapshot)
 
@@ -208,11 +219,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
         self.assertTrue(any("observed_head drifted live" in error for error in errors))
 
-    def test_verified_results_require_exact_head_evidence(self) -> None:
+    def test_verified_results_require_immutable_receipt_evidence(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.public_row(changed)
         row["build"] = {"state": "verified_pass", "evidence_url": "https://github.com/example/repo/actions/runs/1"}
-        self.assertTrue(any("pinned to observed_head" in error for error in self.errors(changed)))
+        self.assertTrue(any("dimension-specific immutable technical receipt" in error for error in self.errors(changed)))
         row["build"]["evidence_url"] = f"https://example.invalid/default_branch/{row['observed_head']}"
         self.assertTrue(any("metadata as technical proof" in error for error in self.errors(changed)))
 
@@ -243,7 +254,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         }
         errors = self.errors(changed)
         self.assertGreaterEqual(
-            sum("dimension-specific exact-head technical receipt" in error for error in errors),
+            sum("dimension-specific immutable technical receipt" in error for error in errors),
             len(MODULE.DIMENSION_RECEIPT_TOKENS),
         )
 
@@ -270,13 +281,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         receipt = self.evidence_receipt(row, "build")
         output = b"build:pass:output\n"
         artifact = b"build:pass:artifact\n"
+        resolved = self.resolved_evidence(receipt)
         with mock.patch.object(
-            MODULE,
-            "_fetch_exact_head_blob",
-            side_effect=[json.dumps(receipt).encode("utf-8"), output, artifact],
-        ):
+            MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")
+        ), mock.patch.object(
+            MODULE, "_fetch_repository_blob", side_effect=[output, artifact]
+        ), mock.patch.object(MODULE, "_run_json", return_value=resolved["provenance"]):
             receipts = MODULE.collect_live_evidence_receipts(changed)
-        self.assertEqual(self.resolved_evidence(receipt), receipts[(row["candidate_id"], "build")])
+        self.assertEqual(resolved, receipts[(row["candidate_id"], "build")])
         broken = self.evidence_receipt(row, "build")
         broken["exit_code"] = 1
         self.assertIn(
@@ -293,7 +305,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         broken = self.evidence_receipt(row, "build")
         broken["output_sha256"] = "0" * 64
         self.assertIn(
-            "candidate.build live receipt must bind immutable output and artifact evidence",
+            "candidate.build live receipt must bind independently distinct output and artifact evidence",
             MODULE._evidence_receipt_errors(
                 self.resolved_evidence(broken),
                 row["repository"],
@@ -302,6 +314,61 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "verified_pass",
                 "candidate.build",
             ),
+        )
+
+    def test_live_receipt_requires_trusted_result_semantics_and_distinct_artifacts(self) -> None:
+        row = self.public_row()
+        receipt = self.evidence_receipt(row, "build")
+        resolved = self.resolved_evidence(receipt)
+        resolved["provenance"]["conclusion"] = "failure"
+        self.assertTrue(
+            any(
+                "trusted result semantics drift" in error
+                for error in MODULE._evidence_receipt_errors(
+                    resolved,
+                    row["repository"],
+                    row["observed_head"],
+                    "build",
+                    "verified_pass",
+                    "candidate.build",
+                )
+            )
+        )
+        receipt = self.evidence_receipt(row, "build")
+        receipt["artifact_path"] = receipt["output_path"]
+        receipt["artifact_sha256"] = receipt["output_sha256"]
+        resolved = self.resolved_evidence(receipt)
+        resolved["artifact_sha256"] = resolved["output_sha256"]
+        errors = MODULE._evidence_receipt_errors(
+            resolved,
+            row["repository"],
+            row["observed_head"],
+            "build",
+            "verified_pass",
+            "candidate.build",
+        )
+        self.assertTrue(any("distinct safe output and artifact paths" in error for error in errors))
+        self.assertTrue(any("independently distinct output and artifact evidence" in error for error in errors))
+
+    def test_live_receipt_rejects_future_chronology_and_allows_later_receipt_commit(self) -> None:
+        row = self.public_row()
+        receipt = self.evidence_receipt(row, "deploy")
+        self.assertNotEqual(row["observed_head"], "f" * 40)
+        self.assertTrue(MODULE._url_proves_dimension(self.receipt_url(row, "deploy"), row["observed_head"], row["repository"], "deploy"))
+        receipt["observed_at"] = "9999-12-31T23:59:59Z"
+        resolved = self.resolved_evidence(receipt)
+        self.assertTrue(
+            any(
+                "chronology drift" in error
+                for error in MODULE._evidence_receipt_errors(
+                    resolved,
+                    row["repository"],
+                    row["observed_head"],
+                    "deploy",
+                    "verified_pass",
+                    "candidate.deploy",
+                )
+            )
         )
 
     def test_live_receipt_exit_semantics_reject_bools_and_accept_any_nonzero_failure(self) -> None:
@@ -347,6 +414,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )["weight"] = 0
         with self.assertRaisesRegex(MODULE.AuditError, "dimension set or build/test allocation drifted"):
             MODULE.readiness_weights(underweight)
+
+    def test_transfer_threshold_is_derived_and_validated_from_contract(self) -> None:
+        self.assertEqual(75, MODULE.readiness_transfer_threshold(self.contract))
+        changed = copy.deepcopy(self.contract)
+        changed["economics_and_kill_rules"]["transfer_floor"]["technical_readiness_minimum"] = 85
+        self.assertEqual(85, MODULE.readiness_transfer_threshold(changed))
+        changed["economics_and_kill_rules"]["transfer_floor"]["technical_readiness_minimum"] = True
+        with self.assertRaisesRegex(MODULE.AuditError, "transfer threshold is invalid"):
+            MODULE.readiness_transfer_threshold(changed)
 
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -411,6 +487,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["transfer_eligible"] = True
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
         self.assertEqual([], self.errors(changed))
+        higher_floor = copy.deepcopy(self.contract)
+        higher_floor["economics_and_kill_rules"]["transfer_floor"]["technical_readiness_minimum"] = 85
+        self.assertTrue(
+            any(
+                "transfer_eligible drift" in error
+                for error in MODULE.validate_audit(changed, self.snapshot, higher_floor)
+            )
+        )
 
     def test_blocker_predicate_is_executable_and_candidate_bound(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -430,7 +514,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["deploy"]["state"] = "verified_pass"
         row["readiness_score"] = 100
         errors = self.errors(changed)
-        self.assertTrue(any("deploy evidence" in error for error in errors))
+        self.assertTrue(any("candidate" in error and "deploy" in error and "immutable technical receipt" in error for error in errors))
         self.assertTrue(any("readiness_score drift" in error for error in errors))
 
     def test_joint_build_test_dimension_scores_only_when_both_pass(self) -> None:
@@ -615,17 +699,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blocker"]["owner"] = "named-person"
         self.assertTrue(any("generic accountable owner role" in error for error in self.errors(changed)))
 
-    def test_private_clearance_requires_owner_controlled_opaque_receipt(self) -> None:
+    def test_private_clearance_is_deferred_until_trusted_live_custody_validation(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.private_row(changed)
         candidate_id = row["candidate_id"]
         digest = "a" * 64
-        row["readiness_status"] = "cleared"
-        row["blocker"] = None
+        row["readiness_status"] = "clearance_pending_live"
         row["clearance_receipt_sha256"] = digest
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
-        self.assertTrue(any("owner-controlled custody" in error for error in self.errors(changed)))
-        self.assertEqual([], MODULE.required_blocker_errors(changed, f"{candidate_id}:restricted_private_evidence"))
+        self.assertEqual([], self.errors(changed))
+        self.assertEqual(
+            ["required blocker remains uncleared"],
+            MODULE.required_blocker_errors(changed, f"{candidate_id}:restricted_private_evidence"),
+        )
         errors = MODULE.validate_audit(
             changed,
             self.snapshot,
@@ -642,17 +728,13 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 private_clearance_receipts={candidate_id: digest},
             ),
         )
-        self.assertTrue(
-            any(
-                "owner-controlled custody" in error
-                for error in MODULE.validate_audit(
-                    changed,
-                    self.snapshot,
-                    self.contract,
-                    private_clearance_receipts=None,
-                )
-            )
-        )
+        self.assertEqual([], MODULE.validate_audit(changed, self.snapshot, self.contract, private_clearance_receipts=None))
+        changed = copy.deepcopy(changed)
+        row = self.private_row(changed)
+        row["readiness_status"] = "cleared"
+        row["blocker"] = None
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        self.assertTrue(any("private status drift" in error for error in self.errors(changed)))
 
     def test_live_refresh_preserves_only_unchanged_head_evidence(self) -> None:
         previous = copy.deepcopy(self.audit)
@@ -713,6 +795,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 leaks = MODULE._private_identity_leaks({"owner/status"}, {"status"})
             self.assertEqual([], leaks)
 
+    def test_private_identity_tracked_path_listing_times_out_fail_closed(self) -> None:
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=MODULE.subprocess.TimeoutExpired(["git", "ls-files"], 240),
+        ):
+            with self.assertRaisesRegex(MODULE.AuditError, "path listing timed out"):
+                MODULE._private_identity_leaks(set(), set())
+
     def test_pr_gate_is_static_and_live_acceptance_requires_operator_context(self) -> None:
         registry = yaml.safe_load((ROOT / "institutio/governance/gates.yaml").read_text(encoding="utf-8"))
         static = registry["gates"]["positioning-foundry-technical-readiness-test"]
@@ -738,7 +829,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertIn("verify_technical_readiness.py", static["command"])
         self.assertIn("--public-live", public_live["command"].split())
         self.assertNotIn("--live", public_live["command"].split())
-        self.assertIsNot(public_live.get("scoped"), False)
+        self.assertIs(public_live["scoped"], False)
         self.assertIs(live["scoped"], False)
         self.assertIn("--live", live["command"].split())
         self.assertNotIn("ci_job", live)

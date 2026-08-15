@@ -499,9 +499,10 @@ gates:
       - "institutio/positioning/github-map.json"
       - "institutio/positioning/program.yaml"
       - "scripts/positioning-program.py"
+    scoped: false
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 scoped public-live acceptance uses the ordinary PR token only for current public heads, exact-head public evidence blobs, and canonical W01 marked-receipt verification; it never enumerates or validates the private estate."
+    note: "PSP-P13-W03 explicitly armed public-live validation uses the ordinary operator token only for current public heads, immutable public evidence blobs, trusted run provenance, and canonical W01 marked-receipt verification; mutable remote state never gates ordinary scoped PR CI and this rung never enumerates the private estate."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:

@@ -22,7 +22,7 @@ import re
 import runpy
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
 
@@ -128,19 +128,29 @@ DIMENSION_RECEIPT_TOKENS = {
 EVIDENCE_RECEIPT_KEYS = {
     "schema_version",
     "repository",
-    "commit",
+    "tested_commit",
     "dimension",
     "status",
     "exit_code",
-    "output_url",
+    "provenance_url",
+    "predicate_path",
+    "output_path",
     "output_sha256",
-    "artifact_url",
+    "artifact_path",
     "artifact_sha256",
     "observed_at",
-    "command",
     "external_effects",
 }
-RESOLVED_EVIDENCE_KEYS = {"receipt", "output_sha256", "artifact_sha256"}
+RESOLVED_EVIDENCE_KEYS = {
+    "receipt",
+    "receipt_repository",
+    "receipt_commit",
+    "output_sha256",
+    "artifact_sha256",
+    "provenance",
+}
+TRUSTED_RECEIPT_REPOSITORIES = {"organvm/limen"}
+FAILED_RUN_CONCLUSIONS = {"action_required", "cancelled", "failure", "stale", "startup_failure", "timed_out"}
 HARD_FLOOR_RULE = "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
 HARD_FLOOR_DIMENSIONS = {"security", "data_custody", "ip_custody", "observability_return"}
 DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimension in DIMENSION_RECEIPT_TOKENS}
@@ -194,14 +204,18 @@ def _is_finite_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(float(value))
 
 
-def _valid_timestamp(value: Any) -> bool:
+def _parse_timestamp(value: Any) -> dt.datetime | None:
     if not _is_nonblank_text(value) or not value.endswith("Z"):
-        return False
+        return None
     try:
         parsed = dt.datetime.fromisoformat(value[:-1] + "+00:00")
     except ValueError:
-        return False
-    return parsed.tzinfo is not None
+        return None
+    return parsed if parsed.tzinfo is not None else None
+
+
+def _valid_timestamp(value: Any) -> bool:
+    return _parse_timestamp(value) is not None
 
 
 def _valid_https_url(value: Any) -> bool:
@@ -221,19 +235,18 @@ def _url_pins_head(value: Any, observed_head: str) -> bool:
 
 
 def _url_proves_dimension(value: Any, observed_head: str, repository: str, dimension: str) -> bool:
-    """Require a dimension-named technical receipt in the candidate tree at the exact head."""
-    if not _url_pins_head(value, observed_head) or dimension not in DIMENSION_RECEIPT_TOKENS:
+    """Require a dimension-named immutable receipt that can test observed_head."""
+    if not _valid_https_url(value) or not SHA40.fullmatch(observed_head) or dimension not in DIMENSION_RECEIPT_TOKENS:
         return False
     parsed = urlparse(value)
     if parsed.netloc.casefold() != "github.com":
         return False
     parts = [segment for segment in parsed.path.split("/") if segment]
-    expected_repository = repository.split("/", 1)
-    if len(parts) < 5 or len(expected_repository) != 2:
+    if len(parts) < 5 or parts[2] != "blob" or not SHA40.fullmatch(parts[3]):
         return False
-    if [part.casefold() for part in parts[:2]] != [part.casefold() for part in expected_repository]:
-        return False
-    if parts[2] != "blob" or parts[3] != observed_head:
+    receipt_repository = "/".join(parts[:2]).casefold()
+    allowed = {repository.casefold(), *(value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES)}
+    if receipt_repository not in allowed:
         return False
     receipt_path = "/".join(parts[4:]).casefold()
     if "receipt" not in receipt_path and "evidence" not in receipt_path:
@@ -246,6 +259,25 @@ def _evidence_location(value: str) -> tuple[str, str, str]:
     if len(parts) < 5 or parts[2] != "blob":
         raise AuditError("technical evidence URL is not an exact-head repository blob")
     return "/".join(parts[:2]), parts[3], "/".join(parts[4:])
+
+
+def _safe_relative_path(value: Any) -> bool:
+    if not _is_nonblank_text(value) or "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return not path.is_absolute() and path.as_posix() == value and ".." not in path.parts and value != "."
+
+
+def _actions_run_id(value: Any, repository: str) -> str | None:
+    if not _valid_https_url(value):
+        return None
+    parsed = urlparse(value)
+    parts = [segment for segment in parsed.path.split("/") if segment]
+    if parsed.netloc.casefold() != "github.com" or len(parts) != 5 or parts[2:4] != ["actions", "runs"]:
+        return None
+    if "/".join(parts[:2]).casefold() != repository.casefold() or not parts[4].isdigit():
+        return None
+    return parts[4]
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
@@ -296,6 +328,17 @@ def readiness_hard_floors(contract: dict[str, Any]) -> set[str]:
     if not isinstance(rules, list) or HARD_FLOOR_RULE not in rules:
         raise AuditError("readiness hard-floor rule drifted")
     return set(HARD_FLOOR_DIMENSIONS)
+
+
+def readiness_transfer_threshold(contract: dict[str, Any]) -> int:
+    value = (
+        contract.get("economics_and_kill_rules", {})
+        .get("transfer_floor", {})
+        .get("technical_readiness_minimum")
+    )
+    if not _is_nonnegative_int(value) or value > 100:
+        raise AuditError("technical readiness transfer threshold is invalid")
+    return value
 
 
 def readiness_score(dimension_states: dict[str, Any], weights: dict[str, int]) -> int:
@@ -449,13 +492,17 @@ def _private_identity_leaks(private_names: set[str], private_bare_names: set[str
         package_path = str(PACKAGE.relative_to(ROOT))
     except ValueError:
         package_path = str(PACKAGE)
-    result = subprocess.run(
-        ["git", "ls-files", "--", package_path],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--", package_path],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=240,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise AuditError("tracked public C11 path listing timed out") from exc
     if result.returncode != 0:
         raise AuditError("tracked public C11 path listing failed")
     tracked = [ROOT / line for line in result.stdout.splitlines() if line.strip()]
@@ -530,6 +577,21 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _fetch_repository_blob(repository: str, commit: str, path: str) -> bytes:
+    if not SHA40.fullmatch(commit) or not _safe_relative_path(path):
+        raise AuditError("technical evidence blob location is invalid")
+    response = _run_json(
+        ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
+    )
+    encoded = response.get("content")
+    if response.get("encoding") != "base64" or not isinstance(encoded, str):
+        raise AuditError("live technical evidence blob is not decodable")
+    try:
+        return base64.b64decode("".join(encoded.split()), validate=True)
+    except ValueError as exc:
+        raise AuditError("live technical evidence blob is invalid") from exc
+
+
 def _fetch_exact_head_blob(value: Any, repository: str, commit: str) -> bytes:
     if not isinstance(value, str) or not _valid_https_url(value):
         raise AuditError("technical evidence artifact URL is invalid")
@@ -539,16 +601,7 @@ def _fetch_exact_head_blob(value: Any, repository: str, commit: str) -> bytes:
     resolved_repository, resolved_commit, path = _evidence_location(value)
     if resolved_repository.casefold() != repository.casefold() or resolved_commit != commit:
         raise AuditError("technical evidence artifact is not bound to the candidate exact head")
-    response = _run_json(
-        ["gh", "api", f"repos/{resolved_repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
-    )
-    encoded = response.get("content")
-    if response.get("encoding") != "base64" or not isinstance(encoded, str):
-        raise AuditError("live technical evidence blob is not decodable")
-    try:
-        return base64.b64decode("".join(encoded.split()), validate=True)
-    except ValueError as exc:
-        raise AuditError("live technical evidence blob is invalid") from exc
+    return _fetch_repository_blob(resolved_repository, resolved_commit, path)
 
 
 def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[dict[str, Any]]) -> str:
@@ -609,20 +662,27 @@ def collect_live_evidence_receipts(audit: dict[str, Any]) -> dict[tuple[str, str
             evidence_url = value.get("evidence_url")
             if not isinstance(candidate_id, str) or not isinstance(evidence_url, str):
                 continue
-            repository, commit, path = _evidence_location(evidence_url)
+            receipt_repository, receipt_commit, _ = _evidence_location(evidence_url)
             try:
-                decoded = _fetch_exact_head_blob(evidence_url, repository, commit).decode("utf-8")
+                decoded = _fetch_exact_head_blob(evidence_url, receipt_repository, receipt_commit).decode("utf-8")
                 receipt = json.loads(decoded, object_pairs_hook=_object_without_duplicate_keys)
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
                 raise AuditError("live technical evidence receipt is invalid") from exc
             if not isinstance(receipt, dict):
                 raise AuditError("live technical evidence receipt is not an object")
-            output = _fetch_exact_head_blob(receipt.get("output_url"), repository, commit)
-            artifact = _fetch_exact_head_blob(receipt.get("artifact_url"), repository, commit)
+            output = _fetch_repository_blob(receipt_repository, receipt_commit, receipt.get("output_path"))
+            artifact = _fetch_repository_blob(receipt_repository, receipt_commit, receipt.get("artifact_path"))
+            run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
+            if run_id is None:
+                raise AuditError("live technical evidence provenance URL is invalid")
+            provenance = _run_json(["gh", "api", f"repos/{row['repository']}/actions/runs/{run_id}"])
             receipts[(candidate_id, dimension)] = {
                 "receipt": receipt,
+                "receipt_repository": receipt_repository,
+                "receipt_commit": receipt_commit,
                 "output_sha256": hashlib.sha256(output).hexdigest(),
                 "artifact_sha256": hashlib.sha256(artifact).hexdigest(),
+                "provenance": provenance,
             }
     return receipts
 
@@ -790,23 +850,62 @@ def _evidence_receipt_errors(
         return [f"{label} live receipt must use the exact evidence schema"]
     errors: list[str] = []
     expected_status = "pass" if state == "verified_pass" else "fail"
-    if receipt.get("schema_version") != "limen.psp_p13_w03_technical_evidence.v1":
+    if receipt.get("schema_version") != "limen.psp_p13_w03_technical_evidence.v2":
         errors.append(f"{label} live receipt schema version drift")
-    if receipt.get("repository") != repository or receipt.get("commit") != observed_head:
-        errors.append(f"{label} live receipt repository or commit drift")
+    if receipt.get("repository") != repository or receipt.get("tested_commit") != observed_head:
+        errors.append(f"{label} live receipt repository or tested_commit drift")
+    receipt_repository = resolved_evidence.get("receipt_repository")
+    receipt_commit = resolved_evidence.get("receipt_commit")
+    allowed_receipt_repositories = {repository.casefold(), *(value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES)}
+    if (
+        not isinstance(receipt_repository, str)
+        or receipt_repository.casefold() not in allowed_receipt_repositories
+        or not isinstance(receipt_commit, str)
+        or not SHA40.fullmatch(receipt_commit)
+    ):
+        errors.append(f"{label} live receipt immutable location drift")
     if receipt.get("dimension") != dimension or receipt.get("status") != expected_status:
         errors.append(f"{label} live receipt dimension or result drift")
     exit_code = receipt.get("exit_code")
     valid_exit = isinstance(exit_code, int) and not isinstance(exit_code, bool)
     if not valid_exit or (state == "verified_pass" and exit_code != 0) or (state == "verified_fail" and exit_code == 0):
         errors.append(f"{label} live receipt exit_code drift")
+    output_path = receipt.get("output_path")
+    artifact_path = receipt.get("artifact_path")
+    if not _safe_relative_path(output_path) or not _safe_relative_path(artifact_path) or output_path == artifact_path:
+        errors.append(f"{label} live receipt needs distinct safe output and artifact paths")
     if (
         receipt.get("output_sha256") != resolved_evidence.get("output_sha256")
         or receipt.get("artifact_sha256") != resolved_evidence.get("artifact_sha256")
+        or resolved_evidence.get("output_sha256") == resolved_evidence.get("artifact_sha256")
     ):
-        errors.append(f"{label} live receipt must bind immutable output and artifact evidence")
-    if not _valid_timestamp(receipt.get("observed_at")) or not _is_nonblank_text(receipt.get("command")):
-        errors.append(f"{label} live receipt needs a timestamp and executable command")
+        errors.append(f"{label} live receipt must bind independently distinct output and artifact evidence")
+    provenance = resolved_evidence.get("provenance")
+    run_id = _actions_run_id(receipt.get("provenance_url"), repository)
+    expected_conclusion = "success" if state == "verified_pass" else None
+    predicate_path = receipt.get("predicate_path")
+    if not isinstance(provenance, dict) or run_id is None:
+        errors.append(f"{label} live receipt must resolve trusted execution provenance")
+    else:
+        conclusion = provenance.get("conclusion")
+        if (
+            provenance.get("html_url") != receipt.get("provenance_url")
+            or provenance.get("head_sha") != observed_head
+            or provenance.get("status") != "completed"
+            or (state == "verified_pass" and conclusion != expected_conclusion)
+            or (state == "verified_fail" and conclusion not in FAILED_RUN_CONCLUSIONS)
+        ):
+            errors.append(f"{label} live receipt trusted result semantics drift")
+        if provenance.get("path") != predicate_path or not _is_nonblank_text(predicate_path) or not any(
+            token in str(predicate_path).casefold() for token in DIMENSION_RECEIPT_TOKENS[dimension]
+        ):
+            errors.append(f"{label} live receipt predicate provenance drift")
+        observed = _parse_timestamp(receipt.get("observed_at"))
+        completed = _parse_timestamp(provenance.get("updated_at"))
+        started = _parse_timestamp(provenance.get("run_started_at") or provenance.get("created_at"))
+        now = dt.datetime.now(dt.UTC)
+        if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
+            errors.append(f"{label} live receipt chronology drift")
     if receipt.get("external_effects") != []:
         errors.append(f"{label} live receipt must record zero external effects")
     return errors
@@ -830,10 +929,8 @@ def _evidence_errors(
     if not isinstance(state, str) or state not in STATES:
         errors.append(f"{label}.state is invalid")
     if isinstance(state, str) and state in {"verified_pass", "verified_fail"}:
-        if not _url_pins_head(evidence_url, observed_head):
-            errors.append(f"{label} evidence must be an HTTPS URL pinned to observed_head")
-        elif not _url_proves_dimension(evidence_url, observed_head, repository, dimension):
-            errors.append(f"{label} requires a dimension-specific exact-head technical receipt")
+        if not _url_proves_dimension(evidence_url, observed_head, repository, dimension):
+            errors.append(f"{label} requires a dimension-specific immutable technical receipt")
         elif require_live_receipt:
             errors.extend(_evidence_receipt_errors(live_receipt, repository, observed_head, dimension, state, label))
         lowered = str(evidence_url).lower()
@@ -864,6 +961,7 @@ def _public_candidate_errors(
     expected: dict[str, Any],
     weights: dict[str, int],
     hard_floors: set[str],
+    transfer_threshold: int,
     live_receipts: dict[tuple[str, str], dict[str, Any]] | None,
 ) -> list[str]:
     candidate_id = str(expected.get("candidate_id") or "unknown")
@@ -991,7 +1089,7 @@ def _public_candidate_errors(
         not all_hard_floors_pass or bool(observed_blocker_codes & hard_blocker_codes) or bool(unclassified_blockers)
     )
     accepted_lifecycle = expected.get("current_state") != "archived" and expected.get("preflight_disposition") != "park"
-    expected_transfer = expected_score >= 75 and not hard_unresolved and accepted_lifecycle
+    expected_transfer = expected_score >= transfer_threshold and not hard_unresolved and accepted_lifecycle
     if row.get("transfer_eligible") is not expected_transfer:
         errors.append(f"{label}.transfer_eligible drift")
     if row.get("transfer_eligible") is True and hard_unresolved:
@@ -1014,7 +1112,7 @@ def _private_candidate_errors(
     if row.get("candidate_id") != candidate_id or not OPAQUE_PRIVATE_ID.fullmatch(candidate_id):
         errors.append(f"{label} must retain its opaque accepted identity")
     status = row.get("readiness_status")
-    if row.get("visibility") != "private" or status not in {"restricted", "cleared"}:
+    if row.get("visibility") != "private" or status not in {"restricted", "clearance_pending_live"}:
         errors.append(f"{label} private status drift")
     blocker = row.get("blocker")
     clearance_digest = row.get("clearance_receipt_sha256")
@@ -1026,10 +1124,15 @@ def _private_candidate_errors(
             errors.append(f"{label} must retain the restricted private evidence blocker")
         if clearance_digest is not None:
             errors.append(f"{label} restricted status cannot claim a clearance receipt")
-    elif status == "cleared":
-        if blocker is not None or not SHA64.fullmatch(str(clearance_digest or "")):
-            errors.append(f"{label} cleared status requires only an opaque clearance receipt digest")
-        if private_clearance_receipts is None or private_clearance_receipts.get(candidate_id) != clearance_digest:
+    elif status == "clearance_pending_live":
+        errors.extend(_blocker_errors(blocker, f"{label}.blocker", candidate_id))
+        if isinstance(blocker, dict) and (
+            blocker.get("owner") != GENERIC_PRIVATE_OWNER or blocker.get("code") != "restricted_private_evidence"
+        ):
+            errors.append(f"{label} pending clearance must retain the generic private evidence blocker")
+        if not SHA64.fullmatch(str(clearance_digest or "")):
+            errors.append(f"{label} pending clearance requires an opaque custody receipt digest")
+        if private_clearance_receipts is not None and private_clearance_receipts.get(candidate_id) != clearance_digest:
             errors.append(f"{label} clearance receipt is not confirmed in owner-controlled custody")
     if row.get("readiness_score") != 0 or row.get("transfer_eligible") is not False:
         errors.append(f"{label} private readiness must remain zero and non-transferable")
@@ -1144,6 +1247,7 @@ def validate_audit(
         errors.append("audit candidate identity set or order drift")
     weights = readiness_weights(contract)
     hard_floors = readiness_hard_floors(contract)
+    transfer_threshold = readiness_transfer_threshold(contract)
     for index, expected in enumerate(expected_candidates):
         if index >= len(candidates) or not isinstance(expected, dict):
             continue
@@ -1152,7 +1256,9 @@ def validate_audit(
             errors.append(f"candidate {expected.get('candidate_id')} must be an object")
             continue
         if expected.get("visibility") == "public":
-            errors.extend(_public_candidate_errors(row, expected, weights, hard_floors, live_receipts))
+            errors.extend(
+                _public_candidate_errors(row, expected, weights, hard_floors, transfer_threshold, live_receipts)
+            )
             if live_heads is not None:
                 repository = expected.get("repository")
                 if live_heads.get(repository) != row.get("observed_head"):

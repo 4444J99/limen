@@ -78,8 +78,8 @@ class HandoffTest(unittest.TestCase):
     def test_public_lifecycle_fields_are_source_locked(self):
         changed = copy.deepcopy(self.snapshot)
         row = next(candidate for candidate in changed["candidates"] if candidate["visibility"] == "public")
-        row["current_state"] = "archived" if row["current_state"] != "archived" else "active_repository"
-        row["preflight_disposition"] = "park" if row["preflight_disposition"] != "park" else "experiment"
+        row["current_state"] = "archived"
+        row["preflight_disposition"] = "experiment"
         with self.assertRaisesRegex(VERIFY.AuditError, "accepted public candidate lifecycle binding is invalid"):
             VERIFY.candidate_projection_digest(changed)
 

@@ -57,12 +57,11 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
-# W03 changes always select both the deterministic owner gate and its public-only
-# current-head/blob rail; the private-inclusive live predicate remains whole-only.
+# W03 changes select the deterministic owner gate. Both mutable live rails remain
+# explicitly armed and are never ordinary scoped PR gates.
 expect foundry-readiness-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-test
-positioning-foundry-technical-readiness-public-live
 check-docs-exports
 check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
 
@@ -218,7 +217,6 @@ verify-parallel-test
 agent-docs
 github-estate-census-custody-test
 positioning-foundry-technical-readiness-test
-positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test

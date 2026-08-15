@@ -119,26 +119,32 @@ while ambiguous bare names are checked only in tracked path names and components
 cannot become a false identity disclosure.
 
 Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
-verified dimension requires a candidate-repository URL pinned to the observed exact head and a
-dimension-specific tracked receipt or evidence path. Trusted live validation resolves that blob and
-checks its exact receipt schema and pass/fail result. The receipt names separate output and artifact
-blobs at the same repository exact head, and their fetched bytes must match the recorded SHA-256
-digests; self-derived receipt hashes, invented paths, and generic commit URLs do not prove a
-dimension. A pass requires integer exit code zero, while a verified failure requires a non-boolean
-nonzero integer. A homepage, default branch, recent push, or repository metadata never becomes build,
-test, runtime, security, custody, or maintenance proof. Blockers may be empty only after every hard
+verified dimension requires a dimension-specific immutable receipt in the candidate repository or
+the trusted Limen receipt surface. The receipt may live at a later commit, avoiding a Git fixed
+point, but its `tested_commit` must equal the candidate's observed head. Its relative output and
+artifact paths resolve at the receipt commit, must be distinct, and must match independently fetched
+SHA-256 digests. Trusted live validation also resolves a dimension-specific completed GitHub Actions
+run whose head, conclusion, predicate path, and completion time bind the tested commit, pass/fail
+semantics, and non-future receipt chronology. Self-authored commands or hashes, reused blobs,
+invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
+zero, while a verified failure requires a non-boolean nonzero integer. A homepage, default branch,
+recent push, or repository metadata never becomes build, test, runtime, security, custody, or
+maintenance proof. Blockers may be empty only after every hard
 floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
 unclassified additions as hard transfer blockers. An unresolved nested maintenance blocker must equal
-its canonical top-level blocker. The unique readiness dimensions must total exactly 100 points; the
+its canonical top-level blocker. The unique readiness dimensions must total exactly 100 points, and
+the transfer threshold is derived from the contract's governed technical-readiness minimum. The
 contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
 archived or parked candidate remains technically non-transferable regardless of evidence. A live
 refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
-head resets that row to unresolved instead of erasing unrelated candidate evidence. Private clearance
-is represented only by an opaque digest and becomes live-valid only
-when the trusted operator supplies the matching owner-controlled custody receipt. The current
-accepted evidence is therefore conservative: all 62 candidates remain non-transferable.
+head resets that row to unresolved instead of erasing unrelated candidate evidence. A proposed
+private clearance is tracked only as `clearance_pending_live`, with an opaque digest, its blocker,
+score zero, and `transfer_eligible: false`. Deterministic scoped CI can validate that explicit
+deferral but cannot self-attest `cleared`; trusted private-inclusive live validation must confirm the
+matching owner-controlled custody receipt. The current accepted evidence is therefore conservative:
+all 62 candidates remain non-transferable.
 
 | Screen result | Candidates |
 | --- | ---: |
@@ -154,10 +160,11 @@ economics, and custody detail behind an opaque per-snapshot identifier.
 
 The `positioning-foundry-technical-readiness-test` gate in
 `institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, and
-accepted W01 inputs as a deterministic scoped acceptance surface. The separately scoped
-`positioning-foundry-technical-readiness-public-live` predicate verifies current public heads,
-public evidence blobs, and the canonical W01 marked receipt with the ordinary PR token. The
-whole-only `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
+accepted W01 inputs as a deterministic scoped acceptance surface. The separate
+`positioning-foundry-technical-readiness-public-live` predicate is explicitly armed (`scoped:
+false`) and verifies current public heads, immutable public evidence blobs and run provenance, and
+the canonical W01 marked receipt with an operator token; mutable remote state never gates ordinary
+PR CI. The whole-only `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed
 `LIMEN_VERIFY_LIVE=1` verification. A repository-scoped Actions token is not accepted as operator
 evidence for the private estate.
