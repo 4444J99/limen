@@ -387,6 +387,57 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blockers"] = row["blockers"][1:]
         self.assertTrue(any("exactly cover every unresolved dimension" in error for error in self.errors(changed)))
 
+    def test_not_applicable_dimensions_retain_owned_blockers(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["documentation"] = {"state": "not_applicable", "evidence_url": None}
+        row["blockers"] = [
+            blocker for blocker in row["blockers"] if blocker["code"] != "documentation_evidence_missing"
+        ]
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        self.assertTrue(any("exactly cover every unresolved dimension" in error for error in self.errors(changed)))
+
+    def test_blocker_codes_are_shell_safe_and_unclassified_codes_block_transfer(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        injected = MODULE._blocker(row["candidate_id"], "note; touch /tmp/owned #", "unsafe")
+        row["blockers"].append(injected)
+        errors = self.errors(changed)
+        self.assertTrue(any("safe lowercase identifier" in error for error in errors))
+        self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
+
+        changed = copy.deepcopy(self.audit)
+        row = self.experiment_row(changed)
+        for dimension in (
+            "build",
+            "test",
+            "deploy",
+            "documentation",
+            "data_custody",
+            "ip_custody",
+            "observability_return",
+        ):
+            row[dimension] = {"state": "verified_pass", "evidence_url": self.receipt_url(row, dimension)}
+        row["security"] = {
+            "class": "low",
+            "state": "verified_pass",
+            "evidence_url": self.receipt_url(row, "security"),
+        }
+        row["maintenance"] = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 1,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "blocker": None,
+        }
+        row["readiness_score"] = 100
+        row["blockers"] = [MODULE._blocker(row["candidate_id"], "credential_rotation_pending", "rotate")]
+        row["transfer_eligible"] = True
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        errors = self.errors(changed)
+        self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
+        self.assertTrue(any("transfer_eligible drift" in error for error in errors))
+
     def test_accepted_archived_and_parked_candidates_never_transfer(self) -> None:
         archived_id = next(
             row["candidate_id"]

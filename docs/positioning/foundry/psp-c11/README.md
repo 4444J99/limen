@@ -124,11 +124,13 @@ prove every dimension. A homepage, default branch, recent push, or repository me
 build, test, runtime, security, custody, or maintenance proof. Blockers may be empty only after every
 hard floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
-dimension; the contract's joint 20-point build/test dimension scores only when both receipts pass;
-and an accepted archived or parked candidate remains technically non-transferable regardless of
-evidence. A live refresh preserves an accepted row only while its repository and exact head are
-unchanged; a moved head resets that row to unresolved instead of erasing evidence for unrelated
-candidates. Private clearance is represented only by an opaque digest and becomes live-valid only
+dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
+unclassified additions as hard transfer blockers. The contract's joint 20-point build/test dimension
+scores only when both receipts pass; and an accepted archived or parked candidate remains technically
+non-transferable regardless of evidence. A live refresh preserves an accepted row only while its
+repository and exact head are unchanged; a moved head resets that row to unresolved instead of
+erasing unrelated candidate evidence. Private clearance is represented only by an opaque digest and
+becomes live-valid only
 when the trusted operator supplies the matching owner-controlled custody receipt. The current
 accepted evidence is therefore conservative: all 62 candidates remain non-transferable.
 

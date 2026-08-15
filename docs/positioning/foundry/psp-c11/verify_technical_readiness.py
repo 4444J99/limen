@@ -105,6 +105,7 @@ SECURITY_CLASSES = {"unassessed", "low", "moderate", "high", "critical"}
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
 SHA64 = re.compile(r"^[0-9a-f]{64}$")
 OPAQUE_PRIVATE_ID = re.compile(r"^private-candidate-[0-9]{3}$")
+SAFE_BLOCKER_CODE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 FORBIDDEN_EVIDENCE_HINTS = {
     "homepage",
     "default_branch",
@@ -778,7 +779,9 @@ def _blocker_errors(value: Any, label: str, candidate_id: str) -> list[str]:
         if not _is_nonblank_text(value.get(key)):
             errors.append(f"{label}.{key} must be nonblank text")
     code = value.get("code")
-    if _is_nonblank_text(code) and value.get("predicate") != _blocker(candidate_id, code, "unused")["predicate"]:
+    if not isinstance(code, str) or not SAFE_BLOCKER_CODE.fullmatch(code):
+        errors.append(f"{label}.code must be a safe lowercase identifier")
+    elif value.get("predicate") != _blocker(candidate_id, code, "unused")["predicate"]:
         errors.append(f"{label}.predicate must be the exact trusted live clearance command")
     return errors
 
@@ -883,11 +886,11 @@ def _public_candidate_errors(
     unresolved_dimensions = {
         dimension
         for dimension, state in dimension_states.items()
-        if isinstance(state, str) and state in {"verified_fail", "blocked_unverified"}
+        if isinstance(state, str) and state in {"verified_fail", "blocked_unverified", "not_applicable"}
     }
     expected_dimension_blockers = {DIMENSION_BLOCKER_CODES[dimension] for dimension in unresolved_dimensions}
-    observed_dimension_blockers = set(blocker_codes) & set(DIMENSION_BLOCKER_CODES.values())
-    if observed_dimension_blockers != expected_dimension_blockers:
+    observed_blocker_codes = set(blocker_codes)
+    if observed_blocker_codes != expected_dimension_blockers:
         errors.append(f"{label}.blockers must exactly cover every unresolved dimension")
     expected_score = readiness_score(dimension_states, weights)
     score = row.get("readiness_score")
@@ -899,7 +902,10 @@ def _public_candidate_errors(
     if not blockers and not all_hard_floors_pass:
         errors.append(f"{label}.blockers may be empty only after every hard floor passes")
     hard_blocker_codes = {DIMENSION_BLOCKER_CODES[dimension] for dimension in hard_floors}
-    hard_unresolved = not all_hard_floors_pass or bool(set(blocker_codes) & hard_blocker_codes)
+    unclassified_blockers = observed_blocker_codes - set(DIMENSION_BLOCKER_CODES.values())
+    hard_unresolved = (
+        not all_hard_floors_pass or bool(observed_blocker_codes & hard_blocker_codes) or bool(unclassified_blockers)
+    )
     accepted_lifecycle = expected.get("current_state") != "archived" and expected.get("preflight_disposition") != "park"
     expected_transfer = expected_score >= 75 and not hard_unresolved and accepted_lifecycle
     if row.get("transfer_eligible") is not expected_transfer:
@@ -932,6 +938,8 @@ def _private_candidate_errors(
         errors.extend(_blocker_errors(blocker, f"{label}.blocker", candidate_id))
         if isinstance(blocker, dict) and blocker.get("owner") != GENERIC_PRIVATE_OWNER:
             errors.append(f"{label} must expose only the generic accountable owner role")
+        if isinstance(blocker, dict) and blocker.get("code") != "restricted_private_evidence":
+            errors.append(f"{label} must retain the restricted private evidence blocker")
         if clearance_digest is not None:
             errors.append(f"{label} restricted status cannot claim a clearance receipt")
     elif status == "cleared":
