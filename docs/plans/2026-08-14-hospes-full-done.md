@@ -37,7 +37,7 @@ atom filed in its git-tracked owner, board truthful, idempotent fixed point.
 1. **Track A — board truth.** limen main mirrors the hospes rows; `GH-organvm-hospes-9`'s software
    gate completed (hospes #24, #26, #27, #34 all closed by merged PRs); its `needs_human` transition
    ticket authored into the broker inbox. Landing is blocked by the keeper defect below; the ticket
-   rides the beat's retry queue.
+   was later terminally rejected at relay (see the runtime correction below).
 2. **Track B — the 12-PR land queue**, in order, each `done.sh`-green and CI-green before merge:
    #61 (i26, 8b0e18ea) · #62 (i25, 3a261fc3) · #66 (i30, 83c7c6a8) · #63 (i24, b0f3463e) ·
    #64 (i27, efca71ff) · #65 (regression #59, 07162ce9) · #67 (i31, fbfdc669) · #68 (i29, 3ff12066) ·
@@ -50,7 +50,9 @@ atom filed in its git-tracked owner, board truthful, idempotent fixed point.
    field + Rule-#4 pointer shipped (limen PR #2419 — the stamped implementing PR). The six broker
    chain tickets were rejected on a claim-agent mismatch, re-authored with `logical_agent: claude`
    (the broker resolves claim agent from `log.logical_agent` → `log.agent` → transport identity, and
-   the tasks target claude while the beat relay authenticates as codex), and re-inboxed.
+   the tasks target claude while the beat relay authenticates as codex), and re-inboxed — later
+   terminally rejected again on the same claim-agent 409 (see the runtime correction below: the
+   worker binds claims to the authenticated identity, so the re-authoring could not have worked).
 6. **Track F — branch disposition**: all session branches merged or retired; landers' worktrees
    removed after each merge.
 7. **Track G — this closeout.**
@@ -82,4 +84,21 @@ atom filed in its git-tracked owner, board truthful, idempotent fixed point.
 - Pilot-1 human residue: `GH-organvm-hospes-9` → hospes#9 (Ari review, real slate, human-authorized
   sends, real receipts) — needs_human ticket queued.
 - Keeper repair: limen#2374 + lever #2408; release-stale defect limen#2413/#2063; DO quota limen#2054.
-- Broker chain: 7 tickets in `logs/tickets/inbox` retry queue (auto-land on keeper repair).
+- Broker chain: 7 tickets — see the runtime correction below (terminally rejected, not queued).
+
+## Runtime-verification correction (2026-08-15, post-closeout `/verify`)
+
+The closeout's broker-ticket mechanism claim was verified **false** at runtime; everything else
+stands. Corrections (full evidence: limen#2374 comment 5302327163):
+
+- The 7 tickets do **not** ride a retry queue: the relay treats keeper 409s as terminal and moved
+  all 7 to `logs/tickets/rejected/` with `.reason.txt` receipts. After the keeper repair they must
+  be **re-submitted**, not waited on.
+- GH-9's rejection (`"canonical board has no top-level tasks sequence"`) freshly corroborates the
+  #2374 board-shape diagnosis.
+- The six claude-targeted chain tickets hit a second, independent 409: the worker's
+  `canonicalClaimAgent` binds the claim agent to the **authenticated transport identity**
+  (`event.agent` = the relay's codex token) and never reads the ticket's declared identity — so
+  `logical_agent: claude` could never work, and the local CLI check (`tabularius.py:792`, which
+  honors the declared identity) was the wrong rail to validate against. The resolution is an
+  authorization-design fork filed on #2374, adjacent to lever #2408.
