@@ -1024,6 +1024,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<select multiple><option>Canonical claim</option><option selected>Other</option></select>",
             "<select size='2'><option>Canonical claim</option><option>Other</option></select>",
             "<select/>",
+            "<canvas>Canonical claim</canvas>",
+            "<CANVAS>Canonical claim</CANVAS>",
+            "<canvas/>",
         ):
             with self.subTest(select_markup=select_markup):
                 with self.assertRaisesRegex(ValueError, "user-agent control"):
