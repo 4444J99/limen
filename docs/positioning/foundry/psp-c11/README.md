@@ -127,22 +127,31 @@ SHA-256 digests. Trusted live validation also resolves a dimension-specific comp
 run whose head, conclusion, predicate path, and completion time bind the tested commit, pass/fail
 semantics, and non-future receipt chronology. Self-authored commands or hashes, reused blobs,
 invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
-zero, while a verified failure requires a non-boolean nonzero integer. The top-level audit time and
-receipt chronology cannot be future-dated. A `high` or `critical` security class cannot be promoted
-to `verified_pass` or satisfy the security hard floor. A homepage, default branch,
+zero, while a verified failure requires a non-boolean nonzero integer plus an executed `failure` or
+`timed_out` workflow conclusion; skipped, cancelled, neutral, and other non-executed runs are not
+failure evidence. The top-level audit time and receipt chronology cannot be future-dated. A `high`
+or `critical` security class cannot be promoted to `verified_pass` or satisfy the security hard
+floor, and every recorded class must equal the classification in the independently fetched,
+exact-head assessment artifact. A homepage, default branch,
 recent push, or repository metadata never becomes build, test, runtime, security, custody, or
 maintenance proof. Blockers may be empty only after every hard
 floor named by the readiness contract is a verified pass, and every tracked blocker carries its
 candidate-bound trusted-live clearance predicate. Blocker codes exactly cover every unresolved
 dimension, including a `not_applicable` disposition, use a shell-safe identifier grammar, and reject
 unclassified additions as hard transfer blockers. An unresolved nested maintenance blocker must equal
-its canonical top-level blocker. Maintenance points require a named owner and a positive estimate no
-higher than the contract's 40-hour monthly maximum. The unique readiness dimensions must total exactly 100 points, and
+its canonical top-level blocker. Maintenance points require a named owner, a positive estimate no
+higher than the contract's 40-hour monthly maximum, and a response window no longer than the
+contract's 168-hour maximum; the response window must equal the value in the independently resolved
+technical receipt. The unique readiness dimensions must total exactly 100 points, and
 the transfer threshold is derived from the contract's governed technical-readiness minimum. The
 contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
 archived or parked candidate remains technically non-transferable regardless of evidence. A
-maintenance pass must use the same immutable receipt to prove that its bounded estimate is funded;
-an owner and estimate alone never permit transfer. A live collection shares one 270-second deadline,
+maintenance pass must independently resolve a distinct immutable funding receipt, funding artifact,
+and successful execution provenance proving capacity for its bounded estimate; the technical
+receipt, an owner, and an estimate cannot self-attest funding. Technical readiness alone never grants
+transfer eligibility: accepted E3+ demand, operator selection, approved terms, downside-tested
+economics, funded maintenance, and tested return must all clear their governed floors. A live
+collection shares one 270-second deadline,
 a 96-call ceiling, and an immutable-response cache across W01 verification, receipt blobs, output and
 artifact blobs, and Actions provenance, so repeated lookups cannot restart the 300-second gate clock.
 A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved

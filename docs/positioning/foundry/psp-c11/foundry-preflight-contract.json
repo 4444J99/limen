@@ -196,6 +196,7 @@
     "score_range": [0, 100],
     "metadata_screen_cap": 30,
     "maintenance_estimate_hours_per_month_maximum": 40,
+    "maintenance_response_window_hours_maximum": 168,
     "dimensions": [
       {"id": "build_test", "weight": 20, "required_proof": "Exact-head build and test receipt."},
       {"id": "deploy_runtime", "weight": 15, "required_proof": "Dated deployment or runtime receipt; homepage presence is intent only."},
@@ -204,7 +205,7 @@
       {"id": "data_privacy", "weight": 15, "required_proof": "Data classes, retention, deletion, and processing boundary."},
       {"id": "ip_custody", "weight": 10, "required_proof": "Ownership, license, contributor, and repository-custody chain."},
       {"id": "observability_return", "weight": 10, "required_proof": "Telemetry plus tested rollback, revocation, and restore route."},
-      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, bounded maintenance estimate, and immutable proof of funded maintenance before transfer."}
+      {"id": "maintenance", "weight": 5, "required_proof": "Named maintainer, response window, bounded maintenance estimate, and independently resolved immutable funding receipt, artifact, and successful execution provenance before transfer."}
     ],
     "metadata_screen": [
       "live owned repository resolution",

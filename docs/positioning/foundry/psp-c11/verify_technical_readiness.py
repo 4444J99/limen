@@ -20,6 +20,7 @@ import math
 import os
 import re
 import runpy
+import stat
 import subprocess
 import sys
 import time
@@ -92,7 +93,7 @@ MAINTENANCE_KEYS = {
     "evidence_url",
     "blocker",
 }
-MAINTENANCE_PASS_KEYS = MAINTENANCE_KEYS | {"funding_evidence_url"}
+MAINTENANCE_PASS_KEYS = MAINTENANCE_KEYS | {"funding_evidence_url", "response_window_hours"}
 BLOCKER_KEYS = {"code", "owner", "next_action", "predicate"}
 SUMMARY_KEYS = {
     "candidate_count",
@@ -144,7 +145,6 @@ EVIDENCE_RECEIPT_KEYS = {
     "observed_at",
     "external_effects",
 }
-MAINTENANCE_EVIDENCE_RECEIPT_KEYS = EVIDENCE_RECEIPT_KEYS | {"maintenance_funded"}
 RESOLVED_EVIDENCE_KEYS = {
     "receipt",
     "receipt_repository",
@@ -153,8 +153,39 @@ RESOLVED_EVIDENCE_KEYS = {
     "artifact_sha256",
     "provenance",
 }
+RESOLVED_MAINTENANCE_EVIDENCE_KEYS = RESOLVED_EVIDENCE_KEYS | {"funding"}
+RESOLVED_SECURITY_EVIDENCE_KEYS = RESOLVED_EVIDENCE_KEYS | {"assessment"}
+SECURITY_ASSESSMENT_KEYS = {
+    "schema_version",
+    "repository",
+    "tested_commit",
+    "classification",
+    "observed_at",
+    "external_effects",
+}
+MAINTENANCE_EVIDENCE_RECEIPT_KEYS = EVIDENCE_RECEIPT_KEYS | {"response_window_hours"}
+FUNDING_RECEIPT_KEYS = {
+    "schema_version",
+    "repository",
+    "tested_commit",
+    "status",
+    "capacity_hours_per_month",
+    "provenance_url",
+    "predicate_path",
+    "artifact_path",
+    "artifact_sha256",
+    "observed_at",
+    "external_effects",
+}
+RESOLVED_FUNDING_KEYS = {
+    "receipt",
+    "receipt_repository",
+    "receipt_commit",
+    "artifact_sha256",
+    "provenance",
+}
 TRUSTED_RECEIPT_REPOSITORIES = {"organvm/limen"}
-FAILED_RUN_CONCLUSIONS = {"action_required", "cancelled", "failure", "stale", "startup_failure", "timed_out"}
+EXECUTED_FAILURE_CONCLUSIONS = {"failure", "timed_out"}
 HARD_FLOOR_RULE = "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
 HARD_FLOOR_DIMENSIONS = {"security", "data_custody", "ip_custody", "observability_return"}
 DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimension in DIMENSION_RECEIPT_TOKENS}
@@ -163,6 +194,12 @@ PRIVATE_CLEARANCE_SCHEMA = "limen.psp_p13_w03_private_clearances.v1"
 PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 LIVE_COLLECTION_DEADLINE_SECONDS = 270
 LIVE_COLLECTION_CALL_LIMIT = 96
+GOVERNED_TRANSFER_BLOCKERS = {
+    "no_E3_or_stronger_primary_demand_receipt",
+    "no_operator_selected_or_scored",
+    "human_terms_and_contract_gates_unpulled",
+    "no_observed_pilot",
+}
 
 
 class AuditError(RuntimeError):
@@ -295,6 +332,13 @@ def _url_proves_dimension(value: Any, observed_head: str, repository: str, dimen
     return any(token in receipt_path for token in DIMENSION_RECEIPT_TOKENS[dimension])
 
 
+def _url_proves_maintenance_funding(value: Any, observed_head: str, repository: str) -> bool:
+    if not _url_proves_dimension(value, observed_head, repository, "maintenance"):
+        return False
+    receipt_path = "/".join(urlparse(str(value)).path.split("/")[5:]).casefold()
+    return "fund" in receipt_path
+
+
 def _evidence_location(value: str) -> tuple[str, str, str]:
     parts = [segment for segment in urlparse(value).path.split("/") if segment]
     if len(parts) < 5 or parts[2] != "blob":
@@ -382,10 +426,49 @@ def readiness_transfer_threshold(contract: dict[str, Any]) -> int:
     return value
 
 
+def governed_transfer_floors_pass(candidate: dict[str, Any], contract: dict[str, Any]) -> bool:
+    transfer_floor = contract.get("economics_and_kill_rules", {}).get("transfer_floor", {})
+    demand_minimum = transfer_floor.get("demand_score_minimum")
+    operator_minimum = transfer_floor.get("operator_score_minimum")
+    tiers = contract.get("demand_model", {}).get("evidence_tiers")
+    tier_ids = [row.get("id") for row in tiers] if isinstance(tiers, list) else []
+    if (
+        not _is_nonnegative_int(demand_minimum)
+        or not _is_nonnegative_int(operator_minimum)
+        or len(tier_ids) != len(set(tier_ids))
+        or "E3" not in tier_ids
+    ):
+        raise AuditError("governed nontechnical transfer floor drifted")
+    demand = candidate.get("demand")
+    economics = candidate.get("economics")
+    blockers = candidate.get("blocking_evidence")
+    if not isinstance(demand, dict) or not isinstance(economics, dict) or not isinstance(blockers, list):
+        return False
+    demand_tier = demand.get("tier")
+    demand_score = demand.get("score")
+    allowed_tiers = set(tier_ids[tier_ids.index("E3") :])
+    return (
+        candidate.get("transfer_eligible") is True
+        and demand_tier in allowed_tiers
+        and _is_nonnegative_int(demand_score)
+        and demand_score >= demand_minimum
+        and economics.get("status") == "transfer_floor_passed"
+        and economics.get("runway") == "approved"
+        and not (set(str(value) for value in blockers) & GOVERNED_TRANSFER_BLOCKERS)
+    )
+
+
 def readiness_maintenance_maximum(contract: dict[str, Any]) -> float:
     value = contract.get("readiness_model", {}).get("maintenance_estimate_hours_per_month_maximum")
     if not _is_finite_number(value) or not 0 < float(value) <= 168:
         raise AuditError("maintenance estimate maximum is invalid")
+    return float(value)
+
+
+def readiness_maintenance_response_maximum(contract: dict[str, Any]) -> float:
+    value = contract.get("readiness_model", {}).get("maintenance_response_window_hours_maximum")
+    if not _is_finite_number(value) or not 0 < float(value) <= 720:
+        raise AuditError("maintenance response-window maximum is invalid")
     return float(value)
 
 
@@ -527,11 +610,48 @@ def load_private_clearance_receipts() -> dict[str, str]:
     configured = os.environ.get(PRIVATE_CLEARANCE_ENV)
     if not configured:
         return {}
-    path = Path(configured).expanduser()
+    path = Path(os.path.abspath(Path(configured).expanduser()))
     try:
-        payload = load_json(path)
-    except AuditError as exc:
+        before = path.lstat()
+        if stat.S_ISLNK(before.st_mode) or not stat.S_ISREG(before.st_mode):
+            raise AuditError("private clearance custody receipt must be a regular non-symlink file")
+        if before.st_uid != os.getuid() or stat.S_IMODE(before.st_mode) != 0o600:
+            raise AuditError("private clearance custody receipt must use owner-only mode 0600")
+        try:
+            relative = path.relative_to(ROOT)
+        except ValueError:
+            relative = None
+        if relative is not None:
+            tracked = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", "--", relative.as_posix()],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=30,
+            )
+            ignored = subprocess.run(
+                ["git", "check-ignore", "--quiet", "--", relative.as_posix()],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=30,
+            )
+            if tracked.returncode != 1 or ignored.returncode != 0:
+                raise AuditError("private clearance custody receipt is not in an untracked private-safe path")
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(path, flags)
+        after = os.fstat(descriptor)
+        if (after.st_dev, after.st_ino) != (before.st_dev, before.st_ino):
+            os.close(descriptor)
+            raise AuditError("private clearance custody receipt changed during validation")
+        with os.fdopen(descriptor, encoding="utf-8") as handle:
+            payload = json.load(handle, object_pairs_hook=_object_without_duplicate_keys)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, subprocess.TimeoutExpired, AuditError) as exc:
         raise AuditError("private clearance custody receipt cannot be loaded") from exc
+    if not isinstance(payload, dict):
+        raise AuditError("private clearance custody receipt must be an object")
     if set(payload) != {"schema_version", "receipts"} or payload.get("schema_version") != PRIVATE_CLEARANCE_SCHEMA:
         raise AuditError("private clearance custody receipt schema drifted")
     receipts = payload.get("receipts")
@@ -769,7 +889,7 @@ def collect_live_evidence_receipts(
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/{run_id}"],
                 collection=collection,
             )
-            receipts[(candidate_id, dimension)] = {
+            resolved: dict[str, Any] = {
                 "receipt": receipt,
                 "receipt_repository": receipt_repository,
                 "receipt_commit": receipt_commit,
@@ -777,6 +897,61 @@ def collect_live_evidence_receipts(
                 "artifact_sha256": hashlib.sha256(artifact).hexdigest(),
                 "provenance": provenance,
             }
+            if dimension == "security":
+                try:
+                    assessment = json.loads(
+                        artifact.decode("utf-8"),
+                        object_pairs_hook=_object_without_duplicate_keys,
+                    )
+                except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
+                    raise AuditError("live security assessment artifact is invalid") from exc
+                if not isinstance(assessment, dict):
+                    raise AuditError("live security assessment artifact is not an object")
+                resolved["assessment"] = assessment
+            if dimension == "maintenance" and value.get("state") == "verified_pass":
+                funding_url = value.get("funding_evidence_url")
+                if not isinstance(funding_url, str):
+                    raise AuditError("live maintenance funding evidence URL is invalid")
+                funding_repository, funding_commit, _ = _evidence_location(funding_url)
+                try:
+                    funding_decoded = _fetch_exact_head_blob(
+                        funding_url,
+                        funding_repository,
+                        funding_commit,
+                        collection,
+                    ).decode("utf-8")
+                    funding_receipt = json.loads(
+                        funding_decoded,
+                        object_pairs_hook=_object_without_duplicate_keys,
+                    )
+                except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
+                    raise AuditError("live maintenance funding receipt is invalid") from exc
+                if not isinstance(funding_receipt, dict):
+                    raise AuditError("live maintenance funding receipt is not an object")
+                funding_artifact = _fetch_repository_blob(
+                    funding_repository,
+                    funding_commit,
+                    funding_receipt.get("artifact_path"),
+                    collection,
+                )
+                funding_run_id = _actions_run_id(
+                    funding_receipt.get("provenance_url"),
+                    str(row.get("repository") or ""),
+                )
+                if funding_run_id is None:
+                    raise AuditError("live maintenance funding provenance URL is invalid")
+                funding_provenance = _run_json(
+                    ["gh", "api", f"repos/{row['repository']}/actions/runs/{funding_run_id}"],
+                    collection=collection,
+                )
+                resolved["funding"] = {
+                    "receipt": funding_receipt,
+                    "receipt_repository": funding_repository,
+                    "receipt_commit": funding_commit,
+                    "artifact_sha256": hashlib.sha256(funding_artifact).hexdigest(),
+                    "provenance": funding_provenance,
+                }
+            receipts[(candidate_id, dimension)] = resolved
     return receipts
 
 
@@ -924,7 +1099,7 @@ def build_audit(
         "external_effects": [],
         "owner_custody_unchanged": True,
     }
-    result["summary"] = compute_summary(candidates)
+    result["summary"] = compute_summary(candidates, snapshot)
     return result
 
 
@@ -935,15 +1110,20 @@ def _evidence_receipt_errors(
     dimension: str,
     state: str,
     label: str,
+    expected_value: dict[str, Any] | None = None,
 ) -> list[str]:
-    if not _exact_keys(resolved_evidence, RESOLVED_EVIDENCE_KEYS):
+    if dimension == "maintenance" and state == "verified_pass":
+        expected_resolved_keys = RESOLVED_MAINTENANCE_EVIDENCE_KEYS
+        expected_receipt_keys = MAINTENANCE_EVIDENCE_RECEIPT_KEYS
+    elif dimension == "security":
+        expected_resolved_keys = RESOLVED_SECURITY_EVIDENCE_KEYS
+        expected_receipt_keys = EVIDENCE_RECEIPT_KEYS
+    else:
+        expected_resolved_keys = RESOLVED_EVIDENCE_KEYS
+        expected_receipt_keys = EVIDENCE_RECEIPT_KEYS
+    if not _exact_keys(resolved_evidence, expected_resolved_keys):
         return [f"{label} live receipt must resolve immutable output and artifact evidence"]
     receipt = resolved_evidence.get("receipt")
-    expected_receipt_keys = (
-        MAINTENANCE_EVIDENCE_RECEIPT_KEYS
-        if dimension == "maintenance" and state == "verified_pass"
-        else EVIDENCE_RECEIPT_KEYS
-    )
     if not _exact_keys(receipt, expected_receipt_keys):
         return [f"{label} live receipt must use the exact evidence schema"]
     errors: list[str] = []
@@ -991,7 +1171,7 @@ def _evidence_receipt_errors(
             or provenance.get("head_sha") != observed_head
             or provenance.get("status") != "completed"
             or (state == "verified_pass" and conclusion != expected_conclusion)
-            or (state == "verified_fail" and conclusion not in FAILED_RUN_CONCLUSIONS)
+            or (state == "verified_fail" and conclusion not in EXECUTED_FAILURE_CONCLUSIONS)
         ):
             errors.append(f"{label} live receipt trusted result semantics drift")
         if provenance.get("path") != predicate_path or not _is_nonblank_text(predicate_path) or not any(
@@ -1006,8 +1186,105 @@ def _evidence_receipt_errors(
             errors.append(f"{label} live receipt chronology drift")
     if receipt.get("external_effects") != []:
         errors.append(f"{label} live receipt must record zero external effects")
-    if dimension == "maintenance" and state == "verified_pass" and receipt.get("maintenance_funded") is not True:
-        errors.append(f"{label} live receipt must prove funded maintenance")
+    if dimension == "security":
+        assessment = resolved_evidence.get("assessment")
+        if not _exact_keys(assessment, SECURITY_ASSESSMENT_KEYS):
+            errors.append(f"{label} must resolve the exact security assessment artifact")
+        elif (
+            assessment.get("schema_version") != "limen.psp_p13_w03_security_assessment.v1"
+            or assessment.get("repository") != repository
+            or assessment.get("tested_commit") != observed_head
+            or assessment.get("classification") != (expected_value or {}).get("class")
+            or assessment.get("observed_at") != receipt.get("observed_at")
+            or assessment.get("external_effects") != []
+        ):
+            errors.append(f"{label} recorded class is not bound to the independently resolved assessment")
+    if dimension == "maintenance" and state == "verified_pass":
+        if receipt.get("response_window_hours") != (expected_value or {}).get("response_window_hours"):
+            errors.append(f"{label} response window is not bound to the independently resolved receipt")
+    return errors
+
+
+def _maintenance_funding_errors(
+    resolved_funding: Any,
+    repository: str,
+    observed_head: str,
+    required_hours: Any,
+    technical_evidence: Any,
+    label: str,
+) -> list[str]:
+    if not _exact_keys(resolved_funding, RESOLVED_FUNDING_KEYS):
+        return [f"{label} must independently resolve immutable funding evidence"]
+    receipt = resolved_funding.get("receipt")
+    if not _exact_keys(receipt, FUNDING_RECEIPT_KEYS):
+        return [f"{label} must use the exact funding receipt schema"]
+    errors: list[str] = []
+    if receipt.get("schema_version") != "limen.psp_p13_w03_maintenance_funding.v1":
+        errors.append(f"{label} schema version drift")
+    if (
+        receipt.get("repository") != repository
+        or receipt.get("tested_commit") != observed_head
+        or receipt.get("status") != "funded"
+    ):
+        errors.append(f"{label} repository, tested_commit, or status drift")
+    capacity = receipt.get("capacity_hours_per_month")
+    if (
+        not _is_finite_number(capacity)
+        or not _is_finite_number(required_hours)
+        or float(capacity) < float(required_hours)
+    ):
+        errors.append(f"{label} capacity does not fund the bounded maintenance estimate")
+    receipt_repository = resolved_funding.get("receipt_repository")
+    receipt_commit = resolved_funding.get("receipt_commit")
+    allowed_repositories = {repository.casefold(), *(value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES)}
+    if (
+        not isinstance(receipt_repository, str)
+        or receipt_repository.casefold() not in allowed_repositories
+        or not isinstance(receipt_commit, str)
+        or not SHA40.fullmatch(receipt_commit)
+    ):
+        errors.append(f"{label} immutable location drift")
+    artifact_path = receipt.get("artifact_path")
+    artifact_sha256 = resolved_funding.get("artifact_sha256")
+    technical_digests = {
+        technical_evidence.get("output_sha256"),
+        technical_evidence.get("artifact_sha256"),
+    } if isinstance(technical_evidence, dict) else set()
+    if (
+        not _safe_relative_path(artifact_path)
+        or receipt.get("artifact_sha256") != artifact_sha256
+        or artifact_sha256 in technical_digests
+    ):
+        errors.append(f"{label} must bind an independently distinct funding artifact")
+    provenance = resolved_funding.get("provenance")
+    run_id = _actions_run_id(receipt.get("provenance_url"), repository)
+    predicate_path = receipt.get("predicate_path")
+    if not isinstance(provenance, dict) or run_id is None:
+        errors.append(f"{label} must resolve trusted execution provenance")
+    else:
+        if (
+            provenance.get("html_url") != receipt.get("provenance_url")
+            or provenance.get("head_sha") != observed_head
+            or provenance.get("status") != "completed"
+            or provenance.get("conclusion") != "success"
+        ):
+            errors.append(f"{label} trusted result semantics drift")
+        lowered_path = str(predicate_path).casefold()
+        if (
+            provenance.get("path") != predicate_path
+            or not _is_nonblank_text(predicate_path)
+            or "maintenance" not in lowered_path
+            or "fund" not in lowered_path
+        ):
+            errors.append(f"{label} predicate provenance drift")
+        observed = _parse_timestamp(receipt.get("observed_at"))
+        completed = _parse_timestamp(provenance.get("updated_at"))
+        started = _parse_timestamp(provenance.get("run_started_at") or provenance.get("created_at"))
+        now = dt.datetime.now(dt.UTC)
+        if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
+            errors.append(f"{label} chronology drift")
+    if receipt.get("external_effects") != []:
+        errors.append(f"{label} must record zero external effects")
     return errors
 
 
@@ -1032,7 +1309,17 @@ def _evidence_errors(
         if not _url_proves_dimension(evidence_url, observed_head, repository, dimension):
             errors.append(f"{label} requires a dimension-specific immutable technical receipt")
         elif require_live_receipt:
-            errors.extend(_evidence_receipt_errors(live_receipt, repository, observed_head, dimension, state, label))
+            errors.extend(
+                _evidence_receipt_errors(
+                    live_receipt,
+                    repository,
+                    observed_head,
+                    dimension,
+                    state,
+                    label,
+                    value,
+                )
+            )
         lowered = str(evidence_url).lower()
         if any(token in lowered for token in FORBIDDEN_EVIDENCE_HINTS):
             errors.append(f"{label} cannot use metadata as technical proof")
@@ -1059,10 +1346,12 @@ def _blocker_errors(value: Any, label: str, candidate_id: str) -> list[str]:
 def _public_candidate_errors(
     row: dict[str, Any],
     expected: dict[str, Any],
+    contract: dict[str, Any],
     weights: dict[str, int],
     hard_floors: set[str],
     transfer_threshold: int,
     maintenance_maximum: float,
+    maintenance_response_maximum: float,
     live_receipts: dict[tuple[str, str], dict[str, Any]] | None,
 ) -> list[str]:
     candidate_id = str(expected.get("candidate_id") or "unknown")
@@ -1141,9 +1430,16 @@ def _public_candidate_errors(
         if state == "verified_pass":
             estimate = maintenance.get("estimate_hours_per_month")
             valid_estimate = _is_finite_number(estimate) and 0 < float(estimate) <= maintenance_maximum
-            valid_pass = _is_nonblank_text(maintenance.get("owner")) and valid_estimate
+            response_window = maintenance.get("response_window_hours")
+            valid_response = (
+                _is_finite_number(response_window)
+                and 0 < float(response_window) <= maintenance_response_maximum
+            )
+            valid_pass = _is_nonblank_text(maintenance.get("owner")) and valid_estimate and valid_response
             if not valid_pass:
-                errors.append(f"{label}.maintenance pass requires an owner and bounded positive estimate")
+                errors.append(
+                    f"{label}.maintenance pass requires an owner, bounded positive estimate, and bounded response window"
+                )
             if _is_finite_number(estimate) and float(estimate) > maintenance_maximum:
                 errors.append(f"{label}.maintenance estimate exceeds the contract maximum")
             if maintenance.get("blocker") is not None:
@@ -1151,11 +1447,23 @@ def _public_candidate_errors(
                 valid_pass = False
             funding_evidence_url = maintenance.get("funding_evidence_url")
             funded_maintenance = (
-                funding_evidence_url == maintenance.get("evidence_url")
-                and _url_proves_dimension(funding_evidence_url, head, repository, "maintenance")
+                funding_evidence_url != maintenance.get("evidence_url")
+                and _url_proves_maintenance_funding(funding_evidence_url, head, repository)
             )
             if not funded_maintenance:
-                errors.append(f"{label}.maintenance pass requires immutable funded-maintenance evidence")
+                errors.append(f"{label}.maintenance pass requires distinct immutable funded-maintenance evidence")
+            if live_receipts is not None:
+                technical_evidence = live_receipts.get((candidate_id, "maintenance"))
+                funding_errors = _maintenance_funding_errors(
+                    technical_evidence.get("funding") if isinstance(technical_evidence, dict) else None,
+                    repository,
+                    head,
+                    estimate,
+                    technical_evidence,
+                    f"{label}.maintenance.funding",
+                )
+                errors.extend(funding_errors)
+                funded_maintenance = funded_maintenance and not funding_errors
             dimension_states["maintenance"] = state if valid_pass else "blocked_unverified"
         else:
             dimension_states["maintenance"] = state
@@ -1208,11 +1516,13 @@ def _public_candidate_errors(
         not all_hard_floors_pass or bool(observed_blocker_codes & hard_blocker_codes) or bool(unclassified_blockers)
     )
     accepted_lifecycle = expected.get("current_state") != "archived" and expected.get("preflight_disposition") != "park"
+    governed_floors_pass = governed_transfer_floors_pass(expected, contract)
     expected_transfer = (
         expected_score >= transfer_threshold
         and not hard_unresolved
         and accepted_lifecycle
         and funded_maintenance
+        and governed_floors_pass
     )
     if row.get("transfer_eligible") is not expected_transfer:
         errors.append(f"{label}.transfer_eligible drift")
@@ -1220,6 +1530,8 @@ def _public_candidate_errors(
         errors.append(f"{label} cannot be transferable with unresolved hard blockers")
     if row.get("transfer_eligible") is True and not accepted_lifecycle:
         errors.append(f"{label} accepted archived or parked lifecycle cannot be transferable")
+    if row.get("transfer_eligible") is True and not governed_floors_pass:
+        errors.append(f"{label} cannot be transferable before every governed nontechnical floor passes")
     return errors
 
 
@@ -1263,23 +1575,43 @@ def _private_candidate_errors(
     return errors
 
 
-def compute_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+def _public_dimensions_verified(row: dict[str, Any]) -> bool:
+    return all(
+        isinstance(row.get(dimension), dict) and row[dimension].get("state") == "verified_pass"
+        for dimension in DIMENSION_RECEIPT_TOKENS
+    )
+
+
+def compute_summary(candidates: list[dict[str, Any]], snapshot: dict[str, Any]) -> dict[str, Any]:
+    lifecycle_by_id = {
+        row.get("candidate_id"): row
+        for row in snapshot.get("candidates", [])
+        if isinstance(row, dict) and row.get("visibility") == "public"
+    }
     visibility = collections.Counter(
         row.get("visibility") if isinstance(row.get("visibility"), str) else "<invalid>"
         for row in candidates
         if isinstance(row, dict)
     )
-    status_counts = collections.Counter(
-        (
-            str(row.get("readiness_status") or "restricted")
-            if row.get("visibility") == "private"
-            else "transfer_ready"
-            if row.get("transfer_eligible") is True
-            else "blocked_unverified"
-        )
-        for row in candidates
-        if isinstance(row, dict)
-    )
+    status_counts: collections.Counter[str] = collections.Counter()
+    for row in candidates:
+        if not isinstance(row, dict):
+            continue
+        if row.get("visibility") == "private":
+            status_counts[str(row.get("readiness_status") or "restricted")] += 1
+            continue
+        if row.get("transfer_eligible") is True:
+            status_counts["transfer_ready"] += 1
+            continue
+        candidate_id = row.get("candidate_id")
+        expected = lifecycle_by_id.get(candidate_id, {}) if isinstance(candidate_id, str) else {}
+        if _public_dimensions_verified(row):
+            if expected.get("current_state") == "archived" or expected.get("preflight_disposition") == "park":
+                status_counts["verified_nontransferable_lifecycle"] += 1
+            else:
+                status_counts["technical_ready_governance_pending"] += 1
+        else:
+            status_counts["blocked_unverified"] += 1
     scores = collections.Counter(
         str(row.get("readiness_score")) if _is_nonnegative_int(row.get("readiness_score")) else "<invalid>"
         for row in candidates
@@ -1374,6 +1706,7 @@ def validate_audit(
     hard_floors = readiness_hard_floors(contract)
     transfer_threshold = readiness_transfer_threshold(contract)
     maintenance_maximum = readiness_maintenance_maximum(contract)
+    maintenance_response_maximum = readiness_maintenance_response_maximum(contract)
     for index, expected in enumerate(expected_candidates):
         if index >= len(candidates) or not isinstance(expected, dict):
             continue
@@ -1386,10 +1719,12 @@ def validate_audit(
                 _public_candidate_errors(
                     row,
                     expected,
+                    contract,
                     weights,
                     hard_floors,
                     transfer_threshold,
                     maintenance_maximum,
+                    maintenance_response_maximum,
                     live_receipts,
                 )
             )
@@ -1402,7 +1737,7 @@ def validate_audit(
         else:
             errors.append(f"candidate {expected.get('candidate_id')} has invalid accepted visibility")
     summary = audit.get("summary")
-    if not _exact_keys(summary, SUMMARY_KEYS) or summary != compute_summary(candidates):
+    if not _exact_keys(summary, SUMMARY_KEYS) or summary != compute_summary(candidates, snapshot):
         errors.append("audit summary drift")
     if audit.get("external_effects") != []:
         errors.append("audit validation must have zero external effects")

@@ -8,6 +8,7 @@ import copy
 import importlib.util
 import io
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -64,9 +65,33 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
 
     @staticmethod
-    def evidence_receipt(row: dict, dimension: str, status: str = "pass") -> dict:
+    def funding_receipt_url(row: dict) -> str:
+        return (
+            f"https://github.com/{row['repository']}/blob/{'f' * 40}"
+            "/docs/receipts/technical-readiness/maintenance-funding-receipt.json"
+        )
+
+    @staticmethod
+    def security_assessment(row: dict, classification: str = "moderate") -> dict:
+        return {
+            "schema_version": "limen.psp_p13_w03_security_assessment.v1",
+            "repository": row["repository"],
+            "tested_commit": row["observed_head"],
+            "classification": classification,
+            "observed_at": "2026-08-15T00:00:00Z",
+            "external_effects": [],
+        }
+
+    @classmethod
+    def evidence_artifact(cls, row: dict, dimension: str, status: str) -> bytes:
+        if dimension == "security":
+            return json.dumps(cls.security_assessment(row), sort_keys=True).encode("utf-8")
+        return f"{dimension}:{status}:artifact\n".encode("utf-8")
+
+    @classmethod
+    def evidence_receipt(cls, row: dict, dimension: str, status: str = "pass") -> dict:
         output = f"{dimension}:{status}:output\n".encode("utf-8")
-        artifact = f"{dimension}:{status}:artifact\n".encode("utf-8")
+        artifact = cls.evidence_artifact(row, dimension, status)
         receipt = {
             "schema_version": "limen.psp_p13_w03_technical_evidence.v2",
             "repository": row["repository"],
@@ -84,26 +109,64 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "external_effects": [],
         }
         if dimension == "maintenance" and status == "pass":
-            receipt["maintenance_funded"] = True
+            receipt["response_window_hours"] = 24
         return receipt
 
     @staticmethod
-    def resolved_evidence(receipt: dict) -> dict:
+    def funding_receipt(row: dict, capacity: int = 1) -> dict:
+        artifact = b"maintenance:funding:artifact\n"
+        return {
+            "schema_version": "limen.psp_p13_w03_maintenance_funding.v1",
+            "repository": row["repository"],
+            "tested_commit": row["observed_head"],
+            "status": "funded",
+            "capacity_hours_per_month": capacity,
+            "provenance_url": f"https://github.com/{row['repository']}/actions/runs/5678",
+            "predicate_path": ".github/workflows/maintenance-funding.yml",
+            "artifact_path": "docs/receipts/technical-readiness/maintenance-funding-artifact.json",
+            "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
+            "observed_at": "2026-08-15T00:00:00Z",
+            "external_effects": [],
+        }
+
+    @classmethod
+    def resolved_evidence(cls, receipt: dict) -> dict:
         dimension = receipt["dimension"]
         status = receipt["status"]
-        return {
+        row = {"repository": receipt["repository"], "observed_head": receipt["tested_commit"]}
+        resolved = {
             "receipt": receipt,
             "receipt_repository": receipt["repository"],
             "receipt_commit": "f" * 40,
             "output_sha256": MODULE.hashlib.sha256(f"{dimension}:{status}:output\n".encode("utf-8")).hexdigest(),
-            "artifact_sha256": MODULE.hashlib.sha256(
-                f"{dimension}:{status}:artifact\n".encode("utf-8")
-            ).hexdigest(),
+            "artifact_sha256": MODULE.hashlib.sha256(cls.evidence_artifact(row, dimension, status)).hexdigest(),
             "provenance": {
                 "html_url": receipt["provenance_url"],
                 "head_sha": receipt["tested_commit"],
                 "status": "completed",
                 "conclusion": "success" if status == "pass" else "failure",
+                "path": receipt["predicate_path"],
+                "run_started_at": "2026-08-14T23:59:00Z",
+                "updated_at": receipt["observed_at"],
+            },
+        }
+        if dimension == "security":
+            resolved["assessment"] = cls.security_assessment(row)
+        return resolved
+
+    @staticmethod
+    def resolved_funding(receipt: dict) -> dict:
+        artifact = b"maintenance:funding:artifact\n"
+        return {
+            "receipt": receipt,
+            "receipt_repository": receipt["repository"],
+            "receipt_commit": "f" * 40,
+            "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
+            "provenance": {
+                "html_url": receipt["provenance_url"],
+                "head_sha": receipt["tested_commit"],
+                "status": "completed",
+                "conclusion": "success",
                 "path": receipt["predicate_path"],
                 "run_started_at": "2026-08-14T23:59:00Z",
                 "updated_at": receipt["observed_at"],
@@ -259,6 +322,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
             "evidence_url": generic,
             "funding_evidence_url": generic,
             "blocker": None,
@@ -327,6 +391,88 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ),
         )
 
+    def test_live_maintenance_funding_is_resolved_independently(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["maintenance"] = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
+            "blocker": None,
+        }
+        technical_receipt = self.evidence_receipt(row, "maintenance")
+        funding_receipt = self.funding_receipt(row)
+        technical = self.resolved_evidence(technical_receipt)
+        funding = self.resolved_funding(funding_receipt)
+        with (
+            mock.patch.object(
+                MODULE,
+                "_fetch_exact_head_blob",
+                side_effect=[json.dumps(technical_receipt).encode(), json.dumps(funding_receipt).encode()],
+            ) as fetch_receipt,
+            mock.patch.object(
+                MODULE,
+                "_fetch_repository_blob",
+                side_effect=[
+                    b"maintenance:pass:output\n",
+                    b"maintenance:pass:artifact\n",
+                    b"maintenance:funding:artifact\n",
+                ],
+            ),
+            mock.patch.object(
+                MODULE,
+                "_run_json",
+                side_effect=[technical["provenance"], funding["provenance"]],
+            ),
+        ):
+            receipts = MODULE.collect_live_evidence_receipts(changed)
+        resolved = receipts[(row["candidate_id"], "maintenance")]
+        self.assertEqual(2, fetch_receipt.call_count)
+        self.assertEqual(funding, resolved["funding"])
+        self.assertNotEqual(row["maintenance"]["evidence_url"], row["maintenance"]["funding_evidence_url"])
+
+    def test_live_security_class_is_bound_to_resolved_assessment_artifact(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["security"] = {
+            "class": "low",
+            "state": "verified_pass",
+            "evidence_url": self.receipt_url(row, "security"),
+        }
+        receipt = self.evidence_receipt(row, "security")
+        assessment = self.security_assessment(row, "moderate")
+        artifact = json.dumps(assessment, sort_keys=True).encode("utf-8")
+        receipt["artifact_sha256"] = MODULE.hashlib.sha256(artifact).hexdigest()
+        provenance = self.resolved_evidence(receipt)["provenance"]
+        with (
+            mock.patch.object(MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode()),
+            mock.patch.object(
+                MODULE,
+                "_fetch_repository_blob",
+                side_effect=[b"security:pass:output\n", artifact],
+            ),
+            mock.patch.object(MODULE, "_run_json", return_value=provenance),
+        ):
+            resolved = MODULE.collect_live_evidence_receipts(changed)[(row["candidate_id"], "security")]
+        self.assertEqual(assessment, resolved["assessment"])
+        self.assertTrue(
+            any(
+                "recorded class is not bound" in error
+                for error in MODULE._evidence_receipt_errors(
+                    resolved,
+                    row["repository"],
+                    row["observed_head"],
+                    "security",
+                    "verified_pass",
+                    "candidate.security",
+                    row["security"],
+                )
+            )
+        )
+
     def test_live_receipt_requires_trusted_result_semantics_and_distinct_artifacts(self) -> None:
         row = self.public_row()
         receipt = self.evidence_receipt(row, "build")
@@ -361,18 +507,73 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertTrue(any("distinct safe output and artifact paths" in error for error in errors))
         self.assertTrue(any("independently distinct output and artifact evidence" in error for error in errors))
 
-        receipt = self.evidence_receipt(row, "maintenance")
-        receipt["maintenance_funded"] = False
-        self.assertIn(
-            "candidate.maintenance live receipt must prove funded maintenance",
-            MODULE._evidence_receipt_errors(
-                self.resolved_evidence(receipt),
+        technical = self.resolved_evidence(self.evidence_receipt(row, "maintenance"))
+        funding = self.resolved_funding(self.funding_receipt(row))
+        self.assertEqual(
+            [],
+            MODULE._maintenance_funding_errors(
+                funding,
                 row["repository"],
                 row["observed_head"],
-                "maintenance",
-                "verified_pass",
-                "candidate.maintenance",
+                1,
+                technical,
+                "candidate.maintenance.funding",
             ),
+        )
+        funding["receipt"]["capacity_hours_per_month"] = 0
+        self.assertTrue(
+            any(
+                "does not fund" in error
+                for error in MODULE._maintenance_funding_errors(
+                    funding,
+                    row["repository"],
+                    row["observed_head"],
+                    1,
+                    technical,
+                    "candidate.maintenance.funding",
+                )
+            )
+        )
+        funding = self.resolved_funding(self.funding_receipt(row))
+        funding["receipt"]["artifact_sha256"] = technical["artifact_sha256"]
+        funding["artifact_sha256"] = technical["artifact_sha256"]
+        self.assertTrue(
+            any(
+                "independently distinct funding artifact" in error
+                for error in MODULE._maintenance_funding_errors(
+                    funding,
+                    row["repository"],
+                    row["observed_head"],
+                    1,
+                    technical,
+                    "candidate.maintenance.funding",
+                )
+            )
+        )
+        maintenance_value = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 1,
+            "response_window_hours": 48,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
+            "blocker": None,
+        }
+        technical = self.resolved_evidence(self.evidence_receipt(row, "maintenance"))
+        technical["funding"] = self.resolved_funding(self.funding_receipt(row))
+        self.assertTrue(
+            any(
+                "response window is not bound" in error
+                for error in MODULE._evidence_receipt_errors(
+                    technical,
+                    row["repository"],
+                    row["observed_head"],
+                    "maintenance",
+                    "verified_pass",
+                    "candidate.maintenance",
+                    maintenance_value,
+                )
+            )
         )
 
     def test_live_collection_has_one_deadline_call_budget_and_response_cache(self) -> None:
@@ -413,7 +614,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             )
         )
 
-    def test_live_receipt_exit_semantics_reject_bools_and_accept_any_nonzero_failure(self) -> None:
+    def test_live_receipt_exit_semantics_require_an_executed_failure(self) -> None:
         row = self.public_row()
         failed = self.evidence_receipt(row, "test", "fail")
         failed["exit_code"] = 124
@@ -428,6 +629,33 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "candidate.test",
             ),
         )
+        timed_out = self.resolved_evidence(failed)
+        timed_out["provenance"]["conclusion"] = "timed_out"
+        self.assertEqual(
+            [],
+            MODULE._evidence_receipt_errors(
+                timed_out,
+                row["repository"],
+                row["observed_head"],
+                "test",
+                "verified_fail",
+                "candidate.test",
+            ),
+        )
+        for conclusion in ("action_required", "cancelled", "neutral", "skipped", "stale", "startup_failure"):
+            not_executed = self.resolved_evidence(failed)
+            not_executed["provenance"]["conclusion"] = conclusion
+            self.assertIn(
+                "candidate.test live receipt trusted result semantics drift",
+                MODULE._evidence_receipt_errors(
+                    not_executed,
+                    row["repository"],
+                    row["observed_head"],
+                    "test",
+                    "verified_fail",
+                    "candidate.test",
+                ),
+            )
         for state, status, exit_code in (("verified_pass", "pass", False), ("verified_fail", "fail", True)):
             receipt = self.evidence_receipt(row, "test", status)
             receipt["exit_code"] = exit_code
@@ -474,6 +702,13 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         changed["readiness_model"]["maintenance_estimate_hours_per_month_maximum"] = 1_000
         with self.assertRaisesRegex(MODULE.AuditError, "maintenance estimate maximum is invalid"):
             MODULE.readiness_maintenance_maximum(changed)
+        self.assertEqual(168, MODULE.readiness_maintenance_response_maximum(self.contract))
+        changed = copy.deepcopy(self.contract)
+        changed["readiness_model"]["maintenance_response_window_hours_maximum"] = 24
+        self.assertEqual(24, MODULE.readiness_maintenance_response_maximum(changed))
+        changed["readiness_model"]["maintenance_response_window_hours_maximum"] = 1_000
+        with self.assertRaisesRegex(MODULE.AuditError, "response-window maximum is invalid"):
+            MODULE.readiness_maintenance_response_maximum(changed)
 
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -500,23 +735,35 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
             "evidence_url": self.receipt_url(row, "maintenance"),
-            "funding_evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
             "blocker": None,
         }
         row["readiness_score"] = 100
         row["blockers"] = []
-        row["transfer_eligible"] = True
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        row["transfer_eligible"] = False
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         self.assertEqual([], self.errors(changed))
 
+        row["transfer_eligible"] = True
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
+        self.assertTrue(
+            any("every governed nontechnical floor" in error for error in self.errors(changed))
+        )
+        row["transfer_eligible"] = False
+        row["maintenance"]["funding_evidence_url"] = row["maintenance"]["evidence_url"]
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
+        self.assertTrue(
+            any("distinct immutable funded-maintenance evidence" in error for error in self.errors(changed))
+        )
+        row["maintenance"]["funding_evidence_url"] = self.funding_receipt_url(row)
         row["maintenance"].pop("funding_evidence_url")
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         errors = self.errors(changed)
         self.assertTrue(any("maintenance must use the exact dimension schema" in error for error in errors))
-        self.assertTrue(any("transfer_eligible drift" in error for error in errors))
 
-    def test_contract_hard_floors_allow_75_with_owned_nonhard_gaps(self) -> None:
+    def test_contract_hard_floors_allow_75_but_nontechnical_floors_still_bar_transfer(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.experiment_row(changed)
         for dimension in ("build", "test", "data_custody", "ip_custody", "observability_return"):
@@ -533,8 +780,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
             "evidence_url": self.receipt_url(row, "maintenance"),
-            "funding_evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
             "blocker": None,
         }
         row["readiness_score"] = 75
@@ -543,17 +791,35 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             for blocker in row["blockers"]
             if blocker["code"] in {"deploy_evidence_missing", "documentation_evidence_missing"}
         ]
-        row["transfer_eligible"] = True
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        row["transfer_eligible"] = False
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         self.assertEqual([], self.errors(changed))
         higher_floor = copy.deepcopy(self.contract)
         higher_floor["economics_and_kill_rules"]["transfer_floor"]["technical_readiness_minimum"] = 85
-        self.assertTrue(
-            any(
-                "transfer_eligible drift" in error
-                for error in MODULE.validate_audit(changed, self.snapshot, higher_floor)
+        self.assertEqual([], MODULE.validate_audit(changed, self.snapshot, higher_floor))
+
+    def test_governed_transfer_floor_requires_demand_operator_terms_economics_and_return(self) -> None:
+        candidate = copy.deepcopy(
+            next(
+                row
+                for row in self.snapshot["candidates"]
+                if row["visibility"] == "public" and row["preflight_disposition"] == "experiment"
             )
         )
+        self.assertFalse(MODULE.governed_transfer_floors_pass(candidate, self.contract))
+        candidate["transfer_eligible"] = True
+        candidate["demand"]["tier"] = "E3"
+        candidate["demand"]["score"] = 60
+        candidate["economics"]["status"] = "transfer_floor_passed"
+        candidate["economics"]["runway"] = "approved"
+        candidate["blocking_evidence"] = [
+            value for value in candidate["blocking_evidence"] if value not in MODULE.GOVERNED_TRANSFER_BLOCKERS
+        ]
+        self.assertTrue(MODULE.governed_transfer_floors_pass(candidate, self.contract))
+        for blocker in MODULE.GOVERNED_TRANSFER_BLOCKERS:
+            changed = copy.deepcopy(candidate)
+            changed["blocking_evidence"].append(blocker)
+            self.assertFalse(MODULE.governed_transfer_floors_pass(changed, self.contract))
 
     def test_blocker_predicate_is_executable_and_candidate_bound(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -608,7 +874,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             row["blockers"] = [
                 blocker for blocker in row["blockers"] if blocker["code"] != "security_evidence_missing"
             ]
-            changed["summary"] = MODULE.compute_summary(changed["candidates"])
+            changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
             errors = self.errors(changed)
             self.assertTrue(any("verified_pass requires a low or moderate class" in error for error in errors))
             self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
@@ -625,11 +891,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": None,
             "estimate_hours_per_month": None,
+            "response_window_hours": None,
             "evidence_url": f"https://github.com/{row['repository']}/commit/{row['observed_head']}",
             "funding_evidence_url": f"https://github.com/{row['repository']}/commit/{row['observed_head']}",
             "blocker": None,
         }
-        self.assertTrue(any("owner and bounded positive estimate" in error for error in self.errors(changed)))
+        self.assertTrue(any("bounded response window" in error for error in self.errors(changed)))
 
     def test_maintenance_points_require_an_estimate_within_the_contract_maximum(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -638,17 +905,23 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": "maintainer",
             "estimate_hours_per_month": 41,
+            "response_window_hours": 24,
             "evidence_url": self.receipt_url(row, "maintenance"),
-            "funding_evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
             "blocker": None,
         }
         row["readiness_score"] = 5
         row["blockers"] = [
             blocker for blocker in row["blockers"] if blocker["code"] != "maintenance_evidence_missing"
         ]
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         errors = self.errors(changed)
         self.assertTrue(any("estimate exceeds the contract maximum" in error for error in errors))
+        self.assertTrue(any("readiness_score drift" in error for error in errors))
+        row["maintenance"]["estimate_hours_per_month"] = 1
+        row["maintenance"]["response_window_hours"] = 169
+        errors = self.errors(changed)
+        self.assertTrue(any("bounded response window" in error for error in errors))
         self.assertTrue(any("readiness_score drift" in error for error in errors))
         self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
 
@@ -688,7 +961,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blockers"] = [
             blocker for blocker in row["blockers"] if blocker["code"] != "documentation_evidence_missing"
         ]
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         self.assertTrue(any("exactly cover every unresolved dimension" in error for error in self.errors(changed)))
 
     def test_blocker_codes_are_shell_safe_and_unclassified_codes_block_transfer(self) -> None:
@@ -721,14 +994,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "state": "verified_pass",
             "owner": "maintainer",
             "estimate_hours_per_month": 1,
+            "response_window_hours": 24,
             "evidence_url": self.receipt_url(row, "maintenance"),
-            "funding_evidence_url": self.receipt_url(row, "maintenance"),
+            "funding_evidence_url": self.funding_receipt_url(row),
             "blocker": None,
         }
         row["readiness_score"] = 100
         row["blockers"] = [MODULE._blocker(row["candidate_id"], "credential_rotation_pending", "rotate")]
         row["transfer_eligible"] = True
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         errors = self.errors(changed)
         self.assertTrue(any("exactly cover every unresolved dimension" in error for error in errors))
         self.assertTrue(any("transfer_eligible drift" in error for error in errors))
@@ -771,15 +1045,22 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "state": "verified_pass",
                 "owner": "maintainer",
                 "estimate_hours_per_month": 1,
+                "response_window_hours": 24,
                 "evidence_url": self.receipt_url(row, "maintenance"),
-                "funding_evidence_url": self.receipt_url(row, "maintenance"),
+                "funding_evidence_url": self.funding_receipt_url(row),
                 "blocker": None,
             }
             row["readiness_score"] = 100
             row["blockers"] = []
+            row["transfer_eligible"] = False
+            changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
+            self.assertEqual([], self.errors(changed))
+            self.assertEqual(1, changed["summary"]["status_counts"]["verified_nontransferable_lifecycle"])
             row["transfer_eligible"] = True
-            changed["summary"] = MODULE.compute_summary(changed["candidates"])
-            self.assertTrue(any("archived or parked lifecycle" in error for error in self.errors(changed)))
+            changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
+            errors = self.errors(changed)
+            self.assertTrue(any("archived or parked lifecycle" in error for error in errors))
+            self.assertTrue(any("every governed nontechnical floor" in error for error in errors))
 
     def test_unhashable_candidate_fields_fail_closed(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -801,6 +1082,61 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["blocker"]["owner"] = "named-person"
         self.assertTrue(any("generic accountable owner role" in error for error in self.errors(changed)))
 
+    def test_private_clearance_file_requires_regular_owner_only_custody(self) -> None:
+        payload = {
+            "schema_version": MODULE.PRIVATE_CLEARANCE_SCHEMA,
+            "receipts": {"private-candidate-001": "a" * 64},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / "clearances.json"
+            receipt.write_text(json.dumps(payload), encoding="utf-8")
+            receipt.chmod(0o600)
+            with mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(receipt)}):
+                self.assertEqual(payload["receipts"], MODULE.load_private_clearance_receipts())
+            receipt.chmod(0o644)
+            with (
+                mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(receipt)}),
+                self.assertRaisesRegex(MODULE.AuditError, "cannot be loaded"),
+            ):
+                MODULE.load_private_clearance_receipts()
+            receipt.chmod(0o600)
+            link = root / "clearances-link.json"
+            link.symlink_to(receipt)
+            with (
+                mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(link)}),
+                self.assertRaisesRegex(MODULE.AuditError, "cannot be loaded"),
+            ):
+                MODULE.load_private_clearance_receipts()
+
+    def test_private_clearance_file_inside_checkout_must_be_untracked_and_ignored(self) -> None:
+        payload = {
+            "schema_version": MODULE.PRIVATE_CLEARANCE_SCHEMA,
+            "receipts": {"private-candidate-001": "a" * 64},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            receipt = root / ".private" / "clearances.json"
+            receipt.parent.mkdir()
+            receipt.write_text(json.dumps(payload), encoding="utf-8")
+            receipt.chmod(0o600)
+            untracked = mock.Mock(returncode=1)
+            ignored = mock.Mock(returncode=0)
+            with (
+                mock.patch.object(MODULE, "ROOT", root),
+                mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(receipt)}),
+                mock.patch.object(MODULE.subprocess, "run", side_effect=[untracked, ignored]),
+            ):
+                self.assertEqual(payload["receipts"], MODULE.load_private_clearance_receipts())
+            tracked = mock.Mock(returncode=0)
+            with (
+                mock.patch.object(MODULE, "ROOT", root),
+                mock.patch.dict(os.environ, {MODULE.PRIVATE_CLEARANCE_ENV: str(receipt)}),
+                mock.patch.object(MODULE.subprocess, "run", side_effect=[tracked, ignored]),
+                self.assertRaisesRegex(MODULE.AuditError, "cannot be loaded"),
+            ):
+                MODULE.load_private_clearance_receipts()
+
     def test_private_clearance_is_deferred_until_trusted_live_custody_validation(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.private_row(changed)
@@ -808,7 +1144,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         digest = "a" * 64
         row["readiness_status"] = "clearance_pending_live"
         row["clearance_receipt_sha256"] = digest
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         self.assertEqual([], self.errors(changed))
         self.assertEqual(
             ["required blocker remains uncleared"],
@@ -835,7 +1171,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row = self.private_row(changed)
         row["readiness_status"] = "cleared"
         row["blocker"] = None
-        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         self.assertTrue(any("private status drift" in error for error in self.errors(changed)))
 
     def test_live_refresh_preserves_only_unchanged_head_evidence(self) -> None:
@@ -843,7 +1179,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row = self.public_row(previous)
         row["build"] = {"state": "verified_pass", "evidence_url": self.receipt_url(row, "build")}
         row["blockers"] = [blocker for blocker in row["blockers"] if blocker["code"] != "build_evidence_missing"]
-        previous["summary"] = MODULE.compute_summary(previous["candidates"])
+        previous["summary"] = MODULE.compute_summary(previous["candidates"], self.snapshot)
         heads = {
             candidate["repository"]: candidate["observed_head"]
             for candidate in self.audit["candidates"]
