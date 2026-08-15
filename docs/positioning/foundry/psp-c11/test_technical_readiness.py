@@ -35,9 +35,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def errors(self, audit: dict | None = None) -> list[str]:
         return MODULE.validate_audit(audit or self.audit, self.snapshot, self.contract)
 
-    def public_row(self, audit: dict | None = None) -> dict:
+    def public_row(self, audit: dict | None = None, candidate_id: str | None = None) -> dict:
         value = audit or self.audit
-        return next(row for row in value["candidates"] if row["visibility"] == "public")
+        return next(
+            row
+            for row in value["candidates"]
+            if row["visibility"] == "public" and (candidate_id is None or row["candidate_id"] == candidate_id)
+        )
+
+    def experiment_row(self, audit: dict | None = None) -> dict:
+        candidate_id = next(
+            row["candidate_id"]
+            for row in self.snapshot["candidates"]
+            if row["visibility"] == "public" and row["preflight_disposition"] == "experiment"
+        )
+        return self.public_row(audit, candidate_id)
 
     def private_row(self, audit: dict | None = None) -> dict:
         value = audit or self.audit
@@ -208,10 +220,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_all_hard_floors_can_pass_with_empty_blockers(self) -> None:
         changed = copy.deepcopy(self.audit)
-        row = self.public_row(changed)
+        row = self.experiment_row(changed)
         for dimension in (
             "build",
             "test",
+            "deploy",
+            "documentation",
             "data_custody",
             "ip_custody",
             "observability_return",
@@ -232,8 +246,38 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "evidence_url": self.receipt_url(row, "maintenance"),
             "blocker": None,
         }
-        row["readiness_score"] = 75
+        row["readiness_score"] = 100
         row["blockers"] = []
+        row["transfer_eligible"] = True
+        changed["summary"] = MODULE.compute_summary(changed["candidates"])
+        self.assertEqual([], self.errors(changed))
+
+    def test_contract_hard_floors_allow_75_with_owned_nonhard_gaps(self) -> None:
+        changed = copy.deepcopy(self.audit)
+        row = self.experiment_row(changed)
+        for dimension in ("build", "test", "data_custody", "ip_custody", "observability_return"):
+            row[dimension] = {
+                "state": "verified_pass",
+                "evidence_url": self.receipt_url(row, dimension),
+            }
+        row["security"] = {
+            "class": "low",
+            "state": "verified_pass",
+            "evidence_url": self.receipt_url(row, "security"),
+        }
+        row["maintenance"] = {
+            "state": "verified_pass",
+            "owner": "maintainer",
+            "estimate_hours_per_month": 1,
+            "evidence_url": self.receipt_url(row, "maintenance"),
+            "blocker": None,
+        }
+        row["readiness_score"] = 75
+        row["blockers"] = [
+            blocker
+            for blocker in row["blockers"]
+            if blocker["code"] in {"deploy_evidence_missing", "documentation_evidence_missing"}
+        ]
         row["transfer_eligible"] = True
         changed["summary"] = MODULE.compute_summary(changed["candidates"])
         self.assertEqual([], self.errors(changed))
@@ -258,6 +302,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         errors = self.errors(changed)
         self.assertTrue(any("deploy evidence" in error for error in errors))
         self.assertTrue(any("readiness_score drift" in error for error in errors))
+
+    def test_joint_build_test_dimension_scores_only_when_both_pass(self) -> None:
+        weights = MODULE.readiness_weights(self.contract)
+        states = {dimension: "blocked_unverified" for dimension in weights}
+        states["build"] = "verified_pass"
+        self.assertEqual(0, MODULE.readiness_score(states, weights))
+        states["test"] = "verified_pass"
+        self.assertEqual(20, MODULE.readiness_score(states, weights))
 
     def test_security_and_custody_shapes_fail_closed(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -302,6 +354,58 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         errors = self.errors(changed)
         self.assertTrue(any("blocker codes must be unique" in error for error in errors))
         self.assertTrue(any("cannot be transferable" in error for error in errors))
+
+        changed = copy.deepcopy(self.audit)
+        row = self.public_row(changed)
+        row["blockers"] = row["blockers"][1:]
+        self.assertTrue(any("exactly cover every unresolved dimension" in error for error in self.errors(changed)))
+
+    def test_accepted_archived_and_parked_candidates_never_transfer(self) -> None:
+        archived_id = next(
+            row["candidate_id"]
+            for row in self.snapshot["candidates"]
+            if row["visibility"] == "public" and row["current_state"] == "archived"
+        )
+        parked_id = next(
+            row["candidate_id"]
+            for row in self.snapshot["candidates"]
+            if row["visibility"] == "public"
+            and row["current_state"] != "archived"
+            and row["preflight_disposition"] == "park"
+        )
+        for candidate_id in (archived_id, parked_id):
+            changed = copy.deepcopy(self.audit)
+            row = self.public_row(changed, candidate_id)
+            for dimension in (
+                "build",
+                "test",
+                "deploy",
+                "documentation",
+                "data_custody",
+                "ip_custody",
+                "observability_return",
+            ):
+                row[dimension] = {
+                    "state": "verified_pass",
+                    "evidence_url": self.receipt_url(row, dimension),
+                }
+            row["security"] = {
+                "class": "low",
+                "state": "verified_pass",
+                "evidence_url": self.receipt_url(row, "security"),
+            }
+            row["maintenance"] = {
+                "state": "verified_pass",
+                "owner": "maintainer",
+                "estimate_hours_per_month": 1,
+                "evidence_url": self.receipt_url(row, "maintenance"),
+                "blocker": None,
+            }
+            row["readiness_score"] = 100
+            row["blockers"] = []
+            row["transfer_eligible"] = True
+            changed["summary"] = MODULE.compute_summary(changed["candidates"])
+            self.assertTrue(any("archived or parked lifecycle" in error for error in self.errors(changed)))
 
     def test_unhashable_candidate_fields_fail_closed(self) -> None:
         changed = copy.deepcopy(self.audit)

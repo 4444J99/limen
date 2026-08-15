@@ -132,6 +132,7 @@ EVIDENCE_RECEIPT_KEYS = {
 }
 HARD_FLOOR_RULE = "Any unresolved IP, data, credential, or rollback boundary makes the candidate non-transferable."
 HARD_FLOOR_DIMENSIONS = {"security", "data_custody", "ip_custody", "observability_return"}
+DIMENSION_BLOCKER_CODES = {dimension: f"{dimension}_evidence_missing" for dimension in DIMENSION_RECEIPT_TOKENS}
 GENERIC_PRIVATE_OWNER = "portfolio_owner"
 
 
@@ -280,6 +281,17 @@ def readiness_hard_floors(contract: dict[str, Any]) -> set[str]:
     if not isinstance(rules, list) or HARD_FLOOR_RULE not in rules:
         raise AuditError("readiness hard-floor rule drifted")
     return set(HARD_FLOOR_DIMENSIONS)
+
+
+def readiness_score(dimension_states: dict[str, Any], weights: dict[str, int]) -> int:
+    score = sum(
+        weight
+        for dimension, weight in weights.items()
+        if dimension not in {"build", "test"} and dimension_states.get(dimension) == "verified_pass"
+    )
+    if dimension_states.get("build") == dimension_states.get("test") == "verified_pass":
+        score += weights["build"] + weights["test"]
+    return score
 
 
 def _run_json(args: list[str], timeout: int = 240) -> dict[str, Any]:
@@ -763,9 +775,16 @@ def _public_candidate_errors(
             blocker_codes.append(blocker["code"])
     if len(blocker_codes) != len(set(blocker_codes)):
         errors.append(f"{label}.blocker codes must be unique")
-    expected_score = sum(
-        weight for dimension, weight in weights.items() if dimension_states.get(dimension) == "verified_pass"
-    )
+    unresolved_dimensions = {
+        dimension
+        for dimension, state in dimension_states.items()
+        if isinstance(state, str) and state in {"verified_fail", "blocked_unverified"}
+    }
+    expected_dimension_blockers = {DIMENSION_BLOCKER_CODES[dimension] for dimension in unresolved_dimensions}
+    observed_dimension_blockers = set(blocker_codes) & set(DIMENSION_BLOCKER_CODES.values())
+    if observed_dimension_blockers != expected_dimension_blockers:
+        errors.append(f"{label}.blockers must exactly cover every unresolved dimension")
+    expected_score = readiness_score(dimension_states, weights)
     score = row.get("readiness_score")
     if not _is_nonnegative_int(score) or score > 100 or score != expected_score:
         errors.append(f"{label}.readiness_score drift")
@@ -774,12 +793,16 @@ def _public_candidate_errors(
     )
     if not blockers and not all_hard_floors_pass:
         errors.append(f"{label}.blockers may be empty only after every hard floor passes")
-    hard_unresolved = not all_hard_floors_pass
-    expected_transfer = expected_score >= 75 and all_hard_floors_pass and not blockers
+    hard_blocker_codes = {DIMENSION_BLOCKER_CODES[dimension] for dimension in hard_floors}
+    hard_unresolved = not all_hard_floors_pass or bool(set(blocker_codes) & hard_blocker_codes)
+    accepted_lifecycle = expected.get("current_state") != "archived" and expected.get("preflight_disposition") != "park"
+    expected_transfer = expected_score >= 75 and not hard_unresolved and accepted_lifecycle
     if row.get("transfer_eligible") is not expected_transfer:
         errors.append(f"{label}.transfer_eligible drift")
-    if row.get("transfer_eligible") is True and (hard_unresolved or blockers):
+    if row.get("transfer_eligible") is True and hard_unresolved:
         errors.append(f"{label} cannot be transferable with unresolved hard blockers")
+    if row.get("transfer_eligible") is True and not accepted_lifecycle:
+        errors.append(f"{label} accepted archived or parked lifecycle cannot be transferable")
     return errors
 
 
