@@ -4603,6 +4603,13 @@ parameters:
     owner: tabularius
     note: "The effector for the recurring macOS Gatekeeper 'ClaudeCode.app is damaged, move it to Trash' dialog (scripts/heal-claude-lsregister.sh, sensed by dialogs-silenced.sh section 4b, beat-wired on the heartbeat hygiene cadence beside heal-claude-update-marker.sh). Dry-run by default (reports the cure, mutates nothing). When 1, the beat unregisters + removes ONLY the exact-malformed-seal ClaudeCode.app stub (codesign 'code has no resources but signature indicates they must be present') under ~/.local/share/claude or ~/.Trash and sweeps reseeded Trash copies, returning LaunchServices registrations to the steady state of ZERO; never touches /Applications, the versions/ dir, or the resolved CLI symlink. macOS-only; fails OPEN off-darwin. Arm once in the daemon env (~/.limen.env) so occurrence #4 self-heals without a per-incident approval. Set 0 to silence."
 
+  LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL:
+    default: "0"               # OFF — the effector. Arm once to keep the version store bundle-enclosed.
+    env: LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL
+    self_update: none
+    owner: tabularius
+    note: "The effector for the rotating per-version macOS TCC identity (scripts/heal-claude-versions-enclosure.sh, dialogs-silenced sensor class 5, beat-wired beside heal-claude-lsregister.sh) — the '2.1.233 would like to access ...' prompt class that re-asks the full grant set on every Claude Code update. Spare pty-hosts skip the vendor's re-exec-into-bundle, so background sessions prompt from the versions/<v> path; enclosing the store at ClaudeCode.app/Contents/MacOS/versions with a symlink at the old path resolves every exec bundle-enclosed onto the stable com.anthropic.claude-code identity — prompts once ever, surviving updates. Dry-run by default (reports the cure, mutates nothing). When 1, the beat relocates the store and restores the symlink after each vendor updater/installer reset; never deletes a version binary, never edits TCC, aborts loudly on any name collision that differs. Upstream terminal fix anthropics/claude-code#86706; receipts docs/receipts/tcc-track-c-1703/README.md. Arm once in the daemon env (~/.limen.env). Set 0 to silence."
+
   LIMEN_HOOK_DRIFT_HEAL:
     default: "0"               # OFF — the effector. Arm once to auto-reinstall a drifted trust hook.
     env: LIMEN_HOOK_DRIFT_HEAL

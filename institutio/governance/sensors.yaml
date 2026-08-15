@@ -1043,6 +1043,15 @@ sensors:
             armed_valve_type: deliverable
         severity: advisory
         escalation: "unassessable ClaudeCode.app registered with LaunchServices (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat UNREGISTERS it (never removes it: the bundle is vendor-materialized every start and deleting it destroys the stable TCC identity sensor 0g8d keeps). Ideal form IF-GATEKEEPER-INERT; corrected root in docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md"
+      - command: "bash scripts/heal-claude-versions-enclosure.sh"
+        args_when:
+          - env: LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "Claude Code version store not enclosed in ClaudeCode.app (class 5 — the rotating per-version TCC identity behind the \"2.1.233\" prompt bursts) — arm LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL=1 so the beat re-encloses the store after every vendor update/installer reset; root + upstream tracking (anthropics/claude-code#86706) in docs/receipts/tcc-track-c-1703/README.md"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
         escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"

@@ -98,3 +98,22 @@ audit to green; no local action can discharge it. The one local dial that change
 operator's experience meanwhile is `autoUpdates: false` (prompt bursts on a chosen update
 cadence instead of the vendor's ~daily one) — an operator trade of freshness for quiet,
 never an agent default.
+
+## 2026-08-15 addendum — an enclosure-class local fix exists after all
+
+"No local ingress fix exists" was true of every *ancestry* fix and stands; it missed the
+*filesystem* class. The precise leak, read from the vendor binary the same day: non-spare
+pty-hosts re-exec themselves into the stable bundle before spawning sessions (`Vsm()`:
+`execve(bundleExec, ..., {macDisclaimResponsibility: true})`), but **spare pty-hosts skip
+that re-exec** (`if(!r) await Vsm()` — the `--bg-spare` branch), keep their `versions/<v>`
+exec path, and every background session claimed from a pre-warmed spare inherits the
+rotating identity. The session argv is untouchable — the filesystem under it is not: with
+the version store relocated to `ClaudeCode.app/Contents/MacOS/versions` and a symlink at
+the old path, the kernel resolves the same literal argv to a bundle-enclosed executable,
+and every lane converges on `com.anthropic.claude-code` — prompts read "Claude Code",
+grants are answered once ever, and they survive updates. Shipped as
+`scripts/heal-claude-versions-enclosure.sh` (dialogs-silenced sensor 0g8b, class 5; valve
+`LIMEN_CLAUDE_VERSIONS_ENCLOSURE_HEAL`, cited by lever L-DIALOGS-HEAL) because the vendor
+updater recreates the plain-directory layout and the beat must re-enclose after every
+update. The upstream fix (anthropics/claude-code#86706) remains the terminal cure; the
+enclosure is harmless after it ships.
