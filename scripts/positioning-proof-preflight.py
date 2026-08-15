@@ -1679,6 +1679,18 @@ class _VisibleSurfaceParser(HTMLParser):
         "tr",
         "ul",
     }
+    _TABLE_PARSING_TAGS = {
+        "caption",
+        "col",
+        "colgroup",
+        "table",
+        "tbody",
+        "td",
+        "tfoot",
+        "th",
+        "thead",
+        "tr",
+    }
     _HIDDEN_STYLE = re.compile(
         r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse))"
         r"(?:\s*!important)?\s*(?:;|$)",
@@ -1722,7 +1734,15 @@ class _VisibleSurfaceParser(HTMLParser):
             return False
         if "/*" in style or "\\" in style:
             raise ValueError("surface response uses obfuscated inline visibility styling")
-        return cls._HIDDEN_STYLE.search(style) is not None
+        if cls._HIDDEN_STYLE.search(style) is not None:
+            return True
+        if style.strip():
+            raise ValueError("surface visibility requires unsupported inline style evaluation")
+        return False
+
+    def _reject_closed_details_table_ambiguity(self, tag: str) -> None:
+        if self._closed_details and tag in self._TABLE_PARSING_TAGS:
+            raise ValueError("surface response has table parsing ambiguity inside closed details")
 
     @staticmethod
     def _attributes_reference_stylesheet(attrs: list[tuple[str, str | None]]) -> bool:
@@ -1733,6 +1753,7 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        self._reject_closed_details_table_ambiguity(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
@@ -1766,6 +1787,7 @@ class _VisibleSurfaceParser(HTMLParser):
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
+        self._reject_closed_details_table_ambiguity(normalized)
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
         attributes_hidden = self._attributes_hide_element(attrs)

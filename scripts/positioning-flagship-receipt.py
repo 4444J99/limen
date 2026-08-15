@@ -319,8 +319,18 @@ def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bo
                 for key, parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
                     if _normalized_public_key(key) in FORBIDDEN_PUBLIC_URL_KEYS:
                         return True
-                    if depth < 3 and _public_url_contains_forbidden_material(parameter_value, depth=depth + 1):
-                        return True
+                    if depth < 3:
+                        if _public_url_contains_forbidden_material(parameter_value, depth=depth + 1):
+                            return True
+                    else:
+                        decoded_parameter = parameter_value
+                        for _attempt in range(3):
+                            next_parameter = unquote(decoded_parameter)
+                            if next_parameter == decoded_parameter:
+                                break
+                            decoded_parameter = next_parameter
+                        if re.search(r"https?://", decoded_parameter, re.IGNORECASE):
+                            return True
     return False
 
 

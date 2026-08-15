@@ -868,6 +868,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         self.assertIn(b"Visible summary proof", closed_details)
         self.assertNotIn(b"Hidden body proof", closed_details)
+        with self.assertRaisesRegex(ValueError, "table parsing ambiguity"):
+            MODULE._canonical_surface_extraction(
+                b"<details><table><summary>Browser-visible proof</summary></table></details>",
+                "visible_text_v3",
+            )
+        with self.assertRaisesRegex(ValueError, "unsupported inline style"):
+            MODULE._canonical_surface_extraction(
+                b"<div style='content-visibility:hidden'>Hidden proof claim</div>",
+                "visible_text_v3",
+            )
         for malformed in (
             "<div style='display:block' style='display:none'>hidden</div>",
             "<div style='display/**/:none'>hidden</div>",

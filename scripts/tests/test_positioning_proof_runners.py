@@ -8,6 +8,7 @@ import tempfile
 import time
 import unittest
 from datetime import datetime
+from urllib.parse import quote
 from unittest import mock
 from pathlib import Path
 
@@ -1105,6 +1106,11 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertTrue(any(expected_error in error for error in result["errors"]))
 
     def test_receipt_request_never_copies_unsafe_limitations_into_a_receipt(self) -> None:
+        nested_credential_url = "https://target.example/proof?" + "api_" + "key=" + "plain" + "value"
+        for index in range(4):
+            nested_credential_url = (
+                f"https://redirect-{index}.example/proof?next={quote(nested_credential_url, safe='')}"
+            )
         unsafe_limitations = (
             "Contact customer@example.invalid for the evidence.",
             "The password is hunter2alpha.",
@@ -1112,6 +1118,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "https://example.com/proof?api%5Fkey=plainvalue",
             "See https://example.com/proof?api%5Fkey=plainvalue for proof.",
             "See https://example.com/proof?next=https%253A%252F%252Fexample.com%252F%253Faccess_token%253Dplainvalue.",
+            f"See {nested_credential_url} for proof.",
         )
         for limitation in unsafe_limitations:
             with self.subTest(limitation=limitation):
