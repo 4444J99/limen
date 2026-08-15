@@ -1450,6 +1450,8 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     gates = MODULE._load_yaml(ROOT / "institutio" / "governance" / "gates.yaml")
     gate = gates["gates"]["research-adjudication-test"]
     live_gate = gates["gates"]["research-adjudication-live-test"]
+    foundry_gate = gates["gates"]["positioning-foundry-technical-readiness-test"]
+    foundry_public_live_gate = gates["gates"]["positioning-foundry-technical-readiness-public-live"]
     workflow = MODULE._load_yaml(ROOT / ".github" / "workflows" / "pr-gate.yml")
 
     assert ".github/workflows/pr-gate.yml" in gate["paths"]
@@ -1469,7 +1471,7 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     assert "scripts/positioning-research-adjudication.py" in live_gate["paths"]
     assert "institutio/governance/gates.yaml" not in live_gate["paths"]
     assert "institutio/positioning/program.yaml" not in live_gate["paths"]
-    assert workflow["permissions"] == {"contents": "read", "issues": "read"}
+    assert workflow["permissions"] == {"actions": "read", "contents": "read", "issues": "read"}
     verification_steps = {
         step["name"]: step
         for step in workflow["jobs"]["pr-gate"]["steps"]
@@ -1485,6 +1487,8 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)"
     ]
     assert fallback["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert foundry_gate["command"] in fallback["run"].splitlines()
+    assert foundry_public_live_gate["command"] in fallback["run"].splitlines()
     assert (
         "python3 scripts/positioning-research-adjudication.py --verify-live"
         in fallback["run"].splitlines()

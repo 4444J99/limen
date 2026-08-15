@@ -57,6 +57,15 @@ flagship-evidence-test
 check-docs-exports
 check-note-links' docs/positioning/evidence/new-packet.md
 
+# W03 changes select the deterministic owner gate and immutable public-evidence
+# validation; the private-inclusive census and custody rail remains operator-only.
+expect foundry-readiness-change 'syntax-changed
+diff-hygiene
+positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
+check-docs-exports
+check-note-links' docs/positioning/foundry/psp-c11/technical-readiness-audit.json
+
 expect bounded-retainer-capacity-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
@@ -89,6 +98,8 @@ check-note-links' docs/positioning/offers/obsolete.json
 
 expect positioning-program-offer-input-change 'syntax-changed
 diff-hygiene
+positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
 positioning-offer-contract-test
 research-adjudication-test
 check-note-links' institutio/positioning/program.yaml
@@ -122,6 +133,7 @@ check-effectors' scripts/positioning-research-adjudication.py
 
 expect research-adjudication-live-input-change 'syntax-changed
 diff-hygiene
+positioning-foundry-technical-readiness-public-live
 research-adjudication-test
 research-adjudication-live-test
 check-note-links' institutio/positioning/github-map.json
@@ -220,6 +232,17 @@ check-gates
 check-runner-coverage
 check-note-links' .github/workflows/ci.yml
 
+expect foundry-pr-gate-permission-change 'syntax-changed
+diff-hygiene
+merge-queue-contract-test
+direct-main-writer-contract
+positioning-foundry-technical-readiness-public-live
+research-adjudication-test
+workflow-yaml
+check-gates
+check-runner-coverage
+check-note-links' .github/workflows/pr-gate.yml
+
 expect dashboard-change 'syntax-changed
 diff-hygiene
 check-params
@@ -269,6 +292,8 @@ verify-resolver-test
 verify-parallel-test
 agent-docs
 github-estate-census-custody-test
+positioning-foundry-technical-readiness-test
+positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test
@@ -278,6 +303,16 @@ research-adjudication-test
 positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
+
+# The W03 collector is a static-gate input. The scoped public-evidence rail does
+# not invoke that census; the private-inclusive operator predicate remains whole-only.
+expect foundry-preflight-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+positioning-foundry-technical-readiness-test
+check-params
+check-note-links
+check-effectors' scripts/positioning-foundry-preflight.py
 
 expect resolver-change 'syntax-changed
 diff-hygiene

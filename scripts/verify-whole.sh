@@ -254,6 +254,9 @@ python3 "$ROOT/scripts/assemble-dashboard-data.py" \
 node "$ROOT/web/app/scripts/validate-exported-pages.mjs"
 
 if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]; then
+  step "Verify PSP-P13-W03 private-inclusive live technical readiness"
+  python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json
+
   step "Verify live Firebase static surfaces"
   python3 - <<'PY'
 import json
