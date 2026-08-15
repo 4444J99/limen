@@ -3830,6 +3830,110 @@ def test_release_stale_in_progress_releases_through_failed(tmp_path: Path, monke
     assert second_by_id["LIMEN-STEP-1"].dispatch_log[-2].status == "failed"
 
 
+def _fake_private_board(monkeypatch, canonical_tasks: list[dict]) -> None:
+    class _Client:
+        def private_board(self):
+            return {"version": "1.0", "portal": {}, "tasks": canonical_tasks}
+
+    monkeypatch.setattr(D, "client_from_env", lambda: _Client())
+
+
+def test_release_stale_resumes_interrupted_release_from_canonical_failed(tmp_path: Path, monkeypatch) -> None:
+    """Local says in_progress but canonical already holds phase 1's `failed`:
+    the rung resumes at the relist step instead of re-submitting phase 1 (which
+    the keeper would 409 on expected_status)."""
+
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-RESUME-1",
+                "title": "Interrupted release",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    _fake_private_board(
+        monkeypatch,
+        [
+            {
+                "id": "LIMEN-RESUME-1",
+                "title": "Interrupted release",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "failed",
+                "created": "2026-06-01",
+                "updated": "2026-08-15T13:00:00+00:00",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-08-15T13:00:00+00:00",
+                        "agent": "limen",
+                        "session_id": "release-stale",
+                        "status": "failed",
+                        "output": "Released stale claim after 24h",
+                    }
+                ],
+            }
+        ],
+    )
+    projections = capture_canonical_deltas(monkeypatch)
+
+    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
+
+    assert report["released"] == ["LIMEN-RESUME-1"]
+    final = {task.id: task for task in projections[-1].tasks}["LIMEN-RESUME-1"]
+    assert final.status == "open"
+    assert final.dispatch_log[-1].status == "open"
+    assert final.dispatch_log[-2].status == "failed"
+
+
+def test_release_stale_skips_candidate_when_canonical_diverged(tmp_path: Path, monkeypatch) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "LIMEN-DIVERGED-1",
+                "title": "Canonical moved on",
+                "repo": "4444J99/limen",
+                "target_agent": "codex",
+                "priority": "high",
+                "budget_cost": 1,
+                "status": "in_progress",
+                "created": "2026-06-01",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    _fake_private_board(
+        monkeypatch,
+        [
+            {
+                "id": "LIMEN-DIVERGED-1",
+                "title": "Canonical moved on",
+                "status": "done",
+            }
+        ],
+    )
+    projections = capture_canonical_deltas(monkeypatch)
+
+    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, hours=24, dry_run=False)
+
+    assert report["released"] == []
+    assert projections == []
+    skip_rows = [row for row in report["candidates"] if row["action"] == "skip"]
+    assert skip_rows and skip_rows[0]["remote_status"] == "canonical_done"
+
+
 def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path, monkeypatch) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
