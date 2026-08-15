@@ -396,6 +396,28 @@ ideals:
       derives: "the resolved Claude harness root still holds transcripts; empty-while-a-sibling-candidate-is-full is the relocation signature"
       environment: repo
       at_ideal_when: exit_zero
+  IF-FLEET-LEGIBLE:
+    ideal: >
+      Every agent lane is legible to the estate's own governance: what tier it ran, what it spent,
+      and what it claimed are answerable from a declared registry rather than from one vendor's
+      transcript schema. A rule that binds the fleet is ENFORCED over the fleet — otherwise the
+      lanes it was never written for are exempt by accident, and the exemption is invisible
+      precisely where it matters. And a lane whose store cannot answer reports BLIND, never clean:
+      an undetectable violation is strictly worse than a visible one, because "we checked and
+      found nothing" and "we could not see" are the same value to every consumer downstream.
+    owner: "Claude (scripts/check-reserved-tier.py — the audit; cli/src/limen/bucket_partition.py —
+      the summing denominator it accounts through; institutio/governance/reserved-tier-blind-baseline.txt
+      — the shrink-only ledger of lanes that cannot answer)"
+    probe:
+      command: "python3 scripts/check-reserved-tier.py"
+      derives: "reserved-tier runs in ANY lane carrying no covering acceptance receipt, plus lanes
+        newly blind to model identity. Denominated on meta.total_in_window, never the shown sample.
+        environment is `host`, not `repo`: the vendor indexes are gitignored machine state, so this
+        probe answers about the operator's fleet rather than about the tree — and a repo-scoped run
+        would exit 0 on a machine that simply has no indexes, which is the exact green-through-absence
+        this row exists to name."
+      environment: host
+      at_ideal_when: exit_zero
   IF-DIURNAL:
     ideal: "The day is a falsifiable loop, not a report. Morning emits a dashboard PLUS claims of\
       \ the form 'section X's metric falls below N today'; midday re-probes them mid-flight and\
