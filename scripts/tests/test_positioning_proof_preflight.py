@@ -878,11 +878,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["RANKED-CLAIM"], drifted)
 
-        long_expected = {
-            (surface, "LONG-CLAIM"): {
-                "claim_text": "Limen demonstrates governed multi-agent delivery with durable exact-head receipts"
-            }
-        }
+        long_canonical = "Limen demonstrates governed multi-agent delivery with durable exact-head receipts"
+        long_expected = {(surface, "LONG-CLAIM"): {"claim_text": long_canonical}}
         matched, drifted = MODULE._surface_claim_scan(
             "Limen fabricates governed multi-agent delivery with durable exact-head receipts",
             long_expected,
@@ -935,12 +932,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
-        format_obfuscated = (
-            "Li\u200dmen demo\u200dnstrates gov\u200derned multi-agent deliv\u200dery with durable exact-head receipts"
-        )
-        matched, drifted = MODULE._surface_claim_scan(format_obfuscated, long_expected, surface)
-        self.assertEqual(["LONG-CLAIM"], matched)
-        self.assertEqual([], drifted)
+        for separator in ("\u200d", "\u034f", "\ufe0f"):
+            with self.subTest(default_ignorable=hex(ord(separator))):
+                format_obfuscated = separator.join(long_canonical)
+                matched, drifted = MODULE._surface_claim_scan(format_obfuscated, long_expected, surface)
+                self.assertEqual(["LONG-CLAIM"], matched)
+                self.assertEqual([], drifted)
 
         matched, drifted = MODULE._surface_claim_scan(
             "There is no evidence supporting the statement that Limen demonstrates governed "
@@ -1160,6 +1157,30 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "visible_text_v3",
         )
         self.assertEqual(b"\n", hidden_table_cell)
+        inline_adjacency = MODULE._canonical_surface_extraction(
+            b"<p>Li<span></span>men demonstrates governed multi-agent delivery with durable exact-head receipts</p>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        inline_expected = {
+            ("portfolio_front_door", "INLINE-CLAIM"): {
+                "claim_text": "Limen demonstrates governed multi-agent delivery with durable exact-head receipts"
+            }
+        }
+        matched, drifted = MODULE._surface_claim_scan(
+            inline_adjacency,
+            inline_expected,
+            "portfolio_front_door",
+        )
+        self.assertEqual(["INLINE-CLAIM"], matched)
+        self.assertEqual([], drifted)
+        for bidi_markup in (
+            '<bdo dir="rtl">Canonical claim</bdo>',
+            "<bdi>Canonical claim</bdi>",
+            '<span dir="rtl">Canonical claim</span>',
+        ):
+            with self.subTest(bidi_markup=bidi_markup):
+                with self.assertRaisesRegex(ValueError, "bidirectional rendering evaluation"):
+                    MODULE._canonical_surface_extraction(bidi_markup.encode(), "visible_text_v3")
         for math_markup in (
             "<math><semantics><mi>x</mi><annotation>Canonical claim</annotation></semantics></math>",
             "<MATH/>",
@@ -1945,6 +1966,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertTrue(any("surface presence unresolved" in error for error in result["errors"]))
 
+    def test_surface_audit_requires_exact_private_safe_row_schema(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        manifest_rows = manifest["rows"]
+        assert isinstance(manifest_rows, list)
+        manifest_rows[0]["password"] = "hunter2alpha"
+        result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(any("unexpected exact-schema fields: password" in error for error in result["errors"]))
+        self.assertTrue(any("surface row contains private material" in error for error in result["errors"]))
+
     def test_present_surface_claim_requires_evidence_disclosure_and_action(self) -> None:
         rows = MODULE.build_surface_audit_skeleton(self.contract)
         manifest = self._empty_surface_manifest(rows)
@@ -2380,6 +2412,26 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual("fail", result["status"])
         self.assertEqual(0, result["substantive_public_count"])
         self.assertTrue(any("public consent disposition" in error for error in result["errors"]))
+
+    def test_external_validation_rejects_unhashable_object_class_without_crashing(self) -> None:
+        required = self.contract["external_validation"]["minimum_fields"]
+        objects = []
+        for index in range(2):
+            row = {field: f"value-{index}-{field}" for field in required}
+            row["object class"] = self.contract["external_validation"]["acceptable_objects"][index]
+            row["independence disclosure"] = "independent_third_party"
+            row["object URL or receipt"] = f"https://example.invalid/class-{index}"
+            row["date"] = "2026-08-14"
+            row["consent status"] = "public_consented"
+            objects.append(row)
+        objects[0]["object class"] = ["independent reproduction"]
+        result = MODULE.validate_external_objects(
+            self.contract,
+            {"outreach_performed": False, "objects": objects},
+        )
+        self.assertEqual("fail", result["status"])
+        self.assertEqual(0, result["substantive_public_count"])
+        self.assertTrue(any("approved object class" in error for error in result["errors"]))
 
     def test_external_validation_authenticates_and_binds_each_independent_review(self) -> None:
         required = self.contract["external_validation"]["minimum_fields"]

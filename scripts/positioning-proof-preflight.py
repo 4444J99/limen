@@ -602,6 +602,20 @@ EXPECTED_SURFACE_LEVELS = {
     "organization_profile": "L1",
     "flagship_repository": "L2",
 }
+SURFACE_ROW_FIELDS = {
+    "action",
+    "canonical_or_drift",
+    "claim_id",
+    "claim_text",
+    "contains_private_material",
+    "disclosure_level",
+    "inspection_id",
+    "observed_at",
+    "presence",
+    "source_ids",
+    "status",
+    "surface",
+}
 FORBIDDEN_DEMO_KEYS = {
     "access_token",
     "api_key",
@@ -668,12 +682,42 @@ SURFACE_PRIVATE_VALUE_PATTERNS = (
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
     r"(?i)(?:"
     r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
-    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?\d{10,15}\b"
+    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?[\d(][\d\s().-]{8,31}\d"
     r"|\btel:\s*\+?[\d\s().-]{10,32}"
     r"|\+\d[\d\s().-]{8,31}\d"
+    r"|\(\d{2,4}\)\d{3,4}[ .-]\d{3,4}"
     r"|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4}"
     r")"
 )
+
+_DEFAULT_IGNORABLE_RANGES = (
+    (0x00AD, 0x00AD),
+    (0x034F, 0x034F),
+    (0x061C, 0x061C),
+    (0x115F, 0x1160),
+    (0x17B4, 0x17B5),
+    (0x180B, 0x180F),
+    (0x200B, 0x200F),
+    (0x202A, 0x202E),
+    (0x2060, 0x206F),
+    (0x3164, 0x3164),
+    (0xFE00, 0xFE0F),
+    (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0),
+    (0xFFF0, 0xFFF8),
+    (0x1BCA0, 0x1BCA3),
+    (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF),
+)
+
+
+def _strip_default_ignorable(value: str) -> str:
+    return "".join(
+        character
+        for character in value
+        if unicodedata.category(character) != "Cf"
+        and not any(start <= ord(character) <= end for start, end in _DEFAULT_IGNORABLE_RANGES)
+    )
 
 
 def _reject_duplicate_json_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -1687,7 +1731,7 @@ _CLAIM_STOPWORDS = {
 
 
 def _normalized_surface_text(value: str) -> str:
-    browser_visible = "".join(character for character in value if unicodedata.category(character) != "Cf")
+    browser_visible = _strip_default_ignorable(value)
     return " ".join(re.findall(r"[a-z0-9]+", browser_visible.lower()))
 
 
@@ -1711,6 +1755,7 @@ class _VisibleSurfaceParser(HTMLParser):
         "video",
     }
     _UNSUPPORTED_LEGACY_BLOCK_TAGS = {"listing", "marquee", "plaintext", "xmp"}
+    _UNSUPPORTED_BIDI_TAGS = {"bdi", "bdo"}
     _HEAD_ALLOWED_TAGS = {"base", "link", "meta", "noscript", "script", "style", "template", "title"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
@@ -1842,7 +1887,7 @@ class _VisibleSurfaceParser(HTMLParser):
                 and value.lstrip().casefold().startswith("javascript:")
             ):
                 raise ValueError("surface visibility requires executable URI evaluation")
-            if key in {"hidden", "aria-hidden", "style", "rel", "open", "popover"} and key in normalized:
+            if key in {"hidden", "aria-hidden", "style", "rel", "open", "popover", "dir"} and key in normalized:
                 raise ValueError("surface response duplicates a visibility or stylesheet-control attribute")
             normalized[key] = value
         if "hidden" in normalized:
@@ -1894,6 +1939,10 @@ class _VisibleSurfaceParser(HTMLParser):
     def _attributes_name_details(attrs: list[tuple[str, str | None]]) -> bool:
         return any(name.casefold() == "name" for name, _value in attrs)
 
+    @staticmethod
+    def _attributes_change_bidi(attrs: list[tuple[str, str | None]]) -> bool:
+        return any(name.casefold() == "dir" for name, _value in attrs)
+
     def _reject_browser_head_reparenting(self, tag: str) -> None:
         if "head" in self._element_stack and tag not in self._HEAD_ALLOWED_TAGS:
             raise ValueError("surface response requires browser head-closing rules")
@@ -1913,6 +1962,8 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
         if normalized in self._UNSUPPORTED_LEGACY_BLOCK_TAGS:
             raise ValueError("surface visibility requires unsupported legacy block parsing")
+        if normalized in self._UNSUPPORTED_BIDI_TAGS or self._attributes_change_bidi(attrs):
+            raise ValueError("surface visibility requires bidirectional rendering evaluation")
         if normalized == "template" and self._attributes_request_shadow_dom(attrs):
             raise ValueError("surface visibility requires declarative shadow DOM evaluation")
         if normalized == "details" and self._attributes_name_details(attrs):
@@ -1942,8 +1993,8 @@ class _VisibleSurfaceParser(HTMLParser):
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden or user_agent_hidden
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
-        elif not hidden:
-            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
+        elif not hidden and normalized in self._CLAUSE_BOUNDARY_TAGS:
+            self._visible_fragments.append("\n")
         if normalized == "details" and "open" not in attribute_names:
             self._closed_details.append(
                 {
@@ -1964,6 +2015,8 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
         if normalized in self._UNSUPPORTED_LEGACY_BLOCK_TAGS:
             raise ValueError("surface visibility requires unsupported legacy block parsing")
+        if normalized in self._UNSUPPORTED_BIDI_TAGS or self._attributes_change_bidi(attrs):
+            raise ValueError("surface visibility requires bidirectional rendering evaluation")
         if normalized == "template" and self._attributes_request_shadow_dom(attrs):
             raise ValueError("surface visibility requires declarative shadow DOM evaluation")
         if normalized == "details" and self._attributes_name_details(attrs):
@@ -1979,8 +2032,8 @@ class _VisibleSurfaceParser(HTMLParser):
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
-        if not hidden:
-            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
+        if not hidden and normalized in self._CLAUSE_BOUNDARY_TAGS:
+            self._visible_fragments.append("\n")
 
     def handle_endtag(self, tag: str) -> None:
         normalized = tag.casefold()
@@ -1990,8 +2043,8 @@ class _VisibleSurfaceParser(HTMLParser):
             self._hidden_stack.pop()
         elif normalized in self._HIDDEN_TAGS:
             raise ValueError("surface response has malformed hidden HTML regions")
-        else:
-            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
+        elif normalized in self._CLAUSE_BOUNDARY_TAGS:
+            self._visible_fragments.append("\n")
         if normalized not in self._VOID_TAGS:
             if not self._element_stack or self._element_stack[-1] != normalized:
                 if self._closed_details:
@@ -2019,7 +2072,7 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface response has unterminated hidden HTML regions")
         if self._stylesheet_text_seen:
             raise ValueError("surface visibility requires stylesheet evaluation")
-        return " ".join(self._visible_fragments)
+        return "".join(self._visible_fragments)
 
 
 def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
@@ -2148,7 +2201,7 @@ def _contains_private_telephone(value: str) -> bool:
 
 
 def _surface_contains_private_material(inspected_text: str) -> bool:
-    inspected_text = "".join(character for character in inspected_text if unicodedata.category(character) != "Cf")
+    inspected_text = _strip_default_ignorable(inspected_text)
     return any(
         pattern.search(inspected_text) for pattern in SURFACE_PRIVATE_VALUE_PATTERNS
     ) or _contains_private_telephone(inspected_text)
@@ -2501,6 +2554,18 @@ def audit_surface_manifest(
         if not isinstance(row, dict):
             errors.append("surface row must be an object")
             continue
+        missing_fields = sorted(SURFACE_ROW_FIELDS - set(row))
+        unexpected_fields = sorted((field for field in row if field not in SURFACE_ROW_FIELDS), key=str)
+        if missing_fields:
+            errors.append(f"surface row has missing exact-schema fields: {', '.join(missing_fields)}")
+        if unexpected_fields:
+            errors.append(
+                "surface row has unexpected exact-schema fields: "
+                + ", ".join(str(field) for field in unexpected_fields)
+            )
+        private_paths = sorted(_find_forbidden_demo_material(row, "surface row"))
+        if private_paths:
+            errors.append("surface row contains private material: " + ", ".join(private_paths))
         key = (str(row.get("surface")), str(row.get("claim_id")))
         if key in supplied:
             errors.append(f"duplicate surface cell: {key[0]} / {key[1]}")
@@ -2811,8 +2876,9 @@ def _find_forbidden_demo_material(value: object, path: str = "$") -> set[str]:
         for index, child in enumerate(value):
             forbidden.update(_find_forbidden_demo_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
-        if _demo_url_contains_forbidden_material(value) or any(
-            pattern.search(value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS
+        public_value = _strip_default_ignorable(value)
+        if _demo_url_contains_forbidden_material(public_value) or any(
+            pattern.search(public_value) for pattern in FORBIDDEN_DEMO_VALUE_PATTERNS
         ):
             forbidden.add(path)
     return forbidden
@@ -2956,7 +3022,8 @@ def validate_external_objects(
         if invalid_text:
             errors.append(f"validation object {index} fields must be nonblank text: {', '.join(invalid_text)}")
         object_class = row.get("object class")
-        if not isinstance(object_class, str) or object_class not in acceptable_objects:
+        valid_object_class = isinstance(object_class, str) and object_class in acceptable_objects
+        if not valid_object_class:
             errors.append(f"validation object {index} requires an approved object class")
         independence = str(row.get("independence disclosure") or "").strip().lower()
         if independence not in INDEPENDENCE_DISPOSITIONS:
@@ -3009,7 +3076,7 @@ def validate_external_objects(
             and exact_schema
             and not invalid_text
             and not private_paths
-            and object_class in acceptable_objects
+            and valid_object_class
             and independence in INDEPENDENCE_DISPOSITIONS
             and isinstance(object_receipt, str)
             and bool(object_receipt)

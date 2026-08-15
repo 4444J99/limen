@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
@@ -94,6 +95,35 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
     r"(?:[ \t]*[:=]\s*|[ \t]+(?:is|was)[ \t]*[:=]?\s*)"
     r"(?!(?:[\"'`][ \t]*)?(?:not|never|none|absent|redacted|withheld|unknown|unavailable|prohibited|required|unused)\b)"
     r"(?!\#(?:[ \t]|$))\S+"
+)
+PRIVATE_TELEPHONE_CANDIDATE = re.compile(
+    r"(?i)(?:"
+    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
+    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?[\d(][\d\s().-]{8,31}\d"
+    r"|\btel:\s*\+?[\d\s().-]{10,32}"
+    r"|\+\d[\d\s().-]{8,31}\d"
+    r"|\(\d{2,4}\)\d{3,4}[ .-]\d{3,4}"
+    r"|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4}"
+    r")"
+)
+_DEFAULT_IGNORABLE_RANGES = (
+    (0x00AD, 0x00AD),
+    (0x034F, 0x034F),
+    (0x061C, 0x061C),
+    (0x115F, 0x1160),
+    (0x17B4, 0x17B5),
+    (0x180B, 0x180F),
+    (0x200B, 0x200F),
+    (0x202A, 0x202E),
+    (0x2060, 0x206F),
+    (0x3164, 0x3164),
+    (0xFE00, 0xFE0F),
+    (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0),
+    (0xFFF0, 0xFFF8),
+    (0x1BCA0, 0x1BCA3),
+    (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF),
 )
 FORBIDDEN_PUBLIC_URL_KEYS = {
     "apikey",
@@ -302,6 +332,25 @@ def _normalized_public_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]", "", value.casefold())
 
 
+def _strip_default_ignorable(value: str) -> str:
+    return "".join(
+        character
+        for character in value
+        if unicodedata.category(character) != "Cf"
+        and not any(start <= ord(character) <= end for start, end in _DEFAULT_IGNORABLE_RANGES)
+    )
+
+
+def _contains_private_telephone(value: str) -> bool:
+    for match in PRIVATE_TELEPHONE_CANDIDATE.finditer(value):
+        candidate = match.group()
+        digits = [character for character in candidate if character.isdecimal()]
+        ipv4_candidate = re.fullmatch(r"\d{1,3}(?:\.\d{1,3}){3}", candidate.strip()) is not None
+        if 10 <= len(digits) <= 15 and not ipv4_candidate:
+            return True
+    return False
+
+
 def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bool:
     candidates = [value]
     decoded = value
@@ -344,12 +393,14 @@ def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bo
 def _public_text_contains_forbidden_material(value: str) -> bool:
     if "\0" in value:
         return True
+    value = _strip_default_ignorable(value)
     return bool(
         _public_url_contains_forbidden_material(value)
         or PUBLIC_EMAIL.search(value)
         or PUBLIC_SECRET_VALUE.search(value)
         or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
         or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)
+        or _contains_private_telephone(value)
     )
 
 

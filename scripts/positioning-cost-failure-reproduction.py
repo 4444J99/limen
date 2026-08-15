@@ -98,11 +98,31 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
     r"(?i)(?:"
     r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
-    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?\d{10,15}\b"
+    r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?[\d(][\d\s().-]{8,31}\d"
     r"|\btel:\s*\+?[\d\s().-]{10,32}"
     r"|\+\d[\d\s().-]{8,31}\d"
+    r"|\(\d{2,4}\)\d{3,4}[ .-]\d{3,4}"
     r"|(?:\(?\d{2,4}\)?[ .-]){2,}\d{3,4}"
     r")"
+)
+_DEFAULT_IGNORABLE_RANGES = (
+    (0x00AD, 0x00AD),
+    (0x034F, 0x034F),
+    (0x061C, 0x061C),
+    (0x115F, 0x1160),
+    (0x17B4, 0x17B5),
+    (0x180B, 0x180F),
+    (0x200B, 0x200F),
+    (0x202A, 0x202E),
+    (0x2060, 0x206F),
+    (0x3164, 0x3164),
+    (0xFE00, 0xFE0F),
+    (0xFEFF, 0xFEFF),
+    (0xFFA0, 0xFFA0),
+    (0xFFF0, 0xFFF8),
+    (0x1BCA0, 0x1BCA3),
+    (0x1D173, 0x1D17A),
+    (0xE0000, 0xE0FFF),
 )
 FORBIDDEN_PUBLIC_KEYS = {
     "email",
@@ -338,6 +358,15 @@ def _contains_private_telephone(value: str) -> bool:
     return False
 
 
+def _strip_default_ignorable(value: str) -> str:
+    return "".join(
+        character
+        for character in value
+        if unicodedata.category(character) != "Cf"
+        and not any(start <= ord(character) <= end for start, end in _DEFAULT_IGNORABLE_RANGES)
+    )
+
+
 def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
     """Find private identifiers and credential material before a public artifact can pass."""
     findings: set[str] = set()
@@ -355,7 +384,7 @@ def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
         for index, child in enumerate(value):
             findings.update(_find_forbidden_public_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
-        value = "".join(character for character in value if unicodedata.category(character) != "Cf")
+        value = _strip_default_ignorable(value)
         if (
             PUBLIC_EMAIL.search(value)
             or PUBLIC_SECRET_VALUE.search(value)
@@ -1638,7 +1667,7 @@ def _validate_required_receipt_fields(
                 except (OSError, ValueError) as exc:
                     errors.append(f"analysis reproduction review is not exactly committed and reproducible: {exc}")
                 else:
-                    if not isinstance(committed_review, dict) or committed_review != analysis.get("review_verdict"):
+                    if not isinstance(committed_review, dict):
                         errors.append("analysis reproduction review differs from its committed HEAD artifact")
                     else:
                         private_paths = sorted(_find_forbidden_public_material(committed_review))
@@ -1647,6 +1676,8 @@ def _validate_required_receipt_fields(
                                 "analysis reproduction review contains private or credential material: "
                                 + ", ".join(private_paths)
                             )
+                        if committed_review != analysis.get("review_verdict"):
+                            errors.append("analysis reproduction review differs from its committed HEAD artifact")
         elif review_blob is not None:
             errors.append("analysis reproduction_command cannot bind a review blob without a review artifact")
         expected_argv = _reproduction_argv(

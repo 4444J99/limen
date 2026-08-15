@@ -573,12 +573,19 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertNotIn(private_limitation, serialized)
 
         private_phone = "phone: +1 (212) " + "555-1234"
-        payload["provenance"] = private_phone
-        result = reproduce_cost(payload)
-        serialized = json.dumps(result, sort_keys=True)
-        self.assertEqual("withheld", result["status"])
-        self.assertIsNone(result["provenance"])
-        self.assertNotIn(private_phone, serialized)
+        for private_value in (
+            private_phone,
+            "phone: (212)555-1234",
+            "pass\u034fword: hunter2alpha",
+            "pass\ufe0fword: hunter2alpha",
+        ):
+            with self.subTest(private_value=private_value):
+                payload["provenance"] = private_value
+                result = reproduce_cost(payload)
+                serialized = json.dumps(result, sort_keys=True)
+                self.assertEqual("withheld", result["status"])
+                self.assertIsNone(result["provenance"])
+                self.assertNotIn(private_value, serialized)
 
     def test_public_safe_scan_checks_identifier_values_inside_lists(self) -> None:
         findings = COST._find_forbidden_public_material({"record_id": ["private-123"]})
@@ -1196,6 +1203,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "passphrase=hunter2alpha",  # allow-secret: synthetic adversarial fixture
             "passwd is hunter2alpha",
             "pwd: hunter2alpha",
+            "pass\u034fword: hunter2alpha",
+            "pass\ufe0fword: hunter2alpha",
+            "phone: (212)555-1234",
             "Private record customer-123 is excluded.",
             "https://example.com/proof?api%5Fkey=plainvalue",
             "See https://example.com/proof?api%5Fkey=plainvalue for proof.",
@@ -2348,9 +2358,14 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 f"time.sleep(0.5); Path({str(late_path)!r}).write_text('late')"
             )
             parent = (
-                "import subprocess,sys; "
+                "import subprocess,sys,time\n"
+                "from pathlib import Path\n"
                 f"subprocess.Popen([sys.executable,'-c',{child!r}], stdout=subprocess.DEVNULL, "
-                "stderr=subprocess.DEVNULL, start_new_session=True); print('parent done')"
+                "stderr=subprocess.DEVNULL, start_new_session=True)\n"
+                "deadline = time.monotonic() + 1.0\n"
+                f"while not Path({str(pid_path)!r}).exists() and time.monotonic() < deadline:\n"
+                "    time.sleep(0.01)\n"
+                "print('parent done')"
             )
             request = {
                 "schema_version": RECEIPT.SCHEMA_VERSION,
