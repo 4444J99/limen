@@ -502,7 +502,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
         mutations = (
             ("selected_count", 1, "selected_count must equal"),
-            ("population_count", 4, "census selection requires"),
+            ("population_count", 4, "population_count must equal"),
             ("eligible_count", True, "eligible_count must be"),
             ("selection_method", "manual_best_case", "selection_method"),
             ("selection_seed_sha256", "0" * 64, "census selection must not"),
@@ -515,6 +515,34 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 result = reproduce_cost(changed, reviewed=True)
                 self.assertEqual("withheld", result["status"])
                 self.assertTrue(any(expected in error for error in result["errors"]), result["errors"])
+
+    def test_cost_failure_census_preserves_reconciled_ineligible_population_records(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        population = payload["population"]
+        excluded = population["source_manifest"]["records"][-1]
+        excluded["eligible"] = False
+        excluded["exclusion_reason"] = "outside_observation_scope"
+        excluded_id = excluded["sample_id"]
+        payload["rows"] = [row for row in payload["rows"] if row["sample_id"] != excluded_id]
+        population["population_count"] = 3
+        population["eligible_count"] = 2
+        population["selected_count"] = 2
+        population["exclusion_counts"] = {"outside_observation_scope": 1}
+        with tempfile.TemporaryDirectory() as directory:
+            source_artifact = Path(directory) / "population.json"
+            source_raw = json.dumps(population["source_manifest"], sort_keys=True, separators=(",", ":")).encode()
+            source_artifact.write_bytes(source_raw)
+            population["source_sha256"] = COST.hashlib.sha256(source_raw).hexdigest()
+            original = COST._safe_tracked_artifact
+
+            def tracked(value: object) -> Path | None:
+                if value == population["source_artifact"]:
+                    return source_artifact
+                return original(value)
+
+            with mock.patch.object(COST, "_safe_tracked_artifact", side_effect=tracked):
+                errors = COST.validate_sample(payload)
+        self.assertEqual([], errors)
 
     def test_cost_failure_population_manifest_and_hash_selection_are_reproduced(self) -> None:
         payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
@@ -640,6 +668,29 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 require_trusted_association=True,
             )
         self.assertEqual(("4444J99", "MEMBER"), (actor, association))
+
+        assignment_label = "".join(("pass", "word"))
+        assignment_value = "".join(("hunter", "2"))
+        for private_limitation in (
+            "Contact customer@example.invalid for the private evidence set.",
+            "Internal evidence is held under customer-123.",
+            f"Replay {assignment_label}={assignment_value} in the private fixture.",
+        ):
+            receipt["limitations"] = [private_limitation]
+            receipt_sha256 = COST._canonical_digest(receipt)
+            comment["body"] = "<!-- positioning-cost-authority-receipt -->\n```json\n" + json.dumps(receipt) + "\n```"
+            response.read.return_value = json.dumps(comment).encode()
+            with self.subTest(private_limitation=private_limitation):
+                with mock.patch.object(COST, "_contract_https_open", return_value=response):
+                    with self.assertRaisesRegex(ValueError, "private or credential material"):
+                        COST._verify_authority_receipt(
+                            receipt_url,
+                            receipt_sha256,
+                            evidence_kind="population_manifest",
+                            subject_sha256=subject_sha256,
+                            require_trusted_association=True,
+                        )
+        receipt["limitations"] = ["Hermetic authentication fixture only."]
 
         receipt["evidence_kind"] = "independent_review"
         receipt_sha256 = COST._canonical_digest(receipt)
@@ -1085,6 +1136,94 @@ class PositioningProofRunnerTest(unittest.TestCase):
             **exact_cost_kwargs(payload),
         )
         self.assertTrue(any("input differs from its committed HEAD artifact" in error for error in drifted["errors"]))
+
+    def test_cost_failure_auto_replay_head_must_exist_in_the_canonical_remote(self) -> None:
+        review = {"verdict": "withheld"}
+        identities = (
+            (COST_SOURCE_HEAD, COST_RUNNER_BLOB),
+            (COST_SOURCE_HEAD, COST_INPUT_BLOB),
+            (COST_SOURCE_HEAD, COST_REVIEW_BLOB),
+        )
+        with (
+            mock.patch.object(COST, "_tracked_artifact_identity", side_effect=identities),
+            mock.patch.object(
+                COST,
+                "_fetch_exact_replay_artifacts",
+                side_effect=ValueError("canonical replay head could not be fetched"),
+            ) as fetch,
+        ):
+            rejected = COST._build_reproduction_command(
+                COST_INPUT_ARTIFACT,
+                "a" * 64,
+                COST_REVIEW_ARTIFACT,
+                review,
+            )
+        self.assertIsNone(rejected["source_head"])
+        fetch.assert_called_once_with(
+            COST_SOURCE_HEAD,
+            COST_RUNNER_BLOB,
+            {
+                COST_INPUT_ARTIFACT: COST_INPUT_BLOB,
+                COST_REVIEW_ARTIFACT: COST_REVIEW_BLOB,
+            },
+        )
+
+        with (
+            mock.patch.object(COST, "_tracked_artifact_identity", side_effect=identities),
+            mock.patch.object(COST, "_fetch_exact_replay_artifacts", return_value={}),
+        ):
+            accepted = COST._build_reproduction_command(
+                COST_INPUT_ARTIFACT,
+                "a" * 64,
+                COST_REVIEW_ARTIFACT,
+                review,
+            )
+        self.assertEqual(COST_SOURCE_HEAD, accepted["source_head"])
+
+        with (
+            mock.patch.object(COST, "_tracked_artifact_identity", side_effect=identities),
+            mock.patch.object(
+                COST,
+                "_fetch_exact_replay_artifacts",
+                side_effect=subprocess.TimeoutExpired(["git", "fetch"], 120),
+            ),
+        ):
+            timed_out = COST._build_reproduction_command(
+                COST_INPUT_ARTIFACT,
+                "a" * 64,
+                COST_REVIEW_ARTIFACT,
+                review,
+            )
+        self.assertIsNone(timed_out["source_head"])
+
+    def test_cost_failure_exact_replay_timeout_is_structured_and_withheld(self) -> None:
+        argv = [
+            "positioning-cost-failure-reproduction.py",
+            "--source-repository",
+            COST.CANONICAL_REPOSITORY,
+            "--source-head",
+            COST_SOURCE_HEAD,
+            "--runner-blob",
+            COST_RUNNER_BLOB,
+            "--input",
+            COST_INPUT_ARTIFACT,
+            "--input-blob",
+            COST_INPUT_BLOB,
+        ]
+        with (
+            mock.patch.object(sys, "argv", argv),
+            mock.patch.object(
+                COST,
+                "_fetch_exact_replay_artifacts",
+                side_effect=subprocess.TimeoutExpired(["git", "fetch"], 120),
+            ),
+            mock.patch("builtins.print") as emit,
+        ):
+            exit_code = COST.main()
+        self.assertEqual(1, exit_code)
+        result = json.loads(emit.call_args.args[0])
+        self.assertEqual("withheld", result["status"])
+        self.assertTrue(any("timed out" in error for error in result["errors"]))
 
     def test_cost_failure_exact_replay_fetches_and_reads_only_the_recorded_head_and_blobs(self) -> None:
         payload = {"schema_version": "synthetic.input.v1", "rows": []}

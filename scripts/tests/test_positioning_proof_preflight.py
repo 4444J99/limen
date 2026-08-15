@@ -194,8 +194,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         tracked = (
             MODULE.W07_VALIDATOR_PATH,
-            "docs/positioning/program/w07_blinded_reader_response_schema.json",
-            "docs/positioning/w07-blinded-reader-protocol.md",
+            MODULE.W07_WORKFLOW_PATH,
+            MODULE.W07_SCHEMA_PATH,
+            MODULE.W07_PROTOCOL_PATH,
         )
         for path in tracked:
             target = repository / path
@@ -707,6 +708,25 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(["LONG-CLAIM"], drifted)
 
         matched, drifted = MODULE._surface_claim_scan(
+            "Limen fabricates governed distributed agent delivery using durable exact commit receipts",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
+            "A deliberately padded public paragraph introduces unrelated architecture, delivery, "
+            "and governance context before stating that Limen fabricates governed distributed agent "
+            "delivery using durable exact commit receipts amid several additional explanatory clauses "
+            "about bounded verification, documentation, and operational limits.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
             "There is no evidence supporting the statement that Limen demonstrates governed "
             "multi-agent delivery with durable exact-head receipts.",
             long_expected,
@@ -761,6 +781,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<div style='display:block' style='display:none'>hidden</div>",
             "<div style='display/**/:none'>hidden</div>",
             r"<div style='d\69splay:none'>hidden</div>",
+            "<link rel='stylesheet' rel='alternate' href='/dynamic.css'>",
+            "<link REL='alternate' rel='stylesheet' href='/dynamic.css'>",
         ):
             with self.subTest(malformed=malformed):
                 with self.assertRaisesRegex(ValueError, "visibility"):
@@ -770,6 +792,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         for stylesheet_markup in (
             "<style>.proof{display:none}</style><div class='proof'>Hidden proof claim</div>",
             "<link rel='stylesheet' href='/dynamic.css'><div>Unverified proof claim</div>",
+            "<link rel='alternate stylesheet' href='/dynamic.css'/><div>Unverified proof claim</div>",
         ):
             with self.subTest(stylesheet_markup=stylesheet_markup):
                 with self.assertRaisesRegex(ValueError, "stylesheet evaluation"):
@@ -1005,6 +1028,29 @@ class PositioningProofPreflightTest(unittest.TestCase):
             self.assertNotIn(key, environment)
         self.assertEqual("1", environment["PYTHONNOUSERSITE"])
         self.assertEqual("1", environment["PYTHONSAFEPATH"])
+
+    def test_w07_replay_uses_validator_and_workflow_from_the_observed_head(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(repository, payload)
+            response_blob = subprocess.run(
+                ["git", "show", f"{head}:{response_path}"],
+                cwd=repository,
+                check=True,
+                capture_output=True,
+            ).stdout
+            (repository / MODULE.W07_VALIDATOR_PATH).write_text(
+                "raise SystemExit('untrusted current validator')\n",
+                encoding="utf-8",
+            )
+            (repository / MODULE.W07_WORKFLOW_PATH).write_text(
+                "raise SystemExit('untrusted current workflow')\n",
+                encoding="utf-8",
+            )
+            completed, memo = MODULE._run_observed_w07_replay(repository, head, response_blob)
+        self.assertEqual(0, completed.returncode, completed.stderr or completed.stdout)
+        self.assertIn(b"# PSP-P03-W07 blinded-reader decision memo", memo)
 
     def test_live_phase_verification_executes_and_binds_manifest_phase_proof(self) -> None:
         phase_id = "PSP-P03"
@@ -1904,46 +1950,41 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertFalse(result["ready"])
         self.assertTrue(any("timed out" in error for error in result["errors"]))
 
-    def test_live_closure_ancestry_disables_replacement_and_graft_overrides(self) -> None:
-        completed = subprocess.CompletedProcess([], 0, "", "")
-        injected = {
-            "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/tmp/alternate",
-            "GIT_SSL_NO_VERIFY": "1",
-            "GIT_COMMON_DIR": "/tmp/common",
-            "GIT_CONFIG_PARAMETERS": "'replace.ref=refs/heads/untrusted'",
-            "GIT_DIR": "/tmp/untrusted.git",
-            "GIT_INDEX_FILE": "/tmp/index",
-            "GIT_NAMESPACE": "untrusted",
-            "GIT_OBJECT_DIRECTORY": "/tmp/objects",
-            "GIT_SHALLOW_FILE": "/tmp/shallow",
-            "GIT_SSL_CAINFO": "/tmp/untrusted-ca.pem",
-            "GIT_SSL_CAPATH": "/tmp/untrusted-ca",
-            "GIT_WORK_TREE": "/tmp/tree",
-            "ALL_PROXY": "https://proxy.invalid",
-            "HTTP_PROXY": "http://proxy.invalid",
-            "HTTPS_PROXY": "https://proxy.invalid",
-            "NO_PROXY": "github.com",
-            "all_proxy": "https://proxy.invalid",
-            "http_proxy": "https://proxy.invalid",
-            "https_proxy": "https://proxy.invalid",
-            "no_proxy": "github.com",
-        }
+    def test_live_closure_ancestry_uses_the_isolated_canonical_store(self) -> None:
         with (
-            mock.patch.dict(MODULE.os.environ, injected, clear=False),
             mock.patch.object(
                 MODULE,
                 "_canonical_limen_remote_head",
                 return_value=("main", MODULE.C03_MERGE_COMMIT),
             ),
-            mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run,
+            mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=True) as contains,
         ):
             result = MODULE._live_authoritative_closure_verification(ROOT, MODULE.C03_MERGE_COMMIT)
         self.assertTrue(result["contained"])
-        environment = run.call_args.kwargs["env"]
-        self.assertEqual("1", environment["GIT_NO_REPLACE_OBJECTS"])
-        self.assertEqual(MODULE.os.devnull, environment["GIT_GRAFT_FILE"])
-        for key in injected:
-            self.assertNotIn(key, environment)
+        contains.assert_called_once_with("main", MODULE.C03_MERGE_COMMIT, MODULE.C03_MERGE_COMMIT)
+
+    def test_canonical_closure_ancestry_fetches_before_using_the_isolated_object_store(self) -> None:
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        fetched = subprocess.CompletedProcess([], 0, MODULE.C03_MERGE_COMMIT + "\n", "")
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=(completed, completed, fetched, completed, completed),
+        ) as run:
+            self.assertTrue(
+                MODULE._canonical_limen_contains_head(
+                    "main",
+                    MODULE.C03_MERGE_COMMIT,
+                    MODULE.C03_MERGE_COMMIT,
+                )
+            )
+        fetch = run.call_args_list[1]
+        self.assertIn("--filter=blob:none", fetch.args[0])
+        self.assertIn(f"{MODULE.C03_MERGE_COMMIT}:refs/canonical/main", fetch.args[0])
+        ancestry = run.call_args_list[-1]
+        self.assertIn("--git-dir", ancestry.args[0])
+        self.assertEqual("1", ancestry.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"])
+        self.assertEqual(MODULE.os.devnull, ancestry.kwargs["env"]["GIT_GRAFT_FILE"])
 
     def test_evidence_git_object_reads_use_the_sanitized_bounded_environment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -2013,7 +2054,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
             unpublished_head = subprocess.run(
                 ["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True
             ).stdout.strip()
-            with mock.patch.object(MODULE, "_canonical_limen_remote_head", return_value=("main", published_head)):
+            with (
+                mock.patch.object(MODULE, "_canonical_limen_remote_head", return_value=("main", published_head)),
+                mock.patch.object(MODULE, "_canonical_limen_contains_head", return_value=False),
+            ):
                 with self.assertRaisesRegex(ValueError, "authoritative default branch"):
                     MODULE._live_authoritative_closure_verification(repository, unpublished_head)
 
@@ -2188,7 +2232,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             ).stdout.strip()
             binding, live = self._valid_w07_binding(repository, head, response_path, payload)
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
-            self.assertTrue(any("canonical aggregate" in error for error in errors))
+            self.assertTrue(any("observed-head aggregate" in error for error in errors))
 
     def test_w07_observed_head_must_be_contained_by_the_closure_head(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -2270,7 +2314,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             errors = MODULE._validate_w07_receipt_binding(binding, repository, live)
         self.assertTrue(any("duplicate JSON member: verbatim_notes" in error for error in errors), errors)
 
-    def test_w07_receipt_does_not_trust_a_validator_from_the_observed_head(self) -> None:
+    def test_w07_receipt_replays_validator_and_workflow_as_one_observed_head_pair(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repository = Path(directory)
             payload = self._passing_w07_payload()
@@ -2306,7 +2350,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 live,
                 closure_head=head,
             )
-            self.assertTrue(any("trusted W07 blinded-reader predicate did not pass" in error for error in errors))
+            self.assertTrue(any("observed-head W07 workflow did not reproduce" in error for error in errors))
 
     def test_program_binding_covers_all_p05_leaves(self) -> None:
         self.assertEqual(

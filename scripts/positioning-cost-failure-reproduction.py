@@ -86,6 +86,16 @@ PUBLIC_SECRET_VALUE = re.compile(
 PRIVATE_IDENTIFIER = re.compile(
     r"(?i)(?:^|[-_:/])(?:customer|client|lead|contact|private|person|email|account)(?:[-_:/]|[0-9]|$)"
 )
+PUBLIC_PRIVATE_IDENTIFIER_VALUE = re.compile(
+    r"(?i)(?<![A-Za-z0-9])(?:customer|client|lead|contact|person|account|private)"
+    r"(?:[-_:/]+(?:id[-_:/]+)?)"
+    r"(?=[A-Za-z0-9._:/-]*\d)[A-Za-z0-9][A-Za-z0-9._:/-]*"
+)
+PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
+    r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
+    r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
+    r"private[-_ ]?key|recovery[-_ ]?code)\s*[:=]\s*\S+"
+)
 FORBIDDEN_PUBLIC_KEYS = {
     "email",
     "emailaddress",
@@ -255,7 +265,12 @@ def _find_forbidden_public_material(value: object, path: str = "$") -> set[str]:
         for index, child in enumerate(value):
             findings.update(_find_forbidden_public_material(child, f"{path}[{index}]"))
     elif isinstance(value, str):
-        if PUBLIC_EMAIL.search(value) or PUBLIC_SECRET_VALUE.search(value):
+        if (
+            PUBLIC_EMAIL.search(value)
+            or PUBLIC_SECRET_VALUE.search(value)
+            or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
+            or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)
+        ):
             findings.add(path)
         last_segment = re.sub(r"(?:\[\d+\])+$", "", path.rsplit(".", 1)[-1])
         field_name = re.sub(r"[^a-z0-9]", "", last_segment.casefold())
@@ -463,6 +478,9 @@ def _verify_authority_receipt(
         and all(isinstance(value, str) and value.strip() and "\0" not in value for value in limitations)
     ):
         raise ValueError("authority receipt limitations must be public-safe text")
+    private_paths = sorted(_find_forbidden_public_material(receipt))
+    if private_paths:
+        raise ValueError("authority receipt contains private or credential material: " + ", ".join(private_paths))
     if _canonical_digest(receipt) != receipt_sha256:
         raise ValueError("authority receipt digest differs from the marked receipt")
     return login, str(association)
@@ -575,14 +593,17 @@ def _git_output(argv: list[str], *, git_dir: Path | None = None, timeout: int = 
     command = [str(_trusted_named_executable("git"))]
     if git_dir is not None:
         command.extend(["--git-dir", str(git_dir)])
-    completed = subprocess.run(
-        [*command, *argv],
-        cwd=ROOT if git_dir is None else Path(Path.cwd().anchor or os.sep),
-        check=False,
-        capture_output=True,
-        timeout=timeout,
-        env=_sanitized_git_environment(),
-    )
+    try:
+        completed = subprocess.run(
+            [*command, *argv],
+            cwd=ROOT if git_dir is None else Path(Path.cwd().anchor or os.sep),
+            check=False,
+            capture_output=True,
+            timeout=timeout,
+            env=_sanitized_git_environment(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ValueError("exact Git object lookup timed out") from exc
     if completed.returncode != 0:
         raise ValueError("exact Git object lookup failed")
     return completed.stdout
@@ -656,14 +677,17 @@ def _fetch_exact_replay_artifacts(
             ],
         )
         for command in commands:
-            completed = subprocess.run(
-                command,
-                cwd=anchor,
-                check=False,
-                capture_output=True,
-                timeout=120,
-                env=environment,
-            )
+            try:
+                completed = subprocess.run(
+                    command,
+                    cwd=anchor,
+                    check=False,
+                    capture_output=True,
+                    timeout=120,
+                    env=environment,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise ValueError("canonical replay head fetch timed out") from exc
             if completed.returncode != 0:
                 raise ValueError("canonical replay head could not be fetched")
         fetched_head = _git_output(["rev-parse", "refs/canonical/source"], git_dir=object_store).decode().strip()
@@ -924,8 +948,10 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     if method == "census":
         if seed is not None:
             errors.append("census selection must not declare a selection seed")
-        if counts and len(set(counts.values())) != 1:
-            errors.append("census selection requires selected == eligible == population")
+        if {"eligible_count", "selected_count"} <= set(counts) and (
+            counts["selected_count"] != counts["eligible_count"]
+        ):
+            errors.append("census selection requires selected == eligible")
     elif not _lower_sha256(seed):
         errors.append("deterministic sampling requires a lowercase selection seed SHA-256")
     elif seed != _derived_selection_seed(population):
@@ -1236,7 +1262,11 @@ def _build_reproduction_command(
             if len(heads) != 1:
                 raise ValueError("replay artifacts do not share one exact repository head")
             source_head = heads.pop()
-        except (OSError, ValueError):
+            artifact_blobs = {str(input_artifact): str(input_blob)}
+            if review_artifact is not None:
+                artifact_blobs[str(review_artifact)] = str(review_blob)
+            _fetch_exact_replay_artifacts(str(source_head), str(runner_blob), artifact_blobs)
+        except (OSError, subprocess.TimeoutExpired, ValueError):
             source_head = None
             runner_blob = None
             input_blob = None
@@ -1672,7 +1702,7 @@ def main() -> int:
             review_blob=args.review_blob,
             exact_artifacts=exact_artifacts,
         )
-    except (HTTPException, OSError, json.JSONDecodeError, ValueError) as exc:
+    except (HTTPException, OSError, json.JSONDecodeError, subprocess.TimeoutExpired, ValueError) as exc:
         result = {
             "schema_version": "limen.positioning_cost_failure_analysis.v1",
             "provenance": None,

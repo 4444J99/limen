@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from difflib import SequenceMatcher
 import html
 import hashlib
 import importlib.util
@@ -114,6 +115,9 @@ PHASE_RECEIPT_BLOCK = re.compile(
 )
 W07_VALIDATOR_PATH = "docs/positioning/program/validate_p03_w07_blinded_reader.py"
 W07_WORKFLOW_PATH = "docs/positioning/program/w07_blinded_reader_workflow.py"
+W07_SCHEMA_PATH = "docs/positioning/program/w07_blinded_reader_response_schema.json"
+W07_PROTOCOL_PATH = "docs/positioning/w07-blinded-reader-protocol.md"
+W07_REPLAY_PATHS = (W07_VALIDATOR_PATH, W07_WORKFLOW_PATH, W07_SCHEMA_PATH, W07_PROTOCOL_PATH)
 W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-responses\.json$")
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
@@ -159,6 +163,25 @@ if digest.hexdigest() != dependency_sha256:
 sys.path.insert(0, dependency_root)
 sys.argv = [program, *arguments]
 runpy.run_path(program, run_name="__main__")
+"""
+W07_MEMO_BOOTSTRAP = """
+import importlib.util
+import pathlib
+import sys
+
+workflow_path = pathlib.Path(sys.argv[1]).resolve(strict=True)
+response_path = pathlib.Path(sys.argv[2]).resolve(strict=True)
+spec = importlib.util.spec_from_file_location("psp_c04_observed_w07_workflow", workflow_path)
+if spec is None or spec.loader is None:
+    raise SystemExit("observed W07 workflow is unavailable")
+workflow = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = workflow
+spec.loader.exec_module(workflow)
+payload = workflow.V.load_payload(response_path)
+verdict = workflow.V.validate(payload)
+if verdict.state != "pass":
+    raise SystemExit("observed W07 workflow did not accept the response set")
+sys.stdout.write(workflow.decision_memo(payload, verdict))
 """
 INDEPENDENT_REVIEWER_CLASSES = {"independent_human", "independent_model", "consented_collaborator"}
 DEMO_ROOT_FIELDS = {"schema_version", "synthetic_only", "records"}
@@ -1329,8 +1352,8 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized: dict[str, str | None] = {}
         for name, value in attrs:
             key = name.casefold()
-            if key in {"hidden", "aria-hidden", "style"} and key in normalized:
-                raise ValueError("surface response duplicates a visibility-control attribute")
+            if key in {"hidden", "aria-hidden", "style", "rel"} and key in normalized:
+                raise ValueError("surface response duplicates a visibility or stylesheet-control attribute")
             normalized[key] = value
         if "hidden" in normalized:
             return True
@@ -1344,14 +1367,19 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface response uses obfuscated inline visibility styling")
         return cls._HIDDEN_STYLE.search(style) is not None
 
+    @staticmethod
+    def _attributes_reference_stylesheet(attrs: list[tuple[str, str | None]]) -> bool:
+        for name, value in attrs:
+            if name.casefold() == "rel" and isinstance(value, str):
+                return "stylesheet" in value.casefold().split()
+        return False
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
-        normalized_attributes = {
-            name.casefold(): value.casefold().split() if isinstance(value, str) else [] for name, value in attrs
-        }
-        if normalized == "link" and "stylesheet" in normalized_attributes.get("rel", []):
+        attributes_hidden = self._attributes_hide_element(attrs)
+        if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
-        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or self._attributes_hide_element(attrs)
+        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
         elif not hidden:
@@ -1361,7 +1389,10 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized = tag.casefold()
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
-        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or self._attributes_hide_element(attrs)
+        attributes_hidden = self._attributes_hide_element(attrs)
+        if normalized == "link" and self._attributes_reference_stylesheet(attrs):
+            raise ValueError("surface visibility requires external stylesheet evaluation")
+        hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
         if not hidden:
             self._visible_fragments.append(" ")
 
@@ -1441,26 +1472,20 @@ def _surface_claim_scan(
         canonical_sequence = canonical.split()
         if len(canonical_tokens) < 2 or len(canonical_sequence) < 3:
             continue
-        if len(canonical_tokens) >= 5:
-            anchor_size = 3
-            canonical_anchors = {
-                " ".join(canonical_sequence[index : index + anchor_size])
-                for index in range(len(canonical_sequence) - anchor_size + 1)
-            }
-        else:
-            anchor_size = 2
-            canonical_anchors = {
-                " ".join(canonical_sequence[index : index + anchor_size])
-                for index in range(len(canonical_sequence) - anchor_size + 1)
-            }
         for segment in segments:
-            segment_tokens = set(segment.split())
+            segment_sequence = segment.split()
+            segment_tokens = set(segment_sequence)
             overlap = canonical_tokens & segment_tokens
             coverage = len(overlap) / len(canonical_tokens)
-            anchor_matches = sum(f" {anchor} " in f" {segment} " for anchor in canonical_anchors)
-            anchored_variant = anchor_matches >= (2 if len(canonical_tokens) >= 5 else 1)
+            matcher = SequenceMatcher(
+                None,
+                canonical_sequence,
+                segment_sequence,
+                autojunk=False,
+            )
+            ordered_coverage = sum(block.size for block in matcher.get_matching_blocks()) / len(canonical_sequence)
             minimum_overlap = min(3, len(canonical_tokens))
-            if len(overlap) >= minimum_overlap and coverage >= 0.5 and anchored_variant:
+            if len(overlap) >= minimum_overlap and coverage >= 0.5 and ordered_coverage >= 0.5:
                 drifted.append(claim_id)
                 break
     return sorted(matched), sorted(set(drifted))
@@ -2634,12 +2659,92 @@ def _canonical_limen_remote_head() -> tuple[str, str]:
     return default_branch, default_head
 
 
+def _canonical_limen_contains_head(default_branch: str, default_head: str, candidate_head: str) -> bool:
+    """Fetch the advertised Limen head into an isolated store before proving ancestry."""
+    if (
+        not isinstance(default_branch, str)
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", default_branch)
+        or any(token in default_branch for token in ("..", "//", "@{", "\\"))
+        or not FULL_HEAD.fullmatch(default_head)
+        or not FULL_HEAD.fullmatch(candidate_head)
+    ):
+        raise ValueError("canonical organvm/limen ancestry request is invalid")
+    trusted_git = str(_trusted_named_executable("git"))
+    environment = _sanitized_git_environment()
+    anchor = Path(Path.cwd().anchor or os.sep)
+    with tempfile.TemporaryDirectory(prefix="limen-c04-closure-authority-") as temporary:
+        object_store = Path(temporary) / "canonical.git"
+        commands = (
+            [trusted_git, "init", "--bare", "--quiet", str(object_store)],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "fetch",
+                "--no-tags",
+                "--filter=blob:none",
+                "--force",
+                "https://github.com/organvm/limen.git",
+                f"{default_head}:refs/canonical/{default_branch}",
+            ],
+        )
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=120,
+            )
+            if completed.returncode != 0:
+                raise ValueError("canonical organvm/limen head could not be fetched into the isolated store")
+        canonical_ref = f"refs/canonical/{default_branch}"
+        fetched = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "rev-parse", "--verify", canonical_ref],
+            cwd=anchor,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
+            raise ValueError("fetched canonical organvm/limen head differs from the advertised head")
+        candidate = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "cat-file", "-e", f"{candidate_head}^{{commit}}"],
+            cwd=anchor,
+            env=environment,
+            check=False,
+            capture_output=True,
+            timeout=30,
+        )
+        if candidate.returncode != 0:
+            return False
+        ancestry = subprocess.run(
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "merge-base",
+                "--is-ancestor",
+                candidate_head,
+                canonical_ref,
+            ],
+            cwd=anchor,
+            env=environment,
+            check=False,
+            capture_output=True,
+            timeout=30,
+        )
+        return ancestry.returncode == 0
+
+
 def _live_authoritative_closure_verification(repository: Path, closure_head: str) -> dict[str, Any]:
     if not FULL_HEAD.fullmatch(closure_head):
         raise ValueError("authoritative closure verification requires a full exact head")
     default_branch, default_head = _canonical_limen_remote_head()
-    ancestry = _sanitized_ancestry(repository, closure_head, default_head)
-    if ancestry.returncode != 0:
+    if not _canonical_limen_contains_head(default_branch, default_head, closure_head):
         raise ValueError("claimed C03 closure head is not contained by the authoritative default branch")
     value = {
         "status": "pass",
@@ -2808,6 +2913,62 @@ def _run_trusted_w07_validator(response_path: Path) -> subprocess.CompletedProce
     )
 
 
+def _run_observed_w07_replay(
+    repository: Path,
+    observed_head: str,
+    response_blob: bytes,
+) -> tuple[subprocess.CompletedProcess[str], bytes]:
+    """Execute the W07 validator and memo workflow from the receipt's exact observed head."""
+    interpreter = Path(sys.executable).resolve(strict=True)
+    environment = _sanitized_git_environment()
+    for key in tuple(environment):
+        if key.upper().startswith(("PYTHON", "LD_", "DYLD_")):
+            environment.pop(key, None)
+    environment.update({"PYTHONNOUSERSITE": "1", "PYTHONSAFEPATH": "1"})
+    with tempfile.TemporaryDirectory(prefix="limen-c04-w07-replay-") as directory:
+        replay_root = Path(directory)
+        for relative in W07_REPLAY_PATHS:
+            target = replay_root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(_git_blob(repository, observed_head, relative))
+        response_target = replay_root / "w07-reader-responses.json"
+        response_target.write_bytes(response_blob)
+        validator = replay_root / W07_VALIDATOR_PATH
+        workflow = replay_root / W07_WORKFLOW_PATH
+        completed = subprocess.run(
+            [str(interpreter), "-I", str(validator), str(response_target)],
+            cwd=replay_root,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        if completed.returncode != 0:
+            return completed, b""
+        memo = subprocess.run(
+            [
+                str(interpreter),
+                "-I",
+                "-B",
+                "-c",
+                W07_MEMO_BOOTSTRAP,
+                str(workflow),
+                str(response_target),
+            ],
+            cwd=replay_root,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        if memo.returncode != 0:
+            detail = (memo.stderr or memo.stdout).strip()
+            raise ValueError(f"observed-head W07 workflow did not reproduce the decision memo: {detail}")
+        return completed, memo.stdout.encode("utf-8")
+
+
 def _verify_w07_response_blob(
     repository: Path,
     observed_head: str,
@@ -2838,10 +2999,7 @@ def _verify_w07_response_blob(
     if hashlib.sha256(decision_memo_blob).hexdigest() != decision_memo_sha256:
         raise ValueError("W07 decision-memo digest does not bind the exact tracked memo blob")
 
-    with tempfile.TemporaryDirectory() as directory:
-        response_target = Path(directory) / "w07-reader-responses.json"
-        response_target.write_bytes(response_blob)
-        completed = _run_trusted_w07_validator(response_target)
+    completed, canonical_memo = _run_observed_w07_replay(repository, observed_head, response_blob)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise ValueError(f"trusted W07 blinded-reader predicate did not pass: {detail}")
@@ -2850,8 +3008,8 @@ def _verify_w07_response_blob(
     predicate_output_sha256 = predicate.get("output_sha256")
     if hashlib.sha256(completed.stdout.encode("utf-8")).hexdigest() != predicate_output_sha256:
         raise ValueError("W07 receipt predicate output digest differs from the exact-head validator result")
-    if decision_memo_blob != _canonical_w07_decision_memo(response_payload):
-        raise ValueError("W07 decision memo differs from the canonical aggregate of the exact response set")
+    if decision_memo_blob != canonical_memo:
+        raise ValueError("W07 decision memo differs from the observed-head aggregate of the exact response set")
     match = re.search(
         r"SCORE: total=(\d+)/25 role=(\d+)/5 buyer=(\d+)/5 cta=(\d+)/5",
         completed.stdout,
