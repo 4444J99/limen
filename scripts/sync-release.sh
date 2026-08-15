@@ -59,7 +59,7 @@ SELF_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd -P)" || S
 # republishes it every beat and the collapse guard restores from the projection branch. Observed
 # park this closes: a local-only "fix validation errors in tasks.yaml" commit (2026-07-19) pinned
 # the live checkout 60 commits behind for 3 days of loud fail-open beats.
-RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json logs/overnight-watch.md docs/branch-hygiene.md docs/always-working.md docs/capacity-fill.md docs/dispatch-health.md docs/diurnal/INDEX.md docs/github-*.json organs/contributions/* organs/financial/* docs/RECLASSIFY-PROPOSAL.md}"
+RECEIPT_GLOBS="${LIMEN_SYNC_RECEIPT_GLOBS:-tasks.yaml docs/worktree-preservation-receipts.json docs/pr-receipts.json docs/*-receipts.json docs/*-receipt.json docs/receipts/*.json docs/receipts/*/*.json logs/overnight-watch.md docs/branch-hygiene.md docs/always-working.md docs/capacity-fill.md docs/dispatch-health.md docs/diurnal/INDEX.md docs/github-*.json organs/contributions/* organs/financial/* docs/RECLASSIFY-PROPOSAL.md}"
 _only_receipts() {  # exit 0 ⟺ stdin has ≥1 path AND every path matches a receipt glob
   local f p matched any=0
   local -a globs

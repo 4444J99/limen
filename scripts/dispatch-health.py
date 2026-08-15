@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import ast
 import datetime as dt
+import fnmatch
 import json
 import os
 import plistlib
@@ -46,6 +47,11 @@ IGNORED_GENERATED_RECEIPTS = {
     "docs/session-corpus-ledger.md",
     "docs/session-lifecycle-blockers.md",
 }
+# Nested timestamped receipt snapshots (e.g. docs/receipts/tcc-track-c-1703/closeout-*.json) sit
+# outside the exact-path set above but are the same "regenerable, costs nothing to lose" class
+# sync-release.sh's RECEIPT_GLOBS already tolerates (docs/receipts/*/*.json) — glob-matched here so
+# live-root-dirty reflects genuine drift instead of flagging expected receipt churn as a blocker.
+IGNORED_GENERATED_RECEIPT_GLOBS = ("docs/receipts/*/*.json",)
 HEARTBEAT_ENV_KEYS = (
     "LIMEN_ROOT",
     "LIMEN_WORKTREES",
@@ -310,7 +316,7 @@ def parse_dirty(status_text: str, ignored_paths: set[str] | None = None) -> dict
     ignored: list[str] = []
     for line in [line for line in status_text.splitlines() if line and not line.startswith("## ")]:
         path = line[3:] if len(line) > 3 else line
-        if path in ignored_paths:
+        if path in ignored_paths or any(fnmatch.fnmatch(path, g) for g in IGNORED_GENERATED_RECEIPT_GLOBS):
             ignored.append(path)
             continue
         if line.startswith("?? "):
