@@ -809,6 +809,25 @@ sensors:
         severity: advisory
         escalation: "critical launch-agent DOWN above (spec/critical-launch-agents.json) — arm LIMEN_LAUNCHAGENT_HEAL=1 so the beat auto-restores it (mint/tunnel/credential organ), else it stays dark"
 
+  background-items-census:
+    section: "0g4b"
+    title: "background-items census — every LaunchAgent/BTM row maps to a declared owner (spec/background-items.json)"
+    gate: LIMEN_BACKGROUND_ITEMS_CHECK
+    default: "1"
+    # Same reachability lesson as its 0g4 sibling: [metabolize]-only + cadence = never runs.
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_BACKGROUND_ITEMS
+      default: 12               # the surface changes on installs/updates, not per-beat — daily-ish is plenty
+    timeout:
+      env: LIMEN_BACKGROUND_ITEMS_TIMEOUT
+      default: 60               # plist glob + one sfltool dumpbtm; measured ~2 s live
+    steps:
+      - command: "python3 scripts/background-items-census.py --check"
+        severity: advisory
+        escalation: "an UNDECLARED background item is installed (no registry owner, no Rule-55a third-party exemption) — declare it in spec/background-items.json or investigate what installed it; the census never mutates (Rule 55 hook is the authority), receipt at logs/background-items-census.json"
+
   sensor-canary:
     section: "0g5"
     title: "sensor canary — every scheduled sensor observed live within bounds (merged ≠ running)"
