@@ -1131,6 +1131,12 @@ class PositioningProofRunnerTest(unittest.TestCase):
         unsafe_limitations = (
             "Contact customer@example.invalid for the evidence.",
             "The password is hunter2alpha.",
+            "token is hunter2alpha",
+            "credential was hunter2alpha",
+            "passcode: hunter2alpha",
+            "passphrase=hunter2alpha",  # allow-secret: synthetic adversarial fixture
+            "passwd is hunter2alpha",
+            "pwd: hunter2alpha",
             "Private record customer-123 is excluded.",
             "https://example.com/proof?api%5Fkey=plainvalue",
             "See https://example.com/proof?api%5Fkey=plainvalue for proof.",
@@ -1163,6 +1169,13 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 self.assertEqual("blocked_external", result["result"])
                 self.assertEqual([], result["limitations"])
                 self.assertNotIn(limitation, json.dumps(result, sort_keys=True))
+        for safe_limitation in (
+            "token is required",
+            "credential is redacted",
+            "token budget is bounded",
+        ):
+            with self.subTest(safe_limitation=safe_limitation):
+                self.assertTrue(RECEIPT._public_safe_limitations([safe_limitation]))
 
     def test_validation_error_receipts_do_not_copy_unsafe_request_fields(self) -> None:
         request = {

@@ -1683,6 +1683,7 @@ def _normalized_surface_text(value: str) -> str:
 class _VisibleSurfaceParser(HTMLParser):
     _HIDDEN_TAGS = {"datalist", "head", "script", "style", "template", "title", "noscript"}
     _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script", "svg"}
+    _UNSUPPORTED_USER_AGENT_TAGS = {"select"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
         "area",
@@ -1817,6 +1818,8 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized = tag.casefold()
         if normalized in self._ACTIVE_CONTENT_TAGS:
             raise ValueError("surface visibility requires executable active-content evaluation")
+        if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
+            raise ValueError("surface visibility requires unsupported user-agent control evaluation")
         self._reject_closed_details_table_ambiguity(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
@@ -1853,6 +1856,8 @@ class _VisibleSurfaceParser(HTMLParser):
         normalized = tag.casefold()
         if normalized in self._ACTIVE_CONTENT_TAGS:
             raise ValueError("surface visibility requires executable active-content evaluation")
+        if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
+            raise ValueError("surface visibility requires unsupported user-agent control evaluation")
         self._reject_closed_details_table_ambiguity(normalized)
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
@@ -3493,12 +3498,15 @@ def _fetch_canonical_limen_objects(
 
 def _fetch_canonical_limen_bindings(
     bindings: set[tuple[str, str]],
+    *,
+    descendant_head: str | None = None,
 ) -> dict[tuple[str, str], tuple[bytes, str]]:
     """Resolve accepted historical blobs only from one authenticated canonical-main object store."""
     if (
         not isinstance(bindings, set)
         or not bindings
         or any(not FULL_HEAD.fullmatch(head) or not _safe_relative_path(path) for head, path in bindings)
+        or (descendant_head is not None and not FULL_HEAD.fullmatch(descendant_head))
     ):
         raise ValueError("canonical dependency binding request is invalid")
     default_branch, default_head = _canonical_limen_remote_head()
@@ -3569,13 +3577,26 @@ def _fetch_canonical_limen_bindings(
         )
         if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
             raise ValueError("fetched canonical dependency head differs from the advertised head")
+        ancestry_target = canonical_ref
+        if descendant_head is not None:
+            descendant = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "cat-file", "-e", f"{descendant_head}^{{commit}}"],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            if descendant.returncode != 0:
+                raise ValueError("accepted dependency descendant head is unavailable from canonical main")
+            ancestry_target = descendant_head
         paths_by_head: dict[str, list[str]] = {}
         for head, path in sorted(bindings):
             paths_by_head.setdefault(head, []).append(path)
         blob_by_binding: dict[tuple[str, str], str] = {}
         for head, paths in paths_by_head.items():
             ancestry = subprocess.run(
-                [trusted_git, "--git-dir", str(object_store), "merge-base", "--is-ancestor", head, canonical_ref],
+                [trusted_git, "--git-dir", str(object_store), "merge-base", "--is-ancestor", head, ancestry_target],
                 cwd=anchor,
                 env=environment,
                 check=False,
@@ -3984,9 +4005,9 @@ def _run_trusted_w07_validator(response_path: Path) -> subprocess.CompletedProce
 
 
 def _run_observed_w07_replay(
-    repository: Path,
     observed_head: str,
     response_blob: bytes,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]],
 ) -> tuple[subprocess.CompletedProcess[str], bytes]:
     """Execute the W07 validator and memo workflow from the receipt's exact observed head."""
     interpreter = Path(sys.executable).resolve(strict=True)
@@ -3998,7 +4019,10 @@ def _run_observed_w07_replay(
         for relative in W07_REPLAY_PATHS:
             target = replay_root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(_git_blob(repository, observed_head, relative))
+            try:
+                target.write_bytes(canonical_objects[(observed_head, relative)][0])
+            except KeyError as exc:
+                raise ValueError(f"canonical W07 replay blob is unavailable at {observed_head}:{relative}") from exc
         response_target = replay_root / "w07-reader-responses.json"
         response_target.write_bytes(response_blob)
         validator = replay_root / W07_VALIDATOR_PATH
@@ -4050,7 +4074,6 @@ def _run_observed_w07_replay(
 
 
 def _verify_w07_response_blob(
-    repository: Path,
     observed_head: str,
     closure_head: str,
     response_path: str,
@@ -4060,11 +4083,18 @@ def _verify_w07_response_blob(
     evidence: dict[str, Any],
     predicate: dict[str, Any],
 ) -> None:
-    ancestry = _sanitized_ancestry(repository, observed_head, closure_head)
-    if ancestry.returncode != 0:
-        raise ValueError("W07 observed head is not contained by the claimed C03 closure head")
-
-    response_blob = _git_blob(repository, observed_head, response_path)
+    requested_paths = {*W07_REPLAY_PATHS, response_path, decision_memo_path}
+    try:
+        canonical_objects = _fetch_canonical_limen_bindings(
+            {(observed_head, path) for path in requested_paths},
+            descendant_head=closure_head,
+        )
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        raise ValueError(
+            "W07 observed head is not contained by the claimed C03 closure head "
+            f"or canonical evidence is unavailable: {exc}"
+        ) from exc
+    response_blob = canonical_objects[(observed_head, response_path)][0]
     try:
         response_payload = _loads_preflight_artifact(response_blob.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
@@ -4075,11 +4105,11 @@ def _verify_w07_response_blob(
     if hashlib.sha256(canonical).hexdigest() != response_sha256:
         raise ValueError("W07 response-set digest does not bind the exact tracked response blob")
 
-    decision_memo_blob = _git_blob(repository, observed_head, decision_memo_path)
+    decision_memo_blob = canonical_objects[(observed_head, decision_memo_path)][0]
     if hashlib.sha256(decision_memo_blob).hexdigest() != decision_memo_sha256:
         raise ValueError("W07 decision-memo digest does not bind the exact tracked memo blob")
 
-    completed, canonical_memo = _run_observed_w07_replay(repository, observed_head, response_blob)
+    completed, canonical_memo = _run_observed_w07_replay(observed_head, response_blob, canonical_objects)
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout).strip()
         raise ValueError(f"trusted W07 blinded-reader predicate did not pass: {detail}")
@@ -4225,9 +4255,8 @@ def _validate_w07_receipt_binding(
     assert isinstance(predicate, dict)
     try:
         _verify_w07_response_blob(
-            repository,
             observed_head,
-            closure_head or "HEAD",
+            closure_head or observed_head,
             response_path,
             evidence["response_set_sha256"],
             memo_path,

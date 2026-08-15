@@ -38,6 +38,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.addCleanup(authority_patch.stop)
         self.fetch_canonical_limen_objects = MODULE._fetch_canonical_limen_objects
         self.fetch_canonical_limen_bindings = MODULE._fetch_canonical_limen_bindings
+        self.canonical_fixture_repositories = [ROOT]
 
         def local_canonical_objects(
             _default_branch: str,
@@ -56,10 +57,37 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
         def local_canonical_bindings(
             bindings: set[tuple[str, str]],
+            *,
+            descendant_head: str | None = None,
         ) -> dict[tuple[str, str], tuple[bytes, str]]:
             resolved: dict[tuple[str, str], tuple[bytes, str]] = {}
             for head, path in bindings:
-                content, blob = MODULE._read_git_object_bytes(ROOT, head, path)
+                source_repository = next(
+                    (
+                        candidate
+                        for candidate in self.canonical_fixture_repositories
+                        if subprocess.run(
+                            ["git", "cat-file", "-e", f"{head}^{{commit}}"],
+                            cwd=candidate,
+                            check=False,
+                            capture_output=True,
+                        ).returncode
+                        == 0
+                    ),
+                    None,
+                )
+                if source_repository is None:
+                    raise ValueError(f"missing local fixture head: {head}")
+                if descendant_head is not None:
+                    ancestry = subprocess.run(
+                        ["git", "merge-base", "--is-ancestor", head, descendant_head],
+                        cwd=source_repository,
+                        check=False,
+                        capture_output=True,
+                    )
+                    if ancestry.returncode != 0:
+                        raise ValueError(f"fixture head is not contained by descendant: {head}")
+                content, blob = MODULE._read_git_object_bytes(source_repository, head, path)
                 if content is None or blob is None:
                     raise ValueError(f"missing local fixture binding: {head}:{path}")
                 resolved[(head, path)] = (content, blob)
@@ -70,7 +98,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "_fetch_canonical_limen_bindings",
             side_effect=local_canonical_bindings,
         )
-        binding_patch.start()
+        self.fetch_canonical_limen_bindings_mock = binding_patch.start()
         self.addCleanup(binding_patch.stop)
         paths = (
             ".gitignore",
@@ -253,6 +281,8 @@ class PositioningProofPreflightTest(unittest.TestCase):
             cwd=repository,
             check=True,
         )
+        if repository not in self.canonical_fixture_repositories:
+            self.canonical_fixture_repositories.append(repository)
         head = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=repository,
@@ -988,6 +1018,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "visible_text_v3",
         )
         self.assertEqual(b"Visible dialog proof\nVisible details proof\n", open_dialog)
+        for select_markup in (
+            "<select><option>Canonical claim</option><option selected>Other</option></select>",
+            "<select><option>Canonical claim</option><option>Other</option></select>",
+            "<select multiple><option>Canonical claim</option><option selected>Other</option></select>",
+            "<select size='2'><option>Canonical claim</option><option>Other</option></select>",
+            "<select/>",
+        ):
+            with self.subTest(select_markup=select_markup):
+                with self.assertRaisesRegex(ValueError, "user-agent control"):
+                    MODULE._canonical_surface_extraction(select_markup.encode(), "visible_text_v3")
         closed_details = MODULE._canonical_surface_extraction(
             b"<details><summary>Visible summary proof</summary><p>Hidden body proof</p></details>",
             "visible_text_v3",
@@ -1298,6 +1338,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 check=True,
                 capture_output=True,
             ).stdout
+            canonical_objects: dict[tuple[str, str], tuple[bytes, str]] = {}
+            for path in MODULE.W07_REPLAY_PATHS:
+                content, blob = MODULE._read_git_object_bytes(repository, head, path)
+                assert content is not None and blob is not None
+                canonical_objects[(head, path)] = (content, blob)
             (repository / MODULE.W07_VALIDATOR_PATH).write_text(
                 "raise SystemExit('untrusted current validator')\n",
                 encoding="utf-8",
@@ -1315,7 +1360,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     "DYLD_INSERT_LIBRARIES": "/tmp/untrusted.dylib",
                 }
                 with mock.patch.dict(os.environ, injected, clear=False):
-                    completed, memo = MODULE._run_observed_w07_replay(repository, head, response_blob)
+                    completed, memo = MODULE._run_observed_w07_replay(head, response_blob, canonical_objects)
         self.assertEqual(0, completed.returncode, completed.stderr or completed.stdout)
         self.assertIn(b"# PSP-P03-W07 blinded-reader decision memo", memo)
 
@@ -2647,6 +2692,55 @@ class PositioningProofPreflightTest(unittest.TestCase):
         for object_read in run.call_args_list[7:]:
             self.assertIn("--git-dir", object_read.args[0])
 
+    def test_dependency_binding_snapshot_can_anchor_blobs_to_a_closure_descendant(self) -> None:
+        authoritative_head = MODULE._canonical_limen_remote_head()[1]
+        observed_head = "a" * 40
+        closure_head = "c" * 40
+        path = "docs/receipts/positioning/psp-p03-w07-reader-responses.json"
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        fetched = subprocess.CompletedProcess([], 0, authoritative_head + "\n", "")
+        listing = subprocess.CompletedProcess(
+            [],
+            0,
+            f"100644 blob {'b' * 40}\t{path}\0".encode(),
+            b"",
+        )
+        content = b'{"status":"complete"}\n'
+        batch = subprocess.CompletedProcess(
+            [],
+            0,
+            f"{'b' * 40} blob {len(content)}\n".encode() + content + b"\n",
+            b"",
+        )
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=(
+                completed,
+                completed,
+                completed,
+                completed,
+                completed,
+                fetched,
+                completed,
+                completed,
+                listing,
+                batch,
+            ),
+        ) as run:
+            observed = self.fetch_canonical_limen_bindings(
+                {(observed_head, path)},
+                descendant_head=closure_head,
+            )
+        self.assertEqual((content, "b" * 40), observed[(observed_head, path)])
+        descendant_check = run.call_args_list[6].args[0]
+        self.assertIn(f"{closure_head}^{{commit}}", descendant_check)
+        ancestry = run.call_args_list[7].args[0]
+        self.assertEqual(observed_head, ancestry[-2])
+        self.assertEqual(closure_head, ancestry[-1])
+        for object_read in run.call_args_list[6:]:
+            self.assertIn("--git-dir", object_read.args[0])
+
     def test_formalization_git_resolver_rejects_mutable_interpreter_siblings(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             mutable_git = Path(directory) / "git"
@@ -2934,6 +3028,50 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 closure_head=closure_head,
             )
             self.assertTrue(any("claimed C03 closure head" in error for error in errors))
+
+    def test_w07_evidence_uses_only_the_isolated_canonical_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as source_directory, tempfile.TemporaryDirectory() as caller_directory:
+            source_repository = Path(source_directory)
+            caller_repository = Path(caller_directory)
+            payload = self._passing_w07_payload()
+            head, response_path = self._w07_repository(source_repository, payload)
+            binding, live = self._valid_w07_binding(source_repository, head, response_path, payload)
+            receipt = binding["receipt"]
+            assert isinstance(receipt, dict)
+            evidence = receipt["reader_evidence"]
+            assert isinstance(evidence, dict)
+            memo_path = evidence["decision_memo_path"]
+            assert isinstance(memo_path, str)
+            self.fetch_canonical_limen_bindings_mock.reset_mock()
+            with (
+                mock.patch.object(
+                    MODULE,
+                    "_git_blob",
+                    side_effect=AssertionError("caller object store must not supply W07 evidence"),
+                ),
+                mock.patch.object(
+                    MODULE,
+                    "_sanitized_ancestry",
+                    side_effect=AssertionError("caller object store must not decide W07 ancestry"),
+                ),
+            ):
+                self.assertEqual(
+                    [],
+                    MODULE._validate_w07_receipt_binding(
+                        binding,
+                        caller_repository,
+                        live,
+                        closure_head=head,
+                    ),
+                )
+            self.fetch_canonical_limen_bindings_mock.assert_called_once_with(
+                {
+                    *((head, path) for path in MODULE.W07_REPLAY_PATHS),
+                    (head, response_path),
+                    (head, memo_path),
+                },
+                descendant_head=head,
+            )
 
     def test_w07_receipt_reexecutes_the_exact_head_validator(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
