@@ -52,7 +52,8 @@ def test_http_client_sends_stable_user_agent(monkeypatch):
 #   500 {"detail": "Exceeded allowed rows written in Durable Objects free tier."}
 # ``_register_relay_session`` is on EVERY relay write path, so this single wall blocked the
 # canonical-heal rung, dispatch receipts, and board publication at once. No retry helps: the
-# resolution is a spend decision, homed as lever L-CLOUDFLARE-DO-QUOTA.
+# resolution is NOT a spend decision: lever L-CLOUDFLARE-DO-QUOTA was retired 2026-08-10 once
+# recurrence proved the defect is Limen's own write amplification, homed as organvm/limen#2054.
 #
 # These pin BOTH directions, and the negative cases matter more than the positive one: the
 # detection reads keeper PROSE — a narrow, documented exemption from the estate's
