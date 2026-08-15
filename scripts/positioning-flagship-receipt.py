@@ -19,7 +19,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
-from urllib.parse import parse_qsl, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -297,22 +297,39 @@ def _normalized_public_key(value: str) -> str:
     return re.sub(r"[^a-z0-9]", "", value.casefold())
 
 
+def _public_url_contains_forbidden_material(value: str, *, depth: int = 0) -> bool:
+    candidates = [value]
+    decoded = value
+    for _attempt in range(3):
+        next_value = unquote(decoded)
+        if next_value == decoded:
+            break
+        candidates.append(next_value)
+        decoded = next_value
+    for candidate_text in candidates:
+        for match in re.finditer(r"https?://[^\s<>\"']+", candidate_text, re.IGNORECASE):
+            candidate = match.group(0).rstrip(".,);]")
+            try:
+                parsed = urlsplit(candidate)
+            except ValueError:
+                return True
+            if parsed.username is not None or parsed.password is not None:
+                return True
+            for encoded_parameters in (parsed.query, parsed.fragment):
+                for key, parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
+                    if _normalized_public_key(key) in FORBIDDEN_PUBLIC_URL_KEYS:
+                        return True
+                    if depth < 3 and _public_url_contains_forbidden_material(parameter_value, depth=depth + 1):
+                        return True
+    return False
+
+
 def _public_text_contains_forbidden_material(value: str) -> bool:
     if "\0" in value:
         return True
-    try:
-        parsed = urlsplit(value)
-    except ValueError:
-        return True
-    if parsed.scheme.casefold() in {"http", "https"}:
-        if parsed.username is not None or parsed.password is not None:
-            return True
-        for encoded_parameters in (parsed.query, parsed.fragment):
-            for key, _parameter_value in parse_qsl(encoded_parameters, keep_blank_values=True):
-                if _normalized_public_key(key) in FORBIDDEN_PUBLIC_URL_KEYS:
-                    return True
     return bool(
-        PUBLIC_EMAIL.search(value)
+        _public_url_contains_forbidden_material(value)
+        or PUBLIC_EMAIL.search(value)
         or PUBLIC_SECRET_VALUE.search(value)
         or PUBLIC_PRIVATE_IDENTIFIER_VALUE.search(value)
         or PUBLIC_CREDENTIAL_ASSIGNMENT.search(value)

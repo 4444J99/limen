@@ -1110,6 +1110,8 @@ class PositioningProofRunnerTest(unittest.TestCase):
             "The password is hunter2alpha.",
             "Private record customer-123 is excluded.",
             "https://example.com/proof?api%5Fkey=plainvalue",
+            "See https://example.com/proof?api%5Fkey=plainvalue for proof.",
+            "See https://example.com/proof?next=https%253A%252F%252Fexample.com%252F%253Faccess_token%253Dplainvalue.",
         )
         for limitation in unsafe_limitations:
             with self.subTest(limitation=limitation):

@@ -862,6 +862,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "visible_text_v3",
         )
         self.assertEqual(b"Visible dialog proof\nVisible details proof\n", open_dialog)
+        closed_details = MODULE._canonical_surface_extraction(
+            b"<details><summary>Visible summary proof</summary><p>Hidden body proof</p></details>",
+            "visible_text_v3",
+        )
+        self.assertIn(b"Visible summary proof", closed_details)
+        self.assertNotIn(b"Hidden body proof", closed_details)
         for malformed in (
             "<div style='display:block' style='display:none'>hidden</div>",
             "<div style='display/**/:none'>hidden</div>",

@@ -1688,8 +1688,21 @@ class _VisibleSurfaceParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self._hidden_stack: list[str] = []
+        self._element_stack: list[str] = []
+        self._closed_details: list[dict[str, int | bool | None]] = []
         self._visible_fragments: list[str] = []
         self._stylesheet_text_seen = False
+
+    def _closed_details_hide_current(self) -> bool:
+        for frame in self._closed_details:
+            summary_index = frame["summary_index"]
+            if (
+                not isinstance(summary_index, int)
+                or len(self._element_stack) <= summary_index
+                or self._element_stack[summary_index] != "summary"
+            ):
+                return True
+        return False
 
     @classmethod
     def _attributes_hide_element(cls, attrs: list[tuple[str, str | None]]) -> bool:
@@ -1724,14 +1737,32 @@ class _VisibleSurfaceParser(HTMLParser):
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
         attribute_names = {name.casefold() for name, _value in attrs}
+        if normalized == "summary":
+            for frame in reversed(self._closed_details):
+                if frame["details_index"] == len(self._element_stack) - 1 and not frame["summary_seen"]:
+                    frame["summary_seen"] = True
+                    frame["summary_index"] = len(self._element_stack)
+                    break
+        if normalized not in self._VOID_TAGS:
+            self._element_stack.append(normalized)
         user_agent_hidden = (
-            normalized in {"dialog", "details"} and "open" not in attribute_names
-        ) or "popover" in attribute_names
+            (normalized == "dialog" and "open" not in attribute_names)
+            or "popover" in attribute_names
+            or self._closed_details_hide_current()
+        )
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden or user_agent_hidden
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
         elif not hidden:
             self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
+        if normalized == "details" and "open" not in attribute_names:
+            self._closed_details.append(
+                {
+                    "details_index": len(self._element_stack) - 1,
+                    "summary_seen": False,
+                    "summary_index": None,
+                }
+            )
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
@@ -1754,15 +1785,26 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface response has malformed hidden HTML regions")
         else:
             self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
+        if normalized not in self._VOID_TAGS:
+            if not self._element_stack or self._element_stack[-1] != normalized:
+                if self._closed_details:
+                    raise ValueError("surface response has malformed closed-details HTML")
+            else:
+                closing_index = len(self._element_stack) - 1
+                self._element_stack.pop()
+                if normalized == "details" and self._closed_details:
+                    if self._closed_details[-1]["details_index"] != closing_index:
+                        raise ValueError("surface response has malformed closed-details HTML")
+                    self._closed_details.pop()
 
     def handle_data(self, data: str) -> None:
         if self._hidden_stack and self._hidden_stack[-1] == "style" and data.strip():
             self._stylesheet_text_seen = True
-        if not self._hidden_stack:
+        if not self._hidden_stack and not self._closed_details_hide_current():
             self._visible_fragments.append(data)
 
     def visible_text(self) -> str:
-        if self._hidden_stack:
+        if self._hidden_stack or self._closed_details:
             raise ValueError("surface response has unterminated hidden HTML regions")
         if self._stylesheet_text_seen:
             raise ValueError("surface visibility requires stylesheet evaluation")
