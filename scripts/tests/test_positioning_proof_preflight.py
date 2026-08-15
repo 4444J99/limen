@@ -36,6 +36,22 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         authority_patch.start()
         self.addCleanup(authority_patch.stop)
+        self.fetch_canonical_limen_objects = MODULE._fetch_canonical_limen_objects
+
+        def local_canonical_objects(
+            _default_branch: str,
+            default_head: str,
+            object_paths: set[str],
+        ) -> dict[str, tuple[bytes | None, str | None]]:
+            return {path: MODULE._read_git_object_bytes(ROOT, default_head, path) for path in object_paths}
+
+        object_patch = mock.patch.object(
+            MODULE,
+            "_fetch_canonical_limen_objects",
+            side_effect=local_canonical_objects,
+        )
+        object_patch.start()
+        self.addCleanup(object_patch.stop)
         paths = (
             ".gitignore",
             ".ruff.toml",
@@ -94,7 +110,6 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "exact_head": head,
                 "blob_sha1": blob,
-                "raw_response_sha256": None,
                 "extracted_text_sha256": hashlib.sha256(extracted).hexdigest(),
                 "scanner": MODULE.SURFACE_SCANNER,
                 "scanner_version": MODULE.SURFACE_SCANNER_VERSION,
@@ -636,6 +651,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(any("authoritative remote default head" in error for error in result["errors"]))
         self.assertTrue(any("freshness budget" in error for error in result["errors"]))
 
+    def test_surface_audit_fails_closed_when_isolated_authority_fetch_times_out(self) -> None:
+        rows = MODULE.build_surface_audit_skeleton(self.contract)
+        manifest = self._empty_surface_manifest(rows)
+        timeout = subprocess.TimeoutExpired(["git", "fetch"], 120)
+        with mock.patch.object(MODULE, "_fetch_canonical_limen_objects", side_effect=timeout):
+            result = MODULE.audit_surface_manifest(self.contract, manifest)
+        self.assertEqual("fail", result["status"])
+        self.assertTrue(
+            any("canonical surface inspection objects are unavailable" in error for error in result["errors"])
+        )
+
     def test_surface_scanner_rejects_shortened_inflated_and_contradictory_variants(self) -> None:
         surface = "portfolio_front_door"
         claim_id = "SYNTHETIC-CLAIM"
@@ -708,6 +734,22 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(["LONG-CLAIM"], drifted)
 
         matched, drifted = MODULE._surface_claim_scan(
+            "Limen demonstrates governed; multi-agent delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
+        block_split = MODULE._canonical_surface_extraction(
+            b"<p>Limen demonstrates governed</p><p>multi-agent delivery with durable exact-head receipts</p>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        matched, drifted = MODULE._surface_claim_scan(block_split, long_expected, surface)
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
+        matched, drifted = MODULE._surface_claim_scan(
             "Limen fabricates governed distributed agent delivery using durable exact commit receipts",
             long_expected,
             surface,
@@ -744,13 +786,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(["LONG-CLAIM"], matched)
         self.assertEqual([], drifted)
 
+        matched, drifted = MODULE._surface_claim_scan(
+            "Limen demonstrates governed. Multi-agent delivery with durable exact-head receipts.",
+            long_expected,
+            surface,
+        )
+        self.assertEqual([], matched)
+        self.assertEqual(["LONG-CLAIM"], drifted)
+
     def test_visible_surface_extraction_ignores_dynamic_markup_but_not_claim_changes(self) -> None:
         first = b"<html><body><h1>Bounded proof claim</h1><script>nonce='one'</script></body></html>"
         second = b"<html data-nonce='two'><body><h1>Bounded proof claim</h1><script>nonce='two'</script></body></html>"
         changed = b"<html><body><h1>Inflated proof claim</h1><script>nonce='three'</script></body></html>"
-        first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v2")
-        second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v2")
-        changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v2")
+        first_extraction = MODULE._canonical_surface_extraction(first, "visible_text_v3")
+        second_extraction = MODULE._canonical_surface_extraction(second, "visible_text_v3")
+        changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v3")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
         for hidden_tag in ("script", "style", "template", "noscript", "svg"):
@@ -758,11 +808,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unterminated hidden"):
                     MODULE._canonical_surface_extraction(
                         f"<html><body>Bounded proof claim<{hidden_tag}>hidden inflated proof claim".encode(),
-                        "visible_text_v2",
+                        "visible_text_v3",
                     )
         malformed_closing = MODULE._canonical_surface_extraction(
             b"<html><body>Bounded proof claim<script>hidden inflated claim</script attr></body></html>",
-            "visible_text_v2",
+            "visible_text_v3",
         )
         self.assertNotIn(b"hidden", malformed_closing)
         for hidden_markup in (
@@ -774,7 +824,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with self.subTest(hidden_markup=hidden_markup):
                 extraction = MODULE._canonical_surface_extraction(
                     f"<html><body>{hidden_markup}<p>Visible proof</p></body></html>".encode(),
-                    "visible_text_v2",
+                    "visible_text_v3",
                 )
                 self.assertEqual(b"Visible proof\n", extraction)
         for malformed in (
@@ -786,9 +836,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ):
             with self.subTest(malformed=malformed):
                 with self.assertRaisesRegex(ValueError, "visibility"):
-                    MODULE._canonical_surface_extraction(malformed.encode(), "visible_text_v2")
+                    MODULE._canonical_surface_extraction(malformed.encode(), "visible_text_v3")
         with self.assertRaisesRegex(ValueError, "self-closes a non-void"):
-            MODULE._canonical_surface_extraction(b"<div hidden/>", "visible_text_v2")
+            MODULE._canonical_surface_extraction(b"<div hidden/>", "visible_text_v3")
         for stylesheet_markup in (
             "<style>.proof{display:none}</style><div class='proof'>Hidden proof claim</div>",
             "<link rel='stylesheet' href='/dynamic.css'><div>Unverified proof claim</div>",
@@ -796,7 +846,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         ):
             with self.subTest(stylesheet_markup=stylesheet_markup):
                 with self.assertRaisesRegex(ValueError, "stylesheet evaluation"):
-                    MODULE._canonical_surface_extraction(stylesheet_markup.encode(), "visible_text_v2")
+                    MODULE._canonical_surface_extraction(stylesheet_markup.encode(), "visible_text_v3")
         with self.assertRaisesRegex(ValueError, "unsupported canonical extractor"):
             MODULE._canonical_surface_extraction(first, "visible_text_v1")
 
@@ -835,7 +885,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 "source_kind": "live_receipt",
                 "source_locator": "https://example.com/public-proof",
                 "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
-                "extractor": "visible_text_v2",
+                "extractor": "visible_text_v3",
             }
         }
         inspection = {
@@ -845,11 +895,10 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "source_kind": "live_receipt",
             "source_locator": "https://example.com/public-proof",
             "receipt_path": "docs/receipts/positioning/surface-inspections/public-proof.txt",
-            "extractor": "visible_text_v2",
+            "extractor": "visible_text_v3",
             "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "exact_head": head,
             "blob_sha1": "a" * 40,
-            "raw_response_sha256": "0" * 64,
             "extracted_text_sha256": hashlib.sha256(receipt_content).hexdigest(),
             "scanner": MODULE.SURFACE_SCANNER,
             "scanner_version": MODULE.SURFACE_SCANNER_VERSION,
@@ -914,6 +963,15 @@ class PositioningProofPreflightTest(unittest.TestCase):
             any("raw response contains private material" in error for error in private_raw_errors),
             private_raw_errors,
         )
+        legacy_inspection = copy.deepcopy(inspection)
+        legacy_inspection["raw_response_sha256"] = "0" * 64
+        legacy_errors, _resolved = MODULE._surface_inspection_errors(
+            self.contract,
+            {surface: legacy_inspection},
+            {},
+            ROOT,
+        )
+        self.assertTrue(any("invalid exact schema" in error for error in legacy_errors), legacy_errors)
 
     def test_phase_receipt_comments_require_an_authorized_repository_actor(self) -> None:
         self.assertTrue(
@@ -1248,9 +1306,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         self.assertEqual(
             set(),
-            MODULE._find_forbidden_demo_material(
-                {"limitations": ["API_" + "KEY" + "=\n# intentionally blank"]}
-            ),
+            MODULE._find_forbidden_demo_material({"limitations": ["API_" + "KEY" + "=\n# intentionally blank"]}),
         )
 
     def test_surface_audit_rejects_unhashable_inspection_claim_ids_without_crashing(self) -> None:
@@ -2065,6 +2121,44 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertIn("--git-dir", ancestry.args[0])
         self.assertEqual("1", ancestry.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"])
         self.assertEqual(MODULE.os.devnull, ancestry.kwargs["env"]["GIT_GRAFT_FILE"])
+
+    def test_surface_authority_fetches_exact_main_before_reading_receipt_blobs(self) -> None:
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        fetched = subprocess.CompletedProcess([], 0, MODULE.C03_MERGE_COMMIT + "\n", "")
+        content = subprocess.CompletedProcess([], 0, b"bounded receipt\n", b"")
+        blob = subprocess.CompletedProcess([], 0, "b" * 40 + "\n", "")
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=(
+                completed,
+                completed,
+                completed,
+                completed,
+                completed,
+                fetched,
+                content,
+                blob,
+            ),
+        ) as run:
+            objects = self.fetch_canonical_limen_objects(
+                "main",
+                MODULE.C03_MERGE_COMMIT,
+                {"docs/receipts/positioning/surface-inspections/public-proof.txt"},
+            )
+        self.assertEqual(
+            (b"bounded receipt\n", "b" * 40),
+            objects["docs/receipts/positioning/surface-inspections/public-proof.txt"],
+        )
+        fetch = run.call_args_list[4]
+        self.assertIn("--depth=1", fetch.args[0])
+        self.assertIn("--filter=blob:none", fetch.args[0])
+        self.assertIn("canonical", fetch.args[0])
+        self.assertIn(f"{MODULE.C03_MERGE_COMMIT}:refs/canonical/main", fetch.args[0])
+        for object_read in run.call_args_list[6:]:
+            self.assertIn("--git-dir", object_read.args[0])
+            self.assertEqual("1", object_read.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"])
+            self.assertEqual(MODULE.os.devnull, object_read.kwargs["env"]["GIT_GRAFT_FILE"])
 
     def test_evidence_git_object_reads_use_the_sanitized_bounded_environment(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

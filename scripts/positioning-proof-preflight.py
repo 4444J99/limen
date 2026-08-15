@@ -135,9 +135,9 @@ W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-r
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
-SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v1"
+SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v2"
 SURFACE_SCANNER = "canonical_claim_drift"
-SURFACE_SCANNER_VERSION = "3"
+SURFACE_SCANNER_VERSION = "4"
 TRUSTED_PYYAML_DEPENDENCY = {
     "distribution": "PyYAML",
     "version": "6.0.3",
@@ -832,7 +832,7 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 if (
                     not _credential_free_https_url(binding.get("source_locator"))
                     or not _safe_relative_path(binding.get("receipt_path"))
-                    or binding.get("extractor") != "visible_text_v2"
+                    or binding.get("extractor") != "visible_text_v3"
                 ):
                     errors.append(f"live surface source binding is invalid: {surface}")
             else:
@@ -1359,6 +1359,37 @@ class _VisibleSurfaceParser(HTMLParser):
         "track",
         "wbr",
     }
+    _CLAUSE_BOUNDARY_TAGS = {
+        "article",
+        "aside",
+        "blockquote",
+        "br",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "footer",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hr",
+        "li",
+        "main",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "section",
+        "table",
+        "td",
+        "th",
+        "tr",
+        "ul",
+    }
     _HIDDEN_STYLE = re.compile(
         r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse))"
         r"(?:\s*!important)?\s*(?:;|$)",
@@ -1407,7 +1438,7 @@ class _VisibleSurfaceParser(HTMLParser):
         if hidden and normalized not in self._VOID_TAGS:
             self._hidden_stack.append(normalized)
         elif not hidden:
-            self._visible_fragments.append(" ")
+            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
@@ -1418,7 +1449,7 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires external stylesheet evaluation")
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
         if not hidden:
-            self._visible_fragments.append(" ")
+            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
 
     def handle_endtag(self, tag: str) -> None:
         normalized = tag.casefold()
@@ -1429,7 +1460,7 @@ class _VisibleSurfaceParser(HTMLParser):
         elif normalized in self._HIDDEN_TAGS:
             raise ValueError("surface response has malformed hidden HTML regions")
         else:
-            self._visible_fragments.append(" ")
+            self._visible_fragments.append("\n" if normalized in self._CLAUSE_BOUNDARY_TAGS else " ")
 
     def handle_data(self, data: str) -> None:
         if self._hidden_stack and self._hidden_stack[-1] == "style" and data.strip():
@@ -1450,7 +1481,7 @@ def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
         text = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("surface response is not UTF-8 text") from exc
-    if extractor == "visible_text_v2":
+    if extractor in {"visible_text_v2", "visible_text_v3"}:
         parser = _VisibleSurfaceParser()
         parser.feed(text)
         parser.close()
@@ -1459,7 +1490,12 @@ def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
         text = html.unescape(text)
     else:
         raise ValueError("surface source uses an unsupported canonical extractor")
-    normalized = " ".join(text.split())
+    if extractor == "visible_text_v3":
+        normalized = "\n".join(
+            normalized_line for line in text.splitlines() if (normalized_line := " ".join(line.split()))
+        )
+    else:
+        normalized = " ".join(text.split())
     return (normalized + "\n").encode("utf-8")
 
 
@@ -1468,10 +1504,9 @@ def _surface_claim_scan(
     expected_rows: dict[tuple[str, str], dict[str, Any]],
     surface: str,
 ) -> tuple[list[str], list[str]]:
-    normalized_full = _normalized_surface_text(inspected_text)
     segments = [
         normalized
-        for raw in re.split(r"[\n\r.!?]+", html.unescape(inspected_text))
+        for raw in re.split(r"[\n\r.!?;]+", html.unescape(inspected_text))
         if (normalized := _normalized_surface_text(raw))
     ]
     matched: list[str] = []
@@ -1482,7 +1517,7 @@ def _surface_claim_scan(
         canonical = _normalized_surface_text(row["claim_text"])
         if not canonical:
             continue
-        if f" {canonical} " in f" {normalized_full} ":
+        if any(f" {canonical} " in f" {segment} " for segment in segments):
             if _canonical_claim_is_negated(inspected_text, canonical):
                 drifted.append(claim_id)
             else:
@@ -1589,9 +1624,10 @@ def _surface_inspection_errors(
         errors.append("surface inspection freshness budget must be a bounded integer hour count")
         max_age_hours = 0
     try:
-        _default_branch, authoritative_head = _canonical_limen_remote_head()
+        default_branch, authoritative_head = _canonical_limen_remote_head()
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
         errors.append(f"canonical surface inspection authority is unavailable: {exc}")
+        default_branch = None
         authoritative_head = None
     binding_fields = {"source_kind", "source_locator", "receipt_path", "extractor"}
     binding_identities: set[str] = set()
@@ -1619,11 +1655,32 @@ def _surface_inspection_errors(
             if (
                 not _credential_free_https_url(binding.get("source_locator"))
                 or not _safe_relative_path(binding.get("receipt_path"))
-                or binding.get("extractor") != "visible_text_v2"
+                or binding.get("extractor") != "visible_text_v3"
             ):
                 errors.append(f"live surface source binding is invalid: {surface}")
         else:
             errors.append(f"surface source binding kind is unsupported: {surface}")
+    canonical_objects: dict[str, tuple[bytes | None, str | None]] = {}
+    if default_branch is not None and authoritative_head is not None:
+        authority_paths = {
+            str(binding.get("source_locator"))
+            if binding.get("source_kind") == "tracked_blob"
+            else str(binding.get("receipt_path"))
+            for binding in source_bindings.values()
+            if isinstance(binding, dict)
+            and (
+                (binding.get("source_kind") == "tracked_blob" and _safe_relative_path(binding.get("source_locator")))
+                or (binding.get("source_kind") == "live_receipt" and _safe_relative_path(binding.get("receipt_path")))
+            )
+        }
+        try:
+            canonical_objects = _fetch_canonical_limen_objects(
+                default_branch,
+                authoritative_head,
+                authority_paths,
+            )
+        except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+            errors.append(f"canonical surface inspection objects are unavailable: {exc}")
     exact_fields = {
         "schema_version",
         "inspection_id",
@@ -1635,7 +1692,6 @@ def _surface_inspection_errors(
         "observed_at",
         "exact_head",
         "blob_sha1",
-        "raw_response_sha256",
         "extracted_text_sha256",
         "scanner",
         "scanner_version",
@@ -1687,7 +1743,6 @@ def _surface_inspection_errors(
         source_locator = inspection.get("source_locator")
         receipt_path = inspection.get("receipt_path")
         extractor = inspection.get("extractor")
-        raw_response_sha256 = inspection.get("raw_response_sha256")
         extracted_text_sha256 = inspection.get("extracted_text_sha256")
         binding = source_bindings.get(surface)
         if isinstance(binding, dict) and any(
@@ -1699,7 +1754,7 @@ def _surface_inspection_errors(
         if source_kind == "tracked_blob":
             if not _safe_relative_path(source_locator):
                 errors.append(f"tracked surface inspection requires a safe repository path: {surface}")
-            if receipt_path is not None or raw_response_sha256 is not None or extractor != "raw_text_v1":
+            if receipt_path is not None or extractor != "raw_text_v1":
                 errors.append(f"tracked surface inspection must not declare live-receipt fields: {surface}")
             if not isinstance(extracted_text_sha256, str) or not SHA256.fullmatch(extracted_text_sha256):
                 errors.append(f"tracked surface inspection requires a canonical extraction SHA-256: {surface}")
@@ -1709,10 +1764,8 @@ def _surface_inspection_errors(
                 errors.append(f"live surface inspection requires a credential-free HTTPS URL: {surface}")
             if not _safe_relative_path(receipt_path):
                 errors.append(f"live surface inspection requires an immutable tracked receipt path: {surface}")
-            if extractor != "visible_text_v2":
+            if extractor != "visible_text_v3":
                 errors.append(f"live surface inspection requires the contract-owned visible-text extractor: {surface}")
-            if not isinstance(raw_response_sha256, str) or not SHA256.fullmatch(raw_response_sha256):
-                errors.append(f"live surface inspection requires a bounded raw-response SHA-256: {surface}")
             if not isinstance(extracted_text_sha256, str) or not SHA256.fullmatch(extracted_text_sha256):
                 errors.append(f"live surface inspection requires a canonical extraction SHA-256: {surface}")
             object_path = receipt_path
@@ -1727,7 +1780,7 @@ def _surface_inspection_errors(
             and isinstance(object_path, str)
             and _safe_relative_path(object_path)
         ):
-            content, actual_blob = _read_git_object_bytes(repository, exact_head, object_path)
+            content, actual_blob = canonical_objects.get(object_path, (None, None))
         if content is None or actual_blob != blob_sha1:
             errors.append(f"surface inspection source blob is unavailable or drifted: {surface}")
             content = b""
@@ -1745,7 +1798,7 @@ def _surface_inspection_errors(
                 and hashlib.sha256(inspected_content).hexdigest() != extracted_text_sha256
             ):
                 errors.append(f"tracked surface canonical extraction digest differs from the bound source: {surface}")
-        if source_kind == "live_receipt" and extractor == "visible_text_v2":
+        if source_kind == "live_receipt" and extractor == "visible_text_v3":
             inspected_content = content
             if (
                 isinstance(extracted_text_sha256, str)
@@ -2715,6 +2768,116 @@ def _canonical_limen_remote_head() -> tuple[str, str]:
     if not isinstance(default_branch, str) or not default_branch.strip() or default_head is None:
         raise ValueError("canonical organvm/limen remote returned no exact default-branch head")
     return default_branch, default_head
+
+
+def _fetch_canonical_limen_objects(
+    default_branch: str,
+    default_head: str,
+    object_paths: set[str],
+) -> dict[str, tuple[bytes | None, str | None]]:
+    """Fetch canonical main into an isolated store before resolving surface evidence blobs."""
+    if (
+        not isinstance(default_branch, str)
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", default_branch)
+        or any(token in default_branch for token in ("..", "//", "@{", "\\"))
+        or not FULL_HEAD.fullmatch(default_head)
+        or not isinstance(object_paths, set)
+        or any(not _safe_relative_path(path) for path in object_paths)
+    ):
+        raise ValueError("canonical organvm/limen object request is invalid")
+    trusted_git = str(_trusted_named_executable("git"))
+    environment = _sanitized_git_environment()
+    anchor = Path(Path.cwd().anchor or os.sep)
+    with tempfile.TemporaryDirectory(prefix="limen-c04-surface-authority-") as temporary:
+        object_store = Path(temporary) / "canonical.git"
+        commands = (
+            [trusted_git, "init", "--bare", "--quiet", str(object_store)],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "remote",
+                "add",
+                "canonical",
+                "https://github.com/organvm/limen.git",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.promisor",
+                "true",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.partialclonefilter",
+                "blob:none",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "fetch",
+                "--no-tags",
+                "--depth=1",
+                "--filter=blob:none",
+                "--force",
+                "canonical",
+                f"{default_head}:refs/canonical/{default_branch}",
+            ],
+        )
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=120,
+            )
+            if completed.returncode != 0:
+                raise ValueError("canonical organvm/limen surface head could not be fetched into the isolated store")
+        canonical_ref = f"refs/canonical/{default_branch}"
+        fetched = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "rev-parse", "--verify", canonical_ref],
+            cwd=anchor,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
+            raise ValueError("fetched canonical organvm/limen surface head differs from the advertised head")
+        objects: dict[str, tuple[bytes | None, str | None]] = {}
+        for path in sorted(object_paths):
+            source_spec = f"{canonical_ref}:{path}"
+            content = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "show", source_spec],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            blob = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "rev-parse", source_spec],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if content.returncode != 0 or blob.returncode != 0 or not FULL_HEAD.fullmatch(blob.stdout.strip()):
+                objects[path] = (None, None)
+            else:
+                objects[path] = (content.stdout, blob.stdout.strip())
+        return objects
 
 
 def _canonical_limen_contains_head(default_branch: str, default_head: str, candidate_head: str) -> bool:
