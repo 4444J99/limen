@@ -75,9 +75,13 @@ LOG = ROOT / "logs" / "self-heal.log"
 LIVENESS_LOG = ROOT / "logs" / "self-heal-liveness.jsonl"
 HEAL_CONVERGENCE = ROOT / "logs" / "heal-convergence.json"
 CHRONIC_MAX_AGE_SECONDS = 2 * 60 * 60
-# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable home
-# instead of reciting the atom at the operator. Matches scripts/heal-board.py.
-QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
 # sysexits(3): the request is valid, the service is temporarily unable to honour it.
 EX_TEMPFAIL = 75
 
@@ -703,10 +707,7 @@ def main():
                     f"self-heal: BLOCKED — keeper storage quota exhausted, heal emission deferred "
                     f"({len(emitted)} emitted, {len(retired)} retired)"
                 )
-                print(
-                    "self-heal: the write path is spent, not broken — "
-                    f"owner: lever {QUOTA_LEVER} in his-hand-levers.json"
-                )
+                print(f"self-heal: the write path is spent, not broken — owner: {QUOTA_OWNER}")
                 print(f"self-heal: keeper said: {exc}"[:400])
                 write_liveness("error", "keeper storage quota exhausted")
                 return EX_TEMPFAIL

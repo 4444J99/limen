@@ -9,7 +9,7 @@ from pathlib import Path
 import click
 import yaml
 
-from limen.conduct.client import client_from_env
+from limen.conduct.client import BrokerQuotaExhausted, client_from_env
 from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
@@ -34,6 +34,15 @@ from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
+
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
+EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 
 
 def resolve_root() -> Path:
@@ -341,7 +350,21 @@ def release_stale(hours, agent, dry_run, json_output, report_file):
     root = resolve_root()
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)
-    report = release_stale_tasks(limen, tasks_path, hours=hours, dry_run=dry_run, agent=agent)
+    try:
+        report = release_stale_tasks(limen, tasks_path, hours=hours, dry_run=dry_run, agent=agent)
+    except BrokerQuotaExhausted as exc:
+        # A spent keeper storage plan is not a release-stale defect and not a bug — it is an
+        # owner decision this rung cannot make. Report one legible line naming its registry
+        # owner and exit EX_TEMPFAIL, the idiom heal-board.py and self-heal.py already use:
+        # non-zero, so the beat ledger still records a real outcome, but distinguishable from
+        # the exit 1 that means "this rung is broken". Before this, a quota wall read as a
+        # release-stale failure and sent readers hunting a defect that did not exist.
+        click.echo(f"release-stale: BLOCKED — keeper storage quota exhausted, release deferred ({exc})"[:400], err=True)
+        click.echo(
+            f"release-stale: the write path is spent, not broken — owner: {QUOTA_OWNER}",
+            err=True,
+        )
+        raise SystemExit(EX_TEMPFAIL) from exc
     if report_file:
         report_path = Path(report_file).expanduser()
         report_path.parent.mkdir(parents=True, exist_ok=True)
