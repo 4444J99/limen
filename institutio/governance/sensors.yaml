@@ -1068,6 +1068,17 @@ sensors:
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
         escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
+      # The attribution ratchet. Both local cures for the rotating per-version TCC identity
+      # (#1703) were measured on 2026-08-15: ENCLOSURE is refuted, SYMLINK is UNRESOLVED with
+      # code identity resolving the target. The probe's own rationale is that an unrun result
+      # decays into folklore and gets re-derived at full cost — which is exactly what happens
+      # if it is never wired to a cadence, so it rides the same hygiene beat as the estate it
+      # describes. Exit 1 means macOS behavior CHANGED and the receipt is now wrong in one
+      # direction or the other; advisory because a changed verdict is a re-measure prompt, not
+      # a broken host. Receipts: docs/receipts/tcc-track-c-1703/README.md.
+      - command: "python3 scripts/tcc-identity-attribution-probe.py"
+        severity: advisory
+        escalation: "macOS changed how it attributes exec identity — the #1703 cure verdicts (enclosure REFUTED / symlink UNRESOLVED) no longer hold. Re-measure and amend docs/receipts/tcc-track-c-1703/README.md before anyone re-proposes or re-buries a local cure"
     omega_eligible:
       - label: "dialogs silenced (agent-curable)"
         rung_id: sensor.dialogs.agent-curable

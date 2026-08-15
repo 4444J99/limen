@@ -160,7 +160,9 @@ returning a `comm` and an `lsof` entry instead of `<defunct>`, which is possible
 constraint was satisfied through the link.
 
 **Status of cure B: not refuted — unresolved, with the evidence leaning viable.** Two things
-are still required before anything ships, and neither is done:
+are still required before anything ships, and neither is done. **Owner: organvm/limen#2465** —
+this paragraph is a description, not a home, and the work is not tracked by its being written
+here:
 
 1. **The end-to-end test.** Every measurement so far is a proxy. The decisive experiment is
    to trigger a TCC-protected access from a symlinked binary and read the resulting `client`
@@ -169,12 +171,21 @@ are still required before anything ships, and neither is done:
 2. **An effector on a cadence.** The vendor re-materializes the version store on start, so a
    hand-laid symlink is overwritten. A one-time `ln -s` cures nothing.
 
-**Consequence for the ratchet.** `tcc-identity-attribution-probe.py` computes cure B's
-verdict as `recorded == str(link)` against `p_comm`. That comparison will hold forever
-regardless of what the code-identity layer does, so the ratchet cannot detect the change it
-exists to watch for — it certifies a negative that was never measured on the deciding layer.
-The probe's cure-B arm should either measure code identity or be marked unresolved; its
-cure-A arm is sound and worth keeping exactly as it is.
+**Consequence for the ratchet — found, then fixed.** As first written,
+`tcc-identity-attribution-probe.py` computed cure B's verdict as `recorded == str(link)`
+against `p_comm`. That comparison holds regardless of what the code-identity layer does, so
+the ratchet could never have detected the change it existed to watch for: it would have read
+OK forever in either world. The cure-A arm was sound and is kept exactly as it was; the
+cure-B arm now measures the code-identity discriminator and reports
+`code_identity_resolves_target` (JSON schema bumped to **v2** — `recorded_executable_path`
+became `accounting_string_p_comm`, so no reader mistakes an accounting string for an
+identity). Exit 1 now means macOS genuinely changed.
+
+**And the ratchet is wired to a cadence.** A predicate nothing runs decays exactly like the
+prose it replaced — which is this probe's own stated rationale, so leaving it unscheduled
+would have reproduced the defect it was written to prevent. It rides the hygiene beat as a
+step of sensor **`0g8b`** (`institutio/governance/sensors.yaml`), advisory severity: a changed
+verdict is a re-measure prompt, not a broken host.
 
 **Registry correction.** Lineage prose (and the agent memory `tcc-prompts-upstream-blocked`)
 cited `scripts/heal-claude-versions-enclosure.sh`, a `sensors.yaml` class-5 sensor, and a
