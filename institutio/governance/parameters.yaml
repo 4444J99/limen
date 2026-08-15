@@ -2446,11 +2446,17 @@ parameters:
     owner: heal
     note: "Toggle for the self-heal PR-repair factory (scripts/self-heal.py) wired into the HEAL beat. 1=on. Classifies the fleet's refused PRs and emits bounded HEAL-cifix/HEAL-rebase tasks so the router+dispatcher fix them and merge-drain lands them — merge-drain is the bouncer, this is the factory. Self-acquires the queue-lock (skips cleanly when the daemon holds it), already-queued-deduped, fail-open. 0=off."
   LIMEN_SELF_HEAL_TIMEOUT:
-    default: 150                # seconds: cap the network-touching classify+emit run inside the beat
+    default: 300                # seconds: cap the network-touching classify+emit run inside the beat
     env: LIMEN_SELF_HEAL_TIMEOUT
     self_update: none
     owner: heal
-    note: "Hard timeout (s) for the self-heal factory inside the HEAL beat so a slow gh enumeration never wedges the heartbeat."
+    note: "Hard timeout (s) for the self-heal factory inside the HEAL beat so a slow gh enumeration never wedges the heartbeat. Raised 150->300 on 2026-08-15: the full-fleet search enumeration alone can take ~2 min at the estate's current open-PR count (see LIMEN_PR_SCAN_TIMEOUT), and the old cap left no room for the classify window."
+  LIMEN_PR_SCAN_TIMEOUT:
+    default: 120                # seconds: gh timeout for the ONE full-fleet `gh search prs` enumeration call
+    env: LIMEN_PR_SCAN_TIMEOUT
+    self_update: none
+    owner: heal
+    note: "Per-call gh timeout for the shared open-PR enumeration (scripts/_pr_scan.py callers: self-heal.py, merge-drain.py). The search pages ~10 requests near GitHub's 1000-result ceiling and outgrew the organs' generic 60s gh timeout (self-heal-scan failed 37 consecutive beats to 2026-08-15). A timeout now surfaces as a loud failed enumeration, never a traceback."
   LIMEN_SELF_HEAL_SCAN:
     default: 30                 # rotating window: PRs classified per beat (self-heal.py --scan)
     env: LIMEN_SELF_HEAL_SCAN
