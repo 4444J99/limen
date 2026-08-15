@@ -979,6 +979,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "visible_text_v3",
         )
         self.assertEqual(b"Visible proof\n", metadata_only)
+        for malformed_head in (
+            "<html><head><div>Browser-visible proof claim</div></head></html>",
+            "<html><head>Browser-visible proof claim</head></html>",
+        ):
+            with self.subTest(malformed_head=malformed_head):
+                with self.assertRaisesRegex(ValueError, "head-closing rules"):
+                    MODULE._canonical_surface_extraction(malformed_head.encode(), "visible_text_v3")
         for executable_markup in (
             "<script>document.body.hidden=true</script><p>Claim</p>",
             "<script src='/visibility.js'></script><p>Claim</p>",
@@ -999,7 +1006,6 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     MODULE._canonical_surface_extraction(svg_markup.encode(), "visible_text_v3")
         for hidden_markup in (
             "<div hidden>hidden@example.invalid</div>",
-            "<section aria-hidden='true'>hidden@example.invalid</section>",
             "<aside style='display: none !important'>hidden@example.invalid</aside>",
             "<p style='visibility:hidden'>hidden@example.invalid</p>",
             "<dialog>hidden@example.invalid</dialog>",
@@ -1013,12 +1019,17 @@ class PositioningProofPreflightTest(unittest.TestCase):
                     "visible_text_v3",
                 )
                 self.assertEqual(b"Visible proof\n", extraction)
+        aria_visible = MODULE._canonical_surface_extraction(
+            b"<section aria-hidden='true'>Sighted-user proof claim</section><p>Visible proof</p>",
+            "visible_text_v3",
+        )
+        self.assertIn(b"Sighted-user proof claim", aria_visible)
         open_dialog = MODULE._canonical_surface_extraction(
             b"<dialog open='false'>Visible dialog proof</dialog><details open>Visible details proof</details>",
             "visible_text_v3",
         )
         self.assertEqual(b"Visible dialog proof\nVisible details proof\n", open_dialog)
-        for select_markup in (
+        for control_markup in (
             "<select><option>Canonical claim</option><option selected>Other</option></select>",
             "<select><option>Canonical claim</option><option>Other</option></select>",
             "<select multiple><option>Canonical claim</option><option selected>Other</option></select>",
@@ -1027,10 +1038,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<canvas>Canonical claim</canvas>",
             "<CANVAS>Canonical claim</CANVAS>",
             "<canvas/>",
+            "<audio>Canonical claim</audio>",
+            "<video>Canonical claim</video>",
+            "<meter value='1'>Canonical claim</meter>",
+            "<progress value='1'>Canonical claim</progress>",
+            "<input value='Canonical claim'>",
+            "<input type='button' value='Canonical claim'>",
+            "<input placeholder='Canonical claim'>",
         ):
-            with self.subTest(select_markup=select_markup):
+            with self.subTest(control_markup=control_markup):
                 with self.assertRaisesRegex(ValueError, "user-agent control"):
-                    MODULE._canonical_surface_extraction(select_markup.encode(), "visible_text_v3")
+                    MODULE._canonical_surface_extraction(control_markup.encode(), "visible_text_v3")
+        for refresh_markup in (
+            "<meta http-equiv='refresh' content='0;url=/other'><p>Canonical claim</p>",
+            "<meta HTTP-EQUIV=' Refresh ' content='0;url=/other'/><p>Canonical claim</p>",
+        ):
+            with self.subTest(refresh_markup=refresh_markup):
+                with self.assertRaisesRegex(ValueError, "client-side redirect"):
+                    MODULE._canonical_surface_extraction(refresh_markup.encode(), "visible_text_v3")
+        encoded_once = MODULE._canonical_surface_extraction(
+            b"<p>&amp;#76;imen demonstrates governed multi-agent delivery</p>",
+            "visible_text_v3",
+        ).decode("utf-8")
+        matched, _drifted = MODULE._surface_claim_scan(
+            encoded_once,
+            {
+                ("portfolio_front_door", "CLAIM-ENTITY"): {
+                    "claim_text": "Limen demonstrates governed multi-agent delivery"
+                }
+            },
+            "portfolio_front_door",
+        )
+        self.assertEqual([], matched)
         closed_details = MODULE._canonical_surface_extraction(
             b"<details><summary>Visible summary proof</summary><p>Hidden body proof</p></details>",
             "visible_text_v3",
@@ -1077,6 +1116,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response = mock.MagicMock()
         response.geturl.return_value = source_url
         response.read.return_value = b"bounded public proof"
+        response.headers.get_content_type.return_value = "text/html"
         response.__enter__.return_value = response
         with mock.patch.dict(
             os.environ,
@@ -1089,6 +1129,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
         request = opener.call_args.args[0]
         self.assertEqual(source_url, request.full_url)
         self.assertEqual(30, opener.call_args.kwargs["timeout"])
+
+        response.headers.get_content_type.return_value = "text/plain"
+        with mock.patch.object(MODULE, "_contract_https_open", return_value=response):
+            with self.assertRaisesRegex(ValueError, "not HTML"):
+                MODULE._fetch_bounded_public_surface(source_url)
 
     def test_live_surface_inspection_reproduces_canonical_text_not_volatile_raw_html(self) -> None:
         surface = "portfolio_front_door"

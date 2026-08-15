@@ -1676,14 +1676,23 @@ _CLAIM_STOPWORDS = {
 
 
 def _normalized_surface_text(value: str) -> str:
-    without_markup = re.sub(r"<[^>]+>", " ", html.unescape(value))
+    without_markup = re.sub(r"<[^>]+>", " ", value)
     return " ".join(re.findall(r"[a-z0-9]+", without_markup.lower()))
 
 
 class _VisibleSurfaceParser(HTMLParser):
     _HIDDEN_TAGS = {"datalist", "head", "script", "style", "template", "title", "noscript"}
     _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script", "svg"}
-    _UNSUPPORTED_USER_AGENT_TAGS = {"canvas", "select"}
+    _UNSUPPORTED_USER_AGENT_TAGS = {
+        "audio",
+        "canvas",
+        "input",
+        "meter",
+        "progress",
+        "select",
+        "video",
+    }
+    _HEAD_ALLOWED_TAGS = {"base", "link", "meta", "noscript", "script", "style", "template", "title"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
         "area",
@@ -1789,9 +1798,6 @@ class _VisibleSurfaceParser(HTMLParser):
             normalized[key] = value
         if "hidden" in normalized:
             return True
-        aria_hidden = normalized.get("aria-hidden")
-        if isinstance(aria_hidden, str) and aria_hidden.strip().casefold() == "true":
-            return True
         style = normalized.get("style")
         if not isinstance(style, str):
             return False
@@ -1814,14 +1820,30 @@ class _VisibleSurfaceParser(HTMLParser):
                 return "stylesheet" in value.casefold().split()
         return False
 
+    @staticmethod
+    def _attributes_request_refresh(attrs: list[tuple[str, str | None]]) -> bool:
+        return any(
+            name.casefold() == "http-equiv"
+            and isinstance(value, str)
+            and value.strip().casefold() == "refresh"
+            for name, value in attrs
+        )
+
+    def _reject_browser_head_reparenting(self, tag: str) -> None:
+        if "head" in self._element_stack and tag not in self._HEAD_ALLOWED_TAGS:
+            raise ValueError("surface response requires browser head-closing rules")
+
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.casefold()
         if normalized in self._ACTIVE_CONTENT_TAGS:
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
         attributes_hidden = self._attributes_hide_element(attrs)
+        if normalized == "meta" and self._attributes_request_refresh(attrs):
+            raise ValueError("surface visibility requires client-side redirect evaluation")
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
         attribute_names = {name.casefold() for name, _value in attrs}
@@ -1858,10 +1880,13 @@ class _VisibleSurfaceParser(HTMLParser):
             raise ValueError("surface visibility requires executable active-content evaluation")
         if normalized in self._UNSUPPORTED_USER_AGENT_TAGS:
             raise ValueError("surface visibility requires unsupported user-agent control evaluation")
+        self._reject_browser_head_reparenting(normalized)
         self._reject_closed_details_table_ambiguity(normalized)
         if normalized not in self._VOID_TAGS:
             raise ValueError("surface response self-closes a non-void HTML element")
         attributes_hidden = self._attributes_hide_element(attrs)
+        if normalized == "meta" and self._attributes_request_refresh(attrs):
+            raise ValueError("surface visibility requires client-side redirect evaluation")
         if normalized == "link" and self._attributes_reference_stylesheet(attrs):
             raise ValueError("surface visibility requires external stylesheet evaluation")
         hidden = bool(self._hidden_stack) or normalized in self._HIDDEN_TAGS or attributes_hidden
@@ -1891,6 +1916,8 @@ class _VisibleSurfaceParser(HTMLParser):
                     self._closed_details.pop()
 
     def handle_data(self, data: str) -> None:
+        if self._element_stack and self._element_stack[-1] == "head" and data.strip():
+            raise ValueError("surface response requires browser head-closing rules")
         if self._hidden_stack and self._hidden_stack[-1] == "style" and data.strip():
             self._stylesheet_text_seen = True
         if not self._hidden_stack and not self._closed_details_hide_current():
@@ -1934,7 +1961,7 @@ def _surface_claim_scan(
 ) -> tuple[list[str], list[str]]:
     segments = [
         normalized
-        for raw in re.split(r"[\n\r.!?;]+", html.unescape(inspected_text))
+        for raw in re.split(r"[\n\r.!?;]+", inspected_text)
         if (normalized := _normalized_surface_text(raw))
     ]
     matched: list[str] = []
@@ -1983,7 +2010,7 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
     if not canonical_tokens:
         return False
     occurrence_results: list[bool] = []
-    for raw_segment in re.split(r"[\n\r.!?;]+", html.unescape(inspected_text)):
+    for raw_segment in re.split(r"[\n\r.!?;]+", inspected_text):
         segment = _normalized_surface_text(raw_segment)
         segment_tokens = segment.split()
         width = len(canonical_tokens)
@@ -2032,6 +2059,12 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
     with _contract_https_open(request, timeout=30) as response:
         if response.geturl() != source_url:
             raise ValueError("live surface redirected away from its contract-owned URL")
+        try:
+            content_type = response.headers.get_content_type()
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise ValueError("live surface response has no trustworthy media type") from exc
+        if content_type not in {"application/xhtml+xml", "text/html"}:
+            raise ValueError("live surface response is not HTML")
         content = response.read(1_048_577)
     if len(content) > 1_048_576:
         raise ValueError("live surface exceeds the bounded response size")
