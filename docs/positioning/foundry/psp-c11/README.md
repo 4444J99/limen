@@ -153,9 +153,10 @@ the transfer threshold is derived from the contract's governed technical-readine
 contract's joint 20-point build/test dimension scores only when both receipts pass, and an accepted
 archived or parked candidate remains technically non-transferable regardless of evidence. A
 maintenance pass must independently resolve a distinct immutable funding receipt, funding artifact,
-and successful execution provenance proving capacity for its bounded estimate; the technical
-receipt, an owner, and an estimate cannot self-attest funding. Technical readiness alone never grants
-transfer eligibility: accepted E3+ demand, operator selection, approved terms, downside-tested
+and successful execution provenance. The parsed artifact must bind the receipt's funded capacity and
+the candidate's bounded maintenance estimate; the technical receipt, an owner, and an estimate cannot
+self-attest funding. Technical readiness alone never grants transfer eligibility: accepted E3+ demand,
+a canonical receipt-backed operator score meeting the contract minimum, approved terms, downside-tested
 economics, funded maintenance, and tested return must all clear their governed floors. A live
 collection shares one 270-second deadline,
 a 96-call ceiling, and an immutable-response cache across W01 verification, receipt blobs, output and

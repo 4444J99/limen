@@ -114,8 +114,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         return receipt
 
     @staticmethod
-    def funding_receipt(row: dict, capacity: int = 1) -> dict:
-        artifact = b"maintenance:funding:artifact\n"
+    def funding_artifact(row: dict, capacity: int = 1, estimate: int = 1) -> bytes:
+        payload = {
+            "schema_version": "limen.psp_p13_w03_maintenance_funding_artifact.v1",
+            "repository": row["repository"],
+            "tested_commit": row["observed_head"],
+            "capacity_hours_per_month": capacity,
+            "maintenance_estimate_hours_per_month": estimate,
+            "observed_at": "2026-08-15T00:00:00Z",
+            "external_effects": [],
+        }
+        return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    @classmethod
+    def funding_receipt(cls, row: dict, capacity: int = 1, estimate: int = 1) -> dict:
+        artifact = cls.funding_artifact(row, capacity, estimate)
         return {
             "schema_version": "limen.psp_p13_w03_maintenance_funding.v1",
             "repository": row["repository"],
@@ -157,13 +170,15 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             resolved["assessment"] = cls.security_assessment(row)
         return resolved
 
-    @staticmethod
-    def resolved_funding(receipt: dict) -> dict:
-        artifact = b"maintenance:funding:artifact\n"
+    @classmethod
+    def resolved_funding(cls, receipt: dict, estimate: int = 1) -> dict:
+        row = {"repository": receipt["repository"], "observed_head": receipt["tested_commit"]}
+        artifact = cls.funding_artifact(row, receipt["capacity_hours_per_month"], estimate)
         return {
             "receipt": receipt,
             "receipt_repository": receipt["repository"],
             "receipt_commit": "f" * 40,
+            "artifact": json.loads(artifact),
             "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
             "provenance": {
                 "html_url": receipt["provenance_url"],
@@ -175,6 +190,27 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "run_started_at": "2026-08-14T23:59:00Z",
                 "updated_at": receipt["observed_at"],
             },
+        }
+
+    @staticmethod
+    def operator_score(candidate: dict, score: int = 75) -> dict:
+        receipt = {
+            "schema_version": "limen.psp_p13_w04_operator_score.v1",
+            "candidate_id": candidate["candidate_id"],
+            "status": "selected",
+            "score": score,
+            "observed_at": "2026-08-15T00:00:00Z",
+            "external_effects": [],
+        }
+        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return {
+            "score": score,
+            "receipt_url": (
+                f"https://github.com/{candidate['repository']}/blob/{'f' * 40}"
+                "/docs/receipts/operator/operator-score-receipt.json"
+            ),
+            "receipt_sha256": MODULE.hashlib.sha256(canonical).hexdigest(),
+            "receipt": receipt,
         }
 
     def test_tracked_audit_is_valid_and_has_zero_effects(self) -> None:
@@ -303,6 +339,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             lambda value: value["economics"].__setitem__("status", "transfer_floor_passed"),
             lambda value: value["blocking_evidence"].pop(),
             lambda value: value.__setitem__("transfer_eligible", not value["transfer_eligible"]),
+            lambda value: value.__setitem__("operator_score", self.operator_score(value)),
         ):
             changed_snapshot = copy.deepcopy(self.snapshot)
             row = next(
@@ -498,7 +535,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 side_effect=[
                     b"maintenance:pass:output\n",
                     b"maintenance:pass:artifact\n",
-                    b"maintenance:funding:artifact\n",
+                    self.funding_artifact(row),
                 ],
             ),
             mock.patch.object(
@@ -519,6 +556,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
         self.assertEqual(funding, resolved["funding"])
         self.assertNotEqual(row["maintenance"]["evidence_url"], row["maintenance"]["funding_evidence_url"])
+        with (
+            mock.patch.object(
+                MODULE,
+                "_fetch_exact_head_blob",
+                side_effect=[json.dumps(technical_receipt).encode(), json.dumps(funding_receipt).encode()],
+            ),
+            mock.patch.object(
+                MODULE,
+                "_fetch_repository_blob",
+                side_effect=[b"maintenance:pass:output\n", b"maintenance:pass:artifact\n", b"not-json"],
+            ),
+            mock.patch.object(MODULE, "_run_json", return_value=technical["provenance"]),
+            self.assertRaisesRegex(MODULE.AuditError, "funding artifact is invalid"),
+        ):
+            MODULE.collect_live_evidence_receipts(changed)
 
     def test_live_security_class_is_bound_to_resolved_assessment_artifact(self) -> None:
         changed = copy.deepcopy(self.audit)
@@ -640,6 +692,36 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertTrue(
             any(
                 "does not fund" in error
+                for error in MODULE._maintenance_funding_errors(
+                    funding,
+                    row["repository"],
+                    row["observed_head"],
+                    1,
+                    technical,
+                    "candidate.maintenance.funding",
+                )
+            )
+        )
+        funding = self.resolved_funding(self.funding_receipt(row))
+        funding["artifact"]["capacity_hours_per_month"] = 2
+        self.assertTrue(
+            any(
+                "artifact does not bind receipt capacity and maintenance claim" in error
+                for error in MODULE._maintenance_funding_errors(
+                    funding,
+                    row["repository"],
+                    row["observed_head"],
+                    1,
+                    technical,
+                    "candidate.maintenance.funding",
+                )
+            )
+        )
+        funding = self.resolved_funding(self.funding_receipt(row))
+        funding["artifact"]["maintenance_estimate_hours_per_month"] = 2
+        self.assertTrue(
+            any(
+                "artifact does not bind receipt capacity and maintenance claim" in error
                 for error in MODULE._maintenance_funding_errors(
                     funding,
                     row["repository"],
@@ -985,7 +1067,24 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         candidate["blocking_evidence"] = [
             value for value in candidate["blocking_evidence"] if value not in MODULE.GOVERNED_TRANSFER_BLOCKERS
         ]
+        self.assertFalse(MODULE.governed_transfer_floors_pass(candidate, self.contract))
+        candidate["operator_score"] = self.operator_score(candidate)
         self.assertTrue(MODULE.governed_transfer_floors_pass(candidate, self.contract))
+        higher_operator_floor = copy.deepcopy(self.contract)
+        higher_operator_floor["economics_and_kill_rules"]["transfer_floor"]["operator_score_minimum"] = 80
+        self.assertFalse(MODULE.governed_transfer_floors_pass(candidate, higher_operator_floor))
+        below_floor = copy.deepcopy(candidate)
+        below_floor["operator_score"] = self.operator_score(below_floor, 74)
+        self.assertFalse(MODULE.governed_transfer_floors_pass(below_floor, self.contract))
+        tampered = copy.deepcopy(candidate)
+        tampered["operator_score"]["receipt"]["score"] = 100
+        self.assertFalse(MODULE.governed_transfer_floors_pass(tampered, self.contract))
+        mutable_url = copy.deepcopy(candidate)
+        mutable_url["operator_score"]["receipt_url"] = (
+            f"https://github.com/{candidate['repository']}/blob/main/"
+            "docs/receipts/operator/operator-score-receipt.json"
+        )
+        self.assertFalse(MODULE.governed_transfer_floors_pass(mutable_url, self.contract))
         for blocker in MODULE.GOVERNED_TRANSFER_BLOCKERS:
             changed = copy.deepcopy(candidate)
             changed["blocking_evidence"].append(blocker)

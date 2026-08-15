@@ -185,8 +185,27 @@ RESOLVED_FUNDING_KEYS = {
     "receipt",
     "receipt_repository",
     "receipt_commit",
+    "artifact",
     "artifact_sha256",
     "provenance",
+}
+FUNDING_ARTIFACT_KEYS = {
+    "schema_version",
+    "repository",
+    "tested_commit",
+    "capacity_hours_per_month",
+    "maintenance_estimate_hours_per_month",
+    "observed_at",
+    "external_effects",
+}
+OPERATOR_SCORE_KEYS = {"score", "receipt_url", "receipt_sha256", "receipt"}
+OPERATOR_SCORE_RECEIPT_KEYS = {
+    "schema_version",
+    "candidate_id",
+    "status",
+    "score",
+    "observed_at",
+    "external_effects",
 }
 TRUSTED_RECEIPT_REPOSITORIES = {"organvm/limen"}
 EXECUTED_FAILURE_CONCLUSIONS = {"failure", "timed_out"}
@@ -349,6 +368,26 @@ def _url_proves_maintenance_funding(value: Any, observed_head: str, repository: 
     return "fund" in receipt_path
 
 
+def _url_proves_operator_score(value: Any, repository: Any) -> bool:
+    if not _valid_https_url(value):
+        return False
+    parsed = urlparse(value)
+    parts = [segment for segment in parsed.path.split("/") if segment]
+    if parsed.netloc.casefold() != "github.com" or len(parts) < 5 or parts[2] != "blob":
+        return False
+    allowed = {value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES}
+    if _is_nonblank_text(repository):
+        allowed.add(repository.casefold())
+    path = "/".join(parts[4:]).casefold()
+    return (
+        SHA40.fullmatch(parts[3]) is not None
+        and "/".join(parts[:2]).casefold() in allowed
+        and "operator" in path
+        and "score" in path
+        and "receipt" in path
+    )
+
+
 def _evidence_location(value: str) -> tuple[str, str, str]:
     parts = [segment for segment in urlparse(value).path.split("/") if segment]
     if len(parts) < 5 or parts[2] != "blob":
@@ -445,6 +484,7 @@ def governed_transfer_floors_pass(candidate: dict[str, Any], contract: dict[str,
     if (
         not _is_nonnegative_int(demand_minimum)
         or not _is_nonnegative_int(operator_minimum)
+        or operator_minimum > 100
         or len(tier_ids) != len(set(tier_ids))
         or "E3" not in tier_ids
     ):
@@ -462,9 +502,37 @@ def governed_transfer_floors_pass(candidate: dict[str, Any], contract: dict[str,
         and demand_tier in allowed_tiers
         and _is_nonnegative_int(demand_score)
         and demand_score >= demand_minimum
+        and governed_operator_floor_passes(candidate, operator_minimum)
         and economics.get("status") == "transfer_floor_passed"
         and economics.get("runway") == "approved"
         and not (set(str(value) for value in blockers) & GOVERNED_TRANSFER_BLOCKERS)
+    )
+
+
+def governed_operator_floor_passes(candidate: dict[str, Any], operator_minimum: int) -> bool:
+    value = candidate.get("operator_score")
+    if not _exact_keys(value, OPERATOR_SCORE_KEYS) or not _is_nonnegative_int(operator_minimum):
+        return False
+    receipt = value.get("receipt")
+    if not _exact_keys(receipt, OPERATOR_SCORE_RECEIPT_KEYS):
+        return False
+    score = value.get("score")
+    observed = _parse_timestamp(receipt.get("observed_at"))
+    canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return (
+        _is_nonnegative_int(score)
+        and score <= 100
+        and score >= operator_minimum
+        and receipt.get("schema_version") == "limen.psp_p13_w04_operator_score.v1"
+        and receipt.get("candidate_id") == candidate.get("candidate_id")
+        and receipt.get("status") == "selected"
+        and receipt.get("score") == score
+        and receipt.get("external_effects") == []
+        and observed is not None
+        and observed <= dt.datetime.now(dt.UTC)
+        and SHA64.fullmatch(str(value.get("receipt_sha256"))) is not None
+        and hashlib.sha256(canonical).hexdigest() == value.get("receipt_sha256")
+        and _url_proves_operator_score(value.get("receipt_url"), candidate.get("repository"))
     )
 
 
@@ -747,6 +815,7 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
         economics = row.get("economics")
         blocking_evidence = row.get("blocking_evidence")
         transfer_eligible = row.get("transfer_eligible")
+        operator_score = row.get("operator_score")
         if (
             not isinstance(demand, dict)
             or not isinstance(economics, dict)
@@ -775,6 +844,7 @@ def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
                 "economics": economics,
                 "blocking_evidence": blocking_evidence,
                 "transfer_eligible": transfer_eligible,
+                "operator_score": operator_score,
             }
         )
     if len(identities) != len(set(identities)):
@@ -1047,6 +1117,15 @@ def collect_live_evidence_receipts(
                     funding_receipt.get("artifact_path"),
                     collection,
                 )
+                try:
+                    funding_artifact_payload = json.loads(
+                        funding_artifact,
+                        object_pairs_hook=_object_without_duplicate_keys,
+                    )
+                except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
+                    raise AuditError("live maintenance funding artifact is invalid") from exc
+                if not isinstance(funding_artifact_payload, dict):
+                    raise AuditError("live maintenance funding artifact is not an object")
                 funding_run_id = _actions_run_id(
                     funding_receipt.get("provenance_url"),
                     str(row.get("repository") or ""),
@@ -1070,6 +1149,7 @@ def collect_live_evidence_receipts(
                     "receipt": funding_receipt,
                     "receipt_repository": funding_repository,
                     "receipt_commit": funding_commit,
+                    "artifact": funding_artifact_payload,
                     "artifact_sha256": hashlib.sha256(funding_artifact).hexdigest(),
                     "provenance": funding_provenance,
                 }
@@ -1374,6 +1454,7 @@ def _maintenance_funding_errors(
     ):
         errors.append(f"{label} immutable location drift")
     artifact_path = receipt.get("artifact_path")
+    artifact = resolved_funding.get("artifact")
     artifact_sha256 = resolved_funding.get("artifact_sha256")
     technical_digests = {
         technical_evidence.get("output_sha256"),
@@ -1385,6 +1466,25 @@ def _maintenance_funding_errors(
         or artifact_sha256 in technical_digests
     ):
         errors.append(f"{label} must bind an independently distinct funding artifact")
+    if not _exact_keys(artifact, FUNDING_ARTIFACT_KEYS):
+        errors.append(f"{label} must resolve the exact funding artifact schema")
+    else:
+        artifact_capacity = artifact.get("capacity_hours_per_month")
+        artifact_estimate = artifact.get("maintenance_estimate_hours_per_month")
+        if (
+            artifact.get("schema_version") != "limen.psp_p13_w03_maintenance_funding_artifact.v1"
+            or artifact.get("repository") != repository
+            or artifact.get("tested_commit") != observed_head
+            or not _is_finite_number(artifact_capacity)
+            or not _is_finite_number(capacity)
+            or float(artifact_capacity) != float(capacity)
+            or not _is_finite_number(artifact_estimate)
+            or not _is_finite_number(required_hours)
+            or float(artifact_estimate) != float(required_hours)
+            or artifact.get("observed_at") != receipt.get("observed_at")
+            or artifact.get("external_effects") != []
+        ):
+            errors.append(f"{label} artifact does not bind receipt capacity and maintenance claim")
     provenance = resolved_funding.get("provenance")
     run_id = _actions_run_id(receipt.get("provenance_url"), repository)
     run_attempt = receipt.get("run_attempt")
