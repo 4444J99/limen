@@ -31,16 +31,18 @@
     "pr": "https://github.com/organvm/limen/pull/2481",
     "branch": "codex/psp-receipt-corruption-recovery",
     "source_head": "984b1121083b4ab2453c3671ad20d11586cf6713",
-    "latest_correction_head": "d6a8010abbc64e22c6ffbc7e5368ea11f9998365",
+    "latest_correction_head": "811a2f60b5f7fbb996f4a5c775e579d96a6bb84c",
     "accepted_main_head": null,
-    "merge_status": "held by required pr-gate",
-    "merge_blocker": "positioning-foundry-technical-readiness-public-live failed closed with live GitHub observation failed closed; one rerun produced the same failure. No bypass or direct-main write used."
+    "merge_status": "held by required scoped heavy verification host admission",
+    "merge_blocker": "scoped exact-tree verification cheap wave passed, but heavy wave was denied by machine-wide host admission: swap-fraction. No bypass or direct-main write used."
   },
   "predicate_outputs": {
     "focused_validator_tests": "54 passed",
-    "scoped_exact_tree": "correction-specific gates passed; public-live external observation failed closed",
+    "public_live_foundry": "pass; errors=[]; transfer_eligible=0",
+    "scoped_exact_tree": "cheap wave passed; heavy wave denied by host admission swap-fraction",
     "verify_work": {
-      "PSP-P03-W07": "exit 2: receipt chain contains invalidated comment(s): 5302836577, 5302840153",
+      "PSP-P13-W01": "pass; historical v1 receipt accepted under pre-cutover compatibility",
+      "PSP-P03-W07": "exit 2: receipt chain contains invalidated comment(s): 5302834365, 5302836577, 5302840153",
       "PSP-P04-W05": "exit 2: receipt chain contains invalidated comment(s): 5302849163",
       "PSP-P04-W06": "exit 2: receipt chain contains invalidated comment(s): 5302859980, 5302868894",
       "PSP-P04-W07": "exit 2: receipt chain contains invalidated comment(s): 5302849325"
