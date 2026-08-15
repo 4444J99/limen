@@ -204,6 +204,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         output_digest = None if funding else receipt["output_sha256"]
         return {
             "total_count": 1,
+            "scanned_count": 1,
             "artifacts": [
                 {
                     "id": artifact_id,
@@ -934,25 +935,41 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             technical_location: json.dumps(technical_receipt).encode("utf-8"),
             funding_location: json.dumps(funding_receipt).encode("utf-8"),
         }
+        payload_blobs = {
+            (
+                technical_location[0],
+                technical_location[1],
+                technical_receipt["output_path"],
+            ): b"maintenance:pass:output\n",
+            (
+                technical_location[0],
+                technical_location[1],
+                technical_receipt["artifact_path"],
+            ): b"maintenance:pass:artifact\n",
+            (
+                funding_location[0],
+                funding_location[1],
+                funding_receipt["artifact_path"],
+            ): self.funding_artifact(row),
+        }
         collection = mock.Mock()
         collection.run_json_batch.side_effect = lambda requests: {
-            tuple(request): (
-                {"total_count": 0, "artifacts": []}
-                if "/artifacts?" in request[-1]
-                else {}
-            )
-            for request in requests
+            tuple(request): {} for request in requests
         }
-        with mock.patch.object(
-            MODULE,
-            "_fetch_repository_blobs_batch",
-            side_effect=[receipt_blobs, {}],
-        ) as fetch_batch:
+        with (
+            mock.patch.object(
+                MODULE,
+                "_fetch_repository_blobs_batch",
+                side_effect=[receipt_blobs, payload_blobs],
+            ) as fetch_batch,
+            mock.patch.object(MODULE, "_scan_actions_artifacts") as scan,
+        ):
             MODULE._prefetch_live_evidence(changed, collection)
         self.assertEqual(2, fetch_batch.call_count)
         self.assertEqual({technical_location, funding_location}, set(fetch_batch.call_args_list[0].args[0]))
         self.assertEqual(3, len(set(fetch_batch.call_args_list[1].args[0])))
-        self.assertEqual(4, len(collection.run_json_batch.call_args.args[0]))
+        self.assertEqual(2, len(collection.run_json_batch.call_args.args[0]))
+        self.assertEqual(2, len(scan.call_args.args[0]))
 
     def test_actions_artifact_listing_paginates_for_technical_and_funding_evidence(self) -> None:
         row = self.public_row()
@@ -961,30 +978,58 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         funding_receipt = self.funding_receipt(row)
         funding = self.resolved_funding(funding_receipt)
 
-        def collect(run_id: str, expected: dict, offset: int = 0) -> dict:
-            pages = {
-                1: {
-                    "total_count": 101,
-                    "artifacts": [{"id": offset + index} for index in range(1, 101)],
-                },
-                2: {"total_count": 101, "artifacts": [expected]},
+        technical_match = technical["production_artifact"]["artifacts"][0]
+        funding_match = funding["production_artifact"]["artifacts"][0]
+        technical_name = technical_match["name"]
+        funding_name = funding_match["name"]
+
+        def page(run_id: str, page_number: int) -> dict:
+            offset = 0 if run_id == "1234" else 10_000
+            artifacts = [
+                {
+                    "id": offset + (page_number - 1) * MODULE.ACTIONS_ARTIFACT_PAGE_SIZE + index,
+                    "name": f"irrelevant-{run_id}-{page_number}-{index}",
+                }
+                for index in range(1, MODULE.ACTIONS_ARTIFACT_PAGE_SIZE + 1)
+            ]
+            if page_number == MODULE.ACTIONS_ARTIFACT_MAX_PAGES:
+                artifacts[-1] = technical_match if run_id == "1234" else funding_match
+            return {
+                "total_count": MODULE.ACTIONS_ARTIFACT_PAGE_SIZE * MODULE.ACTIONS_ARTIFACT_MAX_PAGES,
+                "artifacts": artifacts,
             }
 
-            def response(args: list[str], **_: object) -> mock.Mock:
-                page = int(args[-1].rsplit("page=", 1)[-1])
-                return mock.Mock(returncode=0, stdout=json.dumps(pages[page]))
+        def response(args: list[str], **_: object) -> mock.Mock:
+            endpoint = args[-1]
+            run_id = endpoint.split("/runs/", 1)[1].split("/", 1)[0]
+            page_number = int(endpoint.rsplit("page=", 1)[-1])
+            return mock.Mock(returncode=0, stdout=json.dumps(page(run_id, page_number)))
 
-            collection = MODULE.LiveCollection(call_limit=2)
-            with mock.patch.object(MODULE.subprocess, "run", side_effect=response) as run:
-                result = MODULE._collect_actions_artifacts(row["repository"], run_id, collection)
-            self.assertEqual(2, run.call_count)
-            self.assertEqual([1, 2], [int(call.args[0][-1].rsplit("page=", 1)[-1]) for call in run.call_args_list])
-            return result
-
-        technical["production_artifact"] = collect(
-            "1234",
-            technical["production_artifact"]["artifacts"][0],
+        collection = MODULE.LiveCollection(call_limit=20)
+        with mock.patch.object(MODULE.subprocess, "run", side_effect=response) as run:
+            MODULE._scan_actions_artifacts(
+                [
+                    (row["repository"], "1234", technical_name),
+                    (row["repository"], "5678", funding_name),
+                ],
+                collection,
+            )
+            technical["production_artifact"] = MODULE._collect_actions_artifacts(
+                row["repository"], "1234", technical_name, collection
+            )
+            funding["production_artifact"] = MODULE._collect_actions_artifacts(
+                row["repository"], "5678", funding_name, collection
+            )
+        self.assertEqual(20, run.call_count)
+        self.assertEqual({}, collection._json_cache)
+        self.assertEqual(2, len(collection._artifact_scan_cache))
+        self.assertEqual(
+            {"total_count", "scanned_count", "artifacts"},
+            set(technical["production_artifact"]),
         )
+        self.assertEqual(1000, technical["production_artifact"]["scanned_count"])
+        self.assertEqual([technical_match], technical["production_artifact"]["artifacts"])
+        self.assertEqual([funding_match], funding["production_artifact"]["artifacts"])
         self.assertEqual(
             [],
             MODULE._evidence_receipt_errors(
@@ -995,11 +1040,6 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "verified_pass",
                 "candidate.build",
             ),
-        )
-        funding["production_artifact"] = collect(
-            "5678",
-            funding["production_artifact"]["artifacts"][0],
-            1000,
         )
         self.assertEqual(
             [],
@@ -1030,6 +1070,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE._collect_actions_artifacts(
                 row["repository"],
                 "1234",
+                technical_name,
                 MODULE.LiveCollection(call_limit=2),
             )
         with (
@@ -1046,6 +1087,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE._collect_actions_artifacts(
                 row["repository"],
                 "1234",
+                technical_name,
                 MODULE.LiveCollection(call_limit=1),
             )
 

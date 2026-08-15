@@ -133,8 +133,10 @@ The same attempt must expose exactly one non-expired Actions evidence artifact w
 metadata, platform digest, creation window, and exact name bind the attempt-available output and
 artifact digests to that attempt. The later immutable receipt separately records the completion time
 and those independently resolved digests; its completion-time bytes are intentionally not part of the
-artifact name. Artifact discovery is fully paginated under a bounded ten-page ceiling before exact
-matching. The separate maintenance-funding provenance uses the same attempt-specific artifact rule.
+artifact name. Artifact discovery is fully paginated under a bounded ten-page ceiling in groups of
+at most eight listings and response batches of at most sixteen pages. Full pages bypass the shared
+JSON cache; each completed scan retains only total/scanned counts and at most two exact-name matches.
+The separate maintenance-funding provenance uses the same attempt-specific artifact rule.
 Self-authored commands or hashes, reused blobs,
 invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
 zero, while a verified failure requires a non-boolean nonzero integer plus an executed `failure` or
@@ -165,7 +167,7 @@ self-attest funding. Technical readiness alone never grants transfer eligibility
 a canonical receipt-backed operator score meeting the contract minimum, approved terms, downside-tested
 economics, funded maintenance, and tested return must all clear their governed floors. A live
 collection shares one 270-second deadline, an immutable-response cache, and bounded concurrent
-waves for immutable receipt/payload blobs and fully paginated attempt-specific Actions provenance. One batched
+waves for immutable receipt/payload blobs and compact, fully paginated attempt-specific Actions provenance. One batched
 GraphQL observation independently resolves each recorded public head as an immutable commit in its
 own repository, including blocked rows, without turning PR acceptance into a moving-branch gate.
 The call ceiling is derived from the exact verified-receipt surface, capped by the

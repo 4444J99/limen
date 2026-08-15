@@ -228,6 +228,9 @@ LIVE_COLLECTION_BLOB_METADATA_BATCH_SIZE = 16
 LIVE_COLLECTION_BLOB_RESPONSE_BATCH_MAX_BYTES = 16 * 1024 * 1024
 ACTIONS_ARTIFACT_PAGE_SIZE = 100
 ACTIONS_ARTIFACT_MAX_PAGES = 10
+ACTIONS_ARTIFACT_SCAN_GROUP_SIZE = 8
+ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE = 16
+ACTIONS_ARTIFACT_MATCH_LIMIT = 2
 LIVE_COLLECTION_BASE_CALLS = 5
 LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT = 7 + ACTIONS_ARTIFACT_MAX_PAGES
 LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT = 5 + ACTIONS_ARTIFACT_MAX_PAGES
@@ -273,11 +276,22 @@ class LiveCollection:
         self._call_limit = call_limit
         self.calls = 0
         self._json_cache: dict[tuple[str, ...], dict[str, Any]] = {}
+        self._artifact_scan_cache: dict[tuple[str, str, str], dict[str, Any]] = {}
         self._blob_cache: dict[tuple[str, str, str], bytes] = {}
         self._blob_bytes = 0
 
     def get_blob(self, location: tuple[str, str, str]) -> bytes | None:
         return self._blob_cache.get(location)
+
+    def get_artifact_scan(self, key: tuple[str, str, str]) -> dict[str, Any] | None:
+        value = self._artifact_scan_cache.get(key)
+        return copy.deepcopy(value) if value is not None else None
+
+    def store_artifact_scan(self, key: tuple[str, str, str], value: dict[str, Any]) -> None:
+        previous = self._artifact_scan_cache.get(key)
+        if previous is not None and previous != value:
+            raise AuditError("Actions evidence artifact scan binding drift")
+        self._artifact_scan_cache[key] = copy.deepcopy(value)
 
     def ensure_blob_capacity(self, additional_bytes: int) -> None:
         if not _is_nonnegative_int(additional_bytes) or (
@@ -558,47 +572,114 @@ def _actions_artifact_page_count(value: Any) -> int:
     return pages
 
 
+def _consume_actions_artifact_page(
+    state: dict[str, Any],
+    value: Any,
+    page_number: int,
+) -> None:
+    total_count = state["total_count"]
+    page_artifacts = value.get("artifacts") if isinstance(value, dict) else None
+    expected_count = min(
+        ACTIONS_ARTIFACT_PAGE_SIZE,
+        max(0, total_count - (page_number - 1) * ACTIONS_ARTIFACT_PAGE_SIZE),
+    )
+    if (
+        not isinstance(value, dict)
+        or value.get("total_count") != total_count
+        or not isinstance(page_artifacts, list)
+        or len(page_artifacts) != expected_count
+    ):
+        raise AuditError("Actions evidence artifact listing is incomplete")
+    for artifact in page_artifacts:
+        artifact_id = artifact.get("id") if isinstance(artifact, dict) else None
+        if (
+            not _is_nonnegative_int(artifact_id)
+            or artifact_id < 1
+            or artifact_id in state["artifact_ids"]
+        ):
+            raise AuditError("Actions evidence artifact listing is incomplete")
+        state["artifact_ids"].add(artifact_id)
+        name = artifact.get("name")
+        if name in state["matches"] and len(state["matches"][name]) < ACTIONS_ARTIFACT_MATCH_LIMIT:
+            state["matches"][name].append(copy.deepcopy(artifact))
+    state["scanned_count"] += len(page_artifacts)
+
+
+def _scan_actions_artifacts(
+    plans: list[tuple[str, str, str]],
+    collection: LiveCollection,
+) -> None:
+    pending: dict[tuple[str, str], set[str]] = {}
+    for repository, run_id, expected_name in plans:
+        if collection.get_artifact_scan((repository, run_id, expected_name)) is None:
+            pending.setdefault((repository, run_id), set()).add(expected_name)
+    listings = sorted(pending.items())
+    for offset in range(0, len(listings), ACTIONS_ARTIFACT_SCAN_GROUP_SIZE):
+        group = listings[offset : offset + ACTIONS_ARTIFACT_SCAN_GROUP_SIZE]
+        first_requests = [
+            _actions_artifact_request(repository, run_id, 1)
+            for (repository, run_id), _ in group
+        ]
+        first_responses = collection.run_json_batch(first_requests, cache=False)
+        states: dict[tuple[str, str], dict[str, Any]] = {}
+        page_requests: list[tuple[list[str], tuple[str, str], int]] = []
+        for (repository, run_id), expected_names in group:
+            first_request = _actions_artifact_request(repository, run_id, 1)
+            first = first_responses[tuple(first_request)]
+            page_count = _actions_artifact_page_count(first)
+            state = {
+                "total_count": first["total_count"],
+                "scanned_count": 0,
+                "artifact_ids": set(),
+                "matches": {name: [] for name in expected_names},
+            }
+            states[(repository, run_id)] = state
+            _consume_actions_artifact_page(state, first, 1)
+            page_requests.extend(
+                (
+                    _actions_artifact_request(repository, run_id, page),
+                    (repository, run_id),
+                    page,
+                )
+                for page in range(2, page_count + 1)
+            )
+        for page_offset in range(0, len(page_requests), ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE):
+            page_group = page_requests[
+                page_offset : page_offset + ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE
+            ]
+            requests = [request for request, _, _ in page_group]
+            responses = collection.run_json_batch(requests, cache=False)
+            for request, listing, page in page_group:
+                _consume_actions_artifact_page(states[listing], responses[tuple(request)], page)
+        for (repository, run_id), expected_names in group:
+            state = states[(repository, run_id)]
+            if state["scanned_count"] != state["total_count"]:
+                raise AuditError("Actions evidence artifact listing is incomplete")
+            for expected_name in expected_names:
+                collection.store_artifact_scan(
+                    (repository, run_id, expected_name),
+                    {
+                        "total_count": state["total_count"],
+                        "scanned_count": state["scanned_count"],
+                        "artifacts": state["matches"][expected_name],
+                    },
+                )
+
+
 def _collect_actions_artifacts(
     repository: str,
     run_id: str,
+    expected_name: str,
     collection: LiveCollection,
 ) -> dict[str, Any]:
-    first_request = _actions_artifact_request(repository, run_id, 1)
-    first = _run_json(first_request, collection=collection)
-    page_count = _actions_artifact_page_count(first)
-    requests = [
-        _actions_artifact_request(repository, run_id, page)
-        for page in range(2, page_count + 1)
-    ]
-    responses = collection.run_json_batch(requests)
-    pages = [first] + [responses[tuple(request)] for request in requests]
-    total_count = first["total_count"]
-    artifacts: list[dict[str, Any]] = []
-    artifact_ids: set[int] = set()
-    for page_number, page in enumerate(pages, start=1):
-        page_artifacts = page.get("artifacts") if isinstance(page, dict) else None
-        expected_count = min(
-            ACTIONS_ARTIFACT_PAGE_SIZE,
-            max(0, total_count - (page_number - 1) * ACTIONS_ARTIFACT_PAGE_SIZE),
-        )
-        if (
-            not isinstance(page, dict)
-            or page.get("total_count") != total_count
-            or not isinstance(page_artifacts, list)
-            or len(page_artifacts) != expected_count
-        ):
-            raise AuditError("Actions evidence artifact listing is incomplete")
-        for artifact in page_artifacts:
-            artifact_id = artifact.get("id") if isinstance(artifact, dict) else None
-            if (
-                not _is_nonnegative_int(artifact_id)
-                or artifact_id < 1
-                or artifact_id in artifact_ids
-            ):
-                raise AuditError("Actions evidence artifact listing is incomplete")
-            artifact_ids.add(artifact_id)
-            artifacts.append(artifact)
-    return {"total_count": total_count, "artifacts": artifacts}
+    key = (repository, run_id, expected_name)
+    value = collection.get_artifact_scan(key)
+    if value is None:
+        _scan_actions_artifacts([key], collection)
+        value = collection.get_artifact_scan(key)
+    if value is None:
+        raise AuditError("Actions evidence artifact scan failed closed")
+    return value
 
 
 def _production_artifact_errors(
@@ -613,13 +694,17 @@ def _production_artifact_errors(
     completed: dt.datetime | None,
     label: str,
 ) -> list[str]:
-    if not isinstance(value, dict) or not _is_nonnegative_int(value.get("total_count")):
+    if (
+        not _exact_keys(value, {"total_count", "scanned_count", "artifacts"})
+        or not _is_nonnegative_int(value.get("total_count"))
+        or value.get("scanned_count") != value.get("total_count")
+    ):
         return [f"{label} must resolve an attempt-bound Actions evidence artifact"]
     artifacts = value.get("artifacts")
-    if not isinstance(artifacts, list) or value.get("total_count") != len(artifacts):
+    if not isinstance(artifacts, list) or len(artifacts) > ACTIONS_ARTIFACT_MATCH_LIMIT:
         return [f"{label} Actions evidence artifact listing is incomplete"]
     matches = [artifact for artifact in artifacts if isinstance(artifact, dict) and artifact.get("name") == expected_name]
-    if len(matches) != 1:
+    if len(matches) != 1 or len(matches) != len(artifacts):
         return [f"{label} must resolve exactly one attempt-bound Actions evidence artifact"]
     artifact = matches[0]
     artifact_id = artifact.get("id")
@@ -1445,15 +1530,14 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
     receipt_blobs = _fetch_repository_blobs_batch(receipt_locations, collection)
     payload_locations: list[tuple[str, str, str]] = []
     provenance_requests: list[list[str]] = []
-    artifact_listings: set[tuple[str, str]] = set()
-    for row, _, _, location in technical_plans:
+    artifact_scan_inputs: list[
+        tuple[str, str, str, int, tuple[str, str, str] | None, tuple[str, str, str]]
+    ] = []
+    for row, dimension, _, location in technical_plans:
         receipt = _parse_live_json_blob(receipt_blobs[location], "live technical evidence receipt")
-        payload_locations.extend(
-            [
-                (location[0], location[1], receipt.get("output_path")),
-                (location[0], location[1], receipt.get("artifact_path")),
-            ]
-        )
+        output_location = (location[0], location[1], receipt.get("output_path"))
+        artifact_location = (location[0], location[1], receipt.get("artifact_path"))
+        payload_locations.extend([output_location, artifact_location])
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
         if (
@@ -1462,20 +1546,27 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
             or run_attempt < 1
         ):
             raise AuditError("live technical evidence provenance URL is invalid")
-        provenance_requests.extend(
+        provenance_requests.append(
             [
-                [
-                    "gh",
-                    "api",
-                    f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
-                ],
-                _actions_artifact_request(row["repository"], run_id, 1),
+                "gh",
+                "api",
+                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
             ]
         )
-        artifact_listings.add((row["repository"], run_id))
+        artifact_scan_inputs.append(
+            (
+                row["repository"],
+                run_id,
+                dimension,
+                run_attempt,
+                output_location,
+                artifact_location,
+            )
+        )
     for row, location in funding_plans:
         receipt = _parse_live_json_blob(receipt_blobs[location], "live maintenance funding receipt")
-        payload_locations.append((location[0], location[1], receipt.get("artifact_path")))
+        artifact_location = (location[0], location[1], receipt.get("artifact_path"))
+        payload_locations.append(artifact_location)
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
         if (
@@ -1484,29 +1575,50 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
             or run_attempt < 1
         ):
             raise AuditError("live maintenance funding provenance URL is invalid")
-        provenance_requests.extend(
+        provenance_requests.append(
             [
-                [
-                    "gh",
-                    "api",
-                    f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
-                ],
-                _actions_artifact_request(row["repository"], run_id, 1),
+                "gh",
+                "api",
+                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
             ]
         )
-        artifact_listings.add((row["repository"], run_id))
-    _fetch_repository_blobs_batch(payload_locations, collection)
-    prefetched = collection.run_json_batch(provenance_requests)
-    pagination_requests: list[list[str]] = []
-    for repository, run_id in sorted(artifact_listings):
-        first_request = _actions_artifact_request(repository, run_id, 1)
-        page_count = _actions_artifact_page_count(prefetched[tuple(first_request)])
-        pagination_requests.extend(
-            _actions_artifact_request(repository, run_id, page)
-            for page in range(2, page_count + 1)
+        artifact_scan_inputs.append(
+            (
+                row["repository"],
+                run_id,
+                "maintenance-funding",
+                run_attempt,
+                None,
+                artifact_location,
+            )
         )
-    if pagination_requests:
-        collection.run_json_batch(pagination_requests)
+    payload_blobs = _fetch_repository_blobs_batch(payload_locations, collection)
+    collection.run_json_batch(provenance_requests)
+    _scan_actions_artifacts(
+        [
+            (
+                repository,
+                run_id,
+                _production_artifact_name(
+                    dimension,
+                    run_attempt,
+                    hashlib.sha256(payload_blobs[output_location]).hexdigest()
+                    if output_location is not None
+                    else None,
+                    hashlib.sha256(payload_blobs[artifact_location]).hexdigest(),
+                ),
+            )
+            for (
+                repository,
+                run_id,
+                dimension,
+                run_attempt,
+                output_location,
+                artifact_location,
+            ) in artifact_scan_inputs
+        ],
+        collection,
+    )
 
 
 def collect_live_evidence_receipts(
@@ -1552,6 +1664,8 @@ def collect_live_evidence_receipts(
                 receipt.get("artifact_path"),
                 collection,
             )
+            output_sha256 = hashlib.sha256(output).hexdigest()
+            artifact_sha256 = hashlib.sha256(artifact).hexdigest()
             run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
             run_attempt = receipt.get("run_attempt")
             if (
@@ -1571,6 +1685,12 @@ def collect_live_evidence_receipts(
             production_artifact = _collect_actions_artifacts(
                 row["repository"],
                 run_id,
+                _production_artifact_name(
+                    dimension,
+                    run_attempt,
+                    output_sha256,
+                    artifact_sha256,
+                ),
                 collection,
             )
             resolved: dict[str, Any] = {
@@ -1578,8 +1698,8 @@ def collect_live_evidence_receipts(
                 "receipt_repository": receipt_repository,
                 "receipt_commit": receipt_commit,
                 "receipt_sha256": hashlib.sha256(receipt_blob).hexdigest(),
-                "output_sha256": hashlib.sha256(output).hexdigest(),
-                "artifact_sha256": hashlib.sha256(artifact).hexdigest(),
+                "output_sha256": output_sha256,
+                "artifact_sha256": artifact_sha256,
                 "provenance": provenance,
                 "production_artifact": production_artifact,
             }
@@ -1629,6 +1749,7 @@ def collect_live_evidence_receipts(
                     raise AuditError("live maintenance funding artifact is invalid") from exc
                 if not isinstance(funding_artifact_payload, dict):
                     raise AuditError("live maintenance funding artifact is not an object")
+                funding_artifact_sha256 = hashlib.sha256(funding_artifact).hexdigest()
                 funding_run_id = _actions_run_id(
                     funding_receipt.get("provenance_url"),
                     str(row.get("repository") or ""),
@@ -1651,6 +1772,12 @@ def collect_live_evidence_receipts(
                 funding_production_artifact = _collect_actions_artifacts(
                     row["repository"],
                     funding_run_id,
+                    _production_artifact_name(
+                        "maintenance-funding",
+                        funding_run_attempt,
+                        None,
+                        funding_artifact_sha256,
+                    ),
                     collection,
                 )
                 resolved["funding"] = {
@@ -1659,7 +1786,7 @@ def collect_live_evidence_receipts(
                     "receipt_commit": funding_commit,
                     "receipt_sha256": hashlib.sha256(funding_receipt_blob).hexdigest(),
                     "artifact": funding_artifact_payload,
-                    "artifact_sha256": hashlib.sha256(funding_artifact).hexdigest(),
+                    "artifact_sha256": funding_artifact_sha256,
                     "provenance": funding_provenance,
                     "production_artifact": funding_production_artifact,
                 }
