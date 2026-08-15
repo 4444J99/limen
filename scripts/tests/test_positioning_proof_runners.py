@@ -571,11 +571,19 @@ class PositioningProofRunnerTest(unittest.TestCase):
             'The API key is "hunter2alpha".',
             "The password is correct-horse-battery-staple",
             "The password was hunter2alpha",
+            "token is hunter2alpha",
+            "credential: hunter2alpha",
+            "passphrase was hunter2alpha",
         ):
             with self.subTest(value=value):
                 findings = COST._find_forbidden_public_material({"limitations": [value]})
                 self.assertEqual({"$.limitations[0]"}, findings)
-        for value in ("The API key is not collected.", 'The API key is "not collected".'):
+        for value in (
+            "The API key is not collected.",
+            'The API key is "not collected".',
+            "token is required",
+            "token budget is bounded",
+        ):
             with self.subTest(value=value):
                 self.assertEqual(set(), COST._find_forbidden_public_material({"limitations": [value]}))
 
@@ -1694,7 +1702,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
         remote = subprocess.CompletedProcess(
             [],
             0,
-            (f"ref: refs/heads/main\tHEAD\n{'d' * 40}\tHEAD\n").encode(),
+            (f"ref: refs/heads/main\tHEAD\n{'a' * 40}\tHEAD\n").encode(),
             b"",
         )
         with tempfile.TemporaryDirectory() as directory:
@@ -1712,7 +1720,7 @@ class PositioningProofRunnerTest(unittest.TestCase):
             self.assertEqual("b" * 40, metadata["proof_contract_blob"])
             self.assertEqual(RECEIPT.hashlib.sha256(committed).hexdigest(), metadata["proof_contract_sha256"])
             self.assertEqual("main", metadata["proof_contract_canonical_branch"])
-            self.assertEqual("d" * 40, metadata["proof_contract_canonical_head"])
+            self.assertEqual("a" * 40, metadata["proof_contract_canonical_head"])
 
             contract.write_bytes(b'{"exact_head_receipt_plan":{"flagship_predicates":{"limen":{}}}}')
             with (
@@ -1731,6 +1739,21 @@ class PositioningProofRunnerTest(unittest.TestCase):
                 mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=remote),
                 mock.patch.object(RECEIPT, "_canonical_main_contains_head", return_value=False),
                 self.assertRaisesRegex(ValueError, "not contained in canonical Limen main"),
+            ):
+                RECEIPT._proof_contract_snapshot()
+
+            advanced_remote = subprocess.CompletedProcess(
+                [],
+                0,
+                (f"ref: refs/heads/main\tHEAD\n{'d' * 40}\tHEAD\n").encode(),
+                b"",
+            )
+            with (
+                mock.patch.object(RECEIPT, "PROOF_CONTRACT", contract),
+                mock.patch.object(RECEIPT, "_run_git", side_effect=completed),
+                mock.patch.object(RECEIPT, "_run_canonical_remote", return_value=advanced_remote),
+                mock.patch.object(RECEIPT, "_canonical_main_contains_head", return_value=True),
+                self.assertRaisesRegex(ValueError, "not the latest canonical Limen main head"),
             ):
                 RECEIPT._proof_contract_snapshot()
 

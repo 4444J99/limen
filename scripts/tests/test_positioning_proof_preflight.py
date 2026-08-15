@@ -974,6 +974,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             "<p style='visibility:hidden'>hidden@example.invalid</p>",
             "<dialog>hidden@example.invalid</dialog>",
             "<details>hidden@example.invalid</details>",
+            "<datalist><option>hidden@example.invalid</option></datalist>",
             "<div popover>hidden@example.invalid</div>",
         ):
             with self.subTest(hidden_markup=hidden_markup):

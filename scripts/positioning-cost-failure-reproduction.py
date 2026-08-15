@@ -86,7 +86,8 @@ PUBLIC_PRIVATE_IDENTIFIER_VALUE = re.compile(
     r"(?=[A-Za-z0-9._:/-]*\d)[A-Za-z0-9][A-Za-z0-9._:/-]*"
 )
 PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
-    r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
+    r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd|passcode|passphrase|secret|credential|token|"
+    r"api[-_ ]?key|access[-_ ]?token|"
     r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
     r"private[-_ ]?key|recovery[-_ ]?code)"
     r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"

@@ -1681,7 +1681,7 @@ def _normalized_surface_text(value: str) -> str:
 
 
 class _VisibleSurfaceParser(HTMLParser):
-    _HIDDEN_TAGS = {"head", "script", "style", "template", "title", "noscript"}
+    _HIDDEN_TAGS = {"datalist", "head", "script", "style", "template", "title", "noscript"}
     _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script", "svg"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {

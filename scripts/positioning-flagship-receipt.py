@@ -210,6 +210,8 @@ def _proof_contract_snapshot() -> tuple[dict[str, Any], dict[str, str]]:
         raise ValueError("canonical Limen proof-contract authority is unavailable")
     if not _canonical_main_contains_head(CANONICAL_REPOSITORY, remote_branch, remote_head, head_value):
         raise ValueError("proof contract runner head is not contained in canonical Limen main")
+    if head_value != remote_head:
+        raise ValueError("proof contract runner head is not the latest canonical Limen main head")
     try:
         worktree_bytes = PROOF_CONTRACT.read_bytes()
     except OSError as exc:
