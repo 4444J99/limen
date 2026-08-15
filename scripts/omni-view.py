@@ -19,13 +19,13 @@ own output files. ([[no-never-happens-again]])
 
 import json
 import os
-import re
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
 from _board_custody import board_path  # noqa: E402
+from _ships_24h import read_ships_24h  # noqa: E402
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -37,8 +37,6 @@ MEMORY_DIR = Path(
 PLANS_DIR = Path(os.environ.get("LIMEN_PLANS_DIR", Path.home() / ".claude" / "plans"))
 
 _SPARK = "▁▂▃▄▅▆▇█"
-_PR_RE = re.compile(r"[\w.\-]+/[\w.\-]+#\d+")
-_TS_RE = re.compile(r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
 
 
 def _load_json(path, default):
@@ -70,26 +68,6 @@ def _sparkline(vals):
     if hi == lo:
         return _SPARK[0] * len(vals)
     return "".join(_SPARK[int((v - lo) / (hi - lo) * (len(_SPARK) - 1))] for v in vals)
-
-
-def _ships_last_24h():
-    try:
-        lines = (LOGS / "merge-drain.log").read_text().splitlines()
-    except OSError:
-        return 0, []
-    cutoff = datetime.now() - timedelta(hours=24)
-    refs = []
-    for ln in lines:
-        m = _TS_RE.search(ln)
-        if not m:
-            continue
-        try:
-            when = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            continue
-        if when >= cutoff:
-            refs += _PR_RE.findall(ln)
-    return len(refs), refs[-10:]
 
 
 def _board_status():
@@ -124,7 +102,7 @@ def build_view():
     corpus = _load_json(LOGS / "corpus-view.json", {})
     ingest = _load_json(LOGS / "ingest-coverage.json", {})  # Strand 3 writes this; fail-open
     ticks = _ticks()
-    ships_total, recent_refs = _ships_last_24h()
+    ships_total, _ships_by_repo, recent_refs = read_ships_24h(ROOT)
 
     fleet = {
         n: {"health": i.get("health"), "headroom_pct": i.get("headroom_pct"), "runway_h": i.get("runway_h")}

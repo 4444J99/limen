@@ -223,6 +223,36 @@ sensors:
         severity: advisory
         escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
 
+  ships-24h-refresh:
+    section: "heartbeat"
+    title: "record the ground-truth 24h ships count (self-merges + drain-merges, all owners)"
+    gate: LIMEN_SHIPS_24H_REFRESH
+    default: "1"
+    source: [heartbeat]
+    owner: money-view
+    # money-view.py / omni-view.py used to count "PRs shipped in the last 24h" by grep-parsing
+    # logs/merge-drain.log — written ONLY by the batch merge-drain.py daemon's own merges. Sessions
+    # that self-merge their own green PRs directly (merge-policy.sh -> await-pr.sh --merge, the
+    # documented normal path) never touch that log, so the count structurally missed most of the
+    # fleet's real throughput and notify-events.py's ship-milestone push (10/25/50/100 in 24h)
+    # could never fire from real activity. Measured 2026-08-15: merge-drain.log read merged=0 on
+    # every beat all day while gh showed 63 real merges. This rung queries GitHub directly and
+    # caches the answer so the view scripts stay pure local-file readers.
+    #
+    # Cheap due-check, not the census — same shape as github-pr-debt above. ships-24h-refresh.py
+    # owns its own wall-clock interval (LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES, default 20m) and
+    # no-ops until due.
+    cadence:
+      env: LIMEN_BEAT_SHIPS_24H
+      default: 4
+    timeout:
+      env: LIMEN_SHIPS_24H_REFRESH_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/ships-24h-refresh.py"
+        severity: advisory
+        escalation: "ships-24h cache did not refresh — money-view/omni-view/notify-events fall back to 0 ships"
+
   github-pr-autotype:
     section: "heartbeat"
     title: "auto-type newly-arrived mechanical PRs lifecycle:blocked (fail-closed) so the estate predicate cannot rebound at arrival rate"
