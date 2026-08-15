@@ -94,7 +94,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         output = f"{dimension}:{status}:output\n".encode("utf-8")
         artifact = cls.evidence_artifact(row, dimension, status)
         receipt = {
-            "schema_version": "limen.psp_p13_w03_technical_evidence.v2",
+            "schema_version": "limen.psp_p13_w03_technical_evidence.v3",
             "repository": row["repository"],
             "tested_commit": row["observed_head"],
             "dimension": dimension,
@@ -131,7 +131,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
     def funding_receipt(cls, row: dict, capacity: int = 1, estimate: int = 1) -> dict:
         artifact = cls.funding_artifact(row, capacity, estimate)
         return {
-            "schema_version": "limen.psp_p13_w03_maintenance_funding.v1",
+            "schema_version": "limen.psp_p13_w03_maintenance_funding.v2",
             "repository": row["repository"],
             "tested_commit": row["observed_head"],
             "status": "funded",
@@ -154,6 +154,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "receipt": receipt,
             "receipt_repository": receipt["repository"],
             "receipt_commit": "f" * 40,
+            "receipt_sha256": MODULE.hashlib.sha256(json.dumps(receipt).encode("utf-8")).hexdigest(),
             "output_sha256": MODULE.hashlib.sha256(f"{dimension}:{status}:output\n".encode("utf-8")).hexdigest(),
             "artifact_sha256": MODULE.hashlib.sha256(cls.evidence_artifact(row, dimension, status)).hexdigest(),
             "provenance": {
@@ -166,6 +167,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "run_started_at": "2026-08-14T23:59:00Z",
                 "updated_at": receipt["observed_at"],
             },
+            "production_artifact": cls.production_artifact(receipt),
         }
         if dimension == "security":
             resolved["assessment"] = cls.security_assessment(row)
@@ -179,6 +181,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "receipt": receipt,
             "receipt_repository": receipt["repository"],
             "receipt_commit": "f" * 40,
+            "receipt_sha256": MODULE.hashlib.sha256(json.dumps(receipt).encode("utf-8")).hexdigest(),
             "artifact": json.loads(artifact),
             "artifact_sha256": MODULE.hashlib.sha256(artifact).hexdigest(),
             "provenance": {
@@ -191,6 +194,41 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "run_started_at": "2026-08-14T23:59:00Z",
                 "updated_at": receipt["observed_at"],
             },
+            "production_artifact": cls.production_artifact(receipt, funding=True),
+        }
+
+    @staticmethod
+    def production_artifact(receipt: dict, *, funding: bool = False) -> dict:
+        artifact_id = 9002 if funding else 9001
+        dimension = "maintenance-funding" if funding else receipt["dimension"]
+        output_digest = None if funding else receipt["output_sha256"]
+        receipt_sha256 = MODULE.hashlib.sha256(json.dumps(receipt).encode("utf-8")).hexdigest()
+        return {
+            "total_count": 1,
+            "artifacts": [
+                {
+                    "id": artifact_id,
+                    "name": MODULE._production_artifact_name(
+                        dimension,
+                        receipt["run_attempt"],
+                        receipt_sha256,
+                        output_digest,
+                        receipt["artifact_sha256"],
+                    ),
+                    "expired": False,
+                    "digest": f"sha256:{'a' * 64}",
+                    "created_at": "2026-08-14T23:59:30Z",
+                    "updated_at": "2026-08-14T23:59:40Z",
+                    "archive_download_url": (
+                        f"https://api.github.com/repos/{receipt['repository']}"
+                        f"/actions/artifacts/{artifact_id}/zip"
+                    ),
+                    "workflow_run": {
+                        "id": int(receipt["provenance_url"].rsplit("/", 1)[-1]),
+                        "head_sha": receipt["tested_commit"],
+                    },
+                }
+            ],
         }
 
     @staticmethod
@@ -493,12 +531,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")
         ), mock.patch.object(
             MODULE, "_fetch_repository_blob", side_effect=[output, artifact]
-        ), mock.patch.object(MODULE, "_run_json", return_value=resolved["provenance"]) as run:
+        ), mock.patch.object(
+            MODULE,
+            "_run_json",
+            side_effect=[resolved["provenance"], resolved["production_artifact"]],
+        ) as run:
             receipts = MODULE.collect_live_evidence_receipts(changed)
         self.assertEqual(resolved, receipts[(row["candidate_id"], "build")])
         self.assertEqual(
-            ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
-            run.call_args.args[0],
+            [
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100"],
+            ],
+            [call.args[0] for call in run.call_args_list],
         )
         broken = self.evidence_receipt(row, "build")
         broken["exit_code"] = 1
@@ -562,7 +607,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             mock.patch.object(
                 MODULE,
                 "_run_json",
-                side_effect=[technical["provenance"], funding["provenance"]],
+                side_effect=[
+                    technical["provenance"],
+                    technical["production_artifact"],
+                    funding["provenance"],
+                    funding["production_artifact"],
+                ],
             ) as run,
         ):
             receipts = MODULE.collect_live_evidence_receipts(changed)
@@ -571,7 +621,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(
             [
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/attempts/1"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/1234/artifacts?per_page=100"],
                 ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/attempts/1"],
+                ["gh", "api", f"repos/{row['repository']}/actions/runs/5678/artifacts?per_page=100"],
             ],
             [call.args[0] for call in run.call_args_list],
         )
@@ -615,7 +667,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "_fetch_repository_blob",
                 side_effect=[b"security:pass:output\n", artifact],
             ),
-            mock.patch.object(MODULE, "_run_json", return_value=provenance),
+            mock.patch.object(
+                MODULE,
+                "_run_json",
+                side_effect=[provenance, self.production_artifact(receipt)],
+            ),
         ):
             resolved = MODULE.collect_live_evidence_receipts(changed)[(row["candidate_id"], "security")]
         self.assertEqual(assessment, resolved["assessment"])
@@ -887,7 +943,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertEqual(2, fetch_batch.call_count)
         self.assertEqual({technical_location, funding_location}, set(fetch_batch.call_args_list[0].args[0]))
         self.assertEqual(3, len(set(fetch_batch.call_args_list[1].args[0])))
-        self.assertEqual(2, len(collection.run_json_batch.call_args.args[0]))
+        self.assertEqual(4, len(collection.run_json_batch.call_args.args[0]))
 
     def test_large_repository_blob_uses_exact_bounded_git_blob_fallback(self) -> None:
         content = b"x" * (MODULE.GITHUB_CONTENTS_INLINE_MAX_BYTES + 1)
@@ -918,9 +974,16 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                     collection,
                 ),
             )
+            self.assertEqual(
+                content,
+                MODULE._fetch_repository_blob(
+                    "organvm/limen",
+                    "f" * 40,
+                    "docs/evidence.bin",
+                    collection,
+                ),
+            )
         self.assertEqual(2, run.call_count)
-        self.assertIs(collection, run.call_args_list[0].kwargs["collection"])
-        self.assertIs(collection, run.call_args_list[1].kwargs["collection"])
         self.assertEqual(
             ["gh", "api", f"repos/organvm/limen/git/blobs/{blob_sha}"],
             run.call_args_list[1].args[0],
@@ -943,11 +1006,62 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE._fetch_repository_blob("organvm/limen", "f" * 40, "docs/evidence.bin")
         self.assertEqual(1, run.call_count)
 
+        small_blobs = {"docs/a.bin": b"aaaaa", "docs/b.bin": b"bbbbb"}
+
+        def metadata(args: list[str], timeout: int = 240) -> dict:
+            path = next(path for path in small_blobs if path in args[-1])
+            value = small_blobs[path]
+            return {
+                "type": "file",
+                "size": len(value),
+                "sha": MODULE.hashlib.sha1(
+                    f"blob {len(value)}\0".encode("ascii") + value
+                ).hexdigest(),
+                "encoding": "none",
+                "content": "",
+            }
+
+        bounded = MODULE.LiveCollection(call_limit=4)
+        locations = [("organvm/limen", "f" * 40, path) for path in small_blobs]
+        with (
+            mock.patch.object(MODULE, "GITHUB_CONTENTS_INLINE_MAX_BYTES", 4),
+            mock.patch.object(MODULE, "LIVE_COLLECTION_BLOB_AGGREGATE_MAX_BYTES", 8),
+            mock.patch.object(MODULE, "_run_json", side_effect=metadata) as run,
+            self.assertRaisesRegex(MODULE.AuditError, "aggregate byte budget exhausted"),
+        ):
+            MODULE._fetch_repository_blobs_batch(locations, bounded)
+        self.assertEqual(2, run.call_count)
+
     def test_live_receipt_rejects_future_chronology_and_allows_later_receipt_commit(self) -> None:
         row = self.public_row()
         receipt = self.evidence_receipt(row, "deploy")
         self.assertNotEqual(row["observed_head"], "f" * 40)
         self.assertTrue(MODULE._url_proves_dimension(self.receipt_url(row, "deploy"), row["observed_head"], row["repository"], "deploy"))
+        resolved = self.resolved_evidence(receipt)
+        self.assertEqual(
+            [],
+            MODULE._evidence_receipt_errors(
+                resolved,
+                row["repository"],
+                row["observed_head"],
+                "deploy",
+                "verified_pass",
+                "candidate.deploy",
+            ),
+        )
+        unbound = self.resolved_evidence(receipt)
+        unbound["production_artifact"]["artifacts"][0]["name"] = "self-authored-later-receipt"
+        self.assertIn(
+            "candidate.deploy must resolve exactly one attempt-bound Actions evidence artifact",
+            MODULE._evidence_receipt_errors(
+                unbound,
+                row["repository"],
+                row["observed_head"],
+                "deploy",
+                "verified_pass",
+                "candidate.deploy",
+            ),
+        )
         receipt["observed_at"] = "9999-12-31T23:59:59Z"
         resolved = self.resolved_evidence(receipt)
         self.assertTrue(
@@ -1553,6 +1667,22 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ["required blocker remains uncleared"],
             MODULE.required_blocker_errors(changed, f"{candidate_id}:restricted_private_evidence"),
         )
+        self.assertEqual(
+            [],
+            MODULE.required_blocker_errors(
+                changed,
+                f"{candidate_id}:restricted_private_evidence",
+                {candidate_id: digest},
+            ),
+        )
+        self.assertEqual(
+            ["required blocker remains uncleared"],
+            MODULE.required_blocker_errors(
+                changed,
+                f"{candidate_id}:restricted_private_evidence",
+                {candidate_id: "b" * 64},
+            ),
+        )
         errors = MODULE.validate_audit(
             changed,
             self.snapshot,
@@ -1619,6 +1749,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             )
             tracked_file = package / "tracked.md"
             tracked_file.write_text("owner/secretrepo", encoding="utf-8")
+            undecodable = package / "binary.dat"
+            undecodable.write_bytes(b"\xff\xfeowner/secretrepo")
             with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
                 MODULE.subprocess,
                 "run",
@@ -1626,6 +1758,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
             self.assertEqual(["safe.md", "tracked.md"], leaks)
+            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
+                MODULE.subprocess,
+                "run",
+                return_value=mock.Mock(returncode=0, stdout="binary.dat\n"),
+            ), self.assertRaisesRegex(MODULE.AuditError, "not valid UTF-8"):
+                MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
 
     def test_generic_private_bare_name_in_prose_is_not_an_identity_leak(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

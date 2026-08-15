@@ -117,7 +117,7 @@ drift, unpinned evidence, metadata promoted to build/test/deploy proof, score or
 unowned blockers, private detail, private-name leakage, and transfer eligibility with any hard
 blocker. Live mode re-queries all public repository heads and scans the tracked public C11 package
 against private full names and unique private bare tokens held only in memory. That scan is
-case-insensitive: full `owner/repository` identities are checked in tracked file content and paths,
+case-insensitive and fail-closed on any non-UTF-8 tracked file: full `owner/repository` identities are checked in tracked file content and paths,
 while ambiguous bare names are checked only in tracked path names and components so ordinary prose
 cannot become a false identity disclosure.
 
@@ -129,7 +129,10 @@ artifact paths resolve at the receipt commit, must be distinct, and must match i
 SHA-256 digests. Trusted live validation also resolves the receipt's exact GitHub Actions
 `run_attempt` through the attempt-specific endpoint; its head, attempt, conclusion, predicate path,
 and completion time bind the tested commit, pass/fail semantics, and non-future receipt chronology.
-The separate maintenance-funding provenance uses the same attempt-specific rule. Self-authored commands or hashes, reused blobs,
+The same attempt must expose exactly one non-expired Actions evidence artifact whose repository-bound
+metadata, platform digest, creation window, and exact digest-bearing name bind the later receipt bytes
+and its independently resolved output and artifact bytes to that attempt. The separate maintenance-funding provenance uses
+the same attempt-specific artifact rule. Self-authored commands or hashes, reused blobs,
 invented paths, and generic commit URLs do not prove a dimension. A pass requires integer exit code
 zero, while a verified failure requires a non-boolean nonzero integer plus an executed `failure` or
 `timed_out` workflow conclusion; skipped, cancelled, neutral, and other non-executed runs are not
@@ -164,7 +167,8 @@ GraphQL observation independently resolves each recorded public head as an immut
 own repository, including blocked rows, without turning PR acceptance into a moving-branch gate.
 The call ceiling is derived from the exact verified-receipt surface, capped by the
 accepted 54-public-candidate denominator and worst-case Contents-to-Git-blob fallbacks, so repeated
-lookups cannot restart the gate clock.
+lookups cannot restart the gate clock. Blob responses are processed in bounded non-cached chunks;
+decoded evidence lives in one immutable blob cache with a complete 64 MiB aggregate ceiling.
 Contents API evidence above 1 MiB resolves through its exact Git blob SHA with a 100 MiB fail-closed
 ceiling; size and Git-object digest must match before receipt SHA-256 validation.
 A live refresh preserves an accepted row only while its repository and exact head are unchanged; a moved
@@ -172,7 +176,9 @@ head resets that row to unresolved instead of erasing unrelated candidate eviden
 private clearance is tracked only as `clearance_pending_live`, with an opaque digest, its blocker,
 score zero, and `transfer_eligible: false`. Deterministic scoped CI can validate that explicit
 deferral but cannot self-attest `cleared`; trusted private-inclusive live validation must confirm the
-matching owner-controlled custody receipt. The current accepted evidence is therefore conservative:
+matching owner-controlled custody receipt. Once confirmed, the candidate-bound `--require-cleared`
+predicate truthfully passes for that one private evidence gate while the tracked public-safe row remains
+deferred and non-transferable. The current accepted evidence is therefore conservative:
 all 62 candidates remain non-transferable.
 
 | Screen result | Candidates |

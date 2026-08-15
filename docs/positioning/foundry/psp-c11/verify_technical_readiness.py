@@ -153,9 +153,11 @@ RESOLVED_EVIDENCE_KEYS = {
     "receipt",
     "receipt_repository",
     "receipt_commit",
+    "receipt_sha256",
     "output_sha256",
     "artifact_sha256",
     "provenance",
+    "production_artifact",
 }
 RESOLVED_MAINTENANCE_EVIDENCE_KEYS = RESOLVED_EVIDENCE_KEYS | {"funding"}
 RESOLVED_SECURITY_EVIDENCE_KEYS = RESOLVED_EVIDENCE_KEYS | {"assessment"}
@@ -186,9 +188,11 @@ RESOLVED_FUNDING_KEYS = {
     "receipt",
     "receipt_repository",
     "receipt_commit",
+    "receipt_sha256",
     "artifact",
     "artifact_sha256",
     "provenance",
+    "production_artifact",
 }
 FUNDING_ARTIFACT_KEYS = {
     "schema_version",
@@ -219,9 +223,12 @@ PRIVATE_CLEARANCE_ENV = "LIMEN_P13_W03_PRIVATE_CLEARANCE_RECEIPTS"
 LIVE_COLLECTION_DEADLINE_SECONDS = 270
 GITHUB_CONTENTS_INLINE_MAX_BYTES = 1024 * 1024
 GITHUB_BLOB_MAX_BYTES = 100 * 1024 * 1024
+LIVE_COLLECTION_BLOB_AGGREGATE_MAX_BYTES = 64 * 1024 * 1024
+LIVE_COLLECTION_BLOB_METADATA_BATCH_SIZE = 16
+LIVE_COLLECTION_BLOB_RESPONSE_BATCH_MAX_BYTES = 16 * 1024 * 1024
 LIVE_COLLECTION_BASE_CALLS = 5
-LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT = 7
-LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT = 5
+LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT = 8
+LIVE_COLLECTION_CALLS_PER_FUNDING_RECEIPT = 6
 LIVE_COLLECTION_BATCH_WORKERS = 8
 LIVE_COLLECTION_MAX_CALL_LIMIT = LIVE_COLLECTION_BASE_CALLS + SOURCE_LOCK["visibility"]["public"] * (
     len(DIMENSION_RECEIPT_TOKENS) * LIVE_COLLECTION_CALLS_PER_TECHNICAL_RECEIPT
@@ -264,6 +271,27 @@ class LiveCollection:
         self._call_limit = call_limit
         self.calls = 0
         self._json_cache: dict[tuple[str, ...], dict[str, Any]] = {}
+        self._blob_cache: dict[tuple[str, str, str], bytes] = {}
+        self._blob_bytes = 0
+
+    def get_blob(self, location: tuple[str, str, str]) -> bytes | None:
+        return self._blob_cache.get(location)
+
+    def ensure_blob_capacity(self, additional_bytes: int) -> None:
+        if not _is_nonnegative_int(additional_bytes) or (
+            self._blob_bytes + additional_bytes > LIVE_COLLECTION_BLOB_AGGREGATE_MAX_BYTES
+        ):
+            raise AuditError("live evidence aggregate byte budget exhausted")
+
+    def store_blob(self, location: tuple[str, str, str], value: bytes) -> None:
+        previous = self._blob_cache.get(location)
+        if previous is not None:
+            if previous != value:
+                raise AuditError("live evidence blob cache binding drift")
+            return
+        self.ensure_blob_capacity(len(value))
+        self._blob_cache[location] = value
+        self._blob_bytes += len(value)
 
     def run_json(self, args: list[str], timeout: int) -> dict[str, Any]:
         return self.run_json_batch([args], timeout)[tuple(args)]
@@ -272,6 +300,8 @@ class LiveCollection:
         self,
         requests: list[list[str]],
         timeout: int = 240,
+        *,
+        cache: bool = True,
     ) -> dict[tuple[str, ...], dict[str, Any]]:
         keys = list(dict.fromkeys(tuple(request) for request in requests))
         if not keys:
@@ -279,9 +309,9 @@ class LiveCollection:
         values = {
             key: copy.deepcopy(self._json_cache[key])
             for key in keys
-            if key in self._json_cache
+            if cache and key in self._json_cache
         }
-        missing = [key for key in keys if key not in self._json_cache]
+        missing = [key for key in keys if key not in values]
         remaining = self._deadline - self._clock()
         if self.calls + len(missing) > self._call_limit or remaining <= 0:
             raise AuditError("live evidence collection budget exhausted")
@@ -305,8 +335,9 @@ class LiveCollection:
                 pending = {executor.submit(fetch, key): key for key in missing}
                 for future in concurrent.futures.as_completed(pending):
                     values[pending[future]] = future.result()
-        for key in missing:
-            self._json_cache[key] = copy.deepcopy(values[key])
+        if cache:
+            for key in missing:
+                self._json_cache[key] = copy.deepcopy(values[key])
         return {key: copy.deepcopy(values[key]) for key in keys}
 
 
@@ -492,6 +523,66 @@ def _actions_run_id(value: Any, repository: str) -> str | None:
     if "/".join(parts[:2]).casefold() != repository.casefold() or not parts[4].isdigit():
         return None
     return parts[4]
+
+
+def _production_artifact_name(
+    dimension: str,
+    run_attempt: int,
+    receipt_sha256: str,
+    output_sha256: str | None,
+    artifact_sha256: str,
+) -> str:
+    digests = f"-{output_sha256}" if output_sha256 is not None else ""
+    return f"psp-p13-w03-{dimension}-attempt-{run_attempt}-{receipt_sha256}{digests}-{artifact_sha256}"
+
+
+def _production_artifact_errors(
+    value: Any,
+    *,
+    repository: str,
+    observed_head: str,
+    run_id: str | None,
+    run_attempt: Any,
+    expected_name: str,
+    started: dt.datetime | None,
+    completed: dt.datetime | None,
+    label: str,
+) -> list[str]:
+    if not isinstance(value, dict) or not _is_nonnegative_int(value.get("total_count")):
+        return [f"{label} must resolve an attempt-bound Actions evidence artifact"]
+    artifacts = value.get("artifacts")
+    if not isinstance(artifacts, list) or value.get("total_count") != len(artifacts):
+        return [f"{label} Actions evidence artifact listing is incomplete"]
+    matches = [artifact for artifact in artifacts if isinstance(artifact, dict) and artifact.get("name") == expected_name]
+    if len(matches) != 1:
+        return [f"{label} must resolve exactly one attempt-bound Actions evidence artifact"]
+    artifact = matches[0]
+    artifact_id = artifact.get("id")
+    workflow_run = artifact.get("workflow_run")
+    created = _parse_timestamp(artifact.get("created_at"))
+    updated = _parse_timestamp(artifact.get("updated_at"))
+    digest = artifact.get("digest")
+    if (
+        not _is_nonnegative_int(artifact_id)
+        or artifact_id < 1
+        or artifact.get("expired") is not False
+        or artifact.get("archive_download_url")
+        != f"https://api.github.com/repos/{repository}/actions/artifacts/{artifact_id}/zip"
+        or not isinstance(digest, str)
+        or re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is None
+        or not isinstance(workflow_run, dict)
+        or str(workflow_run.get("id")) != run_id
+        or workflow_run.get("head_sha") != observed_head
+        or not _is_nonnegative_int(run_attempt)
+        or created is None
+        or updated is None
+        or started is None
+        or completed is None
+        or not started <= created <= updated <= dt.datetime.now(dt.UTC)
+        or created > completed
+    ):
+        return [f"{label} Actions evidence artifact is not bound to the recorded run attempt"]
+    return []
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
@@ -897,8 +988,8 @@ def _private_identity_leaks(private_names: set[str], private_bare_names: set[str
         content = ""
         try:
             content = path.read_text(encoding="utf-8").casefold()
-        except UnicodeDecodeError:
-            pass
+        except UnicodeDecodeError as exc:
+            raise AuditError("tracked public C11 file is not valid UTF-8") from exc
         for name in full_names:
             pattern = rf"(?<![{repository_character}]){re.escape(name)}(?:\.git)?(?![{repository_character}])"
             if re.search(pattern, content) or any(re.search(pattern, haystack) for haystack in path_haystacks):
@@ -1001,18 +1092,32 @@ def _fetch_repository_blob(
 ) -> bytes:
     if not SHA40.fullmatch(commit) or not _safe_relative_path(path):
         raise AuditError("technical evidence blob location is invalid")
-    response = _run_json(
-        ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"],
-        collection=collection,
+    location = (repository, commit, path)
+    if collection is not None:
+        cached = collection.get_blob(location)
+        if cached is not None:
+            return cached
+    args = ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
+    response = (
+        collection.run_json_batch([args], cache=False)[tuple(args)]
+        if collection is not None
+        else _run_json(args)
     )
     size = response.get("size")
-    if not _is_nonnegative_int(size) or size > GITHUB_BLOB_MAX_BYTES or response.get("type") != "file":
+    if (
+        not _is_nonnegative_int(size)
+        or size > GITHUB_BLOB_MAX_BYTES
+        or size > LIVE_COLLECTION_BLOB_AGGREGATE_MAX_BYTES
+        or response.get("type") != "file"
+    ):
         raise AuditError("live technical evidence blob metadata is invalid or exceeds GitHub maximums")
     encoded = response.get("content")
     if response.get("encoding") == "base64":
         decoded = _decode_github_base64(encoded, GITHUB_CONTENTS_INLINE_MAX_BYTES, "live technical evidence blob")
         if len(decoded) != size:
             raise AuditError("live technical evidence blob size drift")
+        if collection is not None:
+            collection.store_blob(location, decoded)
         return decoded
     blob_sha = response.get("sha")
     if (
@@ -1022,9 +1127,11 @@ def _fetch_repository_blob(
         or not SHA40.fullmatch(blob_sha)
     ):
         raise AuditError("live technical evidence blob is not decodable")
-    blob = _run_json(
-        ["gh", "api", f"repos/{repository}/git/blobs/{blob_sha}"],
-        collection=collection,
+    fallback_args = ["gh", "api", f"repos/{repository}/git/blobs/{blob_sha}"]
+    blob = (
+        collection.run_json_batch([fallback_args], cache=False)[tuple(fallback_args)]
+        if collection is not None
+        else _run_json(fallback_args)
     )
     if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
         raise AuditError("live technical evidence blob fallback binding drift")
@@ -1032,6 +1139,8 @@ def _fetch_repository_blob(
     git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
     if len(decoded) != size or git_digest != blob_sha:
         raise AuditError("live technical evidence blob fallback digest drift")
+    if collection is not None:
+        collection.store_blob(location, decoded)
     return decoded
 
 
@@ -1040,8 +1149,15 @@ def _fetch_repository_blobs_batch(
     collection: LiveCollection,
 ) -> dict[tuple[str, str, str], bytes]:
     unique = list(dict.fromkeys(locations))
+    resolved = {
+        location: cached
+        for location in unique
+        if (cached := collection.get_blob(location)) is not None
+    }
     requests: dict[tuple[str, str, str], list[str]] = {}
     for repository, commit, path in unique:
+        if (repository, commit, path) in resolved:
+            continue
         if not SHA40.fullmatch(commit) or not _safe_relative_path(path):
             raise AuditError("technical evidence blob location is invalid")
         requests[(repository, commit, path)] = [
@@ -1049,53 +1165,78 @@ def _fetch_repository_blobs_batch(
             "api",
             f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}",
         ]
-    responses = collection.run_json_batch(list(requests.values()))
-    resolved: dict[tuple[str, str, str], bytes] = {}
     fallbacks: dict[tuple[str, str, str], tuple[str, int, list[str]]] = {}
-    for location, args in requests.items():
-        response = responses[tuple(args)]
-        size = response.get("size")
-        if not _is_nonnegative_int(size) or size > GITHUB_BLOB_MAX_BYTES or response.get("type") != "file":
-            raise AuditError("live technical evidence blob metadata is invalid or exceeds GitHub maximums")
-        if response.get("encoding") == "base64":
-            decoded = _decode_github_base64(
-                response.get("content"),
-                GITHUB_CONTENTS_INLINE_MAX_BYTES,
-                "live technical evidence blob",
+    request_items = list(requests.items())
+    for offset in range(0, len(request_items), LIVE_COLLECTION_BLOB_METADATA_BATCH_SIZE):
+        chunk = request_items[offset : offset + LIVE_COLLECTION_BLOB_METADATA_BATCH_SIZE]
+        responses = collection.run_json_batch([args for _, args in chunk], cache=False)
+        for location, args in chunk:
+            response = responses[tuple(args)]
+            size = response.get("size")
+            if (
+                not _is_nonnegative_int(size)
+                or size > GITHUB_BLOB_MAX_BYTES
+                or size > LIVE_COLLECTION_BLOB_AGGREGATE_MAX_BYTES
+                or response.get("type") != "file"
+            ):
+                raise AuditError("live technical evidence blob metadata is invalid or exceeds GitHub maximums")
+            if response.get("encoding") == "base64":
+                decoded = _decode_github_base64(
+                    response.get("content"),
+                    GITHUB_CONTENTS_INLINE_MAX_BYTES,
+                    "live technical evidence blob",
+                )
+                if len(decoded) != size:
+                    raise AuditError("live technical evidence blob size drift")
+                collection.store_blob(location, decoded)
+                resolved[location] = decoded
+                continue
+            blob_sha = response.get("sha")
+            if (
+                response.get("encoding") != "none"
+                or size <= GITHUB_CONTENTS_INLINE_MAX_BYTES
+                or not isinstance(blob_sha, str)
+                or not SHA40.fullmatch(blob_sha)
+            ):
+                raise AuditError("live technical evidence blob is not decodable")
+            fallbacks[location] = (
+                blob_sha,
+                size,
+                ["gh", "api", f"repos/{location[0]}/git/blobs/{blob_sha}"],
             )
-            if len(decoded) != size:
-                raise AuditError("live technical evidence blob size drift")
+    collection.ensure_blob_capacity(sum(size for _, size, _ in fallbacks.values()))
+    fallback_items = list(fallbacks.items())
+    offset = 0
+    while offset < len(fallback_items):
+        chunk: list[tuple[tuple[str, str, str], tuple[str, int, list[str]]]] = []
+        chunk_bytes = 0
+        while offset < len(fallback_items):
+            item = fallback_items[offset]
+            size = item[1][1]
+            if chunk and chunk_bytes + size > LIVE_COLLECTION_BLOB_RESPONSE_BATCH_MAX_BYTES:
+                break
+            chunk.append(item)
+            chunk_bytes += size
+            offset += 1
+            if chunk_bytes >= LIVE_COLLECTION_BLOB_RESPONSE_BATCH_MAX_BYTES:
+                break
+        fallback_responses = collection.run_json_batch(
+            [args for _, (_, _, args) in chunk],
+            cache=False,
+        )
+        for location, (blob_sha, size, args) in chunk:
+            blob = fallback_responses[tuple(args)]
+            if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
+                raise AuditError("live technical evidence blob fallback binding drift")
+            decoded = _decode_github_base64(
+                blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob"
+            )
+            git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
+            if len(decoded) != size or git_digest != blob_sha:
+                raise AuditError("live technical evidence blob fallback digest drift")
+            collection.store_blob(location, decoded)
             resolved[location] = decoded
-            continue
-        blob_sha = response.get("sha")
-        if (
-            response.get("encoding") != "none"
-            or size <= GITHUB_CONTENTS_INLINE_MAX_BYTES
-            or not isinstance(blob_sha, str)
-            or not SHA40.fullmatch(blob_sha)
-        ):
-            raise AuditError("live technical evidence blob is not decodable")
-        repository = location[0]
-        fallbacks[location] = (
-            blob_sha,
-            size,
-            ["gh", "api", f"repos/{repository}/git/blobs/{blob_sha}"],
-        )
-    fallback_responses = collection.run_json_batch(
-        [args for _, _, args in fallbacks.values()]
-    )
-    for location, (blob_sha, size, args) in fallbacks.items():
-        blob = fallback_responses[tuple(args)]
-        if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
-            raise AuditError("live technical evidence blob fallback binding drift")
-        decoded = _decode_github_base64(
-            blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob"
-        )
-        git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
-        if len(decoded) != size or git_digest != blob_sha:
-            raise AuditError("live technical evidence blob fallback digest drift")
-        resolved[location] = decoded
-    return resolved
+    return {location: resolved[location] for location in unique}
 
 
 def _exact_head_blob_location(value: Any) -> tuple[str, str, str]:
@@ -1249,13 +1390,24 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
         )
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
-        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
+        if (
+            run_id is None
+            or not _is_nonnegative_int(run_attempt)
+            or run_attempt < 1
+        ):
             raise AuditError("live technical evidence provenance URL is invalid")
-        provenance_requests.append(
+        provenance_requests.extend(
             [
-                "gh",
-                "api",
-                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+                ],
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/artifacts?per_page=100",
+                ],
             ]
         )
     for row, location in funding_plans:
@@ -1263,13 +1415,24 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
         payload_locations.append((location[0], location[1], receipt.get("artifact_path")))
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
-        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
+        if (
+            run_id is None
+            or not _is_nonnegative_int(run_attempt)
+            or run_attempt < 1
+        ):
             raise AuditError("live maintenance funding provenance URL is invalid")
-        provenance_requests.append(
+        provenance_requests.extend(
             [
-                "gh",
-                "api",
-                f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/attempts/{run_attempt}",
+                ],
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/artifacts?per_page=100",
+                ],
             ]
         )
     _fetch_repository_blobs_batch(payload_locations, collection)
@@ -1296,13 +1459,13 @@ def collect_live_evidence_receipts(
                 continue
             receipt_repository, receipt_commit, _ = _evidence_location(evidence_url)
             try:
-                decoded = _fetch_exact_head_blob(
+                receipt_blob = _fetch_exact_head_blob(
                     evidence_url,
                     receipt_repository,
                     receipt_commit,
                     collection,
-                ).decode("utf-8")
-                receipt = json.loads(decoded, object_pairs_hook=_object_without_duplicate_keys)
+                )
+                receipt = json.loads(receipt_blob.decode("utf-8"), object_pairs_hook=_object_without_duplicate_keys)
             except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
                 raise AuditError("live technical evidence receipt is invalid") from exc
             if not isinstance(receipt, dict):
@@ -1321,7 +1484,11 @@ def collect_live_evidence_receipts(
             )
             run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
             run_attempt = receipt.get("run_attempt")
-            if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
+            if (
+                run_id is None
+                or not _is_nonnegative_int(run_attempt)
+                or run_attempt < 1
+            ):
                 raise AuditError("live technical evidence provenance URL is invalid")
             provenance = _run_json(
                 [
@@ -1331,13 +1498,23 @@ def collect_live_evidence_receipts(
                 ],
                 collection=collection,
             )
+            production_artifact = _run_json(
+                [
+                    "gh",
+                    "api",
+                    f"repos/{row['repository']}/actions/runs/{run_id}/artifacts?per_page=100",
+                ],
+                collection=collection,
+            )
             resolved: dict[str, Any] = {
                 "receipt": receipt,
                 "receipt_repository": receipt_repository,
                 "receipt_commit": receipt_commit,
+                "receipt_sha256": hashlib.sha256(receipt_blob).hexdigest(),
                 "output_sha256": hashlib.sha256(output).hexdigest(),
                 "artifact_sha256": hashlib.sha256(artifact).hexdigest(),
                 "provenance": provenance,
+                "production_artifact": production_artifact,
             }
             if dimension == "security":
                 try:
@@ -1356,14 +1533,14 @@ def collect_live_evidence_receipts(
                     raise AuditError("live maintenance funding evidence URL is invalid")
                 funding_repository, funding_commit, _ = _evidence_location(funding_url)
                 try:
-                    funding_decoded = _fetch_exact_head_blob(
+                    funding_receipt_blob = _fetch_exact_head_blob(
                         funding_url,
                         funding_repository,
                         funding_commit,
                         collection,
-                    ).decode("utf-8")
+                    )
                     funding_receipt = json.loads(
-                        funding_decoded,
+                        funding_receipt_blob.decode("utf-8"),
                         object_pairs_hook=_object_without_duplicate_keys,
                     )
                 except (ValueError, UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
@@ -1404,13 +1581,23 @@ def collect_live_evidence_receipts(
                     ],
                     collection=collection,
                 )
+                funding_production_artifact = _run_json(
+                    [
+                        "gh",
+                        "api",
+                        f"repos/{row['repository']}/actions/runs/{funding_run_id}/artifacts?per_page=100",
+                    ],
+                    collection=collection,
+                )
                 resolved["funding"] = {
                     "receipt": funding_receipt,
                     "receipt_repository": funding_repository,
                     "receipt_commit": funding_commit,
+                    "receipt_sha256": hashlib.sha256(funding_receipt_blob).hexdigest(),
                     "artifact": funding_artifact_payload,
                     "artifact_sha256": hashlib.sha256(funding_artifact).hexdigest(),
                     "provenance": funding_provenance,
+                    "production_artifact": funding_production_artifact,
                 }
             receipts[(candidate_id, dimension)] = resolved
     return receipts
@@ -1589,7 +1776,7 @@ def _evidence_receipt_errors(
         return [f"{label} live receipt must use the exact evidence schema"]
     errors: list[str] = []
     expected_status = "pass" if state == "verified_pass" else "fail"
-    if receipt.get("schema_version") != "limen.psp_p13_w03_technical_evidence.v2":
+    if receipt.get("schema_version") != "limen.psp_p13_w03_technical_evidence.v3":
         errors.append(f"{label} live receipt schema version drift")
     if receipt.get("repository") != repository or receipt.get("tested_commit") != observed_head:
         errors.append(f"{label} live receipt repository or tested_commit drift")
@@ -1619,11 +1806,16 @@ def _evidence_receipt_errors(
         or resolved_evidence.get("output_sha256") == resolved_evidence.get("artifact_sha256")
     ):
         errors.append(f"{label} live receipt must bind independently distinct output and artifact evidence")
+    receipt_sha256 = resolved_evidence.get("receipt_sha256")
+    if not isinstance(receipt_sha256, str) or not SHA64.fullmatch(receipt_sha256):
+        errors.append(f"{label} live receipt resolved digest drift")
     provenance = resolved_evidence.get("provenance")
     run_id = _actions_run_id(receipt.get("provenance_url"), repository)
     run_attempt = receipt.get("run_attempt")
     expected_conclusion = "success" if state == "verified_pass" else None
     predicate_path = receipt.get("predicate_path")
+    started: dt.datetime | None = None
+    completed: dt.datetime | None = None
     if (
         not isinstance(provenance, dict)
         or run_id is None
@@ -1652,6 +1844,25 @@ def _evidence_receipt_errors(
         now = dt.datetime.now(dt.UTC)
         if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
             errors.append(f"{label} live receipt chronology drift")
+    errors.extend(
+        _production_artifact_errors(
+            resolved_evidence.get("production_artifact"),
+            repository=repository,
+            observed_head=observed_head,
+            run_id=run_id,
+            run_attempt=run_attempt,
+            expected_name=_production_artifact_name(
+                dimension,
+                run_attempt if _is_nonnegative_int(run_attempt) else 0,
+                receipt_sha256 if isinstance(receipt_sha256, str) else "",
+                resolved_evidence.get("output_sha256"),
+                resolved_evidence.get("artifact_sha256"),
+            ),
+            started=started,
+            completed=completed,
+            label=label,
+        )
+    )
     if receipt.get("external_effects") != []:
         errors.append(f"{label} live receipt must record zero external effects")
     if dimension == "security":
@@ -1687,7 +1898,7 @@ def _maintenance_funding_errors(
     if not _exact_keys(receipt, FUNDING_RECEIPT_KEYS):
         return [f"{label} must use the exact funding receipt schema"]
     errors: list[str] = []
-    if receipt.get("schema_version") != "limen.psp_p13_w03_maintenance_funding.v1":
+    if receipt.get("schema_version") != "limen.psp_p13_w03_maintenance_funding.v2":
         errors.append(f"{label} schema version drift")
     if (
         receipt.get("repository") != repository
@@ -1715,6 +1926,7 @@ def _maintenance_funding_errors(
     artifact_path = receipt.get("artifact_path")
     artifact = resolved_funding.get("artifact")
     artifact_sha256 = resolved_funding.get("artifact_sha256")
+    receipt_sha256 = resolved_funding.get("receipt_sha256")
     technical_digests = {
         technical_evidence.get("output_sha256"),
         technical_evidence.get("artifact_sha256"),
@@ -1725,6 +1937,8 @@ def _maintenance_funding_errors(
         or artifact_sha256 in technical_digests
     ):
         errors.append(f"{label} must bind an independently distinct funding artifact")
+    if not isinstance(receipt_sha256, str) or not SHA64.fullmatch(receipt_sha256):
+        errors.append(f"{label} resolved receipt digest drift")
     if not _exact_keys(artifact, FUNDING_ARTIFACT_KEYS):
         errors.append(f"{label} must resolve the exact funding artifact schema")
     else:
@@ -1748,6 +1962,8 @@ def _maintenance_funding_errors(
     run_id = _actions_run_id(receipt.get("provenance_url"), repository)
     run_attempt = receipt.get("run_attempt")
     predicate_path = receipt.get("predicate_path")
+    started: dt.datetime | None = None
+    completed: dt.datetime | None = None
     if (
         not isinstance(provenance, dict)
         or run_id is None
@@ -1778,6 +1994,25 @@ def _maintenance_funding_errors(
         now = dt.datetime.now(dt.UTC)
         if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
             errors.append(f"{label} chronology drift")
+    errors.extend(
+        _production_artifact_errors(
+            resolved_funding.get("production_artifact"),
+            repository=repository,
+            observed_head=observed_head,
+            run_id=run_id,
+            run_attempt=run_attempt,
+            expected_name=_production_artifact_name(
+                "maintenance-funding",
+                run_attempt if _is_nonnegative_int(run_attempt) else 0,
+                receipt_sha256 if isinstance(receipt_sha256, str) else "",
+                None,
+                artifact_sha256,
+            ),
+            started=started,
+            completed=completed,
+            label=label,
+        )
+    )
     if receipt.get("external_effects") != []:
         errors.append(f"{label} must record zero external effects")
     return errors
@@ -2249,7 +2484,11 @@ def validate_audit(
     return errors
 
 
-def required_blocker_errors(audit: dict[str, Any], requirement: str | None) -> list[str]:
+def required_blocker_errors(
+    audit: dict[str, Any],
+    requirement: str | None,
+    private_clearance_receipts: dict[str, str] | None = None,
+) -> list[str]:
     if requirement is None:
         return []
     candidate_id, separator, code = requirement.partition(":")
@@ -2277,6 +2516,14 @@ def required_blocker_errors(audit: dict[str, Any], requirement: str | None) -> l
         return ["--require-cleared blocker code is invalid for candidate visibility"]
     blockers: list[Any] = []
     if row.get("visibility") == "private":
+        clearance_digest = row.get("clearance_receipt_sha256")
+        if (
+            row.get("readiness_status") == "clearance_pending_live"
+            and isinstance(clearance_digest, str)
+            and private_clearance_receipts is not None
+            and private_clearance_receipts.get(candidate_id) == clearance_digest
+        ):
+            return []
         blockers.append(row.get("blocker"))
     else:
         blockers.extend(row.get("blockers", []))
@@ -2372,7 +2619,13 @@ def main() -> int:
                 private_clearance_receipts=private_clearance_receipts,
                 accepted_candidate_projection_sha256=accepted_projection_digest,
             )
-            errors.extend(required_blocker_errors(generated, args.require_cleared))
+            errors.extend(
+                required_blocker_errors(
+                    generated,
+                    args.require_cleared,
+                    private_clearance_receipts,
+                )
+            )
             if errors:
                 payload = _result(write_path, errors, generated)
                 print(json.dumps(payload, sort_keys=True) if args.json else "\n".join(errors))
@@ -2396,7 +2649,13 @@ def main() -> int:
             private_clearance_receipts=private_clearance_receipts,
             accepted_candidate_projection_sha256=accepted_projection_digest,
         )
-        errors.extend(required_blocker_errors(audit, args.require_cleared))
+        errors.extend(
+            required_blocker_errors(
+                audit,
+                args.require_cleared,
+                private_clearance_receipts,
+            )
+        )
         payload = _result(audit_path, errors, audit)
         print(
             json.dumps(payload, sort_keys=True)
