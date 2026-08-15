@@ -55,3 +55,46 @@ retrofitted while live; policy preserves that active process until its normal re
   or (b) upstream Claude Code gives its daemon/session processes a stable bundle identity
   instead of the per-version path (`ClaudeCode.app` exists at
   `~/.local/share/claude/ClaudeCode.app` but resumed sessions exec `versions/<v>` directly).
+
+## 2026-08-15 correction — Track C is upstream-blocked; no local ingress fix exists
+
+The same-day finding above over-promised: path (a) is not a path. The "unverified" disclaim
+hypothesis is now verified, and it forecloses every local ancestry fix. Responsibility map
+measured live (`responsibility_get_pid_responsible_for_pid`, 2.1.233 process tree):
+
+- daemon → **self-responsible**, exec'd via the `~/.local/bin/claude` symlink, which the
+  updater re-points into `versions/<v>` on every update — so the daemon's own identity rotates;
+- each bg-pty-host → **self-responsible**, exec'd from
+  `ClaudeCode.app/Contents/MacOS/claude` (stable path, same inode);
+- each session → responsible = its pty-host at spawn, but the vendor **disclaims at startup**
+  and the session lands on its own exec path `versions/<v>` — the rotating TCC client the
+  operator sees as an app named "2.1.233".
+
+`scripts/claude-identity-bundle.py` (sensor 0g8d) has owned this exact diagnosis since
+2026-08-05: Claude Code disclaims inherited TCC responsibility **by design**
+(`macDisclaimResponsibility: true` — a supervising host, `DomusAgentHost.app` included,
+cannot carry an identity into it), and the daemon composes the session's `versions/<v>` argv
+inside the signed vendor binary — "nothing outside it can redirect the session onto the
+bundled path." Its scope note says plainly that a green bundle keeper must not be read as
+"prompts are fixed." Hosting any ingress therefore cannot green Track C.
+
+Two structural consequences, both recorded here so the wait-state reads honestly:
+
+1. **The hosted-update requirement can never fire while autoupdate is on.**
+   `automatic_updates_enabled: true` means the vendor self-updates before any hosted update
+   runs, so `update_attempted` stays `false` forever — the formula's non-noop
+   through-the-host update is unreachable by construction, not by patience.
+2. **The fix is upstream.** anthropics/claude-code#86706 (open, filed 2026-08-14,
+   root-caused with TCC log evidence) and #74068 (open) cover exactly this defect: session
+   identity should ride the stable `com.anthropic.claude-code` bundle, not the per-version
+   path. Until a vendor version ships that, every update mints a new TCC client and the
+   prompt burst recurs. Cost evidence: `versions/2.1.233` now holds allowed grants for
+   Documents / Desktop / Downloads / Removable Volumes / FileProvider / Media Library /
+   AppleEvents, and the system db shows three successive Full Disk Access **denials**
+   (2.1.222, 2.1.226, 2.1.233) — the operator re-answering the same question each bump.
+
+Wait-state: Track C stays `blocked` on the beat until a post-fix vendor version advances the
+audit to green; no local action can discharge it. The one local dial that changes the
+operator's experience meanwhile is `autoUpdates: false` (prompt bursts on a chosen update
+cadence instead of the vendor's ~daily one) — an operator trade of freshness for quiet,
+never an agent default.
