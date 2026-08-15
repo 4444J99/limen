@@ -407,8 +407,8 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
         "outcome": "succeeded",
         "authority": {
             "kind": "broker",
-            "run_id": "run-0123456789abcdef",
-            "lease_id": "lease-0123456789abcdef",
+            "run_id": "run-0123456789abcdef0123456789abcdef",
+            "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "copilot",
         },
         "observed_heads": {"organvm/limen": "a" * 40},
@@ -458,8 +458,8 @@ def test_forged_receipts_fail_exact_corruption_shapes() -> None:
         "outcome": "succeeded",
         "authority": {
             "kind": "broker",
-            "run_id": "run-0123456789abcdef",
-            "lease_id": "lease-0123456789abcdef",
+            "run_id": "run-0123456789abcdef0123456789abcdef",
+            "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "agy",
         },
         "observed_heads": {"organvm/limen": "a" * 40},
@@ -509,8 +509,8 @@ def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> Non
         "outcome": "succeeded",
         "authority": {
             "kind": "broker",
-            "run_id": "run-0123456789abcdef",
-            "lease_id": "lease-0123456789abcdef",
+            "run_id": "run-0123456789abcdef0123456789abcdef",
+            "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "agy",
         },
         "observed_heads": {"organvm/limen": "a" * 40},
@@ -1133,8 +1133,8 @@ def test_multi_repository_receipt_requires_resolved_concrete_heads() -> None:
         "outcome": "succeeded",
         "authority": {
             "kind": "broker",
-            "run_id": "run-0123456789abcdef",
-            "lease_id": "lease-0123456789abcdef",
+            "run_id": "run-0123456789abcdef0123456789abcdef",
+            "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "codex",
         },
         "resolved_repositories": ["organvm/alpha", "organvm/beta"],

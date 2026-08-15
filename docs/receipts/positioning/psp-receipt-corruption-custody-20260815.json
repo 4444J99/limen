@@ -15,7 +15,7 @@
     "branches": "all existing refs preserved; no Agy branch or worktree deleted or rewritten"
   },
   "recovery_worktree": {
-    "path": "/Users/4jp/Workspace/.worktrees/psp-receipt-corruption-recovery",
+    "path": "repo-relative:.worktrees/psp-receipt-corruption-recovery",
     "branch": "codex/psp-receipt-corruption-recovery",
     "source": "origin/main",
     "exact_source_head": "984b1121083b4ab2453c3671ad20d11586cf6713"

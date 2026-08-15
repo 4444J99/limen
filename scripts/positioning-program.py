@@ -33,8 +33,10 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -51,8 +53,10 @@ OMEGA_DIR = ROOT / "docs" / "receipts" / "positioning"
 PROGRAM_SCHEMA = "limen.positioning_program.v1"
 MAP_SCHEMA = "limen.positioning_github_map.v1"
 SEED_SCHEMA = "limen.positioning_packet_seed.v1"
-RECEIPT_SCHEMA = "limen.positioning_work_receipt.v1"
-PHASE_RECEIPT_SCHEMA = "limen.positioning_phase_receipt.v1"
+LEGACY_RECEIPT_SCHEMA = "limen.positioning_work_receipt.v1"
+RECEIPT_SCHEMA = "limen.positioning_work_receipt.v2"
+LEGACY_PHASE_RECEIPT_SCHEMA = "limen.positioning_phase_receipt.v1"
+PHASE_RECEIPT_SCHEMA = "limen.positioning_phase_receipt.v2"
 OMEGA_PASS_SCHEMA = "limen.positioning_omega_pass.v1"
 MODEL_ASSIGNMENT_SCHEMA = "limen.positioning_model_assignments.v1"
 EXECUTION_CHUNKS_SCHEMA = "limen.positioning_execution_chunks.v1"
@@ -73,7 +77,8 @@ HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 RFC3339_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\Z")
 URL_RE = re.compile(r"https://[^\s]+\Z")
 REPOSITORY_RE = re.compile(r"[^/:\s]+/[^/:\s]+\Z")
-BROKER_ID_RE = re.compile(r"(?:run|lease)-[0-9a-f]{16,}\Z|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z")
+BROKER_ID_RE = re.compile(r"(?:run-[0-9a-f]{32}|lease-[0-9]+-[0-9a-f]{16})\Z")
+RECEIPT_CONTRACT_CUTOVER = "2026-08-15T19:23:19Z"
 PHASE_RE = re.compile(r"PSP-P\d{2}\Z")
 WORK_RE = re.compile(r"PSP-P\d{2}-W\d{2}\Z")
 CHUNK_RE = re.compile(r"PSP-C\d{2}\Z")
@@ -131,7 +136,33 @@ def _valid_broker_id(value: object, prefix: str) -> bool:
     return isinstance(value, str) and bool(BROKER_ID_RE.fullmatch(value)) and value.startswith(prefix + "-")
 
 
-def _predicate_binding_failures(predicate: dict[str, Any], *, expected_command: str | None = None) -> list[str]:
+def _command_owned_by_packet(command: str, packet: dict[str, Any]) -> bool:
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    if not tokens:
+        return False
+    if any(token in {";", "|", "||", "&&"} or any(char in token for char in "$`()") for token in tokens):
+        return False
+    executable = tokens[1] if Path(tokens[0]).name in {"python", "python3", "python3.13"} and len(tokens) > 1 else tokens[0]
+    executable = executable.removeprefix("./")
+    if Path(executable).is_absolute() or Path(executable).name in {
+        "bash", "dash", "env", "ksh", "sh", "zsh", "true", "false", "echo", "printf",
+    }:
+        return False
+    if "-c" in tokens or executable.endswith("/true") or executable.endswith("/false"):
+        return False
+    target_paths = [str(path).rstrip("/") for path in packet.get("target_paths") or []]
+    if not any(path == "scripts" or path.startswith(("scripts/", "docs/", "src/")) or path.endswith((".py", ".sh")) for path in target_paths):
+        return (ROOT / executable).is_file()
+    return any(executable == target or executable.startswith(target + "/") for target in target_paths)
+
+
+def _predicate_binding_failures(
+    predicate: dict[str, Any], *, expected_command: str | None = None, packet: dict[str, Any] | None = None,
+    strengthened: bool = True,
+) -> list[str]:
     failures: list[str] = []
     command = predicate.get("command")
     if not _is_nonempty_text(command):
@@ -141,6 +172,10 @@ def _predicate_binding_failures(predicate: dict[str, Any], *, expected_command: 
         failures.append(f"predicate.command must match manifest proof contract {expected_command!r}")
     if re.fullmatch(r"(?:echo|printf|true|false|:)\b.*", command.strip()):
         failures.append("predicate.command must be an owning executable predicate, not a shell stub")
+    if packet is not None and not _command_owned_by_packet(command, packet):
+        failures.append("predicate.command must invoke an executable owned by the manifest packet")
+    if not strengthened:
+        return failures
     command_sha256 = predicate.get("command_sha256")
     if not isinstance(command_sha256, str) or not DIGEST_RE.fullmatch(command_sha256):
         failures.append("predicate.command_sha256 must be a lowercase SHA-256 digest")
@@ -161,6 +196,58 @@ def _predicate_binding_failures(predicate: dict[str, Any], *, expected_command: 
         expected = hashlib.sha256(f"{command}\n{output}".encode("utf-8")).hexdigest()
         if command_output_sha256 != expected:
             failures.append("predicate output digest is not bound to the owning command")
+    return failures
+
+
+def _legacy_receipt_allowed(schema_version: object, comment: dict[str, Any]) -> bool:
+    if schema_version not in {LEGACY_RECEIPT_SCHEMA, LEGACY_PHASE_RECEIPT_SCHEMA}:
+        return False
+    created_at = str(comment.get("created_at") or comment.get("createdAt") or "")
+    return bool(created_at and created_at < RECEIPT_CONTRACT_CUTOVER)
+
+
+def _git_show_text(head: str, path: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{40}", head) or Path(path).is_absolute() or ".." in Path(path).parts:
+        raise ProgramError("receipt artifact must use an exact head and repository-relative path")
+    try:
+        completed = subprocess.run(
+            ["git", "show", f"{head}:{path}"], cwd=ROOT, check=True, capture_output=True, text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ProgramError(f"receipt artifact {path!r} is not present at observed head {head}") from exc
+    return completed.stdout
+
+
+def _validate_w07_artifacts(reader_evidence: dict[str, Any], observed_heads: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
+    response_path = reader_evidence.get("response_path")
+    memo_path = reader_evidence.get("decision_memo_path")
+    if not _is_nonempty_text(head) or not _valid_exact_head(head):
+        return ["PSP-P03-W07 reader evidence must bind to an exact observed head"]
+    if not _is_nonempty_text(response_path) or not _is_nonempty_text(memo_path):
+        return ["PSP-P03-W07 requires immutable response_path and decision_memo_path artifacts"]
+    try:
+        response_text = _git_show_text(head, response_path)
+        memo_text = _git_show_text(head, memo_path)
+        response = json.loads(response_text)
+        spec = importlib.util.spec_from_file_location(
+            "positioning_w07_validator", ROOT / "docs/positioning/program/validate_p03_w07_blinded_reader.py"
+        )
+        if not spec or not spec.loader:
+            raise ProgramError("cannot load the owning W07 validator")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        verdict = module.validate(response)
+        if verdict.state != "pass":
+            failures.append("PSP-P03-W07 response artifact does not pass the owning W07 validator")
+        digest = hashlib.sha256(
+            json.dumps(response, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        if f"Response-set SHA-256: {digest}" not in memo_text:
+            failures.append("PSP-P03-W07 decision memo is not bound to the immutable response artifact")
+    except (OSError, UnicodeError, json.JSONDecodeError, ProgramError, ValueError) as exc:
+        failures.append(f"PSP-P03-W07 immutable reader evidence is invalid: {exc}")
     return failures
 
 
@@ -1382,15 +1469,19 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
     return receipt
 
 
-def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) -> dict[str, Any]:
+def validate_work_receipt(
+    receipt: object, work_id: str, graph: dict[str, Any], *, allow_legacy_v1: bool = False
+) -> dict[str, Any]:
     failures: list[str] = []
     packet = graph["work_by_id"].get(work_id)
     if packet is None:
         raise ProgramError(f"unknown work id: {work_id}")
     if not isinstance(receipt, dict):
         raise ProgramError(f"{work_id} receipt must be a JSON object")
-    if receipt.get("schema_version") != RECEIPT_SCHEMA:
-        failures.append(f"schema_version must be {RECEIPT_SCHEMA}")
+    schema_version = receipt.get("schema_version")
+    strengthened = schema_version == RECEIPT_SCHEMA or not allow_legacy_v1
+    if schema_version not in {LEGACY_RECEIPT_SCHEMA, RECEIPT_SCHEMA}:
+        failures.append(f"schema_version must be {RECEIPT_SCHEMA} for receipts after the contract cutover")
     if receipt.get("work_id") != work_id:
         failures.append(f"work_id must be {work_id}")
     if receipt.get("acceptance_sha256") != acceptance_digest(packet):
@@ -1454,7 +1545,7 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
             failures.append("predicate.command cannot call the receipt verifier itself")
         if predicate.get("exit_code") != 0:
             failures.append("predicate.exit_code must be zero")
-        failures.extend(_predicate_binding_failures(predicate))
+        failures.extend(_predicate_binding_failures(predicate, packet=packet, strengthened=strengthened))
         observed_at = predicate.get("observed_at")
         if not isinstance(observed_at, str) or not RFC3339_RE.fullmatch(observed_at):
             failures.append("predicate.observed_at must be RFC3339")
@@ -1485,6 +1576,10 @@ def validate_work_receipt(receipt: object, work_id: str, graph: dict[str, Any]) 
                 failures.append("PSP-P03-W07 reader_evidence.valid_records must be true")
             if not _is_text_list(reader_evidence.get("decision_evidence_urls"), nonempty=True):
                 failures.append("PSP-P03-W07 reader_evidence.decision_evidence_urls must be non-empty")
+            elif any(not URL_RE.fullmatch(url) for url in reader_evidence["decision_evidence_urls"]):
+                failures.append("PSP-P03-W07 decision evidence URLs must use https")
+            if strengthened:
+                failures.extend(_validate_w07_artifacts(reader_evidence, observed_heads))
     if failures:
         raise ProgramError(f"{work_id} receipt validation failed:\n- " + "\n- ".join(failures))
     return receipt
@@ -1598,6 +1693,7 @@ def validate_phase_receipt(
     child_receipt_digest: str,
     remote_state_digest: str,
     parity_digest: str,
+    allow_legacy_v1: bool = False,
 ) -> dict[str, Any]:
     failures: list[str] = []
     phase = graph["phase_by_id"].get(phase_id)
@@ -1605,8 +1701,10 @@ def validate_phase_receipt(
         raise ProgramError(f"unknown phase id: {phase_id}")
     if not isinstance(receipt, dict):
         raise ProgramError(f"{phase_id} phase receipt must be a JSON object")
-    if receipt.get("schema_version") != PHASE_RECEIPT_SCHEMA:
-        failures.append(f"schema_version must be {PHASE_RECEIPT_SCHEMA}")
+    schema_version = receipt.get("schema_version")
+    strengthened = schema_version == PHASE_RECEIPT_SCHEMA or not allow_legacy_v1
+    if schema_version not in {LEGACY_PHASE_RECEIPT_SCHEMA, PHASE_RECEIPT_SCHEMA}:
+        failures.append(f"schema_version must be {PHASE_RECEIPT_SCHEMA} for receipts after the contract cutover")
     if receipt.get("phase_id") != phase_id:
         failures.append(f"phase_id must be {phase_id}")
     if receipt.get("status") != "pass":
@@ -1620,7 +1718,11 @@ def validate_phase_receipt(
         failures.append("predicate must be a mapping")
     else:
         command = predicate.get("command")
-        failures.extend(_predicate_binding_failures(predicate, expected_command=expected_command))
+        failures.extend(
+            _predicate_binding_failures(
+                predicate, expected_command=expected_command, strengthened=strengthened
+            )
+        )
         if predicate.get("exit_code") != 0:
             failures.append("predicate.exit_code must be zero")
         if not isinstance(predicate.get("observed_at"), str) or not RFC3339_RE.fullmatch(predicate["observed_at"]):
@@ -1667,13 +1769,14 @@ def fetch_phase_receipt(
     repository = graph["program"]["repository"]
     issue_number = int(mapping["issues"][phase_id]["number"])
     comments = _pages(repository, f"issues/{issue_number}/comments")
+    invalidated = [row for row in comments if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
+    if invalidated:
+        ids = ", ".join(str(int(row["id"])) for row in invalidated)
+        # Quarantined receipt chains are custody evidence and cannot be superseded.
+        raise ProgramError(f"{phase_id} receipt chain contains invalidated comment(s): {ids}")
     marked = [row for row in comments if f"positioning-phase-receipt:{phase_id}" in str(row.get("body") or "")]
     if not marked:
         raise ProgramError(f"{phase_id} has no marked phase exit-gate receipt")
-    invalidated = [row for row in marked if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
-    if invalidated:
-        ids = ", ".join(str(int(row["id"])) for row in invalidated)
-        raise ProgramError(f"{phase_id} receipt chain contains invalidated comment(s): {ids}")
     latest = max(marked, key=lambda row: int(row.get("id") or 0))
     body = str(latest.get("body") or "")
     matches = [match for match in PHASE_RECEIPT_BLOCK_RE.findall(body) if match[0] == phase_id]
@@ -1698,6 +1801,7 @@ def fetch_phase_receipt(
             child_receipt_digest=child_receipt_digest,
             remote_state_digest=remote_state_digest,
             parity_digest=parity_digest,
+            allow_legacy_v1=_legacy_receipt_allowed(receipt.get("schema_version"), latest),
         ),
         str(latest.get("html_url") or ""),
     )
@@ -1925,13 +2029,14 @@ def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, A
     repository = graph["program"]["repository"]
     issue_number = int(mapping["issues"][work_id]["number"])
     comments = _pages(repository, f"issues/{issue_number}/comments")
+    invalidated = [row for row in comments if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
+    if invalidated:
+        ids = ", ".join(str(int(row["id"])) for row in invalidated)
+        # Quarantined receipt chains are custody evidence and cannot be superseded.
+        raise ProgramError(f"{work_id} receipt chain contains invalidated comment(s): {ids}")
     marked = [row for row in comments if receipt_marker(work_id) in str(row.get("body") or "")]
     if not marked:
         raise ProgramError(f"{work_id} has no marked completion receipt")
-    invalidated = [row for row in marked if int(row.get("id") or 0) in INVALIDATED_RECEIPT_COMMENT_IDS]
-    if invalidated:
-        ids = ", ".join(str(int(row["id"])) for row in invalidated)
-        raise ProgramError(f"{work_id} receipt chain contains invalidated comment(s): {ids}")
     latest = max(marked, key=lambda row: int(row.get("id") or 0))
     body = str(latest.get("body") or "")
     matches = [match for match in RECEIPT_BLOCK_RE.findall(body) if match[0] == work_id]
@@ -1941,7 +2046,14 @@ def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, A
         receipt = json.loads(matches[0][1])
     except json.JSONDecodeError as exc:
         raise ProgramError(f"{work_id} latest marked receipt is invalid JSON: {exc}") from exc
-    return validate_work_receipt(receipt, work_id, graph), str(latest.get("html_url") or "")
+    if receipt.get("schema_version") == LEGACY_RECEIPT_SCHEMA and not _legacy_receipt_allowed(
+        receipt.get("schema_version"), latest
+    ):
+        raise ProgramError(f"{work_id} legacy v1 receipt was posted after the contract cutover")
+    return validate_work_receipt(
+        receipt, work_id, graph,
+        allow_legacy_v1=_legacy_receipt_allowed(receipt.get("schema_version"), latest),
+    ), str(latest.get("html_url") or "")
 
 
 def verify_work(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
