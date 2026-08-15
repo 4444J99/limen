@@ -62,9 +62,13 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 HEAL_ON = os.environ.get("LIMEN_BOARD_HEAL", "1") != "0"
 ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
-# The registry owner of a spent keeper storage plan. Named here so the rung cites a durable home
-# instead of reciting the atom at the operator (CLAUDE.md → Closeout Definition).
-QUOTA_LEVER = "L-CLOUDFLARE-DO-QUOTA"
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
 EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 NEEDS_HUMAN_LABEL = "needs-human"
 DISPATCHABLE = {"open", "dispatched", "in_progress"}
@@ -307,7 +311,7 @@ def repair_canonical(*, check: bool, dry_run: bool) -> int:
         # EX_TEMPFAIL so the beat's rung ledger still records a NON-ZERO outcome: a tidy exit 0
         # here would restore exactly the "everything looks healthy" blindness that let this sit.
         print(f"heal-board: BLOCKED — keeper storage quota exhausted, canonical reconcile deferred ({summary})")
-        print(f"heal-board: the write path is spent, not broken — owner: lever {QUOTA_LEVER} in his-hand-levers.json")
+        print(f"heal-board: the write path is spent, not broken — owner: {QUOTA_OWNER}")
         print(f"heal-board: keeper said: {exc}"[:400])
         return EX_TEMPFAIL
     print(f"heal-board: reconciled {summary}")
