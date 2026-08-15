@@ -1125,14 +1125,21 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with mock.patch.dict(os.environ, injected, clear=False):
                 with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
                     observed = MODULE._run_trusted_w07_validator(response)
-        self.assertIs(completed, observed)
+        self.assertEqual(completed.returncode, observed.returncode)
+        self.assertEqual(completed.stdout, observed.stdout)
+        self.assertEqual(completed.stderr, observed.stderr)
         argv = run.call_args.args[0]
         environment = run.call_args.kwargs["env"]
+        dependency_archive = run.call_args.kwargs["input"]
         self.assertEqual(Path(sys.executable).resolve(), Path(argv[0]))
         self.assertEqual(["-I", "-S", "-B", "-c"], argv[1:5])
         self.assertEqual(MODULE.W07_REPLAY_BOOTSTRAP, argv[5])
         self.assertEqual("script", argv[-3])
         self.assertEqual((ROOT / MODULE.W07_VALIDATOR_PATH).resolve(), Path(argv[-2]))
+        self.assertIsInstance(dependency_archive, bytes)
+        self.assertEqual(hashlib.sha256(dependency_archive).hexdigest(), argv[9])
+        self.assertEqual(len(dependency_archive), int(argv[10]))
+        self.assertFalse(run.call_args.kwargs["text"])
         for key in injected:
             self.assertNotIn(key, environment)
         self.assertEqual("1", environment["PYTHONNOUSERSITE"])
@@ -1357,22 +1364,78 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 with self.assertRaisesRegex(OSError, "complete contract-owned W07 jsonschema dependency tree"):
                     MODULE._trusted_w07_jsonschema_sources()
 
-    def test_w07_dependency_materializes_only_authenticated_sources(self) -> None:
+    def test_w07_dependency_archive_contains_only_authenticated_sources_in_memory(self) -> None:
         sources = MODULE._trusted_w07_jsonschema_sources()
-        with tempfile.TemporaryDirectory() as directory:
-            dependency_root = Path(directory) / "dependencies"
-            MODULE._write_w07_jsonschema_dependency(dependency_root, sources)
+        dependency_archive = MODULE._w07_jsonschema_dependency_archive(sources)
+        self.assertEqual(dependency_archive, MODULE._w07_jsonschema_dependency_archive(sources))
+        with MODULE.zipfile.ZipFile(io.BytesIO(dependency_archive)) as archive:
+            infos = archive.infolist()
             expected = {
                 *MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["package_roots"],
                 "rpds",
                 *MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["single_files"],
             }
-            self.assertEqual(expected, {path.name for path in dependency_root.iterdir()})
-            self.assertFalse((dependency_root / "sitecustomize.py").exists())
+            self.assertEqual(expected, {Path(info.filename).parts[0] for info in infos})
+            self.assertNotIn("sitecustomize.py", {info.filename for info in infos})
+            self.assertTrue(all(info.compress_type == MODULE.zipfile.ZIP_STORED for info in infos))
             self.assertEqual(
                 MODULE.TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
-                hashlib.sha256((dependency_root / "rpds/__init__.py").read_bytes()).hexdigest(),
+                hashlib.sha256(archive.read("rpds/__init__.py")).hexdigest(),
             )
+
+        completed = subprocess.CompletedProcess([], 0, b"PASS\n", b"")
+        with tempfile.TemporaryDirectory() as directory:
+            response = Path(directory) / "response.json"
+            response.write_text("{}", encoding="utf-8")
+            with mock.patch.object(Path, "write_bytes", side_effect=AssertionError("dependency write")):
+                with mock.patch.object(MODULE.subprocess, "run", return_value=completed) as run:
+                    MODULE._run_trusted_w07_validator(response)
+        self.assertEqual(dependency_archive, run.call_args.kwargs["input"])
+
+    def test_w07_dependency_bootstrap_rejects_changed_and_traversal_entries(self) -> None:
+        sources = MODULE._trusted_w07_jsonschema_sources()
+        archive = MODULE._w07_jsonschema_dependency_archive(sources)
+        validator = (ROOT / MODULE.W07_VALIDATOR_PATH).resolve()
+        with tempfile.TemporaryDirectory() as directory:
+            response = Path(directory) / "response.json"
+            response.write_text("{}", encoding="utf-8")
+            mutations: list[tuple[bytes, str]] = []
+            for changed_name, changed_data in (
+                ("jsonschema/validators.py", b"raise SystemExit('changed')\n"),
+                ("../sitecustomize.py", b"raise SystemExit('ambient hook')\n"),
+            ):
+                output = io.BytesIO()
+                with MODULE.zipfile.ZipFile(io.BytesIO(archive)) as source_archive:
+                    with MODULE.zipfile.ZipFile(
+                        output,
+                        "w",
+                        compression=MODULE.zipfile.ZIP_STORED,
+                    ) as changed_archive:
+                        for info in source_archive.infolist():
+                            if info.filename != changed_name:
+                                changed_archive.writestr(info, source_archive.read(info))
+                        changed_archive.writestr(changed_name, changed_data)
+                mutations.append((output.getvalue(), changed_name))
+
+            for changed_archive, changed_name in mutations:
+                completed = subprocess.run(
+                    [
+                        str(Path(sys.executable).resolve()),
+                        "-I",
+                        "-S",
+                        "-B",
+                        "-c",
+                        MODULE.W07_REPLAY_BOOTSTRAP,
+                        *MODULE._w07_replay_arguments(changed_archive, "script", validator, response),
+                    ],
+                    cwd=ROOT,
+                    env=MODULE._w07_replay_environment(Path(sys.executable).resolve()),
+                    check=False,
+                    capture_output=True,
+                    input=changed_archive,
+                    timeout=90,
+                )
+                self.assertNotEqual(0, completed.returncode, changed_name)
 
     def test_live_phase_verification_cannot_accept_receipt_without_current_phase_proof(self) -> None:
         failed = subprocess.CompletedProcess([], 2, "", "phase proof failed")

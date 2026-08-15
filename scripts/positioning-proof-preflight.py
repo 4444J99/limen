@@ -7,6 +7,7 @@ import argparse
 from difflib import SequenceMatcher
 import html
 import hashlib
+import io
 import importlib.util
 import json
 import os
@@ -15,6 +16,7 @@ import ssl
 import subprocess
 import sys
 import tempfile
+import zipfile
 from http.client import HTTPException
 from urllib.parse import parse_qsl, urlsplit
 from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener
@@ -298,27 +300,86 @@ runpy.run_path(program, run_name="__main__")
 """
 W07_REPLAY_BOOTSTRAP = """
 import hashlib
+import importlib.abc
 import importlib.util
+import io
 import pathlib
 import runpy
 import sys
+import zipfile
 
-dependency_root, dependency_sha256, dependency_file_count, rpds_sha256, mode, program, *arguments = sys.argv[1:]
-root = pathlib.Path(dependency_root).resolve(strict=True)
-all_files = sorted(path for path in root.rglob("*") if path.is_file())
-if len(all_files) != int(dependency_file_count) + 1:
+(
+    dependency_sha256,
+    dependency_file_count,
+    rpds_sha256,
+    archive_sha256,
+    archive_size,
+    uncompressed_size,
+    mode,
+    program,
+    *arguments,
+) = sys.argv[1:]
+archive_size = int(archive_size)
+if archive_size <= 0 or archive_size > 1_000_000:
+    raise SystemExit("trusted W07 jsonschema dependency archive exceeds its bound")
+raw_archive = sys.stdin.buffer.read(archive_size + 1)
+if len(raw_archive) != archive_size:
+    raise SystemExit("trusted W07 jsonschema dependency archive size changed")
+if hashlib.sha256(raw_archive).hexdigest() != archive_sha256:
+    raise SystemExit("trusted W07 jsonschema dependency archive digest changed")
+archive_bytes = io.BytesIO(raw_archive)
+try:
+    archive = zipfile.ZipFile(archive_bytes)
+except (OSError, zipfile.BadZipFile) as error:
+    raise SystemExit("trusted W07 jsonschema dependency archive is invalid") from error
+infos = archive.infolist()
+if len(infos) != int(dependency_file_count) + 1:
     raise SystemExit("trusted W07 jsonschema dependency file count changed")
+names = [info.filename for info in infos]
+if len(names) != len(set(names)):
+    raise SystemExit("trusted W07 jsonschema dependency contains duplicate paths")
+allowed_top_levels = {
+    "attr",
+    "attrs",
+    "jsonschema",
+    "jsonschema_specifications",
+    "referencing",
+    "rpds",
+    "typing_extensions.py",
+}
+sources = {}
+total_uncompressed = 0
+for info in infos:
+    name = info.filename
+    relative = pathlib.PurePosixPath(name)
+    if (
+        info.is_dir()
+        or info.compress_type != zipfile.ZIP_STORED
+        or info.flag_bits & 0x1
+        or not name
+        or "\\\\" in name
+        or relative.is_absolute()
+        or ".." in relative.parts
+        or relative.parts[0] not in allowed_top_levels
+    ):
+        raise SystemExit("trusted W07 jsonschema dependency contains an unsafe path or entry")
+    data = archive.read(info)
+    if len(data) != info.file_size:
+        raise SystemExit("trusted W07 jsonschema dependency entry size changed")
+    sources[name] = data
+    total_uncompressed += len(data)
+if int(uncompressed_size) <= 0 or int(uncompressed_size) > 1_000_000:
+    raise SystemExit("trusted W07 jsonschema dependency uncompressed size exceeds its bound")
+if total_uncompressed != int(uncompressed_size):
+    raise SystemExit("trusted W07 jsonschema dependency uncompressed size changed")
 digest = hashlib.sha256()
-for source_file in all_files:
-    relative = source_file.relative_to(root)
-    if source_file.is_symlink() or root not in source_file.resolve(strict=True).parents:
-        raise SystemExit("trusted W07 jsonschema dependency escaped its root")
-    data = source_file.read_bytes()
-    if relative.as_posix() == "rpds/__init__.py":
+for name in sorted(sources):
+    data = sources[name]
+    if name == "rpds/__init__.py":
         if hashlib.sha256(data).hexdigest() != rpds_sha256:
             raise SystemExit("trusted W07 rpds compatibility source changed")
         continue
-    relative_bytes = relative.as_posix().encode("utf-8")
+    relative_bytes = name.encode("utf-8")
     digest.update(relative_bytes)
     digest.update(b"\\0")
     digest.update(str(len(data)).encode("ascii"))
@@ -326,7 +387,67 @@ for source_file in all_files:
     digest.update(data)
 if digest.hexdigest() != dependency_sha256:
     raise SystemExit("trusted W07 jsonschema dependency tree changed")
-sys.path.insert(0, str(root))
+
+class MemoryResourceReader:
+    def __init__(self, package_prefix):
+        self.package_prefix = package_prefix
+
+    def files(self):
+        return zipfile.Path(archive, at=self.package_prefix)
+
+
+class MemoryDependencyImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    def __init__(self):
+        self.packages = {
+            name[:-12].replace("/", "."): name
+            for name in sources
+            if name.endswith("/__init__.py")
+        }
+        self.modules = {
+            name[:-3].replace("/", "."): name
+            for name in sources
+            if name.endswith(".py") and not name.endswith("/__init__.py")
+        }
+
+    def find_spec(self, fullname, path=None, target=None):
+        source_name = self.packages.get(fullname)
+        is_package = source_name is not None
+        if source_name is None:
+            source_name = self.modules.get(fullname)
+        if source_name is None:
+            return None
+        spec = importlib.util.spec_from_loader(fullname, self, is_package=is_package)
+        if spec is None:
+            raise ImportError(f"cannot create in-memory dependency spec for {fullname}")
+        spec.origin = f"memory:///{source_name}"
+        spec.has_location = True
+        spec.loader_state = {"source_name": source_name, "is_package": is_package}
+        if is_package:
+            spec.submodule_search_locations = []
+        return spec
+
+    def create_module(self, spec):
+        return None
+
+    def exec_module(self, module):
+        state = module.__spec__.loader_state
+        source_name = state["source_name"]
+        origin = f"memory:///{source_name}"
+        module.__file__ = origin
+        if state["is_package"]:
+            module.__path__ = []
+        code = compile(sources[source_name], origin, "exec", dont_inherit=True)
+        exec(code, module.__dict__)
+
+    def get_resource_reader(self, fullname):
+        source_name = self.packages.get(fullname)
+        if source_name is None:
+            return None
+        return MemoryResourceReader(source_name.removesuffix("__init__.py"))
+
+
+dependency_importer = MemoryDependencyImporter()
+sys.meta_path.insert(0, dependency_importer)
 program_path = pathlib.Path(program).resolve(strict=True)
 if mode == "script":
     sys.argv = [str(program_path), *arguments]
@@ -2866,21 +2987,49 @@ def _trusted_w07_jsonschema_sources() -> list[tuple[PurePosixPath, bytes]]:
     raise OSError("complete contract-owned W07 jsonschema dependency tree is unavailable")
 
 
-def _write_w07_jsonschema_dependency(
-    dependency_root: Path,
+def _w07_jsonschema_dependency_archive(
     sources: list[tuple[PurePosixPath, bytes]],
-) -> None:
-    dependency_root.mkdir()
-    for relative, data in sources:
-        destination = dependency_root.joinpath(*relative.parts)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(data)
-    rpds_root = dependency_root / "rpds"
-    rpds_root.mkdir()
+) -> bytes:
+    """Create one deterministic, stored, in-memory archive for the isolated W07 child."""
     rpds_source = W07_RPDS_COMPAT_SOURCE.encode("utf-8")
     if hashlib.sha256(rpds_source).hexdigest() != TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"]:
         raise ValueError("contract-owned W07 rpds compatibility source digest changed")
-    (rpds_root / "__init__.py").write_bytes(rpds_source)
+    entries = [*sources, (PurePosixPath("rpds/__init__.py"), rpds_source)]
+    archive_buffer = io.BytesIO()
+    with zipfile.ZipFile(archive_buffer, "w", compression=zipfile.ZIP_STORED) as archive:
+        for relative, data in entries:
+            info = zipfile.ZipInfo(relative.as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_STORED
+            info.create_system = 3
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, data)
+    return archive_buffer.getvalue()
+
+
+def _w07_replay_arguments(archive: bytes, mode: str, program: Path, *arguments: Path) -> list[str]:
+    with zipfile.ZipFile(io.BytesIO(archive)) as dependency_archive:
+        uncompressed_size = sum(info.file_size for info in dependency_archive.infolist())
+    return [
+        TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
+        str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
+        TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
+        hashlib.sha256(archive).hexdigest(),
+        str(len(archive)),
+        str(uncompressed_size),
+        mode,
+        str(program),
+        *(str(argument) for argument in arguments),
+    ]
+
+
+def _text_completed_process(completed: subprocess.CompletedProcess[bytes | str]) -> subprocess.CompletedProcess[str]:
+    stdout = (
+        completed.stdout.decode("utf-8", errors="replace") if isinstance(completed.stdout, bytes) else completed.stdout
+    )
+    stderr = (
+        completed.stderr.decode("utf-8", errors="replace") if isinstance(completed.stderr, bytes) else completed.stderr
+    )
+    return subprocess.CompletedProcess(completed.args, completed.returncode, stdout or "", stderr or "")
 
 
 def _w07_replay_environment(interpreter: Path) -> dict[str, str]:
@@ -3415,33 +3564,27 @@ def _run_trusted_w07_validator(response_path: Path) -> subprocess.CompletedProce
     if validator != ROOT / W07_VALIDATOR_PATH or not validator.is_file():
         raise ValueError("trusted W07 validator must be the tracked repository script")
     sources = _trusted_w07_jsonschema_sources()
+    archive = _w07_jsonschema_dependency_archive(sources)
     environment = _w07_replay_environment(interpreter)
-    with tempfile.TemporaryDirectory(prefix="limen-c04-w07-dependency-") as directory:
-        dependency_root = Path(directory) / "dependencies"
-        _write_w07_jsonschema_dependency(dependency_root, sources)
-        return subprocess.run(
-            [
-                str(interpreter),
-                "-I",
-                "-S",
-                "-B",
-                "-c",
-                W07_REPLAY_BOOTSTRAP,
-                str(dependency_root),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
-                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
-                "script",
-                str(validator),
-                str(response_path),
-            ],
-            cwd=ROOT,
-            env=environment,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=90,
-        )
+    completed = subprocess.run(
+        [
+            str(interpreter),
+            "-I",
+            "-S",
+            "-B",
+            "-c",
+            W07_REPLAY_BOOTSTRAP,
+            *_w07_replay_arguments(archive, "script", validator, response_path),
+        ],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        input=archive,
+        text=False,
+        timeout=90,
+    )
+    return _text_completed_process(completed)
 
 
 def _run_observed_w07_replay(
@@ -3452,11 +3595,10 @@ def _run_observed_w07_replay(
     """Execute the W07 validator and memo workflow from the receipt's exact observed head."""
     interpreter = Path(sys.executable).resolve(strict=True)
     sources = _trusted_w07_jsonschema_sources()
+    archive = _w07_jsonschema_dependency_archive(sources)
     environment = _w07_replay_environment(interpreter)
     with tempfile.TemporaryDirectory(prefix="limen-c04-w07-replay-") as directory:
         replay_root = Path(directory)
-        dependency_root = replay_root / "dependencies"
-        _write_w07_jsonschema_dependency(dependency_root, sources)
         for relative in W07_REPLAY_PATHS:
             target = replay_root / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -3473,21 +3615,17 @@ def _run_observed_w07_replay(
                 "-B",
                 "-c",
                 W07_REPLAY_BOOTSTRAP,
-                str(dependency_root),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
-                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
-                "script",
-                str(validator),
-                str(response_target),
+                *_w07_replay_arguments(archive, "script", validator, response_target),
             ],
             cwd=replay_root,
             env=environment,
             check=False,
             capture_output=True,
-            text=True,
+            input=archive,
+            text=False,
             timeout=90,
         )
+        completed = _text_completed_process(completed)
         if completed.returncode != 0:
             return completed, b""
         memo = subprocess.run(
@@ -3498,21 +3636,17 @@ def _run_observed_w07_replay(
                 "-B",
                 "-c",
                 W07_REPLAY_BOOTSTRAP,
-                str(dependency_root),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_tree_sha256"],
-                str(TRUSTED_W07_JSONSCHEMA_DEPENDENCY["source_file_count"]),
-                TRUSTED_W07_JSONSCHEMA_DEPENDENCY["rpds_compat_sha256"],
-                "memo",
-                str(workflow),
-                str(response_target),
+                *_w07_replay_arguments(archive, "memo", workflow, response_target),
             ],
             cwd=replay_root,
             env=environment,
             check=False,
             capture_output=True,
-            text=True,
+            input=archive,
+            text=False,
             timeout=90,
         )
+        memo = _text_completed_process(memo)
         if memo.returncode != 0:
             detail = (memo.stderr or memo.stdout).strip()
             raise ValueError(f"observed-head W07 workflow did not reproduce the decision memo: {detail}")
