@@ -208,6 +208,7 @@ verify-resolver-test
 verify-parallel-test
 agent-docs
 github-estate-census-custody-test
+positioning-foundry-technical-readiness-test
 flagship-proof-set-test
 flagship-evidence-test
 claim-policy-test

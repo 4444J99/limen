@@ -96,12 +96,15 @@ a finite experiment and is parked after two bounded failures rather than kept al
 ## W03 — Technical readiness, custody, and maintenance risk
 
 [`technical-readiness-audit.json`](technical-readiness-audit.json) is locked to the accepted W01
-receipt, accepted head, acceptance digest, and candidate identity digest. Its denominator is
-exactly 62 candidates: 54 public rows and eight opaque private rows. Every public row records the
-currently observed 40-hex repository head and an exact-schema result for build, test, deploy,
-documentation, security, data custody, IP custody, observability/return, and maintenance. Every
-private row exposes only its accepted opaque identifier, a restricted state, a generic accountable
-owner role, score zero, and `transfer_eligible: false`.
+receipt, accepted head, acceptance digest, and private-inclusive candidate identity digest. The
+validator recomputes that identity digest from the live accepted W01 candidate identities and also
+recomputes the public snapshot projection digest from its candidate IDs; neither self-declared
+digest is trusted. Its denominator is exactly 62 candidates: 54 public rows and eight opaque private
+rows. Every public row records the currently observed 40-hex repository head and an exact-schema
+result for build, test, deploy, documentation, security, data custody, IP custody,
+observability/return, and maintenance. Every private row exposes only its accepted opaque
+identifier, a restricted state, a generic accountable owner role, score zero, and
+`transfer_eligible: false`.
 
 [`verify_technical_readiness.py`](verify_technical_readiness.py) derives its weights from
 `foundry-preflight-contract.json` and its candidate set from
@@ -109,12 +112,16 @@ owner role, score zero, and `transfer_eligible: false`.
 drift, unpinned evidence, metadata promoted to build/test/deploy proof, score or summary tampering,
 unowned blockers, private detail, private-name leakage, and transfer eligibility with any hard
 blocker. Live mode re-queries all public repository heads and scans the tracked public C11 package
-against private full names and unique private bare tokens held only in memory.
+against private full names and unique private bare tokens held only in memory. That scan is
+case-insensitive and covers tracked path names and components as well as file content.
 
 Missing exact-head evidence scores zero and carries a named owner plus bounded next action. A
-homepage, default branch, recent push, or repository metadata never becomes build, test, runtime,
-security, custody, or maintenance proof. The current accepted evidence is therefore conservative:
-all 62 candidates remain non-transferable.
+verified dimension requires a candidate-repository URL pinned to the observed exact head and a
+dimension-specific tracked receipt or evidence path; a generic commit URL does not prove every
+dimension. A homepage, default branch, recent push, or repository metadata never becomes build,
+test, runtime, security, custody, or maintenance proof. Blockers may be empty only after every hard
+floor is a verified pass. The current accepted evidence is therefore conservative: all 62
+candidates remain non-transferable.
 
 | Screen result | Candidates |
 | --- | ---: |
@@ -127,6 +134,10 @@ data/privacy, IP/custody, observability/return, and maintenance. Missing evidenc
 unresolved IP, contributor, data, credential, ownership, or rollback boundary is a hard transfer
 blocker. The public snapshot withholds every private candidate's state, fork, demand, readiness,
 economics, and custody detail behind an opaque per-snapshot identifier.
+
+The `positioning-foundry-technical-readiness-test` gate in
+`institutio/governance/gates.yaml` binds the audit, validator, focused adversarial tests, accepted
+W01 inputs, and live exact-head/private-leak predicate as one scoped acceptance surface.
 
 ## W04 — Domain-operator profile
 

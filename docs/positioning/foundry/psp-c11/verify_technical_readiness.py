@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import collections
 import datetime as dt
+import hashlib
 import json
 import math
 import re
@@ -34,6 +35,7 @@ SOURCE_LOCK = {
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
+    "candidate_projection_sha256": "fc24d86149bd48f05bb5a5fb4b843b69cbf1b77abb56acf7717a92863cdd9774",
     "candidate_count": 62,
     "visibility": {"public": 54, "private": 8},
 }
@@ -105,6 +107,17 @@ FORBIDDEN_EVIDENCE_HINTS = {
     "recent_push",
     "recent-push",
     "pushed_at",
+}
+DIMENSION_RECEIPT_TOKENS = {
+    "build": ("build",),
+    "test": ("test",),
+    "deploy": ("deploy", "runtime"),
+    "documentation": ("documentation", "operator-doc", "recovery-doc"),
+    "security": ("security", "secret-boundary"),
+    "data_custody": ("data-custody", "data_custody", "privacy-custody"),
+    "ip_custody": ("ip-custody", "ip_custody", "ownership-custody"),
+    "observability_return": ("observability-return", "observability_return", "rollback-return"),
+    "maintenance": ("maintenance",),
 }
 GENERIC_PRIVATE_OWNER = "portfolio_owner"
 
@@ -178,6 +191,27 @@ def _url_pins_head(value: Any, observed_head: str) -> bool:
     path_values = {segment for segment in parsed.path.split("/") if segment}
     query_values = {item for values in parse_qs(parsed.query, keep_blank_values=True).values() for item in values}
     return observed_head in path_values or observed_head in query_values
+
+
+def _url_proves_dimension(value: Any, observed_head: str, repository: str, dimension: str) -> bool:
+    """Require a dimension-named technical receipt in the candidate tree at the exact head."""
+    if not _url_pins_head(value, observed_head) or dimension not in DIMENSION_RECEIPT_TOKENS:
+        return False
+    parsed = urlparse(value)
+    if parsed.netloc.casefold() != "github.com":
+        return False
+    parts = [segment for segment in parsed.path.split("/") if segment]
+    expected_repository = repository.split("/", 1)
+    if len(parts) < 5 or len(expected_repository) != 2:
+        return False
+    if [part.casefold() for part in parts[:2]] != [part.casefold() for part in expected_repository]:
+        return False
+    if parts[2] != "blob" or parts[3] != observed_head:
+        return False
+    receipt_path = "/".join(parts[4:]).casefold()
+    if "receipt" not in receipt_path and "evidence" not in receipt_path:
+        return False
+    return any(token in receipt_path for token in DIMENSION_RECEIPT_TOKENS[dimension])
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
@@ -273,23 +307,59 @@ def _graphql_heads(repositories: list[str]) -> dict[str, str]:
 
 
 def _private_identity_leaks(private_names: set[str], private_bare_names: set[str]) -> list[str]:
-    names = {name for name in private_names | private_bare_names if name}
+    names = {name.casefold() for name in private_names | private_bare_names if name}
     repository_character = r"A-Za-z0-9_.-"
     leaks: set[str] = set()
     for path in sorted(PACKAGE.rglob("*")):
         if not path.is_file() or "__pycache__" in path.parts:
             continue
         try:
-            text = path.read_text(encoding="utf-8")
+            relative = path.relative_to(ROOT)
+        except ValueError:
+            relative = path
+        haystacks = [relative.as_posix().casefold(), *(part.casefold() for part in relative.parts)]
+        try:
+            haystacks.append(path.read_text(encoding="utf-8").casefold())
         except UnicodeDecodeError:
-            continue
+            pass
         for name in names:
-            if re.search(rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])", text):
+            pattern = rf"(?<![{repository_character}]){re.escape(name)}(?![{repository_character}])"
+            if any(re.search(pattern, haystack) for haystack in haystacks):
                 leaks.add(display_path(path))
     return sorted(leaks)
 
 
-def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list[str]]:
+def candidate_projection_digest(snapshot: dict[str, Any]) -> str:
+    candidates = snapshot.get("candidates")
+    if not isinstance(candidates, list):
+        raise AuditError("accepted candidate snapshot candidates are missing")
+    identities: list[str] = []
+    for row in candidates:
+        candidate_id = row.get("candidate_id") if isinstance(row, dict) else None
+        if not _is_nonblank_text(candidate_id):
+            raise AuditError("accepted candidate snapshot contains an invalid identity")
+        identities.append(candidate_id)
+    if len(identities) != len(set(identities)):
+        raise AuditError("accepted candidate snapshot contains duplicate identities")
+    return hashlib.sha256("\n".join(sorted(identities)).encode("utf-8")).hexdigest()
+
+
+def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[dict[str, Any]]) -> str:
+    estate = module["load_yaml"](module["ESTATE"])
+    product_names = [str(value) for value in ((estate.get("product_ledger") or {}).get("repos") or [])]
+    by_name: dict[str, list[dict[str, Any]]] = collections.defaultdict(list)
+    for row in repositories:
+        by_name[str(row.get("name") or "")].append(row)
+    resolved = [by_name.get(name, []) for name in product_names]
+    if len(product_names) != SOURCE_LOCK["candidate_count"] or any(len(rows) != 1 for rows in resolved):
+        raise AuditError("live accepted candidate identity resolution drifted")
+    identities = sorted(str(rows[0].get("full_name") or "") for rows in resolved)
+    if any(not identity for identity in identities):
+        raise AuditError("live accepted candidate identity resolution drifted")
+    return hashlib.sha256("\n".join(identities).encode("utf-8")).hexdigest()
+
+
+def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list[str], str]:
     module = runpy.run_path(str(PREFLIGHT))
     _, repositories = module["collect_live_repositories"]()
     public_repositories = sorted(
@@ -312,7 +382,11 @@ def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list
         for row in repositories
         if isinstance(row, dict) and bool(row.get("private")) and str(row.get("name") or "") not in public_bare_names
     }
-    return _graphql_heads(public_repositories), _private_identity_leaks(private_names, private_bare_names)
+    return (
+        _graphql_heads(public_repositories),
+        _private_identity_leaks(private_names, private_bare_names),
+        _live_candidate_identity_digest(module, repositories),
+    )
 
 
 def _blocker(code: str, next_action: str) -> dict[str, str]:
@@ -409,7 +483,14 @@ def build_audit(snapshot: dict[str, Any], heads: dict[str, str], observed_at: st
     return result
 
 
-def _evidence_errors(value: Any, observed_head: str, label: str, expected_keys: set[str]) -> list[str]:
+def _evidence_errors(
+    value: Any,
+    observed_head: str,
+    repository: str,
+    dimension: str,
+    label: str,
+    expected_keys: set[str],
+) -> list[str]:
     errors: list[str] = []
     if not _exact_keys(value, expected_keys):
         return [f"{label} must use the exact dimension schema"]
@@ -420,6 +501,8 @@ def _evidence_errors(value: Any, observed_head: str, label: str, expected_keys: 
     if isinstance(state, str) and state in {"verified_pass", "verified_fail"}:
         if not _url_pins_head(evidence_url, observed_head):
             errors.append(f"{label} evidence must be an HTTPS URL pinned to observed_head")
+        elif not _url_proves_dimension(evidence_url, observed_head, repository, dimension):
+            errors.append(f"{label} requires a dimension-specific exact-head technical receipt")
         lowered = str(evidence_url).lower()
         if any(token in lowered for token in FORBIDDEN_EVIDENCE_HINTS):
             errors.append(f"{label} cannot use metadata as technical proof")
@@ -448,6 +531,7 @@ def _public_candidate_errors(row: dict[str, Any], expected: dict[str, Any], weig
         errors.append(f"{label} identity or visibility drift")
     if row.get("repository") != expected.get("repository"):
         errors.append(f"{label} repository drift")
+    repository = str(expected.get("repository") or "")
     head = row.get("observed_head")
     if not isinstance(head, str) or not SHA40.fullmatch(head):
         errors.append(f"{label} observed_head must be a 40-hex commit")
@@ -455,10 +539,12 @@ def _public_candidate_errors(row: dict[str, Any], expected: dict[str, Any], weig
     dimension_states: dict[str, Any] = {}
     for dimension in ("build", "test", "deploy", "documentation", "data_custody", "ip_custody", "observability_return"):
         value = row.get(dimension)
-        errors.extend(_evidence_errors(value, head, f"{label}.{dimension}", SIMPLE_DIMENSION_KEYS))
+        errors.extend(
+            _evidence_errors(value, head, repository, dimension, f"{label}.{dimension}", SIMPLE_DIMENSION_KEYS)
+        )
         dimension_states[dimension] = value.get("state") if isinstance(value, dict) else None
     security = row.get("security")
-    errors.extend(_evidence_errors(security, head, f"{label}.security", SECURITY_KEYS))
+    errors.extend(_evidence_errors(security, head, repository, "security", f"{label}.security", SECURITY_KEYS))
     if isinstance(security, dict):
         if not isinstance(security.get("class"), str) or security.get("class") not in SECURITY_CLASSES:
             errors.append(f"{label}.security.class is invalid")
@@ -466,7 +552,9 @@ def _public_candidate_errors(row: dict[str, Any], expected: dict[str, Any], weig
             errors.append(f"{label}.security cannot pass while unassessed")
         dimension_states["security"] = security.get("state")
     maintenance = row.get("maintenance")
-    errors.extend(_evidence_errors(maintenance, head, f"{label}.maintenance", MAINTENANCE_KEYS))
+    errors.extend(
+        _evidence_errors(maintenance, head, repository, "maintenance", f"{label}.maintenance", MAINTENANCE_KEYS)
+    )
     if isinstance(maintenance, dict):
         state = maintenance.get("state")
         dimension_states["maintenance"] = state
@@ -485,8 +573,8 @@ def _public_candidate_errors(row: dict[str, Any], expected: dict[str, Any], weig
                 errors.append(f"{label}.maintenance unresolved state must not claim owner or estimate")
             errors.extend(_blocker_errors(maintenance.get("blocker"), f"{label}.maintenance.blocker"))
     blockers = row.get("blockers")
-    if not isinstance(blockers, list) or not blockers:
-        errors.append(f"{label}.blockers must be a nonempty list until every hard floor passes")
+    if not isinstance(blockers, list):
+        errors.append(f"{label}.blockers must be a list")
         blockers = []
     blocker_codes: list[str] = []
     for index, blocker in enumerate(blockers):
@@ -501,11 +589,13 @@ def _public_candidate_errors(row: dict[str, Any], expected: dict[str, Any], weig
     score = row.get("readiness_score")
     if not _is_nonnegative_int(score) or score > 100 or score != expected_score:
         errors.append(f"{label}.readiness_score drift")
-    hard_unresolved = any(
-        not isinstance(state, str) or state in {"verified_fail", "blocked_unverified"}
-        for state in dimension_states.values()
+    all_hard_floors_pass = len(dimension_states) == len(weights) and all(
+        state == "verified_pass" for state in dimension_states.values()
     )
-    expected_transfer = expected_score >= 75 and not hard_unresolved and not blockers
+    if not blockers and not all_hard_floors_pass:
+        errors.append(f"{label}.blockers may be empty only after every hard floor passes")
+    hard_unresolved = not all_hard_floors_pass
+    expected_transfer = expected_score >= 75 and all_hard_floors_pass and not blockers
     if row.get("transfer_eligible") is not expected_transfer:
         errors.append(f"{label}.transfer_eligible drift")
     if row.get("transfer_eligible") is True and (hard_unresolved or blockers):
@@ -539,7 +629,13 @@ def compute_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
         if isinstance(row, dict)
     )
     status_counts = collections.Counter(
-        "restricted" if row.get("visibility") == "private" else "blocked_unverified"
+        (
+            "restricted"
+            if row.get("visibility") == "private"
+            else "transfer_ready"
+            if row.get("transfer_eligible") is True
+            else "blocked_unverified"
+        )
         for row in candidates
         if isinstance(row, dict)
     )
@@ -577,6 +673,7 @@ def validate_audit(
     *,
     live_heads: dict[str, str] | None = None,
     private_leaks: list[str] | None = None,
+    live_candidate_identity_sha256: str | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if set(audit) != ROOT_KEYS:
@@ -599,6 +696,18 @@ def validate_audit(
             errors.append("accepted candidate visibility drift")
         if denominator.get("identity_sha256") != SOURCE_LOCK["candidate_identity_sha256"]:
             errors.append("accepted candidate identity digest drift")
+    try:
+        projection_digest = candidate_projection_digest(snapshot)
+    except AuditError as exc:
+        errors.append(str(exc))
+    else:
+        if projection_digest != SOURCE_LOCK["candidate_projection_sha256"]:
+            errors.append("accepted candidate projection digest drift")
+    if (
+        live_candidate_identity_sha256 is not None
+        and live_candidate_identity_sha256 != SOURCE_LOCK["candidate_identity_sha256"]
+    ):
+        errors.append("live accepted candidate identity digest drift")
     candidates = audit.get("candidates")
     expected_candidates = snapshot.get("candidates")
     if not isinstance(candidates, list) or not isinstance(expected_candidates, list):
@@ -669,8 +778,9 @@ def main() -> int:
         contract = load_json(CONTRACT)
         heads: dict[str, str] | None = None
         leaks: list[str] | None = None
+        live_identity_digest: str | None = None
         if args.live:
-            heads, leaks = collect_live_context(snapshot)
+            heads, leaks, live_identity_digest = collect_live_context(snapshot)
         if write_path is not None:
             if not args.live or heads is None:
                 raise AuditError("--write requires --live")
@@ -685,6 +795,7 @@ def main() -> int:
                 contract,
                 live_heads=heads,
                 private_leaks=leaks,
+                live_candidate_identity_sha256=live_identity_digest,
             )
             if errors:
                 payload = _result(write_path, errors, generated)
@@ -695,7 +806,14 @@ def main() -> int:
             print(json.dumps(payload, sort_keys=True) if args.json else "technical-readiness: PASS")
             return 0
         audit = load_json(audit_path)
-        errors = validate_audit(audit, snapshot, contract, live_heads=heads, private_leaks=leaks)
+        errors = validate_audit(
+            audit,
+            snapshot,
+            contract,
+            live_heads=heads,
+            private_leaks=leaks,
+            live_candidate_identity_sha256=live_identity_digest,
+        )
         payload = _result(audit_path, errors, audit)
         print(
             json.dumps(payload, sort_keys=True)

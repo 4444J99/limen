@@ -5450,6 +5450,7 @@
   "source_lock": {
     "candidate_count": 62,
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
+    "candidate_projection_sha256": "fc24d86149bd48f05bb5a5fb4b843b69cbf1b77abb56acf7717a92863cdd9774",
     "visibility": {
       "private": 8,
       "public": 54
