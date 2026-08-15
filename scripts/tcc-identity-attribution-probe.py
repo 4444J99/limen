@@ -13,13 +13,20 @@ obvious, and BOTH were measured false on 2026-08-15 before either shipped:
      attaches only to the declared CFBundleExecutable.
 
   B. SYMLINK — replace versions/<v> with a symlink to the bundle's main executable, hoping the
-     kernel records the resolved target.
-     REFUTED: the kernel records the path used at exec (the symlink's own path); only the
-     underlying vnode (lsof txt) shows the target.
+     system attributes the resolved target.
+     UNRESOLVED (amended 2026-08-15; this arm previously read REFUTED). The original verdict
+     compared `ps -o comm=` against the link's path. That is the kernel's ACCOUNTING STRING
+     (p_comm), not the code identity a TCC client derives from — and it holds regardless of
+     the deciding layer, so it could never have detected a change. The discriminator that does
+     decide is a platform binary's launch constraint: a COPY of /bin/sleep at another path is
+     SIGKILLed, while a SYMLINK at that same path RUNS — which is possible only if the kernel
+     resolved the link to /bin/sleep before judging it. So code identity follows the target.
+     Still required before anything ships: an end-to-end test that triggers a protected access
+     from a symlinked binary and reads the resulting `client` column in the TCC db.
 
-This probe re-measures both. It is a RATCHET ON A NEGATIVE RESULT: exit 0 means the refutations
-still hold and neither cure is worth re-proposing; exit 1 means macOS behavior CHANGED and the
-finding must be revisited. That is the point — a negative result with no predicate decays into
+This probe re-measures both, each on its deciding layer. Exit 0 means the enclosure refutation
+still holds AND code identity still resolves symlinks; exit 1 means macOS behavior CHANGED and
+the finding must be revisited. That is the point — a result with no predicate decays into
 folklore, and the next session re-derives it at full cost (this estate has already shipped five
 cures against one false premise; see IF-GATEKEEPER-INERT).
 
@@ -128,8 +135,46 @@ def measure_enclosure(tmp: Path) -> dict:
     }
 
 
+def _code_identity_resolves_symlink(tmp: Path) -> bool | None:
+    """Does the KERNEL's code-identity layer resolve a symlink before judging the binary?
+
+    `ps -o comm=` and `proc_pidpath` disagree for a symlinked exec, and neither settles which
+    one a TCC client derives from — both are strings we chose to read. A platform binary's
+    launch constraint settles it, because the kernel decides the outcome and it is binary.
+    /bin/sleep is constrained to its canonical path, so:
+
+      * a COPY at another path is SIGKILLed  — the constraint saw the copy's path
+      * a SYMLINK at another path RUNS       — only possible if it resolved to /bin/sleep
+
+    Returns True when the layer resolves to the target, False when it does not, None when the
+    fixture itself failed to behave (neither arm behaved as the constraint requires).
+    """
+    copy = tmp / "constraint-copy"
+    shutil.copy("/bin/sleep", copy)
+    copy_rc = subprocess.run([str(copy), "0.3"], capture_output=True).returncode
+
+    link = tmp / "constraint-symlink"
+    link.symlink_to("/bin/sleep")
+    link_rc = subprocess.run([str(link), "0.3"], capture_output=True).returncode
+
+    # subprocess reports a signal as -N; a shell would report 128+N. Accept both.
+    copy_killed = copy_rc in (-9, 137)
+    if not copy_killed:
+        return None  # the constraint did not fire at all — fixture assumption broken
+    return link_rc == 0
+
+
 def measure_symlink(tmp: Path) -> dict:
-    """Cure B: does an exec through a symlink record the resolved target or the symlink path?"""
+    """Cure B: which path does the system attribute to an exec through a symlink?
+
+    AMENDED 2026-08-15. The original verdict compared `ps -o comm=` against the link's path
+    and called the cure refuted. That comparison is correct about `p_comm` — the kernel's
+    ACCOUNTING STRING — and `p_comm` is not what a TCC client identity derives from. It will
+    also hold forever regardless of the deciding layer, so as a ratchet it could never detect
+    the change it existed to watch for. The code-identity discriminator below is what decides,
+    and it currently shows the symlink RESOLVING to its target: cure B is not refuted, it is
+    unresolved pending an end-to-end TCC-db test.
+    """
     link = tmp / "version-shaped-symlink"
     link.symlink_to("/bin/sleep")
 
@@ -154,14 +199,32 @@ def measure_symlink(tmp: Path) -> dict:
         proc.kill()
         proc.wait()
 
+    resolves = _code_identity_resolves_symlink(tmp)
+
     return {
         "cure": "symlink",
-        "recorded_executable_path": recorded,
+        "accounting_string_p_comm": recorded,
         "underlying_vnode": vnode,
-        # Refuted <=> the kernel records the SYMLINK path, not the target.
-        "refuted": recorded == str(link),
-        "inconclusive": recorded is None,
+        # The deciding layer: does code identity follow the symlink to its target?
+        "code_identity_resolves_target": resolves,
+        # NOT refuted while code identity resolves the target. Kept as an explicit key so a
+        # reader never has to infer the verdict from the accounting string again.
+        "refuted": resolves is False,
+        "status": "unresolved — pending an end-to-end TCC-db attribution test",
+        "inconclusive": recorded is None or resolves is None,
     }
+
+
+def _ratchet_holds(findings: list[dict]) -> bool:
+    """The ratchet watches each cure on the layer that actually decides it.
+
+    Enclosure: stays refuted (CoreFoundation attribution).
+    Symlink:   stays unresolved WITH code identity resolving the target. If macOS ever stops
+               resolving, the cure becomes genuinely refuted — and that is a change worth
+               failing on, because the receipt would then be wrong in the other direction.
+    """
+    by_cure = {f["cure"]: f for f in findings}
+    return by_cure["enclosure"]["refuted"] and by_cure["symlink"]["code_identity_resolves_target"] is True
 
 
 def main() -> int:
@@ -181,9 +244,12 @@ def main() -> int:
 
     if args.json:
         print(
-            json.dumps({"schema": "limen.tcc_identity_attribution.v1", "findings": findings}, indent=2, sort_keys=True)
+            # v2: the symlink finding reports the deciding layer
+            # (`code_identity_resolves_target`) and renames the old `recorded_executable_path`
+            # to `accounting_string_p_comm`, so no reader mistakes p_comm for an identity.
+            json.dumps({"schema": "limen.tcc_identity_attribution.v2", "findings": findings}, indent=2, sort_keys=True)
         )
-        return 0 if all(f["refuted"] for f in findings) else 1
+        return 0 if _ratchet_holds(findings) else 1
 
     inconclusive = [f for f in findings if f["inconclusive"]]
     if inconclusive:
@@ -198,16 +264,21 @@ def main() -> int:
         f"the .app itself resolves for the declared executable ({enclosure['control_is_bundle']})"
     )
     print(
-        f"  symlink   — kernel records {symlink['recorded_executable_path']!r}; "
-        f"underlying vnode is {symlink['underlying_vnode']!r}"
+        f"  symlink   — accounting string (p_comm) is {symlink['accounting_string_p_comm']!r}; "
+        f"underlying vnode is {symlink['underlying_vnode']!r}; "
+        f"code identity resolves the target: {symlink['code_identity_resolves_target']}"
     )
 
-    if all(f["refuted"] for f in findings):
-        print("OK — both local cures remain REFUTED; the fix stays upstream (anthropics/claude-code#86706)")
+    if _ratchet_holds(findings):
+        print("OK — enclosure stays REFUTED; symlink stays UNRESOLVED with code identity")
+        print("     resolving the target. Terminal fix remains upstream (anthropics/claude-code#86706).")
         return 0
 
-    revived = [f["cure"] for f in findings if not f["refuted"]]
-    print(f"CHANGED — macOS no longer refutes: {', '.join(revived)}. Re-open the local cure and re-measure.")
+    if not enclosure["refuted"]:
+        print("CHANGED — macOS no longer refutes the ENCLOSURE cure. Re-open it and re-measure.")
+    if symlink["code_identity_resolves_target"] is not True:
+        print("CHANGED — code identity no longer resolves a symlink to its target.")
+        print("          The symlink cure becomes genuinely refuted; record that and stop.")
     return 1
 
 
