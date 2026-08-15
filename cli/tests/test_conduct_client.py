@@ -114,10 +114,26 @@ def test_quota_exhaustion_is_still_a_conduct_error():
     assert issubclass(BrokerQuotaExhausted, ConductError)
 
 
-def test_the_quota_condition_has_a_registry_owner():
-    """heal-board.py cites a lever by id; if the lever is absent the rung names a home that isn't there."""
+def test_the_quota_condition_names_a_live_owner_not_the_retired_lever():
+    """The rungs must cite an owner a reader can act on.
+
+    This test used to assert that L-CLOUDFLARE-DO-QUOTA exists in his-hand-levers.json,
+    which it still does — as a RETIRED entry. The lever was retired 2026-08-10 once the
+    recurrence proved the active defect is Limen's own write amplification (issue #2054),
+    and that issue states in terms that no Cloudflare support case, billing change, plan
+    change, credential mint or operator action is required. So "the lever exists" stopped
+    being the property worth pinning: a rung citing it sends the reader to a human action
+    its owner explicitly ruled out. Pin the live citation instead, and pin that the retired
+    id is not presented as the owner.
+    """
     registry = json.loads((ROOT / "his-hand-levers.json").read_text())
     lever = next((lv for lv in registry["levers"] if lv.get("id") == "L-CLOUDFLARE-DO-QUOTA"), None)
-    assert lever is not None, "heal-board.py cites L-CLOUDFLARE-DO-QUOTA — it must exist in the registry"
-    for field in ("id", "label", "owner", "cost", "unlocks", "source_task"):
-        assert str(lever.get(field, "")).strip(), f"lever missing required field {field}"
+    if lever is not None:
+        assert str(lever.get("status", "")).strip().lower() in {"retired", "discharged", "done", "closed"}, (
+            "L-CLOUDFLARE-DO-QUOTA is retired; if it is reopened, revisit what the rungs cite"
+        )
+
+    for organ in ("scripts/heal-board.py", "scripts/self-heal.py", "scripts/heal-dispatch.py"):
+        text = (ROOT / organ).read_text(encoding="utf-8")
+        assert 'QUOTA_OWNER = "organvm/limen#2054' in text, f"{organ} must cite the live engineering owner"
+        assert "QUOTA_LEVER" not in text, f"{organ} must not resurrect the retired lever constant"
