@@ -33,13 +33,8 @@ CONTRACT_CA_BUNDLE_CANDIDATES = (
     Path("/etc/pki/tls/certs/ca-bundle.crt"),
     Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
 )
-TRUSTED_EXECUTABLE_DIRECTORIES = (
-    Path(sys.executable).resolve().parent,
-    Path("/opt/homebrew/bin"),
-    Path("/usr/local/bin"),
-    Path("/usr/bin"),
-    Path("/bin"),
-)
+TRUSTED_EXECUTABLE_DIRECTORIES = (Path("/usr/bin"), Path("/bin"))
+IMMUTABLE_SYSTEM_EXECUTABLES = {"git": Path("/usr/bin/git")}
 DEFAULT_CONTRACT = ROOT / "docs/positioning/proof/psp-c04-proof-contract.json"
 FULL_HEAD = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -650,7 +645,8 @@ FORBIDDEN_DEMO_VALUE_PATTERNS = (
     re.compile(r"(?i)\b(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}\b"),
     re.compile(r"(?i)https?://[^\s/:@]+:[^\s/@]+@"),
     re.compile(
-        r"(?i)(?<![A-Za-z0-9])(?:password|secret|api[-_ ]?key|access[-_ ]?token|"
+        r"(?i)(?<![A-Za-z0-9])(?:password|passwd|pwd|passcode|passphrase|secret|credential|token|"
+        r"api[-_ ]?key|access[-_ ]?token|"
         r"refresh[-_ ]?token|id[-_ ]?token|authorization|session[-_ ]?cookie|"
         r"private[-_ ]?key|recovery[-_ ]?code)"
         r"(?:[ \t]*[:=][ \t]*|[ \t]+(?:is|was)[ \t]*[:=]?[ \t]*)"
@@ -1184,41 +1180,22 @@ def source_freshness(contract: dict[str, Any], as_of: date) -> list[dict[str, An
     return rows
 
 
-def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT) -> list[dict[str, Any]]:
-    """Resolve pinned dependency files directly from Git objects without merging branches."""
+def resolve_dependency_sources(
+    contract: dict[str, Any],
+    repository: Path = ROOT,
+    *,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
+) -> list[dict[str, Any]]:
+    """Resolve pinned dependency files from authenticated canonical-main objects."""
     rows: list[dict[str, Any]] = []
-    for dependency in contract.get("dependency_sources", []):
-        source_spec = f"{dependency['exact_head']}:{dependency['required_path']}"
-        completed = subprocess.run(
-            [str(_trusted_named_executable("git")), "show", source_spec],
-            cwd=repository,
-            env=_sanitized_git_environment(),
-            check=False,
-            capture_output=True,
-            timeout=30,
-        )
-        if completed.returncode:
-            rows.append(
-                {
-                    "source_id": dependency["id"],
-                    "exact_head": dependency["exact_head"],
-                    "path": dependency["required_path"],
-                    "expected_blob": dependency["expected_blob"],
-                    "resolved": False,
-                    "reason": "missing_exact_head_object_or_path",
-                }
-            )
-            continue
-        blob = subprocess.run(
-            [str(_trusted_named_executable("git")), "rev-parse", source_spec],
-            cwd=repository,
-            env=_sanitized_git_environment(),
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        actual_blob = blob.stdout.strip() if blob.returncode == 0 else None
+    dependencies = [row for row in contract.get("dependency_sources", []) if isinstance(row, dict)]
+    bindings = {
+        (str(dependency.get("exact_head", "")), str(dependency.get("required_path", ""))) for dependency in dependencies
+    }
+    if canonical_objects is None:
+        canonical_objects = _fetch_canonical_limen_bindings(bindings)
+    for dependency in dependencies:
+        content, actual_blob = canonical_objects[(dependency["exact_head"], dependency["required_path"])]
         blob_match = actual_blob == dependency["expected_blob"]
         rows.append(
             {
@@ -1230,8 +1207,8 @@ def resolve_dependency_sources(contract: dict[str, Any], repository: Path = ROOT
                 "reason": "resolved" if blob_match else "blob_mismatch",
                 "blob": actual_blob,
                 "blob_match": blob_match,
-                "sha256": hashlib.sha256(completed.stdout).hexdigest(),
-                "bytes": len(completed.stdout),
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "bytes": len(content),
             }
         )
     return rows
@@ -1286,16 +1263,52 @@ def _read_git_object_bytes(repository: Path, head: str, path: str) -> tuple[byte
     return content.stdout, blob.stdout.strip()
 
 
-def verify_upstream_bindings(contract: dict[str, Any], repository: Path = ROOT) -> dict[str, Any]:
-    """Verify accepted registry, claim, commercial, and generated-offer objects without checkout mutation."""
+def verify_upstream_bindings(
+    contract: dict[str, Any],
+    repository: Path = ROOT,
+    *,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
+) -> dict[str, Any]:
+    """Verify accepted registry, claim, commercial, and offer objects from canonical main."""
     errors: list[str] = []
     checked: list[dict[str, Any]] = []
     binding = contract.get("program_binding", {})
-    registry_content, registry_blob = _read_git_object(
-        repository,
-        str(binding.get("exact_head")),
-        str(binding.get("source_path")),
-    )
+    dependencies = {row.get("id"): row for row in contract.get("dependency_sources", []) if isinstance(row, dict)}
+    claims_dependency = dependencies.get("p02_claims_ledger", {})
+    commercial_dependency = dependencies.get("c03_identity_offers", {})
+    artifact_set = contract.get("commercial_artifact_set", {})
+    source_head = str(artifact_set.get("source_head", ""))
+    requested = {
+        (str(binding.get("exact_head", "")), str(binding.get("source_path", ""))),
+        (str(claims_dependency.get("exact_head", "")), str(claims_dependency.get("required_path", ""))),
+        (str(commercial_dependency.get("exact_head", "")), str(commercial_dependency.get("required_path", ""))),
+        *{
+            (source_head, str(artifact.get("path", "")))
+            for artifact in artifact_set.get("artifacts", [])
+            if isinstance(artifact, dict)
+        },
+    }
+    if canonical_objects is None:
+        try:
+            canonical_objects = _fetch_canonical_limen_bindings(requested)
+        except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+            return {
+                "status": "fail",
+                "errors": [f"canonical upstream binding authority is unavailable: {exc}"],
+                "checked": [],
+            }
+
+    def object_text(head: object, path: object) -> tuple[str | None, str | None]:
+        value = canonical_objects.get((str(head), str(path)))
+        if value is None:
+            return None, None
+        raw, blob = value
+        try:
+            return raw.decode("utf-8"), blob
+        except UnicodeDecodeError:
+            return None, blob
+
+    registry_content, registry_blob = object_text(binding.get("exact_head"), binding.get("source_path"))
     if registry_blob != binding.get("expected_blob"):
         errors.append("accepted PSP-P02 registry blob mismatch")
     elif registry_content is None:
@@ -1319,18 +1332,11 @@ def verify_upstream_bindings(contract: dict[str, Any], repository: Path = ROOT) 
         }
     )
 
-    dependencies = {row.get("id"): row for row in contract.get("dependency_sources", [])}
-    claims_dependency = dependencies.get("p02_claims_ledger", {})
-    ledger_content, ledger_blob = _read_git_object(
-        repository,
-        str(claims_dependency.get("exact_head")),
-        str(claims_dependency.get("required_path")),
+    ledger_content, ledger_blob = object_text(
+        claims_dependency.get("exact_head"), claims_dependency.get("required_path")
     )
-    commercial_dependency = dependencies.get("c03_identity_offers", {})
-    commercial_content, commercial_blob = _read_git_object(
-        repository,
-        str(commercial_dependency.get("exact_head")),
-        str(commercial_dependency.get("required_path")),
+    commercial_content, commercial_blob = object_text(
+        commercial_dependency.get("exact_head"), commercial_dependency.get("required_path")
     )
     checked.extend(
         [
@@ -1364,10 +1370,8 @@ def verify_upstream_bindings(contract: dict[str, Any], repository: Path = ROOT) 
             if flagship.get("candidate_claim") not in commercial_content:
                 errors.append(f"claim {claim_id} commercial wording is stale")
 
-    artifact_set = contract.get("commercial_artifact_set", {})
-    source_head = artifact_set.get("source_head")
     for artifact in artifact_set.get("artifacts", []):
-        _content, actual_blob = _read_git_object(repository, str(source_head), str(artifact.get("path")))
+        _content, actual_blob = object_text(source_head, artifact.get("path"))
         blob_match = actual_blob == artifact.get("expected_blob")
         checked.append(
             {
@@ -1435,10 +1439,14 @@ def resolve_claims(
     return resolved
 
 
-def build_surface_audit_skeleton(contract: dict[str, Any]) -> list[dict[str, Any]]:
+def build_surface_audit_skeleton(
+    contract: dict[str, Any],
+    *,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
+) -> list[dict[str, Any]]:
     """Create the complete surface-by-claim denominator without touching public copy."""
     rows: list[dict[str, Any]] = []
-    claims = discover_material_claims(contract)
+    claims = discover_material_claims(contract, canonical_objects=canonical_objects)
     for surface in contract.get("surface_audit_model", {}).get("surfaces", []):
         for claim in claims:
             rows.append(
@@ -1463,25 +1471,41 @@ def _markdown_cells(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
 
-def _ledger_action(*dispositions: str) -> str:
-    boundary = " ".join(dispositions).lower()
+def _ledger_statuses(value: str) -> list[str]:
+    return [status.casefold().replace("-", "_") for status in re.findall(r"`([^`]+)`", value)]
+
+
+def _ledger_action(
+    status_value: str,
+    public_safe_wording: str,
+    tier: str,
+    claim_policy: dict[str, Any],
+) -> str:
+    boundary = f"{public_safe_wording} {tier}".lower()
     unsafe_markers = (
-        "conflicted",
-        "contradicted",
         "do not publish",
-        "ignored",
         "never use",
         "not yet published",
         "not_established",
         "nowhere",
         "remove",
-        "superseded",
         "unsupported",
         "unverified",
         "withhold",
         "withheld",
     )
-    return "withhold_or_remove" if any(marker in boundary for marker in unsafe_markers) else "audit_canonical_wording"
+    publishable = set(claim_policy.get("publishable_statuses", []))
+    non_publishable = set(claim_policy.get("non_publishable_statuses", []))
+    statuses = _ledger_statuses(status_value)
+    if (
+        len(statuses) != 1
+        or statuses[0] not in publishable
+        or statuses[0] in non_publishable
+        or any(status not in publishable | non_publishable for status in statuses)
+        or any(marker in boundary for marker in unsafe_markers)
+    ):
+        return "withhold_or_remove"
+    return "audit_canonical_wording"
 
 
 def _is_markdown_separator(cells: list[str]) -> bool:
@@ -1493,41 +1517,51 @@ def _ledger_material_claims(
     source_id: str,
     *,
     formalization_pending: bool,
+    claim_policy: dict[str, Any],
 ) -> list[dict[str, Any]]:
     reconciled = re.search(r"Reconciled (\d{4}-\d{2}-\d{2})", content)
     observed_at = [reconciled.group(1)] if reconciled else []
     in_claim_section = False
     claims: list[dict[str, Any]] = []
     seen_text: set[str] = set()
-    lines = content.splitlines()
-    for index, line in enumerate(lines):
+    accepted_headers = {
+        ("Claim", "Status", "Evidence / method", "Public-safe wording", "Tier"),
+        ("Packet metric", "Status", "Observed value", "Public-safe wording", "Tier"),
+    }
+    active_header: tuple[str, ...] | None = None
+    for line in content.splitlines():
         if re.match(r"^## [1-9]\.", line):
             in_claim_section = True
+            active_header = None
             continue
         if line.startswith("## "):
             in_claim_section = False
+            active_header = None
         if not in_claim_section or not line.startswith("|"):
+            active_header = None
             continue
         cells = _markdown_cells(line)
-        next_cells = (
-            _markdown_cells(lines[index + 1]) if index + 1 < len(lines) and lines[index + 1].startswith("|") else []
-        )
-        if (
-            len(cells) < 3
-            or _is_markdown_separator(cells)
-            or _is_markdown_separator(next_cells)
-            or cells[1].lower() == "status"
-        ):
+        header = tuple(cells)
+        if header in accepted_headers:
+            active_header = header
             continue
-        claim_text = cells[0]
+        if _is_markdown_separator(cells):
+            continue
+        if active_header is None or len(cells) != len(active_header):
+            continue
+        row = dict(zip(active_header, cells, strict=True))
+        claim_text = row[active_header[0]]
         if not claim_text or claim_text in seen_text:
             continue
         seen_text.add(claim_text)
-        status = cells[1]
-        public_safe_wording = cells[-2] if len(cells) >= 5 else claim_text
-        tier = cells[-1] if len(cells) >= 5 else "ledger_only"
-        action = _ledger_action(*cells[1:])
+        status = row["Status"]
+        public_safe_wording = row["Public-safe wording"]
+        tier = row["Tier"]
+        action = _ledger_action(status, public_safe_wording, tier, claim_policy)
         publishable = action == "audit_canonical_wording" and not formalization_pending
+        canonical_surface_wording = claim_text
+        if action == "audit_canonical_wording" and public_safe_wording.strip().casefold() != "as-is":
+            canonical_surface_wording = public_safe_wording.strip().strip('"')
         reason_codes = ["accepted_claims_ledger_inventory"]
         if formalization_pending:
             reason_codes.append("c04_formalization_pending")
@@ -1536,7 +1570,7 @@ def _ledger_material_claims(
             {
                 "claim_id": claim_id,
                 "flagship_id": None,
-                "candidate_claim": claim_text,
+                "candidate_claim": canonical_surface_wording,
                 "source_ids": [source_id],
                 "observation_dates": observed_at,
                 "status": status,
@@ -1552,22 +1586,33 @@ def _ledger_material_claims(
     return claims
 
 
-def discover_material_claims(contract: dict[str, Any], repository: Path = ROOT) -> list[dict[str, Any]]:
+def discover_material_claims(
+    contract: dict[str, Any],
+    repository: Path = ROOT,
+    *,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
+) -> list[dict[str, Any]]:
     """Discover the accepted ledger denominator, then retain the selected flagship proof cells."""
     dependencies = {row.get("id"): row for row in contract.get("dependency_sources", []) if isinstance(row, dict)}
     source_id = str(contract.get("surface_audit_model", {}).get("claim_inventory_source", ""))
     dependency = dependencies.get(source_id, {})
-    content, blob = _read_git_object(
-        repository,
-        str(dependency.get("exact_head", "")),
-        str(dependency.get("required_path", "")),
-    )
+    head = str(dependency.get("exact_head", ""))
+    path = str(dependency.get("required_path", ""))
+    try:
+        if canonical_objects is None:
+            canonical_objects = _fetch_canonical_limen_bindings({(head, path)})
+        raw, blob = canonical_objects[(head, path)]
+        content = raw.decode("utf-8")
+    except (OSError, UnicodeDecodeError, subprocess.TimeoutExpired, ValueError):
+        content = None
+        blob = None
     if content is None or blob != dependency.get("expected_blob"):
         raise ValueError("accepted claims-ledger inventory is unavailable or stale")
     claims = _ledger_material_claims(
         content,
         source_id,
         formalization_pending=contract.get("status") == "PREPARED/PREFLIGHT",
+        claim_policy=contract.get("claim_policy", {}),
     )
     claims.extend(resolve_claims(contract))
     if not claims:
@@ -1636,8 +1681,8 @@ def _normalized_surface_text(value: str) -> str:
 
 
 class _VisibleSurfaceParser(HTMLParser):
-    _HIDDEN_TAGS = {"head", "script", "style", "template", "title", "noscript", "svg"}
-    _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script"}
+    _HIDDEN_TAGS = {"head", "script", "style", "template", "title", "noscript"}
+    _ACTIVE_CONTENT_TAGS = {"applet", "embed", "iframe", "object", "script", "svg"}
     _EXECUTABLE_URI_ATTRIBUTES = {"action", "formaction", "href", "src", "xlink:href"}
     _VOID_TAGS = {
         "area",
@@ -1945,6 +1990,13 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
             negated = bool(prefix[-1:] and prefix[-1] in {"cannot", "cant", "never", "no", "not", "without"})
             prefix_text = " ".join(prefix[-12:])
             if re.search(r"\b(?:no|without)\s+(?:credible\s+)?evidence\b(?:\s+[a-z0-9]+){0,8}$", prefix_text):
+                negated = True
+            if re.search(
+                r"\b(?:(?:it\s+is\s+)?(?:false|untrue|incorrect)\s+that|"
+                r"cannot\s+truthfully\s+(?:say|state|claim)\s+that|"
+                r"(?:not|isnt)\s+true\s+that)\s*$",
+                prefix_text,
+            ):
                 negated = True
             if set(suffix[:4]).intersection(
                 {
@@ -2256,8 +2308,10 @@ def audit_surface_manifest(
     contract: dict[str, Any],
     manifest: dict[str, Any],
     repository: Path = ROOT,
+    *,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
 ) -> dict[str, Any]:
-    skeleton = build_surface_audit_skeleton(contract)
+    skeleton = build_surface_audit_skeleton(contract, canonical_objects=canonical_objects)
     expected_rows = {(row["surface"], row["claim_id"]): row for row in skeleton}
     expected = set(expected_rows)
     supplied_rows = manifest.get("rows") if isinstance(manifest, dict) else None
@@ -2994,21 +3048,24 @@ def _sanitized_git_environment() -> dict[str, str]:
 
 
 def _trusted_named_executable(name: str) -> Path:
+    """Resolve an immutable root-owned system executable without ambient PATH."""
     if not name or Path(name).name != name or "/" in name or "\\" in name:
         raise ValueError("trusted executable name must be one path-free component")
-    candidate = next(
-        (
-            directory / name
-            for directory in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)
-            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
-        ),
-        None,
-    )
+    candidate = IMMUTABLE_SYSTEM_EXECUTABLES.get(name)
     if candidate is None:
         raise OSError(f"trusted executable is unavailable: {name}")
-    resolved = candidate.resolve(strict=True)
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise OSError(f"trusted executable is unavailable: {name}") from exc
     if not resolved.is_file() or not os.access(resolved, os.X_OK):
         raise OSError(f"trusted executable is not executable: {resolved}")
+    for component in (resolved, *resolved.parents):
+        status = component.stat()
+        if status.st_uid != 0 or status.st_mode & 0o022:
+            raise OSError(f"trusted executable ancestry is mutable: {component}")
+        if component.parent == component:
+            break
     return resolved
 
 
@@ -3432,6 +3489,189 @@ def _fetch_canonical_limen_objects(
             else:
                 objects[path] = (content.stdout, blob.stdout.strip())
         return objects
+
+
+def _fetch_canonical_limen_bindings(
+    bindings: set[tuple[str, str]],
+) -> dict[tuple[str, str], tuple[bytes, str]]:
+    """Resolve accepted historical blobs only from one authenticated canonical-main object store."""
+    if (
+        not isinstance(bindings, set)
+        or not bindings
+        or any(not FULL_HEAD.fullmatch(head) or not _safe_relative_path(path) for head, path in bindings)
+    ):
+        raise ValueError("canonical dependency binding request is invalid")
+    default_branch, default_head = _canonical_limen_remote_head()
+    trusted_git = str(_trusted_named_executable("git"))
+    environment = _sanitized_git_environment()
+    anchor = Path(Path.cwd().anchor or os.sep)
+    with tempfile.TemporaryDirectory(prefix="limen-c04-dependency-authority-") as temporary:
+        object_store = Path(temporary) / "canonical.git"
+        commands = (
+            [trusted_git, "init", "--bare", "--quiet", str(object_store)],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "remote",
+                "add",
+                "canonical",
+                "https://github.com/organvm/limen.git",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.promisor",
+                "true",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.partialclonefilter",
+                "blob:none",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "fetch",
+                "--no-tags",
+                "--filter=blob:none",
+                "--force",
+                "canonical",
+                f"{default_head}:refs/canonical/{default_branch}",
+            ],
+        )
+        for command in commands:
+            completed = subprocess.run(
+                command,
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=120,
+            )
+            if completed.returncode != 0:
+                raise ValueError("canonical dependency history could not be fetched into the isolated store")
+        canonical_ref = f"refs/canonical/{default_branch}"
+        fetched = subprocess.run(
+            [trusted_git, "--git-dir", str(object_store), "rev-parse", "--verify", canonical_ref],
+            cwd=anchor,
+            env=environment,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if fetched.returncode != 0 or fetched.stdout.strip() != default_head:
+            raise ValueError("fetched canonical dependency head differs from the advertised head")
+        paths_by_head: dict[str, list[str]] = {}
+        for head, path in sorted(bindings):
+            paths_by_head.setdefault(head, []).append(path)
+        blob_by_binding: dict[tuple[str, str], str] = {}
+        for head, paths in paths_by_head.items():
+            ancestry = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "merge-base", "--is-ancestor", head, canonical_ref],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            if ancestry.returncode != 0:
+                raise ValueError(f"accepted dependency head is not contained in canonical main: {head}")
+            listing = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "ls-tree", "-z", head, "--", *paths],
+                cwd=anchor,
+                env=environment,
+                check=False,
+                capture_output=True,
+                timeout=30,
+            )
+            if listing.returncode != 0:
+                raise ValueError(f"accepted dependency tree is unavailable: {head}")
+            for entry in listing.stdout.split(b"\0"):
+                if not entry:
+                    continue
+                try:
+                    metadata, raw_path = entry.split(b"\t", 1)
+                    _mode, object_type, raw_blob = metadata.split()
+                    path = raw_path.decode("utf-8")
+                    actual_blob = raw_blob.decode("ascii")
+                except (UnicodeDecodeError, ValueError) as exc:
+                    raise ValueError("accepted dependency tree returned a malformed object") from exc
+                if object_type != b"blob" or not FULL_HEAD.fullmatch(actual_blob):
+                    raise ValueError(f"accepted dependency path is not a regular blob: {head}:{path}")
+                blob_by_binding[(head, path)] = actual_blob
+            missing = set(paths) - {path for bound_head, path in blob_by_binding if bound_head == head}
+            if missing:
+                raise ValueError(f"accepted dependency paths are unavailable at {head}: {', '.join(sorted(missing))}")
+
+        ordered_blobs = list(dict.fromkeys(blob_by_binding.values()))
+        try:
+            batch = subprocess.run(
+                [trusted_git, "--git-dir", str(object_store), "cat-file", "--batch"],
+                cwd=anchor,
+                env=environment,
+                input=("\n".join(ordered_blobs) + "\n").encode("ascii"),
+                check=False,
+                capture_output=True,
+                timeout=120,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise ValueError("accepted dependency blob batch timed out") from exc
+        if batch.returncode != 0:
+            raise ValueError("accepted dependency blob batch failed")
+        content_by_blob: dict[str, bytes] = {}
+        offset = 0
+        for expected_blob in ordered_blobs:
+            header_end = batch.stdout.find(b"\n", offset)
+            if header_end < 0:
+                raise ValueError("accepted dependency blob batch returned a truncated header")
+            header = batch.stdout[offset:header_end].split()
+            if len(header) != 3 or header[0].decode("ascii", "ignore") != expected_blob or header[1] != b"blob":
+                raise ValueError("accepted dependency blob batch returned an unexpected object")
+            try:
+                size = int(header[2])
+            except ValueError as exc:
+                raise ValueError("accepted dependency blob batch returned an invalid size") from exc
+            if size < 0 or size > 1_048_576:
+                raise ValueError("accepted dependency blob exceeds the bounded size")
+            content_start = header_end + 1
+            content_end = content_start + size
+            if content_end >= len(batch.stdout) or batch.stdout[content_end : content_end + 1] != b"\n":
+                raise ValueError("accepted dependency blob batch returned truncated content")
+            content_by_blob[expected_blob] = batch.stdout[content_start:content_end]
+            offset = content_end + 1
+        if offset != len(batch.stdout):
+            raise ValueError("accepted dependency blob batch returned trailing content")
+        resolved = {binding: (content_by_blob[blob], blob) for binding, blob in blob_by_binding.items()}
+        return resolved
+
+
+def _contract_canonical_binding_request(contract: dict[str, Any]) -> set[tuple[str, str]]:
+    """Return every contract-owned historical object needed by one top-level validation run."""
+    bindings = {
+        (str(row.get("exact_head", "")), str(row.get("required_path", "")))
+        for row in contract.get("dependency_sources", [])
+        if isinstance(row, dict)
+    }
+    program = contract.get("program_binding", {})
+    if isinstance(program, dict):
+        bindings.add((str(program.get("exact_head", "")), str(program.get("source_path", ""))))
+    artifact_set = contract.get("commercial_artifact_set", {})
+    if isinstance(artifact_set, dict):
+        source_head = str(artifact_set.get("source_head", ""))
+        bindings.update(
+            (source_head, str(row.get("path", "")))
+            for row in artifact_set.get("artifacts", [])
+            if isinstance(row, dict)
+        )
+    return bindings
 
 
 def _canonical_limen_containment(
@@ -4024,6 +4264,7 @@ def formalization_readiness(
     repository: Path = ROOT,
     w07_verification: dict[str, Any] | None = None,
     phase_verifications: dict[str, dict[str, Any]] | None = None,
+    canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None,
 ) -> dict[str, Any]:
     accepted_head = contract.get("dependency_progress", {}).get("c03", {}).get("merge_commit")
     residual = ["PSP-P03-W07 genuine five-reader receipt", "PSP-C03 formal closure predicates"]
@@ -4073,11 +4314,11 @@ def formalization_readiness(
         )
         if not receipt_errors:
             residual = []
-    dependency_rows = resolve_dependency_sources(contract, repository)
+    dependency_rows = resolve_dependency_sources(contract, repository, canonical_objects=canonical_objects)
     unresolved_sources = [row["source_id"] for row in dependency_rows if not row.get("resolved")]
     if unresolved_sources:
         receipt_errors.append(f"unresolved pinned sources: {', '.join(unresolved_sources)}")
-    upstream_bindings = verify_upstream_bindings(contract, repository)
+    upstream_bindings = verify_upstream_bindings(contract, repository, canonical_objects=canonical_objects)
     receipt_errors.extend(upstream_bindings["errors"])
     if contract.get("counts_as_closure") is not False:
         receipt_errors.append("C04 preflight must not count as closure")
@@ -4138,9 +4379,19 @@ def main() -> int:
         }
         if not errors:
             as_of = args.as_of or datetime.now(timezone.utc).date()
+            canonical_objects: dict[tuple[str, str], tuple[bytes, str]] | None = None
+            if args.mode in {
+                "validate",
+                "resolve",
+                "surface-audit",
+                "dependency-sources",
+                "upstream-bindings",
+                "formalization",
+            }:
+                canonical_objects = _fetch_canonical_limen_bindings(_contract_canonical_binding_request(contract))
             if args.mode == "validate":
-                result["sources"] = resolve_dependency_sources(contract)
-                result["upstream_bindings"] = verify_upstream_bindings(contract)
+                result["sources"] = resolve_dependency_sources(contract, canonical_objects=canonical_objects)
+                result["upstream_bindings"] = verify_upstream_bindings(contract, canonical_objects=canonical_objects)
                 unresolved = [row["source_id"] for row in result["sources"] if not row["resolved"]]
                 if unresolved:
                     result["errors"].append(f"unresolved pinned sources: {', '.join(unresolved)}")
@@ -4148,24 +4399,24 @@ def main() -> int:
                 if result["errors"]:
                     result["status"] = "fail"
             elif args.mode == "dependency-sources":
-                result["sources"] = resolve_dependency_sources(contract)
+                result["sources"] = resolve_dependency_sources(contract, canonical_objects=canonical_objects)
                 if not all(row["resolved"] for row in result["sources"]):
                     result["status"] = "fail"
             elif args.mode == "upstream-bindings":
-                result["upstream_bindings"] = verify_upstream_bindings(contract)
+                result["upstream_bindings"] = verify_upstream_bindings(contract, canonical_objects=canonical_objects)
                 result["status"] = result["upstream_bindings"]["status"]
             elif args.mode == "freshness":
                 result["sources"] = source_freshness(contract, as_of)
             elif args.mode == "resolve":
-                dependency_rows = resolve_dependency_sources(contract)
+                dependency_rows = resolve_dependency_sources(contract, canonical_objects=canonical_objects)
                 result["dependency_sources"] = dependency_rows
                 result["claims"] = resolve_claims(contract, as_of=as_of, dependency_rows=dependency_rows)
             elif args.mode == "surface-audit":
                 payload = _load_optional_json(args.input)
                 if payload is None:
-                    result["rows"] = build_surface_audit_skeleton(contract)
+                    result["rows"] = build_surface_audit_skeleton(contract, canonical_objects=canonical_objects)
                 else:
-                    result["audit"] = audit_surface_manifest(contract, payload)
+                    result["audit"] = audit_surface_manifest(contract, payload, canonical_objects=canonical_objects)
                     result["status"] = result["audit"]["status"]
             elif args.mode == "demo":
                 payload = _load_optional_json(args.input)
@@ -4181,7 +4432,9 @@ def main() -> int:
                 result["status"] = result["validation"]["status"]
             elif args.mode == "formalization":
                 payload = _load_optional_json(args.input)
-                result["formalization"] = formalization_readiness(contract, payload)
+                result["formalization"] = formalization_readiness(
+                    contract, payload, canonical_objects=canonical_objects
+                )
                 result["status"] = "pass" if result["formalization"]["ready"] else "fail"
                 result["errors"].extend(result["formalization"]["errors"])
     except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired, ValueError) as exc:

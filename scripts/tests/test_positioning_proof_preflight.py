@@ -37,6 +37,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         authority_patch.start()
         self.addCleanup(authority_patch.stop)
         self.fetch_canonical_limen_objects = MODULE._fetch_canonical_limen_objects
+        self.fetch_canonical_limen_bindings = MODULE._fetch_canonical_limen_bindings
 
         def local_canonical_objects(
             _default_branch: str,
@@ -52,6 +53,25 @@ class PositioningProofPreflightTest(unittest.TestCase):
         )
         object_patch.start()
         self.addCleanup(object_patch.stop)
+
+        def local_canonical_bindings(
+            bindings: set[tuple[str, str]],
+        ) -> dict[tuple[str, str], tuple[bytes, str]]:
+            resolved: dict[tuple[str, str], tuple[bytes, str]] = {}
+            for head, path in bindings:
+                content, blob = MODULE._read_git_object_bytes(ROOT, head, path)
+                if content is None or blob is None:
+                    raise ValueError(f"missing local fixture binding: {head}:{path}")
+                resolved[(head, path)] = (content, blob)
+            return resolved
+
+        binding_patch = mock.patch.object(
+            MODULE,
+            "_fetch_canonical_limen_bindings",
+            side_effect=local_canonical_bindings,
+        )
+        binding_patch.start()
+        self.addCleanup(binding_patch.stop)
         paths = (
             ".gitignore",
             ".ruff.toml",
@@ -481,17 +501,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertGreater(len(claims), len(self.contract["flagships"]))
         self.assertEqual(surface_count * len(claims), len(rows))
         self.assertTrue(any("Top 1% Python committer" in claim["candidate_claim"] for claim in claims))
-        self.assertTrue(any("314 repositories total" in claim["candidate_claim"] for claim in claims))
-        unpublished = next(
-            claim for claim in claims if claim["candidate_claim"] == "Cost/reliability/verification metrics"
-        )
-        self.assertFalse(unpublished["publishable"])
-        self.assertEqual("withhold_or_remove", unpublished["action"])
-        unsupported = next(
-            claim for claim in claims if claim["candidate_claim"] == "`profile-universal-production-claim`"
-        )
-        self.assertFalse(unsupported["publishable"])
-        self.assertEqual("withhold_or_remove", unsupported["action"])
+        self.assertTrue(any("314 repositories" in claim["candidate_claim"] for claim in claims))
+        self.assertFalse(any(claim["candidate_claim"] == "Cost/reliability/verification metrics" for claim in claims))
+        self.assertFalse(any(claim["candidate_claim"] == "`profile-universal-production-claim`" for claim in claims))
         self.assertFalse(any(claim["candidate_claim"] == "Claim ID" for claim in claims))
         self.assertTrue(all(row["canonical_or_drift"] == "not_audited" for row in rows))
 
@@ -502,6 +514,44 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertTrue(all(not claim["publishable"] for claim in ledger_claims))
         self.assertTrue(all("c04_formalization_pending" in claim["reason_codes"] for claim in ledger_claims))
         self.assertTrue(all(claim["action"] != "audit_canonical_wording" for claim in ledger_claims))
+
+    def test_ledger_publication_authority_uses_the_exact_status_vocabulary(self) -> None:
+        content = """Reconciled 2026-08-15
+## 1. Claims
+| Claim | Status | Evidence / method | Public-safe wording | Tier |
+|---|---|---|---|---|
+| Independently proven claim | `verified` | receipt | As independently proven. | L1 |
+| Verified raw wording | `verified` | receipt | as-is | L2 |
+| Reviewed derived claim | `derived-reviewed` | receipt | Reviewed derived wording. | L2 |
+| Unreviewed derived claim | `derived` | calculation | Decorative wording. | L2 |
+| Repository assertion | `repository-asserted` | README only | repository-reported until a receipt exists | L2 with label |
+| Unknown status | `invented` | none | polished but unauthorized wording | L1 |
+
+## 7. Metrics
+| Metric | Status | Evidence |
+|---|---|---|
+| Three-column metric | `verified` | source |
+
+## 9. Research
+| Claim ID | Measurement | Inference | Implication | Prominence | Publishable status |
+|---|---|---|---|---|---|
+| `research-row` | `verified` | `bounded` | `not_established` | `retain_l1` | `provisional_verified_wording` |
+"""
+        claims = MODULE._ledger_material_claims(
+            content,
+            "ledger",
+            formalization_pending=False,
+            claim_policy=self.contract["claim_policy"],
+        )
+        by_text = {claim["candidate_claim"]: claim for claim in claims}
+        self.assertEqual("audit_canonical_wording", by_text["As independently proven."]["action"])
+        self.assertEqual("audit_canonical_wording", by_text["Verified raw wording"]["action"])
+        self.assertEqual("audit_canonical_wording", by_text["Reviewed derived wording."]["action"])
+        self.assertEqual("withhold_or_remove", by_text["Unreviewed derived claim"]["action"])
+        self.assertEqual("withhold_or_remove", by_text["Repository assertion"]["action"])
+        self.assertEqual("withhold_or_remove", by_text["Unknown status"]["action"])
+        self.assertNotIn("Three-column metric", by_text)
+        self.assertNotIn("`research-row`", by_text)
 
     def test_surface_audit_main_reports_unavailable_claim_inventory_without_traceback(self) -> None:
         stdout = io.StringIO()
@@ -517,6 +567,19 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertEqual("fail", result["status"])
         self.assertEqual([f"surface audit failed: {message}"], result["errors"])
+
+    def test_validate_mode_reuses_one_authenticated_canonical_object_snapshot(self) -> None:
+        stdout = io.StringIO()
+        MODULE._fetch_canonical_limen_bindings.reset_mock()
+        argv = [str(SCRIPT), "--mode", "validate", "--json"]
+        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(stdout):
+            exit_code = MODULE.main()
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(0, exit_code, result)
+        self.assertEqual("pass", result["status"])
+        MODULE._fetch_canonical_limen_bindings.assert_called_once()
+        requested = MODULE._fetch_canonical_limen_bindings.call_args.args[0]
+        self.assertEqual(MODULE._contract_canonical_binding_request(self.production_contract), requested)
 
     def test_preflight_main_reports_bounded_subprocess_timeout_without_traceback(self) -> None:
         stdout = io.StringIO()
@@ -627,6 +690,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
         private_content = b"support contact: customer@example.com\n"
         extraction = MODULE._canonical_surface_extraction(private_content, "raw_text_v1")
         inspection["extracted_text_sha256"] = hashlib.sha256(extraction).hexdigest()
+        read_git_object_bytes = MODULE._read_git_object_bytes
+
+        def inspected_surface_only(repository: Path, head: str, path: str) -> tuple[bytes | None, str | None]:
+            if path == ".gitignore":
+                return private_content, inspection["blob_sha1"]
+            return read_git_object_bytes(repository, head, path)
+
         with (
             mock.patch.object(
                 MODULE,
@@ -636,7 +706,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
             mock.patch.object(
                 MODULE,
                 "_read_git_object_bytes",
-                return_value=(private_content, inspection["blob_sha1"]),
+                side_effect=inspected_surface_only,
             ),
         ):
             result = MODULE.audit_surface_manifest(self.contract, manifest)
@@ -812,6 +882,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual([], matched)
         self.assertEqual(["LONG-CLAIM"], drifted)
 
+        for framing in (
+            "It is false that Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
+            "We cannot truthfully say that Limen demonstrates governed multi-agent delivery with durable "
+            "exact-head receipts.",
+        ):
+            with self.subTest(framing=framing):
+                matched, drifted = MODULE._surface_claim_scan(framing, long_expected, surface)
+                self.assertEqual([], matched)
+                self.assertEqual(["LONG-CLAIM"], drifted)
+
         matched, drifted = MODULE._surface_claim_scan(
             "There is no evidence for an unrelated adoption claim. "
             "Limen demonstrates governed multi-agent delivery with durable exact-head receipts.",
@@ -857,7 +937,7 @@ class PositioningProofPreflightTest(unittest.TestCase):
         changed_extraction = MODULE._canonical_surface_extraction(changed, "visible_text_v3")
         self.assertEqual(first_extraction, second_extraction)
         self.assertNotEqual(first_extraction, changed_extraction)
-        for hidden_tag in ("style", "template", "noscript", "svg"):
+        for hidden_tag in ("style", "template", "noscript"):
             with self.subTest(hidden_tag=hidden_tag):
                 with self.assertRaisesRegex(ValueError, "unterminated hidden"):
                     MODULE._canonical_surface_extraction(
@@ -880,6 +960,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
             with self.subTest(executable_markup=executable_markup):
                 with self.assertRaisesRegex(ValueError, "executable"):
                     MODULE._canonical_surface_extraction(executable_markup.encode(), "visible_text_v3")
+        for svg_markup in (
+            "<svg><text>Browser-visible proof claim</text></svg>",
+            "<SVG><text>Browser-visible proof claim</text></SVG>",
+        ):
+            with self.subTest(svg_markup=svg_markup):
+                with self.assertRaisesRegex(ValueError, "active-content"):
+                    MODULE._canonical_surface_extraction(svg_markup.encode(), "visible_text_v3")
         for hidden_markup in (
             "<div hidden>hidden@example.invalid</div>",
             "<section aria-hidden='true'>hidden@example.invalid</section>",
@@ -1499,10 +1586,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(1, run.call_count)
 
     def test_receipt_privacy_scan_rejects_assignments_and_credential_url_parameters(self) -> None:
-        self.assertEqual(
-            {"$.limitations[0]"},
-            MODULE._find_forbidden_demo_material({"limitations": ["The password is hunter2alpha"]}),
-        )
+        for assignment in (
+            "The password is hunter2alpha",
+            "token is hunter2alpha",
+            "credential: hunter2alpha",
+        ):
+            with self.subTest(assignment=assignment):
+                self.assertEqual(
+                    {"$.limitations[0]"},
+                    MODULE._find_forbidden_demo_material({"limitations": [assignment]}),
+                )
         self.assertEqual(
             {"$.evidence_urls[0]"},
             MODULE._find_forbidden_demo_material(
@@ -1531,6 +1624,12 @@ class PositioningProofPreflightTest(unittest.TestCase):
             set(),
             MODULE._find_forbidden_demo_material({"limitations": ["API_" + "KEY" + "=\n# intentionally blank"]}),
         )
+        for safe_statement in ("token is required", "token budget is bounded"):
+            with self.subTest(safe_statement=safe_statement):
+                self.assertEqual(
+                    set(),
+                    MODULE._find_forbidden_demo_material({"limitations": [safe_statement]}),
+                )
         self.assertEqual(
             {"$.limitations[0]"},
             MODULE._find_forbidden_demo_material(
@@ -2507,6 +2606,62 @@ class PositioningProofPreflightTest(unittest.TestCase):
                 if key != "PATH":
                     self.assertNotIn(key, environment)
             self.assertNotIn(directory, environment["PATH"].split(os.pathsep))
+
+    def test_dependency_bindings_fetch_canonical_history_before_historical_object_reads(self) -> None:
+        authoritative_head = MODULE._canonical_limen_remote_head()[1]
+        historical_head = "a" * 40
+        path = "docs/positioning/claims-ledger.md"
+        completed = subprocess.CompletedProcess([], 0, b"", b"")
+        fetched = subprocess.CompletedProcess([], 0, authoritative_head + "\n", "")
+        listing = subprocess.CompletedProcess(
+            [],
+            0,
+            f"100644 blob {'b' * 40}\t{path}\0".encode(),
+            b"",
+        )
+        content = b"bounded ledger\n"
+        batch = subprocess.CompletedProcess(
+            [],
+            0,
+            f"{'b' * 40} blob {len(content)}\n".encode() + content + b"\n",
+            b"",
+        )
+        with mock.patch.object(
+            MODULE.subprocess,
+            "run",
+            side_effect=(completed, completed, completed, completed, completed, fetched, completed, listing, batch),
+        ) as run:
+            observed = self.fetch_canonical_limen_bindings({(historical_head, path)})
+        self.assertEqual((b"bounded ledger\n", "b" * 40), observed[(historical_head, path)])
+        fetch = run.call_args_list[4].args[0]
+        self.assertIn("--filter=blob:none", fetch)
+        self.assertNotIn("--depth=1", fetch)
+        self.assertIn(f"{authoritative_head}:refs/canonical/main", fetch)
+        ancestry = run.call_args_list[6].args[0]
+        self.assertIn("--git-dir", ancestry)
+        self.assertIn(historical_head, ancestry)
+        self.assertIn("ls-tree", run.call_args_list[7].args[0])
+        self.assertIn("cat-file", run.call_args_list[8].args[0])
+        self.assertEqual((("b" * 40) + "\n").encode(), run.call_args_list[8].kwargs["input"])
+        for object_read in run.call_args_list[7:]:
+            self.assertIn("--git-dir", object_read.args[0])
+
+    def test_formalization_git_resolver_rejects_mutable_interpreter_siblings(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            mutable_git = Path(directory) / "git"
+            mutable_git.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            mutable_git.chmod(0o755)
+            with (
+                mock.patch.object(MODULE.sys, "executable", str(Path(directory) / "python3")),
+                mock.patch.object(
+                    MODULE,
+                    "TRUSTED_EXECUTABLE_DIRECTORIES",
+                    (Path(directory), Path("/usr/bin"), Path("/bin")),
+                ),
+            ):
+                resolved = MODULE._trusted_named_executable("git")
+        self.assertEqual(Path("/usr/bin/git").resolve(), resolved)
+        self.assertNotEqual(mutable_git, resolved)
 
     def test_live_closure_verification_rejects_an_unpushed_descendant(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

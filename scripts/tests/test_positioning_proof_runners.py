@@ -1407,22 +1407,40 @@ class PositioningProofRunnerTest(unittest.TestCase):
         self.assertTrue(any("timed out" in error for error in result["errors"]))
 
     def test_cost_failure_exact_replay_fetches_and_reads_only_the_recorded_head_and_blobs(self) -> None:
-        payload = {"schema_version": "synthetic.input.v1", "rows": []}
+        population_path = "scripts/tests/fixtures/positioning-proof/exact-population.json"
+        rate_path = "scripts/tests/fixtures/positioning-proof/exact-rates.json"
+        payload = {
+            "schema_version": COST.SCHEMA_VERSION,
+            "population": {"source_artifact": population_path},
+            "rows": [{"model_cost_rate_basis": {"source_artifact": rate_path}}],
+        }
         review = {"schema_version": "synthetic.review.v1", "verdict": "withheld"}
+        population_source = {"schema_version": "synthetic.population.v1"}
+        rate_source = {"schema_version": "synthetic.rates.v1"}
         input_raw = json.dumps(payload).encode()
         review_raw = json.dumps(review).encode()
+        population_raw = json.dumps(population_source).encode()
+        rate_raw = json.dumps(rate_source).encode()
+        default_head = "f" * 40
         git_outputs = (
-            (COST_SOURCE_HEAD + "\n").encode(),
+            (default_head + "\n").encode(),
+            b"",
+            b"",
             (COST_RUNNER_BLOB + "\n").encode(),
             Path(COST.__file__).resolve().read_bytes(),
             (COST_INPUT_BLOB + "\n").encode(),
             input_raw,
             (COST_REVIEW_BLOB + "\n").encode(),
             review_raw,
+            ("1" * 40 + "\n").encode(),
+            population_raw,
+            ("2" * 40 + "\n").encode(),
+            rate_raw,
         )
         completed = subprocess.CompletedProcess([], 0, b"", b"")
         with (
-            mock.patch.object(COST.subprocess, "run", side_effect=(completed, completed)) as run,
+            mock.patch.object(COST, "_canonical_remote_default_head", return_value=("main", default_head)),
+            mock.patch.object(COST.subprocess, "run", side_effect=(completed,) * 5) as run,
             mock.patch.object(COST, "_git_output", side_effect=git_outputs) as git_output,
         ):
             observed = COST._fetch_exact_replay_artifacts(
@@ -1435,20 +1453,47 @@ class PositioningProofRunnerTest(unittest.TestCase):
             )
         self.assertEqual(payload, observed[COST_INPUT_ARTIFACT])
         self.assertEqual(review, observed[COST_REVIEW_ARTIFACT])
-        fetch = run.call_args_list[1].args[0]
-        self.assertIn(f"{COST_SOURCE_HEAD}:refs/canonical/source", fetch)
-        self.assertIn(f"{COST_SOURCE_HEAD}:{COST.RUNNER_ARTIFACT}", git_output.call_args_list[1].args[0])
-        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_INPUT_ARTIFACT}", git_output.call_args_list[3].args[0])
-        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_REVIEW_ARTIFACT}", git_output.call_args_list[5].args[0])
+        self.assertEqual(population_source, observed[population_path])
+        self.assertEqual(rate_source, observed[rate_path])
+        fetch = run.call_args_list[4].args[0]
+        self.assertIn("--filter=blob:none", fetch)
+        self.assertNotIn("--depth=1", fetch)
+        self.assertIn(f"{default_head}:refs/canonical/main", fetch)
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST.RUNNER_ARTIFACT}", git_output.call_args_list[3].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_INPUT_ARTIFACT}", git_output.call_args_list[5].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{COST_REVIEW_ARTIFACT}", git_output.call_args_list[7].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{population_path}", git_output.call_args_list[9].args[0])
+        self.assertIn(f"{COST_SOURCE_HEAD}:{rate_path}", git_output.call_args_list[11].args[0])
+        for call in git_output.call_args_list:
+            self.assertIsNotNone(call.kwargs.get("git_dir"))
 
         wrong_blob_outputs = (
-            (COST_SOURCE_HEAD + "\n").encode(),
+            (default_head + "\n").encode(),
+            b"",
+            b"",
             ("e" * 40 + "\n").encode(),
         )
         with (
-            mock.patch.object(COST.subprocess, "run", side_effect=(completed, completed)),
+            mock.patch.object(COST, "_canonical_remote_default_head", return_value=("main", default_head)),
+            mock.patch.object(COST.subprocess, "run", side_effect=(completed,) * 5),
             mock.patch.object(COST, "_git_output", side_effect=wrong_blob_outputs),
             self.assertRaisesRegex(ValueError, "runner blob differs"),
+        ):
+            COST._fetch_exact_replay_artifacts(
+                COST_SOURCE_HEAD,
+                COST_RUNNER_BLOB,
+                {COST_INPUT_ARTIFACT: COST_INPUT_BLOB},
+            )
+
+        with (
+            mock.patch.object(COST, "_canonical_remote_default_head", return_value=("main", default_head)),
+            mock.patch.object(COST.subprocess, "run", side_effect=(completed,) * 5),
+            mock.patch.object(
+                COST,
+                "_git_output",
+                side_effect=((default_head + "\n").encode(), b"", ValueError("not an ancestor")),
+            ),
+            self.assertRaisesRegex(ValueError, "not contained in canonical main"),
         ):
             COST._fetch_exact_replay_artifacts(
                 COST_SOURCE_HEAD,
@@ -1472,6 +1517,26 @@ class PositioningProofRunnerTest(unittest.TestCase):
             review_verdict=review,
         )
         self.assertTrue(any("canonical authenticated character set" in error for error in result["errors"]))
+
+    def test_exact_replay_validates_nested_sources_from_the_recorded_bundle_only(self) -> None:
+        payload = json.loads((FIXTURES / "synthetic-cost-failure.json").read_text(encoding="utf-8"))
+        paths = {
+            payload["population"]["source_artifact"],
+            *(row["model_cost_rate_basis"]["source_artifact"] for row in payload["rows"]),
+        }
+        bundle = COST.ExactReplayArtifacts()
+        for path in paths:
+            raw = (ROOT / path).read_bytes()
+            bundle[path] = COST._loads_public_artifact(raw.decode("utf-8"))
+            bundle.raw_by_path[path] = raw
+            bundle.blob_by_path[path] = "a" * 40
+        with mock.patch.object(COST, "_safe_tracked_artifact", side_effect=AssertionError("local fallback")):
+            self.assertEqual([], COST.validate_sample(payload, exact_artifacts=bundle))
+
+        population_path = payload["population"]["source_artifact"]
+        bundle.raw_by_path[population_path] += b"\n"
+        errors = COST.validate_sample(payload, exact_artifacts=bundle)
+        self.assertTrue(any("source SHA-256 differs" in error for error in errors), errors)
 
     def test_cost_failure_oversized_numbers_fail_closed_without_overflow(self) -> None:
         cases = (

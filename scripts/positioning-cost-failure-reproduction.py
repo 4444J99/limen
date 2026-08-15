@@ -11,7 +11,6 @@ import os
 import re
 import ssl
 import subprocess
-import sys
 import tempfile
 from datetime import date, datetime, timezone
 from http.client import HTTPException
@@ -28,13 +27,8 @@ CONTRACT_CA_BUNDLE_CANDIDATES = (
     Path("/etc/pki/tls/certs/ca-bundle.crt"),
     Path("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"),
 )
-TRUSTED_EXECUTABLE_DIRECTORIES = (
-    Path(sys.executable).resolve().parent,
-    Path("/opt/homebrew/bin"),
-    Path("/usr/local/bin"),
-    Path("/usr/bin"),
-    Path("/bin"),
-)
+TRUSTED_EXECUTABLE_DIRECTORIES = (Path("/usr/bin"), Path("/bin"))
+IMMUTABLE_SYSTEM_EXECUTABLES = {"git": Path("/usr/bin/git")}
 SCHEMA_VERSION = "limen.positioning_cost_failure_sample.v1"
 ALLOWED_STATES = {"done", "failed", "failed_blocked", "needs_human"}
 ALLOWED_FAILURE_CLASSES = {
@@ -197,6 +191,17 @@ MODEL_RATE_SOURCE_RECORD_FIELDS = {
 MODEL_RATE_FORMULA = (
     "((input_units * input_rate_usd_per_million) + (output_units * output_rate_usd_per_million)) / 1000000"
 )
+
+
+class ExactReplayArtifacts(dict[str, object]):
+    """Parsed exact-head artifacts plus the same immutable raw bytes and blob identities."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.raw_by_path: dict[str, bytes] = {}
+        self.blob_by_path: dict[str, str] = {}
+
+
 REVIEW_FIELDS = {
     "schema_version",
     "reviewer_class",
@@ -553,19 +558,21 @@ def _verify_authority_receipt(
 def _trusted_named_executable(name: str) -> Path:
     if not name or Path(name).name != name or "/" in name or "\\" in name:
         raise ValueError("trusted executable name must be one path-free component")
-    candidate = next(
-        (
-            directory / name
-            for directory in dict.fromkeys(TRUSTED_EXECUTABLE_DIRECTORIES)
-            if (directory / name).is_file() and os.access(directory / name, os.X_OK)
-        ),
-        None,
-    )
+    candidate = IMMUTABLE_SYSTEM_EXECUTABLES.get(name)
     if candidate is None:
         raise OSError(f"trusted executable is unavailable: {name}")
-    resolved = candidate.resolve(strict=True)
+    try:
+        resolved = candidate.resolve(strict=True)
+    except OSError as exc:
+        raise OSError(f"trusted executable is unavailable: {name}") from exc
     if not resolved.is_file() or not os.access(resolved, os.X_OK):
         raise OSError(f"trusted executable is not executable: {resolved}")
+    for component in (resolved, *resolved.parents):
+        status = component.stat()
+        if status.st_uid != 0 or status.st_mode & 0o022:
+            raise OSError(f"trusted executable ancestry is mutable: {component}")
+        if component.parent == component:
+            break
     return resolved
 
 
@@ -709,11 +716,67 @@ def _load_exact_public_artifact(source_head: object, artifact_path: object, expe
         raise ValueError("artifact is not UTF-8 JSON") from exc
 
 
+def _canonical_remote_default_head() -> tuple[str, str]:
+    try:
+        completed = subprocess.run(
+            [
+                str(_trusted_named_executable("git")),
+                "ls-remote",
+                "--symref",
+                f"https://github.com/{CANONICAL_REPOSITORY}.git",
+                "HEAD",
+            ],
+            cwd=Path(Path.cwd().anchor or os.sep),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=_sanitized_git_environment(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ValueError("canonical replay default-branch inspection timed out") from exc
+    if completed.returncode != 0:
+        raise ValueError("canonical replay default-branch inspection failed")
+    default_branch: str | None = None
+    default_head: str | None = None
+    for line in completed.stdout.splitlines():
+        if line.startswith("ref: refs/heads/") and line.endswith("\tHEAD"):
+            default_branch = line.removeprefix("ref: refs/heads/").removesuffix("\tHEAD")
+        elif line.endswith("\tHEAD"):
+            candidate = line.removesuffix("\tHEAD")
+            if FULL_HEAD.fullmatch(candidate):
+                default_head = candidate
+    if (
+        not isinstance(default_branch, str)
+        or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", default_branch)
+        or any(token in default_branch for token in ("..", "//", "@{", "\\"))
+        or default_head is None
+    ):
+        raise ValueError("canonical replay remote returned no exact default-branch head")
+    return default_branch, default_head
+
+
+def _nested_replay_artifact_paths(payload: object) -> set[str]:
+    paths: set[str] = set()
+    if not isinstance(payload, dict):
+        return paths
+    population = payload.get("population")
+    if isinstance(population, dict) and _public_artifact_path(population.get("source_artifact")):
+        paths.add(str(population["source_artifact"]))
+    rows = payload.get("rows")
+    if isinstance(rows, list):
+        for row in rows:
+            detail = row.get("model_cost_rate_basis") if isinstance(row, dict) else None
+            if isinstance(detail, dict) and _public_artifact_path(detail.get("source_artifact")):
+                paths.add(str(detail["source_artifact"]))
+    return paths
+
+
 def _fetch_exact_replay_artifacts(
     source_head: str,
     runner_blob: str,
     artifact_blobs: dict[str, str],
-) -> dict[str, object]:
+) -> ExactReplayArtifacts:
     """Fetch and parse the exact canonical replay tree without trusting the current checkout."""
     if not FULL_HEAD.fullmatch(source_head) or not GIT_BLOB.fullmatch(runner_blob):
         raise ValueError("replay source identity is invalid")
@@ -724,6 +787,7 @@ def _fetch_exact_replay_artifacts(
     trusted_git = str(_trusted_named_executable("git"))
     environment = _sanitized_git_environment()
     anchor = Path(Path.cwd().anchor or os.sep)
+    default_branch, default_head = _canonical_remote_default_head()
     with tempfile.TemporaryDirectory(prefix="limen-cost-replay-") as temporary:
         object_store = Path(temporary) / "canonical.git"
         commands = (
@@ -732,12 +796,37 @@ def _fetch_exact_replay_artifacts(
                 trusted_git,
                 "--git-dir",
                 str(object_store),
+                "remote",
+                "add",
+                "canonical",
+                f"https://github.com/{CANONICAL_REPOSITORY}.git",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.promisor",
+                "true",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
+                "config",
+                "remote.canonical.partialclonefilter",
+                "blob:none",
+            ],
+            [
+                trusted_git,
+                "--git-dir",
+                str(object_store),
                 "fetch",
                 "--no-tags",
-                "--depth=1",
+                "--filter=blob:none",
                 "--force",
-                f"https://github.com/{CANONICAL_REPOSITORY}.git",
-                f"{source_head}:refs/canonical/source",
+                "canonical",
+                f"{default_head}:refs/canonical/{default_branch}",
             ],
         )
         for command in commands:
@@ -753,10 +842,16 @@ def _fetch_exact_replay_artifacts(
             except subprocess.TimeoutExpired as exc:
                 raise ValueError("canonical replay head fetch timed out") from exc
             if completed.returncode != 0:
-                raise ValueError("canonical replay head could not be fetched")
-        fetched_head = _git_output(["rev-parse", "refs/canonical/source"], git_dir=object_store).decode().strip()
-        if fetched_head != source_head:
-            raise ValueError("fetched replay head differs from the recorded source head")
+                raise ValueError("canonical replay default-branch history could not be fetched")
+        canonical_ref = f"refs/canonical/{default_branch}"
+        fetched_head = _git_output(["rev-parse", canonical_ref], git_dir=object_store).decode().strip()
+        if fetched_head != default_head:
+            raise ValueError("fetched replay default head differs from the advertised head")
+        try:
+            _git_output(["cat-file", "-e", f"{source_head}^{{commit}}"], git_dir=object_store)
+            _git_output(["merge-base", "--is-ancestor", source_head, canonical_ref], git_dir=object_store)
+        except ValueError as exc:
+            raise ValueError("replay source head is not contained in canonical main") from exc
         runner_identity = (
             _git_output(["rev-parse", f"{source_head}:{RUNNER_ARTIFACT}"], git_dir=object_store).decode().strip()
         )
@@ -765,18 +860,35 @@ def _fetch_exact_replay_artifacts(
         runner_bytes = _git_output(["show", runner_blob], git_dir=object_store)
         if runner_bytes != Path(__file__).resolve().read_bytes():
             raise ValueError("executing replay runner differs from the exact recorded runner blob")
-        parsed: dict[str, object] = {}
-        for path, expected_blob in artifact_blobs.items():
+        parsed = ExactReplayArtifacts()
+
+        def read_artifact(path: str, expected_blob: str | None = None) -> None:
             observed_blob = _git_output(["rev-parse", f"{source_head}:{path}"], git_dir=object_store).decode().strip()
-            if observed_blob != expected_blob:
+            if not GIT_BLOB.fullmatch(observed_blob) or (expected_blob is not None and observed_blob != expected_blob):
                 raise ValueError("replay artifact blob differs from the recorded binding")
-            raw = _git_output(["show", expected_blob], git_dir=object_store)
+            raw = _git_output(["show", observed_blob], git_dir=object_store)
             if len(raw) > 1_048_576:
                 raise ValueError("replay artifact exceeds the bounded size")
             try:
                 parsed[path] = _loads_public_artifact(raw.decode("utf-8"))
             except UnicodeDecodeError as exc:
                 raise ValueError("replay artifact is not UTF-8 JSON") from exc
+            parsed.raw_by_path[path] = raw
+            parsed.blob_by_path[path] = observed_blob
+
+        for path, expected_blob in artifact_blobs.items():
+            read_artifact(path, expected_blob)
+        input_payload = next(
+            (
+                value
+                for value in parsed.values()
+                if isinstance(value, dict) and value.get("schema_version") == SCHEMA_VERSION
+            ),
+            None,
+        )
+        for path in sorted(_nested_replay_artifact_paths(input_payload)):
+            if path not in parsed:
+                read_artifact(path)
         return parsed
 
 
@@ -785,16 +897,27 @@ def _model_rate_source_record(
     index: int,
     errors: list[str],
     provenance: object,
+    exact_artifacts: dict[str, object] | None = None,
 ) -> dict[str, Any] | None:
-    artifact = _safe_tracked_artifact(detail.get("source_artifact"))
-    if artifact is None:
-        errors.append(f"row {index} model rate basis requires a safe tracked rate artifact")
-        return None
-    try:
-        raw = artifact.read_bytes()
-    except OSError as exc:
-        errors.append(f"row {index} model rate source artifact is unreadable: {exc}")
-        return None
+    source_path = detail.get("source_artifact")
+    raw: bytes | None = None
+    source: object = None
+    if isinstance(exact_artifacts, ExactReplayArtifacts) and isinstance(source_path, str):
+        raw = exact_artifacts.raw_by_path.get(source_path)
+        source = exact_artifacts.get(source_path)
+        if raw is None or source is None:
+            errors.append(f"row {index} model rate source is absent from the recorded replay head")
+            return None
+    else:
+        artifact = _safe_tracked_artifact(source_path)
+        if artifact is None:
+            errors.append(f"row {index} model rate basis requires a safe tracked rate artifact")
+            return None
+        try:
+            raw = artifact.read_bytes()
+        except OSError as exc:
+            errors.append(f"row {index} model rate source artifact is unreadable: {exc}")
+            return None
     if len(raw) > 65_536:
         errors.append(f"row {index} model rate source artifact exceeds the bounded size")
         return None
@@ -802,11 +925,12 @@ def _model_rate_source_record(
         errors.append(f"row {index} model rate basis requires a lowercase source SHA-256")
     elif hashlib.sha256(raw).hexdigest() != detail.get("source_sha256"):
         errors.append(f"row {index} model rate basis source SHA-256 differs from its tracked artifact")
-    try:
-        source = _loads_public_artifact(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-        errors.append(f"row {index} model rate source artifact is invalid JSON: {exc}")
-        return None
+    if source is None:
+        try:
+            source = _loads_public_artifact(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            errors.append(f"row {index} model rate source artifact is invalid JSON: {exc}")
+            return None
     if not isinstance(source, dict) or set(source) != MODEL_RATE_SOURCE_FIELDS:
         errors.append(f"row {index} model rate source artifact has an invalid exact schema")
         return None
@@ -877,27 +1001,37 @@ def _validate_population_source(
     population: dict[str, Any],
     provenance: object,
     errors: list[str],
+    exact_artifacts: dict[str, object] | None = None,
 ) -> tuple[list[str], dict[str, int]]:
     source = population.get("source_manifest")
     if not isinstance(source, dict) or set(source) != POPULATION_SOURCE_FIELDS:
         errors.append("sample population requires an exact public-safe source manifest")
         return [], {}
-    artifact = _safe_tracked_artifact(population.get("source_artifact"))
+    source_path = population.get("source_artifact")
     artifact_source: object = None
-    if artifact is None:
-        errors.append("sample population requires a safe tracked authoritative source artifact")
+    raw: bytes | None = None
+    if isinstance(exact_artifacts, ExactReplayArtifacts) and isinstance(source_path, str):
+        raw = exact_artifacts.raw_by_path.get(source_path)
+        artifact_source = exact_artifacts.get(source_path)
+        if raw is None or artifact_source is None:
+            errors.append("sample population source is absent from the recorded replay head")
     else:
-        try:
-            raw = artifact.read_bytes()
-        except OSError as exc:
-            errors.append(f"sample population source artifact is unreadable: {exc}")
+        artifact = _safe_tracked_artifact(source_path)
+        if artifact is None:
+            errors.append("sample population requires a safe tracked authoritative source artifact")
         else:
-            if len(raw) > 1_048_576:
-                errors.append("sample population source artifact exceeds the bounded size")
-            if not _lower_sha256(population.get("source_sha256")):
-                errors.append("sample population requires a lowercase source SHA-256")
-            elif hashlib.sha256(raw).hexdigest() != population.get("source_sha256"):
-                errors.append("sample population source SHA-256 differs from its tracked artifact")
+            try:
+                raw = artifact.read_bytes()
+            except OSError as exc:
+                errors.append(f"sample population source artifact is unreadable: {exc}")
+    if raw is not None:
+        if len(raw) > 1_048_576:
+            errors.append("sample population source artifact exceeds the bounded size")
+        if not _lower_sha256(population.get("source_sha256")):
+            errors.append("sample population requires a lowercase source SHA-256")
+        elif hashlib.sha256(raw).hexdigest() != population.get("source_sha256"):
+            errors.append("sample population source SHA-256 differs from its tracked artifact")
+        if artifact_source is None:
             try:
                 artifact_source = _loads_public_artifact(raw.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
@@ -962,7 +1096,12 @@ def _validate_population_source(
     return eligible_ids, exclusion_counts
 
 
-def _validate_population(payload: dict[str, Any], rows: list[object], errors: list[str]) -> dict[str, Any] | None:
+def _validate_population(
+    payload: dict[str, Any],
+    rows: list[object],
+    errors: list[str],
+    exact_artifacts: dict[str, object] | None = None,
+) -> dict[str, Any] | None:
     population = payload.get("population")
     if not isinstance(population, dict):
         errors.append("sample requires an exact source population block")
@@ -982,7 +1121,12 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     ):
         errors.append("sample population window must exactly match the observed sample window")
 
-    eligible_ids, derived_exclusions = _validate_population_source(population, payload.get("provenance"), errors)
+    eligible_ids, derived_exclusions = _validate_population_source(
+        population,
+        payload.get("provenance"),
+        errors,
+        exact_artifacts,
+    )
     counts: dict[str, int] = {}
     for field in ("population_count", "eligible_count", "selected_count"):
         value = population.get(field)
@@ -1053,7 +1197,13 @@ def _validate_population(payload: dict[str, Any], rows: list[object], errors: li
     return population
 
 
-def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str], provenance: object) -> None:
+def _validate_model_rate_basis(
+    row: dict[str, Any],
+    index: int,
+    errors: list[str],
+    provenance: object,
+    exact_artifacts: dict[str, object] | None = None,
+) -> None:
     basis = row.get("model_cost_basis")
     detail = row.get("model_cost_rate_basis")
     model_cost = row.get("model_cost_usd")
@@ -1076,7 +1226,7 @@ def _validate_model_rate_basis(row: dict[str, Any], index: int, errors: list[str
         value = detail.get(field)
         if not isinstance(value, str) or not value.strip() or "\0" in value:
             errors.append(f"row {index} model rate basis requires a nonblank {field}")
-    source_record = _model_rate_source_record(detail, index, errors, provenance)
+    source_record = _model_rate_source_record(detail, index, errors, provenance, exact_artifacts)
     rate_observed_at = detail.get("rate_observed_at")
     try:
         parsed_rate = datetime.fromisoformat(rate_observed_at.replace("Z", "+00:00"))
@@ -1154,7 +1304,11 @@ def _observation_cutoff(payload: dict[str, Any]) -> datetime | None:
     return max(candidates) if candidates else None
 
 
-def validate_sample(payload: dict[str, Any]) -> list[str]:
+def validate_sample(
+    payload: dict[str, Any],
+    *,
+    exact_artifacts: dict[str, object] | None = None,
+) -> list[str]:
     errors: list[str] = []
     unexpected_sample_fields = sorted(set(payload) - ALLOWED_SAMPLE_FIELDS)
     if unexpected_sample_fields:
@@ -1177,7 +1331,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
         return [*errors, "sample rows must be a non-empty list"]
-    _validate_population(payload, rows, errors)
+    _validate_population(payload, rows, errors, exact_artifacts)
     seen: set[str] = set()
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
@@ -1215,7 +1369,7 @@ def validate_sample(payload: dict[str, Any]) -> list[str]:
         retry_count = row.get("retry_count")
         if retry_count is not None and not _bounded_nonnegative_integer(retry_count):
             errors.append(f"row {index} field retry_count must be null or a non-negative integer")
-        _validate_model_rate_basis(row, index, errors, provenance)
+        _validate_model_rate_basis(row, index, errors, provenance, exact_artifacts)
         failure_class = row.get("failure_class")
         if terminal_state == "done":
             if failure_class is not None:
@@ -1639,7 +1793,7 @@ def reproduce(
         input_blob=input_blob,
         review_blob=review_blob,
     )
-    errors = validate_sample(payload)
+    errors = validate_sample(payload, exact_artifacts=exact_artifacts)
     if errors:
         return _finalize_analysis(
             {
