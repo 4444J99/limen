@@ -373,7 +373,6 @@ def _numeric_leaf_paths(value: Any, prefix: str = "") -> Iterable[str]:
         for index, item in enumerate(value):
             yield from _numeric_leaf_paths(item, f"{prefix}[{index}]")
 
-
 def _offer_map(data: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     ladder = _mapping(data.get("offer_ladder"))
     result: dict[str, Mapping[str, Any]] = {}
