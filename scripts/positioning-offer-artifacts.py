@@ -409,6 +409,18 @@ def _rule_matches(rule: Mapping[str, Any], facts: Mapping[str, Any]) -> bool:
     )
 
 
+def _is_evaluable_qualification_rule(rule: Mapping[str, Any]) -> bool:
+    return (
+        isinstance(rule.get("id"), str)
+        and bool(rule["id"].strip())
+        and isinstance(rule.get("route"), str)
+        and rule["route"] in QUALIFICATION_ROUTES
+        and isinstance(rule.get("priority"), int)
+        and not isinstance(rule["priority"], bool)
+        and all(_is_unique_text_list(rule.get(condition)) for condition in ("any", "all", "none"))
+    )
+
+
 def evaluate_qualification_route(
     rules: Sequence[Mapping[str, Any]],
     facts: Mapping[str, bool],
@@ -416,7 +428,7 @@ def evaluate_qualification_route(
 ) -> str:
     """Return the first priority-ordered matching route, or the explicit default."""
     for rule in sorted(rules, key=_priority_value):
-        if _rule_matches(rule, facts):
+        if _is_evaluable_qualification_rule(rule) and _rule_matches(rule, facts):
             return str(rule["route"])
     return default_route
 

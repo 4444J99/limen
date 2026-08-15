@@ -348,6 +348,45 @@ class OfferArtifactTests(unittest.TestCase):
             "qualification rule guarded_exception.any must be a list of unique non-blank strings",
         )
 
+    def test_qualification_invalid_rule_accumulates_errors_without_raising(self) -> None:
+        changed = copy.deepcopy(self.contract)
+        changed["qualification"]["rules"][0].pop("route")
+        errors = MODULE.validate_contract(changed)
+        self.assertTrue(
+            any("qualification rule guarded_exception missing required field: route" in error for error in errors),
+            errors,
+        )
+        self.assertTrue(
+            any("qualification rule guarded_exception.route must be a supported route string" in error for error in errors),
+            errors,
+        )
+
+        non_mapping = copy.deepcopy(self.contract)
+        non_mapping["qualification"]["rules"][0] = None
+        errors = MODULE.validate_contract(non_mapping)
+        self.assertTrue(
+            any("qualification rule unknown must be a non-empty mapping" in error for error in errors),
+            errors,
+        )
+
+    def test_insufficient_evidence_overrides_otherwise_matching_commercial_route(self) -> None:
+        qualification = self.contract["qualification"]
+        self.assertIn("insufficient_evidence", qualification["rules"][0]["any"])
+        self.assertEqual(
+            "human_review",
+            MODULE.evaluate_qualification_route(
+                qualification["rules"],
+                {
+                    "insufficient_evidence": True,
+                    "diagnosis_needed": True,
+                    "read_access": True,
+                    "sponsor_authority": True,
+                    "bounded_initiative": True,
+                },
+                qualification["default_route"],
+            ),
+        )
+
     def test_qualification_unmatched_facts_fall_back_to_human_review(self) -> None:
         qualification = self.contract["qualification"]
         self.assertEqual(

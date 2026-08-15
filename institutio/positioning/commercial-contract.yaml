@@ -659,7 +659,7 @@ qualification:
     - id: guarded_exception
       route: human_review
       priority: 10
-      any: [pricing_exception, legal_terms, regulated_data, account_or_custody_change, public_claim_exception]
+      any: [pricing_exception, legal_terms, regulated_data, account_or_custody_change, public_claim_exception, insufficient_evidence]
       all: []
       none: []
     - id: prohibited_scope
