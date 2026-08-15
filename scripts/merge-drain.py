@@ -437,7 +437,14 @@ def main():
     # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
     # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
     # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
-    enumeration = enumerate_open_prs_result(OWNERS, gh, max_total=a.scan_max, want_url=False)
+    # Same slow-search reality as self-heal.py: the full-fleet enumeration outgrew the
+    # generic 60s gh timeout, so it carries its own cap (shared knob, registry-owned).
+    enumeration = enumerate_open_prs_result(
+        OWNERS,
+        lambda cmd: gh(cmd, timeout=int(os.environ.get("LIMEN_PR_SCAN_TIMEOUT", "120"))),
+        max_total=a.scan_max,
+        want_url=False,
+    )
     allprs = list(enumeration.rows)
     enumeration_complete = bool(enumeration.success and enumeration.complete)
     if not allprs:
