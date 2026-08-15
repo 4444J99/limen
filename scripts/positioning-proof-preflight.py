@@ -2054,17 +2054,30 @@ def _surface_contains_private_material(inspected_text: str) -> bool:
 def _fetch_bounded_public_surface(source_url: str) -> bytes:
     request = Request(
         source_url,
-        headers={"Accept": "text/html,text/plain", "User-Agent": "limen-positioning-proof-preflight"},
+        headers={"Accept": "text/html", "User-Agent": "limen-positioning-proof-preflight"},
     )
     with _contract_https_open(request, timeout=30) as response:
         if response.geturl() != source_url:
             raise ValueError("live surface redirected away from its contract-owned URL")
         try:
-            content_type = response.headers.get_content_type()
+            content_types = response.headers.get_all("Content-Type")
+            refresh_headers = response.headers.get_all("Refresh")
         except (AttributeError, TypeError, ValueError) as exc:
             raise ValueError("live surface response has no trustworthy media type") from exc
-        if content_type not in {"application/xhtml+xml", "text/html"}:
+        if (
+            not isinstance(content_types, list)
+            or len(content_types) != 1
+            or not isinstance(content_types[0], str)
+            or content_types[0].split(";", 1)[0].strip().casefold() != "text/html"
+        ):
             raise ValueError("live surface response is not HTML")
+        if isinstance(refresh_headers, list) and (
+            len(refresh_headers) > 1
+            or any(not isinstance(value, str) or value.strip() for value in refresh_headers)
+        ):
+            raise ValueError("live surface response requests a client-side redirect")
+        if refresh_headers is not None and not isinstance(refresh_headers, list):
+            raise ValueError("live surface response has malformed redirect metadata")
         content = response.read(1_048_577)
     if len(content) > 1_048_576:
         raise ValueError("live surface exceeds the bounded response size")

@@ -1116,7 +1116,9 @@ class PositioningProofPreflightTest(unittest.TestCase):
         response = mock.MagicMock()
         response.geturl.return_value = source_url
         response.read.return_value = b"bounded public proof"
-        response.headers.get_content_type.return_value = "text/html"
+        response.headers.get_all.side_effect = lambda name: (
+            ["text/html; charset=utf-8"] if name == "Content-Type" else None
+        )
         response.__enter__.return_value = response
         with mock.patch.dict(
             os.environ,
@@ -1129,10 +1131,26 @@ class PositioningProofPreflightTest(unittest.TestCase):
         request = opener.call_args.args[0]
         self.assertEqual(source_url, request.full_url)
         self.assertEqual(30, opener.call_args.kwargs["timeout"])
+        self.assertEqual("text/html", request.headers["Accept"])
 
-        response.headers.get_content_type.return_value = "text/plain"
+        for content_types in (
+            ["text/plain"],
+            ["application/xhtml+xml"],
+            ["text/html", "text/plain"],
+        ):
+            with self.subTest(content_types=content_types):
+                response.headers.get_all.side_effect = lambda name, values=content_types: (
+                    values if name == "Content-Type" else None
+                )
+                with mock.patch.object(MODULE, "_contract_https_open", return_value=response):
+                    with self.assertRaisesRegex(ValueError, "not HTML"):
+                        MODULE._fetch_bounded_public_surface(source_url)
+
+        response.headers.get_all.side_effect = lambda name: (
+            ["text/html"] if name == "Content-Type" else ["0; url=/other"]
+        )
         with mock.patch.object(MODULE, "_contract_https_open", return_value=response):
-            with self.assertRaisesRegex(ValueError, "not HTML"):
+            with self.assertRaisesRegex(ValueError, "client-side redirect"):
                 MODULE._fetch_bounded_public_surface(source_url)
 
     def test_live_surface_inspection_reproduces_canonical_text_not_volatile_raw_html(self) -> None:
