@@ -62,6 +62,23 @@ BOOTSTRAP_ARTIFACT_IDS = frozenset(
         "artifact-002",
         "artifact-003",
         "artifact-004",
+        # Extended set: limen-private subtree archives (added 2026-08-16).
+        # A code change here IS the recovery-admission proof for a new artifact id — by design,
+        # so ids cannot be invented at runtime and every artifact has a committed provenance record.
+        "artifact-005",  # limen-private/async-runs
+        "artifact-006",  # limen-private/career-tracker
+        "artifact-007",  # limen-private/decorum
+        "artifact-008",  # limen-private/email-ask-audit
+        "artifact-009",  # limen-private/link-health
+        "artifact-010",  # limen-private/mail-story
+        "artifact-011",  # limen-private/receipts
+        "artifact-012",  # limen-private/recovery-bundles
+        "artifact-013",  # limen-private/reports
+        "artifact-014",  # limen-private/security
+        "artifact-015",  # limen-private/session-corpus/lifecycle
+        "artifact-016",  # limen-private/session-corpus/local-memory
+        "artifact-017",  # limen-private/session-corpus/{corpus-command-center,host-mutations,objects,omega-substrate-literal,screenshots}
+        "artifact-018",  # limen-private/session-corpus/prompt-atoms
     }
 )
 PRIVATE_TRACKING_PREFIXES = (".limen-private/", ".agent-runtime/", ".limen-workstream/")
@@ -1048,7 +1065,7 @@ def cmd_verify(_args: argparse.Namespace) -> int:
         failures.append(f"required custody baseline is missing neutral ids: {', '.join(missing_required)}")
     unattested_ids = sorted(seen_ids - BOOTSTRAP_ARTIFACT_IDS)
     if unattested_ids:
-        failures.append("non-bootstrap ciphertext lacks a public recovery admission proof")
+        failures.append("non-admitted ciphertext lacks a public recovery admission proof")
     for artifact_id, expected_metadata in historical_artifacts.items():
         current_metadata = current_artifacts.get(artifact_id)
         if current_metadata is not None and current_metadata != expected_metadata:

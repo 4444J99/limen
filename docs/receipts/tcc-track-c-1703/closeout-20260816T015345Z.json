@@ -21,8 +21,7 @@
     "failures": [
       "rotating_identity_active_grants",
       "active_managed_tcc_leak",
-      "visible_app_management_path_client",
-      "claude_helper_registration_unreadable"
+      "visible_app_management_path_client"
     ],
     "new_managed_identities": 4,
     "ok": false,
@@ -46,9 +45,9 @@
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 2
   },
-  "observed_at": "2026-08-16T04:33:13Z",
+  "observed_at": "2026-08-16T01:53:45Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260816T043313Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260816T015345Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
@@ -59,8 +58,7 @@
       "failures": [
         "rotating_identity_active_grants",
         "active_managed_tcc_leak",
-        "visible_app_management_path_client",
-        "claude_helper_registration_unreadable"
+        "visible_app_management_path_client"
       ],
       "new_managed_identities": 4,
       "ok": false,

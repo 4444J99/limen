@@ -51,7 +51,8 @@ container/backup/
 container/state/
 *.premigrate
 .limen.env
-.limen-private/
+# .limen-private/ is NOT gitignored — it is encrypted and git-tracked via institutio/vault/
+# (scripts/private-vault.py). The private-vault gate enforces no plaintext ever reaches the index.
 /.limen-workstream/
 MASTER-PLAN.md
 # git worktree dirs (isolation checkouts — never tracked)

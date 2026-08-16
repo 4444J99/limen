@@ -21,6 +21,7 @@ sanctioned:
   - {path: .env.example, kind: config, owner: fleet, why: "env template (public)"}
   - {path: .env.template, kind: config, owner: fleet, why: "env template (public)"}
   - {path: .gemini, kind: dir, owner: conduct, why: "Gemini lane config"}
+  - {path: .gitattributes, kind: config, owner: fleet, why: "Git LFS tracking definitions for private-vault ciphertext"}
   - {path: .github, kind: dir, owner: fleet, why: "workflows + templates"}
   - {path: .gitignore, kind: config, owner: fleet, why: "ignore rules"}
   - {path: .ruff.toml, kind: config, owner: fleet, why: "lint config (py311, line-length 120)"}

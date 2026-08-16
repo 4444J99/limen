@@ -827,7 +827,9 @@ def test_accepted_repository_private_namespaces_are_gitignored(vault, tmp_path: 
         text=True,
         timeout=60,
     )
-    for prefix in vault.PRIVATE_TRACKING_PREFIXES:
+    # .agent-runtime/ and .limen-workstream/ remain gitignored local scratch.
+    # .limen-private/ is encrypted and git-tracked via institutio/vault/ (not gitignored).
+    for prefix in (".agent-runtime/", ".limen-workstream/"):
         probe = f"{prefix}vault-ignore-probe"
         ignored = subprocess.run(
             ["git", "-C", str(repository), "check-ignore", "--no-index", "--quiet", probe],
