@@ -1,0 +1,20 @@
+--- a/docs/receipts/positioning/preflights/2026-08-10-psp-c10-readiness-synthetic.json
++++ b/docs/receipts/positioning/preflights/2026-08-10-psp-c10-readiness-synthetic.json
+@@ -135,7 +135,7 @@
+     "fixture_path": "docs/positioning/program/psp-c10-readiness/synthetic-fixture.json",
+     "fixture_sha256": "aa2712df09413f107956c70a24df81249259708228945e2f98bba720c9f45d3a",
+     "program_manifest_path": "institutio/positioning/program.yaml",
+-    "program_registry_projection_sha256": "6a4e1221a88f304726273339470e29d208e59282e236f39744c71ac4ecfb8a73",
++    "program_registry_projection_sha256": "ad1237b9432371157f4b21f45bf551b218fba525eb6c6cbd8b6a61e4ab8a4bc5",
+     "source_bindings": [
+       {
+         "counts_as_closure": false,
+@@ -482,7 +482,7 @@
+           "src/content/case-studies",
+           "public"
+         ],
+-        "target_repo": "organvm/portfolio",
++        "target_repo": "organvm-vii-kerygma/portfolio",
+         "title": "Produce the first consented public case study"
+       },
+       {

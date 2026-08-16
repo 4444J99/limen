@@ -1,49 +1,49 @@
 {
   "actions_top_repos_minutes": {
-    "application-pipeline": 120,
-    "domus": 160,
-    "domus-genoma": 237,
-    "hospes": 957,
-    "limen": 24730,
-    "metasystem-master": 127,
-    "my-knowledge-base": 89,
-    "organvm-corpvs-testamentvm": 360,
-    "the-thing-without-a-name": 757,
-    "universal-mail--automation": 146
+    "application-pipeline": 127,
+    "domus": 293,
+    "domus-genoma": 243,
+    "hospes": 2889,
+    "limen": 34236,
+    "metasystem-master": 181,
+    "my-knowledge-base": 110,
+    "organvm-corpvs-testamentvm": 487,
+    "the-thing-without-a-name": 809,
+    "universal-mail--automation": 167
   },
-  "as_of_day": 10,
+  "as_of_day": 15,
   "billing_canary": {
-    "detail": "newest run 31421282086 concluded 'success'",
+    "detail": "newest run 31906961116 concluded 'skipped'",
     "green": true,
     "repo": "organvm/limen"
   },
   "budget_net_usd": 25.0,
   "by_product": {
     "actions": {
-      "gross_usd": 174.48,
-      "net_usd": 0.0,
-      "quantity": 28955.69
+      "gross_usd": 249.02,
+      "net_usd": 7.25,
+      "quantity": 41206.59
     },
     "code_quality": {
-      "gross_usd": 4.36,
-      "net_usd": 4.36,
-      "quantity": 113.51
+      "gross_usd": 5.98,
+      "net_usd": 5.98,
+      "quantity": 115.04
     },
     "ghas": {
-      "gross_usd": 14.23,
-      "net_usd": 14.23,
-      "quantity": 0.58
+      "gross_usd": 22.13,
+      "net_usd": 22.13,
+      "quantity": 0.9
     },
     "git_lfs": {
-      "gross_usd": 0.51,
+      "gross_usd": 0.77,
       "net_usd": 0.0,
-      "quantity": 5381.11
+      "quantity": 8174.71
     }
   },
-  "gross_usd_total": 193.57,
+  "gross_usd_total": 277.91,
   "month": "2026-08",
-  "net_usd_projected_month_end": 57.6,
-  "net_usd_total": 18.58,
+  "net_usd_projected_month_end": 73.1,
+  "net_usd_total": 35.37,
   "org": "organvm",
   "schema": "limen.github_actions_usage.v1"
 }

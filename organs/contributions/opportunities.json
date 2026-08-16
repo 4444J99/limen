@@ -11,23 +11,23 @@
       "used_in_repos": 7
     },
     {
-      "dependency": "playwright",
-      "used_in_repos": 6
-    },
-    {
       "dependency": "pytest-cov",
       "used_in_repos": 6
     },
     {
+      "dependency": "playwright",
+      "used_in_repos": 5
+    },
+    {
       "dependency": "typescript",
-      "used_in_repos": 6
+      "used_in_repos": 5
     },
     {
       "dependency": "beautifulsoup4",
       "used_in_repos": 4
     },
     {
-      "dependency": "node",
+      "dependency": "cryptography",
       "used_in_repos": 4
     },
     {
@@ -35,19 +35,19 @@
       "used_in_repos": 4
     },
     {
-      "dependency": "test",
-      "used_in_repos": 4
-    },
-    {
       "dependency": "tsx",
       "used_in_repos": 4
     },
     {
-      "dependency": "vitest",
-      "used_in_repos": 4
+      "dependency": "eslint",
+      "used_in_repos": 3
     },
     {
-      "dependency": "cryptography",
+      "dependency": "httpx",
+      "used_in_repos": 3
+    },
+    {
+      "dependency": "jsonschema",
       "used_in_repos": 3
     }
   ]

@@ -31,6 +31,7 @@ sanctioned:
   - {path: FLAME.md, kind: doc, owner: docs, why: "dispatch flame doc — cli dispatch.py + evocator.py consume it at this path"}
   - {path: GEMINI.md, kind: doc, owner: docs, why: "Gemini transport adapter — agent-instruction standard requires root placement"}
   - {path: NAMING.md, kind: doc, owner: docs, why: "the styling canon"}
+  - {path: PROJECT.md, kind: doc, owner: conduct, why: "PSP Omega Recovery scope document — orchestrator working state"}
   - {path: QUICKSTART.md, kind: doc, owner: docs, why: "install/first-run path"}
   - {path: README.md, kind: doc, owner: docs, why: "front door"}
   - {path: SCHEMA.md, kind: doc, owner: docs, why: "data-shape reference"}
@@ -76,6 +77,8 @@ sanctioned:
   - {path: state, kind: dir, owner: governance, why: "live gate input (aug1-view.py / AUG1-10K-GATE)"}
   - {path: studium, kind: dir, owner: studium, why: "first-class component with its own scripts/studium-* family"}
   - {path: tasks.yaml, kind: registry, owner: tabularius, why: "the board projection (TABVLARIVS keeper)"}
+  - {path: TEST_INFRA.md, kind: doc, owner: conduct, why: "PSP Omega Recovery E2E test infra spec — orchestrator working state"}
+  - {path: tests, kind: dir, owner: conduct, why: "E2E test suites (e2e_psp_omega and future orchestrated test tracks)"}
   - {path: value-discovery-dispositions.json, kind: registry, owner: governance, why: "value-discovery dispositions (parameters.yaml consumes)"}
   - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}

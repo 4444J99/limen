@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-10T21:04:04+00:00`
+Generated: `2026-08-15T22:47:46+00:00`
 
 Status: `blocked`
 
@@ -22,12 +22,12 @@ Status: `blocked`
 - Plist LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Loaded launchd state: `running` pid `84914`.
+- Loaded launchd state: `running` pid `2249`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-08-10T21:04:04.983709+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `True`; `[watchdog] 2026-08-15T22:47:47.372715+00:00 HEALTHY sig=healthy`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -57,51 +57,63 @@ Status: `blocked`
 - Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
   - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 69.9%, PRs 17.9%, issues 11.2%, reviews 1.0%.
-  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 242 active flagged non-deleted messages require classification.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 69.9%, PRs 18.0%, issues 11.2%, reviews 1.0%.
+  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 250 active flagged non-deleted messages require classification.
   - `REPO-BOIL-UP`: `repo-boil-up` / `needs_assignment`; repo surface ledger missing; assignment must refresh existing roots before new work.
   - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 19 value repos define the funded work lane.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 9]`.
-- HEAD: `c32f846006d517dd01738ea02107f7233ed849bd`.
-- origin/main: `7c269d54e51024c37099ce2f4bcd248fdcfa58bf`.
-- Matches origin/main: `False`; ahead `0` behind `9`.
-- Dirty entries: `19`.
+- Branch: `main`; status `## main...origin/main [behind 41]`.
+- HEAD: `9c8a87215962da131059ab63bd95a376f79891c2`.
+- origin/main: `ea6711181135ecc5022ca1e6d0e9a68dc0c1cba2`.
+- Matches origin/main: `False`; ahead `0` behind `41`.
+- Dirty entries: `79`.
 - Ignored generated receipt dirty entries: `1`.
   - `docs/dispatch-health.md`
   - `docs/RECLASSIFY-PROPOSAL.md`
-  - `docs/always-working.md`
   - `docs/branch-hygiene.md`
   - `docs/capacity-fill.md`
   - `docs/diurnal/INDEX.md`
   - `docs/github-actions-usage.json`
+  - `docs/github-estate-census.json`
+  - `docs/github-pr-debt-ledger.json`
   - `docs/receipts/session-contention-ledger.json`
   - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
   - `logs/overnight-watch.md`
   - `organs/contributions/MIRROR.md`
   - `organs/contributions/opportunities.json`
   - `organs/financial/cashflow.md`
-  - `docs/diurnal/2026-08-10.md`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T133238Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T155418Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T172244Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T190416Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T205244Z.json`
-  - `studium/ledger/studium-2026-08-10.md`
+  - `.agents/ORIGINAL_REQUEST.md`
+  - `.agents/sentinel_1/`
+  - `.agents/teamwork_preview_explorer_e2e_1/`
+  - `.agents/teamwork_preview_explorer_e2e_2/`
+  - `.agents/teamwork_preview_explorer_e2e_3/`
+  - `.agents/teamwork_preview_explorer_m1_1/`
+  - `.agents/teamwork_preview_explorer_m1_2/`
+  - `.agents/teamwork_preview_explorer_m1_3/`
+  - `.agents/teamwork_preview_explorer_m2_1/`
+  - `.agents/teamwork_preview_explorer_m2_2/`
+  - `.agents/teamwork_preview_explorer_m2_3/`
+  - `.agents/teamwork_preview_explorer_survey_1/`
+  - `.agents/teamwork_preview_explorer_survey_2/`
+  - `.agents/teamwork_preview_orchestrator_1/`
+  - `.agents/teamwork_preview_orchestrator_e2e_track/`
+  - `.agents/teamwork_preview_orchestrator_m1_circuit_breaker/`
+  - `.agents/teamwork_preview_orchestrator_m2_worktrees/`
+  - `<truncated>`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 9]`.
+- Branch: `main`; status `## main...origin/main [behind 41]`.
 - HEAD matches origin/main: `False`.
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch main head c32f846006d5 differs from origin/main 7c269d54e510.
-- `live-root-dirty`: live root has 19 dirty entries.
+- `live-root-not-at-origin-main`: live root branch main head 9c8a87215962 differs from origin/main ea6711181135.
+- `live-root-dirty`: live root has 79 dirty entries.
 - `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
