@@ -223,6 +223,36 @@ sensors:
         severity: advisory
         escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
 
+  ships-24h-refresh:
+    section: "heartbeat"
+    title: "record the ground-truth 24h ships count (self-merges + drain-merges, all owners)"
+    gate: LIMEN_SHIPS_24H_REFRESH
+    default: "1"
+    source: [heartbeat]
+    owner: money-view
+    # money-view.py / omni-view.py used to count "PRs shipped in the last 24h" by grep-parsing
+    # logs/merge-drain.log — written ONLY by the batch merge-drain.py daemon's own merges. Sessions
+    # that self-merge their own green PRs directly (merge-policy.sh -> await-pr.sh --merge, the
+    # documented normal path) never touch that log, so the count structurally missed most of the
+    # fleet's real throughput and notify-events.py's ship-milestone push (10/25/50/100 in 24h)
+    # could never fire from real activity. Measured 2026-08-15: merge-drain.log read merged=0 on
+    # every beat all day while gh showed 63 real merges. This rung queries GitHub directly and
+    # caches the answer so the view scripts stay pure local-file readers.
+    #
+    # Cheap due-check, not the census — same shape as github-pr-debt above. ships-24h-refresh.py
+    # owns its own wall-clock interval (LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES, default 20m) and
+    # no-ops until due.
+    cadence:
+      env: LIMEN_BEAT_SHIPS_24H
+      default: 4
+    timeout:
+      env: LIMEN_SHIPS_24H_REFRESH_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/ships-24h-refresh.py"
+        severity: advisory
+        escalation: "ships-24h cache did not refresh — money-view/omni-view/notify-events fall back to 0 ships"
+
   github-pr-autotype:
     section: "heartbeat"
     title: "auto-type newly-arrived mechanical PRs lifecycle:blocked (fail-closed) so the estate predicate cannot rebound at arrival rate"
@@ -657,8 +687,11 @@ sensors:
         quiet_output: true
         severity: silent
         escalation: "fable balance meter skipped — see logs"
-      - command: 'python3 scripts/claude-workflow-guard.py audit-transcript "${LIMEN_LATEST_SESSION_JSONL}"'
-        when_env: LIMEN_LATEST_SESSION_JSONL
+      # Derives its own target. Until 2026-08-15 this step interpolated
+      # ${LIMEN_LATEST_SESSION_JSONL} behind `when_env: LIMEN_LATEST_SESSION_JSONL`
+      # — a parameter EXPORTED BY NOTHING, so the guard had never run once on the
+      # beat. The guard now resolves the most recently modified transcript itself.
+      - command: "python3 scripts/claude-workflow-guard.py audit-transcript"
         quiet_output: true
         severity: advisory
         escalation: "unaccepted / over-budget Fable run above — accept it (scripts/fable-allotment.py accept …) or drop off Fable (docs/fable-allotment.md)"
@@ -1062,9 +1095,29 @@ sensors:
             armed_valve_type: deliverable
         severity: advisory
         escalation: "unassessable ClaudeCode.app registered with LaunchServices (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat UNREGISTERS it (never removes it: the bundle is vendor-materialized every start and deleting it destroys the stable TCC identity sensor 0g8d keeps). Ideal form IF-GATEKEEPER-INERT; corrected root in docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md"
+      - command: "python3 scripts/claude-bundle-identity-heal.py"
+        args_when:
+          - env: LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "the live versions/<v> is still a hardlink, so every vendor update mints a fresh per-version TCC client and re-asks the whole grant set (#1703) — arm LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL=1 so the beat routes it onto the stable com.anthropic.claude-code bundle path. Never writes a TCC db; touches only an inode the bundle already holds. Upstream fix: anthropics/claude-code#86706"
       - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
         severity: advisory
         escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
+      # The attribution ratchet. Both local cures for the rotating per-version TCC identity
+      # (#1703) were measured on 2026-08-15: ENCLOSURE is refuted, SYMLINK is UNRESOLVED with
+      # code identity resolving the target. The probe's own rationale is that an unrun result
+      # decays into folklore and gets re-derived at full cost — which is exactly what happens
+      # if it is never wired to a cadence, so it rides the same hygiene beat as the estate it
+      # describes. Exit 1 means macOS behavior CHANGED and the receipt is now wrong in one
+      # direction or the other; advisory because a changed verdict is a re-measure prompt, not
+      # a broken host. Receipts: docs/receipts/tcc-track-c-1703/README.md.
+      - command: "python3 scripts/tcc-identity-attribution-probe.py"
+        severity: advisory
+        escalation: "macOS changed how it attributes exec identity — the #1703 cure verdicts (enclosure REFUTED / symlink UNRESOLVED) no longer hold. Re-measure and amend docs/receipts/tcc-track-c-1703/README.md before anyone re-proposes or re-buries a local cure"
     omega_eligible:
       - label: "dialogs silenced (agent-curable)"
         rung_id: sensor.dialogs.agent-curable
@@ -1721,6 +1774,34 @@ sensors:
       - command: "python3 scripts/insight-cross-vendor-ingest.py --health"
         severity: advisory
         escalation: "cross-vendor health evaluation failed — packet staleness, store resets, and retention pruning go unwatched until it lands"
+
+  reserved-tier-audit:
+    section: "0z0"
+    title: "reserved-tier accounting across EVERY lane — a Fable run with no acceptance receipt, in any vendor"
+    gate: LIMEN_RESERVED_TIER
+    default: "1"
+    source: [metabolize]
+    owner: censor
+    # docs/fable-allotment.md declares Fable reserved estate-wide; the enforcement was
+    # Claude-lane-only on BOTH axes (measured 2026-08-15): fable-allotment.py sums spend
+    # from Claude transcripts alone, and claude-workflow-guard.py cannot resolve a
+    # non-Claude transcript path at all. The same sweep found copilot on claude-fable-5 in
+    # 3 of 5 substantive sessions, contributing 0 to spent_pct and tripping nothing.
+    # This reads only the vendor-insights indexes the sensor above already refreshes — no
+    # vendor store is opened here (insight-cross-vendor-ingest.VENDOR_REGISTRY owns paths).
+    # ADVISORY by construction: it opens with a real 24-session backlog, and the estate's
+    # observe-before-enforce doctrine (closeout-reconcile, plan D6) says a new predicate
+    # surfaces its backlog before it blocks anything.
+    cadence:
+      env: LIMEN_BEAT_RESERVED_TIER
+      default: 24
+    timeout:
+      env: LIMEN_RESERVED_TIER_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/check-reserved-tier.py"
+        severity: advisory
+        escalation: "a reserved tier ran with no covering acceptance receipt, or a lane went blind to model identity — accept it (scripts/fable-allotment.py accept …), drop off the tier (docs/fable-allotment.md), or teach the ingest adapter to read models"
 
   lesson-harvest-backlog:
     section: "0z0a"

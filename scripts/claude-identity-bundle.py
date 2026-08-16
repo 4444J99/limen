@@ -140,12 +140,30 @@ def _current_binary(env: Mapping[str, str]) -> tuple[Path | None, str | None]:
     (`if (!process.execPath.startsWith(join(store, "versions") + sep)) return null`).
     A launcher pointing anywhere else means the bundle path is not in play and
     there is nothing for this organ to keep.
+
+    ONE EXCEPTION: the native installer (`~/.local/bin/claude`, no npm `versions/`
+    tree of independent copies) has itself started symlinking `versions/<v>` to
+    `<bundle>/Contents/MacOS/claude` on some hosts -- verified 2026-08-15 on
+    `versions/2.1.233 -> .../ClaudeCode.app/Contents/MacOS/claude`. A strict resolve
+    of the launcher then chases straight through BOTH hops and lands on the bundle
+    binary itself, which sits outside `versions/` by construction -- so the check
+    above misreads an already-repaired install as `launcher_unresolvable` and the
+    beat's `--repair` rung goes permanently silent on it (never invoked, because
+    `repair()` returns early on this same error). Landing on the bundle's own
+    linked binary is not a failure to measure -- it is the strongest possible
+    evidence the identity is already correct, so treat it as the current binary
+    directly rather than an unresolvable launcher.
     """
     launcher = _launcher(env)
     try:
         resolved = launcher.resolve(strict=True)
     except OSError:
         return None, f"launcher is unresolvable: {launcher}"
+    bundle_binary = (_store(env) / BUNDLE_NAME / "Contents/MacOS/claude").resolve(strict=False)
+    if resolved == bundle_binary:
+        if not os.access(resolved, os.X_OK):
+            return None, f"resolved binary is not executable: {resolved}"
+        return resolved, None
     versions = (_store(env) / "versions").resolve(strict=False)
     if not resolved.is_relative_to(versions):
         return None, f"launcher does not resolve under {versions}: {resolved}"

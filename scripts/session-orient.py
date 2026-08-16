@@ -22,12 +22,22 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 try:
     import yaml
 except Exception:  # pragma: no cover - dependency absence is a fail-open hook path.
     yaml = None
+
+# libyaml's C loader parses the 5.9MB tasks.yaml in ~0.6s against ~3.6s for the
+# pure-Python one. Same safe loader, same semantics — this whole banner runs under
+# the SessionStart hook's 5s `timeout`, and the pure-Python parse alone spent most
+# of it. Falls back cleanly where libyaml is not built.
+try:  # pragma: no cover - availability is environmental.
+    from yaml import CSafeLoader as _SafeLoader
+except Exception:  # pragma: no cover
+    _SafeLoader = getattr(yaml, "SafeLoader", None) if yaml is not None else None
 
 ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
 # The auto-memory index lives outside the repo (per-user projects dir); resolve it from
@@ -143,7 +153,11 @@ def section_board():
     counts = {}
     tasks_path = Path(os.environ.get("LIMEN_ORIENT_TASKS") or ROOT / "tasks.yaml")
     try:
-        data = yaml.safe_load(tasks_path.read_text(encoding="utf-8", errors="replace"))
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.private_board import operational_board_path
+
+        text = operational_board_path(tasks_path).read_text(encoding="utf-8", errors="replace")
+        data = yaml.load(text, Loader=_SafeLoader) if _SafeLoader else yaml.safe_load(text)
     except Exception:
         return ""
     tasks = data.get("tasks") if isinstance(data, dict) else []
@@ -181,13 +195,42 @@ def section_git():
     branch = _git("rev-parse", "--abbrev-ref", "HEAD")
     if not branch:
         return ""
+
+    # Refresh origin BEFORE deriving ahead/behind, and say out loud whether it
+    # worked. Sessions have twice run gates against a 19-commits-behind checkout
+    # and reported a verdict about the wrong code; the ahead/behind numbers here
+    # were computed against whatever origin/main happened to be on disk, with
+    # nothing distinguishing "at parity" from "never fetched". The fetch is
+    # best-effort and hard-bounded (the SessionStart hook's whole budget is 5s),
+    # so the load-bearing part is the FRESHNESS LABEL, not the fetch: a stale
+    # read that announces itself is safe, a stale read that looks fresh is not.
+    fresh = False
+    if not os.environ.get("LIMEN_OFFLINE") and os.environ.get("LIMEN_ORIENT_FETCH", "1") == "1":
+        try:
+            fresh = (
+                subprocess.run(
+                    ["git", "-C", str(ROOT), "fetch", "origin", "--quiet", "--prune"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                ).returncode
+                == 0
+            )
+        except Exception:
+            fresh = False
+
     dirty = "dirty" if _git("status", "--porcelain") else "clean"
+    head_sha = _git("rev-parse", "--short", "HEAD")
+    base_sha = _git("rev-parse", "--short", "origin/main")
     ahead = behind = None
     counts = _git("rev-list", "--left-right", "--count", "origin/main...HEAD")
     if counts and len(counts.split()) == 2:
         behind, ahead = counts.split()
     pos = f" · ahead {ahead}/behind {behind} of main" if ahead is not None else ""
-    return f"**Git** — {branch}{pos} · {dirty}"
+    sha = f" · HEAD {head_sha}" if head_sha else ""
+    base = f" · origin/main {base_sha}" if base_sha else ""
+    label = "refs fresh" if fresh else "refs STALE (no fetch) — verify against origin before trusting any gate verdict"
+    return f"**Git** — {branch}{pos} · {dirty}{sha}{base} · {label}"
 
 
 def section_lifecycle_pressure():
@@ -196,21 +239,13 @@ def section_lifecycle_pressure():
     line = next((ln.strip() for ln in txt.splitlines() if ln.strip()), "")
     if line:
         return _trunc(line, 260)
-    gen = ROOT / "scripts" / "session-lifecycle-pressure.py"
-    if not gen.is_file():
-        return ""
-    try:
-        proc = subprocess.run(
-            ["python3", str(gen)],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except Exception:
-        return ""
-    if proc.returncode != 0:
-        return ""
-    return _trunc(proc.stdout.strip(), 260)
+    # No inline regeneration. This used to shell out to session-lifecycle-pressure.py
+    # with a timeout of 5s whenever the cache was cold — the SessionStart hook's ENTIRE
+    # budget is `timeout 5`, so a cold cache silently ate the whole banner and the
+    # session fell back to a stale logs/session-orientation.md. The refresh already has
+    # an owner: the `lifecycle_pressure` consumer in the SessionEnd breadcrumb drain.
+    # A banner reports state; it does not generate it.
+    return ""
 
 
 def section_tranche():
@@ -287,7 +322,21 @@ def section_autonomy() -> str:
     try:
         lines = marker.read_text(encoding="utf-8").splitlines()
     except OSError:
-        return ""
+        # No marker: state the STANDING GRANTS instead of staying silent.
+        # This section used to speak only when autonomy was paused, so the
+        # grants CLAUDE.md already confers existed nowhere the session could
+        # read them at open — they surfaced only when the operator had to
+        # correct a deferral mid-session (insights 2026-08-15: wrong_approach
+        # 19 > buggy_code 13, dominated by decision menus and parked items).
+        # An authorization that arrives only after it is violated is not an
+        # authorization; naming it at open is the cheap half of the fix.
+        return (
+            "**Autonomy** — ACTIVE. Standing grants (no need to ask): merge your own PRs the moment "
+            "`scripts/merge-policy.sh <PR#>` exits 0 · reap spent branches · reap stale watchers · "
+            "file owed atoms to their registry · write durable artifacts.\n"
+            "  Still human-gated: mass cross-org/fleet merges · anything that SENDS · anything that "
+            "WIPES · large spends. Do not return a decision menu inside this scope."
+        )
 
     def field(name: str) -> str:
         return next((ln.split(":", 1)[1].strip() for ln in lines if ln.strip().startswith(f"{name}:")), "")

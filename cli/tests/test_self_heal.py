@@ -344,7 +344,7 @@ def test_releases_queue_lock_after_live_pass(tmp_path, monkeypatch):
 # Mirrors scripts/heal-board.py's handler for the identical condition.
 
 
-def test_broker_quota_wall_exits_tempfail_and_names_lever(tmp_path, monkeypatch, capsys):
+def test_broker_quota_wall_exits_tempfail_and_names_owner(tmp_path, monkeypatch, capsys):
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
     _board(p)
@@ -362,9 +362,12 @@ def test_broker_quota_wall_exits_tempfail_and_names_lever(tmp_path, monkeypatch,
     rc = _run(m, monkeypatch, p)
     out = capsys.readouterr().out
     assert rc == 75, "quota wall must exit EX_TEMPFAIL, not 0 — silence would hide the spent plan"
-    assert "BLOCKED" in out and "L-CLOUDFLARE-DO-QUOTA" in out, (
-        "the rung must name its durable lever owner in the beat log"
-    )
+    # The owner is the ENGINEERING issue, not the retired lever. L-CLOUDFLARE-DO-QUOTA was
+    # retired 2026-08-10 once recurrence proved the defect is ours (write amplification), and
+    # #2054 states no Cloudflare support case, billing change, plan change or operator action
+    # is required — so naming the lever would send a reader to a ruled-out human action.
+    assert "BLOCKED" in out and "#2054" in out, "the rung must name its durable owner in the beat log"
+    assert "L-CLOUDFLARE-DO-QUOTA" not in out, "the retired lever must not be presented as the owner"
     assert "keeper said:" in out
     assert not (tmp_path / "logs" / ".queue.lock.d").exists(), "quota exit must still release the lock"
 

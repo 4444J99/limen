@@ -57,6 +57,11 @@ MASTER-PLAN.md
 # git worktree dirs (isolation checkouts — never tracked)
 .worktrees/
 .claude/worktrees/
+# multi-agent orchestration coordination scratch (briefings/dispatch/progress files a run drops at
+# the repo root when it isn't isolated in a worktree) — disposable; the run's real deliverables are
+# durable receipts and PRs, never this directory. 2026-08-15: a "PSP Omega Recovery" run left 18
+# .agents/{sentinel,teamwork_preview_*}/ dirs + ORIGINAL_REQUEST.md untracked in the live root.
+.agents/
 # nested vendored clones (their own repos — archived independently)
 domus-genoma/
 # build artifacts

@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -101,6 +102,30 @@ def test_consolidates_all_sections(tmp_path: Path):
     assert "ChatGPT Exporter" in html
     # everything index
     assert "1 memories" in html and "1 plans" in html
+
+
+def test_ships_24h_reads_ground_truth_cache_not_merge_drain_log(tmp_path: Path):
+    """Regression pin for the 2026-08-15 notification blackout: ships_24h used to come from
+    grep-parsing logs/merge-drain.log, which only sees the batch merge-drain.py daemon's own
+    merges — self-merged PRs (most of real throughput) were invisible. It now reads
+    logs/ships-24h.json (scripts/ships-24h-refresh.py's ground-truth cache). A stale/absent
+    merge-drain.log with real hits in the cache must still render the real count."""
+    _seed(tmp_path)
+    logs = tmp_path / "logs"
+    (logs / "merge-drain.log").write_text("[merge-drain] 2026-08-15 16:41:18 window=80/500 ready=0 merged=0 queued=0\n")
+    (logs / "ships-24h.json").write_text(
+        json.dumps(
+            {
+                "generated_at": datetime.now().isoformat(timespec="seconds"),
+                "total": 63,
+                "by_repo": {"organvm/limen": 63},
+                "recent": ["organvm/limen#2482", "organvm/limen#2480"],
+            }
+        )
+    )
+    html = _run(tmp_path)
+    assert "ships 24h: <b>63</b>" in html
+    assert "organvm/limen#2482" in html
 
 
 def test_fails_open_with_no_feeds(tmp_path: Path):

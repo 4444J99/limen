@@ -228,6 +228,41 @@ streams:
       coupling: CUSTODY (#1615) and STREAMS (#1612) each shipped a registry, predicate and gate
       row with no IF-* entry, the same gap IF-ATOM-HOMING had at the 6th axis.
 
+  s11-fleet-completion:
+    family: governance
+    title: "Fleet completion — the bar binds every lane, and every measure states its population"
+    branch_prefix: heal
+    intent: docs/continuations/s11-fleet-completion/intent.md
+    requires: []
+    unblocks: []
+    # `canon`: the work is on the registries and the predicates that read them, not on a feature.
+    job_class: canon
+    predicate: scripts/check-reserved-tier.py
+    predicate_command: bash scripts/run-pytest-hermetic.sh cli/tests/test_reserved_tier.py -q
+    predicate_status: existing
+    runway: 8h
+    owner_of_record: docs/IDEAL-FORMS-LEDGER.md
+    max_children: 3
+    note: >-
+      Measured 2026-08-15 across five agent lanes: one defect wearing five costumes — the work
+      lands and the proof does not. Claude declares COMPLETE early; codex never declares done
+      (19 capsules, each answering "are we there yet" with a bigger plan); opencode truncates
+      mid-survey with no receipt (134 tool calls, 1 merge of ~130 candidates); antigravity dies on
+      provider quota mid-fan-out; copilot, which produces the best finished artifacts in the corpus,
+      truncates mid-closeout. Exploration then found the sharper problem: not missing machinery, but
+      machinery that lands green and never fires — worktree-debt.py --fail-on-debt with zero
+      non-doc callers, the SessionEnd guard invoked with 999999999 budgets, the beat's Fable audit
+      gated on a parameter exported by NOTHING (never run once; 5 real violations on its first
+      execution), closeout-reconcile shipping default "0", and 11 vendor lane indexes refreshed
+      every 24h that nothing has ever narrated. This row owns two invariants: the completion bar is
+      executable and binds EVERY lane (not prose in one file one vendor reads), and every measure
+      states its population (a predicate passing over an empty population is indistinguishable from
+      one that checked). #2462 and #2468 shipped the first half; four lanes remain BLIND to model
+      identity and the claims axis is still unmeasurable — reconcile-closeouts.py --check exits 0
+      having examined 0 claims. Precedents: PREC-2026-08-15-lane-scoped-rule-exempts-every-other-lane,
+      PREC-2026-08-15-a-loop-with-no-consumer-is-indistinguishable-from-no-measurement.
+      Ideal form: IF-FLEET-LEGIBLE.
+
   # ── settled: the spine landed as #1608 while this registry was being authored ──
   s1-homing-spine:
     family: governance

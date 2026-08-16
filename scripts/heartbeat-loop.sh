@@ -552,6 +552,14 @@ while true; do
     # body tries to load it, so a dead board self-recovers instead of idling the fleet for hours
     # (the 2026-06-26 halt). Idempotent: a healthy board is a fast no-op, no network. See
     # heal-board.py + the limen.io collapse-guard — "fix the handoff so it ain't broken".
+    # PRIVATE-BOARD CUSTODY — refresh the off-repo full board from the authenticated keeper
+    # BEFORE anything reads board state this beat. After the partition cutover the public
+    # tasks.yaml is a counts-only aggregate, and every consumer resolves through
+    # private_board.operational_board_path(): stale custody means stale CAS preconditions
+    # ("exact revision moved"), and MISSING custody is a loud error, never an empty board.
+    # Pre-cutover this is a cheap no-op — the rung self-arms off the public file's shape.
+    [ "${LIMEN_BOARD_PRIVATE_HYDRATE:-1}" = "1" ] \
+      && beat_run hydrate-private-board bash "$LIMEN_ROOT/scripts/hydrate-private-board.sh" || true
     beat_run heal-board python3 "$LIMEN_ROOT/scripts/heal-board.py" || true
     # TABVLARIVS RELAY — submit the lock-free ticket inbox to the authenticated remote conduct
     # keeper. Archive only tickets with canonical projection receipts; broker outages leave the

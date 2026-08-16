@@ -9,7 +9,7 @@ from pathlib import Path
 import click
 import yaml
 
-from limen.conduct.client import client_from_env
+from limen.conduct.client import BrokerQuotaExhausted, client_from_env
 from limen.conduct.cli import conduct_group
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
@@ -23,11 +23,26 @@ from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
-from limen.private_board import private_board_path
+from limen.private_board import (
+    PrivateCustodyUnavailable,
+    default_private_custody_path,
+    operational_board_path,
+    path_is_public_aggregate,
+    private_board_path,
+)
 from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import build_progress_snapshot, render_progress
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
+
+# The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
+# RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
+# persistence and full-state write amplification (every mutation rewrites the whole broker
+# state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
+# change or operator action is required, so pointing a reader at a lever sends them to a
+# human action the owner explicitly ruled out. Cite the engineering owner instead.
+QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
+EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 
 
 def resolve_root() -> Path:
@@ -70,8 +85,11 @@ def resolve_tasks_path(root: Path) -> Path:
         return private_board_path(root / "tasks.yaml") or (root / "tasks.yaml")
     env_path = os.environ.get("LIMEN_TASKS")
     if env_path:
-        return Path(env_path).expanduser().resolve()
-    return root / "tasks.yaml"
+        configured = Path(env_path).expanduser().resolve()
+        # An explicit LIMEN_TASKS can itself name the public aggregate (the live
+        # checkout after cutover); derive custody from its SHAPE, not from the name.
+        return operational_board_path(configured)
+    return operational_board_path(root / "tasks.yaml")
 
 
 def resolve_limen_repo_root() -> Path:
@@ -222,6 +240,29 @@ def board_hydrate(output: Path) -> None:
     click.echo(f"hydrated private board custody: {target}")
 
 
+@board_group.command("custody-path")
+@click.option("--public", type=click.Path(path_type=Path), default=None, help="Public projection to resolve against")
+def board_custody_path(public: Path | None) -> None:
+    """Print the custody path local operation resolves to — the beat's single source of truth.
+
+    Exits 0 with the path when the public projection is still a full board (custody
+    is that same file), 0 with the private custody path once it is the aggregate, and
+    3 when the aggregate has no hydrated custody yet — the state that must never be
+    read as "the board is empty".
+    """
+    root = resolve_root() if public is None else Path(public).expanduser().parent
+    public_path = Path(public).expanduser() if public else root / "tasks.yaml"
+    try:
+        resolved = operational_board_path(public_path)
+    except PrivateCustodyUnavailable as exc:
+        click.echo(str(exc), err=True)
+        click.echo(str(default_private_custody_path(public_path)))
+        raise SystemExit(3) from exc
+    click.echo(str(resolved))
+    if path_is_public_aggregate(public_path):
+        click.echo(f"# derived: {public_path} is the public aggregate; operating on private custody", err=True)
+
+
 @board_group.command("initialize")
 @click.argument("source", type=click.Path(exists=True, dir_okay=False, path_type=Path))
 def board_initialize(source: Path) -> None:
@@ -309,7 +350,21 @@ def release_stale(hours, agent, dry_run, json_output, report_file):
     root = resolve_root()
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)
-    report = release_stale_tasks(limen, tasks_path, hours=hours, dry_run=dry_run, agent=agent)
+    try:
+        report = release_stale_tasks(limen, tasks_path, hours=hours, dry_run=dry_run, agent=agent)
+    except BrokerQuotaExhausted as exc:
+        # A spent keeper storage plan is not a release-stale defect and not a bug — it is an
+        # owner decision this rung cannot make. Report one legible line naming its registry
+        # owner and exit EX_TEMPFAIL, the idiom heal-board.py and self-heal.py already use:
+        # non-zero, so the beat ledger still records a real outcome, but distinguishable from
+        # the exit 1 that means "this rung is broken". Before this, a quota wall read as a
+        # release-stale failure and sent readers hunting a defect that did not exist.
+        click.echo(f"release-stale: BLOCKED — keeper storage quota exhausted, release deferred ({exc})"[:400], err=True)
+        click.echo(
+            f"release-stale: the write path is spent, not broken — owner: {QUOTA_OWNER}",
+            err=True,
+        )
+        raise SystemExit(EX_TEMPFAIL) from exc
     if report_file:
         report_path = Path(report_file).expanduser()
         report_path.parent.mkdir(parents=True, exist_ok=True)

@@ -861,6 +861,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "When 1, session-orient.py prints the digest without refreshing logs/session-orientation.md. Used by idempotence predicates; normal hooks leave it unset."
+  LIMEN_ORIENT_FETCH:
+    default: "1"
+    env: LIMEN_ORIENT_FETCH
+    self_update: none
+    owner: continuity
+    note: "When 1 (default), session-orient.py refreshes origin with a hard-bounded 3s fetch before deriving ahead/behind, so the Git line reports a fresh comparison rather than one against whatever origin/main happened to sit on disk — the mechanism behind two sessions running gates against a 19-commits-behind checkout. Set 0 (or LIMEN_OFFLINE) to skip the network entirely; the section then labels itself 'refs STALE' rather than silently reading like parity. The label, not the fetch, is the invariant: a stale read that announces itself is safe."
   LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:
     default: ""
     env: LIMEN_INSIGHT_CADENCE_VERIFY_ROOT
@@ -2730,6 +2736,42 @@ parameters:
     self_update: none
     owner: censor
     note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: eleven adapters over multi-GiB sqlite/jsonl stores with a 30-day window, PLUS the index --all and --health steps added 2026-08-06 (three ordered steps share this envelope). 900 covers the observed manual-run envelope with headroom; if the rung SIGKILLs (124), shrink --window-days rather than growing this. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_RESERVED_TIER:
+    default: "1"
+    env: LIMEN_RESERVED_TIER
+    self_update: none
+    owner: censor
+    note: "Gate for the reserved-tier-audit sensor (scripts/check-reserved-tier.py): does any lane run a reserved tier without a covering acceptance receipt. Armed by default because the rule it enforces (docs/fable-allotment.md) is already estate-wide in prose and was enforced Claude-lane-only in code — the sensor's severity is advisory, so arming it surfaces the backlog without blocking a beat."
+  LIMEN_BEAT_RESERVED_TIER:
+    default: 24
+    env: LIMEN_BEAT_RESERVED_TIER
+    self_update: none
+    owner: censor
+    note: "Beat cadence (hours) for reserved-tier-audit. Matched to LIMEN_BEAT_CROSS_VENDOR because this sensor reads the indexes that one refreshes — auditing more often than the input changes would burn the host for identical verdicts."
+  LIMEN_RESERVED_TIER_TIMEOUT:
+    default: 60
+    env: LIMEN_RESERVED_TIER_TIMEOUT
+    self_update: none
+    owner: censor
+    note: "Per-run timeout (seconds) for reserved-tier-audit. It reads already-materialized JSON indexes and never opens a vendor store, so 60 is generous; an overrun means the index tree grew pathological, not that the audit is slow."
+  LIMEN_RESERVED_TIERS:
+    default: "claude-fable-5"
+    env: LIMEN_RESERVED_TIERS
+    self_update: none
+    owner: censor
+    note: "Comma-separated model identities that require a written acceptance receipt before a run starts. Fable is the only reserved tier today (docs/fable-allotment.md); this is a list rather than a constant so a future reserved tier is one parameter edit, not a code change."
+  LIMEN_RESERVED_TIER_COVER_DAYS:
+    default: 7
+    env: LIMEN_RESERVED_TIER_COVER_DAYS
+    self_update: none
+    owner: censor
+    note: "How many days an acceptance receipt covers runs that START after it. 7 matches the ISO-week the Fable allotment ledger is reckoned in — a cover window wider than the ledger's period would let one receipt authorize two weeks of spend."
+  LIMEN_FABLE_RECEIPTS_DIR:
+    default: ""
+    env: LIMEN_FABLE_RECEIPTS_DIR
+    self_update: none
+    owner: censor
+    note: "Optional override for the Fable acceptance-receipt directory read by check-reserved-tier.py. Blank means logs/fable-acceptance/ (where fable-allotment.py accept writes). Set only by tests, which must never read the host's real receipts."
   LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS:
     default: 3
     env: LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS
@@ -3120,7 +3162,13 @@ parameters:
     env: LIMEN_PRIVATE_TASKS
     self_update: none
     owner: vigilia
-    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty reads the configured public projection; never point this at public tasks.yaml."
+    note: "Explicit off-disk full-board custody path used by local dispatch after public tasks.yaml is reduced to aggregate counts. Empty no longer means 'read the public file unconditionally': limen.private_board.operational_board_path() DERIVES custody from the public projection's shape, so an aggregate public board resolves to $LIMEN_PRIVATE_ROOT/board/canonical.yaml (and raises PrivateCustodyUnavailable when that has never been hydrated). This variable is the explicit override that outranks the derivation; never point it at public tasks.yaml."
+  LIMEN_BOARD_PRIVATE_HYDRATE:
+    default: "1"
+    env: LIMEN_BOARD_PRIVATE_HYDRATE
+    self_update: none
+    owner: vigilia
+    note: "Gate for the beat's hydrate-private-board rung (scripts/hydrate-private-board.sh), which refreshes off-repo private board custody from the authenticated keeper BEFORE any board reader runs. Self-arming: pre-cutover, while public tasks.yaml is still the full board, the rung exits 0 after one cheap shape probe (no network, no writes); it starts hydrating on the beat the partition cutover lands. Ordering matters — stale custody produces stale CAS preconditions and the keeper answers those with 'exact revision moved' (the 2026-08-15 release-stale wedge). Fail-open on keeper outages when custody already exists, fail-loud when the public board is an aggregate and custody has never been hydrated. 0 disables the rung."
   LIMEN_ISOLATION_PROMPT_GUARD:
     default: "1"
     env: LIMEN_ISOLATION_PROMPT_GUARD
@@ -4610,6 +4658,13 @@ parameters:
     owner: tabularius
     note: "The effector for the recurring macOS Gatekeeper 'ClaudeCode.app is damaged, move it to Trash' dialog (scripts/heal-claude-lsregister.sh, sensed by dialogs-silenced.sh section 4b, beat-wired on the heartbeat hygiene cadence beside heal-claude-update-marker.sh). Dry-run by default (reports the cure, mutates nothing). When 1, the beat unregisters + removes ONLY the exact-malformed-seal ClaudeCode.app stub (codesign 'code has no resources but signature indicates they must be present') under ~/.local/share/claude or ~/.Trash and sweeps reseeded Trash copies, returning LaunchServices registrations to the steady state of ZERO; never touches /Applications, the versions/ dir, or the resolved CLI symlink. macOS-only; fails OPEN off-darwin. Arm once in the daemon env (~/.limen.env) so occurrence #4 self-heals without a per-incident approval. Set 0 to silence."
 
+  LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL:
+    default: "0"               # OFF — the effector. Arm once so a vendor update stops minting a new TCC identity.
+    env: LIMEN_CLAUDE_BUNDLE_IDENTITY_HEAL
+    self_update: none
+    owner: tabularius
+    note: "The effector for the recurring per-version TCC prompt burst (#1703; scripts/claude-bundle-identity-heal.py, beat-wired on the heartbeat hygiene cadence beside heal-claude-lsregister.sh). TCC keys a grant on the client PATH for a non-bundled binary and the vendor names each build after its version, so every update mints a client with zero rows and re-asks the whole grant set under an 'app' named e.g. 2.1.233 — 19 identities since 2026-05-19, up to 9 dialogs each. Dry-run by default (reports the cure, mutates nothing). When 1, the beat replaces the LIVE versions/<v> hardlink with a SYMLINK to ClaudeCode.app/Contents/MacOS/claude, whose path never changes; TCC code identity follows a symlink to its target (proven from the live db: Homebrew execs ruby via portable-ruby/current and the client column records the resolved .../4.0.6/bin/ruby), so the grant then survives updates the way a normal app's does. Never a TCC database write. Touches ONLY an entry sharing the bundle executable's inode — by construction the live build, where unlinking one of two names for a file destroys nothing; a stale version is a distinct inode holding rollback bytes and is left alone. Exec-verified with automatic rollback, idempotent, --revert restores the hardlink. macOS-only; fails OPEN off-darwin. Residual: the heal runs AFTER the vendor rematerializes versions/<new>, so a session started in that gap can still draw one prompt — one, not nine. Upstream fix is anthropics/claude-code#86706. Arm once in ~/.limen.env. Set 0 to silence."
+
   LIMEN_HOOK_DRIFT_HEAL:
     default: "0"               # OFF — the effector. Arm once to auto-reinstall a drifted trust hook.
     env: LIMEN_HOOK_DRIFT_HEAL
@@ -5861,6 +5916,36 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Seconds the recorder rung may take. Generous because a due run is a fully paginated open-PR census across every governed owner plus a ship-docs PR; a timeout is advisory and never breaks the fail-open beat."
+  LIMEN_SHIPS_24H_REFRESH:
+    default: "1"
+    env: LIMEN_SHIPS_24H_REFRESH
+    self_update: none
+    owner: money-view
+    note: "Master on/off for the `ships-24h-refresh` recorder sensor declared in sensors.yaml. It writes logs/ships-24h.json — a real gh-backed count of PRs merged in the last 24h across every governed owner, replacing the merge-drain.log grep that only ever saw the batch merge-drain.py daemon's own merges and stayed at 0 while self-merges (most real throughput) went uncounted. 0 disables recording, which leaves money-view.py/omni-view.py/notify-events.py reading a stale-or-absent cache (fails open to 0 ships) rather than silently serving a wrong number."
+  LIMEN_BEAT_SHIPS_24H:
+    default: 4
+    env: LIMEN_BEAT_SHIPS_24H
+    self_update: none
+    owner: money-view
+    note: "Cadence (every N beats) at which the recorder's cheap due-check runs. Not the query cadence: the beat is adaptive (120s…1800s), so the actual `gh search prs --merged` call is throttled separately by LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES, mirroring LIMEN_BEAT_PR_DEBT's two-clock shape."
+  LIMEN_SHIPS_24H_REFRESH_TIMEOUT:
+    default: 60
+    env: LIMEN_SHIPS_24H_REFRESH_TIMEOUT
+    self_update: none
+    owner: money-view
+    note: "Seconds the recorder rung may take. A single `gh search prs --merged` call across a handful of owners; generous but far below LIMEN_PR_DEBT_RECORD_TIMEOUT's full paginated census, since this is one bounded search, not a sweep."
+  LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES:
+    default: 20
+    env: LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES
+    self_update: none
+    owner: money-view
+    note: "Minimum wall-clock minutes between real `gh search prs --merged` calls, read by scripts/ships-24h-refresh.py's own due-check — the LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS pattern scaled down for a cheap single-search query instead of a full paginated census. Keeps the sensor's beat-count cadence (LIMEN_BEAT_SHIPS_24H) from re-querying gh faster than the count could plausibly have changed."
+  LIMEN_SHIPS_24H_STALE_MINUTES:
+    default: 40
+    env: LIMEN_SHIPS_24H_STALE_MINUTES
+    self_update: none
+    owner: money-view
+    note: "How old logs/ships-24h.json may be before scripts/_ships_24h.py's reader treats it as unknown and fails open to (0, {}, []) rather than serving a silently-stale count. Set to 2x LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES's default (20m) so one missed refresh beat still reads fresh and two in a row is what trips it."
   LIMEN_PR_AUTOTYPE:
     default: "1"
     env: LIMEN_PR_AUTOTYPE
