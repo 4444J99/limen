@@ -1,0 +1,1644 @@
+[
+  {
+    "branch": "agent/codex-sessions-adapter-0713",
+    "sha": "4f56aa95a",
+    "closed_pr": null,
+    "behind_main": 1024,
+    "ahead_main": 1
+  },
+  {
+    "branch": "agent/handoff-runtime-readiness-0713",
+    "sha": "2b434e2ec",
+    "closed_pr": null,
+    "behind_main": 1017,
+    "ahead_main": 3
+  },
+  {
+    "branch": "agent/opencode-db-prompt-adapter-20260713",
+    "sha": "e267e576a",
+    "closed_pr": null,
+    "behind_main": 1024,
+    "ahead_main": 1
+  },
+  {
+    "branch": "archive/danse-predecessor-experiments-20260802",
+    "sha": "a232f2d71",
+    "closed_pr": null,
+    "behind_main": 395,
+    "ahead_main": 6
+  },
+  {
+    "branch": "capture/detached-8afd8ac60ba1-deferred",
+    "sha": "ad35e1c8a",
+    "closed_pr": null,
+    "behind_main": 130,
+    "ahead_main": 38
+  },
+  {
+    "branch": "capture/detached-93d741b82391-deferred",
+    "sha": "ce75f66bd",
+    "closed_pr": null,
+    "behind_main": 131,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/detached-f6a05dae23bc-deferred",
+    "sha": "344fc0ebf",
+    "closed_pr": null,
+    "behind_main": 149,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/docs/sync-captured-state-20260815-deferred",
+    "sha": "172793707",
+    "closed_pr": null,
+    "behind_main": 42,
+    "ahead_main": 3
+  },
+  {
+    "branch": "capture/main-2026-07-02T01-03-35Z",
+    "sha": "71b488528",
+    "closed_pr": null,
+    "behind_main": 3217,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-07-02T18-41-47Z",
+    "sha": "eaca4510c",
+    "closed_pr": null,
+    "behind_main": 3126,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-07-03T18-23-54Z",
+    "sha": "b53f0abc9",
+    "closed_pr": null,
+    "behind_main": 2888,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-07-04T18-44-48Z",
+    "sha": "bdc71ecbb",
+    "closed_pr": null,
+    "behind_main": 2650,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-07-06T17-09-22Z",
+    "sha": "e85f09095",
+    "closed_pr": null,
+    "behind_main": 2322,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-07-08T21-07-28Z",
+    "sha": "672c21c1c",
+    "closed_pr": null,
+    "behind_main": 1912,
+    "ahead_main": 11
+  },
+  {
+    "branch": "capture/main-2026-07-16T04-48-58Z",
+    "sha": "a0bdb5593",
+    "closed_pr": null,
+    "behind_main": 903,
+    "ahead_main": 1
+  },
+  {
+    "branch": "capture/main-2026-08-09-offdisk-priority",
+    "sha": "a6aea4a76",
+    "closed_pr": null,
+    "behind_main": 152,
+    "ahead_main": 8
+  },
+  {
+    "branch": "capture/main-deferred",
+    "sha": "35c02685b",
+    "closed_pr": null,
+    "behind_main": 1,
+    "ahead_main": 458
+  },
+  {
+    "branch": "capture/pr-744-deferred",
+    "sha": "037f6063b",
+    "closed_pr": null,
+    "behind_main": 720,
+    "ahead_main": 3
+  },
+  {
+    "branch": "chore/ruff-format-cli-tests",
+    "sha": "bbd9874a3",
+    "closed_pr": null,
+    "behind_main": 1249,
+    "ahead_main": 2
+  },
+  {
+    "branch": "codex/claude-permission-preflight-0713",
+    "sha": "2597ad485",
+    "closed_pr": null,
+    "behind_main": 1036,
+    "ahead_main": 1
+  },
+  {
+    "branch": "codex/claude-projects-adapter-20260713",
+    "sha": "b0c3676ac",
+    "closed_pr": null,
+    "behind_main": 1027,
+    "ahead_main": 3
+  },
+  {
+    "branch": "codex/codex-attachments-gap-0713",
+    "sha": "c33b9a4f4",
+    "closed_pr": null,
+    "behind_main": 1036,
+    "ahead_main": 1
+  },
+  {
+    "branch": "codex/jules-workstream-cloud-adapter-20260722",
+    "sha": "c346a5ac3",
+    "closed_pr": null,
+    "behind_main": 661,
+    "ahead_main": 45
+  },
+  {
+    "branch": "codex/jules-workstream-cloud-adapter-final-20260723",
+    "sha": "532d2b92a",
+    "closed_pr": null,
+    "behind_main": 661,
+    "ahead_main": 52
+  },
+  {
+    "branch": "codex/progress-universe-0713",
+    "sha": "45a7aa40a",
+    "closed_pr": null,
+    "behind_main": 1036,
+    "ahead_main": 7
+  },
+  {
+    "branch": "codex/promote-auto-revision-epistemic-engine",
+    "sha": "6ede4a327",
+    "closed_pr": null,
+    "behind_main": 3249,
+    "ahead_main": 1
+  },
+  {
+    "branch": "codex/promote-auto-revision-value-20260701",
+    "sha": "80b95b5fd",
+    "closed_pr": null,
+    "behind_main": 3253,
+    "ahead_main": 1
+  },
+  {
+    "branch": "codex/psp-c00-relay-2026-08-09",
+    "sha": "7c381a413",
+    "closed_pr": null,
+    "behind_main": 129,
+    "ahead_main": 2
+  },
+  {
+    "branch": "codex/psp-c00-relay-2026-08-10",
+    "sha": "1357eb603",
+    "closed_pr": null,
+    "behind_main": 124,
+    "ahead_main": 2
+  },
+  {
+    "branch": "codex/resource-safe-closeout",
+    "sha": "d682600e2",
+    "closed_pr": null,
+    "behind_main": 1874,
+    "ahead_main": 3
+  },
+  {
+    "branch": "codex/student-email-doctrine-cleanup-20260709",
+    "sha": "00e05587c",
+    "closed_pr": null,
+    "behind_main": 1819,
+    "ahead_main": 4
+  },
+  {
+    "branch": "docs/board-partition-verify-20260808014448",
+    "sha": "b254c2793",
+    "closed_pr": null,
+    "behind_main": 3991,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/diurnal-20260801100329",
+    "sha": "e57536b7b",
+    "closed_pr": null,
+    "behind_main": 387,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/diurnal-20260801161410",
+    "sha": "ed840b9d8",
+    "closed_pr": null,
+    "behind_main": 387,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/diurnal-20260802010616",
+    "sha": "65aa62967",
+    "closed_pr": null,
+    "behind_main": 387,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/diurnal-20260802100422",
+    "sha": "72f04e7f9",
+    "closed_pr": null,
+    "behind_main": 387,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/diurnal-first-live-day",
+    "sha": "3c8d8480d",
+    "closed_pr": null,
+    "behind_main": 396,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/enc1101-eot-catchalls-20260804",
+    "sha": "d86a575dd",
+    "closed_pr": null,
+    "behind_main": 356,
+    "ahead_main": 2
+  },
+  {
+    "branch": "docs/gitvs-pr-debt-zero-20260809",
+    "sha": "4bdf960a8",
+    "closed_pr": null,
+    "behind_main": 146,
+    "ahead_main": 42
+  },
+  {
+    "branch": "docs/pr-debt-observation-20260806033359",
+    "sha": "7739086a4",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "docs/pr-debt-observation-20260806033359",
+      "mergedAt": null,
+      "number": 1859,
+      "title": "docs(gitvs): record open-PR debt observation (1293 open)"
+    },
+    "behind_main": 314,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/reap-acceptance-0709-final-20260709115323",
+    "sha": "00cd21cee",
+    "closed_pr": null,
+    "behind_main": 1837,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/reap-acceptance-0709-final2-20260709115636",
+    "sha": "cdef65734",
+    "closed_pr": null,
+    "behind_main": 1834,
+    "ahead_main": 1
+  },
+  {
+    "branch": "docs/sensor-registry-done",
+    "sha": "7862658be",
+    "closed_pr": null,
+    "behind_main": 1196,
+    "ahead_main": 2
+  },
+  {
+    "branch": "feat-59-waitlist-landing",
+    "sha": "42e1dea48",
+    "closed_pr": null,
+    "behind_main": 730,
+    "ahead_main": 2
+  },
+  {
+    "branch": "feat/board-consumer-custody-routing",
+    "sha": "6b8354c11",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "feat/board-consumer-custody-routing",
+      "mergedAt": null,
+      "number": 2477,
+      "title": "feat(board): route every board reader through custody, and make missing custody unswallowable"
+    },
+    "behind_main": 23,
+    "ahead_main": 4
+  },
+  {
+    "branch": "feat/clavis-credential-provisioning",
+    "sha": "028faaa95",
+    "closed_pr": null,
+    "behind_main": 974,
+    "ahead_main": 2
+  },
+  {
+    "branch": "feat/conversion-funnel",
+    "sha": "6cc6bbd05",
+    "closed_pr": null,
+    "behind_main": 823,
+    "ahead_main": 1
+  },
+  {
+    "branch": "feat/danse-screendance-leaf-20260802",
+    "sha": "911410ba4",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "feat/danse-screendance-leaf-20260802",
+      "mergedAt": null,
+      "number": 1762,
+      "title": "feat(danse): make the submission trunk executable"
+    },
+    "behind_main": 382,
+    "ahead_main": 7
+  },
+  {
+    "branch": "feat/opencode-tier-ladder",
+    "sha": "bf6207ebb",
+    "closed_pr": null,
+    "behind_main": 1207,
+    "ahead_main": 1
+  },
+  {
+    "branch": "feat/session-contention-receipt",
+    "sha": "d9e9f5a7c",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "feat/session-contention-receipt",
+      "mergedAt": null,
+      "number": 1894,
+      "title": "feat(substrate): the fleet stops rewriting the tree a live session works in"
+    },
+    "behind_main": 295,
+    "ahead_main": 7
+  },
+  {
+    "branch": "feat/session-streams-registry",
+    "sha": "06be21478",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 2
+  },
+  {
+    "branch": "feature/ORG-education-organ-face-0630",
+    "sha": "9d174794c",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 29
+  },
+  {
+    "branch": "feature/ORG-media-organ-deepen-0630",
+    "sha": "ec5e06d7e",
+    "closed_pr": null,
+    "behind_main": 3303,
+    "ahead_main": 2
+  },
+  {
+    "branch": "fix-1565-tighten-types",
+    "sha": "0f34299d1",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix-1565-tighten-types",
+      "mergedAt": null,
+      "number": 1795,
+      "title": "Tighten types in organvm/limen (Fixes #1565)"
+    },
+    "behind_main": 387,
+    "ahead_main": 12
+  },
+  {
+    "branch": "fix-ignore-claude-sessions-666685427080882",
+    "sha": "5ff7f39e4",
+    "closed_pr": null,
+    "behind_main": 3941,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix-types-1565-clean",
+    "sha": "62cb5d01a",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix-types-1565-clean",
+      "mergedAt": null,
+      "number": 1796,
+      "title": "Tighten types in organvm/limen (Fixes #1565)"
+    },
+    "behind_main": 364,
+    "ahead_main": 2
+  },
+  {
+    "branch": "fix/application-funnel-dormant",
+    "sha": "964772922",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/application-funnel-dormant",
+      "mergedAt": null,
+      "number": 1797,
+      "title": "fix(funnel): the outbound job funnel was dormant on a path miss"
+    },
+    "behind_main": 364,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/fork-safety-predicate",
+    "sha": "09b6eb0cf",
+    "closed_pr": null,
+    "behind_main": 1249,
+    "ahead_main": 2
+  },
+  {
+    "branch": "fix/hospes-heal-work-loan-underwriting",
+    "sha": "c608db294",
+    "closed_pr": null,
+    "behind_main": 124,
+    "ahead_main": 3
+  },
+  {
+    "branch": "fix/needs-human-truth",
+    "sha": "ed62e484e",
+    "closed_pr": null,
+    "behind_main": 998,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/next-audit-bump",
+    "sha": "ba9227b7b",
+    "closed_pr": null,
+    "behind_main": 667,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/pr-debt-trend-names-the-real-producer",
+    "sha": "ff3e42bc2",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/pr-debt-trend-names-the-real-producer",
+      "mergedAt": null,
+      "number": 1772,
+      "title": "fix(gitvs): the trend predicate named the wrong producer in its own escalation"
+    },
+    "behind_main": 379,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/pr-debt-trend-owner-assertion",
+    "sha": "c1c1f840f",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/pr-debt-trend-owner-assertion",
+      "mergedAt": null,
+      "number": 1860,
+      "title": "fix(tests): derive the producer's owner, don't re-pin it \u2014 main is red on a stale literal"
+    },
+    "behind_main": 314,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/pubpolicy-doc-secret-false-positive",
+    "sha": "63901080a",
+    "closed_pr": null,
+    "behind_main": 833,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/relay-identity-freeze-kills-dispatch-receipts",
+    "sha": "3286f8df4",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/relay-identity-freeze-kills-dispatch-receipts",
+      "mergedAt": null,
+      "number": 2003,
+      "title": "fix(tabularius): a fixed relay session id is frozen by the first client that claims it"
+    },
+    "behind_main": 219,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/routines-freshness-budget-and-defect-clock",
+    "sha": "f8665b095",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/routines-freshness-budget-and-defect-clock",
+      "mergedAt": null,
+      "number": 2028,
+      "title": "fix(organ-health): ROUTINES read down for 5.5 of every 6 hours of correct operation"
+    },
+    "behind_main": 199,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/settles-trailer-test-not-universal",
+    "sha": "fdc22a722",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/settles-trailer-test-not-universal",
+      "mergedAt": null,
+      "number": 1830,
+      "title": "fix(tests): the Claude-Session trailer-parser gap is per-commit, not universal"
+    },
+    "behind_main": 341,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/tcc-cure-cadence-and-verdict",
+    "sha": "6f3911dde",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/tcc-cure-cadence-and-verdict",
+      "mergedAt": null,
+      "number": 2471,
+      "title": "fix(tcc): give the shipped bundle-identity cure a cadence, and stop the probe saying UNRESOLVED"
+    },
+    "behind_main": 15,
+    "ahead_main": 1
+  },
+  {
+    "branch": "fix/tcc-versions-enclosure",
+    "sha": "72b66f76a",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "fix/tcc-versions-enclosure",
+      "mergedAt": null,
+      "number": 2450,
+      "title": "fix(sensors): enclose the Claude Code version store in its bundle \u2014 kill the rotating \"2.1.233\" TCC identity (#1703)"
+    },
+    "behind_main": 26,
+    "ahead_main": 1
+  },
+  {
+    "branch": "gh-readonly-queue/main/pr-1885-e960db359cf9532cfdb3c825da3b6a00975345af",
+    "sha": "a11fd16a7",
+    "closed_pr": null,
+    "behind_main": 290,
+    "ahead_main": 2
+  },
+  {
+    "branch": "gh-readonly-queue/main/pr-1887-a11fd16a737a575b501dc7e93fe39bcfc00b1143",
+    "sha": "f8ad0ed83",
+    "closed_pr": null,
+    "behind_main": 290,
+    "ahead_main": 3
+  },
+  {
+    "branch": "gh-readonly-queue/main/pr-1892-31a90c9492bce598f29cd3f69793adcde1f03ad7",
+    "sha": "e960db359",
+    "closed_pr": null,
+    "behind_main": 290,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/aw-tabvlarivs-846-rebase",
+    "sha": "0647c4cc6",
+    "closed_pr": null,
+    "behind_main": 944,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/conductor-drift-2",
+    "sha": "f38ffb9b4",
+    "closed_pr": null,
+    "behind_main": 1147,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/dialogs-effector-family",
+    "sha": "a85d992c8",
+    "closed_pr": null,
+    "behind_main": 830,
+    "ahead_main": 3
+  },
+  {
+    "branch": "heal/dialogs-effector-family-v2",
+    "sha": "6b2ec913c",
+    "closed_pr": null,
+    "behind_main": 824,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/dispatch-admission",
+    "sha": "0681e396a",
+    "closed_pr": null,
+    "behind_main": 1844,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/live-main-snapshot-60edc0d2",
+    "sha": "60edc0d2c",
+    "closed_pr": null,
+    "behind_main": 1912,
+    "ahead_main": 26
+  },
+  {
+    "branch": "heal/live-main-snapshot-dirt-2026-07-09",
+    "sha": "7d9e6d7fc",
+    "closed_pr": null,
+    "behind_main": 1912,
+    "ahead_main": 27
+  },
+  {
+    "branch": "heal/micro-tato-audience",
+    "sha": "fb9378999",
+    "closed_pr": null,
+    "behind_main": 433,
+    "ahead_main": 2
+  },
+  {
+    "branch": "heal/micro-tato-audience-v2",
+    "sha": "8926ceb17",
+    "closed_pr": null,
+    "behind_main": 433,
+    "ahead_main": 3
+  },
+  {
+    "branch": "heal/revert-opencode-lane-truth-932",
+    "sha": "6dcaf0a52",
+    "closed_pr": null,
+    "behind_main": 1197,
+    "ahead_main": 1
+  },
+  {
+    "branch": "heal/trunk-green-censor-armed-valves",
+    "sha": "a709336d0",
+    "closed_pr": null,
+    "behind_main": 823,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/capfill-agy-20260629-06-ec05",
+    "sha": "038837834",
+    "closed_pr": null,
+    "behind_main": 2327,
+    "ahead_main": 3
+  },
+  {
+    "branch": "limen/capfill-agy-20260629-16-7baa",
+    "sha": "1a6b2a2e4",
+    "closed_pr": null,
+    "behind_main": 2318,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/capfill-claude-20260629-03-5bac",
+    "sha": "f206e80f8",
+    "closed_pr": null,
+    "behind_main": 2274,
+    "ahead_main": 2
+  },
+  {
+    "branch": "limen/capfill-claude-20260629-13-2b0f",
+    "sha": "58ebc3077",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 2
+  },
+  {
+    "branch": "limen/gen-organvm-limen-ci-green-0629-e0c3",
+    "sha": "965d07d7f",
+    "closed_pr": null,
+    "behind_main": 3334,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-384-947d7bcc",
+    "sha": "e37847dd7",
+    "closed_pr": null,
+    "behind_main": 3349,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-401-a2ea349b",
+    "sha": "ca076bfe0",
+    "closed_pr": null,
+    "behind_main": 3333,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-402-140f5ba7",
+    "sha": "945b05d15",
+    "closed_pr": null,
+    "behind_main": 3333,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-402-f000515e",
+    "sha": "945b05d15",
+    "closed_pr": null,
+    "behind_main": 3333,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-405-cba906fe",
+    "sha": "21b10df2f",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-406-fce333e5",
+    "sha": "41bd5a66b",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-409-93c549df",
+    "sha": "86690a1fa",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-413-491f6092",
+    "sha": "91ab4a768",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-414-4e02d6f1",
+    "sha": "038837834",
+    "closed_pr": null,
+    "behind_main": 2327,
+    "ahead_main": 3
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-417-980ffa89",
+    "sha": "af398882b",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-418-5676e703",
+    "sha": "1153c76c9",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-418-81791685",
+    "sha": "1153c76c9",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-419-7987cca2",
+    "sha": "199ec2ac7",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-419-e59a4529",
+    "sha": "199ec2ac7",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-422-6b0c8ca2",
+    "sha": "c58a0320e",
+    "closed_pr": null,
+    "behind_main": 2348,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-428-2ae62246",
+    "sha": "e4fa19a86",
+    "closed_pr": null,
+    "behind_main": 2310,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-430-955f9dd1",
+    "sha": "e752ed9d6",
+    "closed_pr": null,
+    "behind_main": 2361,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-431-6ee61f31",
+    "sha": "7d6834efc",
+    "closed_pr": null,
+    "behind_main": 2364,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-432-06bf02c7",
+    "sha": "47c47550a",
+    "closed_pr": null,
+    "behind_main": 2364,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-439-b17fd83a",
+    "sha": "b13ba0f08",
+    "closed_pr": null,
+    "behind_main": 2309,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-442-1b11af92",
+    "sha": "2beac4173",
+    "closed_pr": null,
+    "behind_main": 2315,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-443-4e67ed4e",
+    "sha": "ad12cd642",
+    "closed_pr": null,
+    "behind_main": 2309,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-452-32c5a00b",
+    "sha": "793e4afea",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-455-09792942",
+    "sha": "56f9a013a",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-456-2d8d8026",
+    "sha": "917357bd4",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-456-f80ad47a",
+    "sha": "917357bd4",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-457-fa165ce1",
+    "sha": "15dc86189",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-484-6c85e505",
+    "sha": "3c8cf2590",
+    "closed_pr": null,
+    "behind_main": 3302,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-083a",
+    "sha": "539cb7171",
+    "closed_pr": null,
+    "behind_main": 2194,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-1f7d",
+    "sha": "2525ea4e6",
+    "closed_pr": null,
+    "behind_main": 2206,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-3a0b",
+    "sha": "78e1083ac",
+    "closed_pr": null,
+    "behind_main": 2187,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-43fd",
+    "sha": "a6c303664",
+    "closed_pr": null,
+    "behind_main": 2178,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-4c02",
+    "sha": "778790b6f",
+    "closed_pr": null,
+    "behind_main": 2199,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-51e4",
+    "sha": "a59d5fa85",
+    "closed_pr": null,
+    "behind_main": 2169,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-9f1d",
+    "sha": "fd91625a6",
+    "closed_pr": null,
+    "behind_main": 2167,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-c97e",
+    "sha": "a9797d4ae",
+    "closed_pr": null,
+    "behind_main": 2202,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-mail-historical-backlog-e50f",
+    "sha": "4cbf2f03e",
+    "closed_pr": null,
+    "behind_main": 2208,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-aw-value-repos-85be0b900919-d730",
+    "sha": "0471204d2",
+    "closed_pr": null,
+    "behind_main": 944,
+    "ahead_main": 0
+  },
+  {
+    "branch": "limen/jules-capfill-agy-20260629-04-25b5",
+    "sha": "187a7bbdb",
+    "closed_pr": null,
+    "behind_main": 2305,
+    "ahead_main": 3
+  },
+  {
+    "branch": "limen/jules-capfill-jules-20260629-02-488a",
+    "sha": "199ec2ac7",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/jules-capfill-jules-20260629-12-be5f",
+    "sha": "1ca07a852",
+    "closed_pr": null,
+    "behind_main": 2361,
+    "ahead_main": 5
+  },
+  {
+    "branch": "limen/org-artist-organ-face-0704-54ed",
+    "sha": "f0ca62974",
+    "closed_pr": null,
+    "behind_main": 2555,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-governance-organ-deepen-0628-90ee",
+    "sha": "3b2001f63",
+    "closed_pr": null,
+    "behind_main": 3345,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-health-organ-kernel-0704-59fd",
+    "sha": "c3d9167b8",
+    "closed_pr": null,
+    "behind_main": 2765,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-hr-organ-kernel-0704-3658",
+    "sha": "939962e92",
+    "closed_pr": null,
+    "behind_main": 2611,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-hr-organ-kernel-0704-ab6c",
+    "sha": "40c484073",
+    "closed_pr": null,
+    "behind_main": 2614,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-legal-organ-firstslice-0703-c244",
+    "sha": "05cad7d7f",
+    "closed_pr": null,
+    "behind_main": 2706,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-legal-organ-kernel-0630-a5e5",
+    "sha": "6c301f3e2",
+    "closed_pr": null,
+    "behind_main": 3317,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-legal-organ-kernel-0701-e535",
+    "sha": "3dcb37cde",
+    "closed_pr": null,
+    "behind_main": 3220,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-legal-organ-kernel-0704-a80b",
+    "sha": "1800caa0b",
+    "closed_pr": null,
+    "behind_main": 2765,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-legal-organ-kernel-0704-c763",
+    "sha": "ac60fff8b",
+    "closed_pr": null,
+    "behind_main": 2755,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/org-social-organ-firstslice-0703-edcd",
+    "sha": "0fbca3fab",
+    "closed_pr": null,
+    "behind_main": 2704,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/promote-glyph-cascade-tapes",
+    "sha": "e3cb47a24",
+    "closed_pr": null,
+    "behind_main": 3248,
+    "ahead_main": 1
+  },
+  {
+    "branch": "limen/promote-organon-noumenon-ontogenetic-morphe",
+    "sha": "822fc176a",
+    "closed_pr": null,
+    "behind_main": 3240,
+    "ahead_main": 1
+  },
+  {
+    "branch": "pr-744",
+    "sha": "0a9d6a5a6",
+    "closed_pr": null,
+    "behind_main": 724,
+    "ahead_main": 3
+  },
+  {
+    "branch": "pr-767",
+    "sha": "e489b285a",
+    "closed_pr": null,
+    "behind_main": 1855,
+    "ahead_main": 3
+  },
+  {
+    "branch": "preserve/board-writer-audit-gate-wip-20260730",
+    "sha": "330980596",
+    "closed_pr": null,
+    "behind_main": 833,
+    "ahead_main": 3
+  },
+  {
+    "branch": "preserve/canonical-main-20260726",
+    "sha": "681f02944",
+    "closed_pr": null,
+    "behind_main": 627,
+    "ahead_main": 1
+  },
+  {
+    "branch": "preserve/codex-runaway-prevention-20260717-wip-20260730",
+    "sha": "7bf7f85ee",
+    "closed_pr": null,
+    "behind_main": 833,
+    "ahead_main": 11
+  },
+  {
+    "branch": "preserve/opencode-tier-ladder-20260710",
+    "sha": "bf7f2091f",
+    "closed_pr": null,
+    "behind_main": 1198,
+    "ahead_main": 1
+  },
+  {
+    "branch": "preserve/prima-materia-universe-s17-wip-20260730",
+    "sha": "f3e98aace",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 46
+  },
+  {
+    "branch": "preserve/reclaim-plan-digest-20260724-20260730",
+    "sha": "5a4a6b8b8",
+    "closed_pr": null,
+    "behind_main": 609,
+    "ahead_main": 6
+  },
+  {
+    "branch": "preserve/shared-root-b4c56d9-20260722",
+    "sha": "41785f304",
+    "closed_pr": null,
+    "behind_main": 730,
+    "ahead_main": 2
+  },
+  {
+    "branch": "preserve/typed-campaign-contracts-wip-20260730",
+    "sha": "e1aea141f",
+    "closed_pr": null,
+    "behind_main": 523,
+    "ahead_main": 3
+  },
+  {
+    "branch": "preserve/vic-limen-rail-repair-wip-20260730",
+    "sha": "5e89a10b6",
+    "closed_pr": null,
+    "behind_main": 675,
+    "ahead_main": 13
+  },
+  {
+    "branch": "refactor/armed-valve-derive",
+    "sha": "e342c68f6",
+    "closed_pr": null,
+    "behind_main": 1196,
+    "ahead_main": 1
+  },
+  {
+    "branch": "research-149-stickk-analysis",
+    "sha": "9e1966e8f",
+    "closed_pr": null,
+    "behind_main": 730,
+    "ahead_main": 2
+  },
+  {
+    "branch": "ship/f3-f6-f7",
+    "sha": "04094145c",
+    "closed_pr": {
+      "author": {
+        "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+        "is_bot": false,
+        "login": "4444J99",
+        "name": "Anthony James Padavano"
+      },
+      "headRefName": "ship/f3-f6-f7",
+      "mergedAt": null,
+      "number": 2012,
+      "title": "feat(arms-agents): guard the cadence CEILING, census every lane's opening floor, and ratchet the fail-toward-warning invariant (F3+F6+F7)"
+    },
+    "behind_main": 217,
+    "ahead_main": 4
+  },
+  {
+    "branch": "tabularius/board-projection-20260721-177302a5",
+    "sha": "b16284fef",
+    "closed_pr": null,
+    "behind_main": 699,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/charles-cotton-preview-successor-20260803",
+    "sha": "5c082683b",
+    "closed_pr": null,
+    "behind_main": 364,
+    "ahead_main": 17
+  },
+  {
+    "branch": "work/charles-rose-toners-closeout-20260803",
+    "sha": "876e6033b",
+    "closed_pr": null,
+    "behind_main": 367,
+    "ahead_main": 14
+  },
+  {
+    "branch": "work/codex-runaway-prevention-20260717",
+    "sha": "c61c45397",
+    "closed_pr": null,
+    "behind_main": 844,
+    "ahead_main": 7
+  },
+  {
+    "branch": "work/correspondence",
+    "sha": "843240cee",
+    "closed_pr": null,
+    "behind_main": 468,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/financial",
+    "sha": "462c7d963",
+    "closed_pr": null,
+    "behind_main": 468,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/fitness",
+    "sha": "89b755f4d",
+    "closed_pr": null,
+    "behind_main": 480,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/hokage-chess",
+    "sha": "d0b13ec0a",
+    "closed_pr": null,
+    "behind_main": 470,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/hospes-heal-reconcile-20260809",
+    "sha": "6de49b29f",
+    "closed_pr": null,
+    "behind_main": 128,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/hospes-heal-reconcile-20260810-s1",
+    "sha": "05ea9a955",
+    "closed_pr": null,
+    "behind_main": 128,
+    "ahead_main": 2
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260724-s3",
+    "sha": "578bf5d1c",
+    "closed_pr": null,
+    "behind_main": 598,
+    "ahead_main": 4
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260724-s4",
+    "sha": "50c1cf10e",
+    "closed_pr": null,
+    "behind_main": 579,
+    "ahead_main": 36
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260724-s5",
+    "sha": "a20abfe8b",
+    "closed_pr": null,
+    "behind_main": 595,
+    "ahead_main": 5
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260724-s6",
+    "sha": "d26ffd029",
+    "closed_pr": null,
+    "behind_main": 595,
+    "ahead_main": 7
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260725-s10",
+    "sha": "d35324511",
+    "closed_pr": null,
+    "behind_main": 562,
+    "ahead_main": 2
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260725-s7",
+    "sha": "3b608bb60",
+    "closed_pr": null,
+    "behind_main": 571,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260725-s8",
+    "sha": "70afd75c6",
+    "closed_pr": null,
+    "behind_main": 570,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260725-s9",
+    "sha": "33e6b7f9e",
+    "closed_pr": null,
+    "behind_main": 564,
+    "ahead_main": 2
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260726-s12",
+    "sha": "2cd6300e5",
+    "closed_pr": null,
+    "behind_main": 553,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260726-s13",
+    "sha": "80a8b0603",
+    "closed_pr": null,
+    "behind_main": 553,
+    "ahead_main": 2
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260727-s17",
+    "sha": "29c7060d4",
+    "closed_pr": null,
+    "behind_main": 535,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/lead-representation",
+    "sha": "2ae87712e",
+    "closed_pr": null,
+    "behind_main": 583,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/lead-substrate",
+    "sha": "46bb367dc",
+    "closed_pr": null,
+    "behind_main": 583,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/limen-notifier-closeout-successor-20260812",
+    "sha": "400e921e7",
+    "closed_pr": null,
+    "behind_main": 105,
+    "ahead_main": 169
+  },
+  {
+    "branch": "work/micro-tato",
+    "sha": "86e75528b",
+    "closed_pr": null,
+    "behind_main": 470,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/next-autonomous-epoch-20260714",
+    "sha": "9335337ba",
+    "closed_pr": null,
+    "behind_main": 979,
+    "ahead_main": 17
+  },
+  {
+    "branch": "work/omega-substrate-convergence-next",
+    "sha": "66bb7c272",
+    "closed_pr": null,
+    "behind_main": 429,
+    "ahead_main": 11
+  },
+  {
+    "branch": "work/photos-universe-20260629-182431",
+    "sha": "d45b030d1",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 14
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-20260728-s2",
+    "sha": "a336e49e9",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 3
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s10",
+    "sha": "bc87aec74",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 27
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s11",
+    "sha": "dced7bd35",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 30
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s12",
+    "sha": "58a85381c",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 33
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s13",
+    "sha": "dcfb208d2",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 36
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s14",
+    "sha": "b00ceca0d",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 39
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s15",
+    "sha": "5e09984cc",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 42
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s16",
+    "sha": "a6fe53a79",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 44
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s17",
+    "sha": "36909af39",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 45
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s3",
+    "sha": "450e0813f",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 8
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s4",
+    "sha": "068d10538",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 9
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s5",
+    "sha": "c2c80593a",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 12
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s6",
+    "sha": "54e1bb3f7",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 15
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s7",
+    "sha": "7624dd47a",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 18
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s8",
+    "sha": "06552d8ea",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 21
+  },
+  {
+    "branch": "work/prima-materia-alpha-omega-universe-20260728-s9",
+    "sha": "dba90bbfb",
+    "closed_pr": null,
+    "behind_main": 510,
+    "ahead_main": 24
+  },
+  {
+    "branch": "work/representation",
+    "sha": "99088426f",
+    "closed_pr": null,
+    "behind_main": 468,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/tcc-reap-closeout-20260801",
+    "sha": "57d5e7bfd",
+    "closed_pr": null,
+    "behind_main": 387,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/tcc-stable-agent-host-cutover-20260730",
+    "sha": "b6767943b",
+    "closed_pr": null,
+    "behind_main": 429,
+    "ahead_main": 15
+  },
+  {
+    "branch": "work/three-pinned-conversations-20260721",
+    "sha": "edc937ee7",
+    "closed_pr": null,
+    "behind_main": 702,
+    "ahead_main": 3
+  },
+  {
+    "branch": "work/victoroff-external-custody-20260722",
+    "sha": "456a03a4f",
+    "closed_pr": null,
+    "behind_main": 695,
+    "ahead_main": 1
+  },
+  {
+    "branch": "work/workstream-agent-launcher-20260629",
+    "sha": "40c428549",
+    "closed_pr": null,
+    "behind_main": 3324,
+    "ahead_main": 27
+  },
+  {
+    "branch": "worktree-feat-host-pressure-loop",
+    "sha": "1864ea386",
+    "closed_pr": null,
+    "behind_main": 848,
+    "ahead_main": 1
+  },
+  {
+    "branch": "worktree-fix+needs-human-fleet-debt-state",
+    "sha": "3a44a8e58",
+    "closed_pr": null,
+    "behind_main": 999,
+    "ahead_main": 2
+  },
+  {
+    "branch": "worktree-fluttering-twirling-abelson",
+    "sha": "c2ef7b48a",
+    "closed_pr": null,
+    "behind_main": 2419,
+    "ahead_main": 1
+  },
+  {
+    "branch": "worktree-parsed-finding-fern",
+    "sha": "d1db814bc",
+    "closed_pr": null,
+    "behind_main": 3264,
+    "ahead_main": 1
+  },
+  {
+    "branch": "worktree-victoroff-closeout",
+    "sha": "3803fd9c6",
+    "closed_pr": null,
+    "behind_main": 26,
+    "ahead_main": 0
+  }
+]
