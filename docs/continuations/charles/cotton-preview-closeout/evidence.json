@@ -1,0 +1,64 @@
+{
+  "schema": "limen.direct-session-closeout.v1",
+  "subject": "charles-cotton-preview",
+  "captured_at": "2026-08-03",
+  "scope": {
+    "article": "cotton only",
+    "visual_preview": true,
+    "squarespace_mutated": false,
+    "stock_images_are_recreation_references": true
+  },
+  "source_lineage": {
+    "recording_count": 3,
+    "speaker_labeled_artifact_count": 4,
+    "speaker_mapping": {
+      "local_close_voice": "Anthony",
+      "phone_voice": "Charles"
+    },
+    "latest_message_window_reviewed": "24 hours",
+    "archive_reviewed": true,
+    "raw_private_source_in_public_git": false,
+    "superseded_draft_preserved_privately": true
+  },
+  "source_receipt": {
+    "repository": "organvm/limen",
+    "branch": "feat/charles-cotton-preview",
+    "article_commit": "38d53030c18d8597c1eb59b40ade942070aa2183",
+    "review_commit": "7e53d8cef0108bdefeab95efff105a81805b51ec",
+    "pull_request": "https://github.com/organvm/limen/pull/1791"
+  },
+  "deployment_receipt": {
+    "provider": "OpenAI Sites",
+    "project_id": "appgprj_6a6f989f3d908191aa52562e2f0c212d",
+    "version_number": 12,
+    "version_id": "appgprj_6a6f989f3d908191aa52562e2f0c212d~appgver_74b8a360a0e48191925877b122c11787",
+    "deployment_id": "appgdep_6a70a8be1a5c8191b9a5a3bd0e7729f8",
+    "source_commit": "9a169efaa60e18516e9be8a7948e7a14751f8047",
+    "archive_content_hash": "sha256:7c2651a9207663f8d050273830e83806620ccca1bc3afd6d814437e30568a40b",
+    "site_source_manifest_sha256": "90c3c92d34252fc8a1138b69d08478326b9ee7fcd2b8247c791c278b7e3dbcb2",
+    "route": "https://downs-style-rose-toners-preview.ajpadavano.chatgpt.site/cotton",
+    "access_mode": "public",
+    "status": "succeeded"
+  },
+  "successor_capsule": {
+    "branch": "work/charles-cotton-preview-successor-20260803",
+    "commit": "f32283af3004dfed18f6a9e725b58b301916af0f",
+    "runway_seconds": 604800,
+    "launch_tested": true
+  },
+  "verification": {
+    "rendered_route_tests": {
+      "passed": 8,
+      "failed": 0
+    },
+    "lint_errors": 0,
+    "lint_warnings": 0,
+    "scoped_repository_gate": "passed",
+    "desktop_checked": true,
+    "mobile_checked": true,
+    "horizontal_overflow": false,
+    "reference_images_loaded": 5,
+    "preview_robots": "noindex, nofollow"
+  },
+  "disposition": "done"
+}
