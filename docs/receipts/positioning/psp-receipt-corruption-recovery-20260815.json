@@ -1,0 +1,80 @@
+{
+  "schema_version": "limen.psp_receipt_corruption_recovery.v1",
+  "captured_at": "2026-08-15T19:32:37Z",
+  "scope": "PSP receipt-corruption recovery only; no leaf repair and no C04/C05 mutation",
+  "issues": {
+    "reopened": [2188, 2194, 2195, 2196, 2181],
+    "reopened_state_reason": "reopened",
+    "kept_open": [2189],
+    "invalidation_comments": {
+      "2188": "https://github.com/organvm/limen/issues/2188#issuecomment-5303837496",
+      "2194": "https://github.com/organvm/limen/issues/2194#issuecomment-5303837651",
+      "2195": "https://github.com/organvm/limen/issues/2195#issuecomment-5303837749",
+      "2196": "https://github.com/organvm/limen/issues/2196#issuecomment-5303837846",
+      "2181": "https://github.com/organvm/limen/issues/2181#issuecomment-5303837398",
+      "2189": "https://github.com/organvm/limen/issues/2189#issuecomment-5303837581"
+    },
+    "preserved_invalid_comment_ids": [
+      5302834365,
+      5302836577,
+      5302840153,
+      5302849163,
+      5302859980,
+      5302868894,
+      5302849325,
+      5302905058,
+      5302990346,
+      5303014333
+    ]
+  },
+  "correction": {
+    "pr": "https://github.com/organvm/limen/pull/2481",
+    "branch": "codex/psp-receipt-corruption-recovery",
+    "source_head": "984b1121083b4ab2453c3671ad20d11586cf6713",
+    "latest_correction_head": "811a2f60b5f7fbb996f4a5c775e579d96a6bb84c",
+    "accepted_main_head": null,
+    "merge_status": "held by required scoped heavy verification host admission",
+    "merge_blocker": "scoped exact-tree verification cheap wave passed, but heavy wave was denied by machine-wide host admission: swap-fraction. No bypass or direct-main write used."
+  },
+  "predicate_outputs": {
+    "focused_validator_tests": "54 passed",
+    "public_live_foundry": "pass; errors=[]; transfer_eligible=0",
+    "scoped_exact_tree": "cheap wave passed; heavy wave denied by host admission swap-fraction",
+    "verify_work": {
+      "PSP-P13-W01": "pass; historical v1 receipt accepted under pre-cutover compatibility",
+      "PSP-P03-W07": "exit 2: receipt chain contains invalidated comment(s): 5302834365, 5302836577, 5302840153",
+      "PSP-P04-W05": "exit 2: receipt chain contains invalidated comment(s): 5302849163",
+      "PSP-P04-W06": "exit 2: receipt chain contains invalidated comment(s): 5302859980, 5302868894",
+      "PSP-P04-W07": "exit 2: receipt chain contains invalidated comment(s): 5302849325"
+    },
+    "verify_phase": {
+      "PSP-P03": "exit 2: receipt chain contains invalidated comment(s): 5302905058, 5302990346",
+      "PSP-P04": "exit 2: receipt chain contains invalidated comment(s): 5303014333"
+    }
+  },
+  "quarantine": {
+    "custody_receipt": "docs/receipts/positioning/psp-receipt-corruption-custody-20260815.json",
+    "shared_checkout": "/Users/4jp/Workspace/limen (dirty/untracked state preserved)",
+    "agy_teamwork_preview_artifacts": ".agents/teamwork_preview_* (18 directories preserved)",
+    "agy_branch_refs": [
+      "limen/capfill-agy-20260629-01-aef0",
+      "limen/capfill-agy-20260629-03-796b",
+      "limen/capfill-agy-20260629-11-a3b7",
+      "limen/capfill-agy-20260629-12-5661",
+      "limen/capfill-agy-20260629-13-cf80",
+      "limen/capfill-agy-20260629-25-eb64"
+    ],
+    "worktree_inventory": "43 roots captured by git worktree list --porcelain; no Agy-created root, branch, staged file, or preview artifact deleted or rewritten"
+  },
+  "truthful_progress": {
+    "closed_leaves": 35,
+    "leaves_denominator": 111,
+    "closed_objects": 38,
+    "objects_denominator": 127,
+    "closed_phases": 3,
+    "phases_denominator": 15,
+    "chunks_denominator": 13,
+    "basis": "live GitHub issue projection after reopening the five forged leaf/phase issues"
+  },
+  "owner_handoff": "P03-W07 remains human-gated. P04-W05, P04-W06, and P04-W07 are reopened for canonical-owner predicate execution after the verifier repair."
+}

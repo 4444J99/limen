@@ -64,7 +64,8 @@ skeleton with
 current `exit_gate_sha256`, exactly the program repository head in `observed_heads`,
 `child_receipts_sha256`, phase-local `remote_state_sha256`, `parity_sha256`, the manifest-derived
 non-circular `exit_predicate` in `predicate.command`, zero `predicate.exit_code`,
-`predicate.output_sha256`, RFC3339 `predicate.observed_at`, and nonempty HTTPS `evidence_urls`.
+captured `predicate.output`, command/output/command-plus-output SHA-256 bindings, RFC3339
+`predicate.observed_at`, and nonempty HTTPS `evidence_urls`.
 Validate it with
 `python3 scripts/positioning-program.py --verify-phase <PHASE-ID>` before closing the phase; the
 underlying predicate may not call this receipt verifier. Closure-integrity and ready-work checks
