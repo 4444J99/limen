@@ -70,6 +70,7 @@ def _run(tmp_path: Path, organs: list[dict], floor: int = 5) -> subprocess.Compl
     board = _board(tmp_path / "tasks.yaml")
     env = {
         **os.environ,
+        "LIMEN_ROOT": str(tmp_path),
         "LIMEN_ORGAN_LADDER": str(ladder),
         "LIMEN_TASKS": str(board),
         "PYTHONPATH": str(ROOT / "cli" / "src"),
@@ -104,6 +105,7 @@ def test_a_ladder_of_only_spanning_rows_is_a_clean_no_op(tmp_path):
     res = _run(tmp_path, [SPANNING_ORGAN])
     assert res.returncode == 0, res.stdout + res.stderr
     assert "skipped 1 organ(s) with no exact owner/repo" in res.stdout
+    assert "no buildable organs with an exact owner/repo" in res.stdout
     assert "nothing to generate" in res.stdout
 
 

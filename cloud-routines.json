@@ -13,7 +13,7 @@
     },
     {
       "name": "irf-p0-surface",
-      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue_repo": "organvm/organvm-corpvs-testamentvm",
       "issue": 489,
       "cadence": "daily",
       "class": "delta-gated",
@@ -58,7 +58,7 @@
     },
     {
       "name": "atom-backlog-triage",
-      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue_repo": "organvm/organvm-corpvs-testamentvm",
       "issue": null,
       "cadence": "daily",
       "class": "delta-gated",
@@ -95,7 +95,7 @@
     },
     {
       "name": "omega-scorecard",
-      "issue_repo": "a-organvm/organvm-corpvs-testamentvm",
+      "issue_repo": "organvm/organvm-corpvs-testamentvm",
       "issue": 490,
       "cadence": "daily",
       "class": "delta-gated",

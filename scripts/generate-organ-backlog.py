@@ -275,7 +275,10 @@ def main() -> int:
         print(f"# skipped {len(info['unslugged_organs'])} organ(s) with no exact owner/repo "
               f"(a PR contract needs one): {', '.join(info['unslugged_organs'])}")
     if info.get("no_organs"):
-        print("no build-stage organs in organ-ladder.json — nothing to generate.")
+        if info.get("unslugged_organs"):
+            print("no buildable organs with an exact owner/repo — nothing to generate.")
+        else:
+            print("no build-stage organs in organ-ladder.json — nothing to generate.")
         return 0
     if info["open_org"] >= info["floor"]:
         print(f"organ queue healthy: {info['open_org']} >= {info['floor']} — nothing to generate.")
