@@ -1,0 +1,82 @@
+# COVENANT — the record-keeper covenant registry.
+#
+# A "testament" file is a durable record with ONE legitimate author: TABVLARIVS, the record
+# keeper. The memory dir (MEMORY.md + its per-topic atoms) and the board (tasks.yaml) each
+# accrue truth across sessions; when every session may write directly, the file races itself
+# and the record drifts. The covenant makes the keeper the SOLE writer and gives every other
+# session a lane — a ticket it submits, which the keeper's beat drain folds in.
+#
+# Lane-not-wall is the law: a blocked write must have somewhere to go. We build the lane
+# BEFORE the wall (the write-guard hook), so nothing a session needs to record is ever lost.
+# Every field here is checked by scripts/check-covenant.py (the drift predicate) and mirrored
+# in docs/record-keeper-covenant.md (the charter). Nothing arms by merge: enforcement.armed
+# stays false until the operator arms the guard — the checker only WARNS while unarmed.
+#
+# Field notes:
+#   path_kind: in_repo (tracked file, `path`) | out_of_repo (`path_env` + `index_file`).
+#   sole_writer.kind: agent — an identity; keeper_env names the drain's arming env var.
+#   lane.kind: ticket — sessions submit; the keeper drains. `submit` is the CLI, `drain` the
+#     keeper pass, `inbox` where tickets pool.
+#   enforcement: the (currently unarmed) hook + the gate/sensor ids that will guard it.
+
+schema_version: 0.1
+
+covenants:
+  memory:
+    title: "The memory dir — MEMORY.md + its per-topic atoms"
+    # The out-of-repo memory dir reaches interactive sessions; the checker resolves it via the
+    # SAME derivation as evocator.py (LIMEN_MEMORY_DIR override, else the ~/.claude slug path).
+    path_kind: out_of_repo
+    path_env: LIMEN_MEMORY_DIR
+    index_file: MEMORY.md
+    atom_glob: "*.md"
+    sole_writer:
+      kind: agent
+      identity: tabularius
+      keeper_env: LIMEN_MEMORIA
+    lane:
+      kind: ticket
+      submit: "python3 scripts/memory-ticket.py --slug <s> --title <t> --desc <d> [--body-file f] [--star]"
+      inbox: "<memdir>/.covenant-inbox"
+      drain: "scripts/tabularius-organ.py memory pass (LIMEN_MEMORIA=1)"
+    enforcement:
+      hook: scripts/hooks/covenant-write-guard.sh
+      gate: check-covenant
+      sensor: covenant-attribution
+      armed: false
+    verify_only:
+      - scripts/evocator.py
+    # THE LEAK: the harness auto-writes MEMORY.md + atoms from EVERY session, so today the
+    # memory dir has as many writers as there are sessions. Arming sequence: the lane
+    # (memory-ticket.py + memoria.py) lands and is proven GREEN, THEN the operator arms the
+    # write-guard hook (PR 6). Never arm by merge — the checker only warns while armed: false.
+    note: >-
+      Harness auto-memory writes from every session are the leak this covenant closes; the lane
+      exists before the wall so no recorded truth is lost, and the wall arms only by the
+      operator's hand, never on merge.
+
+  board:
+    title: "The board — tasks.yaml (the live task queue SSOT)"
+    path_kind: in_repo
+    path: tasks.yaml
+    sole_writer:
+      kind: agent
+      identity: tabularius
+    lane:
+      kind: ticket
+      submit: "limen.tabularius.submit_task_upsert / submit_task_status"
+      inbox: "logs/tickets/inbox"
+      drain: "scripts/tabularius-organ.py board pass"
+    enforcement:
+      # The board's teeth are the AST writer audit (delegated, NOT duplicated in check-covenant).
+      audit: scripts/task-writer-audit.py
+      gate: task-writer-audit
+    migration_debt:
+      audit_doc: docs/tabularius-writer-audit.md
+      remaining_packets: 7
+    # tabularius.py already exposes submit_task_upsert / submit_task_status and the keeper
+    # already drains logs/tickets/inbox; the writer audit counts the legacy direct writers
+    # still being burned down (migration_debt).
+    note: >-
+      Board single-writer is already partly enacted (Tabularius + the ticket inbox); the
+      task-writer-audit AST scan is its wall and burns down the remaining legacy direct writers.

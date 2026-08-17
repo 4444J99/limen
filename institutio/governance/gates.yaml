@@ -675,6 +675,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "This registry's own drift predicate: schema, command existence, deploy-trigger parity, CI mirrors, consumer ratchets."
+  check-covenant:
+    command: "python3 scripts/check-covenant.py"
+    paths: ["institutio/governance/covenant.yaml", "scripts/check-covenant.py", "scripts/covenant.py", "scripts/memory-ticket.py", "cli/src/limen/memoria.py", "scripts/hooks/covenant-write-guard.sh", ".claude/settings.json", "docs/record-keeper-covenant.md"]
+    scoped: false
+    owner: tabularius
+    note: "Record-keeper covenant drift predicate: TABVLARIVS is the sole writer of the testament surfaces (the memory dir + tasks.yaml); each has a lane (a ticket sessions submit) before its wall. PENDING-tolerant while a lane is unbuilt or a guard unarmed, so nothing arms by merge. No ci_job (mirrors removal-acceptance)."
   check-test-hygiene:
     command: "python3 scripts/check-test-hygiene.py"
     paths: ["cli/tests/**", "web/api/tests/**", "scripts/check-test-hygiene.py", "institutio/governance/test-hygiene-baseline.txt"]
