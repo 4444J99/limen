@@ -65,7 +65,28 @@ Checks (exit 0 iff all pass):
      queue mode uses ``merge_group``, and neither the shared nor tool-specific protocol permits an
      admin bypass of the serialization rail.
 
+  Q. The closure covenant is lane-neutral: AGENTS.md ``## Full Lifecycle Closure`` binds every
+     lane (CLI, desktop, IDE, fleet, MCP) to the predicate-backed fixed point
+     (``no-tasks-on-me.sh`` + ``credential-wall.py --check``), the terminal statement, and the
+     rule that menus/caveat-tails/transcript-parked items are not closure forms. (2026-08-06:
+     three consecutive insights runs found the same defect in different lanes — the rule lived
+     only in CLAUDE.md, the one file the other lanes never read.)
+
+  R. Session-discipline rules 6/7 stay encoded in the AGENTS.md shared layer: read the
+     predicate's own exit code, never a pipeline's (rule 6), and one command per judged
+     invocation on hook-judged rails, with the scripts-chain-freely carve-out (rule 7).
+
+  S. Instruction surfaces fit their declared byte budget (gates.yaml ``instruction_surfaces``;
+     G1 2026-08-06 — codex silently truncated AGENTS.md at its default 32,768-byte cap):
+     S1 the budget equals the weakest consumer's default cap (derived, not chosen); S2 every
+     surface fits the shrink-only ceiling; S3 the ceiling follows the file down (dead headroom
+     stays within slack); S4 the debt line exists exactly while a surface exceeds the budget.
+
 Run directly (``scripts/check-agent-docs.py``) or via ``scripts/verify-whole.sh``.
+
+Checks that read the domus-genoma templates run only when that repo is NESTED at
+``./domus-genoma``; in the sibling-clone layout they are SKIPPED, and main() announces the
+skip loudly instead of silently passing (the 8 dead-check incident, 2026-08-06).
 """
 
 from __future__ import annotations
@@ -74,6 +95,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "mcp" / "src" / "limen_mcp" / "server.py"
@@ -275,8 +298,12 @@ def peer_conductor_errors(documents: dict[str, str]) -> list[str]:
 
     adapters = {
         name: documents.get(name, "")
-        for name in ("CLAUDE.md", "GEMINI.md", ".agents/skills/agy_conductor/SKILL.md",
-                     "integrations/copilot/limen-conductor.agent.md")
+        for name in (
+            "CLAUDE.md",
+            "GEMINI.md",
+            ".agents/skills/agy_conductor/SKILL.md",
+            "integrations/copilot/limen-conductor.agent.md",
+        )
     }
     for name, text in adapters.items():
         if not text:
@@ -452,6 +479,17 @@ def main() -> int:
             if not (ROOT / path).exists():
                 errors.append(f"{doc.relative_to(ROOT)} references missing path: {path}")
 
+    # Template checks require the domus-genoma clone NESTED at ./domus-genoma. In the
+    # sibling-clone layout every one of these silently never ran (8 dead checks,
+    # 2026-08-06) — a skipped check must announce itself so absence of findings is
+    # never mistaken for a green.
+    skipped_templates = [t for t in TEMPLATE_DOCS if not t.exists()]
+    if skipped_templates:
+        print(
+            f"NOTE: {len(skipped_templates)} domus-genoma template check(s) SKIPPED — "
+            "no nested clone at ./domus-genoma (sibling-clone layout); these run only "
+            "when the clone is nested"
+        )
     for template in TEMPLATE_DOCS:
         if not template.exists():
             continue
@@ -494,6 +532,11 @@ def main() -> int:
         errors.append(str(exc))
 
     home_agents_tmpl = ROOT / "domus-genoma" / "dot_config" / "ai-context" / "AGENTS.md.tmpl"
+    if not home_agents_tmpl.exists():
+        print(
+            "NOTE: home-scope Layer-1 AGENTS.md.tmpl deferral check SKIPPED — "
+            "no nested domus-genoma clone (sibling-clone layout)"
+        )
     if home_agents_tmpl.exists():
         tmpl_text = home_agents_tmpl.read_text(encoding="utf-8")
         for phrase, label in [
@@ -582,6 +625,95 @@ def main() -> int:
             errors.append("agent instruction standard lacks the concurrent-integration rule")
     except ValueError as exc:
         errors.append(str(exc))
+
+    # Q. 2026-08-06 universal-covenant correction: the closure covenant binds every lane, so it
+    # lives in AGENTS.md ## Full Lifecycle Closure — phrase-bound here so a doc edit cannot
+    # quietly demote it back to a single lane's charter.
+    try:
+        closure_section = section(agents_text, "Full Lifecycle Closure")
+        for phrase, label in [
+            ("Closure is a covenant", "lane-neutral covenant framing ('Closure is a covenant, not one lane's ritual')"),
+            ("scripts/no-tasks-on-me.sh", "nothing-hangs predicate citation"),
+            ("scripts/credential-wall.py", "credential-wall predicate citation"),
+            (terminal, f"closure terminal statement ('{terminal}')"),
+            ("are not closure forms", "non-closure-forms rule (menus, caveat tails, transcript-parked items)"),
+        ]:
+            if phrase not in closure_section:
+                errors.append(f"AGENTS.md 'Full Lifecycle Closure' lacks the {label}")
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    # R. Session-discipline rules 6/7 (2026-08-06 covenant additions): pipeline exit-code honesty
+    # and one-command-per-judged-invocation, including the scripts-chain-freely carve-out that
+    # keeps the rule from being misread as a ban on composition inside committed scripts.
+    try:
+        discipline_section = section(agents_text, "Session Discipline")
+        for phrase, label in [
+            ("Read the predicate's own exit code", "rule-6 pipeline-exit-code rule"),
+            ("PIPESTATUS", "rule-6 PIPESTATUS mechanism"),
+            ("One command per judged invocation", "rule-7 one-command-per-judged-invocation rule"),
+            ("Shell **scripts** chain freely", "rule-7 scripts-chain-freely carve-out"),
+        ]:
+            if phrase not in discipline_section:
+                errors.append(f"AGENTS.md 'Session Discipline' lacks the {label}")
+    except ValueError as exc:
+        errors.append(str(exc))
+
+    # S. Instruction-surface byte budget (G1, 2026-08-06): codex truncated AGENTS.md at its
+    # default 32,768-byte cap and silently dropped every section past it — including its own
+    # Agent-Specific Note. The registry declares the budget; this check makes surface size a
+    # ratchet instead of a surprise.
+    gates_registry = ROOT / "institutio" / "governance" / "gates.yaml"
+    surfaces_cfg = None
+    try:
+        surfaces_cfg = (yaml.safe_load(gates_registry.read_text(encoding="utf-8")) or {}).get("instruction_surfaces")
+    except yaml.YAMLError as exc:
+        errors.append(f"instruction_surfaces unreadable in {gates_registry.relative_to(ROOT)}: {exc}")
+    if surfaces_cfg:
+        budget = int(surfaces_cfg.get("budget_bytes") or 0)
+        ceiling = int(surfaces_cfg.get("ceiling_bytes") or 0)
+        slack = int(surfaces_cfg.get("slack_bytes") or 0)
+        consumer_caps = [
+            int(c["default_bytes"])
+            for c in surfaces_cfg.get("consumers") or []
+            if isinstance(c, dict) and c.get("default_bytes") is not None
+        ]
+        # S1 — the budget IS the weakest consumer's default cap, not a hand-picked number.
+        if consumer_caps and budget != min(consumer_caps):
+            errors.append(
+                f"instruction_surfaces budget_bytes={budget} must equal the minimum consumer "
+                f"default cap ({min(consumer_caps)}) — the budget is derived, not chosen (S1)"
+            )
+        has_debt = bool(str(surfaces_cfg.get("debt") or "").strip())
+        for name in surfaces_cfg.get("surfaces") or []:
+            surface = ROOT / str(name)
+            if not surface.exists():
+                errors.append(f"instruction_surfaces names a missing surface: {name} (S2)")
+                continue
+            size = surface.stat().st_size
+            # S2 — shrink-only ratchet: the surface never outgrows the declared ceiling.
+            if size > ceiling:
+                errors.append(
+                    f"{name} is {size} B, over the {ceiling} B ceiling — trim the surface or "
+                    f"relocate doctrine to Tier-1 homes; never raise the ceiling to fit (S2)"
+                )
+            # S3 — the ceiling follows the file down: dead headroom stays within slack.
+            elif ceiling - size > slack:
+                errors.append(
+                    f"{name} shrank to {size} B but ceiling_bytes={ceiling} leaves "
+                    f"{ceiling - size} B dead headroom (> slack {slack}) — lower the ceiling (S3)"
+                )
+            # S4 — the debt line exists exactly while the surface exceeds the budget.
+            if size > budget and not has_debt:
+                errors.append(
+                    f"{name} is {size} B (> budget {budget}) but instruction_surfaces carries no "
+                    f"debt line naming the retirement owner (S4)"
+                )
+            if size <= budget and has_debt:
+                errors.append(
+                    f"{name} fits the {budget} B budget but the debt line is still present — "
+                    f"the debt is paid; remove the line (S4)"
+                )
 
     if errors:
         print("Agent-instruction doc drift detected:")

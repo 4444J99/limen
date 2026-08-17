@@ -129,7 +129,7 @@ be derived from existing doctrine.
 
 ## Session Discipline
 
-Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M and N). Each is
+Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M, N, Q, R). Each is
 stated once here — the canonical shared layer. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`)
 extend or cite these; they must not contradict them.
 
@@ -182,6 +182,20 @@ the live queue rail is proven active; without that proof it remains fail-closed.
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is
 [`docs/architecture/concurrent-integration.md`](docs/architecture/concurrent-integration.md).
+
+**6. Read the predicate's own exit code — never a pipeline's.**
+`predicate | tail` reports the filter's exit status, not the predicate's, so a gate that printed
+FAIL reads as green (observed 2026-08-05: a closeout reported `EXIT=0` from a run that had truly
+exited 1). Run each gate bare and read its own exit code; when output must be filtered, capture to
+a file and filter the copy, or read `PIPESTATUS`. The defect enters through ad-hoc verification
+shell, where a false green has no second reader — committed runners already get this right, so the
+rule binds the shell you improvise, in every lane.
+
+**7. One command per judged invocation on hook-judged rails.**
+Where a policy hook judges shell commands, compose nothing on the judged rail: one bare command
+per invocation. A `&&`/`;`/pipe chain forces the judge to guess about the whole composition, and a
+chain also short-circuits — hiding which member failed. Shell **scripts** chain freely inside
+their own bodies; the rule binds the top-level judged invocation, not script internals.
 
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
@@ -251,138 +265,39 @@ through TABVLARIVS, and task statuses still use only the canonical state vocabul
 
 ## Board Progress and Source-Coverage Truth
 
-Lifecycle debt is first-class portfolio work. A preserved branch, merged PR, exact owner blocker,
-or safely reclaimed cache is real value when it closes ambiguity or preservation risk; do not dismiss
-that work as overhead. It still counts as progress only when the owning predicate and durable receipt
-exist. Scans, classifications, token spend, commits, and agent motion are supporting evidence, not
-terminal outcomes by themselves.
-
-Keep four sources of work distinct even when they point to the same leaf:
-
-- external obligations and work that is actually due;
-- human prompts, asks, corrections, and acceptance criteria;
-- agent or system recommendations about what should happen next;
-- detected lifecycle, quality, custody, and control-plane debt.
-
-Also preserve the purpose lane and time horizon (`past`, `present`, or `future`). Every normalized leaf
-should converge on source lineage, lane, horizon, owner, priority rationale, executable predicate,
-durable receipt target, and canonical state. Unknown classification or an unscanned source is visible
-coverage debt; never render it as zero work. Macro progress is terminal closure over an explicit
-denominator. Micro progress is predicate/receipt evidence or canonical lifecycle stage, never a
-made-up estimate of effort.
-
-Treat execution capacity as a work loan. Before dispatch, the task should underwrite the requested
-capacity with an explicit value case, cost, origin, horizon, owner surface, predicate, and receipt
-target. Urgency, cost of delay, confidence, reversibility, dependencies, and resource pressure inform
-ranking when available. Record requested capacity as a debit, expected value as forecast credit, and
-predicate plus receipt target as collateral. After execution, reconcile forecast to actual durable
-credit and actual spend. A terminal board state is only a credit claim until the owning receipt passes;
-do not let a high-cost attempt inherit the value it merely intended to create.
-
-`limen progress` is only the partial task-board projection and source-readiness lens for this
-doctrine. It does not ingest the source-owned leaves behind prompt, GitHub-estate, lifecycle, mail,
-financial, or contribution receipts. Its `scope: partial` output, source contract hashes, and
-separate board / coverage / verified-receipt debt counts must not be represented as whole-estate
-proof. Dynamic source enumeration, actual spend/value reconciliation, historical comparison, and an
-interactive TUI require their own owner receipts.
+Lifecycle debt is first-class portfolio work; progress counts only as predicate plus durable receipt
+over an explicit denominator, and execution capacity is a work loan underwritten before dispatch.
+Full doctrine: [`docs/architecture/board-progress-and-source-coverage-truth.md`](docs/architecture/board-progress-and-source-coverage-truth.md).
 
 ## Dynamic Provider Selection
 
-Provider catalogs are live external state, not repository constants. Do not encode model IDs,
-catalog snapshots, name-based capability guesses, or fixed fallback tables in dispatch logic,
-instructions, tasks, or receipts.
-
-- Derive provider-neutral requirements from the current task and discover reachable capabilities at
-  execution time. Treat `tier:*` text as opaque context. Express numeric constraints only through the
-  owning execution-profile schema, such as `profile:<field>:<value>`.
-- When the provider exposes sufficient live metadata, filter and rank that catalog by capability,
-  availability, cost, and task pressure. When it does not, leave model selection to provider Auto.
-- A human-configured model override is an escape hatch, not a default. Validate it against the live
-  catalog when possible; otherwise fail blocked instead of inventing or silently substituting a name.
-- Tests use arbitrary and renamed fixture IDs and must prove that catalog add/remove/reorder changes
-  are handled without a code change. Receipts may record the actual selected model when exposed, but
-  never promise a future model name, price class, subscription outcome, or fixed tier mapping.
+Provider catalogs are live external state, never repository constants: derive requirements, discover
+capabilities at execution time, and never promise a future model name or fixed tier mapping.
+Full doctrine: [`docs/architecture/dynamic-provider-selection.md`](docs/architecture/dynamic-provider-selection.md).
 
 ## Source of Truth and Local Cache
 
-For GitHub, profile, repo inventory, credential, and public proof surfaces, the remote owner is the
-source of truth. A local checkout is a disposable cache or staging area; it is not the golden state.
-
-- Read remote state first through the GitHub API, live deployed endpoint, pinned issue, or owner repo
-  receipt before trusting a local clone.
-- If local work is required, create it in an isolated worktree or scratch lane, push/open the remote
-  receipt, then reap the local cache once lifecycle custody is proven.
-- Reap a local worktree once it is clean, inactive, and its exact HEAD is reachable from a remote
-  ref. A pushed branch or open PR is durable custody for the disposable checkout; the unresolved
-  delivery lifecycle remains owned by that remote receipt until it merges or closes.
-- Do not fall back to local files when the canonical object is remote and queryable.
-- Do not let local clone presence, local profile copies, or stale generated artifacts define public
-  truth. If a remote cannot be updated, record the owner repo, missing gate, and next command.
-- Do not generalize one failed GitHub surface into "GitHub is blocked." A zero-step hosted Actions
-  job, including a runner-allocation or billing annotation, describes that exact execution surface;
-  it does not make repository/API/PR custody unavailable and is not by itself an external stop
-  condition. Verify live permissions and current receipts, continue every available local or remote
-  predicate, and name the narrow failing surface without stalling unrelated closeout work.
+The remote owner is the source of truth; a local checkout is a disposable cache, and one failed
+GitHub surface never generalizes into "GitHub is blocked."
+Full doctrine: [`docs/architecture/source-of-truth-and-local-cache.md`](docs/architecture/source-of-truth-and-local-cache.md).
 
 ## Run-and-Gun Substrate
 
-The laptop must be able to operate alone as a thin control plane. External SSDs are the durable
-library and processing substrate, not random leftovers from a recovery event.
-
-- Keep the laptop as hot cache: active worktrees, small receipts, local tools, and enough context to
-  continue from the remote owner without needing a drive at a coffee shop.
-- Keep external drives as durable custody: complete private/raw data, processed/redacted corpora,
-  archived repo/org mirrors, photos/media packages, and restore-tested recovery copies.
-- At the desk, assume externals are plugged in and use them for hydration, archive, media processing,
-  and bulk scans; when unplugged, continue from remote receipts and cached indexes.
-- Do not move, delete, dedupe, or purge personal data without the relevant two-copy/restore gate and
-  an owner receipt.
+The laptop is a thin hot-cache control plane; external SSDs are durable custody, and personal data
+never moves without the two-copy/restore gate.
+Full doctrine: [`docs/architecture/run-and-gun-substrate.md`](docs/architecture/run-and-gun-substrate.md).
 
 ## Autonomy Continuation
 
-When the human explicitly says to keep working until usage is spent or everything is done, that is an
-operating order, not motivation text.
-
-- Do not leave `logs/AUTONOMY_PAUSED` in place unless a higher-priority safety gate requires it. If
-  the policy already permits dispatch, remove the stale pause marker, verify the heartbeat LaunchAgent
-  is loaded, and record any remaining blocker in the owning receipt.
-- Fan out all healthy remote lanes according to live usage telemetry. Jules is a remote lane; do not
-  count Jules against local CPU or disk concurrency. If Jules is exhausted or rate-limited, record that
-  from `logs/usage.json` and use the remaining healthy lanes.
-- Keep local lanes bounded by host pressure and local concurrency (`LIMEN_LOCAL_LIMIT`,
-  `--local-per-lane`, and `--max`), but do not convert a local cap into a global fleet cap.
-- A future time gate or bounded waiter must not monopolize an autonomous runway. Once the wait is
-  registered with its durable owner (the sanctioned PR waiter, heartbeat rung, or continuation
-  receipt), calculate the unreserved runway and route immediately executable independent packets
-  through their own owners and capsules, subject to live host admission and concurrency. Elapsed
-  watch time is not value; each parallel packet still needs its own predicate and durable receipt.
-- If disk pressure is part of the correction, dry-run proof is not enough. Run the accepted reclaim
-  path until it reaches a fixed point, deleting only roots the reclaim script classifies as clean,
-  inactive, and exact-HEAD remote-preserved (pushed, merged, or patch-equivalent). Anything left must
-  be owner-routed by its concrete reason (`dirty`, `unpushed`, `active-process-cwd`, `locked`,
-  `not-a-git-dir`), not explained away in chat.
-- A zero-launch dispatch command is not progress. If a lane filter launches nothing, inspect the board
-  and usage telemetry, then dispatch the actual eligible lanes or record the exact blocker.
+"Keep working until usage is spent" is an operating order: fan out healthy lanes from live telemetry,
+never let a bounded wait monopolize the runway, and elapsed watch time is not value.
+Full doctrine: [`docs/architecture/autonomy-continuation.md`](docs/architecture/autonomy-continuation.md).
 
 ## Pain Point Ownership
 
-Every repeated pain point needs an owner. Missing scopes, stale profile metadata, disk pressure,
-credential/token hygiene, contribution imbalance, voice/temp failure, and queue/lane drift are not
-chat-only blockers.
-
-- Put each pain point in the repo that owns the fix: issue, task packet, PR, pinned wall, or receipt.
-- Credential, token, secret, API-key, login, and env-var problems belong to the credential wall owner;
-  never paste values into chat, tasks, commits, or PRs.
-- 1Password access is a one-touch owner transaction, never a discovery or retry loop. Consume the
-  mode-`600` private cache first. If promptless access cannot read the registered item, record that
-  owner gate once and continue independent work; do not fall back to repeated desktop-backed
-  `op` item/vault probes. An explicitly authorized rotation may perform one owner-native transaction,
-  hydrate the cache, verify the named service predicate, and then stop touching 1Password.
-- A blocker is incomplete unless it names the owning repo/surface, the failed predicate, and the next
-  command that would clear it.
-- If the same pain point appears twice, update the owner receipt instead of explaining it again.
-- Default toward productizing the fix: split private adapters from reusable public shells, publish a
-  redacted demo or method when safe, and route the outward-facing value surface through the owner repo.
+Every repeated pain point gets a repo owner (issue, packet, PR, wall, or receipt); credentials belong
+to the credential wall, never chat, and a blocker is incomplete without owner + predicate + next command.
+Full doctrine: [`docs/architecture/pain-point-ownership.md`](docs/architecture/pain-point-ownership.md).
 
 ## Full Lifecycle Closure
 
@@ -403,85 +318,33 @@ local checkout; the branch, PR, plan, task, or blocker remains the durable lifec
 worktree produced no usable code, emit and push the plan/owner task that captures the prompt's intent
 before reaping it.
 
+Closure is a covenant, not one lane's ritual: every lane — native CLI, desktop app, IDE extension,
+dispatched fleet, MCP client — ends a claimed task at an idempotent fixed point with zero dangling
+items, then stops. The shipped predicates are `scripts/no-tasks-on-me.sh` (nothing hangs on the
+ephemeral session) and `scripts/credential-wall.py` `--check` (every secret in use is homed); both
+green is the closure bar for any lane that can run them, and the terminal statement —
+"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items" — ends the closeout: nothing
+follows it. Option menus, caveat tails, "here's what's still open" lists, and items parked only in
+the transcript are not closure forms; they are the failure this covenant exists to prevent.
+
 ## Continuation Capsules
 
-Every closeout and every new autonomous initiative must leave or begin from one continuation capsule.
-For repository-backed work, use the existing worktree launcher (`limen workstream` /
-`scripts/start-worktree-session.sh`) instead of inventing a parallel session framework. If no Git
-repository is a logical owner, use an isolated owner-native workspace or remote receipt and explain
-that choice in the capsule; never manufacture a fake worktree merely to satisfy the form.
-
-A continuation capsule contains:
-
-- one isolated worktree and single-purpose branch when repository-backed, otherwise one isolated
-  owner-native workspace or durable remote surface;
-- one validated, machine-readable workstream contract with an explicit finite configurable runway;
-  the first launch admits it, successor sessions inherit its deadline, and malformed, unbounded, or
-  expired contracts fail closed without preempting an already-running provider process;
-- a README with the objective, current evidence links, authorities, prohibitions, first probes,
-  executable predicates, ownership rules, and session-switch conditions;
-- one copy/paste command that enters the worktree and starts the next agent with that README as its
-  initial prompt;
-- a durable remote receipt for the capsule itself before the producing session closes.
-
-The capsule is a conducted workstream, not an implicit one-packet handoff. Its conductor re-checks
-remaining runway at packet boundaries, derives healthy lanes from live capabilities, and routes
-independently bounded packets across agents without pinning a provider or model. Full approval is
-carried as a no-modal contract: in-scope reversible work proceeds without confirmation under the
-scoped sandbox; destructive, credential, paid-spend, public-send, and runtime/host mutations remain
-gated.
-
-The capsule defines how reality decides what happens next; it never predeclares the ending. At launch,
-derive the exact remote head and CI state, board/task contracts, handoff age, provider headroom, mounted
-substrates, host pressure, active sessions, and lifecycle custody from live probes. Do not hard-code a
-future model, provider table, task count, completion percentage, or claim that Omega is reachable.
-Environment figures may select a lane, deny unsafe work, or trigger a session switch; they must never
-be edited to manufacture green.
-
-The next session finishes only when its live predicates pass and every discovered leaf has one of the
-closure receipts above. If context, value, resource, provider, or human gates require a boundary, emit
-the successor capsule and its launch command before ending. A closeout without that command is
-incomplete; a new autonomous session without a capsule must create one before broad execution.
+Every closeout and autonomous initiative leaves or begins from one continuation capsule (worktree +
+finite-runway contract + README + one launch command + remote receipt); reality decides the ending,
+never a predeclared one. Full doctrine: [`docs/architecture/continuation-capsules.md`](docs/architecture/continuation-capsules.md).
 
 ## Bounded Composition
 
-A long-running campaign or whole-repo gate may exist only as a thin orchestrator over independently
-owned, bounded units. Every unit declares its inputs, owner, predicate, execution profile, finite
-retry policy, bounded-output policy, and durable receipt. The aggregate preserves completed receipts,
-resumes from them, and reports counts plus links; it never reruns successful children or emits their
-full logs.
-
-Apply the same rule to artifacts: README files are indexes over cohesive modules, not concatenated
-prompts, reports, transcripts, or append-only scrawl. Split on semantic ownership and independently
-testable interfaces, not an arbitrary line count. A file repeatedly changed for unrelated reasons has
-already exposed a missing module boundary.
-
-CI must shard module predicates and run eligible shards in parallel. The final integration gate checks
-the shard receipts plus only genuine cross-module seams. Each shard has an execution-profile timeout,
-finite transient retry policy, output cap, and stable receipt; no unbounded wait, retry, or log stream
-is a valid verification strategy.
+Campaigns and whole-repo gates are thin orchestrators over independently owned, bounded units with
+finite retries, bounded output, and durable receipts — never reruns of successful children.
+Full doctrine: [`docs/architecture/bounded-composition.md`](docs/architecture/bounded-composition.md).
 
 ## Machine-Wide Host Admission
 
-Every heavy local Codex, Claude, OpenCode, Agy, or Limen surface must enter through the shared host
-admission boundary documented in [`docs/architecture/host-work-admission.md`](docs/architecture/host-work-admission.md).
-Codex conversation roots may always open concurrently: `UserPromptSubmit` never acquires a global
-execution lease, even when stable action denial is unavailable. Source mutations require a linked
-worktree and one scoped writer lease per worktree; distinct worktrees may have concurrent writers.
-At most one heavy local surface remains machine-wide. New heavy work is denied under declared
-Backblaze, swap, disk, or VITALS pressure; existing work is never killed, restarted, or retuned and
-may perform bounded closeout.
-
-The installed Codex client's structured `PreToolUse` denial is the action boundary for project-hook
-mutations. A missing or unstable action-denial capability must never fall back to a blanket one-root
-session lock. Guarded heavy entrypoints still acquire the same atomic heavy lease internally, and
-`SubagentStart` remains advisory. Leases bind PID plus process-start identity, refresh finitely, and
-clean up only dead, reused, or stale owners. Never delete the lease store or signal a peer to seize
-capacity.
-
-Project Codex families are capped at three threads and depth one. Global hook deployment and the
-verified non-backed scratch root belong to the Domus cartridge; Limen must not patch home-directory
-hooks or backup configuration directly.
+Every heavy local surface enters through the shared admission boundary
+([`docs/architecture/host-work-admission.md`](docs/architecture/host-work-admission.md)): at most one
+heavy surface machine-wide, existing work never killed, leases bound to process identity.
+Full doctrine: [`docs/architecture/machine-wide-host-admission.md`](docs/architecture/machine-wide-host-admission.md).
 
 ## Task States
 

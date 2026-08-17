@@ -1,0 +1,1881 @@
+# SENSORS registry — the beat's continuous-runtime invariants, as declared data.
+#
+# The third axis of the VIGILIA spine: pre-merge is GATES (gates.yaml), configuration is PARAMETERS
+# (parameters.yaml), and continuous-runtime is SENSORS (here). Before this file the beat sensors were
+# 20 hand-wired `── 0x ──` shell blocks in metabolize.sh — check-params.py and armed-valve-audit.py had
+# to GREP the shell to find their gates. Now they are one entry each: adding a sensor is one registry
+# entry, and a drifted copy is a red check (check-sensors.py), not a memory chore.
+# Same parameter-panel pattern as GATES, one domain over.
+#
+# Each sensor: the beat section it runs as, the gate env that toggles it (declared in parameters.yaml)
+# and its default, which beat source(s) run it, an owner, and one or more steps. Scheduled sensors may
+# declare cadence/timeout as ``{env, default}``; conditional argv lives in ``args_when``; fixed-point
+# checks live in ``omega_eligible``; and a conditional behavior valve carries ``armed_valve_type``.
+# These are capabilities, not special sensor names: consumers must work unchanged if an id is renamed.
+# Each step is a command plus the exact escalation echoed on non-zero and its severity:
+#   advisory  → `  ↑ <escalation>`  (surfaced with the ↑ marker; never breaks the beat)
+#   silent    → `  (<escalation>)`  (quiet skip note; never breaks the beat)
+#   fatal     → non-zero propagates and breaks the beat  (none today — the beat is fail-open)
+# `when_env` on a step runs it only when that env var is truthy (nested conditionals in the shell).
+#
+# Consumers: metabolize.sh runs `scripts/beat-sensors.py --run --source metabolize` (the whole sensor
+# loop derives from here — the hand-wired blocks are gone); check-params.py and armed-valve-audit.py read
+# these gates from this registry instead of grepping the shell; omega.sh derives its registry-declared
+# fixed-point rungs via `beat-sensors.py --list-omega`/`--run-omega` (the `omega_eligible` capability).
+# Drift-check: scripts/check-sensors.py.
+
+schema_version: 0.2
+
+sensors:
+  creds-hydrate:
+    section: "0a"
+    title: "hydrate credentials (1Password → ~/.limen.env → every lane; never re-login)"
+    gate: LIMEN_CREDS_HYDRATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # This sensor WRITES ~/.limen.env (creds-hydrate --apply). reload_env re-sources it into the
+    # runner's environment after this sensor's steps so every downstream sensor inherits the fresh
+    # keys — the ordering metabolize.sh hard-codes as `set -a; . ~/.limen.env` right after block 0a,
+    # now declared data instead of shell tribal knowledge.
+    reload_env: "~/.limen.env"
+    steps:
+      - command: "python3 scripts/creds-hydrate.py --apply"
+        severity: silent
+        escalation: "creds-hydrate skipped — op locked/absent"
+      - command: "python3 scripts/creds-hydrate.py --verify"
+        severity: advisory
+        escalation: "DEAD credential(s) above — re-mint into the op:// item, then they self-heal next beat"
+
+  creds-provision:
+    section: "0a1"
+    title: "CLAVIS — every required op-sourced secret is readable by the fleet service account"
+    gate: LIMEN_CREDS_PROVISION
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The PROVISIONING predicate, sibling of creds-hydrate's consumption. creds-hydrate --verify
+    # catches a DEAD/absent materialized value; this catches the upstream cause — a secret sitting in
+    # a vault the service account cannot read, so it never materializes at all. Read-only. Stays red
+    # until the one-time `creds-provision bootstrap` homes every required secret in the SA-owned
+    # automation vault; then green forever. See institutio/governance/credentials.yaml, Wall #320.
+    steps:
+      - command: "python3 scripts/creds-provision.py check"
+        severity: advisory
+        escalation: "a REQUIRED secret is not SA-readable — the estate is not SA-homed; run `creds-provision bootstrap` (one owner-op seed, Wall #320)"
+
+  identity-verify:
+    section: "0a2"
+    title: "verify personal-fact atoms present (personal-facts registry; sibling of creds — atoms don't rotate)"
+    gate: LIMEN_IDENTITY_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: identity
+    steps:
+      - command: "python3 scripts/identity.py verify"
+        severity: advisory
+        escalation: "identity atoms missing/blank above — one-time populate (op hydrate or entry); see lever L-IDENTITY-POPULATE"
+
+  mcp-auth-verify:
+    section: "0b"
+    title: "verify MCP connector consent (Lane B — surface lapsed claude.ai connectors in the log)"
+    gate: LIMEN_MCP_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/mcp-auth-verify.py"
+        severity: advisory
+        escalation: "REQUIRED MCP connector(s) unauthenticated — pull L-IANVA-CLOUD (#263) to end the class"
+
+  mcp-server-boot:
+    section: "0b2"
+    title: "verify local MCP servers boot (Lane A — every agent CLI's stdio servers actually start)"
+    gate: LIMEN_MCP_BOOT_VERIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/mcp-server-boot.py"
+        args_when:
+          - env: LIMEN_MCP_BOOT_HEAL
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "configured MCP server(s) fail to boot/reach above — arm LIMEN_MCP_BOOT_HEAL=1 so the beat re-lands dropped agent entries + clears corrupt npx caches; an empty ianva registry is a registry decision (deploy ianva/upstreams.example.json or `ianva add-upstream`). Ω = scripts/verify-mcp-estate.sh"
+    # Fixed-point rung (Phase C, promoted once the estate went green 2026-07-18): the whole-estate
+    # predicate — every configured MCP server boots + ianva doorway ≥1 upstream + no placeholder
+    # secret. live tier: runs on the host/beat, SKIPs cleanly under omega.sh --offline (CI has no
+    # agent configs). No det rung — the predicate has no offline/parity mode; it fail-opens where a
+    # component is absent, so a bare CI host is green by construction.
+    omega_eligible:
+      - label: "MCP estate — servers boot + doorway + ownership"
+        rung_id: sensor.mcp.estate
+        tier: live
+        command: "bash scripts/verify-mcp-estate.sh --strict"
+        semantic_inputs:
+          - {path: scripts/verify-mcp-estate.sh, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.mcp.estate.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  cartridge-connected:
+    section: "0c"
+    title: "verify the cartridge is plugged into the real source (host-is-factory invariant)"
+    gate: LIMEN_CARTRIDGE_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/cartridge-connected.py"
+        severity: advisory
+        escalation: "cartridge UNPLUGGED (above) — bring domus-genoma current, then re-point chezmoi at it"
+
+  chezmoi-drift:
+    section: "0c'"
+    title: "verify config hydrates from the CURRENT cartridge (no wedge / no stale / no orphan)"
+    gate: LIMEN_CHEZMOI_DRIFT_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/chezmoi-drift.py"
+        severity: advisory
+        escalation: "config is NOT hydrating from the current cartridge (above) — nothing is local; reconcile per the hint"
+
+  enactment-audit:
+    section: "0d"
+    title: "verify enactment — every declared-ON fleet flag is actually LIVE (not just merged)"
+    gate: LIMEN_ENACTMENT_CHECK
+    default: "1"
+    source: [metabolize, heartbeat]   # heartbeat-loop.sh runs it inline too (the live-loop home)
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/enactment-audit.py --check"
+        severity: advisory
+        escalation: "un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+
+  github-estate-reconcile:
+    section: "heartbeat"
+    title: "reconcile the declared GitHub estate resource graph"
+    gate: LIMEN_GITVS
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_GITVS
+      default: 8
+    timeout:
+      env: LIMEN_GITVS_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/gitvs.py reconcile"
+        args_when:
+          - env: LIMEN_GITVS_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "GitHub estate reconciliation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "GitHub estate parity"
+        rung_id: sensor.github.parity
+        tier: det
+        command: "python3 scripts/gitvs.py doctor --offline --parity-only"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
+      - label: "GitHub estate posture"
+        rung_id: sensor.github.posture
+        tier: live
+        command: "python3 scripts/gitvs.py doctor --strict"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.github.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  github-pr-debt:
+    section: "heartbeat"
+    title: "record the estate's open-PR debt observation (the series IF-AMALGAMATION reads)"
+    gate: LIMEN_PR_DEBT_RECORD
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # THE PRODUCER THAT WAS NEVER WIRED. scripts/pr-debt-trend.py --check is IF-AMALGAMATION's probe
+    # and it read STALE for eleven days, because the thing that writes its ledger — gitvs pr-debt —
+    # was attached to no sensor, no gate and no beat rung. Every observation in the series is a side
+    # effect of an unrelated feature PR (#1337, #1503, #1508, #1495, #1541) that happened to
+    # regenerate the file; when that work stopped, the series stopped, and a debt trend nobody
+    # records reads as a debt trend that improved. This rung is the recorder.
+    #
+    # Note the cadence is a CHEAP due-check, not the census. The beat is adaptive (120s…1800s), so
+    # `cadence: 12` is anywhere from 24 minutes to 6 hours of wall-clock — far too often for a full
+    # paginated open-PR sweep of the estate. --record owns its own wall-clock interval
+    # (LIMEN_PR_DEBT_RECORD_INTERVAL_HOURS, default 20h, inside the probe's 3-day staleness
+    # tolerance with two missed runs of margin) and no-ops until it is due. It also ships nothing
+    # when the census is unchanged, so it cannot add to the debt it measures.
+    cadence:
+      env: LIMEN_BEAT_PR_DEBT
+      default: 12
+    timeout:
+      env: LIMEN_PR_DEBT_RECORD_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/pr-debt-trend.py --record"
+        severity: advisory
+        escalation: "the open-PR debt observation was not recorded — IF-AMALGAMATION's series goes stale at 3d and its probe fails on the silence itself (scripts/pr-debt-trend.py --check)"
+
+  github-publish-sweep:
+    section: "heartbeat"
+    title: "keep every publish candidate's pre-publication sweep receipt green and fresh"
+    gate: LIMEN_PUBLISH_SWEEP
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    # The receipt is the ONLY thing that authorizes a private→public flip, and it expires
+    # (LIMEN_SWEEP_FRESH_DAYS, default 7). Until 2026-07-30 nothing re-ran the sweep: receipts were
+    # minted by hand, went stale in a week, and apply-visibility then had no verdict for any
+    # candidate — a predicate with no organ behind it, which is a permanently-un-adjudicated rung
+    # rather than a green one. Bounded per run (LIMEN_SWEEP_MAX), so the candidate set rolls
+    # forward across beats instead of cloning the whole estate every cadence.
+    cadence:
+      env: LIMEN_BEAT_PUBLISH_SWEEP
+      default: 24
+    timeout:
+      env: LIMEN_PUBLISH_SWEEP_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/publish-sweep.py --candidates"
+        severity: advisory
+        escalation: "a publish candidate's sweep is RED or un-run — apply-visibility will hold its flip (and demote it if it is already live public)"
+
+  github-actions-usage:
+    section: "heartbeat"
+    title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
+    gate: LIMEN_GH_USAGE
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_GH_USAGE
+      default: 24
+    timeout:
+      env: LIMEN_GH_USAGE_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/gitvs.py usage --check"
+        severity: advisory
+        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json; roots: L-CARD-FRAUD-HOLD (#182) then L-ORG-TEAM-UPGRADE (docs/github-estate-runbook.md)"
+    omega_eligible:
+      - label: "GitHub Actions budget"
+        rung_id: sensor.github.actions-budget
+        tier: live
+        command: "python3 scripts/gitvs.py usage --check --strict"
+        semantic_inputs:
+          - {path: scripts/gitvs.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.github.actions-budget.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  plans-lifecycle:
+    section: "heartbeat"
+    title: "plans-lifecycle — the drain docs/plans + per-agent scratch corpora never had: census -> stale report -> bounded archival (dry until armed)"
+    gate: LIMEN_PLANS_LIFECYCLE
+    default: "1"
+    source: [heartbeat]
+    owner: lifecycle
+    cadence:
+      env: LIMEN_BEAT_PLANS_LIFECYCLE
+      default: 24
+    timeout:
+      env: LIMEN_PLANS_LIFECYCLE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/plans-lifecycle-audit.py"
+        args_when:
+          - env: LIMEN_PLANS_LIFECYCLE_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "plans-lifecycle audit skipped or exceeded its bound"
+
+  seo-drift:
+    section: "heartbeat"
+    title: "SEO drift — public-portal surface: audit sweep -> metadata drift check -> bounded task filing (dry until armed)"
+    gate: LIMEN_SEO_DRIFT
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_SEO
+      default: 24
+    timeout:
+      env: LIMEN_SEO_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/seo-audit.py --sweep"
+        quiet_output: true
+        severity: silent
+        escalation: "seo audit sweep skipped or exceeded its bound"
+      - command: "python3 scripts/repo-metadata-sync.py --check"
+        severity: advisory
+        escalation: "repo metadata drift above — the effector converges it once lever L-SEO-METADATA arms LIMEN_REPO_METADATA_APPLY=1 (rides the github-estate-reconcile beat)"
+      - command: "python3 scripts/generate-seo-backlog.py"
+        args_when:
+          - env: LIMEN_SEO_BACKLOG_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "seo backlog generation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "seo registry parity"
+        rung_id: sensor.seo.parity
+        tier: det
+        command: "python3 scripts/seo-audit.py --doctor"
+        semantic_inputs:
+          - {path: scripts/seo-audit.py, normalization: raw}
+      - label: "seo estate posture"
+        rung_id: sensor.seo.posture
+        tier: live
+        command: "python3 scripts/seo-audit.py --check --strict"
+        semantic_inputs:
+          - {path: scripts/seo-audit.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.seo.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  estate-audit-heal:
+    section: "heartbeat"
+    title: "estate audit-heal — the OTHER org repos' npm/pnpm audit CI must not sit red (verify-gated overrides fix PRs; dark until armed)"
+    gate: LIMEN_ESTATE_AUDIT_HEAL
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_ESTATE_AUDIT
+      default: 24
+    timeout:
+      env: LIMEN_ESTATE_AUDIT_TIMEOUT
+      default: 1200
+    steps:
+      - command: "python3 scripts/estate-audit-heal.py"
+        severity: advisory
+        escalation: "an org repo's npm/pnpm audit CI is red on a verify-fixable transitive advisory — the estate healer opens a verify-gated overrides fix PR (no auto-merge) once LIMEN_ESTATE_AUDIT_HEAL_APPLY=1 arms it (env lever, read internally; framework-major residue is deferred to Dependabot); until armed it is detection-only. Heavy (clones+installs); slow cadence + repo cap (LIMEN_ESTATE_AUDIT_MAX). See scripts/estate-audit-heal.py"
+
+  estate-audit-posture:
+    section: "heartbeat"
+    title: "estate audit posture — the single rollup: whole-estate dependency-audit health in one line + one exit code"
+    gate: LIMEN_ESTATE_AUDIT_POSTURE
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_ESTATE_AUDIT_POSTURE
+      default: 12
+    timeout:
+      env: LIMEN_ESTATE_AUDIT_POSTURE_TIMEOUT
+      default: 480
+    steps:
+      - command: "python3 scripts/estate-audit-posture.py --check"
+        severity: advisory
+        escalation: "the estate dependency-audit posture is UNHEALTHY — a Tier-2 owner (Dependabot security-updates) is OFF on an audit-CI repo, so an advisory can rot unowned. dependabot-security-guard heals it once armed. Composes the three ownership organs (npm-audit-autofix + estate-audit-heal Tier-1 leaves as telemetry, dependabot-security-guard Tier-2 as the hard predicate); read-only, no arm. See scripts/estate-audit-posture.py"
+
+  observatory-run:
+    section: "heartbeat"
+    title: "run the OBSERVATORY legibility-and-traction loop (ships dark; armed by L-OBSERVATORY-ACTIVATE)"
+    gate: LIMEN_OBSERVATORY
+    default: "0"
+    source: [metabolize]
+    owner: observatory
+    cadence:
+      env: LIMEN_BEAT_OBSERVATORY
+      default: 24
+    timeout:
+      env: LIMEN_OBSERVATORY_TIMEOUT
+      default: 480
+    steps:
+      - command: "python3 scripts/observatory-beat.py"
+        args_when:
+          - env: OBSERVATORY_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "OBSERVATORY loop skipped or exceeded its bound"
+    omega_eligible:
+      - label: "observatory wiring"
+        rung_id: sensor.observatory.wiring
+        tier: det
+        command: "python3 scripts/observatory-beat.py --doctor"
+        semantic_inputs:
+          - {path: scripts/observatory-beat.py, normalization: raw}
+      - label: "observatory operational posture"
+        rung_id: sensor.observatory.posture
+        tier: live
+        command: "python3 scripts/observatory-beat.py --check"
+        semantic_inputs:
+          - {path: scripts/observatory-beat.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.observatory.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  dependabot-security-guard:
+    section: "heartbeat"
+    title: "dependabot security-guard — the Tier-2 deferral's owner must stay enabled: audit-CI repos' Dependabot security-updates + alerts must not drift OFF (re-enables under the lever; dark until armed)"
+    gate: LIMEN_DEPENDABOT_GUARD
+    default: "1"
+    source: [heartbeat]
+    owner: gitvs
+    cadence:
+      env: LIMEN_BEAT_DEPENDABOT_GUARD
+      default: 24
+    timeout:
+      env: LIMEN_DEPENDABOT_GUARD_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/dependabot-security-guard.py"
+        severity: advisory
+        escalation: "an audit-CI repo's Dependabot security-updates or alerts drifted OFF — estate-audit-heal defers framework-major (Tier-2) advisories to Dependabot, so this silently breaks the deferral. The guard re-enables the benign ON-only setting once LIMEN_DEPENDABOT_GUARD_APPLY=1 arms it (env lever, read internally); until armed it is detection-only. See scripts/dependabot-security-guard.py"
+
+  experience-drift:
+    section: "heartbeat"
+    title: "visitor-experience drift — the front door as a visitor EXPERIENCES it: audit sweep -> posture check -> bounded task filing (dry until armed)"
+    gate: LIMEN_EXPERIENCE_AUDIT
+    default: "1"
+    source: [heartbeat]
+    owner: observatory
+    cadence:
+      env: LIMEN_BEAT_EXPERIENCE
+      default: 24
+    timeout:
+      env: LIMEN_EXPERIENCE_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/experience-audit.py --sweep"
+        quiet_output: true
+        severity: silent
+        escalation: "experience audit sweep skipped or exceeded its bound"
+      - command: "python3 scripts/experience-audit.py --check"
+        severity: advisory
+        escalation: "surface(s) below their visitor-experience budget — see logs/experience-audit.json; for the VISUAL half (layout/typography/coherence/trust) run the experience-judge skill (.claude/skills/experience-judge)"
+      - command: "python3 scripts/generate-experience-backlog.py"
+        args_when:
+          - env: LIMEN_EXPERIENCE_BACKLOG_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "experience backlog generation skipped or exceeded its bound"
+    omega_eligible:
+      - label: "experience registry parity"
+        rung_id: sensor.experience.parity
+        tier: det
+        command: "python3 scripts/experience-audit.py --doctor"
+        semantic_inputs:
+          - {path: scripts/experience-audit.py, normalization: raw}
+      - label: "visitor-experience posture"
+        rung_id: sensor.experience.posture
+        tier: live
+        command: "python3 scripts/experience-audit.py --check --strict"
+        semantic_inputs:
+          - {path: scripts/experience-audit.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.experience.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  prompt-corpus-control:
+    section: "heartbeat"
+    title: "incrementally reconcile prompt occurrences into the ask-atom control plane"
+    gate: LIMEN_PROMPT_ATOM_CONTROL
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    note: "ARMED 2026-07-15 (PR fix/agy-steps-schema-v2). agy steps schema extended to admit 3 vendor-drift columns (has_subtrajectory, permissions, step_format); 567 unsupported-columns units resolved; canary: unbounded pass 219.9s (567 schema errors → 0), bounded pass 198.9s exit-0, --check-cursor PASS. Prior note: 2026-07-14 canary (PR fix/prompt-corpus-missing-source-exclusion) drained 20,487-unit obligation deadlock (unresolved 20,487 -> 566, zero stale-version orphans; probe: python3 scripts/prompt-atom-ledger.py --check-cursor). Dark condition (when LIMEN_PROMPT_ATOM_CONTROL=0): source cursor not bound to private checkpoint — reseal via python3 scripts/prompt-atom-ledger.py --scan. agy columns (has_subtrajectory/permissions/step_format) are already admitted in cli/src/limen/prompt_sources.py; the skip reason is cursor-checkpoint unbind in prompt-atom-ledger, not the schema adapter gap."
+    cadence:
+      env: LIMEN_BEAT_PROMPT_ATOMS
+      default: 4
+    timeout:
+      env: LIMEN_PROMPT_ATOM_TIMEOUT
+      default: 300
+    steps:
+      - command: 'python3 scripts/prompt-atom-ledger.py --scan --days "${LIMEN_PROMPT_ATOM_DAYS:-2}" --max-files "${LIMEN_PROMPT_ATOM_MAX_FILES:-80}" --write'
+        quiet_output: true
+        severity: silent
+        escalation: "prompt atom reconciliation skipped or exceeded its bound"
+
+  harness-root-probe:
+    section: "heartbeat"
+    title: "sense the Claude harness: runtime root still live, plan mode still working"
+    gate: LIMEN_HARNESS_ROOT_PROBE
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    note: "ARMED 2026-07-30. The fleet senses its work product (lint, tests, contracts, deploys) but never sensed the worker. When the harness relocated its runtime tree from ~/.claude to <repo>/.agent-runtime/claude, ten limen surfaces went blind at once and nothing went red: action_admission stopped recognising plan-file writes (plan mode broke, re-breaking PR #1521's fix six days later), continuity globbed an empty dir while still reporting ok, claude-workflow-guard's untiered-fan-out audit silently found no sessions. This probe asserts (1) the resolved root actually holds transcripts — empty-while-a-sibling-is-full is the relocation signature — and (2) three structural plan-mode fault signatures: A ExitPlanMode returned is_error, B a file mutation while permissionMode=plan excluding the session's own plan file (the read-only guarantee), C one plan slug written to both a shared and a .claude/worktrees path (the shadow that serves a stale plan to the approval dialog). Matching is structural, never on error text: substring matching also catches sessions merely discussing the error (3 false positives when prototyped). Baseline at arming, full corpus: A=15 (41% of 37 ExitPlanMode calls; Fable 14 fail/10 ok vs Opus 1 fail/13 ok), B=0, C=3."
+    cadence:
+      env: LIMEN_BEAT_HARNESS_PROBE
+      default: 6
+    timeout:
+      env: LIMEN_HARNESS_PROBE_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/harness-root-probe.py"
+        severity: advisory
+        escalation: "harness root moved or plan-mode faults seen — run scripts/harness-root-probe.py"
+
+  bifrons-portal:
+    section: "heartbeat"
+    title: "metabolize the BIFRONS star<->contribution portal (absorb->map->prepare; never submits)"
+    gate: LIMEN_BIFRONS
+    default: "1"
+    source: [heartbeat]
+    owner: bifrons
+    cadence:
+      env: LIMEN_BEAT_BIFRONS
+      default: 24
+    timeout:
+      env: LIMEN_BIFRONS_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/bifrons-organ.py"
+        severity: silent
+        escalation: "BIFRONS portal beat skipped or exceeded its bound"
+      - command: "python3 scripts/bifrons-organ.py --check"
+        severity: advisory
+        escalation: "BIFRONS PORTAL.md drift — a re-render is owed"
+    omega_eligible:
+      - label: "bifrons portal render"
+        rung_id: sensor.bifrons.render
+        tier: det
+        command: "python3 scripts/bifrons-organ.py --check"
+        semantic_inputs:
+          - {path: scripts/bifrons-organ.py, normalization: raw}
+      - label: "bifrons portal liveness"
+        rung_id: sensor.bifrons.liveness
+        tier: live
+        command: "python3 scripts/bifrons-organ.py --doctor"
+        semantic_inputs:
+          - {path: scripts/bifrons-organ.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.bifrons.liveness.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  fable-balance:
+    section: "0e"
+    title: "refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run"
+    gate: LIMEN_FABLE_BALANCE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/fable-allotment.py balance"
+        quiet_output: true
+        severity: silent
+        escalation: "fable balance meter skipped — see logs"
+      - command: 'python3 scripts/claude-workflow-guard.py audit-transcript "${LIMEN_LATEST_SESSION_JSONL}"'
+        when_env: LIMEN_LATEST_SESSION_JSONL
+        quiet_output: true
+        severity: advisory
+        escalation: "unaccepted / over-budget Fable run above — accept it (scripts/fable-allotment.py accept …) or drop off Fable (docs/fable-allotment.md)"
+
+  armed-valve-audit:
+    section: "0e2"
+    title: "armed-valve audit — parked levers vs silently-off valves"
+    gate: LIMEN_VALVE_AUDIT
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/armed-valve-audit.py --check"
+        severity: advisory
+        escalation: "SILENTLY-OFF deliverable valve above — arm it, or file its lever in his-hand-levers.json"
+
+  ship-gate:
+    section: "0f"
+    title: "ship gate — product-facing done requires a reachable external artifact"
+    gate: LIMEN_SHIP_GATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/ship-gate.py --check"
+        severity: advisory
+        escalation: "product-facing done-claim with NO reachable artifact above — deploy it or reopen the task"
+
+  heal-convergence:
+    section: "0g"
+    title: "heal convergence — the healer must converge, not re-spend capacity on a wall"
+    gate: LIMEN_HEAL_CONVERGENCE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/heal-convergence.py --check"
+        severity: advisory
+        escalation: "CHRONIC heal non-convergence above — fix the named check at its root or park the repo with a chronic receipt"
+
+  fork-safety:
+    section: "0g2"
+    title: "fork-safety — the macOS 26.6 atfork/os_log crash must stay fixed, provably"
+    gate: LIMEN_FORK_SAFETY_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/check-fork-safety.py --check"
+        severity: advisory
+        escalation: "fork/os_log crash RECURRED or mitigation removed above — restore OS_ACTIVITY_MODE=disable, or arm the posix_spawn escalation (LIMEN_FORK_SAFE=1; see scripts/check-fork-safety.py)"
+
+  trunk-green:
+    section: "0g3"
+    title: "trunk-green — main's required CI must stay green, or nothing can merge"
+    gate: LIMEN_MAIN_GREEN_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/check-main-green.py"
+        severity: advisory
+        escalation: "main trunk RED above — a heal PR is needed (arm LIMEN_MAIN_GREEN_APPLY=1 to auto-emit one canonical HEAL-mainred task); see scripts/check-main-green.py"
+
+  npm-audit-autofix:
+    section: "0g3b"
+    title: "npm-audit autofix — a new high/critical transitive advisory auto-produces an overrides fix PR, never a queue jam"
+    gate: LIMEN_NPM_AUDIT_AUTOFIX
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # No cadence — like its sibling trunk-green (§0g3), this runs every metabolize beat. A
+    # [metabolize]-source sensor WITH a cadence fires in neither beat path (the launch-agent-liveness
+    # incident); every-beat is also the right latency for keeping the queue unjammed.
+    steps:
+      - command: "python3 scripts/npm-audit-autofix.py"
+        severity: advisory
+        escalation: "a new high/critical npm advisory is red on ci.yml (web/app or web/worker) — the effector pins the patched transitive via overrides and opens a fix PR once LIMEN_NPM_AUDIT_AUTOFIX_APPLY=1 arms it (env lever, read internally like LIMEN_MAIN_GREEN_APPLY; merge-policy gates web/app until CI green); until armed it is detection-only. See scripts/npm-audit-autofix.py"
+
+  pip-audit-autofix:
+    section: "0g3b"
+    title: "pip-audit autofix — the Python tier: limen's own core (cli/web-api/mcp) advisories detected each beat, never an unscanned ecosystem"
+    gate: LIMEN_PIP_AUDIT_AUTOFIX
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # No cadence — every metabolize beat, like its npm sibling (a [metabolize] sensor WITH a cadence
+    # fires in neither beat path — the launch-agent-liveness incident). pip-audit --no-deps on the
+    # pinned lockfiles is fast; uv components are exported first.
+    steps:
+      - command: "python3 scripts/pip-audit-autofix.py"
+        severity: advisory
+        escalation: "a Python dependency advisory is present in cli/, web/api/, or mcp/ (ci.yml now runs pip-audit too) — the effector applies the minimal forward pin (uv lock upgrade / requirements rewrite), re-audits to verify it cleared, and opens a fix PR once LIMEN_PIP_AUDIT_AUTOFIX_APPLY=1 arms it (env lever, read internally); until armed it is detection-only. No-fix residue defers to Dependabot. See scripts/pip-audit-autofix.py"
+
+  launch-agent-liveness:
+    section: "0g4"
+    title: "launch-agent liveness — critical organs (mint, tunnel, creds, ianva) must stay alive"
+    gate: LIMEN_LAUNCHAGENT_LIVENESS_CHECK
+    default: "1"
+    # heartbeat + cadence make this rung REACHABLE from the live loop: the daemon's only derive call
+    # is `--source heartbeat --scheduled-only`, which runs cadence-declaring heartbeat sensors only —
+    # declared as [metabolize] with no cadence, this sensor had zero live executions ever.
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_LAUNCHAGENT_LIVENESS
+      default: 4                # cheap check guarding the revenue rail (prompt-corpus-control precedent)
+    timeout:
+      env: LIMEN_LAUNCHAGENT_LIVENESS_TIMEOUT
+      default: 300              # founding incident: 4-agent quiesce restore ≈ 264 s; gitvs's 120 would kill it mid-restore
+    steps:
+      - command: "python3 scripts/launch-agent-liveness.py --check"
+        args_when:
+          - env: LIMEN_LAUNCHAGENT_HEAL
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "critical launch-agent DOWN above (spec/critical-launch-agents.json) — arm LIMEN_LAUNCHAGENT_HEAL=1 so the beat auto-restores it (mint/tunnel/credential organ), else it stays dark"
+
+  sensor-canary:
+    section: "0g5"
+    title: "sensor canary — every scheduled sensor observed live within bounds (merged ≠ running)"
+    gate: LIMEN_SENSOR_CANARY
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    # Mechanizes the canary ritual that used to live only in operator memory: the runner already
+    # stamps logs/.voice/<id> per visit, so NEVER-RAN / STALE is derived data. A stamp records
+    # visited, not armed (arming is armed-valve-audit's axis); a metabolize-only scheduled sensor
+    # (e.g. a lever-parked organ) is owner-routed, never red. First run after landing may self-flag
+    # never-visited sensors once — they clear as the scheduled lane visits them.
+    cadence:
+      env: LIMEN_BEAT_SENSOR_CANARY
+      default: 8
+    steps:
+      - command: "python3 scripts/beat-sensors.py --canary"
+        severity: advisory
+        escalation: "scheduled sensor NEVER-RAN or STALE above — a lane is dark or a rung is unreachable (merged is not running); check LIMEN_BEAT_DERIVE and the sensor's source/cadence"
+    omega_eligible:
+      - label: "sensor canary — scheduled lane observed live"
+        rung_id: sensor.canary.live
+        tier: live                # reads the live daemon's voice stamps — offline omega SKIPs it visibly
+        command: "python3 scripts/beat-sensors.py --canary"
+        semantic_inputs:
+          - {path: scripts/beat-sensors.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.canary.live.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  reclassify-needs-human:
+    section: "0g6"
+    title: "needs_human truth — drain mislabeled fleet-buildable / chronic tasks from his queue"
+    gate: LIMEN_RECLASSIFY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The queue lied at 64% chronic fleet-debt (154→406 refill in 13h, 2026-07-13) until the
+    # chronic inflow was routed by ownership (heal-dispatch + scripts/_human_signals.py). This
+    # sensor keeps it truthful on cadence: DRY by default (five visible buckets →
+    # docs/RECLASSIFY-PROPOSAL.md); the flip/park effector is the safety valve below.
+    cadence:
+      env: LIMEN_BEAT_RECLASSIFY
+      default: 12
+    timeout:
+      env: LIMEN_RECLASSIFY_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/reclassify-needs-human.py"
+        args_when:
+          - env: LIMEN_RECLASSIFY_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "needs_human reclassify pass skipped or exceeded its bound"
+
+  orphan-watcher:
+    section: "0g7"
+    title: "orphan watchers — no session-spawned PR poll shell outlives its session"
+    gate: LIMEN_ORPHAN_WATCHER_CHECK
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: tabularius
+    # The 2026-07-15 endless-watcher incident: four concurrent session background shells
+    # hand-rolling `gh pr`/merge-policy poll loops (one silent-on-FAIL, a 28-min stall), and
+    # nothing audited what a dead session left running. Detection is read-only every visit;
+    # the reap effector is the armed valve (house law: sensor without effector = defect — the
+    # effector is named here, dry until armed). Sanctioned alternatives the escalation points
+    # at: scripts/await-pr.sh (bounded, loud) or the merge rung (scripts/merge-drain.py via
+    # scripts/drain.sh).
+    cadence:
+      env: LIMEN_BEAT_ORPHAN_WATCHER
+      default: 4
+    timeout:
+      env: LIMEN_ORPHAN_WATCHER_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/orphan-watchers.py --check"
+        args_when:
+          - env: LIMEN_ORPHAN_WATCHER_REAP
+            default: "0"
+            equals: "1"
+            args: ["--reap"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "orphan PR-watcher shell(s) above — a session hand-rolled a poll loop and died; use scripts/await-pr.sh or hand off to the merge rung (arm LIMEN_ORPHAN_WATCHER_REAP=1 to auto-reap)"
+
+  disk-capacity:
+    section: "0g8"
+    title: "disk capacity — live free bytes must cover the resource envelope; heal-probe artifacts + heartbeat err log reaped when armed"
+    gate: LIMEN_DISK_CAPACITY
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_DISK_CAPACITY
+      default: 4
+    timeout:
+      env: LIMEN_DISK_CAPACITY_TIMEOUT
+      default: 30
+    steps:
+      - command: "python3 scripts/disk-capacity.py --check"
+        args_when:
+          - env: LIMEN_DISK_CAPACITY_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "disk capacity BREACHED — arm LIMEN_DISK_CAPACITY_APPLY=1 so the beat removes gitignored probes and truncates the heartbeat error log"
+    omega_eligible:
+      - label: "disk capacity covers live resource envelope"
+        rung_id: sensor.disk.capacity
+        tier: live
+        command: "python3 scripts/disk-capacity.py --check --strict"
+        semantic_inputs:
+          - {path: scripts/disk-capacity.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.disk.capacity.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  tcc-track-c:
+    section: "0g8c"
+    title: "Track C vendor-update proof — real Claude Code advance past cutover baseline under fixed Domus host, or clean external wait"
+    # Owns the finite external vendor wait for #1703 / L-DOMUS-AGENT-HOST-TCC.
+    # Exit 0 means external_vendor_wait (still at 2.1.220, inventory not regressing)
+    # OR track_c.met. Exit 1 means inventory/host regression after a real advance path.
+    # Never treats no-op "up to date" as completion. Finalize/discharge is a separate
+    # --finalize --write-lever step after a met receipt exists.
+    gate: LIMEN_TCC_TRACK_C
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_TCC_TRACK_C
+      default: 8
+    timeout:
+      env: LIMEN_TCC_TRACK_C_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/tcc-track-c-closeout.py --beat --json"
+        severity: advisory
+        escalation: "Track C closeout blocked (inventory regression or host failure) — read logs/tcc-track-c-status.json; never pin/suppress the Claude updater or discharge L-DOMUS-AGENT-HOST-TCC on a no-op update"
+    omega_eligible:
+      - label: "Track C vendor-update wait-or-met"
+        rung_id: sensor.tcc.track-c
+        tier: live
+        command: "python3 scripts/tcc-track-c-closeout.py --probe --json"
+        semantic_inputs:
+          - {path: scripts/tcc-track-c-closeout.py, normalization: raw}
+          - {path: logs/tcc-track-c-status.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 86400}
+
+  claude-identity-bundle:
+    section: "0g8d"
+    title: "Claude Code's disclaimed TCC identity rests on the stable ClaudeCode.app bundle, never a versioned path"
+    # Claude Code re-execs itself with macDisclaimResponsibility:true at startup, so NO
+    # supervising host — DomusAgentHost included — can carry an identity into it. Which
+    # identity it lands on is one `??` in the vendor's code: `await _jb() ?? process.execPath`.
+    # _jb() materializes <store>/ClaudeCode.app (CFBundleIdentifier com.anthropic.claude-code,
+    # stable across versions); it returns null on ANY exception inside one bare catch, and the
+    # fallback identity is the versioned binary — the same inode, but with no enclosing bundle
+    # for TCC to resolve, so it is named by its own filename.
+    # SCOPE (verified 2026-08-05 with this sensor already at-ideal): keeping the bundle does NOT
+    # stop per-version consent dialogs. The daemon runs its pty host from the bundle but hands
+    # the session process its versions/<version> path as argv, and that session is what disclaims
+    # into its own TCC identity. Vendor-internal; a green reading here is not "prompts fixed".
+    # _jb() takes an early return when the hardlink already carries the running binary's inode,
+    # skipping the unlink/link pair that concurrent session starts can race into EEXIST. Keeping
+    # the bundle inode-correct keeps every start on that early return. Idempotent; writes exactly
+    # the vendor's own bytes; never signs, never deletes a version, never edits TCC.
+    gate: LIMEN_CLAUDE_IDENTITY_BUNDLE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    timeout:
+      env: LIMEN_CLAUDE_IDENTITY_BUNDLE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/claude-identity-bundle.py --repair"
+        severity: advisory
+        escalation: "Claude Code identity bundle could not be kept — the stable com.anthropic.claude-code identity is unavailable to anything that does exec through it; check that ~/.local/bin/claude still resolves under the store's versions/ tree. Does not by itself govern per-version consent prompts (see the scope note above)."
+    omega_eligible:
+      - label: "Claude Code stable identity bundle"
+        rung_id: sensor.claude.identity-bundle
+        tier: live
+        command: "python3 scripts/claude-identity-bundle.py --json"
+        semantic_inputs:
+          - {path: scripts/claude-identity-bundle.py, normalization: raw}
+          - {path: logs/claude-identity-bundle-status.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 86400}
+
+  dialogs-silenced:
+    section: "0g8b"
+    title: "dialogs silenced — stable TCC identity + the agent-curable macOS dialog estate hold while managed tools auto-update"
+    # Replaces the three hand-wired hygiene hooks in heartbeat-loop.sh with ONE registry-derived sensor:
+    # each armed LIMEN_*_HEAL effector runs on the hygiene cadence, then --agent-curable-only verifies
+    # the beat-healable estate is silent. The human-gated classes (settings.json self-mod, firewall)
+    # stay levers (L-DIALOGS-HEAL cites the three deliverable valves so an unarmed host reads PARKED,
+    # not SILENT-OFF). See docs plan + [[macos-tcc-gatekeeper-dialogs-solved]].
+    gate: LIMEN_DIALOGS_SILENCED
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_DIALOGS
+      default: 8                # the hygiene cadence (C_HYGIENE) the three effectors rode as hand-wired hooks
+    timeout:
+      env: LIMEN_DIALOGS_TIMEOUT
+      default: 120
+    steps:
+      - command: "bash scripts/heal-hook-drift.sh"
+        args_when:
+          - env: LIMEN_HOOK_DRIFT_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_HOOK_DRIFT_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "PreToolUse trust hook drifted (class 1b) — arm LIMEN_HOOK_DRIFT_HEAL=1 so the beat reinstalls the canonical hook, else the compound-cd guard re-prompts every fleet job"
+      - command: "bash scripts/heal-claude-cask.sh"
+        args_when:
+          - env: LIMEN_CASK_DUPLICATE_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CASK_DUPLICATE_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "duplicate Homebrew claude-code cask (class 4) — arm LIMEN_CASK_DUPLICATE_HEAL=1 so the beat uninstalls it, else brew re-quarantines it every upgrade"
+      - command: "bash scripts/heal-claude-lsregister.sh"
+        args_when:
+          - env: LIMEN_CLAUDE_LSREGISTER_HEAL
+            default: "0"
+            equals: "1"
+            args: ["--apply"]   # armed → inject --apply (the healer also honors LIMEN_CLAUDE_LSREGISTER_HEAL); registers the deliverable valve
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "unassessable ClaudeCode.app registered with LaunchServices (class 4b) — arm LIMEN_CLAUDE_LSREGISTER_HEAL=1 so the beat UNREGISTERS it (never removes it: the bundle is vendor-materialized every start and deleting it destroys the stable TCC identity sensor 0g8d keeps). Ideal form IF-GATEKEEPER-INERT; corrected root in docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md"
+      - command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
+        severity: advisory
+        escalation: "stable-host/TCC identity or an agent-curable dialog class is red after the heal pass — repair the named host route or arm the matching LIMEN_*_HEAL valve; never disable an updater"
+    omega_eligible:
+      - label: "dialogs silenced (agent-curable)"
+        rung_id: sensor.dialogs.agent-curable
+        tier: live
+        command: "bash scripts/dialogs-silenced.sh --agent-curable-only"
+        semantic_inputs:
+          - {path: scripts/dialogs-silenced.sh, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.dialogs.agent-curable.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  foreign-litter:
+    section: "0g9"
+    title: "foreign-agent litter — no other vendor's session state squats untracked in the live checkout"
+    gate: LIMEN_FOREIGN_LITTER
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The 2026-07-24 mess audit: Antigravity's teamwork-preview run planted ~35 untracked .agents/
+    # orchestration dirs + a stray root-level SQLite (`1`) in the live checkout and died mid-flight;
+    # nothing watched either class. Detection every beat; the reap valve (SAFE-OFF, orphan-watcher
+    # precedent: detection earns trust first) quarantines by MOVE, never delete — excavation of
+    # handoffs owed to another repo happens before arming, not after losing them.
+    steps:
+      - command: "python3 scripts/check-foreign-litter.py"
+        args_when:
+          - env: LIMEN_FOREIGN_LITTER_REAP
+            default: "0"
+            equals: "1"
+            args: ["--reap"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "foreign-agent session litter in the live checkout above — excavate any handoffs owed to another repo, then reap (arm LIMEN_FOREIGN_LITTER_REAP=1 or run scripts/check-foreign-litter.py --reap once)"
+
+  dispatch-continuity:
+    section: "0h"
+    title: "dispatch continuity — detect a silent lane while queue + budget exist"
+    gate: LIMEN_CONTINUITY_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: continuity
+    steps:
+      - command: "python3 scripts/dispatch-continuity-check.py"
+        severity: silent
+        escalation: "continuity skipped"
+
+  lane-fitness-refresh:
+    section: "0h2"
+    title: "lane-fitness refresh — recompute per-(agent, task_class) conversion fitness from dispatch_log into logs/lane-fitness.json"
+    gate: LIMEN_LANE_FITNESS
+    default: "1"
+    source: [metabolize]
+    owner: dispatch
+    # dispatch._lane_fitness consults logs/lane-fitness.json at reservation time (fail-open). Without
+    # a beat-wired refresh the file goes stale and the fitness signal either never seeds (cold start)
+    # or anchors on history from a previous run. Reading tasks.yaml dispatch_log only; PII-clean;
+    # runs in seconds. Cadence 4 keeps the table current without paying per-beat I/O on every cycle.
+    cadence:
+      env: LIMEN_BEAT_LANE_FITNESS
+      default: 4
+    timeout:
+      env: LIMEN_LANE_FITNESS_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/lane-fitness.py --write"
+        severity: silent
+        escalation: "lane-fitness refresh skipped or exceeded its bound — dispatch continues fail-open"
+
+  ask-gate:
+    section: "0i"
+    title: "ask gate — every intake-window ask carries one done-predicate, or gets split"
+    gate: LIMEN_ASK_GATE
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/ask-gate.py --audit --since 7 --top 8"
+        severity: silent
+        escalation: "ask-gate report failed — non-fatal"
+
+  omega:
+    section: "0i2"
+    title: "omega — the autonomic fixed point (conjunction of every gate's --check)"
+    gate: LIMEN_OMEGA
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "bash scripts/omega.sh --offline --quiet"
+        severity: advisory
+        escalation: "OMEGA not holding above — a gate rung failed; the system is off its fixed point (see logs/omega.json)"
+
+  usage-telemetry:
+    section: "0k"
+    title: "refresh usage telemetry / lane health"
+    gate: null                          # ungated — always runs
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/usage-telemetry.py"
+        severity: silent
+        escalation: "usage telemetry skipped"
+
+  link-health:
+    section: "0l"
+    title: "link health — dead links on public surfaces (+ throttled auto-heal)"
+    gate: LIMEN_LINK_HEALTH
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/link-health.py --verify --throttle 21600"
+        severity: advisory
+        escalation: "DEAD link(s) on a public surface above — fix at the source or add a remap in link-surfaces.json"
+      - command: "python3 scripts/link-health.py --heal --apply --throttle 21600"
+        when_env: LIMEN_LINK_HEAL
+        when_default: "1"
+        severity: silent
+        escalation: "link-health heal skipped/failed — non-fatal"
+
+  codex-skill-slim:
+    section: "0m"
+    title: "codex skill distillation — flagged noise thinned, not disabled"
+    gate: LIMEN_CODEX_SLIM
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/codex-skill-slim.py --apply --quiet"
+        severity: silent
+        escalation: "codex-skill-slim skipped — no codex config/cache"
+
+  routine-freshness:
+    section: "0n"
+    title: "routine freshness — detect cloud routines that fire but stop delivering"
+    gate: LIMEN_ROUTINE_FRESHNESS
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/routine-freshness-audit.py --throttle 21600"
+        severity: silent
+        escalation: "routine freshness skipped"
+
+  session-walk:
+    section: "0j"
+    title: "session walk — full-horizon census of BOTH vendor session estates"
+    gate: LIMEN_SESSION_WALK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: 'python3 scripts/session-walk-census.py --walk "${LIMEN_SESSION_WALK_CAP:-2}"'
+        severity: silent
+        escalation: "session walk skipped"
+
+  mail-answered:
+    section: "0m2"
+    title: "mail answered — the obligations ledger is fresh AND every reply-owed obligation has a draft (the C_MAIL effector is alive)"
+    gate: LIMEN_MAIL_ANSWERED_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-mail-answered.py"
+        severity: advisory
+        escalation: "mail unanswered — stale ledger or a reply-owed obligation without a draft; the C_MAIL draft effector may be dark (the 2026-06 silent-freeze failure mode this sensor exists to catch)"
+
+  correspondence-terminal:
+    section: "0m3"
+    title: "correspondence walked to terminal — every reply-owed obligation has a terminal disposition and the walk is at a fixed point (the AUTONOMY_PAUSED release predicate, mechanized)"
+    gate: LIMEN_CORRESPONDENCE_TERMINAL_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-correspondence-terminal.py"
+        severity: advisory
+        escalation: "correspondence not walked to terminal — stale ledger, an un-walked reply-owed row, or a HOLD row lacking a composed draft; the correspondence-walk effector (mail-beat.sh 2d) may be dark"
+
+  correspondence-drain-trend:
+    section: "0m4"
+    title: "correspondence drain-trend — reply_owed is DRAINING across beats, not stalled at a high plateau (the loop-closure the fixed-point snapshot can't see)"
+    gate: LIMEN_CORRESPONDENCE_DRAIN_TREND
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    steps:
+      - command: "python3 scripts/check-correspondence-drain-trend.py --check"
+        severity: advisory
+        escalation: "correspondence NOT draining — reply_owed or needs_human is rising across a day-plus window, or a HOLD draft is persistently missing; the ledger is re-owing faster than the walk clears it"
+
+  host-pressure-stale:
+    section: "0o"
+    title: "host-pressure gauge is alive — the VITALS throttle/shed valve is not flying blind"
+    gate: LIMEN_HOST_PRESSURE_STALE
+    default: "1"
+    source: [metabolize]
+    owner: vitals
+    steps:
+      - command: "python3 scripts/host-pressure-stale.py"
+        severity: advisory
+        escalation: "VITALS gauge silent past VITALS_STALE_BEATS worst-case beats — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia beat` and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+
+  runtime-lag:
+    section: "0o3"
+    title: "the scheduled runtime carries merged main — a fix is deployed when the thing that RUNS it is rebuilt"
+    gate: LIMEN_RUNTIME_LAG
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    # The canary (0g5) proves a scheduled lane is ALIVE. It cannot see that a live lane is
+    # running WEEK-OLD CODE: a stale runtime install stamps its voice files on time, passes
+    # its canary, and reports green the whole while. Different axis, invisible from inside
+    # the first — which is why this is a second sensor and not a widened canary.
+    #
+    # Found one level below, from the notify arc: _notify.py's in-tree gate only reached
+    # copies that had rebased, because osascript is a host singleton and the guard is
+    # tree-local. The INSTALL is how merged main reaches this host at all, and nothing
+    # measured it. First measurement: 88 commits / 5.6 days behind — the notify gate had
+    # been merged, shipped, and was running nowhere. Every host-global fix inherits this
+    # latency, so the sensor measures the general condition rather than re-checking notify.
+    #
+    # Sensing only. The rotator is domus-owned and repoints a symlink under a daemon that
+    # executes from it every 300s; limen's authority ends at naming the owner and the exact
+    # command. Silent (exit 0) wherever no runtime install exists — CI, containers, any
+    # machine that schedules nothing.
+    steps:
+      - command: "python3 scripts/check-runtime-lag.py"
+        severity: advisory
+        escalation: "the scheduled limen runtime is further behind the default branch than LIMEN_RUNTIME_LAG_MAX_COMMITS — merged fixes are live on the remote and running nowhere on this host. Rotate with the `domus-limen-runtime install --sha <head>` line the predicate prints (domus owns the rotator); an UNVERIFIED line means the install SHA is unfetched here, not that the runtime is current"
+
+  backblaze-exclusions:
+    section: "0p"
+    title: "backblaze exclusions live — regenerable fleet state is out of the crawl set (organ-owned since 2026-07-16; lever L-BACKBLAZE-EXCLUDE retired)"
+    gate: LIMEN_BACKBLAZE_EXCLUSIONS
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    cadence:
+      env: LIMEN_BEAT_BACKBLAZE
+      default: 24
+    steps:
+      - command: "python3 scripts/backblaze-exclusions.py --check"
+        args_when:
+          - env: LIMEN_BACKBLAZE_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "Backblaze is still crawling regenerable fleet trees and the self-heal could not land — run `python3 scripts/backblaze-exclusions.py --apply` (bzinfo.xml is user-owned, 2026-07-16 ground truth); if the file went root-owned again, the fallback is the Backblaze pane → Settings → Exclusions (2026-07-15/16 host-thrash incidents, IF-HOST-PRESSURE form 3)"
+
+  host-relief:
+    section: "0q"
+    title: "host-relief — SHED has hands: bloated com.limen agents restarted, root hogs escalated with the exact command (IF-HOST-PRESSURE form 4)"
+    gate: LIMEN_HOST_RELIEF
+    default: "1"
+    source: [metabolize]
+    owner: substrate
+    cadence:
+      env: LIMEN_BEAT_HOST_RELIEF
+      default: 1
+    timeout:
+      env: LIMEN_HOST_RELIEF_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/host-relief.py --check"
+        args_when:
+          - env: LIMEN_HOST_RELIEF_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: advisory
+        escalation: "host-relief could not land a kickstart — read the report above and logs/vigilia/relief-state.json; if a root-owned hog is named, run the printed sudo one-liner (2026-07-16 thrash: bztransmit held 8.6 GiB; IF-HOST-PRESSURE form 4)"
+
+  cloud-storage-doctor:
+    section: "heartbeat"
+    title: "HORREVM — every storage rail matches its declared role (iCloud caught-up; Dropbox/Drive/OneDrive quiet; Archive4T mounted; Backblaze observed read-only)"
+    gate: LIMEN_CLOUD_STORAGE
+    default: "1"
+    source: [heartbeat]
+    owner: horrevm
+    # Pure sensor, no effector by design — its escalation path IS the pairing: advisory severity
+    # surfaces drift in the beat log; the mutations (adoption, baseline edits) are operator decisions
+    # recorded in institutio/governance/storage-roles.yaml, never doctor actions.
+    cadence:
+      env: LIMEN_BEAT_CLOUD_STORAGE
+      default: 24
+    timeout:
+      env: LIMEN_CLOUD_STORAGE_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/cloud-storage-doctor.py --check"
+        severity: advisory
+        escalation: "storage rail drifted from its declared role (logs/cloud-storage-health.json) — see docs/storage-endgame.md; NEVER terminal-delete under ~/Library/CloudStorage or ~/Library/Mobile Documents"
+    omega_eligible:
+      - label: "storage-roles registry parity"
+        rung_id: sensor.storage.parity
+        tier: det
+        command: "python3 scripts/cloud-storage-doctor.py --doctor"
+        semantic_inputs:
+          - {path: scripts/cloud-storage-doctor.py, normalization: raw}
+      - label: "storage rails posture"
+        rung_id: sensor.storage.posture
+        tier: live
+        command: "python3 scripts/cloud-storage-doctor.py --check --strict"
+        semantic_inputs:
+          - {path: scripts/cloud-storage-doctor.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.storage.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  horrevm-custody:
+    section: "heartbeat"
+    title: "HORREVM custody — arca-sealed ciphertext shipped to Drive/Dropbox and proven restorable (dark until L-CLOUD-EGRESS-CONSENT)"
+    gate: LIMEN_HORREVM
+    default: "1"
+    source: [heartbeat]
+    owner: horrevm
+    # Seal-then-ship rides the heartbeat (arca seals every metabolize beat; custody self-throttles
+    # to >=20h between pushes, so <=1-beat vault staleness is accepted by design). Dry-run until the
+    # operator arms LIMEN_HORREVM_APPLY=1 via the lever — the ONLY egress consent switch. A 240s
+    # bound may truncate the FIRST bulk push; rclone copy is incremental per file, so successive
+    # beats converge — fail-open, never wedged.
+    cadence:
+      env: LIMEN_BEAT_HORREVM
+      default: 4
+    timeout:
+      env: LIMEN_HORREVM_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/horrevm-custody.py --push"
+        args_when:
+          - env: LIMEN_HORREVM_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "HORREVM custody push skipped or exceeded its bound"
+      - command: "python3 scripts/horrevm-custody.py --status"
+        severity: advisory
+        escalation: "custody rail unproven or stale (logs/horrevm.json) — pull L-CLOUD-EGRESS-CONSENT (issue #1109) to consent + arm, or re-consent a dead token via the same lever; NEVER install a File Provider desktop app"
+    omega_eligible:
+      - label: "custody config parity"
+        rung_id: sensor.custody.parity
+        tier: det
+        command: "python3 scripts/horrevm-custody.py --doctor"
+        semantic_inputs:
+          - {path: scripts/horrevm-custody.py, normalization: raw}
+      - label: "custody freshness"
+        rung_id: sensor.custody.freshness
+        tier: live
+        command: "python3 scripts/horrevm-custody.py --status --strict"
+        semantic_inputs:
+          - {path: scripts/horrevm-custody.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.custody.freshness.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  relationship-review-delta:
+    section: heartbeat
+    title: "relationship review-due detector — surface (PII-clean count) when a person's new inbound volume since their last review warrants a delta dice-up"
+    gate: LIMEN_RELATIONSHIP_REVIEW
+    default: "1"
+    source: [heartbeat]
+    owner: tabularius
+    cadence:
+      env: LIMEN_BEAT_RELATIONSHIP_REVIEW
+      # daily-active (was 168 ≈ weekly, effectively dormant): this is a read-only,
+      # side-effect-free detector (surfaces a PII-clean review-due COUNT — no send, no
+      # draft, no outreach), so it can fire often at zero account-safety cost. At the
+      # slowest quiet tempo (~30min/beat) 24 beats ≈ 12h → the warm-network re-engagement
+      # signal surfaces at least twice a day instead of ~weekly. Half as frequent as the
+      # time-critical opportunity sensors (cadence 12), which is the right priority tier.
+      default: 24
+    timeout:
+      env: LIMEN_RELATIONSHIP_REVIEW_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/relationship-review-delta.py"
+        args_when:
+          - env: LIMEN_RELATIONSHIP_REVIEW_NOTIFY
+            default: "1"
+            equals: "1"
+            args: ["--notify"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "relationship review-due detector skipped or exceeded its bound (read-only chat.db count; fails open)"
+
+  opportunity-pipeline:
+    section: heartbeat
+    title: "inbound-opportunity review-due detector — surface (PII-clean count) when an inbound lead (hire/deploy/linkedin) owes a human move: ball on us >24h, a stalled interview/offer, a LinkedIn row with no reply path, or a portal/ATS form demanded"
+    gate: LIMEN_OPPORTUNITY_PIPELINE
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_OPPORTUNITY_PIPELINE
+      default: 12
+    timeout:
+      env: LIMEN_OPPORTUNITY_PIPELINE_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/opportunity-review-delta.py"
+        args_when:
+          - env: LIMEN_OPPORTUNITY_NOTIFY
+            default: "1"
+            equals: "1"
+            args: ["--notify"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "opportunity sync skipped or exceeded its bound (reads obligations-ledger.json; fails open)"
+
+  daily-execution:
+    section: heartbeat
+    title: "the daily professional communications/application loop — ingest, reconcile, derive obligations, source/rank live roles, run voice/factual checks, and settle only provider-receipted applications and follow-ups in one persisted run"
+    gate: LIMEN_DAILY_EXECUTION
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_DAILY_EXECUTION
+      default: 48
+    timeout:
+      env: LIMEN_DAILY_EXECUTION_TIMEOUT
+      default: 1800
+    steps:
+      - command: 'python3 -m limen.daily_execution --json --timeout "${LIMEN_DAILY_EXECUTION_TIMEOUT:-1800}"'
+        args_when:
+          - env: LIMEN_DAILY_EXECUTION_FIRE
+            default: "0"
+            equals: "1"
+            args: ["--fire"]
+            armed_valve_type: safety
+        severity: silent
+        escalation: "daily execution skipped or exceeded its 1,800-second bound; its persisted redacted receipt names the exact owner stage and provider blocker"
+
+  conversion-funnel:
+    section: heartbeat
+    title: "name the single public-face bottleneck (DISCOVERY|FACE|CLOSE) — the constraint that routes Aug-1 ($10k/wk) effort, kept live on the beat instead of dark/manual"
+    gate: LIMEN_CONVERSION_FUNNEL
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_CONVERSION_FUNNEL
+      default: 48
+    timeout:
+      env: LIMEN_CONVERSION_FUNNEL_TIMEOUT
+      default: 300
+    # Two ORDERED steps: traffic-collect (gh /traffic per value-repo -> traffic.jsonl, the "seen"
+    # signal) must refresh BEFORE conversion-funnel fuses seen->inbound->revenue and writes the
+    # bottleneck to logs/profile-conversion-funnel-latest.json (which the daily brief then surfaces).
+    # Both read-only + fail-open (a 403 on a repo without push access is recorded, never fatal); both
+    # silent so a network hiccup can't red the beat. Dark until this rung — the bottleneck (currently
+    # DISCOVERY: repos provable but unseen) only refreshed when a human ran it by hand.
+    steps:
+      - command: "python3 scripts/traffic-collect.py"
+        severity: silent
+        escalation: "traffic-collect skipped/failed — the 'seen' signal may be stale (gh /traffic; 403 without push access is recorded, non-fatal)"
+      - command: "python3 scripts/conversion-funnel.py"
+        severity: silent
+        escalation: "conversion-funnel skipped/failed — the public-face bottleneck (DISCOVERY|FACE|CLOSE) may be stale in logs/profile-conversion-funnel-latest.json (reads traffic.jsonl + opportunity-status.json; fails open)"
+
+  opportunity-brief:
+    section: heartbeat
+    title: "the engine's daily VOICE — once per day compose a plain-text opportunity brief (inbound leads, what you owe, LinkedIn mirror status, correspondence, engine freshness) and EMAIL it to the operator's own inbox so the continuous engine is felt, not buried in a log"
+    gate: LIMEN_OPPORTUNITY_BRIEF
+    default: "1"
+    source: [heartbeat]
+    owner: mail
+    cadence:
+      env: LIMEN_BEAT_OPPORTUNITY_BRIEF
+      default: 12
+    timeout:
+      env: LIMEN_OPPORTUNITY_BRIEF_TIMEOUT
+      default: 180
+    steps:
+      - command: "python3 scripts/opportunity-brief.py"
+        severity: silent
+        escalation: "daily brief skipped or send failed (reads status/ledger, emails self via mail-send; idempotent once/day; fails open)"
+
+  opportunity-status-stale:
+    section: "0o2"
+    title: "opportunity engine is alive — the inbound-lead monitor's status file is still being refreshed, not silently frozen"
+    gate: LIMEN_OPPORTUNITY_STALE
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    # The 2026-07-21 sibling of host-pressure-stale: the beat ticked but opportunity-review-delta
+    # stopped rewriting logs/opportunity-status.json for ~18h, so the daily brief + every downstream
+    # reader reported all-clear while the engine was blind. This rung watches the WRITER, not the
+    # leads: opportunity-pipeline fires every 12 beats (~6h worst-case tempo), so 13h = ~2 windows
+    # is stale without false-positiving a slow beat. Reuses the generic scripts/state-freshness.py
+    # (fails toward stale: absent/unparseable/old file all exit 1). Read-only; advisory; onset-deduped.
+    steps:
+      - command: 'python3 scripts/state-freshness.py --file logs/opportunity-status.json --field generated_at --max-age-seconds 46800 --key opportunity-status-stale --label "opportunity engine"'
+        severity: advisory
+        escalation: "opportunity-status.json has stopped refreshing — the inbound-lead monitor (opportunity-review-delta) is frozen and the daily brief is reporting stale state; check `python3 scripts/opportunity-review-delta.py` and the heartbeat (2026-07-21 18h-blind incident, WS0)"
+
+  closeout-reconcile:
+    section: "0z"
+    title: "closeout reconciliation — every claimed-done outcome carries a verified receipt"
+    gate: LIMEN_SESSION_CLOSEOUT
+    default: "0"
+    source: [metabolize]
+    owner: censor
+    # verify-dispatch babysits status=dispatched; this babysits the COMPLEMENT — status=done CLOSEOUT
+    # claims. Reuses verify-dispatch.gh_pr_state to probe each cited PR; a done-claim citing an unmerged
+    # PR is DONE_UNVERIFIED (the #1203 "solved at root" false-closeout). Ships DARK (default 0); arming is
+    # a separate lever. Findings route via insight-route.py (org/repo -> board task, censor -> residual).
+    steps:
+      - command: "python3 scripts/reconcile-closeouts.py --check"
+        severity: advisory
+        escalation: "closeout reconciliation found unverified done-claim(s) — see logs/closeout-reconcile.json"
+    omega_eligible:
+      - label: "closeout classifier self-test (verdicts correct)"
+        rung_id: sensor.closeout.self-test
+        tier: det
+        command: "python3 scripts/reconcile-closeouts.py --doctor"
+        semantic_inputs:
+          - {path: scripts/reconcile-closeouts.py, normalization: raw}
+      - label: "closeout operational posture"
+        rung_id: sensor.closeout.posture
+        tier: live
+        command: "python3 scripts/reconcile-closeouts.py --check"
+        semantic_inputs:
+          - {path: scripts/reconcile-closeouts.py, normalization: raw}
+          - {path: logs/omega-owner-receipts/sensor.closeout.posture.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
+
+  insight-cross-vendor:
+    section: "0z0"
+    title: "cross-vendor friction ingest — per-vendor /insights-class packets (claude/codex/opencode/antigravity/cline/copilot/jules) refresh on the beat and feed the censor cascade"
+    gate: LIMEN_CROSS_VENDOR_INGEST
+    default: "1"
+    source: [metabolize]
+    owner: censor
+    # Arms the estate-wide-friction-beat-sensor proposal (censor/whole-estate-insights-proposals.json,
+    # whole-estate-2026-07-16; enacted on the operator's 2026-07-24 "implement all of it"): the
+    # 7-adapter engine (scripts/insight-cross-vendor-ingest.py, PR #1124 + the copilot adapter #1343)
+    # ran only by hand, so per-vendor packets went stale (last manual run 2026-07-22) and
+    # insight-cadence's cross-vendor source read cold data. Read-only over vendor stores; packets
+    # carry counts/patterns only (PII firewall upstream in the ingest itself).
+    cadence:
+      env: LIMEN_BEAT_CROSS_VENDOR
+      default: 24
+    timeout:
+      env: LIMEN_CROSS_VENDOR_TIMEOUT
+      default: 900
+    # Three ordered steps (conversion-funnel precedent): ingest refreshes the packets,
+    # index --all refreshes every vendor-insights lane (NOTE: this widens the standing
+    # local PII footprint — session metadata + cwd paths under gitignored
+    # logs/vendor-insights/ — disarm via LIMEN_CROSS_VENDOR_INGEST=0), and --health
+    # watches the pipeline itself (packet staleness, store resets, retention pruning,
+    # capsule churn, narrative lag) writing ONE aggregate censor-owned warning packet.
+    steps:
+      - command: "python3 scripts/insight-cross-vendor-ingest.py --window-days 30"
+        severity: advisory
+        escalation: "cross-vendor friction ingest failed — per-vendor packets in logs/insight-cross-vendor/ go stale and insight-cadence reads cold data until it lands"
+      - command: "python3 scripts/vendor-insights.py index --all"
+        severity: advisory
+        escalation: "vendor-insights index refresh failed — per-lane indexes go stale and the health checks (capsule churn, narrative lag) read cold data until it lands"
+      - command: "python3 scripts/insight-cross-vendor-ingest.py --health"
+        severity: advisory
+        escalation: "cross-vendor health evaluation failed — packet staleness, store resets, and retention pruning go unwatched until it lands"
+
+  jules-quota:
+    section: "0z1"
+    title: "Jules daily quota — used-vs-target gauge, orphaned completions, recovery states"
+    gate: LIMEN_JULES_QUOTA
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The 183-day silent lane (2026-01-21 -> 2026-07-23: zero landed Jules output while the
+    # 100/day vendor quota expired unused) had no gauge: drain landed only receipt-mapped
+    # sessions and dropped orphans silently, and nothing measured used-vs-target. This sensor
+    # is the missing gauge; the EFFECTORS stay the existing rungs (drain.sh -> jules-land for
+    # landing, metabolize 4b dispatch for filling). Target derives from
+    # capacity.DEFAULT_DAILY_TASK_TARGETS / LIMEN_JULES_DAILY_TASKS — never pinned here.
+    # Read-only; advisory; fail-open when the jules CLI is unavailable (probe_unavailable noted).
+    steps:
+      - command: "python3 scripts/jules-quota.py"
+        severity: advisory
+        escalation: "Jules quota under target late-day, or orphan/recovery sessions pending — drain (jules-land) + dispatch (metabolize 4b) own the effectors; orphan list via `python3 scripts/jules-land.py`"
+
+  jules-supply:
+    section: "0z2"
+    title: "Jules packet supply — dispatchable-supply-vs-floor gauge with armed template minting"
+    gate: LIMEN_JULES_SUPPLY
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The quota sensor (jules-quota) measures used-vs-target; hitting 100/day also needs
+    # ~100 loan-complete open packets to dispatch. This organ measures supply-vs-floor and,
+    # when the LIMEN_JULES_SUPPLY_APPLY valve is armed, mints the deficit from the declared
+    # renewable series in docs/jules-supply-templates.yaml as TABVLARIVS upsert tickets —
+    # adding supply = adding one registry entry, never a hand-minting session. Floor derives
+    # from the jules capacity target — never pinned here. Dry-run (gauge-only) by default.
+    steps:
+      - command: "python3 scripts/jules-supply.py"
+        args_when:
+          # Armed by default (operator mandate 2026-07-23: the 100/day quota is consumed
+          # autonomously — "we shouldn't even have to think about it"). Disarm with
+          # LIMEN_JULES_SUPPLY_APPLY=0 for a gauge-only dry run.
+          - env: LIMEN_JULES_SUPPLY_APPLY
+            default: "1"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "Dispatchable Jules supply is below floor and minting is unarmed — arm LIMEN_JULES_SUPPLY_APPLY=1 or extend docs/jules-supply-templates.yaml"
+
+  lane-throughput:
+    section: "0z4"
+    title: "throughput governor gauge — each lane's dispatch cap vs its landed evidence"
+    gate: LIMEN_LANE_THROUGHPUT
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The June-July jules era proved raw dispatch volume compounds debt: 90-190 launches/day
+    # at ~15% completion left 308 blocked owner_route PRs (23.8% of estate PR debt). The
+    # governor (capacity.lane_throughput_cap, enforced in dispatch._remaining_budget) makes
+    # the full daily target EARNED: bootstrap 25/day from cold start, full target only while
+    # landed/dispatched holds LIMEN_THROUGHPUT_FLOOR_RATE. This sensor is the gauge — cap
+    # table per run, JSONL history, advisory-red on a clamp sustained across 2+ days (the
+    # fix then belongs to the LANDING organs, never to more dispatch).
+    steps:
+      - command: "python3 scripts/lane-throughput.py"
+        severity: advisory
+        escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
+
+  jules-flywheel:
+    section: "0z9"
+    title: "the flywheel predicate — exit 0 ⟺ quota consumed AND landing holds AND debt non-increasing"
+    gate: LIMEN_JULES_FLYWHEEL
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # THE acceptance predicate of the jules-flywheel program (issue #1874, plan
+    # docs/plans/2026-08-06-jules-flywheel.md): one exit code answering "is the compound
+    # loop turning?". Three clauses, each red naming its owning effector: quota
+    # (dispatched_today vs 0.8 x target, judged after the alarm hour), landing
+    # (landed/dispatched over the throughput window vs LIMEN_FLYWHEEL_LAND_FLOOR, skipped
+    # below the governor's bootstrap_min — never alarm on the permitted ramp), debt
+    # (jules open-PR count non-increasing vs logs/jules-pr-debt-snapshot.json; fail-open
+    # when gh is unavailable). Read-only except its own snapshot.
+    timeout:
+      env: LIMEN_JULES_FLYWHEEL_TIMEOUT
+      default: 120
+    steps:
+      - command: "python3 scripts/jules-flywheel.py"
+        severity: advisory
+        escalation: "the flywheel is not turning — the failing clause names its owner in the output: quota -> supply/valve organs, landing -> jules-land/owner-route-drain/merge-drain, debt -> owner-route-drain"
+  work-loan-backfill:
+    section: "0z8"
+    title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"
+    gate: LIMEN_WORK_LOAN_BACKFILL
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The candidate-starvation cut of the 07-19 starvation: 738/829 open tasks (89%) fail
+    # WorkLoanV1 readiness, so an open valve found ~8 jules candidates. This organ derives
+    # the missing loan fields mechanically under docs/repo-predicates.yaml's declarative
+    # quality bar (value-tier membership = permission to underwrite; measured first census:
+    # 168 mintable, 520 honestly refused). Enrichments land as preconditioned TABVLARIVS
+    # tickets — never a direct board write. Batch-capped 25/run through the single-writer
+    # queue. Gauge-only until the apply valve arms: review one dry-run census first.
+    steps:
+      - command: "python3 scripts/work-loan-backfill.py"
+        args_when:
+          # DISARMED by default (unlike jules-supply): enrichment rewrites 700+ real rows'
+          # loan fields, so the first armed run follows a reviewed dry-run census, then
+          # LIMEN_WORK_LOAN_BACKFILL_APPLY=1 makes it autonomous.
+          - env: LIMEN_WORK_LOAN_BACKFILL_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "loan-less board tasks exist and minting is unarmed or refused — review the census in logs/work-loan-backfill.jsonl; membership in docs/repo-predicates.yaml is the permission to underwrite a repo"
+  jules-dispatch:
+    section: "0z5"
+    title: "jules dispatch valve rung — the beat's governed path to the serial engine"
+    gate: LIMEN_JULES_DISPATCH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # The 2026-07-19 -> 08-06 starvation's wiring cut: the only `limen dispatch --live` call
+    # sites (metabolize.sh 4b, saturate.sh) had no scheduler, so zero autonomous dispatch
+    # existed. This rung is the declared caller: dispatch-beat.py gates SOLELY on
+    # `autonomy-governor.py dispatch-ok` (logs/autonomy-policy.json is the single valve —
+    # LIMEN_DISPATCH stays the his-hand lever for MANUAL metabolize/saturate runs), throttles
+    # itself to one pass per LIMEN_DISPATCH_BEAT_MIN_SECS, and runs the serial engine for
+    # jules only (remote lane, no local load on the 16GB host). Volume is bounded three
+    # deep: per-pass limit, per_agent.jules=100 board cap, and the throughput governor's
+    # landed-evidence clamp. Cite: docs/plans/2026-08-06-jules-flywheel.md (issue #1874).
+    timeout:
+      env: LIMEN_DISPATCH_BEAT_TIMEOUT
+      default: 900
+    steps:
+      - command: "python3 scripts/dispatch-beat.py"
+        severity: advisory
+        armed_valve_type: deliverable
+        escalation: "the jules dispatch rung failed — read its tail in the beat log; the valve is logs/autonomy-policy.json via autonomy-governor.py dispatch-ok, the engine is `python3 -m limen dispatch --agent jules --live`"
+
+  capacity-fill-refresh:
+    section: "0z6"
+    title: "capacity-fill receipt refresh — the down-lane gate reads live data, not fossils"
+    gate: LIMEN_CAPACITY_FILL_REFRESH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # docs/capacity-fill.md sat frozen at its 2026-07-10 generation ("jules exhausted
+    # 109/100") for 27 days because nothing regenerated it — and stale depletion receipts
+    # are what the down-lane gating reads. Regenerate on the metabolize pass.
+    cadence:
+      env: LIMEN_BEAT_CAPACITY_FILL
+      default: 4
+    timeout:
+      env: LIMEN_CAPACITY_FILL_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/capacity-fill-ledger.py --write"
+        severity: silent
+        escalation: "capacity-fill ledger refresh failed — docs/capacity-fill.md goes stale and lane gating reads fossil depletion data"
+
+  dispatch-health-refresh:
+    section: "0z7"
+    title: "dispatch-health receipt refresh — the health receipt tracks the live loop"
+    gate: LIMEN_DISPATCH_HEALTH_REFRESH
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # Sibling of capacity-fill-refresh: docs/dispatch-health.md froze 2026-07-10 with
+    # "jules in async skipped down lanes" and was never regenerated.
+    cadence:
+      env: LIMEN_BEAT_DISPATCH_HEALTH
+      default: 8
+    timeout:
+      env: LIMEN_DISPATCH_HEALTH_TIMEOUT
+      default: 300
+    steps:
+      - command: "python3 scripts/dispatch-health.py --write"
+        severity: silent
+        escalation: "dispatch-health receipt refresh failed — docs/dispatch-health.md goes stale"
+
+  funnel-integrity:
+    section: 0z3
+    title: "application funnel honesty — the funnel claims nothing it cannot evidence"
+    gate: LIMEN_FUNNEL_INTEGRITY
+    default: "1"
+    source: [metabolize]
+    owner: mail
+    # On 2026-08-04/05 the funnel recorded SIMULATED job applications as provider-CONFIRMED ones
+    # against six real employers, and separately drove an agent through a 27h32m retry loop whose
+    # exit condition was unreachable by construction. NEITHER announced itself: every stage exited
+    # 0, and the fabricated receipts were schema-valid DeliveryReceiptV1 rows — the only tell was
+    # that the "evidence" was the entry's own id and the provider response said "simulated".
+    #
+    # A defect that survives schema validation and exits 0 is not caught by the next reader being
+    # careful. The predicate asserts it every beat instead. Read-only and idempotent; the root
+    # cause it watches hardest is a live application-pipeline checkout parked behind main, which is
+    # where every fabricated record in that incident came from.
+    # Full record: docs/plans/2026-08-05-application-funnel-healing.md
+    steps:
+      - command: "bash scripts/funnel-integrity.sh"
+        severity: advisory
+        escalation: "Application funnel integrity FAILED — a confirmation without provider evidence, corrupt funnel state, or an application-pipeline checkout parked off main (the 2026-08-05 fabrication cause). Run `bash scripts/funnel-integrity.sh` bare for the failing invariant"
+
+  decorum:
+    section: "heartbeat"
+    title: "professionalization keeper — no public surface is currently egg-faced"
+    gate: LIMEN_DECORUM
+    default: "1"
+    source: [heartbeat]
+    owner: decorum
+    cadence:
+      env: LIMEN_BEAT_DECORUM
+      default: 6
+    timeout:
+      env: LIMEN_DECORUM_TIMEOUT
+      default: 120
+    # DECORVM federates the estate's six quality organs (experience/visual/seo/countenance/links/moat)
+    # into ONE verdict at logs/decorum.json + logs/decorum.html. Departments + the severity floor are
+    # declared data in institutio/governance/decorum-surfaces.yaml (derive-never-pin); an unmeasured
+    # department is skipped fail-open, never failed. Ships default-on but READ-ONLY — the effector that
+    # files tasks/issues from findings is a separate gate (LIMEN_DECORUM_APPLY), dry-run until armed.
+    steps:
+      - command: "python3 scripts/decorum-keeper.py --sweep"
+        args_when:
+          - env: LIMEN_DECORUM_APPLY
+            default: "0"
+            equals: "1"
+            args: ["--apply"]
+            armed_valve_type: deliverable
+        severity: advisory
+        escalation: "DECORVM found a public egg-face — see logs/decorum.json (blocking finding at/above floor 'high')"
+    omega_eligible:
+      - label: "keeper wiring self-test (registry + schema valid)"
+        rung_id: sensor.decorum.self-test
+        tier: det
+        command: "python3 scripts/decorum-keeper.py --doctor"
+        semantic_inputs:
+          - {path: scripts/decorum-keeper.py, normalization: raw}
+
+  ideal-forms-distance:
+    section: "heartbeat"
+    title: "ideal-forms distance — every named ideal's distance is re-derived, not remembered"
+    gate: LIMEN_IDEAL_FORMS
+    default: "1"
+    source: [heartbeat]
+    owner: governance
+    cadence:
+      env: LIMEN_BEAT_IDEAL_FORMS
+      default: 12
+    timeout:
+      env: LIMEN_IDEAL_FORMS_TIMEOUT
+      default: 300
+    # The heartbeat half of IF-LEDGER-OF-IDEALS. pr-gate already runs check-ideal-forms on any
+    # PR that touches the registry or the ledger — but the distances measure the SYSTEM, not the
+    # diff, so they rot without anyone editing either file. That is precisely how the ledger sat
+    # 34 days with its own entry reading "not yet wired into a verification/heartbeat lane" while
+    # IF-LIVE-TREE-COHERENCE drifted 5x underneath it.
+    #
+    # --measure (not the bare gate) is deliberate: it additionally runs the `host` and `network`
+    # probes that pr-gate cannot, which is the entire reason a beat rung exists. The live-checkout
+    # probe is one of them, so the beat is where a frozen fleet checkout finally becomes audible —
+    # the six-day freeze of 2026-07-23 was invisible because sync-release.sh fails OPEN into a log
+    # nothing reads.
+    #
+    # Advisory, never fatal: a distance that remains is the normal state of an ideal (that is what
+    # makes the ledger liquid rather than a checkbox). Only registry INCOHERENCE is drift, and
+    # pr-gate already fails on that.
+    steps:
+      - command: "python3 scripts/check-ideal-forms.py --measure"
+        severity: advisory
+        escalation: "an ideal-form distance changed or a probe went unmeasurable (above) — re-derive with `python3 scripts/check-ideal-forms.py --measure`; do NOT hand-edit a Distance: line in docs/IDEAL-FORMS-LEDGER.md"
+
+  hot-cache:
+    section: "heartbeat"
+    title: "hot flash cache — the machine is disposable (every byte re-summonable from upstream)"
+    gate: LIMEN_HOTCACHE_CHECK
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_HOTCACHE
+      default: 24
+    timeout:
+      env: LIMEN_HOTCACHE_TIMEOUT
+      default: 300
+    # The Meeseeks law's court (plan 2026-07-30): summoned surfaces must return their result to
+    # source and self-erase, so the local floor is only ever a hot flash cache. The predicate walks
+    # five rungs — spine (cartridge-connected), capture (chezmoi-drift), creds validity, toolchain
+    # summonability (mise.toml), and every-clone-pushed — and lists each un-summonable state with
+    # its owner. Advisory, never fatal: a red names debt (e.g. domus-genoma#359), it does not
+    # break the beat. Daily cadence — disposability moves at human speed, not per-beat.
+    steps:
+      - command: "bash scripts/verify-hot-cache.sh"
+        severity: advisory
+        escalation: "machine is NOT disposable — un-summonable state above (each red names its owner/fix); run bash scripts/verify-hot-cache.sh"
+
+  residue-census:
+    section: "heartbeat"
+    title: "residue census — what this machine holds that it should be able to re-summon"
+    gate: LIMEN_RESIDUE_CENSUS
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_RESIDUE_CENSUS
+      default: 24
+    timeout:
+      env: LIMEN_RESIDUE_CENSUS_TIMEOUT
+      default: 180
+    # The other half of the Meeseeks law. The hot-cache court (above) is honest about its own blind
+    # spot — its R5 excludes worktrees and quarantines "by marker … never silent", because those
+    # have their own reap organs — which left nothing measuring whether those organs KEEP UP. They
+    # did not: 10 GiB of .agent-runtime whose reaper is written and wired to nothing, a 571 MiB
+    # append-only ledger snapshot with no reaper at all, 1,616 remote branches behind an acceptance
+    # ledger never once written to. This counts the pressure and names the owner of each class.
+    # READ-ONLY: it deletes nothing and arms nothing. Deleting is the reapers' job (human-gated
+    # where destructive); knowing was nobody's, which is why none of it was known.
+    steps:
+      - command: "python3 scripts/residue-census.py"
+        severity: advisory
+        escalation: "residue caps breached — this machine is holding state it should be able to re-summon; each breach names its owner (run python3 scripts/residue-census.py)"
+
+  collaboration-hub-sync:
+    section: "0g9c"
+    title: "collaboration hub — refresh the registered denominator, encrypt new originals, reconcile immutable remote events, and verify custody"
+    gate: LIMEN_COLLABORATION_HUB_SYNC
+    default: "1"
+    source: [heartbeat]
+    owner: continuity
+    cadence:
+      env: LIMEN_BEAT_COLLABORATION_HUB_SYNC
+      default: 48
+    timeout:
+      env: LIMEN_COLLABORATION_HUB_SYNC_TIMEOUT
+      default: 900
+    steps:
+      - command: "bash scripts/collaboration-hub-sync.sh"
+        severity: advisory
+        escalation: "the owner-only collaboration vault did not reach its bounded discover → migrate → encrypted sync → verify fixed point; inspect its private receipt and credential wall without placing paths, keys, or client data in the board"
+
+  diurnal:
+    section: "0h"
+    title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
+    gate: LIMEN_DIURNAL
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: diurnal
+    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
+    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
+    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
+    # due exits before doing any work.
+    cadence:
+      env: LIMEN_BEAT_DIURNAL
+      default: 2
+    timeout:
+      env: LIMEN_DIURNAL_TIMEOUT
+      default: 240
+    steps:
+      - command: "python3 scripts/diurnal.py --phase auto"
+        severity: advisory
+        escalation: "diurnal emission failed — the day has no briefing; check that LIMEN_ROOT resolves to the LIVE organism (a worktree's logs/ is empty and the organ refuses to emit a false 'all quiet') and inspect logs/diurnal/state.json"
+
+  notify-gate:
+    section: "0h1"
+    title: "notify gate — every copy of the notifier on this host gates osascript on the liveness predicate, not just the one in main"
+    gate: LIMEN_NOTIFY_GATE
+    default: "1"
+    source: [heartbeat]
+    owner: diurnal
+    # The cross-tree half of the guard diurnal already carries in-tree. Measured 2026-08-05:
+    # the effector gate shipped at 19:20 and four more "LIMEN · morning — ABSENT" pops landed
+    # after it, because a fix in a versioned file cannot reach the OTHER copies of the notifier
+    # on this host — 13 worktrees plus 7 rotated runtime install trees. A tree-local guard
+    # cannot protect a host-global effector.
+    #
+    # It does not merely count them. The copies split by HOW THEY GET RUN, and that is the
+    # whole finding: `~/.local/share/limen/current` is executed unattended by launchd every
+    # 300s and was itself ungated with a 5-day-stale symlink, while the rest are inert unless
+    # a test runs inside them. A scheduled executor gets its own stanza and the exact rotation
+    # command; dormant copies ratchet against notify-ungated-baseline.txt so the count can only
+    # shrink. Cheap: it parses ~23 small files.
+    cadence:
+      env: LIMEN_BEAT_NOTIFY_GATE
+      default: 8
+    timeout:
+      env: LIMEN_NOTIFY_GATE_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/check-notify-gate.py"
+        severity: advisory
+        escalation: "a notifier copy reaches osascript ungated in a way the baseline does not already own — either the launchd-run install (~/.local/share/limen/current, which speaks on a timer and is cleared by `domus-limen-runtime install --sha <merged-main-sha>`) or a NEW copy that is not in institutio/governance/notify-ungated-baseline.txt. For a new one: rebase it onto origin/main so it inherits the gate, or reap it via python3 scripts/reclaim-worktrees.py; if it is legitimately known, record it with check-notify-gate.py --update. Gate-run tests cannot reach osascript regardless — run-pytest-hermetic.sh exports LIMEN_NOTIFY=0, which every copy on this host honors"

@@ -109,11 +109,13 @@ def test_targeted_ruleset_and_classic_protection_contract() -> None:
         ["pr-gate"],
     )
 
-    ruleset = module.merge_queue_ruleset_body()
+    ruleset = module.default_ruleset_body()
     assert ruleset["conditions"] == {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}}
     assert ruleset["enforcement"] == "active"
     assert ruleset["bypass_actors"] == []
-    assert [rule["type"] for rule in ruleset["rules"]] == ["pull_request", "merge_queue"]
+    # Queue-free rail (2026-08-06): exactly one rule — the no-bypass PR requirement. A reintroduced
+    # merge_queue rule is a contract violation, not a config choice.
+    assert [rule["type"] for rule in ruleset["rules"]] == ["pull_request"]
     assert ruleset["rules"][0]["parameters"] == {
         "allowed_merge_methods": ["squash"],
         "dismiss_stale_reviews_on_push": False,
@@ -122,16 +124,12 @@ def test_targeted_ruleset_and_classic_protection_contract() -> None:
         "required_approving_review_count": 0,
         "required_review_thread_resolution": False,
     }
-    assert ruleset["rules"][1]["parameters"] == {
-        "check_response_timeout_minutes": 60,
-        "grouping_strategy": "HEADGREEN",
-        "max_entries_to_build": 4,
-        "max_entries_to_merge": 1,
-        "merge_method": "SQUASH",
-        "min_entries_to_merge": 1,
-        "min_entries_to_merge_wait_minutes": 0,
-    }
     assert module._ruleset_contract_holds(ruleset)
+    requeued = {
+        **ruleset,
+        "rules": ruleset["rules"] + [{"type": "merge_queue", "parameters": {}}],
+    }
+    assert not module._ruleset_contract_holds(requeued)
     bypassed = {**ruleset, "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole"}]}
     assert not module._ruleset_contract_holds(bypassed)
 
@@ -274,7 +272,7 @@ def test_actions_permissions_are_explicit_and_verified() -> None:
 def test_ruleset_apply_is_idempotent_and_targeted() -> None:
     module = load_setup_module()
     success = SimpleNamespace(returncode=0, stdout='{"id": 731}', stderr="")
-    observed = {**module.merge_queue_ruleset_body(), "id": 731}
+    observed = {**module.default_ruleset_body(), "id": 731}
 
     for existing, method, path in (
         (
@@ -290,11 +288,11 @@ def test_ruleset_apply_is_idempotent_and_targeted() -> None:
             mock.patch.object(module, "gh_input", return_value=success) as api,
             contextlib.redirect_stdout(io.StringIO()),
         ):
-            assert module.ensure_merge_queue("organvm/limen") is True
-        api.assert_called_once_with(method, path, module.merge_queue_ruleset_body())
+            assert module.ensure_default_ruleset("organvm/limen") is True
+        api.assert_called_once_with(method, path, module.default_ruleset_body())
 
     with mock.patch.object(module, "gh_input") as api:
-        assert module.ensure_merge_queue("organvm/another-repo") is True
+        assert module.ensure_default_ruleset("organvm/another-repo") is True
         api.assert_not_called()
 
 
@@ -311,7 +309,7 @@ def test_dry_run_never_calls_mutating_seams() -> None:
         mock.patch.object(module, "gh") as gh_call,
         mock.patch.object(module, "gh_input") as gh_input_call,
         mock.patch.object(module, "ensure_actions_pr_permissions") as actions_call,
-        mock.patch.object(module, "ensure_merge_queue") as queue_call,
+        mock.patch.object(module, "ensure_default_ruleset") as ruleset_call,
         mock.patch.object(module, "ensure_copilot_review") as copilot_call,
         contextlib.redirect_stdout(io.StringIO()),
     ):
@@ -319,7 +317,7 @@ def test_dry_run_never_calls_mutating_seams() -> None:
     gh_call.assert_not_called()
     gh_input_call.assert_not_called()
     actions_call.assert_not_called()
-    queue_call.assert_not_called()
+    ruleset_call.assert_not_called()
     copilot_call.assert_not_called()
 
 
@@ -338,7 +336,7 @@ def test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations() -> None:
         mock.patch.object(module, "gh") as weaker_repo_mutation,
         mock.patch.object(module, "gh_input") as weaker_classic_mutation,
         mock.patch.object(module, "ensure_actions_pr_permissions", return_value=True),
-        mock.patch.object(module, "ensure_merge_queue", side_effect=queue),
+        mock.patch.object(module, "ensure_default_ruleset", side_effect=queue),
         mock.patch.object(module, "ensure_copilot_review", return_value=True),
         contextlib.redirect_stdout(io.StringIO()),
         contextlib.redirect_stderr(io.StringIO()),

@@ -28,6 +28,12 @@ parameters:
     self_update: none
     owner: vigilia
     note: "When 1 (default), autonomy-governor.current_mode() auto-clears an AUTONOMY_PAUSED 'integration drain' marker once its owner: branch has a MERGED PR (fail-closed via gh). Prevents the 2026-07-10 21h respawn-spin freeze (owner codex/dynamic-routing-closeout-20260710, PR #921 merged, marker never cleaned up). 0 = never auto-clear (a marker outlives its owner PR)."
+  LIMEN_AUTONOMY_WINDOW_RESTORE:
+    default: "1"
+    env: LIMEN_AUTONOMY_WINDOW_RESTORE
+    self_update: none
+    owner: vigilia
+    note: "Auto-restore switch for finite maintenance windows: when a window's declared resume predicate passes (recorded at logs/autonomy-maintenance-resume.json), the governor flips the policy observe->dispatch with a receipt (logs/autonomy-policy-restore.json) instead of waiting on a manual policy edit. 0 restores the old manual-restore contract. Founded on the 2026-07-21->08-06 incident: all resume clauses passing since 08-05 while the estate sat at observe with zero dispatch — satisfying the predicate cleared the blocker but nothing rewrote mode. Indefinite observe (no window), `restore: manual` windows, and the pause marker are never overridden."
   LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS:
     default: 300
     env: LIMEN_AUTONOMY_CLAUSE_RECHECK_SECS
@@ -2550,6 +2556,12 @@ parameters:
     self_update: none
     owner: limen-daemon
     note: "Break-glass for scripts/hooks/worktree-commit-guard.sh: 1 disables the PreToolUse deny of git commit in the live checkout on main. Mirrors the LIMEN_ALLOW_OPUS_FANOUT escape-hatch precedent; leave 0 — the deny is the charter's no-direct-main-commit rule made mechanical."
+  LIMEN_ALLOW_PR_POLL:
+    default: "0"
+    env: LIMEN_ALLOW_PR_POLL
+    self_update: none
+    owner: limen-daemon
+    note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables the PreToolUse deny of hand-rolled PR/CI poll loops (loop + gh state probe + sleep in one command). Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0 — the deny is the charter's sanctioned-waiter rule (scripts/await-pr.sh; 2026-07-15 endless-watcher incident) made mechanical, for every lane whose hooks run the guard."
   LIMEN_OUTBOUND_REGISTRY:
     default: "institutio/governance/outbound-effectors.yaml"
     env: LIMEN_OUTBOUND_REGISTRY
@@ -2647,11 +2659,47 @@ parameters:
     owner: censor
     note: "Cadence (every N beats) of the insight-cross-vendor sensor — a daily-ish refresh matches the insights-report tempo the packets feed; the scan walks large vendor session stores (codex logs sqlite is GiB-scale), so it stays off the hot path."
   LIMEN_CROSS_VENDOR_TIMEOUT:
-    default: 600
+    default: 900
     env: LIMEN_CROSS_VENDOR_TIMEOUT
     self_update: none
     owner: censor
-    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: seven adapters over multi-GiB sqlite/jsonl stores with a 30-day window; 600 covers the observed manual-run envelope with headroom. The runner kills the command group on overrun and the beat continues fail-open."
+    note: "Per-run timeout (seconds) for the insight-cross-vendor sensor: eleven adapters over multi-GiB sqlite/jsonl stores with a 30-day window, PLUS the index --all and --health steps added 2026-08-06 (three ordered steps share this envelope). 900 covers the observed manual-run envelope with headroom; if the rung SIGKILLs (124), shrink --window-days rather than growing this. The runner kills the command group on overrun and the beat continues fail-open."
+  LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS:
+    default: 3
+    env: LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check packet_stale: a vendor packet whose run_at_iso is older than this many days flags its lane (the frozen-packets incident — every packet sat at 2026-07-22 for two weeks before anything noticed). Read by scripts/insight-cross-vendor-ingest.py --health."
+  LIMEN_CROSS_VENDOR_RESET_DROP_PCT:
+    default: 50
+    env: LIMEN_CROSS_VENDOR_RESET_DROP_PCT
+    self_update: none
+    owner: censor
+    note: "Health check store_reset: flag a lane whose sessions_seen fell by at least this percent vs the recent ring-buffer max (state/health-state.json). The opencode wipe (store reset ~2026-08-03 to a single 1-second session) was only discovered by a manual sweep."
+  LIMEN_CROSS_VENDOR_RESET_MIN_BASE:
+    default: 20
+    env: LIMEN_CROSS_VENDOR_RESET_MIN_BASE
+    self_update: none
+    owner: censor
+    note: "Health check store_reset noise floor: the drop check only arms when the recent max sessions_seen is at least this — a 3-session lane halving is noise, a 40-session lane halving is a reset."
+  LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS:
+    default: 14
+    env: LIMEN_CROSS_VENDOR_MIN_HORIZON_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check retention_horizon: flag a non-empty lane whose oldest locally-surviving record (packet oldest_record_iso) is younger than this many days — the store prunes faster than review happens (antigravity blobs prune at ~10d; 59% of one 30-day window was already structural-only before anything measured it)."
+  LIMEN_VENDOR_CAPSULE_CHURN_MAX:
+    default: 3
+    env: LIMEN_VENDOR_CAPSULE_CHURN_MAX
+    self_update: none
+    owner: censor
+    note: "Health check capsule_churn: flag a lane whose index meta.capsule_churn.mean_files_per_session exceeds this — resume-fragmentation (codex live mean 4.38, max 35 rollout files for one logical session) makes transcripts expensive to reassemble and signals sessions dying/resuming pathologically."
+  LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS:
+    default: 7
+    env: LIMEN_VENDOR_NARRATIVE_MAX_LAG_DAYS
+    self_update: none
+    owner: censor
+    note: "Health check index_ahead_of_narrative: flag a lane whose index.json is newer than its narrative.json by more than this many days (or never narrated) — the lane is being measured on the beat but never read, which is how a 25-hour autonomous mission and a 21-day-dark dispatch estate went unreviewed."
 
   LIMEN_JULES_QUOTA:
     default: "1"
@@ -2701,6 +2749,54 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Beat gate for the jules-supply sensor (sensors.yaml jules-supply): dispatchable-supply-vs-floor gauge; the armed valve LIMEN_JULES_SUPPLY_APPLY owns minting."
+  LIMEN_OWNER_ROUTE_DRAIN:
+    default: "1"
+    env: LIMEN_OWNER_ROUTE_DRAIN
+    self_update: none
+    owner: arms-agents
+    note: "Drain-rung gate for owner-route-drain.py (the 308-blocked-jules-PR debt organ, GITVS-UNCAPPED-PR-DEBT-0715). Classification always runs when gated on; mutations need the separate apply valve."
+  LIMEN_OWNER_ROUTE_DRAIN_APPLY:
+    default: "0"
+    env: LIMEN_OWNER_ROUTE_DRAIN_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for owner-route-drain mutations (merge/supersede/close). Default 0: classification + receipts only, until a dry-run day's verdict distribution has been reviewed. A pause marker forces classification-only even when armed."
+  LIMEN_OWNER_ROUTE_LIMIT:
+    default: 15
+    env: LIMEN_OWNER_ROUTE_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Verdicts per owner-route-drain run (rotating cursor over the jules PR cohort)."
+  LIMEN_OWNER_ROUTE_MERGE_LIMIT:
+    default: 5
+    env: LIMEN_OWNER_ROUTE_MERGE_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Merges per owner-route-drain run — each one still individually gated on merge-policy.sh exit 0 with the exact head pinned."
+  LIMEN_OWNER_ROUTE_MAX_AGE_DAYS:
+    default: 45
+    env: LIMEN_OWNER_ROUTE_MAX_AGE_DAYS
+    self_update: none
+    owner: arms-agents
+    note: "Age horizon past which a red-CI jules PR with no surviving value claim is closed (with the reason as a comment) instead of routed to heal."
+  LIMEN_JULES_PR_AUTHOR:
+    default: "app/google-labs-jules"
+    env: LIMEN_JULES_PR_AUTHOR
+    self_update: none
+    owner: arms-agents
+    note: "GitHub author identity of vendor-authored jules PRs, used by owner-route-drain's cohort enumeration."
+  LIMEN_JULES_LAND_LIMIT:
+    default: 5
+    env: LIMEN_JULES_LAND_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "jules-land landings per drain beat (raised 3->5 for the 100/day throughput program: ~96 drain runs/day x 5 = 480/day landing headroom)."
+  LIMEN_MERGE_SCAN:
+    default: 50
+    env: LIMEN_MERGE_SCAN
+    self_update: none
+    owner: arms-agents
+    note: "merge-drain rotating assessment window per run (raised 30->50 so the jules cohort gets a same-day revisit at 100/day dispatch)."
   LIMEN_LANE_THROUGHPUT:
     default: "1"
     env: LIMEN_LANE_THROUGHPUT
@@ -2749,6 +2845,7 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Throttled-mode multiplier: cap = max(bootstrap, ramp_mult x landed_in_window), capped at the daily target — landing more work opens more dispatch."
+<<<<<<< HEAD
   LIMEN_OWNER_ROUTE_DRAIN_APPLY:
     default: "0"
     env: LIMEN_OWNER_ROUTE_DRAIN_APPLY
@@ -2767,6 +2864,104 @@ parameters:
     self_update: none
     owner: arms-agents
     note: "Timeout for one jules-flywheel predicate run (board load + one gh search + snapshot write)."
+=======
+  LIMEN_WORK_LOAN_BACKFILL:
+    default: "1"
+    env: LIMEN_WORK_LOAN_BACKFILL
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the work-loan-backfill sensor: loan-less open tasks become dispatchable packets under the docs/repo-predicates.yaml quality bar; refusals counted, never silent."
+  LIMEN_WORK_LOAN_BACKFILL_APPLY:
+    default: "0"
+    env: LIMEN_WORK_LOAN_BACKFILL_APPLY
+    self_update: none
+    owner: arms-agents
+    note: "Armed valve for backfill minting. Default 0 — enrichment rewrites hundreds of real rows' loan fields, so the first armed run follows a reviewed dry-run census (first census 2026-08-06: 168 mintable / 520 refused)."
+  LIMEN_WORK_LOAN_BACKFILL_LIMIT:
+    default: 25
+    env: LIMEN_WORK_LOAN_BACKFILL_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Enrichment tickets per backfill run — the jules-supply per_run_cap, bounding tasks.yaml churn through the tabularius single-writer queue."
+  LIMEN_WORK_LOAN_BACKFILL_RECEIPTS:
+    default: ""
+    env: LIMEN_WORK_LOAN_BACKFILL_RECEIPTS
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the backfill receipt ledger (default logs/work-loan-backfill.jsonl at LIMEN_ROOT)."
+  LIMEN_REPO_PREDICATES:
+    default: ""
+    env: LIMEN_REPO_PREDICATES
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the repo-predicates registry (default docs/repo-predicates.yaml at LIMEN_ROOT) — the work-loan backfill's declarative quality bar."
+  LIMEN_JULES_DISPATCH:
+    default: "1"
+    env: LIMEN_JULES_DISPATCH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the jules-dispatch sensor (sensors.yaml jules-dispatch): the governed valve rung to the serial dispatch engine. The rung additionally self-gates on autonomy-governor.py dispatch-ok — logs/autonomy-policy.json is the single autonomous valve; LIMEN_DISPATCH stays the manual metabolize/saturate lever."
+  LIMEN_JULES_DISPATCH_LIMIT:
+    default: 10
+    env: LIMEN_JULES_DISPATCH_LIMIT
+    self_update: none
+    owner: arms-agents
+    note: "Tasks per dispatch-beat pass (serial engine, jules only). ~48 throttled passes/day x this, hard-capped by per_agent.jules=100 and the throughput governor's landed-evidence clamp — the quota drains across the day instead of bursting."
+  LIMEN_DISPATCH_BEAT_MIN_SECS:
+    default: 1800
+    env: LIMEN_DISPATCH_BEAT_MIN_SECS
+    self_update: none
+    owner: arms-agents
+    note: "Wall-clock throttle between dispatch-beat passes — bounds the rung at <=48 passes/day regardless of the adaptive beat tempo (MIN=120s beats would otherwise over-fire it)."
+  LIMEN_DISPATCH_BEAT_TIMEOUT:
+    default: 900
+    env: LIMEN_DISPATCH_BEAT_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Process-group timeout for one dispatch-beat engine run; a hung provider call is terminated and the rung exits 0 (never a red beat)."
+  LIMEN_METABOLIZE_SENSORS_SECS:
+    default: 3600
+    env: LIMEN_METABOLIZE_SENSORS_SECS
+    self_update: none
+    owner: vigilia
+    note: "Wall-clock throttle for the heartbeat's metabolize sensor pass (beat-sensors.py --run --source metabolize) — the live runner for the source:[metabolize] registry sensors that lost their scheduler when metabolize.sh's callers went away. Hourly default: the old 4-hourly cron's spirit at beat granularity."
+  LIMEN_CAPACITY_FILL_REFRESH:
+    default: "1"
+    env: LIMEN_CAPACITY_FILL_REFRESH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the capacity-fill-refresh sensor: regenerates docs/capacity-fill.md so down-lane gating reads live depletion data, not the 2026-07-10 fossil that kept jules marked exhausted for 27 days."
+  LIMEN_BEAT_CAPACITY_FILL:
+    default: 4
+    env: LIMEN_BEAT_CAPACITY_FILL
+    self_update: none
+    owner: arms-agents
+    note: "Cadence (metabolize passes) for capacity-fill-refresh."
+  LIMEN_CAPACITY_FILL_TIMEOUT:
+    default: 300
+    env: LIMEN_CAPACITY_FILL_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one capacity-fill-ledger --write run."
+  LIMEN_DISPATCH_HEALTH_REFRESH:
+    default: "1"
+    env: LIMEN_DISPATCH_HEALTH_REFRESH
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the dispatch-health-refresh sensor: regenerates docs/dispatch-health.md (frozen 2026-07-10 with jules in the skipped down-lanes)."
+  LIMEN_BEAT_DISPATCH_HEALTH:
+    default: 8
+    env: LIMEN_BEAT_DISPATCH_HEALTH
+    self_update: none
+    owner: arms-agents
+    note: "Cadence (metabolize passes) for dispatch-health-refresh."
+  LIMEN_DISPATCH_HEALTH_TIMEOUT:
+    default: 300
+    env: LIMEN_DISPATCH_HEALTH_TIMEOUT
+    self_update: none
+    owner: arms-agents
+    note: "Timeout for one dispatch-health --write run."
+>>>>>>> origin/main
   LIMEN_FUNNEL_INTEGRITY:
     default: "1"
     env: LIMEN_FUNNEL_INTEGRITY
