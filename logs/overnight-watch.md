@@ -1,12 +1,12 @@
 # Overnight Watch
 
-- Status: `ok`
-- Updated: `2026-08-10T22:33:15+00:00`
-- Log age: `6` seconds
+- Status: `alert`
+- Updated: `2026-08-17T19:00:18+00:00`
+- Log age: `440` seconds
 - Launchd: `active`
-- Latest tick: `tick emitted: 2026-08-10T22:30:08+00:00 total=3111 open=829 spent=8/600`
+- Latest tick: `tick emitted: 2026-08-17T18:08:25+00:00 total=3119 open=837 spent=8/600`
 - Latest async: `None`
-- Stale tick samples: `0`
+- Stale tick samples: `9`
 - Active workers: `0`
 - Heartbeat child processes: `1`
 
@@ -15,21 +15,24 @@
 - Launched: `0`; harvested: `0`; reaped: `0`.
 - Done: `0`; failed: `0`; no-op: `0`; timed out: `0`.
 - Stale handoff: `false`.
-- Gate action: `continue_direct_product_work` (exit `0`).
-- Dispatch allowed: `true`.
-- Lane switch: `not_requested`; owner packet: `none`; tickets: `0`.
-- Lane blocker: `none`.
-- Next command: `python3 scripts/product-ledger.py --refresh --redacted-summary`.
+- Gate action: `switch_to_packetization` (exit `10`).
+- Dispatch allowed: `false`.
+- Lane switch: `blocked`; owner packet: `AW-VALUE-REPOS-77d88c87bfb2`; tickets: `1`.
+- Lane blocker: `overnight-owner-conduct-unavailable`.
+- Next command: `PYTHONPATH=cli/src limen conduct capabilities`.
 
 ## Gate Checks
 
 - Handoff refresh: `0`; check: `0`.
-- Value gate: `0`; action: `continue_direct_product_work`.
-- Dispatch control: dispatch allowed.
-- Selected owner: `none`.
+- Value gate: `10`; action: `switch_to_packetization`.
+- Dispatch control: authenticated conduct is unavailable for exact owner packet AW-VALUE-REPOS-77d88c87bfb2: conduct broker is not configured; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN (LIMEN_CONDUCT_STATE is an explicit local test adapter).
+- Selected owner: `organvm/limen`.
 
 ## Throughput
 
-- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0.0`).
+- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0`).
 - Below floor: `false`; suppressed: `no`.
-  - child `84915` `S` `02-22:41:20` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
+  - child `1297` `S` `04:52:23` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
+
+## WATCH_ALERT
+- `overnight-lane-switch-blocked`: blocker=overnight-owner-conduct-unavailable owner=organvm/limen reason=authenticated conduct is unavailable for exact owner packet AW-VALUE-REPOS-77d88c87bfb2: conduct broker is not configured; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN (LIMEN_CONDUCT_STATE is an explicit local test adapter)
