@@ -1,12 +1,12 @@
 # Overnight Watch
 
 - Status: `alert`
-- Updated: `2026-08-17T19:12:10+00:00`
-- Log age: `42` seconds
+- Updated: `2026-08-17T19:43:03+00:00`
+- Log age: `38` seconds
 - Launchd: `active`
 - Latest tick: `tick emitted: 2026-08-17T18:08:25+00:00 total=3119 open=837 spent=8/600`
 - Latest async: `None`
-- Stale tick samples: `11`
+- Stale tick samples: `16`
 - Active workers: `0`
 - Heartbeat child processes: `1`
 
@@ -14,25 +14,26 @@
 
 - Launched: `0`; harvested: `0`; reaped: `0`.
 - Done: `0`; failed: `0`; no-op: `0`; timed out: `0`.
-- Stale handoff: `false`.
+- Stale handoff: `true`.
 - Gate action: `switch_to_packetization` (exit `10`).
 - Dispatch allowed: `false`.
-- Lane switch: `blocked`; owner packet: `AW-VALUE-REPOS-77d88c87bfb2`; tickets: `1`.
-- Lane blocker: `overnight-owner-conduct-unavailable`.
-- Next command: `PYTHONPATH=cli/src limen conduct capabilities`.
+- Lane switch: `blocked`; owner packet: `none`; tickets: `0`.
+- Lane blocker: `overnight-handoff-blocked`.
+- Next command: `python3 scripts/handoff-relay.py && python3 scripts/handoff-relay.py --check`.
 
 ## Gate Checks
 
-- Handoff refresh: `1`; check: `0`.
+- Handoff refresh: `1`; check: `1`.
 - Value gate: `10`; action: `switch_to_packetization`.
-- Dispatch control: authenticated conduct is unavailable for exact owner packet AW-VALUE-REPOS-77d88c87bfb2: conduct broker is not configured; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN (LIMEN_CONDUCT_STATE is an explicit local test adapter).
+- Dispatch control: handoff relay is not fresh enough to transfer one owner packet.
 - Selected owner: `organvm/limen`.
 
 ## Throughput
 
 - Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0`).
 - Below floor: `false`; suppressed: `no`.
-  - child `1297` `S` `05:04:15` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
+  - child `1297` `S` `05:35:08` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
 
 ## WATCH_ALERT
-- `overnight-lane-switch-blocked`: blocker=overnight-owner-conduct-unavailable owner=organvm/limen reason=authenticated conduct is unavailable for exact owner packet AW-VALUE-REPOS-77d88c87bfb2: conduct broker is not configured; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN (LIMEN_CONDUCT_STATE is an explicit local test adapter)
+- `handoff-relay-stale`: handoff-relay --check: FAIL — provider headroom stale (108m > 90m)
+- `overnight-lane-switch-blocked`: blocker=overnight-handoff-blocked owner=organvm/limen reason=handoff relay is not fresh enough to transfer one owner packet
