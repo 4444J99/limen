@@ -228,6 +228,16 @@ gates:
     paths: ["institutio/governance/biography.yaml", "scripts/check-biography.py", "scripts/derive-epochs.py", "scripts/corpus_resolve.py"]
     owner: governance
     note: "BIOGRAPHY registry drift — schema, provenance legality (`inferred` is not a provenance), derived rows naming declared epoch_signals, and the rule a deriver may never write a meaning. Store parity only where absence is provable (LIMEN_LIFE_HOST); a CI runner with no ~/Workspace reports unverifiable, never drift. `corpus_resolve.py` is in paths because check F and the deriver both import it: renaming a resolver function crashes this gate, and without that path a scoped run went green while the gate was broken."
+  consulting-phase0:
+    command: "python3 organs/consulting/validate-consulting.py organs/consulting/prospects/bbnc.yaml --quiet && python3 organs/consulting/validate-phase0.py prepare --packet organs/consulting/prospects/bbnc/phase-0/preparation.json --quiet && python3 -m unittest discover -s organs/consulting/tests -p 'test_phase0.py'"
+    paths:
+      - "organs/consulting/prospects/bbnc/**"
+      - "organs/consulting/validate-phase0.py"
+      - "organs/consulting/tests/test_phase0.py"
+    scoped: true
+    tier: cheap
+    owner: consulting
+    note: "BBNC Phase 0 stays public-safe, workshop-ready, and fail-closed without client authority."
   artist-records:
     command: "python3 organs/artist/validate-artist.py --fleet --quiet"
     paths: ["organs/artist/**"]

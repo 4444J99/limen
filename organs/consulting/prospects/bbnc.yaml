@@ -1,0 +1,55 @@
+member:
+  name: "Bristol Bay Native Corporation (BBNC)"
+  context: >
+    Public-source prospect record for an authority-to-outcome platform and a
+    separate BBNC.net public-site rebuild. This record does not assert a client
+    relationship, commission, approval, or access to BBNC systems.
+mandate:
+  description: >
+    Prepare the authority-and-ownership workshop, an unsigned website-modernization
+    charter, and a fail-closed Phase 0 acceptance contract for BBNC review.
+  outcome: >
+    BBNC can decide whether to commission Phase 1 from a complete, bounded packet;
+    no implementation authority exists until BBNC supplies its signed receipt.
+standing:
+  current: "DISCOVERY"
+next_standing: "PROPOSAL"
+human_gates:
+  - "BBNC authorizes the workshop participants and use of the packet"
+  - "BBNC assigns every required governance and delivery owner"
+  - "BBNC and Padavano execute the Phase 0 charter and acceptance terms"
+  - "BBNC supplies an independently verified authority receipt before Phase 1 starts"
+standard:
+  quality_bar: >
+    Public-safe, explicit about non-commissioned status, complete against every
+    Phase 0 exit condition, and blocked from Phase 1 without BBNC-owned evidence.
+  evidence: >
+    organs/consulting/prospects/bbnc/README.md indexes the prepared packet;
+    organs/consulting/validate-phase0.py is its executable authority predicate.
+governance:
+  authority: >
+    BBNC alone owns institutional authority, policy meaning, delegations, product
+    acceptance, accounts, data, release decisions, and permission to proceed.
+  ethics: >
+    Padavano may prepare and deliver engineering work only within a signed scope;
+    the prospect packet grants no authority inside BBNC and contains public data only.
+  reversibility: >
+    All current artifacts are unsigned drafts. They may be revised or withdrawn
+    without changing BBNC systems, accounts, content, or public representations.
+scope:
+  boundary: >
+    Phase 0 preparation only: product boundary, delivery roadmap, acceptance
+    contract, authority-and-ownership workshop, and unsigned modernization charter.
+  exclusions:
+    - "No assertion that BBNC commissioned or approved this work"
+    - "No external send or representation in BBNC's name"
+    - "No contract execution or signature simulation"
+    - "No creation of BBNC repositories, cloud resources, identities, or domains"
+    - "No production, myBBNC, shareholder, employment, voting, or sensitive-data access"
+    - "No legal advice, policy interpretation, or acceptance of institutional risk"
+  changes:
+    - date: "2026-07-21"
+      description: >
+        Created at DISCOVERY from the supplied BBNC Stewardship to BBNC.net
+        alpha-to-omega proposal, with implementation held at its Phase 0 authority gate.
+      approved_by: "Anthony (requesting principal)"
