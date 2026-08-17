@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-10T21:37:38Z",
-  "incident_count": 24,
+  "generated_at": "2026-08-12T08:11:31Z",
+  "incident_count": 23,
   "incidents": [
     {
       "action": "skipped-stash-push",
@@ -126,12 +126,6 @@
       "action": "skipped-unpark",
       "observed_at": "2026-08-09T10:54:35Z",
       "pid": 51552,
-      "root": "/Users/4jp/Workspace/limen"
-    },
-    {
-      "action": "skipped-stash-push",
-      "observed_at": "2026-08-10T12:51:20Z",
-      "pid": 90173,
       "root": "/Users/4jp/Workspace/limen"
     },
     {
