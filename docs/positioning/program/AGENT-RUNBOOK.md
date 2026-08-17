@@ -68,15 +68,17 @@ Translate the leaf’s acceptance condition into the narrowest credible executab
 command bare, and capture its true exit status and output digest. The command may invoke a focused
 test, a tracked evidence validator, a live-state query, or a review-rubric checker; it may not call,
 directly or indirectly, the program’s own `--verify-work` command. `--verify-work` validates the
-durable receipt after the underlying work has passed; it is never the evidence recorded as that
+ durable receipt after the underlying work has passed; it is never the evidence recorded as that
 receipt’s predicate. Add focused probes only when they clarify a failure. Reuse unchanged green
 receipts; do not rerun whole suites for reassurance. For public experience work, verify the rendered
 result in a browser and attach visual evidence. For claims, include source, observation date,
 method, machine-assistance treatment, and limits.
 
 Generate the receipt skeleton, replace every placeholder, and post it as one JSON code block after
-the exact marker shown below. The latest marked comment is authoritative, so a corrected receipt
-supersedes an older one without rewriting history.
+the exact marker shown below. For an ordinary, non-quarantined chain, the latest marked comment is
+authoritative and a corrected receipt supersedes an older one without rewriting history. A chain
+containing a quarantined comment ID remains rejected even when a later corrected receipt is posted;
+its custody must be explicitly recovered before that chain can pass again.
 
 ```bash
 python3 scripts/positioning-program.py --receipt-template <WORK-ID>
@@ -127,8 +129,8 @@ Post the completed `limen.positioning_phase_receipt.v1` JSON receipt after the m
 `"status": "pass"`, the current `exit_gate_sha256`, exactly the program repository and its exact
 head in `observed_heads`, `child_receipts_sha256`, phase-local `remote_state_sha256`,
 `parity_sha256`, the manifest-derived `exit_predicate` in `predicate.command`,
-`predicate.exit_code: 0`, `predicate.output_sha256`, `predicate.observed_at`, and nonempty HTTPS
-`evidence_urls`. Replace only the skeleton’s evidence placeholders with facts from the completed
+`predicate.exit_code: 0`, captured `predicate.output`, command/output/command-plus-output SHA-256
+bindings, `predicate.observed_at`, and nonempty HTTPS `evidence_urls`. Replace only the skeleton’s evidence placeholders with facts from the completed
 phase proof. Then validate it with:
 
 ```bash
