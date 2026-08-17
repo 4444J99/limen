@@ -10,7 +10,7 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Decided — closed PR, work preserved (89) — reapable, awaiting acceptance
+## Decided — closed PR, work preserved (162) — reapable, awaiting acceptance
 
 A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
 GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
@@ -24,24 +24,54 @@ the intention was already decided against. They are reap candidates gated on
 - `codex/claude-permission-preflight-0713` — 2597ad485 fix(claude): preflight unattended permission conflicts
 - `codex/claude-projects-adapter-20260713` — b0c3676ac fix(prompt-corpus): narrow alias target type for mypy
 - `codex/codex-attachments-gap-0713` — c33b9a4f4 fix(prompt): admit exact Codex attachment parents
+- `codex/financial-codex-finish-0704` — 65f20fcb2 limen: add financial obligation action plan
+- `codex/limen-main-trench-20260628` — c5fb867f3 limen: preserve overnight autonomous receipts
+- `codex/network-substrate-healing-20260628` — 5ba52e5d0 capture: autonomic off-disk sync 2026-06-29T10:39:58Z
 - `codex/private-board-bootstrap-cli-20260810` — 7f5512829 fix: enforce worker body limits on actual bytes
 - `codex/progress-universe-0713` — 45a7aa40a docs(cli): document progress ledger command
+- `codex/psp-p00-w02-validator` — 8e20ada9c fix(positioning): bound phase issue recovery
+- `codex/psp-p00-w04-contracts` — e8e5d5bfc docs(positioning): name phase proof predicates
 - `codex/resource-safe-closeout` — d682600e2 limen: format lifecycle pressure tests
 - `deepen/tao-te-ching-ch6-10` — 6bbd51f7b limen: promote organvm/domus-genoma to ranked value tier
 - `discover-carrier-wave-zeitgeist-thesis-value` — fe4f76333 limen: discover corpus-mythicum, promote to ranked tier
+- `discover-cind-and-sol-foundation` — 08e60a1f8 DISCOVER: latent value of organvm/cind-and-sol-foundation
 - `discover-limen-value-2026-06-22` — 7ad100f0c capture: autonomic off-disk sync 2026-06-23T13:19:40Z
 - `docs/diurnal-20260801100329` — e57536b7b docs(diurnal): 2026-08-01 INDEX
 - `docs/diurnal-20260801161410` — ed840b9d8 docs(diurnal): 2026-08-01 INDEX
 - `docs/diurnal-20260802010616` — 65aa62967 docs(diurnal): 2026-08-01 INDEX
 - `docs/diurnal-20260802100422` — 72f04e7f9 docs(diurnal): 2026-08-02 INDEX
+- `docs/diurnal-20260813000917` — 08aef0e88 docs(diurnal): 2026-08-12 INDEX
+- `docs/diurnal-20260815000819` — b0cf837c6 docs(diurnal): 2026-08-14 INDEX
 - `docs/diurnal-first-live-day` — 3c8d8480d docs(diurnal): day one — the organ's first emission against the live body
 - `docs/pr-debt-observation-20260806033359` — 7739086a4 docs(gitvs): record open-PR debt observation (1293 open)
+- `docs/pr-debt-observation-20260812180615` — 25c2c5aa0 docs(gitvs): record open-PR debt observation (1188 open)
+- `docs/pr-debt-observation-20260814134056` — ab9002c11 docs(gitvs): record open-PR debt observation (1205 open)
+- `docs/pr-debt-observation-20260815121016` — d5c2b29e6 docs(gitvs): record open-PR debt observation (1225 open)
 - `docs/reap-acceptance-0709-final-20260709115323` — 00cd21cee docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
 - `docs/reap-acceptance-0709-final2-20260709115636` — cdef65734 docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
+- `docs/session-contention-incident-20260812034533` — 987c86d2b docs(contention): record session-contention incident (22 total)
+- `docs/session-contention-incident-20260812123526` — 7610f9573 docs(contention): record session-contention incident (24 total)
+- `docs/session-contention-incident-20260812180804` — d802bf713 docs(contention): record session-contention incident (25 total)
+- `docs/session-contention-incident-20260812221242` — 196d269e4 docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260813024505` — b2754fce5 docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260813164557` — 0971e7de2 docs(contention): record session-contention incident (28 total)
+- `docs/session-contention-incident-20260813225552` — 2572693f0 docs(contention): record session-contention incident (30 total)
+- `docs/session-contention-incident-20260814002211` — 77239a36c docs(contention): record session-contention incident (32 total)
+- `docs/session-contention-incident-20260814042143` — 0df205fa5 docs(contention): record session-contention incident (34 total)
+- `docs/session-contention-incident-20260814093422` — c91f7770f docs(contention): record session-contention incident (36 total)
+- `docs/session-contention-incident-20260814134213` — ecfc673d0 docs(contention): record session-contention incident (38 total)
+- `docs/session-contention-incident-20260814181017` — 2c838d09b docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260815005925` — 7d23eac8e docs(contention): record session-contention incident (29 total)
+- `docs/session-contention-incident-20260815033009` — e11869292 docs(contention): record session-contention incident (32 total)
+- `docs/session-contention-incident-20260815075714` — f9d7c9989 docs(contention): record session-contention incident (36 total)
+- `docs/session-contention-incident-20260815121136` — bb86b65cd docs(contention): record session-contention incident (41 total)
+- `docs/session-contention-incident-20260815164503` — 1f6b4d764 docs(contention): record session-contention incident (47 total)
+- `docs/session-contention-incident-20260815203149` — 61781ab43 docs(contention): record session-contention incident (54 total)
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c35 feat(studium): author metamorphoses books 2 and 3 arcs
 - `feat/board-consumer-custody-routing` — 6b8354c11 feat(board): route every board reader through custody, and make missing custody unswallowable
 - `feat/danse-screendance-leaf-20260802` — 911410ba4 test(danse): avoid secret-like fixture flow
 - `feat/hospes-podcast-os-audit` — 4523e8db4 feat(hospes): register organvm/hospes as value repo, positioning seed awaiting_publish
+- `feat/mail-story-mining-20260706` — d76726f37 feat: complete mail story mining outputs
 - `feat/studium-deepen-bhagavad-gita` — b79d0fae1 studium: deepen bhagavad-gita — chapters 2-4 (3 arcs)
 - `feat/studium-deepen-mahabharata-books-5-8` — fd8dbae61 studium: deepen mahabharata — parvas 5-8 (Udyoga, Bhishma, Drona, Karna)
 - `feat/studium-film-beowulf` — 799a27f9d limen: studium-film-tanakh done — existing companion verified on origin/main (PR #116)
@@ -50,6 +80,7 @@ the intention was already decided against. They are reap candidates gated on
 - `feat/studium-film-tanakh` — d8c703e99 feat: studium-film-tanakh (covenant/law/exile companion)
 - `feat/vltima-organ-engine` — fe3e5eb40 fix(ci): clear ruff E702/E703 in test_sync_reclaim.py — unjams the merge backlog
 - `feat/walls-auto-regen` — 990a39da1 feat(heartbeat): auto-regenerate the credential + his-hand Walls every 12 beats
+- `feature/ORG-artist-organ-face-0628` — a99db3a6c fix: add missing pydantic dep to auto-scale CI workflow
 - `feature/tale-of-genji-chapters-2-5` — 50a31de42 studium: author Tale of Genji chapters 2-5
 - `fix-1565-tighten-types` — 0f34299d1 Tighten types in organvm/limen
 - `fix-types-1565-clean` — 62cb5d01a Fix models.py arg types
@@ -74,7 +105,22 @@ the intention was already decided against. They are reap candidates gated on
 - `heal/micro-tato-audience-v2` — 8926ceb17 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
 - `heal/revert-opencode-lane-truth-932` — 6dcaf0a52 Revert "heal(opencode): land surviving lane pieces — auth lever + census/doc truth (#932)"
 - `heal/trunk-green-censor-armed-valves` — a709336d0 heal(vigilia): green the trunk — classify + home the two dark censor armed-valves
+- `limen/aw-credential-wall-token-hygiene-2c076ba3` — 17c418a83 docs: add credential token tombstone audit
+- `limen/aw-mail-active-flagged-dad69fe3` — 617c5005c mail: classify active flagged receipt
+- `limen/aw-repo-boil-up-eb66c5ab` — b3a3c1ba2 limen: refresh repo surface ledger
+- `limen/aw-tabvlarivs-status-writers-c37d2df5` — e071bf5c4 limen: owner-record tabularius status writers
+- `limen/capfill-agy-20260629-01-aef0` — 3b9fbe7c8 fix mypy type errors in _task_agent/_task_status/_task_cost_int
+- `limen/capfill-agy-20260629-03-796b` — 6775009fe fix: resolve mypy errors in task typing
+- `limen/capfill-agy-20260629-11-a3b7` — 15b3ab839 Agy daily capacity-fill packet 11
+- `limen/capfill-agy-20260629-12-5661` — d32010d4b fix: ignore missing yaml type stubs in io.py
+- `limen/capfill-agy-20260629-13-cf80` — a5bb3adcf Agy daily capacity-fill packet 13
+- `limen/capfill-agy-20260629-25-eb64` — f37dbb8b6 Agy daily capacity-fill packet 25
+- `limen/capfill-claude-20260629-01-278a` — 370911082 ruff format: wrap long decorator lines in cli.py
+- `limen/capfill-opencode-20260629-01-0afd` — 24f367f9d OpenCode daily capacity-fill packet 01
+- `limen/capfill-opencode-20260629-01-79bc` — 8169d561e style: run ruff format to fix CI
+- `limen/gen-organvm-limen-docs-0628-31d6` — 2470b06f1 docs: fix dispatch --budget flag description in CLI reference table
 - `limen/gen-organvm-limen-security-0624-a9e5` — 0d705fe1e security: harden input validation across API and CLI models
+- `limen/gen-organvm-limen-typing-0629-7bfb` — 98415581c Tighten types in organvm/limen
 - `limen/heal-cifix-organvm-limen-384-947d7bcc` — e37847dd7 Map the VLTIMA 5-primitive kernel to the social organ
 - `limen/heal-cifix-organvm-limen-401-a2ea349b` — ca076bfe0 Raise test coverage in organvm/limen
 - `limen/heal-cifix-organvm-limen-402-140f5ba7` — 945b05d15 Raise test coverage in organvm/limen
@@ -83,38 +129,66 @@ the intention was already decided against. They are reap candidates gated on
 - `limen/heal-cifix-organvm-limen-406-fce333e5` — 41bd5a66b OpenCode daily capacity-fill packet 06
 - `limen/heal-cifix-organvm-limen-409-93c549df` — 86690a1fa OpenCode daily capacity-fill packet 08
 - `limen/heal-cifix-organvm-limen-413-491f6092` — 91ab4a768 Gemini daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-414-361fb12b` — 038837834 fix(ci): redact live root paths in absorption cadence
 - `limen/heal-cifix-organvm-limen-414-4e02d6f1` — 038837834 fix(ci): redact live root paths in absorption cadence
 - `limen/heal-cifix-organvm-limen-417-980ffa89` — af398882b Agy daily capacity-fill packet 04
 - `limen/heal-cifix-organvm-limen-418-5676e703` — 1153c76c9 Jules daily capacity-fill packet 05
 - `limen/heal-cifix-organvm-limen-418-81791685` — 1153c76c9 Jules daily capacity-fill packet 05
 - `limen/heal-cifix-organvm-limen-419-7987cca2` — 199ec2ac7 Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-419-e59a4529` — 199ec2ac7 Jules daily capacity-fill packet 02
+- `limen/heal-cifix-organvm-limen-432-19e5f605` — b8b2ea405 fix failing CI on organvm/limen#432
+- `limen/heal-cifix-organvm-limen-434-529e2e6d` — 6bc6d1282 fix failing CI on organvm/limen#434
 - `limen/heal-cifix-organvm-limen-452-32c5a00b` — 793e4afea Make organvm/limen CI green
 - `limen/heal-cifix-organvm-limen-455-09792942` — 56f9a013a Jules daily capacity-fill packet 04
 - `limen/heal-cifix-organvm-limen-456-f80ad47a` — 917357bd4 Jules daily capacity-fill packet 13
 - `limen/heal-cifix-organvm-limen-457-fa165ce1` — 15dc86189 Claude daily capacity-fill packet 11
 - `limen/heal-cifix-organvm-limen-484-6c85e505` — 3c8cf2590 Router fans across ALL paid services, not just the 6 vendors
+- `limen/jules-capfill-claude-20260629-14-5970` — 48984004e capture: autonomic off-disk sync 2026-07-04T17:56:04Z
+- `limen/jules-capfill-jules-20260629-08-e434` — e745ddcf8 fix: ruff format on test files
+- `limen/jules-capfill-jules-20260629-09-f6cc` — d7bb7ecd3 fix: ruff format cli/src/limen/cli.py (wrap long @click.option decorators)
+- `limen/jules-capfill-jules-20260629-14-26c8` — b1a12a512 style: format cli.py
+- `limen/jules-capfill-opencode-20260629-11-980d` — 8bbcfb231 OpenCode daily capacity-fill packet 11
+- `limen/jules-gen-organvm-limen-ci-green-0630-9622` — 793e4afea Make organvm/limen CI green
+- `limen/jules-heal-cifix-organvm-limen-375-f260` — 42d75f7e1 fix failing CI on organvm/limen#375
+- `limen/jules-retro-0708-handoff-relay-41fd` — 742f6330f handoff-relay.py: cross-session/cross-vendor warm-resume packet
+- `limen/jules-retro-0708-pii-premerge-gate-4e92` — d5649a557 pr-gate PII containment scan for person-adjacent organ paths
+- `limen/jules-studium-film-beowulf-3e40` — 8573c3f88 Beowulf film companion (wyrd/heroic doom)
+- `limen/recover-force-copilot-lane-0870` — f70008a7e Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane
 - `limen/studium-deepen-tale-of-genji-0ce7` — c01d09874 feat(studium): Tale of Genji chapters 2–5 — early loves arc (force-matched + essays)
 - `promote-domus-genoma` — 6bbd51f7b limen: promote organvm/domus-genoma to ranked value tier
 - `refactor/armed-valve-derive` — e342c68f6 refactor(armed-valve): read sensor gates from the SENSORS registry, not just the shell
 - `registry-update` — c2490e098 docs(registry): credential CLOSED (keyless lane); Exporter funnel verified BUILT
+- `session/post-moneta-durability` — 01c7773cd docs: PR summary — ready for human review and merge
 - `ship/f3-f6-f7` — 04094145c feat(arms-agents): "a guard that cannot see must WARN" becomes an executable, ratcheted invariant
 - `studium-beowulf-fitts-2-4` — cd8625b86 studium: author Beowulf fitts 2-4 music arcs and essays
 - `studium-deepen-metamorphoses` — d0cb8cd71 limen: track studium-deepen-metamorphoses done (opencode +1)
 - `studium-deepen-shahnameh-2-8` — bf6de36ab feat(studium): Shahnameh cycles 2-8 arcs and essays
 - `tabularius/board-projection-20260721-177302a5` — b16284fef tabularius: publish current board projection
 - `task-conference-of-birds-batch-1` — e1facc15c feat(studium): author Conference of the Birds arcs 2-4
+- `work/claude-reacceptance-20260716` — b32a52377 limen: add fail-closed reacceptance controls
+- `work/claude-recovery-authority-workflow-20260717` — 7a2666e83 recovery: bind fable authority to owner custody
+- `work/claude-recovery-containment-20260716` — ae56ffc75 fix: lock containment before draining auto-merge
+- `work/claude-recovery-peer-gate-20260717` — c9332a431 fix(review-gate): require protection-owned CI
+- `work/claude-recovery-preview-truth-20260716` — fb2143f8b fix: make drain preview state truthful
+- `work/claude-recovery-provider-trajectory-20260717` — 997ae136e recovery: preserve exact provider attempt custody
+- `work/claude-recovery-zero-write-custody-20260717` — 5dc912ab5 recovery: close zero-write custody races
+- `work/collaboration-operations-platform-alpha-omega-20260803` — 09d0336f3 fix(worker): rename Cloudflare worker to collaboration-operations-platform-api
+- `work/governance-organ-recovery-20260716` — 261ad2523 fix(governance): expire Scratch authority receipts
+- `work/host-pressure-reacceptance-20260716` — 536bf494d fix(host-pressure): keep peer observation bounded
 - `work/photos-universe-20260629-182431` — d45b030d1 photos: extend duplicate proof batch
+- `work/truth-first-system-advance-20260720` — 577f799cd docs: bind activation receipt to preservation custody
 - `work/victoroff-external-custody-20260722` — 456a03a4f govern Victoroff external custody
+- `work/warp-agent-routing-20260629` — 6fb678e85 limen: audit warp notification provenance
 - `worktree-feat-host-pressure-loop` — 1864ea386 feat: close the host-pressure loop — swap axis, host-relief effector, loud escalation (IF-HOST-PRESSURE form 4)
 
-## Closed-but-advanced (12) — has commits the closed PR never saw
+## Closed-but-advanced (18) — has commits the closed PR never saw
 
 These heads had a CLOSED-unmerged PR but the local tip DIFFERS from that PR's head, so
 the extra commits exist **nowhere but this machine**. Never auto-deleted.
 Push them as a fresh PR, or delete by hand if the extra commits are throwaway.
 
 - `agent/handoff-runtime-readiness-0713` — 2b434e2ec fix(dispatch): close runtime readiness claim seams
+- `codex/vltima-organ-impl-20260706` — 45bef795c Merge remote-tracking branch 'origin/main' into codex/vltima-organ-impl-20260706
 - `feat/charles-rose-toners-post` — 876e6033b Add Charles rose toners closeout relay capsule
 - `feat/conversion-funnel` — 0eba9cca2 feat(conversion): measure the public face — traffic collector + funnel leak-diagnosis
 - `feat/session-contention-receipt` — 24a0c7472 fix(contention): the guard could go blind quietly, and the gate graded text
@@ -123,6 +197,11 @@ Push them as a fresh PR, or delete by hand if the extra commits are throwaway.
 - `fix/heartbeat-refresh-web-wedge` — 0a512024e fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
 - `limen/capfill-claude-20260629-13-2b0f` — 69e10c5a9 fix: add CapacityFill TypedDicts and correct mypy type annotations
 - `limen/gh-organvm-limen-352-b4c3` — 18129a474 fix(cli): type-modernization — PEP 604 syntax and TypedDict definitions
+- `limen/heal-cifix-organvm-limen-425-0597e483` — 2f47ab181 fix failing CI on organvm/limen#425
+- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc7440340 fix failing CI on organvm/limen#427
+- `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c4 Deepen the contributions organ toward a usable institution
+- `limen/org-governance-organ-deepen-0628-0e39` — f23a6f668 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
+- `limen/promote-fetch-familiar-friends-value-tier` — 9d64fc583 limen: promote organvm/fetch-familiar-friends to the value tier
 - `worktree-fluttering-twirling-abelson` — c2c548846 Redact circle-personal business intel from public consulting organ
 - `worktree-jolly-knitting-lovelace` — 1e239934c feat(hooks): arm the session-orientation organ in committed project settings
 - `worktree-parsed-finding-fern` — 6f171f830 docs(hishand): register L-STUDIO-GOLIVE — clip studio go-live atoms to the durable registry (#538)
@@ -151,7 +230,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-fix-macos-fork-oslog-crash` — 414ded132 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
 - `worktree-ianva-doorway` — f4c0c076f fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 
-## Live-work branches (345) — decide each
+## Live-work branches (339) — decide each
 
 - `_pr198` — 4cd0dbaa9 fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `archive/danse-predecessor-experiments-20260802` — a232f2d71 archive(danse): preserve predecessor experiments
@@ -169,7 +248,6 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `codex/psp-c00-relay-2026-08-10` — 1357eb603 docs(positioning): correct W07 continuation gate
 - `codex/psp-p02-w03-final-review-correction` — 95cadbdfd docs(positioning): refresh final flagship relay
 - `codex/student-email-doctrine-cleanup-20260709` — 00e05587c Merge remote-tracking branch 'origin/main' into codex/student-email-doctrine-cleanup-20260709
-- `codex/vltima-organ-impl-20260706` — 45bef795c Merge remote-tracking branch 'origin/main' into codex/vltima-organ-impl-20260706
 - `corpus-verify` — d45b030d1 photos: extend duplicate proof batch
 - `discover-organvm-browser-state` — 7fb6478b9 docs: preserve gens discovery thesis
 - `discovery-organvm-palimpsest` — 738089502 feat: discover organvm/palimpsest and add to value-repos
@@ -259,8 +337,6 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/heal-cifix-organvm-limen-419-7595de98` — 199ec2ac7 Jules daily capacity-fill packet 02
 - `limen/heal-cifix-organvm-limen-420-6d674400` — 8da3918e3 ruff format: fix formatting in capacity.py and cli.py
 - `limen/heal-cifix-organvm-limen-422-6b0c8ca2` — c58a0320e fix(ci): isolate producer env in backlog tests
-- `limen/heal-cifix-organvm-limen-425-0597e483` — 2f47ab181 fix failing CI on organvm/limen#425
-- `limen/heal-cifix-organvm-limen-427-5f8bb97d` — fc7440340 fix failing CI on organvm/limen#427
 - `limen/heal-cifix-organvm-limen-428-2ae62246` — e4fa19a86 fix(ci): repair PR 428 gate failures
 - `limen/heal-cifix-organvm-limen-430-955f9dd1` — e752ed9d6 fix(ci): clear PR gate regressions
 - `limen/heal-cifix-organvm-limen-430-b979134a` — 1a6b2a2e4 fix(ci): declare new limen parameters
@@ -346,10 +422,8 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/jules-aw-mail-historical-backlog-9f1d` — fd91625a6 Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-c97e` — a9797d4ae Continue historical mail backlog in resumable batches
 - `limen/jules-aw-mail-historical-backlog-e50f` — 4cbf2f03e Continue historical mail backlog in resumable batches
-- `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c4 Deepen the contributions organ toward a usable institution
 - `limen/org-artist-organ-face-0704-2152` — 0bf299b0b artist: polish macro and micro faces (ORG-artist-organ-face-0704)
 - `limen/org-artist-organ-face-0704-54ed` — f0ca62974 chore(artist): mark ORG-artist-organ-face-0704 as done
-- `limen/org-governance-organ-deepen-0628-0e39` — f23a6f668 limen: ruff-format test_dispatch_engine and test_session_lifecycle_pressure
 - `limen/org-governance-organ-deepen-0628-90ee` — 3b2001f63 feat: operationalize cvrsvs-honorvm rule as executable validator
 - `limen/org-governance-organ-deepen-0703-9f8e` — 6d4860175 governance: enforce publication-policy convergence
 - `limen/org-governance-organ-selffeed-0701-ba0f` — 3b9baf048 limen: close governance organ self-feed task
@@ -372,7 +446,6 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `limen/org-social-organ-firstslice-0703-1c71` — a2fa6ada5 organs/social: ship first slice
 - `limen/org-social-organ-firstslice-0703-6fb5` — 4e6993328 feat(social): add first koinonia slice
 - `limen/org-social-organ-firstslice-0703-edcd` — 0fbca3fab social: ship koinonia first slice
-- `limen/promote-fetch-familiar-friends-value-tier` — 9d64fc583 limen: promote organvm/fetch-familiar-friends to the value tier
 - `limen/studium-deepen-aeneid-e6cf` — fcee5d4d1 feat(studium): Aeneid Books 4-8 arcs and essays (desire/sacrifice/revelation/war)
 - `limen/studium-deepen-analects-78fa` — d5d8c1902 feat(studium): Analects books 9-11 music arcs + essays (ascent/memory/salvation)
 - `limen/studium-deepen-beowulf-4918` — 99fb7715a feat(studium): Beowulf fitts 2–6 — force-matched arcs + essays

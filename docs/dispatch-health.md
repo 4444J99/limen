@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-10T21:04:04+00:00`
+Generated: `2026-08-17T21:59:20+00:00`
 
 Status: `blocked`
 
@@ -22,12 +22,12 @@ Status: `blocked`
 - Plist LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Loaded launchd state: `running` pid `84914`.
+- Loaded launchd state: `running` pid `1278`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `True`; `[watchdog] 2026-08-10T21:04:04.983709+00:00 HEALTHY sig=healthy`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-17T21:59:21.072428+00:00 UNHEALTHY sig=beating`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -39,8 +39,8 @@ Status: `blocked`
 
 ## Prompt Packet Gate
 
-- Prompt packet index present: `True`.
-- Prompt packet status: `clear`.
+- Prompt packet index present: `False`.
+- Prompt packet status: `missing`.
 - Open prompt packets: `0`.
 - Conductor-required packets: `0`.
 - Ready-after-predicate packets: `0`.
@@ -49,60 +49,44 @@ Status: `blocked`
 
 ## Always-Working Gate
 
-- Reconciliation index present: `True`.
-- Reconciliation status: `needs-work`.
-- Required open workstreams: `5`.
-- Blocked workstreams: `2`.
-- Done from receipt: `4`.
-- Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
+- Reconciliation index present: `False`.
+- Reconciliation status: `missing`.
+- Required open workstreams: `0`.
+- Blocked workstreams: `0`.
+- Done from receipt: `0`.
+- Next item: `` (``).
 - Public reconciliation: `~/Workspace/limen/docs/always-working.md`.
-  - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
-  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 69.9%, PRs 17.9%, issues 11.2%, reviews 1.0%.
-  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; 242 active flagged non-deleted messages require classification.
-  - `REPO-BOIL-UP`: `repo-boil-up` / `needs_assignment`; repo surface ledger missing; assignment must refresh existing roots before new work.
-  - `VALUE-REPOS`: `revenue-value-repos` / `assigned_from_existing_work`; 19 value repos define the funded work lane.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 9]`.
-- HEAD: `c32f846006d517dd01738ea02107f7233ed849bd`.
-- origin/main: `7c269d54e51024c37099ce2f4bcd248fdcfa58bf`.
-- Matches origin/main: `False`; ahead `0` behind `9`.
-- Dirty entries: `19`.
-- Ignored generated receipt dirty entries: `1`.
-  - `docs/dispatch-health.md`
-  - `docs/RECLASSIFY-PROPOSAL.md`
-  - `docs/always-working.md`
-  - `docs/branch-hygiene.md`
-  - `docs/capacity-fill.md`
-  - `docs/diurnal/INDEX.md`
-  - `docs/github-actions-usage.json`
-  - `docs/receipts/session-contention-ledger.json`
+- Branch: `docs/custody-preservation-receipts-20260817`; status `## docs/custody-preservation-receipts-20260817...origin/docs/custody-preservation-receipts-20260817`.
+- HEAD: `ead56dac052b52ba4a47a90c5d353b7c53ba3eac`.
+- origin/main: `751f44ab7f39cc62dba16733cfa21c3f0feaae37`.
+- Matches origin/main: `False`; ahead `6` behind `14`.
+- Dirty entries: `6`.
+- Ignored generated receipt dirty entries: `2`.
   - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260817T212847Z.json`
+  - `docs/RECLASSIFY-PROPOSAL.md`
+  - `docs/branch-hygiene.md`
+  - `docs/github-actions-usage.json`
+  - `dump.rdb`
   - `logs/overnight-watch.md`
-  - `organs/contributions/MIRROR.md`
-  - `organs/contributions/opportunities.json`
-  - `organs/financial/cashflow.md`
-  - `docs/diurnal/2026-08-10.md`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T133238Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T155418Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T172244Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T190416Z.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260810T205244Z.json`
-  - `studium/ledger/studium-2026-08-10.md`
+  - `docs/receipts/reapable_branches_20260817.json`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 9]`.
+- Branch: `docs/custody-preservation-receipts-20260817`; status `## docs/custody-preservation-receipts-20260817...origin/docs/custody-preservation-receipts-20260817`.
 - HEAD matches origin/main: `False`.
 
 ## Blockers
 
-- `live-root-not-at-origin-main`: live root branch main head c32f846006d5 differs from origin/main 7c269d54e510.
-- `live-root-dirty`: live root has 19 dirty entries.
-- `always-working-required-work-open`: 5 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
+- `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
+- `live-root-not-at-origin-main`: live root branch docs/custody-preservation-receipts-20260817 head ead56dac052b differs from origin/main 751f44ab7f39.
+- `live-root-dirty`: live root has 6 dirty entries.
+- `always-working-reconciliation-missing`: No current always-working reconciliation receipt is available.
 
 ## Commands
 
