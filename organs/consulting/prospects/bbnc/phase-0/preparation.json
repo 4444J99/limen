@@ -1,0 +1,106 @@
+{
+  "schema": "consulting.phase0.preparation.v1",
+  "engagement_id": "bbnc-stewardship-to-bbnc-net",
+  "state": "workshop_ready",
+  "prepared_at": "2026-07-21T21:48:08Z",
+  "disclosure": {
+    "classification": "public",
+    "contains_personal_data": false,
+    "contains_pricing": false,
+    "contains_credentials": false,
+    "contains_bbnc_private_material": false,
+    "asserts_client_relationship": false
+  },
+  "client": {
+    "name": "Bristol Bay Native Corporation (BBNC)",
+    "authority_owner": "BBNC"
+  },
+  "delivery_party": {
+    "name": "Padavano",
+    "source_plan_superseded_label": "Victoroff",
+    "identity_evidence": "https://github.com/organvm/padavano/blob/main/CLAUDE.md",
+    "has_bbnc_authority": false
+  },
+  "product": {
+    "seed_initiative": "BBNC.net Modernization",
+    "internal_working_name": "BBNC Stewardship",
+    "public_site": "BBNC.net"
+  },
+  "authority": {
+    "bbnc_commissioned": false,
+    "workshop_conducted": false,
+    "charter_executed": false,
+    "phase_1_authorized": false,
+    "production_access_authorized": false,
+    "bbnc_repository_creation_authorized": false,
+    "public_representation_authorized": false,
+    "software_may_interpret_policy": false
+  },
+  "required_roles": [
+    {"role_id": "executive_sponsor", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "product_owner", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "legal_compliance_owner", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "it_security_owner", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "records_owner", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "communications_owner", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "cultural_content_steward", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"},
+    {"role_id": "release_authority", "owner": "BBNC", "assignment_state": "pending_bbnc_nomination"}
+  ],
+  "gates": [
+    {"gate_id": "discovery_sow", "owner": "BBNC and Padavano", "state": "open"},
+    {"gate_id": "confidentiality_and_data_processing", "owner": "BBNC and Padavano", "state": "open"},
+    {"gate_id": "security_review", "owner": "BBNC", "state": "open"},
+    {"gate_id": "change_control", "owner": "BBNC and Padavano", "state": "open"},
+    {"gate_id": "acceptance_process", "owner": "BBNC and Padavano", "state": "open"},
+    {"gate_id": "named_owners", "owner": "BBNC", "state": "open"},
+    {"gate_id": "data_boundary", "owner": "BBNC", "state": "open"},
+    {"gate_id": "authority_statement", "owner": "BBNC", "state": "open"},
+    {"gate_id": "delivery_accounts", "owner": "BBNC", "state": "open"}
+  ],
+  "data_boundary": {
+    "packet_classification": "public",
+    "proposed_v1_stored_classes": ["public", "bbnc_approved_internal"],
+    "owner_system_only_classes": ["confidential", "restricted"],
+    "unknown_defaults_to": "restricted",
+    "sensitive_transaction_owner": "existing_systems_of_record"
+  },
+  "preserved_systems": [
+    "myBBNC",
+    "voting",
+    "employment_ATS",
+    "applications",
+    "policy_library",
+    "compliance",
+    "subsidiary_systems"
+  ],
+  "delivery_accounts": [
+    {"account_id": "repositories", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "azure_subscription", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "identity_registrations", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "domain_and_dns", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "keys", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "backups", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "logs", "owner": "BBNC", "state": "not_provisioned"},
+    {"account_id": "audit_exports", "owner": "BBNC", "state": "not_provisioned"}
+  ],
+  "accepted_work_package": null,
+  "artifact_refs": [
+    {"artifact_id": "product_boundary", "path": "organs/consulting/prospects/bbnc/product-boundary.md"},
+    {"artifact_id": "technical_contract", "path": "organs/consulting/prospects/bbnc/technical-contract.md"},
+    {"artifact_id": "delivery_roadmap", "path": "organs/consulting/prospects/bbnc/delivery-roadmap.md"},
+    {"artifact_id": "acceptance_contract", "path": "organs/consulting/prospects/bbnc/acceptance.md"},
+    {"artifact_id": "public_sources", "path": "organs/consulting/prospects/bbnc/sources.md"},
+    {"artifact_id": "authority_workshop", "path": "organs/consulting/prospects/bbnc/phase-0/workshop.md"},
+    {"artifact_id": "unsigned_charter", "path": "organs/consulting/prospects/bbnc/phase-0/website-modernization-charter.md"}
+  ],
+  "authority_receipt": {
+    "state": "absent",
+    "owner": "BBNC",
+    "required_schema": "bbnc.phase0.authority-receipt.v1"
+  },
+  "next_action": {
+    "owner": "BBNC-authorized participants and Padavano facilitator",
+    "action": "Conduct the Phase 0 workshop, execute the charter in BBNC's private system, and issue the redacted authority receipt.",
+    "predicate": "python3 organs/consulting/validate-phase0.py authorize --packet organs/consulting/prospects/bbnc/phase-0/preparation.json --receipt /bbnc-owned/path/phase-0-authority-receipt.json"
+  }
+}
