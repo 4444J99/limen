@@ -219,6 +219,14 @@ def _dig(obj, dotted: str):
     return cur
 
 
+def _yaml_scalar_text(text: str, key: str):
+    """Pull a top-level `key: value` scalar from flat-YAML TEXT by regex (no pyyaml dep)."""
+    m = re.search(rf"^\s*{re.escape(key)}\s*:\s*(.+?)\s*(?:#.*)?$", text, re.MULTILINE)
+    if not m:
+        return None
+    return m.group(1).strip().strip('"').strip("'")
+
+
 def _yaml_scalar(path: Path, key: str):
     """Pull a top-level `key: value` scalar from a simple flat YAML file by regex (no pyyaml dep —
     ecosystem.yml is flat key:value). Returns the raw string (quotes/comment stripped) or None."""
@@ -226,10 +234,7 @@ def _yaml_scalar(path: Path, key: str):
         text = path.read_text()
     except OSError:
         return None
-    m = re.search(rf"^\s*{re.escape(key)}\s*:\s*(.+?)\s*(?:#.*)?$", text, re.MULTILINE)
-    if not m:
-        return None
-    return m.group(1).strip().strip('"').strip("'")
+    return _yaml_scalar_text(text, key)
 
 
 def _file_contains(rel: str, marker: str):
@@ -397,11 +402,69 @@ def _register_state(pipes: list[dict], key: str) -> dict | None:
 
 
 # ── SPECVLVM — the mirror (each face ⇄ its declared source) ───────────────────────────────────
+def _published_text(path: Path) -> str | None:
+    """A face is HIS PUBLIC repo, so measure the PUBLISHED blob on origin's default branch — NOT the
+    local working tree. A local clone drifts behind origin (an un-pulled checkout can be dozens of
+    commits stale and report a phantom drift the live public site never had — e.g. a portfolio clone
+    41 commits behind showed 116 repos while origin/main already published the correct 171). We read
+    the origin ref the clone already has on disk (no network fetch — keeps the beat offline by
+    default), and fail open to the working-tree read when git/origin is unavailable."""
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(path.parent), "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if top.returncode != 0:
+            return None
+        root = Path(top.stdout.strip())
+        rel = path.relative_to(root).as_posix()
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    refs = []
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(root), "symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if head.returncode == 0 and head.stdout.strip():
+            refs.append(head.stdout.strip().replace("refs/remotes/", ""))  # e.g. origin/main
+    except (OSError, subprocess.SubprocessError):
+        pass
+    for ref in refs + ["origin/main", "origin/master"]:
+        try:
+            show = subprocess.run(
+                ["git", "-C", str(root), "show", f"{ref}:{rel}"],
+                capture_output=True, text=True, timeout=10,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if show.returncode == 0:
+            return show.stdout
+    return None
+
+
+def _face_text(path: Path) -> str | None:
+    """Prefer the published origin blob; fall back to the working-tree file (fail-open)."""
+    text = _published_text(path)
+    if text is not None:
+        return text
+    try:
+        return path.read_text()
+    except OSError:
+        return None
+
+
 def _face_value(path: Path, fmt: str, locator: str):
+    text = _face_text(path)
+    if text is None:
+        return None
     if fmt == "json":
-        doc = _load_json(path)
-        return _dig(doc, locator) if doc is not None else None
-    return _yaml_scalar(path, locator)  # yaml
+        try:
+            doc = json.loads(text)
+        except ValueError:
+            return None
+        return _dig(doc, locator)
+    return _yaml_scalar_text(text, locator)  # yaml
 
 
 def _resolve_source(check: dict, src: dict, pipes: list[dict]):
