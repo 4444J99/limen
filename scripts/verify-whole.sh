@@ -192,6 +192,9 @@ python3 scripts/check-gates.py
 step "Verify local removal acceptance contracts require archive and redaction proof"
 python3 scripts/check-removal-acceptance.py
 
+step "Verify the record-keeper covenant (sole-writer testament surfaces + lanes)"
+python3 scripts/check-covenant.py
+
 step "Validate task-board statuses match the canonical vocabulary"
 python3 scripts/validate-task-board.py
 
