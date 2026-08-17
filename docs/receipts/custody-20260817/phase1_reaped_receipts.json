@@ -1,0 +1,1556 @@
+[
+  {
+    "branch": "closeout/dispatch-admission-20260709",
+    "pr_number": 768,
+    "merged_at": "2026-07-09T11:51:32Z",
+    "title": "limen: gate dispatch admission"
+  },
+  {
+    "branch": "codex/discovery-disposition-ledger-20260712",
+    "pr_number": 982,
+    "merged_at": "2026-07-12T17:54:28Z",
+    "title": "fix(discovery): preserve terminal dispositions"
+  },
+  {
+    "branch": "codex/epoch-closeout-20260714",
+    "pr_number": 1051,
+    "merged_at": "2026-07-14T15:24:08Z",
+    "title": "feat(session): standardize autonomous continuation capsules"
+  },
+  {
+    "branch": "docs/agents-universal-covenant",
+    "pr_number": 1883,
+    "merged_at": "2026-08-06T22:06:20Z",
+    "title": "docs(agents): the covenant lands where every lane reads \u2014 closure, exit codes, judged rails"
+  },
+  {
+    "branch": "docs/deeplink-lever-issue-20260806025857",
+    "pr_number": 1852,
+    "merged_at": "2026-08-06T03:06:26Z",
+    "title": "chore(levers): assign L-CLAUDE-DEEPLINK-REGISTRATION its issue pointer (#1851)"
+  },
+  {
+    "branch": "docs/enc1101-eot-catchalls-clean",
+    "pr_number": 1805,
+    "merged_at": "2026-08-05T17:59:56Z",
+    "title": "docs: ENC1101 end-of-term catch-all announcements"
+  },
+  {
+    "branch": "docs/funnel-healing-record-20260805172226",
+    "pr_number": 1822,
+    "merged_at": "2026-08-05T18:06:39Z",
+    "title": "docs(plans): 2026-08-05 application funnel incident and repair record"
+  },
+  {
+    "branch": "docs/gatekeeper-inert-plan-20260806025658",
+    "pr_number": 1850,
+    "merged_at": "2026-08-06T03:03:09Z",
+    "title": "docs(plans): home the IF-GATEKEEPER-INERT arc \u2014 plan \u2192 issue #1849 \u2192 PR #1848"
+  },
+  {
+    "branch": "docs/jules-flywheel-20260806141140",
+    "pr_number": 1875,
+    "merged_at": "2026-08-06T14:40:46Z",
+    "title": "docs(plan): The jules flywheel: valve chain + throughput loop to a landed 100/day"
+  },
+  {
+    "branch": "docs/pr-autotype-rung-20260807140257",
+    "pr_number": 1979,
+    "merged_at": "2026-08-07T14:03:10Z",
+    "title": "docs(plan): Continuous PR lifecycle auto-typing rung"
+  },
+  {
+    "branch": "docs/pr-debt-estate-drain-20260807113705",
+    "pr_number": 1951,
+    "merged_at": "2026-08-07T11:37:19Z",
+    "title": "docs(receipts): PR-debt estate drain \u2014 manifests, private receipt, dependabot lever, plan (issue #1950)"
+  },
+  {
+    "branch": "docs/pr-debt-final-receipts-20260807125532",
+    "pr_number": 1967,
+    "merged_at": "2026-08-07T13:02:24Z",
+    "title": "docs(receipts): final operator-active manifest (15 applied_verified) + plan table corrections \u2014 estate untyped=0 (issue #1950)"
+  },
+  {
+    "branch": "docs/pr-debt-observation-20260806031934",
+    "pr_number": 1857,
+    "merged_at": "2026-08-06T03:22:25Z",
+    "title": "docs(gitvs): record open-PR debt observation (1293 open)"
+  },
+  {
+    "branch": "docs/pr-debt-observation-20260807125430",
+    "pr_number": 1966,
+    "merged_at": "2026-08-07T12:56:06Z",
+    "title": "docs(gitvs): record open-PR debt observation (1297 open)"
+  },
+  {
+    "branch": "docs/pr-debt-observation-20260808094633",
+    "pr_number": 2075,
+    "merged_at": "2026-08-08T09:47:00Z",
+    "title": "docs(gitvs): record open-PR debt observation (1303 open)"
+  },
+  {
+    "branch": "docs/pr-debt-observation-20260809064955",
+    "pr_number": 2139,
+    "merged_at": "2026-08-09T06:50:15Z",
+    "title": "docs(gitvs): record open-PR debt observation (1310 open)"
+  },
+  {
+    "branch": "docs/pr-lifecycle-registry-plan",
+    "pr_number": 1982,
+    "merged_at": "2026-08-07T14:32:30Z",
+    "title": "docs(plan): the PR-lifecycle axis has no ideal form \u2014 registry, predicate, IF row (#1981)"
+  },
+  {
+    "branch": "docs/prima-materia-pr-stamp-20260807030037",
+    "pr_number": 1936,
+    "merged_at": "2026-08-07T03:00:49Z",
+    "title": "docs(plans): stamp PR #1935 on prima-materia-reconciliation"
+  },
+  {
+    "branch": "docs/quicken-residue-20260805",
+    "pr_number": 1811,
+    "merged_at": "2026-08-05T16:04:10Z",
+    "title": "docs(quicken): regenerate residue + reclassify proposal (2026-08-05)"
+  },
+  {
+    "branch": "docs/readme-drift",
+    "pr_number": 1920,
+    "merged_at": "2026-08-06T23:59:17Z",
+    "title": "docs(readme): tasks.yaml is the projection; Pages is the live dashboard"
+  },
+  {
+    "branch": "docs/reap-pelican-receipt-20260805171231",
+    "pr_number": 1819,
+    "merged_at": "2026-08-05T17:15:41Z",
+    "title": "docs(hygiene): reap receipt \u2014 worktree-snug-finding-pelican (landed-ancestor, standing grant)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260807031859",
+    "pr_number": 1938,
+    "merged_at": "2026-08-07T03:19:16Z",
+    "title": "docs(contention): record session-contention incident (1 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260807141757",
+    "pr_number": 1980,
+    "merged_at": "2026-08-07T14:18:21Z",
+    "title": "docs(contention): record session-contention incident (7 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260807163001",
+    "pr_number": 2007,
+    "merged_at": "2026-08-07T16:30:13Z",
+    "title": "docs(contention): record session-contention incident (8 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260808023702",
+    "pr_number": 2074,
+    "merged_at": "2026-08-08T02:37:29Z",
+    "title": "docs(contention): record session-contention incident (10 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260808130551",
+    "pr_number": 2117,
+    "merged_at": "2026-08-08T13:06:15Z",
+    "title": "docs(contention): record session-contention incident (11 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260809005959",
+    "pr_number": 2133,
+    "merged_at": "2026-08-09T01:00:19Z",
+    "title": "docs(contention): record session-contention incident (17 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260809065035",
+    "pr_number": 2140,
+    "merged_at": "2026-08-09T06:50:52Z",
+    "title": "docs(contention): record session-contention incident (19 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260809103508",
+    "pr_number": 2142,
+    "merged_at": "2026-08-09T10:35:34Z",
+    "title": "docs(contention): record session-contention incident (20 total)"
+  },
+  {
+    "branch": "docs/session-contention-incident-20260809130916",
+    "pr_number": 2153,
+    "merged_at": "2026-08-09T13:09:32Z",
+    "title": "docs(contention): record session-contention incident (21 total)"
+  },
+  {
+    "branch": "docs/tcc-1703-upstream-blocked",
+    "pr_number": 2446,
+    "merged_at": "2026-08-15T13:07:08Z",
+    "title": "docs(tcc): reclassify Track C as upstream-blocked \u2014 vendor disclaim forecloses every local ingress fix (#1703)"
+  },
+  {
+    "branch": "docs/tcc-fda-atom-20260805221405",
+    "pr_number": 1836,
+    "merged_at": "2026-08-05T22:16:40Z",
+    "title": "docs(tcc): home the Full Disk Access atom \u2014 the probe cannot measure without it"
+  },
+  {
+    "branch": "docs/tcc-identity-attribution-refuted",
+    "pr_number": 2456,
+    "merged_at": "2026-08-15T15:14:43Z",
+    "title": "docs(tcc): refute both local cures for the rotating TCC identity, with a predicate (#1703)"
+  },
+  {
+    "branch": "docs/uig-plan-stamp-20260806223826",
+    "pr_number": 1911,
+    "merged_at": "2026-08-06T22:40:36Z",
+    "title": "docs(plans): stamp PR #1910 on the universal-insights-governance plan \u2014 chain closed"
+  },
+  {
+    "branch": "docs/universal-insights-governance-20260806143158",
+    "pr_number": 1877,
+    "merged_at": "2026-08-06T17:17:48Z",
+    "title": "docs(plan): Universal insights \u2192 universal governance: implement all /insights suggestions across every actor"
+  },
+  {
+    "branch": "docs/verify-load-sensitive-class",
+    "pr_number": 2061,
+    "merged_at": "2026-08-08T00:24:54Z",
+    "title": "docs(verify-skill): the load-sensitive test whose error names the wrong cause"
+  },
+  {
+    "branch": "docs/verify-skill-diff-and-effector-gotchas-20260807172421",
+    "pr_number": 2024,
+    "merged_at": "2026-08-07T17:24:33Z",
+    "title": "docs(skills): the two-dot diff that lies the other way, and signals with no effector"
+  },
+  {
+    "branch": "docs/verify-skill-diff-corrections",
+    "pr_number": 2035,
+    "merged_at": "2026-08-07T18:38:39Z",
+    "title": "docs(verify-skill): the diff-trap section carried a diff trap, and --is-ancestor does not mean \"behind\""
+  },
+  {
+    "branch": "docs/verify-skill-rails-and-rung-ledger-20260808005006",
+    "pr_number": 2065,
+    "merged_at": "2026-08-08T00:50:17Z",
+    "title": "docs(verify-skill): two rails run different code, and the rung ledger answers what is quietly broken"
+  },
+  {
+    "branch": "docs/verify-skill-runtime-recipes",
+    "pr_number": 2009,
+    "merged_at": "2026-08-07T16:33:57Z",
+    "title": "docs(skills): a project verify skill, so the next session does not pay this cold start again"
+  },
+  {
+    "branch": "docs/verify-skill-sensor-drive-path",
+    "pr_number": 2055,
+    "merged_at": "2026-08-07T23:07:43Z",
+    "title": "docs(verify-skill): a sensor in the matrix is not a sensor anyone reads"
+  },
+  {
+    "branch": "docs/verify-skill-worker-and-load-gotchas-20260807165825",
+    "pr_number": 2018,
+    "merged_at": "2026-08-07T16:58:36Z",
+    "title": "docs(skills): the Worker handle, the load-sensitive relay test, and the checkout-- trap \u2014 three session costs each"
+  },
+  {
+    "branch": "feat/armed-valve-file-probe",
+    "pr_number": 1997,
+    "merged_at": "2026-08-07T16:06:29Z",
+    "title": "feat(substrate): probe the arm, never write it \u2014 an unpulled lever reports PARKED every beat instead of being invisible"
+  },
+  {
+    "branch": "feat/background-items-census",
+    "pr_number": 2452,
+    "merged_at": "2026-08-15T14:42:35Z",
+    "title": "feat(census): background-items census \u2014 every LaunchAgent/BTM row maps to a declared owner"
+  },
+  {
+    "branch": "feat/beat-dispatch-rung",
+    "pr_number": 1889,
+    "merged_at": "2026-08-06T22:22:55Z",
+    "title": "feat(beat): the metabolize sensor pass gets a live runner \u2014 and jules dispatch gets its valve rung"
+  },
+  {
+    "branch": "feat/beat-owns-chronic-heal",
+    "pr_number": 1829,
+    "merged_at": "2026-08-05T17:46:19Z",
+    "title": "feat(drain): give the beat a CHRONIC heal rung, demote the report gate"
+  },
+  {
+    "branch": "feat/board-consumer-routing-v2",
+    "pr_number": 2478,
+    "merged_at": "2026-08-15T17:27:33Z",
+    "title": "feat(board): route every board reader through custody, and make missing custody unswallowable"
+  },
+  {
+    "branch": "feat/board-gates-aggregate-aware",
+    "pr_number": 2469,
+    "merged_at": "2026-08-15T16:39:51Z",
+    "title": "feat(board): make the board gates shape-aware so the public aggregate is lawful"
+  },
+  {
+    "branch": "feat/branch-reap-decided-proof",
+    "pr_number": 2002,
+    "merged_at": "2026-08-07T16:34:57Z",
+    "title": "feat(reap): a closed PR is a decision the reaper could not read \u2014 proof 3"
+  },
+  {
+    "branch": "feat/branch-reap-valve",
+    "pr_number": 2417,
+    "merged_at": "2026-08-14T15:59:32Z",
+    "title": "fix(beat): unstarve the branch reap, and audit step-level armed valves"
+  },
+  {
+    "branch": "feat/broker-quota-is-a-named-condition",
+    "pr_number": 2057,
+    "merged_at": "2026-08-07T23:26:37Z",
+    "title": "feat(conduct): a spent keeper storage plan is a named condition with a registry owner, not a traceback"
+  },
+  {
+    "branch": "feat/claude-bundle-identity-beat-heal",
+    "pr_number": 2470,
+    "merged_at": "2026-08-15T16:24:26Z",
+    "title": "feat(tcc): beat-heal the claude bundle identity every hygiene cadence (#1703)"
+  },
+  {
+    "branch": "feat/cross-vendor-health-sensor",
+    "pr_number": 1901,
+    "merged_at": "2026-08-06T22:32:02Z",
+    "title": "feat(insights): the pipeline watches itself \u2014 five health checks, one censor-owned packet"
+  },
+  {
+    "branch": "feat/enactment-efficacy-axis",
+    "pr_number": 2059,
+    "merged_at": "2026-08-07T23:30:29Z",
+    "title": "feat(enactment): a third audit axis \u2014 a rung can be wired, live, and fail on every single beat"
+  },
+  {
+    "branch": "feat/engagement-guard-mutually-binding",
+    "pr_number": 2389,
+    "merged_at": "2026-08-14T15:24:20Z",
+    "title": "feat(engagement-guard): MUTUALLY-BINDING check + wire the regression contract as a gate"
+  },
+  {
+    "branch": "feat/estate-census-record",
+    "pr_number": 1956,
+    "merged_at": "2026-08-07T11:59:25Z",
+    "title": "feat(gitvs): beat-wire the estate census \u2014 the fleet-debt register's issue/branch axis gets a recorder"
+  },
+  {
+    "branch": "feat/governor-prose-predicate-surfaced",
+    "pr_number": 1827,
+    "merged_at": "2026-08-05T18:41:42Z",
+    "title": "feat(autonomy): surface unrunnable resume predicates as a distinct governor state"
+  },
+  {
+    "branch": "feat/hospes-levers",
+    "pr_number": 2410,
+    "merged_at": "2026-08-14T15:56:49Z",
+    "title": "feat(levers): home the four hospes-campaign human atoms"
+  },
+  {
+    "branch": "feat/host-pressure-estate-probe",
+    "pr_number": 1886,
+    "merged_at": "2026-08-06T16:01:41Z",
+    "title": "feat(vitals): IF-HOST-PRESSURE was measuring the weather \u2014 measure the estate"
+  },
+  {
+    "branch": "feat/jules-flywheel",
+    "pr_number": 1893,
+    "merged_at": "2026-08-07T12:31:43Z",
+    "title": "feat(flywheel): THE predicate \u2014 exit 0 iff quota consumed AND landing holds AND debt non-increasing"
+  },
+  {
+    "branch": "feat/keeper-409-contract",
+    "pr_number": 2015,
+    "merged_at": "2026-08-07T17:03:38Z",
+    "title": "test(conduct): the 409 already-homed contract stops being a claim and starts being a gate"
+  },
+  {
+    "branch": "feat/ledger-custody-predicate",
+    "pr_number": 1880,
+    "merged_at": "2026-08-06T15:17:27Z",
+    "title": "feat(gitvs): give the debt ledger a keeper, not just a convention"
+  },
+  {
+    "branch": "feat/lesson-harvest",
+    "pr_number": 2398,
+    "merged_at": "2026-08-14T15:30:15Z",
+    "title": "feat(lesson-harvest): process every chat session into its durable owner (#2394)"
+  },
+  {
+    "branch": "feat/lifecycle-cohort-manifests",
+    "pr_number": 1944,
+    "merged_at": "2026-08-07T12:37:57Z",
+    "title": "feat(lifecycle): estate manifest v2 \u2014 per-cohort dispositions, SHA-pinned, private rows via --facts"
+  },
+  {
+    "branch": "feat/live-checkout-currency",
+    "pr_number": 1996,
+    "merged_at": "2026-08-07T15:52:42Z",
+    "title": "feat(substrate): deployment currency gets an offline receipt \u2014 \"I could not establish this\" stops reading as fine"
+  },
+  {
+    "branch": "feat/loop-body-edits-load-themselves",
+    "pr_number": 2023,
+    "merged_at": "2026-08-07T17:35:19Z",
+    "title": "feat(beat): a merged loop-body rung loads itself instead of waiting on a human"
+  },
+  {
+    "branch": "feat/no-hand-poll-guard",
+    "pr_number": 1909,
+    "merged_at": "2026-08-06T22:34:31Z",
+    "title": "feat(hooks): the poll-loop ban becomes mechanical \u2014 on Claude's rail AND codex's"
+  },
+  {
+    "branch": "feat/note-link-gate",
+    "pr_number": 1865,
+    "merged_at": "2026-08-06T05:46:21Z",
+    "title": "feat(governance): gate the citation, not just the note \u2014 [[wikilinks]] must resolve"
+  },
+  {
+    "branch": "feat/observatory-complete",
+    "pr_number": 963,
+    "merged_at": "2026-07-12T00:09:57Z",
+    "title": "feat(observatory): complete the organ, alpha to omega \u2014 every residual shipped (all dark)"
+  },
+  {
+    "branch": "feat/owner-route-drain",
+    "pr_number": 1881,
+    "merged_at": "2026-08-06T16:25:23Z",
+    "title": "feat(drain): owner-route drain \u2014 the 308 blocked jules PRs get a disposition, with receipts"
+  },
+  {
+    "branch": "feat/phase-tier-enforcement",
+    "pr_number": 1840,
+    "merged_at": "2026-08-06T00:10:03Z",
+    "title": "feat(tiers): enforce the phase split \u2014 plan derives Opus, build is capped cheap"
+  },
+  {
+    "branch": "feat/plans-lifecycle-organ",
+    "pr_number": 1831,
+    "merged_at": "2026-08-05T18:43:40Z",
+    "title": "feat(lifecycle): plans-lifecycle organ \u2014 audit, propose, dark until armed"
+  },
+  {
+    "branch": "feat/pr-debt-recorder",
+    "pr_number": 1854,
+    "merged_at": "2026-08-06T03:16:50Z",
+    "title": "Wire the PR-debt recorder \u2014 the probe existed, the producer never ran"
+  },
+  {
+    "branch": "feat/pr-lifecycle-autotype",
+    "pr_number": 1988,
+    "merged_at": "2026-08-07T15:23:34Z",
+    "title": "feat(gitvs): the drained estate stops rebounding \u2014 a continuous typing rung for mechanical arrivals"
+  },
+  {
+    "branch": "feat/pr-lifecycle-axis-1981",
+    "pr_number": 2127,
+    "merged_at": "2026-08-09T10:45:58Z",
+    "title": "feat(lifecycle): declare the PR policy axis"
+  },
+  {
+    "branch": "feat/private-artifact-vault",
+    "pr_number": 2141,
+    "merged_at": "2026-08-10T20:59:28Z",
+    "title": "feat(custody): private-vault \u2014 git-tracked ciphertext custody for high-value private artifacts"
+  },
+  {
+    "branch": "feat/private-board-custody-derivation",
+    "pr_number": 2461,
+    "merged_at": "2026-08-15T16:05:09Z",
+    "title": "feat(board): derive private custody from the public projection's shape + hydrate it every beat"
+  },
+  {
+    "branch": "feat/reserved-tier-denominator",
+    "pr_number": 2468,
+    "merged_at": "2026-08-15T16:14:04Z",
+    "title": "feat(governance): lane-neutral reserved-tier accounting over a summing denominator"
+  },
+  {
+    "branch": "feat/review-harvest-sensor",
+    "pr_number": 2033,
+    "merged_at": "2026-08-07T18:47:20Z",
+    "title": "feat(review-harvest): prove a review finding was CONSUMED, not merely received"
+  },
+  {
+    "branch": "feat/runtime-lag-sensor",
+    "pr_number": 1858,
+    "merged_at": "2026-08-06T13:56:04Z",
+    "title": "feat(sensors): sense whether the running host carries merged main"
+  },
+  {
+    "branch": "feat/session-contention-receipt-v2",
+    "pr_number": 1904,
+    "merged_at": "2026-08-07T00:54:14Z",
+    "title": "feat(substrate): the fleet stops rewriting the tree a live session works in"
+  },
+  {
+    "branch": "feat/throughput-governor",
+    "pr_number": 1878,
+    "merged_at": "2026-08-06T15:05:04Z",
+    "title": "feat(governor): dispatch volume is EARNED by landed evidence \u2014 the throughput clamp"
+  },
+  {
+    "branch": "feat/valve-potency",
+    "pr_number": 2155,
+    "merged_at": "2026-08-09T14:04:21Z",
+    "title": "feat(enactment): a POTENCY rung \u2014 prove a destructive valve actually FIRES"
+  },
+  {
+    "branch": "feat/vendor-insights",
+    "pr_number": 1872,
+    "merged_at": "2026-08-06T14:07:04Z",
+    "title": "feat(insights): /vendor-insights \u2014 cross-vendor /insights for codex, copilot, opencode, agy, gemini"
+  },
+  {
+    "branch": "feat/vendor-registry-desktop-lanes",
+    "pr_number": 1888,
+    "merged_at": "2026-08-06T22:06:04Z",
+    "title": "feat(insights): every desktop estate gets a lane \u2014 4 real, 3 dormant-with-evidence, cline's zero speaks"
+  },
+  {
+    "branch": "feat/work-loan-backfill",
+    "pr_number": 1892,
+    "merged_at": "2026-08-06T22:58:56Z",
+    "title": "feat(supply): work-loan backfill \u2014 738 loan-less tasks get a mechanical underwriter with a declarative quality bar"
+  },
+  {
+    "branch": "fix-sync-release",
+    "pr_number": 2128,
+    "merged_at": "2026-08-09T00:28:36Z",
+    "title": "Fix sync-release convergence block and wire exchange-guard"
+  },
+  {
+    "branch": "fix/already-homed-is-structural",
+    "pr_number": 1999,
+    "merged_at": "2026-08-07T16:22:19Z",
+    "title": "fix(conduct): the already-homed answer is a status code, not a sentence"
+  },
+  {
+    "branch": "fix/arca-generation-rotation-2089",
+    "pr_number": 2130,
+    "merged_at": "2026-08-09T00:53:48Z",
+    "title": "feat(arca): generation rotation \u2014 shallow-cloned vaults, size-based rotate, archived cold archive (#2089)"
+  },
+  {
+    "branch": "fix/autonomy-governor-window-restore",
+    "pr_number": 1882,
+    "merged_at": "2026-08-06T17:57:13Z",
+    "title": "fix(governor): a resumed maintenance window restores dispatch \u2014 satisfying the predicate is the restore"
+  },
+  {
+    "branch": "fix/beat-diagnostics-honest-definition",
+    "pr_number": 2062,
+    "merged_at": "2026-08-08T00:46:24Z",
+    "title": "fix(beat-diagnostics): the gate certified 29 blind rungs, and misnamed the defect it was built for"
+  },
+  {
+    "branch": "fix/beat-freshness-sensor",
+    "pr_number": 1963,
+    "merged_at": "2026-08-07T12:28:36Z",
+    "title": "feat(vigilia): beat-freshness sensor \u2014 a resident daemon must postdate its own loop body"
+  },
+  {
+    "branch": "fix/beat-run-temp-file-is-reaped",
+    "pr_number": 2060,
+    "merged_at": "2026-08-07T23:33:01Z",
+    "title": "fix(beat): reap beat_run's capture buffer \u2014 a defect I shipped in #2050"
+  },
+  {
+    "branch": "fix/beat-rungs-do-not-hide-failures",
+    "pr_number": 2050,
+    "merged_at": "2026-08-07T23:25:19Z",
+    "title": "fix(beat): a rung that fails every beat must not read as a quiet one \u2014 `tail -1` was eating the reason"
+  },
+  {
+    "branch": "fix/board-partition-atomic-baseline-and-flag-guard",
+    "pr_number": 2030,
+    "merged_at": "2026-08-07T18:40:08Z",
+    "title": "fix(board-partition): a flag that accepts nothing returned success, and the ratchet floor was written non-atomically"
+  },
+  {
+    "branch": "fix/board-partition-update-can-silently-grow",
+    "pr_number": 2019,
+    "merged_at": "2026-08-07T17:27:58Z",
+    "title": "fix(board-partition): --update said shrink-only three times and grew silently"
+  },
+  {
+    "branch": "fix/board-publication-pr-has-no-opener",
+    "pr_number": 2016,
+    "merged_at": "2026-08-07T16:55:37Z",
+    "title": "fix(tabularius): the board-publication PR had no opener, so the board froze for 12 days"
+  },
+  {
+    "branch": "fix/board-write-path-409s",
+    "pr_number": 2447,
+    "merged_at": "2026-08-15T13:45:00Z",
+    "title": "fix(conduct): heal the board write path \u2014 aggregate CAS read + legal stale-lease release"
+  },
+  {
+    "branch": "fix/branch-reap-cadence-matches-grace",
+    "pr_number": 2420,
+    "merged_at": "2026-08-14T16:08:16Z",
+    "title": "fix(sensors): match the branch-reap cadence to the grace window it depends on"
+  },
+  {
+    "branch": "fix/censor-store-absent",
+    "pr_number": 1832,
+    "merged_at": "2026-08-05T18:52:55Z",
+    "title": "fix(censor): distinguish absent friction stores from genuine zero-drift"
+  },
+  {
+    "branch": "fix/ci-red-disposition-ledger",
+    "pr_number": 2323,
+    "merged_at": "2026-08-10T22:38:20Z",
+    "title": "feat(disposition): CI-RED cohort ledger for DRAIN-0810-DISPOSITION-CIRED"
+  },
+  {
+    "branch": "fix/claude-bundle-identity-heal",
+    "pr_number": 2467,
+    "merged_at": "2026-08-15T15:55:10Z",
+    "title": "fix(tcc): give Claude Code sessions a stable bundle identity (#1703)"
+  },
+  {
+    "branch": "fix/claude-identity-bundle-keeper",
+    "pr_number": 1837,
+    "merged_at": "2026-08-05T23:49:27Z",
+    "title": "fix(tcc): keep Claude Code's disclaimed identity on a stable bundle, not a versioned path"
+  },
+  {
+    "branch": "fix/claude-identity-native-symlink",
+    "pr_number": 2482,
+    "merged_at": "2026-08-15T19:39:28Z",
+    "title": "fix(identity): recognize native-installer symlink as already-healed"
+  },
+  {
+    "branch": "fix/contention-hold-vs-breach",
+    "pr_number": 1974,
+    "merged_at": "2026-08-07T14:14:02Z",
+    "title": "fix(contention): a declined action is the guard HOLDING, not a breach \u2014 the gate was permanently red on a 100%-success record"
+  },
+  {
+    "branch": "fix/corpus-runtime-sources-1957",
+    "pr_number": 2126,
+    "merged_at": "2026-08-09T10:46:10Z",
+    "title": "fix(corpus): discover runtime stores with cold-archive custody"
+  },
+  {
+    "branch": "fix/daily-receipt-idempotent-replay",
+    "pr_number": 1842,
+    "merged_at": "2026-08-06T00:53:06Z",
+    "title": "fix(daily): stop re-stamping completed_at on a no-op replay \u2014 the receipt is the fixed point"
+  },
+  {
+    "branch": "fix/defect-note-carries-its-own-age",
+    "pr_number": 2027,
+    "merged_at": "2026-08-07T18:20:03Z",
+    "title": "fix(organ-health): a defect's age is the artifact's, not the voice's"
+  },
+  {
+    "branch": "fix/deploy-arming-axis",
+    "pr_number": 1855,
+    "merged_at": "2026-08-06T03:30:06Z",
+    "title": "feat(gates): classify by \"will merging change what is served\", not by glob match"
+  },
+  {
+    "branch": "fix/deploy-trigger-api-scope",
+    "pr_number": 1847,
+    "merged_at": "2026-08-06T02:57:28Z",
+    "title": "fix(gates): make a deploy-trigger path defend itself \u2014 check J, and cli/** recorded"
+  },
+  {
+    "branch": "fix/dispatch-admission-bootstrap",
+    "pr_number": 1885,
+    "merged_at": "2026-08-06T22:22:12Z",
+    "title": "fix(admission): an idle window bootstraps \u2014 starvation evidence is not runaway evidence"
+  },
+  {
+    "branch": "fix/diurnal-claims-type-consistency",
+    "pr_number": 2036,
+    "merged_at": "2026-08-07T19:49:39Z",
+    "title": "fix(diurnal): one key, one type \u2014 the receipt's claims list changed shape by phase"
+  },
+  {
+    "branch": "fix/diurnal-midday-sidecar-drift",
+    "pr_number": 2034,
+    "merged_at": "2026-08-07T18:47:51Z",
+    "title": "fix(diurnal): the midday receipt announced a drift count it did not record"
+  },
+  {
+    "branch": "fix/enactment-audit-worktree-false-red",
+    "pr_number": 2053,
+    "merged_at": "2026-08-07T23:24:23Z",
+    "title": "fix(enactment-audit): a global daemon compared against a per-worktree file mtime"
+  },
+  {
+    "branch": "fix/fable-meter-falsifiable",
+    "pr_number": 1998,
+    "merged_at": "2026-08-07T16:23:57Z",
+    "title": "fix(arms-agents): the weekly Fable meter becomes falsifiable \u2014 one reader, an explicit verdict, and a tier withheld when it cannot be trusted"
+  },
+  {
+    "branch": "fix/funnel-corrupt-state-detection",
+    "pr_number": 1820,
+    "merged_at": "2026-08-05T18:29:25Z",
+    "title": "fix(daily): an unmeasured confirmation count was reported as zero, making the daily exit condition unreachable"
+  },
+  {
+    "branch": "fix/funnel-integrity-predicate-v2",
+    "pr_number": 1825,
+    "merged_at": "2026-08-05T18:45:09Z",
+    "title": "feat(funnel): funnel-integrity.sh \u2014 the executable definition of \"the funnel is honest\""
+  },
+  {
+    "branch": "fix/gatekeeper-class-residuals",
+    "pr_number": 1862,
+    "merged_at": "2026-08-06T04:04:40Z",
+    "title": "fix(gatekeeper): close the class residuals \u2014 a fast path, the sensor's first contracts, a homed hypothesis"
+  },
+  {
+    "branch": "fix/gatekeeper-exec-root",
+    "pr_number": 2347,
+    "merged_at": "2026-08-12T22:58:59Z",
+    "title": "fix(gatekeeper): correct class 4b's root \u2014 unregistration is not the mechanism"
+  },
+  {
+    "branch": "fix/gemini-mcp-command-argv",
+    "pr_number": 1943,
+    "merged_at": "2026-08-07T11:04:44Z",
+    "title": "fix(gemini): split MCP command into argv \u2014 limen server showed Disconnected"
+  },
+  {
+    "branch": "fix/gitvs-uncapped-pr-debt",
+    "pr_number": 2131,
+    "merged_at": "2026-08-09T03:26:53Z",
+    "title": "fix(gitvs): uncapped PR debt audit via paginated owner graph"
+  },
+  {
+    "branch": "fix/handoff-hold-labels",
+    "pr_number": 1941,
+    "merged_at": "2026-08-07T12:42:00Z",
+    "title": "fix(handoff): dispatch admission honors the canonical hold-label set"
+  },
+  {
+    "branch": "fix/handoff-print-honesty",
+    "pr_number": 1977,
+    "merged_at": "2026-08-07T14:19:19Z",
+    "title": "fix(handoff): --print distinguishes absence from an empty board"
+  },
+  {
+    "branch": "fix/heal-board-cannot-see-canonical-drift",
+    "pr_number": 2014,
+    "merged_at": "2026-08-07T17:17:04Z",
+    "title": "fix(heal-board): the board self-heal could not see the drift that mattered"
+  },
+  {
+    "branch": "fix/heal-quota-tempfail",
+    "pr_number": 2298,
+    "merged_at": "2026-08-10T18:52:35Z",
+    "title": "fix(heal): self-heal-scan reports broker quota wall legibly instead of dying"
+  },
+  {
+    "branch": "fix/heartbeat-launchd-label-fixed-string",
+    "pr_number": 2031,
+    "merged_at": "2026-08-07T18:37:45Z",
+    "title": "fix(heartbeat): ask launchd for the label instead of grepping its table"
+  },
+  {
+    "branch": "fix/hospes-heal-exact-head-verification",
+    "pr_number": 2293,
+    "merged_at": "2026-08-10T02:57:52Z",
+    "title": "docs: record exact-head HOSPES heal verification"
+  },
+  {
+    "branch": "fix/host-admission-rendezvous-race",
+    "pr_number": 2455,
+    "merged_at": "2026-08-15T15:03:28Z",
+    "title": "fix(tests): publish the host-admission rendezvous marker atomically"
+  },
+  {
+    "branch": "fix/ianva-copilot-http-entry",
+    "pr_number": 1940,
+    "merged_at": "2026-08-07T10:56:06Z",
+    "title": "fix(ianva): Copilot direct http entry; mcp-proxy shim pins mcp<1.17"
+  },
+  {
+    "branch": "fix/ledger-custody-prose-false-positive",
+    "pr_number": 1906,
+    "merged_at": "2026-08-07T00:41:29Z",
+    "title": "fix(gitvs): a docstring naming the ledger is not a writer of it \u2014 main is red on ledger-custody"
+  },
+  {
+    "branch": "fix/lever-cite-the-wrapper",
+    "pr_number": 1868,
+    "merged_at": "2026-08-06T05:31:08Z",
+    "title": "fix(levers): cite the wrapper \u2014 and delete the claim I had no business making"
+  },
+  {
+    "branch": "fix/lever-verify-step-regression",
+    "pr_number": 1867,
+    "merged_at": "2026-08-06T05:03:04Z",
+    "title": "fix(gates): I took main red \u2014 and the reason was a hole in gate SCOPING, not the edit"
+  },
+  {
+    "branch": "fix/limen-typing-0703",
+    "pr_number": 2137,
+    "merged_at": "2026-08-09T04:16:15Z",
+    "title": "fix(typing): scoped mypy strict + python-typecheck gate"
+  },
+  {
+    "branch": "fix/live-checkout-detached-release",
+    "pr_number": 2287,
+    "merged_at": "2026-08-09T17:06:22Z",
+    "title": "fix(live-checkout): a contended detach is the converged state, not a park"
+  },
+  {
+    "branch": "fix/loop-self-load-gate-coverage",
+    "pr_number": 2042,
+    "merged_at": "2026-08-07T19:41:07Z",
+    "title": "fix(gates): a heartbeat-loop.sh-only change ran no test of the rung it changed"
+  },
+  {
+    "branch": "fix/loop-self-load-suite-tracks-exact-label-lookup",
+    "pr_number": 2041,
+    "merged_at": "2026-08-07T19:32:54Z",
+    "title": "fix(loop-self-load): the suite's launchctl stub modelled one of two real forms \u2014 main was red"
+  },
+  {
+    "branch": "fix/mcp-boot-config-path-resolution",
+    "pr_number": 2333,
+    "merged_at": "2026-08-12T16:22:23Z",
+    "title": "fix(mcp): resolve agent-CLI configs the CLIs actually read"
+  },
+  {
+    "branch": "fix/mcp-semantic-auth-2120",
+    "pr_number": 2124,
+    "merged_at": "2026-08-09T10:47:03Z",
+    "title": "fix(mcp): report hosted OAuth truth separately from reachability"
+  },
+  {
+    "branch": "fix/metabolize-pass-output-discarded",
+    "pr_number": 2048,
+    "merged_at": "2026-08-07T23:19:37Z",
+    "title": "fix(beat): the metabolize sensor pass threw away 57 sensors' findings"
+  },
+  {
+    "branch": "fix/nanoid-advisory-blocks-every-pr",
+    "pr_number": 2051,
+    "merged_at": "2026-08-07T23:02:00Z",
+    "title": "fix(web): nanoid advisory reds the web job on every PR, main included"
+  },
+  {
+    "branch": "fix/notification-routing-truth-2120",
+    "pr_number": 2122,
+    "merged_at": "2026-08-12T22:46:49Z",
+    "title": "fix(notify): restore routing, dedupe, and effect truth"
+  },
+  {
+    "branch": "fix/notify-ci-red-hysteresis",
+    "pr_number": 2302,
+    "merged_at": "2026-08-10T22:25:24Z",
+    "title": "fix(notify): hold CI-RED clear open across a cooldown so a rotating window can't re-page"
+  },
+  {
+    "branch": "fix/notify-estate-env-floor",
+    "pr_number": 1844,
+    "merged_at": "2026-08-06T13:40:20Z",
+    "title": "fix(notify): the hermetic wrapper was un-setting the one guard old copies honor"
+  },
+  {
+    "branch": "fix/npm-audit-nanoid",
+    "pr_number": 2392,
+    "merged_at": "2026-08-14T15:18:18Z",
+    "title": "fix(ci): npm-audit gate with recorded, expiring exceptions \u2014 unblocks the nanoid advisory"
+  },
+  {
+    "branch": "fix/occupancy-app-server-is-a-service",
+    "pr_number": 2351,
+    "merged_at": "2026-08-12T23:21:02Z",
+    "title": "fix(liveness): a desktop app's stdio server is a service, not a session"
+  },
+  {
+    "branch": "fix/occupancy-counts-non-interactive-runtimes",
+    "pr_number": 1987,
+    "merged_at": "2026-08-07T15:18:58Z",
+    "title": "fix(liveness): a pre-warmed spare is not a session \u2014 the live checkout can converge again"
+  },
+  {
+    "branch": "fix/organ-backlog-unslugged-repo",
+    "pr_number": 2066,
+    "merged_at": "2026-08-08T01:12:03Z",
+    "title": "fix(organ-backlog): a ladder row spanning two repos crashed the work-supply generator on every beat"
+  },
+  {
+    "branch": "fix/organ-uses-its-own-probe",
+    "pr_number": 2352,
+    "merged_at": "2026-08-12T23:17:56Z",
+    "title": "fix(sync-release): the organ consults its own helpers, not the target tree's"
+  },
+  {
+    "branch": "fix/pr-debt-docstring-accuracy",
+    "pr_number": 1869,
+    "merged_at": "2026-08-06T06:01:09Z",
+    "title": "fix(gitvs): I misattributed #1859 \u2014 and proved the digest against a fixture I wrote"
+  },
+  {
+    "branch": "fix/pr-debt-owner-assertion",
+    "pr_number": 1861,
+    "merged_at": "2026-08-06T04:18:58Z",
+    "title": "fix(tests): main is red \u2014 the debt row asserts its own fix never happened"
+  },
+  {
+    "branch": "fix/pr-debt-recorder-noise",
+    "pr_number": 1863,
+    "merged_at": "2026-08-06T05:26:35Z",
+    "title": "fix(gitvs): the debt recorder shipped a PR per census \u2014 neither clock nor change-check held"
+  },
+  {
+    "branch": "fix/pr-debt-recorder-verify-findings",
+    "pr_number": 1873,
+    "merged_at": "2026-08-06T14:07:20Z",
+    "title": "fix(gitvs): the recorder counted a phantom observation and left a broken one behind"
+  },
+  {
+    "branch": "fix/pr-scan-timeout",
+    "pr_number": 2448,
+    "merged_at": "2026-08-15T13:35:13Z",
+    "title": "fix(heal): the full-fleet PR enumeration outgrew its 60s gh timeout"
+  },
+  {
+    "branch": "fix/quota-is-a-lever-not-a-defect",
+    "pr_number": 2479,
+    "merged_at": "2026-08-15T17:57:40Z",
+    "title": "fix(beat): a spent keeper storage plan is a homed defect, not a rung failure"
+  },
+  {
+    "branch": "fix/reap-branches-exec-bit",
+    "pr_number": 1871,
+    "merged_at": "2026-08-06T13:40:21Z",
+    "title": "fix(reap): the FAIL message tells you to run a file that is not executable"
+  },
+  {
+    "branch": "fix/reclaim-repository-ignore-scope",
+    "pr_number": 2327,
+    "merged_at": "2026-08-12T15:29:16Z",
+    "title": "fix: scope generated reclaim to repository ignores"
+  },
+  {
+    "branch": "fix/relay-identity-freeze-v2",
+    "pr_number": 2005,
+    "merged_at": "2026-08-07T17:06:29Z",
+    "title": "fix(tabularius): a fixed relay session id is frozen by the first client that claims it"
+  },
+  {
+    "branch": "fix/release-stale-all-agents",
+    "pr_number": 1887,
+    "merged_at": "2026-08-06T22:23:33Z",
+    "title": "fix(beat): release-stale sweeps every lane \u2014 the jules pin hid a 14-day stale codex claim"
+  },
+  {
+    "branch": "fix/release-stale-canonical-reconcile",
+    "pr_number": 2453,
+    "merged_at": "2026-08-15T14:40:51Z",
+    "title": "fix(conduct): release-stale reconciles candidates against canonical before releasing"
+  },
+  {
+    "branch": "fix/release-stale-relist-cas",
+    "pr_number": 2449,
+    "merged_at": "2026-08-15T14:17:01Z",
+    "title": "fix(conduct): relist pass must CAS against the keeper's projection"
+  },
+  {
+    "branch": "fix/removal-count-dash-dash-space",
+    "pr_number": 2043,
+    "merged_at": "2026-08-07T19:43:42Z",
+    "title": "fix(verify-skill): '^--- ' eats a real removal too \u2014 third pass on the same four-line recipe"
+  },
+  {
+    "branch": "fix/removal-table-numbers-are-machine-checked",
+    "pr_number": 2044,
+    "merged_at": "2026-08-07T19:56:39Z",
+    "title": "fix(verify-skill): the comparison table's own numbers were wrong, and its gate could not tell"
+  },
+  {
+    "branch": "fix/repair-stale-sensor",
+    "pr_number": 2304,
+    "merged_at": "2026-08-10T19:53:45Z",
+    "title": "feat(sensors): self-heal-stale \u2014 watch the PR-repair factory's writer"
+  },
+  {
+    "branch": "fix/routine-freshness-defect-is-visible",
+    "pr_number": 2017,
+    "merged_at": "2026-08-07T17:12:55Z",
+    "title": "fix(organ-health): a fresh timestamp is not a working organ \u2014 read the failure the artifact records"
+  },
+  {
+    "branch": "fix/routines-budget-and-utc-clock",
+    "pr_number": 2032,
+    "merged_at": "2026-08-07T18:45:01Z",
+    "title": "fix(organ-health): the 6h budget that read down, and the UTC clock that read 4h young"
+  },
+  {
+    "branch": "fix/self-heal-retirement-predicate",
+    "pr_number": 2144,
+    "merged_at": "2026-08-09T11:35:36Z",
+    "title": "fix(self-heal): root-cause HEAL task retirement gap and add executable predicate gate"
+  },
+  {
+    "branch": "fix/self-heal-scan-max-ceiling",
+    "pr_number": 2150,
+    "merged_at": "2026-08-09T13:43:15Z",
+    "title": "fix(self-heal): the retirement valve was wired, scheduled, and dead"
+  },
+  {
+    "branch": "fix/self-load-pause-order-declared",
+    "pr_number": 2058,
+    "merged_at": "2026-08-07T23:40:43Z",
+    "title": "fix(beat): the self-load rung acting during an autonomy pause is now a DECISION, not an accident"
+  },
+  {
+    "branch": "fix/ship-docs-orphan-base",
+    "pr_number": 2086,
+    "merged_at": "2026-08-08T13:00:35Z",
+    "title": "fix(ship-docs): a worktree add that checked out nothing shipped a parentless branch"
+  },
+  {
+    "branch": "fix/stale-host-lifetime-marker",
+    "pr_number": 1973,
+    "merged_at": "2026-08-07T14:27:25Z",
+    "title": "fix(dispatch): an uninherited lifetime descriptor is absence, not tampering \u2014 the beat could not dispatch at all"
+  },
+  {
+    "branch": "fix/stale-host-marker-spawns-host",
+    "pr_number": 1984,
+    "merged_at": "2026-08-07T14:58:33Z",
+    "title": "fix(beat): the dispatch rung stops passing on a host claim it cannot back \u2014 jules dispatches again"
+  },
+  {
+    "branch": "fix/status-stale-budget-window-label",
+    "pr_number": 2006,
+    "merged_at": "2026-08-07T16:40:57Z",
+    "title": "fix(status): a 12-day-old budget window stops calling itself \"today\""
+  },
+  {
+    "branch": "fix/sync-release-content-identity-valve",
+    "pr_number": 2349,
+    "merged_at": "2026-08-12T22:55:41Z",
+    "title": "fix(sync-release): reconcile when local content already landed upstream in a larger commit"
+  },
+  {
+    "branch": "fix/sync-release-detach-fallback",
+    "pr_number": 2286,
+    "merged_at": "2026-08-09T16:57:36Z",
+    "title": "fix(sync-release): give the unpark valve an effector for a held branch name"
+  },
+  {
+    "branch": "fix/tabularius-preflight-deferred",
+    "pr_number": 1828,
+    "merged_at": "2026-08-05T18:45:08Z",
+    "title": "fix(tabularius): defer the retired-writer preflight sentinel, don't fail it"
+  },
+  {
+    "branch": "fix/tape-timezone-frame",
+    "pr_number": 2358,
+    "merged_at": "2026-08-13T01:04:24Z",
+    "title": "fix(tape): render the device's zone, not a hardcoded America/New_York"
+  },
+  {
+    "branch": "fix/tcc-identity-honest-measurement",
+    "pr_number": 1835,
+    "merged_at": "2026-08-05T21:51:34Z",
+    "title": "fix(tcc): IF-AGENT-IDENTITY \u2014 heal the instrument that discharged the TCC lever"
+  },
+  {
+    "branch": "fix/tcc-leak-lever-scope",
+    "pr_number": 1864,
+    "merged_at": "2026-08-06T04:18:59Z",
+    "title": "fix(levers): the TCC leak lever names 2 grants; the live audit shows 8"
+  },
+  {
+    "branch": "fix/tcc-lever-audit-citation",
+    "pr_number": 1866,
+    "merged_at": "2026-08-06T04:57:55Z",
+    "title": "fix(tests): main is red on a pinned SPELLING of the TCC audit, not a missing citation"
+  },
+  {
+    "branch": "fix/tcc-probe-verdict-and-residuals",
+    "pr_number": 2474,
+    "merged_at": "2026-08-15T16:34:22Z",
+    "title": "fix(tcc): stop the probe announcing UNRESOLVED for a cure that shipped"
+  },
+  {
+    "branch": "fix/throughput-governor-frozen-now",
+    "pr_number": 2152,
+    "merged_at": "2026-08-09T13:16:32Z",
+    "title": "fix(tests): unfreeze the throughput-governor clock \u2014 a dated NOW is a timer"
+  },
+  {
+    "branch": "fix/trailer-parser-unreliability-assertion",
+    "pr_number": 1826,
+    "merged_at": "2026-08-05T17:59:55Z",
+    "title": "fix(streams): a test asserted more than its own rationale needed, and turned the trunk red"
+  },
+  {
+    "branch": "fix/update-marker-config-path",
+    "pr_number": 2335,
+    "merged_at": "2026-08-12T17:31:54Z",
+    "title": "fix(heal): resolve the update marker Claude Code actually writes"
+  },
+  {
+    "branch": "fix/usage-meters-live-tree",
+    "pr_number": 2425,
+    "merged_at": "2026-08-14T21:12:02Z",
+    "title": "fix(meters): resolve the live harness projects tree, never the legacy ~/.claude layout"
+  },
+  {
+    "branch": "fix/vendor-insights-index-honesty",
+    "pr_number": 1879,
+    "merged_at": "2026-08-06T15:35:27Z",
+    "title": "fix(insights): index caps announce themselves; antigravity becomes a 3-source union"
+  },
+  {
+    "branch": "fix/verify-findings-plan-decision-homes",
+    "pr_number": 1986,
+    "merged_at": "2026-08-07T14:49:47Z",
+    "title": "fix(gates): a receipt is not a registry, and an ignored $LIMEN_ROOT is not agreement"
+  },
+  {
+    "branch": "fix/verify-skill-removal-count-undercounted",
+    "pr_number": 2038,
+    "merged_at": "2026-08-07T19:02:12Z",
+    "title": "fix(verify-skill): the tidier removal pattern UNDER-counted, which is the dangerous direction"
+  },
+  {
+    "branch": "heal/capfill-limen-423",
+    "pr_number": 672,
+    "merged_at": "2026-07-06T15:28:21Z",
+    "title": "[limen CAPFILL-claude-20260629-13] Claude daily capacity-fill packet 13 (healed)"
+  },
+  {
+    "branch": "heal/gatekeeper-inert",
+    "pr_number": 1848,
+    "merged_at": "2026-08-06T02:57:27Z",
+    "title": "heal(gatekeeper): unregister the vendor bundle, never delete it \u2014 IF-GATEKEEPER-INERT"
+  },
+  {
+    "branch": "heal/hospes-eviction-retire",
+    "pr_number": 2411,
+    "merged_at": "2026-08-14T15:45:47Z",
+    "title": "heal(estate): retire the hospes transcript eviction as vacuously satisfied"
+  },
+  {
+    "branch": "heal/ianva-cli-census-drift",
+    "pr_number": 1946,
+    "merged_at": "2026-08-07T11:52:31Z",
+    "title": "heal(ianva): census follows copilot's http adapter; ianva/** implicates pytest-cli"
+  },
+  {
+    "branch": "heal/merge-ready-removal-ban",
+    "pr_number": 1962,
+    "merged_at": "2026-08-07T12:16:34Z",
+    "title": "heal(drainage): merge-ready copy matches reality \u2014 source branches are preserved, not deleted"
+  },
+  {
+    "branch": "heal/mypy-owner-route-drain",
+    "pr_number": 1916,
+    "merged_at": "2026-08-06T23:57:46Z",
+    "title": "heal(cli): type-narrow _ci_signal rollup \u2014 main's mypy gate is red"
+  },
+  {
+    "branch": "heal/omega-autonomy-call-site",
+    "pr_number": 1921,
+    "merged_at": "2026-08-07T00:19:27Z",
+    "title": "heal(omega): add the missing autonomy-acting call site \u2014 main's verify gate is red"
+  },
+  {
+    "branch": "heal/operator-gate-nag-visible",
+    "pr_number": 2148,
+    "merged_at": "2026-08-09T12:07:56Z",
+    "title": "heal(operator-gates): name the still-live nag instead of counting it"
+  },
+  {
+    "branch": "heal/operator-gates-canonical",
+    "pr_number": 2145,
+    "merged_at": "2026-08-09T11:19:43Z",
+    "title": "heal(operator-gates): audit the KEEPER's board, not the mirror"
+  },
+  {
+    "branch": "heal/retirement-fail-closed",
+    "pr_number": 2146,
+    "merged_at": "2026-08-09T11:58:29Z",
+    "title": "heal(heal-retirement): the gate must not answer when it could not look"
+  },
+  {
+    "branch": "heal/revive-self-heal-beat",
+    "pr_number": 591,
+    "merged_at": "2026-07-03T13:54:15Z",
+    "title": "heal(beat): wire the self-heal PR-repair factory into the beat + clear NO-HARDCODE gate"
+  },
+  {
+    "branch": "heal/sync-release-check-predicate",
+    "pr_number": 1821,
+    "merged_at": "2026-08-05T17:24:36Z",
+    "title": "heal(sync-release): add --check predicate, extend receipt-glob tolerance"
+  },
+  {
+    "branch": "limen/aw-estate-custody-1bf70c8a",
+    "pr_number": 689,
+    "merged_at": "2026-07-08T04:24:10Z",
+    "title": "[limen AW-ESTATE-CUSTODY] Make external SSDs the durable estate and the laptop a hot cache"
+  },
+  {
+    "branch": "limen/aw-public-face-contribution-balance-3112b780",
+    "pr_number": 690,
+    "merged_at": "2026-07-08T05:15:00Z",
+    "title": "[limen AW-PUBLIC-FACE-CONTRIBUTION-BALANCE] Rebalance public GitHub activity away from commit-only churn"
+  },
+  {
+    "branch": "limen/heal-cifix-organvm-limen-433-aba31b6f",
+    "pr_number": 674,
+    "merged_at": "2026-07-06T16:54:13Z",
+    "title": "[limen HEAL-cifix-organvm-limen-433] fix failing CI on organvm/limen#433"
+  },
+  {
+    "branch": "limen/jules-org-legal-organ-firstslice-0703-40b8",
+    "pr_number": 620,
+    "merged_at": "2026-07-11T23:40:55Z",
+    "title": "[limen jules ORG-legal-organ-firstslice-0703] Build the first working vertical slice of the legal or"
+  },
+  {
+    "branch": "ship/f2-unresolved-model",
+    "pr_number": 2004,
+    "merged_at": "2026-08-07T16:42:36Z",
+    "title": "fix(arms-agents): an unresolvable session model becomes a third state that speaks"
+  },
+  {
+    "branch": "ship/f3-f6-f7-v2",
+    "pr_number": 2013,
+    "merged_at": "2026-08-07T17:09:39Z",
+    "title": "feat(arms-agents): guard the cadence CEILING, census every lane's opening floor, and ratchet the fail-toward-warning invariant (F3+F6+F7)"
+  },
+  {
+    "branch": "tabularius/board-projection",
+    "pr_number": 1267,
+    "merged_at": "2026-07-18T17:53:44Z",
+    "title": "tabularius: publish board projection"
+  },
+  {
+    "branch": "test/review-harvest-asserts-exact-resolve-command",
+    "pr_number": 2037,
+    "merged_at": "2026-08-07T18:56:48Z",
+    "title": "test(review-harvest): run the printed resolve command instead of pattern-matching it"
+  },
+  {
+    "branch": "test/review-harvest-stub-robustness",
+    "pr_number": 2039,
+    "merged_at": "2026-08-07T19:04:41Z",
+    "title": "test(review-harvest): the stub emitted invalid JSON, and the extraction was over-tight"
+  },
+  {
+    "branch": "test/shell-tests-adopt-pipefail",
+    "pr_number": 2040,
+    "merged_at": "2026-08-07T19:09:36Z",
+    "title": "test(shell): adopt pipefail in the two new suites, and stop conflating exit status with output"
+  },
+  {
+    "branch": "work/agent-state-metabolism-20260724",
+    "pr_number": 1517,
+    "merged_at": "2026-07-24T19:16:00Z",
+    "title": "stream, encrypt, and restore agent-state custody"
+  },
+  {
+    "branch": "work/charles",
+    "pr_number": 1782,
+    "merged_at": "2026-08-05T16:24:52Z",
+    "title": "docs(lanes): charles lane brief + agent-neutral workstream capsule"
+  },
+  {
+    "branch": "work/collaboration-operations-platform-genesis-20260802",
+    "pr_number": 1778,
+    "merged_at": "2026-08-02T19:03:35Z",
+    "title": "feat: establish private collaboration operations boundary"
+  },
+  {
+    "branch": "work/concurrency-closeout-reap-20260719",
+    "pr_number": 1268,
+    "merged_at": "2026-07-18T17:45:31Z",
+    "title": "docs: close the live concurrency rail rollout"
+  },
+  {
+    "branch": "work/laptop-wide-recovery-closeout-20260727-s18",
+    "pr_number": 1590,
+    "merged_at": "2026-07-27T15:33:27Z",
+    "title": "docs: preserve institutional Omega campaign S18"
+  },
+  {
+    "branch": "work/seven-agent-whole-estate-review-20260719",
+    "pr_number": 1304,
+    "merged_at": "2026-07-19T16:24:36Z",
+    "title": "docs: seven-agent whole-estate session review"
+  },
+  {
+    "branch": "work/truth-session-breadcrumb-20260721",
+    "pr_number": 1326,
+    "merged_at": "2026-07-21T18:17:16Z",
+    "title": "Defer Claude SessionEnd lifecycle work to heartbeat"
+  },
+  {
+    "branch": "worktree-arca-generations-and-exchange-rubric",
+    "pr_number": 2073,
+    "merged_at": "2026-08-08T02:39:20Z",
+    "title": "feat(arca): the backup died eight days ago and every beat stayed green"
+  },
+  {
+    "branch": "worktree-board-partition-public-leak",
+    "pr_number": 2070,
+    "merged_at": "2026-08-08T01:26:29Z",
+    "title": "docs(plan): the board-partition scrub the gate promises cannot be built"
+  },
+  {
+    "branch": "worktree-ceiling-unresolved-speaks",
+    "pr_number": 2029,
+    "merged_at": "2026-08-07T18:36:05Z",
+    "title": "fix(cadence-guard): the ceiling was the other input, and nothing was asking about it"
+  },
+  {
+    "branch": "worktree-codify-grounding-rules",
+    "pr_number": 1817,
+    "merged_at": "2026-08-05T17:13:16Z",
+    "title": "docs(charter): codify channel-enumeration + predicate-exit-integrity rules"
+  },
+  {
+    "branch": "worktree-codify-reap-advice",
+    "pr_number": 1824,
+    "merged_at": "2026-08-05T17:26:48Z",
+    "title": "fix(reap): derive --check FAIL advice from the acceptance ledger; restore credential-wall exec bit"
+  },
+  {
+    "branch": "worktree-codify-review-loop-precedent",
+    "pr_number": 2348,
+    "merged_at": "2026-08-12T22:51:24Z",
+    "title": "docs(charter): bound fix-on-review cycles \u2014 a reviewer is a generator, not a gate"
+  },
+  {
+    "branch": "worktree-docs+arca-coverage-precedent",
+    "pr_number": 2357,
+    "merged_at": "2026-08-13T00:17:33Z",
+    "title": "docs(censor): custody recency is not coverage (PREC-2026-08-12)"
+  },
+  {
+    "branch": "worktree-docs-grounding-prior-sessions",
+    "pr_number": 2071,
+    "merged_at": "2026-08-08T01:40:13Z",
+    "title": "docs(charter): the prior sessions are a channel, and a binary event is invisible to a text dump"
+  },
+  {
+    "branch": "worktree-docs-tcc-1703-restart-evidence",
+    "pr_number": 2444,
+    "merged_at": "2026-08-15T12:48:53Z",
+    "title": "docs(tcc): record 2026-08-15 recurrence \u2014 daemon restart does not heal the unhosted ingress (#1703)"
+  },
+  {
+    "branch": "worktree-docs-verify-skill-sensor-bounds",
+    "pr_number": 2064,
+    "merged_at": "2026-08-08T00:52:42Z",
+    "title": "docs(skills): a missing sensor log is not a dead rung \u2014 the bound was 10 minutes, measured 74"
+  },
+  {
+    "branch": "worktree-dustin-conversation-review",
+    "pr_number": 2341,
+    "merged_at": "2026-08-12T17:40:18Z",
+    "title": "feat(constellation): clear Dustin's T3 gate \u2014 three lanes on evidence"
+  },
+  {
+    "branch": "worktree-dustin-social-instance",
+    "pr_number": 2350,
+    "merged_at": "2026-08-12T23:06:46Z",
+    "title": "feat(constellation): register the social-presence instance repo"
+  },
+  {
+    "branch": "worktree-dustin-ventures-built",
+    "pr_number": 2353,
+    "merged_at": "2026-08-12T23:45:57Z",
+    "title": "docs(constellation): promote both dustin ventures dossier -> building"
+  },
+  {
+    "branch": "worktree-engagement-guard-victoroff-update",
+    "pr_number": 2338,
+    "merged_at": "2026-08-12T17:30:52Z",
+    "title": "feat(engagement-guard): SCOPE-PRICED check + rules 11-12 from live recurrence"
+  },
+  {
+    "branch": "worktree-feat-engagement-intake-guard",
+    "pr_number": 2332,
+    "merged_at": "2026-08-12T15:43:52Z",
+    "title": "feat(engagement): intake standard + executable guard"
+  },
+  {
+    "branch": "worktree-feat-reap-check-sensor",
+    "pr_number": 2399,
+    "merged_at": "2026-08-14T15:27:06Z",
+    "title": "feat(sensors): wire reap-branches --check into the beat as sensor 0g9b"
+  },
+  {
+    "branch": "worktree-feat-session-phase-entry-binding",
+    "pr_number": 1846,
+    "merged_at": "2026-08-06T01:55:40Z",
+    "title": "feat(phase): bind the session entry phase \u2014 sessions open in PLAN, plans carry an issue and a PR"
+  },
+  {
+    "branch": "worktree-fix+arca-coverage-predicate",
+    "pr_number": 2354,
+    "merged_at": "2026-08-13T00:12:11Z",
+    "title": "fix(arca): assert vault COVERAGE, not just recency"
+  },
+  {
+    "branch": "worktree-fix-arca-sensor-prose",
+    "pr_number": 2359,
+    "merged_at": "2026-08-13T02:12:00Z",
+    "title": "docs(sensors): say COVERAGE where the arca predicate now checks coverage"
+  },
+  {
+    "branch": "worktree-fix-capture-threads-chat-join",
+    "pr_number": 2068,
+    "merged_at": "2026-08-08T01:16:24Z",
+    "title": "fix(capture-threads): the tape kept their half of the conversation and deleted mine"
+  },
+  {
+    "branch": "worktree-fix-enactment-audit-self-latch",
+    "pr_number": 2373,
+    "merged_at": "2026-08-13T09:33:42Z",
+    "title": "fix(enactment-audit): break the self-latch that made the gate permanently red"
+  },
+  {
+    "branch": "worktree-fix-enclosure-probe-fixture",
+    "pr_number": 2457,
+    "merged_at": "2026-08-15T15:35:28Z",
+    "title": "fix(tcc): measure exec identity on the layer that decides it"
+  },
+  {
+    "branch": "worktree-fix-hotcache-r4-toolchain",
+    "pr_number": 1983,
+    "merged_at": "2026-08-07T14:40:52Z",
+    "title": "fix(hot-cache): R4 could not fail \u2014 `mise current` resolves config, never disk"
+  },
+  {
+    "branch": "worktree-fix-macos-fork-oslog-crash",
+    "pr_number": 831,
+    "merged_at": "2026-07-09T15:20:37Z",
+    "title": "fix(fork-safety): defuse macOS 26.6 Network.framework atfork os_log SIGSEGV"
+  },
+  {
+    "branch": "worktree-fix-notify-body-gate",
+    "pr_number": 1838,
+    "merged_at": "2026-08-05T23:32:57Z",
+    "title": "fix(notify): gate the osascript effector on has_body \u2014 synthetic roots never reach the phone"
+  },
+  {
+    "branch": "worktree-fix-routine-freshness-409",
+    "pr_number": 1985,
+    "merged_at": "2026-08-07T15:01:37Z",
+    "title": "fix(routine-freshness): a keeper 409 stops killing the beat's escalation organ"
+  },
+  {
+    "branch": "worktree-fix-scoped-verify-gates",
+    "pr_number": 767,
+    "merged_at": "2026-07-09T11:10:06Z",
+    "title": "fix: scoped verification gate + machine-wide lock on verify-whole"
+  },
+  {
+    "branch": "worktree-fleet-completion-heal",
+    "pr_number": 2462,
+    "merged_at": "2026-08-15T15:38:20Z",
+    "title": "heal(closeout): make the completion bar executable and un-neuter the guards"
+  },
+  {
+    "branch": "worktree-heal-fable-meter-transcripts-dir",
+    "pr_number": 1930,
+    "merged_at": "2026-08-07T01:45:44Z",
+    "title": "heal(fable): restore sight to the blind weekly meter \u2014 harness_paths resolution + 64M calibration"
+  },
+  {
+    "branch": "worktree-heal-hotcache-rungs",
+    "pr_number": 1994,
+    "merged_at": "2026-08-07T15:46:56Z",
+    "title": "fix(hot-cache): three predicates that reported green over a false condition"
+  },
+  {
+    "branch": "worktree-heal-notify-host-singleton",
+    "pr_number": 1841,
+    "merged_at": "2026-08-06T00:51:43Z",
+    "title": "fix(notify): the gate is tree-local but osascript is host-global \u2014 count every copy"
+  },
+  {
+    "branch": "worktree-heal-tcc-track-c-receipt-pin",
+    "pr_number": 1833,
+    "merged_at": "2026-08-05T21:16:37Z",
+    "title": "heal(tcc): pin Track C discharge to immutable receipt; home the post-discharge versioned-client leak"
+  },
+  {
+    "branch": "worktree-maddie-delta-review-20260812",
+    "pr_number": 2331,
+    "merged_at": "2026-08-12T15:28:13Z",
+    "title": "fix: make the relationship-capture cadence's silent data loss audible"
+  },
+  {
+    "branch": "worktree-model-persist-correction",
+    "pr_number": 1972,
+    "merged_at": "2026-08-07T13:41:58Z",
+    "title": "docs(cadence): the opening model pin is a default, not a lock \u2014 /model persists where no predicate can read it"
+  },
+  {
+    "branch": "worktree-operator-gate-audit",
+    "pr_number": 2143,
+    "merged_at": "2026-08-09T11:10:43Z",
+    "title": "feat(operator-gates): a predicate for \"does this actually need the operator?\""
+  },
+  {
+    "branch": "worktree-plan-session-model-cadence",
+    "pr_number": 1949,
+    "merged_at": "2026-08-07T12:47:03Z",
+    "title": "feat(cadence): sessions open on Sonnet \u2014 Fable/Opus become deliberate plan-ratification escalations"
+  },
+  {
+    "branch": "worktree-potestas-program",
+    "pr_number": 2118,
+    "merged_at": "2026-08-08T13:19:12Z",
+    "title": "feat(potestas): the power-literacy track's root \u2014 a mechanism registry where `debunked` is a first-class evidence grade (#2077)"
+  },
+  {
+    "branch": "worktree-pr-estate-drain-full-fix",
+    "pr_number": 1976,
+    "merged_at": "2026-08-07T14:02:05Z",
+    "title": "docs(plan): PR estate drain \u2014 the merge rung has no reachable gate (#1975)"
+  },
+  {
+    "branch": "worktree-styx-full-demo-launch",
+    "pr_number": 2361,
+    "merged_at": "2026-08-13T05:05:32Z",
+    "title": "docs(receipts): styx live-stack receipt"
+  },
+  {
+    "branch": "worktree-sync-hygiene-receipt-globs",
+    "pr_number": 2486,
+    "merged_at": "2026-08-15T21:33:34Z",
+    "title": "fix(sync): widen receipt-glob coverage and stop tracking orchestration scratch"
+  },
+  {
+    "branch": "worktree-this-needs-to-all-adaptive-kernighan",
+    "pr_number": 2485,
+    "merged_at": "2026-08-15T21:35:51Z",
+    "title": "fix(notify): ground ships-24h counter in real GitHub data, not merge-drain.log"
+  },
+  {
+    "branch": "worktree-venture-ladder-heal",
+    "pr_number": 2460,
+    "merged_at": "2026-08-15T15:21:39Z",
+    "title": "docs(plan): venture ladder heal \u2014 retire the constant-asserting predicate, derive the frontier"
+  },
+  {
+    "branch": "worktree-verify-potestas-runtime",
+    "pr_number": 2119,
+    "merged_at": "2026-08-08T14:17:08Z",
+    "title": "docs(verify-skill): three extraction traps that make a weaker verification look like a pass"
+  }
+]
