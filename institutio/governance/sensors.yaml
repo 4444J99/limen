@@ -1289,6 +1289,22 @@ sensors:
         severity: silent
         escalation: "usage telemetry skipped"
 
+  pause-marker-hygiene:
+    section: "0r"
+    title: "pause-marker hygiene — an AUTONOMY_PAUSED marker that can never autoclear is a defect"
+    gate: null                          # ungated — always runs (read-only marker lint; instant no-op when no marker)
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    # The three-time freeze (2026-07-14/15/16): a marker whose release path the governor can never
+    # reach (owner_surface: only, or an owner: label matching no branch) idles the whole beat. This
+    # catches it every cycle. Advisory ⇒ never breaks the beat; it just surfaces the ↑ until a
+    # release coordinate (pr:/owner:) or a next_command runbook is added. See autonomy-governor.py.
+    steps:
+      - command: "python3 scripts/pause-marker-hygiene.py"
+        severity: advisory
+        escalation: "un-clearable pause marker above — add a `pr:`/`owner:` release coordinate or a `next_command` runbook, else the beat idles forever (autonomy-governor cannot autoclear it)"
+
   link-health:
     section: "0l"
     title: "link health — dead links on public surfaces (+ throttled auto-heal)"
