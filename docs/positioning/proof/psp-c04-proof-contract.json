@@ -294,14 +294,14 @@
       "portfolio_front_door": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-front-door.txt", "extractor": "visible_text_v3"},
       "portfolio_flagship": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/directory/", "receipt_path": "docs/receipts/positioning/surface-inspections/portfolio-flagship.txt", "extractor": "visible_text_v3"},
       "resume": {"source_kind": "live_receipt", "source_locator": "https://organvm-vii-kerygma.github.io/portfolio/resume/", "receipt_path": "docs/receipts/positioning/surface-inspections/resume.txt", "extractor": "visible_text_v3"},
-      "personal_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/4444J99", "receipt_path": "docs/receipts/positioning/surface-inspections/personal-profile.txt", "extractor": "visible_text_v3"},
-      "organization_profile": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm", "receipt_path": "docs/receipts/positioning/surface-inspections/organization-profile.txt", "extractor": "visible_text_v3"},
-      "flagship_repository": {"source_kind": "live_receipt", "source_locator": "https://github.com/organvm/limen", "receipt_path": "docs/receipts/positioning/surface-inspections/flagship-repositories.txt", "extractor": "visible_text_v3"}
+      "personal_profile": {"source_kind": "live_receipt", "source_locator": "https://api.github.com/repos/4444J99/4444J99/readme", "receipt_path": "docs/receipts/positioning/surface-inspections/personal-profile.txt", "extractor": "github_rendered_readme_accessible_text_v1"},
+      "organization_profile": {"source_kind": "live_receipt", "source_locator": "https://api.github.com/repos/organvm/.github/contents/profile/README.md", "receipt_path": "docs/receipts/positioning/surface-inspections/organization-profile.txt", "extractor": "github_rendered_readme_accessible_text_v1"},
+      "flagship_repository": {"source_kind": "live_receipt", "source_locator": "https://api.github.com/repos/organvm/limen/readme", "receipt_path": "docs/receipts/positioning/surface-inspections/flagship-repositories.txt", "extractor": "github_rendered_readme_accessible_text_v1"}
     },
     "required_cells": ["claim_id", "source_ids", "observed_at", "status", "disclosure_level", "canonical_or_drift", "action", "inspection_id"],
-    "inspection_schema": "limen.positioning_surface_inspection.v2",
+    "inspection_schema": "limen.positioning_surface_inspection.v3",
     "inspection_max_age_hours": 24,
-    "inspection_rule": "Every canonical surface binds one exact blob fetched from the current authoritative Limen default head. Live raw responses are bounded and privacy-scanned transiently; retained evidence is the canonical clause-preserving visible-text receipt and digest. Scanner v4 rejects cross-clause reconstruction and material claim variants, and row presence equals the exact canonical matches.",
+    "inspection_rule": "Every canonical surface binds one exact blob fetched from the current authoritative Limen default head. Live raw responses are bounded and privacy-scanned transiently; retained evidence is the canonical clause-preserving visible-text receipt and digest. Scanner v5 uses exact GitHub rendered-README API media for GitHub profile/repository surfaces, isolates the single markdown article from non-rendered chrome, admits only text-free aria-hidden Octicons, and includes nonblank image accessibility text. It rejects cross-clause reconstruction and material claim variants, and row presence equals the exact canonical matches.",
     "fail_closed_on": ["missing source", "missing observation date", "expired source", "contradiction", "private material", "unsupported implication"]
   },
   "cost_failure_reproduction": {

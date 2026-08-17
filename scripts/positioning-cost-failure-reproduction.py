@@ -97,7 +97,8 @@ PUBLIC_CREDENTIAL_ASSIGNMENT = re.compile(
 )
 PRIVATE_TELEPHONE_CANDIDATE = re.compile(
     r"(?i)(?:"
-    r"\b(?:(?:phone|telephone|mobile|cell)(?:\s+(?:number|no\.?)|\s*#)?|contact\s+(?:number|no\.?|#))"
+    r"\b(?:(?:phone|telephone|mobile|cell|call|text|fax)(?:\s+(?:number|no\.?)|\s*#)?|"
+    r"contact\s+(?:number|no\.?|#))"
     r"(?:\s*(?::|=)\s*|\s+(?:is|was)\s+|\s+)\+?[\d(][\d\s().-]{8,31}\d"
     r"|\btel:\s*\+?[\d\s().-]{10,32}"
     r"|\+\d[\d\s().-]{8,31}\d"

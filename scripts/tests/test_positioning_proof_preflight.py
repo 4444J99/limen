@@ -384,6 +384,16 @@ class PositioningProofPreflightTest(unittest.TestCase):
     def test_tracked_contract_is_valid(self) -> None:
         self.assertEqual([], MODULE.validate(self.production_contract))
 
+    def test_live_surface_extractors_are_exactly_bound_by_surface_kind(self) -> None:
+        bindings = self.production_contract["surface_audit_model"]["surface_sources"]
+        for surface, source_locator in MODULE.GITHUB_RENDERED_README_SOURCES.items():
+            with self.subTest(surface=surface):
+                self.assertEqual(source_locator, bindings[surface]["source_locator"])
+                self.assertEqual(MODULE.GITHUB_RENDERED_README_EXTRACTOR, bindings[surface]["extractor"])
+        for surface in ("portfolio_front_door", "portfolio_flagship", "resume"):
+            with self.subTest(surface=surface):
+                self.assertEqual("visible_text_v3", bindings[surface]["extractor"])
+
     def test_malformed_flagship_entries_fail_as_structured_validation_errors(self) -> None:
         changed = copy.deepcopy(self.contract)
         changed["flagships"] = [None]
@@ -391,6 +401,13 @@ class PositioningProofPreflightTest(unittest.TestCase):
 
         changed["flagships"] = None
         self.assertIn("flagships must be a list", MODULE.validate(changed))
+
+    def test_malformed_commercial_artifacts_fail_as_structured_validation_errors(self) -> None:
+        for malformed in (None, []):
+            with self.subTest(malformed=malformed):
+                changed = copy.deepcopy(self.contract)
+                changed["commercial_artifact_set"]["artifacts"].insert(0, malformed)
+                self.assertIn("commercial artifact must be an object", MODULE.validate(changed))
 
     def test_formalization_contract_exact_binds_complete_python_dependency_trees(self) -> None:
         changed = copy.deepcopy(self.contract)
@@ -1017,6 +1034,11 @@ class PositioningProofPreflightTest(unittest.TestCase):
             f"We refute the claim that {long_canonical}.",
             f"She refutes the claim that {long_canonical}.",
             f"They refuted the claim that {long_canonical}.",
+            f"We are denying the claim that {long_canonical}.",
+            f"We are disputing the claim that {long_canonical}.",
+            f"We are refuting the claim that {long_canonical}.",
+            f"We are rejecting the claim that {long_canonical}.",
+            f"This is a refutation of the claim that {long_canonical}.",
         ):
             with self.subTest(denial=denial):
                 matched, drifted = MODULE._surface_claim_scan(denial, long_expected, surface)
@@ -1348,6 +1370,38 @@ class PositioningProofPreflightTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported canonical extractor"):
             MODULE._canonical_surface_extraction(first, "visible_text_v1")
 
+    def test_github_rendered_readme_extractor_isolates_accessible_article_text(self) -> None:
+        rendered = b"""
+        <script>document.body.dataset.chrome = 'dynamic'</script>
+        <div id="readme" class="md" data-path="README.md">
+          <article class="markdown-body entry-content" itemprop="text">
+            <h1 dir="auto">Bounded proof claim</h1>
+            <a href="#proof">
+              <svg data-component="Octicon" aria-hidden="true" viewBox="0 0 16 16">
+                <path d="M0 0"></path>
+              </svg>
+            </a>
+            <p><img src="./proof.svg" alt="Accessible image proof" style="max-width: 100%;"></p>
+          </article>
+        </div>
+        """
+        extracted = MODULE._canonical_surface_extraction(rendered, MODULE.GITHUB_RENDERED_README_EXTRACTOR)
+        self.assertIn(b"Bounded proof claim", extracted)
+        self.assertIn(b"Accessible image proof", extracted)
+        self.assertNotIn(b"dynamic", extracted)
+
+        for malformed in (
+            b'<article class="markdown-body"><script>Claim</script></article>',
+            b'<article class="markdown-body"><svg aria-hidden="true"><path></path></svg></article>',
+            b'<article class="markdown-body"><svg data-component="Octicon" aria-hidden="true"><text>Claim</text></svg></article>',
+            b'<article class="markdown-body"><img src="./proof.svg"></article>',
+            b'<article class="markdown-body"><p dir="rtl">Claim</p></article>',
+            b'<article class="markdown-body">One</article><article class="markdown-body">Two</article>',
+        ):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(ValueError):
+                    MODULE._canonical_surface_extraction(malformed, MODULE.GITHUB_RENDERED_README_EXTRACTOR)
+
     def test_live_surface_fetch_uses_contract_owned_https_transport(self) -> None:
         source_url = "https://example.com/public-proof"
         response = mock.MagicMock()
@@ -1373,6 +1427,18 @@ class PositioningProofPreflightTest(unittest.TestCase):
         self.assertEqual(source_url, request.full_url)
         self.assertEqual(30, opener.call_args.kwargs["timeout"])
         self.assertEqual("text/html", request.headers["Accept"])
+
+        github_source = MODULE.GITHUB_RENDERED_README_SOURCES["flagship_repository"]
+        response.geturl.return_value = github_source
+        response.headers.get_all.side_effect = lambda name: (
+            [f"{MODULE.GITHUB_RENDERED_README_MEDIA_TYPE}; charset=utf-8"] if name == "Content-Type" else None
+        )
+        with mock.patch.object(MODULE, "_contract_https_open", return_value=response) as opener:
+            self.assertEqual(b"bounded public proof", MODULE._fetch_bounded_public_surface(github_source))
+        github_request = opener.call_args.args[0]
+        self.assertEqual(MODULE.GITHUB_RENDERED_README_MEDIA_TYPE, github_request.headers["Accept"])
+        self.assertEqual("2022-11-28", github_request.headers["X-github-api-version"])
+        response.geturl.return_value = source_url
 
         for content_types in (
             ["text/plain"],

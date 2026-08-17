@@ -133,9 +133,16 @@ W07_RESPONSE_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-reader-r
 W07_MEMO_PATH = re.compile(r"^docs/receipts/positioning/psp-p03-w07-decision-memo\.md$")
 ARCHITECTURE_DEMO_SCHEMA = "limen.positioning_architecture_demo_fixture.v1"
 COST_REVIEW_SCHEMA = "limen.positioning_cost_failure_review.v1"
-SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v2"
+SURFACE_INSPECTION_SCHEMA = "limen.positioning_surface_inspection.v3"
 SURFACE_SCANNER = "canonical_claim_drift"
-SURFACE_SCANNER_VERSION = "4"
+SURFACE_SCANNER_VERSION = "5"
+GITHUB_RENDERED_README_EXTRACTOR = "github_rendered_readme_accessible_text_v1"
+GITHUB_RENDERED_README_MEDIA_TYPE = "application/vnd.github.html+json"
+GITHUB_RENDERED_README_SOURCES = {
+    "personal_profile": "https://api.github.com/repos/4444J99/4444J99/readme",
+    "organization_profile": "https://api.github.com/repos/organvm/.github/contents/profile/README.md",
+    "flagship_repository": "https://api.github.com/repos/organvm/limen/readme",
+}
 TRUSTED_PYYAML_DEPENDENCY = {
     "distribution": "PyYAML",
     "version": "6.0.3",
@@ -970,7 +977,11 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 ):
                     errors.append(f"commercial artifact {artifact_id} is not pinned to the accepted C03 object")
             partnership = next(
-                (artifact for artifact in artifacts if artifact.get("id") == "product_operating_partnership_review"),
+                (
+                    artifact
+                    for artifact in artifacts
+                    if isinstance(artifact, dict) and artifact.get("id") == "product_operating_partnership_review"
+                ),
                 {},
             )
             if partnership.get("levels") != ["L3"] or partnership.get("public_front_door") is not False:
@@ -1184,11 +1195,7 @@ def validate(contract: dict[str, Any]) -> list[str]:
                 ):
                     errors.append(f"tracked surface source binding is invalid: {surface}")
             elif binding.get("source_kind") == "live_receipt":
-                if (
-                    not _credential_free_https_url(binding.get("source_locator"))
-                    or not _safe_relative_path(binding.get("receipt_path"))
-                    or binding.get("extractor") != "visible_text_v3"
-                ):
+                if not _live_surface_binding_is_valid(surface, binding):
                     errors.append(f"live surface source binding is invalid: {surface}")
             else:
                 errors.append(f"surface source binding kind is unsupported: {surface}")
@@ -1713,6 +1720,16 @@ def _credential_free_https_url(value: object) -> bool:
     )
 
 
+def _live_surface_binding_is_valid(surface: str, binding: dict[str, Any]) -> bool:
+    source_locator = binding.get("source_locator")
+    if not _credential_free_https_url(source_locator) or not _safe_relative_path(binding.get("receipt_path")):
+        return False
+    expected_github_source = GITHUB_RENDERED_README_SOURCES.get(surface)
+    if expected_github_source is not None:
+        return source_locator == expected_github_source and binding.get("extractor") == GITHUB_RENDERED_README_EXTRACTOR
+    return binding.get("extractor") == "visible_text_v3"
+
+
 _CLAIM_STOPWORDS = {
     "a",
     "an",
@@ -2090,12 +2107,157 @@ class _VisibleSurfaceParser(HTMLParser):
         return "".join(self._visible_fragments)
 
 
+class _GitHubRenderedReadmeParser(_VisibleSurfaceParser):
+    """Extract the GitHub-rendered README article while excluding page chrome."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._github_article_depth = 0
+        self._github_article_count = 0
+        self._github_svg_stack: list[str] = []
+
+    @staticmethod
+    def _normalized_github_attributes(attrs: list[tuple[str, str | None]]) -> list[tuple[str, str | None]]:
+        seen: set[str] = set()
+        normalized: list[tuple[str, str | None]] = []
+        for name, value in attrs:
+            key = name.casefold()
+            if key in seen:
+                raise ValueError("GitHub rendered README duplicates an HTML attribute")
+            seen.add(key)
+            if key == "dir":
+                if not isinstance(value, str) or value.strip().casefold() != "auto":
+                    raise ValueError("GitHub rendered README requires unsupported bidirectional rendering")
+                continue
+            normalized.append((name, value))
+        return normalized
+
+    @staticmethod
+    def _is_markdown_article(tag: str, attrs: list[tuple[str, str | None]]) -> bool:
+        if tag.casefold() != "article":
+            return False
+        classes = next((value for name, value in attrs if name.casefold() == "class"), None)
+        return isinstance(classes, str) and "markdown-body" in classes.split()
+
+    def _start_github_svg(self, attrs: list[tuple[str, str | None]]) -> None:
+        normalized = self._normalized_github_attributes(attrs)
+        values = {name.casefold(): value for name, value in normalized}
+        if values.get("data-component") != "Octicon" or values.get("aria-hidden") != "true":
+            raise ValueError("GitHub rendered README contains an unsupported SVG surface")
+        self._attributes_hide_element(normalized)
+        self._github_svg_stack.append("svg")
+
+    def _emit_github_image_alt(self, attrs: list[tuple[str, str | None]]) -> None:
+        normalized = self._normalized_github_attributes(attrs)
+        values = {name.casefold(): value for name, value in normalized}
+        alt = values.get("alt")
+        source = values.get("src")
+        if not isinstance(alt, str) or not alt.strip() or "\0" in alt:
+            raise ValueError("GitHub rendered README image requires nonblank accessible text")
+        if not isinstance(source, str) or not source.strip() or "\0" in source:
+            raise ValueError("GitHub rendered README image requires a bounded source")
+        style = values.get("style")
+        if style is not None:
+            if not isinstance(style, str) or " ".join(style.casefold().split()) != "max-width: 100%;":
+                raise ValueError("GitHub rendered README image uses unsupported styling")
+            normalized = [(name, value) for name, value in normalized if name.casefold() != "style"]
+        if not self._attributes_hide_element(normalized):
+            super().handle_data(alt)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        normalized_tag = tag.casefold()
+        if self._github_svg_stack:
+            if normalized_tag != "path":
+                raise ValueError("GitHub rendered README SVG contains unsupported content")
+            normalized_attrs = self._normalized_github_attributes(attrs)
+            self._attributes_hide_element(normalized_attrs)
+            self._github_svg_stack.append("path")
+            return
+        normalized_attrs = self._normalized_github_attributes(attrs)
+        if self._github_article_depth == 0:
+            if not self._is_markdown_article(normalized_tag, normalized_attrs):
+                return
+            self._github_article_count += 1
+            if self._github_article_count != 1:
+                raise ValueError("GitHub rendered README must contain exactly one markdown article")
+            super().handle_starttag(normalized_tag, normalized_attrs)
+            self._github_article_depth = 1
+            return
+        if self._is_markdown_article(normalized_tag, normalized_attrs):
+            raise ValueError("GitHub rendered README must contain exactly one markdown article")
+        if normalized_tag == "svg":
+            self._start_github_svg(normalized_attrs)
+            return
+        if normalized_tag == "img":
+            self._emit_github_image_alt(normalized_attrs)
+            return
+        super().handle_starttag(normalized_tag, normalized_attrs)
+        if normalized_tag not in self._VOID_TAGS:
+            self._github_article_depth += 1
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        normalized_tag = tag.casefold()
+        if self._github_svg_stack:
+            if normalized_tag != "path":
+                raise ValueError("GitHub rendered README SVG contains unsupported content")
+            normalized_attrs = self._normalized_github_attributes(attrs)
+            self._attributes_hide_element(normalized_attrs)
+            return
+        normalized_attrs = self._normalized_github_attributes(attrs)
+        if self._github_article_depth == 0:
+            if self._is_markdown_article(normalized_tag, normalized_attrs):
+                raise ValueError("GitHub rendered README self-closes its markdown article")
+            return
+        if normalized_tag == "svg":
+            self._start_github_svg(normalized_attrs)
+            self._github_svg_stack.pop()
+            return
+        if normalized_tag == "img":
+            self._emit_github_image_alt(normalized_attrs)
+            return
+        super().handle_startendtag(normalized_tag, normalized_attrs)
+
+    def handle_endtag(self, tag: str) -> None:
+        normalized_tag = tag.casefold()
+        if self._github_svg_stack:
+            if self._github_svg_stack[-1] != normalized_tag:
+                raise ValueError("GitHub rendered README SVG is malformed")
+            self._github_svg_stack.pop()
+            return
+        if self._github_article_depth == 0:
+            return
+        super().handle_endtag(normalized_tag)
+        if normalized_tag not in self._VOID_TAGS:
+            self._github_article_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._github_svg_stack:
+            if data.strip():
+                raise ValueError("GitHub rendered README SVG contains visible text")
+            return
+        if self._github_article_depth == 0:
+            return
+        if _strip_default_ignorable(data) != data:
+            raise ValueError("GitHub rendered README contains obfuscated visible text")
+        super().handle_data(data)
+
+    def visible_text(self) -> str:
+        if self._github_article_count != 1 or self._github_article_depth or self._github_svg_stack:
+            raise ValueError("GitHub rendered README must contain one complete markdown article")
+        return super().visible_text()
+
+
 def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("surface response is not UTF-8 text") from exc
-    if extractor in {"visible_text_v2", "visible_text_v3"}:
+    if extractor == GITHUB_RENDERED_README_EXTRACTOR:
+        parser = _GitHubRenderedReadmeParser()
+        parser.feed(text)
+        parser.close()
+        text = parser.visible_text()
+    elif extractor in {"visible_text_v2", "visible_text_v3"}:
         parser = _VisibleSurfaceParser()
         parser.feed(text)
         parser.close()
@@ -2104,7 +2266,7 @@ def _canonical_surface_extraction(content: bytes, extractor: str) -> bytes:
         text = html.unescape(text)
     else:
         raise ValueError("surface source uses an unsupported canonical extractor")
-    if extractor == "visible_text_v3":
+    if extractor in {"visible_text_v3", GITHUB_RENDERED_README_EXTRACTOR}:
         normalized = "\n".join(
             normalized_line for line in text.splitlines() if (normalized_line := " ".join(line.split()))
         )
@@ -2189,8 +2351,10 @@ def _canonical_claim_is_negated(inspected_text: str, canonical: str) -> bool:
             ):
                 negated = True
             if re.search(
-                r"\b(?:deny|denies|denied|dispute|disputes|disputed|refute|refutes|refuted|"
-                r"reject|rejects|rejected)"
+                r"\b(?:deny|denies|denied|denying|dispute|disputes|disputed|disputing|"
+                r"refute|refutes|refuted|refuting|"
+                r"refutations?(?:\s+of)?|"
+                r"reject|rejects|rejected|rejecting)"
                 r"(?:\s+the\s+claim)?(?:\s+that)?$",
                 prefix_text,
             ):
@@ -2230,9 +2394,17 @@ def _surface_contains_private_material(inspected_text: str) -> bool:
 
 
 def _fetch_bounded_public_surface(source_url: str) -> bytes:
+    github_rendered_readme = source_url in set(GITHUB_RENDERED_README_SOURCES.values())
+    accepted_media_type = GITHUB_RENDERED_README_MEDIA_TYPE if github_rendered_readme else "text/html"
+    headers = {
+        "Accept": accepted_media_type,
+        "User-Agent": "limen-positioning-proof-preflight",
+    }
+    if github_rendered_readme:
+        headers["X-GitHub-Api-Version"] = "2022-11-28"
     request = Request(
         source_url,
-        headers={"Accept": "text/html", "User-Agent": "limen-positioning-proof-preflight"},
+        headers=headers,
     )
     with _contract_https_open(request, timeout=30) as response:
         if response.geturl() != source_url:
@@ -2253,7 +2425,9 @@ def _fetch_bounded_public_surface(source_url: str) -> bytes:
             for key, value in [part.split("=", 1)]
             if key.strip().casefold() == "charset"
         ]
-        if media_parts[0].casefold() != "text/html" or charset_values != ["utf-8"]:
+        if media_parts[0].casefold() != accepted_media_type or charset_values != ["utf-8"]:
+            if github_rendered_readme:
+                raise ValueError("live surface response is not the authenticated GitHub rendered README media type")
             raise ValueError("live surface response is not HTML with an authenticated UTF-8 charset")
         if isinstance(refresh_headers, list) and (
             len(refresh_headers) > 1 or any(not isinstance(value, str) or value.strip() for value in refresh_headers)
@@ -2324,11 +2498,7 @@ def _surface_inspection_errors(
             ):
                 errors.append(f"tracked surface source binding is invalid: {surface}")
         elif binding.get("source_kind") == "live_receipt":
-            if (
-                not _credential_free_https_url(binding.get("source_locator"))
-                or not _safe_relative_path(binding.get("receipt_path"))
-                or binding.get("extractor") != "visible_text_v3"
-            ):
+            if not _live_surface_binding_is_valid(surface, binding):
                 errors.append(f"live surface source binding is invalid: {surface}")
         else:
             errors.append(f"surface source binding kind is unsupported: {surface}")
@@ -2439,7 +2609,7 @@ def _surface_inspection_errors(
                 errors.append(f"live surface inspection requires a credential-free HTTPS URL: {surface}")
             if not _safe_relative_path(receipt_path):
                 errors.append(f"live surface inspection requires an immutable tracked receipt path: {surface}")
-            if extractor != "visible_text_v3":
+            if not _live_surface_binding_is_valid(surface, inspection):
                 errors.append(f"live surface inspection requires the contract-owned visible-text extractor: {surface}")
             if not isinstance(extracted_text_sha256, str) or not SHA256.fullmatch(extracted_text_sha256):
                 errors.append(f"live surface inspection requires a canonical extraction SHA-256: {surface}")
@@ -2473,7 +2643,10 @@ def _surface_inspection_errors(
                 and hashlib.sha256(inspected_content).hexdigest() != extracted_text_sha256
             ):
                 errors.append(f"tracked surface canonical extraction digest differs from the bound source: {surface}")
-        if source_kind == "live_receipt" and extractor == "visible_text_v3":
+        if source_kind == "live_receipt" and extractor in {
+            "visible_text_v3",
+            GITHUB_RENDERED_README_EXTRACTOR,
+        }:
             inspected_content = content
             if (
                 isinstance(extracted_text_sha256, str)

@@ -576,6 +576,9 @@ class PositioningProofRunnerTest(unittest.TestCase):
         for private_value in (
             private_phone,
             "phone: (212)555-1234",
+            "call 2125551234",
+            "text 2125551234",
+            "fax 2125551234",
             "pass\u034fword: hunter2alpha",
             "pass\ufe0fword: hunter2alpha",
         ):
