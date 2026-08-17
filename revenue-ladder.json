@@ -1,7 +1,12 @@
 {
   "_comment": "THE REVENUE LADDER — the money view's source of truth. Each product's STAGE toward its first paying dollar and WHOSE hand the next move needs. The fleet fills in the live/mechanical numbers (PRs shipped, open work) every beat; YOU curate the stage + gate here. Edit freely: this is what the money dashboard, the phone page, and the push notifications all read. Spine: real income before unemployment ends (~late Aug 2026) — enough to rent an EV and live/work/travel.",
   "spine": "real income in <10 weeks — rent an EV, live/work/travel",
-  "stages": ["building", "deploy-ready", "live", "monetized"],
+  "stages": [
+    "building",
+    "deploy-ready",
+    "live",
+    "monetized"
+  ],
   "products": [
     {
       "rank": 1,
@@ -62,9 +67,54 @@
       "next_action": "harden toward deploy-ready",
       "first_dollar_path": "paid tier once live",
       "note": ""
+    },
+    {
+      "rank": 7,
+      "repo": "organvm/limen",
+      "product": "PR-Repair Factory",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "extract heal-dispatch + merge-policy.sh + auto-merge-arm as an API surface with a config schema; ship the heal-convergence dashboard (stale open-fix PRs by repo/check/days) as the demo artifact",
+      "first_dollar_path": "GitHub Action / hosted endpoint subscription for multi-repo orgs; the internal 182-repo fleet is the case study",
+      "note": "retro 2026-07-08 productization #1 — nearest external buyer; also heals finding 1 (cifix lane opens PRs it cannot merge)"
+    },
+    {
+      "rank": 8,
+      "repo": "organvm/limen",
+      "product": "MONETA Mint-as-a-Service",
+      "stage": "deploy-ready",
+      "whose_hand": "yours",
+      "next_action": "deploy the Dockerfile ($0) + set the receive address (L-REVENUE-ACCT) — reserved orders auto-open; then externalize as a drop-in 'take BTC, sign an offline ECDSA licence' primitive",
+      "first_dollar_path": "exporter Pro licences through the own mint — keyless explorer confirmation, no processor in the path",
+      "note": "retro finding 4: most-complete un-enacted organ; the deliverable IS the armed behavior (PREC-2026-07-08-armed-valve-outcome)"
+    },
+    {
+      "rank": 9,
+      "repo": "organvm/limen",
+      "product": "Fleet Cost-Compliance Guard",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "package the model_selection.py per-job tiering chokepoint + claude-workflow-guard.py audit as a standalone config + CI action",
+      "first_dollar_path": "paid tool for agent-fleet teams — prevents trivial fan-out riding expensive tiers",
+      "note": "retro productization #3; converged internally, needs packaging not invention"
+    },
+    {
+      "rank": 10,
+      "repo": "organvm/limen",
+      "product": "Enactment Audit",
+      "stage": "building",
+      "whose_hand": "mine",
+      "next_action": "generalize enactment-audit.py (declared vs wired vs live) beyond the limen organ registry; package with the report format",
+      "first_dollar_path": "'is it actually on?' assurance subscription for AI/agent shops; the 2026-07-08 retro is the sales demo",
+      "note": "retro productization #4; closes the merged≠running blind spot no standard CI catches"
     }
   ],
-  "conductor_core": ["organvm/limen", "4444J99/limen", "organvm/session-meta", "4444J99/session-meta"],
+  "conductor_core": [
+    "organvm/limen",
+    "4444J99/limen",
+    "organvm/session-meta",
+    "4444J99/session-meta"
+  ],
   "your_levers": [
     "money rail — Ko-fi or Lemon Squeezy (individual, ~1h, start now)",
     "git push the exporter branch",
