@@ -23,11 +23,16 @@ after merge + `domus-limen-runtime install --sha <merged-sha>`.
 
 **Two rails run different code, and confusing them turns a real verification into a false one.**
 A `scripts/*.py` organ inserts the *live checkout's* `cli/src` at `sys.path[0]`
-(`heal-board.py:49`), so it executes your merged working tree the moment `sync-release.sh`
+(`scripts/heal-board.py:49`), so it executes your merged working tree the moment `sync-release.sh`
 fast-forwards it. The installed CLI does not. Measured 2026-08-07: the pin was **62 commits**
 behind `origin/main`, so `BrokerQuotaExhausted` (#2057) was demonstrably live on the heal-board
-rail and **absent from the deployed runtime** — `grep -c BrokerQuotaExhausted
-~/.local/share/limen/current/venv/lib/python3*/site-packages/limen/conduct/client.py` → `0`.
+rail and **absent from the deployed runtime**:
+
+```bash
+grep -c BrokerQuotaExhausted \
+  ~/.local/share/limen/current/venv/lib/python3*/site-packages/limen/conduct/client.py
+# expected: 0
+```
 Verifying a `cli/src` fix by driving a *script* proves nothing about `limen <verb>`, and the
 reverse holds too. State which rail you drove.
 
@@ -133,7 +138,7 @@ anything else.**
 python3 scripts/enactment-audit.py --efficacy-only        # streaks, with the threshold applied
 grep -v '"exit":0' logs/beat-rungs.jsonl                  # every non-zero outcome, raw
 grep -a "RUNG FAIL" logs/heartbeat.out.log | tail -20     # the banners, with real diagnostics
-sed -n '<start>,<end>p' logs/heartbeat.out.log            # the block, for the actual traceback
+sed -n '1200,1260p' logs/heartbeat.out.log                # example range; adjust to the relevant block
 ```
 
 Asked once on 2026-08-07 it returned three live defects in minutes, two of them unknown:
@@ -324,7 +329,7 @@ option and does not apply to blob shows).
 
   **But the lease only covers verification owners — the BEAT is uncovered heavy work.** The `heavy`
   lease (`limen.host_admission`, denial reason built as `f"{kind}-lease-held"` at
-  `host_admission.py:1092`, surfaced by `scripts/verify.py:783` as exit **75**) serializes one
+  `cli/src/limen/host_admission.py:1092`, surfaced by `scripts/verify.py:785` as exit **75**) serializes one
   verification run against another. It knows nothing about `limen dispatch --live`, which the
   heartbeat launches on its own cadence. So **`EXIT=75` absent is not proof of a quiet host.**
   Measured 2026-08-07: a scoped run returned plain exit **1** with two contention failures
