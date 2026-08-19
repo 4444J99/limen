@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import importlib
 import os
+import importlib
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 
-yaml: Any
 try:
-    yaml = importlib.import_module("yaml")
+    yaml_module: Any = importlib.import_module("yaml")
 except ModuleNotFoundError:  # standalone/launchd Python may not carry PyYAML
-    yaml = None
+    yaml_module = None
 
 _PANEL_REL = ("institutio", "governance", "parameters.yaml")
 
@@ -51,10 +51,10 @@ def panel_path() -> Optional[Path]:
 
 def _load_panel() -> dict[str, object]:
     path = panel_path()
-    if yaml is None or not path or not path.exists():
+    if yaml_module is None or not path or not path.exists():
         return {}
     try:
-        data = yaml.safe_load(path.read_text())
+        data = yaml_module.safe_load(path.read_text())
         if not isinstance(data, dict):
             return {}
         params = data.get("parameters", {})

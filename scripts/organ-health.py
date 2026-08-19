@@ -24,10 +24,12 @@ and the self-contained organ-health.html face. Every probe fails OPEN — a miss
 "unknown", never a crash, and never blocks the beat.
 """
 
+import fcntl
 import json
 import os
 import re
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -121,7 +123,13 @@ def _discover_doors(text):
     # Scheduled sensors are doors too. Membership remains derived from the live loop: registry
     # entries join only when the loop contains the generic scheduled runner. Sensor identity,
     # cadence, gate, and title all come from data, so renamed ids require no consumer edit.
-    if re.search(r"beat-sensors\.py[^\n]*--source\s+heartbeat[^\n]*--scheduled-only", text):
+    scheduled_sources = set(
+        re.findall(
+            r"beat-sensors\.py[^\n]*--source\s+([\w-]+)[^\n]*--scheduled-only",
+            text,
+        )
+    )
+    if scheduled_sources:
         try:
             sensors = (yaml.safe_load(SENSORS.read_text()) or {}).get("sensors") or {}
         except (OSError, ValueError, AttributeError):
@@ -129,8 +137,11 @@ def _discover_doors(text):
         derive_match = re.search(r"LIMEN_BEAT_DERIVE:-(\d+)", text)
         derive_default = derive_match.group(1) if derive_match else "0"
         derive_live = _env_flag("LIMEN_BEAT_DERIVE", derive_default) == "1"
+        raw_fast_wave = _env_flag("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+        fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
         for sensor_id, sensor in sensors.items():
-            if sensor_id in seen or "heartbeat" not in (sensor.get("source") or []):
+            sensor_sources = set(sensor.get("source") or [])
+            if sensor_id in seen or not scheduled_sources.intersection(sensor_sources):
                 continue
             cadence_spec = sensor.get("cadence")
             if cadence_spec is None:
@@ -162,6 +173,7 @@ def _discover_doors(text):
                     "role": str(sensor.get("title") or f"{sensor_id} sensor"),
                     "dormant": (not derive_live) or sensor_gate_dormant,
                     "registry_sensor": True,
+                    "interval_s": fast_wave_seconds * cadence if "fast-wave" in sensor_sources else None,
                     "gate": gate,
                     "gate_default": gate_default,
                     "bound_lever": (
@@ -172,6 +184,32 @@ def _discover_doors(text):
     return out
 
 
+def _env_file_value(raw: str) -> str:
+    """Parse a sourced env value while preserving hash characters inside quotes."""
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1]
+    return value
+
+
 def _env_flag(name, default=""):
     """Read a gate flag from the live env, falling back to ~/.limen.env, then default. Read-only."""
     if name in os.environ:
@@ -180,7 +218,7 @@ def _env_flag(name, default=""):
         for ln in ENV_FILE.read_text().splitlines():
             ln = ln.strip()
             if ln.startswith(f"{name}=") or ln.startswith(f"export {name}="):
-                return ln.split("=", 1)[1].strip().strip('"').strip("'")
+                return _env_file_value(ln.split("=", 1)[1])
     except OSError:
         pass
     return default
@@ -336,6 +374,16 @@ def _json_nested_error(path, *trails, stamp=None):
     return None
 
 
+def _vitals_sample_interval() -> int:
+    """Return the declared fast-wave sample cadence, with a safe positive fallback."""
+    raw = _env_flag("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+    try:
+        seconds = int(raw)
+    except (TypeError, ValueError):
+        return 300
+    return seconds if seconds > 0 else 300
+
+
 # ── the enrichment table ──────────────────────────────────────────────────────────────────────
 # NOT the door-list (that is DISCOVERED from the heartbeat — see _doors). This only ENRICHES a
 # discovered beat with the signal specifics the loop can't express: which VOICE stamps it, which
@@ -437,10 +485,23 @@ def _registry():
             rung="VIGILIA",
             voice="vigilia",
             cadence_beats=1,
+            interval_s=_vitals_sample_interval(),
+            probe_first=True,
             gate="LIMEN_VIGILIA",
             gate_default="1",
             what="autonomic self-keeping: VITALS (don't crash) · CONTINUITY (don't forget) · INTEGRITY (don't corrupt)",
-            probe=lambda: _json_field_ts(LOGS / "vigilia" / "status.json", "ts"),
+            # VIGILIA has separate clocks: prefer the early sample, then the full beat
+            # completion. The retired single ``ts`` field must not make a healthy sample stale.
+            probe=lambda: _json_field_ts(
+                LOGS / "vigilia" / "status.json",
+                "sampled_at",
+                "completed_at",
+            ),
+            defect=lambda: _json_nested_error(
+                LOGS / "vigilia" / "status.json",
+                ("sample_error", "error"),
+                stamp="sample_error_at",
+            ),
         ),
         dict(
             key="nomenclator",
@@ -630,7 +691,8 @@ def _doors(text):
                 rung=d["name"],
                 voice=d["key"],
                 cadence_key=None if d.get("registry_sensor") else d["name"],
-                cadence_beats=d["cadence"] if d.get("registry_sensor") else None,
+                cadence_beats=d["cadence"] if d.get("registry_sensor") and not d.get("interval_s") else None,
+                interval_s=d.get("interval_s"),
                 what=d["role"] or f"{d['key']} beat",
                 probe=lambda: None,
                 _dormant=bool(d.get("dormant")),
@@ -646,6 +708,12 @@ def _doors(text):
     return rungs
 
 
+def _interval_label(seconds: int) -> str:
+    if seconds < 3600:
+        return f"~{max(1, seconds // 60)}m"
+    return f"~{seconds // 3600}h"
+
+
 def build():
     text = _loop_text()
     cadences = _parse_cadences(text)
@@ -655,9 +723,9 @@ def build():
     drift = []
     for o in _doors(text):
         # cadence → expected seconds between fires, worst-case (idle beats run at LOOP_MAX).
-        if "interval_s" in o:
+        if o.get("interval_s"):
             expected = o["interval_s"]
-            cadence_desc = f"~{o['interval_s'] // 3600}h"
+            cadence_desc = _interval_label(o["interval_s"])
         else:
             beats = o.get("cadence_beats") or cadences.get(o.get("cadence_key", ""), 0) or 1
             expected = beats * loop_max
@@ -700,12 +768,20 @@ def build():
                     }
                 )
 
-        # best signal: voice-stamp (ground truth) else artifact probe
-        src = "voice-stamp"
-        ts = _voice_stamp(o["voice"])
-        if ts is None:
+        # Most organs use the heartbeat voice stamp first. VIGILIA is different: its early
+        # sampled_at artifact is the fast-wave clock, while the voice stamp marks slow completion.
+        if o.get("probe_first"):
             ts = o["probe"]()
             src = "artifact"
+            if ts is None:
+                ts = _voice_stamp(o["voice"])
+                src = "voice-stamp"
+        else:
+            src = "voice-stamp"
+            ts = _voice_stamp(o["voice"])
+            if ts is None:
+                ts = o["probe"]()
+                src = "artifact"
         if ts is None:
             src = "none"
 
@@ -838,6 +914,23 @@ def render_html(v):
 </div></body></html>"""
 
 
+def _atomic_write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     if "--help" in argv or "-h" in argv:
@@ -848,17 +941,22 @@ def main(argv=None):
     strict = "--strict" in argv
     view = build()
     LOGS.mkdir(parents=True, exist_ok=True)
-    (LOGS / "organ-health.json").write_text(json.dumps(view, indent=2))
+    payload = json.dumps(view, indent=2)
     html = render_html(view)
     wrote = []
-    for d in OUT_DIRS:
-        try:
-            d.mkdir(parents=True, exist_ok=True)
-            (d / "organ-health.html").write_text(html)
-            (d / "organ-health.json").write_text(json.dumps(view, indent=2))
-            wrote.append(str(d / "organ-health.html"))
-        except OSError:
-            continue
+    lock_path = LOGS / ".organ-health.lock"
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        _atomic_write_text(LOGS / "organ-health.json", payload)
+        for d in OUT_DIRS:
+            try:
+                d.mkdir(parents=True, exist_ok=True)
+                _atomic_write_text(d / "organ-health.html", html)
+                _atomic_write_text(d / "organ-health.json", payload)
+                wrote.append(str(d / "organ-health.html"))
+            except OSError:
+                continue
+        fcntl.flock(lock, fcntl.LOCK_UN)
     s = view["summary"]
     detail = " ".join(f"{o['rung']}:{o['status']}" for o in view["organs"])
     print(

@@ -143,6 +143,17 @@ def _mock_launchd(
     gate_next_command="python3 scripts/session-value-review.py --gate --hours 1.5",
 ):
     calls = []
+    monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "111")
+    monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "112")
+    monkeypatch.setattr(module, "_resident_alive", lambda _pid: True)
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [
+            {"pid": "111", "command": "heartbeat fast-wave resident"},
+            {"pid": "112", "command": "host-pressure watchdog resident"},
+        ],
+    )
 
     def fake_run(args, timeout=10):
         calls.append(list(args))
@@ -395,7 +406,14 @@ def test_missing_pause_marker_runs_normal_snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
 
     assert module.run_once(dry_run=True, json_output=False) == 0
-    assert calls == [{"refresh_handoff": False, "record_gate": False, "submit_lane_switch": False}]
+    assert calls == [
+        {
+            "refresh_handoff": False,
+            "record_gate": False,
+            "submit_lane_switch": False,
+            "host_pressure_read_only": True,
+        }
+    ]
 
 
 def test_successful_bounded_lane_preserves_explicit_zero_exit(tmp_path, monkeypatch):
@@ -445,6 +463,80 @@ def test_root_defaults_to_invoking_worktree_and_explicit_limen_root_wins(tmp_pat
     assert explicit_root_module.PAUSE_MARKER == explicit_root.resolve() / "logs" / "AUTONOMY_PAUSED"
 
 
+def test_missing_resident_loops_alert_while_heartbeat_is_active(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot.update(
+        {
+            "launchd": {"ok": True, "state": "active", "env": {}},
+            "heartbeat": {"latest_tick": {"timestamp": "2026-07-01T09:53:57+00:00"}},
+            "resident_fast_wave": {"pid": None, "alive": False},
+            "resident_host_pressure_watchdog": {"pid": None, "alive": False},
+        }
+    )
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {
+        "vigilia-fast-wave-missing",
+        "host-pressure-watchdog-missing",
+    }
+
+
+def test_progress_excludes_resident_descendant_subtrees(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+
+    children = [
+        {"pid": "111", "ppid": "4242", "command": "fast-wave resident"},
+        {"pid": "211", "ppid": "111", "command": "sleep 300"},
+        {"pid": "311", "ppid": "211", "command": "python fast-wave child"},
+        {"pid": "112", "ppid": "4242", "command": "host-pressure resident"},
+        {"pid": "212", "ppid": "112", "command": "sleep 300"},
+        {"pid": "999", "ppid": "4242", "command": "unrelated heartbeat work"},
+    ]
+
+    resident = module._resident_subtree_pids(children, {"111", "112"})
+
+    assert resident == {"111", "112", "211", "212", "311"}
+    assert [child["pid"] for child in children if child["pid"] not in resident] == ["999"]
+
+
+def test_sourced_runtime_env_overrides_stale_launchd_values(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    env_file = tmp_path / "limen.env"
+    env_file.write_text(
+        "export LIMEN_VIGILIA=0 # intentionally disabled\nLIMEN_HOST_PRESSURE_STALE=1\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    monkeypatch.delenv("LIMEN_VIGILIA", raising=False)
+
+    effective = module.effective_runtime_env({"LIMEN_VIGILIA": "1"})
+
+    assert effective["LIMEN_VIGILIA"] == "0"
+    assert effective["LIMEN_HOST_PRESSURE_STALE"] == "1"
+
+
+def test_absent_resident_records_alert_while_heartbeat_is_active(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = _minimal_ok_snapshot()
+    snapshot.update(
+        {
+            "launchd": {"ok": True, "state": "active", "env": {}},
+            "heartbeat": {"latest_tick": {"timestamp": "2026-07-01T09:53:57+00:00"}},
+        }
+    )
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {
+        "vigilia-fast-wave-missing",
+        "host-pressure-watchdog-missing",
+    }
+
+
 def test_repeated_tick_alerts_when_no_workers(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
     _mock_launchd(module, monkeypatch)
@@ -488,9 +580,97 @@ def test_heartbeat_child_suppresses_repeated_tick_alert(tmp_path, monkeypatch):
         lambda pid: [{"pid": "99", "command": "scripts/clone-maintenance.sh"}],
     )
 
+    monkeypatch.setenv("LIMEN_VIGILIA", "0")
+    monkeypatch.setenv("LIMEN_HOST_PRESSURE_STALE", "0")
     snapshot = module.build_snapshot()
     assert snapshot["status"] == "ok"
     assert snapshot["heartbeat_child_count"] == 1
+
+
+def test_resident_fast_wave_does_not_suppress_stale_progress(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
+    _mock_launchd(module, monkeypatch)
+    monkeypatch.setattr(module, "resident_fast_wave_pid", lambda: "99")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [{"pid": "99", "command": "heartbeat fast-wave resident"}],
+    )
+    _write_heartbeat(module)
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
+        encoding="utf-8",
+    )
+    module.FAST_WAVE_PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    module.FAST_WAVE_PID_PATH.write_text("99\n", encoding="utf-8")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda pid: [{"pid": "99", "command": "heartbeat fast-wave resident"}],
+    )
+
+    snapshot = module.build_snapshot()
+
+    assert snapshot["heartbeat_child_count"] == 0
+    assert snapshot["resident_fast_wave"]["pid"] == "99"
+    assert snapshot["status"] == "alert"
+    assert "heartbeat-progress-stale" in {alert["id"] for alert in snapshot["alerts"]}
+
+
+def test_resident_stale_watchdog_does_not_suppress_stale_progress(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS=2)
+    _mock_launchd(module, monkeypatch)
+    monkeypatch.setattr(module, "resident_host_pressure_watchdog_pid", lambda: "101")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda _pid: [{"pid": "101", "command": "host-pressure stale resident"}],
+    )
+    _write_heartbeat(module)
+    module.STATE_PATH.write_text(
+        json.dumps({"latest_tick": "2026-07-01T09:53:57+00:00", "stale_tick_count": 1}),
+        encoding="utf-8",
+    )
+    module.HOST_PRESSURE_WATCHDOG_PID_PATH.parent.mkdir(parents=True, exist_ok=True)
+    module.HOST_PRESSURE_WATCHDOG_PID_PATH.write_text("101\n", encoding="utf-8")
+    monkeypatch.setattr(
+        module,
+        "heartbeat_child_processes",
+        lambda pid: [{"pid": "101", "command": "host-pressure stale resident"}],
+    )
+
+    snapshot = module.build_snapshot()
+
+    assert snapshot["heartbeat_child_count"] == 0
+    assert snapshot["resident_host_pressure_watchdog"]["pid"] == "101"
+    assert snapshot["status"] == "alert"
+
+
+def test_resident_pid_without_matching_heartbeat_child_is_not_alive(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_resident_alive", lambda _pid: True)
+
+    assert module._resident_state("99", None)["alive"] is False
+    assert module._resident_state("99", {"pid": "98"})["alive"] is False
+    assert module._resident_state("99", {"pid": "99"})["alive"] is True
+
+
+def test_host_pressure_probe_has_an_independent_alert_path(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    snapshot = {
+        "launchd": {"ok": True, "state": "active"},
+        "log_age_sec": 0,
+        "heartbeat": {"latest_tick": {"timestamp": "2026-08-08T12:00:00+00:00"}},
+        "stale_tick_count": 0,
+        "worker_count": 0,
+        "heartbeat_child_count": 0,
+        "host_pressure": {"ok": False, "detail": "sample missed three cadences"},
+    }
+
+    status, alerts = module.evaluate(snapshot)
+
+    assert status == "alert"
+    assert {alert["id"] for alert in alerts} == {"vitals-sample-stale"}
 
 
 def test_expected_env_mismatch_alerts(tmp_path, monkeypatch):
@@ -1622,3 +1802,75 @@ def test_no_heal_when_service_loaded_but_unhealthy(tmp_path, monkeypatch):
 
     assert module.run_once(dry_run=False, json_output=False) == 1
     assert not _bootstrap_calls(calls)
+
+
+def test_host_pressure_read_only_mode_is_forwarded(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    module.HOST_PRESSURE_STALE_SCRIPT.parent.mkdir(parents=True, exist_ok=True)
+    module.HOST_PRESSURE_STALE_SCRIPT.write_text("# probe", encoding="utf-8")
+    calls = []
+
+    def fake_run(command, timeout):
+        calls.append((command, timeout))
+        return _CP(command, rc=1, stdout="stale")
+
+    monkeypatch.setattr(module, "run", fake_run)
+
+    snapshot = module.host_pressure_snapshot(read_only=True)
+
+    assert snapshot["ok"] is False
+    assert calls == [
+        (
+            [
+                module.sys.executable,
+                str(module.HOST_PRESSURE_STALE_SCRIPT),
+                "--read-only",
+            ],
+            30,
+        )
+    ]
+
+
+def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    calls = []
+
+    def fake_snapshot(**kwargs):
+        calls.append(kwargs)
+        return _minimal_ok_snapshot()
+
+    monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
+    monkeypatch.setattr(module, "write_receipts", lambda _snapshot: None)
+    monkeypatch.setattr(module, "heal", lambda _snapshot: [])
+    monkeypatch.setattr(module, "append_trial_observation", lambda _snapshot: None)
+    monkeypatch.setattr(module, "maybe_finalize_trial", lambda: None)
+
+    assert module.run_once(dry_run=False, json_output=True) == 0
+    assert calls == [
+        {
+            "refresh_handoff": True,
+            "record_gate": True,
+            "submit_lane_switch": True,
+            "host_pressure_read_only": True,
+        }
+    ]
+
+
+def test_effective_runtime_env_redacts_credentials(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch)
+    env_file = tmp_path / "limen.env"
+    env_file.write_text(
+        "LIMEN_VIGILIA=1\nLIMEN_API_TOKEN=secret-value\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+    effective = module.effective_runtime_env(
+        {
+            "LIMEN_VIGILIA": "0",
+            "LIMEN_API_TOKEN": "launchd-secret",
+        }
+    )
+
+    assert effective["LIMEN_VIGILIA"] == "1"
+    assert effective["LIMEN_ROOT"] == str(tmp_path)
+    assert "LIMEN_API_TOKEN" not in effective

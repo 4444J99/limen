@@ -44,7 +44,11 @@ def _live_overlay() -> dict:
     except Exception:
         return overlay
     v = data.get("vitals") or {}
-    if "level" in v:
+    sample_error = data.get("sample_error")
+    if isinstance(sample_error, dict):
+        error_detail = str(sample_error.get("error") or "sample failed")[:120]
+        overlay["vitals"] = f"ERROR/{error_detail}"
+    elif "level" in v:
         overlay["vitals"] = f"L{v.get('level')}/{v.get('action', '?')}"
     c = data.get("continuity") or {}
     if c.get("status"):

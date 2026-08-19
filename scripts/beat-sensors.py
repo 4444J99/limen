@@ -197,11 +197,37 @@ def _format_escalation(step: dict) -> str | None:
     return None  # fatal has no echo — it propagates
 
 
+def _env_file_value(raw: str) -> str:
+    """Parse one shell-style value while preserving ``#`` characters inside quotes."""
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+        value = value[1:-1]
+    return value
+
+
 def _load_env_file(path: Path) -> None:
     """Load a shell-style env file (``KEY=VALUE`` / ``export KEY=VALUE``) into os.environ, mirroring
     ``set -a; . <file>``. A sensor (creds-hydrate) may WRITE this file, and later sensors need those
-    values in their environment — the ordering metabolize.sh hard-codes as a ``. ~/.limen.env`` source
-    right after block 0a. Honoring it here (via the registry's ``reload_env`` field) makes that
+    values in their environment — the ordering metabolize.sh hard-codes as a ``. ~/.limen.env``
+    source right after block 0a. Honoring it here (via the registry's ``reload_env`` field) makes that
     sequencing constraint declared data rather than shell tribal knowledge. Fail-open if absent."""
     try:
         text = path.read_text(encoding="utf-8")
@@ -215,12 +241,9 @@ def _load_env_file(path: Path) -> None:
         if "=" not in line:
             continue
         key, _, val = line.partition("=")
-        key, val = key.strip(), val.strip()
-        if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
-            val = val[1:-1]
+        key, val = key.strip(), _env_file_value(val)
         if key:
             os.environ[key] = val
-
 
 def iter_source(sensors: dict, source: str):
     """Sensors that run in the given beat source, in registry (declaration) order."""
@@ -287,7 +310,13 @@ def run(
     return worst
 
 
-def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path | None = None) -> int:
+def canary(
+    *,
+    registry: Path = REGISTRY,
+    loop_max: int = 1800,
+    fast_wave_seconds: int | None = None,
+    voice_dir: Path | None = None,
+) -> int:
     """Mechanize the sensor-canary ritual: "merged but never observed live" is fully derivable from
     the voice stamps the scheduled runner already writes (one ``logs/.voice/<id>`` per visit) — it
     must never again live only in an operator's memory (the post-#921 drain left the 0g4 liveness
@@ -295,7 +324,7 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
 
     For every cadence-declaring sensor: a missing stamp is NEVER-RAN; a stamp older than
     cadence × loop_max × 2 (twice the worst-case wall-clock for one cadence window) is STALE.
-    Exit 1 only for live-lane findings (``heartbeat`` in source) — a metabolize-only scheduled
+    Exit 1 only for live-lane findings (``heartbeat`` or ``fast-wave`` in source) — a registry-only
     sensor that never ran is usually an organ parked behind its activation lever (observatory-run),
     so it is printed and routed to its owner but never reads as red every beat.
 
@@ -305,6 +334,16 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
     scheduled lane visits them (transient, not a defect)."""
     sensors = load_sensors(registry)
     voice_dir = voice_dir or (ROOT / "logs" / ".voice")
+    if fast_wave_seconds is None:
+        # Direct canary invocations do not inherit launchd's sourced environment. Honor the
+        # deployed env-file fallback unless the caller supplied an explicit process override.
+        if "LIMEN_VITALS_SAMPLE_SECONDS" not in os.environ:
+            env_file = Path(
+                os.environ.get("LIMEN_ENV_FILE", str(Path.home() / ".limen.env"))
+            ).expanduser()
+            _load_env_file(env_file)
+        raw_fast_wave = os.environ.get("LIMEN_VITALS_SAMPLE_SECONDS", "300")
+        fast_wave_seconds = int(raw_fast_wave) if raw_fast_wave.isdigit() and int(raw_fast_wave) > 0 else 300
     now = time.time()
     live_findings: list[str] = []
     routed: list[str] = []
@@ -317,14 +356,17 @@ def canary(*, registry: Path = REGISTRY, loop_max: int = 1800, voice_dir: Path |
         except OSError:
             finding = f"NEVER-RAN {sid} — no voice stamp ({s.get('title', sid)})"
         else:
-            bound = cadence * max(1, loop_max) * 2
+            sources = set(s.get("source") or [])
+            period = fast_wave_seconds if "fast-wave" in sources else loop_max
+            bound = cadence * max(1, period) * 2
             if age <= bound:
                 continue
             finding = f"STALE {sid} — stamp {int(age)}s old > bound {int(bound)}s ({s.get('title', sid)})"
-        if "heartbeat" in (s.get("source") or []):
+        sources = set(s.get("source") or [])
+        if sources.intersection({"heartbeat", "fast-wave"}):
             live_findings.append(finding)
         else:
-            routed.append(f"{finding} → owner {s.get('owner', '?')} (metabolize-only; not a live-lane failure)")
+            routed.append(f"{finding} → owner {s.get('owner', '?')} (registry-only; not a live-lane failure)")
     for line in live_findings:
         print(f"  ✗ {line}")
     for line in routed:
@@ -543,12 +585,13 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="derive the beat sensor loop from sensors.yaml")
     ap.add_argument("--list", action="store_true", help="print the sensor matrix")
     ap.add_argument("--run", action="store_true", help="run the sensors for --source")
-    ap.add_argument("--source", default="metabolize", help="beat source: metabolize | heartbeat")
+    ap.add_argument("--source", default="metabolize", help="beat source: metabolize | heartbeat | fast-wave")
     ap.add_argument("--dry-run", action="store_true", help="with --run: print commands, don't execute")
     ap.add_argument("--registry", type=Path, default=REGISTRY, help="sensor registry path")
     ap.add_argument("--scheduled-only", action="store_true", help="run only sensors declaring cadence")
     ap.add_argument("--beat", type=int, default=0, help="current heartbeat counter for cadence")
     ap.add_argument("--loop-max", type=int, default=1800, help="maximum loop seconds for overdue detection")
+    ap.add_argument("--fast-wave-seconds", type=int, default=None, help="fast-wave sample period for canary bounds")
     ap.add_argument("--voice-dir", type=Path, default=None, help="voice-stamp directory")
     ap.add_argument("--list-omega", action="store_true", help="emit TSV metadata for omega-eligible checks")
     ap.add_argument("--list-omega-json", action="store_true", help="emit stable JSON omega rung discovery")
@@ -557,7 +600,12 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.canary:
-        return canary(registry=args.registry, loop_max=args.loop_max, voice_dir=args.voice_dir)
+        return canary(
+            registry=args.registry,
+            loop_max=args.loop_max,
+            fast_wave_seconds=args.fast_wave_seconds,
+            voice_dir=args.voice_dir,
+        )
     if args.list:
         return list_sensors(args.registry)
     if args.list_omega:

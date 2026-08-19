@@ -193,6 +193,8 @@ def _watch_snapshot(at: dt.datetime) -> dict:
         "worker_count": 0,
         "heartbeat_child_count": 0,
         "stale_tick_count": 0,
+        "resident_fast_wave": {"alive": True, "pid": "101"},
+        "resident_host_pressure_watchdog": {"alive": True, "pid": "102"},
         "handoff_relay": {"ok": True, "check_returncode": 0},
         "value_gate": {"returncode": 0},
         "dispatch_control": {"allow_dispatch": True},

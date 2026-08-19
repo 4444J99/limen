@@ -141,7 +141,7 @@ def derived_sources(shell: str) -> set[str]:
     derived: set[str] = set()
     if not re.search(r"""beat-sensors\.py["']?\s+--run""", shell):
         return derived
-    for src in ("metabolize", "heartbeat"):
+    for src in ("metabolize", "heartbeat", "fast-wave"):
         if re.search(rf"""beat-sensors\.py["']?\s+--run[^\n]*--source\s+{src}""", shell):
             derived.add(src)
     if re.search(r"""beat-sensors\.py["']?\s+--run(?![^\n]*--source)""", shell):  # bare --run == metabolize

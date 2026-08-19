@@ -88,6 +88,7 @@ def test_scheduled_registry_door_and_script_survive_arbitrary_id_rename(tmp_path
     (scripts / "heartbeat-loop.sh").write_text(
         'if [ "${LIMEN_BEAT_DERIVE:-0}" = "1" ]; then\n'
         '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source heartbeat --scheduled-only\n'
+        '  python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only\n'
         "fi\n",
         encoding="utf-8",
     )
@@ -100,6 +101,15 @@ sensors:
     title: arbitrary future sensor
     source: [heartbeat]
     cadence: {env: TEST_ARBITRARY_CADENCE, default: 5}
+    steps:
+      - command: "python3 scripts/renamed-scan.py"
+        severity: silent
+        escalation: skipped
+  arbitrary.fast.wave:
+    section: heartbeat
+    title: arbitrary fast-wave sensor
+    source: [fast-wave]
+    cadence: {env: TEST_FAST_CADENCE, default: 2}
     steps:
       - command: "python3 scripts/renamed-scan.py"
         severity: silent
@@ -118,6 +128,7 @@ sensors:
     doors = {door["key"]: door for door in module.discover_doors(canon)}
     assert doors["arbitrary.future.id"]["cadence"] == 5
     assert doors["arbitrary.future.id"]["dormant"] is True  # global derive canary remains dark
+    assert doors["arbitrary.fast.wave"]["cadence"] == 2
     assert {path.name for path in module._sensor_scripts_for("arbitrary.future.id")} == {"renamed-scan.py"}
 
 
