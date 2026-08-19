@@ -27,6 +27,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+from limen.memoria import drain_memory_once  # noqa: E402
+from limen.memoria import pending_count as memory_pending_count  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     board_publication_preflight,
     drain_once,
@@ -39,6 +41,7 @@ ROOT = Path(
 )
 BOARD = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 ENABLED = os.environ.get("LIMEN_TABVLARIVS", "1") != "0"
+MEMORIA_ENABLED = os.environ.get("LIMEN_MEMORIA", "0") == "1"
 STATE = ROOT / "logs" / "tabularius-organ-state.json"
 
 
@@ -50,6 +53,25 @@ def _stamp(**fields: object) -> None:
     except OSError:
         pass
 
+
+def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
+    if not MEMORIA_ENABLED:
+        return {}
+    try:
+        from limen.memoria import MEMORY_DIR, drain_memory_once
+        from limen.memoria import pending_count as memory_pending_count
+
+        if check:
+            return {"memory_pending": memory_pending_count(MEMORY_DIR)}
+        result = drain_memory_once(MEMORY_DIR, dry_run=dry_run)
+        return {
+            "memory_pending": result.pending,
+            "memory_applied": result.applied,
+            "memory_rejected": result.rejected,
+        }
+    except Exception as exc:
+        print(f"tabularius[memoria]: skipped ({type(exc).__name__}: {str(exc)[:120]})")
+        return {"memory_error": type(exc).__name__}
 
 def _publication_required_failure(required: bool, preserve: object | None) -> bool:
     """Return whether CI lacks exact remote board custody."""
@@ -127,11 +149,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         n = pending_count(BOARD)
         print(f"tabularius: {n} ticket(s) pending in inbox" if n else "tabularius: inbox empty")
-        _stamp(pending=n, mode="check")
+        memory = _memory_pass(check=True, dry_run=args.dry_run)
+        _stamp(pending=n, mode="check", **memory)
         return 0
 
     result = drain_once(BOARD, dry_run=args.dry_run)
     preserve = None if args.dry_run else preserve_board_projection(BOARD)
+    memory = _memory_pass(check=False, dry_run=args.dry_run)
     publication_failed = _publication_required_failure(args.require_published, preserve)
 
     if result.deferred:
