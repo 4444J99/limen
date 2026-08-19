@@ -131,7 +131,7 @@ def is_executable_predicate(value: Any) -> bool:
         argv = shlex.split(command)
     except ValueError:
         return False
-    if any(tok in {"&&", "||", ";", "|", "&"} for tok in argv):
+    if not argv:
         return False
     command_index = 0
     while command_index < len(argv) and (
@@ -174,7 +174,8 @@ def is_executable_predicate(value: Any) -> bool:
                     return False
                 program = argv[index + 1]
                 if (
-                    "\\n" in program
+                    any(token in program for token in (";", "|", "&", "$(", "`"))
+                    or "\\n" in program
                     or "\\r" in program
                     or (("$" + "'") in command and ("\\n" in command or "\\r" in command))
                 ):
