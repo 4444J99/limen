@@ -1,0 +1,30 @@
+id: bifrons-portal
+name: Bifrons Star <-> Contribution Exchange
+member:
+  repo: bifrons-exchange
+  surface: organs/observation/bifrons/PORTAL.md
+  owner: Anthony J. Padavano
+  role: star_contribution_portal
+mandate:
+  description: Absorb starred repositories into dossiers and resonance edges, preparing outbound draft packets without autonomous submission.
+  scope_boundary: Read-only database ingestion and local draft packet preparation.
+standing:
+  current: OBSERVING
+  since: "2026-08-19"
+next_standing: ANALYZED
+standard:
+  rubric: Deterministic rendering stamped from portal state; two faces one relationship.
+  evidence:
+    - organs/observation/bifrons/PORTAL.md
+    - logs/observation/feed-latest.json
+    - scripts/bifrons-organ.py
+governance:
+  human_gated: true
+  read_only: true
+  forbidden_acts:
+    - autonomous upstream PR creation
+    - unsupervised outbound send
+human_gates:
+  - operator_contribution_approval
+artifacts:
+  next_reviewable_output: organs/observation/bifrons/PORTAL.md

@@ -1418,3 +1418,34 @@ def test_export_requires_matching_mode_approval():
     packet = rs.render_record(et4l, "project_page", export=True)
 
     assert packet.startswith("# Project Page Draft")
+
+
+def test_validator_bare_defaults_to_fleet():
+    result = run_validator()
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "6/6 passed" in result.stdout
+    assert "PASS" in result.stdout
+
+
+def test_validator_fleet_flag():
+    result = run_validator("--fleet")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "6/6 passed" in result.stdout
+
+
+def test_validator_fleet_quiet():
+    result = run_validator("--fleet", "--quiet")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == ""
+
+
+def test_substrate_validate_empty_paths_defaults_to_fleet():
+    result = run_tool("validate")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "6/6 passed" in result.stdout
+
+
+def test_substrate_validate_with_explicit_path():
+    result = run_tool("validate", CHRIS)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1/1 passed" in result.stdout

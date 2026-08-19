@@ -575,6 +575,15 @@ test("full-mesh canary read edge preserves Worker protocol parity", async () => 
     storage: {
       async get(key) { return structuredClone(deployedValues.get(key)); },
       async put(key, value) { deployedValues.set(key, structuredClone(value)); },
+      async list(options) {
+        const out = new Map();
+        for (const [k, v] of deployedValues.entries()) {
+          if (options?.prefix && !k.startsWith(options.prefix)) continue;
+          out.set(k, structuredClone(v));
+        }
+        return out;
+      },
+      async delete(key) { deployedValues.delete(key); },
     },
   }, {
     LIMEN_CONDUCT_RUNTIME_GIT_SHA: runtimeHead,
@@ -766,6 +775,8 @@ test("deployed runtime identity degrades to null when either binding is absent",
       storage: {
         async get() { return undefined; },
         async put() {},
+        async list() { return new Map(); },
+        async delete() {},
       },
     }, env);
     assert.equal(

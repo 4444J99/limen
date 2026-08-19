@@ -208,6 +208,11 @@
       "id": "sensor.decorum.self-test",
       "next_action": "Run the DECORVM keeper doctor and repair any registry, schema, or owner-wiring regression.",
       "owner": "decorum"
+    },
+    {
+      "id": "sensor.observation.feed",
+      "next_action": "Run the Observation Organ validator and ensure telemetry collector self-feeds properly.",
+      "owner": "observation"
     }
   ],
   "schema": "limen.omega_remediation_registry.v1"

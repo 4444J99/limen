@@ -1,0 +1,30 @@
+id: limen-legibility
+name: Limen Legibility & Traction Surface
+member:
+  repo: organvm/limen
+  surface: README.md
+  owner: Anthony J. Padavano
+  role: hero_estate_surface
+mandate:
+  description: Audit and reconcile public legibility claims and transferable mechanisms for Limen.
+  scope_boundary: Read-only analysis of public documentation, telemetry feeds, and claim truth.
+standing:
+  current: OBSERVING
+  since: "2026-08-19"
+next_standing: ANALYZED
+standard:
+  rubric: Priority formula (explanatory_strength * controllability * similarity * EV / activation_cost) + honesty rule.
+  evidence:
+    - logs/observation/feed-latest.json
+    - logs/observation/feed.jsonl
+    - organs/observation/KERNEL.md
+governance:
+  human_gated: true
+  read_only: true
+  forbidden_acts:
+    - autonomous publication or surface modification
+    - unapproved external network mutations
+human_gates:
+  - operator_experiment_approval
+artifacts:
+  next_reviewable_output: logs/observation/feed-latest.json

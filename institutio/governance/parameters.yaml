@@ -4280,6 +4280,24 @@ parameters:
     self_update: none
     owner: observatory
     note: "Per-run timeout (seconds) resolved by the generic sensor runner for the OBSERVATORY loop. The runner kills the command group on overrun and the beat continues fail-open. 480 covers the full-field pass (~50 light snapshots + 17 estate surfaces on top of the deep winners; the 3-winner loop measured 106s)."
+  LIMEN_OBSERVATION_FEED:
+    default: 1
+    env: LIMEN_OBSERVATION_FEED
+    self_update: none
+    owner: observatory
+    note: "Master on/off for the observation-feed heartbeat sensor (scripts/observation-feed.py). Emits unified observation telemetry (vitals + bifrons + observatory) to logs/observation/feed.jsonl and feed-latest.json."
+  LIMEN_BEAT_OBSERVATION_FEED:
+    default: 12
+    env: LIMEN_BEAT_OBSERVATION_FEED
+    self_update: none
+    owner: observatory
+    note: "Cadence (every N beats) of the observation-feed sensor in sensors.yaml. Emits system telemetry snapshot on the beat."
+  LIMEN_OBSERVATION_FEED_TIMEOUT:
+    default: 60
+    env: LIMEN_OBSERVATION_FEED_TIMEOUT
+    self_update: none
+    owner: observatory
+    note: "Per-run timeout (seconds) for the observation-feed telemetry collector."
   LIMEN_DEPENDABOT_GUARD:
     default: "1"               # ON — detect drift in the Tier-2 deferral owner (Dependabot security-updates)
     env: LIMEN_DEPENDABOT_GUARD

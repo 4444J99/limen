@@ -244,6 +244,7 @@ export class ConductKernel {
       adoptionAfterMs = 10 * 60 * 1000,
       leaseTtlMs = 15 * 60 * 1000,
       capabilitySecret = null,
+      runtimeIdentity = null,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -253,6 +254,7 @@ export class ConductKernel {
     this.adoptionAfterMs = adoptionAfterMs;
     this.leaseTtlMs = leaseTtlMs;
     this.capabilitySecret = capabilitySecret;
+    this.runtimeIdentity = runtimeIdentity;
     this.projectionEvents = [];
     this.mutated = false;
   }
@@ -260,7 +262,7 @@ export class ConductKernel {
   async execute(operation, payload = {}) {
     switch (operation) {
       case "register": return this.register(payload.session, payload.principal);
-      case "capabilities": return this.capabilities();
+      case "capabilities": return this.capabilities(payload.principal);
       case "task_run": return this.taskRun(payload.task_id);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
@@ -469,7 +471,7 @@ export class ConductKernel {
     return clone(stored);
   }
 
-  capabilities() {
+  capabilities(principal = null) {
     const load = this.activeLoad();
     const sessions = Object.values(this.state.sessions).map((session) => ({
       ...clone(session),
@@ -478,11 +480,20 @@ export class ConductKernel {
     }));
     sessions.sort((left, right) =>
       left.identity.agent.localeCompare(right.identity.agent) || left.session_id.localeCompare(right.session_id));
-    return {
+    const response = {
       schema_version: "limen.conduct_capabilities.v1",
       generated_at: this.timestamp,
+      runtime_identity: this.runtimeIdentity ?? null,
       sessions,
     };
+    if (principal) {
+      response.authenticated_principal = clone(principal);
+      response.authenticated_session_ids = Object.entries(this.state.session_principals || {})
+        .filter(([, pid]) => pid === principal.principal_id)
+        .map(([sid]) => sid)
+        .sort((left, right) => left.localeCompare(right));
+    }
+    return response;
   }
 
   taskRun(taskId) {
@@ -1843,6 +1854,7 @@ export class SerializedConductService {
       adoptionAfterMs,
       leaseTtlMs,
       capabilitySecret,
+      runtimeIdentity,
     };
     this.tail = Promise.resolve();
   }

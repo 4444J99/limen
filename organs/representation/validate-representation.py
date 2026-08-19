@@ -9,4 +9,7 @@ from representation_substrate import main
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(["validate", *sys.argv[1:]]))
+    args = sys.argv[1:]
+    if not args:
+        args = ["--fleet"]
+    raise SystemExit(main(["validate", *args]))

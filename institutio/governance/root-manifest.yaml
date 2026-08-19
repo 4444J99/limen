@@ -62,10 +62,12 @@ sanctioned:
   - {path: moat-guard.json, kind: registry, owner: governance, why: "moat guard registry (parameters.yaml + access.yaml consume)"}
   - {path: moneta, kind: dir, owner: moneta, why: "sovereign cash organ"}
   - {path: organ-ladder.json, kind: registry, owner: governance, why: "the organ pillar ladder — domain-stream roster derives from it"}
+  - {path: ORIGINAL_REQUEST.md, kind: doc, owner: docs, why: "VLTIMA feature request — consumed by verify-scoped and organ validators"}
   - {path: organs, kind: dir, owner: governance, why: "self-* organ registries"}
   - {path: package-lock.json, kind: package, owner: fleet, why: "root npm lockfile"}
   - {path: pillars.yaml, kind: registry, owner: governance, why: "platform pillars registry"}
   - {path: positioning-seeds.json, kind: registry, owner: launch, why: "positioning seed registry (gates.yaml + seo-seeds consume)"}
+  - {path: PROJECT.md, kind: doc, owner: docs, why: "VLTIMA project architecture doc — consumed by verify-scoped and organ validators"}
   - {path: public-portal, kind: dir, owner: observation, why: "named target of the planned dashboard consolidation"}
   - {path: renovate.json, kind: config, owner: fleet, why: "dependency update bot config"}
   - {path: revenue-ladder.json, kind: registry, owner: financial, why: "revenue ladder registry (organ-ladder cites)"}

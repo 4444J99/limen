@@ -1,12 +1,12 @@
 # Overnight Watch
 
 - Status: `alert`
-- Updated: `2026-08-19T13:50:34+00:00`
-- Log age: `47` seconds
+- Updated: `2026-08-19T17:49:29+00:00`
+- Log age: `13` seconds
 - Launchd: `active`
-- Latest tick: `None`
+- Latest tick: `tick emitted: 2026-08-19T16:52:11+00:00 total=3184 open=884 spent=8/600`
 - Latest async: `None`
-- Stale tick samples: `63`
+- Stale tick samples: `6`
 - Active workers: `0`
 - Heartbeat child processes: `1`
 
@@ -30,10 +30,9 @@
 
 ## Throughput
 
-- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0`).
+- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0.0`).
 - Below floor: `false`; suppressed: `no`.
-  - child `56095` `S` `02:30` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
+  - child `56095` `S` `04:01:25` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
 
 ## WATCH_ALERT
-- `heartbeat-tick-missing`: no tick emitted line found in recent heartbeat log
 - `overnight-lane-switch-blocked`: blocker=overnight-owner-conduct-unavailable owner=organvm/limen reason=authenticated conduct is unavailable for exact owner packet AW-VALUE-REPOS-77d88c87bfb2: conduct broker is not configured; set LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN (LIMEN_CONDUCT_STATE is an explicit local test adapter)

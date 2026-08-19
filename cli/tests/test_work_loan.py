@@ -209,6 +209,7 @@ def test_sanctioned_producers_adopt_explicit_work_loan_collateral() -> None:
         "scripts/quicken.py",
         "scripts/routine-freshness-audit.py",
         "scripts/self-heal.py",
+        "scripts/github-universe-sweep.py",
     )
     for relative in task_producers:
         source = (ROOT / relative).read_text(encoding="utf-8")

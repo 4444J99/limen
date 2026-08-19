@@ -78,6 +78,12 @@ python3 organs/artist/validate-artist.py --fleet --quiet
 step "Validate Koinonia social organ relationship-posture briefs"
 python3 organs/social/validate-social.py --fleet --quiet
 
+step "Validate Representation Organ substrate records and opportunities"
+python3 organs/representation/validate-representation.py --fleet --quiet
+
+step "Validate Observation Organ governance and telemetry feed schema"
+python3 organs/observation/validate-observation.py --fleet --quiet
+
 step "Verify the merge-policy predicate (verdict matrix regression test)"
 bash scripts/tests/merge-policy.test.sh
 
