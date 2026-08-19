@@ -71,6 +71,9 @@ PRIVATE_SESSION_CORPUS = Path(
 )
 PROMPT_ATOM_SNAPSHOT = PRIVATE_SESSION_CORPUS / "prompt-atoms" / "prompt-atom-ledger.json"
 HEARTBEAT_LOG = LOGS / "heartbeat.out.log"
+FAST_WAVE_PID_PATH = LOGS / "vigilia" / "fast-wave.pid"
+HOST_PRESSURE_WATCHDOG_PID_PATH = LOGS / "vigilia" / "host-pressure-watchdog.pid"
+HOST_PRESSURE_STALE_SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
 ASYNC_RUNS = LOGS / "async-runs"
 STATE_PATH = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_STATE", LOGS / "overnight-watch-state.json"))
 RECEIPT_JSONL = Path(os.environ.get("LIMEN_OVERNIGHT_WATCH_RECEIPT", LOGS / "overnight-watch.jsonl"))
@@ -197,9 +200,21 @@ def parse_iso(value: str | None) -> dt.datetime | None:
     return parsed.astimezone(dt.timezone.utc)
 
 
-def run(args: list[str], timeout: int = 10) -> subprocess.CompletedProcess[str]:
+def run(
+    args: list[str],
+    timeout: int = 10,
+    *,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     try:
-        return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        kwargs: dict[str, Any] = {
+            "capture_output": True,
+            "text": True,
+            "timeout": timeout,
+        }
+        if env is not None:
+            kwargs["env"] = env
+        return subprocess.run(args, **kwargs)
     except Exception as exc:
         return subprocess.CompletedProcess(args, 1, "", str(exc))
 
@@ -286,6 +301,24 @@ def parse_heartbeat(text: str) -> dict[str, Any]:
     }
 
 
+MONITORED_ENV_KEYS = frozenset(
+    {
+        "LIMEN_CAMPAIGN_WAKE_TIMEOUT",
+        "LIMEN_ROOT",
+        "LIMEN_VIGILIA",
+        "LIMEN_HOST_PRESSURE_STALE",
+        "LIMEN_VITALS_SAMPLE_SECONDS",
+        "LIMEN_VITALS_SAMPLE_TIMEOUT",
+        "LIMEN_VITALS_SAMPLE_GRACE_SECONDS",
+        "LIMEN_VITALS_STALE_BEATS",
+    }
+)
+
+
+def _safe_runtime_env(values: dict[str, str]) -> dict[str, str]:
+    return {key: str(value) for key, value in values.items() if key in MONITORED_ENV_KEYS}
+
+
 def parse_launchd_env(stdout: str) -> dict[str, str]:
     env: dict[str, str] = {}
     for line in stdout.splitlines():
@@ -293,7 +326,61 @@ def parse_launchd_env(stdout: str) -> dict[str, str]:
         if not match:
             continue
         env[match.group(1)] = match.group(2).strip().strip('"')
-    return env
+    return _safe_runtime_env(env)
+
+
+def _env_file_value(raw: str) -> str:
+    quote: str | None = None
+    escaped = False
+    for index, char in enumerate(raw):
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\" and quote != "'":
+            escaped = True
+            continue
+        if quote:
+            if char == quote:
+                quote = None
+            continue
+        if char in ("'", '"'):
+            quote = char
+        elif char == "#" and (index == 0 or raw[index - 1].isspace()):
+            raw = raw[:index]
+            break
+    value = raw.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1]
+    return value
+
+
+def _env_file_overrides(path: Path) -> dict[str, str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+    values: dict[str, str] = {}
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        line = line.removeprefix("export ")
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key and re.fullmatch(r"[A-Z][A-Z0-9_]+", key):
+            values[key] = _env_file_value(value)
+    return values
+
+
+def effective_runtime_env(launchd_env: dict[str, str] | None = None) -> dict[str, str]:
+    """Merge only non-sensitive monitor settings from runtime sources."""
+    effective = _safe_runtime_env(launchd_env or {})
+    env_file = Path(os.environ.get("LIMEN_ENV_FILE", Path.home() / ".limen.env")).expanduser()
+    effective.update(_safe_runtime_env(_env_file_overrides(env_file)))
+    for key in MONITORED_ENV_KEYS:
+        if key in os.environ:
+            effective[key] = os.environ[key]
+    return _safe_runtime_env(effective)
 
 
 def launchd_snapshot() -> dict[str, Any]:
@@ -342,29 +429,107 @@ def active_workers() -> list[dict[str, Any]]:
 
 
 def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
+    """Return the heartbeat's full descendant tree, not only its wrapper child."""
     if not pid:
         return []
-    pgrep = run(["pgrep", "-P", str(pid)], timeout=5)
-    if pgrep.returncode != 0:
-        return []
+    pending = [str(pid)]
+    seen = {str(pid)}
     children: list[dict[str, Any]] = []
-    for child_pid in [line.strip() for line in pgrep.stdout.splitlines() if line.strip()]:
-        ps = run(["ps", "-o", "pid=,ppid=,stat=,etime=,command=", "-p", child_pid], timeout=5)
-        line = (ps.stdout or "").strip()
-        if ps.returncode != 0 or not line:
-            children.append({"pid": child_pid})
+    while pending:
+        parent_pid = pending.pop(0)
+        pgrep = run(["pgrep", "-P", parent_pid], timeout=5)
+        if pgrep.returncode != 0:
             continue
-        parts = line.split(None, 4)
-        children.append(
-            {
-                "pid": parts[0] if len(parts) > 0 else child_pid,
-                "ppid": parts[1] if len(parts) > 1 else None,
-                "stat": parts[2] if len(parts) > 2 else None,
-                "etime": parts[3] if len(parts) > 3 else None,
-                "command": parts[4] if len(parts) > 4 else "",
-            }
-        )
+        for child_pid in [line.strip() for line in pgrep.stdout.splitlines() if line.strip()]:
+            if child_pid in seen:
+                continue
+            seen.add(child_pid)
+            ps = run(["ps", "-o", "pid=,ppid=,stat=,etime=,command=", "-p", child_pid], timeout=5)
+            line = (ps.stdout or "").strip()
+            if ps.returncode != 0 or not line:
+                child = {"pid": child_pid}
+            else:
+                parts = line.split(None, 4)
+                child = {
+                    "pid": parts[0] if len(parts) > 0 else child_pid,
+                    "ppid": parts[1] if len(parts) > 1 else parent_pid,
+                    "stat": parts[2] if len(parts) > 2 else None,
+                    "etime": parts[3] if len(parts) > 3 else None,
+                    "command": parts[4] if len(parts) > 4 else "",
+                }
+            children.append(child)
+            pending.append(child_pid)
     return children
+def _resident_pid(path: Path) -> str | None:
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return value if value.isdigit() else None
+
+
+def resident_fast_wave_pid() -> str | None:
+    return _resident_pid(FAST_WAVE_PID_PATH)
+
+
+def resident_host_pressure_watchdog_pid() -> str | None:
+    return _resident_pid(HOST_PRESSURE_WATCHDOG_PID_PATH)
+
+
+def _resident_alive(pid: str | None) -> bool:
+    if not pid:
+        return False
+    try:
+        os.kill(int(pid), 0)
+    except (OSError, ValueError):
+        return False
+    return True
+
+
+def _resident_state(pid: str | None, child: dict[str, Any] | None) -> dict[str, Any]:
+    child_pid = str(child.get("pid") or "") if child else ""
+    alive = bool(pid and child_pid == str(pid) and _resident_alive(pid))
+    return {
+        "pid": pid,
+        "alive": alive,
+        "process": child,
+    }
+
+
+def host_pressure_snapshot(
+    *,
+    read_only: bool = False,
+    effective_env: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    if not HOST_PRESSURE_STALE_SCRIPT.is_file():
+        return {"ok": None, "returncode": None, "detail": "host-pressure-stale.py missing"}
+    command = [sys.executable, str(HOST_PRESSURE_STALE_SCRIPT)]
+    if read_only:
+        command.append("--read-only")
+    probe_env = None
+    if effective_env:
+        probe_env = os.environ.copy()
+        for key in (
+            "LIMEN_ENV_FILE",
+            "LIMEN_HOST_PRESSURE_STALE",
+            "LIMEN_VIGILIA",
+            "LIMEN_VITALS_SAMPLE_SECONDS",
+            "LIMEN_VITALS_SAMPLE_TIMEOUT",
+            "LIMEN_VITALS_SAMPLE_GRACE_SECONDS",
+            "LIMEN_VITALS_STALE_BEATS",
+        ):
+            if key in effective_env:
+                probe_env[key] = effective_env[key]
+    if probe_env is None:
+        completed = run(command, timeout=30)
+    else:
+        completed = run(command, timeout=30, env=probe_env)
+    detail = ((completed.stdout or "") + (completed.stderr or "")).strip()
+    return {
+        "ok": completed.returncode == 0,
+        "returncode": completed.returncode,
+        "detail": detail[-500:],
+    }
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -1763,11 +1928,27 @@ def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> i
     return int(previous.get("stale_tick_count") or 0) + 1
 
 
+def _resident_subtree_pids(children: list[dict[str, Any]], roots: set[str]) -> set[str]:
+    """Return resident roots plus every descendant process below them."""
+    resident = set(roots)
+    changed = True
+    while changed:
+        changed = False
+        for child in children:
+            child_pid = str(child.get("pid") or "")
+            parent_pid = str(child.get("ppid") or "")
+            if child_pid and parent_pid in resident and child_pid not in resident:
+                resident.add(child_pid)
+                changed = True
+    return resident
+
+
 def build_snapshot(
     *,
     refresh_handoff: bool = True,
     record_gate: bool = True,
     submit_lane_switch: bool = False,
+    host_pressure_read_only: bool = False,
 ) -> dict[str, Any]:
     text = tail_text(HEARTBEAT_LOG)
     heartbeat = parse_heartbeat(text)
@@ -1776,6 +1957,40 @@ def build_snapshot(
     workers = active_workers()
     launchd = launchd_snapshot()
     children = heartbeat_child_processes(launchd.get("pid"))
+    fast_wave_pid = resident_fast_wave_pid()
+    watchdog_pid = resident_host_pressure_watchdog_pid()
+    resident_pids = {str(pid) for pid in (fast_wave_pid, watchdog_pid) if pid}
+    resident_tree_pids = _resident_subtree_pids(children, resident_pids)
+    progress_children = [
+        child
+        for child in children
+        if str(child.get("pid") or "") not in resident_tree_pids
+    ]
+    resident_fast_wave_child = next(
+        (
+            child
+            for child in children
+            if str(child.get("pid") or "") == str(fast_wave_pid or "")
+        ),
+        None,
+    )
+    resident_host_pressure_watchdog_child = next(
+        (
+            child
+            for child in children
+            if str(child.get("pid") or "") == str(watchdog_pid or "")
+        ),
+        None,
+    )
+    resident_fast_wave = _resident_state(fast_wave_pid, resident_fast_wave_child)
+    resident_host_pressure_watchdog = _resident_state(watchdog_pid, resident_host_pressure_watchdog_child)
+    effective_env = effective_runtime_env(
+        launchd.get("env") if isinstance(launchd.get("env"), dict) else None
+    )
+    host_pressure = host_pressure_snapshot(
+        read_only=host_pressure_read_only,
+        effective_env=effective_env,
+    )
 
     captured_at = utc_now().replace(microsecond=0)
     snapshot: dict[str, Any] = {
@@ -1786,8 +2001,12 @@ def build_snapshot(
         "launchd": launchd,
         "workers": workers,
         "worker_count": len(workers),
-        "heartbeat_children": children,
-        "heartbeat_child_count": len(children),
+        "heartbeat_children": progress_children,
+        "heartbeat_child_count": len(progress_children),
+        "resident_fast_wave": resident_fast_wave,
+        "resident_host_pressure_watchdog": resident_host_pressure_watchdog,
+        "host_pressure": host_pressure,
+        "effective_env": effective_env,
         "stale_tick_count": stale_count,
         "thresholds": {
             "max_log_age_sec": MAX_LOG_AGE_SEC,
@@ -1840,7 +2059,15 @@ def overnight_counts(snapshot: dict[str, Any]) -> dict[str, Any]:
 def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     alerts: list[dict[str, str]] = []
     launchd = snapshot.get("launchd") or {}
-    env = launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
+    host_pressure = snapshot.get("host_pressure") or {}
+    if host_pressure.get("ok") is False:
+        alerts.append(
+            {
+                "id": "vitals-sample-stale",
+                "evidence": str(host_pressure.get("detail") or "host-pressure watcher failed")[:500],
+            }
+        )
+    env = snapshot.get("effective_env") if isinstance(snapshot.get("effective_env"), dict) else launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
@@ -1853,6 +2080,37 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
                 "evidence": f"state={launchd.get('state')} error={launchd.get('error')}",
             }
         )
+
+    heartbeat_active = launchd.get("ok") and launchd.get("state") in (None, "active", "running")
+    resident_telemetry_present = (
+        "resident_fast_wave" in snapshot
+        or "resident_host_pressure_watchdog" in snapshot
+        or "effective_env" in snapshot
+        or isinstance(launchd.get("env"), dict)
+    )
+    if heartbeat_active and resident_telemetry_present:
+        fast_wave = snapshot.get("resident_fast_wave")
+        watchdog = snapshot.get("resident_host_pressure_watchdog")
+        if env.get("LIMEN_VIGILIA", "1") == "1" and (
+            not isinstance(fast_wave, dict) or not fast_wave.get("alive")
+        ):
+            fast_wave_pid = fast_wave.get("pid") if isinstance(fast_wave, dict) else None
+            alerts.append(
+                {
+                    "id": "vigilia-fast-wave-missing",
+                    "evidence": f"resident fast-wave pid={fast_wave_pid or 'missing'} is not alive",
+                }
+            )
+        if env.get("LIMEN_HOST_PRESSURE_STALE", "1") == "1" and (
+            not isinstance(watchdog, dict) or not watchdog.get("alive")
+        ):
+            watchdog_pid = watchdog.get("pid") if isinstance(watchdog, dict) else None
+            alerts.append(
+                {
+                    "id": "host-pressure-watchdog-missing",
+                    "evidence": f"resident watchdog pid={watchdog_pid or 'missing'} is not alive",
+                }
+            )
 
     log_age_sec = snapshot.get("log_age_sec")
     if log_age_sec is None:
@@ -5584,6 +5842,9 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
         refresh_handoff=not dry_run,
         record_gate=not dry_run,
         submit_lane_switch=not dry_run,
+        # The resident stale watchdog is the sole notification effector. The watcher's
+        # host-pressure probe remains read-only in both dry-run and receipt modes.
+        host_pressure_read_only=True,
     )
     if not dry_run:
         heal_actions = heal(snapshot)

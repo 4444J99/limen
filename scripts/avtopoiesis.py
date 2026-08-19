@@ -61,7 +61,10 @@ def discover_doors(canon):
         if "%s" in gate_tmpl:
             dormant = bool(re.search(gate_tmpl % name, text))
         doors[key] = {"key": key, "name": name, "cadence": int(cadence), "role": role, "dormant": dormant}
-    if re.search(r"beat-sensors\.py[^\n]*--source\s+heartbeat[^\n]*--scheduled-only", text):
+    if re.search(
+        r"beat-sensors\.py[^\n]*--source\s+(?:heartbeat|fast-wave)[^\n]*--scheduled-only",
+        text,
+    ):
         sensors_path = ROOT / "institutio" / "governance" / "sensors.yaml"
         try:
             sensors = (_load(sensors_path).get("sensors") or {}) if yaml is not None else {}
@@ -71,7 +74,9 @@ def discover_doors(canon):
         derive_default = derive_match.group(1) if derive_match else "0"
         derive_live = os.environ.get("LIMEN_BEAT_DERIVE", derive_default) == "1"
         for sensor_id, sensor in sensors.items():
-            if sensor_id in doors or "heartbeat" not in (sensor.get("source") or []):
+            if sensor_id in doors or not {"heartbeat", "fast-wave"}.intersection(
+                sensor.get("source") or []
+            ):
                 continue
             cadence_spec = sensor.get("cadence")
             if cadence_spec is None:

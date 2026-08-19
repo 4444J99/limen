@@ -82,6 +82,7 @@ SCRIPTS_DIR = ROOT / "scripts"
 BEAT_SOURCE_SCRIPTS = {
     "metabolize": "scripts/metabolize.sh",
     "heartbeat": "scripts/heartbeat-loop.sh",
+    "fast-wave": "scripts/heartbeat-loop.sh",
 }
 
 SCRIPT_PATH_RE = re.compile(r"scripts/[\w./-]+\.(?:py|sh)")

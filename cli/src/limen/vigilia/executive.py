@@ -1,29 +1,34 @@
 """The autonomic executive — the ONE hand.
 
-Convenes the three autonomic organs each beat, records their state to the seat's
-live status file (``logs/vigilia/status.json``), and returns a one-line summary.
-VITALS' load-shedding decision rides a separate fast path (the vitals-gate, run
-early in the beat before dispatch); here it is recorded read-only alongside
-continuity and integrity so one file shows the whole autonomic picture.
+VITALS sampling has a deliberately smaller clock than the full autonomic beat.
+``sampled_at`` records the early, lightweight host observation; ``completed_at``
+records when continuity and integrity finish. A slow downstream organ can therefore
+delay full completion without rewriting the truth about when the host was sampled.
 
 Every organ call is wrapped: one organ faulting never stops the others or the beat.
 """
 
 from __future__ import annotations
 
+import fcntl
 import json
 import os
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import continuity, integrity, params, vitals
 
 
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def _status_dir() -> Path:
     root = params._repo_root() or Path(os.environ.get("LIMEN_ROOT", ".")).expanduser()
-    d = root / "logs" / "vigilia"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
+    directory = root / "logs" / "vigilia"
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory
 
 
 def _safe(fn, organ: str) -> dict:
@@ -33,27 +38,169 @@ def _safe(fn, organ: str) -> dict:
         return {"organ": organ, "status": "error", "error": str(exc)[:200]}
 
 
-def run_beat() -> dict:
-    status = {
-        "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
-        "ts": datetime.now(timezone.utc).isoformat(),
-        # vitals recorded read-only here (shed=False); the gate path does the shedding.
-        "vitals": _safe(lambda: vitals.beat_gate(shed=False), "vitals"),
-        "continuity": _safe(continuity.beat, "continuity"),
-        "integrity": _safe(integrity.check, "integrity"),
-    }
+def _load_status(path: Path) -> dict:
     try:
-        (_status_dir() / "status.json").write_text(json.dumps(status, indent=2))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        pass
-    return status
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _sample_time(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed
+
+
+def _update_status(mutator: Callable[[dict], dict]) -> dict:
+    """Serialize the fast sampler and full beat, then replace the seat atomically."""
+    try:
+        directory = _status_dir()
+        path = directory / "status.json"
+        lock_path = directory / ".status.lock"
+        with lock_path.open("a+", encoding="utf-8") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            status = mutator(_load_status(path))
+            status.pop("ts", None)  # retired: one timestamp cannot represent two cadences
+            tmp = directory / f".status.{os.getpid()}.tmp"
+            tmp.write_text(json.dumps(status, indent=2), encoding="utf-8")
+            tmp.replace(path)
+            return status
+    except Exception as exc:
+        # The executive remains fail-open, but a sampler must not claim a timestamp that
+        # never reached the watchdog-visible seat. The private marker is added only to
+        # this in-memory fallback; successful receipts never persist diagnostic metadata.
+        try:
+            fallback = mutator({})
+        except Exception as fallback_exc:
+            return {
+                "status": "error",
+                "error": str(fallback_exc)[:200],
+                "_persistence_error": str(exc)[:200],
+            }
+        fallback["_persistence_error"] = str(exc)[:200]
+        return fallback
+
+
+def sample_vitals() -> dict:
+    """Refresh only the host sample while preserving the last full-beat receipt."""
+    sampled_time = _now()
+    sampled_at = sampled_time.isoformat()
+    observed = _safe(lambda: vitals.beat_gate(shed=False), "vitals")
+
+    def merge(current: dict) -> dict:
+        status = dict(current)
+        status["institution"] = params.get("INSTITVTIO_NOMEN", "VIGILIA")
+        status.setdefault("completed_at", None)
+        if observed.get("status") == "error":
+            current_time = _sample_time(status.get("sampled_at"))
+            if current_time is not None and current_time > sampled_time:
+                return status
+            status["sample_error"] = observed
+            status["sample_error_at"] = sampled_at
+            status.setdefault("vitals", observed)
+            return status
+        current_time = _sample_time(status.get("sampled_at"))
+        if current_time is not None and current_time > sampled_time:
+            return status
+        status.update(
+            {
+                "sampled_at": sampled_at,
+                "vitals": observed,
+            }
+        )
+        status.pop("sample_error", None)
+        status.pop("sample_error_at", None)
+        return status
+
+    status = _update_status(merge)
+    # Keep this bit out of status.json: it is a delivery receipt for the caller, not
+    # another freshness clock. A failed seat write is therefore visible to the sampler.
+    result = dict(status)
+    result["sample_persisted"] = "_persistence_error" not in status
+    return result
+
+
+def run_beat() -> dict:
+    # Sampling is the first operation. A concurrent fast-wave sample may refresh it
+    # again while the slower organs run; the merge below preserves whichever is newest.
+    early = sample_vitals()
+    continuity_status = _safe(continuity.beat, "continuity")
+    integrity_status = _safe(integrity.check, "integrity")
+    completed_at = _now().isoformat()
+
+    def merge(current: dict) -> dict:
+        current_sampled_at = current.get("sampled_at")
+        early_sampled_at = early.get("sampled_at")
+        current_time = _sample_time(current_sampled_at)
+        early_time = _sample_time(early_sampled_at)
+        early_is_new_success = (
+            early_time is not None
+            and early.get("sample_error") is None
+            and (current_time is None or early_time > current_time)
+        )
+        sampled_at = early_sampled_at if early_is_new_success else (current_sampled_at or early_sampled_at)
+        current_error = current.get("sample_error")
+        current_error_at = _sample_time(current.get("sample_error_at"))
+        if current_error is not None and current_error_at is None:
+            current_error_at = current_time
+        early_error = early.get("sample_error")
+        early_error_at = _sample_time(early.get("sample_error_at"))
+        if early_error is not None and early_error_at is None:
+            early_error_at = early_time
+        sample_error = current_error
+        sample_error_at = current_error_at
+        if early_error is not None and (
+            sample_error is None
+            or (early_error_at is not None and (sample_error_at is None or early_error_at > sample_error_at))
+        ):
+            sample_error = early_error
+            sample_error_at = early_error_at
+        successful_samples = []
+        if current_error is None and current_time is not None:
+            successful_samples.append(current_time)
+        if early.get("sample_error") is None and early_time is not None:
+            successful_samples.append(early_time)
+        latest_success = max(successful_samples) if successful_samples else None
+        if (
+            sample_error is not None
+            and sample_error_at is not None
+            and latest_success is not None
+            and sample_error_at < latest_success
+        ):
+            sample_error = None
+            sample_error_at = None
+        result = {
+            "institution": params.get("INSTITVTIO_NOMEN", "VIGILIA"),
+            "sampled_at": sampled_at,
+            "completed_at": completed_at,
+            "vitals": (
+                early.get("vitals", {}) if early_is_new_success else current.get("vitals") or early.get("vitals", {})
+            ),
+            "continuity": continuity_status,
+            "integrity": integrity_status,
+        }
+        if sample_error is not None:
+            result["sample_error"] = sample_error
+            if sample_error_at is not None:
+                result["sample_error_at"] = sample_error_at.isoformat()
+        return result
+
+    return _update_status(merge)
 
 
 def summary_line(status: dict) -> str:
     v = status.get("vitals", {})
     c = status.get("continuity", {})
     i = status.get("integrity", {})
-    return (
-        f"vigilia: vitals=L{v.get('level', '?')}/{v.get('action', '?')} "
-        f"continuity={c.get('status', '?')} integrity={i.get('status', '?')}"
-    )
+    sample_error = status.get("sample_error")
+    if isinstance(sample_error, dict):
+        error_detail = str(sample_error.get("error") or "sample failed")[:120]
+        vitals_summary = f"ERROR/{error_detail}"
+    else:
+        vitals_summary = f"L{v.get('level', '?')}/{v.get('action', '?')}"
+    return f"vigilia: vitals={vitals_summary} continuity={c.get('status', '?')} integrity={i.get('status', '?')}"

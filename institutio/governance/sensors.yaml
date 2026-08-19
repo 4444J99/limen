@@ -1402,9 +1402,9 @@ sensors:
     source: [metabolize]
     owner: vitals
     steps:
-      - command: "python3 scripts/host-pressure-stale.py"
+      - command: "python3 scripts/host-pressure-stale.py --read-only"
         severity: advisory
-        escalation: "VITALS gauge silent past VITALS_STALE_BEATS worst-case beats — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia beat` and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+        escalation: "VITALS gauge missed VITALS_STALE_BEATS declared sample cadences — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia sample`, logs/vigilia/fast-wave.log, and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
 
   runtime-lag:
     section: "0o3"
@@ -2328,15 +2328,15 @@ sensors:
     title: "diurnal — morning dashboard / midday check-in / evening close; the evening scores the morning's claims and cuts the sections that never earned their place"
     gate: LIMEN_DIURNAL
     default: "1"
-    source: [metabolize, heartbeat]
+    source: [fast-wave]
     owner: diurnal
-    # Cadence is beat-modulo ONLY. True time-of-day gating is wall-clock inside the script
-    # (logs/diurnal/state.json, one emission per phase per calendar day) — the
-    # scripts/insight-cadence.py precedent. Visiting often is cheap: a phase that is not yet
-    # due exits before doing any work.
+    # The heartbeat's independent fast wave visits every declared sample cadence. True
+    # time-of-day gating remains wall-clock inside the script (logs/diurnal/state.json,
+    # one emission per phase per local calendar day), so visits before a phase is due are
+    # cheap no-ops and a multi-hour slow main rung cannot delay the phase notification.
     cadence:
       env: LIMEN_BEAT_DIURNAL
-      default: 2
+      default: 1
     timeout:
       env: LIMEN_DIURNAL_TIMEOUT
       default: 240

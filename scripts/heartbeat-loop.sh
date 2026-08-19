@@ -234,6 +234,21 @@ LANES="${LIMEN_LANES:-auto}"   # planner input only; campaign execution derives 
 
 # base tempo (adaptive) + voice subdivisions (configurable)
 MIN="${LIMEN_LOOP_MIN:-120}"; MAX="${LIMEN_LOOP_MAX:-1800}"; beat="$MIN"
+FAST_WAVE_SECONDS="${LIMEN_VITALS_SAMPLE_SECONDS:-300}"
+case "$FAST_WAVE_SECONDS" in ''|*[!0-9]*) FAST_WAVE_SECONDS=300 ;; esac
+[ "$FAST_WAVE_SECONDS" -gt 0 ] || FAST_WAVE_SECONDS=300
+VITALS_SAMPLE_GRACE_SECONDS="${LIMEN_VITALS_SAMPLE_GRACE_SECONDS:-5}"
+case "$VITALS_SAMPLE_GRACE_SECONDS" in ''|*[!0-9]*) VITALS_SAMPLE_GRACE_SECONDS=5 ;; esac
+[ "$VITALS_SAMPLE_GRACE_SECONDS" -gt 0 ] || VITALS_SAMPLE_GRACE_SECONDS=5
+VITALS_SAMPLE_TIMEOUT_SECONDS="${LIMEN_VITALS_SAMPLE_TIMEOUT:-30}"
+case "$VITALS_SAMPLE_TIMEOUT_SECONDS" in ''|*[!0-9]*) VITALS_SAMPLE_TIMEOUT_SECONDS=30 ;; esac
+[ "$VITALS_SAMPLE_TIMEOUT_SECONDS" -gt 0 ] || VITALS_SAMPLE_TIMEOUT_SECONDS=30
+FAST_WAVE_BEAT=0
+FAST_WAVE_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave.log"
+FAST_WAVE_AUX_LOG="$LIMEN_ROOT/logs/vigilia/fast-wave-aux.log"
+FAST_WAVE_PID_FILE="$LIMEN_ROOT/logs/vigilia/fast-wave.pid"
+HOST_PRESSURE_WATCHDOG_LOG="$LIMEN_ROOT/logs/vigilia/host-pressure-watchdog.log"
+HOST_PRESSURE_WATCHDOG_PID_FILE="$LIMEN_ROOT/logs/vigilia/host-pressure-watchdog.pid"
 PAUSED_BEAT="${LIMEN_HEARTBEAT_PAUSED_SECONDS:-300}"
 case "$PAUSED_BEAT" in
   ''|*[!0-9]*) PAUSED_BEAT=300 ;;
@@ -307,6 +322,276 @@ metabolize_pass_due() {
   [ -n "$last" ] || return 0
   [ $(( now - last )) -ge "${LIMEN_METABOLIZE_SENSORS_SECS:-3600}" ]
 }
+# FAST WAVE — a dedicated sample clock plus a single-flight auxiliary tier. The sample
+# never waits for diurnal or organ-health, so their bounded work cannot consume its next slot.
+fast_wave_bounded() {
+  _fw_timeout="$1"; shift
+  python3 - "$_fw_timeout" "$@" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+
+process = None
+
+
+def terminate_group(signum, _frame):
+    if process is not None and process.poll() is None:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=5)
+        except (OSError, subprocess.TimeoutExpired):
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+            except OSError:
+                pass
+    raise SystemExit(128 + signum)
+
+
+signal.signal(signal.SIGHUP, terminate_group)
+signal.signal(signal.SIGINT, terminate_group)
+signal.signal(signal.SIGTERM, terminate_group)
+
+try:
+    ceiling = float(sys.argv[1])
+    process = subprocess.Popen(sys.argv[2:], start_new_session=True)
+    try:
+        code = process.wait(timeout=ceiling)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+        code = 124
+except (OSError, TypeError, ValueError) as exc:
+    print(f"fast-wave timeout wrapper: {exc}", file=sys.stderr)
+    code = 125
+raise SystemExit(code)
+PY
+}
+
+_fast_wave_kill_tree() {
+  local _fw_tree_root="$1"
+  local _fw_descendant
+  for _fw_descendant in $(pgrep -P "$_fw_tree_root" 2>/dev/null || true); do
+    _fast_wave_kill_tree "$_fw_descendant"
+    kill "$_fw_descendant" 2>/dev/null || true
+  done
+}
+
+# Use one interruptible timer per cadence. Bash delivers the resident loop's TERM trap
+# while sleep is active, so there is no per-second process churn across the two permanent loops.
+_interruptible_sleep() {
+  _sleep_remaining="$1"
+  case "$_sleep_remaining" in
+    ''|*[!0-9]*) return 2 ;;
+  esac
+  [ "$_sleep_remaining" -gt 0 ] || return 0
+  # A background timer makes wait interruptible by the resident loop's TERM/HUP traps.
+  sleep "$_sleep_remaining" &
+  _sleep_pid=$!
+  wait "$_sleep_pid"
+  _sleep_status=$?
+  if kill -0 "$_sleep_pid" 2>/dev/null; then
+    kill "$_sleep_pid" 2>/dev/null || true
+    wait "$_sleep_pid" 2>/dev/null || true
+  fi
+  return "$_sleep_status"
+}
+
+_fast_wave_due_beat() {
+  _fw_cadence="$1"
+  case "$_fw_cadence" in
+    ''|*[!0-9]*) _fw_cadence=1 ;;
+  esac
+  [ "$_fw_cadence" -gt 0 ] || _fw_cadence=1
+  _fw_candidate_beat="$2"
+  if [ "$_fw_cadence" -le 1 ] || [ $((_fw_candidate_beat % _fw_cadence)) -eq 0 ]; then
+    return 0
+  fi
+  return 1
+}
+
+fast_wave_sample_once() {
+  # Initialize before any redirection: an unwritable temp log must not kill the resident loop under set -u.
+  _fw_sample_rc=125
+  _fw_tmp="$FAST_WAVE_LOG.$$.$FAST_WAVE_BEAT.tmp"
+  if mkdir -p "$(dirname "$FAST_WAVE_LOG")" 2>/dev/null && : >"$_fw_tmp" 2>/dev/null; then
+    {
+      echo "fast-wave: sample start beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ)"
+      if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
+        fast_wave_bounded "$VITALS_SAMPLE_TIMEOUT_SECONDS" python3 -m limen.vigilia sample
+        _fw_sample_rc=$?
+      else
+        echo "fast-wave: VIGILIA disabled — sample skipped"
+        _fw_sample_rc=0
+      fi
+      echo "fast-wave: sample finish beat=$FAST_WAVE_BEAT $(date -u +%FT%TZ) rc=$_fw_sample_rc"
+    } >"$_fw_tmp" 2>&1 || true
+    mv "$_fw_tmp" "$FAST_WAVE_LOG" 2>/dev/null || true
+  else
+    # Preserve the sample even when the log directory or temp file is briefly unavailable.
+    echo "fast-wave: sample log unavailable — running without capture" >&2 || true
+    if [ "${LIMEN_VIGILIA:-1}" = "1" ]; then
+      fast_wave_bounded "$VITALS_SAMPLE_TIMEOUT_SECONDS" python3 -m limen.vigilia sample
+      _fw_sample_rc=$?
+    else
+      _fw_sample_rc=0
+    fi
+  fi
+  return "$_fw_sample_rc"
+}
+
+fast_wave_aux_once() {
+  _fw_aux_kind="${1:-both}"
+  if [ "$_fw_aux_kind" = "diurnal" ] || [ "$_fw_aux_kind" = "health" ] || [ "$_fw_aux_kind" = "both" ]; then
+    _fw_aux_beat="${2:-$FAST_WAVE_BEAT}"
+  else
+    # Legacy callers passed only the beat; normalize that form to the compatibility wrapper.
+    _fw_aux_beat="$_fw_aux_kind"
+    _fw_aux_kind="both"
+  fi
+
+  # The one-argument form remains a compatibility wrapper; the loop below launches each
+  # bounded sensor independently so a slow organ-health run cannot suppress diurnal work.
+  if [ "$_fw_aux_kind" = "both" ]; then
+    fast_wave_aux_once diurnal "$_fw_aux_beat" &
+    _fw_diurnal_pid=$!
+    fast_wave_aux_once health "$_fw_aux_beat" &
+    _fw_health_pid=$!
+    _fw_diurnal_rc=0
+    wait "$_fw_diurnal_pid" || _fw_diurnal_rc=$?
+    _fw_health_rc=0
+    wait "$_fw_health_pid" || _fw_health_rc=$?
+    [ "$_fw_diurnal_rc" -eq 0 ] || return "$_fw_diurnal_rc"
+    return "$_fw_health_rc"
+  fi
+
+  _fw_aux_tmp="$FAST_WAVE_AUX_LOG.$_fw_aux_kind.$$.$_fw_aux_beat.tmp"
+  _fw_aux_output="/dev/null"
+  if mkdir -p "$(dirname "$FAST_WAVE_AUX_LOG")" 2>/dev/null && : >"$_fw_aux_tmp" 2>/dev/null; then
+    _fw_aux_output="$_fw_aux_tmp"
+  fi
+  _fw_aux_rc=0
+
+  if [ "$_fw_aux_kind" = "diurnal" ]; then
+    if [ "${LIMEN_BEAT_DERIVE:-1}" = "1" ]; then
+      fast_wave_bounded "${LIMEN_FAST_WAVE_SENSOR_TIMEOUT:-260}" python3 "$LIMEN_ROOT/scripts/beat-sensors.py" --run --source fast-wave --scheduled-only --beat "$_fw_aux_beat" --loop-max "$FAST_WAVE_SECONDS" --voice-dir "$VOICED" >"$_fw_aux_output" 2>&1
+      _fw_aux_rc=$?
+    else
+      echo "fast-wave: derived sensors disabled" >"$_fw_aux_output" 2>&1 || true
+    fi
+  elif [ "$_fw_aux_kind" = "health" ]; then
+    fast_wave_bounded "${LIMEN_ORGAN_HEALTH_TIMEOUT:-120}" python3 "$LIMEN_ROOT/scripts/organ-health.py" >"$_fw_aux_output" 2>&1
+    _fw_aux_rc=$?
+  else
+    echo "fast-wave: unknown auxiliary sensor kind=$_fw_aux_kind" >&2 || true
+    return 2
+  fi
+
+  if [ "$_fw_aux_output" = "$_fw_aux_tmp" ]; then
+    {
+      echo "fast-wave: aux start kind=$_fw_aux_kind beat=$_fw_aux_beat $(date -u +%FT%TZ)"
+      cat "$_fw_aux_tmp" 2>/dev/null || true
+      echo "fast-wave: aux finish kind=$_fw_aux_kind beat=$_fw_aux_beat rc=$_fw_aux_rc"
+    } >>"$FAST_WAVE_AUX_LOG" 2>/dev/null || true
+    rm -f "$_fw_aux_tmp" 2>/dev/null || true
+  else
+    echo "fast-wave: aux log unavailable kind=$_fw_aux_kind — sensor completed without capture" >&2 || true
+  fi
+  return "$_fw_aux_rc"
+}
+
+stale_watchdog_loop() {
+  _watchdog_parent_pid="$1"
+  trap 'exit 0' HUP INT TERM
+  while kill -0 "$_watchdog_parent_pid" 2>/dev/null; do
+    # Let the fast-wave producer complete its boundary write before reading the seat.
+    _interruptible_sleep "$((FAST_WAVE_SECONDS + VITALS_SAMPLE_TIMEOUT_SECONDS + VITALS_SAMPLE_GRACE_SECONDS))" || exit 0
+    kill -0 "$_watchdog_parent_pid" 2>/dev/null || exit 0
+    if [ "${LIMEN_HOST_PRESSURE_STALE:-1}" = "1" ]; then
+      _watchdog_output="/dev/null"
+      if mkdir -p "$(dirname "$HOST_PRESSURE_WATCHDOG_LOG")" 2>/dev/null \
+        && : >>"$HOST_PRESSURE_WATCHDOG_LOG" 2>/dev/null; then
+        _watchdog_output="$HOST_PRESSURE_WATCHDOG_LOG"
+      fi
+      if [ "$_watchdog_output" = "$HOST_PRESSURE_WATCHDOG_LOG" ]; then
+        fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+          python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" \
+          >>"$_watchdog_output" 2>&1 || true
+      else
+        echo "fast-wave: watchdog log unavailable — running stale probe without capture" >&2 || true
+        fast_wave_bounded "${LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:-30}" \
+          python3 "$LIMEN_ROOT/scripts/host-pressure-stale.py" || true
+      fi
+    else
+      echo "host-pressure watchdog disabled" >>"$HOST_PRESSURE_WATCHDOG_LOG"
+    fi
+  done
+}
+
+
+fast_wave_loop() {
+  _fw_parent_pid="$1"
+  _fw_diurnal_pid=""
+  _fw_health_pid=""
+  _fw_diurnal_pending=""
+  _fw_health_pending=""
+  _fast_wave_cleanup() {
+    for _fw_child_pid in "$_fw_diurnal_pid" "$_fw_health_pid"; do
+      if [ -n "$_fw_child_pid" ] && kill -0 "$_fw_child_pid" 2>/dev/null; then
+        _fast_wave_kill_tree "$_fw_child_pid"
+        kill "$_fw_child_pid" 2>/dev/null || true
+        wait "$_fw_child_pid" 2>/dev/null || true
+      fi
+    done
+  }
+  trap _fast_wave_cleanup EXIT
+  trap 'exit 0' HUP INT TERM
+  while kill -0 "$_fw_parent_pid" 2>/dev/null; do
+    _fw_started="$(date +%s)"
+    FAST_WAVE_BEAT=$(( FAST_WAVE_BEAT + 1 ))
+    fast_wave_sample_once || true
+
+    # Diurnal and organ-health are independent single-flight workers. If a bounded run is still
+    # active, retain the latest scheduled beat and launch it as soon as that worker is free.
+    if [ -n "$_fw_diurnal_pid" ] && kill -0 "$_fw_diurnal_pid" 2>/dev/null; then
+      # Prefer a later beat that is due by cadence; retain the first non-due beat
+      # only as an age-based fallback when no due visit has appeared.
+      if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then
+        _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      else
+        [ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"
+      fi
+    else
+      [ -z "$_fw_diurnal_pid" ] || wait "$_fw_diurnal_pid" 2>/dev/null || true
+      if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then
+        _fw_diurnal_beat="$FAST_WAVE_BEAT"
+      else
+        _fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"
+      fi
+      _fw_diurnal_pending=""
+      fast_wave_aux_once diurnal "$_fw_diurnal_beat" &
+      _fw_diurnal_pid=$!
+    fi
+
+    if [ -n "$_fw_health_pid" ] && kill -0 "$_fw_health_pid" 2>/dev/null; then
+      # Keep the earliest pending visit for the same single-flight invariant as diurnal.
+      [ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"
+    else
+      [ -z "$_fw_health_pid" ] || wait "$_fw_health_pid" 2>/dev/null || true
+      _fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"
+      _fw_health_pending=""
+      fast_wave_aux_once health "$_fw_health_beat" &
+      _fw_health_pid=$!
+    fi
+
+    _fw_elapsed=$(( $(date +%s) - _fw_started ))
+    _fw_wait=$(( FAST_WAVE_SECONDS - _fw_elapsed ))
+    [ "$_fw_wait" -gt 0 ] || _fw_wait=1
+    _interruptible_sleep "$_fw_wait" || exit 0
+  done
+}
+
 # NETWORK REACH — one definition, used by the connectivity gate AND by paused-beat sensing.
 # True when the host the cycle depends on answers; true (fail-open) when the preflight is disabled.
 net_up() {
@@ -376,6 +661,13 @@ print(",".join(select_lanes(sys.argv[1], board, down_lanes=_down_lanes())))
 PY
 }
 cleanup() {
+  for _background_pid in "${FAST_WAVE_PID:-}" "${HOST_PRESSURE_WATCHDOG_PID:-}"; do
+    if [ -n "$_background_pid" ] && kill -0 "$_background_pid" 2>/dev/null; then
+      kill "$_background_pid" 2>/dev/null || true
+      wait "$_background_pid" 2>/dev/null || true
+    fi
+  done
+  rm -f "$FAST_WAVE_PID_FILE" "$HOST_PRESSURE_WATCHDOG_PID_FILE" 2>/dev/null || true
   # beat_run's capture buffer. Named by pid, reused for every rung, and removed after each — so it
   # only survives if the daemon dies mid-rung. launchd's SIGTERM (which the self-load rung relies on
   # to restart the loop) runs this trap, so the ordinary case is covered here; a SIGKILL is what the
@@ -404,6 +696,13 @@ rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
 rm -f "$LIMEN_ROOT"/logs/.beat-rung.*.out 2>/dev/null || true
 # ensure the web dashboard is served from the start
 bash "$LIMEN_ROOT/scripts/refresh-web.sh" >>"$LIMEN_ROOT/logs/refresh-web.log" 2>&1 || true  # NO pipe: refresh-web backgrounds the http.server, which can inherit a pipe's write-end and block `tail` on EOF forever → wedged the whole daemon before the first beat (2026-06-23). Redirect to a log instead.
+mkdir -p "$(dirname "$FAST_WAVE_PID_FILE")" 2>/dev/null || true
+fast_wave_loop "$$" &
+FAST_WAVE_PID=$!
+printf '%s\n' "$FAST_WAVE_PID" > "$FAST_WAVE_PID_FILE" 2>/dev/null || true
+stale_watchdog_loop "$$" &
+HOST_PRESSURE_WATCHDOG_PID=$!
+printf '%s\n' "$HOST_PRESSURE_WATCHDOG_PID" > "$HOST_PRESSURE_WATCHDOG_PID_FILE" 2>/dev/null || true
 while true; do
   # OWNERSHIP BACKSTOP — if any acquisition race let a second loop through, the one whose
   # pid is NOT in the lockfile exits here. Converges to exactly one daemon within a beat.
@@ -867,7 +1166,6 @@ while true; do
   play "$C_REPORT"           && stamp report
   play "$C_QUICKEN"          && stamp quicken
   play "$C_CORPUS_FEED"      && stamp corpus_feed
-  beat_run organ-health python3 "$LIMEN_ROOT/scripts/organ-health.py" || true   # PROPRIOCEPTION — EVERY beat: the health face must never lag the organs it watches. route stamps on C_BALANCE=2, feed on C_FEED=3, but C_WEB=4, so on the old web cadence the face showed stale "unknown" for rungs that were already green (and a restart-to-beat-2 froze it until beat 4). Cheapest renderer: read-only, no network, can't time out — belongs with the tick.
   [ "${LIMEN_VIGILIA:-1}" = "1" ] && { beat_run vigilia python3 -m limen.vigilia beat || true; stamp vigilia; }   # VIGILIA autonomic executive — record vitals/continuity/integrity to the seat (read-only, fail-open)
   play "$C_WEB"     && beat_run usage-telemetry python3 "$LIMEN_ROOT/scripts/usage-telemetry.py" || true   # real per-vendor usage
   play "$C_WEB"     && beat_run codex-token-accounting python3 "$LIMEN_ROOT/scripts/codex-token-accounting.py" --since-hours "${LIMEN_CODEX_TOKEN_REPORT_HOURS:-6}" --limit-sessions "${LIMEN_CODEX_TOKEN_REPORT_LIMIT:-25}" --output "$LIMEN_ROOT/logs/codex-token-report.json" || true   # per-session Codex spend report

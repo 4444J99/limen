@@ -341,18 +341,54 @@ parameters:
     self_update: none
     owner: vitals
     note: "A combined-axis 'warn' that persists this many consecutive gate beats escalates to SHED — 2026-07-16 sat at warn for hours while swap filled; sustained warn IS critical. Streak persists in logs/vigilia/vitals-streak.json, counts only on the gate path (beat_gate(shed=True)) at most once per 60 s, resets on ok. 0 disables the escalation."
+  VITALS_SAMPLE_SECONDS:
+    default: 300
+    env: LIMEN_VITALS_SAMPLE_SECONDS
+    self_update: none
+    owner: vitals
+    note: "Declared cadence of the heartbeat's independent fast wave. It refreshes VIGILIA sampled_at, phase-sensitive diurnal checks, and organ-health even while the main beat is inside a slow bounded rung."
+  LIMEN_VITALS_SAMPLE_TIMEOUT:
+    default: 30
+    env: LIMEN_VITALS_SAMPLE_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Seconds allowed for the lightweight VIGILIA host sample inside one fast wave. This stays far below the declared sample cadence so a wedged probe cannot consume the next sample slot."
+  VITALS_SAMPLE_GRACE_SECONDS:
+    default: 5
+    env: LIMEN_VITALS_SAMPLE_GRACE_SECONDS
+    self_update: none
+    owner: vitals
+    note: "Bounded sampler/write grace at a VITALS sample cadence boundary. The stale watcher and fast-wave scheduler include LIMEN_VITALS_SAMPLE_TIMEOUT plus this allowance, so a healthy slow sample cannot be reported stale while its atomic seat replacement is still pending."
+  LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT:
+    default: 30
+    env: LIMEN_HOST_PRESSURE_WATCHDOG_TIMEOUT
+    self_update: none
+    owner: vitals
+    note: "Seconds allowed for one independent stale-sample watchdog evaluation. The watchdog is a sibling of the sampler, so this bound cannot delay the declared VITALS sample cadence."
+  LIMEN_FAST_WAVE_SENSOR_TIMEOUT:
+    default: 260
+    env: LIMEN_FAST_WAVE_SENSOR_TIMEOUT
+    self_update: none
+    owner: diurnal
+    note: "Seconds allowed for phase-sensitive scheduled sensors in the independent fast-wave auxiliary tier. The tier is single-flight and concurrent with organ-health, so this bound can never postpone the dedicated VITALS sample clock."
+  LIMEN_ORGAN_HEALTH_TIMEOUT:
+    default: 120
+    env: LIMEN_ORGAN_HEALTH_TIMEOUT
+    self_update: none
+    owner: governance
+    note: "Seconds allowed for the fresh organ-health receipt in one fast wave. A timeout is recorded in the atomic fast-wave log and never delays the next declared sample cadence."
   VITALS_STALE_BEATS:
     default: 3
     env: LIMEN_VITALS_STALE_BEATS
     self_update: none
     owner: vitals
-    note: "host-pressure-stale sensor threshold: the vitals record in logs/vigilia/status.json is stale after this many worst-case beats (x LIMEN_LOOP_MAX seconds, the heartbeat's adaptive ceiling). A silent gauge means the throttle/shed valve is flying blind — that is the alarm, not the pressure itself."
+    note: "host-pressure-stale threshold: sampled_at in logs/vigilia/status.json is stale after this many declared VITALS_SAMPLE_SECONDS cadences, plus VITALS_SAMPLE_GRACE_SECONDS for the producer write. completed_at measures the slower full autonomic beat and never substitutes for a fresh host sample."
   LIMEN_HOST_PRESSURE_STALE:
     default: "1"
     env: LIMEN_HOST_PRESSURE_STALE
     self_update: none
     owner: vitals
-    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when the VITALS record hasn't been written within VITALS_STALE_BEATS worst-case beats while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when sampled_at misses VITALS_STALE_BEATS declared sample cadences while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   LIMEN_RUNTIME_LAG:
     default: "1"
     env: LIMEN_RUNTIME_LAG
@@ -6055,11 +6091,11 @@ parameters:
     owner: diurnal
     note: "Master gate for the DIVRNAL sensor (morning/midday/evening emission). 0 = the day gets no briefing. The organ is read-mostly: it renders declared sections from institutio/governance/diurnal.yaml, writes docs/diurnal/<date>.md, and (evening only) may cut one of its OWN noop sections. It never sends, spends, or deletes."
   LIMEN_BEAT_DIURNAL:
-    default: 2
+    default: 1
     env: LIMEN_BEAT_DIURNAL
     self_update: none
     owner: diurnal
-    note: "Cadence (every N beats) at which the DIVRNAL sensor is visited. The registry cadence is beat-modulo only; the actual time-of-day gating is wall-clock inside scripts/diurnal.py (logs/diurnal/state.json, one emission per phase per calendar day), following the scripts/insight-cadence.py precedent. A tight cadence is cheap because a not-yet-due phase exits immediately."
+    note: "Cadence (every N fast-wave samples) at which the DIVRNAL sensor is visited. The registry cadence is sample-modulo only; the actual time-of-day gating is wall-clock inside scripts/diurnal.py (logs/diurnal/state.json, one emission per phase per calendar day), following the scripts/insight-cadence.py precedent. Every sample is cheap because a not-yet-due phase exits immediately, and it prevents a slow main rung from delaying a due phase."
   LIMEN_DIURNAL_TIMEOUT:
     default: 240
     env: LIMEN_DIURNAL_TIMEOUT

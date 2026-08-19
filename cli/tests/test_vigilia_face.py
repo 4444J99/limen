@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from limen.vigilia import face, params
 
 
@@ -51,3 +53,20 @@ def test_live_overlay_parses_status(tmp_path, monkeypatch):
     overlay = face._live_overlay()
     assert overlay["vitals"] == "L2/shed"
     assert overlay["integrity"] == "ok"
+
+
+def test_live_overlay_surfaces_sample_error(tmp_path, monkeypatch):
+    d = tmp_path / "logs" / "vigilia"
+    d.mkdir(parents=True)
+    (d / "status.json").write_text(
+        json.dumps(
+            {
+                "sampled_at": "2026-08-08T12:00:00+00:00",
+                "vitals": {"level": 1, "action": "ok"},
+                "sample_error": {"status": "error", "error": "sample unavailable"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(params, "_repo_root", lambda: tmp_path)
+    assert face._live_overlay()["vitals"] == "ERROR/sample unavailable"

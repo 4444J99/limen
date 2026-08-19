@@ -6,8 +6,11 @@ so the organs are exercised by logic, not by the host machine's current state.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
+import threading
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -216,6 +219,33 @@ def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
     monkeypatch.setattr(vitals, "_update_warn_streak", lambda action, update: 3)
     g = vitals.beat_gate(shed=True)
     assert g["action"] == "shed" and g["sustained_warn"] is True and g["warn_streak"] == 3
+
+
+def test_organ_health_vigilia_uses_fast_sample_clock(monkeypatch):
+    script = Path(__file__).resolve().parents[2] / "scripts" / "organ-health.py"
+    spec = importlib.util.spec_from_file_location("organ_health_vigilia_test", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    vigilia = next(row for row in module._registry() if row["key"] == "vigilia")
+    assert vigilia["probe_first"] is True
+    assert vigilia["interval_s"] == 300
+
+    monkeypatch.setattr(module, "_loop_text", lambda: "")
+    monkeypatch.setattr(
+        module,
+        "_doors",
+        lambda _text: [dict(vigilia, probe=lambda: 200)],
+    )
+    monkeypatch.setattr(module, "_voice_stamp", lambda _voice: 100)
+    monkeypatch.setattr(module.time, "time", lambda: 250)
+
+    row = module.build()["organs"][0]
+
+    assert row["source"] == "artifact"
+    assert row["last_fired"] == datetime.fromtimestamp(200).isoformat(timespec="seconds")
+    assert row["expected_h"] == 0.1
 
 
 def test_heartbeat_vitals_leaves_provider_admission_to_the_campaign_supervisor():
@@ -483,9 +513,240 @@ def test_executive_run_beat_aggregates_and_writes(tmp_path, monkeypatch):
     monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
 
     status = executive.run_beat()
-    assert set(status) >= {"institution", "vitals", "continuity", "integrity"}
+    assert set(status) >= {"institution", "sampled_at", "completed_at", "vitals", "continuity", "integrity"}
+    assert "ts" not in status
     assert (tmp_path / "status.json").exists()
     assert "vitals=L1/ok" in executive.summary_line(status)
+
+
+def test_slow_full_beat_keeps_the_early_sample_clock(tmp_path, monkeypatch):
+    clock = {"now": datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)}
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(executive, "_now", lambda: clock["now"])
+    monkeypatch.setattr(vitals, "beat_gate", lambda shed=False: {"organ": "vitals", "level": 1, "action": "ok"})
+
+    def slow_continuity():
+        clock["now"] += timedelta(hours=4)
+        return {"organ": "continuity", "status": "ok"}
+
+    monkeypatch.setattr(continuity, "beat", slow_continuity)
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["sampled_at"] == "2026-08-08T12:00:00+00:00"
+    assert status["completed_at"] == "2026-08-08T16:00:00+00:00"
+
+
+def test_full_beat_preserves_early_sample_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("sample unavailable")),
+    )
+    monkeypatch.setattr(continuity, "beat", lambda: {"organ": "continuity", "status": "ok"})
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["sample_error"]["status"] == "error"
+    assert status["vitals"]["status"] == "error"
+
+
+def test_later_successful_sample_supersedes_early_error(tmp_path, monkeypatch):
+    clock = {"now": datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)}
+    probes = iter(
+        [
+            RuntimeError("early sample unavailable"),
+            {"organ": "vitals", "status": "ok", "action": "ok"},
+        ]
+    )
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(executive, "_now", lambda: clock["now"])
+
+    def probe(shed=False):
+        result = next(probes)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    def continuity_with_fast_sample():
+        clock["now"] += timedelta(seconds=1)
+        executive.sample_vitals()
+        return {"organ": "continuity", "status": "ok"}
+
+    monkeypatch.setattr(vitals, "beat_gate", probe)
+    monkeypatch.setattr(continuity, "beat", continuity_with_fast_sample)
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    status = executive.run_beat()
+
+    assert status["vitals"]["status"] == "ok"
+    assert "sample_error" not in status
+
+
+def test_heartbeat_resident_sleep_uses_interruptible_helper():
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+
+    assert "_interruptible_sleep()" in source
+    watchdog = source[
+        source.index("stale_watchdog_loop()") : source.index(
+            "\n\nfast_wave_loop()", source.index("stale_watchdog_loop()")
+        )
+    ]
+    fast_wave = source[source.index("fast_wave_loop()") : source.index("\n\n# ", source.index("fast_wave_loop()"))]
+    assert '\\n  sleep "$FAST_WAVE_SECONDS"' not in watchdog
+    assert '\\n  sleep "$_fw_wait"' not in fast_wave
+
+
+def test_interruptible_sleep_uses_one_timer_without_per_second_churn():
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+    helper = source[source.index("_interruptible_sleep()") : source.index("\n}\n\n_fast_wave_due_beat")]
+    assert 'sleep "$_sleep_remaining"' in helper
+    assert "sleep 1" not in helper
+
+
+def test_heartbeat_fast_wave_is_independent_of_the_slow_main_loop():
+    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+
+    launch = heartbeat.index('fast_wave_loop "$$" &')
+    main_loop = heartbeat.index("while true; do", launch)
+    fast_body = heartbeat[heartbeat.index("fast_wave_bounded()") : launch]
+
+    assert launch < main_loop
+    assert "python3 -m limen.vigilia sample" in fast_body
+    assert "fast_wave_aux_once diurnal" in fast_body
+    assert "fast_wave_aux_once health" in fast_body
+    assert "_fw_diurnal_pending" in fast_body
+    assert "_fw_health_pending" in fast_body
+    assert "beat-sensors.py" in fast_body and "--source fast-wave" in fast_body
+    assert "scripts/organ-health.py" in fast_body
+    assert 'python3 - "$_fw_timeout" "$@"' in fast_body
+    assert "BASHPID" not in fast_body
+    assert '[ "$FAST_WAVE_SECONDS" -ge 60 ]' not in heartbeat
+    assert "${LIMEN_BEAT_DERIVE:-1}" in fast_body
+    assert "signal.signal(signal.SIGTERM, terminate_group)" in fast_body
+    assert "_fast_wave_cleanup" in fast_body
+    assert "_fw_sample_rc=125" in fast_body
+    assert "running without capture" in fast_body
+    assert "_fast_wave_kill_tree" in fast_body
+    assert "pgrep -P" in fast_body
+    watchdog_launch = heartbeat.index('stale_watchdog_loop "$$" &')
+    assert watchdog_launch < main_loop
+    assert "scripts/host-pressure-stale.py" in heartbeat[heartbeat.index("stale_watchdog_loop()") : launch]
+    assert "HOST_PRESSURE_WATCHDOG_PID" in heartbeat[heartbeat.index("cleanup()") : main_loop]
+
+
+def test_fast_wave_prefers_due_pending_visits():
+    heartbeat = (Path(__file__).resolve().parents[2] / "scripts" / "heartbeat-loop.sh").read_text(encoding="utf-8")
+    diurnal_start = heartbeat.index('    if [ -n "$_fw_diurnal_pid" ]')
+    health_start = heartbeat.index('    if [ -n "$_fw_health_pid" ]')
+    diurnal = heartbeat[diurnal_start:health_start]
+
+    assert "_fast_wave_due_beat" in heartbeat
+    assert 'if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then' in diurnal
+    assert '_fw_diurnal_pending="$FAST_WAVE_BEAT"' in diurnal
+    assert '[ -n "$_fw_diurnal_pending" ] || _fw_diurnal_pending="$FAST_WAVE_BEAT"' in diurnal
+    assert '[ -n "$_fw_health_pending" ] || _fw_health_pending="$FAST_WAVE_BEAT"' in heartbeat[health_start:]
+    assert '_fw_diurnal_beat="${_fw_diurnal_pending:-$FAST_WAVE_BEAT}"' in heartbeat
+    assert 'if _fast_wave_due_beat "${LIMEN_BEAT_DIURNAL:-1}" "$FAST_WAVE_BEAT"; then' in heartbeat
+    assert '_fw_diurnal_beat="$FAST_WAVE_BEAT"' in heartbeat
+    assert 'case "$_fw_cadence" in' in heartbeat
+    assert "fast-wave: watchdog log unavailable" in heartbeat
+    assert '_fw_health_beat="${_fw_health_pending:-$FAST_WAVE_BEAT}"' in heartbeat
+
+
+def test_metabolize_host_pressure_probe_is_read_only():
+    sensors = (Path(__file__).resolve().parents[2] / "institutio" / "governance" / "sensors.yaml").read_text(
+        encoding="utf-8"
+    )
+    start = sensors.index("  host-pressure-stale:")
+    end = sensors.index("\n  runtime-lag:", start)
+    assert "source: [metabolize]" in sensors[start:end]
+    assert "host-pressure-stale.py --read-only" in sensors[start:end]
+
+
+def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
+    old_time = datetime(2026, 8, 8, 12, 0, tzinfo=timezone.utc)
+    new_time = old_time + timedelta(seconds=1)
+    old_started = threading.Event()
+    release_old = threading.Event()
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        executive,
+        "_now",
+        lambda: old_time if threading.current_thread().name == "old-sample" else new_time,
+    )
+
+    def gate(shed=False):
+        if threading.current_thread().name == "old-sample":
+            old_started.set()
+            assert release_old.wait(timeout=5)
+            return {"organ": "vitals", "status": "old"}
+        return {"organ": "vitals", "status": "new"}
+
+    monkeypatch.setattr(vitals, "beat_gate", gate)
+    old = threading.Thread(target=executive.sample_vitals, name="old-sample")
+    old.start()
+    assert old_started.wait(timeout=5)
+    executive.sample_vitals()
+    release_old.set()
+    old.join(timeout=5)
+
+    status = json.loads((tmp_path / "status.json").read_text())
+    assert status["sampled_at"] == new_time.isoformat()
+    assert status["vitals"]["status"] == "new"
+
+
+def test_new_early_sample_survives_transient_seat_write_failure(tmp_path, monkeypatch):
+    old = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:00:00+00:00",
+        "completed_at": "2026-08-08T12:01:00+00:00",
+        "vitals": {"organ": "vitals", "status": "old", "action": "ok"},
+    }
+    early = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:02:00+00:00",
+        "vitals": {"organ": "vitals", "status": "new", "action": "ok"},
+    }
+    monkeypatch.setattr(executive, "sample_vitals", lambda: early)
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        executive, "continuity", type("Continuity", (), {"beat": staticmethod(lambda: {"status": "ok"})})
+    )
+    monkeypatch.setattr(
+        executive, "integrity", type("Integrity", (), {"check": staticmethod(lambda: {"status": "ok"})})
+    )
+    monkeypatch.setattr(executive, "_update_status", lambda mutator: mutator(old))
+
+    status = executive.run_beat()
+
+    assert status["sampled_at"] == early["sampled_at"]
+    assert status["vitals"] == early["vitals"]
+
+
+def test_failed_vitals_probe_does_not_refresh_a_valid_sample(tmp_path, monkeypatch):
+    previous = {
+        "institution": "VIGILIA",
+        "sampled_at": "2026-08-08T12:00:00+00:00",
+        "completed_at": "2026-08-08T12:01:00+00:00",
+        "vitals": {"organ": "vitals", "status": "ok", "action": "ok"},
+    }
+    (tmp_path / "status.json").write_text(json.dumps(previous), encoding="utf-8")
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("probe failed")),
+    )
+
+    status = executive.sample_vitals()
+
+    assert status["sampled_at"] == previous["sampled_at"]
+    assert status["vitals"] == previous["vitals"]
+    assert status["sample_error"]["status"] == "error"
 
 
 def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch):
@@ -497,3 +758,57 @@ def test_executive_one_organ_fault_does_not_break_the_beat(tmp_path, monkeypatch
     status = executive.run_beat()
     assert status["vitals"]["status"] == "error"  # captured, not raised
     assert status["continuity"]["status"] == "ok"
+
+
+def test_early_sample_error_survives_transient_seat_write(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    (tmp_path / "status.json").write_text(
+        json.dumps(
+            {
+                "sampled_at": "2026-08-08T11:59:00+00:00",
+                "vitals": {"organ": "vitals", "level": 1, "action": "ok"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: (_ for _ in ()).throw(RuntimeError("sample unavailable")),
+    )
+    monkeypatch.setattr(continuity, "beat", lambda: {"organ": "continuity", "status": "ok"})
+    monkeypatch.setattr(integrity, "check", lambda: {"organ": "integrity", "status": "ok"})
+
+    real_update = executive._update_status
+    calls = {"count": 0}
+
+    def flaky_update(mutator):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return mutator({})
+        return real_update(mutator)
+
+    monkeypatch.setattr(executive, "_update_status", flaky_update)
+    status = executive.run_beat()
+
+    assert status["sample_error"]["error"] == "sample unavailable"
+    assert status["sample_error_at"]
+
+
+def test_sample_reports_unpersisted_receipt(tmp_path, monkeypatch):
+    monkeypatch.setattr(executive, "_status_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        vitals,
+        "beat_gate",
+        lambda shed=False: {"organ": "vitals", "status": "ok", "action": "ok"},
+    )
+    monkeypatch.setattr(
+        executive,
+        "_update_status",
+        lambda mutator: {**mutator({}), "_persistence_error": "disk full"},
+    )
+
+    status = executive.sample_vitals()
+
+    assert status["sample_persisted"] is False
+    assert status["_persistence_error"] == "disk full"

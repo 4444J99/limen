@@ -78,6 +78,7 @@ def test_derived_sources_bare_and_heartbeat_and_none():
     m = _mod()
     assert m.derived_sources("x/beat-sensors.py --run") == {"metabolize"}  # bare --run == metabolize
     assert m.derived_sources("beat-sensors.py --run --source heartbeat") == {"heartbeat"}
+    assert m.derived_sources("beat-sensors.py --run --source fast-wave") == {"fast-wave"}
     assert m.derived_sources("no runner here at all") == set()
 
 

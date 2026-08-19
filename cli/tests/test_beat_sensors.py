@@ -113,7 +113,9 @@ def test_reload_env_loads_written_file(tmp_path):
     ordering, now declared data). conftest autouse restores os.environ after the test."""
     m = _mod()
     envf = tmp_path / ".limen.env"
-    envf.write_text('export FOO_RELOAD_KEY="bar123"\n# a comment\nBAZ_RELOAD=qux\n', encoding="utf-8")
+    envf.write_text(
+        'export FOO_RELOAD_KEY="bar123" # inline note\n# a comment\nBAZ_RELOAD=qux # another note\n', encoding="utf-8"
+    )
     os.environ.pop("FOO_RELOAD_KEY", None)
     os.environ.pop("BAZ_RELOAD", None)
     m._load_env_file(envf)
@@ -427,6 +429,16 @@ sensors:
       - command: "python3 scripts/example.py"
         severity: silent
         escalation: skipped
+  fast-wave-sensor:
+    section: heartbeat
+    title: fast-wave scheduled sensor
+    gate: null
+    source: [fast-wave]
+    cadence: {env: TEST_CANARY_FAST_CADENCE, default: 1}
+    steps:
+      - command: "python3 scripts/example.py"
+        severity: silent
+        escalation: skipped
   parked-organ:
     section: heartbeat
     title: metabolize-only scheduled organ (lever-parked)
@@ -472,10 +484,54 @@ def test_canary_never_ran_live_lane_exits_1_and_names_the_sensor(tmp_path, capsy
 def test_canary_fresh_stamps_are_green(tmp_path, capsys):
     m = _mod()
     registry, voice_dir = _canary_setup(tmp_path)
-    for sid in ("live-lane-sensor", "parked-organ"):
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
         (voice_dir / sid).write_text("now\n", encoding="utf-8")
     assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
     assert "sensor-canary: OK" in capsys.readouterr().out
+
+
+def test_canary_never_ran_fast_wave_exits_1(tmp_path, capsys):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    (voice_dir / "live-lane-sensor").write_text("now\n", encoding="utf-8")
+
+    assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 1
+    assert "NEVER-RAN fast-wave-sensor" in capsys.readouterr().out
+
+
+def test_canary_uses_fast_wave_period_for_fast_wave_sources(tmp_path, capsys):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
+        (voice_dir / sid).write_text("stamp\n", encoding="utf-8")
+    os.utime(voice_dir / "fast-wave-sensor", (time.time() - 400, time.time() - 400))
+
+    assert (
+        m.canary(
+            registry=registry,
+            loop_max=1800,
+            fast_wave_seconds=60,
+            voice_dir=voice_dir,
+        )
+        == 1
+    )
+    assert "STALE fast-wave-sensor" in capsys.readouterr().out
+
+
+def test_canary_reads_fast_wave_cadence_from_deployed_env_file(tmp_path, capsys, monkeypatch):
+    m = _mod()
+    registry, voice_dir = _canary_setup(tmp_path)
+    for sid in ("live-lane-sensor", "fast-wave-sensor", "parked-organ"):
+        (voice_dir / sid).write_text("stamp\n", encoding="utf-8")
+    os.utime(voice_dir / "fast-wave-sensor", (time.time() - 1000, time.time() - 1000))
+    env_file = tmp_path / ".limen.env"
+    env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200\n", encoding="utf-8")
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(env_file))
+
+    assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
+    assert "STALE fast-wave-sensor" not in capsys.readouterr().out
+    monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
 
 
 def test_canary_stale_stamp_exits_1(tmp_path, capsys):
@@ -499,6 +555,7 @@ def test_canary_metabolize_only_finding_is_owner_routed_not_red(tmp_path, capsys
     m = _mod()
     registry, voice_dir = _canary_setup(tmp_path)
     (voice_dir / "live-lane-sensor").write_text("now\n", encoding="utf-8")
+    (voice_dir / "fast-wave-sensor").write_text("now\n", encoding="utf-8")
     assert m.canary(registry=registry, loop_max=60, voice_dir=voice_dir) == 0
     out = capsys.readouterr().out
     assert "NEVER-RAN parked-organ" in out
