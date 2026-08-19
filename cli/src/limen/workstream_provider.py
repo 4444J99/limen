@@ -31,5 +31,5 @@ def workstream_launchable(vendor: Vendor, *, autonomous: bool) -> bool:
     """Return whether the lane can execute this interactive/autonomous workstream mode."""
 
     profile = getattr(vendor, "execution", None)
-    adapter = profile.workstream_adapter if profile is not None else "positional"
-    return not vendor.issue_assignment and (direct_native_workstream(vendor) or (autonomous and adapter == "jules"))
+    adapter = getattr(profile, "workstream_adapter", "positional") if profile is not None else "positional"
+    return not getattr(vendor, "issue_assignment", False) and (direct_native_workstream(vendor) or (autonomous and adapter == "jules"))

@@ -21,10 +21,11 @@ ROOT = Path(__file__).resolve().parents[2]
 RELAY_ID = "a" * 64
 
 
-def _profile(*, transport: str, capabilities: tuple[str, ...]):
+def _profile(*, transport: str, capabilities: tuple[str, ...], workstream_adapter: str = "positional"):
     return SimpleNamespace(
         transport=transport,
         capabilities=frozenset(capabilities),
+        workstream_adapter=workstream_adapter,
     )
 
 
