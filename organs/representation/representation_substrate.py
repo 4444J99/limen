@@ -4157,9 +4157,7 @@ def main(argv: list[str] | None = None) -> int:
     base = Path(__file__).resolve().parent
 
     if args.cmd == "validate":
-        paths = fleet_paths(base) if args.fleet else args.paths
-        if not paths:
-            parser.error("validate requires path(s) or --fleet")
+        paths = fleet_paths(base) if (args.fleet or not args.paths) else args.paths
         failures = 0
         for path in paths:
             violations = validate_path(path)

@@ -675,6 +675,34 @@ sensors:
           - {path: scripts/bifrons-organ.py, normalization: raw}
           - {path: logs/omega-owner-receipts/sensor.bifrons.liveness.json, normalization: json, volatile_fields: [observed_at], role: owner_receipt, max_age_seconds: 3600}
 
+  observation-feed:
+    section: "heartbeat"
+    title: "collect and emit unified observation organ telemetry feed (vitals + bifrons + observatory)"
+    gate: LIMEN_OBSERVATION_FEED
+    default: "1"
+    source: [heartbeat]
+    owner: observatory
+    cadence:
+      env: LIMEN_BEAT_OBSERVATION_FEED
+      default: 12
+    timeout:
+      env: LIMEN_OBSERVATION_FEED_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/observation-feed.py --emit"
+        severity: silent
+        escalation: "observation telemetry emission skipped or exceeded its bound"
+      - command: "python3 scripts/observation-feed.py --check"
+        severity: advisory
+        escalation: "observation feed schema drift — run python3 scripts/observation-feed.py --check"
+    omega_eligible:
+      - label: "observation feed check"
+        rung_id: sensor.observation.feed
+        tier: det
+        command: "python3 scripts/observation-feed.py --check"
+        semantic_inputs:
+          - {path: scripts/observation-feed.py, normalization: raw}
+
   fable-balance:
     section: "0e"
     title: "refresh the weekly Fable balance meter + surface an over-cap / unaccepted Fable run"
@@ -2410,6 +2438,7 @@ sensors:
     steps:
       - name: check
         command: "python3 scripts/lever-classify.py --check"
+        severity: advisory
         timeout: 30
         on_fail: escalate
         escalation: "unclassified open levers in his-hand-levers.json (see scripts/lever-classify.py --list)"
