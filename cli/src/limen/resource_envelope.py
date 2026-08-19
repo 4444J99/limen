@@ -115,6 +115,14 @@ class ResourceEnvelope:
     def required_free_gib(self) -> float:
         return self.required_free_bytes / (1024**3)
 
+    @property
+    def peak_concurrent_memory_bytes(self) -> int:
+        return self.peak_concurrent_task_bytes
+
+    @property
+    def memory_nonnegative(self) -> bool:
+        return self.required_free_bytes >= 0
+
 
 def evaluate_resource_envelope(
     telemetry: ResourceTelemetry,

@@ -27,6 +27,21 @@ CLI_SRC = ROOT / "cli" / "src"
 if CLI_SRC.is_dir() and str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
+_env_file = Path(os.environ.get("LIMEN_CONDUCT_ENV_FILE", Path.home() / ".limen.env"))
+if _env_file.exists():
+    try:
+        for _line in _env_file.read_text(encoding="utf-8").splitlines():
+            _line = _line.strip()
+            if _line.startswith("export "):
+                _line = _line[7:].strip()
+            if "=" in _line and not _line.startswith("#"):
+                _k, _v = _line.split("=", 1)
+                _k = _k.strip()
+                if _k not in os.environ:
+                    os.environ[_k] = _v.strip("\"'")
+    except Exception:
+        pass
+
 from limen import harness_paths
 
 try:
